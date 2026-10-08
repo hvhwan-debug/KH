@@ -41,7 +41,8 @@ h1{font-size:28px;line-height:1.15;margin:2px 0 4px;font-weight:800;letter-spaci
 h2{font-size:17px;margin:0 0 6px;font-weight:700}
 .brand{color:var(--muted);font-size:13px;font-weight:600}
 .sub{color:var(--muted);margin:0 0 12px;font-size:14px}
-.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:6px;background:var(--bg);padding:8px 0;margin:0 0 12px}
+.stickyhead{position:sticky;top:0;z-index:10}
+.tabs{display:flex;gap:6px;background:var(--bg);padding:8px 0;margin:0 0 12px}
 .tabs button{flex:1;border:1.5px solid var(--line);background:var(--surface);padding:10px 6px;border-radius:12px;font-weight:700;color:var(--muted);cursor:pointer}
 .tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
@@ -197,7 +198,9 @@ body{background:var(--bg)}
 .top .pill{display:inline-block;margin-top:14px;padding:3px 12px;border-radius:999px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);font-size:12px;font-weight:700;letter-spacing:.02em}
 .top h1{color:#fff;font-size:30px;margin:8px 0 4px;text-shadow:0 1px 10px rgba(0,50,47,.35)}
 .top .sub{color:rgba(255,255,255,.94);font-size:14px;margin:0;max-width:48ch;text-shadow:0 1px 6px rgba(0,50,47,.3)}
-.tabs{position:relative;z-index:6;background:var(--surface);padding:7px;border-radius:20px;margin:-36px 0 16px;box-shadow:0 14px 30px rgba(0,40,38,.18)}
+.tabs{position:relative;z-index:6;background:var(--surface);padding:7px;border-radius:20px;margin:-36px auto 16px;box-shadow:0 14px 30px rgba(0,40,38,.18);max-width:652px;width:calc(100% - 28px)}
+@media (min-width:900px){.tabs{max-width:832px}}
+@media (min-width:1200px){.tabs{max-width:1012px}}
 .tabs button{background:transparent;border:0;color:var(--muted);box-shadow:none}
 .tabs button[aria-selected="true"]{background:var(--btn-grad);color:var(--on-brand);border-color:transparent;box-shadow:0 6px 16px rgba(0,122,115,.28)}
 .card{border-radius:22px;box-shadow:var(--shadow);border-color:var(--line)}
@@ -520,6 +523,7 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 </style>
 </head>
 <body>
+<div class="stickyhead">
 <header class="top">
   <svg class="drop" viewBox="0 0 100 120" aria-hidden="true"><path d="M50 4C50 4 12 48 12 78a38 38 0 0 0 76 0C88 48 50 4 50 4Z"/></svg>
   <svg class="rings" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="96"/><circle cx="100" cy="100" r="68"/><circle cx="100" cy="100" r="40"/></svg>
@@ -532,8 +536,9 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
   </div>
   <svg class="wave" viewBox="0 0 1440 48" preserveAspectRatio="none" aria-hidden="true"><path d="M0,26C220,58 470,2 720,22C970,42 1210,54 1440,14L1440,48L0,48Z"/></svg>
 </header>
+<nav class="tabs" id="tabs" role="tablist"></nav>
+</div>
 <div class="wrap">
-  <nav class="tabs" id="tabs" role="tablist"></nav>
   <main id="app"></main>
 </div>
 <footer class="foot"><img class="logo sm" id="logo2" alt="Livotec"><div><b>Trợ lí thiết lập kế hoạch bán hàng</b> dành cho Sales Rep kênh GT Livotec</div><div class="foot-disc">Lưu ý: số liệu, dự báo và cảnh báo chỉ mang tính tham khảo, không phải cam kết hay chỉ tiêu chính thức.</div></footer>
