@@ -322,6 +322,33 @@ button,.chip,.cal button{touch-action:manipulation}
 .askrow .btn.sm{flex:1;min-width:140px;text-align:center}
 @media (max-width:600px){.askplan{margin-top:8px;padding:10px;border-radius:12px}.askrow{gap:6px;margin-top:8px}.askrow .btn.sm{min-width:120px;padding:9px 10px}}
 .askrow .btn small{display:block;font-weight:500;font-size:11px;opacity:.85;margin-top:1px}
+
+/* ===== Mục thu gọn ===== */
+.secard{padding:0}
+.secard details{margin:0}
+.sech{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;cursor:pointer;font-weight:700;min-height:48px}
+.sech::-webkit-details-marker{display:none}
+.sech .st{display:flex;align-items:center;gap:8px;font-size:15px}
+.sech .ss{display:flex;align-items:center;gap:6px;margin-left:auto;font-size:13px;font-weight:600}
+.sech::after{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:-3px 2px 0 4px;flex:0 0 auto;transition:transform .15s}
+details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
+.secb{padding:0 14px 14px}
+.crow{padding:10px 0;border-top:1px solid var(--line)}
+.crow:first-of-type{border-top:0}
+.chd{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cctl{display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap}
+.cp{display:flex;align-items:center;gap:6px}
+.cinfo{margin-top:4px}
+.xbtn{border:0;background:var(--bg);color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:13px;font-weight:700}
+@media (max-width:600px){
+  .sech{padding:10px 12px;min-height:44px}
+  .sech .st{font-size:14px}
+  .secb{padding:0 12px 12px}
+  .crow{padding:8px 0}
+  .cctl{gap:8px;margin-top:4px}
+}
+.chd .l{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 10px;min-width:0}
+.chd .l b{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -770,28 +797,32 @@ function catBar(){
 }
 function catsCard(tg){
   const fr={};catShares().forEach(x=>{fr[x.c.id]=x.f;});
-  const rows=CATS.map(c=>{
+  const on=CATS.filter(c=>S.cats[c.id].on),off=CATS.filter(c=>!S.cats[c.id].on);
+  const rows=on.map(c=>{
     const s=S.cats[c.id],f=fr[c.id]||0,v=Math.round(tg*f),sp=siCat(c.id);
-    let d='';
-    if(s.on){
-      const info=tg?'≈ '+Math.round(f*100)+'% · '+fmt(v)+' tr · '+(sp>0?'<b>'+Math.round(v/sp)+' '+c.u+'</b>':'<span style="color:var(--warn)">chưa có giá, nhập giá để đổi ra số bộ</span>'):'≈ '+Math.round(f*100)+'% gia dụng'+(sp>0?'':' · chưa có giá');
-      d='<div class="row" style="margin-top:8px;gap:12px;flex-wrap:wrap;justify-content:flex-start"><div><div class="small muted">Tỷ trọng</div>'+stepper('data-act="catW" data-c="'+c.id+'"',s.w,5)+'</div>'+
-        '<div><div class="small muted">Giá niêm yết TB (tr/bộ)</div><input class="num sm" type="number" inputmode="decimal" step="0.1" min="0" data-f="catP" data-c="'+c.id+'" value="'+(s.p||'')+'" placeholder="nhập giá" aria-label="Giá niêm yết '+c.name+'"></div></div>'+
-        '<div class="small muted" style="margin-top:6px">'+info+'</div>';
-    }
-    return '<div class="rule"><div class="row"><b><i class="sw" style="background:'+c.col+'"></i>'+c.name+'</b><button class="sw2" role="switch" aria-checked="'+s.on+'" aria-label="Bật tắt '+c.name+'" data-act="catTog" data-c="'+c.id+'"></button></div>'+d+'</div>';
+    const info=tg?'≈ '+Math.round(f*100)+'% · '+fmt(v)+' tr · '+(sp>0?'<b>'+Math.round(v/sp)+' '+c.u+'</b>':'<span style="color:var(--warn)">nhập giá để ra số bộ</span>'):'≈ '+Math.round(f*100)+'%'+(sp>0?'':' · chưa có giá');
+    return '<div class="crow"><div class="chd"><div class="l"><b><i class="sw" style="background:'+c.col+'"></i>'+c.name+'</b><span class="small muted">'+info+'</span></div><button class="xbtn" data-act="catTog" data-c="'+c.id+'" aria-label="Tắt '+c.name+'">✕</button></div>'+
+      '<div class="cctl">'+stepper('data-act="catW" data-c="'+c.id+'"',s.w,5)+
+      '<label class="cp"><input class="num sm" type="number" inputmode="decimal" step="0.1" min="0" data-f="catP" data-c="'+c.id+'" value="'+(s.p||'')+'" placeholder="giá" aria-label="Giá niêm yết '+c.name+' (triệu/bộ)"><span class="unit">tr/bộ</span></label></div>'+'</div>';
   }).join('');
-  return '<div class="card"><h2>'+ic('plug',18)+' Cơ cấu gia dụng bếp</h2><div class="small muted">Bật các ngành bạn bán và đặt tỷ trọng tương đối (công cụ tự quy về 100%). Giá niêm yết đã điền sẵn theo livotec.com cho bếp từ, nồi cơm điện và bộ nồi chảo. Các ngành còn lại bạn nhập giá.</div>'+
-    '<div style="margin-top:10px">'+catBar()+'</div>'+rows+
-    '<div class="small muted" style="margin-top:8px">Tỷ trọng ban đầu là điểm khởi đầu giả định, bạn sửa theo cơ cấu bán thực tế của mình.</div></div>';
+  const adds=off.length?'<div class="small muted" style="margin-top:8px">Thêm ngành:</div><div class="chips">'+off.map(c=>'<button class="chip" data-act="catTog" data-c="'+c.id+'"><i class="sw" style="background:'+c.col+';margin-right:5px"></i>+ '+c.name+'</button>').join('')+'</div>':'';
+  const sum=on.length?on.map(c=>c.name.split(' ').slice(-1)[0]+' '+Math.round((fr[c.id]||0)*100)+'%').join(' · '):'chưa chọn';
+  return sec('cats',ic('plug',18),'Cơ cấu gia dụng bếp','<span class="small muted">'+on.length+' ngành</span>',
+    '<div class="small muted">Đặt tỷ trọng tương đối, công cụ tự quy về 100%. Giá đã điền sẵn theo livotec.com, sửa theo thực tế.</div><div style="margin-top:8px">'+catBar()+'</div>'+rows+adds);
 }
 
+const openSec={};
+document.addEventListener('toggle',function(e){const d=e.target;if(d&&d.dataset&&d.dataset.sec)openSec[d.dataset.sec]=d.open;},true);
+function isOpen(k,def){return openSec[k]===undefined?!!def:openSec[k];}
+function sec(k,icon,title,sum,body,def){
+  return '<div class="card secard"><details data-sec="'+k+'"'+(isOpen(k,def)?' open':'')+'><summary class="sech"><span class="st">'+icon+'<span>'+title+'</span></span><span class="ss">'+sum+'</span></summary><div class="secb">'+body+'</div></details></div>';
+}
 function feasCard(weeks){
   const f=feasibility(weeks);if(!f)return '';
   const st=f.ratio<=0.7?['ok','Thoải mái']:f.ratio<=1?['warn','Sát nhưng làm được']:['bad','Vượt năng lực ước tính'];
   const fill=Math.min(f.ratio,1.5)/1.5*100;
   const sugg=f.ratio>1?' Với mức tối đa '+f.mc+' khách/ngày, chỉ tiêu hợp lý hơn khoảng <b>'+fmt(f.cap)+' triệu</b>. Bạn có thể trao đổi lại chỉ tiêu hoặc tìm cách tăng giá trị mỗi đơn.':'';
-  return '<div class="card"><h2>'+ic('compass',18)+' Kiểm tra khả thi</h2><div class="small muted">So chỉ tiêu với số khách bạn làm được mỗi ngày làm việc.</div>'+
+  return sec('feas',ic('compass',18),'Kiểm tra khả thi','<span class="badge '+st[0]+'">'+st[1]+'</span> <b>'+Math.round(f.ratio*100)+'%</b>','<div class="small muted">So chỉ tiêu với số khách bạn làm được mỗi ngày làm việc.</div>'+
     '<div class="field"><span class="nm small">Tối đa bạn liên hệ được mỗi ngày</span><input class="num sm" type="number" inputmode="numeric" min="1" data-f="maxC" value="'+S.maxC+'"><span class="unit">khách</span></div>'+
     '<div class="small row"><span>Cần ≈ <b>'+fmt(f.perDay,1)+'</b> khách/ngày</span><b>'+Math.round(f.ratio*100)+'% mức tối đa</b></div>'+
     '<div class="gauge" role="img" aria-label="Mức sử dụng năng lực '+Math.round(f.ratio*100)+'%"><i style="width:46.7%;background:var(--ok-soft)"></i><i style="width:20%;background:var(--warn-soft)"></i><i style="width:33.3%;background:var(--bad-soft)"></i><span class="mk" style="left:'+fill+'%"></span></div>'+
@@ -800,7 +831,7 @@ function feasCard(weeks){
     '<input type="range" min="60" max="140" step="5" value="'+S.season+'" data-f="season" data-live="seasv" aria-label="Sức mua tháng này">'+
     '<div class="small muted">Chỉ bạn biết tháng này bán dễ hay khó. Kéo sang trái nếu tháng yếu (trời nóng, ít người mua bình), sang phải nếu vào mùa cao điểm.</div>'+
     '<div class="small muted" style="margin-top:10px">Mẫu địa bàn (điểm khởi đầu giả định, bạn sửa theo thực tế):</div>'+
-    '<div class="chips">'+[['tp','Thành phố lớn'],['tinh','Tỉnh đồng bằng'],['rong','Địa bàn rộng, đại lý thưa']].map(x=>'<button class="chip" data-act="area" data-v="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+DISC+'</div>';
+    '<div class="chips">'+[['tp','Thành phố lớn'],['tinh','Tỉnh đồng bằng'],['rong','Địa bàn rộng, đại lý thưa']].map(x=>'<button class="chip" data-act="area" data-v="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+DISC,f.ratio>1);
 }
 
 const AICON={bad:ic('alertOct',22),warn:ic('warnTri',22),info:ic('infoCirc',22)};
@@ -919,8 +950,8 @@ function renderSetup(){
   aiCard(weeks)+
   feasCard(weeks)+
   catsCard(tg)+
-  '<div class="card"><h2>Ngày bạn làm việc</h2><div class="small muted">Chủ nhật mặc định nghỉ. Chạm vào ngày để đổi: ngày lễ, nghỉ phép, đi công tác.</div>'+cal+'</div>'+
-  '<div class="card"><details><summary>Tinh chỉnh thêm (không bắt buộc)</summary>'+
+  sec('days',ic('plan',18),'Ngày bạn làm việc','<span class="small muted">'+workDays+' ngày</span>','<div class="small muted">Chủ nhật mặc định nghỉ. Chạm vào ngày để đổi: ngày lễ, nghỉ phép, đi công tác.</div>'+cal)+
+  '<div class="card secard"><details data-sec="tune"'+(isOpen('tune')?' open':'')+'><summary class="sech"><span class="st">'+ic('setup',18)+'<span>Tinh chỉnh thêm</span></span><span class="ss small muted">không bắt buộc</span></summary><div class="secb">'+
     '<div class="small muted" style="margin-top:6px">Cách chia chỉ tiêu cho các tuần</div>'+
     '<div class="radio"><label'+(S.pace==='front'?' class="on"':'')+'><input type="radio" name="pace" data-f="pace" value="front"'+(S.pace==='front'?' checked':'')+'><b>Nhẹ dần về cuối tháng</b><div class="small muted">Tuần đầu nhiều hơn một chút, tuần cuối ít nhất.</div></label>'+
     '<label'+(S.pace==='even'?' class="on"':'')+'><input type="radio" name="pace" data-f="pace" value="even"'+(S.pace==='even'?' checked':'')+'><b>Đều theo ngày làm việc</b><div class="small muted">Mỗi ngày làm việc gánh phần bằng nhau.</div></label></div>'+
@@ -931,7 +962,7 @@ function renderSetup(){
     '<div class="small muted" style="margin-top:10px">Để tính số khách cần liên hệ:</div>'+
     '<div class="field"><span class="nm small">Giá trị trung bình mỗi đơn</span><input class="num sm" type="number" inputmode="numeric" min="1" data-f="aov" value="'+S.aov+'"><span class="unit">tr</span></div>'+
     '<div class="field"><span class="nm small">Tỷ lệ khách liên hệ chốt được đơn</span><input class="num sm" type="number" inputmode="numeric" min="5" max="100" data-f="rate" value="'+S.rate+'"><span class="unit">%</span></div>'+
-  '</details></div>'+
+  '</div></details></div>'+
   '<button class="btn" data-act="tab" data-v="plan">Xem kế hoạch của tôi</button>'+
   '<div style="text-align:center;margin-top:10px"><button class="link" data-act="reset">'+(confirmReset?'Bấm lại để xác nhận xoá hết dữ liệu':'Làm lại từ đầu')+'</button></div>'+
   '<div class="small muted" style="text-align:center">Dữ liệu chỉ lưu trên thiết bị này. Không gửi cho ai và không xếp hạng giữa các SR.</div>';
