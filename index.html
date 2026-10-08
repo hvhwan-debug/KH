@@ -1454,8 +1454,7 @@ function targetBlock(){
   const cur=STRATS.find(x=>x[0]===S.strat)||STRATS[4];
   let h='<div class="field"><span class="nm">Chiến lược chỉ tiêu</span><select data-f="strat" aria-label="Chiến lược chia chỉ tiêu">'+opts+'</select></div>';
   if(S.strat==='manual'){
-    h+='<div class="fieldgrid">'+PRODUCTS.map(p=>'<div class="field"><span class="nm">'+ic(p.icon)+' '+p.name+'</span><span class="iu"><input class="num" type="number" inputmode="numeric" min="0" data-f="target" data-p="'+p.id+'" value="'+(S.target[p.id]||'')+'" placeholder="0" aria-label="Chỉ tiêu S.I '+p.name+'"><span class="unit">tr</span></span></div>').join('')+'</div>'+
-      '<div class="small muted">Tính bằng triệu đồng. Ví dụ 250 cho bình nước nóng, 100 cho gia dụng.</div>';
+    h+='<div class="fieldgrid">'+PRODUCTS.map((p,i)=>'<div class="field"><span class="nm">'+ic(p.icon)+' '+p.name+'</span><span class="iu"><input class="num" type="number" inputmode="numeric" min="0" data-f="target" data-p="'+p.id+'" value="'+(S.target[p.id]||'')+'" placeholder="'+(i===0?'VD: 250':'VD: 100')+'" aria-label="Chỉ tiêu S.I '+p.name+' (triệu đồng)"><span class="unit">tr</span></span></div>').join('')+'</div>';
   }else{
     const t=+S.tt||0,bn=+S.target.bn||0,gd=+S.target.gd||0,pb=t?Math.round(bn/t*100):0;
     h+='<div class="field"><span class="nm">Tổng chỉ tiêu S.I</span><input class="num" type="number" inputmode="numeric" min="0" data-f="ttotal" value="'+(S.tt||'')+'" placeholder="0" aria-label="Tổng chỉ tiêu S.I"><span class="unit">tr</span></div>';
@@ -1947,7 +1946,7 @@ function renderSetup(){
     '<div class="field"><span class="nm">Tháng</span><select data-f="month" aria-label="Chọn tháng">'+opts+'</select></div>'+
     '<div class="field"><span class="nm">Khu vực phụ trách</span><select data-f="province" aria-label="Tỉnh, thành phố phụ trách"><option value="">— Chọn tỉnh, thành phố —</option>'+PROVINCES.map(p=>'<option value="'+p+'"'+(S.province===p?' selected':'')+'>'+p+'</option>').join('')+'</select></div>'+
     '</div>'+
-    '<div class="small muted" style="margin:0 0 12px">AI sẽ tham khảo đặc điểm thị trường, mùa vụ của khu vực này khi đưa ra nhận xét.</div>'+
+    (S.province?'':'<div class="small muted" style="margin:0 0 12px">AI sẽ dùng khu vực này để nhận xét sát hơn.</div>')+
     targetBlock()+'</div>'+
   needCard(weeks)+
   factorsCard(weeks,'full')+
@@ -2103,7 +2102,7 @@ function renderCheck(){
   const ds=dailySeries(weeks);
   $app.innerHTML=banner(weeks)+
   '<div class="card herocard">'+hero+'</div>'+forecastCard(weeks)+factorsCard(weeks,'compact')+aiPanel('check',weeks)+
-  '<div class="card"><h2>Nhật ký hàng ngày</h2><div class="small muted">Nhập số liệu mỗi ngày — chỉ mất khoảng 20 giây, giúp bạn theo dõi tiến độ sát hơn thay vì chờ đến cuối tuần. Số liệu này dành cho bạn, không phải báo cáo.</div><div style="margin-top:10px">'+weekChips+'</div><div style="margin-top:6px">'+dayChips+'</div>'+
+  '<div class="card"><h2>Nhật ký hàng ngày</h2><div class="small muted">Chỉ bạn thấy, mất ~20 giây mỗi ngày.</div><div style="margin-top:10px">'+weekChips+'</div><div style="margin-top:6px">'+dayChips+'</div>'+
     (w.work===0?'<div class="note">Tuần này không có ngày làm việc.</div>':fields)+result+(w.work>0?'<div class="savebar"><button class="btn sm" data-act="daySave" data-day="'+curDay+'">Lưu số liệu ngày '+curDay.slice(8)+'/'+curDay.slice(5,7)+'</button><span class="small muted">'+(S.daily[curDay]?'Đã lưu':'Chưa lưu')+'</span></div>':'')+'</div>'+
   rebal+
   '<div class="card"><h2>Tiến độ theo ngày</h2>'+dailyChart(ds,total)+
@@ -2122,7 +2121,7 @@ function renderAlertsTab(){
   const rules=RULES.map(r=>{const c=S.rules[r.id];return '<div class="rule'+(c.on?'':' off')+'"><div class="row"><b>'+r.title+'</b><button class="sw2" role="switch" aria-checked="'+c.on+'" aria-label="Bật tắt: '+r.title+'" data-act="rule" data-r="'+r.id+'"></button></div>'+
     '<div class="rb"><div class="small muted" style="margin:6px 0">'+r.pre+'</div><div class="row" style="justify-content:flex-start;gap:10px">'+stepper('data-act="rv" data-r="'+r.id+'"',c.v,r.step)+'<span class="small">'+r.post+'</span></div></div></div>';}).join('');
   $app.innerHTML=
-  '<div class="card"><h2>'+ic('bell',18)+' Cảnh báo đang có</h2><div class="small muted">Cảnh báo chỉ hiện cho bạn, không gửi cho ai. Bạn có thể ẩn cảnh báo nào không cần.</div>'+DISC+list+
+  '<div class="card"><h2>'+ic('bell',18)+' Cảnh báo đang có</h2><div class="small muted">Chỉ bạn thấy.</div>'+DISC+list+
     (hid.length?'<details><summary class="small">Đã ẩn ('+hid.length+')</summary><button class="btn ghost sm" data-act="undismiss">Hiện lại tất cả</button></details>':'')+'</div>'+
   aiPanel('alerts',weeks)+
   '<div class="card"><h2>Mức độ nhạy</h2><div class="small muted">Chọn nhanh bộ ngưỡng, sau đó chỉnh từng quy tắc bên dưới nếu muốn.</div><div class="preset">'+
