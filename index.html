@@ -329,7 +329,7 @@ const GROQ_MODEL='llama-3.3-70b-versatile';
 let aiState={loading:false,text:'',error:''};
 let aiLastKey=null,aiTimer=null;
 const AI_DISCLAIMER='Nhận xét và đề xuất này do AI tạo tự động dựa trên số liệu bạn nhập, có thể không chính xác hoàn toàn — hãy đối chiếu với thực tế trước khi quyết định.';
-function aiDataKey(){return JSON.stringify({t:S.target,a:S.actual,m:S.month,p:S.province});}
+function aiDataKey(){return JSON.stringify({t:S.target,a:S.actual,d:S.daily,m:S.month,p:S.province});}
 function scheduleAI(){
   const key=aiDataKey();
   if(key===aiLastKey)return;
@@ -359,13 +359,15 @@ function aiPrompt(weeks){
     } else {
       lines.push('Hiện không có cảnh báo nào được kích hoạt.');
     }
+    const recent=recentDailyNote(weeks);
+    if(recent)lines.push(recent);
   } else {
     lines.push('Chưa có số liệu tự soát nào được nhập — đây là giai đoạn lập kế hoạch đầu tháng.');
   }
 
   const regionNote=S.province?' Khi đưa ra nhận xét và đề xuất, hãy cân nhắc đặc điểm thị trường, khí hậu theo mùa và mức độ cạnh tranh điển hình của khu vực '+S.province+' đối với ngành hàng bình nước nóng và gia dụng nhà bếp.':'';
   const task=hasActual
-    ? 'Hãy viết một nhận xét ngắn gọn (3–5 câu, văn phong chuyên nghiệp, tiếng Việt, không dùng ẩn dụ đời sống, không chào hỏi) về tình hình hiện tại, sau đó liệt kê 2–3 đề xuất hành động cụ thể cho phần còn lại của tháng.'
+    ? 'Hãy viết một nhận xét ngắn gọn (3–5 câu, văn phong chuyên nghiệp, tiếng Việt, không dùng ẩn dụ đời sống, không chào hỏi) về tình hình hiện tại, nêu rõ mức độ rủi ro không đạt chỉ tiêu (thấp / trung bình / cao) dựa trên diễn biến gần đây, sau đó liệt kê 2–3 đề xuất hành động cụ thể cho phần còn lại của tháng.'
     : 'Hãy đánh giá ngắn gọn (3–5 câu, văn phong chuyên nghiệp, tiếng Việt, không dùng ẩn dụ đời sống, không chào hỏi) mức độ khả thi của chỉ tiêu này so với năng lực làm việc, sau đó liệt kê 2–3 khuyến nghị cụ thể để triển khai hiệu quả ngay từ đầu tháng.';
   return 'Bạn là trợ lý phân tích kinh doanh, hỗ trợ một nhân viên kinh doanh (SR) ngành hàng điện gia dụng đánh giá kế hoạch và tiến độ doanh số tháng dựa trên dữ liệu sau:\n\n'+
     lines.join('\n')+'\n\n'+task+regionNote;
@@ -404,7 +406,7 @@ const pad=n=>String(n).padStart(2,'0');
 const fmt=(x,d=0)=>Number(x).toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d});
 const C={bn:'var(--bn)',gd:'var(--gd)'};
 function monthKey(o){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+o);return d.getFullYear()+'-'+pad(d.getMonth()+1);}
-function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std')};}
+function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std')};}
 function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats});}}catch(e){}return defaults();}
 let S=load(),confirmReset=false,copyText=null;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
@@ -514,6 +516,53 @@ function analyze(){
 function riskSel(w){if(S.risks[w.key])return S.risks[w.key];const r=[];if(w.hard)r.push('hoan','gia');if(w.holiday)r.push('nghi');return r;}
 function todayKey(){const t=new Date();return t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate());}
 function currentWeekIndex(weeks){const k=todayKey();for(const w of weeks){if(w.days.some(d=>d.date===k))return w.i;}return 0;}
+/* ---------- Nhật ký hàng ngày ---------- */
+function recomputeWeekActual(w){
+  let v=0,bn=0,gd=0,any=false;
+  w.days.forEach(d=>{const e=S.daily[d.date];if(e){any=true;v+=e.v||0;bn+=e.bn||0;gd+=e.gd||0;}});
+  if(any)S.actual[w.key]={v,bn,gd};else delete S.actual[w.key];
+}
+function dailySeries(weeks){
+  const planPts=[],actPts=[];let planCum=0,actCum=0,idx=0;
+  weeks.forEach(w=>{
+    const perDay=w.work>0?w.tt/w.work:0;
+    w.days.forEach(d=>{
+      if(!d.off)planCum+=perDay;
+      planPts.push({i:idx,v:planCum});
+      const e=S.daily[d.date];
+      if(e)actCum+=(e.bn||0)+(e.gd||0);
+      if(e||d.date<=todayKey())actPts.push({i:idx,v:actCum});
+      idx++;
+    });
+  });
+  return{planPts,actPts,n:idx};
+}
+function dailyChart(ds,ymax){
+  const W=640,H=170,L=42,R=10,T=10,B=22,n=Math.max(ds.n-1,1),pw=(W-L-R)/n,ph=H-T-B;
+  const X=i=>L+pw*i,Y=v=>T+ph-(Math.min(v,ymax)/Math.max(ymax,1))*ph;
+  let s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Tiến độ theo ngày">';
+  [0,.5,1].forEach(f=>{const y=T+ph-f*ph;s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'" style="stroke:var(--line)" stroke-width="1"/><text x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="10" style="fill:var(--muted)">'+Math.round(ymax*f)+'</text>';});
+  function draw(pts,color,dash,dotLast){
+    if(!pts.length)return;
+    const p=[[L,Y(0)]].concat(pts.map(pt=>[X(pt.i),Y(pt.v)]));
+    s+='<polyline fill="none" points="'+p.map(x=>x[0]+','+x[1]).join(' ')+'" style="stroke:'+color+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"'+(dash?' stroke-dasharray="5 5"':'')+'/>';
+    if(dotLast){const last=pts[pts.length-1];s+='<circle cx="'+X(last.i)+'" cy="'+Y(last.v)+'" r="4" style="fill:'+color+'"/>';}
+  }
+  draw(ds.planPts,'var(--ink)',true,false);
+  draw(ds.actPts,'var(--ok)',false,true);
+  s+='<text x="'+L+'" y="'+(H-4)+'" font-size="10" style="fill:var(--muted)">Đầu tháng</text><text x="'+(W-R)+'" y="'+(H-4)+'" text-anchor="end" font-size="10" style="fill:var(--muted)">Cuối tháng</text>';
+  return s+'</svg>';
+}
+function recentDailyNote(weeks){
+  const tk=todayKey(),allDays=[];
+  weeks.forEach(w=>w.days.forEach(d=>{if(!d.off&&d.date<=tk)allDays.push(d.date);}));
+  const last3=allDays.slice(-3);
+  if(!last3.length)return '';
+  const logged=last3.filter(dt=>S.daily[dt]);
+  const sum=last3.reduce((s,dt)=>{const e=S.daily[dt];return s+(e?(e.bn||0)+(e.gd||0):0);},0);
+  if(!logged.length)return 'Chưa có số liệu hàng ngày trong các ngày làm việc gần nhất.';
+  return '3 ngày làm việc gần nhất: tổng '+fmt(sum)+' triệu đã chốt ('+logged.length+'/'+last3.length+' ngày có số liệu).';
+}
 function computeRebalance(weeks,k){
   const T=targets(weeks),later=weeks.filter(w=>w.i>k&&w.work>0);
   if(!later.length)return null;
@@ -871,8 +920,15 @@ function renderCheck(){
     '<div class="li"><span>So với mốc</span>'+verdict+'</div></div></div>';
 
   const weekChips='<div class="wk">'+weeks.map(x=>{const lv=weekLevel(x);return '<button class="chip" data-act="cw" data-w="'+x.i+'" aria-pressed="'+(x.i===k)+'">Tuần '+(x.i+1)+' · '+x.label+'<span class="sd'+(lv?' '+lv:'')+'"></span></button>';}).join('')+'</div>';
-  const fields=[['v',''+ic('users',16)+' Số khách đã liên hệ','',w.vt,1],['bn',''+ic('droplet',16)+' Đã chốt · Bình nước nóng',' (triệu)',w.t.bn,5],['gd',''+ic('plug',16)+' Đã chốt · Gia dụng',' (triệu)',w.t.gd,5]]
-    .map(f=>'<div class="tline"><span class="nm">'+f[1]+f[2]+'<div class="small muted" style="font-weight:500">Kế hoạch: '+f[3]+'</div></span>'+stepper('data-act="ck" data-f="'+f[0]+'" data-w="'+w.key+'"',a[f[0]]||0,f[4])+'</div>').join('');
+
+  const todayK=todayKey();
+  let curDay=S.cd;
+  if(!curDay||!w.days.some(d=>d.date===curDay))curDay=w.days.some(d=>d.date===todayK)?todayK:w.days[0].date;
+  const dayChips='<div class="wk">'+w.days.map(d=>{const logged=!!S.daily[d.date];return '<button class="chip" data-act="cd" data-day="'+d.date+'" aria-pressed="'+(d.date===curDay)+'">Ngày '+d.d+(d.off?' · nghỉ':'')+'<span class="sd'+(logged?' ok':'')+'"></span></button>';}).join('')+'</div>';
+  const dd=S.daily[curDay]||{v:0,bn:0,gd:0};
+  const perVt=w.work>0?fmt(w.vt/w.work,1):'0',perBn=w.work>0?fmt(w.t.bn/w.work,1):'0',perGd=w.work>0?fmt(w.t.gd/w.work,1):'0';
+  const fields=[['v',''+ic('users',16)+' Số khách đã liên hệ hôm nay','',perVt,1],['bn',''+ic('droplet',16)+' Đã chốt hôm nay · Bình nước nóng',' (triệu)',perBn,5],['gd',''+ic('plug',16)+' Đã chốt hôm nay · Gia dụng',' (triệu)',perGd,5]]
+    .map(f=>'<div class="tline"><span class="nm">'+f[1]+f[2]+'<div class="small muted" style="font-weight:500">Tham khảo/ngày: '+f[3]+'</div></span>'+stepper('data-act="dk" data-f="'+f[0]+'" data-day="'+curDay+'"',dd[f[0]]||0,f[4])+'</div>').join('');
 
   let result='';
   if(has&&w.work>0){
@@ -893,12 +949,15 @@ function renderCheck(){
 
   let cum=0;const planPts=[],actPts=[];let ca=0;
   weeks.forEach(x=>{cum+=x.tt;planPts.push({i:x.i,v:cum});const ac=S.actual[x.key];if(ac){ca+=(ac.bn||0)+(ac.gd||0);actPts.push({i:x.i,v:ca});}else if(ac===undefined){}});
+  const ds=dailySeries(weeks);
   $app.innerHTML=banner(weeks)+
   '<div class="card herocard">'+hero+'</div>'+forecastCard(weeks)+aiCard(weeks)+
-  '<div class="card"><h2>Tự soát cuối tuần</h2><div class="small muted">Chọn ngày bạn thấy tiện, chỉ mất khoảng 20 giây. Số liệu này dành cho bạn, không phải báo cáo.</div><div style="margin-top:10px">'+weekChips+'</div>'+
+  '<div class="card"><h2>Nhật ký hàng ngày</h2><div class="small muted">Nhập số liệu mỗi ngày — chỉ mất khoảng 20 giây, giúp bạn theo dõi tiến độ sát hơn thay vì chờ đến cuối tuần. Số liệu này dành cho bạn, không phải báo cáo.</div><div style="margin-top:10px">'+weekChips+'</div><div style="margin-top:6px">'+dayChips+'</div>'+
     (w.work===0?'<div class="note">Tuần này không có ngày làm việc.</div>':fields)+result+'</div>'+
   rebal+
-  '<div class="card"><h2>Thực tế so với kế hoạch</h2>'+lineChart(weeks,[{pts:planPts,color:'var(--ink)',dash:true,w:2},{pts:actPts,color:'var(--ok)',dots:true,w:4}],total)+
+  '<div class="card"><h2>Tiến độ theo ngày</h2>'+dailyChart(ds,total)+
+    '<div class="legend"><span class="dash" style="--c:var(--ink)">Kế hoạch tích lũy</span><span style="--c:var(--ok)">Thực tế tích lũy</span></div></div>'+
+  '<div class="card"><h2>Thực tế so với kế hoạch theo tuần</h2>'+lineChart(weeks,[{pts:planPts,color:'var(--ink)',dash:true,w:2},{pts:actPts,color:'var(--ok)',dots:true,w:4}],total)+
     '<div class="legend"><span class="dash" style="--c:var(--ink)">Kế hoạch tích lũy</span><span style="--c:var(--ok)">Thực tế tích lũy</span></div></div>';
 }
 
@@ -944,8 +1003,16 @@ document.addEventListener('click',function(e){
   else if(a==='wt'){const weeks=analyze(),T=targets(weeks);if(!S.plan){S.plan={};PRODUCTS.forEach(p=>{S.plan[p.id]=T[p.id].slice();});}const i=+d.w;S.plan[d.p][i]=Math.max(0,S.plan[d.p][i]+(+d.d));}
   else if(a==='autoplan'){S.plan=null;toast('Đã đưa về gợi ý tự động');}
   else if(a==='risk'){const weeks=analyze(),w=weeks[+d.w],cur=riskSel(w).slice(),i=cur.indexOf(d.r);if(i>=0)cur.splice(i,1);else cur.push(d.r);S.risks[w.key]=cur;}
-  else if(a==='cw'){S.cw=+d.w;}
-  else if(a==='ck'){const cur=S.actual[d.w]||{v:0,bn:0,gd:0};cur[d.f]=Math.max(0,(cur[d.f]||0)+(+d.d));S.actual[d.w]=cur;}
+  else if(a==='cw'){S.cw=+d.w;S.cd=null;}
+  else if(a==='cd'){S.cd=d.day;}
+  else if(a==='dk'){
+    const cur=S.daily[d.day]||{v:0,bn:0,gd:0};
+    cur[d.f]=Math.max(0,(cur[d.f]||0)+(+d.d));
+    S.daily[d.day]=cur;
+    const weeks=analyze();
+    const wk=weeks.find(w=>w.days.some(dd=>dd.date===d.day));
+    if(wk)recomputeWeekActual(wk);
+  }
   else if(a==='rebalance'){const weeks=analyze(),rb=computeRebalance(weeks,S.cw);if(rb){S.plan=rb.np;toast('Đã cân lại các tuần còn lại');}}
   else if(a==='copy'){
     const txt=planText();
