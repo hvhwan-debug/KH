@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#02A79E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Trợ lí thiết lập kế hoạch bán hàng — Livotec</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -391,6 +394,20 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
   .top .topin{flex-wrap:wrap}
   .top .pill{flex-basis:auto;order:3}
 }
+
+/* ===== Báo cáo sáng, nhắc tối, lịch sử ===== */
+.daybar{border-color:var(--brand-deep)}
+.daybar.warn{border-color:var(--warn);background:var(--warn-soft)}
+.daybar.warn.late{border-color:var(--bad);background:var(--bad-soft)}
+.hrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.hrow .hl{flex:1;min-width:0}
+.hrow .hv{text-align:right;font-variant-numeric:tabular-nums}
+.remrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.remrow .rl{flex:1;min-width:0}
+.num.sm.tm{width:132px;min-width:132px;font-size:15px;text-align:center;padding-left:6px;padding-right:6px}
+.remrow .rl{flex:1 1 90px}
+.remblk{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.savebar{display:flex;align-items:center;gap:10px;margin-top:12px}
 </style>
 </head>
 <body>
@@ -410,6 +427,7 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
   <main id="app"></main>
 </div>
 <footer class="foot"><img class="logo sm" id="logo2" alt="Livotec"><div><b>Trợ lí thiết lập kế hoạch bán hàng</b> dành cho Sales Rep Livotec</div><div class="foot-disc">Lưu ý: số liệu, dự báo và cảnh báo chỉ mang tính tham khảo, không phải cam kết hay chỉ tiêu chính thức.</div></footer>
+<input type="file" id="restoreFile" accept=".json,application/json" hidden>
 <button class="fab" id="coachFab" data-coach="open" aria-label="Hỏi trợ lý AI"></button>
 <div class="sheet" id="coach" hidden><div class="sheetin" role="dialog" aria-label="Trợ lý AI Livotec">
   <div class="shh"><b>Trợ lý AI Livotec</b><span><button class="link" data-coach="clear">Xoá</button><button class="xbtn" data-coach="close" aria-label="Đóng">✕</button></span></div>
@@ -708,6 +726,7 @@ const AI_FORMAT=' Trả lời tiếng Việt, văn phong chuyên nghiệp, khôn
 const AI_TASK={
   plan:'Hãy đánh giá cách chia chỉ tiêu theo tuần và khu vực ở trên, tối đa 6 gạch đầu dòng ngắn gồm: (1) tuần hoặc khu vực rủi ro nhất và lý do; (2) nên điều chỉnh tỷ lệ ghé trực tiếp so với chăm sóc từ xa thế nào; (3) ngành hàng nên ưu tiên chào theo mùa vụ, kèm 2–3 điểm bán hàng cụ thể của Livotec phù hợp; (4) một phương án dự phòng nếu tuần đầu chậm.'+AI_FORMAT,
   check:'Hãy phân tích tiến độ thực tế, tối đa 6 gạch đầu dòng ngắn gồm: (1) mức đạt so với kế hoạch; (2) các nguyên nhân khả dĩ (nói rõ đây là giả thuyết từ số liệu); (3) ba việc cụ thể cho 1–2 ngày tới, có số điểm bán và khu vực; (4) có nên cân lại các tuần còn lại không. Nếu chưa có số liệu thực tế, hãy nói rõ và đưa ra 3 việc nên làm ngay đầu tháng.'+AI_FORMAT,
+  brief:'Hãy viết nhận xét ngắn (tối đa 3 câu) về kết quả hôm qua so với kế hoạch ngày, rồi nêu 2 việc cụ thể nên làm trong sáng nay (có số điểm bán hoặc khu vực nếu có). Nếu hôm qua chưa nhập số liệu, hãy nói rõ và gợi ý cách nhập bù nhanh.'+AI_FORMAT,
   alerts:'Hãy sắp xếp các cảnh báo đang hoạt động theo mức ưu tiên và nêu một hành động cụ thể cho từng cảnh báo, ngắn gọn. Nếu không có cảnh báo, nêu 2 rủi ro nên theo dõi trong tuần này dựa trên kế hoạch và mùa vụ.'+AI_FORMAT
 };
 const AI_TITLE={plan:'AI phân tích kế hoạch',check:'AI phân tích tiến độ',alerts:'AI ưu tiên hành động'};
@@ -726,7 +745,7 @@ function aiPanel(ctx,weeks){
 async function askAIx(ctx){
   const weeks=analyze();AIX[ctx]={loading:true,text:'',error:'',key:''};render();
   try{
-    const text=await callAI(aiMsgs('Dữ liệu của một nhân viên kinh doanh (SR) Livotec:\n'+ctxText(weeks)+'\n\n'+AI_TASK[ctx]),1500);
+    const text=await callAI(aiMsgs('Dữ liệu của một nhân viên kinh doanh (SR) Livotec:\n'+ctxText(weeks)+(ctx==='brief'?'\n'+briefLine(weeks):'')+'\n\n'+AI_TASK[ctx]),1500);
     AIX[ctx]={loading:false,text:text,error:'',key:aiKey(ctx)};
   }catch(e){AIX[ctx]={loading:false,text:'',error:'Không gọi được AI. Chi tiết: '+e.message,key:''};}
   render();
@@ -774,14 +793,186 @@ function initCoach(){
   });
 }
 
+/* ---------- Lưu theo tháng, sao lưu, nhắc việc ---------- */
+function monthSnap(){const c=x=>JSON.parse(JSON.stringify(x));return{target:c(S.target),plan:S.plan?c(S.plan):null,season:S.season,flip:S.flip.slice(),booked:c(S.booked),actual:c(S.actual),risks:c(S.risks)};}
+function switchMonth(m){
+  if(!m||m===S.month)return;
+  S.hist[S.month]=monthSnap();
+  const h=S.hist[m];S.month=m;S.cw=null;S.cd=null;
+  if(h){S.target=h.target;S.plan=h.plan;S.season=h.season;S.flip=h.flip;S.booked=h.booked;S.actual=h.actual;S.risks=h.risks;}
+  else{S.season=100;S.flip=[];S.plan=null;S.booked={};S.actual={};S.risks={};}
+}
+function histRows(){
+  const ms=Array.from(new Set(Object.keys(S.hist||{}).concat([S.month]))).sort().reverse();
+  return ms.map(m=>{
+    const h=m===S.month?monthSnap():S.hist[m];if(!h)return null;
+    const tg=(+h.target.bn||0)+(+h.target.gd||0);
+    let ach=0;Object.keys(h.actual||{}).forEach(k=>{const a=h.actual[k];ach+=(a.bn||0)+(a.gd||0);});
+    const days=Object.keys(S.daily).filter(d=>d.indexOf(m)===0).length;
+    return tg||ach||days?{m,tg,ach,days,pct:tg?Math.round(ach/tg*100):0,cur:m===S.month}:null;
+  }).filter(Boolean);
+}
+function histCard(){
+  const rows=histRows();if(!rows.length)return '';
+  const body=rows.map(r=>{
+    const st=r.tg?statusOf(Math.min(1,r.pct/100)):['','—'];
+    return '<div class="hrow"><div class="hl"><b>'+monthName(r.m)+'</b>'+(r.cur?' <span class="badge">đang xem</span>':'')+'<div class="small muted">'+r.days+' ngày có số liệu</div></div><div class="hv"><b>'+fmt(r.ach)+' / '+fmt(r.tg)+' tr</b><div><span class="badge '+(r.tg?(r.pct>=90?'ok':r.pct>=70?'warn':'bad'):'')+'">'+r.pct+'%</span></div></div>'+(r.cur?'':'<button class="btn ghost sm" data-act="gotoMonth" data-m="'+r.m+'">Mở</button>')+'</div>';
+  }).join('');
+  return sec('hist',ic('trend',18),'Lịch sử các tháng','<span class="small muted">'+rows.length+' tháng</span>','<div class="small muted">Mỗi tháng được tự lưu trên thiết bị này khi bạn chuyển sang tháng khác. Chọn "Mở" để xem lại hoặc nhập bổ sung.</div>'+body);
+}
+function backupData(){
+  const blob=new Blob([JSON.stringify({app:'livotec-sr-plan',v:3,saved:new Date().toISOString(),data:S},null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='livotec-ke-hoach-'+todayKey()+'.json';
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800);
+  toast('Đã tạo file sao lưu');
+}
+function restoreData(file){
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=function(){
+    try{
+      const o=JSON.parse(r.result);
+      if(!o||o.app!=='livotec-sr-plan'||!o.data||typeof o.data!=='object'||!o.data.month)throw new Error('sai định dạng');
+      if(!confirm('Khôi phục sẽ thay thế toàn bộ dữ liệu hiện có trên thiết bị này. Tiếp tục?'))return;
+      localStorage.setItem(KEY,JSON.stringify(o.data));S=load();save();render();toast('Đã khôi phục dữ liệu');
+    }catch(e){toast('File không đúng định dạng sao lưu');}
+  };
+  r.readAsText(file);
+}
+function ymdOf(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function prevKey(k){const p=k.split('-').map(Number);return ymdOf(new Date(p[0],p[1]-1,p[2]-1));}
+function isOffDay(k,weeks){
+  for(const w of weeks){const d=w.days.find(x=>x.date===k);if(d)return d.off;}
+  const p=k.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]).getDay()===0;
+}
+function hmMins(s){const p=String(s||'').split(':');return (+p[0]||0)*60+(+p[1]||0);}
+function briefData(weeks){
+  const yk=prevKey(todayKey());if(isOffDay(yk,weeks))return null;
+  let w=null;weeks.forEach(x=>{if(x.days.some(y=>y.date===yk))w=x;});
+  const e=S.daily[yk]||null;
+  return{yk,w,e,plan:w&&w.work?{tt:w.tt/w.work,vt:w.vt/w.work}:null};
+}
+function briefLine(weeks){
+  const b=briefData(weeks);if(!b)return '';
+  const dm=b.yk.slice(8)+'/'+b.yk.slice(5,7);
+  if(!b.e)return 'Hôm qua ('+dm+') bạn chưa nhập số liệu.';
+  return 'Kết quả hôm qua ('+dm+'): đã chốt '+fmt((b.e.bn||0)+(b.e.gd||0))+' tr, đã liên hệ '+(b.e.v||0)+' khách'+(b.plan?'; kế hoạch ngày ≈ '+fmt(b.plan.tt,1)+' tr và ≈ '+fmt(b.plan.vt,1)+' khách':'')+'.';
+}
+function dayBanner(weeks){
+  const total=(+S.target.bn||0)+(+S.target.gd||0);if(!total)return '';
+  const R=S.rem,tk=todayKey(),now=new Date(),hm=now.getHours()*60+now.getMinutes();
+  let h='';
+  const b=briefData(weeks);
+  if(R.mOn&&b&&R.seen!==tk&&hm>=hmMins(R.m)&&hm<hmMins(R.m)+360){
+    const dm=b.yk.slice(8)+'/'+b.yk.slice(5,7);
+    if(b.e){
+      const si=(b.e.bn||0)+(b.e.gd||0),pl=b.plan?b.plan.tt:0,pc=pl?Math.round(si/pl*100):null,st=pc===null?null:statusOf(pc/100);
+      const ai=AIX.brief||{};
+      const aiHtml=ai.loading?'<div class="small muted" style="margin-top:8px">Đang phân tích…</div>':ai.error?'<div class="note" style="color:var(--bad)">'+escH(ai.error)+'</div>':ai.text?'<div class="small" style="white-space:pre-wrap;line-height:1.6;margin-top:8px">'+aiFmt(ai.text)+'</div>':'';
+      h+='<div class="card daybar"><div class="row wrapx"><h2>'+ic('sparkles',18)+' Kết quả hôm qua · '+dm+'</h2><button class="link" data-act="briefOk">Ẩn</button></div>'+
+        '<div class="tiles"><div class="tile"><b>'+fmt(si)+' tr</b><span>S.I đã chốt'+(pl?' · kế hoạch ngày ≈ '+fmt(pl,1)+' tr':'')+'</span></div><div class="tile"><b>'+(b.e.v||0)+'</b><span>khách đã liên hệ'+(b.plan?' · kế hoạch ≈ '+fmt(b.plan.vt,1):'')+'</span></div></div>'+
+        (st?'<div class="note"><span class="badge '+st[0]+'">'+st[1]+'</span> đạt '+pc+'% S.I theo kế hoạch ngày.</div>':'')+aiHtml+
+        '<div class="askrow"><button class="btn ghost sm" data-act="aix" data-c="brief">AI nhận xét</button><button class="btn sm" data-act="briefOk">Đã xem</button></div></div>';
+    }else{
+      h+='<div class="card daybar warn"><div class="row wrapx"><b>Hôm qua ('+dm+') chưa nhập số liệu</b><button class="link" data-act="briefOk">Ẩn</button></div><div class="small muted">Nhập bù để tiến độ và cảnh báo không bị lệch.</div><div style="margin-top:8px"><button class="btn sm" data-act="goDay" data-day="'+b.yk+'">Nhập bù hôm qua</button></div></div>';
+    }
+  }
+  if(R.eOn&&!isOffDay(tk,weeks)&&!S.daily[tk]&&hm>=hmMins(R.e)){
+    const late=R.aOn&&hm>=hmMins(R.a);
+    h+='<div class="card daybar warn'+(late?' late':'')+'"><b>'+(late?'Nhắc lại: ':'')+'Hôm nay chưa nhập số liệu</b><div class="small muted">Nhập mất khoảng 20 giây: số khách đã liên hệ và S.I đã chốt.</div><div style="margin-top:8px"><button class="btn sm" data-act="goDay" data-day="'+tk+'">Nhập ngay</button></div></div>';
+  }
+  return h;
+}
+function icsEsc(t){return String(t).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');}
+function icsFold(line){
+  const enc=new TextEncoder();let out='',cur='',len=0;
+  for(const ch of line){const n=enc.encode(ch).length;if(len+n>74){out+=cur+'\r\n ';cur='';len=1;}cur+=ch;len+=n;}
+  return out+cur;
+}
+function buildICS(){
+  const weeks=analyze(),R=S.rem,tk=todayKey();
+  const origin=(location.origin&&location.origin.indexOf('http')===0)?location.origin:'https://kh.io.vn';
+  const stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Livotec//Tro li thiet lap ke hoach ban hang//VI','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Livotec - nhắc số liệu bán hàng','BEGIN:VTIMEZONE','TZID:Asia/Ho_Chi_Minh','BEGIN:STANDARD','DTSTART:19700101T000000','TZOFFSETFROM:+0700','TZOFFSETTO:+0700','TZNAME:ICT','END:STANDARD','END:VTIMEZONE'];
+  let n=0;
+  const add=(uid,date,hm,title,desc,path)=>{
+    const st=hmMins(hm),en=Math.min(st+15,1439),f=m=>pad(Math.floor(m/60))+pad(m%60)+'00',d8=date.replace(/-/g,'');
+    n++;
+    L.push('BEGIN:VEVENT','UID:livotec-'+uid+'@kh.io.vn','DTSTAMP:'+stamp,'DTSTART;TZID=Asia/Ho_Chi_Minh:'+d8+'T'+f(st),'DTEND;TZID=Asia/Ho_Chi_Minh:'+d8+'T'+f(en),
+      'SUMMARY:'+icsEsc(title),'DESCRIPTION:'+icsEsc(desc+'\n'+origin+path),'URL:'+origin+path,'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(title),'TRIGGER:PT0M','END:VALARM','END:VEVENT');
+  };
+  weeks.forEach(w=>w.days.forEach(d=>{
+    if(d.off||d.date<tk)return;
+    if(R.mOn&&!isOffDay(prevKey(d.date),weeks))add('m-'+d.date,d.date,R.m,'Livotec: xem kết quả hôm qua','Mở ứng dụng để xem kết quả hôm qua và việc cần làm hôm nay.','/#sang');
+    if(R.eOn)add('e-'+d.date,d.date,R.e,'Livotec: nhập số liệu bán hàng hôm nay','Nhập số khách đã liên hệ và S.I đã chốt hôm nay (khoảng 20 giây).','/#nhap');
+    if(R.aOn)add('a-'+d.date,d.date,R.a,'Livotec: nhắc lại, bạn đã nhập số liệu hôm nay chưa?','Nếu chưa nhập, hãy nhập ngay để không mất mạch theo dõi.','/#nhap');
+  }));
+  L.push('END:VCALENDAR');
+  return{text:L.map(icsFold).join('\r\n')+'\r\n',count:n};
+}
+function downloadICS(){
+  const r=buildICS();
+  if(!r.count){toast('Không có ngày làm việc nào phía trước trong tháng này');return;}
+  const blob=new Blob([r.text],{type:'text/calendar;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='livotec-nhac-so-lieu-'+S.month+'.ics';
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800);
+  toast('Đã tạo '+r.count+' lời nhắc. Mở file để thêm vào lịch');
+}
+function notify(title,body,tag){
+  const o={body:body,tag:tag,icon:'icon-192.png',badge:'icon-192.png',data:{url:'/#nhap'}};
+  const fb=()=>{try{new Notification(title,o);}catch(e){}};
+  if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration){
+    navigator.serviceWorker.getRegistration().then(r=>{if(r&&r.showNotification)r.showNotification(title,o);else fb();}).catch(fb);
+  }else fb();
+}
+function remTick(){
+  const R=S.rem;
+  if(!R.notif||!('Notification' in window)||Notification.permission!=='granted')return;
+  const now=new Date(),tk=todayKey(),hm=now.getHours()*60+now.getMinutes();
+  const weeks=analyze(),total=(+S.target.bn||0)+(+S.target.gd||0);if(!total)return;
+  const fire=(k,t,b)=>{if(R.fired[k]===tk)return;R.fired[k]=tk;save();notify(t,b,'livotec-'+k);};
+  const offToday=isOffDay(tk,weeks);
+  if(R.mOn&&hm>=hmMins(R.m)&&hm<hmMins(R.m)+360){
+    const b=briefData(weeks);
+    if(b){
+      if(b.e){const si=(b.e.bn||0)+(b.e.gd||0),pl=b.plan?b.plan.tt:0;fire('m','Livotec: kết quả hôm qua','Đã chốt '+fmt(si)+' tr, liên hệ '+(b.e.v||0)+' khách'+(pl?' ('+Math.round(si/pl*100)+'% kế hoạch ngày)':'')+'.');}
+      else fire('m','Livotec: hôm qua chưa có số liệu','Mở ứng dụng để nhập bù.');
+    }
+  }
+  if(!offToday&&!S.daily[tk]){
+    if(R.eOn&&hm>=hmMins(R.e)&&hm<hmMins(R.e)+300)fire('e','Livotec: nhập số liệu hôm nay','Mất khoảng 20 giây: khách đã liên hệ và S.I đã chốt.');
+    if(R.aOn&&hm>=hmMins(R.a)&&hm<hmMins(R.a)+240)fire('a','Livotec: bạn chưa nhập số liệu hôm nay','Nhập ngay để không mất mạch theo dõi.');
+  }
+}
+function remCard(){
+  const R=S.rem,sw=k=>'<button class="sw2" role="switch" aria-checked="'+!!R[k]+'" data-act="remTog" data-k="'+k+'" aria-label="Bật tắt"></button>';
+  const row=(on,k,lab,sub)=>'<div class="remrow"><div class="rl"><b>'+lab+'</b><div class="small muted">'+sub+'</div></div><input class="num sm tm" type="time" data-f="rem" data-k="'+k+'" value="'+R[k]+'" aria-label="Giờ '+lab+'">'+sw(on)+'</div>';
+  const supported='Notification' in window,perm=supported?Notification.permission:'none';
+  let ns;
+  if(!supported)ns='Trình duyệt này chưa hỗ trợ thông báo (iPhone cần "Thêm vào Màn hình chính" trước). Hãy dùng nhắc lịch bên dưới.';
+  else if(perm==='denied')ns='Bạn đã chặn thông báo cho trang này. Vào cài đặt trình duyệt để cho phép lại.';
+  else if(R.notif&&perm==='granted')ns='Thông báo đang bật.';
+  else ns='Chưa bật thông báo.';
+  const nbtn=supported&&perm!=='denied'?(R.notif&&perm==='granted'?'<button class="btn ghost sm" data-act="notifTest">Gửi thử</button> <button class="btn ghost sm" data-act="notifOff">Tắt</button>':'<button class="btn sm" data-act="notifOn">Bật thông báo</button>'):'';
+  const when=S.savedAt?new Date(S.savedAt):null,ws=when?pad(when.getHours())+':'+pad(when.getMinutes())+' '+pad(when.getDate())+'/'+pad(when.getMonth()+1):'—';
+  const body='<div class="small muted">Nhắc bạn xem kết quả hôm qua và nhập số liệu hôm nay. Không tính Chủ nhật và các ngày bạn đã đánh dấu nghỉ.</div>'+
+    row('mOn','m','Sáng: kết quả hôm qua','Chỉ hiện khi hôm qua là ngày làm việc')+
+    row('eOn','e','Tối: nhập số liệu','Nhắc nếu hôm nay chưa nhập')+
+    row('aOn','a','Tối muộn: nhắc lại','Chỉ nhắc khi vẫn chưa nhập')+
+    '<div class="remblk"><b>Thông báo trên thiết bị</b><div class="small muted">'+ns+' Chỉ chạy khi ứng dụng đang mở hoặc đã cài lên màn hình chính.</div><div class="askrow">'+nbtn+'</div></div>'+
+    '<div class="remblk"><b>Nhắc vào lịch điện thoại</b><div class="small muted">Tạo lời nhắc cho các ngày làm việc còn lại của tháng, báo chuông cả khi bạn không mở ứng dụng. Lịch không biết bạn đã nhập chưa nên vẫn nhắc.</div><div class="askrow"><button class="btn sm" data-act="ics">Tải lịch nhắc (.ics)</button></div></div>'+
+    '<div class="remblk"><b>Dữ liệu của bạn</b><div class="small muted">Tự lưu trên thiết bị này, lần cuối lúc '+ws+'. Đổi điện thoại hoặc xoá dữ liệu trình duyệt sẽ mất nếu chưa sao lưu.</div><div class="askrow"><button class="btn ghost sm" data-act="backup">Tải bản sao lưu</button><button class="btn ghost sm" data-act="restorePick">Khôi phục từ file</button></div></div>';
+  return sec('rem',ic('bell',18),'Nhắc việc &amp; lưu dữ liệu','<span class="small muted">'+(R.eOn?'tối '+R.e:'đã tắt')+'</span>',body);
+}
+
 const pad=n=>String(n).padStart(2,'0');
 const fmt=(x,d=0)=>Number(x).toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d});
 const C={bn:'var(--bn)',gd:'var(--gd)'};
 function monthKey(o){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+o);return d.getFullYear()+'-'+pad(d.getMonth()+1);}
-function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,chan:'gt',promo:'',comp:'',dist:[]}};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats});}}catch(e){}return defaults();}
+function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,chan:'gt',promo:'',comp:'',dist:[]},hist:{},savedAt:0,rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''}};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{hist:o.hist||{},rem:Object.assign(d.rem,o.rem||{}),area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats});}}catch(e){}return defaults();}
 let S=load(),confirmReset=false,copyText=null;
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function save(){try{S.savedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 
 /* ---------- Logic lõi ---------- */
 function si(k){return Math.max(0.1,(+S.list[k]||1)*(1-(+S.disc||0)/100));}
@@ -1183,7 +1374,7 @@ function heat(weeks,withVal){
 /* ---------- Tab Thiết lập ---------- */
 function renderSetup(){
   const weeks=analyze(),tb=+S.target.bn||0,tg=+S.target.gd||0,total=tb+tg,workDays=weeks.reduce((a,w)=>a+w.work,0);
-  const opts=[-1,0,1,2].map(o=>{const m=monthKey(o);return '<option value="'+m+'"'+(m===S.month?' selected':'')+'>'+monthName(m)+'</option>';}).join('');
+  const opts=Array.from(new Set([-1,0,1,2].map(monthKey).concat(Object.keys(S.hist||{}),[S.month]))).sort().map(m=>'<option value="'+m+'"'+(m===S.month?' selected':'')+'>'+monthName(m)+'</option>').join('');
   const hero=total?
     '<div class="hero">'+ring([{f:tb/total,c:C.bn},{f:tg/total,c:C.gd}],null,fmt(total),'triệu S.I')+
     '<div class="leg"><div class="li"><span><i class="sw bn"></i>Bình nước nóng</span><b>'+fmt(tb)+' tr</b></div><div class="small muted" style="margin:-2px 0 4px 20px">'+unitText('bn',tb)+'</div>'+
@@ -1211,6 +1402,7 @@ function renderSetup(){
   areaCard(weeks)+
   catsCard(tg)+
   sec('days',ic('plan',18),'Ngày bạn làm việc','<span class="small muted">'+workDays+' ngày</span>','<div class="small muted">Chủ nhật mặc định nghỉ. Chạm vào ngày để đổi: ngày lễ, nghỉ phép, đi công tác.</div>'+cal)+
+  remCard()+
   '<div class="card secard"><details data-sec="tune"'+(isOpen('tune')?' open':'')+'><summary class="sech"><span class="st">'+ic('setup',18)+'<span>Tinh chỉnh thêm</span></span><span class="ss small muted">không bắt buộc</span></summary><div class="secb">'+
     '<div class="small muted" style="margin-top:6px">Cách chia chỉ tiêu cho các tuần</div>'+
     '<div class="radio"><label'+(S.pace==='front'?' class="on"':'')+'><input type="radio" name="pace" data-f="pace" value="front"'+(S.pace==='front'?' checked':'')+'><b>Nhẹ dần về cuối tháng</b><div class="small muted">Tuần đầu nhiều hơn một chút, tuần cuối ít nhất.</div></label>'+
@@ -1333,7 +1525,7 @@ function renderCheck(){
   $app.innerHTML=banner(weeks)+
   '<div class="card herocard">'+hero+'</div>'+forecastCard(weeks)+aiPanel('check',weeks)+
   '<div class="card"><h2>Nhật ký hàng ngày</h2><div class="small muted">Nhập số liệu mỗi ngày — chỉ mất khoảng 20 giây, giúp bạn theo dõi tiến độ sát hơn thay vì chờ đến cuối tuần. Số liệu này dành cho bạn, không phải báo cáo.</div><div style="margin-top:10px">'+weekChips+'</div><div style="margin-top:6px">'+dayChips+'</div>'+
-    (w.work===0?'<div class="note">Tuần này không có ngày làm việc.</div>':fields)+result+'</div>'+
+    (w.work===0?'<div class="note">Tuần này không có ngày làm việc.</div>':fields)+result+(w.work>0?'<div class="savebar"><button class="btn sm" data-act="daySave" data-day="'+curDay+'">Lưu số liệu ngày '+curDay.slice(8)+'/'+curDay.slice(5,7)+'</button><span class="small muted">'+(S.daily[curDay]?'Đã lưu':'Chưa lưu')+'</span></div>':'')+'</div>'+
   rebal+
   '<div class="card"><h2>Tiến độ theo ngày</h2>'+dailyChart(ds,total)+
     '<div class="legend"><span class="dash" style="--c:var(--ink)">Kế hoạch tích lũy</span><span style="--c:var(--ok)">Thực tế tích lũy</span></div></div>'+
@@ -1360,6 +1552,7 @@ function renderAlertsTab(){
   '<div class="note">Cảnh báo được tính lại mỗi khi bạn mở công cụ hoặc nhập số liệu. Công cụ chưa gửi được thông báo đẩy khi đóng ứng dụng.</div>';
 }
 
+let bannerSig=null;
 function render(){
   const ae=document.activeElement;let sel=null,keepVal=null;
   if(ae&&ae.id&&(ae.id==='dnm'||ae.id==='dpt')){sel='#'+ae.id;keepVal=ae.value;}
@@ -1368,6 +1561,10 @@ function render(){
     sel='[data-f="'+ds.f+'"]'+(ds.p?'[data-p="'+ds.p+'"]':'')+(ds.c?'[data-c="'+ds.c+'"]':'')+(ds.k?'[data-k="'+ds.k+'"]':'')+(ds.i?'[data-i="'+ds.i+'"]':'')+(ds.w?'[data-w="'+ds.w+'"]':'');
   }
   renderTabs();if(S.tab==='setup')renderSetup();else if(S.tab==='plan')renderPlan();else if(S.tab==='alerts')renderAlertsTab();else renderCheck();
+  try{
+    if(S.month===monthKey(0)){const bn=dayBanner(analyze());bannerSig=bn;if(bn)$app.insertAdjacentHTML('afterbegin',bn);}else bannerSig='';
+    if(S.tab==='check'){const hc=histCard();if(hc)$app.insertAdjacentHTML('beforeend',hc);}
+  }catch(e){}
   if(sel){const n=document.querySelector(sel);if(n){if(keepVal!==null)n.value=keepVal;if(n!==document.activeElement)try{n.focus({preventScroll:true});}catch(e){}}}
 }
 
@@ -1417,6 +1614,24 @@ document.addEventListener('click',function(e){
     else{S.plan=null;toast('Đã tạo kế hoạch tự động');}
   }
   else if(a==='aix'){askAIx(d.c);return;}
+  else if(a==='remTog'){S.rem[d.k]=!S.rem[d.k];}
+  else if(a==='notifOn'){
+    if(!('Notification' in window)){toast('Trình duyệt này chưa hỗ trợ thông báo');return;}
+    Notification.requestPermission().then(p=>{S.rem.notif=p==='granted';save();render();toast(p==='granted'?'Đã bật thông báo':'Bạn chưa cho phép thông báo');if(p==='granted')remTick();});return;
+  }
+  else if(a==='notifOff'){S.rem.notif=false;}
+  else if(a==='notifTest'){notify('Livotec: thông báo thử','Nếu bạn thấy tin này, thông báo đã hoạt động.','livotec-test');toast('Đã gửi thông báo thử');return;}
+  else if(a==='ics'){downloadICS();return;}
+  else if(a==='backup'){backupData();return;}
+  else if(a==='restorePick'){const fi=document.getElementById('restoreFile');if(fi)fi.click();return;}
+  else if(a==='briefOk'){S.rem.seen=todayKey();}
+  else if(a==='goDay'){const wk=analyze().find(w=>w.days.some(x=>x.date===d.day));S.tab='check';S.cd=d.day;S.cw=wk?wk.i:null;copyText=null;}
+  else if(a==='daySave'){
+    const cur=S.daily[d.day]||{v:0,bn:0,gd:0};cur.ok=1;S.daily[d.day]=cur;
+    const wk=analyze().find(w=>w.days.some(x=>x.date===d.day));if(wk)recomputeWeekActual(wk);
+    toast('Đã lưu số liệu ngày '+d.day.slice(8)+'/'+d.day.slice(5,7));
+  }
+  else if(a==='gotoMonth'){switchMonth(d.m);S.tab='check';}
   else if(a==='openSec'){openSec[d.k]=true;}
   else if(a==='distAdd'){const n=(document.getElementById('dnm').value||'').trim().slice(0,40),p=Math.max(0,Math.floor(+document.getElementById('dpt').value||0));if(n&&p>0&&S.area.dist.length<30){S.area.dist.push({n:n,p:p});openSec.area=true;}else toast('Nhập tên khu vực và số điểm bán');}
   else if(a==='distDel'){S.area.dist.splice(+d.i,1);}
@@ -1429,7 +1644,7 @@ document.addEventListener('click',function(e){
   else if(a==='undismiss'){S.dismissed=[];}
   else if(a==='reset'){if(confirmReset){S=defaults();confirmReset=false;copyText=null;toast('Đã xoá dữ liệu');}else confirmReset=true;}
   save();render();
-  if(a==='tab')window.scrollTo(0,0);
+  if(a==='tab'||a==='goDay')window.scrollTo(0,0);
   const cb=document.getElementById('copybox');if(cb){cb.focus();cb.select();}
 });
 document.addEventListener('input',function(e){
@@ -1439,7 +1654,7 @@ document.addEventListener('input',function(e){
 });
 document.addEventListener('change',function(e){
   const t=e.target,f=t.dataset&&t.dataset.f;if(!f)return;
-  if(f==='month'){S.month=t.value;S.season=100;S.flip=[];S.plan=null;S.booked={};S.actual={};S.risks={};S.cw=null;}
+  if(f==='month'){switchMonth(t.value);}
   else if(f==='province'){S.province=t.value.trim();}
   else if(f==='target'){S.target[t.dataset.p]=Math.max(0,Math.floor(+t.value||0));S.plan=null;}
   else if(f==='catP'){S.cats[t.dataset.c].p=Math.max(0,+t.value||0);}
@@ -1451,12 +1666,39 @@ document.addEventListener('change',function(e){
   else if(f==='rate'){S.rate=Math.min(100,Math.max(5,Math.floor(+t.value||40)));}
   else if(f==='pace'){S.pace=t.value;S.plan=null;}
   else if(f==='area'){const k=t.dataset.k;if(['chan','promo','comp'].includes(k))S.area[k]=t.value.trim().slice(0,300);else S.area[k]=Math.max(0,Math.floor(+t.value||0));S.plan=null;}
+  else if(f==='rem'){const k=t.dataset.k;if(/^\d{1,2}:\d{2}$/.test(t.value))S.rem[k]=t.value;}
   else if(f==='distP'){const dd=S.area.dist[+t.dataset.i];if(dd)dd.p=Math.max(0,Math.floor(+t.value||0));}
   else if(f==='booked'){S.booked[t.dataset.w]=Math.max(0,Math.floor(+t.value||0));}
   save();setTimeout(render,0);
 });
+function applyHash(){
+  const h=(location.hash||'').replace('#','');
+  if(h==='nhap'||h==='sang'){
+    const tk=todayKey(),wk=analyze().find(w=>w.days.some(x=>x.date===tk));
+    S.tab='check';S.cd=h==='nhap'?tk:null;S.cw=wk?wk.i:null;
+    if(h==='sang')S.rem.seen='';
+    try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
+    save();render();window.scrollTo(0,0);
+  }
+}
+const rf=document.getElementById('restoreFile');
+if(rf)rf.addEventListener('change',function(){const f=rf.files&&rf.files[0];rf.value='';restoreData(f);});
+window.addEventListener('hashchange',applyHash);
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
+try{if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(function(){});}catch(e){}
 render();
 initCoach();
+applyHash();
+remTick();
+function refreshIfNeeded(){
+  remTick();
+  if(document.visibilityState!=='visible')return;
+  const a=document.activeElement;if(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT'))return;
+  const sg=S.month===monthKey(0)?dayBanner(analyze()):'';
+  if(sg!==bannerSig)render();
+}
+setInterval(refreshIfNeeded,60000);
+document.addEventListener('visibilitychange',refreshIfNeeded);
 })();
 </script>
 </body>
