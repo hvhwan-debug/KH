@@ -750,6 +750,7 @@ function ctxText(weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0),ap=areaPlan(weeks),A=S.area||{},L=[];
   L.push(monthName(S.month)+(S.province?', khu vực '+S.province+' ('+REG_NAME[regionOf(S.province)]+')':', chưa chọn khu vực')+'.');
   L.push('Chỉ tiêu S.I: '+PRODUCTS.map(p=>p.name+' '+fmt(+S.target[p.id]||0)+' tr').join(', ')+' (tổng '+fmt(total)+' tr).');
+  L.push('Chiến lược chia chỉ tiêu: '+(STRATS.find(x=>x[0]===S.strat)||STRATS[4])[1]+(S.strat==='manual'?'':' ('+Math.round((+S.target.bn||0)/Math.max(1,total)*100)+'% bình nước nóng)')+'.');
   const on=catShares();if(on.length)L.push('Cơ cấu gia dụng & điện máy (tỷ trọng): '+on.map(x=>x.c.name+' '+Math.round(x.f*100)+'%').join(', ')+'.');
   L.push('Giả định: giá trị trung bình mỗi đơn '+S.aov+' tr, tỷ lệ chốt '+S.rate+'%, sức mua tháng này '+S.season+'%.');
   L.push(seasonText());
@@ -845,13 +846,14 @@ function initCoach(){
 }
 
 /* ---------- Lưu theo tháng, sao lưu, nhắc việc ---------- */
-function monthSnap(){const c=x=>JSON.parse(JSON.stringify(x));return{target:c(S.target),plan:S.plan?c(S.plan):null,season:S.season,flip:S.flip.slice(),booked:c(S.booked),actual:c(S.actual),risks:c(S.risks)};}
+function monthSnap(){const c=x=>JSON.parse(JSON.stringify(x));return{target:c(S.target),tt:S.tt,plan:S.plan?c(S.plan):null,season:S.season,flip:S.flip.slice(),booked:c(S.booked),actual:c(S.actual),risks:c(S.risks)};}
 function switchMonth(m){
   if(!m||m===S.month)return;
   S.hist[S.month]=monthSnap();
   const h=S.hist[m];S.month=m;S.cw=null;S.cd=null;
-  if(h){S.target=h.target;S.plan=h.plan;S.season=h.season;S.flip=h.flip;S.booked=h.booked;S.actual=h.actual;S.risks=h.risks;}
+  if(h){S.target=h.target;if(h.tt!==undefined)S.tt=h.tt;S.plan=h.plan;S.season=h.season;S.flip=h.flip;S.booked=h.booked;S.actual=h.actual;S.risks=h.risks;}
   else{S.season=100;S.flip=[];S.plan=null;S.booked={};S.actual={};S.risks={};}
+  if(S.strat!=='manual')applyStrategy();
 }
 function histRows(){
   const ms=Array.from(new Set(Object.keys(S.hist||{}).concat([S.month]))).sort().reverse();
@@ -1300,12 +1302,62 @@ function acctCard(){
   return sec('acct',ic('users',18),'Tài khoản &amp; email',sum,body);
 }
 
+/* ---------- Chiến lược chia chỉ tiêu ---------- */
+const STRATS=[
+  ['season','Theo mùa vụ (gợi ý)','Chia theo nhu cầu mùa vụ của tháng và khu vực.'],
+  ['bn','Tập trung bình nước nóng','70% bình nước nóng, 30% gia dụng & điện máy.'],
+  ['gd','Tập trung gia dụng & điện máy','30% bình nước nóng, 70% gia dụng & điện máy.'],
+  ['balance','Cân bằng','50% bình nước nóng, 50% gia dụng & điện máy.'],
+  ['manual','Tự nhập từng nhóm','Nhập riêng chỉ tiêu bình nước nóng và gia dụng.']
+];
+function seasonLevels(){
+  const m=+S.month.split('-')[1],r=regionOf(S.province),sh=catShares();
+  let lvGd=SEASON[r].bep[m-1];
+  if(sh.length){lvGd=0;sh.forEach(x=>{lvGd+=x.f*SEASON[r][CAT_GROUP[x.c.id]||'bep'][m-1];});}
+  return{bn:SEASON[r].bn[m-1],gd:lvGd,m:m,r:r};
+}
+// Tỷ trọng bình nước nóng theo chiến lược (null nếu tự nhập)
+function stratShare(){
+  const st=S.strat;
+  if(st==='bn')return 0.7;
+  if(st==='gd')return 0.3;
+  if(st==='balance')return 0.5;
+  if(st==='season'){const L=seasonLevels(),wb=1+L.bn,wg=1+L.gd;return wb/(wb+wg);}
+  return null;
+}
+function applyStrategy(){
+  if(S.strat==='manual')return;
+  const t=Math.max(0,Math.floor(+S.tt||0)),sh=stratShare(),bn=Math.round(t*sh);
+  S.target.bn=bn;S.target.gd=t-bn;
+}
+function targetBlock(){
+  const opts=STRATS.map(x=>'<option value="'+x[0]+'"'+(S.strat===x[0]?' selected':'')+'>'+x[1]+'</option>').join('');
+  const cur=STRATS.find(x=>x[0]===S.strat)||STRATS[4];
+  let h='<div class="field"><span class="nm">Chiến lược chỉ tiêu</span><select data-f="strat" aria-label="Chiến lược chia chỉ tiêu">'+opts+'</select></div>';
+  if(S.strat==='manual'){
+    h+=PRODUCTS.map(p=>'<div class="field"><span class="nm">'+ic(p.icon)+' '+p.name+'</span><input class="num" type="number" inputmode="numeric" min="0" data-f="target" data-p="'+p.id+'" value="'+(S.target[p.id]||'')+'" placeholder="0" aria-label="Chỉ tiêu S.I '+p.name+'"><span class="unit">tr</span></div>').join('')+
+      '<div class="small muted">Tính bằng triệu đồng. Ví dụ 250 cho bình nước nóng, 100 cho gia dụng.</div>';
+  }else{
+    const t=+S.tt||0,bn=+S.target.bn||0,gd=+S.target.gd||0,pb=t?Math.round(bn/t*100):0;
+    h+='<div class="field"><span class="nm">Tổng chỉ tiêu S.I</span><input class="num" type="number" inputmode="numeric" min="0" data-f="ttotal" value="'+(S.tt||'')+'" placeholder="0" aria-label="Tổng chỉ tiêu S.I"><span class="unit">tr</span></div>';
+    let note=cur[2];
+    if(S.strat==='season'){
+      const L=seasonLevels();
+      note+=' Tháng '+L.m+' ('+REG_NAME[L.r]+'): bình nước nóng nhu cầu '+LV[L.bn]+', gia dụng '+LV[Math.round(L.gd)]+'. Ước lượng theo khí hậu, không phải số bán hàng của Livotec.';
+    }
+    h+='<div class="small muted">'+note+'</div>';
+    if(t>0)h+='<div class="pills"><span>Bình nước nóng <b>'+pb+'%</b> · '+fmt(bn)+' tr</span><span>Gia dụng &amp; điện máy <b>'+(100-pb)+'%</b> · '+fmt(gd)+' tr</span></div>';
+    h+='<button class="link" data-act="stratManual">Chỉnh tay từng nhóm</button>';
+  }
+  return h;
+}
+
 const pad=n=>String(n).padStart(2,'0');
 const fmt=(x,d=0)=>Number(x).toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d});
 const C={bn:'var(--bn)',gd:'var(--gd)'};
 function monthKey(o){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+o);return d.getFullYear()+'-'+pad(d.getMonth()+1);}
-function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,sync:{rev:0,lastOk:0},mail:{on:false,morning:true,evening:true,warn:true,weekly:true},rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''}};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{sync:Object.assign(d.sync,o.sync||{}),mail:Object.assign(d.mail,o.mail||{}),hist:o.hist||{},rem:Object.assign(d.rem,o.rem||{}),area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats});}}catch(e){}return defaults();}
+function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,strat:'season',tt:0,sync:{rev:0,lastOk:0},mail:{on:false,morning:true,evening:true,warn:true,weekly:true},rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''}};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{strat:o.strat||'manual',tt:+o.tt||0,sync:Object.assign(d.sync,o.sync||{}),mail:Object.assign(d.mail,o.mail||{}),hist:o.hist||{},rem:Object.assign(d.rem,o.rem||{}),area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats});}}catch(e){}return defaults();}
 let S=load(),confirmReset=false,copyText=null;
 function save(){try{S.savedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}if(typeof scheduleSync==='function')scheduleSync();}
 
@@ -1729,8 +1781,7 @@ function renderSetup(){
     '<div class="field"><span class="nm">Tháng</span><select data-f="month" aria-label="Chọn tháng">'+opts+'</select></div>'+
     '<div class="field"><span class="nm">Khu vực phụ trách</span><select data-f="province" aria-label="Tỉnh, thành phố phụ trách"><option value="">— Chọn tỉnh, thành phố —</option>'+PROVINCES.map(p=>'<option value="'+p+'"'+(S.province===p?' selected':'')+'>'+p+'</option>').join('')+'</select></div>'+
     '<div class="small muted" style="margin:-4px 0 12px">AI sẽ tham khảo đặc điểm thị trường, mùa vụ của khu vực này khi đưa ra nhận xét.</div>'+
-    PRODUCTS.map(p=>'<div class="field"><span class="nm">'+ic(p.icon)+' '+p.name+'</span><input class="num" type="number" inputmode="numeric" min="0" data-f="target" data-p="'+p.id+'" value="'+(S.target[p.id]||'')+'" placeholder="0" aria-label="Chỉ tiêu S.I '+p.name+'"><span class="unit">tr</span></div>').join('')+
-    '<div class="small muted">Tính bằng triệu đồng. Ví dụ 250 cho bình nước nóng, 100 cho gia dụng.</div></div>'+
+    targetBlock()+'</div>'+
   needCard(weeks)+
   factorsCard(weeks,'full')+
   aiCard(weeks,true)+
@@ -1968,6 +2019,7 @@ document.addEventListener('click',function(e){
   else if(a==='acSync'){syncDirty=true;syncPush({});return;}
   else if(a==='acMailTest'){acMailTest();return;}
   else if(a==='mailTog'){S.mail[d.k]=!S.mail[d.k];}
+  else if(a==='stratManual'){S.strat='manual';}
   else if(a==='fxAll'){openSec.fxall=!isOpen('fxall',false);}
   else if(a==='remTog'){S.rem[d.k]=!S.rem[d.k];}
   else if(a==='notifOn'){
@@ -1998,6 +2050,7 @@ document.addEventListener('click',function(e){
   else if(a==='dismiss'){if(!S.dismissed.includes(d.k))S.dismissed.push(d.k);}
   else if(a==='undismiss'){S.dismissed=[];}
   else if(a==='reset'){if(confirmReset){S=defaults();confirmReset=false;copyText=null;toast('Đã xoá dữ liệu');}else confirmReset=true;}
+  if(S.strat!=='manual'){const ob=S.target.bn;applyStrategy();if(S.target.bn!==ob)S.plan=null;}
   save();render();
   if(a==='tab'||a==='goDay')window.scrollTo(0,0);
   const cb=document.getElementById('copybox');if(cb){cb.focus();cb.select();}
@@ -2011,7 +2064,9 @@ document.addEventListener('change',function(e){
   const t=e.target,f=t.dataset&&t.dataset.f;if(!f)return;
   if(f==='month'){switchMonth(t.value);}
   else if(f==='province'){S.province=t.value.trim();}
-  else if(f==='target'){S.target[t.dataset.p]=Math.max(0,Math.floor(+t.value||0));S.plan=null;}
+  else if(f==='target'){S.target[t.dataset.p]=Math.max(0,Math.floor(+t.value||0));S.tt=(+S.target.bn||0)+(+S.target.gd||0);S.plan=null;}
+  else if(f==='strat'){const v=t.value;if(STRATS.some(x=>x[0]===v)){S.strat=v;S.plan=null;if(v!=='manual'&&!(+S.tt>0))S.tt=(+S.target.bn||0)+(+S.target.gd||0);}}
+  else if(f==='ttotal'){S.tt=Math.max(0,Math.floor(+t.value||0));S.plan=null;}
   else if(f==='catP'){S.cats[t.dataset.c].p=Math.max(0,+t.value||0);}
   else if(f==='season'){S.season=+t.value;}
   else if(f==='maxC'){S.maxC=Math.max(1,Math.floor(+t.value||4));}
@@ -2024,6 +2079,7 @@ document.addEventListener('change',function(e){
   else if(f==='rem'){const k=t.dataset.k;if(/^\d{1,2}:\d{2}$/.test(t.value))S.rem[k]=t.value;}
   else if(f==='distP'){const dd=S.area.dist[+t.dataset.i];if(dd)dd.p=Math.max(0,Math.floor(+t.value||0));}
   else if(f==='booked'){S.booked[t.dataset.w]=Math.max(0,Math.floor(+t.value||0));}
+  if(S.strat!=='manual'){const ob=S.target.bn;applyStrategy();if(S.target.bn!==ob)S.plan=null;}
   save();setTimeout(render,0);
 });
 function applyHash(){

@@ -1,4 +1,4 @@
-// Kiểm thử API với máy chủ chạy thử. Chạy:  node dev/server.js &  rồi  node dev/test-api.js
+// Kiểm thử API với máy chủ chạy thử MỚI KHỞI ĐỘNG (cần dữ liệu trống). Chạy:  node dev/server.js // Kiểm thử API với máy chủ chạy thử. Chạy:  node dev/server.js &  rồi  node dev/test-api.js  rồi  node dev/test-api.js
 const BASE = process.env.BASE || "http://localhost:7071";
 process.env.SESSION_SECRET = process.env.SESSION_SECRET || "dev-session-secret-dev-session-secret-1234"; // cùng khoá với dev/server.js
 const H = { "Content-Type": "application/json", "X-Requested-With": "livotec" };
