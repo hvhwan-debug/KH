@@ -37,8 +37,10 @@ Phải có ít nhất một trong `ALLOWED_EMAIL_DOMAINS` hoặc `ALLOWED_EMAILS
 nhằm tránh việc người lạ nhờ hệ thống gửi email. Muốn thu hồi quyền của ai đó, bỏ họ khỏi danh sách (phiên của họ sẽ bị từ chối ở lần dùng sau).
 
 Tạo chuỗi ngẫu nhiên:
-- PowerShell: `-join ((1..64) | ForEach-Object { '{0:x}' -f (Get-Random -Maximum 16) })`
+- Windows (PowerShell): `$b=New-Object byte[] 32;[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b);($b|ForEach-Object{$_.ToString('x2')}) -join ''`
 - Mac/Linux: `openssl rand -hex 32`
+
+Chạy lệnh **hai lần** để có hai chuỗi khác nhau (một cho `SESSION_SECRET`, một cho `CRON_SECRET`). Không dán các chuỗi này vào chat hay vào mã nguồn.
 
 ## 4. Đặt lịch gửi email trên GitHub
 Repo → **Settings → Secrets and variables → Actions → New repository secret**:
@@ -49,6 +51,7 @@ Có thể chạy thử ngay ở tab **Actions → Gửi email tự động theo 
 Lưu ý: GitHub tự tắt lịch chạy nếu kho mã không có hoạt động nào trong 60 ngày, và giờ chạy có thể trễ vài phút.
 
 ## 5. Kiểm tra
+0. Mở `https://kh.io.vn/api/auth/me`. Thấy `{"avail":true,...}` là đã cấu hình đủ. Thấy `{"avail":false,"missing":[...]}` thì danh sách `missing` cho biết còn thiếu biến nào (chỉ hiện tên biến).
 1. Mở ứng dụng → **Thiết lập → Tài khoản & email** → nhập email được phép → nhập mã 6 số nhận được.
 2. Bật **Nhận email** → bấm **Gửi email thử**.
 3. Đăng nhập thiết bị thứ hai bằng cùng email: dữ liệu tự đồng bộ về.
