@@ -509,6 +509,8 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 .hs-st.ok{background:#D7F2E3;color:#17603C}.hs-st.warn{background:#FFEFC9;color:#7A4E00}.hs-st.bad{background:#FBDEDA;color:#9C2A22}
 .hs-sub{font-size:12px;opacity:.92;line-height:1.4;margin-top:3px}
 .htoday{display:block;width:100%;text-align:left;cursor:pointer;color:#fff;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);border-radius:12px;padding:8px 11px;font-size:14px;line-height:1.35}
+.hic{display:inline-flex;align-items:center;gap:3px;margin-left:8px;font-weight:700}
+.hic svg{opacity:.9}
 .htoday.off{cursor:default;font-size:14px}
 .hok{color:#B8F3D4;font-weight:700}.hno{color:#FFE2A0;font-weight:700}
 .hpri{margin-top:6px;font-size:12.5px;font-weight:700;line-height:1.35}
@@ -1462,7 +1464,7 @@ function headerStat(weeks){
     '<div class="hs-line"><b>'+fmt(ach)+' / '+fmt(total)+' tr</b><span>'+pct+'%</span>'+(st?'<em class="hs-st '+st[0]+'">'+st[1]+'</em>':'')+'</div>';
   const need=Math.max(0,total-ach);
   if(isCur&&remDays>0){
-    left+='<div class="hs-sub">'+(need>0?'Còn '+fmt(need)+' tr · cần ≈ '+fmt(need/remDays,1)+' tr/ngày trong '+remDays+' ngày làm việc':'Đã đạt chỉ tiêu tháng')+(planTo>0?'<span class="hs-d"> · vạch vàng: mốc kế hoạch '+fmt(planTo)+' tr</span>':'')+'</div>';
+    left+='<div class="hs-sub">'+(need>0?'Còn '+fmt(need)+' tr · ~'+fmt(need/remDays,1)+' tr/ngày':'Đã đạt chỉ tiêu')+'</div>';
   }else if(S.month<cur)left+='<div class="hs-sub">Tháng đã kết thúc</div>';
   else if(S.month>cur)left+='<div class="hs-sub">Tháng chưa bắt đầu</div>';
   let right='';
@@ -1472,14 +1474,13 @@ function headerStat(weeks){
       if(dy.off||!wk.work)right='<div class="htoday off"><b>Hôm nay nghỉ</b></div>';
       else{
         const ap=areaPlan(weeks),pw=ap&&ap.weeks[wk.i];
-        const parts=['≈ '+fmt(wk.tt/wk.work,1)+' tr S.I',Math.max(1,Math.round(wk.perDay))+' khách'];
-        if(pw&&pw.care)parts.push(Math.max(1,Math.round(pw.care/wk.work))+' chăm sóc');
-        const areas=pw&&pw.areas.length?'<div class="hs-sub hs-d">Khu vực tuần này: '+pw.areas.slice(0,3).map(a=>escH(a.name)).join(', ')+'</div>':'';
-        right='<button class="htoday" data-act="goDay" data-day="'+tk+'"><div><b>Hôm nay</b> · '+parts.join(' · ')+'</div>'+
-          '<div class="hs-sub">'+(te?'<span class="hok">✓ Đã nhập số liệu</span>':'<span class="hno">Chưa nhập số liệu · chạm để nhập</span>')+'</div>'+areas+'</button>';
+        const parts=['<span class="hic">'+ic('droplet',13)+' '+fmt(wk.tt/wk.work,1)+' tr</span>','<span class="hic">'+ic('users',13)+' '+Math.max(1,Math.round(wk.perDay))+'</span>'];
+        if(pw&&pw.care)parts.push('<span class="hic">'+ic('plug',13)+' '+Math.max(1,Math.round(pw.care/wk.work))+'</span>');
+        right='<button class="htoday" data-act="goDay" data-day="'+tk+'"><div><b>Hôm nay</b> '+parts.join(' ')+'</div>'+
+          '<div class="hs-sub">'+(te?'<span class="hok">✓ Đã nhập</span>':'<span class="hno">Chạm để nhập</span>')+'</div></button>';
       }
       const F=factors(weeks),top=F&&F.rows.find(r=>r.lv!=='ok'&&r.act);
-      if(top)right+='<div class="hpri">→ '+escH(top.act)+' <span>('+escH(top.name)+')</span></div>';
+      if(top)right+='<div class="hpri">→ '+escH(top.act)+'</div>';
     }
   }
   return '<div class="hs-col">'+left+'</div>'+(right?'<div class="hs-col">'+right+'</div>':'');
