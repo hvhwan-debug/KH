@@ -408,6 +408,26 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 .remrow .rl{flex:1 1 90px}
 .remblk{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
 .savebar{display:flex;align-items:center;gap:10px;margin-top:12px}
+
+/* ===== Điểm cần chú ý ===== */
+.fxc{display:flex;align-items:center;gap:6px;font-weight:800;font-variant-numeric:tabular-nums}
+.fxc .d,.fxd{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--line);flex:0 0 auto}
+.fxc .d.bad,.fx.bad .fxd{background:var(--bad)}
+.fxc .d.warn,.fx.warn .fxd{background:var(--warn)}
+.fxc .d.ok,.fx.ok .fxd{background:var(--ok)}
+.fxv2{margin:4px 0 8px;line-height:1.45}
+.fx{border-top:1px solid var(--line)}
+.fxs{padding:9px 0;min-height:0;align-items:flex-start;gap:10px;font-weight:400}
+.fxs .fxd{margin-top:6px}
+.fxn{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.fxn b{font-size:14px}
+.fxm{font-size:13px;color:var(--muted);line-height:1.35}
+.fxa{font-size:13px;font-weight:700;line-height:1.35}
+.fx.bad .fxa{color:var(--bad)}.fx.warn .fxa{color:var(--warn)}
+.fxv{font-weight:800;font-size:14px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.fx.bad .fxv{color:var(--bad)}.fx.warn .fxv{color:var(--warn)}.fx.ok .fxv{color:var(--ok)}
+.fxw{padding:0 0 10px 20px}
+.fxs::after{margin-top:6px}
 </style>
 </head>
 <body>
@@ -551,8 +571,8 @@ function aiPrompt(weeks){
 
   const regionNote=S.province?' Khi đưa ra nhận xét và đề xuất, hãy cân nhắc đặc điểm thị trường, khí hậu theo mùa và mức độ cạnh tranh điển hình của khu vực '+S.province+' đối với ngành hàng bình nước nóng và gia dụng nhà bếp.':'';
   const task=hasActual
-    ? 'Hãy viết một nhận xét ngắn gọn (3–5 câu, văn phong chuyên nghiệp, tiếng Việt, không dùng ẩn dụ đời sống, không chào hỏi) về tình hình hiện tại, nêu rõ mức độ rủi ro không đạt chỉ tiêu (thấp / trung bình / cao) dựa trên diễn biến gần đây, sau đó liệt kê 2–3 đề xuất hành động cụ thể cho phần còn lại của tháng.'
-    : 'Hãy đánh giá ngắn gọn (3–5 câu, văn phong chuyên nghiệp, tiếng Việt, không dùng ẩn dụ đời sống, không chào hỏi) mức độ khả thi của chỉ tiêu này so với năng lực làm việc, sau đó liệt kê 2–3 khuyến nghị cụ thể để triển khai hiệu quả ngay từ đầu tháng.';
+    ? 'Hãy viết một nhận xét ngắn gọn (tối đa 3 câu ngắn, tiếng Việt, không ẩn dụ, không chào hỏi) về tình hình hiện tại, nêu rõ mức độ rủi ro không đạt chỉ tiêu (thấp / trung bình / cao) dựa trên diễn biến gần đây, sau đó nêu 2 đề xuất, mỗi đề xuất không quá 15 từ, cho phần còn lại của tháng.'
+    : 'Hãy đánh giá ngắn gọn (tối đa 3 câu ngắn, tiếng Việt, không ẩn dụ, không chào hỏi) mức độ khả thi của chỉ tiêu này so với năng lực làm việc, sau đó nêu 2 khuyến nghị, mỗi khuyến nghị không quá 15 từ, để triển khai ngay từ đầu tháng.';
   return 'Bạn là trợ lý phân tích kinh doanh, hỗ trợ một nhân viên kinh doanh (SR) ngành hàng điện gia dụng đánh giá kế hoạch và tiến độ doanh số tháng dựa trên dữ liệu sau:\n\n'+
     lines.join('\n')+'\n\n'+task+regionNote;
 }
@@ -621,9 +641,9 @@ function seasonText(){
 let apCache=null;
 function areaPlan(weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0);if(!total)return null;
-  const A=S.area||{},act=Math.max(0,+A.act||0),pts=Math.max(act,+A.pts||0),vpp=Math.max(1,+A.vpp||2),care=Math.max(0,+A.care||0);
+  const A=S.area||{},act=Math.max(0,+A.act||0),pts=Math.max(act,+A.pts||0),vpp=Math.max(1,+A.vpp||2),care=Math.max(0,+A.care||0),noP=Math.min(act,Math.max(0,+A.no||0)),usable=act-noP;
   const visits=weeks.reduce((a,w)=>a+w.vt,0),orders=weeks.reduce((a,w)=>a+w.o,0),uniq=Math.ceil(visits/vpp);
-  const have=pts>0,gap=have?Math.max(0,uniq-act):0,dormant=have?Math.max(0,pts-act):0;
+  const have=pts>0,gap=have?Math.max(0,uniq-usable):0,dormant=have?Math.max(0,pts-act):0;
   const careTot=act*care,workTot=Math.max(1,weeks.reduce((a,w)=>a+w.work,0));
   const pw=weeks.map(w=>({i:w.i,care:Math.round(careTot*w.work/workTot),areas:[]}));
   const D=(A.dist||[]).filter(d=>d&&d.p>0).slice().sort((a,b)=>b.p-a.p);
@@ -640,7 +660,7 @@ function areaPlan(weeks){
       }
     });
   }
-  return{total,orders,visits,uniq,vpp,have,pts,act,gap,dormant,careTot,weeks:pw};
+  return{total,orders,visits,uniq,vpp,have,pts,act,usable,noP,gap,dormant,careTot,weeks:pw};
 }
 function escH(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function areaLine(w){
@@ -662,20 +682,23 @@ function needCard(weeks){
   let note;
   if(ap.have){
     note=ap.gap>0
-      ?'<div class="note" style="color:var(--bad)">Với '+ap.act+' điểm đang hoạt động, bạn cần thêm khoảng <b>'+ap.gap+' điểm</b> (mở mới hoặc đánh thức điểm chưa hoạt động'+(ap.dormant?', hiện có '+ap.dormant+' điểm':'')+') hoặc tăng giá trị mỗi đơn.</div>'
-      :'<div class="note">Địa bàn đủ điểm: cần dùng khoảng <b>'+Math.round(ap.uniq/Math.max(1,ap.act)*100)+'%</b> số điểm đang hoạt động.</div>';
+      ?'<div class="note" style="color:var(--bad)">Với '+ap.usable+' điểm dùng được'+(ap.noP?' (đã trừ '+ap.noP+' điểm vướng công nợ)':'')+', bạn cần thêm khoảng <b>'+ap.gap+' điểm</b> (mở mới hoặc đánh thức điểm chưa hoạt động'+(ap.dormant?', hiện có '+ap.dormant+' điểm':'')+') hoặc tăng giá trị mỗi đơn.</div>'
+      :'<div class="note">Địa bàn đủ điểm: cần dùng khoảng <b>'+Math.round(ap.uniq/Math.max(1,ap.usable)*100)+'%</b> số điểm dùng được.</div>';
   } else note='<div class="note">Nhập số điểm bán và khu vực để biết cần ghé bao nhiêu điểm, chăm sóc ra sao. <button class="link" data-act="openSec" data-k="area">Mở mục Địa bàn &amp; điểm bán</button></div>';
   return '<div class="card needcard"><h2>'+ic('target',18)+' Để đạt '+fmt(ap.total)+' triệu</h2><div class="tiles">'+tiles+'</div>'+rows+note+'<div class="small muted" style="margin-top:6px">'+seasonText()+'</div></div>';
 }
 function areaCard(weeks){
   const A=S.area||{},n=(A.dist||[]).length;
   const inp=(k,v,u)=>'<input class="num sm" type="number" inputmode="numeric" min="0" data-f="area" data-k="'+k+'" value="'+(v||'')+'" placeholder="0"><span class="unit">'+u+'</span>';
+  const inpN=(k,v,u)=>'<input class="num sm" type="number" inputmode="numeric" min="0" data-f="area" data-k="'+k+'" value="'+(v===undefined?'':v)+'" placeholder="?"><span class="unit">'+u+'</span>';
   const dist=(A.dist||[]).map((d,i)=>'<div class="drow"><span class="dn">'+escH(d.n)+'</span><input class="num sm" type="number" inputmode="numeric" min="0" data-f="distP" data-i="'+i+'" value="'+d.p+'" aria-label="Số điểm bán '+escH(d.n)+'"><span class="unit">điểm</span><button class="xbtn" data-act="distDel" data-i="'+i+'" aria-label="Xoá '+escH(d.n)+'">✕</button></div>').join('');
   const body='<div class="small muted">Điểm bán là đại lý, cửa hàng điện máy hoặc siêu thị bạn phụ trách. Công cụ dùng số này để tính cần ghé bao nhiêu điểm và chăm sóc ra sao.</div>'+
     '<div class="field"><span class="nm small">Tổng số điểm bán phụ trách</span>'+inp('pts',A.pts,'điểm')+'</div>'+
     '<div class="field"><span class="nm small">Đang hoạt động (có lấy hàng 3 tháng gần đây)</span>'+inp('act',A.act,'điểm')+'</div>'+
     '<div class="field"><span class="nm small">Ghé trực tiếp mỗi điểm / tháng</span>'+inp('vpp',A.vpp,'lần')+'</div>'+
     '<div class="field"><span class="nm small">Chăm sóc từ xa (gọi, Zalo) mỗi điểm / tháng</span>'+inp('care',A.care,'lần')+'</div>'+
+    '<div class="field"><span class="nm small">Điểm vướng công nợ (nếu có)</span>'+inpN('no',A.no,'điểm')+'</div>'+
+    '<div class="field"><span class="nm small">Điểm còn tồn nhiều, chưa bán hết</span>'+inpN('ton',A.ton,'điểm')+'</div>'+
     '<div class="field"><span class="nm small">Kênh chính</span><select data-f="area" data-k="chan" aria-label="Kênh chính"><option value="gt"'+(A.chan==='gt'?' selected':'')+'>Đại lý, cửa hàng (GT)</option><option value="mt"'+(A.chan==='mt'?' selected':'')+'>Siêu thị điện máy (MT)</option><option value="mix"'+(A.chan==='mix'?' selected':'')+'>Cả hai</option></select></div>'+
     '<div class="small muted" style="margin-top:8px"><b>Khu vực / tuyến</b> (quận, huyện hoặc cụm điểm bán). Công cụ chia số lượt ghé của từng tuần theo các khu vực này.</div>'+dist+
     '<div class="dadd"><input id="dnm" class="txt" maxlength="40" placeholder="Tên quận, huyện, tuyến" aria-label="Tên khu vực"><input id="dpt" class="num sm" type="number" inputmode="numeric" min="1" placeholder="điểm" aria-label="Số điểm bán"><button class="btn sm" data-act="distAdd">Thêm</button></div>'+
@@ -717,17 +740,19 @@ function ctxText(weeks){
     const p=ap&&ap.weeks[w.i],a=S.actual[w.key];
     L.push('Tuần '+(w.i+1)+' ('+w.label+', '+w.work+' ngày làm): S.I '+w.tt+' tr, ghé '+w.vt+(p&&p.care?', chăm sóc từ xa '+p.care:'')+(p&&p.areas.length?', khu vực '+p.areas.map(x=>x.name+' '+x.n).join('/'):'')+(a?' | thực tế: '+(a.bn+a.gd)+' tr, đã liên hệ '+a.v:'')+'.');
   });
+  const FF=factors(weeks);
+  if(FF)L.push('Yếu tố chính đã tính sẵn (hãy dùng đúng các kết luận này, không tự suy diễn thêm): '+FF.rows.map(r=>r.name+' ['+({ok:'ổn',warn:'lưu ý',bad:'rủi ro'}[r.lv])+']: '+r.msg+(r.src.indexOf('Ước lượng')===0?' (ước lượng)':'')).join(' | ')+(FF.miss.length?'. Chưa có dữ liệu về: '+FF.miss.join(', ')+'.':'.'));
   const al=evalAlerts(weeks).filter(a=>!a.dismissed);
   L.push(al.length?'Cảnh báo đang hoạt động: '+al.map(a=>a.title+' ('+a.text+')').join('; ')+'.':'Không có cảnh báo đang hoạt động.');
   const rc=typeof recentDailyNote==='function'?recentDailyNote(weeks):'';if(rc)L.push(rc);
   return L.join('\n');
 }
-const AI_FORMAT=' Trả lời tiếng Việt, văn phong chuyên nghiệp, không chào hỏi, không ẩn dụ. Chỉ dùng số liệu đã cho; không bịa giá, khuyến mại hay chính sách.';
+const AI_FORMAT=' Trả lời tiếng Việt, cực ngắn: tối đa 4 gạch đầu dòng, mỗi gạch không quá 20 từ, mở đầu bằng cụm in đậm dạng **cụm từ**, kèm số cụ thể từ dữ liệu. Không chào hỏi, không ẩn dụ. Dùng đúng các kết luận trong mục "Yếu tố chính đã tính sẵn"; không bịa giá, khuyến mại, chính sách; điều gì không chắc thì ghi "cần kiểm tra".';
 const AI_TASK={
-  plan:'Hãy đánh giá cách chia chỉ tiêu theo tuần và khu vực ở trên, tối đa 6 gạch đầu dòng ngắn gồm: (1) tuần hoặc khu vực rủi ro nhất và lý do; (2) nên điều chỉnh tỷ lệ ghé trực tiếp so với chăm sóc từ xa thế nào; (3) ngành hàng nên ưu tiên chào theo mùa vụ, kèm 2–3 điểm bán hàng cụ thể của Livotec phù hợp; (4) một phương án dự phòng nếu tuần đầu chậm.'+AI_FORMAT,
-  check:'Hãy phân tích tiến độ thực tế, tối đa 6 gạch đầu dòng ngắn gồm: (1) mức đạt so với kế hoạch; (2) các nguyên nhân khả dĩ (nói rõ đây là giả thuyết từ số liệu); (3) ba việc cụ thể cho 1–2 ngày tới, có số điểm bán và khu vực; (4) có nên cân lại các tuần còn lại không. Nếu chưa có số liệu thực tế, hãy nói rõ và đưa ra 3 việc nên làm ngay đầu tháng.'+AI_FORMAT,
-  brief:'Hãy viết nhận xét ngắn (tối đa 3 câu) về kết quả hôm qua so với kế hoạch ngày, rồi nêu 2 việc cụ thể nên làm trong sáng nay (có số điểm bán hoặc khu vực nếu có). Nếu hôm qua chưa nhập số liệu, hãy nói rõ và gợi ý cách nhập bù nhanh.'+AI_FORMAT,
-  alerts:'Hãy sắp xếp các cảnh báo đang hoạt động theo mức ưu tiên và nêu một hành động cụ thể cho từng cảnh báo, ngắn gọn. Nếu không có cảnh báo, nêu 2 rủi ro nên theo dõi trong tuần này dựa trên kế hoạch và mùa vụ.'+AI_FORMAT
+  plan:'Đánh giá việc chia chỉ tiêu theo tuần và khu vực: tuần hoặc khu vực rủi ro nhất và lý do; nên chỉnh tỷ lệ ghé trực tiếp so với chăm sóc từ xa thế nào; ngành nên ưu tiên chào theo mùa vụ kèm 1–2 điểm bán hàng cụ thể của Livotec; một phương án dự phòng nếu tuần đầu chậm.'+AI_FORMAT,
+  check:'Phân tích tiến độ: mức đạt so với kế hoạch; nguyên nhân khả dĩ (nói rõ là giả thuyết); 3 việc cụ thể cho 1–2 ngày tới (có số điểm bán, khu vực); có nên cân lại các tuần còn lại. Nếu chưa có số liệu thực tế, nói rõ và nêu 3 việc nên làm ngay.'+AI_FORMAT,
+  brief:'Nhận xét kết quả hôm qua so với kế hoạch ngày trong 1 gạch, rồi 2 việc cụ thể cho sáng nay (có số điểm bán hoặc khu vực nếu có). Nếu hôm qua chưa nhập số liệu, nói rõ và gợi ý nhập bù nhanh.'+AI_FORMAT,
+  alerts:'Xếp các cảnh báo đang hoạt động theo mức ưu tiên và nêu một hành động cụ thể cho từng cảnh báo. Nếu không có cảnh báo, nêu 2 rủi ro nên theo dõi tuần này dựa trên kế hoạch và mùa vụ.'+AI_FORMAT
 };
 const AI_TITLE={plan:'AI phân tích kế hoạch',check:'AI phân tích tiến độ',alerts:'AI ưu tiên hành động'};
 const AI_HINT={plan:'AI sẽ chỉ ra tuần và khu vực rủi ro, cách chia ghé trực tiếp / chăm sóc từ xa và ngành hàng nên ưu tiên chào.',check:'AI sẽ so tiến độ thực tế với kế hoạch và gợi ý việc cần làm cho 1–2 ngày tới.',alerts:'AI sẽ xếp thứ tự ưu tiên các cảnh báo và đề xuất hành động cho từng cảnh báo.'};
@@ -769,7 +794,7 @@ async function coachAsk(q,label){
   try{
     const weeks=analyze();
     const hist=[];coach.log.slice(-4,-1).forEach(x=>{if(x.a){hist.push({role:'user',content:x.p||x.q});hist.push({role:'assistant',content:x.a});}});
-    const sys=LIVOTEC_KB+'\n\nBối cảnh số liệu của SR:\n'+ctxText(weeks)+'\n\nQuy tắc trả lời: tiếng Việt, thực tế, tối đa khoảng 200 từ, không chào hỏi, không bịa giá, khuyến mại hay chính sách; nếu thiếu dữ liệu thì nói rõ.';
+    const sys=LIVOTEC_KB+'\n\nBối cảnh số liệu của SR:\n'+ctxText(weeks)+'\n\nQuy tắc trả lời: tiếng Việt, thực tế, tối đa 120 từ, ưu tiên gạch đầu dòng ngắn (mỗi dòng không quá 20 từ), không chào hỏi, không bịa giá, khuyến mại hay chính sách; nếu thiếu dữ liệu thì nói rõ.';
     const a=await callAI([{role:'system',content:sys}].concat(hist,[{role:'user',content:q}]),1500);
     coach.log[coach.log.length-1].a=a;
   }catch(e){coach.log[coach.log.length-1].a='Không gọi được AI. '+e.message;}
@@ -965,6 +990,110 @@ function remCard(){
   return sec('rem',ic('bell',18),'Nhắc việc &amp; lưu dữ liệu','<span class="small muted">'+(R.eOn?'tối '+R.e:'đã tắt')+'</span>',body);
 }
 
+/* ---------- Yếu tố ảnh hưởng & rủi ro (tính bằng công thức từ số liệu của SR) ---------- */
+const CAT_GROUP={doi:'bep',don:'bep',com:'bep',noi:'bep',chien:'bep',xay:'bep',ep:'bep',mui:'bep',quat:'mat',dh:'mat',suoi:'suoi',ham:'suoi'};
+function seasonMix(){
+  const tb=+S.target.bn||0,tg=+S.target.gd||0,total=tb+tg;if(!total)return null;
+  const m=+S.month.split('-')[1],r=regionOf(S.province),lv=g=>SEASON[r][g][m-1];
+  const parts=[];if(tb)parts.push({n:'Bình nước nóng',sh:tb/total,lv:lv('bn')});
+  if(tg)catShares().forEach(x=>{parts.push({n:x.c.name,sh:tg/total*x.f,lv:lv(CAT_GROUP[x.c.id]||'bep')});});
+  const w=parts.reduce((a,p)=>a+p.sh,0)||1;
+  return{L:parts.reduce((a,p)=>a+p.sh*p.lv,0)/w,parts};
+}
+function factors(weeks){
+  const tb=+S.target.bn||0,tg=+S.target.gd||0,total=tb+tg;if(!total)return null;
+  const F=[],miss=[],f=feasibility(weeks),ap=areaPlan(weeks),A=S.area||{};
+  const add=o=>F.push(o);
+  const totWork=Math.max(1,weeks.reduce((a,w)=>a+w.work,0));
+  if(f){
+    const pc=Math.round(f.ratio*100);
+    add({id:'cap',lv:f.ratio<=0.7?'ok':f.ratio<=1?'warn':'bad',sv:f.ratio>1?'vượt sức liên hệ':'sát trần sức liên hệ',name:'Sức liên hệ',val:pc+'%',
+      msg:'Cần ≈ '+fmt(f.perDay,1)+' khách/ngày, bạn làm tối đa '+f.mc,
+      act:f.ratio>1?'Tăng giá trị mỗi đơn hoặc trao đổi lại chỉ tiêu':f.ratio>0.7?'Gần kịch trần, không còn chỗ cho ngày chậm':'',
+      how:'Khách cần = chỉ tiêu ÷ (giá trị đơn × tỷ lệ chốt × sức mua) ÷ số ngày làm việc.',src:'Số bạn nhập'});
+  }
+  if(ap&&ap.have){
+    const used=ap.usable>0?Math.round(ap.uniq/ap.usable*100):999;
+    add({id:'cover',lv:ap.gap>0?'bad':used>85?'warn':'ok',sv:ap.gap>0?'thiếu điểm bán':'ít dư địa điểm bán',name:'Độ phủ điểm bán',val:ap.gap>0?'thiếu '+ap.gap:used+'%',
+      msg:ap.gap>0?'Cần ghé '+ap.uniq+' điểm, chỉ có '+ap.usable+' điểm dùng được':'Dùng '+used+'% số điểm dùng được'+(used>85?', ít dư địa':''),
+      act:ap.gap>0?'Đánh thức điểm ngủ đông hoặc mở thêm '+ap.gap+' điểm':'',
+      how:'Điểm cần ghé = lượt ghé ÷ số lần ghé mỗi điểm. Điểm dùng được = đang hoạt động trừ điểm vướng công nợ.',src:'Số bạn nhập'});
+  }else miss.push('địa bàn & điểm bán');
+  const noP=+A.no||0,tonP=+A.ton||0;
+  if(A.no===undefined&&A.ton===undefined){if(ap&&ap.have)miss.push('công nợ, tồn kho');}
+  else if(noP>0||tonP>0){
+    const act=Math.max(1,+A.act||0),sh=(noP+tonP)/act;
+    add({id:'risk',lv:sh>0.2?'bad':'warn',sv:'công nợ, tồn kho',name:'Công nợ, tồn kho',val:(noP+tonP)+' điểm',
+      msg:(noP?noP+' điểm vướng công nợ':'')+(noP&&tonP?', ':'')+(tonP?tonP+' điểm còn tồn nhiều':'')+' ('+Math.round(sh*100)+'% điểm đang hoạt động)',
+      act:noP?'Ưu tiên điểm sạch nợ, xử lý nợ song song':'Giúp bán ra trước khi chào nhập thêm',
+      how:'Tỷ lệ so với số điểm đang hoạt động bạn nhập. Trên 20% được coi là rủi ro cao.',src:'Số bạn nhập'});
+  }
+  const sm=seasonMix();
+  if(sm){
+    const low=sm.parts.filter(p=>p.lv===0&&p.sh>=0.08),lowSh=low.reduce((a,p)=>a+p.sh,0);
+    const best=sm.parts.slice().sort((a,b)=>b.sh*b.lv-a.sh*a.lv)[0];
+    let lv='warn',msg,act='',val='trung bình';
+    if(lowSh>=0.3){msg=Math.round(lowSh*100)+'% chỉ tiêu ở ngành có nhu cầu thấp theo khí hậu ('+low.slice(0,2).map(p=>p.n).join(', ')+')';act='Cần chương trình kích cầu hoặc dồn lực ngành đang vào mùa';val='nhu cầu thấp';}
+    else if(sm.L>=1.2){lv='ok';val='nhu cầu cao';msg=best.n+': nhu cầu cao theo mùa ('+Math.round(best.sh*100)+'% chỉ tiêu)';}
+    else{msg='Phần lớn chỉ tiêu ở ngành có nhu cầu trung bình';act='Cần trưng bày, chương trình để kích cầu';}
+    add({id:'season',lv,sv:'mùa vụ chưa thuận',name:'Mùa vụ',val,msg,act,how:'Ước lượng nhu cầu theo tháng và miền, tính theo tỷ trọng chỉ tiêu của từng ngành. Không phải số bán hàng của Livotec.',src:'Ước lượng theo khí hậu'});
+  }
+  if(!S.province)miss.push('khu vực phụ trách');
+  const hw=weeks.find(w=>w.hard);
+  if(hw&&weeks.filter(w=>w.work>0&&w.tt>0).length>=2){
+    const r=(hw.need/hw.work)/(total/totWork),lv=r>=1.5?'bad':r>=1.25?'warn':'ok';
+    add({id:'hard',lv,sv:'tuần nặng nhất',name:'Tuần nặng nhất',val:'Tuần '+(hw.i+1),
+      msg:lv==='ok'?'Các tuần khá đều (nặng nhất gấp '+fmt(r,1)+' lần trung bình)':fmt(hw.need/hw.work,1)+' tr/ngày, gấp '+fmt(r,1)+' lần trung bình tháng',
+      act:lv==='ok'?'':'Chốt sớm đơn của tuần này, dồn lịch hẹn đầu tuần',
+      how:'So S.I cần mỗi ngày làm việc của tuần nặng nhất với mức trung bình cả tháng.',src:'Số bạn nhập'});
+  }
+  const lastW=[...weeks].reverse().find(w=>w.work>0);
+  if(lastW){const sh=lastW.tt/total,ev=lastW.work/totWork;
+    if(sh>ev*1.15&&sh>0.28)add({id:'last',lv:'warn',sv:'dồn cuối tháng',name:'Dồn cuối tháng',val:Math.round(sh*100)+'%',msg:'Tuần cuối chiếm '+Math.round(sh*100)+'% chỉ tiêu (chia đều theo ngày là '+Math.round(ev*100)+'%)',act:'Đẩy bớt chỉ tiêu về các tuần đầu',how:'So tỷ trọng chỉ tiêu tuần cuối với tỷ trọng ngày làm việc của tuần đó.',src:'Số bạn nhập'});}
+  const rate=Math.max(5,+S.rate||40);
+  if(ap&&rate>=25&&ap.visits>0&&!(f&&f.ratio>1)){
+    const cap=totWork*Math.max(1,+S.maxC||4),sc=Math.ceil(ap.visits*rate/(rate-10)),ex=sc-ap.visits,lv=sc>cap?'bad':sc>cap*0.9?'warn':'ok';
+    add({id:'sens',lv,sv:'dễ vỡ nếu chốt kém',name:'Nếu chốt kém hơn',val:'−10 điểm',
+      msg:'Tỷ lệ chốt '+rate+'% còn '+(rate-10)+'%: cần thêm '+ex+' lượt ('+sc+'), '+(sc>cap?'vượt sức ('+cap+')':'vẫn trong sức ('+cap+')'),
+      act:lv==='ok'?'':'Giữ khách dự phòng, nâng giá trị mỗi đơn',
+      how:'Lượt ghé tỉ lệ nghịch với tỷ lệ chốt. Sức = số ngày làm việc × số khách tối đa mỗi ngày.',src:'Tính từ giả định của bạn'});
+  }
+  const fc=forecast(weeks);
+  if(fc&&!fc.noData){
+    const P=fc.P,lv=P>=0.7?'ok':P>=0.4?'warn':'bad';
+    add({id:'prog',lv,sv:'tiến độ chậm',name:'Tiến độ thực tế',val:Math.round(P*100)+'%',
+      msg:'Dự báo chốt ≈ '+fmt(fc.mu)+' tr, khả năng đạt chỉ tiêu '+Math.round(P*100)+'%',
+      act:lv==='ok'?'':'Thiếu ≈ '+fmt(Math.max(0,fc.total-fc.mu))+' tr'+(fc.extra>0?': thêm ≈ '+fmt(fc.extra,1)+' khách/ngày':''),
+      how:'Ước lượng thống kê đơn giản từ số liệu đã nhập, độ tin cậy '+fc.conf+'.',src:'Từ số liệu bạn nhập'});
+  }
+  if(S.month===monthKey(0)){
+    const tk=todayKey(),days=[];weeks.forEach(w=>w.days.forEach(d=>{if(!d.off&&d.date<tk)days.push(d.date);}));
+    const l3=days.slice(-3);
+    if(l3.length>=2){const got=l3.filter(d=>S.daily[d]).length;
+      if(got<l3.length)add({id:'data',lv:'warn',sv:'thiếu số liệu ngày',name:'Số liệu hằng ngày',val:got+'/'+l3.length,msg:'Chỉ '+got+'/'+l3.length+' ngày làm việc gần nhất có số liệu, dự báo kém tin cậy',act:'Nhập bù ngay (20 giây)',how:'Đếm số ngày làm việc gần nhất đã có số liệu.',src:'Số bạn nhập'});}
+  }
+  if(sm){
+    const nop=CATS.filter(c=>S.cats[c.id].on&&!(+S.cats[c.id].p>0));
+    if(nop.length&&tg>0)add({id:'mix',lv:'warn',sv:'thiếu giá ngành hàng',name:'Cơ cấu',val:nop.length+' ngành',msg:nop.slice(0,2).map(c=>c.name).join(', ')+(nop.length>2?'…':'')+' chưa có giá, chưa quy ra số bộ',act:'Nhập giá để tính số bộ cần bán',how:'Ngành đang bật nhưng chưa nhập giá niêm yết.',src:'Số bạn nhập'});
+  }
+  const ord={bad:0,warn:1,ok:2};
+  const rows=F.map((x,i)=>Object.assign({},x,{o:i})).sort((a,b)=>ord[a.lv]-ord[b.lv]||a.o-b.o);
+  return{rows,miss,cnt:{bad:rows.filter(r=>r.lv==='bad').length,warn:rows.filter(r=>r.lv==='warn').length,ok:rows.filter(r=>r.lv==='ok').length}};
+}
+function factorsCard(weeks,mode){
+  const F=factors(weeks);if(!F)return '';
+  const bad=F.rows.filter(r=>r.lv==='bad'),warn=F.rows.filter(r=>r.lv==='warn');
+  let v;
+  if(bad.length)v='<b>Cần xử lý:</b> '+bad.slice(0,3).map(r=>r.sv).join(', ')+(warn.length?'. Lưu ý thêm: '+warn.slice(0,2).map(r=>r.sv).join(', '):'')+'.';
+  else if(warn.length)v='<b>Làm được, cần lưu ý:</b> '+warn.slice(0,3).map(r=>r.sv).join(', ')+'.';
+  else v='<b>Các yếu tố chính đều ổn.</b>';
+  const showAll=mode==='full'&&isOpen('fxall',false),list=showAll?F.rows:F.rows.slice(0,3);
+  const row=r=>'<details class="fx '+r.lv+'" data-sec="fx_'+r.id+'"'+(isOpen('fx_'+r.id,false)?' open':'')+'><summary class="sech fxs"><i class="fxd"></i><span class="fxn"><b>'+r.name+'</b><span class="fxm">'+escH(r.msg)+'</span>'+(r.act?'<span class="fxa">→ '+escH(r.act)+'</span>':'')+'</span><span class="fxv">'+escH(r.val)+'</span></summary><div class="fxw"><div class="small muted"><b>Cách tính:</b> '+escH(r.how)+'</div><div class="small muted"><b>Nguồn số:</b> '+escH(r.src)+'</div></div></details>';
+  const more=(mode==='full'&&F.rows.length>3)?'<button class="link" data-act="fxAll">'+(showAll?'Thu gọn':'Xem đủ '+F.rows.length+' yếu tố')+'</button>':'';
+  const miss=F.miss.length?'<div class="small muted" style="margin-top:6px">Chưa tính: '+F.miss.join(' · ')+'. '+(F.miss.some(x=>x.indexOf('địa bàn')===0||x.indexOf('công nợ')===0)?'<button class="link" data-act="openSec" data-k="area">Nhập để kết luận chắc hơn</button>':'')+'</div>':'';
+  return '<div class="card fxcard"><div class="row wrapx"><h2>'+ic('alertOct',18)+' Điểm cần chú ý</h2><span class="fxc"><i class="d bad"></i>'+F.cnt.bad+' <i class="d warn"></i>'+F.cnt.warn+' <i class="d ok"></i>'+F.cnt.ok+'</span></div><div class="fxv2">'+v+'</div>'+list.map(row).join('')+more+miss+'</div>';
+}
+
 const pad=n=>String(n).padStart(2,'0');
 const fmt=(x,d=0)=>Number(x).toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d});
 const C={bn:'var(--bn)',gd:'var(--gd)'};
@@ -1076,7 +1205,7 @@ function analyze(){
   weeks.forEach(w=>{w.hard=w.i===hard;});
   return weeks;
 }
-function riskSel(w){if(S.risks[w.key])return S.risks[w.key];const r=[];if(w.hard)r.push('hoan','gia');if(w.holiday)r.push('nghi');return r;}
+function riskSel(w){if(S.risks[w.key])return S.risks[w.key];const r=[];if(w.hard){r.push('hoan','gia');if((+(S.area||{}).no||0)>0)r.push('no');if((+(S.area||{}).ton||0)>0)r.push('ton');}if(w.holiday)r.push('nghi');return r;}
 function todayKey(){const t=new Date();return t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate());}
 function currentWeekIndex(weeks){const k=todayKey();for(const w of weeks){if(w.days.some(d=>d.date===k))return w.i;}return 0;}
 /* ---------- Nhật ký hàng ngày ---------- */
@@ -1397,6 +1526,7 @@ function renderSetup(){
     PRODUCTS.map(p=>'<div class="field"><span class="nm">'+ic(p.icon)+' '+p.name+'</span><input class="num" type="number" inputmode="numeric" min="0" data-f="target" data-p="'+p.id+'" value="'+(S.target[p.id]||'')+'" placeholder="0" aria-label="Chỉ tiêu S.I '+p.name+'"><span class="unit">tr</span></div>').join('')+
     '<div class="small muted">Tính bằng triệu đồng. Ví dụ 250 cho bình nước nóng, 100 cho gia dụng.</div></div>'+
   needCard(weeks)+
+  factorsCard(weeks,'full')+
   aiCard(weeks,true)+
   feasCard(weeks)+
   areaCard(weeks)+
@@ -1460,7 +1590,7 @@ function renderPlan(){
   }).join('');
 
   const modeNote=S.plan?'<div class="note"><b>Chế độ thủ công.</b> Chỉnh chỉ tiêu từng tuần bằng nút − / + ở các thẻ tuần bên dưới. <button class="link" data-act="autoplan">Về gợi ý tự động</button></div>':'<div class="note"><b>Kế hoạch tự động.</b> Muốn tự chia, chỉ cần bấm − / + ở thẻ tuần bên dưới.</div>';
-  $app.innerHTML=banner(weeks)+modeNote+aiPanel('plan',weeks)+todayCard+
+  $app.innerHTML=banner(weeks)+modeNote+factorsCard(weeks,'compact')+aiPanel('plan',weeks)+todayCard+
   '<div class="card"><div class="row wrapx"><h2>Tiến độ S.I theo tuần</h2><span class="small muted"><i class="sw bn"></i>Bình NN <i class="sw gd" style="margin-left:6px"></i>Gia dụng</span></div>'+barChart(weeks)+
     '<div class="small muted">Tuần cuối chiếm <b>'+share+'%</b> chỉ tiêu tháng'+(share<evenShare?', thấp hơn mức chia đều theo ngày ('+evenShare+'%), phần còn lại đã được trải ra từ đầu tháng.':' (chia đều theo ngày là '+evenShare+'%).')+' Đơn vị: triệu đồng.</div></div>'+
   '<div class="card"><h2>Đường tích lũy</h2><div class="small muted">Đường đen là kế hoạch của bạn, đường nét đứt là cách chia đều theo ngày.</div>'+
@@ -1523,7 +1653,7 @@ function renderCheck(){
   weeks.forEach(x=>{cum+=x.tt;planPts.push({i:x.i,v:cum});const ac=S.actual[x.key];if(ac){ca+=(ac.bn||0)+(ac.gd||0);actPts.push({i:x.i,v:ca});}else if(ac===undefined){}});
   const ds=dailySeries(weeks);
   $app.innerHTML=banner(weeks)+
-  '<div class="card herocard">'+hero+'</div>'+forecastCard(weeks)+aiPanel('check',weeks)+
+  '<div class="card herocard">'+hero+'</div>'+forecastCard(weeks)+factorsCard(weeks,'compact')+aiPanel('check',weeks)+
   '<div class="card"><h2>Nhật ký hàng ngày</h2><div class="small muted">Nhập số liệu mỗi ngày — chỉ mất khoảng 20 giây, giúp bạn theo dõi tiến độ sát hơn thay vì chờ đến cuối tuần. Số liệu này dành cho bạn, không phải báo cáo.</div><div style="margin-top:10px">'+weekChips+'</div><div style="margin-top:6px">'+dayChips+'</div>'+
     (w.work===0?'<div class="note">Tuần này không có ngày làm việc.</div>':fields)+result+(w.work>0?'<div class="savebar"><button class="btn sm" data-act="daySave" data-day="'+curDay+'">Lưu số liệu ngày '+curDay.slice(8)+'/'+curDay.slice(5,7)+'</button><span class="small muted">'+(S.daily[curDay]?'Đã lưu':'Chưa lưu')+'</span></div>':'')+'</div>'+
   rebal+
@@ -1614,6 +1744,7 @@ document.addEventListener('click',function(e){
     else{S.plan=null;toast('Đã tạo kế hoạch tự động');}
   }
   else if(a==='aix'){askAIx(d.c);return;}
+  else if(a==='fxAll'){openSec.fxall=!isOpen('fxall',false);}
   else if(a==='remTog'){S.rem[d.k]=!S.rem[d.k];}
   else if(a==='notifOn'){
     if(!('Notification' in window)){toast('Trình duyệt này chưa hỗ trợ thông báo');return;}
