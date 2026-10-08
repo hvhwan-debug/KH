@@ -328,7 +328,7 @@ const GROQ_MODEL='llama-3.3-70b-versatile';
 let aiState={loading:false,text:'',error:''};
 let aiLastKey=null,aiTimer=null;
 const AI_DISCLAIMER='Nhận xét và đề xuất này do AI tạo tự động dựa trên số liệu bạn nhập, có thể không chính xác hoàn toàn — hãy đối chiếu với thực tế trước khi quyết định.';
-function aiDataKey(){return JSON.stringify({t:S.target,a:S.actual,m:S.month});}
+function aiDataKey(){return JSON.stringify({t:S.target,a:S.actual,m:S.month,p:S.province});}
 function scheduleAI(){
   if(!Object.keys(S.actual).length)return;
   const key=aiDataKey();
@@ -340,10 +340,12 @@ function aiPrompt(weeks){
   const fc=forecast(weeks),total=(+S.target.bn||0)+(+S.target.gd||0);
   const ach=weeks.reduce((s,x)=>s+(((S.actual[x.key]||{}).bn||0)+((S.actual[x.key]||{}).gd||0)),0);
   const alerts=evalAlerts(weeks).filter(a=>!a.dismissed);
-  const lines=[
+  const lines=[];
+  if(S.province)lines.push('Khu vực phụ trách: '+S.province+'.');
+  lines.push(
     'Chỉ tiêu tháng: '+fmt(total)+' triệu (Bình nước nóng '+fmt(+S.target.bn||0)+', Gia dụng '+fmt(+S.target.gd||0)+').',
     'Đã đạt tính đến hiện tại: '+fmt(ach)+' triệu.'
-  ];
+  );
   if(fc&&!fc.noData){
     lines.push('Dự báo chốt tháng: khoảng '+fmt(fc.mu)+' triệu (khoảng tin cậy '+fmt(fc.lo)+'–'+fmt(fc.hi)+'), xác suất đạt chỉ tiêu '+Math.round(fc.P*100)+'%.');
     lines.push('Tốc độ hiện tại so với kế hoạch: '+Math.round(fc.rho*100)+'%.');
@@ -356,9 +358,10 @@ function aiPrompt(weeks){
   } else {
     lines.push('Hiện không có cảnh báo nào được kích hoạt.');
   }
+  const regionNote=S.province?' Khi đưa ra nhận xét và đề xuất, hãy cân nhắc đặc điểm thị trường, khí hậu theo mùa và mức độ cạnh tranh điển hình của khu vực '+S.province+' đối với ngành hàng bình nước nóng và gia dụng nhà bếp.':'';
   return 'Bạn là trợ lý phân tích kinh doanh, hỗ trợ một nhân viên kinh doanh (SR) ngành hàng điện gia dụng đánh giá tiến độ doanh số tháng dựa trên dữ liệu sau:\n\n'+
     lines.join('\n')+
-    '\n\nHãy viết một nhận xét ngắn gọn (3–5 câu, văn phong chuyên nghiệp, tiếng Việt, không dùng ẩn dụ đời sống, không chào hỏi) về tình hình hiện tại, sau đó liệt kê 2–3 đề xuất hành động cụ thể cho phần còn lại của tháng.';
+    '\n\nHãy viết một nhận xét ngắn gọn (3–5 câu, văn phong chuyên nghiệp, tiếng Việt, không dùng ẩn dụ đời sống, không chào hỏi) về tình hình hiện tại, sau đó liệt kê 2–3 đề xuất hành động cụ thể cho phần còn lại của tháng.'+regionNote;
 }
 async function askAI(){
   if(aiState.loading)return;
@@ -395,7 +398,7 @@ const pad=n=>String(n).padStart(2,'0');
 const fmt=(x,d=0)=>Number(x).toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d});
 const C={bn:'var(--bn)',gd:'var(--gd)'};
 function monthKey(o){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+o);return d.getFullYear()+'-'+pad(d.getMonth()+1);}
-function defaults(){return{month:monthKey(0),target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std')};}
+function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std')};}
 function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats});}}catch(e){}return defaults();}
 let S=load(),confirmReset=false,copyText=null;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
@@ -766,6 +769,8 @@ function renderSetup(){
   '<div class="card herocard">'+hero+'</div>'+
   '<div class="card"><h2>Chỉ tiêu S.I tháng này</h2>'+
     '<div class="field"><span class="nm">Tháng</span><select data-f="month" aria-label="Chọn tháng">'+opts+'</select></div>'+
+    '<div class="field"><span class="nm">Khu vực phụ trách</span><input class="num" style="width:160px;text-align:right" type="text" data-f="province" value="'+(S.province||'')+'" placeholder="VD: Thái Nguyên" aria-label="Tỉnh, thành phố phụ trách"></div>'+
+    '<div class="small muted" style="margin:-4px 0 12px">AI sẽ tham khảo đặc điểm thị trường, mùa vụ của khu vực này khi đưa ra nhận xét.</div>'+
     PRODUCTS.map(p=>'<div class="field"><span class="nm">'+ic(p.icon)+' '+p.name+'</span><input class="num" type="number" inputmode="numeric" min="0" data-f="target" data-p="'+p.id+'" value="'+(S.target[p.id]||'')+'" placeholder="0" aria-label="Chỉ tiêu S.I '+p.name+'"><span class="unit">tr</span></div>').join('')+
     '<div class="small muted">Tính bằng triệu đồng. Ví dụ 250 cho bình nước nóng, 100 cho gia dụng.</div></div>'+
   feasCard(weeks)+
@@ -962,6 +967,7 @@ document.addEventListener('input',function(e){
 document.addEventListener('change',function(e){
   const t=e.target,f=t.dataset&&t.dataset.f;if(!f)return;
   if(f==='month'){S.month=t.value;S.season=100;S.flip=[];S.plan=null;S.booked={};S.actual={};S.risks={};S.cw=null;}
+  else if(f==='province'){S.province=t.value.trim();}
   else if(f==='target'){S.target[t.dataset.p]=Math.max(0,Math.floor(+t.value||0));S.plan=null;}
   else if(f==='catP'){S.cats[t.dataset.c].p=Math.max(0,+t.value||0);}
   else if(f==='season'){S.season=+t.value;}
