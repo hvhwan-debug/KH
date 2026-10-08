@@ -257,38 +257,57 @@ img{max-width:100%}
   <nav class="tabs" id="tabs" role="tablist"></nav>
   <main id="app"></main>
 </div>
-<footer class="foot"><img class="logo sm" id="logo2" alt="Livotec"><div>Công cụ lập kế hoạch dành cho Sales Rep Livotec</div><div class="foot-disc">⚠️ Dữ liệu, dự báo và cảnh báo trong công cụ chỉ mang tính tham khảo, tính từ các giả định và số bạn tự nhập. Không phải cam kết hay chỉ tiêu chính thức.</div></footer>
+<footer class="foot"><img class="logo sm" id="logo2" alt="Livotec"><div>Công cụ lập kế hoạch dành cho Sales Rep Livotec</div><div class="foot-disc">Dữ liệu, dự báo và cảnh báo trong công cụ chỉ mang tính tham khảo, tính từ các giả định và số bạn tự nhập. Không phải cam kết hay chỉ tiêu chính thức.</div></footer>
 <div id="toast" class="toast" hidden></div>
 
 <script>
+/* ---------- Bộ icon đường nét dùng chung (thay cho emoji) ---------- */
+const LICON={
+  setup:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  plan:'<polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/>',
+  check:'<path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/>',
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  trend:'<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+  compass:'<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>',
+  sparkles:'<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>',
+  droplet:'<path d="M12 2.69s5 5.1 5 8.9a5 5 0 0 1-10 0c0-3.8 5-8.9 5-8.9z"/>',
+  plug:'<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  warnTri:'<path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  alertOct:'<path d="M12 16h.01"/><path d="M12 8v4"/><path d="M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z"/>',
+  infoCirc:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>'
+};
+function ic(name,size){size=size||18;return '<svg viewBox="0 0 24 24" width="'+size+'" height="'+size+'" style="stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-4px;flex:0 0 auto">'+LICON[name]+'</svg>';}
+
 (function(){
 document.getElementById('logo2').src=document.getElementById('logo1').src;
 const KEY='livotec-sr-plan-v3';
 const PRODUCTS=[
-  {id:'bn',name:'Bình nước nóng',short:'Bình NN',icon:'💧'},
-  {id:'gd',name:'Gia dụng bếp',short:'Gia dụng',icon:'🍳'}
+  {id:'bn',name:'Bình nước nóng',short:'Bình NN',icon:'droplet'},
+  {id:'gd',name:'Gia dụng bếp',short:'Gia dụng',icon:'plug'}
 ];
 const DOW=['Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7','Chủ nhật'];
 const RISKS=[
-  {id:'hoan',icon:'📅',name:'Khách hoãn lịch hẹn',backup:v=>'Chuẩn bị sẵn '+Math.max(1,Math.ceil(v*0.25))+' khách dự phòng để thay thế'},
-  {id:'gia',icon:'🏷️',name:'Đối thủ chào giá tốt hơn',backup:()=>'Chuẩn bị điểm khác biệt (giữ nhiệt 48 giờ, bảo hành) và chương trình hỗ trợ để trao đổi'},
-  {id:'hang',icon:'📦',name:'Hàng về chậm / thiếu hàng',backup:()=>'Báo khách sớm, đề xuất mẫu tương đương hoặc hẹn ngày giao cụ thể'},
-  {id:'lap',icon:'🔧',name:'Lịch lắp đặt bị lùi',backup:()=>'Thống nhất lịch lắp với khách ngay lúc chốt đơn'},
-  {id:'km',icon:'🎁',name:'Khách chờ khuyến mãi',backup:()=>'Nêu rõ thời hạn ưu đãi khi chào, hẹn lại đúng ngày'},
-  {id:'nghi',icon:'🗓️',name:'Tuần ít ngày làm việc',backup:()=>'Dồn lịch hẹn vào các ngày còn lại, dùng điện thoại thay cho thăm trực tiếp'}
+  {id:'hoan',name:'Khách hoãn lịch hẹn',backup:v=>'Chuẩn bị sẵn '+Math.max(1,Math.ceil(v*0.25))+' khách dự phòng để thay thế'},
+  {id:'gia',name:'Đối thủ chào giá tốt hơn',backup:()=>'Chuẩn bị điểm khác biệt (giữ nhiệt 48 giờ, bảo hành) và chương trình hỗ trợ để trao đổi'},
+  {id:'hang',name:'Hàng về chậm / thiếu hàng',backup:()=>'Báo khách sớm, đề xuất mẫu tương đương hoặc hẹn ngày giao cụ thể'},
+  {id:'lap',name:'Lịch lắp đặt bị lùi',backup:()=>'Thống nhất lịch lắp với khách ngay lúc chốt đơn'},
+  {id:'km',name:'Khách chờ khuyến mãi',backup:()=>'Nêu rõ thời hạn ưu đãi khi chào, hẹn lại đúng ngày'},
+  {id:'nghi',name:'Tuần ít ngày làm việc',backup:()=>'Dồn lịch hẹn vào các ngày còn lại, dùng điện thoại thay cho thăm trực tiếp'}
 ];
 const RULES=[
-  {id:'plan_heavy',icon:'🏋️',level:'warn',title:'Tuần kế hoạch quá nặng',pre:'Báo khi một tuần cần S.I mỗi ngày bằng',post:'% mức trung bình của tháng trở lên',step:5,min:100,max:300,p:{soft:150,std:130,tight:115}},
-  {id:'last_week',icon:'📆',level:'warn',title:'Nguy cơ dồn cuối tháng',pre:'Báo khi tuần cuối chiếm',post:'% chỉ tiêu tháng trở lên',step:5,min:10,max:80,p:{soft:35,std:30,tight:25}},
-  {id:'act_low',icon:'👥',level:'bad',title:'Làm ít hơn kế hoạch',pre:'Báo khi số khách đã liên hệ trong tuần dưới',post:'% kế hoạch tuần',step:5,min:20,max:100,p:{soft:60,std:70,tight:80}},
-  {id:'si_low',icon:'💰',level:'bad',title:'S.I tuần thấp',pre:'Báo khi S.I đã chốt trong tuần dưới',post:'% kế hoạch tuần',step:5,min:20,max:100,p:{soft:60,std:70,tight:80}},
-  {id:'mid_week',icon:'⏱️',level:'warn',title:'Giữa tuần đang chậm',pre:'Báo khi S.I chốt được thấp hơn tiến độ ngày làm việc quá',post:'điểm phần trăm',step:5,min:5,max:50,p:{soft:30,std:20,tight:15}},
-  {id:'cum_lag',icon:'📉',level:'warn',title:'S.I tích lũy tụt mốc',pre:'Báo khi S.I tích lũy dưới',post:'% mốc kế hoạch cùng kỳ',step:5,min:50,max:100,p:{soft:75,std:85,tight:90}},
-  {id:'group_low',icon:'⚖️',level:'warn',title:'Một nhóm hàng bị tụt',pre:'Báo khi bình nước nóng hoặc gia dụng dưới',post:'% mốc kế hoạch của nhóm đó',step:5,min:30,max:100,p:{soft:60,std:70,tight:80}},
-  {id:'month_pace',icon:'🚨',level:'bad',title:'Đã qua 75% tháng mà chưa đủ số',pre:'Báo khi S.I tích lũy dưới',post:'% chỉ tiêu tháng (từ khi qua 75% ngày làm việc)',step:5,min:30,max:95,p:{soft:50,std:60,tight:70}},
-  {id:'forecast',icon:'🔮',level:'warn',title:'Dự báo khó đạt chỉ tiêu',pre:'Báo khi khả năng đạt chỉ tiêu tháng (theo dự báo) dưới',post:'%',step:5,min:10,max:80,p:{soft:25,std:40,tight:55}},
-  {id:'capacity',icon:'🧭',level:'warn',title:'Chỉ tiêu vượt năng lực ước tính',pre:'Báo khi số khách cần liên hệ mỗi ngày bằng',post:'% mức tối đa bạn đặt, trở lên',step:5,min:50,max:200,p:{soft:120,std:100,tight:85}},
-  {id:'no_entry',icon:'📝',level:'info',title:'Tuần đã qua chưa có số liệu',pre:'Nhắc nhẹ khi tuần đã kết thúc quá',post:'ngày mà chưa nhập số liệu',step:1,min:1,max:7,p:{soft:4,std:2,tight:1}}
+  {id:'plan_heavy',level:'warn',title:'Tuần kế hoạch quá nặng',pre:'Báo khi một tuần cần S.I mỗi ngày bằng',post:'% mức trung bình của tháng trở lên',step:5,min:100,max:300,p:{soft:150,std:130,tight:115}},
+  {id:'last_week',level:'warn',title:'Nguy cơ dồn cuối tháng',pre:'Báo khi tuần cuối chiếm',post:'% chỉ tiêu tháng trở lên',step:5,min:10,max:80,p:{soft:35,std:30,tight:25}},
+  {id:'act_low',level:'bad',title:'Làm ít hơn kế hoạch',pre:'Báo khi số khách đã liên hệ trong tuần dưới',post:'% kế hoạch tuần',step:5,min:20,max:100,p:{soft:60,std:70,tight:80}},
+  {id:'si_low',level:'bad',title:'S.I tuần thấp',pre:'Báo khi S.I đã chốt trong tuần dưới',post:'% kế hoạch tuần',step:5,min:20,max:100,p:{soft:60,std:70,tight:80}},
+  {id:'mid_week',level:'warn',title:'Giữa tuần đang chậm',pre:'Báo khi S.I chốt được thấp hơn tiến độ ngày làm việc quá',post:'điểm phần trăm',step:5,min:5,max:50,p:{soft:30,std:20,tight:15}},
+  {id:'cum_lag',level:'warn',title:'S.I tích lũy tụt mốc',pre:'Báo khi S.I tích lũy dưới',post:'% mốc kế hoạch cùng kỳ',step:5,min:50,max:100,p:{soft:75,std:85,tight:90}},
+  {id:'group_low',level:'warn',title:'Một nhóm hàng bị tụt',pre:'Báo khi bình nước nóng hoặc gia dụng dưới',post:'% mốc kế hoạch của nhóm đó',step:5,min:30,max:100,p:{soft:60,std:70,tight:80}},
+  {id:'month_pace',level:'bad',title:'Đã qua 75% tháng mà chưa đủ số',pre:'Báo khi S.I tích lũy dưới',post:'% chỉ tiêu tháng (từ khi qua 75% ngày làm việc)',step:5,min:30,max:95,p:{soft:50,std:60,tight:70}},
+  {id:'forecast',level:'warn',title:'Dự báo khó đạt chỉ tiêu',pre:'Báo khi khả năng đạt chỉ tiêu tháng (theo dự báo) dưới',post:'%',step:5,min:10,max:80,p:{soft:25,std:40,tight:55}},
+  {id:'capacity',level:'warn',title:'Chỉ tiêu vượt năng lực ước tính',pre:'Báo khi số khách cần liên hệ mỗi ngày bằng',post:'% mức tối đa bạn đặt, trở lên',step:5,min:50,max:200,p:{soft:120,std:100,tight:85}},
+  {id:'no_entry',level:'info',title:'Tuần đã qua chưa có số liệu',pre:'Nhắc nhẹ khi tuần đã kết thúc quá',post:'ngày mà chưa nhập số liệu',step:1,min:1,max:7,p:{soft:4,std:2,tight:1}}
 ];
 const CATS=[
   {id:'doi',name:'Bếp từ đôi',u:'bếp đôi',col:'#EE5A24'},
@@ -302,7 +321,7 @@ const CATS=[
 ];
 function defaultCats(){return{doi:{on:true,w:40,p:14.4},don:{on:true,w:20,p:2.0},com:{on:true,w:25,p:1.8},noi:{on:true,w:15,p:2.8},chien:{on:false,w:10,p:0},xay:{on:false,w:10,p:0},ep:{on:false,w:10,p:0},mui:{on:false,w:10,p:0}};}
 const DISC_TXT='Chỉ mang tính tham khảo: số liệu, dự báo và cảnh báo được tính từ các giả định và số bạn tự nhập, không phải cam kết hay chỉ tiêu chính thức.';
-const DISC='<div class="disc"><span aria-hidden="true">⚠️</span><span>'+DISC_TXT+'</span></div>';
+const DISC='<div class="disc"><span aria-hidden="true">'+ic('warnTri',16)+'</span><span>'+DISC_TXT+'</span></div>';
 
 /* ---------- Nhận xét AI (Groq) ---------- */
 const GROQ_MODEL='llama-3.3-70b-versatile';
@@ -359,7 +378,7 @@ function aiCard(weeks){
   else if(aiState.error)body='<div class="note" style="color:var(--bad)">'+aiState.error+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Thử lại</button></div>';
   else if(aiState.text)body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiState.text+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Hỏi lại</button></div>';
   else body='<div class="small muted">Dựa trên dự báo, tốc độ hiện tại và các cảnh báo đang có để đưa ra nhận xét và đề xuất cụ thể.</div><div style="margin-top:10px"><button class="btn sm" data-act="ai">Xin nhận xét từ AI</button></div>';
-  return '<div class="card"><h2>🤖 Nhận xét từ AI</h2>'+body+'</div>';
+  return '<div class="card"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2>'+body+'</div>';
 }
 const pad=n=>String(n).padStart(2,'0');
 const fmt=(x,d=0)=>Number(x).toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -565,14 +584,14 @@ function rangeChart(total,known,lo,mu,hi){
 }
 function forecastCard(weeks){
   const fc=forecast(weeks);if(!fc)return '';
-  if(fc.noData)return '<div class="card"><h2>🔮 Dự báo chốt tháng</h2><div class="note">Nhập số tự soát của tuần đầu tiên, công cụ sẽ bắt đầu dự báo. Càng nhiều tuần có số, dự báo càng sát.</div>'+DISC+'</div>';
+  if(fc.noData)return '<div class="card"><h2>'+ic('trend',18)+' Dự báo chốt tháng</h2><div class="note">Nhập số tự soát của tuần đầu tiên, công cụ sẽ bắt đầu dự báo. Càng nhiều tuần có số, dự báo càng sát.</div>'+DISC+'</div>';
   const pc=Math.round(fc.P*100),cls=pc>=70?'ok':pc>=40?'warn':'bad';
   const lines=[];
   lines.push('Tốc độ hiện tại ≈ <b>'+Math.round(fc.rho*100)+'%</b> so với kế hoạch (độ tin cậy <b>'+fc.conf+'</b>, dựa trên '+fc.dObs+' ngày làm việc có số).');
   if(fc.remDays>0)lines.push('Để đạt chỉ tiêu cần <b>≈ '+fmt(fc.reqPerDay,1)+' tr/ngày</b> trong '+fc.remDays+' ngày còn lại (kế hoạch ban đầu: '+fmt(fc.planPerDay,1)+' tr/ngày).');
   if(fc.extra>0.05)lines.push('Để bù phần thiếu bạn cần liên hệ thêm <b>≈ '+fmt(fc.extra,1)+' khách mỗi ngày</b>.');
   if(fc.lr.n>0)lines.push('Mỗi khách bạn liên hệ mang về <b>≈ '+fmt(fc.lr.obs,1)+' tr</b> (giả định ban đầu '+fmt(fc.lr.prior,1)+' tr). Công cụ dùng số đã hiệu chỉnh '+fmt(fc.lr.yield,1)+' tr.');
-  return '<div class="card"><h2>🔮 Dự báo chốt tháng</h2>'+
+  return '<div class="card"><h2>'+ic('trend',18)+' Dự báo chốt tháng</h2>'+
     '<div class="row wrapx"><div><span style="font-size:30px;font-weight:800;letter-spacing:-.02em">≈ '+fmt(fc.mu)+' tr</span><div class="small muted">khoảng '+fmt(fc.lo)+' đến '+fmt(fc.hi)+' tr (80% khả năng)</div></div>'+
     '<div style="text-align:right"><span class="badge '+cls+'" style="font-size:14px">Khả năng đạt chỉ tiêu '+pc+'%</span></div></div>'+
     rangeChart(fc.total,fc.known,fc.lo,fc.mu,fc.hi)+
@@ -605,7 +624,7 @@ function catsCard(tg){
     }
     return '<div class="rule"><div class="row"><b><i class="sw" style="background:'+c.col+'"></i>'+c.name+'</b><button class="sw2" role="switch" aria-checked="'+s.on+'" aria-label="Bật tắt '+c.name+'" data-act="catTog" data-c="'+c.id+'"></button></div>'+d+'</div>';
   }).join('');
-  return '<div class="card"><h2>🍳 Cơ cấu gia dụng bếp</h2><div class="small muted">Bật các ngành bạn bán và đặt tỷ trọng tương đối (công cụ tự quy về 100%). Giá niêm yết đã điền sẵn theo livotec.com cho bếp từ, nồi cơm điện và bộ nồi chảo. Các ngành còn lại bạn nhập giá.</div>'+
+  return '<div class="card"><h2>'+ic('plug',18)+' Cơ cấu gia dụng bếp</h2><div class="small muted">Bật các ngành bạn bán và đặt tỷ trọng tương đối (công cụ tự quy về 100%). Giá niêm yết đã điền sẵn theo livotec.com cho bếp từ, nồi cơm điện và bộ nồi chảo. Các ngành còn lại bạn nhập giá.</div>'+
     '<div style="margin-top:10px">'+catBar()+'</div>'+rows+
     '<div class="small muted" style="margin-top:8px">Tỷ trọng ban đầu là điểm khởi đầu giả định, bạn sửa theo cơ cấu bán thực tế của mình.</div></div>';
 }
@@ -615,7 +634,7 @@ function feasCard(weeks){
   const st=f.ratio<=0.7?['ok','Thoải mái']:f.ratio<=1?['warn','Sát nhưng làm được']:['bad','Vượt năng lực ước tính'];
   const fill=Math.min(f.ratio,1.5)/1.5*100;
   const sugg=f.ratio>1?' Với mức tối đa '+f.mc+' khách/ngày, chỉ tiêu hợp lý hơn khoảng <b>'+fmt(f.cap)+' triệu</b>. Bạn có thể trao đổi lại chỉ tiêu hoặc tìm cách tăng giá trị mỗi đơn.':'';
-  return '<div class="card"><h2>🧭 Kiểm tra khả thi</h2><div class="small muted">So chỉ tiêu với số khách bạn làm được mỗi ngày làm việc.</div>'+
+  return '<div class="card"><h2>'+ic('compass',18)+' Kiểm tra khả thi</h2><div class="small muted">So chỉ tiêu với số khách bạn làm được mỗi ngày làm việc.</div>'+
     '<div class="field"><span class="nm small">Tối đa bạn liên hệ được mỗi ngày</span><input class="num sm" type="number" inputmode="numeric" min="1" data-f="maxC" value="'+S.maxC+'"><span class="unit">khách</span></div>'+
     '<div class="small row"><span>Cần ≈ <b>'+fmt(f.perDay,1)+'</b> khách/ngày</span><b>'+Math.round(f.ratio*100)+'% mức tối đa</b></div>'+
     '<div class="gauge" role="img" aria-label="Mức sử dụng năng lực '+Math.round(f.ratio*100)+'%"><i style="width:46.7%;background:var(--ok-soft)"></i><i style="width:20%;background:var(--warn-soft)"></i><i style="width:33.3%;background:var(--bad-soft)"></i><span class="mk" style="left:'+fill+'%"></span></div>'+
@@ -627,11 +646,11 @@ function feasCard(weeks){
     '<div class="chips">'+[['tp','Thành phố lớn'],['tinh','Tỉnh đồng bằng'],['rong','Địa bàn rộng, đại lý thưa']].map(x=>'<button class="chip" data-act="area" data-v="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+DISC+'</div>';
 }
 
-const AICON={bad:'🚨',warn:'⚠️',info:'ℹ️'};
+const AICON={bad:ic('alertOct',22),warn:ic('warnTri',22),info:ic('infoCirc',22)};
 function alertItem(a){return '<div class="al '+a.level+'"><div class="ic">'+AICON[a.level]+'</div><div class="bd"><b>'+a.title+'</b><div class="small">'+a.text+'</div><div class="small muted">'+a.act+'</div></div><button class="link" data-act="dismiss" data-k="'+a.k+'">Ẩn</button></div>';}
 function banner(weeks){
   const act=evalAlerts(weeks).filter(a=>!a.dismissed);if(!act.length)return '';
-  return '<div class="card"><div class="row"><h2>🔔 Cảnh báo ('+act.length+')</h2><button class="btn ghost sm" data-act="tab" data-v="alerts">Xem tất cả</button></div>'+act.slice(0,2).map(alertItem).join('')+DISC+'</div>';
+  return '<div class="card"><div class="row"><h2>'+ic('bell',18)+' Cảnh báo ('+act.length+')</h2><button class="btn ghost sm" data-act="tab" data-v="alerts">Xem tất cả</button></div>'+act.slice(0,2).map(alertItem).join('')+DISC+'</div>';
 }
 
 /* ---------- Thành phần trực quan ---------- */
@@ -662,7 +681,7 @@ function barChart(weeks){
       if(hg>16)s+='<text x="'+cx+'" y="'+(y0-hb-hg/2+2)+'" text-anchor="middle" font-size="12" font-weight="700" style="fill:var(--on)">'+w.t.gd+'</text>';}
     const ty=y0-hb-hg-(hg>0&&hb>0?8:6);
     s+='<text x="'+cx+'" y="'+ty+'" text-anchor="middle" font-size="14" font-weight="800" style="fill:var(--ink)">'+w.tt+'</text>';
-    if(w.hard)s+='<text x="'+cx+'" y="'+(ty-18)+'" text-anchor="middle" font-size="15">🔥</text>';
+    if(w.hard)s+='<polygon points="'+cx+','+(ty-24)+' '+(cx-5)+','+(ty-15)+' '+(cx+5)+','+(ty-15)+'" style="fill:var(--gd)"/>';
     s+='<text x="'+cx+'" y="'+(y0+17)+'" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--ink)">T'+(w.i+1)+'</text>';
     s+='<text x="'+cx+'" y="'+(y0+33)+'" text-anchor="middle" font-size="11" style="fill:var(--muted)">'+w.work+' ngày</text>';
   });
@@ -697,16 +716,10 @@ const monthName=m=>'Tháng '+m.split('-')[1]+'/'+m.split('-')[0];
 const $app=document.getElementById('app'),$tabs=document.getElementById('tabs');
 function renderTabs(){
   const n=evalAlerts(analyze()).filter(a=>!a.dismissed&&a.level!=='info').length;
-  const ICONS={
-    setup:'<svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
-    plan:'<svg viewBox="0 0 24 24"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>',
-    check:'<svg viewBox="0 0 24 24"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>',
-    alerts:'<svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>'
-  };
-  $tabs.innerHTML=[['setup','Thiết lập'],['plan','Kế hoạch'],['check','Tự soát'],['alerts','Cảnh báo']].map(x=>'<button role="tab" data-act="tab" data-v="'+x[0]+'" aria-selected="'+(S.tab===x[0])+'"><span class="ti">'+ICONS[x[0]]+'</span><span class="tl">'+x[1]+'</span>'+(x[0]==='alerts'&&n?'<span class="cnt">'+n+'</span>':'')+'</button>').join('');
+  $tabs.innerHTML=[['setup','Thiết lập'],['plan','Kế hoạch'],['check','Tự soát'],['alerts','Cảnh báo']].map(x=>'<button role="tab" data-act="tab" data-v="'+x[0]+'" aria-selected="'+(S.tab===x[0])+'"><span class="ti">'+ic(x[0],21)+'</span><span class="tl">'+x[1]+'</span>'+(x[0]==='alerts'&&n?'<span class="cnt">'+n+'</span>':'')+'</button>').join('');
   document.getElementById('title').textContent=monthName(S.month);
 }
-function emptyCard(msg){return '<div class="card empty"><div style="font-size:42px">🎯</div><h2>Chưa có chỉ tiêu</h2><p class="muted">'+msg+'</p><button class="btn" data-act="tab" data-v="setup">Nhập chỉ tiêu</button></div>';}
+function emptyCard(msg){return '<div class="card empty"><div style="color:var(--brand-deep)">'+ic('target',42)+'</div><h2>Chưa có chỉ tiêu</h2><p class="muted">'+msg+'</p><button class="btn" data-act="tab" data-v="setup">Nhập chỉ tiêu</button></div>';}
 function heat(weeks,withVal){
   const maxD=Math.max(1,...weeks.map(w=>w.dayT)),tk=todayKey();
   return '<div class="cal">'+['T2','T3','T4','T5','T6','T7','CN'].map(x=>'<div class="h">'+x+'</div>').join('')+
@@ -730,7 +743,7 @@ function renderSetup(){
     '<div class="leg"><div class="li"><span><i class="sw bn"></i>Bình nước nóng</span><b>'+fmt(tb)+' tr</b></div><div class="small muted" style="margin:-2px 0 4px 20px">'+unitText('bn',tb)+'</div>'+
     '<div class="li"><span><i class="sw gd"></i>Gia dụng</span><b>'+fmt(tg)+' tr</b></div><div class="small muted" style="margin:-2px 0 4px 20px">'+unitText('gd',tg)+'</div>'+
     '<div class="li"><span>'+workDays+' ngày làm việc</span><b>≈ '+fmt(total/Math.max(1,workDays),1)+' tr/ngày</b></div></div></div>':
-    '<div class="empty" style="padding:10px"><div style="font-size:40px">🎯</div><div class="muted">Nhập chỉ tiêu bên dưới, biểu đồ sẽ hiện ra ngay.</div></div>';
+    '<div class="empty" style="padding:10px"><div style="color:var(--brand-deep)">'+ic('target',40)+'</div><div class="muted">Nhập chỉ tiêu bên dưới, biểu đồ sẽ hiện ra ngay.</div></div>';
   const cal='<div class="cal">'+['T2','T3','T4','T5','T6','T7','CN'].map(x=>'<div class="h">'+x+'</div>').join('')+
     weeks.map(w=>{
       let h='';for(let i=0;i<w.days[0].dow;i++)h+='<i></i>';
@@ -742,7 +755,7 @@ function renderSetup(){
   '<div class="card herocard">'+hero+'</div>'+
   '<div class="card"><h2>Chỉ tiêu S.I tháng này</h2>'+
     '<div class="field"><span class="nm">Tháng</span><select data-f="month" aria-label="Chọn tháng">'+opts+'</select></div>'+
-    PRODUCTS.map(p=>'<div class="field"><span class="nm">'+p.icon+' '+p.name+'</span><input class="num" type="number" inputmode="numeric" min="0" data-f="target" data-p="'+p.id+'" value="'+(S.target[p.id]||'')+'" placeholder="0" aria-label="Chỉ tiêu S.I '+p.name+'"><span class="unit">tr</span></div>').join('')+
+    PRODUCTS.map(p=>'<div class="field"><span class="nm">'+ic(p.icon)+' '+p.name+'</span><input class="num" type="number" inputmode="numeric" min="0" data-f="target" data-p="'+p.id+'" value="'+(S.target[p.id]||'')+'" placeholder="0" aria-label="Chỉ tiêu S.I '+p.name+'"><span class="unit">tr</span></div>').join('')+
     '<div class="small muted">Tính bằng triệu đồng. Ví dụ 250 cho bình nước nóng, 100 cho gia dụng.</div></div>'+
   feasCard(weeks)+
   catsCard(tg)+
@@ -759,7 +772,7 @@ function renderSetup(){
     '<div class="field"><span class="nm small">Giá trị trung bình mỗi đơn</span><input class="num sm" type="number" inputmode="numeric" min="1" data-f="aov" value="'+S.aov+'"><span class="unit">tr</span></div>'+
     '<div class="field"><span class="nm small">Tỷ lệ khách liên hệ chốt được đơn</span><input class="num sm" type="number" inputmode="numeric" min="5" max="100" data-f="rate" value="'+S.rate+'"><span class="unit">%</span></div>'+
   '</details></div>'+
-  '<div class="card"><h2>🤖 Nhận xét AI (tuỳ chọn)</h2><div class="small muted">Dán API key Groq của riêng bạn để dùng tính năng nhận xét AI ở tab Tự soát. Key chỉ lưu trên thiết bị này, không gửi lên đâu khác ngoài Groq.</div>'+
+  '<div class="card"><h2>'+ic('sparkles',18)+' Nhận xét AI (tuỳ chọn)</h2><div class="small muted">Dán API key Groq của riêng bạn để dùng tính năng nhận xét AI ở tab Tự soát. Key chỉ lưu trên thiết bị này, không gửi lên đâu khác ngoài Groq.</div>'+
     '<div class="field" style="margin-top:8px"><input class="num" style="width:100%;text-align:left;font-size:14px;font-weight:600" type="password" autocomplete="off" spellcheck="false" placeholder="gsk_..." data-f="groqKey" value="'+(S.groqKey||'')+'"></div>'+
     '<div class="small muted">Lấy key miễn phí tại <b>console.groq.com/keys</b>.</div></div>'+
   '<button class="btn" data-act="tab" data-v="plan">Xem kế hoạch của tôi</button>'+
@@ -776,9 +789,9 @@ function renderPlan(){
     if(d&&!d.off&&w.work>0){
       const dn=Math.round(w.t.bn/w.work),dg=Math.round(w.t.gd/w.work);
       todayCard='<div class="todaycard"><div class="small" style="opacity:.85">Hôm nay · '+DOW[d.dow]+' '+pad(d.d)+'/'+S.month.split('-')[1]+' · Tuần '+(w.i+1)+'</div>'+
-        '<div class="cols"><div class="c"><div class="lab">💧 Bình nước nóng</div><div class="big">'+dn+' tr</div><div class="lab">'+unitText('bn',dn)+'</div></div>'+
-        '<div class="c"><div class="lab">🍳 Gia dụng</div><div class="big">'+dg+' tr</div><div class="lab">'+unitText('gd',dg)+'</div></div>'+
-        '<div class="c"><div class="lab">👥 Khách cần liên hệ</div><div class="big">≈ '+Math.max(1,Math.round(w.perDay))+'</div><div class="lab">để chốt ≈ '+fmt(w.o/w.work,1)+' đơn</div></div></div></div>';
+        '<div class="cols"><div class="c"><div class="lab">'+ic('droplet',16)+' Bình nước nóng</div><div class="big">'+dn+' tr</div><div class="lab">'+unitText('bn',dn)+'</div></div>'+
+        '<div class="c"><div class="lab">'+ic('plug',16)+' Gia dụng</div><div class="big">'+dg+' tr</div><div class="lab">'+unitText('gd',dg)+'</div></div>'+
+        '<div class="c"><div class="lab">'+ic('users',16)+' Khách cần liên hệ</div><div class="big">≈ '+Math.max(1,Math.round(w.perDay))+'</div><div class="lab">để chốt ≈ '+fmt(w.o/w.work,1)+' đơn</div></div></div></div>';
     }}
   const lastW=[...weeks].reverse().find(w=>w.work>0),share=lastW&&total?Math.round(lastW.tt/total*100):0;
   const planSum=weeks.reduce((a,w)=>a+w.tt,0),hasActual=Object.keys(S.actual).length>0,mismatch=!hasActual&&planSum!==total;
@@ -791,11 +804,11 @@ function renderPlan(){
   const cards=weeks.map(w=>{
     if(w.work===0)return '<div class="card"><div class="row"><b>Tuần '+(w.i+1)+' · '+w.label+'</b><span class="badge">Không có ngày làm việc</span></div></div>';
     const sel=riskSel(w);
-    const tl=PRODUCTS.map(p=>'<div class="tline"><span class="nm">'+p.icon+' '+p.name+'<div class="small muted" style="font-weight:500">'+unitText(p.id,w.t[p.id])+'</div></span>'+stepper('data-act="wt" data-p="'+p.id+'" data-w="'+w.i+'"',w.t[p.id],5)+'</div>').join('');
-    const chips='<div class="chips">'+RISKS.map(r=>'<button class="chip" data-act="risk" data-w="'+w.i+'" data-r="'+r.id+'" aria-pressed="'+sel.includes(r.id)+'">'+r.icon+' '+r.name+'</button>').join('')+'</div>';
+    const tl=PRODUCTS.map(p=>'<div class="tline"><span class="nm">'+ic(p.icon)+' '+p.name+'<div class="small muted" style="font-weight:500">'+unitText(p.id,w.t[p.id])+'</div></span>'+stepper('data-act="wt" data-p="'+p.id+'" data-w="'+w.i+'"',w.t[p.id],5)+'</div>').join('');
+    const chips='<div class="chips">'+RISKS.map(r=>'<button class="chip" data-act="risk" data-w="'+w.i+'" data-r="'+r.id+'" aria-pressed="'+sel.includes(r.id)+'">'+r.name+'</button>').join('')+'</div>';
     const backups=sel.map(id=>{const r=RISKS.find(x=>x.id===id);return '<div class="backup"><b>'+r.name+':</b> '+r.backup(w.vt)+'</div>';}).join('');
     return '<div class="card'+(w.hard?' hard':'')+'">'+
-      '<div class="row wrapx"><b>Tuần '+(w.i+1)+' · '+w.label+'</b><span>'+(w.hard?'<span class="badge hard">🔥 Tuần khó nhất</span> ':'')+'<span class="badge">'+w.work+' ngày làm việc</span></span></div>'+
+      '<div class="row wrapx"><b>Tuần '+(w.i+1)+' · '+w.label+'</b><span>'+(w.hard?'<span class="badge hard">Tuần khó nhất</span> ':'')+'<span class="badge">'+w.work+' ngày làm việc</span></span></div>'+
       '<div class="hbar" style="width:'+Math.max(18,w.tt/maxT*100)+'%"><i class="bn" style="flex:'+Math.max(w.t.bn,.01)+'">'+(w.t.bn?w.t.bn:'')+'</i><i class="gd" style="flex:'+Math.max(w.t.gd,.01)+'">'+(w.t.gd?w.t.gd:'')+'</i></div>'+
       '<div class="small muted">Tổng <b>'+w.tt+' tr</b> · ≈ '+fmt(w.dayT,1)+' tr/ngày</div>'+
       tl+
@@ -838,7 +851,7 @@ function renderCheck(){
     '<div class="li"><span>So với mốc</span>'+verdict+'</div></div></div>';
 
   const weekChips='<div class="wk">'+weeks.map(x=>{const lv=weekLevel(x);return '<button class="chip" data-act="cw" data-w="'+x.i+'" aria-pressed="'+(x.i===k)+'">Tuần '+(x.i+1)+' · '+x.label+'<span class="sd'+(lv?' '+lv:'')+'"></span></button>';}).join('')+'</div>';
-  const fields=[['v','👥 Số khách đã liên hệ','',w.vt,1],['bn','💧 Đã chốt · Bình nước nóng',' (triệu)',w.t.bn,5],['gd','🍳 Đã chốt · Gia dụng',' (triệu)',w.t.gd,5]]
+  const fields=[['v',''+ic('users',16)+' Số khách đã liên hệ','',w.vt,1],['bn',''+ic('droplet',16)+' Đã chốt · Bình nước nóng',' (triệu)',w.t.bn,5],['gd',''+ic('plug',16)+' Đã chốt · Gia dụng',' (triệu)',w.t.gd,5]]
     .map(f=>'<div class="tline"><span class="nm">'+f[1]+f[2]+'<div class="small muted" style="font-weight:500">Kế hoạch: '+f[3]+'</div></span>'+stepper('data-act="ck" data-f="'+f[0]+'" data-w="'+w.key+'"',a[f[0]]||0,f[4])+'</div>').join('');
 
   let result='';
@@ -874,12 +887,12 @@ function renderAlertsTab(){
   const weeks=analyze(),total=(+S.target.bn||0)+(+S.target.gd||0);
   if(!total){$app.innerHTML=emptyCard('Nhập chỉ tiêu tháng trước, công cụ mới có gì để theo dõi giúp bạn.');return;}
   const all=evalAlerts(weeks),act=all.filter(a=>!a.dismissed),hid=all.filter(a=>a.dismissed);
-  const list=act.length?act.map(alertItem).join(''):'<div class="empty" style="padding:14px"><div style="font-size:38px">✅</div><b>Chưa có cảnh báo nào</b><div class="small muted">Kế hoạch và số liệu của bạn đang trong ngưỡng bạn đặt.</div></div>';
+  const list=act.length?act.map(alertItem).join(''):'<div class="empty" style="padding:14px"><div style="color:var(--ok)">'+ic('check',38)+'</div><b>Chưa có cảnh báo nào</b><div class="small muted">Kế hoạch và số liệu của bạn đang trong ngưỡng bạn đặt.</div></div>';
   const pr=[['soft','Thoải mái','ngưỡng rộng'],['std','Chuẩn','khuyến nghị'],['tight','Sát sao','báo sớm hơn']];
-  const rules=RULES.map(r=>{const c=S.rules[r.id];return '<div class="rule'+(c.on?'':' off')+'"><div class="row"><b>'+r.icon+' '+r.title+'</b><button class="sw2" role="switch" aria-checked="'+c.on+'" aria-label="Bật tắt: '+r.title+'" data-act="rule" data-r="'+r.id+'"></button></div>'+
+  const rules=RULES.map(r=>{const c=S.rules[r.id];return '<div class="rule'+(c.on?'':' off')+'"><div class="row"><b>'+r.title+'</b><button class="sw2" role="switch" aria-checked="'+c.on+'" aria-label="Bật tắt: '+r.title+'" data-act="rule" data-r="'+r.id+'"></button></div>'+
     '<div class="rb"><div class="small muted" style="margin:6px 0">'+r.pre+'</div><div class="row" style="justify-content:flex-start;gap:10px">'+stepper('data-act="rv" data-r="'+r.id+'"',c.v,r.step)+'<span class="small">'+r.post+'</span></div></div></div>';}).join('');
   $app.innerHTML=
-  '<div class="card"><h2>🔔 Cảnh báo đang có</h2><div class="small muted">Cảnh báo chỉ hiện cho bạn, không gửi cho ai. Bạn có thể ẩn cảnh báo nào không cần.</div>'+DISC+list+
+  '<div class="card"><h2>'+ic('bell',18)+' Cảnh báo đang có</h2><div class="small muted">Cảnh báo chỉ hiện cho bạn, không gửi cho ai. Bạn có thể ẩn cảnh báo nào không cần.</div>'+DISC+list+
     (hid.length?'<details><summary class="small">Đã ẩn ('+hid.length+')</summary><button class="btn ghost sm" data-act="undismiss">Hiện lại tất cả</button></details>':'')+'</div>'+
   '<div class="card"><h2>Mức độ nhạy</h2><div class="small muted">Chọn nhanh bộ ngưỡng, sau đó chỉnh từng quy tắc bên dưới nếu muốn.</div><div class="preset">'+
     pr.map(x=>'<button data-act="preset" data-v="'+x[0]+'" aria-pressed="'+(S.preset===x[0])+'">'+x[1]+'<small>'+x[2]+'</small></button>').join('')+'</div></div>'+
