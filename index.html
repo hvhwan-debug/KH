@@ -470,6 +470,19 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 .szchip.high{background:var(--ok-soft);color:var(--ok);border-color:transparent}
 .szchip.mid{background:var(--warn-soft);color:var(--warn);border-color:transparent}
 .szchip.low{background:var(--bg);color:var(--muted);border-color:var(--line)}
+.stattiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+@media (min-width:560px){.stattiles{grid-template-columns:repeat(4,1fr)}}
+.sttile{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow)}
+.sttile .stic{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.sttile b{display:block;font-size:21px;font-weight:800;font-variant-numeric:tabular-nums;padding-right:28px}
+.sttile span{font-size:11.5px;color:var(--muted);font-weight:600}
+.sttile.c-brand .stic{background:var(--brand-soft);color:var(--brand-deep)}
+.sttile.c-brand b{color:var(--brand-deep)}
+.sttile.c-ok .stic{background:var(--ok-soft);color:var(--ok)}
+.sttile.c-ok b{color:var(--ok)}
+.sttile.c-bad .stic{background:var(--bad-soft);color:var(--bad)}
+.sttile.c-bad b{color:var(--bad)}
+.sttile.c-muted .stic{background:var(--bg);color:var(--muted)}
 .fxw .small+.small{margin-top:4px}
 .fxs::after{margin-top:6px}
 
@@ -1956,6 +1969,19 @@ function renderSetup(){
 }
 
 /* ---------- Tab Kế hoạch ---------- */
+function statTiles(weeks){
+  const total=(+S.target.bn||0)+(+S.target.gd||0);if(!total)return '';
+  let ach=0;weeks.forEach(w=>{const a=S.actual[w.key];if(a)ach+=(a.bn||0)+(a.gd||0);});
+  const al=evalAlerts(weeks).filter(a=>!a.dismissed&&a.level!=='info').length;
+  const tk=todayKey();let remDays=0;weeks.forEach(w=>w.days.forEach(d=>{if(!d.off&&d.date>=tk)remDays++;}));
+  const tile=(cls,icon,val,lab)=>'<div class="sttile c-'+cls+'"><div class="stic">'+ic(icon,14)+'</div><b>'+val+'</b><span>'+lab+'</span></div>';
+  return '<div class="stattiles">'+
+    tile('brand','target',fmt(total)+' tr','Chỉ tiêu tháng')+
+    tile('ok','trend',fmt(ach)+' tr','Đã đạt')+
+    tile(al>0?'bad':'ok','bell',al,'Cảnh báo')+
+    tile('muted','plan',remDays,'Ngày còn lại')+
+  '</div>';
+}
 function renderPlan(){
   const weeks=analyze();apCache=areaPlan(weeks);const tb=+S.target.bn||0,tg=+S.target.gd||0,total=tb+tg;
   if(!total){$app.innerHTML=emptyCard('Nhập chỉ tiêu tháng ở bước Thiết lập, kế hoạch sẽ tự hiện ra.');return;}
@@ -2010,7 +2036,7 @@ function renderPlan(){
     '<div class="h3">Kế hoạch tích lũy</div>'+lineChart(weeks,[{pts:evenPts,color:'var(--muted)',dash:true,w:2},{pts:planPts,color:'var(--ink)',dots:true,w:3}],total)+
     '<div class="legend"><span style="--c:var(--ink)">Kế hoạch</span><span class="dash" style="--c:var(--muted)">Chia đều theo ngày</span></div>'+
     '<div class="h3">Mục tiêu từng ngày (triệu)</div>'+heat(weeks));
-  $app.innerHTML=aiPanel('plan',weeks)+overview+banner(weeks)+todayCard+factorsCard(weeks,'compact')+
+  $app.innerHTML=aiPanel('plan',weeks)+statTiles(weeks)+overview+banner(weeks)+todayCard+factorsCard(weeks,'compact')+
   (mismatch?'<div class="note">Tổng các tuần là <b>'+planSum+'</b> tr, chỉ tiêu tháng là <b>'+total+'</b> tr. <button class="link" data-act="autoplan">Đưa về gợi ý tự động</button></div>':'')+
   modeLine+weekCards+charts+
   '<div class="row" style="margin:6px 0 12px"><button class="btn ghost sm" data-act="autoplan">Đưa về gợi ý tự động</button><button class="btn sm" data-act="copy">Sao chép kế hoạch</button></div>'+
