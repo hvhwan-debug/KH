@@ -349,6 +349,9 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 }
 .chd .l{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 10px;min-width:0}
 .chd .l b{white-space:nowrap}
+
+.disc-line{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);font-size:11.5px;line-height:1.45;color:var(--muted)}
+@media (max-width:600px){.disc-line{margin-top:8px;padding-top:6px;font-size:11px}}
 </style>
 </head>
 <body>
@@ -367,7 +370,7 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
   <nav class="tabs" id="tabs" role="tablist"></nav>
   <main id="app"></main>
 </div>
-<footer class="foot"><img class="logo sm" id="logo2" alt="Livotec"><div>Công cụ lập kế hoạch dành cho Sales Rep Livotec</div><div class="foot-disc">Dữ liệu, dự báo và cảnh báo trong công cụ chỉ mang tính tham khảo, tính từ các giả định và số bạn tự nhập. Không phải cam kết hay chỉ tiêu chính thức.</div></footer>
+<footer class="foot"><img class="logo sm" id="logo2" alt="Livotec"><div>Công cụ lập kế hoạch dành cho Sales Rep Livotec</div><div class="foot-disc">Lưu ý: số liệu, dự báo và cảnh báo chỉ mang tính tham khảo, không phải cam kết hay chỉ tiêu chính thức.</div></footer>
 <div id="toast" class="toast" hidden></div>
 
 <script>
@@ -431,14 +434,14 @@ const CATS=[
   {id:'mui',name:'Máy hút mùi',u:'máy hút mùi',col:'#7A8B99'}
 ];
 function defaultCats(){return{doi:{on:true,w:40,p:14.4},don:{on:true,w:20,p:2.0},com:{on:true,w:25,p:1.8},noi:{on:true,w:15,p:2.8},chien:{on:false,w:10,p:0},xay:{on:false,w:10,p:0},ep:{on:false,w:10,p:0},mui:{on:false,w:10,p:0}};}
-const DISC_TXT='Chỉ mang tính tham khảo: số liệu, dự báo và cảnh báo được tính từ các giả định và số bạn tự nhập, không phải cam kết hay chỉ tiêu chính thức.';
-const DISC='<div class="disc"><span aria-hidden="true">'+ic('warnTri',16)+'</span><span>'+DISC_TXT+'</span></div>';
+const DISC_TXT='Lưu ý: số liệu, dự báo và cảnh báo chỉ mang tính tham khảo, tính từ các giả định và số bạn tự nhập; không phải cam kết hay chỉ tiêu chính thức.';
+const DISC='<div class="disc-line">'+DISC_TXT+'</div>';
 
 /* ---------- Nhận xét AI (Groq) ---------- */
 const GROQ_MODEL='openai/gpt-oss-120b'; // llama-3.3-70b-versatile đã bị Groq ngừng từ 16/08/2026
 let aiState={loading:false,text:'',error:''};
 let aiLastKey=null,aiTimer=null;
-const AI_DISCLAIMER='Nhận xét và đề xuất này do AI tạo tự động dựa trên số liệu bạn nhập, có thể không chính xác hoàn toàn — hãy đối chiếu với thực tế trước khi quyết định.';
+const AI_DISCLAIMER='Lưu ý: nhận xét do AI tạo tự động từ số liệu bạn nhập, chỉ mang tính tham khảo — hãy đối chiếu thực tế trước khi quyết định.';
 function aiDataKey(){return JSON.stringify({t:S.target,a:S.actual,d:S.daily,m:S.month,p:S.province});}
 function scheduleAI(){
   const key=aiDataKey();
