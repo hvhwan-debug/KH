@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chạy số tháng — Livotec</title>
+<title>Tự chủ doanh số — Livotec</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💧</text></svg>">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
@@ -18,10 +18,10 @@
     --teal: #14B8A6;
     --teal-bright: #2DD4C7;
     --gold: #D7B475;
-    --gold-soft: rgba(215,180,117,.14);
     --ivory: #F3EFE6;
     --muted: #92ABAE;
     --green: #6FCF97;
+    --amber: #E3B155;
     --red: #E8735F;
   }
   *{box-sizing:border-box;}
@@ -33,93 +33,125 @@
     color: var(--ivory);
     font-family:'Inter', -apple-system, system-ui, sans-serif;
     padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
     -webkit-font-smoothing: antialiased;
   }
   .serif{ font-family:'Fraunces', serif; }
-  .num{ font-variant-numeric: tabular-nums; }
 
-  .wrap{ max-width: 620px; margin:0 auto; padding: 28px 20px 70px; }
+  .wrap{ max-width: 620px; margin:0 auto; padding: 22px 18px 100px; }
 
-  .brandbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom: 26px; }
-  .brandbar img{ height: 26px; display:block; }
-  .brandbar .cycle{ font-size:12.5px; color:var(--muted); letter-spacing:.02em; }
+  .brandbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px; }
+  .brandbar img{ height: 24px; display:block; }
+  .brandbar .cycle{ font-size:12px; color:var(--muted); }
 
-  .hero{ text-align:center; margin-bottom: 22px; }
-  .hero h1{ font-family:'Fraunces',serif; font-weight:600; font-size: 30px; margin:0 0 6px; letter-spacing:-0.01em; }
-  .hero p{ font-size:13.5px; color: var(--muted); margin:0; }
+  .hero{ margin-bottom: 18px; }
+  .hero h1{ font-family:'Fraunces',serif; font-weight:600; font-size: 23px; margin:0 0 4px; letter-spacing:-0.01em; }
+  .hero p{ font-size:12.5px; color: var(--muted); margin:0; line-height:1.5; }
 
-  .dial-card{
-    position:relative;
-    background: linear-gradient(180deg, var(--panel-2), var(--panel));
-    border: 1px solid var(--hairline-strong);
-    border-radius: 26px;
-    padding: 32px 22px 26px;
-    display:flex; flex-direction:column; align-items:center;
-    margin-bottom: 18px;
-    box-shadow: 0 30px 60px -30px rgba(0,0,0,.55);
-  }
-  .dial{ position:relative; width:198px; height:198px; }
-  .dial svg{ transform: rotate(-90deg); width:100%; height:100%; }
-  .dial-track{ fill:none; stroke: rgba(255,255,255,.07); stroke-width: 10; }
-  .dial-fill{ fill:none; stroke: var(--gold); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset .6s cubic-bezier(.4,0,.2,1); filter: drop-shadow(0 0 8px rgba(215,180,117,.45)); }
-  .dial-fill.over{ stroke: var(--teal-bright); filter: drop-shadow(0 0 8px rgba(45,212,199,.5)); }
-  .dial-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .dial-pct{ font-family:'Fraunces',serif; font-weight:600; font-size:42px; line-height:1; }
-  .dial-sub{ font-size:11.5px; color:var(--muted); margin-top:6px; letter-spacing:.02em; }
+  .panel{ background: linear-gradient(180deg, var(--panel-2), var(--panel)); border:1px solid var(--hairline); border-radius: 18px; padding: 18px; margin-bottom:14px; }
+  .panel.tight{ padding:14px 16px; }
 
-  .status{ margin-top:18px; padding:10px 18px; border-radius: 999px; font-size:13px; font-weight:600; text-align:center; border:1px solid transparent; }
-  .status.ahead{ background: rgba(111,207,151,.12); color: var(--green); border-color: rgba(111,207,151,.3); }
-  .status.behind{ background: rgba(232,115,95,.12); color: var(--red); border-color: rgba(232,115,95,.3); }
-  .status.flat{ background: rgba(146,171,174,.1); color: var(--muted); border-color: var(--hairline); }
+  h2.section-title{ font-family:'Fraunces',serif; font-size:17px; font-weight:600; margin: 0 0 5px; display:flex; align-items:center; gap:8px; }
+  h2.section-title .glyph{ color: var(--gold); font-size:15px; }
+  .section-note{ font-size:12px; color:var(--muted); margin: 0 0 14px; line-height:1.5; }
 
-  .panel{ background: var(--panel); border:1px solid var(--hairline); border-radius: 18px; padding: 18px; margin-bottom:16px; }
-
-  .grid-inputs{ display:grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; }
-  .field label{ display:block; font-size:11.5px; color:var(--muted); margin-bottom:6px; letter-spacing:.01em; }
-  .field{ border-bottom: 1px solid var(--hairline-strong); padding-bottom:8px; }
-  .field input[type=number]{
-    width:100%; background:transparent; border:none; outline:none; color:var(--ivory);
-    font-family:'Fraunces',serif; font-size:20px; font-weight:600; padding:0;
-  }
+  .field{ border-bottom: 1px solid var(--hairline-strong); padding-bottom:8px; margin-bottom:14px; }
+  .field label{ display:block; font-size:11.5px; color:var(--muted); margin-bottom:6px; }
+  .field input[type=number]{ width:100%; background:transparent; border:none; outline:none; color:var(--ivory); font-family:'Fraunces',serif; font-size:19px; font-weight:600; padding:0; }
   .field .unit{ font-size:11px; color:var(--muted); margin-left:4px; }
-  .checkbox-row{ display:flex; align-items:center; gap:9px; font-size:12.5px; color:var(--muted); margin-top:14px; }
-  .checkbox-row input{ accent-color: var(--teal); width:16px; height:16px; }
+  .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+  .grid4{ display:grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
 
-  .stats{ display:grid; grid-template-columns: repeat(3,1fr); gap:1px; background: var(--hairline); border-radius: 18px; overflow:hidden; margin-bottom:22px; border:1px solid var(--hairline); }
-  .stat{ background: var(--panel); padding: 16px 10px; text-align:center; }
-  .stat .v{ font-family:'Fraunces',serif; font-size:17px; font-weight:600; color: var(--gold); }
-  .stat .l{ font-size:10px; color:var(--muted); margin-top:5px; line-height:1.3; }
+  .presetrow{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .preset-btn{ flex:1; min-width:30%; background: var(--navy); border:1px solid var(--hairline); border-radius:10px; padding:9px 8px; text-align:center; font-size:11.5px; color:var(--muted); cursor:pointer; }
+  .preset-btn b{ display:block; font-family:'Fraunces',serif; font-size:13.5px; color:var(--ivory); margin-bottom:2px; }
+  .preset-btn.active{ border-color: var(--gold); background: rgba(215,180,117,.1); color: var(--gold); }
+  .preset-btn.active b{ color: var(--gold); }
 
-  h2.section-title{ font-family:'Fraunces',serif; font-size:19px; font-weight:600; margin: 0 0 4px; }
-  .section-note{ font-size:12.5px; color:var(--muted); margin: 0 0 14px; }
+  table.weektable{ width:100%; border-collapse: collapse; font-size:12.5px; }
+  table.weektable th{ text-align:left; color:var(--muted); font-weight:500; font-size:10.5px; padding-bottom:8px; }
+  table.weektable td{ padding: 7px 0; border-top:1px solid var(--hairline); }
+  table.weektable td.num{ font-family:'Fraunces',serif; font-weight:600; text-align:right; }
+  table.weektable input.pctinput{ width:48px; background:var(--navy); border:1px solid var(--hairline); border-radius:7px; color:var(--ivory); font-family:'Fraunces',serif; font-weight:600; text-align:center; padding:4px 2px; }
 
-  .cat{ background: var(--panel); border:1px solid var(--hairline); border-radius: 16px; padding:16px; margin-bottom:10px; position:relative; overflow:hidden; }
-  .cat::before{ content:''; position:absolute; top:0; left:0; right:0; height:2px; background: linear-gradient(90deg, var(--teal-bright), var(--gold)); opacity:.7; }
-  .cat-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-  .cat-head input.name{ background:transparent; border:none; outline:none; color:var(--ivory); font-weight:600; font-family:'Fraunces',serif; font-size:15.5px; width:60%; }
-  .cat-head .share{ font-size:13px; color:var(--gold); font-weight:600; font-family:'Fraunces',serif; }
-  input[type=range]{ width:100%; accent-color: var(--gold); margin-bottom:12px; }
-  .cat-row{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px; }
-  .cat-row .f label{ font-size:10.5px; color:var(--muted); display:block; margin-bottom:4px; }
-  .cat-row .f input{ width:100%; background:var(--navy); border:1px solid var(--hairline); border-radius:9px; color:var(--ivory); font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px; padding:8px 9px; }
-  .cat-out{ display:flex; justify-content:space-between; align-items:baseline; font-size:12.5px; padding-top:10px; border-top:1px solid var(--hairline); color:var(--muted); }
-  .cat-out b{ color:var(--teal-bright); font-family:'Fraunces',serif; font-size:14px; font-weight:600; }
-
-  .pct-warning{ font-size:11.5px; color:var(--red); margin: -4px 0 12px; display:none; }
+  .pct-warning{ font-size:11.5px; color:var(--red); margin: 8px 0 0; display:none; }
   .pct-warning.show{ display:block; }
 
-  .actions{ display:flex; gap:10px; margin-top:20px; }
-  button{ font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px; border-radius: 12px; padding: 13px 16px; border:1px solid var(--hairline-strong); background: transparent; color: var(--ivory); cursor:pointer; }
-  button.primary{ background: linear-gradient(135deg, var(--gold), #c89f5c); border-color: transparent; color:#182024; flex:1; }
+  input[type=range]{ width:100%; accent-color: var(--gold); margin: 6px 0 10px; }
+  .splitlabels{ display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:2px; }
+  .splitlabels b{ color:var(--ivory); font-family:'Fraunces',serif; }
+
+  .dial-mini{ display:flex; align-items:center; gap:18px; }
+  .dial{ position:relative; width:110px; height:110px; flex-shrink:0; }
+  .dial svg{ transform: rotate(-90deg); width:100%; height:100%; }
+  .dial-track{ fill:none; stroke: rgba(255,255,255,.07); stroke-width: 9; }
+  .dial-fill{ fill:none; stroke: var(--gold); stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset .5s ease; }
+  .dial-fill.over{ stroke: var(--teal-bright); }
+  .dial-fill.danger{ stroke: var(--red); }
+  .dial-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .dial-pct{ font-family:'Fraunces',serif; font-weight:600; font-size:22px; line-height:1; }
+
+  .status{ padding:11px 16px; border-radius: 12px; font-size:13px; font-weight:600; border:1px solid transparent; line-height:1.4; }
+  .status.ahead{ background: rgba(111,207,151,.12); color: var(--green); border-color: rgba(111,207,151,.3); }
+  .status.warn{ background: rgba(227,177,85,.12); color: var(--amber); border-color: rgba(227,177,85,.3); }
+  .status.danger{ background: rgba(232,115,95,.12); color: var(--red); border-color: rgba(232,115,95,.3); }
+  .status.flat{ background: rgba(146,171,174,.1); color: var(--muted); border-color: var(--hairline); }
+
+  .stats{ display:grid; grid-template-columns: repeat(2,1fr); gap:1px; background: var(--hairline); border-radius: 16px; overflow:hidden; margin:14px 0; border:1px solid var(--hairline); }
+  .stat{ background: var(--panel); padding: 14px 10px; text-align:center; }
+  .stat .v{ font-family:'Fraunces',serif; font-size:16.5px; font-weight:600; color: var(--gold); }
+  .stat .l{ font-size:10px; color:var(--muted); margin-top:5px; line-height:1.3; }
+
+  .cat{ background: var(--panel); border:1px solid var(--hairline); border-radius: 14px; padding:14px; margin-bottom:10px; position:relative; overflow:hidden; }
+  .cat::before{ content:''; position:absolute; top:0; left:0; right:0; height:2px; background: linear-gradient(90deg, var(--teal-bright), var(--gold)); opacity:.7; }
+  .cat-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+  .cat-head .t{ font-family:'Fraunces',serif; font-weight:600; font-size:14.5px; }
+  .cat-head .tag{ font-size:10px; color:var(--muted); }
+  .cat-row{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:8px; }
+  .cat-row .f label{ font-size:10.5px; color:var(--muted); display:block; margin-bottom:4px; }
+  .cat-row .f input{ width:100%; background:var(--navy); border:1px solid var(--hairline); border-radius:9px; color:var(--ivory); font-family:'Inter',sans-serif; font-weight:600; font-size:13px; padding:7px 8px; }
+  .cat-out{ display:flex; justify-content:space-between; align-items:baseline; font-size:12px; padding-top:9px; border-top:1px solid var(--hairline); color:var(--muted); }
+  .cat-out b{ color:var(--teal-bright); font-family:'Fraunces',serif; font-size:13.5px; font-weight:600; }
+
+  .checkrow{ display:flex; align-items:flex-start; gap:10px; font-size:12.5px; color:var(--muted); margin-top:4px; }
+  .checkrow input{ margin-top:2px; accent-color: var(--teal); width:16px; height:16px; flex-shrink:0; }
+
+  .risk-badges{ display:grid; grid-template-columns: repeat(3,1fr); gap:8px; margin:12px 0; }
+  .risk-badge{ text-align:center; padding:10px 6px; border-radius:10px; font-size:10.5px; border:1px solid var(--hairline); color:var(--muted); }
+  .risk-badge.active.safe{ border-color: var(--green); color:var(--green); background:rgba(111,207,151,.08); }
+  .risk-badge.active.mid{ border-color: var(--amber); color:var(--amber); background:rgba(227,177,85,.08); }
+  .risk-badge.active.high{ border-color: var(--red); color:var(--red); background:rgba(232,115,95,.08); }
+  .risk-badge b{ display:block; font-family:'Fraunces',serif; font-size:13px; margin-bottom:2px; color:inherit; }
+
+  textarea{ width:100%; background:var(--navy); border:1px solid var(--hairline); border-radius:10px; color:var(--ivory); font-family:'Inter',sans-serif; font-size:13px; padding:10px; resize:vertical; min-height:46px; }
+
+  .report-box{ background: var(--navy); border:1px solid var(--hairline-strong); border-radius:14px; padding:16px; font-size:13px; line-height:1.7; white-space:pre-wrap; }
+
+  .qbox{ margin-bottom:14px; }
+  .qbox .q{ font-size:13px; font-weight:600; margin-bottom:6px; font-family:'Fraunces',serif; }
+  .qbox .hint{ font-size:11px; color:var(--muted); margin-bottom:6px; }
+
+  button{ font-family:'Inter',sans-serif; font-weight:600; font-size:13px; border-radius: 11px; padding: 12px 14px; border:1px solid var(--hairline-strong); background: transparent; color: var(--ivory); cursor:pointer; width:100%; }
+  button.primary{ background: linear-gradient(135deg, var(--gold), #c89f5c); border-color: transparent; color:#182024; }
   button.ghost{ background:transparent; color: var(--muted); }
 
-  footer{ margin-top: 26px; text-align:center; font-size:11px; color: var(--muted); letter-spacing:.01em; }
+  footer{ margin-top: 20px; text-align:center; font-size:10.5px; color: var(--muted); }
 
-  @media (max-width:380px){
-    .dial{ width:170px; height:170px; }
-    .dial-pct{ font-size:36px; }
+  .tabbar{
+    position: fixed; left:0; right:0; bottom:0;
+    display:flex; background: rgba(10,39,48,.92); backdrop-filter: blur(10px);
+    border-top: 1px solid var(--hairline); padding: 8px 6px env(safe-area-inset-bottom, 8px);
+    z-index: 20;
   }
+  .tabbtn{ flex:1; background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px; color: var(--muted); font-size:10.5px; padding:6px 2px; border-radius:10px; }
+  .tabbtn .g{ font-size:18px; color: var(--muted); }
+  .tabbtn.active{ color: var(--gold); }
+  .tabbtn.active .g{ color: var(--gold); }
+
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; animation: fade .25s ease; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+  @media (max-width:360px){ .preset-btn{ min-width: 100%; } .grid4{ grid-template-columns: repeat(2,1fr); } }
 </style>
 </head>
 <body>
@@ -131,277 +163,491 @@
   </div>
 
   <div class="hero">
-    <h1>Chạy số tháng</h1>
-    <p>Theo dõi tiến độ, tính đúng số cần đạt mỗi ngày</p>
+    <h1>Tự chủ doanh số</h1>
+    <p>Bản đồ của riêng bạn — không phải để nộp sếp. Chọn nhịp, soi mốc ngày 12, và biết chính xác cần làm gì khi hụt số.</p>
   </div>
 
-  <div class="dial-card">
-    <div class="dial">
-      <svg viewBox="0 0 100 100">
-        <circle class="dial-track" cx="50" cy="50" r="42"></circle>
-        <circle class="dial-fill" id="dialFill" cx="50" cy="50" r="42" stroke-dasharray="263.9" stroke-dashoffset="263.9"></circle>
-      </svg>
-      <div class="dial-center">
-        <div class="dial-pct num" id="pctText">0%</div>
-        <div class="dial-sub">mục tiêu tháng</div>
-      </div>
-    </div>
-    <div class="status flat" id="statusBox">Nhập số để bắt đầu</div>
-  </div>
+  <!-- TAB 1: KẾ HOẠCH -->
+  <div class="tab-panel active" id="tab-plan">
 
-  <div class="panel">
-    <div class="grid-inputs">
+    <div class="panel">
+      <h2 class="section-title"><span class="glyph">◆</span>Mục tiêu tháng</h2>
       <div class="field">
-        <label>Mục tiêu tháng</label>
-        <input type="number" id="target" inputmode="numeric" placeholder="0">
+        <label>Mục tiêu doanh số tháng</label>
+        <input type="number" id="target" inputmode="numeric" placeholder="300000000">
         <span class="unit">đ</span>
       </div>
-      <div class="field">
-        <label>Đã đạt (lũy kế)</label>
-        <input type="number" id="achieved" inputmode="numeric" placeholder="0">
-        <span class="unit">đ</span>
+    </div>
+
+    <div class="panel">
+      <h2 class="section-title"><span class="glyph">◔</span>Chọn nhịp 4 tuần</h2>
+      <p class="section-note">Có 3 cách chia — không cách nào đúng tuyệt đối, chỉ có cách hợp với tuyến của bạn. "Đón đầu mùa vụ" là cách nhiều SR lâu năm chọn.</p>
+      <div class="presetrow">
+        <div class="preset-btn" data-preset="late"><b>10·15·25·50</b>Dồn cuối tháng</div>
+        <div class="preset-btn" data-preset="even"><b>25·25·25·25</b>Chia đều</div>
+        <div class="preset-btn active" data-preset="early"><b>30·30·25·15</b>Đón đầu mùa vụ</div>
       </div>
-      <div class="field">
-        <label>Ngày đã qua trong tháng</label>
-        <input type="number" id="elapsed" inputmode="numeric">
+      <table class="weektable">
+        <thead><tr><th>Tuần</th><th>%</th><th style="text-align:right;">Mục tiêu tuần</th><th style="text-align:right;">Lũy kế đến cuối tuần</th></tr></thead>
+        <tbody id="weekBody"></tbody>
+      </table>
+      <p class="pct-warning" id="weekWarning">Tổng % 4 tuần chưa bằng 100%</p>
+    </div>
+
+    <div class="panel">
+      <h2 class="section-title"><span class="glyph">⬡</span>Cơ cấu sản phẩm</h2>
+      <p class="section-note">Phương án A đánh mạnh mùa vụ, doanh số đỉnh cao nhưng phụ thuộc 1 dòng. Phương án B dùng gia dụng làm phao an toàn hơn.</p>
+      <div class="presetrow">
+        <div class="preset-btn active" data-split="70">Phương án A<br><b>70 / 30</b></div>
+        <div class="preset-btn" data-split="50">Phương án B<br><b>50 / 50</b></div>
       </div>
-      <div class="field">
-        <label>Ngày còn lại</label>
-        <input type="number" id="daysLeft" inputmode="numeric">
+      <div class="splitlabels"><span>Bình nước nóng — <b id="splitLabelA">70%</b></span><span>Gia dụng — <b id="splitLabelB">30%</b></span></div>
+      <input type="range" id="productSplit" min="0" max="100" value="70">
+      <div class="stats" style="margin-top:4px;">
+        <div class="stat"><div class="v" id="amtHeater">0đ</div><div class="l">Bình nước nóng</div></div>
+        <div class="stat"><div class="v" id="amtHousehold">0đ</div><div class="l">Gia dụng</div></div>
       </div>
     </div>
-    <label class="checkbox-row">
-      <input type="checkbox" id="noSunday"> Không tính Chủ nhật khi tự tính ngày còn lại
-    </label>
   </div>
 
-  <div class="stats">
-    <div class="stat"><div class="v num" id="statRemain">0đ</div><div class="l">Còn phải đạt</div></div>
-    <div class="stat"><div class="v num" id="statPerDay">0đ</div><div class="l">Cần đạt / ngày</div></div>
-    <div class="stat"><div class="v num" id="statPace">0đ</div><div class="l">Tốc độ / ngày</div></div>
+  <!-- TAB 2: MỐC KIỂM TRA -->
+  <div class="tab-panel" id="tab-check">
+
+    <div class="panel">
+      <h2 class="section-title"><span class="glyph">◉</span>Soi tiến độ tại mốc kiểm tra</h2>
+      <p class="section-note">Ngày 12 là "trạm cấp cứu còn sống" — hụt vẫn còn tận 18 ngày để đổi bài. Đợi đến ngày 28 thì chỉ còn giải trình.</p>
+      <div class="grid2">
+        <div class="field">
+          <label>Ngày kiểm tra trong tháng</label>
+          <input type="number" id="checkDay" inputmode="numeric" placeholder="12">
+        </div>
+        <div class="field">
+          <label>Đã đạt (lũy kế đến ngày đó)</label>
+          <input type="number" id="achievedAtCheck" inputmode="numeric" placeholder="0">
+          <span class="unit">đ</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="dial-mini">
+        <div class="dial">
+          <svg viewBox="0 0 100 100">
+            <circle class="dial-track" cx="50" cy="50" r="42"></circle>
+            <circle class="dial-fill" id="dialFill" cx="50" cy="50" r="42" stroke-dasharray="263.9" stroke-dashoffset="263.9"></circle>
+          </svg>
+          <div class="dial-center"><div class="dial-pct" id="pctText">0%</div></div>
+        </div>
+        <div style="flex:1;">
+          <div class="status flat" id="statusBox">Nhập số để bắt đầu</div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="v" id="statExpected">0đ</div><div class="l">Kỳ vọng theo nhịp đã chọn</div></div>
+        <div class="stat"><div class="v" id="statGap">0đ</div><div class="l">Gap — khoảng trống cần xử lý</div></div>
+      </div>
+      <p class="section-note" style="margin-top:4px;" id="daysLeftNote"></p>
+    </div>
   </div>
 
-  <h2 class="section-title">Phân bổ theo ngành hàng</h2>
-  <p class="section-note">Chỉnh tỷ trọng và giá bán trung bình — hệ thống tự tính số lượng sản phẩm cần bán.</p>
-  <p class="pct-warning" id="pctWarning">Tổng tỷ trọng chưa bằng 100%</p>
-  <div id="catList"></div>
+  <!-- TAB 3: BÙ GAP & RỦI RO -->
+  <div class="tab-panel" id="tab-gap">
 
-  <div class="actions">
-    <button class="primary" id="resetBtn">Đặt lại từ đầu</button>
-    <button class="ghost" id="shareBtn">Sao chép tóm tắt</button>
+    <div class="panel">
+      <h2 class="section-title"><span class="glyph">⛨</span>Menu xử lý Gap</h2>
+      <p class="section-note">Không có đáp án đúng — chỉ có phương án ít rủi ro hơn. Chọn 1 hoặc kết hợp cả 3.</p>
+
+      <div class="cat">
+        <div class="cat-head"><span class="t">Đẩy combo gia dụng</span><span class="tag">Bếp từ + nồi cơm điện</span></div>
+        <div class="cat-row">
+          <div class="f"><label>Giá trị / combo</label><input type="number" id="comboPrice" value="6000000"></div>
+          <div class="f"><label>Số combo dự kiến bán</label><input type="number" id="comboQty" value="0"></div>
+        </div>
+        <div class="cat-out"><span>Bù được</span><b id="comboAmount">0đ</b></div>
+      </div>
+
+      <div class="cat">
+        <div class="cat-head"><span class="t">Mở mới điểm bán</span><span class="tag">Gói chào sân nhỏ</span></div>
+        <div class="cat-row">
+          <div class="f"><label>Giá trị / gói chào sân</label><input type="number" id="outletPrice" value="7000000"></div>
+          <div class="f"><label>Số điểm dự kiến mở</label><input type="number" id="outletQty" value="0"></div>
+        </div>
+        <div class="cat-out"><span>Bù được</span><b id="outletAmount">0đ</b></div>
+      </div>
+
+      <div class="panel tight">
+        <label class="checkrow"><input type="checkbox" id="posmRequested"> Đã đề xuất công ty hỗ trợ POSM (kệ mẫu, standee) để đẩy tốc độ bán ở điểm nghẽn</label>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="v" id="totalCovered">0đ</div><div class="l">Tổng dự kiến bù</div></div>
+        <div class="stat"><div class="v" id="remainingGap">0đ</div><div class="l">Gap còn lại sau khi bù</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 class="section-title"><span class="glyph">⚑</span>Rủi ro tập trung đại lý</h2>
+      <p class="section-note">Bao nhiêu % doanh số đang phụ thuộc vào 5 đại lý lớn nhất trên tuyến?</p>
+      <div class="field">
+        <label>% doanh số từ 5 đại lý lớn nhất</label>
+        <input type="number" id="topDependency" inputmode="numeric" placeholder="0">
+        <span class="unit">%</span>
+      </div>
+      <div class="risk-badges">
+        <div class="risk-badge" id="riskSafe"><b>&lt; 40%</b>An toàn</div>
+        <div class="risk-badge" id="riskMid"><b>40–70%</b>Khá rủi ro</div>
+        <div class="risk-badge" id="riskHigh"><b>&gt; 70%</b>Nguy hiểm</div>
+      </div>
+      <p class="status flat" id="riskMsg" style="margin-top:4px;"></p>
+    </div>
+
+    <div class="panel">
+      <h2 class="section-title"><span class="glyph">♥</span>Phân nhóm đại lý trên tuyến</h2>
+      <p class="section-note">Tham khảo: 60% thời gian cho Ruột, 30% cho Cắm Cờ, 10% cho Tiện Đường.</p>
+      <div class="grid4">
+        <div class="field"><label>Ruột</label><input type="number" id="groupRuot" value="10"></div>
+        <div class="field"><label>Cắm Cờ</label><input type="number" id="groupCamco" value="15"></div>
+        <div class="field"><label>Tiện Đường</label><input type="number" id="groupTien" value="20"></div>
+        <div class="field"><label>Tổng nhà</label><input type="number" id="groupTotal" value="45" disabled></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: BÁO CÁO -->
+  <div class="tab-panel" id="tab-report">
+
+    <div class="panel">
+      <h2 class="section-title"><span class="glyph">✎</span>Báo cáo chủ động cho sếp</h2>
+      <p class="section-note">Thay vì chờ bị hỏi rồi giải trình — chủ động báo trước, kèm kế hoạch bù. Sếp nể trọng hơn là phạt.</p>
+      <div class="field">
+        <label>Cần công ty hỗ trợ thêm gì? (tuỳ chọn)</label>
+        <input type="text" id="supportNeed" placeholder="VD: 3 bộ kệ mẫu, POSM...">
+      </div>
+      <div class="report-box" id="reportBox">—</div>
+      <div style="margin-top:12px;"><button class="primary" id="copyReportBtn">Sao chép báo cáo</button></div>
+    </div>
+
+    <div class="panel">
+      <h2 class="section-title"><span class="glyph">✦</span>4 câu hỏi tự soi cuối tuần</h2>
+      <p class="section-note">5 phút mỗi cuối tuần — không cần dài, chỉ cần biết mình đang ở đâu.</p>
+      <div class="qbox"><div class="q">1. Tiến độ tuần qua?</div><div class="hint">Tuần qua đi được bao nhiêu % chặng đường mong muốn?</div><textarea id="q1"></textarea></div>
+      <div class="qbox"><div class="q">2. Điểm nghẽn nằm ở đâu?</div><div class="hint">Nhà nào chưa nhập, lý do thật sự là gì?</div><textarea id="q2"></textarea></div>
+      <div class="qbox"><div class="q">3. Gap tuần này?</div><div class="hint">Khoảng trống chính xác — không mơ hồ, không phỏng đoán.</div><textarea id="q3"></textarea></div>
+      <div class="qbox"><div class="q">4. Đòn bẩy tuần tới?</div><div class="hint">Combo gia dụng? Mở mới? POSM?</div><textarea id="q4"></textarea></div>
+    </div>
+
+    <button class="ghost" id="resetBtn">Đặt lại toàn bộ kế hoạch</button>
   </div>
 
   <footer>Dữ liệu lưu tự động trên máy bạn, không gửi lên đâu cả.</footer>
 </div>
 
+<nav class="tabbar">
+  <button class="tabbtn active" data-tab="plan"><span class="g">◆</span>Kế hoạch</button>
+  <button class="tabbtn" data-tab="check"><span class="g">◔</span>Mốc 12</button>
+  <button class="tabbtn" data-tab="gap"><span class="g">⛨</span>Bù Gap</button>
+  <button class="tabbtn" data-tab="report"><span class="g">✎</span>Báo cáo</button>
+</nav>
+
 <script>
 (function(){
-  const STORAGE_KEY = 'livotec-kh-planner-v1';
+  const STORAGE_KEY = 'livotec-tu-chu-doanh-so-v1';
   const today = new Date();
   const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
 
-  function countRemainingSundays(fromDate, daysLeft){
-    let count = 0;
-    for(let i=1;i<=daysLeft;i++){
-      const d = new Date(fromDate);
-      d.setDate(d.getDate()+i);
-      if(d.getDay()===0) count++;
-    }
-    return count;
-  }
+  const PRESETS = {
+    late:  [10,15,25,50],
+    even:  [25,25,25,25],
+    early: [30,30,25,15]
+  };
 
   const defaultState = {
     target: 0,
-    achieved: 0,
-    elapsed: today.getDate(),
-    daysLeft: daysInMonth - today.getDate(),
-    noSunday: false,
-    categories: [
-      {name:'Bình nước nóng', pct:40, price:2500000},
-      {name:'Bếp từ', pct:35, price:3500000},
-      {name:'Gia dụng', pct:25, price:800000}
-    ]
+    weekPct: [...PRESETS.early],
+    weekPreset: 'early',
+    productSplit: 70,
+    checkDay: 12,
+    achievedAtCheck: 0,
+    comboPrice: 6000000, comboQty: 0,
+    outletPrice: 7000000, outletQty: 0,
+    posmRequested: false,
+    topDependency: 0,
+    groupRuot: 10, groupCamco: 15, groupTien: 20,
+    supportNeed: '',
+    q1:'', q2:'', q3:'', q4:''
   };
 
   let state = load();
-
   function load(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
       if(!raw) return JSON.parse(JSON.stringify(defaultState));
       const parsed = JSON.parse(raw);
-      if(!parsed.categories || !parsed.categories.length) parsed.categories = defaultState.categories;
-      return parsed;
+      if(!parsed.weekPct || parsed.weekPct.length!==4) parsed.weekPct = [...PRESETS.early];
+      return Object.assign(JSON.parse(JSON.stringify(defaultState)), parsed);
     }catch(e){ return JSON.parse(JSON.stringify(defaultState)); }
   }
   function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
   const $ = id => document.getElementById(id);
-  const fmt = n => Math.round(n||0).toLocaleString('vi-VN');
+  const fmt = n => Math.round(n||0).toLocaleString('vi-VN') + 'đ';
 
-  function recalcDaysLeftIfAuto(){
-    const base = daysInMonth - today.getDate();
-    if(state.noSunday){
-      state.daysLeft = base - countRemainingSundays(today, base);
-    } else {
-      state.daysLeft = base;
+  // ---------- TABS ----------
+  function showTab(name){
+    document.querySelectorAll('.tab-panel').forEach(p=> p.classList.toggle('active', p.id === 'tab-'+name));
+    document.querySelectorAll('.tabbtn').forEach(b=> b.classList.toggle('active', b.dataset.tab===name));
+    window.scrollTo({top:0});
+  }
+  document.querySelectorAll('.tabbtn').forEach(b=> b.addEventListener('click', ()=> showTab(b.dataset.tab)));
+
+  // ---------- WEEK SCHEDULE HELPERS ----------
+  function weekBoundaries(){
+    const b = [0];
+    for(let i=1;i<=4;i++) b.push(Math.round(daysInMonth*i/4));
+    return b;
+  }
+  function cumPctBefore(weekIndex){ // weekIndex 1..4, cumulative pct BEFORE this week starts
+    let sum=0; for(let i=0;i<weekIndex-1;i++) sum+=Number(state.weekPct[i])||0; return sum;
+  }
+  function cumPctThroughWeek(weekIndex){
+    let sum=0; for(let i=0;i<weekIndex;i++) sum+=Number(state.weekPct[i])||0; return sum;
+  }
+  function expectedPctAtDay(day){
+    const b = weekBoundaries();
+    day = Math.max(0, Math.min(day, daysInMonth));
+    for(let k=1;k<=4;k++){
+      if(day<=b[k] || k===4){
+        const segLen = Math.max(b[k]-b[k-1],1);
+        const frac = Math.max(0, Math.min(1,(day-b[k-1])/segLen));
+        return cumPctBefore(k) + (Number(state.weekPct[k-1])||0)*frac;
+      }
     }
+    return 100;
   }
 
-  function render(){
+  // ---------- RENDER: TAB 1 ----------
+  function renderPlan(){
     $('target').value = state.target || '';
-    $('achieved').value = state.achieved || '';
-    $('elapsed').value = state.elapsed || '';
-    $('daysLeft').value = state.daysLeft || '';
-    $('noSunday').checked = state.noSunday;
+
+    document.querySelectorAll('[data-preset]').forEach(el=>{
+      el.classList.toggle('active', el.dataset.preset === state.weekPreset);
+    });
+    document.querySelectorAll('[data-split]').forEach(el=>{
+      el.classList.toggle('active', Number(el.dataset.split) === Number(state.productSplit));
+    });
+    $('productSplit').value = state.productSplit;
+    $('splitLabelA').textContent = state.productSplit + '%';
+    $('splitLabelB').textContent = (100-state.productSplit) + '%';
 
     const target = Number(state.target)||0;
-    const achieved = Number(state.achieved)||0;
-    const elapsed = Number(state.elapsed)||0;
-    const daysLeft = Number(state.daysLeft)||0;
+    $('amtHeater').textContent = fmt(target*state.productSplit/100);
+    $('amtHousehold').textContent = fmt(target*(100-state.productSplit)/100);
 
-    const remaining = Math.max(target - achieved, 0);
-    const surplus = Math.max(achieved - target, 0);
-    const dailyNeeded = daysLeft>0 ? remaining/daysLeft : remaining;
-    const pace = elapsed>0 ? achieved/elapsed : 0;
-    const projected = pace * (elapsed + daysLeft);
+    const body = $('weekBody');
+    body.innerHTML = '';
+    let totalPct = 0;
+    state.weekPct.forEach((p,i)=>{
+      totalPct += Number(p)||0;
+      const weekTarget = target*(Number(p)||0)/100;
+      const cum = target*cumPctThroughWeek(i+1)/100;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>Tuần ${i+1}</td>
+        <td><input class="pctinput" data-i="${i}" type="number" value="${p}"></td>
+        <td class="num">${fmt(weekTarget)}</td>
+        <td class="num">${fmt(cum)}</td>
+      `;
+      body.appendChild(tr);
+    });
+    $('weekWarning').classList.toggle('show', Math.round(totalPct)!==100);
+  }
 
-    const pct = target>0 ? (achieved/target*100) : 0;
-    const pctCapped = Math.min(pct,100);
+  $('target').addEventListener('input', e=>{ state.target = e.target.value; save(); renderAll(); });
+
+  document.querySelectorAll('[data-preset]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      state.weekPreset = el.dataset.preset;
+      state.weekPct = [...PRESETS[el.dataset.preset]];
+      save(); renderAll();
+    });
+  });
+
+  $('weekBody').addEventListener('input', e=>{
+    const i = e.target.getAttribute('data-i');
+    if(i===null) return;
+    state.weekPct[i] = Number(e.target.value)||0;
+    state.weekPreset = 'custom';
+    save(); renderAll();
+  });
+
+  document.querySelectorAll('[data-split]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      state.productSplit = Number(el.dataset.split);
+      save(); renderAll();
+    });
+  });
+  $('productSplit').addEventListener('input', e=>{
+    state.productSplit = Number(e.target.value);
+    save(); renderAll();
+  });
+
+  // ---------- RENDER: TAB 2 ----------
+  function renderCheck(){
+    $('checkDay').value = state.checkDay || '';
+    $('achievedAtCheck').value = state.achievedAtCheck || '';
+
+    const target = Number(state.target)||0;
+    const day = Number(state.checkDay)||0;
+    const achieved = Number(state.achievedAtCheck)||0;
+    const expectedPct = target>0 ? expectedPctAtDay(day) : 0;
+    const expectedAmount = target*expectedPct/100;
+    const gap = Math.max(expectedAmount-achieved,0);
+    const surplus = Math.max(achieved-expectedAmount,0);
+
+    const pctOfPlan = expectedAmount>0 ? (achieved/expectedAmount*100) : 0;
+    const pctCapped = Math.min(Math.max(pctOfPlan,0),100);
     const circumference = 263.9;
     const offset = circumference - (pctCapped/100)*circumference;
     const fillEl = $('dialFill');
     fillEl.style.strokeDashoffset = offset;
-    fillEl.classList.toggle('over', pct>=100);
-    $('pctText').textContent = fmt(pct) + '%';
+    fillEl.classList.remove('over','danger');
+    if(pctOfPlan>=100) fillEl.classList.add('over');
+    else if(pctOfPlan<70) fillEl.classList.add('danger');
+    $('pctText').textContent = fmt0pct(pctOfPlan);
 
     const statusBox = $('statusBox');
     if(target<=0){
-      statusBox.className='status flat';
-      statusBox.textContent = 'Nhập số để bắt đầu';
-    } else if(achieved>=target){
+      statusBox.className='status flat'; statusBox.textContent='Nhập mục tiêu ở tab Kế hoạch trước nhé';
+    } else if(achieved>=expectedAmount){
       statusBox.className='status ahead';
-      statusBox.textContent = 'Đã đạt mục tiêu — vượt ' + fmt(surplus) + 'đ';
-    } else if(pace>0 && projected>=target){
-      statusBox.className='status ahead';
-      statusBox.textContent = 'Đang đúng tiến độ, dự kiến đạt ' + fmt(projected) + 'đ';
-    } else if(pace>0){
-      const need = dailyNeeded>0 ? ((dailyNeeded/pace-1)*100) : 0;
-      statusBox.className='status behind';
-      statusBox.textContent = 'Cần tăng tốc khoảng ' + fmt(need) + '% so với hiện tại';
+      statusBox.textContent = 'Đang bám sát hoặc vượt nhịp kế hoạch' + (surplus>0?(' · dư '+fmt(surplus)):'');
+    } else if(pctOfPlan>=70){
+      statusBox.className='status warn';
+      statusBox.textContent = 'Chậm nhẹ so với nhịp — còn ' + (daysInMonth-day) + ' ngày để đổi bài';
     } else {
-      statusBox.className='status behind';
-      statusBox.textContent = 'Chưa có dữ liệu tốc độ — nhập ngày đã qua và đã đạt';
+      statusBox.className='status danger';
+      statusBox.textContent = 'Tín hiệu đèn vàng — điểm nghẽn cần tháo gỡ ngay, còn ' + (daysInMonth-day) + ' ngày';
     }
 
-    $('statRemain').textContent = fmt(remaining) + 'đ';
-    $('statPerDay').textContent = fmt(dailyNeeded) + 'đ';
-    $('statPace').textContent = fmt(pace) + 'đ';
+    $('statExpected').textContent = fmt(expectedAmount);
+    $('statGap').textContent = fmt(gap);
+    $('daysLeftNote').textContent = day>0 ? ('Còn ' + Math.max(daysInMonth-day,0) + ' ngày trong tháng kể từ mốc kiểm tra ngày ' + day + '.') : '';
+  }
+  function fmt0pct(n){ return Math.round(n||0) + '%'; }
 
-    renderCategories(remaining, daysLeft);
+  $('checkDay').addEventListener('input', e=>{ state.checkDay = e.target.value; save(); renderAll(); });
+  $('achievedAtCheck').addEventListener('input', e=>{ state.achievedAtCheck = e.target.value; save(); renderAll(); });
+
+  // ---------- RENDER: TAB 3 ----------
+  function renderGap(){
+    $('comboPrice').value = state.comboPrice;
+    $('comboQty').value = state.comboQty;
+    $('outletPrice').value = state.outletPrice;
+    $('outletQty').value = state.outletQty;
+    $('posmRequested').checked = state.posmRequested;
+    $('topDependency').value = state.topDependency || '';
+    $('groupRuot').value = state.groupRuot;
+    $('groupCamco').value = state.groupCamco;
+    $('groupTien').value = state.groupTien;
+    $('groupTotal').value = (Number(state.groupRuot)||0)+(Number(state.groupCamco)||0)+(Number(state.groupTien)||0);
+
+    const comboAmount = (Number(state.comboPrice)||0)*(Number(state.comboQty)||0);
+    const outletAmount = (Number(state.outletPrice)||0)*(Number(state.outletQty)||0);
+    $('comboAmount').textContent = fmt(comboAmount);
+    $('outletAmount').textContent = fmt(outletAmount);
+
+    const target = Number(state.target)||0;
+    const day = Number(state.checkDay)||0;
+    const expectedAmount = target>0 ? target*expectedPctAtDay(day)/100 : 0;
+    const achieved = Number(state.achievedAtCheck)||0;
+    const gap = Math.max(expectedAmount-achieved,0);
+    const totalCovered = comboAmount+outletAmount;
+    const remaining = Math.max(gap-totalCovered,0);
+    $('totalCovered').textContent = fmt(totalCovered);
+    $('remainingGap').textContent = fmt(remaining);
+
+    const dep = Number(state.topDependency)||0;
+    ['riskSafe','riskMid','riskHigh'].forEach(id=> $(id).className='risk-badge');
+    const riskMsg = $('riskMsg');
+    if(dep<40){
+      $('riskSafe').classList.add('active','safe');
+      riskMsg.className='status ahead';
+      riskMsg.textContent = 'Tuyến đã được bảo vệ — không nhà nào kéo bạn xuống nếu gặp sự cố.';
+    } else if(dep<=70){
+      $('riskMid').classList.add('active','mid');
+      riskMsg.className='status warn';
+      riskMsg.textContent = 'Vùng cảnh giác — nên mở thêm 3–5 điểm bán mới để rải bớt rủi ro.';
+    } else {
+      $('riskHigh').classList.add('active','high');
+      riskMsg.className='status danger';
+      riskMsg.textContent = 'Tín hiệu đỏ — nên mở mới ngay trong tuần này, đừng trì hoãn.';
+    }
   }
 
-  function renderCategories(remaining, daysLeft){
-    const list = $('catList');
-    list.innerHTML = '';
-    let totalPct = 0;
-    state.categories.forEach((c)=>{ totalPct += Number(c.pct)||0; });
-    $('pctWarning').classList.toggle('show', Math.round(totalPct)!==100);
+  ['comboPrice','comboQty','outletPrice','outletQty','topDependency','groupRuot','groupCamco','groupTien'].forEach(id=>{
+    $(id).addEventListener('input', e=>{ state[id]=e.target.value; save(); renderAll(); });
+  });
+  $('posmRequested').addEventListener('change', e=>{ state.posmRequested = e.target.checked; save(); renderAll(); });
 
-    state.categories.forEach((c, i)=>{
-      const share = remaining * (Number(c.pct)||0)/100;
-      const price = Number(c.price)||0;
-      const units = price>0 ? share/price : 0;
-      const unitsPerDay = daysLeft>0 ? units/daysLeft : units;
+  // ---------- RENDER: TAB 4 ----------
+  function renderReport(){
+    $('supportNeed').value = state.supportNeed || '';
+    ['q1','q2','q3','q4'].forEach(id=> $(id).value = state[id] || '');
 
-      const el = document.createElement('div');
-      el.className = 'cat';
-      el.innerHTML = `
-        <div class="cat-head">
-          <input class="name" data-i="${i}" data-field="name" value="${c.name}">
-          <span class="share">${Math.round(c.pct)}%</span>
-        </div>
-        <input type="range" min="0" max="100" value="${c.pct}" data-i="${i}" data-field="pct">
-        <div class="cat-row">
-          <div class="f">
-            <label>Giá bán trung bình (đ)</label>
-            <input type="number" inputmode="numeric" data-i="${i}" data-field="price" value="${c.price}">
-          </div>
-          <div class="f">
-            <label>Doanh số cần (đ)</label>
-            <input type="text" value="${fmt(share)}" disabled>
-          </div>
-        </div>
-        <div class="cat-out">
-          <span>Số lượng cần bán</span>
-          <b>${Math.ceil(units)} sản phẩm · ${unitsPerDay.toFixed(1)}/ngày</b>
-        </div>
-      `;
-      list.appendChild(el);
-    });
+    const target = Number(state.target)||0;
+    const day = Number(state.checkDay)||0;
+    const expectedAmount = target>0 ? target*expectedPctAtDay(day)/100 : 0;
+    const achieved = Number(state.achievedAtCheck)||0;
+    const gap = Math.max(expectedAmount-achieved,0);
+    const comboAmount = (Number(state.comboPrice)||0)*(Number(state.comboQty)||0);
+    const outletAmount = (Number(state.outletPrice)||0)*(Number(state.outletQty)||0);
+    const remaining = Math.max(gap-comboAmount-outletAmount,0);
+
+    const lines = [];
+    if(gap<=0){
+      lines.push('Tuần này em đang bám sát hoặc vượt nhịp kế hoạch đến ngày ' + (day||'—') + '.');
+    } else {
+      lines.push('Tính đến ngày ' + (day||'—') + ', em đang chậm ' + fmt(gap) + ' so với kế hoạch.');
+    }
+    if(Number(state.comboQty)>0) lines.push('Kế hoạch bù bằng ' + state.comboQty + ' combo gia dụng (~' + fmt(comboAmount) + ').');
+    if(Number(state.outletQty)>0) lines.push('Mở mới ' + state.outletQty + ' điểm bán gói chào sân (~' + fmt(outletAmount) + ').');
+    if(state.posmRequested) lines.push('Đã đề xuất công ty hỗ trợ thêm POSM để đẩy tốc độ bán ở điểm nghẽn.');
+    if(gap>0 && remaining>0) lines.push('Gap còn lại cần xử lý thêm: ' + fmt(remaining) + '.');
+    if(state.supportNeed) lines.push('Em cần công ty hỗ trợ thêm: ' + state.supportNeed + '.');
+
+    $('reportBox').textContent = lines.join('\n');
   }
 
-  ['target','achieved','elapsed','daysLeft'].forEach(id=>{
-    $(id).addEventListener('input', e=>{
-      state[id] = e.target.value;
-      save(); render();
-    });
-  });
-  $('noSunday').addEventListener('change', e=>{
-    state.noSunday = e.target.checked;
-    recalcDaysLeftIfAuto();
-    save(); render();
+  $('supportNeed').addEventListener('input', e=>{ state.supportNeed=e.target.value; save(); renderReport(); });
+  ['q1','q2','q3','q4'].forEach(id=>{
+    $(id).addEventListener('input', e=>{ state[id]=e.target.value; save(); });
   });
 
-  $('catList').addEventListener('input', e=>{
-    const i = e.target.getAttribute('data-i');
-    const field = e.target.getAttribute('data-field');
-    if(i===null) return;
-    state.categories[i][field] = field==='name' ? e.target.value : Number(e.target.value)||0;
-    save(); render();
+  $('copyReportBtn').addEventListener('click', ()=>{
+    const text = $('reportBox').textContent;
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(text).then(()=>{
+        $('copyReportBtn').textContent = 'Đã sao chép ✓';
+        setTimeout(()=>{ $('copyReportBtn').textContent = 'Sao chép báo cáo'; }, 1800);
+      });
+    } else { alert(text); }
   });
 
   $('resetBtn').addEventListener('click', ()=>{
-    if(!confirm('Xoá hết số liệu và đặt lại từ đầu?')) return;
+    if(!confirm('Xoá toàn bộ dữ liệu kế hoạch và đặt lại từ đầu?')) return;
     state = JSON.parse(JSON.stringify(defaultState));
-    recalcDaysLeftIfAuto();
-    save(); render();
+    save(); renderAll();
   });
 
-  $('shareBtn').addEventListener('click', ()=>{
-    const target = Number(state.target)||0;
-    const achieved = Number(state.achieved)||0;
-    const remaining = Math.max(target-achieved,0);
-    const daysLeft = Number(state.daysLeft)||0;
-    const dailyNeeded = daysLeft>0 ? remaining/daysLeft : remaining;
-    const lines = [
-      'KẾ HOẠCH CHẠY SỐ THÁNG — LIVOTEC',
-      'Mục tiêu: ' + fmt(target) + 'đ',
-      'Đã đạt: ' + fmt(achieved) + 'đ',
-      'Còn thiếu: ' + fmt(remaining) + 'đ',
-      'Cần đạt/ngày: ' + fmt(dailyNeeded) + 'đ (' + daysLeft + ' ngày còn lại)',
-      '',
-      'Phân bổ ngành hàng:'
-    ];
-    state.categories.forEach(c=>{
-      const share = remaining*(Number(c.pct)||0)/100;
-      const units = Number(c.price)>0 ? share/Number(c.price) : 0;
-      lines.push('- ' + c.name + ': ' + Math.ceil(units) + ' sản phẩm');
-    });
-    const text = lines.join('\n');
-    if(navigator.clipboard){
-      navigator.clipboard.writeText(text).then(()=>{
-        $('shareBtn').textContent = 'Đã sao chép ✓';
-        setTimeout(()=>{ $('shareBtn').textContent = 'Sao chép tóm tắt'; }, 1800);
-      });
-    } else {
-      alert(text);
-    }
-  });
+  function renderAll(){
+    renderPlan();
+    renderCheck();
+    renderGap();
+    renderReport();
+  }
 
   $('cycleLabel').textContent = 'Tháng ' + (today.getMonth()+1) + '/' + today.getFullYear();
-
-  render();
+  renderAll();
 })();
 </script>
 </body>
