@@ -325,7 +325,7 @@ const DISC_TXT='Chỉ mang tính tham khảo: số liệu, dự báo và cảnh 
 const DISC='<div class="disc"><span aria-hidden="true">'+ic('warnTri',16)+'</span><span>'+DISC_TXT+'</span></div>';
 
 /* ---------- Nhận xét AI (Groq) ---------- */
-const GROQ_MODEL='llama-3.3-70b-versatile';
+const GROQ_MODEL='openai/gpt-oss-120b'; // llama-3.3-70b-versatile đã bị Groq ngừng từ 16/08/2026
 let aiState={loading:false,text:'',error:''};
 let aiLastKey=null,aiTimer=null;
 const AI_DISCLAIMER='Nhận xét và đề xuất này do AI tạo tự động dựa trên số liệu bạn nhập, có thể không chính xác hoàn toàn — hãy đối chiếu với thực tế trước khi quyết định.';
@@ -380,14 +380,14 @@ async function askAI(){
     const res=await fetch('/api/groq',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:GROQ_MODEL,messages:[{role:'user',content:aiPrompt(weeks)}],temperature:0.4,max_tokens:500})
+      body:JSON.stringify({model:GROQ_MODEL,messages:[{role:'user',content:aiPrompt(weeks)}],temperature:0.4,max_tokens:1200})
     });
     if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status+' — '+t.slice(0,200));}
     const data=await res.json();
     const text=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
     aiState={loading:false,text:text||'Không nhận được nội dung phản hồi.',error:''};
   }catch(e){
-    aiState={loading:false,text:'',error:'Không gọi được AI (có thể do giới hạn CORS của trình duyệt hoặc lỗi mạng). Chi tiết: '+e.message};
+    aiState={loading:false,text:'',error:'Không gọi được AI (lỗi mạng hoặc dịch vụ AI tạm thời không phản hồi). Chi tiết: '+e.message};
   }
   render();
 }

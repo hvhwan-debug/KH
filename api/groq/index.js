@@ -10,6 +10,8 @@ module.exports = async function (context, req) {
     return;
   }
 
+  // Model do server quyết định (đổi qua biến môi trường GROQ_MODEL, không cần sửa code khi Groq ngừng model)
+  const MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
   const body = req.body || {};
   if (!Array.isArray(body.messages) || !body.messages.length) {
     context.res = {
@@ -28,10 +30,12 @@ module.exports = async function (context, req) {
         "Authorization": "Bearer " + apiKey
       },
       body: JSON.stringify({
-        model: body.model || "llama-3.3-70b-versatile",
+        model: MODEL,
         messages: body.messages,
         temperature: typeof body.temperature === "number" ? body.temperature : 0.4,
-        max_tokens: typeof body.max_tokens === "number" ? body.max_tokens : 500
+        // gpt-oss là model suy luận: cần dư token để không bị cắt trước khi ra câu trả lời
+        max_tokens: typeof body.max_tokens === "number" ? Math.min(body.max_tokens, 2000) : 1200,
+        reasoning_effort: "low"
       })
     });
 
