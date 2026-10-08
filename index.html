@@ -781,13 +781,18 @@ function needCard(weeks){
   const tiles=t('≈ '+fmt(ap.orders),'đơn cần chốt')+t('≈ '+fmt(ap.visits),'lượt ghé / liên hệ')+t('≈ '+fmt(ap.uniq),'điểm bán khác nhau (ghé '+ap.vpp+' lần/điểm)')+t(ap.act>0?'≈ '+fmt(ap.careTot):'—','lượt chăm sóc từ xa'+(ap.act>0?'':' (nhập địa bàn)'));
   const sum='<span class="small muted">'+fmt(ap.orders)+' đơn · '+fmt(ap.visits)+' ghé</span>';
   const wkWithData=weeks.filter(w=>w.work>0&&w.tt>0),maxTt=Math.max(1,...wkWithData.map(w=>w.tt));
-  const rows=wkWithData.map(w=>{
+  const rowHtml=w=>{
     const p=ap.weeks[w.i],pct=Math.max(6,Math.round(w.tt/maxTt*100));
     return '<div class="wrow'+(w.hard?' hard':'')+'"><div class="wh"><b>Tuần '+(w.i+1)+'</b><span class="muted small">'+w.label+(w.hard?' · <span style="color:var(--gd);font-weight:700">Nặng nhất</span>':'')+'</span></div>'+
       '<div class="wv"><b>'+fmt(w.tt)+' tr</b><span>ghé '+w.vt+(p.care?' · chăm sóc '+p.care:'')+'</span></div>'+
       '<div class="wbar"><i style="width:'+pct+'%"></i></div>'+
       (p.areas.length?'<div class="wa small muted">'+p.areas.map(a=>escH(a.name)+' '+a.n).join(' · ')+'</div>':'')+'</div>';
-  }).join('');
+  };
+  const curI=S.month===monthKey(0)?currentWeekIndex(weeks):(wkWithData[0]?wkWithData[0].i:0);
+  const teaser=wkWithData.find(w=>w.i===curI)||wkWithData[0];
+  const restWeeks=wkWithData.filter(w=>w!==teaser);
+  const rows=(teaser?rowHtml(teaser):'')+(restWeeks.length?
+    '<details class="rkd" data-sec="need_weeks"'+(isOpen('need_weeks',false)?' open':'')+'><summary class="rks"><b>Xem cả tháng ('+wkWithData.length+' tuần)</b></summary>'+restWeeks.map(rowHtml).join('')+'</details>':'');
   let note;
   if(ap.have){
     note=ap.gap>0
