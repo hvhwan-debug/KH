@@ -3,119 +3,137 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chạy số tháng — Kế hoạch bán hàng Livotec</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>">
+<title>Chạy số tháng — Livotec</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💧</text></svg>">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
 
   :root{
-    --bg: #15191D;
-    --panel: #1E242A;
-    --panel-2: #262D34;
-    --stroke: #323A42;
-    --text: #F1EDE4;
-    --muted: #8D98A1;
-    --amber: #E8912E;
-    --amber-dim: #614422;
-    --teal: #4FA8A3;
-    --green: #5FB488;
-    --red: #E2614F;
-    --radius: 14px;
+    --navy-deep: #0A2730;
+    --navy: #0E323C;
+    --panel: #11404B;
+    --panel-2: #154956;
+    --hairline: rgba(45,212,199,.18);
+    --hairline-strong: rgba(45,212,199,.32);
+    --teal: #14B8A6;
+    --teal-bright: #2DD4C7;
+    --gold: #D7B475;
+    --gold-soft: rgba(215,180,117,.14);
+    --ivory: #F3EFE6;
+    --muted: #92ABAE;
+    --green: #6FCF97;
+    --red: #E8735F;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    background:
+      radial-gradient(900px 480px at 50% -120px, rgba(20,184,166,.20), transparent 60%),
+      var(--navy-deep);
+    color: var(--ivory);
+    font-family:'Inter', -apple-system, system-ui, sans-serif;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
     -webkit-font-smoothing: antialiased;
   }
-  .num{ font-family:'Space Grotesk', 'Inter', sans-serif; font-variant-numeric: tabular-nums; }
+  .serif{ font-family:'Fraunces', serif; }
+  .num{ font-variant-numeric: tabular-nums; }
 
-  .wrap{ max-width: 640px; margin: 0 auto; padding: 22px 18px 60px; }
+  .wrap{ max-width: 620px; margin:0 auto; padding: 28px 20px 70px; }
 
-  header{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom: 18px; gap:10px; }
-  header h1{ font-size: 19px; font-weight:700; margin:0; letter-spacing:-0.01em; }
-  header .cycle{ font-size:13px; color:var(--muted); }
+  .brandbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom: 26px; }
+  .brandbar img{ height: 26px; display:block; }
+  .brandbar .cycle{ font-size:12.5px; color:var(--muted); letter-spacing:.02em; }
+
+  .hero{ text-align:center; margin-bottom: 22px; }
+  .hero h1{ font-family:'Fraunces',serif; font-weight:600; font-size: 30px; margin:0 0 6px; letter-spacing:-0.01em; }
+  .hero p{ font-size:13.5px; color: var(--muted); margin:0; }
 
   .dial-card{
+    position:relative;
     background: linear-gradient(180deg, var(--panel-2), var(--panel));
-    border: 1px solid var(--stroke);
-    border-radius: 20px;
-    padding: 26px 20px 22px;
+    border: 1px solid var(--hairline-strong);
+    border-radius: 26px;
+    padding: 32px 22px 26px;
     display:flex; flex-direction:column; align-items:center;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
+    box-shadow: 0 30px 60px -30px rgba(0,0,0,.55);
   }
-  .dial{ position:relative; width:188px; height:188px; }
+  .dial{ position:relative; width:198px; height:198px; }
   .dial svg{ transform: rotate(-90deg); width:100%; height:100%; }
-  .dial-track{ fill:none; stroke: var(--stroke); stroke-width: 12; }
-  .dial-fill{ fill:none; stroke: var(--amber); stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset .5s ease; }
-  .dial-fill.over{ stroke: var(--green); }
+  .dial-track{ fill:none; stroke: rgba(255,255,255,.07); stroke-width: 10; }
+  .dial-fill{ fill:none; stroke: var(--gold); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset .6s cubic-bezier(.4,0,.2,1); filter: drop-shadow(0 0 8px rgba(215,180,117,.45)); }
+  .dial-fill.over{ stroke: var(--teal-bright); filter: drop-shadow(0 0 8px rgba(45,212,199,.5)); }
   .dial-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .dial-pct{ font-size:38px; font-weight:700; line-height:1; }
-  .dial-sub{ font-size:12px; color:var(--muted); margin-top:6px; }
+  .dial-pct{ font-family:'Fraunces',serif; font-weight:600; font-size:42px; line-height:1; }
+  .dial-sub{ font-size:11.5px; color:var(--muted); margin-top:6px; letter-spacing:.02em; }
 
-  .status{ margin-top:16px; width:100%; padding:11px 14px; border-radius: 10px; font-size:13.5px; font-weight:600; text-align:center; }
-  .status.ahead{ background: rgba(95,180,136,.14); color: var(--green); }
-  .status.behind{ background: rgba(226,97,79,.14); color: var(--red); }
-  .status.flat{ background: rgba(141,152,161,.14); color: var(--muted); }
+  .status{ margin-top:18px; padding:10px 18px; border-radius: 999px; font-size:13px; font-weight:600; text-align:center; border:1px solid transparent; }
+  .status.ahead{ background: rgba(111,207,151,.12); color: var(--green); border-color: rgba(111,207,151,.3); }
+  .status.behind{ background: rgba(232,115,95,.12); color: var(--red); border-color: rgba(232,115,95,.3); }
+  .status.flat{ background: rgba(146,171,174,.1); color: var(--muted); border-color: var(--hairline); }
 
-  .grid-inputs{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-  .field{ background: var(--panel); border:1px solid var(--stroke); border-radius: var(--radius); padding: 11px 13px; }
-  .field.span2{ grid-column: 1 / -1; }
-  .field label{ display:block; font-size:12px; color:var(--muted); margin-bottom:5px; }
-  .field input[type=number], .field input[type=text]{
-    width:100%; background:transparent; border:none; outline:none; color:var(--text);
-    font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:600; padding:0;
+  .panel{ background: var(--panel); border:1px solid var(--hairline); border-radius: 18px; padding: 18px; margin-bottom:16px; }
+
+  .grid-inputs{ display:grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; }
+  .field label{ display:block; font-size:11.5px; color:var(--muted); margin-bottom:6px; letter-spacing:.01em; }
+  .field{ border-bottom: 1px solid var(--hairline-strong); padding-bottom:8px; }
+  .field input[type=number]{
+    width:100%; background:transparent; border:none; outline:none; color:var(--ivory);
+    font-family:'Fraunces',serif; font-size:20px; font-weight:600; padding:0;
   }
   .field .unit{ font-size:11px; color:var(--muted); margin-left:4px; }
-  .checkbox-row{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); }
-  .checkbox-row input{ accent-color: var(--amber); width:16px; height:16px; }
+  .checkbox-row{ display:flex; align-items:center; gap:9px; font-size:12.5px; color:var(--muted); margin-top:14px; }
+  .checkbox-row input{ accent-color: var(--teal); width:16px; height:16px; }
 
-  .stats{ display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin-bottom:22px; }
-  .stat{ background: var(--panel); border:1px solid var(--stroke); border-radius: var(--radius); padding: 12px 10px; text-align:center; }
-  .stat .v{ font-size:16px; font-weight:700; }
-  .stat .l{ font-size:10.5px; color:var(--muted); margin-top:4px; line-height:1.3; }
+  .stats{ display:grid; grid-template-columns: repeat(3,1fr); gap:1px; background: var(--hairline); border-radius: 18px; overflow:hidden; margin-bottom:22px; border:1px solid var(--hairline); }
+  .stat{ background: var(--panel); padding: 16px 10px; text-align:center; }
+  .stat .v{ font-family:'Fraunces',serif; font-size:17px; font-weight:600; color: var(--gold); }
+  .stat .l{ font-size:10px; color:var(--muted); margin-top:5px; line-height:1.3; }
 
-  h2{ font-size:15px; font-weight:700; margin: 0 0 4px; }
-  .section-note{ font-size:12.5px; color:var(--muted); margin: 0 0 12px; }
+  h2.section-title{ font-family:'Fraunces',serif; font-size:19px; font-weight:600; margin: 0 0 4px; }
+  .section-note{ font-size:12.5px; color:var(--muted); margin: 0 0 14px; }
 
-  .cat{ background: var(--panel); border:1px solid var(--stroke); border-radius: var(--radius); padding:13px; margin-bottom:10px; }
-  .cat-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-  .cat-head input.name{ background:transparent; border:none; outline:none; color:var(--text); font-weight:600; font-size:14.5px; width:60%; }
-  .cat-head .share{ font-size:13px; color:var(--amber); font-weight:600; font-family:'Space Grotesk',sans-serif; }
-  .cat-row{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:9px; }
-  .cat-row .f label{ font-size:10.5px; color:var(--muted); display:block; margin-bottom:3px; }
-  .cat-row .f input{ width:100%; background:var(--panel-2); border:1px solid var(--stroke); border-radius:8px; color:var(--text); font-family:'Space Grotesk',sans-serif; font-size:14px; padding:7px 8px; }
-  input[type=range]{ width:100%; accent-color: var(--amber); }
-  .cat-out{ display:flex; justify-content:space-between; font-size:12.5px; padding-top:8px; border-top:1px dashed var(--stroke); }
-  .cat-out b{ color:var(--teal); font-family:'Space Grotesk',sans-serif; }
+  .cat{ background: var(--panel); border:1px solid var(--hairline); border-radius: 16px; padding:16px; margin-bottom:10px; position:relative; overflow:hidden; }
+  .cat::before{ content:''; position:absolute; top:0; left:0; right:0; height:2px; background: linear-gradient(90deg, var(--teal-bright), var(--gold)); opacity:.7; }
+  .cat-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .cat-head input.name{ background:transparent; border:none; outline:none; color:var(--ivory); font-weight:600; font-family:'Fraunces',serif; font-size:15.5px; width:60%; }
+  .cat-head .share{ font-size:13px; color:var(--gold); font-weight:600; font-family:'Fraunces',serif; }
+  input[type=range]{ width:100%; accent-color: var(--gold); margin-bottom:12px; }
+  .cat-row{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px; }
+  .cat-row .f label{ font-size:10.5px; color:var(--muted); display:block; margin-bottom:4px; }
+  .cat-row .f input{ width:100%; background:var(--navy); border:1px solid var(--hairline); border-radius:9px; color:var(--ivory); font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px; padding:8px 9px; }
+  .cat-out{ display:flex; justify-content:space-between; align-items:baseline; font-size:12.5px; padding-top:10px; border-top:1px solid var(--hairline); color:var(--muted); }
+  .cat-out b{ color:var(--teal-bright); font-family:'Fraunces',serif; font-size:14px; font-weight:600; }
 
-  .pct-warning{ font-size:11.5px; color:var(--red); margin: -2px 0 10px; display:none; }
+  .pct-warning{ font-size:11.5px; color:var(--red); margin: -4px 0 12px; display:none; }
   .pct-warning.show{ display:block; }
 
-  .actions{ display:flex; gap:10px; margin-top:18px; }
-  button{ font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px; border-radius: 10px; padding: 11px 14px; border:1px solid var(--stroke); background: var(--panel); color: var(--text); cursor:pointer; }
-  button.primary{ background: var(--amber); border-color: var(--amber); color:#1A1204; flex:1; }
+  .actions{ display:flex; gap:10px; margin-top:20px; }
+  button{ font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px; border-radius: 12px; padding: 13px 16px; border:1px solid var(--hairline-strong); background: transparent; color: var(--ivory); cursor:pointer; }
+  button.primary{ background: linear-gradient(135deg, var(--gold), #c89f5c); border-color: transparent; color:#182024; flex:1; }
   button.ghost{ background:transparent; color: var(--muted); }
 
-  footer{ margin-top: 22px; text-align:center; font-size:11.5px; color: var(--muted); }
+  footer{ margin-top: 26px; text-align:center; font-size:11px; color: var(--muted); letter-spacing:.01em; }
 
   @media (max-width:380px){
-    .stats{ grid-template-columns: 1fr 1fr; }
-    .stats .stat:last-child{ grid-column: 1 / -1; }
+    .dial{ width:170px; height:170px; }
+    .dial-pct{ font-size:36px; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <header>
-    <h1>Chạy số tháng</h1>
+  <div class="brandbar">
+    <img src="data:image/png;base64,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" alt="Livotec">
     <span class="cycle" id="cycleLabel"></span>
-  </header>
+  </div>
+
+  <div class="hero">
+    <h1>Chạy số tháng</h1>
+    <p>Theo dõi tiến độ, tính đúng số cần đạt mỗi ngày</p>
+  </div>
 
   <div class="dial-card">
     <div class="dial">
@@ -131,39 +149,39 @@
     <div class="status flat" id="statusBox">Nhập số để bắt đầu</div>
   </div>
 
-  <div class="grid-inputs">
-    <div class="field">
-      <label>Mục tiêu tháng</label>
-      <input type="number" id="target" inputmode="numeric" placeholder="0">
-      <span class="unit">đ</span>
+  <div class="panel">
+    <div class="grid-inputs">
+      <div class="field">
+        <label>Mục tiêu tháng</label>
+        <input type="number" id="target" inputmode="numeric" placeholder="0">
+        <span class="unit">đ</span>
+      </div>
+      <div class="field">
+        <label>Đã đạt (lũy kế)</label>
+        <input type="number" id="achieved" inputmode="numeric" placeholder="0">
+        <span class="unit">đ</span>
+      </div>
+      <div class="field">
+        <label>Ngày đã qua trong tháng</label>
+        <input type="number" id="elapsed" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Ngày còn lại</label>
+        <input type="number" id="daysLeft" inputmode="numeric">
+      </div>
     </div>
-    <div class="field">
-      <label>Đã đạt (lũy kế)</label>
-      <input type="number" id="achieved" inputmode="numeric" placeholder="0">
-      <span class="unit">đ</span>
-    </div>
-    <div class="field">
-      <label>Ngày đã qua trong tháng</label>
-      <input type="number" id="elapsed" inputmode="numeric">
-    </div>
-    <div class="field">
-      <label>Ngày còn lại</label>
-      <input type="number" id="daysLeft" inputmode="numeric">
-    </div>
-    <div class="field span2">
-      <label class="checkbox-row" style="margin-bottom:0;">
-        <input type="checkbox" id="noSunday"> Không tính Chủ nhật khi tự tính ngày còn lại
-      </label>
-    </div>
+    <label class="checkbox-row">
+      <input type="checkbox" id="noSunday"> Không tính Chủ nhật khi tự tính ngày còn lại
+    </label>
   </div>
 
   <div class="stats">
     <div class="stat"><div class="v num" id="statRemain">0đ</div><div class="l">Còn phải đạt</div></div>
     <div class="stat"><div class="v num" id="statPerDay">0đ</div><div class="l">Cần đạt / ngày</div></div>
-    <div class="stat"><div class="v num" id="statPace">0đ</div><div class="l">Tốc độ hiện tại / ngày</div></div>
+    <div class="stat"><div class="v num" id="statPace">0đ</div><div class="l">Tốc độ / ngày</div></div>
   </div>
 
-  <h2>Phân bổ theo ngành hàng</h2>
+  <h2 class="section-title">Phân bổ theo ngành hàng</h2>
   <p class="section-note">Chỉnh tỷ trọng và giá bán trung bình — hệ thống tự tính số lượng sản phẩm cần bán.</p>
   <p class="pct-warning" id="pctWarning">Tổng tỷ trọng chưa bằng 100%</p>
   <div id="catList"></div>
@@ -222,7 +240,6 @@
   const fmt = n => Math.round(n||0).toLocaleString('vi-VN');
 
   function recalcDaysLeftIfAuto(){
-    // only auto-recompute when user hasn't diverged much; simplest: recompute on noSunday toggle
     const base = daysInMonth - today.getDate();
     if(state.noSunday){
       state.daysLeft = base - countRemainingSundays(today, base);
@@ -288,7 +305,7 @@
     const list = $('catList');
     list.innerHTML = '';
     let totalPct = 0;
-    state.categories.forEach((c,i)=>{ totalPct += Number(c.pct)||0; });
+    state.categories.forEach((c)=>{ totalPct += Number(c.pct)||0; });
     $('pctWarning').classList.toggle('show', Math.round(totalPct)!==100);
 
     state.categories.forEach((c, i)=>{
@@ -305,7 +322,7 @@
           <span class="share">${Math.round(c.pct)}%</span>
         </div>
         <input type="range" min="0" max="100" value="${c.pct}" data-i="${i}" data-field="pct">
-        <div class="cat-row" style="margin-top:9px;">
+        <div class="cat-row">
           <div class="f">
             <label>Giá bán trung bình (đ)</label>
             <input type="number" inputmode="numeric" data-i="${i}" data-field="price" value="${c.price}">
@@ -317,14 +334,13 @@
         </div>
         <div class="cat-out">
           <span>Số lượng cần bán</span>
-          <b>${Math.ceil(units)} sản phẩm (${unitsPerDay.toFixed(1)}/ngày)</b>
+          <b>${Math.ceil(units)} sản phẩm · ${unitsPerDay.toFixed(1)}/ngày</b>
         </div>
       `;
       list.appendChild(el);
     });
   }
 
-  // input bindings
   ['target','achieved','elapsed','daysLeft'].forEach(id=>{
     $(id).addEventListener('input', e=>{
       state[id] = e.target.value;
@@ -359,7 +375,7 @@
     const daysLeft = Number(state.daysLeft)||0;
     const dailyNeeded = daysLeft>0 ? remaining/daysLeft : remaining;
     const lines = [
-      'KẾ HOẠCH CHẠY SỐ THÁNG',
+      'KẾ HOẠCH CHẠY SỐ THÁNG — LIVOTEC',
       'Mục tiêu: ' + fmt(target) + 'đ',
       'Đã đạt: ' + fmt(achieved) + 'đ',
       'Còn thiếu: ' + fmt(remaining) + 'đ',
