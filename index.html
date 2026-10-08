@@ -1854,7 +1854,7 @@ const monthName=m=>'Tháng '+m.split('-')[1]+'/'+m.split('-')[0];
 const $app=document.getElementById('app'),$tabs=document.getElementById('tabs');
 function renderTabs(){
   const wks=analyze(),n=evalAlerts(wks).filter(a=>!a.dismissed&&a.level!=='info').length;
-  $tabs.innerHTML=[['setup','Thiết lập'],['plan','Kế hoạch'],['check','Tự soát'],['alerts','Cảnh báo']].map(x=>'<button role="tab" data-act="tab" data-v="'+x[0]+'" aria-selected="'+(S.tab===x[0])+'"><span class="ti">'+ic(x[0],21)+'</span><span class="tl">'+x[1]+'</span>'+(x[0]==='alerts'&&n?'<span class="cnt">'+n+'</span>':'')+'</button>').join('');
+  $tabs.innerHTML=[['setup','setup','Thiết lập'],['plan','plan','Kế hoạch'],['check','check','Tự soát'],['alerts','bell','Cảnh báo']].map(x=>'<button role="tab" data-act="tab" data-v="'+x[0]+'" aria-selected="'+(S.tab===x[0])+'"><span class="ti">'+ic(x[1],21)+'</span><span class="tl">'+x[2]+'</span>'+(x[0]==='alerts'&&n?'<span class="cnt">'+n+'</span>':'')+'</button>').join('');
   document.getElementById('title').textContent=monthName(S.month);
   const hs=headerStat(wks);hdrSig=hs;document.getElementById('hstat').innerHTML=hs;
 }
