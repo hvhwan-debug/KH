@@ -6,7 +6,7 @@
 <title>Tự chủ doanh số — Livotec</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💧</text></svg>">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..800&display=swap');
 
   :root{
     --navy-deep: #0A2730;
@@ -28,10 +28,13 @@
   html,body{margin:0;padding:0;}
   body{
     background:
-      radial-gradient(900px 480px at 50% -120px, rgba(20,184,166,.20), transparent 60%),
+      radial-gradient(900px 480px at 50% -120px, rgba(2,182,172,.22), transparent 60%),
+      radial-gradient(circle at 1px 1px, rgba(2,182,172,.14) 1px, transparent 0) 0 0/22px 22px,
       var(--navy-deep);
     color: var(--ivory);
-    font-family:'Inter', -apple-system, system-ui, sans-serif;
+    font-family:'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    line-height: 1.55;
     padding-top: env(safe-area-inset-top, 0px);
     -webkit-font-smoothing: antialiased;
   }
@@ -40,17 +43,17 @@
   .wrap{ max-width: 620px; margin:0 auto; padding: 22px 18px 100px; }
 
   .brandbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px; }
-  .brandbar img{ height: 24px; display:block; }
+  .brandbar img{ height: 28px; display:block; filter: drop-shadow(0 2px 10px rgba(2,182,172,.35)); }
   .brandbar .cycle{ font-size:12px; color:var(--muted); }
 
-  .hero{ margin-bottom: 18px; }
-  .hero h1{ font-family:'Fraunces',serif; font-weight:600; font-size: 23px; margin:0 0 4px; letter-spacing:-0.01em; }
-  .hero p{ font-size:12.5px; color: var(--muted); margin:0; line-height:1.5; }
+  .hero{ margin-bottom: 22px; }
+  .hero h1{ font-family:'Fraunces',serif; font-weight:650; font-size: 34px; margin:0 0 7px; letter-spacing:-0.025em; line-height:1.08; }
+  .hero p{ font-size:13px; color: var(--muted); margin:0; line-height:1.6; max-width: 46ch; }
 
-  .panel{ background: linear-gradient(180deg, var(--panel-2), var(--panel)); border:1px solid var(--hairline); border-radius: 18px; padding: 18px; margin-bottom:14px; }
+  .panel{ background: linear-gradient(180deg, var(--panel-2), var(--panel)); border:1px solid var(--hairline); border-radius: 18px; padding: 18px; margin-bottom:14px; box-shadow: 0 24px 48px -28px rgba(0,0,0,.6); }
   .panel.tight{ padding:14px 16px; }
 
-  h2.section-title{ font-family:'Fraunces',serif; font-size:17px; font-weight:600; margin: 0 0 5px; display:flex; align-items:center; gap:8px; }
+  h2.section-title{ font-family:'Fraunces',serif; font-size:18.5px; font-weight:600; margin: 0 0 5px; display:flex; align-items:center; gap:8px; letter-spacing:-0.01em; }
   h2.section-title .glyph{ color: var(--gold); font-size:15px; }
   .section-note{ font-size:12px; color:var(--muted); margin: 0 0 14px; line-height:1.5; }
 
@@ -80,15 +83,15 @@
   .splitlabels{ display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:2px; }
   .splitlabels b{ color:var(--ivory); font-family:'Fraunces',serif; }
 
-  .dial-mini{ display:flex; align-items:center; gap:18px; }
-  .dial{ position:relative; width:110px; height:110px; flex-shrink:0; }
+  .dial-mini{ display:flex; align-items:center; gap:20px; }
+  .dial{ position:relative; width:132px; height:132px; flex-shrink:0; }
   .dial svg{ transform: rotate(-90deg); width:100%; height:100%; }
-  .dial-track{ fill:none; stroke: rgba(255,255,255,.07); stroke-width: 9; }
-  .dial-fill{ fill:none; stroke: var(--gold); stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset .5s ease; }
-  .dial-fill.over{ stroke: var(--teal-bright); }
-  .dial-fill.danger{ stroke: var(--red); }
+  .dial-track{ fill:none; stroke: rgba(255,255,255,.06); stroke-width: 8; }
+  .dial-fill{ fill:none; stroke: var(--gold); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset .6s cubic-bezier(.4,0,.2,1); filter: drop-shadow(0 0 10px rgba(215,180,117,.55)); }
+  .dial-fill.over{ stroke: var(--teal-bright); filter: drop-shadow(0 0 10px rgba(45,217,204,.6)); }
+  .dial-fill.danger{ stroke: var(--red); filter: drop-shadow(0 0 10px rgba(232,115,95,.55)); }
   .dial-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .dial-pct{ font-family:'Fraunces',serif; font-weight:600; font-size:22px; line-height:1; }
+  .dial-pct{ font-family:'Fraunces',serif; font-weight:650; font-size:26px; line-height:1; }
 
   .status{ padding:11px 16px; border-radius: 12px; font-size:13px; font-weight:600; border:1px solid transparent; line-height:1.4; }
   .status.ahead{ background: rgba(111,207,151,.12); color: var(--green); border-color: rgba(111,207,151,.3); }
@@ -111,7 +114,7 @@
   #addCatBtn{ background:transparent; border:1px dashed var(--hairline-strong); color:var(--muted); }
   .cat-row{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:8px; }
   .cat-row .f label{ font-size:10.5px; color:var(--muted); display:block; margin-bottom:4px; }
-  .cat-row .f input{ width:100%; background:var(--navy); border:1px solid var(--hairline); border-radius:9px; color:var(--ivory); font-family:'Inter',sans-serif; font-weight:600; font-size:13px; padding:7px 8px; }
+  .cat-row .f input{ width:100%; background:var(--navy); border:1px solid var(--hairline); border-radius:9px; color:var(--ivory); font-family:'Fraunces',serif; font-weight:600; font-size:13px; padding:7px 8px; }
   .cat-out{ display:flex; justify-content:space-between; align-items:baseline; font-size:12px; padding-top:9px; border-top:1px solid var(--hairline); color:var(--muted); }
   .cat-out b{ color:var(--teal-bright); font-family:'Fraunces',serif; font-size:13.5px; font-weight:600; }
 
@@ -125,7 +128,7 @@
   .risk-badge.active.high{ border-color: var(--red); color:var(--red); background:rgba(232,115,95,.08); }
   .risk-badge b{ display:block; font-family:'Fraunces',serif; font-size:13px; margin-bottom:2px; color:inherit; }
 
-  textarea{ width:100%; background:var(--navy); border:1px solid var(--hairline); border-radius:10px; color:var(--ivory); font-family:'Inter',sans-serif; font-size:13px; padding:10px; resize:vertical; min-height:46px; }
+  textarea{ width:100%; background:var(--navy); border:1px solid var(--hairline); border-radius:10px; color:var(--ivory); font-family:'Fraunces',serif; font-size:13px; padding:10px; resize:vertical; min-height:46px; }
 
   .report-box{ background: var(--navy); border:1px solid var(--hairline-strong); border-radius:14px; padding:16px; font-size:13px; line-height:1.7; white-space:pre-wrap; }
 
@@ -133,7 +136,7 @@
   .qbox .q{ font-size:13px; font-weight:600; margin-bottom:6px; font-family:'Fraunces',serif; }
   .qbox .hint{ font-size:11px; color:var(--muted); margin-bottom:6px; }
 
-  button{ font-family:'Inter',sans-serif; font-weight:600; font-size:13px; border-radius: 11px; padding: 12px 14px; border:1px solid var(--hairline-strong); background: transparent; color: var(--ivory); cursor:pointer; width:100%; }
+  button{ font-family:'Fraunces',serif; font-weight:600; font-size:13px; border-radius: 11px; padding: 12px 14px; border:1px solid var(--hairline-strong); background: transparent; color: var(--ivory); cursor:pointer; width:100%; }
   button.primary{ background: linear-gradient(135deg, var(--gold), #c89f5c); border-color: transparent; color:#182024; }
   button.ghost{ background:transparent; color: var(--muted); }
 
