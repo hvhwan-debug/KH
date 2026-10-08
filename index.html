@@ -315,6 +315,12 @@ button,.chip,.cal button{touch-action:manipulation}
   .top h1{font-size:17px}
   .hero svg{width:92px;height:92px}
 }
+
+.askplan{margin-top:12px;padding:12px;border-radius:14px;background:var(--brand-soft);border:1.5px solid var(--brand-deep)}
+.askq{font-weight:600;line-height:1.45}
+.askrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.askrow .btn.sm{flex:1;min-width:140px;text-align:center}
+@media (max-width:600px){.askplan{margin-top:8px;padding:10px;border-radius:12px}.askrow{gap:6px;margin-top:8px}.askrow .btn.sm{min-width:120px;padding:9px 10px}}
 </style>
 </head>
 <body>
@@ -474,9 +480,14 @@ function aiCard(weeks){
   let body;
   if(aiState.loading)body='<div class="small muted">Đang phân tích…</div>';
   else if(aiState.error)body='<div class="note" style="color:var(--bad)">'+aiState.error+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Thử lại</button></div>';
-  else if(aiState.text)body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiState.text+'</div><div class="small muted" style="margin-top:10px">'+AI_DISCLAIMER+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích lại</button></div>';
+  else if(aiState.text)body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiFmt(aiState.text)+'</div><div class="small muted" style="margin-top:10px">'+AI_DISCLAIMER+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích lại</button></div>';
   else body='<div class="small muted">Đang chờ số liệu để phân tích…</div>';
-  return '<div class="card"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2>'+body+'</div>';
+  const ask=aiState.loading?'':'<div class="askplan"><div class="askq">Với con số KPI bạn đặt là <b>'+fmt(total)+' triệu</b>, bạn có muốn tạo kế hoạch không?</div><div class="askrow"><button class="btn sm" data-act="tab" data-v="plan">Có, tạo kế hoạch</button><button class="btn ghost sm" data-act="adjust">Điều chỉnh KPI</button></div></div>';
+  return '<div class="card"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2>'+body+ask+'</div>';
+}
+function aiFmt(t){
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*([^*\n]+?)\*\*/g,'<b>$1</b>').replace(/^#{1,4}\s*/gm,'').replace(/^\s*[-*]\s+/gm,'• ');
 }
 const pad=n=>String(n).padStart(2,'0');
 const fmt=(x,d=0)=>Number(x).toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -1098,6 +1109,7 @@ document.addEventListener('click',function(e){
   else if(a==='catTog'){const c=S.cats[d.c];c.on=!c.on;if(c.on&&c.w<=0)c.w=10;}
   else if(a==='catW'){const c=S.cats[d.c];c.w=Math.max(0,Math.min(100,c.w+(+d.d)));}
   else if(a==='learn'){S.learn=!S.learn;}
+  else if(a==='adjust'){setTimeout(function(){const el=document.querySelector('input[data-f="target"]');if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.focus();}},60);}
   else if(a==='ai'){aiLastKey=aiDataKey();askAI();return;}
   else if(a==='area'){const A={tp:[25,5],tinh:[20,4],rong:[15,3]}[d.v];S.aov=A[0];S.maxC=A[1];toast('Đã áp dụng mẫu địa bàn, bạn có thể sửa tiếp');}
   else if(a==='rule'){S.rules[d.r].on=!S.rules[d.r].on;}
