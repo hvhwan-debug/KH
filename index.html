@@ -584,15 +584,8 @@ const DISC='<div class="disc-line">'+DISC_TXT+'</div>';
 /* ---------- Nhận xét AI (Groq) ---------- */
 const GROQ_MODEL='openai/gpt-oss-120b'; // llama-3.3-70b-versatile đã bị Groq ngừng từ 16/08/2026
 let aiState={loading:false,text:'',error:''};
-let aiLastKey=null,aiTimer=null;
 const AI_DISCLAIMER='Lưu ý: nhận xét do AI tạo tự động từ số liệu bạn nhập, chỉ mang tính tham khảo — hãy đối chiếu thực tế trước khi quyết định.';
 function aiDataKey(){return JSON.stringify({t:S.target,a:S.actual,d:S.daily,m:S.month,p:S.province});}
-function scheduleAI(){
-  const key=aiDataKey();
-  if(key===aiLastKey)return;
-  clearTimeout(aiTimer);
-  aiTimer=setTimeout(()=>{aiLastKey=key;askAI();},2200);
-}
 function aiPrompt(weeks){
   const fc=forecast(weeks),total=(+S.target.bn||0)+(+S.target.gd||0);
   const ach=weeks.reduce((s,x)=>s+(((S.actual[x.key]||{}).bn||0)+((S.actual[x.key]||{}).gd||0)),0);
@@ -629,6 +622,7 @@ function aiPrompt(weeks){
   return 'Bạn là trợ lý phân tích kinh doanh, hỗ trợ một nhân viên kinh doanh (SR) ngành hàng điện gia dụng đánh giá kế hoạch và tiến độ doanh số tháng dựa trên dữ liệu sau:\n\n'+
     lines.join('\n')+'\n\n'+task+regionNote;
 }
+let aiKeyMain='';
 async function askAI(){
   if(aiState.loading)return;
   aiState={loading:true,text:'',error:''};render();
@@ -643,6 +637,7 @@ async function askAI(){
     const data=await res.json();
     const text=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
     aiState={loading:false,text:text||'Không nhận được nội dung phản hồi.',error:''};
+    aiKeyMain=aiDataKey();
   }catch(e){
     aiState={loading:false,text:'',error:'Không gọi được AI (lỗi mạng hoặc dịch vụ AI tạm thời không phản hồi). Chi tiết: '+e.message};
   }
@@ -650,13 +645,13 @@ async function askAI(){
 }
 function aiCard(weeks,withAsk){
   const total=(+S.target.bn||0)+(+S.target.gd||0);
-  if(!total)return '<div class="card"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2><div class="small muted">Nhập chỉ tiêu tháng ở trên — hệ thống sẽ tự động phân tích và đưa ra khuyến nghị.</div></div>';
-  scheduleAI();
+  if(!total)return '<div class="card"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2><div class="small muted">Nhập chỉ tiêu tháng ở trên — bạn sẽ bấm một nút để xem đánh giá và khuyến nghị.</div></div>';
+  const stale=aiState.text&&aiKeyMain!==aiDataKey();
   let body;
   if(aiState.loading)body='<div class="small muted">Đang phân tích…</div>';
   else if(aiState.error)body='<div class="note" style="color:var(--bad)">'+aiState.error+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Thử lại</button></div>';
-  else if(aiState.text)body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiFmt(aiState.text)+'</div><div class="small muted" style="margin-top:10px">'+AI_DISCLAIMER+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích lại</button></div>';
-  else body='<div class="small muted">Đang chờ số liệu để phân tích…</div>';
+  else if(aiState.text)body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiFmt(aiState.text)+'</div>'+(stale?'<div class="small" style="color:var(--warn);margin-top:8px">Số liệu đã thay đổi từ lần phân tích trước.</div>':'')+'<div class="small muted" style="margin-top:8px">'+AI_DISCLAIMER+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích lại</button></div>';
+  else body='<div class="small muted">Xem đánh giá mức độ khả thi và khuyến nghị triển khai dựa trên chỉ tiêu bạn vừa nhập.</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích bằng AI</button></div>';
   const ask=(!withAsk||aiState.loading)?'':'<div class="askplan"><div class="askq">Với con số KPI bạn đặt là <b>'+fmt(total)+' triệu</b>, bạn có muốn tạo kế hoạch không?</div><div class="askrow"><button class="btn sm" data-act="mkplan" data-m="auto">Tạo tự động<small>Tự chia theo tuần, ngày</small></button><button class="btn ghost sm" data-act="mkplan" data-m="manual">Tự tạo thủ công<small>Bạn tự chỉnh từng tuần</small></button></div></div>';
   return '<div class="card"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2>'+body+ask+'</div>';
 }
@@ -2115,7 +2110,7 @@ document.addEventListener('click',function(e){
   else if(a==='openSec'){openSec[d.k]=true;}
   else if(a==='distAdd'){const n=(document.getElementById('dnm').value||'').trim().slice(0,40),p=Math.max(0,Math.floor(+document.getElementById('dpt').value||0));if(n&&p>0&&S.area.dist.length<30){S.area.dist.push({n:n,p:p});openSec.area=true;}else toast('Nhập tên khu vực và số điểm bán');}
   else if(a==='distDel'){S.area.dist.splice(+d.i,1);}
-  else if(a==='ai'){aiLastKey=aiDataKey();askAI();return;}
+  else if(a==='ai'){askAI();return;}
   else if(a==='area'){const A={tp:[25,5],tinh:[20,4],rong:[15,3]}[d.v];S.aov=A[0];S.maxC=A[1];toast('Đã áp dụng mẫu địa bàn, bạn có thể sửa tiếp');}
   else if(a==='rule'){S.rules[d.r].on=!S.rules[d.r].on;}
   else if(a==='rv'){const r=RULES.find(x=>x.id===d.r),c=S.rules[d.r];c.v=Math.min(r.max,Math.max(r.min,c.v+(+d.d)));S.preset='custom';}
