@@ -221,7 +221,8 @@ input[type=range]{accent-color:var(--brand-deep)}
 .toast{background:var(--brand-deep);color:var(--on-brand)}
 
 .tabs button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;line-height:1.2}
-.tabs .ti{font-size:18px}
+.tabs .ti{display:block;line-height:0}
+.tabs .ti svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tabs .tl{font-size:12px;font-weight:700;white-space:nowrap}
 .tabs .cnt{position:absolute;top:4px;right:6px;margin:0;min-width:17px;height:17px;line-height:17px;font-size:10px;padding:0 4px}
 .hero{justify-content:center}
@@ -696,7 +697,13 @@ const monthName=m=>'Tháng '+m.split('-')[1]+'/'+m.split('-')[0];
 const $app=document.getElementById('app'),$tabs=document.getElementById('tabs');
 function renderTabs(){
   const n=evalAlerts(analyze()).filter(a=>!a.dismissed&&a.level!=='info').length;
-  $tabs.innerHTML=[['setup','⚙️','Thiết lập'],['plan','🗺️','Kế hoạch'],['check','✅','Tự soát'],['alerts','🔔','Cảnh báo']].map(x=>'<button role="tab" data-act="tab" data-v="'+x[0]+'" aria-selected="'+(S.tab===x[0])+'"><span class="ti">'+x[1]+'</span><span class="tl">'+x[2]+'</span>'+(x[0]==='alerts'&&n?'<span class="cnt">'+n+'</span>':'')+'</button>').join('');
+  const ICONS={
+    setup:'<svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
+    plan:'<svg viewBox="0 0 24 24"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>',
+    check:'<svg viewBox="0 0 24 24"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>',
+    alerts:'<svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>'
+  };
+  $tabs.innerHTML=[['setup','Thiết lập'],['plan','Kế hoạch'],['check','Tự soát'],['alerts','Cảnh báo']].map(x=>'<button role="tab" data-act="tab" data-v="'+x[0]+'" aria-selected="'+(S.tab===x[0])+'"><span class="ti">'+ICONS[x[0]]+'</span><span class="tl">'+x[1]+'</span>'+(x[0]==='alerts'&&n?'<span class="cnt">'+n+'</span>':'')+'</button>').join('');
   document.getElementById('title').textContent=monthName(S.month);
 }
 function emptyCard(msg){return '<div class="card empty"><div style="font-size:42px">🎯</div><h2>Chưa có chỉ tiêu</h2><p class="muted">'+msg+'</p><button class="btn" data-act="tab" data-v="setup">Nhập chỉ tiêu</button></div>';}
