@@ -480,6 +480,11 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 .szchip.high{background:var(--ok-soft);color:var(--ok);border-color:transparent}
 .szchip.mid{background:var(--warn-soft);color:var(--warn);border-color:transparent}
 .szchip.low{background:var(--bg);color:var(--muted);border-color:var(--line)}
+.srow{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px}
+.srow .txt{margin-top:0;font-weight:600}
+.srow2{display:flex;gap:8px;align-items:center;margin-top:8px}
+.srow2 select{flex:1;min-width:0;padding:8px 10px;font-size:13px}
+.srow2 .num.sm{width:84px}
 .stattiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
 @media (min-width:560px){.stattiles{grid-template-columns:repeat(4,1fr)}}
 .sttile{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow)}
@@ -840,6 +845,31 @@ function needCard(weeks){
   } else note='<div class="note">Nhập số điểm bán và khu vực để biết cần ghé bao nhiêu điểm, chăm sóc ra sao. <button class="link" data-act="openSec" data-k="area">Mở mục Địa bàn &amp; điểm bán</button></div>';
   return sec('need',ic('target',18),'Để đạt '+fmt(ap.total)+' triệu',sum,'<div class="tiles compact">'+tiles+'</div>'+rows+note+'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">'+seasonChips()+'</div>',true);
 }
+function sourcesCard(weeks){
+  const total=(+S.target.bn||0)+(+S.target.gd||0);
+  if(!total)return '';
+  const list=S.sources||[];
+  const sum=list.reduce((s,x)=>s+(+x.amt||0),0),gap=Math.max(0,total-sum);
+  const rows=list.map((s,i)=>'<div class="srow">'+
+    '<input class="txt" type="text" data-f="src" data-i="'+i+'" data-k="name" value="'+escH(s.name||'')+'" placeholder="VD: Đại lý Minh Phát tăng đơn, hoặc Mở mới 3 điểm Hà Đông">'+
+    '<div class="srow2"><input class="num sm" type="number" inputmode="numeric" min="0" data-f="src" data-i="'+i+'" data-k="amt" value="'+(s.amt||'')+'" placeholder="0"><span class="unit">tr</span>'+
+    '<select data-f="src" data-i="'+i+'" data-k="week" aria-label="Tuần dự kiến">'+weeks.map(w=>'<option value="'+w.i+'"'+((+s.week||0)===w.i?' selected':'')+'>Tuần '+(w.i+1)+'</option>').join('')+'</select>'+
+    '<button class="xbtn" data-act="rmsrc" data-i="'+i+'" aria-label="Xoá nguồn">✕</button></div></div>').join('');
+  let stress='';
+  if(list.length&&sum>0){
+    const maxS=list.reduce((a,b)=>(+b.amt||0)>(+a.amt||0)?b:a,list[0]);
+    const pct=Math.round((+maxS.amt||0)/sum*100);
+    if(pct>=40){
+      stress='<div class="note" style="margin-top:10px"><b>'+(escH(maxS.name)||'Nguồn lớn nhất')+'</b> chiếm '+pct+'% tổng các nguồn bạn liệt kê. Nếu nguồn này không đạt, bạn hụt khoảng '+fmt(maxS.amt)+' tr — nên có phương án B.</div>';
+    }
+  }
+  const planB='<div class="field" style="max-width:none;margin:12px 0 0"><span class="nm">Phương án B (nếu nguồn lớn nhất không đạt)</span></div>'+
+    '<textarea class="txt" data-f="planB" placeholder="VD: chuyển sang chào thêm 2-3 điểm bán mới ở khu vực lân cận" rows="2">'+escH(S.planB||'')+'</textarea>';
+  const sumLine='<div class="small" style="margin-top:10px"><b>'+fmt(sum)+' tr</b> / '+fmt(total)+' tr đã gắn nguồn'+(gap>0?' · <span style="color:var(--bad);font-weight:700">còn '+fmt(gap)+' tr chưa rõ nguồn</span>':' · <span style="color:var(--ok);font-weight:700">đã gắn đủ</span>')+'</div>';
+  const body='<div class="small muted">Chỉ tiêu không tự sinh ra — ghi rõ tiền sẽ đến từ đâu: đại lý nào tăng đơn, điểm nào mới mở, nguồn nào khác.</div>'+rows+
+    '<button class="btn ghost sm" data-act="addsrc" style="margin-top:8px">+ Thêm nguồn doanh số</button>'+sumLine+stress+planB;
+  return sec('sources',ic('trend',18),'Nguồn doanh số',list.length?('<span class="small muted">'+list.length+' nguồn</span>'):'',body,false);
+}
 function areaCard(weeks){
   const A=S.area||{},n=(A.dist||[]).length;
   const inp=(k,v,u)=>'<input class="num sm" type="number" inputmode="numeric" min="0" data-f="area" data-k="'+k+'" value="'+(v||'')+'" placeholder="0"><span class="unit">'+u+'</span>';
@@ -888,6 +918,14 @@ function ctxText(weeks){
   if(A.promo)L.push('Chương trình đang áp dụng (SR tự nhập): '+A.promo+'.');
   if(A.comp)L.push('Đối thủ chính (SR tự nhập): '+A.comp+'.');
   if((A.dist||[]).length)L.push('Khu vực/tuyến: '+A.dist.map(d=>d.n+' '+d.p+' điểm').join(', ')+'.');
+  const src=S.sources||[];
+  if(src.length){
+    const srcSum=src.reduce((s,x)=>s+(+x.amt||0),0);
+    L.push('Nguồn doanh số SR tự liệt kê: '+src.map(s=>(s.name||'(chưa đặt tên)')+' '+fmt(s.amt)+' tr vào tuần '+((+s.week||0)+1)).join('; ')+' (tổng đã gắn nguồn '+fmt(srcSum)+'/'+fmt(total)+' tr).');
+    if(S.planB)L.push('Phương án B SR đã ghi: '+S.planB+'.');
+  } else {
+    L.push('SR chưa liệt kê nguồn doanh số cụ thể (chưa rõ tiền đến từ đại lý nào, điểm mới nào).');
+  }
   weeks.forEach(w=>{
     if(!w.work||!w.tt)return;
     const p=ap&&ap.weeks[w.i],a=S.actual[w.key];
@@ -1526,7 +1564,7 @@ const pad=n=>String(n).padStart(2,'0');
 const fmt=(x,d=0)=>Number(x).toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d});
 const C={bn:'var(--bn)',gd:'var(--gd)'};
 function monthKey(o){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+o);return d.getFullYear()+'-'+pad(d.getMonth()+1);}
-function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,strat:'season',tt:0,sync:{rev:0,lastOk:0},mail:{on:false,morning:true,evening:true,warn:true,weekly:true},rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''}};}
+function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,strat:'season',tt:0,sync:{rev:0,lastOk:0},mail:{on:false,morning:true,evening:true,warn:true,weekly:true},rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''},sources:[],planB:''};}
 function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{strat:o.strat||'manual',tt:+o.tt||0,sync:Object.assign(d.sync,o.sync||{}),mail:Object.assign(d.mail,o.mail||{}),hist:o.hist||{},rem:Object.assign(d.rem,o.rem||{}),area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats});}}catch(e){}return defaults();}
 let S=load(),confirmReset=false,copyText=null;
 function save(){try{S.savedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}if(typeof scheduleSync==='function')scheduleSync();}
@@ -1958,6 +1996,7 @@ function renderSetup(){
   needCard(weeks)+
   factorsCard(weeks,'full')+
   aiCard(weeks,true)+
+  sourcesCard(weeks)+
   '<div class="secgrid">'+
   feasCard(weeks)+
   areaCard(weeks)+
@@ -2174,6 +2213,8 @@ document.addEventListener('click',function(e){
   else if(a==='wt'){const weeks=analyze(),T=targets(weeks);if(!S.plan){S.plan={};PRODUCTS.forEach(p=>{S.plan[p.id]=T[p.id].slice();});}const i=+d.w;S.plan[d.p][i]=Math.max(0,S.plan[d.p][i]+(+d.d));}
   else if(a==='autoplan'){S.plan=null;toast('Đã đưa về gợi ý tự động');}
   else if(a==='risk'){const weeks=analyze(),w=weeks[+d.w],cur=riskSel(w).slice(),i=cur.indexOf(d.r);if(i>=0)cur.splice(i,1);else cur.push(d.r);S.risks[w.key]=cur;}
+  else if(a==='addsrc'){S.sources.push({name:'',amt:0,week:0});}
+  else if(a==='rmsrc'){S.sources.splice(+d.i,1);}
   else if(a==='cw'){S.cw=+d.w;S.cd=null;}
   else if(a==='cd'){S.cd=d.day;}
   else if(a==='dk'){
@@ -2267,6 +2308,8 @@ document.addEventListener('change',function(e){
   else if(f==='rem'){const k=t.dataset.k;if(/^\d{1,2}:\d{2}$/.test(t.value))S.rem[k]=t.value;}
   else if(f==='distP'){const dd=S.area.dist[+t.dataset.i];if(dd)dd.p=Math.max(0,Math.floor(+t.value||0));}
   else if(f==='booked'){S.booked[t.dataset.w]=Math.max(0,Math.floor(+t.value||0));}
+  else if(f==='src'){const i=+t.dataset.i,k=t.dataset.k,s=S.sources[i];if(s){if(k==='name')s.name=t.value.trim().slice(0,120);else if(k==='amt')s.amt=Math.max(0,Math.floor(+t.value||0));else if(k==='week')s.week=+t.value;}}
+  else if(f==='planB'){S.planB=t.value.trim().slice(0,400);}
   if(S.strat!=='manual'){const ob=S.target.bn;applyStrategy();if(S.target.bn!==ob)S.plan=null;}
   save();setTimeout(render,0);
 });
