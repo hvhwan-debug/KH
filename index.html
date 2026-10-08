@@ -106,6 +106,9 @@
   .cat-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
   .cat-head .t{ font-family:'Fraunces',serif; font-weight:600; font-size:14.5px; }
   .cat-head .tag{ font-size:10px; color:var(--muted); }
+  .cat-head input.name-input{ background:transparent; border:none; outline:none; color:var(--ivory); font-family:'Fraunces',serif; font-weight:600; font-size:14.5px; width:70%; padding:0; }
+  .rm-cat{ width:auto; background:transparent; border:1px solid var(--hairline); border-radius:8px; color:var(--muted); font-size:13px; padding:4px 9px; }
+  #addCatBtn{ background:transparent; border:1px dashed var(--hairline-strong); color:var(--muted); }
   .cat-row{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:8px; }
   .cat-row .f label{ font-size:10.5px; color:var(--muted); display:block; margin-bottom:4px; }
   .cat-row .f input{ width:100%; background:var(--navy); border:1px solid var(--hairline); border-radius:9px; color:var(--ivory); font-family:'Inter',sans-serif; font-weight:600; font-size:13px; padding:7px 8px; }
@@ -171,11 +174,12 @@
   <div class="tab-panel active" id="tab-plan">
 
     <div class="panel">
-      <h2 class="section-title"><span class="glyph">◆</span>Mục tiêu tháng</h2>
-      <div class="field">
-        <label>Mục tiêu doanh số tháng</label>
-        <input type="number" id="target" inputmode="numeric" placeholder="300000000">
-        <span class="unit">đ</span>
+      <h2 class="section-title"><span class="glyph">◆</span>Mục tiêu theo ngành hàng</h2>
+      <p class="section-note">Nhập đúng số chỉ tiêu công ty giao cho từng ngành hàng — tổng mục tiêu tháng sẽ tự cộng dồn.</p>
+      <div id="catTargetList"></div>
+      <button class="ghost" id="addCatBtn" type="button">+ Thêm ngành hàng</button>
+      <div class="stats" style="margin-top:14px;">
+        <div class="stat" style="grid-column:1/-1;"><div class="v" id="totalTarget">0đ</div><div class="l">Tổng mục tiêu tháng</div></div>
       </div>
     </div>
 
@@ -194,20 +198,6 @@
       <p class="pct-warning" id="weekWarning">Tổng % 4 tuần chưa bằng 100%</p>
     </div>
 
-    <div class="panel">
-      <h2 class="section-title"><span class="glyph">⬡</span>Cơ cấu sản phẩm</h2>
-      <p class="section-note">Phương án A đánh mạnh mùa vụ, doanh số đỉnh cao nhưng phụ thuộc 1 dòng. Phương án B dùng gia dụng làm phao an toàn hơn.</p>
-      <div class="presetrow">
-        <div class="preset-btn active" data-split="70">Phương án A<br><b>70 / 30</b></div>
-        <div class="preset-btn" data-split="50">Phương án B<br><b>50 / 50</b></div>
-      </div>
-      <div class="splitlabels"><span>Bình nước nóng — <b id="splitLabelA">70%</b></span><span>Gia dụng — <b id="splitLabelB">30%</b></span></div>
-      <input type="range" id="productSplit" min="0" max="100" value="70">
-      <div class="stats" style="margin-top:4px;">
-        <div class="stat"><div class="v" id="amtHeater">0đ</div><div class="l">Bình nước nóng</div></div>
-        <div class="stat"><div class="v" id="amtHousehold">0đ</div><div class="l">Gia dụng</div></div>
-      </div>
-    </div>
   </div>
 
   <!-- TAB 2: MỐC KIỂM TRA -->
@@ -362,10 +352,13 @@
   };
 
   const defaultState = {
+    categories: [
+      {name:'Bình nước nóng', amount:0},
+      {name:'Gia dụng', amount:0}
+    ],
     target: 0,
     weekPct: [...PRESETS.early],
     weekPreset: 'early',
-    productSplit: 70,
     checkDay: 12,
     achievedAtCheck: 0,
     comboPrice: 6000000, comboQty: 0,
@@ -384,6 +377,7 @@
       if(!raw) return JSON.parse(JSON.stringify(defaultState));
       const parsed = JSON.parse(raw);
       if(!parsed.weekPct || parsed.weekPct.length!==4) parsed.weekPct = [...PRESETS.early];
+      if(!parsed.categories || !parsed.categories.length) parsed.categories = JSON.parse(JSON.stringify(defaultState.categories));
       return Object.assign(JSON.parse(JSON.stringify(defaultState)), parsed);
     }catch(e){ return JSON.parse(JSON.stringify(defaultState)); }
   }
@@ -426,22 +420,54 @@
   }
 
   // ---------- RENDER: TAB 1 ----------
+  function renderCategories(){
+    const list = $('catTargetList');
+    list.innerHTML = '';
+    state.categories.forEach((c,i)=>{
+      const el = document.createElement('div');
+      el.className = 'cat';
+      el.innerHTML = `
+        <div class="cat-head">
+          <input class="name-input" data-i="${i}" data-field="name" value="${c.name}">
+          ${state.categories.length>1 ? `<button type="button" class="rm-cat" data-i="${i}">✕</button>` : ''}
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Mục tiêu</label>
+          <input type="number" inputmode="numeric" data-i="${i}" data-field="amount" value="${c.amount || ''}">
+          <span class="unit">đ</span>
+        </div>
+      `;
+      list.appendChild(el);
+    });
+  }
+
+  $('catTargetList').addEventListener('input', e=>{
+    const i = e.target.getAttribute('data-i');
+    const field = e.target.getAttribute('data-field');
+    if(i===null) return;
+    state.categories[i][field] = field==='name' ? e.target.value : Number(e.target.value)||0;
+    save(); renderAll();
+  });
+  $('catTargetList').addEventListener('click', e=>{
+    if(!e.target.classList.contains('rm-cat')) return;
+    const i = Number(e.target.getAttribute('data-i'));
+    state.categories.splice(i,1);
+    save(); renderAll();
+  });
+  $('addCatBtn').addEventListener('click', ()=>{
+    state.categories.push({name:'Ngành hàng mới', amount:0});
+    save(); renderAll();
+  });
+
   function renderPlan(){
-    $('target').value = state.target || '';
+    renderCategories();
+    const target = state.categories.reduce((s,c)=> s+(Number(c.amount)||0), 0);
+    state.target = target;
+    $('totalTarget').textContent = fmt(target);
 
     document.querySelectorAll('[data-preset]').forEach(el=>{
       el.classList.toggle('active', el.dataset.preset === state.weekPreset);
     });
-    document.querySelectorAll('[data-split]').forEach(el=>{
-      el.classList.toggle('active', Number(el.dataset.split) === Number(state.productSplit));
-    });
-    $('productSplit').value = state.productSplit;
-    $('splitLabelA').textContent = state.productSplit + '%';
-    $('splitLabelB').textContent = (100-state.productSplit) + '%';
-
-    const target = Number(state.target)||0;
-    $('amtHeater').textContent = fmt(target*state.productSplit/100);
-    $('amtHousehold').textContent = fmt(target*(100-state.productSplit)/100);
 
     const body = $('weekBody');
     body.innerHTML = '';
@@ -462,8 +488,6 @@
     $('weekWarning').classList.toggle('show', Math.round(totalPct)!==100);
   }
 
-  $('target').addEventListener('input', e=>{ state.target = e.target.value; save(); renderAll(); });
-
   document.querySelectorAll('[data-preset]').forEach(el=>{
     el.addEventListener('click', ()=>{
       state.weekPreset = el.dataset.preset;
@@ -477,17 +501,6 @@
     if(i===null) return;
     state.weekPct[i] = Number(e.target.value)||0;
     state.weekPreset = 'custom';
-    save(); renderAll();
-  });
-
-  document.querySelectorAll('[data-split]').forEach(el=>{
-    el.addEventListener('click', ()=>{
-      state.productSplit = Number(el.dataset.split);
-      save(); renderAll();
-    });
-  });
-  $('productSplit').addEventListener('input', e=>{
-    state.productSplit = Number(e.target.value);
     save(); renderAll();
   });
 
