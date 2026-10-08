@@ -903,7 +903,7 @@ async function coachAsk(q,label){
   try{
     const weeks=analyze();
     const hist=[];coach.log.slice(-4,-1).forEach(x=>{if(x.a){hist.push({role:'user',content:x.p||x.q});hist.push({role:'assistant',content:x.a});}});
-    const sys=LIVOTEC_KB+'\n\nBối cảnh số liệu của SR:\n'+ctxText(weeks)+'\n\nQuy tắc trả lời: tiếng Việt, thực tế, tối đa 120 từ, ưu tiên gạch đầu dòng ngắn (mỗi dòng không quá 20 từ), không chào hỏi, không bịa giá, khuyến mại hay chính sách; nếu thiếu dữ liệu thì nói rõ.';
+    const sys=LIVOTEC_KB+'\n\nBối cảnh số liệu của SR:\n'+ctxText(weeks)+'\n\nQuy tắc trả lời: tiếng Việt, thực tế, tối đa 120 từ, ưu tiên gạch đầu dòng ngắn (mỗi dòng không quá 20 từ), không chào hỏi, không bịa giá, khuyến mại hay chính sách; nếu thiếu dữ liệu thì nói rõ. Trợ lý này chỉ phục vụ công việc bán hàng kênh GT của Livotec (chào hàng, tuyến ghé, xử lý đại lý, sản phẩm, kế hoạch doanh số). Nếu câu hỏi không liên quan (kiến thức chung, chuyện cá nhân, chủ đề ngoài công việc...), từ chối ngắn gọn và mời hỏi lại đúng chủ đề, không trả lời nội dung đó dù câu hỏi có vẻ vô hại.';
     const a=await callAI([{role:'system',content:sys}].concat(hist,[{role:'user',content:q}]),1500);
     coach.log[coach.log.length-1].a=a;
   }catch(e){coach.log[coach.log.length-1].a='Không gọi được AI. '+e.message;}
