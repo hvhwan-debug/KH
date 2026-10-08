@@ -1,0 +1,34 @@
+name: Gửi email tự động theo lịch
+
+# Chạy mỗi 30 phút trong khung 07:00–23:30 giờ Việt Nam (GitHub dùng giờ UTC).
+# Máy chủ tự quyết định ai đến giờ nhận email nào (xem api/_lib/emails.js), nên gọi nhiều lần cũng không gửi trùng.
+on:
+  schedule:
+    - cron: "*/30 0-16 * * *"
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gọi API gửi email đến hạn
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::notice::Chưa đặt secret CRON_SECRET nên bỏ qua (xem docs/CAI-DAT-DANG-NHAP-EMAIL.md)."
+            exit 0
+          fi
+          URL="${APP_URL:-https://kh.io.vn}"
+          code=$(curl -s -o /tmp/out.txt -w "%{http_code}" --max-time 120 -X POST "$URL/api/cron" \
+            -H "x-cron-secret: $CRON_SECRET" -H "Content-Type: application/json" -d '{}')
+          cat /tmp/out.txt; echo
+          if [ "$code" = "503" ]; then
+            echo "::notice::Máy chủ chưa cấu hình tính năng email."
+            exit 0
+          fi
+          if [ "$code" != "200" ]; then
+            echo "::error::API trả về HTTP $code"
+            exit 1
+          fi

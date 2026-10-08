@@ -1120,14 +1120,194 @@ function factorsCard(weeks,mode){
   return '<div class="card fxcard"><div class="row wrapx"><h2>'+ic('alertOct',18)+' Điểm cần chú ý</h2><span class="fxc"><i class="d bad"></i>'+F.cnt.bad+' <i class="d warn"></i>'+F.cnt.warn+' <i class="d ok"></i>'+F.cnt.ok+'</span></div><div class="fxv2">'+v+'</div>'+list.map(row).join('')+more+miss+'</div>';
 }
 
+/* ---------- Tài khoản, đồng bộ, email ---------- */
+let AUTH={avail:null,user:null,busy:false,step:'email',email:'',msg:'',ackOff:false,sync:{st:'idle',msg:'',conflict:false}};
+let syncTimer=null,syncBusy=false,syncDirty=false,lastCheck=0;
+const TOKEN_KEY='livotec-sr-token';
+function getToken(){try{return localStorage.getItem(TOKEN_KEY)||'';}catch(e){return '';}}
+function setToken(t){try{if(t)localStorage.setItem(TOKEN_KEY,t);else localStorage.removeItem(TOKEN_KEY);}catch(e){}}
+async function api(method,path,body){
+  const h={'Content-Type':'application/json','X-Requested-With':'livotec'},t=getToken();
+  if(t)h['X-SR-Token']=t;
+  const r=await fetch(path,{method:method,headers:h,credentials:'same-origin',body:body?JSON.stringify(body):undefined});
+  let j=null;try{j=await r.json();}catch(e){}
+  if((r.status===401||r.status===403)&&t&&path.indexOf('/api/auth/')!==0)setToken('');
+  return{s:r.status,j:j||{}};
+}
+function saveQuiet(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function hasData(){return !!((+S.target.bn||0)||(+S.target.gd||0)||Object.keys(S.daily||{}).length||Object.keys(S.hist||{}).length);}
+function hhmm(t){const d=new Date(t);return pad(d.getHours())+':'+pad(d.getMinutes())+' '+pad(d.getDate())+'/'+pad(d.getMonth()+1);}
+function softRender(){const a=document.activeElement;if(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT'))return;render();}
+function fxVerdictText(F){
+  const bad=F.rows.filter(r=>r.lv==='bad'),warn=F.rows.filter(r=>r.lv==='warn');
+  if(bad.length)return 'Cần xử lý: '+bad.slice(0,3).map(r=>r.sv).join(', ');
+  if(warn.length)return 'Làm được, cần lưu ý: '+warn.slice(0,3).map(r=>r.sv).join(', ');
+  return 'Các yếu tố chính đều ổn';
+}
+function buildDigest(weeks){
+  const total=(+S.target.bn||0)+(+S.target.gd||0),days={};
+  weeks.forEach(w=>w.days.forEach(d=>{days[d.date]=d.off?{o:1}:{si:w.work?+(w.tt/w.work).toFixed(2):0,vt:w.work?+(w.vt/w.work).toFixed(2):0};}));
+  const daily={};Object.keys(S.daily||{}).sort().slice(-45).forEach(k=>{const e=S.daily[k];daily[k]={v:e.v||0,bn:e.bn||0,gd:e.gd||0};});
+  const al=evalAlerts(weeks).filter(a=>!a.dismissed&&a.level!=='info').slice(0,5).map(a=>({lv:a.level,t:a.title,x:a.text}));
+  const F=factors(weeks);
+  return{month:S.month,total,days,daily,alerts:al,fx:F?{v:fxVerdictText(F),rows:F.rows.filter(r=>r.lv!=='ok').slice(0,5).map(r=>({lv:r.lv,n:r.name,m:r.msg,a:r.act||''}))}:null};
+}
+function scheduleSync(){
+  if(!AUTH.user)return;
+  syncDirty=true;clearTimeout(syncTimer);
+  syncTimer=setTimeout(function(){syncTimer=null;syncPush({});},4000);
+}
+async function authInit(){
+  try{
+    const r=await api('GET','/api/auth/me');
+    if(r.s!==200||!r.j.avail){AUTH.avail=false;AUTH.user=null;}
+    else{AUTH.avail=true;AUTH.user=r.j.loggedIn?{email:r.j.email}:null;}
+  }catch(e){AUTH.avail=false;AUTH.user=null;}
+  if(AUTH.user)await syncPull();
+  softRender();
+}
+function adoptServer(doc){
+  const st=Object.assign({},doc.state,{sync:{rev:doc.rev,lastOk:Date.now()}});
+  try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}
+  S=load();syncDirty=false;
+  AUTH.sync={st:'ok',msg:'Đã đồng bộ lúc '+hhmm(Date.now()),conflict:false};
+}
+async function syncPull(){
+  if(!AUTH.user||syncBusy)return;
+  AUTH.sync={st:'busy',msg:'Đang đồng bộ…',conflict:false};
+  try{
+    const r=await api('GET','/api/sync');
+    if(r.s===401||r.s===403){AUTH.user=null;AUTH.sync={st:'idle',msg:'',conflict:false};return;}
+    if(r.s!==200)throw new Error('HTTP '+r.s);
+    if(r.j.mailOff){S.mail.on=false;saveQuiet();AUTH.ackOff=true;syncDirty=true;toast('Email tự động đã được tắt từ liên kết trong thư');}
+    const doc=r.j.doc;
+    if(!doc){
+      if(hasData())await syncPush({force:true});else AUTH.sync={st:'ok',msg:'Sẵn sàng đồng bộ',conflict:false};
+      return;
+    }
+    const ss=(doc.state&&doc.state.savedAt)||0,ls=S.savedAt||0;
+    if(S.sync.rev===doc.rev){
+      if(syncDirty||ls>ss)await syncPush({});
+      else AUTH.sync={st:'ok',msg:'Đã đồng bộ lúc '+hhmm(S.sync.lastOk||Date.now()),conflict:false};
+      return;
+    }
+    if(!hasData()){adoptServer(doc);return;}
+    if(ss>ls&&confirm('Dữ liệu trên máy chủ mới hơn (cập nhật lúc '+hhmm(doc.updatedAt)+').\nOK: dùng bản trên máy chủ.\nHủy: giữ dữ liệu đang có trên máy này và ghi đè lên máy chủ.')){adoptServer(doc);return;}
+    S.sync.rev=doc.rev;saveQuiet();
+    await syncPush({force:true});
+  }catch(e){AUTH.sync={st:'err',msg:'Không đồng bộ được. Dữ liệu vẫn được lưu trên máy này.',conflict:false};}
+}
+async function syncPush(o){
+  if(!AUTH.user||syncBusy)return;
+  syncBusy=true;let again=false;
+  AUTH.sync={st:'busy',msg:'Đang đồng bộ…',conflict:false};
+  try{
+    const weeks=analyze();
+    const body={state:S,digest:buildDigest(weeks),prefs:{mail:S.mail,times:{m:S.rem.m,e:S.rem.e,a:S.rem.a}},baseRev:S.sync.rev,force:!!(o&&o.force),ackMailOff:!!AUTH.ackOff};
+    const r=await api('POST','/api/sync',body);
+    if(r.s===200){
+      S.sync.rev=r.j.rev;S.sync.lastOk=Date.now();saveQuiet();
+      syncDirty=false;AUTH.ackOff=false;
+      AUTH.sync={st:'ok',msg:'Đã đồng bộ lúc '+hhmm(S.sync.lastOk),conflict:false};
+    }else if(r.s===409){again=true;}
+    else if(r.s===401||r.s===403){AUTH.user=null;AUTH.sync={st:'idle',msg:'',conflict:false};}
+    else throw new Error('HTTP '+r.s);
+  }catch(e){AUTH.sync={st:'err',msg:'Không đồng bộ được. Dữ liệu vẫn được lưu trên máy này.',conflict:false};}
+  finally{syncBusy=false;}
+  if(again){await syncPull();}
+  softRender();
+}
+async function syncCheck(){
+  if(!AUTH.user||syncBusy||syncDirty||Date.now()-lastCheck<60000)return;
+  lastCheck=Date.now();
+  try{
+    const r=await api('GET','/api/sync');
+    if(r.s!==200||!r.j.doc)return;
+    const doc=r.j.doc;
+    if(doc.rev!==S.sync.rev&&((doc.state&&doc.state.savedAt)||0)>(S.savedAt||0)){adoptServer(doc);toast('Đã cập nhật dữ liệu từ thiết bị khác');softRender();}
+  }catch(e){}
+}
+async function acReq(){
+  const el=document.getElementById('acEmail');
+  const email=((el&&el.value)||AUTH.email||'').trim().toLowerCase();
+  if(!/^\S+@\S+\.\S+$/.test(email)){AUTH.msg='Nhập email hợp lệ.';render();return;}
+  AUTH.busy=true;AUTH.email=email;AUTH.msg='Đang gửi mã…';render();
+  try{
+    const r=await api('POST','/api/auth/request',{email:email});
+    AUTH.busy=false;
+    if(r.s===200){AUTH.step='code';AUTH.msg=r.j.message||'Đã gửi mã.';}else AUTH.msg=r.j.error||'Không gửi được mã.';
+  }catch(e){AUTH.busy=false;AUTH.msg='Lỗi mạng. Thử lại.';}
+  render();
+}
+async function acVerify(){
+  const el=document.getElementById('acCode'),code=((el&&el.value)||'').replace(/\s/g,'');
+  if(!/^\d{6}$/.test(code)){AUTH.msg='Nhập mã gồm 6 chữ số.';render();return;}
+  AUTH.busy=true;AUTH.msg='Đang kiểm tra…';render();
+  try{
+    const r=await api('POST','/api/auth/verify',{email:AUTH.email,code:code});
+    AUTH.busy=false;
+    if(r.s===200){if(r.j.token)setToken(r.j.token);AUTH.step='email';AUTH.msg='';await authInit();toast('Đã đăng nhập');return;}
+    AUTH.msg=r.j.error||'Mã không đúng.';
+  }catch(e){AUTH.busy=false;AUTH.msg='Lỗi mạng. Thử lại.';}
+  render();
+}
+async function acLogout(){
+  clearTimeout(syncTimer);
+  try{await api('POST','/api/auth/logout',{});}catch(e){}
+  setToken('');
+  AUTH.user=null;AUTH.step='email';AUTH.msg='';AUTH.sync={st:'idle',msg:'',conflict:false};
+  toast('Đã đăng xuất. Dữ liệu vẫn còn trên máy này');render();
+}
+async function acMailTest(){
+  try{const r=await api('POST','/api/mail/test',{});toast(r.s===200?'Đã gửi email thử tới '+AUTH.user.email:(r.j.error||'Không gửi được email thử'));}
+  catch(e){toast('Lỗi mạng, chưa gửi được');}
+}
+function acctCard(){
+  const A=AUTH,R=S.mail;
+  let sum,body;
+  if(A.avail===null){sum='<span class="small muted">…</span>';body='<div class="small muted">Đang kiểm tra…</div>';}
+  else if(!A.avail){
+    sum='<span class="small muted">chưa bật</span>';
+    body='<div class="small muted">Đăng nhập chưa được bật trên máy chủ nên dữ liệu của bạn chỉ lưu trên thiết bị này. Bạn vẫn có thể sao lưu thủ công ở mục "Nhắc việc &amp; lưu dữ liệu".</div>';
+  }else if(!A.user){
+    sum='<span class="small muted">chưa đăng nhập</span>';
+    const msg=A.msg?'<div class="small" style="margin-top:6px;color:var(--muted)">'+escH(A.msg)+'</div>':'';
+    if(A.step==='code'){
+      body='<div class="small muted">Mã 6 số đã gửi tới <b>'+escH(A.email)+'</b>. Mã có hiệu lực 10 phút.</div>'+
+        '<input id="acCode" class="txt" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Mã 6 số" aria-label="Mã đăng nhập">'+
+        '<div class="askrow"><button class="btn sm" data-act="acVerify"'+(A.busy?' disabled':'')+'>Đăng nhập</button><button class="btn ghost sm" data-act="acReq"'+(A.busy?' disabled':'')+'>Gửi lại mã</button><button class="link" data-act="acBack">Đổi email</button></div>'+msg;
+    }else{
+      body='<div class="small muted">Đăng nhập để lưu dữ liệu trên máy chủ, dùng nhiều thiết bị và nhận email nhắc, cảnh báo. Không cần mật khẩu: chúng tôi gửi mã 6 số tới email của bạn.</div>'+
+        '<input id="acEmail" class="txt" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="Email của bạn" value="'+escH(A.email)+'" aria-label="Email">'+
+        '<div class="askrow"><button class="btn sm" data-act="acReq"'+(A.busy?' disabled':'')+'>Gửi mã đăng nhập</button></div>'+msg;
+    }
+  }else{
+    const st=A.sync.st;
+    sum='<span class="badge '+(st==='err'?'bad':'ok')+'">'+(st==='err'?'Lỗi đồng bộ':'Đã đăng nhập')+'</span>';
+    const sw=k=>'<button class="sw2" role="switch" aria-checked="'+!!R[k]+'" data-act="mailTog" data-k="'+k+'" aria-label="Bật tắt"></button>';
+    const row=(k,lab,tag,sub)=>'<div class="remrow"><div class="rl"><b>'+lab+'</b> <span class="badge '+tag[1]+'">'+tag[0]+'</span><div class="small muted">'+sub+'</div></div>'+sw(k)+'</div>';
+    body='<div class="remrow" style="border-top:0"><div class="rl"><b>'+escH(A.user.email)+'</b><div class="small'+(st==='err'?'':' muted')+'"'+(st==='err'?' style="color:var(--bad)"':'')+'>'+escH(A.sync.msg||'')+'</div></div><button class="btn ghost sm" data-act="acSync">Đồng bộ ngay</button></div>'+
+      '<div class="remblk"><b>Email tự động</b>'+
+      '<div class="remrow"><div class="rl"><b>Nhận email</b><div class="small muted">Gửi tới '+escH(A.user.email)+'. Giờ gửi theo mục "Nhắc việc".</div></div>'+sw('on')+'</div>'+
+      (R.on?row('morning','Sáng: kết quả hôm qua',['Tham khảo','ok'],'Chỉ khi hôm qua là ngày làm việc')+
+        row('evening','Tối: nhắc nhập số liệu',['Nhắc','warn'],'Chỉ khi hôm nay chưa nhập')+
+        row('warn','Cảnh báo rủi ro cao',['Cảnh báo','bad'],'Gộp vào email buổi sáng, không lặp lại hằng ngày')+
+        row('weekly','Tổng kết tuần (thứ Hai)',['Tham khảo','ok'],'Kết quả tuần trước so với kế hoạch')+
+        '<div class="askrow"><button class="btn ghost sm" data-act="acMailTest">Gửi email thử</button></div>':'')+'</div>'+
+      '<div class="small muted" style="margin-top:10px">Khi đăng nhập, dữ liệu của bạn được lưu thêm trên máy chủ của ứng dụng để đồng bộ và gửi email. Trong ứng dụng, chỉ bạn xem được dữ liệu của mình; người quản trị hệ thống có quyền truy cập kho lưu trữ. Không có bảng xếp hạng giữa các SR.</div>'+
+      '<div class="askrow"><button class="btn ghost sm" data-act="acLogout">Đăng xuất</button></div>';
+  }
+  return sec('acct',ic('users',18),'Tài khoản &amp; email',sum,body);
+}
+
 const pad=n=>String(n).padStart(2,'0');
 const fmt=(x,d=0)=>Number(x).toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d});
 const C={bn:'var(--bn)',gd:'var(--gd)'};
 function monthKey(o){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+o);return d.getFullYear()+'-'+pad(d.getMonth()+1);}
-function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''}};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{hist:o.hist||{},rem:Object.assign(d.rem,o.rem||{}),area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats});}}catch(e){}return defaults();}
+function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,sync:{rev:0,lastOk:0},mail:{on:false,morning:true,evening:true,warn:true,weekly:true},rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''}};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{sync:Object.assign(d.sync,o.sync||{}),mail:Object.assign(d.mail,o.mail||{}),hist:o.hist||{},rem:Object.assign(d.rem,o.rem||{}),area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats});}}catch(e){}return defaults();}
 let S=load(),confirmReset=false,copyText=null;
-function save(){try{S.savedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function save(){try{S.savedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}if(typeof scheduleSync==='function')scheduleSync();}
 
 /* ---------- Logic lõi ---------- */
 function si(k){return Math.max(0.1,(+S.list[k]||1)*(1-(+S.disc||0)/100));}
@@ -1558,6 +1738,7 @@ function renderSetup(){
   areaCard(weeks)+
   catsCard(tg)+
   sec('days',ic('plan',18),'Ngày bạn làm việc','<span class="small muted">'+workDays+' ngày</span>','<div class="small muted">Chủ nhật mặc định nghỉ. Chạm vào ngày để đổi: ngày lễ, nghỉ phép, đi công tác.</div>'+cal)+
+  acctCard()+
   remCard()+
   '<div class="card secard"><details data-sec="tune"'+(isOpen('tune')?' open':'')+'><summary class="sech"><span class="st">'+ic('setup',18)+'<span>Tinh chỉnh thêm</span></span><span class="ss small muted">không bắt buộc</span></summary><div class="secb">'+
     '<div class="small muted" style="margin-top:6px">Cách chia chỉ tiêu cho các tuần</div>'+
@@ -1573,7 +1754,7 @@ function renderSetup(){
   '</div></details></div>'+
   '<button class="btn" data-act="tab" data-v="plan">Xem kế hoạch của tôi</button>'+
   '<div style="text-align:center;margin-top:10px"><button class="link" data-act="reset">'+(confirmReset?'Bấm lại để xác nhận xoá hết dữ liệu':'Làm lại từ đầu')+'</button></div>'+
-  '<div class="small muted" style="text-align:center">Dữ liệu chỉ lưu trên thiết bị này. Không gửi cho ai và không xếp hạng giữa các SR.</div>';
+  '<div class="small muted" style="text-align:center">'+(AUTH.user?'Dữ liệu lưu trên thiết bị này và đồng bộ lên máy chủ vì bạn đã đăng nhập. Không xếp hạng giữa các SR.':'Dữ liệu chỉ lưu trên thiết bị này. Đăng nhập (mục Tài khoản) nếu muốn lưu trên máy chủ. Không xếp hạng giữa các SR.')+'</div>';
 }
 
 /* ---------- Tab Kế hoạch ---------- */
@@ -1720,7 +1901,7 @@ function renderAlertsTab(){
 let bannerSig=null;
 function render(){
   const ae=document.activeElement;let sel=null,keepVal=null;
-  if(ae&&ae.id&&(ae.id==='dnm'||ae.id==='dpt')){sel='#'+ae.id;keepVal=ae.value;}
+  if(ae&&ae.id&&(ae.id==='dnm'||ae.id==='dpt'||ae.id==='acEmail'||ae.id==='acCode')){sel='#'+ae.id;keepVal=ae.value;}
   else if(ae&&ae!==document.body&&ae.closest&&ae.closest('#app')&&ae.dataset&&ae.dataset.f){
     const ds=ae.dataset;
     sel='[data-f="'+ds.f+'"]'+(ds.p?'[data-p="'+ds.p+'"]':'')+(ds.c?'[data-c="'+ds.c+'"]':'')+(ds.k?'[data-k="'+ds.k+'"]':'')+(ds.i?'[data-i="'+ds.i+'"]':'')+(ds.w?'[data-w="'+ds.w+'"]':'');
@@ -1780,6 +1961,13 @@ document.addEventListener('click',function(e){
   }
   else if(a==='aix'){askAIx(d.c);return;}
   else if(a==='openWeek'){openSec['wk_'+d.w]=true;setTimeout(function(){const el=document.querySelector('details[data-sec="wk_'+d.w+'"]');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);}
+  else if(a==='acReq'){acReq();return;}
+  else if(a==='acVerify'){acVerify();return;}
+  else if(a==='acBack'){AUTH.step='email';AUTH.msg='';}
+  else if(a==='acLogout'){acLogout();return;}
+  else if(a==='acSync'){syncDirty=true;syncPush({});return;}
+  else if(a==='acMailTest'){acMailTest();return;}
+  else if(a==='mailTog'){S.mail[d.k]=!S.mail[d.k];}
   else if(a==='fxAll'){openSec.fxall=!isOpen('fxall',false);}
   else if(a==='remTog'){S.rem[d.k]=!S.rem[d.k];}
   else if(a==='notifOn'){
@@ -1857,8 +2045,9 @@ render();
 initCoach();
 applyHash();
 remTick();
+authInit();
 function refreshIfNeeded(){
-  remTick();
+  remTick();syncCheck();
   if(document.visibilityState!=='visible')return;
   const a=document.activeElement;if(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT'))return;
   const sg=S.month===monthKey(0)?dayBanner(analyze()):'';
