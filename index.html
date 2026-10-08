@@ -521,7 +521,7 @@ function computeRebalance(weeks,k){
   });
   return{np,remain};
 }
-function statusOf(p){if(p>=0.9)return['ok','Đúng nhịp'];if(p>=0.7)return['warn','Hơi chậm'];return['bad','Nên chỉnh kế hoạch tuần sau'];}
+function statusOf(p){if(p>=0.9)return['ok','Đúng tiến độ'];if(p>=0.7)return['warn','Hơi chậm'];return['bad','Nên chỉnh kế hoạch tuần sau'];}
 function weekLevel(w){
   const a=S.actual[w.key];if(!a||!w.work)return null;
   const pa=w.vt?a.v/w.vt:1,pt=w.tt?(a.bn+a.gd)/w.tt:1;
@@ -833,7 +833,7 @@ function renderPlan(){
   }).join('');
 
   $app.innerHTML=banner(weeks)+todayCard+
-  '<div class="card"><div class="row wrapx"><h2>Nhịp S.I theo tuần</h2><span class="small muted"><i class="sw bn"></i>Bình NN <i class="sw gd" style="margin-left:6px"></i>Gia dụng</span></div>'+barChart(weeks)+
+  '<div class="card"><div class="row wrapx"><h2>Tiến độ S.I theo tuần</h2><span class="small muted"><i class="sw bn"></i>Bình NN <i class="sw gd" style="margin-left:6px"></i>Gia dụng</span></div>'+barChart(weeks)+
     '<div class="small muted">Tuần cuối chiếm <b>'+share+'%</b> chỉ tiêu tháng'+(share<evenShare?', thấp hơn mức chia đều theo ngày ('+evenShare+'%), phần còn lại đã được trải ra từ đầu tháng.':' (chia đều theo ngày là '+evenShare+'%).')+' Đơn vị: triệu đồng.</div></div>'+
   '<div class="card"><h2>Đường tích lũy</h2><div class="small muted">Đường đen là kế hoạch của bạn, đường nét đứt là cách chia đều theo ngày.</div>'+
     lineChart(weeks,[{pts:evenPts,color:'var(--muted)',dash:true,w:2},{pts:planPts,color:'var(--ink)',dots:true,w:3}],total)+
@@ -872,7 +872,7 @@ function renderCheck(){
     const pa=w.vt?a.v/w.vt:1,pt=w.tt?(a.bn+a.gd)/w.tt:1,st=statusOf(Math.min(pa,pt));
     const per=a.v>0?fmt((a.bn+a.gd)/a.v,1):null,plan=w.vt?fmt(w.tt/w.vt,1):null;
     result='<div style="margin-top:10px">'+gauge(pa,'Hoạt động đã làm / kế hoạch')+gauge(pt,'S.I đã chốt / kế hoạch')+
-      '<div class="legend"><span style="--c:var(--bad)">dưới 70%: nên chỉnh</span><span style="--c:var(--warn)">70–90%: hơi chậm</span><span style="--c:var(--ok)">từ 90%: đúng nhịp</span></div>'+
+      '<div class="legend"><span style="--c:var(--bad)">dưới 70%: nên chỉnh</span><span style="--c:var(--warn)">70–90%: hơi chậm</span><span style="--c:var(--ok)">từ 90%: đúng tiến độ</span></div>'+
       '<div class="note"><span class="badge '+st[0]+'">'+st[1]+'</span>'+(per?' Mỗi khách bạn liên hệ tuần này mang về ≈ <b>'+per+' tr</b> S.I (kế hoạch giả định '+plan+' tr).':'')+'</div></div>';
   }
   const rb=computeRebalance(weeks,k);let rebal='';
