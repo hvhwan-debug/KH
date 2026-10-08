@@ -331,7 +331,6 @@ let aiLastKey=null,aiTimer=null;
 const AI_DISCLAIMER='Nhận xét và đề xuất này do AI tạo tự động dựa trên số liệu bạn nhập, có thể không chính xác hoàn toàn — hãy đối chiếu với thực tế trước khi quyết định.';
 function aiDataKey(){return JSON.stringify({t:S.target,a:S.actual,m:S.month,p:S.province});}
 function scheduleAI(){
-  if(!Object.keys(S.actual).length)return;
   const key=aiDataKey();
   if(key===aiLastKey)return;
   clearTimeout(aiTimer);
@@ -341,28 +340,35 @@ function aiPrompt(weeks){
   const fc=forecast(weeks),total=(+S.target.bn||0)+(+S.target.gd||0);
   const ach=weeks.reduce((s,x)=>s+(((S.actual[x.key]||{}).bn||0)+((S.actual[x.key]||{}).gd||0)),0);
   const alerts=evalAlerts(weeks).filter(a=>!a.dismissed);
+  const hasActual=Object.keys(S.actual).length>0;
+  const f=feasibility(weeks);
   const lines=[];
   if(S.province)lines.push('Khu vực phụ trách: '+S.province+'.');
-  lines.push(
-    'Chỉ tiêu tháng: '+fmt(total)+' triệu (Bình nước nóng '+fmt(+S.target.bn||0)+', Gia dụng '+fmt(+S.target.gd||0)+').',
-    'Đã đạt tính đến hiện tại: '+fmt(ach)+' triệu.'
-  );
-  if(fc&&!fc.noData){
-    lines.push('Dự báo chốt tháng: khoảng '+fmt(fc.mu)+' triệu (khoảng tin cậy '+fmt(fc.lo)+'–'+fmt(fc.hi)+'), xác suất đạt chỉ tiêu '+Math.round(fc.P*100)+'%.');
-    lines.push('Tốc độ hiện tại so với kế hoạch: '+Math.round(fc.rho*100)+'%.');
+  lines.push('Chỉ tiêu tháng: '+fmt(total)+' triệu (Bình nước nóng '+fmt(+S.target.bn||0)+', Gia dụng '+fmt(+S.target.gd||0)+').');
+  if(f)lines.push('Khả năng đáp ứng: cần liên hệ ≈ '+fmt(f.perDay,1)+' khách/ngày, tương đương '+Math.round(f.ratio*100)+'% mức tối đa bạn có thể làm ('+f.mc+' khách/ngày). Năng lực ước tính của tuyến ≈ '+fmt(f.cap)+' triệu.');
+
+  if(hasActual){
+    lines.push('Đã đạt tính đến hiện tại: '+fmt(ach)+' triệu.');
+    if(fc&&!fc.noData){
+      lines.push('Dự báo chốt tháng: khoảng '+fmt(fc.mu)+' triệu (khoảng tin cậy '+fmt(fc.lo)+'–'+fmt(fc.hi)+'), xác suất đạt chỉ tiêu '+Math.round(fc.P*100)+'%.');
+      lines.push('Tốc độ hiện tại so với kế hoạch: '+Math.round(fc.rho*100)+'%.');
+    }
+    if(alerts.length){
+      lines.push('Cảnh báo đang hoạt động:');
+      alerts.forEach(a=>lines.push('- '+a.title+': '+a.text));
+    } else {
+      lines.push('Hiện không có cảnh báo nào được kích hoạt.');
+    }
   } else {
-    lines.push('Chưa có đủ số liệu tự soát để tính dự báo.');
+    lines.push('Chưa có số liệu tự soát nào được nhập — đây là giai đoạn lập kế hoạch đầu tháng.');
   }
-  if(alerts.length){
-    lines.push('Cảnh báo đang hoạt động:');
-    alerts.forEach(a=>lines.push('- '+a.title+': '+a.text));
-  } else {
-    lines.push('Hiện không có cảnh báo nào được kích hoạt.');
-  }
+
   const regionNote=S.province?' Khi đưa ra nhận xét và đề xuất, hãy cân nhắc đặc điểm thị trường, khí hậu theo mùa và mức độ cạnh tranh điển hình của khu vực '+S.province+' đối với ngành hàng bình nước nóng và gia dụng nhà bếp.':'';
-  return 'Bạn là trợ lý phân tích kinh doanh, hỗ trợ một nhân viên kinh doanh (SR) ngành hàng điện gia dụng đánh giá tiến độ doanh số tháng dựa trên dữ liệu sau:\n\n'+
-    lines.join('\n')+
-    '\n\nHãy viết một nhận xét ngắn gọn (3–5 câu, văn phong chuyên nghiệp, tiếng Việt, không dùng ẩn dụ đời sống, không chào hỏi) về tình hình hiện tại, sau đó liệt kê 2–3 đề xuất hành động cụ thể cho phần còn lại của tháng.'+regionNote;
+  const task=hasActual
+    ? 'Hãy viết một nhận xét ngắn gọn (3–5 câu, văn phong chuyên nghiệp, tiếng Việt, không dùng ẩn dụ đời sống, không chào hỏi) về tình hình hiện tại, sau đó liệt kê 2–3 đề xuất hành động cụ thể cho phần còn lại của tháng.'
+    : 'Hãy đánh giá ngắn gọn (3–5 câu, văn phong chuyên nghiệp, tiếng Việt, không dùng ẩn dụ đời sống, không chào hỏi) mức độ khả thi của chỉ tiêu này so với năng lực làm việc, sau đó liệt kê 2–3 khuyến nghị cụ thể để triển khai hiệu quả ngay từ đầu tháng.';
+  return 'Bạn là trợ lý phân tích kinh doanh, hỗ trợ một nhân viên kinh doanh (SR) ngành hàng điện gia dụng đánh giá kế hoạch và tiến độ doanh số tháng dựa trên dữ liệu sau:\n\n'+
+    lines.join('\n')+'\n\n'+task+regionNote;
 }
 async function askAI(){
   if(aiState.loading)return;
@@ -385,11 +391,10 @@ async function askAI(){
 }
 function aiCard(weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0);
-  if(!total)return '';
+  if(!total)return '<div class="card"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2><div class="small muted">Nhập chỉ tiêu tháng ở trên — hệ thống sẽ tự động phân tích và đưa ra khuyến nghị.</div></div>';
   scheduleAI();
   let body;
-  if(!Object.keys(S.actual).length)body='<div class="small muted">Nhập số liệu tự soát ở bên dưới — hệ thống sẽ tự động phân tích và đưa ra đề xuất.</div>';
-  else if(aiState.loading)body='<div class="small muted">Đang phân tích…</div>';
+  if(aiState.loading)body='<div class="small muted">Đang phân tích…</div>';
   else if(aiState.error)body='<div class="note" style="color:var(--bad)">'+aiState.error+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Thử lại</button></div>';
   else if(aiState.text)body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiState.text+'</div><div class="small muted" style="margin-top:10px">'+AI_DISCLAIMER+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích lại</button></div>';
   else body='<div class="small muted">Đang chờ số liệu để phân tích…</div>';
@@ -774,6 +779,7 @@ function renderSetup(){
     '<div class="small muted" style="margin:-4px 0 12px">AI sẽ tham khảo đặc điểm thị trường, mùa vụ của khu vực này khi đưa ra nhận xét.</div>'+
     PRODUCTS.map(p=>'<div class="field"><span class="nm">'+ic(p.icon)+' '+p.name+'</span><input class="num" type="number" inputmode="numeric" min="0" data-f="target" data-p="'+p.id+'" value="'+(S.target[p.id]||'')+'" placeholder="0" aria-label="Chỉ tiêu S.I '+p.name+'"><span class="unit">tr</span></div>').join('')+
     '<div class="small muted">Tính bằng triệu đồng. Ví dụ 250 cho bình nước nóng, 100 cho gia dụng.</div></div>'+
+  aiCard(weeks)+
   feasCard(weeks)+
   catsCard(tg)+
   '<div class="card"><h2>Ngày bạn làm việc</h2><div class="small muted">Chủ nhật mặc định nghỉ. Chạm vào ngày để đổi: ngày lễ, nghỉ phép, đi công tác.</div>'+cal+'</div>'+
@@ -908,6 +914,7 @@ function renderAlertsTab(){
   $app.innerHTML=
   '<div class="card"><h2>'+ic('bell',18)+' Cảnh báo đang có</h2><div class="small muted">Cảnh báo chỉ hiện cho bạn, không gửi cho ai. Bạn có thể ẩn cảnh báo nào không cần.</div>'+DISC+list+
     (hid.length?'<details><summary class="small">Đã ẩn ('+hid.length+')</summary><button class="btn ghost sm" data-act="undismiss">Hiện lại tất cả</button></details>':'')+'</div>'+
+  aiCard(weeks)+
   '<div class="card"><h2>Mức độ nhạy</h2><div class="small muted">Chọn nhanh bộ ngưỡng, sau đó chỉnh từng quy tắc bên dưới nếu muốn.</div><div class="preset">'+
     pr.map(x=>'<button data-act="preset" data-v="'+x[0]+'" aria-pressed="'+(S.preset===x[0])+'">'+x[1]+'<small>'+x[2]+'</small></button>').join('')+'</div></div>'+
   '<div class="card"><h2>Quy tắc cảnh báo</h2><div class="small muted">Bật hoặc tắt từng quy tắc và đặt ngưỡng phù hợp với đặc thù công việc của bạn.</div>'+rules+'</div>'+
