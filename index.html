@@ -535,6 +535,7 @@ details[open]>.rks::before{transform:rotate(90deg)}
 /* ===== Khối theo dõi nhanh ở tiêu đề ===== */
 .top .hsub{margin:0;color:rgba(255,255,255,.94);font-size:13.5px}
 .top .hstat{position:relative;z-index:2;margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;align-items:start}
+.hleft{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.26);border-radius:12px;padding:12px}
 .hs-bar{position:relative;height:10px;border-radius:6px;background:rgba(255,255,255,.28)}
 .hs-bar i{display:block;height:100%;border-radius:6px;background:#fff}
 .hs-bar u{position:absolute;top:-3px;width:3px;height:16px;border-radius:2px;background:#FFD27A;transform:translateX(-50%)}
@@ -554,6 +555,7 @@ details[open]>.rks::before{transform:rotate(90deg)}
   .top .hstat{flex-basis:100%;order:4;grid-template-columns:1fr;gap:8px;margin-top:8px}
   .hs-line{font-size:14px;margin-top:5px}
   .htoday{padding:7px 10px;font-size:13px;border-radius:10px}
+  .hleft{padding:9px 10px;border-radius:10px}
   .hs-sub{font-size:11.5px}
   .hs-d{display:none}
   .hpri{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1557,7 +1559,7 @@ function headerStat(weeks){
       }
     }
   }
-  return '<div class="hs-col">'+left+'</div>'+(right?'<div class="hs-col">'+right+'</div>':'');
+  return '<div class="hs-col"><div class="hleft">'+left+'</div></div>'+(right?'<div class="hs-col">'+right+'</div>':'');
 }
 
 const pad=n=>String(n).padStart(2,'0');
