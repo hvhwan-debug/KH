@@ -428,6 +428,33 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 .fx.bad .fxv{color:var(--bad)}.fx.warn .fxv{color:var(--warn)}.fx.ok .fxv{color:var(--ok)}
 .fxw{padding:0 0 10px 20px}
 .fxs::after{margin-top:6px}
+
+/* ===== Bảng tổng quan kế hoạch ===== */
+.ovwrap{overflow-x:auto;margin-top:6px}
+.ovt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
+.ovt th{font-size:11px;color:var(--muted);font-weight:700;text-align:right;padding:4px 6px;white-space:nowrap}
+.ovt td{padding:9px 6px;text-align:right;border-top:1px solid var(--line)}
+.ovt th:first-child,.ovt td:first-child{text-align:left;padding-left:8px}
+.ovt td:first-child b{display:block;font-size:14px;white-space:nowrap}
+.ovt td:first-child small{color:var(--muted);font-size:11px}
+.ovt td.tot{font-weight:800;border-radius:6px}
+.ovt tr.clk{cursor:pointer}
+.ovt tr.cur td:first-child{box-shadow:inset 3px 0 0 var(--brand-deep)}
+.ovt tr.hardr td:first-child b::after{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--bad);margin-left:6px;vertical-align:1px}
+.ovt tr.ar td{border-top:0;padding:0 6px 8px 8px;text-align:left;font-size:11.5px;color:var(--muted)}
+.ovt tfoot td{font-weight:800;border-top:2px solid var(--line);padding-top:10px}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.pills span{background:var(--brand-soft);border-radius:999px;padding:3px 10px;font-size:12.5px}
+.pills b{font-variant-numeric:tabular-nums}
+.rkd{margin-top:8px;border-top:1px solid var(--line);padding-top:6px}
+.rks{cursor:pointer;font-size:13px;padding:4px 0}
+.modeline{margin:10px 2px 6px;gap:8px}
+.h3{margin:12px 0 4px;font-size:13px;font-weight:700;color:var(--muted)}
+.secard{scroll-margin-top:84px}
+@media (max-width:600px){
+  .ovt{font-size:13px}.ovt td{padding:7px 4px}.ovt th{padding:4px 4px}
+  .pills span{font-size:12px;padding:2px 8px}
+}
 </style>
 </head>
 <body>
@@ -665,7 +692,7 @@ function areaPlan(weeks){
 function escH(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function areaLine(w){
   const p=apCache&&apCache.weeks[w.i];if(!p||(!p.areas.length&&!p.care))return '';
-  return '<div class="note"><b>Địa bàn tuần này:</b> '+(p.areas.length?p.areas.map(a=>escH(a.name)+' ('+a.n+')').join(', '):'chưa nhập khu vực')+(p.care?' · Chăm sóc từ xa ≈ '+p.care+' lượt':'')+'</div>';
+  return '<div class="note"><b>Khu vực:</b> '+(p.areas.length?p.areas.map(a=>escH(a.name)+' ('+a.n+')').join(', '):'chưa nhập khu vực')+(p.care?' · Chăm sóc từ xa ≈ '+p.care+' lượt':'')+'</div>';
 }
 function areaTxt(w){
   const p=apCache&&apCache.weeks[w.i];if(!p)return '';
@@ -1388,7 +1415,7 @@ function catsCard(tg){
 }
 
 const openSec={};
-document.addEventListener('click',function(e){const sm=e.target.closest&&e.target.closest('summary.sech');if(!sm)return;const dd=sm.parentNode;if(dd&&dd.dataset&&dd.dataset.sec)openSec[dd.dataset.sec]=!dd.open;},true);
+document.addEventListener('click',function(e){const sm=e.target.closest&&e.target.closest('summary.sech,summary.rks');if(!sm)return;const dd=sm.parentNode;if(dd&&dd.dataset&&dd.dataset.sec)openSec[dd.dataset.sec]=!dd.open;},true);
 document.addEventListener('toggle',function(e){const d=e.target;if(d&&d.dataset&&d.dataset.sec)openSec[d.dataset.sec]=d.open;},true);
 function isOpen(k,def){return openSec[k]===undefined?!!def:openSec[k];}
 function sec(k,icon,title,sum,body,def){
@@ -1415,7 +1442,7 @@ const AICON={bad:ic('alertOct',22),warn:ic('warnTri',22),info:ic('infoCirc',22)}
 function alertItem(a){return '<div class="al '+a.level+'"><div class="ic">'+AICON[a.level]+'</div><div class="bd"><b>'+a.title+'</b><div class="small">'+a.text+'</div><div class="small muted">'+a.act+'</div></div><button class="link" data-act="dismiss" data-k="'+a.k+'">Ẩn</button></div>';}
 function banner(weeks){
   const act=evalAlerts(weeks).filter(a=>!a.dismissed);if(!act.length)return '';
-  return '<div class="card"><div class="row"><h2>'+ic('bell',18)+' Cảnh báo ('+act.length+')</h2><button class="btn ghost sm" data-act="tab" data-v="alerts">Xem tất cả</button></div>'+act.slice(0,2).map(alertItem).join('')+DISC+'</div>';
+  return '<div class="card"><div class="row"><h2>'+ic('bell',18)+' Cảnh báo ('+act.length+')</h2><button class="btn ghost sm" data-act="tab" data-v="alerts">Xem tất cả</button></div>'+act.slice(0,2).map(alertItem).join('')+'</div>';
 }
 
 /* ---------- Thành phần trực quan ---------- */
@@ -1570,34 +1597,43 @@ function renderPlan(){
   weeks.forEach(w=>{cp+=w.tt;ce+=w.work;planPts.push({i:w.i,v:cp});evenPts.push({i:w.i,v:total*ce/totWork});});
   const maxT=Math.max(1,...weeks.map(w=>w.tt));
 
-  const cards=weeks.map(w=>{
-    if(w.work===0)return '<div class="card"><div class="row"><b>Tuần '+(w.i+1)+' · '+w.label+'</b><span class="badge">Không có ngày làm việc</span></div></div>';
+  const curW=S.month===monthKey(0)?currentWeekIndex(weeks):-1;
+  const hasCare=!!(apCache&&apCache.act>0),cols=hasCare?6:5;
+  const sums=weeks.reduce((a,w)=>{a.bn+=w.t.bn;a.gd+=w.t.gd;a.vt+=w.vt;a.wd+=w.work;return a;},{bn:0,gd:0,vt:0,wd:0});
+  const careSum=hasCare?apCache.weeks.reduce((a,p)=>a+p.care,0):0;
+  const ovRows=weeks.map(w=>{
+    if(!w.work)return '<tr class="off"><td><b>Tuần '+(w.i+1)+'</b><small>'+w.label+'</small></td><td colspan="'+(cols-1)+'" style="text-align:left;color:var(--muted)">Không có ngày làm việc</td></tr>';
+    const p=apCache&&apCache.weeks[w.i],pct=Math.max(8,Math.round(w.tt/maxT*100));
+    let r='<tr class="clk'+(w.i===curW?' cur':'')+(w.hard?' hardr':'')+'" data-act="openWeek" data-w="'+w.i+'"><td><b>Tuần '+(w.i+1)+'</b><small>'+w.label+'</small></td><td>'+w.t.bn+'</td><td>'+w.t.gd+'</td><td class="tot" style="background:linear-gradient(90deg,var(--brand-soft) '+pct+'%,transparent '+pct+'%)">'+w.tt+'</td><td>'+w.vt+'</td>'+(hasCare?'<td>'+(p?p.care:0)+'</td>':'')+'</tr>';
+    if(p&&p.areas.length)r+='<tr class="ar"><td colspan="'+cols+'">'+p.areas.map(a=>escH(a.name)+' '+a.n).join(' · ')+'</td></tr>';
+    return r;
+  }).join('');
+  const overview='<div class="card"><div class="row wrapx"><h2>'+ic('plan',18)+' Kế hoạch '+monthName(S.month).toLowerCase()+'</h2><span class="small muted">'+sums.wd+' ngày làm việc</span></div>'+
+    '<div class="ovwrap"><table class="ovt"><thead><tr><th>Tuần</th><th>Bình NN</th><th>Gia dụng</th><th>Tổng</th><th>Ghé</th>'+(hasCare?'<th>Chăm</th>':'')+'</tr></thead><tbody>'+ovRows+'</tbody>'+
+    '<tfoot><tr><td>Cả tháng</td><td>'+sums.bn+'</td><td>'+sums.gd+'</td><td>'+(sums.bn+sums.gd)+'</td><td>'+sums.vt+'</td>'+(hasCare?'<td>'+careSum+'</td>':'')+'</tr></tfoot></table></div>'+
+    '<div class="small muted" style="margin-top:6px">Triệu đồng · Ghé: lượt ghé, liên hệ · Chăm: chăm sóc từ xa · Chấm đỏ: tuần nặng nhất · Chạm vào tuần để xem chi tiết</div></div>';
+
+  const weekCards=weeks.filter(w=>w.work>0).map(w=>{
     const sel=riskSel(w);
     const tl=PRODUCTS.map(p=>'<div class="tline"><span class="nm">'+ic(p.icon)+' '+p.name+'<div class="small muted" style="font-weight:500">'+unitText(p.id,w.t[p.id])+'</div></span>'+stepper('data-act="wt" data-p="'+p.id+'" data-w="'+w.i+'"',w.t[p.id],5)+'</div>').join('');
+    const pills='<div class="pills"><span><b>'+w.o+'</b> đơn</span><span><b>'+w.vt+'</b> khách</span><span><b>'+fmt(w.perDay,1)+'</b> khách/ngày</span>'+(w.focus?'<span>Tập trung <b>'+PRODUCTS.find(p=>p.id===w.focus).short+'</b></span>':'')+'</div>';
     const chips='<div class="chips">'+RISKS.map(r=>'<button class="chip" data-act="risk" data-w="'+w.i+'" data-r="'+r.id+'" aria-pressed="'+sel.includes(r.id)+'">'+r.name+'</button>').join('')+'</div>';
     const backups=sel.map(id=>{const r=RISKS.find(x=>x.id===id);return '<div class="backup"><b>'+r.name+':</b> '+r.backup(w.vt)+'</div>';}).join('');
-    return '<div class="card'+(w.hard?' hard':'')+'">'+
-      '<div class="row wrapx"><b>Tuần '+(w.i+1)+' · '+w.label+'</b><span>'+(w.hard?'<span class="badge hard">Tuần khó nhất</span> ':'')+'<span class="badge">'+w.work+' ngày làm việc</span></span></div>'+
-      '<div class="hbar" style="width:'+Math.max(18,w.tt/maxT*100)+'%"><i class="bn" style="flex:'+Math.max(w.t.bn,.01)+'">'+(w.t.bn?w.t.bn:'')+'</i><i class="gd" style="flex:'+Math.max(w.t.gd,.01)+'">'+(w.t.gd?w.t.gd:'')+'</i></div>'+
-      '<div class="small muted">Tổng <b>'+w.tt+' tr</b> · ≈ '+fmt(w.dayT,1)+' tr/ngày</div>'+
-      tl+
-      '<div class="note">'+(w.focus?'Tập trung <b>'+PRODUCTS.find(p=>p.id===w.focus).name+'</b>. ':'')+'Cần chốt khoảng <b>'+w.o+' đơn</b>, tức liên hệ ≈ <b>'+w.vt+' khách</b> (≈ '+fmt(w.perDay,1)+' khách/ngày).</div>'+areaLine(w)+
-      '<div class="small muted">Điều gì có thể khiến tuần này không đạt? Chạm để chọn:</div>'+chips+backups+
-      '<details><summary class="small">Có đơn hoặc lịch hẹn chắc chắn rồi?</summary><div class="small muted">Nhập S.I (triệu) đã chắc chắn, số đơn cần chốt sẽ giảm tương ứng.</div>'+
-      '<div class="field"><span class="nm small">Đã chắc chắn</span><input class="num sm" type="number" inputmode="numeric" min="0" data-f="booked" data-w="'+w.key+'" value="'+(w.bk||'')+'" placeholder="0"><span class="unit">tr</span></div></details>'+
-    '</div>';
+    const rk='<details class="rkd" data-sec="rk_'+w.i+'"'+(isOpen('rk_'+w.i,false)?' open':'')+'><summary class="rks"><b>Rủi ro tuần này ('+sel.length+')</b><span class="muted"> · chạm để chọn</span></summary>'+chips+backups+'</details>';
+    const bk='<details class="rkd" data-sec="bk_'+w.i+'"'+(isOpen('bk_'+w.i,false)?' open':'')+'><summary class="rks"><b>Đơn hoặc lịch hẹn đã chắc chắn</b>'+(w.bk?'<span class="muted"> · '+w.bk+' tr</span>':'')+'</summary><div class="field"><span class="nm small">S.I đã chắc chắn</span><input class="num sm" type="number" inputmode="numeric" min="0" data-f="booked" data-w="'+w.key+'" value="'+(w.bk||'')+'" placeholder="0"><span class="unit">tr</span></div></details>';
+    const sum=(w.hard?'<span class="badge hard">Nặng nhất</span> ':'')+'<b>'+w.tt+' tr</b>';
+    return sec('wk_'+w.i,'','Tuần '+(w.i+1)+' · '+w.label,sum,tl+pills+areaLine(w)+rk+bk,w.i===curW);
   }).join('');
 
-  const modeNote=S.plan?'<div class="note"><b>Chế độ thủ công.</b> Chỉnh chỉ tiêu từng tuần bằng nút − / + ở các thẻ tuần bên dưới. <button class="link" data-act="autoplan">Về gợi ý tự động</button></div>':'<div class="note"><b>Kế hoạch tự động.</b> Muốn tự chia, chỉ cần bấm − / + ở thẻ tuần bên dưới.</div>';
-  $app.innerHTML=banner(weeks)+modeNote+factorsCard(weeks,'compact')+aiPanel('plan',weeks)+todayCard+
-  '<div class="card"><div class="row wrapx"><h2>Tiến độ S.I theo tuần</h2><span class="small muted"><i class="sw bn"></i>Bình NN <i class="sw gd" style="margin-left:6px"></i>Gia dụng</span></div>'+barChart(weeks)+
-    '<div class="small muted">Tuần cuối chiếm <b>'+share+'%</b> chỉ tiêu tháng'+(share<evenShare?', thấp hơn mức chia đều theo ngày ('+evenShare+'%), phần còn lại đã được trải ra từ đầu tháng.':' (chia đều theo ngày là '+evenShare+'%).')+' Đơn vị: triệu đồng.</div></div>'+
-  '<div class="card"><h2>Đường tích lũy</h2><div class="small muted">Đường đen là kế hoạch của bạn, đường nét đứt là cách chia đều theo ngày.</div>'+
-    lineChart(weeks,[{pts:evenPts,color:'var(--muted)',dash:true,w:2},{pts:planPts,color:'var(--ink)',dots:true,w:3}],total)+
-    '<div class="legend"><span style="--c:var(--ink)">Kế hoạch tích lũy</span><span class="dash" style="--c:var(--muted)">Chia đều theo ngày</span></div></div>'+
-  '<div class="card"><h2>Mục tiêu từng ngày</h2><div class="small muted">Số trong ô là S.I cần đạt trong ngày (triệu). Ô càng đậm, ngày càng nặng.</div>'+heat(weeks)+'</div>'+
-  (mismatch?'<div class="note">Tổng các tuần đang là <b>'+planSum+'</b> triệu, chỉ tiêu tháng là <b>'+total+'</b> triệu. Bạn có thể giữ nguyên hoặc đưa về gợi ý tự động.</div>':'')+
-  cards+
+  const modeLine='<div class="row wrapx modeline"><b>Chi tiết từng tuần</b><span>'+(S.plan?'<span class="badge warn">Thủ công</span> <button class="link" data-act="autoplan">Về tự động</button>':'<span class="badge ok">Tự động</span> <span class="small muted">chỉnh bằng − / +</span>')+'</span></div>';
+  const charts=sec('plancharts',ic('trend',18),'Biểu đồ và lịch từng ngày','<span class="small muted">chạm để mở</span>',
+    '<div class="small muted"><i class="sw bn"></i>Bình NN <i class="sw gd" style="margin-left:6px"></i>Gia dụng · triệu đồng</div>'+barChart(weeks)+
+    '<div class="h3">Kế hoạch tích lũy</div>'+lineChart(weeks,[{pts:evenPts,color:'var(--muted)',dash:true,w:2},{pts:planPts,color:'var(--ink)',dots:true,w:3}],total)+
+    '<div class="legend"><span style="--c:var(--ink)">Kế hoạch</span><span class="dash" style="--c:var(--muted)">Chia đều theo ngày</span></div>'+
+    '<div class="h3">Mục tiêu từng ngày (triệu)</div>'+heat(weeks));
+  $app.innerHTML=overview+banner(weeks)+todayCard+factorsCard(weeks,'compact')+aiPanel('plan',weeks)+
+  (mismatch?'<div class="note">Tổng các tuần là <b>'+planSum+'</b> tr, chỉ tiêu tháng là <b>'+total+'</b> tr. <button class="link" data-act="autoplan">Đưa về gợi ý tự động</button></div>':'')+
+  modeLine+weekCards+charts+
   '<div class="row" style="margin:6px 0 12px"><button class="btn ghost sm" data-act="autoplan">Đưa về gợi ý tự động</button><button class="btn sm" data-act="copy">Sao chép kế hoạch</button></div>'+
   (copyText?'<textarea class="copybox" id="copybox" readonly>'+copyText+'</textarea><div class="small muted">Không sao chép tự động được. Hãy chọn toàn bộ chữ ở trên rồi sao chép.</div>':'');
 }
@@ -1691,7 +1727,7 @@ function render(){
   }
   renderTabs();if(S.tab==='setup')renderSetup();else if(S.tab==='plan')renderPlan();else if(S.tab==='alerts')renderAlertsTab();else renderCheck();
   try{
-    if(S.month===monthKey(0)){const bn=dayBanner(analyze());bannerSig=bn;if(bn)$app.insertAdjacentHTML('afterbegin',bn);}else bannerSig='';
+    if(S.month===monthKey(0)){const bn=dayBanner(analyze());bannerSig=bn;if(bn){if(S.tab==='plan'&&$app.firstElementChild)$app.firstElementChild.insertAdjacentHTML('afterend',bn);else $app.insertAdjacentHTML('afterbegin',bn);}}else bannerSig='';
     if(S.tab==='check'){const hc=histCard();if(hc)$app.insertAdjacentHTML('beforeend',hc);}
   }catch(e){}
   if(sel){const n=document.querySelector(sel);if(n){if(keepVal!==null)n.value=keepVal;if(n!==document.activeElement)try{n.focus({preventScroll:true});}catch(e){}}}
@@ -1743,6 +1779,7 @@ document.addEventListener('click',function(e){
     else{S.plan=null;toast('Đã tạo kế hoạch tự động');}
   }
   else if(a==='aix'){askAIx(d.c);return;}
+  else if(a==='openWeek'){openSec['wk_'+d.w]=true;setTimeout(function(){const el=document.querySelector('details[data-sec="wk_'+d.w+'"]');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);}
   else if(a==='fxAll'){openSec.fxall=!isOpen('fxall',false);}
   else if(a==='remTog'){S.rem[d.k]=!S.rem[d.k];}
   else if(a==='notifOn'){
