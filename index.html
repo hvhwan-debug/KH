@@ -337,6 +337,12 @@ button,.chip,.cal button{touch-action:manipulation}
 
 /* ===== Mục thu gọn ===== */
 .secard{padding:0}
+.secgrid{display:grid;grid-template-columns:1fr;gap:10px}
+.secgrid>.secard{margin-bottom:0}
+@media (min-width:640px){
+  .secgrid{grid-template-columns:1fr 1fr}
+  .secgrid>.secard:has(details[open]){grid-column:1 / -1}
+}
 .secard details{margin:0}
 .sech{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;cursor:pointer;font-weight:700;min-height:48px}
 .sech::-webkit-details-marker{display:none}
@@ -1908,6 +1914,7 @@ function renderSetup(){
   needCard(weeks)+
   factorsCard(weeks,'full')+
   aiCard(weeks,true)+
+  '<div class="secgrid">'+
   feasCard(weeks)+
   areaCard(weeks)+
   catsCard(tg)+
@@ -1926,6 +1933,7 @@ function renderSetup(){
     '<div class="field"><span class="nm small">Giá trị trung bình mỗi đơn</span><input class="num sm" type="number" inputmode="numeric" min="1" data-f="aov" value="'+S.aov+'"><span class="unit">tr</span></div>'+
     '<div class="field"><span class="nm small">Tỷ lệ khách liên hệ chốt được đơn</span><input class="num sm" type="number" inputmode="numeric" min="5" max="100" data-f="rate" value="'+S.rate+'"><span class="unit">%</span></div>'+
   '</div></details></div>'+
+  '</div>'+
   '<button class="btn" data-act="tab" data-v="plan">Xem kế hoạch của tôi</button>'+
   '<div style="text-align:center;margin-top:10px"><button class="link" data-act="reset">'+(confirmReset?'Bấm lại để xác nhận xoá hết dữ liệu':'Làm lại từ đầu')+'</button></div>'+
   '<div class="small muted" style="text-align:center">'+(AUTH.user?'Dữ liệu lưu trên thiết bị này và đồng bộ lên máy chủ vì bạn đã đăng nhập. Không xếp hạng giữa các SR.':'Dữ liệu chỉ lưu trên thiết bị này. Đăng nhập (mục Tài khoản) nếu muốn lưu trên máy chủ. Không xếp hạng giữa các SR.')+'</div>';
