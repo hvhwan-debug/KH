@@ -464,6 +464,11 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 .fxv{font-weight:800;font-size:14px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .fx.bad .fxv{color:var(--bad)}.fx.warn .fxv{color:var(--warn)}.fx.ok .fxv{color:var(--ok)}
 .fxw{padding:0 0 10px 20px}
+.szchips{display:flex;flex-wrap:wrap;gap:6px}
+.szchip{font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
+.szchip.high{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.szchip.mid{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.szchip.low{background:var(--bg);color:var(--muted);border-color:var(--line)}
 .fxw .small+.small{margin-top:4px}
 .fxs::after{margin-top:6px}
 
@@ -740,6 +745,13 @@ function seasonText(){
   const m=+S.month.split('-')[1],r=regionOf(S.province);
   return 'Mùa vụ ước lượng tháng '+m+' ('+REG_NAME[r]+(S.province?'':', chưa chọn khu vực nên tạm tính theo miền Bắc')+'): '+SEASON_G.map(g=>g[1]+' '+LV[SEASON[r][g[0]][m-1]]).join('; ')+'. Đây là ước lượng theo khí hậu, không phải số liệu bán hàng của Livotec.';
 }
+function seasonChips(){
+  const m=+S.month.split('-')[1],r=regionOf(S.province),cls=['low','mid','high'];
+  const chips=SEASON_G.map(g=>{const lv=SEASON[r][g[0]][m-1];return '<span class="szchip '+cls[lv]+'">'+g[1]+' · '+LV[lv]+'</span>';}).join('');
+  return '<div class="small muted" style="margin-bottom:6px">Mùa vụ ước lượng tháng '+m+' ('+REG_NAME[r]+(S.province?'':', chưa chọn khu vực nên tạm tính theo miền Bắc')+')</div>'+
+    '<div class="szchips">'+chips+'</div>'+
+    '<div class="small muted" style="margin-top:6px">Ước lượng theo khí hậu, không phải số liệu bán hàng của Livotec.</div>';
+}
 let apCache=null;
 function areaPlan(weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0);if(!total)return null;
@@ -797,7 +809,7 @@ function needCard(weeks){
       ?'<div class="note" style="color:var(--bad)">Với '+ap.usable+' điểm dùng được'+(ap.noP?' (đã trừ '+ap.noP+' điểm vướng công nợ)':'')+', bạn cần thêm khoảng <b>'+ap.gap+' điểm</b> (mở mới hoặc đánh thức điểm chưa hoạt động'+(ap.dormant?', hiện có '+ap.dormant+' điểm':'')+') hoặc tăng giá trị mỗi đơn.</div>'
       :'<div class="note">Địa bàn đủ điểm: cần dùng khoảng <b>'+Math.round(ap.uniq/Math.max(1,ap.usable)*100)+'%</b> số điểm dùng được.</div>';
   } else note='<div class="note">Nhập số điểm bán và khu vực để biết cần ghé bao nhiêu điểm, chăm sóc ra sao. <button class="link" data-act="openSec" data-k="area">Mở mục Địa bàn &amp; điểm bán</button></div>';
-  return sec('need',ic('target',18),'Để đạt '+fmt(ap.total)+' triệu',sum,'<div class="tiles compact">'+tiles+'</div>'+rows+note+'<div class="small muted" style="margin-top:6px">'+seasonText()+'</div>',true);
+  return sec('need',ic('target',18),'Để đạt '+fmt(ap.total)+' triệu',sum,'<div class="tiles compact">'+tiles+'</div>'+rows+note+'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">'+seasonChips()+'</div>',true);
 }
 function areaCard(weeks){
   const A=S.area||{},n=(A.dist||[]).length;
