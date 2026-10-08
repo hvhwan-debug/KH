@@ -203,6 +203,7 @@ body{background:var(--bg)}
 .tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--surface);padding:7px;border-radius:20px;margin:0 auto -20px;transform:translateY(-36px);box-shadow:0 14px 30px rgba(0,40,38,.18);max-width:652px;width:calc(100% - 28px)}
 @media (min-width:900px){.tabs{max-width:832px}}
 @media (min-width:1200px){.tabs{max-width:1012px}}
+.tabs.stuck{transform:none}
 .tabs button{background:transparent;border:0;color:var(--muted);box-shadow:none}
 .tabs button[aria-selected="true"]{background:var(--btn-grad);color:var(--on-brand);border-color:transparent;box-shadow:0 6px 16px rgba(0,122,115,.28)}
 .card{border-radius:22px;box-shadow:var(--shadow);border-color:var(--line)}
@@ -565,9 +566,9 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
   </div>
   <svg class="wave" viewBox="0 0 1440 48" preserveAspectRatio="none" aria-hidden="true"><path d="M0,26C220,58 470,2 720,22C970,42 1210,54 1440,14L1440,48L0,48Z"/></svg>
 </header>
-<nav class="tabs" id="tabs" role="tablist"></nav>
 </div>
 <div class="wrap">
+  <nav class="tabs" id="tabs" role="tablist"></nav>
   <main id="app"></main>
 </div>
 <footer class="foot"><img class="logo sm" id="logo2" alt="Livotec"><div><b>Trợ lí thiết lập kế hoạch bán hàng</b> dành cho Sales Rep kênh GT Livotec</div><div class="foot-disc">Lưu ý: số liệu, dự báo và cảnh báo chỉ mang tính tham khảo, không phải cam kết hay chỉ tiêu chính thức.</div></footer>
@@ -2280,6 +2281,17 @@ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
 try{if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(function(){});}catch(e){}
 render();
 initCoach();
+(function(){
+  let ticking=false;
+  function checkStuck(){
+    ticking=false;
+    const el=document.getElementById('tabs');if(!el)return;
+    const topCss=parseFloat(getComputedStyle(el).top)||0;
+    el.classList.toggle('stuck',el.getBoundingClientRect().top<=topCss+1);
+  }
+  window.addEventListener('scroll',function(){if(!ticking){ticking=true;requestAnimationFrame(checkStuck);}},{passive:true});
+  checkStuck();
+})();
 applyHash();
 remTick();
 authInit();
