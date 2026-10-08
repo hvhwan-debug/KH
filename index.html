@@ -302,11 +302,69 @@ const CATS=[
 function defaultCats(){return{doi:{on:true,w:40,p:14.4},don:{on:true,w:20,p:2.0},com:{on:true,w:25,p:1.8},noi:{on:true,w:15,p:2.8},chien:{on:false,w:10,p:0},xay:{on:false,w:10,p:0},ep:{on:false,w:10,p:0},mui:{on:false,w:10,p:0}};}
 const DISC_TXT='Chỉ mang tính tham khảo: số liệu, dự báo và cảnh báo được tính từ các giả định và số bạn tự nhập, không phải cam kết hay chỉ tiêu chính thức.';
 const DISC='<div class="disc"><span aria-hidden="true">⚠️</span><span>'+DISC_TXT+'</span></div>';
+
+/* ---------- Nhận xét AI (Groq) ---------- */
+const GROQ_MODEL='llama-3.3-70b-versatile';
+let aiState={loading:false,text:'',error:''};
+function aiPrompt(weeks){
+  const fc=forecast(weeks),total=(+S.target.bn||0)+(+S.target.gd||0);
+  const ach=weeks.reduce((s,x)=>s+(((S.actual[x.key]||{}).bn||0)+((S.actual[x.key]||{}).gd||0)),0);
+  const alerts=evalAlerts(weeks).filter(a=>!a.dismissed);
+  const lines=[
+    'Chỉ tiêu tháng: '+fmt(total)+' triệu (Bình nước nóng '+fmt(+S.target.bn||0)+', Gia dụng '+fmt(+S.target.gd||0)+').',
+    'Đã đạt tính đến hiện tại: '+fmt(ach)+' triệu.'
+  ];
+  if(fc&&!fc.noData){
+    lines.push('Dự báo chốt tháng: khoảng '+fmt(fc.mu)+' triệu (khoảng tin cậy '+fmt(fc.lo)+'–'+fmt(fc.hi)+'), xác suất đạt chỉ tiêu '+Math.round(fc.P*100)+'%.');
+    lines.push('Tốc độ hiện tại so với kế hoạch: '+Math.round(fc.rho*100)+'%.');
+  } else {
+    lines.push('Chưa có đủ số liệu tự soát để tính dự báo.');
+  }
+  if(alerts.length){
+    lines.push('Cảnh báo đang hoạt động:');
+    alerts.forEach(a=>lines.push('- '+a.title+': '+a.text));
+  } else {
+    lines.push('Hiện không có cảnh báo nào được kích hoạt.');
+  }
+  return 'Bạn là trợ lý phân tích kinh doanh, hỗ trợ một nhân viên kinh doanh (SR) ngành hàng điện gia dụng đánh giá tiến độ doanh số tháng dựa trên dữ liệu sau:\n\n'+
+    lines.join('\n')+
+    '\n\nHãy viết một nhận xét ngắn gọn (3–5 câu, văn phong chuyên nghiệp, tiếng Việt, không dùng ẩn dụ đời sống, không chào hỏi) về tình hình hiện tại, sau đó liệt kê 2–3 đề xuất hành động cụ thể cho phần còn lại của tháng.';
+}
+async function askAI(){
+  if(aiState.loading)return;
+  if(!S.groqKey){aiState={loading:false,text:'',error:'Chưa có API key. Vào tab Thiết lập để nhập key Groq của bạn.'};render();return;}
+  aiState={loading:true,text:'',error:''};render();
+  try{
+    const weeks=analyze();
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.groqKey},
+      body:JSON.stringify({model:GROQ_MODEL,messages:[{role:'user',content:aiPrompt(weeks)}],temperature:0.4,max_tokens:500})
+    });
+    if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status+' — '+t.slice(0,200));}
+    const data=await res.json();
+    const text=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
+    aiState={loading:false,text:text||'Không nhận được nội dung phản hồi.',error:''};
+  }catch(e){
+    aiState={loading:false,text:'',error:'Không gọi được AI (có thể do giới hạn CORS của trình duyệt hoặc lỗi mạng). Chi tiết: '+e.message};
+  }
+  render();
+}
+function aiCard(weeks){
+  const total=(+S.target.bn||0)+(+S.target.gd||0);
+  if(!total)return '';
+  let body;
+  if(aiState.loading)body='<div class="small muted">Đang phân tích…</div>';
+  else if(aiState.error)body='<div class="note" style="color:var(--bad)">'+aiState.error+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Thử lại</button></div>';
+  else if(aiState.text)body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiState.text+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Hỏi lại</button></div>';
+  else body='<div class="small muted">Dựa trên dự báo, tốc độ hiện tại và các cảnh báo đang có để đưa ra nhận xét và đề xuất cụ thể.</div><div style="margin-top:10px"><button class="btn sm" data-act="ai">Xin nhận xét từ AI</button></div>';
+  return '<div class="card"><h2>🤖 Nhận xét từ AI</h2>'+body+'</div>';
+}
 const pad=n=>String(n).padStart(2,'0');
 const fmt=(x,d=0)=>Number(x).toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d});
 const C={bn:'var(--bn)',gd:'var(--gd)'};
 function monthKey(o){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+o);return d.getFullYear()+'-'+pad(d.getMonth()+1);}
-function defaults(){return{month:monthKey(0),target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std')};}
+function defaults(){return{month:monthKey(0),target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std'),groqKey:''};}
 function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats});}}catch(e){}return defaults();}
 let S=load(),confirmReset=false,copyText=null;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
@@ -694,6 +752,9 @@ function renderSetup(){
     '<div class="field"><span class="nm small">Giá trị trung bình mỗi đơn</span><input class="num sm" type="number" inputmode="numeric" min="1" data-f="aov" value="'+S.aov+'"><span class="unit">tr</span></div>'+
     '<div class="field"><span class="nm small">Tỷ lệ khách liên hệ chốt được đơn</span><input class="num sm" type="number" inputmode="numeric" min="5" max="100" data-f="rate" value="'+S.rate+'"><span class="unit">%</span></div>'+
   '</details></div>'+
+  '<div class="card"><h2>🤖 Nhận xét AI (tuỳ chọn)</h2><div class="small muted">Dán API key Groq của riêng bạn để dùng tính năng nhận xét AI ở tab Tự soát. Key chỉ lưu trên thiết bị này, không gửi lên đâu khác ngoài Groq.</div>'+
+    '<div class="field" style="margin-top:8px"><input class="num" style="width:100%;text-align:left;font-size:14px;font-weight:600" type="password" autocomplete="off" spellcheck="false" placeholder="gsk_..." data-f="groqKey" value="'+(S.groqKey||'')+'"></div>'+
+    '<div class="small muted">Lấy key miễn phí tại <b>console.groq.com/keys</b>.</div></div>'+
   '<button class="btn" data-act="tab" data-v="plan">Xem kế hoạch của tôi</button>'+
   '<div style="text-align:center;margin-top:10px"><button class="link" data-act="reset">'+(confirmReset?'Bấm lại để xác nhận xoá hết dữ liệu':'Làm lại từ đầu')+'</button></div>'+
   '<div class="small muted" style="text-align:center">Dữ liệu chỉ lưu trên thiết bị này. Không gửi cho ai và không xếp hạng giữa các SR.</div>';
@@ -793,7 +854,7 @@ function renderCheck(){
   let cum=0;const planPts=[],actPts=[];let ca=0;
   weeks.forEach(x=>{cum+=x.tt;planPts.push({i:x.i,v:cum});const ac=S.actual[x.key];if(ac){ca+=(ac.bn||0)+(ac.gd||0);actPts.push({i:x.i,v:ca});}else if(ac===undefined){}});
   $app.innerHTML=banner(weeks)+
-  '<div class="card herocard">'+hero+'</div>'+forecastCard(weeks)+
+  '<div class="card herocard">'+hero+'</div>'+forecastCard(weeks)+aiCard(weeks)+
   '<div class="card"><h2>Tự soát cuối tuần</h2><div class="small muted">Chọn ngày bạn thấy tiện, chỉ mất khoảng 20 giây. Số liệu này dành cho bạn, không phải báo cáo.</div><div style="margin-top:10px">'+weekChips+'</div>'+
     (w.work===0?'<div class="note">Tuần này không có ngày làm việc.</div>':fields)+result+'</div>'+
   rebal+
@@ -853,6 +914,7 @@ document.addEventListener('click',function(e){
   else if(a==='catTog'){const c=S.cats[d.c];c.on=!c.on;if(c.on&&c.w<=0)c.w=10;}
   else if(a==='catW'){const c=S.cats[d.c];c.w=Math.max(0,Math.min(100,c.w+(+d.d)));}
   else if(a==='learn'){S.learn=!S.learn;}
+  else if(a==='ai'){askAI();return;}
   else if(a==='area'){const A={tp:[25,5],tinh:[20,4],rong:[15,3]}[d.v];S.aov=A[0];S.maxC=A[1];toast('Đã áp dụng mẫu địa bàn, bạn có thể sửa tiếp');}
   else if(a==='rule'){S.rules[d.r].on=!S.rules[d.r].on;}
   else if(a==='rv'){const r=RULES.find(x=>x.id===d.r),c=S.rules[d.r];c.v=Math.min(r.max,Math.max(r.min,c.v+(+d.d)));S.preset='custom';}
@@ -873,6 +935,7 @@ document.addEventListener('change',function(e){
   const t=e.target,f=t.dataset&&t.dataset.f;if(!f)return;
   if(f==='month'){S.month=t.value;S.season=100;S.flip=[];S.plan=null;S.booked={};S.actual={};S.risks={};S.cw=null;}
   else if(f==='target'){S.target[t.dataset.p]=Math.max(0,Math.floor(+t.value||0));S.plan=null;}
+  else if(f==='groqKey'){S.groqKey=t.value.trim();}
   else if(f==='catP'){S.cats[t.dataset.c].p=Math.max(0,+t.value||0);}
   else if(f==='season'){S.season=+t.value;}
   else if(f==='maxC'){S.maxC=Math.max(1,Math.floor(+t.value||4));}
