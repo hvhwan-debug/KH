@@ -537,7 +537,7 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 .ht-val{font-size:17px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
 .htoday.off{cursor:default;font-size:14px}
 .hok{color:#B8F3D4;font-weight:700}.hno{color:#FFE2A0;font-weight:700}
-.hpri{margin-top:6px;font-size:12.5px;font-weight:700;line-height:1.35}
+.hpri{margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.22);font-size:12.5px;font-weight:700;line-height:1.4}
 .hpri span{font-weight:500;opacity:.85}
 @media (max-width:600px){
   .top .hstat{flex-basis:100%;order:4;grid-template-columns:1fr;gap:8px;margin-top:8px}
@@ -1501,16 +1501,16 @@ function headerStat(weeks){
   if(isCur){
     const wk=weeks.find(w=>w.days.some(d=>d.date===tk)),dy=wk&&wk.days.find(d=>d.date===tk);
     if(wk&&dy){
-      if(dy.off||!wk.work)right='<div class="htoday off"><b>Hôm nay nghỉ</b></div>';
+      const F=factors(weeks),top=F&&F.rows.find(r=>r.lv!=='ok'&&r.act);
+      const priHtml=top?'<div class="hpri">→ '+escH(top.act)+'</div>':'';
+      if(dy.off||!wk.work)right='<div class="htoday off"><b>Hôm nay nghỉ</b></div>'+priHtml;
       else{
         const ap=areaPlan(weeks),pw=ap&&ap.weeks[wk.i];
         const parts=[fmt(wk.tt/wk.work,1)+' tr',Math.max(1,Math.round(wk.perDay))+' khách'];
         if(pw&&pw.care)parts.push(Math.max(1,Math.round(pw.care/wk.work))+' chăm sóc');
         right='<button class="htoday" data-act="goDay" data-day="'+tk+'"><div class="ht-lab">Hôm nay</div><div class="ht-val">'+parts.join(' · ')+'</div>'+
-          '<div class="hs-sub">'+(te?'<span class="hok">✓ Đã nhập</span>':'<span class="hno">Chạm để nhập</span>')+'</div></button>';
+          '<div class="hs-sub">'+(te?'<span class="hok">✓ Đã nhập</span>':'<span class="hno">Chạm để nhập</span>')+'</div>'+priHtml+'</button>';
       }
-      const F=factors(weeks),top=F&&F.rows.find(r=>r.lv!=='ok'&&r.act);
-      if(top)right+='<div class="hpri">→ '+escH(top.act)+'</div>';
     }
   }
   return '<div class="hs-col">'+left+'</div>'+(right?'<div class="hs-col">'+right+'</div>':'');
