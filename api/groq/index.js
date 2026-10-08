@@ -22,6 +22,17 @@ module.exports = async function (context, req) {
     return;
   }
 
+  // Chặn lạm dụng: giới hạn số tin nhắn và tổng độ dài
+  const totalChars = body.messages.reduce((a, m) => a + String((m && m.content) || "").length, 0);
+  if (body.messages.length > 12 || totalChars > 24000) {
+    context.res = {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+      body: { error: "Yêu cầu quá dài." }
+    };
+    return;
+  }
+
   try {
     const upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
