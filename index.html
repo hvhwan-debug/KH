@@ -458,16 +458,17 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 .fxc .d.ok,.fx.ok .fxd{background:var(--ok)}
 .fxv2{margin:4px 0 8px;line-height:1.45}
 .fx{border-top:1px solid var(--line)}
-.fxs{padding:9px 0;min-height:0;align-items:flex-start;gap:10px;font-weight:400}
-.fxs .fxd{margin-top:6px}
+.fxs{padding:8px 0;min-height:0;align-items:center;gap:10px;font-weight:400}
 .fxn{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 .fxn b{font-size:14px}
-.fxm{font-size:13px;color:var(--muted);line-height:1.35}
-.fxa{font-size:13px;font-weight:700;line-height:1.35}
-.fx.bad .fxa{color:var(--bad)}.fx.warn .fxa{color:var(--warn)}
+.fxm{font-size:13px;color:var(--ink);line-height:1.4}
+.fxa{font-size:13px;font-weight:700;line-height:1.4;margin-top:3px;display:block}
+.fxa.bad{color:var(--bad)}
+.fxa.warn{color:var(--warn)}
 .fxv{font-weight:800;font-size:14px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .fx.bad .fxv{color:var(--bad)}.fx.warn .fxv{color:var(--warn)}.fx.ok .fxv{color:var(--ok)}
 .fxw{padding:0 0 10px 20px}
+.fxw .small+.small{margin-top:4px}
 .fxs::after{margin-top:6px}
 
 /* ===== Bảng tổng quan kế hoạch ===== */
@@ -1205,7 +1206,7 @@ function factorsCard(weeks,mode){
   else if(warn.length)v='<b>Làm được, cần lưu ý:</b> '+warn.slice(0,3).map(r=>r.sv).join(', ')+'.';
   else v='<b>Các yếu tố chính đều ổn.</b>';
   const showAll=mode==='full'&&isOpen('fxall',false),list=showAll?F.rows:F.rows.slice(0,3);
-  const row=r=>'<details class="fx '+r.lv+'" data-sec="fx_'+r.id+'"'+(isOpen('fx_'+r.id,false)?' open':'')+'><summary class="sech fxs"><i class="fxd"></i><span class="fxn"><b>'+r.name+'</b><span class="fxm">'+escH(r.msg)+'</span>'+(r.act?'<span class="fxa">→ '+escH(r.act)+'</span>':'')+'</span><span class="fxv">'+escH(r.val)+'</span></summary><div class="fxw"><div class="small muted"><b>Cách tính:</b> '+escH(r.how)+'</div><div class="small muted"><b>Nguồn số:</b> '+escH(r.src)+'</div></div></details>';
+  const row=r=>'<details class="fx '+r.lv+'" data-sec="fx_'+r.id+'"'+(isOpen('fx_'+r.id,r.lv!=='ok')?' open':'')+'><summary class="sech fxs"><i class="fxd"></i><span class="fxn"><b>'+r.name+'</b></span><span class="fxv">'+escH(r.val)+'</span></summary><div class="fxw"><div class="fxm">'+escH(r.msg)+'</div>'+(r.act?'<div class="fxa '+r.lv+'">→ '+escH(r.act)+'</div>':'')+'<div class="small muted" style="margin-top:6px"><b>Cách tính:</b> '+escH(r.how)+'</div><div class="small muted"><b>Nguồn số:</b> '+escH(r.src)+'</div></div></details>';
   const more=(mode==='full'&&F.rows.length>3)?'<button class="link" data-act="fxAll">'+(showAll?'Thu gọn':'Xem đủ '+F.rows.length+' yếu tố')+'</button>':'';
   const miss=F.miss.length?'<div class="small muted" style="margin-top:6px">Chưa tính: '+F.miss.join(' · ')+'. '+(F.miss.some(x=>x.indexOf('địa bàn')===0||x.indexOf('công nợ')===0)?'<button class="link" data-act="openSec" data-k="area">Nhập để kết luận chắc hơn</button>':'')+'</div>':'';
   return '<div class="card fxcard"><div class="row wrapx"><h2>'+ic('alertOct',18)+' Điểm cần chú ý</h2><span class="fxc"><i class="d bad"></i>'+F.cnt.bad+' <i class="d warn"></i>'+F.cnt.warn+' <i class="d ok"></i>'+F.cnt.ok+'</span></div><div class="fxv2">'+v+'</div>'+list.map(row).join('')+more+miss+'</div>';
