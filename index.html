@@ -326,6 +326,16 @@ const DISC='<div class="disc"><span aria-hidden="true">'+ic('warnTri',16)+'</spa
 /* ---------- Nhận xét AI (Groq) ---------- */
 const GROQ_MODEL='llama-3.3-70b-versatile';
 let aiState={loading:false,text:'',error:''};
+let aiLastKey=null,aiTimer=null;
+const AI_DISCLAIMER='Nhận xét và đề xuất này do AI tạo tự động dựa trên số liệu bạn nhập, có thể không chính xác hoàn toàn — hãy đối chiếu với thực tế trước khi quyết định.';
+function aiDataKey(){return JSON.stringify({t:S.target,a:S.actual,m:S.month,g:!!S.groqKey});}
+function scheduleAI(){
+  if(!S.groqKey||!Object.keys(S.actual).length)return;
+  const key=aiDataKey();
+  if(key===aiLastKey)return;
+  clearTimeout(aiTimer);
+  aiTimer=setTimeout(()=>{aiLastKey=key;askAI();},2200);
+}
 function aiPrompt(weeks){
   const fc=forecast(weeks),total=(+S.target.bn||0)+(+S.target.gd||0);
   const ach=weeks.reduce((s,x)=>s+(((S.actual[x.key]||{}).bn||0)+((S.actual[x.key]||{}).gd||0)),0);
@@ -373,11 +383,14 @@ async function askAI(){
 function aiCard(weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0);
   if(!total)return '';
+  scheduleAI();
   let body;
-  if(aiState.loading)body='<div class="small muted">Đang phân tích…</div>';
+  if(!S.groqKey)body='<div class="small muted">Thêm API key Groq ở tab Thiết lập để bật tính năng này — hệ thống sẽ tự động phân tích mỗi khi bạn cập nhật số liệu tự soát.</div>';
+  else if(!Object.keys(S.actual).length)body='<div class="small muted">Nhập số liệu tự soát ở bên dưới — hệ thống sẽ tự động phân tích và đưa ra đề xuất.</div>';
+  else if(aiState.loading)body='<div class="small muted">Đang phân tích…</div>';
   else if(aiState.error)body='<div class="note" style="color:var(--bad)">'+aiState.error+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Thử lại</button></div>';
-  else if(aiState.text)body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiState.text+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Hỏi lại</button></div>';
-  else body='<div class="small muted">Dựa trên dự báo, tốc độ hiện tại và các cảnh báo đang có để đưa ra nhận xét và đề xuất cụ thể.</div><div style="margin-top:10px"><button class="btn sm" data-act="ai">Xin nhận xét từ AI</button></div>';
+  else if(aiState.text)body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiState.text+'</div><div class="small muted" style="margin-top:10px">'+AI_DISCLAIMER+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích lại</button></div>';
+  else body='<div class="small muted">Đang chờ số liệu để phân tích…</div>';
   return '<div class="card"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2>'+body+'</div>';
 }
 const pad=n=>String(n).padStart(2,'0');
@@ -934,7 +947,7 @@ document.addEventListener('click',function(e){
   else if(a==='catTog'){const c=S.cats[d.c];c.on=!c.on;if(c.on&&c.w<=0)c.w=10;}
   else if(a==='catW'){const c=S.cats[d.c];c.w=Math.max(0,Math.min(100,c.w+(+d.d)));}
   else if(a==='learn'){S.learn=!S.learn;}
-  else if(a==='ai'){askAI();return;}
+  else if(a==='ai'){aiLastKey=aiDataKey();askAI();return;}
   else if(a==='area'){const A={tp:[25,5],tinh:[20,4],rong:[15,3]}[d.v];S.aov=A[0];S.maxC=A[1];toast('Đã áp dụng mẫu địa bàn, bạn có thể sửa tiếp');}
   else if(a==='rule'){S.rules[d.r].on=!S.rules[d.r].on;}
   else if(a==='rv'){const r=RULES.find(x=>x.id===d.r),c=S.rules[d.r];c.v=Math.min(r.max,Math.max(r.min,c.v+(+d.d)));S.preset='custom';}
