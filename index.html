@@ -356,6 +356,19 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 .disc-line{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);font-size:11.5px;line-height:1.45;color:var(--muted)}
 @media (max-width:600px){.disc-line{margin-top:8px;padding-top:6px;font-size:11px}}
 
+/* ===== Viền gradient chạy quanh các khối AI phân tích/phán đoán ===== */
+@property --ai-angle{syntax:'<angle>';inherits:false;initial-value:0deg}
+.aiGlow{position:relative;z-index:0}
+.aiGlow::before{
+  content:'';position:absolute;inset:-2px;border-radius:24px;padding:2px;
+  background:conic-gradient(from var(--ai-angle),var(--brand),var(--gd),var(--brand-deep),var(--gd),var(--brand));
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  animation:aiSpin 3.5s linear infinite;z-index:-1;pointer-events:none;
+}
+@keyframes aiSpin{to{--ai-angle:360deg}}
+@media (prefers-reduced-motion:reduce){.aiGlow::before{animation:none}}
+
 /* ===== Livotec: nhu cầu hoạt động, địa bàn, trợ lý AI ===== */
 .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:8px 0}
 .tile{background:var(--brand-soft);border-radius:14px;padding:10px 12px}
@@ -653,7 +666,7 @@ async function askAI(){
 }
 function aiCard(weeks,withAsk){
   const total=(+S.target.bn||0)+(+S.target.gd||0);
-  if(!total)return '<div class="card"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2><div class="small muted">Nhập chỉ tiêu tháng ở trên — bạn sẽ bấm một nút để xem đánh giá và khuyến nghị.</div></div>';
+  if(!total)return '<div class="card aiGlow"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2><div class="small muted">Nhập chỉ tiêu tháng ở trên — bạn sẽ bấm một nút để xem đánh giá và khuyến nghị.</div></div>';
   const stale=aiState.text&&aiKeyMain!==aiDataKey();
   let body;
   if(aiState.loading)body='<div class="small muted">Đang phân tích…</div>';
@@ -661,7 +674,7 @@ function aiCard(weeks,withAsk){
   else if(aiState.text)body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiFmt(aiState.text)+'</div>'+(stale?'<div class="small" style="color:var(--warn);margin-top:8px">Số liệu đã thay đổi từ lần phân tích trước.</div>':'')+'<div class="small muted" style="margin-top:8px">'+AI_DISCLAIMER+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích lại</button></div>';
   else body='<div class="small muted">Xem đánh giá mức độ khả thi và khuyến nghị triển khai dựa trên chỉ tiêu bạn vừa nhập.</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích bằng AI</button></div>';
   const ask=(!withAsk||aiState.loading)?'':'<div class="askplan"><div class="askq">Với con số KPI bạn đặt là <b>'+fmt(total)+' triệu</b>, bạn có muốn tạo kế hoạch không?</div><div class="askrow"><button class="btn sm" data-act="mkplan" data-m="auto">Tạo tự động<small>Tự chia theo tuần, ngày</small></button><button class="btn ghost sm" data-act="mkplan" data-m="manual">Tự tạo thủ công<small>Bạn tự chỉnh từng tuần</small></button></div></div>';
-  return '<div class="card"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2>'+body+ask+'</div>';
+  return '<div class="card aiGlow"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2>'+body+ask+'</div>';
 }
 function aiFmt(t){
   return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -825,7 +838,7 @@ function aiPanel(ctx,weeks){
   else if(st.error){body='<div class="note" style="color:var(--bad)">'+escH(st.error)+'</div>'+btn('Thử lại');sum='<span class="badge bad">Lỗi</span>';}
   else if(st.text){const stale=st.key!==aiKey(ctx);body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiFmt(st.text)+'</div>'+(stale?'<div class="small" style="color:var(--warn);margin-top:8px">Số liệu đã thay đổi từ lần phân tích trước.</div>':'')+'<div class="small muted" style="margin-top:8px">'+AI_DISCLAIMER+'</div>'+btn('Phân tích lại');sum=stale?'<span class="badge warn">Cần cập nhật</span>':'<span class="badge ok">Đã phân tích</span>';}
   else{body='<div class="small muted">'+AI_HINT[ctx]+'</div>'+btn('Phân tích bằng AI');sum='<span class="small muted">chạm để mở</span>';}
-  return sec('ai_'+ctx,ic('sparkles',18),AI_TITLE[ctx],sum,body);
+  return sec('ai_'+ctx,ic('sparkles',18),AI_TITLE[ctx],sum,body,false,'aiGlow');
 }
 async function askAIx(ctx){
   const weeks=analyze();AIX[ctx]={loading:true,text:'',error:'',key:''};render();
@@ -1729,8 +1742,8 @@ const openSec={};
 document.addEventListener('click',function(e){const sm=e.target.closest&&e.target.closest('summary.sech,summary.rks');if(!sm)return;const dd=sm.parentNode;if(dd&&dd.dataset&&dd.dataset.sec)openSec[dd.dataset.sec]=!dd.open;},true);
 document.addEventListener('toggle',function(e){const d=e.target;if(d&&d.dataset&&d.dataset.sec)openSec[d.dataset.sec]=d.open;},true);
 function isOpen(k,def){return openSec[k]===undefined?!!def:openSec[k];}
-function sec(k,icon,title,sum,body,def){
-  return '<div class="card secard"><details data-sec="'+k+'"'+(isOpen(k,def)?' open':'')+'><summary class="sech"><span class="st">'+icon+'<span>'+title+'</span></span><span class="ss">'+sum+'</span></summary><div class="secb">'+body+'</div></details></div>';
+function sec(k,icon,title,sum,body,def,cls){
+  return '<div class="card secard'+(cls?' '+cls:'')+'"><details data-sec="'+k+'"'+(isOpen(k,def)?' open':'')+'><summary class="sech"><span class="st">'+icon+'<span>'+title+'</span></span><span class="ss">'+sum+'</span></summary><div class="secb">'+body+'</div></details></div>';
 }
 function feasCard(weeks){
   const f=feasibility(weeks);if(!f)return '';
