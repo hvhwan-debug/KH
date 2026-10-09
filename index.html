@@ -737,6 +737,37 @@ h2,.sech .st{color:var(--ink)}
 @keyframes rrise{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-22px);opacity:0}}
 .hring text{paint-order:stroke;stroke:rgba(0,50,47,.4);stroke-width:2.5px;stroke-linejoin:round}
 @media (prefers-reduced-motion:reduce){.top .bubbles b,.top .shore svg,.hring .rw,.hring .rbub{animation:none}.top .bubbles b{opacity:.45}.hwater{transition:none}}
+
+/* ===== Dải ngày dạng thẻ + vòng tiến độ có núm sáng (theo /krf) ===== */
+.wstrip-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:2px 4px 8px}
+.wstrip-h b{font-size:15px;color:var(--ink)}
+.wstrip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;margin:0 -2px 10px;scrollbar-width:thin}
+.dcard{flex:1 0 64px;display:flex;flex-direction:column;align-items:center;gap:1px;min-height:88px;padding:9px 4px 8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 3px rgba(0,60,56,.08);cursor:pointer;text-align:center;transition:transform .15s,border-color .15s,background-color .15s}
+.dcard:hover{border-color:var(--brand);transform:translateY(-2px)}
+.dcard .wd{font-size:12px;color:var(--muted);font-weight:600}
+.dcard .dn{font-size:24px;font-weight:800;line-height:1.15;font-variant-numeric:tabular-nums;color:var(--ink)}
+.dcard em{font-style:normal;font-size:11px;font-weight:700;color:var(--muted);margin-top:2px;white-space:nowrap}
+.dcard em.ok{color:var(--ok)}.dcard em.miss{color:var(--warn)}.dcard em.off{color:var(--muted);opacity:.8}
+.dcard.off{background:repeating-linear-gradient(135deg,transparent 0 6px,var(--line) 6px 7px),var(--surface);box-shadow:none}
+.dcard.off .dn,.dcard.off .wd{opacity:.6}
+.dcard.logged{border-color:var(--ok)}
+.dcard.today{border-color:var(--brand);background:var(--brand-soft)}
+.dcard.today .dn{color:var(--brand-deep)}
+.dcard[aria-pressed="true"]{background:var(--grad);border-color:transparent}
+.dcard[aria-pressed="true"] .wd,.dcard[aria-pressed="true"] .dn,.dcard[aria-pressed="true"] em{color:var(--on-brand);opacity:1}
+@media (max-width:600px){.dcard{flex-basis:52px;min-height:82px;border-radius:14px}.dcard .dn{font-size:21px}.dcard em{font-size:10px}}
+.hknob{transition:transform 1.1s cubic-bezier(.22,.8,.3,1);filter:drop-shadow(0 0 5px rgba(255,255,255,.95))}
+.hring{filter:drop-shadow(0 6px 14px rgba(0,50,47,.25))}
+@media (prefers-reduced-motion:reduce){.hknob{transition:none}.dcard:hover{transform:none}}
+
+/* lịch ngày làm việc / lịch nhiệt cùng kiểu thẻ ngày */
+.cal{gap:7px}
+.cal button,.cal div.d{border-radius:14px;border:1px solid var(--line);box-shadow:0 1px 3px rgba(0,60,56,.08)}
+.cal button{transition:transform .15s,border-color .15s}
+.cal button:hover{border-color:var(--brand);transform:translateY(-1px)}
+.cal button.off{box-shadow:none;border-style:solid}
+.cal div.d.today{outline:0;border:2px solid var(--brand);background:var(--brand-soft)}
+.cal .h{font-weight:700;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -1754,13 +1785,18 @@ function ringSVG(pct,size,sub,dayKey){
   return '<'+tag+' class="hring"'+attrs+'><svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'">'+
     '<circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.25)" stroke-width="'+stroke+'"/>'+water+
     '<circle class="hring-fill" cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="#fff" stroke-width="'+stroke+'" stroke-linecap="round" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+c.toFixed(1)+'" data-off="'+off.toFixed(1)+'" transform="rotate(-90 '+cx+' '+cx+')"/>'+
-    '<text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="'+(size*0.26)+'" font-weight="800">'+Math.round(pct)+'%</text></svg>'+
+    '<g class="hknob" data-rot="'+(P*3.6).toFixed(1)+'" style="transform-origin:'+cx+'px '+cx+'px;transform:rotate(0deg);opacity:'+(P>0&&P<100?1:0)+'"><circle cx="'+cx+'" cy="'+(stroke/2)+'" r="'+(stroke*0.62).toFixed(1)+'" fill="#fff"/></g>'+
+        '<text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="'+(size*0.26)+'" font-weight="800">'+Math.round(pct)+'%</text></svg>'+
     (sub?'<span>'+sub+'</span>':'')+'</'+tag+'>';
 }
 function animateRings(){
   document.querySelectorAll('.hring-fill[data-off]').forEach(c=>{
     const target=c.dataset.off;
     requestAnimationFrame(()=>requestAnimationFrame(()=>{c.style.strokeDashoffset=target;}));
+  });
+  document.querySelectorAll('.hknob[data-rot]').forEach(g=>{
+    const d=g.dataset.rot;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{g.style.transform='rotate('+d+'deg)';}));
   });
   document.querySelectorAll('.hwater[data-y]').forEach(g=>{
     const y=g.dataset.y;
@@ -2263,6 +2299,24 @@ function statTiles(weeks){
     tile('muted','plan',remDays,'Ngày còn lại')+
   '</div>';
 }
+/* ---------- Dải ngày kiểu thẻ (theo /krf) ---------- */
+const DOWS=['T2','T3','T4','T5','T6','T7','CN'];
+function dayCard(d,act,attrs,pressed){
+  const tk=todayKey(),e=S.daily[d.date],isT=d.date===tk,past=d.date<tk,si=e?(e.bn||0)+(e.gd||0):null;
+  let st;
+  if(d.off)st='<em class="off">nghỉ</em>';
+  else if(e)st='<em class="ok">'+si+' tr</em>';
+  else if(past)st='<em class="miss">chưa nhập</em>';
+  else st='<em>—</em>';
+  return '<button class="dcard'+(isT?' today':'')+(d.off?' off':'')+(e?' logged':'')+'" data-act="'+act+'" data-day="'+d.date+'"'+attrs+(pressed===undefined?'':' aria-pressed="'+pressed+'"')+' aria-label="'+DOW[d.dow]+' ngày '+d.d+'">'+
+    '<span class="wd">'+DOWS[d.dow]+'</span><span class="dn">'+d.d+'</span>'+st+'</button>';
+}
+function weekStrip(weeks,curW){
+  let i=curW;if(i<0||!weeks[i])i=Math.max(0,weeks.findIndex(x=>x.work>0));
+  const w=weeks[i];if(!w)return '';
+  return '<div class="wstripbox"><div class="wstrip-h"><b>Tuần '+(w.i+1)+' · '+w.label+'</b><span class="small muted">Chạm vào ngày để nhập số liệu</span></div>'+
+    '<div class="wstrip" role="group" aria-label="Các ngày trong tuần">'+w.days.map(d=>dayCard(d,'goDay','')).join('')+'</div></div>';
+}
 function renderPlan(){
   const weeks=analyze();apCache=areaPlan(weeks);const tb=+S.target.bn||0,tg=+S.target.gd||0,total=tb+tg;
   if(!total){$app.innerHTML=emptyCard('Nhập chỉ tiêu tháng ở bước Thiết lập, kế hoạch sẽ tự hiện ra.');return;}
@@ -2339,7 +2393,7 @@ function renderPlan(){
     '<div class="h3">Kế hoạch tích lũy</div>'+lineChart(weeks,[{pts:evenPts,color:'var(--muted)',dash:true,w:2},{pts:planPts,color:'var(--ink)',dots:true,w:3}],total)+
     '<div class="legend"><span style="--c:var(--ink)">Kế hoạch</span><span class="dash" style="--c:var(--muted)">Chia đều theo ngày</span></div>'+
     '<div class="h3">Mục tiêu từng ngày (triệu)</div>'+heat(weeks));
-  $app.innerHTML=aiPanel('plan',weeks)+statTiles(weeks)+overview+banner(weeks)+todayCard+factorsCard(weeks,'compact')+
+  $app.innerHTML=weekStrip(weeks,curW)+aiPanel('plan',weeks)+statTiles(weeks)+overview+banner(weeks)+todayCard+factorsCard(weeks,'compact')+
   (mismatch?'<div class="note">Tổng các tuần là <b>'+planSum+'</b> tr, chỉ tiêu tháng là <b>'+total+'</b> tr. <button class="link" data-act="autoplan">Đưa về gợi ý tự động</button></div>':'')+
   modeLine+weekCards+charts+
   '<div class="row" style="margin:6px 0 12px"><button class="btn ghost sm" data-act="autoplan">Đưa về gợi ý tự động</button><button class="btn sm" data-act="copy">Sao chép kế hoạch</button></div>'+
@@ -2369,7 +2423,7 @@ function renderCheck(){
   const todayK=todayKey();
   let curDay=S.cd;
   if(!curDay||!w.days.some(d=>d.date===curDay))curDay=w.days.some(d=>d.date===todayK)?todayK:w.days[0].date;
-  const dayChips='<div class="wk">'+w.days.map(d=>{const logged=!!S.daily[d.date];return '<button class="chip" data-act="cd" data-day="'+d.date+'" aria-pressed="'+(d.date===curDay)+'">Ngày '+d.d+(d.off?' · nghỉ':'')+'<span class="sd'+(logged?' ok':'')+'"></span></button>';}).join('')+'</div>';
+  const dayChips='<div class="wstrip" role="group" aria-label="Chọn ngày">'+w.days.map(d=>dayCard(d,'cd','',d.date===curDay)).join('')+'</div>';
   const dd=S.daily[curDay]||{v:0,bn:0,gd:0};
   const perVt=w.work>0?fmt(w.vt/w.work,1):'0',perBn=w.work>0?fmt(w.t.bn/w.work,1):'0',perGd=w.work>0?fmt(w.t.gd/w.work,1):'0';
   const fields=[['v',''+ic('users',16)+' Số khách đã liên hệ hôm nay','',perVt,1],['bn',''+ic('droplet',16)+' Đã chốt hôm nay · Bình nước nóng',' (triệu)',perBn,5],['gd',''+ic('plug',16)+' Đã chốt hôm nay · Gia dụng',' (triệu)',perGd,5]]
