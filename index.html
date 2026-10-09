@@ -1002,6 +1002,29 @@ h2,.sech .st{color:var(--ink)}
 .aiGlow::before{background:conic-gradient(from var(--ai-angle),var(--brand),#7FF0C0,var(--brand-deep),#7FF0C0,var(--brand))}
 .num::placeholder{font-weight:600;opacity:.4}
 .bn-f .num::placeholder{font-size:15px}
+
+/* ===== Phễu bán hàng benchmark ngành ===== */
+.fnl{padding:14px;margin:6px 0 12px;border:1px solid var(--line);border-radius:18px;background:var(--surface-2)}
+.fnl-h{display:flex;align-items:baseline;justify-content:space-between;gap:4px 12px;flex-wrap:wrap;margin-bottom:10px}
+.fnl-h b{font-size:14.5px}
+.fnl-bars{display:flex;flex-direction:column;align-items:center;gap:0}
+.fnl-bar{width:var(--w);min-width:170px;display:flex;align-items:baseline;justify-content:center;gap:8px;padding:10px 14px;border-radius:14px;color:#fff;box-shadow:0 4px 12px rgba(0,60,56,.12)}
+.fnl-bar b{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.fnl-bar span{font-size:12.5px;font-weight:600;opacity:.95}
+.fnl-bar.b1{background:linear-gradient(90deg,#006A64,#007A73)}
+.fnl-bar.b2{background:linear-gradient(90deg,#018F87,#02A79E)}
+.fnl-bar.b3{background:linear-gradient(90deg,#02A79E,#02B6AC);color:#04302D}
+.fnl-cv{display:flex;align-items:center;gap:6px;padding:5px 0;font-size:12.5px;color:var(--muted)}
+.fnl-cv i{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid var(--brand)}
+.fnl-cv b{color:var(--brand-deep);font-size:13.5px}
+.fnl-edit{display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:center;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);font-size:13px;color:var(--muted)}
+.fnl-edit label{display:inline-flex;align-items:center;gap:7px;flex-wrap:wrap}
+.fnl-edit .num{width:64px;font-size:16px;padding:6px 8px;text-align:center}
+@media (max-width:480px){.fnl-bar{min-width:0;flex-wrap:wrap}
+  .fnl-edit{flex-direction:column;align-items:stretch}
+  .fnl-edit label{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;width:100%}
+  .fnl-edit label>span:first-child{font-weight:700;color:var(--ink)}
+  .fnl-edit label>span:last-child{grid-column:1/-1;font-size:12px}}
 </style>
 </head>
 <body>
@@ -1290,12 +1313,22 @@ function needCard(weeks){
     '<span class="fc-f"><span class="fc-ic">'+ic(icon,16)+'</span><b>'+n+'</b><span class="fc-l">'+l+'</span><span class="fc-hint">'+ic('trend',12)+' chạm để lật</span></span>'+
     '<span class="fc-b"><span class="fc-bt">Cách tính</span><span class="fc-bx">'+back+'</span></span></span></button>';
   const hasBooked=Object.keys(S.booked||{}).some(k=>+S.booked[k]>0);
-  const perVisit=fmt(ap.total/Math.max(1,ap.visits),1);
+  const FN=funnel(),consults=Math.round(ap.visits*FN.reach);
   const tiles=
     fc('var(--brand-deep)','target','≈ '+fmt(ap.orders),'đơn cần chốt','Chỉ tiêu <b>'+fmt(ap.total)+' tr</b> ÷ giá trị trung bình mỗi đơn <b>'+S.aov+' tr</b>'+(hasBooked?' (đã trừ phần chắc chắn)':'')+'.')+
-    fc('var(--bn)','users','≈ '+fmt(ap.visits),'lượt ghé / liên hệ','Mỗi khách liên hệ mang về ≈ <b>'+perVisit+' tr</b> S.I'+(S.learn?', tự cập nhật khi bạn nhập thêm số liệu.':' (tỷ lệ chốt '+S.rate+'%).'))+
+    fc('var(--bn)','users','≈ '+fmt(ap.visits),'lượt ghé đại lý','Mỗi đơn cần ≈ <b>'+fmt(FN.vpo,0)+' lượt ghé</b> (benchmark ngành: '+FN.fv+' lượt ghé gặp chủ → 10 khách tư vấn; '+FN.fc+' khách tư vấn → 1 đơn)'+(S.learn?'. Tự hiệu chỉnh khi bạn nhập số liệu thật.':'.'))+
     fc('var(--gd)','plan','≈ '+fmt(ap.uniq),'điểm bán khác nhau (ghé '+ap.vpp+' lần/điểm)','Số lượt ghé ÷ <b>'+ap.vpp+' lần</b> mỗi điểm.'+(ap.have?' Bạn có <b>'+ap.usable+'</b> điểm dùng được.':' Nhập địa bàn để so với số điểm bạn có.'))+
     fc('var(--ok)','bell',ap.act>0?'≈ '+fmt(ap.careTot):'—','lượt chăm sóc từ xa'+(ap.act>0?'':' (nhập địa bàn)'),ap.act>0?'Điểm đang hoạt động được gọi, nhắn thay cho ghé trực tiếp, theo tần suất bạn đặt ở mục Địa bàn &amp; điểm bán.':'Nhập số điểm bán đang hoạt động ở mục Địa bàn &amp; điểm bán để tính lượt chăm sóc từ xa.');
+  const funnelHtml='<div class="fnl"><div class="fnl-h"><b>Phễu bán hàng theo benchmark ngành</b><span class="small muted">1 đơn ≈ '+fmt(FN.vpo,0)+' lượt ghé ≈ '+FN.fc+' khách tư vấn</span></div>'+
+    '<div class="fnl-bars">'+
+      '<div class="fnl-bar b1" style="--w:100%"><b>≈ '+fmt(ap.visits)+'</b><span>lượt ghé đại lý</span></div>'+
+      '<div class="fnl-cv"><i></i><b>'+Math.round(FN.reach*100)+'%</b> gặp được chủ</div>'+
+      '<div class="fnl-bar b2" style="--w:'+Math.max(58,Math.round(FN.reach*100))+'%"><b>≈ '+fmt(consults)+'</b><span>khách tư vấn</span></div>'+
+      '<div class="fnl-cv"><i></i><b>'+Math.round(FN.close*100)+'%</b> chốt đơn</div>'+
+      '<div class="fnl-bar b3" style="--w:44%"><b>≈ '+fmt(ap.orders)+'</b><span>đơn nhập hàng</span></div>'+
+    '</div>'+
+    '<div class="fnl-edit"><label><span>Gặp được chủ</span><input class="num sm" type="number" inputmode="numeric" min="10" max="60" data-f="fnl" data-k="fv" value="'+FN.fv+'" aria-label="Số lượt ghé để tư vấn 10 khách"><span>cần bao nhiêu lượt ghé để tư vấn 10 khách</span></label>'+
+    '<label><span>Chốt đơn</span><input class="num sm" type="number" inputmode="numeric" min="1" max="50" data-f="fnl" data-k="fc" value="'+FN.fc+'" aria-label="Số khách tư vấn để chốt 1 đơn"><span>cần bao nhiêu khách tư vấn để chốt 1 đơn</span></label></div></div>';
   const sum='<span class="small muted">'+fmt(ap.orders)+' đơn · '+fmt(ap.visits)+' ghé</span>';
   const wkWithData=weeks.filter(w=>w.work>0&&w.tt>0),maxTt=Math.max(1,...wkWithData.map(w=>w.tt));
   const rowHtml=w=>{
@@ -1316,7 +1349,7 @@ function needCard(weeks){
       ?'<div class="note" style="color:var(--bad)">Với '+ap.usable+' điểm dùng được'+(ap.noP?' (đã trừ '+ap.noP+' điểm vướng công nợ)':'')+', bạn cần thêm khoảng <b>'+ap.gap+' điểm</b> (mở mới hoặc đánh thức điểm chưa hoạt động'+(ap.dormant?', hiện có '+ap.dormant+' điểm':'')+') hoặc tăng giá trị mỗi đơn.</div>'
       :'<div class="note">Địa bàn đủ điểm: cần dùng khoảng <b>'+Math.round(ap.uniq/Math.max(1,ap.usable)*100)+'%</b> số điểm dùng được.</div>';
   } else note='<div class="note">Nhập số điểm bán và khu vực để biết cần ghé bao nhiêu điểm, chăm sóc ra sao. <button class="link" data-act="openSec" data-k="area">Mở mục Địa bàn &amp; điểm bán</button></div>';
-  return sec('need',ic('target',18),'Để đạt '+fmt(ap.total)+' triệu',sum,'<div class="fcards">'+tiles+'</div><div class="small muted fchint">Chạm vào từng thẻ để xem cách tính.</div>'+rows+note+'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">'+seasonChips()+'</div>',true);
+  return sec('need',ic('target',18),'Để đạt '+fmt(ap.total)+' triệu',sum,funnelHtml+'<div class="fcards">'+tiles+'</div><div class="small muted fchint">Chạm vào từng thẻ để xem cách tính.</div>'+rows+note+'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">'+seasonChips()+'</div>',true);
 }
 function incomeCard(weeks){
   const income=+S.income||0,rateC=Math.max(0.1,+S.commission||1.5);
@@ -1326,7 +1359,7 @@ function incomeCard(weeks){
   let result='';
   if(income>0){
     const siNeed=income/(rateC/100);
-    const ord=Math.ceil(siNeed/Math.max(1,S.aov)),vis=Math.ceil(siNeed/Math.max(0.1,S.aov*S.rate/100)),st=Math.ceil(vis/Math.max(1,+S.area.vpp||2));
+    const ord=Math.ceil(siNeed/Math.max(1,S.aov)),vis=Math.ceil(ord*funnel().vpo),st=Math.ceil(vis/Math.max(1,+S.area.vpp||2));
     const t=(n,l)=>'<div class="tile"><b>'+n+'</b><span>'+l+'</span></div>';
     result='<div class="tiles compact" style="margin-top:12px">'+
       t('≈ '+fmt(siNeed)+' tr','S.I cần đạt')+t('≈ '+ord,'đơn cần chốt')+t('≈ '+vis,'lượt ghé/liên hệ')+t('≈ '+st,'điểm bán')+'</div>'+
@@ -1397,7 +1430,7 @@ function ctxText(weeks){
   L.push('Chỉ tiêu S.I: '+PRODUCTS.map(p=>p.name+' '+fmt(+S.target[p.id]||0)+' tr').join(', ')+' (tổng '+fmt(total)+' tr).');
   L.push('Chiến lược chia chỉ tiêu: '+(STRATS.find(x=>x[0]===S.strat)||STRATS[4])[1]+(S.strat==='manual'?'':' ('+Math.round((+S.target.bn||0)/Math.max(1,total)*100)+'% bình nước nóng)')+'.');
   const on=catShares();if(on.length)L.push('Cơ cấu gia dụng & điện máy (tỷ trọng): '+on.map(x=>x.c.name+' '+Math.round(x.f*100)+'%').join(', ')+'.');
-  L.push('Giả định: giá trị trung bình mỗi đơn '+S.aov+' tr, tỷ lệ chốt '+S.rate+'%, sức mua tháng này '+S.season+'%.');
+  L.push('Giả định: giá trị trung bình mỗi đơn '+S.aov+' tr; phễu benchmark ngành: cứ '+funnel().fv+' lượt ghé đại lý gặp được chủ để tư vấn 10 khách, '+funnel().fc+' khách tư vấn chốt 1 đơn (≈ '+fmt(funnel().vpo,0)+' lượt ghé mỗi đơn); sức mua tháng này '+S.season+'%.');
   L.push(seasonText());
   if(ap){
     L.push('Cần chốt ≈ '+ap.orders+' đơn, ≈ '+ap.visits+' lượt ghé/liên hệ, ≈ '+ap.uniq+' điểm bán khác nhau (ghé '+ap.vpp+' lần/điểm).');
@@ -1409,7 +1442,7 @@ function ctxText(weeks){
   if((A.dist||[]).length)L.push('Khu vực/tuyến: '+A.dist.map(d=>d.n+' '+d.p+' điểm').join(', ')+'.');
   if(+S.income>0){
     const rateC=Math.max(0.1,+S.commission||1.5),siNeed=(+S.income)/(rateC/100);
-    const ord=Math.ceil(siNeed/Math.max(1,S.aov)),vis=Math.ceil(siNeed/Math.max(0.1,S.aov*S.rate/100)),st=Math.ceil(vis/Math.max(1,+S.area.vpp||2));
+    const ord=Math.ceil(siNeed/Math.max(1,S.aov)),vis=Math.ceil(ord*funnel().vpo),st=Math.ceil(vis/Math.max(1,+S.area.vpp||2));
     L.push('Thu nhập mong muốn SR tự nhập: '+fmt(S.income)+' tr/tháng, hoa hồng giả định '+rateC+'% trên S.I → cần đạt S.I ≈ '+fmt(siNeed)+' tr, tương đương ≈ '+ord+' đơn, ≈ '+vis+' lượt ghé/liên hệ, ≈ '+st+' điểm bán.');
   }
   const src=S.sources||[];
@@ -1444,7 +1477,7 @@ const AI_TASK={
 };
 const AI_TITLE={plan:'AI phân tích kế hoạch',check:'AI phân tích tiến độ',alerts:'AI ưu tiên hành động',income:'AI gợi ý để đạt thu nhập',local:'Bối cảnh kinh tế - xã hội khu vực'};
 const AI_HINT={plan:'AI sẽ chỉ ra tuần và khu vực rủi ro, cách chia ghé trực tiếp / chăm sóc từ xa và ngành hàng nên ưu tiên chào.',check:'AI sẽ so tiến độ thực tế với kế hoạch và gợi ý việc cần làm cho 1–2 ngày tới.',alerts:'AI sẽ xếp thứ tự ưu tiên các cảnh báo và đề xuất hành động cho từng cảnh báo.',income:'AI sẽ nhận định mức độ khả thi và gợi ý cách đạt mức thu nhập bạn muốn.',local:'AI sẽ nhận định thêm về mức sống, thói quen tiêu dùng, mức độ cạnh tranh tại khu vực bạn phụ trách — ngoài yếu tố khí hậu đã có.'};
-function aiKey(ctx){return JSON.stringify([ctx,S.target,S.actual,S.daily,S.month,S.province,S.area,S.plan,S.cats,S.aov,S.rate,S.season,S.risks,S.booked,S.flip,S.income,S.commission]);}
+function aiKey(ctx){return JSON.stringify([ctx,S.target,S.actual,S.daily,S.month,S.province,S.area,S.plan,S.cats,S.aov,S.rate,S.fv,S.fc,S.season,S.risks,S.booked,S.flip,S.income,S.commission]);}
 function aiPanel(ctx,weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0);if(!total&&ctx!=='income')return '';
   const st=AIX[ctx]||{},btn=lab=>'<div style="margin-top:10px"><button class="btn ghost sm" data-act="aix" data-c="'+ctx+'">'+lab+'</button></div>';
@@ -1745,13 +1778,13 @@ function factors(weeks){
   const lastW=[...weeks].reverse().find(w=>w.work>0);
   if(lastW){const sh=lastW.tt/total,ev=lastW.work/totWork;
     if(sh>ev*1.15&&sh>0.28)add({id:'last',lv:'warn',sv:'dồn cuối tháng',name:'Dồn cuối tháng',val:Math.round(sh*100)+'%',msg:'Tuần cuối chiếm '+Math.round(sh*100)+'% chỉ tiêu (chia đều theo ngày là '+Math.round(ev*100)+'%)',act:'Đẩy bớt chỉ tiêu về các tuần đầu',how:'So tỷ trọng chỉ tiêu tuần cuối với tỷ trọng ngày làm việc của tuần đó.',src:'Số bạn nhập'});}
-  const rate=Math.max(5,+S.rate||40);
-  if(ap&&rate>=25&&ap.visits>0&&!(f&&f.ratio>1)){
-    const cap=totWork*Math.max(1,+S.maxC||4),sc=Math.ceil(ap.visits*rate/(rate-10)),ex=sc-ap.visits,lv=sc>cap?'bad':sc>cap*0.9?'warn':'ok';
-    add({id:'sens',lv,sv:'dễ vỡ nếu chốt kém',name:'Nếu chốt kém hơn',val:'−10 điểm',
-      msg:'Tỷ lệ chốt '+rate+'% còn '+(rate-10)+'%: cần thêm '+ex+' lượt ('+sc+'), '+(sc>cap?'vượt sức ('+cap+')':'vẫn trong sức ('+cap+')'),
+  const FN=funnel();
+  if(ap&&ap.visits>0&&!(f&&f.ratio>1)){
+    const cap=totWork*Math.max(1,+S.maxC||12),sc=Math.ceil(ap.visits/0.75),ex=sc-ap.visits,lv=sc>cap?'bad':sc>cap*0.9?'warn':'ok',fc2=Math.round(FN.fc/0.75*10)/10;
+    add({id:'sens',lv,sv:'dễ vỡ nếu chốt kém',name:'Nếu chốt kém hơn',val:'−25%',
+      msg:'Nếu cần '+fmt(fc2,1)+' khách tư vấn mới chốt 1 đơn (thay vì '+FN.fc+'): cần thêm '+ex+' lượt ('+sc+'), '+(sc>cap?'vượt sức ('+cap+')':'vẫn trong sức ('+cap+')'),
       act:lv==='ok'?'':'Giữ khách dự phòng, nâng giá trị mỗi đơn',
-      how:'Lượt ghé tỉ lệ nghịch với tỷ lệ chốt. Sức = số ngày làm việc × số khách tối đa mỗi ngày.',src:'Tính từ giả định của bạn'});
+      how:'Lượt ghé tỉ lệ nghịch với tỷ lệ chốt. Sức = số ngày làm việc × số lượt ghé tối đa mỗi ngày.',src:'Tính từ phễu benchmark và giả định của bạn'});
   }
   const fc=forecast(weeks);
   if(fc&&!fc.noData){
@@ -2088,13 +2121,19 @@ const pad=n=>String(n).padStart(2,'0');
 const fmt=(x,d=0)=>Number(x).toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d});
 const C={bn:'var(--bn)',gd:'var(--gd)'};
 function monthKey(o){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+o);return d.getFullYear()+'-'+pad(d.getMonth()+1);}
-function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,strat:'season',tt:0,sync:{rev:0,lastOk:0},mail:{on:false,morning:true,evening:true,warn:true,weekly:true},rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''},sources:[],planB:'',income:0,commission:1.5,bench:{ord:0,first:0,conv:0},sg:'target'};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{strat:o.strat||'manual',tt:+o.tt||0,sync:Object.assign(d.sync,o.sync||{}),mail:Object.assign(d.mail,o.mail||{}),hist:o.hist||{},rem:Object.assign(d.rem,o.rem||{}),area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats});}}catch(e){}return defaults();}
+function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,fv:15,fc:10,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:12,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,strat:'season',tt:0,sync:{rev:0,lastOk:0},mail:{on:false,morning:true,evening:true,warn:true,weekly:true},rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''},sources:[],planB:'',income:0,commission:1.5,bench:{ord:0,first:0,conv:0},sg:'target'};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{strat:o.strat||'manual',tt:+o.tt||0,sync:Object.assign(d.sync,o.sync||{}),mail:Object.assign(d.mail,o.mail||{}),hist:o.hist||{},rem:Object.assign(d.rem,o.rem||{}),area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats,fv:+o.fv||15,fc:+o.fc||10,maxC:o.fv?(+o.maxC||12):((+o.maxC||4)<=6?Math.min(30,Math.round((+o.maxC||4)*3)):(+o.maxC)),});}}catch(e){}return defaults();}
 let S=load(),confirmReset=false,copyText=null;
 function save(){try{S.savedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}if(typeof scheduleSync==='function')scheduleSync();}
 
 /* ---------- Logic lõi ---------- */
 function si(k){return Math.max(0.1,(+S.list[k]||1)*(1-(+S.disc||0)/100));}
+/* Phễu benchmark ngành: fv lượt ghé đại lý để gặp được chủ và tư vấn 10 khách; fc khách tư vấn để chốt 1 đơn */
+function funnel(){
+  const fv=Math.max(10,Math.min(60,+S.fv||15)),fc=Math.max(1,Math.min(50,+S.fc||10));
+  return{fv,fc,reach:10/fv,close:1/fc,vpo:fv/10*fc,rate:1000/(fv*fc)};
+}
+function rateEff(){return funnel().rate;}
 function catShares(){
   const on=CATS.filter(c=>S.cats[c.id].on&&S.cats[c.id].w>0),tot=on.reduce((a,c)=>a+S.cats[c.id].w,0);
   return on.map(c=>({c,f:S.cats[c.id].w/tot}));
@@ -2146,7 +2185,7 @@ const Phi=z=>0.5*(1+erf(z/Math.SQRT2));
 function learned(weeks){
   let L=-1,n=0,sum=0;
   weeks.forEach(w=>{const a=S.actual[w.key];if(a&&w.work>0){L=w.i;n+=a.v||0;sum+=(a.bn||0)+(a.gd||0);}});
-  const prior=Math.max(0.1,(+S.aov||20)*(Math.max(5,+S.rate||40)/100)*(+S.season||100)/100);
+  const prior=Math.max(0.1,(+S.aov||20)*(rateEff()/100)*(+S.season||100)/100);
   const K=10,obs=n>0?sum/n:null;
   return{L,n,obs,prior,yield:obs===null?prior:(n*obs+K*prior)/(n+K)};
 }
@@ -2175,18 +2214,18 @@ function forecast(weeks){
 }
 function feasibility(weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0);if(!total)return null;
-  const totWork=Math.max(1,weeks.reduce((a,w)=>a+w.work,0)),lr=learned(weeks),y=(S.learn&&lr.n>0)?lr.yield:lr.prior,mc=Math.max(1,+S.maxC||4);
-  const needC=total/y,perDay=needC/totWork;
+  const totWork=Math.max(1,weeks.reduce((a,w)=>a+w.work,0)),lr=learned(weeks),y=(S.learn&&lr.n>0)?lr.yield:lr.prior,mc=Math.max(1,+S.maxC||12);
+  const vsum=weeks.reduce((a,w)=>a+(+w.vt||0),0),needC=vsum>0?vsum:total/y,perDay=needC/totWork;
   return{total,totWork,y,needC,perDay,ratio:perDay/mc,cap:totWork*mc*y,mc};
 }
 
 function analyze(){
-  const weeks=buildWeeks(),T=targets(weeks),aov=Math.max(1,+S.aov||20),rate=Math.max(5,+S.rate||40)/100;
+  const weeks=buildWeeks(),T=targets(weeks),aov=Math.max(1,+S.aov||20),F=funnel();
   weeks.forEach(w=>{
     w.t={};PRODUCTS.forEach(p=>{w.t[p.id]=T[p.id][w.i];});
     w.tt=w.t.bn+w.t.gd;w.bk=+S.booked[w.key]||0;
     w.need=Math.max(0,w.tt-w.bk);
-    const LR=learned(weeks),yy=(S.learn&&LR.n>0&&w.i>LR.L)?LR.yield:LR.prior;w.yl=yy;w.o=w.tt?Math.ceil(w.need/aov):0;w.vt=w.tt?Math.ceil(w.need/yy):0;
+    const LR=learned(weeks),yy=(S.learn&&LR.n>0&&w.i>LR.L)?LR.yield:LR.prior;w.yl=yy;w.o=w.tt?Math.ceil(w.need/aov):0;const lrn=(S.learn&&LR.n>0&&w.i>LR.L);w.vt=w.tt?(lrn?Math.ceil(w.need/yy):Math.ceil(w.o*F.vpo/Math.max(0.3,(+S.season||100)/100))):0;
     w.perDay=w.work?w.vt/w.work:0;w.dayT=w.work?w.tt/w.work:0;
     w.focus=w.tt?(w.t.bn>=w.t.gd?'bn':'gd'):null;
   });
@@ -2391,7 +2430,7 @@ function feasCard(weeks){
   const fill=Math.min(f.ratio,1.5)/1.5*100;
   const sugg=f.ratio>1?' Với mức tối đa '+f.mc+' khách/ngày, chỉ tiêu hợp lý hơn khoảng <b>'+fmt(f.cap)+' triệu</b>. Bạn có thể trao đổi lại chỉ tiêu hoặc tìm cách tăng giá trị mỗi đơn.':'';
   return sec('feas',ic('compass',18),'Kiểm tra khả thi','<span class="badge '+st[0]+'">'+st[1]+'</span> <b>'+Math.round(f.ratio*100)+'%</b>','<div class="small muted">So chỉ tiêu với số khách bạn làm được mỗi ngày làm việc.</div>'+
-    '<div class="field"><span class="nm small">Tối đa bạn liên hệ được mỗi ngày</span><input class="num sm" type="number" inputmode="numeric" min="1" data-f="maxC" value="'+S.maxC+'"><span class="unit">khách</span></div>'+
+    '<div class="field"><span class="nm small">Tối đa bạn ghé / liên hệ được mỗi ngày</span><input class="num sm" type="number" inputmode="numeric" min="1" data-f="maxC" value="'+S.maxC+'"><span class="unit">lượt</span></div>'+
     '<div class="small row"><span>Cần ≈ <b>'+fmt(f.perDay,1)+'</b> khách/ngày</span><b>'+Math.round(f.ratio*100)+'% mức tối đa</b></div>'+
     '<div class="gauge" role="img" aria-label="Mức sử dụng năng lực '+Math.round(f.ratio*100)+'%"><i style="width:46.7%;background:var(--ok-soft)"></i><i style="width:20%;background:var(--warn-soft)"></i><i style="width:33.3%;background:var(--bad-soft)"></i><span class="mk" style="left:'+fill+'%"></span></div>'+
     '<div class="note"><span class="badge '+st[0]+'">'+st[1]+'</span> Năng lực ước tính ≈ <b>'+fmt(f.cap)+' triệu</b> so với chỉ tiêu '+fmt(f.total)+' triệu.'+sugg+'</div>'+
@@ -2500,13 +2539,13 @@ function heat(weeks,withVal){
 function benchCard(weeks){
   const B=S.bench||{},ap=areaPlan(weeks),aov=Math.max(1,+S.aov||20);
   const ord=+B.ord||0,first=+B.first||0,conv=+B.conv||0;
-  const effConv=conv>0?Math.min(100,conv):Math.max(1,+S.rate||40),perDealer=100/effConv;
+  const effConv=conv>0?Math.min(100,conv):rateEff(),perDealer=100/effConv;
   const field=(k,label,hint,v,unit,ph,step)=>'<label class="bn-f"><span class="nm">'+label+'</span><span class="iu"><input class="num sm" type="number" inputmode="decimal" min="0" step="'+step+'" data-f="bench" data-k="'+k+'" value="'+(v>0?v:'')+'" placeholder="'+ph+'" aria-label="'+label+'"><span class="unit">'+unit+'</span></span><span class="small muted">'+hint+'</span></label>';
   const badge=b=>b?'<span class="badge '+b[0]+'">'+b[1]+'</span>':'';
   const row=(icon,title,val,text,b)=>'<div class="bn-row"><span class="bn-ic">'+ic(icon,18)+'</span><div class="bn-t"><b>'+title+'</b><span class="small muted">'+text+'</span></div><div class="bn-v"><b>'+val+'</b>'+badge(b)+'</div></div>';
   const gapNote=ap&&ap.have&&ap.gap>0?' Kế hoạch còn thiếu '+ap.gap+' điểm, cần ghé ≈ <b>'+Math.ceil(ap.gap*perDealer)+' cửa hàng</b> để mở đủ.':'';
   const r1=row('users','Để có 1 đại lý nhập hàng, cần ghé','≈ '+fmt(perDealer,1)+' cửa hàng',
-    'Tỷ lệ '+Math.round(effConv)+'%'+(conv>0?'':' (lấy từ tỷ lệ chốt đang dùng)')+'. 5 đại lý ≈ '+Math.ceil(5*perDealer)+' cửa hàng, 10 đại lý ≈ '+Math.ceil(10*perDealer)+'.'+gapNote);
+    'Tỷ lệ '+fmt(effConv,1)+'%'+(conv>0?'':' (lấy từ phễu benchmark ngành)')+'. 5 đại lý ≈ '+Math.ceil(5*perDealer)+' cửa hàng, 10 đại lý ≈ '+Math.ceil(10*perDealer)+'.'+gapNote);
   let r2;
   if(ap&&ord>0){
     const dealers=Math.ceil(ap.orders/ord);
@@ -2523,7 +2562,7 @@ function benchCard(weeks){
     '<div class="bn-grid">'+
       field('ord','Số đơn nhập hàng trung bình','đơn / đại lý / tháng',ord,'đơn','VD: 2','0.1')+
       field('first','Nhập hàng lần đầu trung bình','của Livotec ở khu vực này',first,'tr','VD: 15','0.5')+
-      field('conv','Cửa hàng ghé thành đại lý nhập','để trống: dùng tỷ lệ chốt '+(+S.rate||40)+'%',conv,'%','VD: 20','1')+
+      field('conv','Cửa hàng ghé thành đại lý nhập','để trống: dùng phễu ngành (≈ '+fmt(funnel().vpo,0)+' lượt ghé/đơn)',conv,'%','VD: 20','1')+
     '</div><div class="bn-res">'+r1+r2+r3+'</div>'+
     '<div class="note">Đây là số liệu do bạn nhập, không phải số liệu bán hàng thật mà công cụ có sẵn của Livotec.</div>';
   return sec('bench',ic('compass',18),'Đối chiếu khu vực','<span class="small muted">ghé ≈ '+fmt(perDealer,1)+' cửa hàng / đại lý</span>',body,false);
@@ -2556,9 +2595,9 @@ function renderSetup(){
     '<input type="range" min="0" max="50" step="1" value="'+S.disc+'" data-f="disc" data-live="discv" aria-label="Chiết khấu S.I">'+
     '<div class="small"><b id="discv">Chiết khấu '+S.disc+'%</b> so với giá niêm yết</div>'+
     [['bn','Bình nước nóng (niêm yết TB, triệu/bình)']].map(x=>'<div class="field"><span class="nm small">'+x[1]+'<div class="muted" style="font-weight:400">Giá S.I ≈ '+fmt(si(x[0]),2)+' tr</div></span><input class="num sm" type="number" inputmode="decimal" step="0.1" min="0.1" data-f="list" data-p="'+x[0]+'" value="'+S.list[x[0]]+'"><span class="unit">tr</span></div>').join('')+
-    '<div class="small muted" style="margin-top:10px">Để tính số khách cần liên hệ:</div>'+
+    '<div class="small muted" style="margin-top:10px">Để tính số lượt ghé và số đơn cần chốt:</div>'+
     '<div class="field"><span class="nm small">Giá trị trung bình mỗi đơn</span><input class="num sm" type="number" inputmode="numeric" min="1" data-f="aov" value="'+S.aov+'"><span class="unit">tr</span></div>'+
-    '<div class="field"><span class="nm small">Tỷ lệ khách liên hệ chốt được đơn</span><input class="num sm" type="number" inputmode="numeric" min="5" max="100" data-f="rate" value="'+S.rate+'"><span class="unit">%</span></div>'+
+    '<div class="small muted">Tỷ lệ phễu bán hàng (lượt ghé, khách tư vấn, đơn) chỉnh ngay trong mục <b>Để đạt … triệu</b>.</div>'+
   '</div></details></div>';
   const SGS=[
     {id:'target',label:'Chỉ tiêu',icon:'target',desc:'Nguồn doanh số, thu nhập mong muốn, kiểm tra khả thi và cơ cấu ngành hàng.',cards:[sourcesCard(weeks),incomeCard(weeks),feasCard(weeks),catsCard(tg)],need:false},
@@ -2732,7 +2771,7 @@ function renderCheck(){
   const dayChips='<div class="wstrip" role="group" aria-label="Chọn ngày">'+w.days.map(d=>dayCard(d,'cd','',d.date===curDay)).join('')+'</div>';
   const dd=S.daily[curDay]||{v:0,bn:0,gd:0};
   const perVt=w.work>0?fmt(w.vt/w.work,1):'0',perBn=w.work>0?fmt(w.t.bn/w.work,1):'0',perGd=w.work>0?fmt(w.t.gd/w.work,1):'0';
-  const fields=[['v',''+ic('users',16)+' Số khách đã liên hệ hôm nay','',perVt,1],['bn',''+ic('droplet',16)+' Đã chốt hôm nay · Bình nước nóng',' (triệu)',perBn,5],['gd',''+ic('plug',16)+' Đã chốt hôm nay · Gia dụng',' (triệu)',perGd,5]]
+  const fields=[['v',''+ic('users',16)+' Số lượt ghé / liên hệ đại lý hôm nay','',perVt,1],['bn',''+ic('droplet',16)+' Đã chốt hôm nay · Bình nước nóng',' (triệu)',perBn,5],['gd',''+ic('plug',16)+' Đã chốt hôm nay · Gia dụng',' (triệu)',perGd,5]]
     .map(f=>'<div class="tline"><span class="nm">'+f[1]+f[2]+'<div class="small muted" style="font-weight:500">Tham khảo/ngày: '+f[3]+'</div></span>'+stepper('data-act="dk" data-f="'+f[0]+'" data-day="'+curDay+'"',dd[f[0]]||0,f[4])+'</div>').join('');
 
   let result='';
@@ -2886,7 +2925,7 @@ document.addEventListener('click',function(e){
   else if(a==='distAdd'){const n=(document.getElementById('dnm').value||'').trim().slice(0,40),p=Math.max(0,Math.floor(+document.getElementById('dpt').value||0));if(n&&p>0&&S.area.dist.length<30){S.area.dist.push({n:n,p:p});openSec.area=true;}else toast('Nhập tên khu vực và số điểm bán');}
   else if(a==='distDel'){S.area.dist.splice(+d.i,1);}
   else if(a==='ai'){askAI();return;}
-  else if(a==='area'){const A={tp:[25,5],tinh:[20,4],rong:[15,3]}[d.v];S.aov=A[0];S.maxC=A[1];toast('Đã áp dụng mẫu địa bàn, bạn có thể sửa tiếp');}
+  else if(a==='area'){const A={tp:[25,15],tinh:[20,12],rong:[15,9]}[d.v];S.aov=A[0];S.maxC=A[1];toast('Đã áp dụng mẫu địa bàn, bạn có thể sửa tiếp');}
   else if(a==='rule'){S.rules[d.r].on=!S.rules[d.r].on;}
   else if(a==='rv'){const r=RULES.find(x=>x.id===d.r),c=S.rules[d.r];c.v=Math.min(r.max,Math.max(r.min,c.v+(+d.d)));S.preset='custom';}
   else if(a==='preset'){S.preset=d.v;RULES.forEach(r=>{S.rules[r.id].v=r.p[d.v];});}
@@ -2916,7 +2955,8 @@ document.addEventListener('change',function(e){
   else if(f==='ttotal'){S.tt=Math.max(0,Math.floor(+t.value||0));S.plan=null;}
   else if(f==='catP'){S.cats[t.dataset.c].p=Math.max(0,+t.value||0);}
   else if(f==='season'){S.season=+t.value;}
-  else if(f==='maxC'){S.maxC=Math.max(1,Math.floor(+t.value||4));}
+  else if(f==='maxC'){S.maxC=Math.max(1,Math.floor(+t.value||12));}
+  else if(f==='fnl'){const k=t.dataset.k;if(k==='fv')S.fv=Math.max(10,Math.min(60,Math.round(+t.value||15)));else if(k==='fc')S.fc=Math.max(1,Math.min(50,Math.round(+t.value||10)));S.plan=S.plan;}
   else if(f==='disc'){S.disc=+t.value;}
   else if(f==='list'){S.list[t.dataset.p]=Math.max(0.1,+t.value||0.1);}
   else if(f==='aov'){S.aov=Math.max(1,Math.floor(+t.value||20));}
