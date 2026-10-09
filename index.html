@@ -541,6 +541,35 @@ details[open]>.rks::before{transform:rotate(90deg)}
   .pills span{font-size:12px;padding:2px 8px}
 }
 
+
+/* ===== Bảng kế hoạch có ô kẻ, tự theo dõi ===== */
+.gtbl{width:100%;min-width:700px;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:13.5px;border:1.5px solid var(--line)}
+.gtbl th,.gtbl td{border:1px solid var(--line);padding:6px 6px;text-align:right;vertical-align:middle}
+.gtbl thead th{background:var(--bg);color:var(--muted);font-size:11.5px;font-weight:700;text-align:center;white-space:nowrap}
+.gtbl thead th.g-plan{background:var(--bn-soft);color:var(--bn)}
+.gtbl thead th.g-act{background:var(--ok-soft);color:var(--ok)}
+.gtbl .wk1{text-align:left;position:sticky;left:0;background:var(--surface);z-index:1;min-width:84px;box-shadow:1px 0 0 var(--line)}
+.gtbl thead .wk1{background:var(--bg);z-index:2}
+.gtbl .wk1 b{display:block;white-space:nowrap}
+.gtbl .wk1 small{color:var(--muted);font-size:11px}
+.gtbl td.clk{cursor:pointer}
+.gtbl td.tot{font-weight:800}
+.gtbl td.act{padding:3px;background:color-mix(in srgb,var(--ok-soft) 35%,transparent)}
+.gtbl td.act.lk{background:var(--bg);color:var(--muted);padding:6px}
+.gtbl .gcell{width:100%;min-width:52px;box-sizing:border-box;padding:7px 6px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-weight:700;text-align:right}
+.gtbl .gcell:focus{outline:2px solid var(--focus);outline-offset:0;border-color:var(--focus)}
+.gtbl td.pc{text-align:center;font-weight:800}
+.gtbl td.pc.ok{color:var(--ok)}.gtbl td.pc.warn{color:var(--warn)}.gtbl td.pc.bad{color:var(--bad)}
+.gtbl td.stc{text-align:center;white-space:nowrap}
+.gtbl tr.cur .wk1{box-shadow:inset 3px 0 0 var(--brand-deep),1px 0 0 var(--line)}
+.gtbl tr.hardr .wk1 b::after{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--bad);margin-left:6px;vertical-align:1px}
+.gtbl tr.off td{background:var(--bg)}
+.gtbl tfoot td{font-weight:800;background:var(--bg);border-top:2px solid var(--line)}
+.gprog{margin-top:10px;display:grid;gap:6px}
+.gbar{height:10px;border-radius:6px;background:var(--line);overflow:hidden}
+.gbar i{display:block;height:100%;border-radius:6px;background:var(--ok)}
+@media (max-width:600px){.gtbl{font-size:12.5px}.gtbl th,.gtbl td{padding:5px 4px}}
+
 /* ===== Khối theo dõi nhanh ở tiêu đề ===== */
 .top .hsub{margin:0;color:rgba(255,255,255,.94);font-size:13.5px}
 .top .hstat{position:relative;z-index:2;margin-top:12px;display:grid;grid-template-columns:1fr;gap:10px;align-items:start;max-width:380px}
@@ -2120,20 +2149,42 @@ function renderPlan(){
   const maxT=Math.max(1,...weeks.map(w=>w.tt));
 
   const curW=S.month===monthKey(0)?currentWeekIndex(weeks):-1;
-  const hasCare=!!(apCache&&apCache.act>0),cols=hasCare?6:5;
+  const hasCare=!!(apCache&&apCache.act>0),cols=hasCare?11:10;
   const sums=weeks.reduce((a,w)=>{a.bn+=w.t.bn;a.gd+=w.t.gd;a.vt+=w.vt;a.wd+=w.work;return a;},{bn:0,gd:0,vt:0,wd:0});
   const careSum=hasCare?apCache.weeks.reduce((a,p)=>a+p.care,0):0;
+  const tdayK=todayKey();
+  let aSumB=0,aSumG=0,aSumV=0,planDone=0;
   const ovRows=weeks.map(w=>{
-    if(!w.work)return '<tr class="off"><td><b>Tuần '+(w.i+1)+'</b><small>'+w.label+'</small></td><td colspan="'+(cols-1)+'" style="text-align:left;color:var(--muted)">Không có ngày làm việc</td></tr>';
-    const p=apCache&&apCache.weeks[w.i],pct=Math.max(8,Math.round(w.tt/maxT*100));
-    let r='<tr class="clk'+(w.i===curW?' cur':'')+(w.hard?' hardr':'')+'" data-act="openWeek" data-w="'+w.i+'"><td><b>Tuần '+(w.i+1)+'</b><small>'+w.label+'</small></td><td>'+w.t.bn+'</td><td>'+w.t.gd+'</td><td class="tot" style="background:linear-gradient(90deg,var(--brand-soft) '+pct+'%,transparent '+pct+'%)">'+w.tt+'</td><td>'+w.vt+'</td>'+(hasCare?'<td>'+(p?p.care:0)+'</td>':'')+'</tr>';
-    if(p&&p.areas.length)r+='<tr class="ar"><td colspan="'+cols+'">'+p.areas.map(a=>escH(a.name)+' '+a.n).join(' · ')+'</td></tr>';
-    return r;
+    if(!w.work)return '<tr class="off"><td class="wk1"><b>Tuần '+(w.i+1)+'</b><small>'+w.label+'</small></td><td colspan="'+(cols-1)+'" style="text-align:left;color:var(--muted)">Không có ngày làm việc</td></tr>';
+    const p=apCache&&apCache.weeks[w.i];
+    const a=S.actual[w.key],locked=w.days.some(d=>S.daily[d.date]);
+    const ab=a?(a.bn||0):0,ag=a?(a.gd||0):0,av=a?(a.v||0):0,as=ab+ag;
+    if(a){aSumB+=ab;aSumG+=ag;aSumV+=av;planDone+=w.tt;}
+    const cell=(k,val)=>locked
+      ?'<td class="act lk" title="Số lấy từ Nhật ký hàng ngày">'+(a?val:'')+'</td>'
+      :'<td class="act"><input class="gcell" type="number" inputmode="numeric" min="0" data-f="wact" data-w="'+w.key+'" data-k="'+k+'" value="'+(a?val:'')+'" placeholder="0" aria-label="Thực tế tuần '+(w.i+1)+' '+(k==='bn'?'bình nước nóng':k==='gd'?'gia dụng':'khách đã liên hệ')+'"></td>';
+    const pct=a&&w.tt?Math.round(as/w.tt*100):null;
+    let stCell='<span class="muted">—</span>';
+    if(a&&w.tt){const st=statusOf(as/w.tt);stCell='<span class="badge '+st[0]+'">'+st[1]+'</span>';}
+    else if(w.days[w.days.length-1].date<tdayK)stCell='<span class="badge warn">Chưa nhập</span>';
+    const pcls=pct===null?'':(pct>=90?'ok':pct>=70?'warn':'bad');
+    return '<tr class="'+(w.i===curW?'cur':'')+(w.hard?' hardr':'')+'">'+
+      '<td class="wk1 clk" data-act="openWeek" data-w="'+w.i+'" title="Chạm để xem chi tiết tuần"><b>Tuần '+(w.i+1)+'</b><small>'+w.label+'</small></td>'+
+      '<td>'+w.t.bn+'</td><td>'+w.t.gd+'</td><td class="tot">'+w.tt+'</td><td>'+w.vt+'</td>'+(hasCare?'<td>'+(p?p.care:0)+'</td>':'')+
+      cell('bn',ab)+cell('gd',ag)+'<td class="tot">'+(a?as:'')+'</td>'+
+      '<td class="pc '+pcls+'">'+(pct===null?'':pct+'%')+'</td><td class="stc">'+stCell+'</td></tr>';
   }).join('');
-  const overview='<div class="card"><div class="row wrapx"><h2>'+ic('plan',18)+' Kế hoạch '+monthName(S.month).toLowerCase()+'</h2><span class="small muted">'+sums.wd+' ngày làm việc</span></div>'+
-    '<div class="ovwrap"><table class="ovt"><thead><tr><th>Tuần</th><th>Bình NN</th><th>Gia dụng</th><th>Tổng</th><th>Ghé</th>'+(hasCare?'<th>Chăm</th>':'')+'</tr></thead><tbody>'+ovRows+'</tbody>'+
-    '<tfoot><tr><td>Cả tháng</td><td>'+sums.bn+'</td><td>'+sums.gd+'</td><td>'+(sums.bn+sums.gd)+'</td><td>'+sums.vt+'</td>'+(hasCare?'<td>'+careSum+'</td>':'')+'</tr></tfoot></table></div>'+
-    '<div class="small muted" style="margin-top:6px">Triệu đồng · Ghé: lượt ghé, liên hệ · Chăm: chăm sóc từ xa · Chấm đỏ: tuần nặng nhất · Chạm vào tuần để xem chi tiết</div></div>';
+  const aSum=aSumB+aSumG,aPctAll=total?Math.round(aSum/total*100):0,remain=Math.max(0,total-aSum);
+  const overview='<div class="card"><div class="row wrapx"><h2>'+ic('plan',18)+' Bảng kế hoạch '+monthName(S.month).toLowerCase()+'</h2><span class="small muted">'+sums.wd+' ngày làm việc</span></div>'+
+    '<div class="small muted" style="margin:2px 0 6px">Nhập số thực tế từng tuần ngay trong bảng, % đạt và trạng thái tự cập nhật.</div>'+
+    '<div class="ovwrap"><table class="gtbl"><thead>'+
+      '<tr><th rowspan="2" class="wk1">Tuần</th><th colspan="'+(hasCare?5:4)+'" class="grp g-plan">KẾ HOẠCH (triệu)</th><th colspan="3" class="grp g-act">THỰC TẾ (triệu)</th><th rowspan="2">% đạt</th><th rowspan="2">Trạng thái</th></tr>'+
+      '<tr><th>Bình NN</th><th>Gia dụng</th><th>Tổng</th><th>Ghé</th>'+(hasCare?'<th>Chăm</th>':'')+'<th>Bình NN</th><th>Gia dụng</th><th>Tổng</th></tr>'+
+    '</thead><tbody>'+ovRows+'</tbody>'+
+    '<tfoot><tr><td class="wk1">Cả tháng</td><td>'+sums.bn+'</td><td>'+sums.gd+'</td><td>'+(sums.bn+sums.gd)+'</td><td>'+sums.vt+'</td>'+(hasCare?'<td>'+careSum+'</td>':'')+
+      '<td>'+aSumB+'</td><td>'+aSumG+'</td><td>'+aSum+'</td><td class="pc">'+aPctAll+'%</td><td></td></tr></tfoot></table></div>'+
+    '<div class="gprog"><div class="gbar"><i style="width:'+Math.min(100,aPctAll)+'%"></i></div><div class="small"><b>Đã đạt '+fmt(aSum)+' / '+fmt(total)+' tr</b> · còn thiếu <b>'+fmt(remain)+' tr</b></div></div>'+
+    '<div class="small muted" style="margin-top:6px">Ghé: lượt ghé, liên hệ · Chăm: chăm sóc từ xa · Chấm đỏ: tuần nặng nhất · Ô xám: số tự lấy từ Nhật ký hàng ngày · Chạm tên tuần để xem chi tiết</div></div>';
 
   const weekCards=weeks.filter(w=>w.work>0).map(w=>{
     const sel=riskSel(w);
@@ -2371,6 +2422,14 @@ document.addEventListener('change',function(e){
   else if(f==='rem'){const k=t.dataset.k;if(/^\d{1,2}:\d{2}$/.test(t.value))S.rem[k]=t.value;}
   else if(f==='distP'){const dd=S.area.dist[+t.dataset.i];if(dd)dd.p=Math.max(0,Math.floor(+t.value||0));}
   else if(f==='booked'){S.booked[t.dataset.w]=Math.max(0,Math.floor(+t.value||0));}
+  else if(f==='wact'){
+    const wk=t.dataset.w,k=t.dataset.k;
+    if(['bn','gd','v'].includes(k)){
+      const a=S.actual[wk]||{v:0,bn:0,gd:0};
+      a[k]=t.value===''?0:Math.max(0,Math.floor(+t.value||0));
+      if(t.value===''&&!a.v&&!a.bn&&!a.gd)delete S.actual[wk];else S.actual[wk]=a;
+    }
+  }
   else if(f==='src'){const i=+t.dataset.i,k=t.dataset.k,s=S.sources[i];if(s){if(k==='name')s.name=t.value.trim().slice(0,120);else if(k==='amt')s.amt=Math.max(0,Math.floor(+t.value||0));else if(k==='week')s.week=+t.value;}}
   else if(f==='planB'){S.planB=t.value.trim().slice(0,400);}
   else if(f==='income'){S.income=Math.max(0,Math.floor(+t.value||0));}
