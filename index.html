@@ -1129,6 +1129,10 @@ h2,.sech .st{color:var(--ink)}
 .gtbl thead tr+tr th.gs{border-left:2px solid var(--cx-line)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .gtbl thead th.g-plan{color:#8AD0F5}:root:not([data-theme="light"]) .gtbl thead th.g-act{color:#4FE6D8}:root:not([data-theme="light"]) .gtbl thead tr+tr th.sp{color:#9CC9E3}:root:not([data-theme="light"]) .gtbl thead tr+tr th.sa{color:#8FDCD4}}
 :root[data-theme="dark"] .gtbl thead th.g-plan{color:#8AD0F5}:root[data-theme="dark"] .gtbl thead th.g-act{color:#4FE6D8}:root[data-theme="dark"] .gtbl thead tr+tr th.sp{color:#9CC9E3}:root[data-theme="dark"] .gtbl thead tr+tr th.sa{color:#8FDCD4}
+
+.aiprov{display:inline-flex;align-items:center;gap:5px;margin-left:8px;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;color:var(--brand-deep);background:var(--brand-soft);border:1px solid color-mix(in srgb,var(--brand) 30%,transparent);vertical-align:2px;white-space:nowrap}
+.aiprov svg{flex:none}
+@media (max-width:480px){.aiprov{margin-left:0;margin-top:2px}}
 </style>
 </head>
 <body>
@@ -1305,7 +1309,7 @@ async function askAI(){
     const res=await fetch('/api/ai',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:aiMsgs(aiPrompt(weeks)+'\n\nBối cảnh bổ sung:\n'+ctxText(weeks)),temperature:0.4,max_tokens:1200})
+      body:JSON.stringify({messages:aiMsgs(aiPrompt(weeks)+'\n\nBối cảnh bổ sung:\n'+ctxText(weeks)+provNote()),temperature:0.4,max_tokens:1200})
     });
     if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status+' — '+t.slice(0,200));}
     const data=await res.json();
@@ -1319,16 +1323,16 @@ async function askAI(){
 }
 function aiCard(weeks,withAsk){
   const total=(+S.target.bn||0)+(+S.target.gd||0);
-  if(!total)return '<div class="card aiGlow"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2><div class="small muted">Nhập chỉ tiêu tháng ở trên — bạn sẽ bấm một nút để xem đánh giá và khuyến nghị.</div></div>';
+  if(!total)return '<div class="card aiGlow"><h2>'+ic('sparkles',18)+' Nhận xét từ AI'+provChip()+'</h2><div class="small muted">Nhập chỉ tiêu tháng ở trên — bạn sẽ bấm một nút để xem đánh giá và khuyến nghị.</div></div>';
   const stale=aiState.text&&aiKeyMain!==aiDataKey();
   const qh='<div class="small muted" style="margin-top:4px">Còn '+aiQuotaRemaining()+'/'+AI_QUOTA_MAX+' lượt hỏi AI hôm nay trên thiết bị này.</div>';
   let body;
   if(aiState.loading)body='<div class="small muted">Đang phân tích…</div>';
   else if(aiState.error)body='<div class="note" style="color:var(--bad)">'+aiState.error+'</div>'+(aiState.error===AI_QUOTA_MSG?'':'<div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Thử lại</button></div>'+qh);
   else if(aiState.text)body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiFmt(aiState.text)+'</div>'+(stale?'<div class="small" style="color:var(--warn);margin-top:8px">Số liệu đã thay đổi từ lần phân tích trước.</div>':'')+'<div class="small muted" style="margin-top:8px">'+AI_DISCLAIMER+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích lại</button></div>'+qh;
-  else body='<div class="small muted">Xem đánh giá mức độ khả thi và khuyến nghị triển khai dựa trên chỉ tiêu bạn vừa nhập.</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích bằng AI</button></div>'+qh;
+  else body='<div class="small muted">Xem đánh giá mức độ khả thi và khuyến nghị triển khai dựa trên chỉ tiêu bạn vừa nhập.</div>'+provNudge()+'<div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích bằng AI</button></div>'+qh;
   const ask=(!withAsk||aiState.loading)?'':'<div class="askplan"><div class="askq">Với con số KPI bạn đặt là <b>'+fmt(total)+' triệu</b>, bạn có muốn tạo kế hoạch không?</div><div class="askrow"><button class="btn sm" data-act="mkplan" data-m="auto">Tạo tự động<small>Tự chia theo tuần, ngày</small></button><button class="btn ghost sm" data-act="mkplan" data-m="manual">Tự tạo thủ công<small>Bạn tự chỉnh từng tuần</small></button></div></div>';
-  return '<div class="card aiGlow"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2>'+body+ask+'</div>';
+  return '<div class="card aiGlow"><h2>'+ic('sparkles',18)+' Nhận xét từ AI'+provChip()+'</h2>'+body+ask+'</div>';
 }
 function aiFmt(t){
   return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -1595,6 +1599,14 @@ function areaCard(weeks){
 const AIX={};
 let coach={busy:false,log:[]};
 function aiMsgs(u){return [{role:'system',content:LIVOTEC_KB},{role:'user',content:u}];}
+/* Buộc AI gọi đích danh tỉnh của người dùng và gắn nhận định với đặc điểm địa phương */
+function provNote(){
+  if(!S.province)return ' Người dùng chưa chọn khu vực phụ trách: ở câu đầu tiên hãy nói rõ chưa biết tỉnh nên phân tích còn chung chung và nhắc chọn tỉnh ở tab Thiết lập.';
+  const r=regionOf(S.province);
+  return ' BẮT BUỘC: ngay câu nhận định đầu tiên phải gọi đích danh tỉnh/thành "'+S.province+'" (ví dụ "Tại '+S.province+', ...") và ít nhất một gạch đầu dòng phải gắn trực tiếp với đặc điểm địa phương này (khí hậu và mùa vụ theo vùng '+REG_NAME[r]+' trong dữ liệu, mức độ cạnh tranh, thói quen mua sắm điển hình, số điểm bán của tuyến). Không bịa số liệu thị trường riêng của tỉnh; điều gì không chắc thì ghi "cần kiểm tra".';
+}
+function provChip(){return S.province?' <span class="aiprov">'+ic('plan',13)+escH(S.province)+'</span>':'';}
+function provNudge(){return S.province?'':'<div class="small" style="margin-top:6px;color:var(--warn)">Bạn chưa chọn tỉnh. <button class="link" data-act="tab" data-v="setup">Chọn khu vực phụ trách</button> để AI phân tích đúng theo tỉnh của bạn.</div>';}
 async function callAI(messages,max){
   const res=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:messages,temperature:0.4,max_tokens:max||1200})});
   if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status+' — '+t.slice(0,160));}
@@ -1611,6 +1623,7 @@ function ctxText(weeks){
   const on=catShares();if(on.length)L.push('Cơ cấu gia dụng & điện máy (tỷ trọng): '+on.map(x=>x.c.name+' '+Math.round(x.f*100)+'%').join(', ')+'.');
   L.push('Giả định: giá trị trung bình mỗi đơn '+S.aov+' tr; phễu benchmark ngành: cứ '+funnel().fv+' lượt ghé đại lý gặp được chủ để tư vấn 10 khách, '+funnel().fc+' khách tư vấn chốt 1 đơn (≈ '+fmt(funnel().vpo,0)+' lượt ghé mỗi đơn); sức mua tháng này '+S.season+'%.');
   L.push(seasonText());
+  {const _m=+S.month.split('-')[1],_r=regionOf(S.province),_c=CLIM[_r];L.push('Khí hậu trung bình nhiều năm (ước lượng) của '+REG_NAME[_r]+' vào tháng '+_m+': ≈ '+_c.t[_m-1]+'°C, '+WLAB[_c.w[_m-1]]+'.');}
   if(ap){
     L.push('Cần chốt ≈ '+ap.orders+' đơn, ≈ '+ap.visits+' lượt ghé/liên hệ, ≈ '+ap.uniq+' điểm bán khác nhau (ghé '+ap.vpp+' lần/điểm).');
     if(ap.have)L.push('Địa bàn: '+ap.pts+' điểm bán, '+ap.act+' đang hoạt động'+(ap.dormant?', '+ap.dormant+' chưa hoạt động':'')+'; '+(ap.gap>0?'thiếu ≈ '+ap.gap+' điểm so với nhu cầu':'đủ điểm cho nhu cầu')+'; chăm sóc từ xa ≈ '+ap.careTot+' lượt/tháng.');
@@ -1665,15 +1678,15 @@ function aiPanel(ctx,weeks){
   if(st.loading){body='<div class="small muted">Đang phân tích…</div>';sum='<span class="small muted">đang chạy</span>';}
   else if(st.error){body='<div class="note" style="color:var(--bad)">'+escH(st.error)+'</div>'+(st.error===AI_QUOTA_MSG?'':btn('Thử lại')+qh);sum='<span class="badge bad">Lỗi</span>';}
   else if(st.text){const stale=st.key!==aiKey(ctx);body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiFmt(st.text)+'</div>'+(stale?'<div class="small" style="color:var(--warn);margin-top:8px">Số liệu đã thay đổi từ lần phân tích trước.</div>':'')+'<div class="small muted" style="margin-top:8px">'+AI_DISCLAIMER+'</div>'+btn('Phân tích lại')+qh;sum=stale?'<span class="badge warn">Cần cập nhật</span>':'<span class="badge ok">Đã phân tích</span>';}
-  else{body='<div class="small muted">'+AI_HINT[ctx]+'</div>'+btn('Phân tích bằng AI')+qh;sum='<span class="small muted">chạm để mở</span>';}
-  return sec('ai_'+ctx,ic('sparkles',18),AI_TITLE[ctx],sum,body,false,'aiGlow');
+  else{body='<div class="small muted">'+AI_HINT[ctx]+'</div>'+provNudge()+btn('Phân tích bằng AI')+qh;sum='<span class="small muted">chạm để mở</span>';}
+  return sec('ai_'+ctx,ic('sparkles',18),AI_TITLE[ctx]+provChip(),sum,body,false,'aiGlow');
 }
 async function askAIx(ctx){
   if(aiQuotaRemaining()<=0){AIX[ctx]={loading:false,text:'',error:AI_QUOTA_MSG,key:''};render();return;}
   aiQuotaUse();
   const weeks=analyze();AIX[ctx]={loading:true,text:'',error:'',key:''};render();
   try{
-    const text=await callAI(aiMsgs('Dữ liệu của một nhân viên kinh doanh (SR) Livotec:\n'+ctxText(weeks)+(ctx==='brief'?'\n'+briefLine(weeks):'')+'\n\n'+AI_TASK[ctx]),1500);
+    const text=await callAI(aiMsgs('Dữ liệu của một nhân viên kinh doanh (SR) Livotec:\n'+ctxText(weeks)+(ctx==='brief'?'\n'+briefLine(weeks):'')+'\n\n'+AI_TASK[ctx]+(ctx==='brief'?'':provNote())),1500);
     AIX[ctx]={loading:false,text:text,error:'',key:aiKey(ctx)};
   }catch(e){AIX[ctx]={loading:false,text:'',error:'Không gọi được AI. Chi tiết: '+e.message,key:''};}
   render();
