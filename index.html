@@ -754,10 +754,10 @@ async function askAI(){
   aiState={loading:true,text:'',error:''};render();
   try{
     const weeks=analyze();
-    const res=await fetch('/api/groq',{
+    const res=await fetch('/api/ai',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:GROQ_MODEL,messages:aiMsgs(aiPrompt(weeks)+'\n\nBối cảnh bổ sung:\n'+ctxText(weeks)),temperature:0.4,max_tokens:1200})
+      body:JSON.stringify({messages:aiMsgs(aiPrompt(weeks)+'\n\nBối cảnh bổ sung:\n'+ctxText(weeks)),temperature:0.4,max_tokens:1200})
     });
     if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status+' — '+t.slice(0,200));}
     const data=await res.json();
@@ -953,7 +953,7 @@ const AIX={};
 let coach={busy:false,log:[]};
 function aiMsgs(u){return [{role:'system',content:LIVOTEC_KB},{role:'user',content:u}];}
 async function callAI(messages,max){
-  const res=await fetch('/api/groq',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:messages,temperature:0.4,max_tokens:max||1200})});
+  const res=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:messages,temperature:0.4,max_tokens:max||1200})});
   if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status+' — '+t.slice(0,160));}
   const data=await res.json();
   const text=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
