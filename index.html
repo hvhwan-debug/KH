@@ -535,7 +535,11 @@ details[open]>.rks::before{transform:rotate(90deg)}
 /* ===== Khối theo dõi nhanh ở tiêu đề ===== */
 .top .hsub{margin:0;color:rgba(255,255,255,.94);font-size:13.5px}
 .top .hstat{position:relative;z-index:2;margin-top:12px;display:grid;grid-template-columns:1fr;gap:10px;align-items:start;max-width:380px}
-.hleft{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.26);border-radius:12px;padding:12px}
+.hleft{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.26);border-radius:12px;padding:12px;font-size:13.5px;line-height:1.5;color:#fff}
+.hleft svg{vertical-align:-3px;margin-right:2px;flex:0 0 auto}
+.hleft.hwarn.bad{background:rgba(255,138,128,.2);border-color:rgba(255,138,128,.4)}
+.hleft.hwarn.warn{background:rgba(227,177,85,.2);border-color:rgba(227,177,85,.4)}
+.hleft.hok2{color:rgba(255,255,255,.85);font-size:13px}
 #hring{position:absolute;top:4px;right:0;z-index:3}
 .hring{display:flex;flex-direction:column;align-items:center;gap:4px;color:#fff;text-align:center;background:none;border:0;padding:0;cursor:default;font:inherit}
 button.hring{cursor:pointer}
@@ -1574,28 +1578,9 @@ function headerRingHTML(weeks){
 function headerStat(weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0);
   if(!total)return '<p class="hsub">Nhập chỉ tiêu tháng để xem tiến độ và việc cần làm hôm nay.</p>';
-  const cur=monthKey(0),tk=todayKey(),isCur=S.month===cur;
-  let ach=0;
-  weeks.forEach(w=>{const a=S.actual[w.key];if(a)ach+=(a.bn||0)+(a.gd||0);});
-  const pct=Math.round(ach/total*100);
-  let planTo=0,remDays=0;
-  weeks.forEach(w=>{if(!w.work)return;const per=w.tt/w.work;w.days.forEach(d=>{if(d.off)return;if(d.date<tk)planTo+=per;else remDays++;});});
-  const te=S.daily[tk],todaySI=te?(te.bn||0)+(te.gd||0):0;
-  const achBefore=Math.max(0,ach-(isCur?todaySI:0));
-  let st=null;
-  if(isCur&&planTo>0){
-    if(!Object.keys(S.actual).length)st=['','Chưa có số liệu'];
-    else{const r=achBefore/planTo,k=statusOf(r)[0];st=[k,(k==='ok'&&r>=1.1)?'Vượt tiến độ':{ok:'Đúng tiến độ',warn:'Hơi chậm',bad:'Đang chậm'}[k]];}
-  }
-  const mark=Math.min(100,Math.max(0,planTo/total*100));
-  let left='<div class="hs-bar" title="Vạch vàng: mốc kế hoạch đến hôm qua"><i style="width:'+Math.min(100,pct)+'%"></i>'+(isCur&&planTo>0?'<u style="left:'+mark+'%"></u>':'')+'</div>'+
-    '<div class="hs-line"><b>'+fmt(ach)+' / '+fmt(total)+' tr</b><span>'+pct+'%</span>'+(st?'<em class="hs-st '+st[0]+'">'+st[1]+'</em>':'')+'</div>';
-  const need=Math.max(0,total-ach);
-  if(isCur&&remDays>0){
-    left+='<div class="hs-sub">'+(need>0?'Còn '+fmt(need)+' tr · ~'+fmt(need/remDays,1)+' tr/ngày':'Đã đạt chỉ tiêu')+'</div>';
-  }else if(S.month<cur)left+='<div class="hs-sub">Tháng đã kết thúc</div>';
-  else if(S.month>cur)left+='<div class="hs-sub">Tháng chưa bắt đầu</div>';
-  return '<div class="hleft">'+left+'</div>';
+  const F=factors(weeks),top=F&&F.rows.find(r=>r.lv!=='ok');
+  if(!top)return '<div class="hleft hok2">Chưa có rủi ro nào đáng chú ý.</div>';
+  return '<div class="hleft hwarn '+top.lv+'">'+ic(top.lv==='bad'?'alertOct':'warnTri',16)+' <b>'+escH(top.name)+':</b> '+escH(top.msg)+'</div>';
 }
 
 const pad=n=>String(n).padStart(2,'0');
