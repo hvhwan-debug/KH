@@ -817,6 +817,33 @@ h2,.sech .st{color:var(--ink)}
 .hc-tx{text-align:left}
 .hc-tx b,.hc-tx span{text-wrap:balance}
 @media (max-width:600px){.hcard{padding:10px 12px;gap:11px}.hcard::after{width:30px;height:30px;background-size:13px}}
+
+/* ===== Quy tắc cảnh báo: gom theo mức độ, ô gọn, số chỉnh ngay trong câu ===== */
+.rgroup{margin-top:18px}
+.rg-h{display:flex;align-items:center;gap:8px;margin:0 2px 9px;font-size:14.5px;flex-wrap:wrap}
+.rg-dot{width:10px;height:10px;border-radius:50%;background:var(--lvc);flex:none}
+.rgroup.lv-bad{--lvc:var(--bad)}.rgroup.lv-warn{--lvc:var(--warn)}.rgroup.lv-info{--lvc:var(--brand-deep)}
+.rg-n{margin-left:auto;font-size:12px;font-weight:700;color:var(--lvc);background:color-mix(in srgb,var(--lvc) 13%,transparent);padding:2px 11px;border-radius:999px}
+.rgrid{display:grid;grid-template-columns:1fr;gap:10px}
+@media (min-width:760px){.rgrid{grid-template-columns:1fr 1fr}}
+.rgroup .rule,.rgroup .rule:last-child{padding:12px 14px 13px;border:1px solid var(--line);border-left:4px solid var(--lvc);border-radius:16px;background:var(--surface-2);display:flex;flex-direction:column}
+.rgroup .rule.off{background:transparent;border-style:dashed;border-left-style:solid}
+.rule-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.rule-h b{font-size:14.5px;line-height:1.3}
+.rule .rb{margin-top:8px;font-size:13px;line-height:2;color:var(--muted)}
+.rule .rb .stp{display:inline-flex;vertical-align:middle;margin:0 3px;border-radius:10px;background:var(--surface)}
+.rule .stp button{width:30px;height:32px;font-size:18px}
+.rule .stp .n{min-width:40px;font-size:15px;color:var(--ink)}
+.rgroup .sw2{width:44px;height:26px}
+.rgroup .sw2::after{width:20px;height:20px}
+.rgroup .sw2[aria-checked="true"]::after{transform:translateX(18px)}
+
+.rule .rb{display:flex;flex-direction:column;gap:8px;margin-top:8px;line-height:1.45}
+.rb-pre{font-size:13px;color:var(--muted)}
+.rb-row{display:flex;align-items:center;gap:10px}
+.rb-row .stp{flex:none;margin:0}
+.rb-row>span{flex:1;min-width:0;font-size:13px;color:var(--ink);line-height:1.35}
+.rgroup .rule{justify-content:space-between}
 </style>
 </head>
 <body>
@@ -2538,8 +2565,12 @@ function renderAlertsTab(){
   const all=evalAlerts(weeks),act=all.filter(a=>!a.dismissed),hid=all.filter(a=>a.dismissed);
   const list=act.length?act.map(alertItem).join(''):'<div class="empty" style="padding:14px"><div style="color:var(--ok)">'+ic('check',38)+'</div><b>Chưa có cảnh báo nào</b><div class="small muted">Kế hoạch và số liệu của bạn đang trong ngưỡng bạn đặt.</div></div>';
   const pr=[['soft','Thoải mái','ngưỡng rộng'],['std','Chuẩn','khuyến nghị'],['tight','Sát sao','báo sớm hơn']];
-  const rules=RULES.map(r=>{const c=S.rules[r.id];return '<div class="rule'+(c.on?'':' off')+'"><div class="row"><b>'+r.title+'</b><button class="sw2" role="switch" aria-checked="'+c.on+'" aria-label="Bật tắt: '+r.title+'" data-act="rule" data-r="'+r.id+'"></button></div>'+
-    '<div class="rb"><div class="small muted" style="margin:6px 0">'+r.pre+'</div><div class="row" style="justify-content:flex-start;gap:10px">'+stepper('data-act="rv" data-r="'+r.id+'"',c.v,r.step)+'<span class="small">'+r.post+'</span></div></div></div>';}).join('');
+  const ruleTile=r=>{const c=S.rules[r.id];
+    return '<div class="rule'+(c.on?'':' off')+'"><div class="rule-h"><b>'+r.title+'</b><button class="sw2" role="switch" aria-checked="'+c.on+'" aria-label="Bật tắt: '+r.title+'" data-act="rule" data-r="'+r.id+'"></button></div>'+
+      '<div class="rb"><div class="rb-pre">'+r.pre+'</div><div class="rb-row">'+stepper('data-act="rv" data-r="'+r.id+'"',c.v,r.step)+'<span>'+r.post+'</span></div></div></div>';};
+  const RLV=[['bad','Nghiêm trọng','cảnh báo đỏ'],['warn','Cần chú ý','cảnh báo vàng'],['info','Nhắc nhẹ','chỉ nhắc, không báo động']];
+  const rules=RLV.map(g=>{const rs=RULES.filter(r=>r.level===g[0]);if(!rs.length)return '';const onN=rs.filter(r=>S.rules[r.id].on).length;
+    return '<div class="rgroup lv-'+g[0]+'"><div class="rg-h"><i class="rg-dot"></i><b>'+g[1]+'</b><span class="small muted">'+g[2]+'</span><span class="rg-n">'+onN+'/'+rs.length+' bật</span></div><div class="rgrid">'+rs.map(ruleTile).join('')+'</div></div>';}).join('');
   $app.innerHTML=
   '<div class="card"><h2>'+ic('bell',18)+' Cảnh báo đang có</h2><div class="small muted">Chỉ bạn thấy.</div>'+DISC+list+
     (hid.length?'<details><summary class="small">Đã ẩn ('+hid.length+')</summary><button class="btn ghost sm" data-act="undismiss">Hiện lại tất cả</button></details>':'')+'</div>'+
