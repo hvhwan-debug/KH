@@ -844,6 +844,28 @@ h2,.sech .st{color:var(--ink)}
 .rb-row .stp{flex:none;margin:0}
 .rb-row>span{flex:1;min-width:0;font-size:13px;color:var(--ink);line-height:1.35}
 .rgroup .rule{justify-content:space-between}
+
+/* ===== Thẻ tổng quan chỉ tiêu (tab Thiết lập): vòng tròn + hai ô nhóm hàng + dải thống kê ===== */
+.shero{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;max-width:780px;margin:0 auto;padding:4px 0}
+.sh-ring{display:flex;justify-content:center}
+.sh-ring svg{display:block}
+.sh-info{min-width:0}
+.sh-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sh-tile{display:flex;flex-direction:column;gap:3px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:16px;box-shadow:0 1px 3px rgba(0,60,56,.07)}
+.sh-tile.bn{--c:var(--bn)}.sh-tile.gd{--c:var(--gd)}
+.sh-lab{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink)}
+.sh-lab .sw{margin:0}
+.sh-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sh-num{font-size:28px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--c);letter-spacing:-.02em}
+.sh-num small{font-size:14px;font-weight:700;color:var(--muted);margin-left:3px;letter-spacing:0}
+.sh-pct{font-size:12px;font-weight:800;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);padding:2px 9px;border-radius:999px;flex:none}
+.sh-sub{font-size:12px;color:var(--muted);line-height:1.4;text-wrap:balance}
+.sh-foot{display:grid;grid-template-columns:1fr 1fr;margin-top:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+.sh-foot>div{display:flex;flex-direction:column;align-items:center;padding:9px 6px;line-height:1.25}
+.sh-foot>div+div{border-left:1px solid var(--line)}
+.sh-foot b{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
+.sh-foot span{font-size:12px;color:var(--muted)}
+@media (max-width:620px){.shero{grid-template-columns:1fr;gap:12px}.sh-ring svg{width:170px;height:170px}.sh-num{font-size:24px}.sh-tile{padding:10px 12px}}
 </style>
 </head>
 <body>
@@ -2331,10 +2353,11 @@ function renderSetup(){
   const weeks=analyze(),tb=+S.target.bn||0,tg=+S.target.gd||0,total=tb+tg,workDays=weeks.reduce((a,w)=>a+w.work,0);
   const opts=Array.from(new Set([-1,0,1,2].map(monthKey).concat(Object.keys(S.hist||{}),[S.month]))).sort().map(m=>'<option value="'+m+'"'+(m===S.month?' selected':'')+'>'+monthName(m)+'</option>').join('');
   const hero=total?
-    '<div class="hero">'+ring([{f:tb/total,c:C.bn},{f:tg/total,c:C.gd}],null,fmt(total),'triệu S.I')+
-    '<div class="leg"><div class="li"><span><i class="sw bn"></i>Bình nước nóng</span><b>'+fmt(tb)+' tr</b></div><div class="small muted" style="margin:-2px 0 4px 20px">'+unitText('bn',tb)+'</div>'+
-    '<div class="li"><span><i class="sw gd"></i>Gia dụng</span><b>'+fmt(tg)+' tr</b></div><div class="small muted" style="margin:-2px 0 4px 20px">'+unitText('gd',tg)+'</div>'+
-    '<div class="li"><span>'+workDays+' ngày làm việc</span><b>≈ '+fmt(total/Math.max(1,workDays),1)+' tr/ngày</b></div></div></div>':
+    '<div class="shero"><div class="sh-ring">'+ring([{f:tb/total,c:C.bn},{f:tg/total,c:C.gd}],null,fmt(total),'triệu S.I')+'</div>'+
+    '<div class="sh-info"><div class="sh-tiles">'+
+      '<div class="sh-tile bn"><span class="sh-lab"><i class="sw bn"></i>Bình nước nóng</span><div class="sh-row"><b class="sh-num">'+fmt(tb)+'<small>tr</small></b><span class="sh-pct">'+Math.round(tb/total*100)+'%</span></div><span class="sh-sub">'+unitText('bn',tb)+'</span></div>'+
+      '<div class="sh-tile gd"><span class="sh-lab"><i class="sw gd"></i>Gia dụng</span><div class="sh-row"><b class="sh-num">'+fmt(tg)+'<small>tr</small></b><span class="sh-pct">'+(100-Math.round(tb/total*100))+'%</span></div><span class="sh-sub">'+unitText('gd',tg)+'</span></div>'+
+    '</div><div class="sh-foot"><div><b>'+workDays+'</b><span>ngày làm việc</span></div><div><b>≈ '+fmt(total/Math.max(1,workDays),1)+'</b><span>triệu mỗi ngày</span></div></div></div></div>':
     '<div class="empty" style="padding:10px"><div style="color:var(--brand-deep)">'+ic('target',40)+'</div><div class="muted">Nhập chỉ tiêu bên dưới, biểu đồ sẽ hiện ra ngay.</div></div>';
   const cal='<div class="cal">'+['T2','T3','T4','T5','T6','T7','CN'].map(x=>'<div class="h">'+x+'</div>').join('')+
     weeks.map(w=>{
