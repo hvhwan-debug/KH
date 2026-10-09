@@ -1160,6 +1160,27 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   .htag,.hcta-row{flex:0 0 calc(100% + 88px);margin-right:-88px;max-width:none}
   .htag{font-size:15px;margin-bottom:12px}
 }
+
+/* ===== Phễu: nguồn số liệu + sức đi thực tế ===== */
+.fnl-src{font-size:11.5px;font-weight:600;padding:2px 10px;border-radius:999px;margin:0 2px 0 8px}
+.fnl-src.bm{background:var(--brand-soft);color:var(--brand-deep)}
+.fnl-src.own{background:var(--warn-soft);color:var(--warn)}
+.fnl-cap{margin-top:12px;padding:12px 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--lvc)}
+.fnl-cap.ok{--lvc:var(--ok)}.fnl-cap.bad{--lvc:var(--bad)}.fnl-cap.warn{--lvc:#D9961A}
+.cap-h{display:flex;justify-content:space-between;gap:4px 12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.cap-h b{color:var(--ink);font-weight:600}
+.cap-bar{height:10px;border-radius:6px;background:var(--cx-soft);overflow:hidden;margin:8px 0 4px;box-shadow:inset 0 0 0 1px var(--cx-line)}
+.cap-bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#17C7BB,#0B86C2)}
+.fnl-cap.bad .cap-bar i{background:linear-gradient(90deg,#F6B26B,#E4572E)}
+.fnl-cap.warn .cap-bar i{background:linear-gradient(90deg,#F7D27A,#E3A63B)}
+.cap-l{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)}
+.cap-res{margin-top:8px;font-size:13.5px;line-height:1.45}
+.cap-res b{font-weight:600;color:var(--lvc)}
+.cap-fix{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:8px;font-size:12.5px}
+.cap-fix em{font-style:normal;color:var(--muted)}
+.cap-fix span{padding:3px 11px;border-radius:999px;background:var(--cx-soft);border:1px solid var(--cx-line)}
+.cap-fix b{font-weight:600}
+.fnl-note{margin-top:10px;text-align:center}
 </style>
 </head>
 <body>
@@ -1531,17 +1552,29 @@ function needCard(weeks){
     fc('var(--bn)','users','≈ '+fmt(ap.visits),'lượt ghé đại lý','Mỗi đơn cần ≈ <b>'+fmt(FN.vpo,0)+' lượt ghé</b> (benchmark ngành: '+FN.fv+' lượt ghé gặp chủ → 10 khách tư vấn; '+FN.fc+' khách tư vấn → 1 đơn)'+(S.learn?'. Tự hiệu chỉnh khi bạn nhập số liệu thật.':'.'))+
     fc('var(--gd)','plan','≈ '+fmt(ap.uniq),'điểm bán khác nhau (ghé '+ap.vpp+' lần/điểm)','Số lượt ghé ÷ <b>'+ap.vpp+' lần</b> mỗi điểm.'+(ap.have?' Bạn có <b>'+ap.usable+'</b> điểm dùng được.':' Nhập địa bàn để so với số điểm bạn có.'))+
     fc('var(--ok)','bell',ap.act>0?'≈ '+fmt(ap.careTot):'—','lượt chăm sóc từ xa'+(ap.act>0?'':' (nhập địa bàn)'),ap.act>0?'Điểm đang hoạt động được gọi, nhắn thay cho ghé trực tiếp, theo tần suất bạn đặt ở mục Địa bàn &amp; điểm bán.':'Nhập số điểm bán đang hoạt động ở mục Địa bàn &amp; điểm bán để tính lượt chăm sóc từ xa.');
-  const funnelHtml='<div class="fnl"><div class="fnl-h"><b>Phễu bán hàng theo benchmark ngành</b><span class="small muted">1 đơn ≈ '+fmt(FN.vpo,0)+' lượt ghé ≈ '+FN.fc+' khách tư vấn</span></div>'+
+  const totWork=Math.max(1,weeks.reduce((x,w)=>x+w.work,0)),mc=Math.max(1,+S.maxC||6),capV=totWork*mc,needV=ap.visits;
+  const aovN=Math.max(1,+S.aov||20),ordCap=Math.floor(capV/FN.vpo),siCap=ordCap*aovN,pctCap=ap.total?Math.round(Math.min(100,siCap/ap.total*100)):0;
+  const over=siCap<ap.total,tight=!over&&needV>capV*0.9,fillPct=Math.min(100,Math.round(capV/Math.max(1,needV)*100)),reqAov=ordCap>0?ap.total/ordCap:0,reqVpo=ap.orders>0?capV/ap.orders:0,isDef=FN.fv===15&&FN.fc===10;
+  const capHtml='<div class="fnl-cap '+(over?'bad':tight?'warn':'ok')+'"><div class="cap-h"><span>Sức đi của bạn</span><b>'+mc+' lượt/ngày × '+totWork+' ngày = '+fmt(capV)+' lượt</b></div>'+
+    '<div class="cap-bar" role="img" aria-label="Sức đi so với nhu cầu"><i style="width:'+fillPct+'%"></i></div>'+
+    '<div class="cap-l"><span>Đi được '+fmt(capV)+'</span><span>Cần '+fmt(needV)+'</span></div>'+
+    (over?'<div class="cap-res">Với sức này chỉ đạt ≈ <b>'+ordCap+' đơn ≈ '+fmt(siCap)+' tr</b> ('+pctCap+'% chỉ tiêu)</div>'+
+      (ordCap>0?'<div class="cap-fix"><em>Để đủ chỉ tiêu:</em><span>đơn TB ≈ <b>'+fmt(reqAov,0)+' tr</b></span><em>hoặc</em><span>≈ <b>'+fmt(reqVpo,1)+' lượt ghé/đơn</b></span></div>':''):
+      (tight?'<div class="cap-res">Sát sức: cần ≈ <b>'+fmt(needV)+' lượt</b> (đã làm tròn lên), đi được <b>'+fmt(capV)+'</b>. Gần như không còn dư cho ngày chậm.</div>':'<div class="cap-res">Trong sức: dùng <b>'+Math.round(needV/capV*100)+'%</b> số lượt ghé tối đa.</div>'))+'</div>';
+  const funnelHtml='<div class="fnl"><div class="fnl-h"><b>Phễu bán hàng</b><span class="fnl-src '+(isDef?'bm':'own')+'">'+(isDef?'Chuẩn ngành':'Tự nhập')+'</span><span class="small muted">1 đơn ≈ '+fmt(FN.vpo,0)+' lượt ghé ≈ '+FN.fc+' khách tư vấn</span></div>'+
     '<div class="fnl-bars">'+
       '<div class="fnl-bar b1" style="--w:100%"><b>≈ '+fmt(ap.visits)+'</b><span>lượt ghé đại lý</span></div>'+
       '<div class="fnl-cv"><i></i><b>'+Math.round(FN.reach*100)+'%</b> gặp được chủ</div>'+
       '<div class="fnl-bar b2" style="--w:'+Math.max(58,Math.round(FN.reach*100))+'%"><b>≈ '+fmt(consults)+'</b><span>khách tư vấn</span></div>'+
       '<div class="fnl-cv"><i></i><b>'+Math.round(FN.close*100)+'%</b> chốt đơn</div>'+
       '<div class="fnl-bar b3" style="--w:44%"><b>≈ '+fmt(ap.orders)+'</b><span>đơn nhập hàng</span></div>'+
-    '</div>'+
+    '</div>'+capHtml+
     '<div class="fnl-edit"><label><span>Gặp được chủ</span><input class="num sm" type="number" inputmode="numeric" min="10" max="60" data-f="fnl" data-k="fv" value="'+FN.fv+'" aria-label="Số lượt ghé để tư vấn 10 khách"><span>cần bao nhiêu lượt ghé để tư vấn 10 khách</span></label>'+
-    '<label><span>Chốt đơn</span><input class="num sm" type="number" inputmode="numeric" min="1" max="50" data-f="fnl" data-k="fc" value="'+FN.fc+'" aria-label="Số khách tư vấn để chốt 1 đơn"><span>cần bao nhiêu khách tư vấn để chốt 1 đơn</span></label></div></div>';
-  const sum='<span class="small muted">'+fmt(ap.orders)+' đơn · '+fmt(ap.visits)+' ghé</span>';
+    '<label><span>Chốt đơn</span><input class="num sm" type="number" inputmode="numeric" min="1" max="50" data-f="fnl" data-k="fc" value="'+FN.fc+'" aria-label="Số khách tư vấn để chốt 1 đơn"><span>cần bao nhiêu khách tư vấn để chốt 1 đơn</span></label>'+
+    '<label><span>Sức đi</span><input class="num sm" type="number" inputmode="numeric" min="1" max="40" data-f="maxC" value="'+mc+'" aria-label="Số lượt ghé tối đa mỗi ngày"><span>lượt ghé tối đa mỗi ngày (SR thường đi khoảng 6)</span></label>'+
+    (isDef?'':'<button class="link" data-act="fnlReset">Về chuẩn ngành</button>')+'</div>'+
+    '<div class="small muted fnl-note">Số liệu là chuẩn ngành hoặc do bạn nhập. AI chỉ gợi ý, không tự đổi số.</div></div>';
+  const sum='<span class="small muted">'+fmt(ap.orders)+' đơn · '+fmt(ap.visits)+' ghé</span>'+(over?' <span class="badge bad">vượt sức</span>':tight?' <span class="badge warn">sát sức</span>':'');
   const wkWithData=weeks.filter(w=>w.work>0&&w.tt>0),maxTt=Math.max(1,...wkWithData.map(w=>w.tt));
   const rowHtml=w=>{
     const p=ap.weeks[w.i],pct=Math.max(6,Math.round(w.tt/maxTt*100));
@@ -1652,6 +1685,7 @@ function ctxText(weeks){
   const on=catShares();if(on.length)L.push('Cơ cấu gia dụng & điện máy (tỷ trọng): '+on.map(x=>x.c.name+' '+Math.round(x.f*100)+'%').join(', ')+'.');
   L.push('Giả định: giá trị trung bình mỗi đơn '+S.aov+' tr; phễu benchmark ngành: cứ '+funnel().fv+' lượt ghé đại lý gặp được chủ để tư vấn 10 khách, '+funnel().fc+' khách tư vấn chốt 1 đơn (≈ '+fmt(funnel().vpo,0)+' lượt ghé mỗi đơn); sức mua tháng này '+S.season+'%.');
   L.push(seasonText());
+  {const _tw=Math.max(1,weeks.reduce((a,w)=>a+w.work,0)),_mc=Math.max(1,+S.maxC||6);L.push('Sức đi tối đa của SR: '+_mc+' lượt ghé/ngày × '+_tw+' ngày làm việc = '+(_mc*_tw)+' lượt/tháng'+(ap?(ap.visits>_mc*_tw?' (nhu cầu '+ap.visits+' lượt, VƯỢT sức)':' (nhu cầu '+ap.visits+' lượt, trong sức)'):'')+'. Tỷ lệ phễu do người dùng đặt hoặc lấy chuẩn ngành; AI chỉ gợi ý, không thay số.');}
   {const _m=+S.month.split('-')[1],_r=regionOf(S.province),_c=CLIM[_r];L.push('Khí hậu trung bình nhiều năm (ước lượng) của '+REG_NAME[_r]+' vào tháng '+_m+': ≈ '+_c.t[_m-1]+'°C, '+WLAB[_c.w[_m-1]]+'.');}
   if(ap){
     L.push('Cần chốt ≈ '+ap.orders+' đơn, ≈ '+ap.visits+' lượt ghé/liên hệ, ≈ '+ap.uniq+' điểm bán khác nhau (ghé '+ap.vpp+' lần/điểm).');
@@ -1689,7 +1723,7 @@ function ctxText(weeks){
 }
 const AI_FORMAT=' Trả lời tiếng Việt, súc tích nhưng đầy đủ lý lẽ: mở đầu bằng 1–2 câu nhận định tổng quan nêu rõ vì sao (dựa trên số liệu/yếu tố nào), sau đó liệt kê 3–5 gạch đầu dòng, mỗi gạch là một câu đầy đủ (không cắt cụt thành cụm từ rời rạc), mở đầu bằng cụm in đậm dạng **cụm từ**, kèm số cụ thể từ dữ liệu và lý do ngắn gọn vì sao. Không chào hỏi, không ẩn dụ. Dùng đúng các kết luận trong mục "Yếu tố chính đã tính sẵn"; không bịa giá, khuyến mại, chính sách; điều gì không chắc thì ghi "cần kiểm tra". QUAN TRỌNG: mỗi gạch đầu dòng chỉ giải quyết đúng 1 vấn đề, dùng đúng lý do của chính vấn đề đó — tuyệt đối không ghép lý do của yếu tố này (ví dụ thiếu số liệu nhập hằng ngày) với hành động dành cho yếu tố khác (ví dụ tần suất ghé điểm bán, số lượt liên hệ); đây là hai việc khác nhau, không có quan hệ nhân quả. Nếu đề xuất liên quan đến ghé điểm bán/tần suất liên hệ, lý do phải là để đạt chỉ tiêu bán hàng hoặc phủ đủ điểm bán — không bao giờ lấy lý do "cải thiện độ tin cậy dự báo" hay "thiếu dữ liệu" làm căn cứ cho hành động ngoài thực địa. Mỗi ngành hàng (bình nước nóng, gia dụng) có chỉ tiêu RIÊNG, không bù qua lại được — không đề xuất kiểu "ngành A yếu nên tập trung bán ngành B để bù", vì bán thêm ngành B không giúp đạt chỉ tiêu ngành A; rủi ro riêng của một ngành phải có đề xuất nhắm đúng vào ngành đó. Tối đa khoảng 150 từ.';
 const AI_TASK={
-  plan:'Đánh giá việc chia chỉ tiêu theo tuần và khu vực: tuần hoặc khu vực rủi ro nhất và lý do; nên chỉnh tỷ lệ ghé trực tiếp so với chăm sóc từ xa thế nào; ngành nên ưu tiên chào theo mùa vụ kèm 1–2 điểm bán hàng cụ thể của Livotec; một phương án dự phòng nếu tuần đầu chậm.'+AI_FORMAT,
+  plan:'Đánh giá việc chia chỉ tiêu theo tuần và khu vực: tuần hoặc khu vực rủi ro nhất và lý do; nên chỉnh tỷ lệ ghé trực tiếp so với chăm sóc từ xa thế nào; ngành nên ưu tiên chào theo mùa vụ kèm 1–2 điểm bán hàng cụ thể của Livotec; một phương án dự phòng nếu tuần đầu chậm; nhận xét phễu (lượt ghé → khách tư vấn → đơn) so với sức đi tối đa mỗi ngày, nếu vượt sức thì gợi ý hướng xử lý (tăng giá trị đơn, tăng tỷ lệ gặp chủ hoặc chốt đơn) và chỉ GỢI Ý, không tự thay tỷ lệ phễu người dùng đã đặt.'+AI_FORMAT,
   check:'Phân tích tiến độ: mức đạt so với kế hoạch; nguyên nhân khả dĩ (nói rõ là giả thuyết); 3 việc cụ thể cho 1–2 ngày tới (có số điểm bán, khu vực); có nên cân lại các tuần còn lại. Nếu chưa có số liệu thực tế, nói rõ và nêu 3 việc nên làm ngay.'+AI_FORMAT,
   brief:'Nhận xét kết quả hôm qua so với kế hoạch ngày trong 1 gạch, rồi 2 việc cụ thể cho sáng nay (có số điểm bán hoặc khu vực nếu có). Nếu hôm qua chưa nhập số liệu, nói rõ và gợi ý nhập bù nhanh.'+AI_FORMAT,
   alerts:'Xếp các cảnh báo đang hoạt động theo mức ưu tiên và nêu một hành động cụ thể cho từng cảnh báo. Nếu không có cảnh báo, nêu 2 rủi ro nên theo dõi tuần này dựa trên kế hoạch và mùa vụ.'+AI_FORMAT,
@@ -2001,7 +2035,7 @@ function factors(weeks){
     if(sh>ev*1.15&&sh>0.28)add({id:'last',lv:'warn',sv:'dồn cuối tháng',name:'Dồn cuối tháng',val:Math.round(sh*100)+'%',msg:'Tuần cuối chiếm '+Math.round(sh*100)+'% chỉ tiêu (chia đều theo ngày là '+Math.round(ev*100)+'%)',act:'Đẩy bớt chỉ tiêu về các tuần đầu',how:'So tỷ trọng chỉ tiêu tuần cuối với tỷ trọng ngày làm việc của tuần đó.',src:'Số bạn nhập'});}
   const FN=funnel();
   if(ap&&ap.visits>0&&!(f&&f.ratio>1)){
-    const cap=totWork*Math.max(1,+S.maxC||12),sc=Math.ceil(ap.visits/0.75),ex=sc-ap.visits,lv=sc>cap?'bad':sc>cap*0.9?'warn':'ok',fc2=Math.round(FN.fc/0.75*10)/10;
+    const cap=totWork*Math.max(1,+S.maxC||6),sc=Math.ceil(ap.visits/0.75),ex=sc-ap.visits,lv=sc>cap?'bad':sc>cap*0.9?'warn':'ok',fc2=Math.round(FN.fc/0.75*10)/10;
     add({id:'sens',lv,sv:'dễ vỡ nếu chốt kém',name:'Nếu chốt kém hơn',val:'−25%',
       msg:'Chốt kém 25% (cần '+fmt(fc2,1)+' khách tư vấn/đơn): thêm '+ex+' lượt ghé ('+sc+'/'+cap+'), '+(sc>cap?'vượt sức':'vẫn trong sức'),
       act:lv==='ok'?'':'Giữ khách dự phòng, nâng giá trị mỗi đơn',
@@ -2373,8 +2407,8 @@ function cxDefs(){return '<defs>'+
   '<linearGradient id="gcxArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#02B6AC" stop-opacity=".30"/><stop offset="1" stop-color="#02B6AC" stop-opacity="0"/></linearGradient>'+
   '</defs>';}
 function monthKey(o){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+o);return d.getFullYear()+'-'+pad(d.getMonth()+1);}
-function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,fv:15,fc:10,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:12,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,strat:'season',tt:0,sync:{rev:0,lastOk:0},mail:{on:false,morning:true,evening:true,warn:true,weekly:true},rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''},sources:[],planB:'',income:0,commission:1.5,bench:{ord:0,first:0,conv:0},sg:'target'};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{strat:o.strat||'manual',tt:+o.tt||0,sync:Object.assign(d.sync,o.sync||{}),mail:Object.assign(d.mail,o.mail||{}),hist:o.hist||{},rem:Object.assign(d.rem,o.rem||{}),area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats,fv:+o.fv||15,fc:+o.fc||10,maxC:o.fv?(+o.maxC||12):((+o.maxC||4)<=6?Math.min(30,Math.round((+o.maxC||4)*3)):(+o.maxC)),});}}catch(e){}return defaults();}
+function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,fv:15,fc:10,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:6,cap6:1,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,strat:'season',tt:0,sync:{rev:0,lastOk:0},mail:{on:false,morning:true,evening:true,warn:true,weekly:true},rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''},sources:[],planB:'',income:0,commission:1.5,bench:{ord:0,first:0,conv:0},sg:'target'};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{strat:o.strat||'manual',tt:+o.tt||0,sync:Object.assign(d.sync,o.sync||{}),mail:Object.assign(d.mail,o.mail||{}),hist:o.hist||{},rem:Object.assign(d.rem,o.rem||{}),area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats,fv:+o.fv||15,fc:+o.fc||10,maxC:(o.cap6?(+o.maxC||6):((!o.maxC||[4,9,12,15].includes(+o.maxC))?6:+o.maxC)),cap6:1,});}}catch(e){}return defaults();}
 let S=load(),confirmReset=false,copyText=null;
 function save(){try{S.savedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}if(typeof scheduleSync==='function')scheduleSync();}
 
@@ -2466,7 +2500,7 @@ function forecast(weeks){
 }
 function feasibility(weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0);if(!total)return null;
-  const totWork=Math.max(1,weeks.reduce((a,w)=>a+w.work,0)),lr=learned(weeks),y=(S.learn&&lr.n>0)?lr.yield:lr.prior,mc=Math.max(1,+S.maxC||12);
+  const totWork=Math.max(1,weeks.reduce((a,w)=>a+w.work,0)),lr=learned(weeks),y=(S.learn&&lr.n>0)?lr.yield:lr.prior,mc=Math.max(1,+S.maxC||6);
   const vsum=weeks.reduce((a,w)=>a+(+w.vt||0),0),needC=vsum>0?vsum:total/y,perDay=needC/totWork;
   return{total,totWork,y,needC,perDay,ratio:perDay/mc,cap:totWork*mc*y,mc};
 }
@@ -3183,13 +3217,14 @@ document.addEventListener('click',function(e){
     const wk=analyze().find(w=>w.days.some(x=>x.date===d.day));if(wk)recomputeWeekActual(wk);
     toast('Đã lưu số liệu ngày '+d.day.slice(8)+'/'+d.day.slice(5,7));
   }
+  else if(a==='fnlReset'){S.fv=15;S.fc=10;toast('Đã về chuẩn ngành');}
   else if(a==='sgroup'){if(['target','area','sys'].includes(d.v))S.sg=d.v;}
   else if(a==='gotoMonth'){switchMonth(d.m);S.tab='check';}
   else if(a==='openSec'){openSec[d.k]=true;}
   else if(a==='distAdd'){const n=(document.getElementById('dnm').value||'').trim().slice(0,40),p=Math.max(0,Math.floor(+document.getElementById('dpt').value||0));if(n&&p>0&&S.area.dist.length<30){S.area.dist.push({n:n,p:p});openSec.area=true;}else toast('Nhập tên khu vực và số điểm bán');}
   else if(a==='distDel'){S.area.dist.splice(+d.i,1);}
   else if(a==='ai'){askAI();return;}
-  else if(a==='area'){const A={tp:[25,15],tinh:[20,12],rong:[15,9]}[d.v];S.aov=A[0];S.maxC=A[1];toast('Đã áp dụng mẫu địa bàn, bạn có thể sửa tiếp');}
+  else if(a==='area'){const A={tp:[25,8],tinh:[20,6],rong:[15,5]}[d.v];S.aov=A[0];S.maxC=A[1];toast('Đã áp dụng mẫu địa bàn, bạn có thể sửa tiếp');}
   else if(a==='rule'){S.rules[d.r].on=!S.rules[d.r].on;}
   else if(a==='rv'){const r=RULES.find(x=>x.id===d.r),c=S.rules[d.r];c.v=Math.min(r.max,Math.max(r.min,c.v+(+d.d)));S.preset='custom';}
   else if(a==='preset'){S.preset=d.v;RULES.forEach(r=>{S.rules[r.id].v=r.p[d.v];});}
@@ -3240,7 +3275,7 @@ document.addEventListener('change',function(e){
   else if(f==='ttotal'){S.tt=Math.max(0,Math.floor(+t.value||0));S.plan=null;}
   else if(f==='catP'){S.cats[t.dataset.c].p=Math.max(0,+t.value||0);}
   else if(f==='season'){S.season=+t.value;}
-  else if(f==='maxC'){S.maxC=Math.max(1,Math.floor(+t.value||12));}
+  else if(f==='maxC'){S.maxC=Math.max(1,Math.min(40,Math.floor(+t.value||6)));}
   else if(f==='fnl'){const k=t.dataset.k;if(k==='fv')S.fv=Math.max(10,Math.min(60,Math.round(+t.value||15)));else if(k==='fc')S.fc=Math.max(1,Math.min(50,Math.round(+t.value||10)));S.plan=S.plan;}
   else if(f==='disc'){S.disc=+t.value;}
   else if(f==='list'){S.list[t.dataset.p]=Math.max(0.1,+t.value||0.1);}
