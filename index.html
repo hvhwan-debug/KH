@@ -1033,6 +1033,41 @@ h2,.sech .st{color:var(--ink)}
 .stp:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
 .rule .stp input.n{width:46px;font-size:15px}
 @media (max-width:420px){.stp input.n{width:52px}}
+
+/* ===== Thẻ mùa vụ lật được: mặt trước có biểu đồ 12 tháng, mặt sau giải thích yếu tố tác động ===== */
+.szcard{display:block;padding:0;border:0;background:none;text-align:left;font:inherit;color:inherit;cursor:pointer;perspective:1000px;-webkit-tap-highlight-color:transparent}
+.sz-in{display:grid;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.3,.7,.2,1);height:100%}
+.szcard.flipped .sz-in{transform:rotateY(180deg)}
+.sz-f,.sz-b{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;
+  background:color-mix(in srgb,var(--lvc) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--lvc) 38%,var(--line))}
+.sz-b{transform:rotateY(180deg);background:color-mix(in srgb,var(--lvc) 13%,var(--surface));gap:7px}
+.sz-top{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px}
+.sz-chart{display:flex;align-items:flex-end;gap:3px;height:44px}
+.sz-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;height:100%;min-width:0}
+.sz-col i{display:block;width:100%;border-radius:3px 3px 1px 1px;background:var(--cc);opacity:.45}
+.sz-col.l0{--cc:#C0352B}.sz-col.l1{--cc:#E3A63B}.sz-col.l2{--cc:#1B8A55}
+.sz-col.l0 i{height:30%}.sz-col.l1 i{height:62%}.sz-col.l2 i{height:100%}
+.sz-col em{font-style:normal;font-size:9px;line-height:1;color:var(--muted)}
+.sz-col.now i{opacity:1;box-shadow:0 0 0 2px color-mix(in srgb,var(--cc) 35%,transparent)}
+.sz-col.now em{font-weight:800;color:var(--ink)}
+.sz-hint{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);opacity:.9}
+.sz-bh{display:flex;align-items:center;gap:8px}
+.sz-bh .sz-ic{width:30px;height:30px;border-radius:10px;flex:none}
+.sz-bh b{font-size:13.5px;flex:1;min-width:0}
+.sz-tag{font-size:11.5px;font-weight:800;color:var(--lvt);background:color-mix(in srgb,var(--lvc) 16%,transparent);padding:2px 10px;border-radius:999px;white-space:nowrap}
+.sz-clim{font-size:12px;color:var(--muted);font-weight:600}
+.sz-fi{display:grid;grid-template-columns:18px 1fr;gap:6px;font-size:12.5px;line-height:1.4;align-items:start}
+.sz-fi i{font-style:normal;font-size:11px;line-height:1.6;text-align:center}
+.sz-fi.e1 i{color:#1B8A55}.sz-fi.em i{color:#C0352B}.sz-fi.e0 i{color:var(--muted)}
+.sz-fi b{font-weight:800;color:var(--ink)}
+.sz-vd{margin-top:auto;font-size:12.5px;padding-top:6px;border-top:1px dashed color-mix(in srgb,var(--lvc) 40%,var(--line));color:var(--ink)}
+.sz-vd b{color:var(--lvt)}
+.szcard:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:16px}
+:root[data-theme="dark"] .sz-fi.e1 i,:root[data-theme="dark"] .sz-col.l2{--x:1}
+@media (prefers-reduced-motion:reduce){.sz-in{transition:none}}
+
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .sz-fi.e1 i{color:#4CC38A}:root:not([data-theme="light"]) .sz-fi.em i{color:#FF8A80}:root:not([data-theme="light"]) .sz-col.l0{--cc:#FF8A80}:root:not([data-theme="light"]) .sz-col.l2{--cc:#4CC38A}}
+:root[data-theme="dark"] .sz-fi.e1 i{color:#4CC38A}:root[data-theme="dark"] .sz-fi.em i{color:#FF8A80}:root[data-theme="dark"] .sz-col.l0{--cc:#FF8A80}:root[data-theme="dark"] .sz-col.l2{--cc:#4CC38A}
 </style>
 </head>
 <body>
@@ -1269,18 +1304,93 @@ const SEASON={
   nam:{bn:[1,1,0,0,0,0,0,0,0,0,1,1],bep:[2,1,1,1,1,1,1,1,1,1,2,2],mat:[1,2,2,2,2,1,1,1,1,1,1,1],suoi:[0,0,0,0,0,0,0,0,0,0,0,0]}
 };
 const LV=['thấp','trung bình','cao'];
+
+/* Khí hậu trung bình nhiều năm (ước lượng): t = nhiệt độ TB (°C), w = 0 ít mưa · 1 ẩm/mưa nhẹ · 2 mưa nhiều */
+const CLIM={
+  bac:{t:[17,18,20,24,28,29,30,29,28,25,22,18],w:[0,1,1,1,2,2,2,2,2,1,0,0]},
+  trung:{t:[21,22,24,26,28,29,29,29,28,26,24,22],w:[1,0,0,0,1,0,0,1,2,2,2,2]},
+  nam:{t:[26,27,29,30,29,28,28,28,28,27,27,26],w:[0,0,0,0,1,2,2,2,2,2,1,0]}
+};
+const WLAB=['ít mưa','ẩm, mưa nhẹ','mưa nhiều'];
+const up_=(n,d)=>[1,n,d],fl_=(n,d)=>[0,n,d],dn_=(n,d)=>[-1,n,d];
+const SZ_WHY={
+  bn:{
+    bac:[[[1],[up_('Nhiệt độ','Trung bình ≈ {t}°C, rét đậm: tắm nước nóng gần như bắt buộc'),up_('Mùa cao điểm','Đỉnh mùa lạnh: nhà lắp mới, thay bình cũ nhiều')]],
+         [[2],[up_('Nhiệt độ','≈ {t}°C, vẫn lạnh'),up_('Độ ẩm','Mưa phùn, ẩm lạnh khiến cảm giác rét hơn')]],
+         [[3],[fl_('Nhiệt độ','≈ {t}°C, ấm dần nhưng sáng tối còn lạnh ẩm'),dn_('Xu hướng','Cuối mùa lạnh, nhu cầu mua mới giảm dần')]],
+         [[4,5,6,7,8],[dn_('Nhiệt độ','≈ {t}°C, trời ấm đến nóng: ít ai cần nước nóng'),dn_('Thói quen mua','Ngoài mùa lạnh, chủ yếu mua thay bình hỏng')]],
+         [[9],[dn_('Nhiệt độ','≈ {t}°C, vẫn nóng'),up_('Mua trước mùa','Đại lý bắt đầu nhập hàng đón mùa lạnh')]],
+         [[10],[fl_('Nhiệt độ','≈ {t}°C, sáng tối bắt đầu se lạnh'),up_('Mua trước mùa','Cao điểm nhập hàng trước đợt rét đầu mùa')]],
+         [[11,12],[up_('Nhiệt độ','≈ {t}°C, không khí lạnh về liên tục'),up_('Mùa cao điểm','Cao điểm mua, lắp bình; sửa nhà trước Tết kéo theo nhu cầu')]]],
+    trung:[[[1],[up_('Nhiệt độ','≈ {t}°C, có đợt rét và mưa phùn ở Bắc Trung Bộ'),up_('Mùa cao điểm','Mùa lạnh còn kéo dài, nhu cầu nước nóng vẫn cao')]],
+         [[2],[up_('Nhiệt độ','≈ {t}°C, rét nhẹ'),up_('Mùa cao điểm','Cuối mùa lạnh, nhu cầu vẫn cao')]],
+         [[3],[fl_('Nhiệt độ','≈ {t}°C, ấm dần'),dn_('Xu hướng','Hết rét, nhu cầu giảm dần')]],
+         [[4,5,6,7,8],[dn_('Nhiệt độ','≈ {t}°C, nắng nóng dần (có gió Lào): rất ít dùng nước nóng'),dn_('Thói quen mua','Chủ yếu mua thay bình hỏng')]],
+         [[9,10],[fl_('Nhiệt độ','≈ {t}°C, mưa bão làm trời dịu dần'),up_('Mua trước mùa','Đại lý nhập hàng đón các đợt lạnh cuối năm')]],
+         [[11,12],[up_('Mưa lạnh','≈ {t}°C, mưa dài ngày, ẩm lạnh'),up_('Mùa cao điểm','Nhu cầu nước nóng tăng mạnh; sửa nhà trước Tết')]]],
+    nam:[[[1,2,11,12],[fl_('Nhiệt độ','≈ {t}°C, ấm quanh năm nên nhu cầu chỉ ở mức vừa'),up_('Gió mùa','Có đợt gió mùa làm sáng sớm và tối mát hơn, một số hộ dùng nước nóng')]],
+         [[3,4],[dn_('Nhiệt độ','≈ {t}°C, mùa khô nắng nóng: hầu như không dùng nước nóng'),dn_('Thói quen mua','Mua chủ yếu để thay bình hỏng hoặc nhà mới')]],
+         [[5,6,7,8,9,10],[dn_('Nhiệt độ','≈ {t}°C, nóng ẩm quanh năm'),fl_('Mùa mưa','Mưa chỉ làm trời mát nhẹ, chưa đủ kéo nhu cầu nước nóng lên')]]]
+  },
+  bep:{},
+  mat:{
+    bac:[[[1,2],[dn_('Nhiệt độ','≈ {t}°C, trời lạnh: không dùng quạt, điều hòa'),dn_('Thời điểm','Xa mùa nóng, nhu cầu mua rất thấp')]],
+         [[3,4],[fl_('Nhiệt độ','≈ {t}°C, ấm dần'),up_('Mua trước mùa','Đại lý nhập hàng đón mùa nóng')]],
+         [[5,6,7,8],[up_('Nhiệt độ','≈ {t}°C, nắng nóng, oi bức'),up_('Mùa cao điểm','Đỉnh mùa quạt, điều hòa; lắp mới và thay thế nhiều')]],
+         [[9],[fl_('Nhiệt độ','≈ {t}°C, vẫn nóng nhưng dịu dần'),dn_('Xu hướng','Cuối mùa nóng, nhu cầu mua giảm')]],
+         [[10],[dn_('Nhiệt độ','≈ {t}°C, trời dịu mát, hết nóng'),dn_('Thời điểm','Hết mùa nóng, nhu cầu mua rất thấp')]],
+         [[11,12],[dn_('Nhiệt độ','≈ {t}°C, trời mát đến lạnh'),dn_('Thời điểm','Xa mùa nóng, nhu cầu mua rất thấp')]]],
+    trung:[[[1],[dn_('Nhiệt độ','≈ {t}°C, trời mát, có mưa phùn'),dn_('Thời điểm','Xa mùa nóng, nhu cầu thấp')]],
+         [[2,3],[fl_('Nhiệt độ','≈ {t}°C, ấm dần'),up_('Mua trước mùa','Đại lý nhập hàng đón mùa nắng nóng')]],
+         [[4,5,6,7,8],[up_('Nhiệt độ','≈ {t}°C, nắng nóng, có gió Lào'),up_('Mùa cao điểm','Đỉnh mùa nóng: quạt, điều hòa bán mạnh')]],
+         [[9],[fl_('Nhiệt độ','≈ {t}°C, nóng dịu dần'),dn_('Xu hướng','Vào mùa mưa bão, nhu cầu giảm')]],
+         [[10,11,12],[dn_('Mưa nhiều','≈ {t}°C, mưa bão kéo dài, trời dịu mát'),dn_('Thời điểm','Ngoài mùa nóng, nhu cầu thấp')]]],
+    nam:[[[1],[fl_('Nhiệt độ','≈ {t}°C, ấm quanh năm nên vẫn có nhu cầu nền'),dn_('Gió mùa','Đầu năm se mát về sáng, nhu cầu chưa tăng')]],
+         [[2,3,4,5],[up_('Nhiệt độ','≈ {t}°C, mùa khô, nắng nóng tăng dần (đỉnh tháng 4)'),up_('Mùa cao điểm','Đỉnh nhu cầu quạt, điều hòa trước và trong mùa nóng')]],
+         [[6,7,8,9,10,11],[fl_('Nhiệt độ','≈ {t}°C, nóng ẩm quanh năm: nhu cầu nền ổn định'),dn_('Mùa mưa','Mưa làm trời dịu bớt nên chưa lên cao')]],
+         [[12],[fl_('Nhiệt độ','≈ {t}°C, nóng ấm quanh năm'),dn_('Đầu mùa khô','Trời khô mát nhẹ, nhu cầu giữ ở mức vừa')]]]
+  },
+  suoi:{
+    bac:[[[1],[up_('Nhiệt độ','≈ {t}°C, rét đậm: máy sưởi bán chạy'),fl_('Độ ẩm','Hanh khô, ít cần hút ẩm')]],
+         [[2],[up_('Nhiệt độ','≈ {t}°C, vẫn rét'),up_('Độ ẩm','Mưa phùn, nồm ẩm: cần máy hút ẩm')]],
+         [[3],[up_('Độ ẩm','Nồm ẩm đặc trưng cuối đông đầu xuân: cần hút ẩm nhiều'),dn_('Nhiệt độ','≈ {t}°C, đã ấm hơn nên ít cần sưởi')]],
+         [[4,5,6,7,8,9],[dn_('Nhiệt độ','≈ {t}°C, ấm đến nóng: không cần sưởi'),dn_('Thời điểm','Ngoài mùa lạnh và nồm, nhu cầu thấp')]],
+         [[10],[fl_('Nhiệt độ','≈ {t}°C, mới se lạnh, chưa cần sưởi nhiều'),up_('Mua trước mùa','Đại lý nhập sưởi, hút ẩm đón đông')]],
+         [[11,12],[up_('Nhiệt độ','≈ {t}°C, không khí lạnh tăng cường: sưởi bán chạy'),up_('Mùa cao điểm','Sắm sưởi trước và trong các đợt rét')]]],
+    trung:[[[1,2],[up_('Nhiệt độ','≈ {t}°C, có đợt rét ngắn, mưa phùn ẩm'),fl_('Giới hạn','Rét không kéo dài như miền Bắc nên nhu cầu chỉ ở mức vừa')]],
+         [[3,4,5,6,7,8],[dn_('Nhiệt độ','≈ {t}°C, ấm đến nóng: không cần sưởi'),dn_('Thời điểm','Ngoài mùa lạnh, nhu cầu thấp')]],
+         [[9,10],[dn_('Nhiệt độ','≈ {t}°C, trời ấm'),dn_('Hút ẩm','Mùa mưa bão nhưng không lạnh, ít hộ mua máy hút ẩm')]],
+         [[11,12],[up_('Mưa lạnh','≈ {t}°C, mưa dài ngày, ẩm lạnh'),fl_('Giới hạn','Chỉ rét nhẹ nên nhu cầu ở mức vừa')]]],
+    nam:[[[1,2,3,4,5,6,7,8,9,10,11,12],[dn_('Nhiệt độ','≈ {t}°C, nóng quanh năm: hầu như không cần sưởi'),dn_('Hút ẩm','Hút ẩm chỉ dùng cục bộ, nhu cầu rất nhỏ')]]]
+  }
+};
+(function(){const bep=[[[1],[up_('Dịp Tết','Sát Tết: sắm sửa, nấu nướng, mua đồ gia dụng nhiều'),fl_('Khí hậu','Ít ảnh hưởng: nấu ăn quanh năm')]],
+  [[2],[fl_('Dịp Tết','Mua sắm Tết dần lắng, sức mua về mức bình thường'),fl_('Khí hậu','Ít ảnh hưởng: nấu ăn quanh năm')]],
+  [[3,4,5,6,7,8,9,10],[fl_('Nhu cầu nền','Nấu nướng hằng ngày, ít phụ thuộc thời tiết'),fl_('Yếu tố khác','Biến động chủ yếu theo khuyến mại, mùa cưới, tân gia')]],
+  [[11,12],[up_('Cuối năm','Sắm sửa, tiệc cuối năm, chuẩn bị Tết'),up_('Thưởng cuối năm','Thu nhập cuối năm kéo sức mua tăng')]]];
+  SZ_WHY.bep={bac:bep,trung:bep,nam:bep};})();
+function szWhy(g,r,m){
+  const c=CLIM[r],t=c.t[m-1],w=c.w[m-1],hit=((SZ_WHY[g]||{})[r]||[]).find(x=>x[0].includes(m));
+  return{clim:'≈ '+t+'°C · '+WLAB[w],fs:hit?hit[1].map(f=>[f[0],f[1],f[2].replace('{t}',t)]):[]};
+}
 function seasonText(){
   const m=+S.month.split('-')[1],r=regionOf(S.province);
   return 'Mùa vụ ước lượng tháng '+m+' ('+REG_NAME[r]+(S.province?'':', chưa chọn khu vực nên tạm tính theo miền Bắc')+'): '+SEASON_G.map(g=>g[1]+' '+LV[SEASON[r][g[0]][m-1]]).join('; ')+'. Đây là ước lượng theo khí hậu, không phải số liệu bán hàng của Livotec.';
 }
 function seasonChips(){
-  const m=+S.month.split('-')[1],r=regionOf(S.province),cls=['low','mid','high'],ICO={bn:'droplet',bep:'pot',mat:'fan',suoi:'flame'};
-  const cards=SEASON_G.map(g=>{const lv=SEASON[r][g[0]][m-1];
-    return '<div class="szcard lv-'+cls[lv]+'"><span class="sz-ic">'+ic(ICO[g[0]]||'droplet',20)+'</span><div class="sz-tx"><b>'+g[1]+'</b><span class="sz-lv">Nhu cầu '+LV[lv]+'</span></div>'+
-      '<span class="sz-meter n'+(lv+1)+'" role="img" aria-label="Mức nhu cầu '+LV[lv]+'"><i></i><i></i><i></i></span></div>';}).join('');
+  const m=+S.month.split('-')[1],r=regionOf(S.province),cls=['low','mid','high'],ICO={bn:'droplet',bep:'pot',mat:'fan',suoi:'flame'},ARW={'1':'▲','0':'●','-1':'▼'},MON=['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
+  const cards=SEASON_G.map(g=>{const arr=SEASON[r][g[0]],lv=arr[m-1],W=szWhy(g[0],r,m);
+    const chart='<span class="sz-chart" aria-hidden="true">'+arr.map((v,i)=>'<span class="sz-col l'+v+(i+1===m?' now':'')+'"><i></i><em>'+(i+1)+'</em></span>').join('')+'</span>';
+    const front='<span class="sz-f"><span class="sz-top"><span class="sz-ic">'+ic(ICO[g[0]]||'droplet',20)+'</span><span class="sz-tx"><b>'+g[1]+'</b><span class="sz-lv">Nhu cầu '+LV[lv]+'</span></span>'+
+      '<span class="sz-meter n'+(lv+1)+'"><i></i><i></i><i></i></span></span>'+chart+'<span class="sz-hint">'+ic('trend',12)+' chạm để xem vì sao</span></span>';
+    const back='<span class="sz-b"><span class="sz-bh"><span class="sz-ic">'+ic(ICO[g[0]]||'droplet',18)+'</span><b>'+g[1]+'</b><span class="sz-tag">Nhu cầu '+LV[lv]+'</span></span>'+
+      '<span class="sz-clim">Tháng '+m+' · '+REG_NAME[r]+': '+W.clim+'</span>'+
+      W.fs.map(f=>'<span class="sz-fi e'+(f[0]<0?'m':f[0])+'"><i>'+ARW[f[0]]+'</i><span><b>'+f[1]+'.</b> '+f[2]+'</span></span>').join('')+
+      '<span class="sz-vd">Kết luận: nhu cầu <b>'+LV[lv]+'</b></span></span>';
+    return '<button type="button" class="szcard lv-'+cls[lv]+'" data-flip="1" aria-pressed="false" aria-label="'+g[1]+': nhu cầu '+LV[lv]+'. Chạm để xem lý do"><span class="sz-in">'+front+back+'</span></button>';}).join('');
   return '<div class="sz-h">'+ic('plan',16)+'<b>Mùa vụ ước lượng tháng '+m+'</b><span class="muted small">'+REG_NAME[r]+(S.province?'':' · chưa chọn khu vực nên tạm tính theo miền Bắc')+'</span></div>'+
     '<div class="szgrid">'+cards+'</div>'+
-    '<div class="szleg"><span class="lv-low"><i></i>thấp</span><span class="lv-mid"><i></i>trung bình</span><span class="lv-high"><i></i>cao</span><span class="szleg-n">Ước lượng theo khí hậu, không phải số liệu bán hàng của Livotec.</span></div>';
+    '<div class="szleg"><span class="lv-low"><i></i>thấp</span><span class="lv-mid"><i></i>trung bình</span><span class="lv-high"><i></i>cao</span><span class="szleg-n">Chạm vào từng thẻ để xem vì sao nhu cầu cao hay thấp. Ước lượng theo khí hậu trung bình nhiều năm, không phải số liệu bán hàng của Livotec.</span></div>';
 }
 let apCache=null;
 function areaPlan(weeks){
