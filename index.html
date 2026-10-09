@@ -972,6 +972,36 @@ h2,.sech .st{color:var(--ink)}
 #hring{right:14px}
 .wrap .tabs{width:100%;max-width:none;margin-left:0;margin-right:0}
 @media (max-width:600px){.top .topin{padding-left:10px}#hring{right:10px}}
+
+/* ===== Thiết lập chi tiết: thanh nhóm + thẻ hành động cuối trang ===== */
+.sghub{margin:6px 0 14px}
+.sg-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.sg-tab{position:relative;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 8px;border:0;border-radius:14px;background:transparent;color:var(--muted);font-weight:700;font-size:14px;cursor:pointer}
+.sg-tab svg{flex:none}
+.sg-tab em{font-style:normal;font-size:11px;font-weight:800;min-width:20px;padding:1px 6px;border-radius:999px;background:color-mix(in srgb,var(--ink) 9%,transparent);text-align:center}
+.sg-tab:hover{color:var(--ink)}
+.sg-tab[aria-selected="true"]{background:var(--grad);color:var(--on-brand);box-shadow:0 6px 14px rgba(0,122,115,.25)}
+.sg-tab[aria-selected="true"] em{background:rgba(255,255,255,.25)}
+.sg-dot{position:absolute;top:7px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--gd);box-shadow:0 0 0 2px var(--surface)}
+.sg-tab[aria-selected="true"] .sg-dot{box-shadow:0 0 0 2px #fff}
+.sg-desc{margin:10px 4px 10px}
+@media (max-width:480px){.sg-tab{flex-direction:column;gap:3px;padding:8px 4px;font-size:12.5px}.sg-tab em{display:none}.sg-dot{top:6px;right:14px}}
+.gocard{display:grid;grid-template-columns:1fr auto;gap:14px 20px;align-items:center;padding:18px 20px;margin:6px 0 10px;border-radius:22px;color:#fff;background:var(--top-grad);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.gocard::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.1);pointer-events:none}
+.gocard>*{position:relative;z-index:1}
+.go-tx{display:flex;flex-direction:column;gap:3px}
+.go-tx b{font-size:17px;line-height:1.3}
+.go-tx span{font-size:13.5px;opacity:.92;line-height:1.45}
+.go-act{display:flex;gap:10px;flex-wrap:wrap}
+.go-act .btn{width:auto;min-width:170px;padding:11px 18px;text-align:center}
+.go-act .btn small{display:block;font-weight:500;font-size:11.5px;opacity:.85;margin-top:1px}
+.gocard .btn:not(.ghost){background:#fff;color:var(--brand-deep);box-shadow:0 8px 18px rgba(0,50,47,.25)}
+.gocard .btn.ghost{background:rgba(255,255,255,.14);color:#fff;border:1.5px solid rgba(255,255,255,.55)}
+.go-link{grid-column:1/-1;justify-self:start;color:#fff;opacity:.92;padding:0;text-decoration:underline}
+@media (max-width:700px){.gocard{grid-template-columns:1fr;padding:16px}.go-act .btn{flex:1;min-width:140px}}
+.aiGlow::before{background:conic-gradient(from var(--ai-angle),var(--brand),#7FF0C0,var(--brand-deep),#7FF0C0,var(--brand))}
+.num::placeholder{font-weight:600;opacity:.4}
+.bn-f .num::placeholder{font-size:15px}
 </style>
 </head>
 <body>
@@ -2058,7 +2088,7 @@ const pad=n=>String(n).padStart(2,'0');
 const fmt=(x,d=0)=>Number(x).toLocaleString('vi-VN',{minimumFractionDigits:d,maximumFractionDigits:d});
 const C={bn:'var(--bn)',gd:'var(--gd)'};
 function monthKey(o){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+o);return d.getFullYear()+'-'+pad(d.getMonth()+1);}
-function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,strat:'season',tt:0,sync:{rev:0,lastOk:0},mail:{on:false,morning:true,evening:true,warn:true,weekly:true},rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''},sources:[],planB:'',income:0,commission:1.5,bench:{ord:0,first:0,conv:0}};}
+function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:4,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,strat:'season',tt:0,sync:{rev:0,lastOk:0},mail:{on:false,morning:true,evening:true,warn:true,weekly:true},rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''},sources:[],planB:'',income:0,commission:1.5,bench:{ord:0,first:0,conv:0},sg:'target'};}
 function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{strat:o.strat||'manual',tt:+o.tt||0,sync:Object.assign(d.sync,o.sync||{}),mail:Object.assign(d.mail,o.mail||{}),hist:o.hist||{},rem:Object.assign(d.rem,o.rem||{}),area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats});}}catch(e){}return defaults();}
 let S=load(),confirmReset=false,copyText=null;
 function save(){try{S.savedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}if(typeof scheduleSync==='function')scheduleSync();}
@@ -2496,7 +2526,7 @@ function benchCard(weeks){
       field('conv','Cửa hàng ghé thành đại lý nhập','để trống: dùng tỷ lệ chốt '+(+S.rate||40)+'%',conv,'%','VD: 20','1')+
     '</div><div class="bn-res">'+r1+r2+r3+'</div>'+
     '<div class="note">Đây là số liệu do bạn nhập, không phải số liệu bán hàng thật mà công cụ có sẵn của Livotec.</div>';
-  return sec('bench',ic('compass',18),'Đối chiếu khu vực','<span class="small muted">ghé ≈ '+fmt(perDealer,1)+' cửa hàng / đại lý</span>',body,true);
+  return sec('bench',ic('compass',18),'Đối chiếu khu vực','<span class="small muted">ghé ≈ '+fmt(perDealer,1)+' cửa hàng / đại lý</span>',body,false);
 }
 
 /* ---------- Tab Thiết lập ---------- */
@@ -2517,6 +2547,31 @@ function renderSetup(){
       for(let i=w.days[w.days.length-1].dow+1;i<7;i++)h+='<i></i>';
       return h;
     }).join('')+'</div>';
+  const daysCard=sec('days',ic('plan',18),'Ngày bạn làm việc','<span class="small muted">'+workDays+' ngày</span>','<div class="small muted">Chủ nhật mặc định nghỉ. Chạm vào ngày để đổi: ngày lễ, nghỉ phép, đi công tác.</div>'+cal);
+  const tuneCard='<div class="card secard"><details data-sec="tune"'+(isOpen('tune')?' open':'')+'><summary class="sech"><span class="st">'+ic('setup',18)+'<span>Tinh chỉnh thêm</span></span><span class="ss small muted">không bắt buộc</span></summary><div class="secb">'+
+    '<div class="small muted" style="margin-top:6px">Cách chia chỉ tiêu cho các tuần</div>'+
+    '<div class="radio"><label'+(S.pace==='front'?' class="on"':'')+'><input type="radio" name="pace" data-f="pace" value="front"'+(S.pace==='front'?' checked':'')+'><b>Nhẹ dần về cuối tháng</b><div class="small muted">Tuần đầu nhiều hơn một chút, tuần cuối ít nhất.</div></label>'+
+    '<label'+(S.pace==='even'?' class="on"':'')+'><input type="radio" name="pace" data-f="pace" value="even"'+(S.pace==='even'?' checked':'')+'><b>Đều theo ngày làm việc</b><div class="small muted">Mỗi ngày làm việc gánh phần bằng nhau.</div></label></div>'+
+    '<div class="small muted" style="margin-top:10px">Giá S.I tạm tính = giá niêm yết trên livotec.com trừ chiết khấu. Hãy sửa theo bảng giá S.I thật.</div>'+
+    '<input type="range" min="0" max="50" step="1" value="'+S.disc+'" data-f="disc" data-live="discv" aria-label="Chiết khấu S.I">'+
+    '<div class="small"><b id="discv">Chiết khấu '+S.disc+'%</b> so với giá niêm yết</div>'+
+    [['bn','Bình nước nóng (niêm yết TB, triệu/bình)']].map(x=>'<div class="field"><span class="nm small">'+x[1]+'<div class="muted" style="font-weight:400">Giá S.I ≈ '+fmt(si(x[0]),2)+' tr</div></span><input class="num sm" type="number" inputmode="decimal" step="0.1" min="0.1" data-f="list" data-p="'+x[0]+'" value="'+S.list[x[0]]+'"><span class="unit">tr</span></div>').join('')+
+    '<div class="small muted" style="margin-top:10px">Để tính số khách cần liên hệ:</div>'+
+    '<div class="field"><span class="nm small">Giá trị trung bình mỗi đơn</span><input class="num sm" type="number" inputmode="numeric" min="1" data-f="aov" value="'+S.aov+'"><span class="unit">tr</span></div>'+
+    '<div class="field"><span class="nm small">Tỷ lệ khách liên hệ chốt được đơn</span><input class="num sm" type="number" inputmode="numeric" min="5" max="100" data-f="rate" value="'+S.rate+'"><span class="unit">%</span></div>'+
+  '</div></details></div>';
+  const SGS=[
+    {id:'target',label:'Chỉ tiêu',icon:'target',desc:'Nguồn doanh số, thu nhập mong muốn, kiểm tra khả thi và cơ cấu ngành hàng.',cards:[sourcesCard(weeks),incomeCard(weeks),feasCard(weeks),catsCard(tg)],need:false},
+    {id:'area',label:'Địa bàn',icon:'plan',desc:'Điểm bán bạn phụ trách, số liệu đối chiếu khu vực và ngày làm việc.',cards:[areaCard(weeks),benchCard(weeks),daysCard],need:!(+((S.area||{}).pts)||0)},
+    {id:'sys',label:'Hệ thống',icon:'setup',desc:'Tài khoản, nhắc việc, lưu dữ liệu và các thông số tinh chỉnh.',cards:[acctCard(),remCard(),tuneCard],need:!AUTH.user}
+  ];
+  const sg=SGS.find(g=>g.id===S.sg)||SGS[0];
+  const hub='<div class="sghub"><div class="sg-tabs" role="tablist" aria-label="Nhóm thiết lập chi tiết">'+SGS.map(g=>'<button role="tab" class="sg-tab" data-act="sgroup" data-v="'+g.id+'" aria-selected="'+(g===sg)+'">'+ic(g.icon,17)+'<span>'+g.label+'</span><em>'+g.cards.filter(Boolean).length+'</em>'+(g.need?'<i class="sg-dot" title="Còn mục chưa nhập"></i>':'')+'</button>').join('')+'</div>'+
+    '<div class="sg-desc small muted">'+sg.desc+'</div><div class="secgrid">'+sg.cards.join('')+'</div></div>';
+  const go=total?'<div class="gocard"><div class="go-tx"><b>Sẵn sàng với KPI '+fmt(total)+' triệu?</b><span>Tạo kế hoạch chia theo tuần và ngày, hoặc tự chỉnh từng tuần.</span></div>'+
+    '<div class="go-act"><button class="btn" data-act="mkplan" data-m="auto">Tạo tự động<small>Tự chia theo tuần, ngày</small></button><button class="btn ghost" data-act="mkplan" data-m="manual">Tự tạo thủ công<small>Bạn tự chỉnh từng tuần</small></button></div>'+
+    '<button class="link go-link" data-act="tab" data-v="plan">Xem kế hoạch hiện tại →</button></div>':
+    '<button class="btn" data-act="tab" data-v="plan">Xem kế hoạch của tôi</button>';
   $app.innerHTML=
   '<div class="card herocard">'+hero+'</div>'+
   '<div class="card tcard"><div class="tc-head"><h2>Chỉ tiêu S.I tháng này</h2><span class="small muted">Chọn tháng, khu vực và cách chia, rồi nhập tổng chỉ tiêu.</span></div>'+
@@ -2529,31 +2584,9 @@ function renderSetup(){
   needCard(weeks)+
   aiPanel('local',weeks)+
   factorsCard(weeks,'full')+
-  aiCard(weeks,true)+
-  '<div class="secgrid">'+
-  sourcesCard(weeks)+
-  incomeCard(weeks)+
-  feasCard(weeks)+
-  areaCard(weeks)+
-  benchCard(weeks)+
-  catsCard(tg)+
-  sec('days',ic('plan',18),'Ngày bạn làm việc','<span class="small muted">'+workDays+' ngày</span>','<div class="small muted">Chủ nhật mặc định nghỉ. Chạm vào ngày để đổi: ngày lễ, nghỉ phép, đi công tác.</div>'+cal)+
-  acctCard()+
-  remCard()+
-  '<div class="card secard"><details data-sec="tune"'+(isOpen('tune')?' open':'')+'><summary class="sech"><span class="st">'+ic('setup',18)+'<span>Tinh chỉnh thêm</span></span><span class="ss small muted">không bắt buộc</span></summary><div class="secb">'+
-    '<div class="small muted" style="margin-top:6px">Cách chia chỉ tiêu cho các tuần</div>'+
-    '<div class="radio"><label'+(S.pace==='front'?' class="on"':'')+'><input type="radio" name="pace" data-f="pace" value="front"'+(S.pace==='front'?' checked':'')+'><b>Nhẹ dần về cuối tháng</b><div class="small muted">Tuần đầu nhiều hơn một chút, tuần cuối ít nhất.</div></label>'+
-    '<label'+(S.pace==='even'?' class="on"':'')+'><input type="radio" name="pace" data-f="pace" value="even"'+(S.pace==='even'?' checked':'')+'><b>Đều theo ngày làm việc</b><div class="small muted">Mỗi ngày làm việc gánh phần bằng nhau.</div></label></div>'+
-    '<div class="small muted" style="margin-top:10px">Giá S.I tạm tính = giá niêm yết trên livotec.com trừ chiết khấu. Hãy sửa theo bảng giá S.I thật.</div>'+
-    '<input type="range" min="0" max="50" step="1" value="'+S.disc+'" data-f="disc" data-live="discv" aria-label="Chiết khấu S.I">'+
-    '<div class="small"><b id="discv">Chiết khấu '+S.disc+'%</b> so với giá niêm yết</div>'+
-    [['bn','Bình nước nóng (niêm yết TB, triệu/bình)']].map(x=>'<div class="field"><span class="nm small">'+x[1]+'<div class="muted" style="font-weight:400">Giá S.I ≈ '+fmt(si(x[0]),2)+' tr</div></span><input class="num sm" type="number" inputmode="decimal" step="0.1" min="0.1" data-f="list" data-p="'+x[0]+'" value="'+S.list[x[0]]+'"><span class="unit">tr</span></div>').join('')+
-    '<div class="small muted" style="margin-top:10px">Để tính số khách cần liên hệ:</div>'+
-    '<div class="field"><span class="nm small">Giá trị trung bình mỗi đơn</span><input class="num sm" type="number" inputmode="numeric" min="1" data-f="aov" value="'+S.aov+'"><span class="unit">tr</span></div>'+
-    '<div class="field"><span class="nm small">Tỷ lệ khách liên hệ chốt được đơn</span><input class="num sm" type="number" inputmode="numeric" min="5" max="100" data-f="rate" value="'+S.rate+'"><span class="unit">%</span></div>'+
-  '</div></details></div>'+
-  '</div>'+
-  '<button class="btn" data-act="tab" data-v="plan">Xem kế hoạch của tôi</button>'+
+  aiCard(weeks,false)+
+  hub+
+  go+
   '<div style="text-align:center;margin-top:10px"><button class="link" data-act="reset">'+(confirmReset?'Bấm lại để xác nhận xoá hết dữ liệu':'Làm lại từ đầu')+'</button></div>'+
   '<div class="small muted" style="text-align:center">'+(AUTH.user?'Dữ liệu lưu trên thiết bị này và đồng bộ lên máy chủ vì bạn đã đăng nhập. Không xếp hạng giữa các SR.':'Dữ liệu chỉ lưu trên thiết bị này. Đăng nhập (mục Tài khoản) nếu muốn lưu trên máy chủ. Không xếp hạng giữa các SR.')+'</div>';
 }
@@ -2847,6 +2880,7 @@ document.addEventListener('click',function(e){
     const wk=analyze().find(w=>w.days.some(x=>x.date===d.day));if(wk)recomputeWeekActual(wk);
     toast('Đã lưu số liệu ngày '+d.day.slice(8)+'/'+d.day.slice(5,7));
   }
+  else if(a==='sgroup'){if(['target','area','sys'].includes(d.v))S.sg=d.v;}
   else if(a==='gotoMonth'){switchMonth(d.m);S.tab='check';}
   else if(a==='openSec'){openSec[d.k]=true;}
   else if(a==='distAdd'){const n=(document.getElementById('dnm').value||'').trim().slice(0,40),p=Math.max(0,Math.floor(+document.getElementById('dpt').value||0));if(n&&p>0&&S.area.dist.length<30){S.area.dist.push({n:n,p:p});openSec.area=true;}else toast('Nhập tên khu vực và số điểm bán');}
