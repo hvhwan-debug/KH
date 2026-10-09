@@ -920,6 +920,8 @@ h2,.sech .st{color:var(--ink)}
 .fchint{margin:2px 2px 8px;text-align:center}
 @media (max-width:420px){.fc-f b{font-size:23px}.fc-f,.fc-b{padding:11px 12px;min-height:124px}.fc-l,.fc-bx{font-size:12px}}
 @media (prefers-reduced-motion:reduce){.fc-in{transition:none}}
+
+.top .hstat:empty{display:none}
 </style>
 </head>
 <body>
@@ -1993,16 +1995,7 @@ function headerDate(weeks){
 function headerStat(weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0);
   if(!total)return '<p class="hsub">Nhập chỉ tiêu tháng để xem tiến độ và việc cần làm hôm nay.</p>';
-  const F=factors(weeks),top=F&&F.rows.find(r=>r.lv!=='ok'),lv=top?top.lv:'ok';
-  const card='<button class="hcard lv-'+lv+'" data-act="tab" data-v="alerts"><span class="hc-ic">'+ic(lv==='bad'?'alertOct':lv==='warn'?'warnTri':'check',20)+'</span>'+
-    '<span class="hc-tx"><b>'+(top?escH(top.name):'Mọi thứ đang ổn')+'</b><span>'+(top?escH(top.msg):'Chưa có rủi ro nào đáng chú ý.')+'</span></span></button>';
-  if(S.month!==monthKey(0))return card;
-  const pi=paceInfo(weeks),timePct=pi.tot?Math.round(pi.past/pi.tot*100):0;
-  let ach=0;weeks.forEach(w=>{const a=S.actual[w.key];if(a)ach+=(a.bn||0)+(a.gd||0);});
-  const achPct=Math.round(ach/total*100);
-  const pace='<div class="hpace"><div class="hp"><span>Thời gian đã qua</span><b>'+timePct+'%</b></div><div class="hp-bar"><i style="width:'+Math.min(100,timePct)+'%"></i></div>'+
-    '<div class="hp"><span>Doanh số đã đạt</span><b>'+achPct+'%</b></div><div class="hp-bar acc '+(achPct>=timePct?'up':'dn')+'"><i style="width:'+Math.min(100,achPct)+'%"></i></div></div>';
-  return card+pace;
+  return '';
 }
 
 const pad=n=>String(n).padStart(2,'0');
