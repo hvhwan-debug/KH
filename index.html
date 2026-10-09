@@ -898,6 +898,28 @@ h2,.sech .st{color:var(--ink)}
 .tc-sum{margin-top:10px;text-align:right;font-size:14px;color:var(--muted)}
 .tc-sum b{color:var(--ink);font-size:16px}
 @media (max-width:620px){.tc-panel{grid-template-columns:1fr}.tc-two{grid-template-columns:1fr}.tc-in .num{font-size:26px}.tcard{padding:14px 14px 16px}.tc-act{justify-content:stretch}.tc-act .btn{width:100%}}
+
+/* ===== Thẻ lật (flashcard) cho các chỉ số "Để đạt ... triệu" ===== */
+.fcards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:8px 0 4px}
+@media (min-width:720px){.fcards{grid-template-columns:repeat(4,1fr)}}
+.fcard{position:relative;display:block;padding:0;border:0;background:none;text-align:left;cursor:pointer;perspective:900px;color:inherit;font:inherit;-webkit-tap-highlight-color:transparent}
+.fc-in{display:grid;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.3,.7,.2,1);height:100%}
+.fcard.flipped .fc-in{transform:rotateY(180deg)}
+.fc-f,.fc-b{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:18px;padding:12px 14px;display:flex;flex-direction:column;gap:3px;min-height:132px}
+.fc-f{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c);box-shadow:0 1px 3px rgba(0,60,56,.08)}
+.fc-b{transform:rotateY(180deg);background:linear-gradient(145deg,var(--c),color-mix(in srgb,var(--c) 62%,#04201F));color:#fff;box-shadow:0 8px 20px -8px color-mix(in srgb,var(--c) 70%,transparent)}
+.fc-ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);margin-bottom:2px}
+.fc-f b{font-size:26px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--c);letter-spacing:-.02em}
+.fc-l{font-size:12.5px;line-height:1.35;color:var(--ink);font-weight:600}
+.fc-hint{margin-top:auto;display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);opacity:.85;padding-top:4px}
+.fc-bt{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+.fc-bx{font-size:12.5px;line-height:1.5}
+.fc-bx b{font-weight:800}
+.fcard:hover .fc-f{border-color:var(--c)}
+.fcard:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:18px}
+.fchint{margin:2px 2px 8px;text-align:center}
+@media (max-width:420px){.fc-f b{font-size:23px}.fc-f,.fc-b{padding:11px 12px;min-height:124px}.fc-l,.fc-bx{font-size:12px}}
+@media (prefers-reduced-motion:reduce){.fc-in{transition:none}}
 </style>
 </head>
 <body>
@@ -1177,8 +1199,16 @@ function areaTxt(w){
 }
 function needCard(weeks){
   const ap=areaPlan(weeks);apCache=ap;if(!ap)return '';
-  const t=(n,l)=>'<div class="tile"><b>'+n+'</b><span>'+l+'</span></div>';
-  const tiles=t('≈ '+fmt(ap.orders),'đơn cần chốt')+t('≈ '+fmt(ap.visits),'lượt ghé / liên hệ')+t('≈ '+fmt(ap.uniq),'điểm bán khác nhau (ghé '+ap.vpp+' lần/điểm)')+t(ap.act>0?'≈ '+fmt(ap.careTot):'—','lượt chăm sóc từ xa'+(ap.act>0?'':' (nhập địa bàn)'));
+  const fc=(c,icon,n,l,back)=>'<button type="button" class="fcard" style="--c:'+c+'" data-flip="1" aria-pressed="false" aria-label="'+l+': '+n+'. Chạm để xem cách tính"><span class="fc-in">'+
+    '<span class="fc-f"><span class="fc-ic">'+ic(icon,16)+'</span><b>'+n+'</b><span class="fc-l">'+l+'</span><span class="fc-hint">'+ic('trend',12)+' chạm để lật</span></span>'+
+    '<span class="fc-b"><span class="fc-bt">Cách tính</span><span class="fc-bx">'+back+'</span></span></span></button>';
+  const hasBooked=Object.keys(S.booked||{}).some(k=>+S.booked[k]>0);
+  const perVisit=fmt(ap.total/Math.max(1,ap.visits),1);
+  const tiles=
+    fc('var(--brand-deep)','target','≈ '+fmt(ap.orders),'đơn cần chốt','Chỉ tiêu <b>'+fmt(ap.total)+' tr</b> ÷ giá trị trung bình mỗi đơn <b>'+S.aov+' tr</b>'+(hasBooked?' (đã trừ phần chắc chắn)':'')+'.')+
+    fc('var(--bn)','users','≈ '+fmt(ap.visits),'lượt ghé / liên hệ','Mỗi khách liên hệ mang về ≈ <b>'+perVisit+' tr</b> S.I'+(S.learn?', tự cập nhật khi bạn nhập thêm số liệu.':' (tỷ lệ chốt '+S.rate+'%).'))+
+    fc('var(--gd)','plan','≈ '+fmt(ap.uniq),'điểm bán khác nhau (ghé '+ap.vpp+' lần/điểm)','Số lượt ghé ÷ <b>'+ap.vpp+' lần</b> mỗi điểm.'+(ap.have?' Bạn có <b>'+ap.usable+'</b> điểm dùng được.':' Nhập địa bàn để so với số điểm bạn có.'))+
+    fc('var(--ok)','bell',ap.act>0?'≈ '+fmt(ap.careTot):'—','lượt chăm sóc từ xa'+(ap.act>0?'':' (nhập địa bàn)'),ap.act>0?'Điểm đang hoạt động được gọi, nhắn thay cho ghé trực tiếp, theo tần suất bạn đặt ở mục Địa bàn &amp; điểm bán.':'Nhập số điểm bán đang hoạt động ở mục Địa bàn &amp; điểm bán để tính lượt chăm sóc từ xa.');
   const sum='<span class="small muted">'+fmt(ap.orders)+' đơn · '+fmt(ap.visits)+' ghé</span>';
   const wkWithData=weeks.filter(w=>w.work>0&&w.tt>0),maxTt=Math.max(1,...wkWithData.map(w=>w.tt));
   const rowHtml=w=>{
@@ -1199,7 +1229,7 @@ function needCard(weeks){
       ?'<div class="note" style="color:var(--bad)">Với '+ap.usable+' điểm dùng được'+(ap.noP?' (đã trừ '+ap.noP+' điểm vướng công nợ)':'')+', bạn cần thêm khoảng <b>'+ap.gap+' điểm</b> (mở mới hoặc đánh thức điểm chưa hoạt động'+(ap.dormant?', hiện có '+ap.dormant+' điểm':'')+') hoặc tăng giá trị mỗi đơn.</div>'
       :'<div class="note">Địa bàn đủ điểm: cần dùng khoảng <b>'+Math.round(ap.uniq/Math.max(1,ap.usable)*100)+'%</b> số điểm dùng được.</div>';
   } else note='<div class="note">Nhập số điểm bán và khu vực để biết cần ghé bao nhiêu điểm, chăm sóc ra sao. <button class="link" data-act="openSec" data-k="area">Mở mục Địa bàn &amp; điểm bán</button></div>';
-  return sec('need',ic('target',18),'Để đạt '+fmt(ap.total)+' triệu',sum,'<div class="tiles compact">'+tiles+'</div>'+rows+note+'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">'+seasonChips()+'</div>',true);
+  return sec('need',ic('target',18),'Để đạt '+fmt(ap.total)+' triệu',sum,'<div class="fcards">'+tiles+'</div><div class="small muted fchint">Chạm vào từng thẻ để xem cách tính.</div>'+rows+note+'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">'+seasonChips()+'</div>',true);
 }
 function incomeCard(weeks){
   const income=+S.income||0,rateC=Math.max(0.1,+S.commission||1.5);
@@ -2750,6 +2780,10 @@ document.addEventListener('click',function(e){
   save();render();
   if(a==='tab'||a==='goDay')window.scrollTo(0,0);
   const cb=document.getElementById('copybox');if(cb){cb.focus();cb.select();}
+});
+document.addEventListener('click',function(e){
+  const c=e.target.closest&&e.target.closest('[data-flip]');if(!c)return;
+  const on=c.classList.toggle('flipped');c.setAttribute('aria-pressed',on);
 });
 document.addEventListener('input',function(e){
   const t=e.target,live=t.dataset&&t.dataset.live;if(!live)return;
