@@ -1080,6 +1080,41 @@ h2,.sech .st{color:var(--ink)}
 .cal div.d{border:1px solid transparent}
 .cal div.d.today{outline:0;border:2px solid var(--brand-deep);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 25%,transparent)}
 .ba .bars i{border-radius:6px;height:10px}
+
+/* ===== Điểm cần chú ý: gọn, 3 giây là hiểu (tên, con số, việc cần làm); giải thích dài giấu trong nút ===== */
+.fxc{display:inline-flex;gap:6px}
+.fxcp{min-width:28px;height:26px;padding:0 9px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;color:#fff}
+.fxcp.bad{background:var(--bad)}.fxcp.warn{background:#D9961A;color:#2B1A00}.fxcp.ok{background:var(--ok);color:#fff}
+.fxchips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px}
+.fxchip{font-size:12.5px;font-weight:700;padding:3px 11px;border-radius:999px}
+.fxchip.bad{background:var(--bad-soft);color:var(--bad)}.fxchip.warn{background:var(--warn-soft);color:var(--warn)}.fxchip.ok{background:var(--ok-soft);color:var(--ok)}
+.fx2{margin:8px 0;border:1px solid var(--line);border-left:4px solid var(--lvc);border-radius:16px;background:var(--surface-2)}
+.fx2.bad{--lvc:var(--bad)}.fx2.warn{--lvc:#D9961A}.fx2.ok{--lvc:var(--ok)}
+.fxs2{list-style:none;display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;min-height:54px}
+.fxs2::-webkit-details-marker{display:none}
+.fxs2::after{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:-3px 4px 0 2px;transition:transform .15s}
+.fx2[open]>.fxs2::after{transform:rotate(-135deg);margin-top:3px}
+.fxi{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:color-mix(in srgb,var(--lvc) 16%,transparent);color:var(--lvc)}
+.fx2.warn .fxi{color:#9A6200}
+.fxt{min-width:0;display:flex;flex-direction:column;gap:1px}
+.fxt b{font-size:14.5px;line-height:1.3}
+.fxsub{font-size:12.5px;line-height:1.4;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fx2.bad .fxsub{color:var(--bad);font-weight:700}.fx2.warn .fxsub{color:var(--warn);font-weight:700}
+.fxval{font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--lvc);background:color-mix(in srgb,var(--lvc) 12%,transparent);padding:3px 11px;border-radius:999px}
+.fx2.warn .fxval{color:#9A6200}
+.fxw2{padding:0 14px 12px 56px}
+.fxm{font-size:13.5px;line-height:1.5}
+.fxhow{margin-top:6px}
+.fxhow>summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--brand-deep);padding:2px 0;list-style:none}
+.fxhow>summary::-webkit-details-marker{display:none}
+.fxhow>summary::before{content:"ⓘ ";}
+.fxhow .small{margin-top:4px;line-height:1.5}
+.fxok{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;width:100%;text-align:left;margin-top:6px;padding:9px 12px;border:1px dashed color-mix(in srgb,var(--ok) 45%,var(--line));border-radius:14px;background:color-mix(in srgb,var(--ok) 7%,transparent);color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+.fxok i{display:grid;place-items:center;color:var(--ok)}
+.fxok span{min-width:0;line-height:1.4}
+.fxok em{font-style:normal;font-weight:700;color:var(--brand-deep);font-size:12.5px}
+.fxmiss{margin-top:8px}
+@media (max-width:480px){.fxs2{grid-template-columns:auto 1fr auto;gap:8px;padding:9px 10px}.fxs2::after{display:none}.fxw2{padding:0 12px 12px 12px}.fxi{width:30px;height:30px}.fxval{font-size:14px;padding:2px 9px}}
 </style>
 </head>
 <body>
@@ -1912,7 +1947,7 @@ function factors(weeks){
   if(ap&&ap.visits>0&&!(f&&f.ratio>1)){
     const cap=totWork*Math.max(1,+S.maxC||12),sc=Math.ceil(ap.visits/0.75),ex=sc-ap.visits,lv=sc>cap?'bad':sc>cap*0.9?'warn':'ok',fc2=Math.round(FN.fc/0.75*10)/10;
     add({id:'sens',lv,sv:'dễ vỡ nếu chốt kém',name:'Nếu chốt kém hơn',val:'−25%',
-      msg:'Nếu cần '+fmt(fc2,1)+' khách tư vấn mới chốt 1 đơn (thay vì '+FN.fc+'): cần thêm '+ex+' lượt ('+sc+'), '+(sc>cap?'vượt sức ('+cap+')':'vẫn trong sức ('+cap+')'),
+      msg:'Chốt kém 25% (cần '+fmt(fc2,1)+' khách tư vấn/đơn): thêm '+ex+' lượt ghé ('+sc+'/'+cap+'), '+(sc>cap?'vượt sức':'vẫn trong sức'),
       act:lv==='ok'?'':'Giữ khách dự phòng, nâng giá trị mỗi đơn',
       how:'Lượt ghé tỉ lệ nghịch với tỷ lệ chốt. Sức = số ngày làm việc × số lượt ghé tối đa mỗi ngày.',src:'Tính từ phễu benchmark và giả định của bạn'});
   }
@@ -1940,16 +1975,21 @@ function factors(weeks){
 }
 function factorsCard(weeks,mode){
   const F=factors(weeks);if(!F)return '';
-  const bad=F.rows.filter(r=>r.lv==='bad'),warn=F.rows.filter(r=>r.lv==='warn');
-  let v;
-  if(bad.length)v='<b>Cần xử lý:</b> '+bad.slice(0,3).map(r=>r.sv).join(', ')+(warn.length?'. Lưu ý thêm: '+warn.slice(0,2).map(r=>r.sv).join(', '):'')+'.';
-  else if(warn.length)v='<b>Làm được, cần lưu ý:</b> '+warn.slice(0,3).map(r=>r.sv).join(', ')+'.';
-  else v='<b>Các yếu tố chính đều ổn.</b>';
-  const showAll=mode==='full'&&isOpen('fxall',false),list=showAll?F.rows:F.rows.slice(0,3);
-  const row=r=>'<details class="fx '+r.lv+'" data-sec="fx_'+r.id+'"'+(isOpen('fx_'+r.id,r.lv!=='ok')?' open':'')+'><summary class="sech fxs"><i class="fxd"></i><span class="fxn"><b>'+r.name+'</b></span><span class="fxv">'+escH(r.val)+'</span></summary><div class="fxw"><div class="fxm">'+escH(r.msg)+'</div>'+(r.act?'<div class="fxa '+r.lv+'">→ '+escH(r.act)+'</div>':'')+'<div class="small muted" style="margin-top:6px"><b>Cách tính:</b> '+escH(r.how)+'</div><div class="small muted"><b>Nguồn số:</b> '+escH(r.src)+'</div></div></details>';
-  const more=(mode==='full'&&F.rows.length>3)?'<button class="link" data-act="fxAll">'+(showAll?'Thu gọn':'Xem đủ '+F.rows.length+' yếu tố')+'</button>':'';
-  const miss=F.miss.length?'<div class="small muted" style="margin-top:6px">Chưa tính: '+F.miss.join(' · ')+'. '+(F.miss.some(x=>x.indexOf('địa bàn')===0||x.indexOf('công nợ')===0)?'<button class="link" data-act="openSec" data-k="area">Nhập để kết luận chắc hơn</button>':'')+'</div>':'';
-  return '<div class="card fxcard"><div class="row wrapx"><h2>'+ic('alertOct',18)+' Điểm cần chú ý</h2><span class="fxc"><i class="d bad"></i>'+F.cnt.bad+' <i class="d warn"></i>'+F.cnt.warn+' <i class="d ok"></i>'+F.cnt.ok+'</span></div><div class="fxv2">'+v+'</div>'+list.map(row).join('')+more+miss+'</div>';
+  const probs=F.rows.filter(r=>r.lv!=='ok'),oks=F.rows.filter(r=>r.lv==='ok');
+  const bad=probs.filter(r=>r.lv==='bad'),warn=probs.filter(r=>r.lv==='warn');
+  const chips=(bad.slice(0,3).map(r=>'<span class="fxchip bad">'+escH(r.sv)+'</span>').join(''))+(warn.slice(0,2).map(r=>'<span class="fxchip warn">'+escH(r.sv)+'</span>').join(''))||'<span class="fxchip ok">Các yếu tố chính đều ổn</span>';
+  const ICN={bad:'alertOct',warn:'warnTri',ok:'check'};
+  const row=r=>'<details class="fx2 '+r.lv+'" data-sec="fx_'+r.id+'"'+(isOpen('fx_'+r.id,false)?' open':'')+'><summary class="fxs2"><span class="fxi">'+ic(ICN[r.lv]||'infoCirc',18)+'</span>'+
+    '<span class="fxt"><b>'+r.name+'</b><span class="fxsub">'+(r.act?'→ '+escH(r.act):escH(r.msg))+'</span></span><span class="fxval">'+escH(r.val)+'</span></summary>'+
+    '<div class="fxw2"><div class="fxm">'+escH(r.msg)+'</div><details class="fxhow"><summary>Cách tính và nguồn số</summary><div class="small muted"><b>Cách tính:</b> '+escH(r.how)+'<br><b>Nguồn số:</b> '+escH(r.src)+'</div></details></div></details>';
+  const full=mode==='full',showOk=full&&isOpen('fxall',false);
+  let list=full?probs:probs.slice(0,3);
+  if(!probs.length)list=oks.slice(0,3);
+  if(showOk)list=list.concat(probs.length?oks:oks.slice(3));
+  const okLine=(probs.length&&oks.length)?'<button class="fxok" data-act="fxAll"><i>'+ic('check',14)+'</i><span><b>'+oks.length+' yếu tố ổn:</b> '+oks.map(r=>escH(r.name)).join(', ')+'</span><em>'+(showOk?'Thu gọn':'Xem')+'</em></button>':'';
+  const miss=F.miss.length?'<div class="small muted fxmiss">Chưa tính: '+F.miss.join(' · ')+'. '+(F.miss.some(x=>x.indexOf('địa bàn')===0||x.indexOf('công nợ')===0)?'<button class="link" data-act="openSec" data-k="area">Nhập thêm</button>':'')+'</div>':'';
+  return '<div class="card fxcard"><div class="row wrapx"><h2>'+ic('alertOct',18)+' Điểm cần chú ý</h2><span class="fxc" aria-label="'+F.cnt.bad+' nghiêm trọng, '+F.cnt.warn+' cần lưu ý, '+F.cnt.ok+' ổn"><span class="fxcp bad">'+F.cnt.bad+'</span><span class="fxcp warn">'+F.cnt.warn+'</span><span class="fxcp ok">'+F.cnt.ok+'</span></span></div>'+
+    '<div class="fxchips">'+chips+'</div>'+list.map(row).join('')+okLine+miss+'</div>';
 }
 
 /* ---------- Tài khoản, đồng bộ, email ---------- */
