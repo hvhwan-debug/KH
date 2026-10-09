@@ -1181,6 +1181,16 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
 .cap-fix span{padding:3px 11px;border-radius:999px;background:var(--cx-soft);border:1px solid var(--cx-line)}
 .cap-fix b{font-weight:600}
 .fnl-note{margin-top:10px;text-align:center}
+
+/* ===== Bảng trong câu trả lời của AI ===== */
+.aitbl-w{overflow-x:auto;margin:8px 0;border:1px solid var(--cx-line);border-radius:12px;background:var(--surface);white-space:normal}
+.aitbl{width:100%;border-collapse:collapse;font-size:12.5px;line-height:1.4;min-width:340px}
+.aitbl th{background:var(--cx-soft);color:var(--ink);font-weight:600;text-align:left;padding:7px 10px;border-bottom:1px solid var(--cx-line);white-space:nowrap}
+.aitbl td{padding:7px 10px;border-top:1px solid var(--cx-line);vertical-align:top}
+.aitbl tbody tr:first-child td{border-top:0}
+.aitbl tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--cx-soft) 50%,transparent)}
+.aitbl td:first-child{font-weight:600;white-space:nowrap;color:var(--brand-deep)}
+.aitbl th+th,.aitbl td+td{border-left:1px solid var(--cx-line)}
 </style>
 </head>
 <body>
@@ -1385,8 +1395,24 @@ function aiCard(weeks,withAsk){
   return '<div class="card aiGlow"><h2>'+ic('sparkles',18)+' Nhận xét từ AI'+provChip()+'</h2>'+body+ask+'</div>';
 }
 function aiFmt(t){
-  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\*\*([^*\n]+?)\*\*/g,'<b>$1</b>').replace(/^#{1,4}\s*/gm,'').replace(/^\s*[-*]\s+/gm,'• ');
+  const esc=x=>String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const inl=x=>esc(x).replace(/\*\*([^*\n]+?)\*\*/g,'<b>$1</b>').replace(/&lt;br\s*\/?&gt;/gi,'<br>');
+  const txt=x=>esc(x).replace(/\*\*([^*\n]+?)\*\*/g,'<b>$1</b>').replace(/^#{1,4}\s*/gm,'').replace(/^\s*[-*]\s+/gm,'• ');
+  const isRow=l=>/^\s*\|.*\|\s*$/.test(l),isSep=l=>/^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(l)&&l.indexOf('-')>=0;
+  const cells=l=>l.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(c=>c.trim());
+  const lines=String(t).split('\n'),out=[];let buf=[];
+  const flush=()=>{if(buf.length){out.push(txt(buf.join('\n')));buf=[];}};
+  for(let i=0;i<lines.length;i++){
+    if(isRow(lines[i])&&i+1<lines.length&&isSep(lines[i+1])){
+      flush();const head=cells(lines[i]);let j=i+2;const rows=[];
+      while(j<lines.length&&isRow(lines[j])&&!isSep(lines[j])){rows.push(cells(lines[j]));j++;}
+      out.push('<div class="aitbl-w"><table class="aitbl"><thead><tr>'+head.map(c=>'<th>'+inl(c)+'</th>').join('')+'</tr></thead><tbody>'+
+        rows.map(r=>'<tr>'+head.map((_,k)=>'<td>'+inl(r[k]||'')+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>');
+      i=j-1;
+    }else buf.push(lines[i]);
+  }
+  flush();
+  return out.join('\n').replace(/\n*(<div class="aitbl-w">)/g,'$1').replace(/(<\/table><\/div>)\n*/g,'$1');
 }
 
 /* ---------- Thương hiệu, mùa vụ, địa bàn Livotec ---------- */
@@ -1679,6 +1705,8 @@ async function callAI(messages,max){
 }
 function ctxText(weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0),ap=areaPlan(weeks),A=S.area||{},L=[];
+  {const t=new Date(),dw=(t.getDay()+6)%7,mon=new Date(t.getFullYear(),t.getMonth(),t.getDate()-dw),sun=new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()+6),f=d=>pad(d.getDate())+'/'+pad(d.getMonth()+1);
+   L.push('Hôm nay: '+DOW[dw]+', '+f(t)+'/'+t.getFullYear()+'. Tuần hiện tại: Thứ 2 ('+f(mon)+') đến Chủ nhật ('+f(sun)+'/'+sun.getFullYear()+'). Chỉ dùng đúng ngày, tháng, năm này khi nhắc đến thời gian.');}
   L.push(monthName(S.month)+(S.province?', khu vực '+S.province+' ('+REG_NAME[regionOf(S.province)]+')':', chưa chọn khu vực')+'.');
   L.push('Chỉ tiêu S.I: '+PRODUCTS.map(p=>p.name+' '+fmt(+S.target[p.id]||0)+' tr').join(', ')+' (tổng '+fmt(total)+' tr).');
   L.push('Chiến lược chia chỉ tiêu: '+(STRATS.find(x=>x[0]===S.strat)||STRATS[4])[1]+(S.strat==='manual'?'':' ('+Math.round((+S.target.bn||0)/Math.max(1,total)*100)+'% bình nước nóng)')+'.');
@@ -1758,7 +1786,7 @@ const COACH_Q=[
   ['Lời chào hàng cho đại lý','Soạn lời chào hàng 60–80 giây cho chủ đại lý hoặc cửa hàng điện máy về ngành hàng đang vào mùa của Livotec (dựa trên mùa vụ và cơ cấu ở trên): 1 câu mở đầu, 3 điểm bán hàng lấy từ thông tin thương hiệu, cách xử lý khi họ chê giá cao, 1 câu chốt đơn.'],
   ['Đánh thức điểm ngủ đông','Soạn 2 mẫu tin Zalo ngắn và 1 kịch bản gọi điện 30 giây để đánh thức các điểm bán chưa lấy hàng gần đây, kèm lý do để họ nhập lại (dựa trên mùa vụ và sản phẩm Livotec phù hợp).'],
   ['Khi đại lý chê giá','Đại lý nói hãng khác rẻ hơn. Đề xuất 3 cách phản hồi dựa trên điểm khác biệt có thật của Livotec trong thông tin thương hiệu, không nêu giá hay khuyến mại cụ thể nếu chưa được cung cấp.'],
-  ['Sắp tuyến ghé tuần này','Gợi ý cách sắp xếp tuyến ghé điểm bán cho tuần hiện tại dựa trên khu vực và số lượt ghé đã nhập: thứ tự ngày, thời gian ghé mỗi điểm và khi nào nên chuyển sang chăm sóc từ xa.'],
+  ['Sắp tuyến ghé tuần này','Gợi ý cách sắp xếp tuyến ghé điểm bán cho tuần hiện tại (đúng các ngày của tuần hiện tại trong bối cảnh ở trên) dựa trên khu vực, sức đi tối đa mỗi ngày và số lượt ghé đã nhập. Trình bày thành BẢNG gồm các cột: Ngày | Số điểm | Giờ/điểm | Khung giờ | Mục tiêu; mỗi ô ngắn gọn; thứ 2 đến thứ 7, chủ nhật nghỉ. Sau bảng ghi tối đa 2 gạch đầu dòng về khi nào chuyển sang chăm sóc từ xa.'],
   ['Mở điểm bán mới','Lập checklist tiếp cận 5 bước để mở thêm điểm bán mới (số điểm cần mở lấy theo phần thiếu điểm ở trên nếu có): cách chọn điểm, trưng bày mẫu, đơn nhập đầu tiên nên gồm gì.']
 ];
 function renderCoach(){
@@ -1776,7 +1804,7 @@ async function coachAsk(q,label){
   try{
     const weeks=analyze();
     const hist=[];coach.log.slice(-4,-1).forEach(x=>{if(x.a){hist.push({role:'user',content:x.p||x.q});hist.push({role:'assistant',content:x.a});}});
-    const sys=LIVOTEC_KB+'\n\nBối cảnh số liệu của SR:\n'+ctxText(weeks)+'\n\nQuy tắc trả lời: tiếng Việt, thực tế, tối đa 120 từ, ưu tiên gạch đầu dòng ngắn (mỗi dòng không quá 20 từ), không chào hỏi, không bịa giá, khuyến mại hay chính sách; nếu thiếu dữ liệu thì nói rõ. Trợ lý này chỉ phục vụ công việc bán hàng kênh GT của Livotec (chào hàng, tuyến ghé, xử lý đại lý, sản phẩm, kế hoạch doanh số). Nếu câu hỏi không liên quan (kiến thức chung, chuyện cá nhân, chủ đề ngoài công việc...), từ chối ngắn gọn và mời hỏi lại đúng chủ đề, không trả lời nội dung đó dù câu hỏi có vẻ vô hại. Không ghép lý do của vấn đề này (ví dụ thiếu số liệu nhập hằng ngày) với hành động của vấn đề khác (ví dụ tần suất ghé điểm bán) — đó là hai việc không liên quan nhau. Mỗi ngành hàng có chỉ tiêu riêng, không bù qua lại — không gợi ý "ngành A yếu thì tập trung bán ngành B" vì không giúp đạt chỉ tiêu ngành A.';
+    const sys=LIVOTEC_KB+'\n\nBối cảnh số liệu của SR:\n'+ctxText(weeks)+'\n\nQuy tắc trả lời: tiếng Việt, thực tế, tối đa 120 từ, ưu tiên gạch đầu dòng ngắn (mỗi dòng không quá 20 từ). Khi nội dung là lịch, tuyến ghé, so sánh nhiều mục hoặc có nhiều cột thông tin, BẮT BUỘC trình bày bằng BẢNG markdown (dòng tiêu đề dạng | Cột 1 | Cột 2 |, tiếp theo là dòng | --- | --- |, rồi từng hàng), tối đa 5 cột, mỗi ô dưới 10 từ, không viết đoạn dài trong ô; sau bảng chỉ thêm tối đa 2 gạch đầu dòng lưu ý. Không chào hỏi, không bịa giá, khuyến mại hay chính sách; nếu thiếu dữ liệu thì nói rõ. Trợ lý này chỉ phục vụ công việc bán hàng kênh GT của Livotec (chào hàng, tuyến ghé, xử lý đại lý, sản phẩm, kế hoạch doanh số). Nếu câu hỏi không liên quan (kiến thức chung, chuyện cá nhân, chủ đề ngoài công việc...), từ chối ngắn gọn và mời hỏi lại đúng chủ đề, không trả lời nội dung đó dù câu hỏi có vẻ vô hại. Không ghép lý do của vấn đề này (ví dụ thiếu số liệu nhập hằng ngày) với hành động của vấn đề khác (ví dụ tần suất ghé điểm bán) — đó là hai việc không liên quan nhau. Mỗi ngành hàng có chỉ tiêu riêng, không bù qua lại — không gợi ý "ngành A yếu thì tập trung bán ngành B" vì không giúp đạt chỉ tiêu ngành A.';
     const a=await callAI([{role:'system',content:sys}].concat(hist,[{role:'user',content:q}]),1500);
     coach.log[coach.log.length-1].a=a;
   }catch(e){coach.log[coach.log.length-1].a='Không gọi được AI. '+e.message;}
