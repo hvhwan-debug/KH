@@ -866,6 +866,38 @@ h2,.sech .st{color:var(--ink)}
 .sh-foot b{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
 .sh-foot span{font-size:12px;color:var(--muted)}
 @media (max-width:620px){.shero{grid-template-columns:1fr;gap:12px}.sh-ring svg{width:170px;height:170px}.sh-num{font-size:24px}.sh-tile{padding:10px 12px}}
+
+/* ===== Thẻ chỉ tiêu tháng: lưới ba ô chọn đều nhau, ô tổng chỉ tiêu + thanh phân bổ ===== */
+.tcard{padding:18px 18px 20px}
+.tc-head{display:flex;align-items:baseline;justify-content:space-between;gap:6px 14px;flex-wrap:wrap;margin-bottom:14px}
+.tc-head h2{margin:0}
+.tc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.tc-grid .field{display:flex;flex-direction:column;align-items:stretch;gap:5px;margin:0;max-width:none;min-width:0}
+.tc-grid .field .nm{font-size:12.5px;font-weight:700;color:var(--muted);flex:none}
+.tc-grid select{width:100%;max-width:none;min-width:0;background:var(--surface-2);font-size:15px;padding:11px 12px;border-radius:12px}
+.tc-body{margin-top:16px;padding-top:16px;border-top:1px dashed var(--line)}
+.tc-panel{display:grid;grid-template-columns:minmax(200px,260px) 1fr;gap:16px 22px;align-items:center;padding:14px 16px;background:var(--surface-2);border:1px solid var(--line);border-radius:18px}
+.tc-in{display:flex;flex-direction:column;gap:6px;min-width:0}
+.tc-in .nm{font-size:12.5px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:6px}
+.tc-in .iu{display:flex;align-items:center;gap:8px}
+.tc-in .num{flex:1;width:auto;max-width:none;min-width:0;font-size:30px;padding:8px 14px;background:var(--surface);border-radius:14px}
+.tc-in .unit{font-weight:700;color:var(--muted)}
+.tc-split{min-width:0}
+.tc-split .nm{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.sbar{display:flex;height:26px;border-radius:13px;overflow:hidden;background:var(--line)}
+.sbar i{display:flex;align-items:center;justify-content:center;font-style:normal;font-size:12px;font-weight:800;color:#fff;min-width:0;transition:width .3s}
+.sbar i.bn{background:var(--bn)}.sbar i.gd{background:var(--gd)}
+.tc-leg{display:flex;justify-content:space-between;gap:6px 14px;flex-wrap:wrap;margin-top:8px;font-size:13px}
+.tc-leg span{display:inline-flex;align-items:center;gap:6px}
+.tc-leg .sw{margin:0}
+.tc-leg b{font-variant-numeric:tabular-nums}
+.tc-note{margin-top:12px;padding:10px 14px;border-radius:12px;background:var(--brand-soft);font-size:13px;line-height:1.5;color:var(--ink)}
+.tc-act{margin-top:12px;display:flex;justify-content:flex-end}
+.tc-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tc-two .tc-in{padding:12px 14px;background:var(--surface-2);border:1px solid var(--line);border-radius:16px}
+.tc-sum{margin-top:10px;text-align:right;font-size:14px;color:var(--muted)}
+.tc-sum b{color:var(--ink);font-size:16px}
+@media (max-width:620px){.tc-panel{grid-template-columns:1fr}.tc-two{grid-template-columns:1fr}.tc-in .num{font-size:26px}.tcard{padding:14px 14px 16px}.tc-act{justify-content:stretch}.tc-act .btn{width:100%}}
 </style>
 </head>
 <body>
@@ -1847,23 +1879,30 @@ function applyStrategy(){
   const t=Math.max(0,Math.floor(+S.tt||0)),sh=stratShare(),bn=Math.round(t*sh);
   S.target.bn=bn;S.target.gd=t-bn;
 }
-function targetBlock(){
+function stratSelect(){
   const opts=STRATS.map(x=>'<option value="'+x[0]+'"'+(S.strat===x[0]?' selected':'')+'>'+x[1]+'</option>').join('');
+  return '<div class="field"><span class="nm">Chiến lược chỉ tiêu</span><select data-f="strat" aria-label="Chiến lược chia chỉ tiêu">'+opts+'</select></div>';
+}
+function targetBlock(){
   const cur=STRATS.find(x=>x[0]===S.strat)||STRATS[4];
-  let h='<div class="fieldgrid" style="grid-template-columns:1fr"><div class="field"><span class="nm">Chiến lược chỉ tiêu</span><select data-f="strat" aria-label="Chiến lược chia chỉ tiêu">'+opts+'</select></div></div>';
+  let h='';
   if(S.strat==='manual'){
-    h+='<div class="fieldgrid">'+PRODUCTS.map((p,i)=>'<div class="field"><span class="nm">'+ic(p.icon)+' '+p.name+'</span><span class="iu"><input class="num" type="number" inputmode="numeric" min="0" data-f="target" data-p="'+p.id+'" value="'+(S.target[p.id]||'')+'" placeholder="'+(i===0?'VD: 250':'VD: 100')+'" aria-label="Chỉ tiêu S.I '+p.name+' (triệu đồng)"><span class="unit">tr</span></span></div>').join('')+'</div>';
+    const sum=(+S.target.bn||0)+(+S.target.gd||0);
+    h+='<div class="tc-two">'+PRODUCTS.map((p,i)=>'<label class="tc-in"><span class="nm">'+ic(p.icon)+' '+p.name+'</span><span class="iu"><input class="num" type="number" inputmode="numeric" min="0" data-f="target" data-p="'+p.id+'" value="'+(S.target[p.id]||'')+'" placeholder="'+(i===0?'VD: 250':'VD: 100')+'" aria-label="Chỉ tiêu S.I '+p.name+' (triệu đồng)"><span class="unit">tr</span></span></label>').join('')+'</div>';
+    if(sum>0)h+='<div class="tc-sum">Tổng chỉ tiêu: <b>'+fmt(sum)+' tr</b></div>';
   }else{
     const t=+S.tt||0,bn=+S.target.bn||0,gd=+S.target.gd||0,pb=t?Math.round(bn/t*100):0;
-    h+='<div class="fieldgrid" style="grid-template-columns:1fr"><div class="field"><span class="nm">Tổng chỉ tiêu S.I</span><span class="iu"><input class="num" type="number" inputmode="numeric" min="0" data-f="ttotal" value="'+(S.tt||'')+'" placeholder="0" aria-label="Tổng chỉ tiêu S.I"><span class="unit">tr</span></span></div></div>';
+    h+='<div class="tc-panel"><label class="tc-in"><span class="nm">Tổng chỉ tiêu S.I</span><span class="iu"><input class="num" type="number" inputmode="numeric" min="0" data-f="ttotal" value="'+(S.tt||'')+'" placeholder="0" aria-label="Tổng chỉ tiêu S.I"><span class="unit">tr</span></span></label>';
+    if(t>0)h+='<div class="tc-split"><div class="nm">Phân bổ theo nhóm hàng</div><div class="sbar" role="img" aria-label="Bình nước nóng '+pb+'%, gia dụng '+(100-pb)+'%"><i class="bn" style="width:'+pb+'%">'+(pb>=12?pb+'%':'')+'</i><i class="gd" style="width:'+(100-pb)+'%">'+(100-pb>=12?(100-pb)+'%':'')+'</i></div>'+
+      '<div class="tc-leg"><span><i class="sw bn"></i>Bình nước nóng <b>'+fmt(bn)+' tr</b></span><span><i class="sw gd"></i>Gia dụng &amp; điện máy <b>'+fmt(gd)+' tr</b></span></div></div>';
+    h+='</div>';
     let note=cur[2];
     if(S.strat==='season'){
       const L=seasonLevels();
       note+=' Tháng '+L.m+' ('+REG_NAME[L.r]+'): bình nước nóng nhu cầu '+LV[L.bn]+', gia dụng '+LV[Math.round(L.gd)]+'. Ước lượng theo khí hậu, không phải số bán hàng của Livotec.';
     }
-    h+='<div class="small muted">'+note+'</div>';
-    if(t>0)h+='<div class="pills"><span>Bình nước nóng <b>'+pb+'%</b> · '+fmt(bn)+' tr</span><span>Gia dụng &amp; điện máy <b>'+(100-pb)+'%</b> · '+fmt(gd)+' tr</span></div>';
-    h+='<button class="link" data-act="stratManual">Chỉnh tay từng nhóm</button>';
+    h+='<div class="tc-note">'+note+'</div>';
+    h+='<div class="tc-act"><button class="btn ghost sm" data-act="stratManual">Chỉnh tay từng nhóm</button></div>';
   }
   return h;
 }
@@ -2368,13 +2407,13 @@ function renderSetup(){
     }).join('')+'</div>';
   $app.innerHTML=
   '<div class="card herocard">'+hero+'</div>'+
-  '<div class="card"><h2>Chỉ tiêu S.I tháng này</h2>'+
-    '<div class="fieldgrid">'+
+  '<div class="card tcard"><div class="tc-head"><h2>Chỉ tiêu S.I tháng này</h2><span class="small muted">Chọn tháng, khu vực và cách chia, rồi nhập tổng chỉ tiêu.</span></div>'+
+    '<div class="tc-grid">'+
     '<div class="field"><span class="nm">Tháng</span><select data-f="month" aria-label="Chọn tháng">'+opts+'</select></div>'+
     '<div class="field"><span class="nm">Khu vực phụ trách</span><select data-f="province" aria-label="Tỉnh, thành phố phụ trách"><option value="">— Chọn tỉnh, thành phố —</option>'+PROVINCES.map(p=>'<option value="'+p+'"'+(S.province===p?' selected':'')+'>'+p+'</option>').join('')+'</select></div>'+
-    '</div>'+
-    (S.province?'':'<div class="small muted" style="margin:0 0 12px">AI sẽ dùng khu vực này để nhận xét sát hơn.</div>')+
-    targetBlock()+'</div>'+
+    stratSelect()+'</div>'+
+    (S.province?'':'<div class="small muted" style="margin:8px 2px 0">AI sẽ dùng khu vực này để nhận xét sát hơn.</div>')+
+    '<div class="tc-body">'+targetBlock()+'</div></div>'+
   needCard(weeks)+
   aiPanel('local',weeks)+
   factorsCard(weeks,'full')+
