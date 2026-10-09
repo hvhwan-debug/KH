@@ -975,10 +975,11 @@ const AI_TASK={
   check:'Phân tích tiến độ: mức đạt so với kế hoạch; nguyên nhân khả dĩ (nói rõ là giả thuyết); 3 việc cụ thể cho 1–2 ngày tới (có số điểm bán, khu vực); có nên cân lại các tuần còn lại. Nếu chưa có số liệu thực tế, nói rõ và nêu 3 việc nên làm ngay.'+AI_FORMAT,
   brief:'Nhận xét kết quả hôm qua so với kế hoạch ngày trong 1 gạch, rồi 2 việc cụ thể cho sáng nay (có số điểm bán hoặc khu vực nếu có). Nếu hôm qua chưa nhập số liệu, nói rõ và gợi ý nhập bù nhanh.'+AI_FORMAT,
   alerts:'Xếp các cảnh báo đang hoạt động theo mức ưu tiên và nêu một hành động cụ thể cho từng cảnh báo. Nếu không có cảnh báo, nêu 2 rủi ro nên theo dõi tuần này dựa trên kế hoạch và mùa vụ.'+AI_FORMAT,
-  income:'SR đang muốn biết cần làm gì để đạt mức thu nhập mong muốn (đã tính sẵn ở trên: S.I cần, số đơn, số lượt ghé, số điểm bán — dùng đúng các con số này, không tự tính lại). Hãy nhận định mức độ khả thi so với năng lực làm việc hiện tại, rồi nêu 2–3 việc cụ thể nên làm để đạt được (ví dụ nhóm điểm bán nào nên ưu tiên, nhịp độ theo tuần ra sao).'+AI_FORMAT
+  income:'SR đang muốn biết cần làm gì để đạt mức thu nhập mong muốn (đã tính sẵn ở trên: S.I cần, số đơn, số lượt ghé, số điểm bán — dùng đúng các con số này, không tự tính lại). Hãy nhận định mức độ khả thi so với năng lực làm việc hiện tại, rồi nêu 2–3 việc cụ thể nên làm để đạt được (ví dụ nhóm điểm bán nào nên ưu tiên, nhịp độ theo tuần ra sao).'+AI_FORMAT,
+  local:'Ngoài yếu tố khí hậu/mùa vụ đã có sẵn ở trên, hãy nhận định ngắn gọn về bối cảnh kinh tế - xã hội - hành vi tiêu dùng tại khu vực phụ trách trong thời điểm hiện tại, có thể ảnh hưởng đến việc bán bình nước nóng và gia dụng (ví dụ: mức sống phổ biến, thói quen chi tiêu, mức độ nhạy cảm giá, mức độ cạnh tranh ngành hàng tại khu vực). Dùng hiểu biết chung, không bịa số liệu kinh tế cụ thể (GDP, thu nhập bình quân...), nói rõ đây là nhận định định tính cần đối chiếu thực tế.'+AI_FORMAT
 };
-const AI_TITLE={plan:'AI phân tích kế hoạch',check:'AI phân tích tiến độ',alerts:'AI ưu tiên hành động',income:'AI gợi ý để đạt thu nhập'};
-const AI_HINT={plan:'AI sẽ chỉ ra tuần và khu vực rủi ro, cách chia ghé trực tiếp / chăm sóc từ xa và ngành hàng nên ưu tiên chào.',check:'AI sẽ so tiến độ thực tế với kế hoạch và gợi ý việc cần làm cho 1–2 ngày tới.',alerts:'AI sẽ xếp thứ tự ưu tiên các cảnh báo và đề xuất hành động cho từng cảnh báo.',income:'AI sẽ nhận định mức độ khả thi và gợi ý cách đạt mức thu nhập bạn muốn.'};
+const AI_TITLE={plan:'AI phân tích kế hoạch',check:'AI phân tích tiến độ',alerts:'AI ưu tiên hành động',income:'AI gợi ý để đạt thu nhập',local:'Bối cảnh kinh tế - xã hội khu vực'};
+const AI_HINT={plan:'AI sẽ chỉ ra tuần và khu vực rủi ro, cách chia ghé trực tiếp / chăm sóc từ xa và ngành hàng nên ưu tiên chào.',check:'AI sẽ so tiến độ thực tế với kế hoạch và gợi ý việc cần làm cho 1–2 ngày tới.',alerts:'AI sẽ xếp thứ tự ưu tiên các cảnh báo và đề xuất hành động cho từng cảnh báo.',income:'AI sẽ nhận định mức độ khả thi và gợi ý cách đạt mức thu nhập bạn muốn.',local:'AI sẽ nhận định thêm về mức sống, thói quen tiêu dùng, mức độ cạnh tranh tại khu vực bạn phụ trách — ngoài yếu tố khí hậu đã có.'};
 function aiKey(ctx){return JSON.stringify([ctx,S.target,S.actual,S.daily,S.month,S.province,S.area,S.plan,S.cats,S.aov,S.rate,S.season,S.risks,S.booked,S.flip,S.income,S.commission]);}
 function aiPanel(ctx,weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0);if(!total&&ctx!=='income')return '';
@@ -2033,6 +2034,7 @@ function renderSetup(){
     (S.province?'':'<div class="small muted" style="margin:0 0 12px">AI sẽ dùng khu vực này để nhận xét sát hơn.</div>')+
     targetBlock()+'</div>'+
   needCard(weeks)+
+  aiPanel('local',weeks)+
   factorsCard(weeks,'full')+
   aiCard(weeks,true)+
   sourcesCard(weeks)+
