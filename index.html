@@ -605,7 +605,7 @@ button.hring{cursor:pointer}
   <div class="chips" id="coachChips"></div>
   <div class="colog" id="coachLog"></div>
   <div class="coin"><textarea id="coachQ" rows="2" maxlength="600" placeholder="Hỏi về lời chào hàng, tuyến ghé, xử lý đại lý..."></textarea><button class="btn sm" id="coachSend" data-coach="send">Gửi</button></div>
-  <div class="small muted">Câu trả lời do AI tạo tự động, chỉ mang tính tham khảo.</div>
+  <div class="small muted">Câu trả lời do AI tạo tự động, chỉ mang tính tham khảo. <span id="coachQuota"></span></div>
 </div></div>
 <div id="toast" class="toast" hidden></div>
 
@@ -632,6 +632,21 @@ function ic(name,size){size=size||18;return '<svg viewBox="0 0 24 24" width="'+s
 (function(){
 document.getElementById('logo2').src=document.getElementById('logo1').src;
 const KEY='livotec-sr-plan-v3';
+const AI_QUOTA_KEY='livotec-ai-quota-v1',AI_QUOTA_MAX=10;
+function aiQuotaState(){
+  try{
+    const raw=localStorage.getItem(AI_QUOTA_KEY),today=todayKey();
+    let st=raw?JSON.parse(raw):null;
+    if(!st||st.date!==today)st={date:today,count:0};
+    return st;
+  }catch(e){return{date:todayKey(),count:0};}
+}
+function aiQuotaRemaining(){return Math.max(0,AI_QUOTA_MAX-aiQuotaState().count);}
+function aiQuotaUse(){
+  const st=aiQuotaState();st.count++;
+  try{localStorage.setItem(AI_QUOTA_KEY,JSON.stringify(st));}catch(e){}
+}
+const AI_QUOTA_MSG='Thiết bị này đã dùng hết '+AI_QUOTA_MAX+' lượt hỏi AI hôm nay. Thử lại vào ngày mai nhé.';
 const PROVINCES=['An Giang','Bà Rịa - Vũng Tàu','Bạc Liêu','Bắc Giang','Bắc Kạn','Bắc Ninh','Bến Tre','Bình Dương','Bình Định','Bình Phước','Bình Thuận','Cà Mau','Cao Bằng','Cần Thơ','Đà Nẵng','Đắk Lắk','Đắk Nông','Điện Biên','Đồng Nai','Đồng Tháp','Gia Lai','Hà Giang','Hà Nam','Hà Nội','Hà Tĩnh','Hải Dương','Hải Phòng','Hậu Giang','Hòa Bình','Thành phố Hồ Chí Minh','Hưng Yên','Khánh Hòa','Kiên Giang','Kon Tum','Lai Châu','Lâm Đồng','Lạng Sơn','Lào Cai','Long An','Nam Định','Nghệ An','Ninh Bình','Ninh Thuận','Phú Thọ','Phú Yên','Quảng Bình','Quảng Nam','Quảng Ngãi','Quảng Ninh','Quảng Trị','Sóc Trăng','Sơn La','Tây Ninh','Thái Bình','Thái Nguyên','Thanh Hóa','Thừa Thiên Huế','Tiền Giang','Trà Vinh','Tuyên Quang','Vĩnh Long','Vĩnh Phúc','Yên Bái'];
 const PRODUCTS=[
   {id:'bn',name:'Bình nước nóng',short:'Bình NN',icon:'droplet'},
@@ -724,6 +739,8 @@ function aiPrompt(weeks){
 let aiKeyMain='';
 async function askAI(){
   if(aiState.loading)return;
+  if(aiQuotaRemaining()<=0){aiState={loading:false,text:'',error:AI_QUOTA_MSG};render();return;}
+  aiQuotaUse();
   aiState={loading:true,text:'',error:''};render();
   try{
     const weeks=analyze();
@@ -746,11 +763,12 @@ function aiCard(weeks,withAsk){
   const total=(+S.target.bn||0)+(+S.target.gd||0);
   if(!total)return '<div class="card aiGlow"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2><div class="small muted">Nhập chỉ tiêu tháng ở trên — bạn sẽ bấm một nút để xem đánh giá và khuyến nghị.</div></div>';
   const stale=aiState.text&&aiKeyMain!==aiDataKey();
+  const qh='<div class="small muted" style="margin-top:4px">Còn '+aiQuotaRemaining()+'/'+AI_QUOTA_MAX+' lượt hỏi AI hôm nay trên thiết bị này.</div>';
   let body;
   if(aiState.loading)body='<div class="small muted">Đang phân tích…</div>';
-  else if(aiState.error)body='<div class="note" style="color:var(--bad)">'+aiState.error+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Thử lại</button></div>';
-  else if(aiState.text)body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiFmt(aiState.text)+'</div>'+(stale?'<div class="small" style="color:var(--warn);margin-top:8px">Số liệu đã thay đổi từ lần phân tích trước.</div>':'')+'<div class="small muted" style="margin-top:8px">'+AI_DISCLAIMER+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích lại</button></div>';
-  else body='<div class="small muted">Xem đánh giá mức độ khả thi và khuyến nghị triển khai dựa trên chỉ tiêu bạn vừa nhập.</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích bằng AI</button></div>';
+  else if(aiState.error)body='<div class="note" style="color:var(--bad)">'+aiState.error+'</div>'+(aiState.error===AI_QUOTA_MSG?'':'<div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Thử lại</button></div>'+qh);
+  else if(aiState.text)body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiFmt(aiState.text)+'</div>'+(stale?'<div class="small" style="color:var(--warn);margin-top:8px">Số liệu đã thay đổi từ lần phân tích trước.</div>':'')+'<div class="small muted" style="margin-top:8px">'+AI_DISCLAIMER+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích lại</button></div>'+qh;
+  else body='<div class="small muted">Xem đánh giá mức độ khả thi và khuyến nghị triển khai dựa trên chỉ tiêu bạn vừa nhập.</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Phân tích bằng AI</button></div>'+qh;
   const ask=(!withAsk||aiState.loading)?'':'<div class="askplan"><div class="askq">Với con số KPI bạn đặt là <b>'+fmt(total)+' triệu</b>, bạn có muốn tạo kế hoạch không?</div><div class="askrow"><button class="btn sm" data-act="mkplan" data-m="auto">Tạo tự động<small>Tự chia theo tuần, ngày</small></button><button class="btn ghost sm" data-act="mkplan" data-m="manual">Tự tạo thủ công<small>Bạn tự chỉnh từng tuần</small></button></div></div>';
   return '<div class="card aiGlow"><h2>'+ic('sparkles',18)+' Nhận xét từ AI</h2>'+body+ask+'</div>';
 }
@@ -988,14 +1006,17 @@ function aiKey(ctx){return JSON.stringify([ctx,S.target,S.actual,S.daily,S.month
 function aiPanel(ctx,weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0);if(!total&&ctx!=='income')return '';
   const st=AIX[ctx]||{},btn=lab=>'<div style="margin-top:10px"><button class="btn ghost sm" data-act="aix" data-c="'+ctx+'">'+lab+'</button></div>';
+  const qh='<div class="small muted" style="margin-top:4px">Còn '+aiQuotaRemaining()+'/'+AI_QUOTA_MAX+' lượt hỏi AI hôm nay trên thiết bị này.</div>';
   let body,sum;
   if(st.loading){body='<div class="small muted">Đang phân tích…</div>';sum='<span class="small muted">đang chạy</span>';}
-  else if(st.error){body='<div class="note" style="color:var(--bad)">'+escH(st.error)+'</div>'+btn('Thử lại');sum='<span class="badge bad">Lỗi</span>';}
-  else if(st.text){const stale=st.key!==aiKey(ctx);body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiFmt(st.text)+'</div>'+(stale?'<div class="small" style="color:var(--warn);margin-top:8px">Số liệu đã thay đổi từ lần phân tích trước.</div>':'')+'<div class="small muted" style="margin-top:8px">'+AI_DISCLAIMER+'</div>'+btn('Phân tích lại');sum=stale?'<span class="badge warn">Cần cập nhật</span>':'<span class="badge ok">Đã phân tích</span>';}
-  else{body='<div class="small muted">'+AI_HINT[ctx]+'</div>'+btn('Phân tích bằng AI');sum='<span class="small muted">chạm để mở</span>';}
+  else if(st.error){body='<div class="note" style="color:var(--bad)">'+escH(st.error)+'</div>'+(st.error===AI_QUOTA_MSG?'':btn('Thử lại')+qh);sum='<span class="badge bad">Lỗi</span>';}
+  else if(st.text){const stale=st.key!==aiKey(ctx);body='<div class="small" style="white-space:pre-wrap;line-height:1.6">'+aiFmt(st.text)+'</div>'+(stale?'<div class="small" style="color:var(--warn);margin-top:8px">Số liệu đã thay đổi từ lần phân tích trước.</div>':'')+'<div class="small muted" style="margin-top:8px">'+AI_DISCLAIMER+'</div>'+btn('Phân tích lại')+qh;sum=stale?'<span class="badge warn">Cần cập nhật</span>':'<span class="badge ok">Đã phân tích</span>';}
+  else{body='<div class="small muted">'+AI_HINT[ctx]+'</div>'+btn('Phân tích bằng AI')+qh;sum='<span class="small muted">chạm để mở</span>';}
   return sec('ai_'+ctx,ic('sparkles',18),AI_TITLE[ctx],sum,body,false,'aiGlow');
 }
 async function askAIx(ctx){
+  if(aiQuotaRemaining()<=0){AIX[ctx]={loading:false,text:'',error:AI_QUOTA_MSG,key:''};render();return;}
+  aiQuotaUse();
   const weeks=analyze();AIX[ctx]={loading:true,text:'',error:'',key:''};render();
   try{
     const text=await callAI(aiMsgs('Dữ liệu của một nhân viên kinh doanh (SR) Livotec:\n'+ctxText(weeks)+(ctx==='brief'?'\n'+briefLine(weeks):'')+'\n\n'+AI_TASK[ctx]),1500);
@@ -1015,9 +1036,12 @@ function renderCoach(){
   lg.innerHTML=coach.log.length?coach.log.map(x=>'<div class="cq">'+escH(x.q)+'</div><div class="ca small" style="white-space:pre-wrap;line-height:1.6">'+(x.a?aiFmt(x.a):'<span class="muted">Đang suy nghĩ…</span>')+'</div>').join(''):'<div class="small muted">Chọn một gợi ý ở trên hoặc nhập câu hỏi. Trợ lý biết số liệu tháng này của bạn và thông tin sản phẩm Livotec.</div>';
   lg.scrollTop=lg.scrollHeight;
   const sb=document.getElementById('coachSend');if(sb)sb.disabled=coach.busy;
+  const cq=document.getElementById('coachQuota');if(cq)cq.textContent='Còn '+aiQuotaRemaining()+'/'+AI_QUOTA_MAX+' lượt hôm nay.';
 }
 async function coachAsk(q,label){
   q=(q||'').trim();if(!q||coach.busy)return;
+  if(aiQuotaRemaining()<=0){coach.log.push({q:label||q,p:q,a:AI_QUOTA_MSG});renderCoach();return;}
+  aiQuotaUse();
   coach.busy=true;coach.log.push({q:label||q,p:q,a:''});renderCoach();
   try{
     const weeks=analyze();
