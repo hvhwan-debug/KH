@@ -570,6 +570,17 @@ header.top.cmp #title{margin-bottom:6px}
 .xc-main:active,.xc-alt:active{transform:scale(.98)}
 .xc-main:focus-visible,.xc-alt:focus-visible{outline:3px solid #FFD27A;outline-offset:2px}
 @media (max-width:480px){.xc-main,.xc-alt{flex-basis:100%}}
+.qp-ref b{color:var(--ink)}
+.bm-r{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line);margin-top:8px}
+.bm-l{flex:1 1 55%;min-width:0}.bm-l b{display:block;font-size:13px}.bm-l span{display:block;font-size:11.5px;line-height:1.4;color:var(--muted);margin-top:2px}
+.bm-v{flex:0 0 42%;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.bm-v em{font-style:normal;font-weight:600;font-size:13.5px;color:var(--ink)}.bm-v span{font-size:12px}
+.bm-c{font-style:normal;font-size:11px;font-weight:600;border-radius:999px;padding:2px 9px;background:var(--bg);color:var(--muted)}
+.bm-c.ok{background:var(--ok-soft);color:var(--ok)}.bm-c.warn{background:var(--warn-soft);color:var(--warn)}.bm-c.bad{background:var(--bad-soft);color:var(--bad)}
+.bm-n{margin-top:6px;padding-top:10px;border-top:1px solid var(--line);line-height:1.55}
+.bm-apply{margin-top:10px;border:0;border-radius:999px;background:var(--brand-deep);color:#fff;font:inherit;font-weight:600;padding:9px 18px;cursor:pointer}
+.bm-ok{margin-top:10px;font-weight:600;color:var(--ok)}
+@media (max-width:480px){.bm-r{flex-direction:column}.bm-v{flex-basis:auto;align-items:flex-start;text-align:left}}
 .srmore{margin-top:8px}
 .srsum{cursor:pointer;color:var(--brand-deep);font-weight:600;padding:2px 0}
 .aibadge{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#9a6700;margin-bottom:6px}
@@ -1658,19 +1669,19 @@ function needCard(weeks){
   const FN=funnel(),consults=Math.round(ap.visits*FN.reach);
   const tiles=
     fc('var(--brand-deep)','target','≈ '+fmt(ap.orders),'đơn cần chốt','Chỉ tiêu <b>'+fmt(ap.total)+' tr</b> ÷ giá trị trung bình mỗi đơn <b>'+S.aov+' tr</b>'+(hasBooked?' (đã trừ phần chắc chắn)':'')+'.')+
-    fc('var(--bn)','users','≈ '+fmt(ap.visits),'lượt ghé đại lý','Mỗi đơn cần ≈ <b>'+fmt(FN.vpo,0)+' lượt ghé</b> (số gợi ý ban đầu, chưa kiểm chứng: '+FN.fv+' lượt ghé gặp chủ → 10 khách tư vấn; '+FN.fc+' khách tư vấn → 1 đơn)'+(S.learn?'. Tự hiệu chỉnh khi bạn nhập số liệu thật.':'.'))+
+    fc('var(--bn)','users','≈ '+fmt(ap.visits),'lượt ghé đại lý','Mỗi đơn cần ≈ <b>'+fmt(FN.vpo,0)+' lượt ghé</b> (chốt ≈ '+Math.round(100/FN.fc)+'% số khách tư vấn'+(FN.fc===5?' theo benchmark B2B':' theo số bạn nhập')+'; '+FN.fv+' lượt ghé gặp chủ → 10 khách là giả định chưa có benchmark)'+(S.learn?'. Tự hiệu chỉnh khi bạn nhập số liệu thật.':'.'))+
     fc('var(--gd)','plan','≈ '+fmt(ap.uniq),'điểm bán khác nhau (ghé '+ap.vpp+' lần/điểm)','Số lượt ghé ÷ <b>'+ap.vpp+' lần</b> mỗi điểm.'+(ap.have?' Bạn có <b>'+ap.usable+'</b> điểm dùng được.':' Nhập địa bàn để so với số điểm bạn có.'))+
     fc('var(--ok)','bell',ap.act>0?'≈ '+fmt(ap.careTot):'—','lượt chăm sóc từ xa'+(ap.act>0?'':' (nhập địa bàn)'),ap.act>0?'Điểm đang hoạt động được gọi, nhắn thay cho ghé trực tiếp, theo tần suất bạn đặt ở mục Địa bàn &amp; điểm bán.':'Nhập số điểm bán đang hoạt động ở mục Địa bàn &amp; điểm bán để tính lượt chăm sóc từ xa.');
   const totWork=Math.max(1,weeks.reduce((x,w)=>x+w.work,0)),mc=Math.max(1,+S.maxC||6),capV=totWork*mc,needV=ap.visits;
   const aovN=Math.max(1,+S.aov||20),ordCap=Math.floor(capV/FN.vpo),siCap=ordCap*aovN,pctCap=ap.total?Math.round(Math.min(100,siCap/ap.total*100)):0;
-  const over=siCap<ap.total,tight=!over&&needV>capV*0.9,fillPct=Math.min(100,Math.round(capV/Math.max(1,needV)*100)),reqAov=ordCap>0?ap.total/ordCap:0,reqVpo=ap.orders>0?capV/ap.orders:0,isDef=FN.fv===15&&FN.fc===10;
+  const over=siCap<ap.total,tight=!over&&needV>capV*0.9,fillPct=Math.min(100,Math.round(capV/Math.max(1,needV)*100)),reqAov=ordCap>0?ap.total/ordCap:0,reqVpo=ap.orders>0?capV/ap.orders:0,isDef=FN.fv===15&&FN.fc===5;
   const capHtml='<div class="fnl-cap '+(over?'bad':tight?'warn':'ok')+'"><div class="cap-h"><span>Sức đi của bạn</span><b>'+mc+' lượt/ngày × '+totWork+' ngày = '+fmt(capV)+' lượt</b></div>'+
     '<div class="cap-bar" role="img" aria-label="Sức đi so với nhu cầu"><i style="width:'+fillPct+'%"></i></div>'+
     '<div class="cap-l"><span>Đi được '+fmt(capV)+'</span><span>Cần '+fmt(needV)+'</span></div>'+
     (over?'<div class="cap-res">Với sức này chỉ đạt ≈ <b>'+ordCap+' đơn ≈ '+fmt(siCap)+' tr</b> ('+pctCap+'% chỉ tiêu)</div>'+
       (ordCap>0?'<div class="cap-fix"><em>Để đủ chỉ tiêu:</em><span>đơn TB ≈ <b>'+fmt(reqAov,0)+' tr</b></span><em>hoặc</em><span>≈ <b>'+fmt(reqVpo,1)+' lượt ghé/đơn</b></span></div>':''):
       (tight?'<div class="cap-res">Sát sức: cần ≈ <b>'+fmt(needV)+' lượt</b> (đã làm tròn lên), đi được <b>'+fmt(capV)+'</b>. Gần như không còn dư cho ngày chậm.</div>':'<div class="cap-res">Trong sức: dùng <b>'+Math.round(needV/capV*100)+'%</b> số lượt ghé tối đa.</div>'))+'</div>';
-  const funnelHtml='<div class="fnl"><div class="fnl-h"><b>Phễu bán hàng</b><span class="fnl-src '+(isDef?'bm':'own')+'">'+(isDef?'Gợi ý ban đầu':'Tự nhập')+'</span><span class="small muted">1 đơn ≈ '+fmt(FN.vpo,0)+' lượt ghé ≈ '+FN.fc+' khách tư vấn</span></div>'+
+  const funnelHtml='<div class="fnl"><div class="fnl-h"><b>Phễu bán hàng</b><span class="fnl-src '+(isDef?'bm':'own')+'">'+(isDef?'Benchmark B2B':'Tự nhập')+'</span><span class="small muted">1 đơn ≈ '+fmt(FN.vpo,0)+' lượt ghé ≈ '+FN.fc+' khách tư vấn</span></div>'+
     '<div class="fnl-bars">'+
       '<div class="fnl-bar b1" style="--w:100%"><b>≈ '+fmt(ap.visits)+'</b><span>lượt ghé đại lý</span></div>'+
       '<div class="fnl-cv"><i></i><b>'+Math.round(FN.reach*100)+'%</b> gặp được chủ</div>'+
@@ -1681,8 +1692,8 @@ function needCard(weeks){
     '<div class="fnl-edit"><label><span>Gặp được chủ</span><input class="num sm" type="number" inputmode="numeric" min="10" max="60" data-f="fnl" data-k="fv" value="'+FN.fv+'" aria-label="Số lượt ghé để tư vấn 10 khách"><span>cần bao nhiêu lượt ghé để tư vấn 10 khách</span></label>'+
     '<label><span>Chốt đơn</span><input class="num sm" type="number" inputmode="numeric" min="1" max="50" data-f="fnl" data-k="fc" value="'+FN.fc+'" aria-label="Số khách tư vấn để chốt 1 đơn"><span>cần bao nhiêu khách tư vấn để chốt 1 đơn</span></label>'+
     '<label><span>Sức đi</span><input class="num sm" type="number" inputmode="numeric" min="1" max="40" data-f="maxC" value="'+mc+'" aria-label="Số lượt ghé tối đa mỗi ngày"><span>lượt ghé tối đa mỗi ngày (SR thường đi khoảng 6)</span></label>'+
-    (isDef?'':'<button class="link" data-act="fnlReset">Về số gợi ý ban đầu</button>')+'</div>'+
-    '<div class="small muted fnl-note">Đây là số gợi ý ban đầu (chưa có nguồn chuẩn ngành được kiểm chứng) hoặc do bạn nhập. Hãy thay bằng số thật của bạn. AI chỉ gợi ý, không tự đổi số.</div></div>';
+    (isDef?'':'<button class="link" data-act="fnlReset">Về benchmark B2B</button>')+'</div>'+
+    '<div class="small muted fnl-note">Tỷ lệ chốt ≈ 20% lấy theo benchmark B2B bán hàng trực tiếp (nhiều nguồn, không riêng điện máy). Tỷ lệ gặp được chủ là giả định, chưa có benchmark. Hãy thay bằng số thật của bạn. AI chỉ gợi ý, không tự đổi số.</div></div>';
   const sum='<span class="small muted">'+fmt(ap.orders)+' đơn · '+fmt(ap.visits)+' ghé</span>'+(over?' <span class="badge bad">vượt sức</span>':tight?' <span class="badge warn">sát sức</span>':'');
   const wkWithData=weeks.filter(w=>w.work>0&&w.tt>0),maxTt=Math.max(1,...wkWithData.map(w=>w.tt));
   const rowHtml=w=>{
@@ -1796,7 +1807,7 @@ function ctxText(weeks){
   L.push('Chỉ tiêu S.I: '+PRODUCTS.map(p=>p.name+' '+fmt(+S.target[p.id]||0)+' tr').join(', ')+' (tổng '+fmt(total)+' tr).');
   L.push('Chiến lược chia chỉ tiêu: '+(STRATS.find(x=>x[0]===S.strat)||STRATS[4])[1]+(S.strat==='manual'?'':' ('+Math.round((+S.target.bn||0)/Math.max(1,total)*100)+'% bình nước nóng)')+'.');
   const on=catShares();if(on.length)L.push('Cơ cấu gia dụng & điện máy (tỷ trọng): '+on.map(x=>x.c.name+' '+Math.round(x.f*100)+'%').join(', ')+'.');
-  L.push('Giả định: giá trị trung bình mỗi đơn '+S.aov+' tr; phễu gợi ý ban đầu (chưa kiểm chứng, KHÔNG phải chuẩn ngành): cứ '+funnel().fv+' lượt ghé đại lý gặp được chủ để tư vấn 10 khách, '+funnel().fc+' khách tư vấn chốt 1 đơn (≈ '+fmt(funnel().vpo,0)+' lượt ghé mỗi đơn); sức mua tháng này '+S.season+'%.');
+  L.push('Giả định: giá trị trung bình mỗi đơn '+S.aov+' tr; phễu: tỷ lệ chốt lấy theo benchmark B2B bán hàng trực tiếp 19–29% (không riêng điện máy gia dụng), tỷ lệ gặp chủ là giả định chưa có benchmark: cứ '+funnel().fv+' lượt ghé đại lý gặp được chủ để tư vấn 10 khách, '+funnel().fc+' khách tư vấn chốt 1 đơn (≈ '+fmt(funnel().vpo,0)+' lượt ghé mỗi đơn); sức mua tháng này '+S.season+'%.');
   L.push(seasonText());
   {const _tw=Math.max(1,weeks.reduce((a,w)=>a+w.work,0)),_mc=Math.max(1,+S.maxC||6);L.push('Sức đi tối đa của SR: '+_mc+' lượt ghé/ngày × '+_tw+' ngày làm việc = '+(_mc*_tw)+' lượt/tháng'+(ap?(ap.visits>_mc*_tw?' (nhu cầu '+ap.visits+' lượt, VƯỢT sức)':' (nhu cầu '+ap.visits+' lượt, trong sức)'):'')+'. Tỷ lệ phễu do người dùng đặt hoặc là số gợi ý ban đầu chưa kiểm chứng; AI chỉ gợi ý, không thay số.');}
   {const _m=+S.month.split('-')[1],_r=regionOf(S.province),_c=CLIM[_r];L.push('Khí hậu trung bình nhiều năm (ước lượng) của '+REG_NAME[_r]+' vào tháng '+_m+': ≈ '+_c.t[_m-1]+'°C, '+WLAB[_c.w[_m-1]]+'.');}
@@ -2236,7 +2247,7 @@ function xlBuildBook(){
     '3. Nếu '+(maxS?(maxS.name||'nguồn lớn nhất'):'1 đại lý lớn')+' không nhập thì sao? ('+(maxS&&sumAmt?'Hụt '+maxS.amt+'M → kế hoạch lập tức thiếu '+maxS.amt+'M, tức '+Math.round(maxS.amt/sumAmt*100)+'% kế hoạch':'Cần xác định nguồn lớn nhất và mức hụt nếu nguồn đó không nhập')+')',
     '4. Phần thiếu có thể bù bằng cách nào? ('+(S.planB?S.planB:'Chưa ghi Plan B — nêu rõ nguồn dự phòng và người phụ trách')+')',
     '5. Muốn mở thêm điểm mới cần làm gì? ('+(ap&&ap.gap>0?'Cần thêm khoảng '+ap.gap+' điểm đang làm việc; mỗi điểm nhập trung bình ~'+(+S.aov||20)+'M/đơn':'Xác định số điểm cần mở thêm từ phần Khu vực của ứng dụng')+')',
-    '6. Cần tiếp cận bao nhiêu điểm trên tuyến? (Cả tháng ≈ '+visits+' lượt ghé, ≈ '+(workD?Math.ceil(visits/workD):0)+' lượt/ngày làm việc; mỗi đơn cần ≈ '+F.vpo.toFixed(1).replace('.',',')+' lượt theo tỷ lệ gợi ý ban đầu, chưa kiểm chứng)',
+    '6. Cần tiếp cận bao nhiêu điểm trên tuyến? (Cả tháng ≈ '+visits+' lượt ghé, ≈ '+(workD?Math.ceil(visits/workD):0)+' lượt/ngày làm việc; mỗi đơn cần ≈ '+F.vpo.toFixed(1).replace('.',',')+' lượt, tỷ lệ chốt ≈ '+Math.round(100/F.fc)+'% theo benchmark B2B tham khảo)',
     '7. Còn đủ thời gian để triển khai không? (Còn '+remD+' ngày làm việc trong tháng; phát hiện sớm ở tuần 1-2 để kịp đổi phương án hành động)'
   ];
   for(let i=0;i<7;i++){
@@ -2247,7 +2258,7 @@ function xlBuildBook(){
     s1.height(r,30);
   }
   const rF=rB+9;
-  s1.merge(rF,0,rF,NC-1,st.foot).set(rF,0,'Lưu ý: tỷ lệ phễu (lượt ghé, khách tư vấn, đơn) là số gợi ý ban đầu, chưa có nguồn chuẩn ngành được kiểm chứng; mục "Thực tế đạt" do SR tự nhập'+(hasAi?'; các dòng 🤖 là bản nháp do AI/quy tắc mẫu gợi ý':'')+'. Cần đối chiếu với báo cáo bán hàng chính thức và xác nhận với quản lý trước khi dùng để ra quyết định.').height(rF,34);
+  s1.merge(rF,0,rF,NC-1,st.foot).set(rF,0,'Lưu ý: tỷ lệ chốt lấy theo benchmark B2B bán hàng trực tiếp (≈ 19–29%, nhiều nguồn, không riêng điện máy gia dụng); tỷ lệ gặp được chủ là giả định chưa có benchmark; mục "Thực tế đạt" do SR tự nhập'+(hasAi?'; các dòng 🤖 là bản nháp do AI/quy tắc mẫu gợi ý':'')+'. Cần đối chiếu với báo cáo bán hàng chính thức và xác nhận với quản lý trước khi dùng để ra quyết định.').height(rF,34);
   // độ rộng cột
   [22,30,28,40,22,19].forEach((w,c)=>s1.width(c,w));
   for(let k=0;k<n;k++)s1.width(6+k,16);
@@ -2527,7 +2538,7 @@ function factors(weeks){
     add({id:'sens',lv,sv:'dễ vỡ nếu chốt kém',name:'Nếu chốt kém hơn',val:'−25%',
       msg:'Chốt kém 25% (cần '+fmt(fc2,1)+' khách tư vấn/đơn): thêm '+ex+' lượt ghé ('+sc+'/'+cap+'), '+(sc>cap?'vượt sức':'vẫn trong sức'),
       act:lv==='ok'?'':'Giữ khách dự phòng, nâng giá trị mỗi đơn',
-      how:'Lượt ghé tỉ lệ nghịch với tỷ lệ chốt. Sức = số ngày làm việc × số lượt ghé tối đa mỗi ngày.',src:'Tính từ phễu gợi ý ban đầu và giả định của bạn'});
+      how:'Lượt ghé tỉ lệ nghịch với tỷ lệ chốt. Sức = số ngày làm việc × số lượt ghé tối đa mỗi ngày.',src:'Tính từ phễu (benchmark B2B + giả định) và giả định của bạn'});
   }
   const fc=forecast(weeks);
   if(fc&&!fc.noData){
@@ -2894,8 +2905,8 @@ function cxDefs(){return '<defs>'+
   '<linearGradient id="gcxArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#02B6AC" stop-opacity=".30"/><stop offset="1" stop-color="#02B6AC" stop-opacity="0"/></linearGradient>'+
   '</defs>';}
 function monthKey(o){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+o);return d.getFullYear()+'-'+pad(d.getMonth()+1);}
-function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,fv:15,fc:10,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:6,cap6:1,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,strat:'season',tt:0,sync:{rev:0,lastOk:0},mail:{on:false,morning:true,evening:true,warn:true,weekly:true},rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''},sources:[],planB:'',income:0,commission:1.5,bench:{ord:0,first:0,conv:0},sg:'target'};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{strat:o.strat||'manual',tt:+o.tt||0,sync:Object.assign(d.sync,o.sync||{}),mail:Object.assign(d.mail,o.mail||{}),hist:o.hist||{},rem:Object.assign(d.rem,o.rem||{}),area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats,fv:+o.fv||15,fc:+o.fc||10,maxC:(o.cap6?(+o.maxC||6):((!o.maxC||[4,9,12,15].includes(+o.maxC))?6:+o.maxC)),cap6:1,});}}catch(e){}return defaults();}
+function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,fv:15,fc:5,bmv:1,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',cw:null,preset:'std',season:100,maxC:6,cap6:1,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,strat:'season',tt:0,sync:{rev:0,lastOk:0},mail:{on:false,morning:true,evening:true,warn:true,weekly:true},rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''},sources:[],planB:'',income:0,commission:1.5,bench:{ord:0,first:0,conv:0},sg:'target'};}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{strat:o.strat||'manual',tt:+o.tt||0,sync:Object.assign(d.sync,o.sync||{}),mail:Object.assign(d.mail,o.mail||{}),hist:o.hist||{},rem:Object.assign(d.rem,o.rem||{}),area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats,fv:+o.fv||15,fc:(!o.bmv&&+o.fv===15&&+o.fc===10)?5:(+o.fc||5),bmv:1,maxC:(o.cap6?(+o.maxC||6):((!o.maxC||[4,9,12,15].includes(+o.maxC))?6:+o.maxC)),cap6:1,});}}catch(e){}return defaults();}
 let S=load(),confirmReset=false,copyText=null;
 function save(){try{S.savedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}if(typeof scheduleSync==='function')scheduleSync();}
 
@@ -2903,7 +2914,7 @@ function save(){try{S.savedAt=Date.now();localStorage.setItem(KEY,JSON.stringify
 function si(k){return Math.max(0.1,(+S.list[k]||1)*(1-(+S.disc||0)/100));}
 /* Phễu benchmark ngành: fv lượt ghé đại lý để gặp được chủ và tư vấn 10 khách; fc khách tư vấn để chốt 1 đơn */
 function funnel(){
-  const fv=Math.max(10,Math.min(60,+S.fv||15)),fc=Math.max(1,Math.min(50,+S.fc||10));
+  const fv=Math.max(10,Math.min(60,+S.fv||15)),fc=Math.max(1,Math.min(50,+S.fc||5));
   return{fv,fc,reach:10/fv,close:1/fc,vpo:fv/10*fc,rate:1000/(fv*fc)};
 }
 function rateEff(){return funnel().rate;}
@@ -3331,7 +3342,7 @@ function benchCard(weeks,raw){
   const row=(icon,title,val,text,b)=>'<div class="bn-row"><span class="bn-ic">'+ic(icon,18)+'</span><div class="bn-t"><b>'+title+'</b><span class="small muted">'+text+'</span></div><div class="bn-v"><b>'+val+'</b>'+badge(b)+'</div></div>';
   const gapNote=ap&&ap.have&&ap.gap>0?' Kế hoạch còn thiếu '+ap.gap+' điểm, cần ghé ≈ <b>'+Math.ceil(ap.gap*perDealer)+' cửa hàng</b> để mở đủ.':'';
   const r1=row('users','Để có 1 đại lý nhập hàng, cần ghé','≈ '+fmt(perDealer,1)+' cửa hàng',
-    'Tỷ lệ '+fmt(effConv,1)+'%'+(conv>0?'':' (lấy từ phễu gợi ý ban đầu)')+'. 5 đại lý ≈ '+Math.ceil(5*perDealer)+' cửa hàng, 10 đại lý ≈ '+Math.ceil(10*perDealer)+'.'+gapNote);
+    'Tỷ lệ '+fmt(effConv,1)+'%'+(conv>0?'':' (lấy từ phễu: benchmark B2B + giả định)')+'. 5 đại lý ≈ '+Math.ceil(5*perDealer)+' cửa hàng, 10 đại lý ≈ '+Math.ceil(10*perDealer)+'.'+gapNote);
   let r2;
   if(ap&&ord>0){
     const dealers=Math.ceil(ap.orders/ord);
@@ -3375,11 +3386,20 @@ function quickPlan(weeks){
     const mc=Math.max(1,+S.maxC||6),tw=Math.max(1,weeks.reduce((a,w)=>a+w.work,0)),cap=mc*tw;
     const node=(n,l)=>'<div class="qp-node"><b>'+n+'</b><span>'+l+'</span></div>',arr='<i class="qp-arrow" aria-hidden="true">›</i>';
     route='<div class="qp-route">'+node('≈ '+pts,'điểm bán cần đi')+arr+node('≈ '+vis,'lượt gặp khách')+arr+node('≈ '+orders,'đơn cần chốt')+arr+node('≈ '+fmt(si),'triệu doanh số S.I')+'</div>'+
-      '<div class="qp-basis"><span class="qp-tag">'+(ordB>0?'Theo điểm tương đồng':'Gợi ý ban đầu')+'</span><span>'+(ordB>0?'mỗi đại lý '+fmt(ordB,1)+' đơn/tháng · ':'chưa kiểm chứng · ')+'hoa hồng giả định '+fmt(rateC,1)+'% · mỗi đơn ≈ '+fmt(aov,0)+' tr</span></div>'+
+      '<div class="qp-basis"><span class="qp-tag">'+(ordB>0?'Theo điểm tương đồng':(F.fv===15&&F.fc===5?'Benchmark B2B':'Số bạn đã chỉnh'))+'</span><span>'+(ordB>0?'mỗi đại lý '+fmt(ordB,1)+' đơn/tháng · ':'')+'chốt ≈ '+Math.round(100/F.fc)+'% khách tư vấn · '+'hoa hồng giả định '+fmt(rateC,1)+'% · mỗi đơn ≈ '+fmt(aov,0)+' tr</span></div>'+
       '<div class="qp-cap '+(vis>cap?'bad':'ok')+'">'+(vis>cap?'⚠ Vượt sức đi: ':'✓ Trong sức đi: ')+'bạn đi tối đa ≈ '+cap+' lượt/tháng ('+mc+' lượt/ngày × '+tw+' ngày), kế hoạch cần '+vis+' lượt.'+(vis>cap?' Với sức đi này, theo các giả định trên bạn đạt khoảng ≈ '+fmt(Math.floor(cap/Math.max(1,F.vpo))*aov)+' tr S.I, tức thu nhập ≈ '+fmt(Math.floor(cap/Math.max(1,F.vpo))*aov*rateC/100,1)+' tr. Hãy đối chiếu giả định hoặc tăng sức đi.':'')+'</div>'+
       (Math.round(si)!==total?'<button type="button" class="qp-apply" data-act="incApply">Đặt '+fmt(si)+' tr làm chỉ tiêu tháng</button>':'<div class="qp-ok">✓ Đã khớp với chỉ tiêu tháng</div>');
   }else route='<div class="qp-hint">Nhập số, ví dụ 15, để xem cần đi bao nhiêu điểm, gặp bao nhiêu khách và chốt bao nhiêu đơn.</div>';
-  const refs='<div class="qp-ref"><b>Tham khảo thị trường (khác ngành, không so thẳng):</b> hàng tiêu dùng nhanh kênh GT thường có khoảng 60–75% lượt ghé ra đơn (nguồn: blog phần mềm bán hàng, 2026) và một mẫu KPI tại Việt Nam đặt tối thiểu 8 điểm bán/ngày (AMIS). Hàng điện máy giá trị lớn có tỷ lệ thấp hơn nhiều. <b>Chưa có chuẩn công bố riêng cho điện máy gia dụng qua đại lý</b>, nên hãy nhập số của các điểm tương đồng (cùng quy mô, cùng khu vực) ở dưới. Đây là số tham khảo, cần đối chiếu với thực tế.</div>';
+  const st=(v,lo,hi)=>v<lo?['bad','Thấp hơn chuẩn']:v>hi?['warn','Cao hơn chuẩn']:['ok','Trong khoảng chuẩn'];
+  const bmRows=[
+    ['Tỷ lệ chốt (khách tư vấn → đơn)','19–29%','B2B bán hàng trực tiếp · HubSpot Sales Trends (TB 21%, đủ điều kiện 29%), Ebsta × Pavilion 2025 (19%)',Math.round(100/F.fc)+'%',st(100/F.fc,19,29)],
+    ['Số lượt ghé mỗi ngày','TB 5,1 (2,1–13,9)','B2B bán hàng trực tiếp (outside sales) · RepMove, 10% thấp nhất đến 10% cao nhất',fmt(Math.max(1,+S.maxC||6),0),st(Math.max(1,+S.maxC||6),2.1,13.9)],
+    ['Lượt ghé ra đơn','60–75%','Hàng tiêu dùng nhanh kênh GT · massistcrm 2026 (đơn nhỏ, đặt lại thường xuyên)',fmt(100/F.vpo,1)+'%',['mute','Khác ngành, không so thẳng']],
+    ['Gặp được chủ trong mỗi lượt ghé','Chưa có benchmark','Không tìm thấy nguồn công bố',Math.round(10/F.fv*100)+'%',['mute','Giả định của bạn']]
+  ];
+  const refs='<div class="qp-ref"><b>Benchmark tham khảo và so với giả định của bạn</b>'+bmRows.map(r=>'<div class="bm-r"><div class="bm-l"><b>'+r[0]+'</b><span>'+r[2]+'</span></div><div class="bm-v"><em>'+r[1]+'</em><span>Bạn: <b>'+r[3]+'</b></span><i class="bm-c '+r[4][0]+'">'+r[4][1]+'</i></div></div>').join('')+
+    '<div class="bm-n"><b>Chưa có benchmark công bố riêng cho điện máy gia dụng bán qua đại lý.</b> Các số trên đến từ B2B nói chung (chủ yếu phần mềm) và hàng tiêu dùng nhanh, nên chỉ để tham khảo; hãy nhập số của các điểm tương đồng ở dưới.</div>'+
+    (F.fv===15&&F.fc===5?'<div class="bm-ok">✓ Đang dùng benchmark B2B cho tỷ lệ chốt</div>':'<button type="button" class="bm-apply" data-act="bmApply">Dùng benchmark B2B (chốt ≈ 20%)</button>')+'</div>';
   const assume='<div class="fieldgrid" style="margin-bottom:10px"><div class="field"><span class="nm">Hoa hồng giả định trên S.I</span><span class="iu"><input class="num sm" type="number" inputmode="decimal" step="0.1" min="0.1" data-f="commission" value="'+rateC+'"><span class="unit">%</span></span></div><div class="field"><span class="nm">Giá trị trung bình mỗi đơn</span><span class="iu"><input class="num sm" type="number" inputmode="numeric" min="1" data-f="aov" value="'+aov+'"><span class="unit">tr</span></span></div></div>';
   const more='<details class="qp-more" data-sec="qp_more"'+(isOpen('qp_more',false)?' open':'')+'><summary class="qp-sum">Số liệu từ điểm tương đồng và giả định</summary><div class="qp-body">'+assume+benchCard(weeks,true)+refs+'</div></details>';
   return '<div class="card qplan"><div class="qp-q">Tháng này bạn muốn thu nhập bao nhiêu?</div>'+
@@ -3757,7 +3777,7 @@ document.addEventListener('click',function(e){
     const wk=analyze().find(w=>w.days.some(x=>x.date===d.day));if(wk)recomputeWeekActual(wk);
     toast('Đã lưu số liệu ngày '+d.day.slice(8)+'/'+d.day.slice(5,7));
   }
-  else if(a==='fnlReset'){S.fv=15;S.fc=10;toast('Đã về số gợi ý ban đầu');}
+  else if(a==='fnlReset'||a==='bmApply'){S.fv=15;S.fc=5;toast('Đã dùng benchmark B2B: chốt ≈ 20% số khách tư vấn');}
   else if(a==='sgroup'){if(['target','area','sys'].includes(d.v))S.sg=d.v;}
   else if(a==='gotoMonth'){switchMonth(d.m);S.tab='check';}
   else if(a==='openSec'){openSec[d.k]=true;}
