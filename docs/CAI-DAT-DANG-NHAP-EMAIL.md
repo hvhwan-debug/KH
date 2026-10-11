@@ -18,7 +18,7 @@ Azure Portal → Static Web App → **Settings → Environment variables** (ho�
 | `STORAGE_CONNECTION_STRING` | chuỗi kết nối ở bước 1 |
 | `SESSION_SECRET` | chuỗi ngẫu nhiên từ 32 ký tự (xem cách tạo bên dưới) |
 | `ALLOWED_EMAIL_DOMAINS` | ví dụ `livotec.vn` (nhiều tên miền cách nhau dấu phẩy) |
-| `ALLOWED_EMAILS` | (tùy chọn) email lẻ được phép, cách nhau dấu phẩy |
+| `ALLOWED_EMAILS` | (tùy chọn) email lẻ được phép, cách nhau dấu phẩy. Đặt giá trị là `*` (chỉ một dấu sao) để cho phép **bất kỳ email hợp lệ nào** đăng ký, không cần liệt kê hay giới hạn tên miền |
 | `APP_URL` | `https://kh.io.vn` |
 
 Phải có ít nhất một trong `ALLOWED_EMAIL_DOMAINS` hoặc `ALLOWED_EMAILS`. Đây là danh sách người được đăng ký tài khoản,

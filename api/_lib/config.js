@@ -49,6 +49,8 @@ function validEmail(e) {
 function emailAllowed(email) {
   const c = cfg(), e = String(email || "").toLowerCase();
   if (!validEmail(e)) return false;
+  // "*" trong ALLOWED_EMAILS hoặc ALLOWED_EMAIL_DOMAINS nghĩa là cho phép mọi email hợp lệ (không giới hạn danh sách/tên miền).
+  if (c.allowEmails.includes("*") || c.allowDomains.includes("*")) return true;
   if (c.allowEmails.includes(e)) return true;
   const dom = e.split("@")[1];
   return c.allowDomains.includes(dom);
