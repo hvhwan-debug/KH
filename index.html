@@ -2875,7 +2875,7 @@ function acctCard(){
       '<div class="small muted" style="margin-top:10px">Khi đăng nhập, dữ liệu của bạn được lưu thêm trên máy chủ của ứng dụng để đồng bộ và gửi email. Trong ứng dụng, chỉ bạn xem được dữ liệu của mình; người quản trị hệ thống có quyền truy cập kho lưu trữ. Không có bảng xếp hạng giữa các SR.</div>'+
       '<div class="askrow"><button class="btn ghost sm" data-act="acLogout">Đăng xuất</button></div>';
   }
-  return sec('acct',ic('users',18),'Tài khoản &amp; email',sum,body);
+  return sec('acct',ic('users',18),'Tài khoản &amp; email',sum,body,!A.user);
 }
 
 /* ---------- Chiến lược chia chỉ tiêu ---------- */
@@ -3607,7 +3607,7 @@ function renderSetup(){
   const SGS=[
     {id:'target',label:'Chỉ tiêu',icon:'target',desc:'Nguồn doanh số, kiểm tra khả thi và cơ cấu ngành hàng.',cards:[sourcesCard(weeks),feasCard(weeks),catsCard(tg)],need:false},
     {id:'area',label:'Địa bàn',icon:'plan',desc:'Điểm bán bạn phụ trách và ngày làm việc.',cards:[areaCard(weeks),daysCard],need:!(+((S.area||{}).pts)||0)},
-    {id:'sys',label:'Hệ thống',icon:'setup',desc:'Tài khoản, nhắc việc, lưu dữ liệu và các thông số tinh chỉnh.',cards:[acctCard(),remCard(),tuneCard],need:!AUTH.user}
+    {id:'sys',label:'Hệ thống',icon:'setup',desc:'Nhắc việc, lưu dữ liệu và các thông số tinh chỉnh. Tài khoản & đăng nhập đã chuyển lên đầu trang.',cards:[remCard(),tuneCard],need:false}
   ];
   const sg=SGS.find(g=>g.id===S.sg)||SGS[0];
   const hub='<div class="sghub"><div class="sg-tabs" role="tablist" aria-label="Nhóm thiết lập chi tiết">'+SGS.map(g=>'<button role="tab" class="sg-tab" data-act="sgroup" data-v="'+g.id+'" aria-selected="'+(g===sg)+'">'+ic(g.icon,17)+'<span>'+g.label+'</span><em>'+g.cards.filter(Boolean).length+'</em>'+(g.need?'<i class="sg-dot" title="Còn mục chưa nhập"></i>':'')+'</button>').join('')+'</div>'+
@@ -3616,7 +3616,7 @@ function renderSetup(){
     '<div class="go-act"><button class="btn" data-act="mkplan" data-m="auto">Tạo tự động<small>Tự chia theo tuần, ngày</small></button><button class="btn ghost" data-act="mkplan" data-m="manual">Tự tạo thủ công<small>Bạn tự chỉnh từng tuần</small></button></div>'+
     '<button class="link go-link" data-act="tab" data-v="plan">Xem kế hoạch hiện tại →</button></div>':
     '<button class="btn" data-act="tab" data-v="plan">Xem kế hoạch của tôi</button>';
-  $app.innerHTML=quickPlan(weeks)+((+S.income||0)>0?aiPanel('income',weeks):'')+
+  $app.innerHTML=acctCard()+quickPlan(weeks)+((+S.income||0)>0?aiPanel('income',weeks):'')+
   '<div class="card herocard">'+hero+'</div>'+
   '<div class="card tcard"><div class="tc-head"><h2>Chỉ tiêu S.I tháng này</h2><span class="small muted">Chọn tháng, khu vực và cách chia, rồi nhập tổng chỉ tiêu.</span></div>'+
     '<div class="tc-grid">'+
