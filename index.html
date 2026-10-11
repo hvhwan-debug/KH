@@ -1685,7 +1685,7 @@ function needCard(weeks){
   const FN=funnel(),consults=Math.round(ap.visits*FN.reach);
   const tiles=
     fc('var(--brand-deep)','target','≈ '+fmt(ap.orders),'đơn cần chốt','Chỉ tiêu <b>'+fmt(ap.total)+' tr</b> ÷ giá trị trung bình mỗi đơn <b>'+S.aov+' tr</b>'+(hasBooked?' (đã trừ phần chắc chắn)':'')+'.')+
-    fc('var(--bn)','users','≈ '+fmt(ap.visits),'lượt ghé đại lý','Mỗi đơn cần ≈ <b>'+fmt(FN.vpo,0)+' lượt ghé</b> (chốt ≈ '+Math.round(100/FN.fc)+'% số khách tư vấn'+(FN.fc===5?' theo benchmark B2B':' theo số bạn nhập')+'; '+FN.fv+' lượt ghé gặp chủ → 10 khách là giả định chưa có benchmark)'+(S.learn?'. Tự hiệu chỉnh khi bạn nhập số liệu thật.':'.'))+
+    fc('var(--bn)','users','≈ '+fmt(ap.visits),'lượt ghé đại lý','Mỗi đơn cần ≈ <b>'+fmt(FN.vpo,0)+' lượt ghé</b> = gặp đúng người quyết định ≈ '+Math.round(10/FN.fv*100)+'% mỗi lượt ghé (thông lệ field sales không hẹn trước: 50–70%) × chốt ≈ '+Math.round(100/FN.fc)+'% số khách tư vấn'+(FN.fc===5?' theo benchmark B2B':' theo số bạn nhập')+(S.learn?'. Tự hiệu chỉnh khi bạn nhập số liệu thật.':'.'))+
     fc('var(--gd)','plan','≈ '+fmt(ap.uniq),'điểm bán khác nhau (ghé '+ap.vpp+' lần/điểm)','Số lượt ghé ÷ <b>'+ap.vpp+' lần</b> mỗi điểm.'+(ap.have?' Bạn có <b>'+ap.usable+'</b> điểm dùng được.':' Nhập địa bàn để so với số điểm bạn có.'))+
     fc('var(--ok)','bell',ap.act>0?'≈ '+fmt(ap.careTot):'—','lượt chăm sóc từ xa'+(ap.act>0?'':' (nhập địa bàn)'),ap.act>0?'Điểm đang hoạt động được gọi, nhắn thay cho ghé trực tiếp, theo tần suất bạn đặt ở mục Địa bàn &amp; điểm bán.':'Nhập số điểm bán đang hoạt động ở mục Địa bàn &amp; điểm bán để tính lượt chăm sóc từ xa.');
   const totWork=Math.max(1,weeks.reduce((x,w)=>x+w.work,0)),mc=Math.max(1,+S.maxC||6),capV=totWork*mc,needV=ap.visits;
@@ -1823,7 +1823,7 @@ function ctxText(weeks){
   L.push('Chỉ tiêu S.I: '+PRODUCTS.map(p=>p.name+' '+fmt(+S.target[p.id]||0)+' tr').join(', ')+' (tổng '+fmt(total)+' tr).');
   L.push('Chiến lược chia chỉ tiêu: '+(STRATS.find(x=>x[0]===S.strat)||STRATS[4])[1]+(S.strat==='manual'?'':' ('+Math.round((+S.target.bn||0)/Math.max(1,total)*100)+'% bình nước nóng)')+'.');
   const on=catShares();if(on.length)L.push('Cơ cấu gia dụng & điện máy (tỷ trọng): '+on.map(x=>x.c.name+' '+Math.round(x.f*100)+'%').join(', ')+'.');
-  L.push('Giả định: giá trị trung bình mỗi đơn '+S.aov+' tr; phễu: tỷ lệ chốt lấy theo benchmark B2B bán hàng trực tiếp 19–29% (không riêng điện máy gia dụng), tỷ lệ gặp chủ là giả định chưa có benchmark: cứ '+funnel().fv+' lượt ghé đại lý gặp được chủ để tư vấn 10 khách, '+funnel().fc+' khách tư vấn chốt 1 đơn (≈ '+fmt(funnel().vpo,0)+' lượt ghé mỗi đơn); sức mua tháng này '+S.season+'%.');
+  L.push('Giả định: giá trị trung bình mỗi đơn '+S.aov+' tr; phễu gồm 2 bước có căn cứ: (1) tỷ lệ chốt theo benchmark B2B bán hàng trực tiếp 19–29% (không riêng điện máy gia dụng), hiện dùng '+Math.round(100/funnel().fc)+'%; (2) tỷ lệ gặp đúng người quyết định mỗi lượt ghé không hẹn trước, ước theo thông lệ field sales 50–70%, hiện dùng '+Math.round(10/funnel().fv*100)+'% — nhân hai bước này ra ≈ '+fmt(100/funnel().vpo,1)+'% đơn trên mỗi lượt ghé, tức '+fmt(funnel().vpo,1)+' lượt ghé mỗi đơn; sức mua tháng này '+S.season+'%.');
   L.push(seasonText());
   {const _tw=Math.max(1,weeks.reduce((a,w)=>a+w.work,0)),_mc=Math.max(1,+S.maxC||6);L.push('Sức đi tối đa của SR: '+_mc+' lượt ghé/ngày × '+_tw+' ngày làm việc = '+(_mc*_tw)+' lượt/tháng'+(ap?(ap.visits>_mc*_tw?' (nhu cầu '+ap.visits+' lượt, VƯỢT sức)':' (nhu cầu '+ap.visits+' lượt, trong sức)'):'')+'. Tỷ lệ phễu do người dùng đặt hoặc là số gợi ý ban đầu chưa kiểm chứng; AI chỉ gợi ý, không thay số.');}
   {const _m=+S.month.split('-')[1],_r=regionOf(S.province),_c=CLIM[_r];L.push('Khí hậu trung bình nhiều năm (ước lượng) của '+REG_NAME[_r]+' vào tháng '+_m+': ≈ '+_c.t[_m-1]+'°C, '+WLAB[_c.w[_m-1]]+'.');}
@@ -2204,8 +2204,8 @@ function xlBuildBook(){
     ['gd','Chỉ tiêu Gia dụng & điện máy (VNĐ)',gdM*M,'M',''],
     ['kpi','Tổng chỉ tiêu KPI (VNĐ)',null,'FM','= Bình nước nóng + Gia dụng'],
     ['aov','Giá trị trung bình mỗi đơn (VNĐ)',aovM*M,'M','Dùng tính số đơn cần chốt'],
-    ['fv','Số lượt ghé để gặp chủ và tư vấn 10 khách',F.fv,'I','Giả định, chưa có benchmark công bố'],
-    ['fc','Số khách tư vấn để chốt 1 đơn',F.fc,'I','Mặc định 5 (chốt ≈ 20%) theo benchmark B2B'],
+    ['fv','Số lượt ghé để gặp chủ và tư vấn 10 khách',F.fv,'I','Ước theo thông lệ field sales: gặp đúng người quyết định 50–70% mỗi lượt ghé không hẹn trước'],
+    ['fc','Số khách tư vấn để chốt 1 đơn',F.fc,'I','Mặc định 5 (chốt ≈ 20%) theo benchmark B2B (19–29%)'],
     ['vpo','Số lượt ghé cho 1 đơn',null,'FD','= lượt ghé / 10 × khách mỗi đơn'],
     ['close','Tỷ lệ chốt (khách tư vấn → đơn)',null,'FP','= 1 / số khách mỗi đơn'],
     ['season','Sức mua của tháng (%)',season,'I','100 = bình thường; dưới 100 = cần nhiều lượt ghé hơn'],
@@ -3550,15 +3550,16 @@ function quickPlan(weeks){
       (c.acct?'':'<div class="qp-how-t">Chưa có số đại lý đang hoạt động và đơn/đại lý nên đang tính như toàn bộ là khách mới. Nhập hai số đó ở trên để tính đúng.</div>');
   }else route='<div class="qp-hint">Nhập số, ví dụ 20, để xem bạn làm được bao nhiêu điểm, đơn và doanh thu.</div>';
   const st=(v,lo,hi)=>v<lo?['bad','Thấp hơn chuẩn']:v>hi?['warn','Cao hơn chuẩn']:['ok','Trong khoảng chuẩn'];
+  const reachLo=50,reachHi=70,closeLo=19,closeHi=29,combLo=reachLo*closeLo/100,combHi=reachHi*closeHi/100;
   const bmRows=[
-    ['Tỷ lệ chốt (khách tư vấn → đơn)','19–29%','B2B bán hàng trực tiếp · HubSpot Sales Trends (TB 21%, đủ điều kiện 29%), Ebsta × Pavilion 2025 (19%)',Math.round(100/F.fc)+'%',st(100/F.fc,19,29)],
+    ['Tỷ lệ chốt (khách tư vấn → đơn)',closeLo+'–'+closeHi+'%','B2B bán hàng trực tiếp · HubSpot Sales Trends (TB 21%, đủ điều kiện 29%), Ebsta × Pavilion 2025 (19%)',Math.round(100/F.fc)+'%',st(100/F.fc,closeLo,closeHi)],
     ['Số lượt ghé mỗi ngày','TB 5,1 (2,1–13,9)','B2B bán hàng trực tiếp (outside sales) · RepMove, 10% thấp nhất đến 10% cao nhất',fmt(c.mc,0),st(c.mc,2.1,13.9)],
     ['Lương cứng trong thu nhập mục tiêu','40–60%','Sales tại Việt Nam · CareerLink cẩm nang lương',Math.round(c.base/Math.max(1,c.income)*100)+'%',st(c.base/Math.max(1,c.income)*100,40,60)],
-    ['Lượt ghé ra đơn','60–75%','Hàng tiêu dùng nhanh kênh GT · massistcrm 2026 (đơn nhỏ, đặt lại thường xuyên)',fmt(100/F.vpo,1)+'%',['mute','Khác ngành, không so thẳng']],
-    ['Gặp được chủ trong mỗi lượt ghé','Chưa có benchmark','Không tìm thấy nguồn công bố',Math.round(10/F.fv*100)+'%',['mute','Giả định của bạn']]
+    ['Gặp đúng người quyết định mỗi lượt ghé',reachLo+'–'+reachHi+'%','Thông lệ bán hàng trực tiếp (field sales): ghé đại lý không hẹn trước chỉ gặp đúng chủ/người quyết định '+reachLo+'–'+reachHi+'% do vắng mặt, bận hoặc ủy quyền nhân viên — đây là ước tính theo kinh nghiệm ngành, không phải số liệu công bố riêng cho điện máy gia dụng',Math.round(10/F.fv*100)+'%',st(10/F.fv*100,reachLo,reachHi)],
+    ['Tỷ lệ ra đơn mỗi lượt ghé (suy ra từ 2 dòng trên)',fmt(combLo,1)+'–'+fmt(combHi,1)+'%','Phép nhân, không phải benchmark riêng: gặp đúng người ('+reachLo+'–'+reachHi+'%) × tỷ lệ chốt ('+closeLo+'–'+closeHi+'%) — dùng để kiểm tra 2 dòng trên có nhất quán với nhau không',fmt(100/F.vpo,1)+'%',st(100/F.vpo,combLo,combHi)]
   ];
   const refs='<div class="qp-ref"><b>Benchmark tham khảo và so với giả định của bạn</b>'+bmRows.map(r=>'<div class="bm-r"><div class="bm-l"><b>'+r[0]+'</b><span>'+r[2]+'</span></div><div class="bm-v"><em>'+r[1]+'</em><span>Bạn: <b>'+r[3]+'</b></span><i class="bm-c '+r[4][0]+'">'+r[4][1]+'</i></div></div>').join('')+
-    '<div class="bm-n"><b>Chưa có benchmark công bố riêng cho điện máy gia dụng bán qua đại lý.</b> Các số trên đến từ B2B nói chung (chủ yếu phần mềm), hàng tiêu dùng nhanh và thị trường lao động sales, nên chỉ để tham khảo.</div>'+
+    '<div class="bm-n"><b>Chưa có benchmark công bố riêng cho điện máy gia dụng bán qua đại lý.</b> 3 dòng đầu lấy từ B2B nói chung (chủ yếu phần mềm) và thị trường lao động sales tại Việt Nam; dòng "gặp đúng người" là ước tính theo thông lệ field sales; dòng cuối chỉ là phép nhân để kiểm tra tính nhất quán nội bộ, không phải dữ liệu đo riêng. Nên dùng số liệu thật của Livotec (nếu có) thay cho các benchmark này.</div>'+
     (F.fv===15&&F.fc===5?'<div class="bm-ok">✓ Đang dùng benchmark B2B cho tỷ lệ chốt</div>':'<button type="button" class="bm-apply" data-act="bmApply">Dùng benchmark B2B (chốt ≈ 20%)</button>')+'</div>';
   const fld=(label,attrs,val,unit,ph,extra)=>'<div class="field"><span class="nm">'+label+'</span><span class="iu"><input class="num sm" type="number" inputmode="decimal" min="0" '+(extra||'')+attrs+' value="'+val+'" placeholder="'+(ph||'')+'"><span class="unit">'+unit+'</span></span></div>';
   const A=S.area||{},B=S.bench||{};
