@@ -539,7 +539,7 @@ header.top.cmp #title{margin-bottom:6px}
 .qp-chips{display:flex;gap:8px;flex-wrap:wrap}
 .qp-chip{border:1.5px solid rgba(255,255,255,.6);background:transparent;color:#fff;border-radius:999px;padding:6px 16px;font:inherit;font-weight:600;cursor:pointer}
 .qp-chip.on{background:#fff;color:#007A73;border-color:#fff}
-.qp-route{display:flex;align-items:stretch;gap:4px;margin-top:18px}
+.qp-route{display:flex;align-items:stretch;gap:4px;margin-top:8px}
 .qp-node{flex:1 1 0;min-width:0;background:rgba(255,255,255,.17);border-radius:16px;padding:12px 2px;text-align:center}
 .qp-node b{display:block;font-size:clamp(14px,4vw,24px);line-height:1.1;font-weight:600;white-space:nowrap;letter-spacing:-.01em}
 .qp-node span{display:block;font-size:11.5px;line-height:1.25;margin-top:4px;opacity:.95}
@@ -550,6 +550,7 @@ header.top.cmp #title{margin-bottom:6px}
 .qp-cap.bad{background:#fff1f0;color:#8a1c14}
 .qp-apply{margin-top:12px;border:0;border-radius:999px;background:#fff;color:#007A73;font:inherit;font-weight:600;padding:10px 20px;cursor:pointer;box-shadow:0 10px 20px rgba(0,50,47,.25)}
 .qp-ok{margin-top:12px;font-weight:600;font-size:14px}
+.qp-lead{margin-top:16px;font-size:13px;font-weight:600;opacity:.95}
 .qp-split{margin-top:12px;font-size:13.5px;line-height:1.5}
 .qp-split i{font-style:normal;opacity:.9;font-size:12px}
 .qp-node span em{font-style:normal;opacity:.85;font-size:10px}
@@ -1827,7 +1828,7 @@ function ctxText(weeks){
   if((A.dist||[]).length)L.push('Khu vực/tuyến: '+A.dist.map(d=>d.n+' '+d.p+' điểm').join(', ')+'.');
   if(+S.income>0){
     const pc=planCalc(weeks);
-    L.push('Thu nhập mong muốn SR tự nhập: '+fmt(pc.income)+' tr/tháng = lương cứng '+fmt(pc.base,1)+' tr'+(pc.baseSet?'':' (ước 50%, SR chưa nhập)')+' + hoa hồng '+fmt(pc.V,1)+' tr (hoa hồng giả định '+pc.rateC+'% trên S.I) → cần S.I ≈ '+fmt(pc.si)+' tr, ≈ '+pc.orders+' đơn, ≈ '+pc.vis+' lượt ghé (≈ '+fmt(pc.perDay,1)+' lượt/ngày; trung bình ngành bán hàng trực tiếp 5,1), ≈ '+pc.points+' điểm bán'+(pc.acct?'; đã tính '+pc.exOrd+' đơn từ '+pc.act+' đại lý đang hoạt động':'; chưa có số đại lý đang hoạt động nên tính như khách mới, số lượt có thể cao hơn thực tế')+'. Sức đi tối đa cho khả thi ≈ '+fmt(pc.siCap)+' tr S.I, thu nhập ≈ '+fmt(pc.incCap,1)+' tr.');
+    L.push('Thu nhập mong muốn SR tự nhập: '+fmt(pc.income)+' tr/tháng (lương cứng '+fmt(pc.base,1)+' tr'+(pc.baseSet?'':', ước 50%, SR chưa nhập')+'). Theo sức đi thực tế (tối đa '+pc.mc+' lượt/ngày × '+pc.tw+' ngày = '+pc.cap+' lượt, không quá '+pc.maxPts+' điểm/tháng) SR làm được ≈ '+pc.pts+' điểm, '+pc.vis+' lượt, '+pc.ord+' đơn, doanh thu ≈ '+fmt(pc.si)+' tr, thu nhập ≈ '+fmt(pc.inc,1)+' tr (hoa hồng '+pc.rateC+'%)'+(pc.enough?', đủ đạt mục tiêu':', thiếu '+fmt(pc.income-pc.inc,1)+' tr so với mục tiêu')+(pc.acct?'; đã tính '+pc.exOrd+' đơn từ '+pc.act+' đại lý đang hoạt động':'; chưa có số đại lý đang hoạt động nên tính như khách mới')+'. Không được đề xuất kế hoạch vượt sức đi này.');
   }
   const src=S.sources||[];
   if(src.length){
@@ -3494,19 +3495,26 @@ function exportCard(){
 /* Tính ngược từ thu nhập: thu nhập = lương cứng + hoa hồng; đơn từ đại lý đang hoạt động tính riêng với đơn từ khách mới */
 function planCalc(weeks){
   const income=+S.income||0,rateC=Math.max(0.1,+S.commission||1.5),aov=Math.max(1,+S.aov||20),F=funnel();
-  const A=S.area||{},B=S.bench||{},vpp=Math.max(1,+A.vpp||2),act=Math.max(0,+A.act||0),pts=Math.max(act,+A.pts||0),ordB=+B.ord||0;
+  const A=S.area||{},B=S.bench||{},vpp=Math.max(1,+A.vpp||2),act=Math.max(0,+A.act||0),pts0=Math.max(act,+A.pts||0),ordB=+B.ord||0;
+  const maxPts=Math.max(1,Math.round(+S.maxPts||150));
   const baseSet=S.base!==null&&S.base!==undefined&&S.base!=='';
   const base=baseSet?Math.max(0,+S.base||0):Math.round(income*0.5*10)/10;
-  const V=Math.max(0,income-base),si=V/(rateC/100),orders=Math.ceil(si/aov);
+  const V=Math.max(0,income-base),siNeed=V/(rateC/100),ordNeed=Math.ceil(siNeed/aov);
   const mc=Math.max(1,+S.maxC||6),tw=Math.max(1,weeks.reduce((a,w)=>a+w.work,0)),cap=mc*tw,acct=act>0&&ordB>0;
-  let vis,points,exOrd=0,newOrd=orders,visEx=0;
-  if(acct){exOrd=Math.floor(act*ordB);newOrd=Math.max(0,orders-exOrd);visEx=act*vpp;vis=Math.ceil(visEx+newOrd*F.vpo);points=act+Math.ceil(newOrd/ordB);}
-  else{vis=Math.ceil(orders*F.vpo);points=Math.ceil(vis/vpp);}
-  let ordCap;
-  if(acct)ordCap=cap>=visEx?exOrd+Math.floor((cap-visEx)/F.vpo):Math.floor(exOrd*cap/Math.max(1,visEx));
-  else ordCap=Math.floor(cap/F.vpo);
-  const siCap=ordCap*aov,incCap=base+siCap*rateC/100;
-  return{income,rateC,aov,F,base,baseSet,V,si,orders,vis,points,pts,act,vpp,ordB,acct,exOrd,newOrd,mc,tw,cap,perDay:vis/tw,ordCap,siCap,incCap};
+  let exOrd=0,visEx=0,visNeed;
+  if(acct){exOrd=Math.floor(act*ordB);visEx=act*vpp;visNeed=Math.ceil(visEx+Math.max(0,ordNeed-exOrd)*F.vpo);}else visNeed=Math.ceil(ordNeed*F.vpo);
+  // Kế hoạch làm được trong sức đi thực tế (không bao giờ vượt số lượt/ngày và số điểm tối đa)
+  let vis,ord,pts,newOrd=0;
+  if(acct){
+    if(cap>=visEx){newOrd=Math.min(Math.max(0,ordNeed-exOrd),Math.floor((cap-visEx)/F.vpo));ord=Math.min(ordNeed,exOrd+newOrd);vis=Math.ceil(visEx+newOrd*F.vpo);pts=act+Math.ceil(newOrd/ordB);}
+    else{vis=cap;ord=Math.floor(exOrd*cap/Math.max(1,visEx));pts=Math.floor(cap/vpp);}
+  }else{ord=Math.min(ordNeed,Math.floor(cap/F.vpo));vis=Math.ceil(ord*F.vpo);pts=Math.ceil(vis/vpp);}
+  pts=Math.min(pts,maxPts);
+  const si=ord*aov,inc=base+si*rateC/100,enough=V<=0||inc>=income-1e-9;
+  // Cách bù khoảng thiếu khi giữ nguyên sức đi
+  const leverAov=ord>0?siNeed/ord:0,leverRate=si>0?V/si*100:0;
+  const vpoNeed=ordNeed>0?vis/ordNeed:0,fcNeed=vpoNeed>0?vpoNeed/(F.fv/10):0,leverClose=fcNeed>0?100/fcNeed:0;
+  return{income,rateC,aov,F,base,baseSet,V,siNeed,ordNeed,visNeed,vis,ord,pts,si,inc,enough,mc,tw,cap,maxPts,havePts:pts0,act,vpp,ordB,acct,exOrd,newOrd,leverAov,leverRate,leverClose,perDay:vis/tw};
 }
 function applyTargetSI(si){
   si=Math.round(si);if(!(si>0))return;
@@ -3524,17 +3532,15 @@ function quickPlan(weeks){
     route='<div class="qp-hint">Lương cứng '+n1(c.base)+' tr đã bằng hoặc cao hơn thu nhập bạn muốn, nên không cần thêm doanh số. Hãy nhập mức cao hơn để xem lộ trình.</div>';
   }else if(c.income>0){
     const node=(n,l)=>'<div class="qp-node"><b>'+n+'</b><span>'+l+'</span></div>',arr='<i class="qp-arrow" aria-hidden="true">›</i>';
-    const have=c.pts>0?c.pts:0,ptsLbl='điểm bán cần đi'+(have?'<br><em>bạn có '+have+'</em>':'');
-    route='<div class="qp-route">'+node('≈ '+c.points,ptsLbl)+arr+node('≈ '+c.vis,'lượt gặp khách')+arr+node('≈ '+c.orders,'đơn cần chốt')+arr+node('≈ '+fmt(c.si),'triệu doanh số S.I')+'</div>';
-    route+='<div class="qp-split">Thu nhập '+fmt(c.income)+' tr = lương cứng <b>'+n1(c.base)+' tr</b>'+(c.baseSet?'':' <i>(ước 50%, phổ biến 40–60%)</i>')+' + hoa hồng <b>'+n1(c.V)+' tr</b></div>';
-    route+='<div class="qp-basis"><span class="qp-tag">'+(c.acct?'Theo đại lý của bạn':(F.fv===15&&F.fc===5?'Benchmark B2B':'Số bạn đã chỉnh'))+'</span><span>'+(c.acct?c.act+' đại lý × '+fmt(c.ordB,1)+' đơn = '+c.exOrd+' đơn đã có, cần thêm '+c.newOrd+' đơn từ đại lý mới · ':'chốt ≈ '+Math.round(100/F.fc)+'% khách tư vấn · ')+'hoa hồng '+fmt(c.rateC,1)+'% · mỗi đơn ≈ '+fmt(c.aov,0)+' tr</span></div>';
-    if(!c.acct)route+='<div class="qp-warnline">Đang tính như toàn bộ là khách mới nên số lượt thường cao hơn thực tế. Nhập số đại lý đang hoạt động và đơn/đại lý ở mục bên dưới để tính đúng.</div>';
-    const ovr=c.vis>c.cap,unreal=c.perDay>13.9;
-    route+='<div class="qp-cap '+(ovr?'bad':'ok')+'">'+(unreal?'⚠ Không thực tế: ':(ovr?'⚠ Vượt sức đi: ':'✓ Trong sức đi: '))+'cần ≈ '+fmt(c.perDay,1)+' lượt/ngày (trung bình ngành 5,1; bạn đi tối đa '+c.mc+').'+
-      (ovr?' Với sức đi này, khả thi ≈ '+fmt(c.siCap)+' tr doanh số, tức thu nhập ≈ '+n1(c.incCap)+' tr.'+(c.ordCap>0?' Để đạt '+fmt(c.income)+' tr bạn cần đơn ≈ '+fmt(c.si/c.ordCap,0)+' tr/đơn (đang '+fmt(c.aov,0)+') hoặc hoa hồng ≈ '+fmt(c.V/(c.ordCap*c.aov)*100,1)+'%.':''):'')+'</div>';
+    route='<div class="qp-lead">Với sức đi thực tế của bạn trong tháng</div>';
+    route+='<div class="qp-route">'+node('≈ '+c.pts,'điểm bán đi được')+arr+node('≈ '+c.vis,'lượt gặp khách')+arr+node('≈ '+c.ord,'đơn chốt được')+arr+node('≈ '+fmt(c.si),'triệu doanh thu')+'</div>';
+    route+='<div class="qp-split">Thu nhập ≈ <b>'+n1(c.inc)+' tr</b> = lương cứng '+n1(c.base)+' tr'+(c.baseSet?'':' <i>(ước 50% mục tiêu)</i>')+' + hoa hồng '+n1(c.si*c.rateC/100)+' tr ('+n1(c.rateC)+'% × doanh thu)</div>';
+    route+='<div class="qp-cap '+(c.enough?'ok':'bad')+'">'+(c.enough?'✓ Đủ để đạt '+fmt(c.income)+' tr bạn muốn.':'⚠ Còn thiếu '+n1(c.income-c.inc)+' tr so với mục tiêu '+fmt(c.income)+' tr.')+
+      (c.enough?'':' Giữ nguyên sức đi, để đạt mục tiêu cần một trong: đơn trung bình ≈ '+fmt(c.leverAov,0)+' tr (đang '+fmt(c.aov,0)+'), tỷ lệ chốt ≈ '+Math.round(c.leverClose)+'% (đang '+Math.round(100/F.fc)+'%) hoặc hoa hồng ≈ '+n1(c.leverRate)+'% (đang '+n1(c.rateC)+'%).')+'</div>';
+    route+='<div class="qp-basis"><span class="qp-tag">'+(c.acct?'Theo đại lý của bạn':(F.fv===15&&F.fc===5?'Benchmark B2B':'Số bạn đã chỉnh'))+'</span><span>'+(c.acct?c.act+' đại lý × '+fmt(c.ordB,1)+' đơn = '+c.exOrd+' đơn đã có · ':'chốt ≈ '+Math.round(100/F.fc)+'% khách tư vấn · ')+'tối đa '+c.mc+' lượt/ngày × '+c.tw+' ngày = '+c.cap+' lượt, không quá '+c.maxPts+' điểm · mỗi đơn ≈ '+fmt(c.aov,0)+' tr</span></div>';
+    if(!c.acct)route+='<div class="qp-warnline">Chưa có số đại lý đang hoạt động và đơn/đại lý nên đang tính như toàn bộ là khách mới. Nhập hai số đó ở mục bên dưới để tính đúng.</div>';
     route+=(Math.round(c.si)!==total?'<button type="button" class="qp-apply" data-act="incApply">Đặt '+fmt(c.si)+' tr làm chỉ tiêu tháng</button>':'<div class="qp-ok">✓ Đã khớp với chỉ tiêu tháng</div>');
-    if(ovr&&c.siCap>0&&Math.round(c.siCap)!==total)route+='<button type="button" class="qp-apply alt" data-act="incApplyCap">Đặt mục tiêu khả thi '+fmt(c.siCap)+' tr</button>';
-  }else route='<div class="qp-hint">Nhập số, ví dụ 20, để xem cần đi bao nhiêu điểm, gặp bao nhiêu khách và chốt bao nhiêu đơn.</div>';
+  }else route='<div class="qp-hint">Nhập số, ví dụ 20, để xem với sức đi thực tế bạn làm được bao nhiêu điểm, đơn và doanh thu.</div>';
   const st=(v,lo,hi)=>v<lo?['bad','Thấp hơn chuẩn']:v>hi?['warn','Cao hơn chuẩn']:['ok','Trong khoảng chuẩn'];
   const bmRows=[
     ['Tỷ lệ chốt (khách tư vấn → đơn)','19–29%','B2B bán hàng trực tiếp · HubSpot Sales Trends (TB 21%, đủ điều kiện 29%), Ebsta × Pavilion 2025 (19%)',Math.round(100/F.fc)+'%',st(100/F.fc,19,29)],
@@ -3546,7 +3552,7 @@ function quickPlan(weeks){
   const refs='<div class="qp-ref"><b>Benchmark tham khảo và so với giả định của bạn</b>'+bmRows.map(r=>'<div class="bm-r"><div class="bm-l"><b>'+r[0]+'</b><span>'+r[2]+'</span></div><div class="bm-v"><em>'+r[1]+'</em><span>Bạn: <b>'+r[3]+'</b></span><i class="bm-c '+r[4][0]+'">'+r[4][1]+'</i></div></div>').join('')+
     '<div class="bm-n"><b>Chưa có benchmark công bố riêng cho điện máy gia dụng bán qua đại lý.</b> Các số trên đến từ B2B nói chung (chủ yếu phần mềm), hàng tiêu dùng nhanh và thị trường lao động sales, nên chỉ để tham khảo; hãy nhập số của các điểm tương đồng ở dưới.</div>'+
     (F.fv===15&&F.fc===5?'<div class="bm-ok">✓ Đang dùng benchmark B2B cho tỷ lệ chốt</div>':'<button type="button" class="bm-apply" data-act="bmApply">Dùng benchmark B2B (chốt ≈ 20%)</button>')+'</div>';
-  const assume='<div class="fieldgrid" style="margin-bottom:10px"><div class="field"><span class="nm">Lương cứng hiện tại</span><span class="iu"><input class="num sm" type="number" inputmode="decimal" step="0.5" min="0" data-f="base" value="'+(c.baseSet?c.base:'')+'" placeholder="ước 50%"><span class="unit">tr</span></span></div><div class="field"><span class="nm">Hoa hồng trên doanh số</span><span class="iu"><input class="num sm" type="number" inputmode="decimal" step="0.1" min="0.1" data-f="commission" value="'+c.rateC+'"><span class="unit">%</span></span></div><div class="field"><span class="nm">Giá trị trung bình mỗi đơn</span><span class="iu"><input class="num sm" type="number" inputmode="numeric" min="1" data-f="aov" value="'+c.aov+'"><span class="unit">tr</span></span></div></div>';
+  const assume='<div class="fieldgrid" style="margin-bottom:10px"><div class="field"><span class="nm">Số điểm tối đa đi được mỗi tháng</span><span class="iu"><input class="num sm" type="number" inputmode="numeric" min="1" data-f="maxPts" value="'+c.maxPts+'"><span class="unit">điểm</span></span></div><div class="field"><span class="nm">Số lượt ghé tối đa mỗi ngày</span><span class="iu"><input class="num sm" type="number" inputmode="numeric" min="1" data-f="maxC" value="'+c.mc+'"><span class="unit">lượt</span></span></div><div class="field"><span class="nm">Lương cứng hiện tại</span><span class="iu"><input class="num sm" type="number" inputmode="decimal" step="0.5" min="0" data-f="base" value="'+(c.baseSet?c.base:'')+'" placeholder="ước 50%"><span class="unit">tr</span></span></div><div class="field"><span class="nm">Hoa hồng trên doanh thu</span><span class="iu"><input class="num sm" type="number" inputmode="decimal" step="0.1" min="0.1" data-f="commission" value="'+c.rateC+'"><span class="unit">%</span></span></div><div class="field"><span class="nm">Giá trị trung bình mỗi đơn</span><span class="iu"><input class="num sm" type="number" inputmode="numeric" min="1" data-f="aov" value="'+c.aov+'"><span class="unit">tr</span></span></div></div>';
   const more='<details class="qp-more" data-sec="qp_more"'+(isOpen('qp_more',false)?' open':'')+'><summary class="qp-sum">Số liệu của bạn, điểm tương đồng và benchmark</summary><div class="qp-body">'+assume+benchCard(weeks,true)+refs+'</div></details>';
   return '<div class="card qplan"><div class="qp-q">Tháng này bạn muốn thu nhập bao nhiêu?</div>'+
     '<div class="qp-in"><input type="number" inputmode="numeric" min="0" data-f="income" value="'+(c.income||'')+'" placeholder="20" aria-label="Thu nhập mong muốn mỗi tháng, đơn vị triệu đồng"><span class="qp-u">triệu / tháng</span></div>'+
@@ -3902,7 +3908,6 @@ document.addEventListener('click',function(e){
   else if(a==='ics'){downloadICS();return;}
   else if(a==='incSet'){S.income=Math.max(0,+d.v||0);}
   else if(a==='incApply'){applyTargetSI(planCalc(analyze()).si);}
-  else if(a==='incApplyCap'){applyTargetSI(planCalc(analyze()).siCap);}
   else if(a==='xlsx'){exportXlsx();return;}
   else if(a==='gdrive'){exportXlsx('drive');return;}
   else if(a==='aisrc'){if(!(S.sources||[]).length||confirm('Thay danh sách nguồn hiện có bằng bản nháp mới do AI soạn? Các chỉnh sửa của bạn ở danh sách hiện tại sẽ mất.\n\nLưu ý: AI chỉ gợi ý, cần đối chiếu với số liệu thật.'))aiSources(false);return;}
@@ -3997,6 +4002,7 @@ document.addEventListener('change',function(e){
   else if(f==='src'){const i=+t.dataset.i,k=t.dataset.k,s=S.sources[i];if(s){if(k==='name')s.name=t.value.trim().slice(0,120);else if(k==='amt')s.amt=Math.max(0,Math.floor(+t.value||0));else if(k==='week')s.week=+t.value;else if(k==='prod')s.prod=t.value==='gd'?'gd':'bn';else if(k==='type')s.type=Math.min(3,Math.max(0,+t.value||0));else if(k==='conf')s.conf=['g','y','r'].includes(t.value)?t.value:'';else if(k==='basis')s.basis=t.value.trim().slice(0,200);else if(k==='planB')s.planB=t.value.trim().slice(0,300);else if(k==='act')s.act=t.value===''?null:Math.max(0,Math.floor(+t.value||0));}}
   else if(f==='planB'){S.planB=t.value.trim().slice(0,400);}
   else if(f==='income'){S.income=Math.max(0,Math.floor(+t.value||0));}
+  else if(f==='maxPts'){S.maxPts=Math.max(1,Math.min(1000,Math.round(+t.value||150)));}
   else if(f==='base'){S.base=t.value===''?null:Math.max(0,Math.round((+t.value||0)*10)/10);}
   else if(f==='commission'){S.commission=Math.max(0.1,+t.value||1.5);}
   if(S.strat!=='manual'){const ob=S.target.bn;applyStrategy();if(S.target.bn!==ob)S.plan=null;}
