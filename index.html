@@ -427,7 +427,7 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 .dadd{display:flex;gap:8px;align-items:center;margin-top:8px}
 .dadd .txt{margin:0;flex:1;min-width:0}
 .fab{position:fixed;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:15;display:flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:11px 16px;background:var(--btn-grad);color:var(--on-brand);font-weight:600;font-size:14px;box-shadow:0 8px 20px rgba(0,100,94,.3);cursor:pointer}
-.acctFab{position:fixed;left:12px;top:calc(10px + env(safe-area-inset-top,0px));z-index:16;display:inline-flex;align-items:center;gap:7px;border:0;border-radius:999px;padding:9px 16px 9px 12px;background:#fff;color:#007A73;font-weight:600;font-size:14px;cursor:pointer;box-shadow:0 10px 22px rgba(0,50,47,.32);transition:transform .15s,box-shadow .15s}
+.acctFab{position:absolute;left:0;top:4px;z-index:3;display:inline-flex;align-items:center;gap:7px;border:0;border-radius:999px;padding:9px 16px 9px 12px;background:#fff;color:#007A73;font-weight:600;font-size:14px;cursor:pointer;box-shadow:0 10px 22px rgba(0,50,47,.32);transition:transform .15s,box-shadow .15s}
 .acctFab:hover{transform:translateY(-1px)}
 .acctFab.needs{box-shadow:0 10px 22px rgba(0,50,47,.32),0 0 0 2.5px var(--gd)}
 .modalc{position:fixed;inset:0;z-index:30;background:rgba(0,20,18,.6);display:flex;align-items:center;justify-content:center;padding:16px}
@@ -1088,10 +1088,10 @@ h2,.sech .st{color:var(--ink)}
 
 /* ===== Căn thẳng hàng: logo, tiêu đề, vòng tròn, thanh tab và các thẻ cùng một lề trái/phải ===== */
 .top{padding-left:0;padding-right:0}
-.top .topin{padding-left:14px}
+.top .topin{padding-left:138px}
 #hring{right:14px}
 .wrap .tabs{width:100%;max-width:none;margin-left:0;margin-right:0}
-@media (max-width:600px){.top .topin{padding-left:10px}#hring{right:10px}}
+@media (max-width:600px){.top .topin{padding-left:52px}#hring{right:10px}.acctFab span{display:none}.acctFab{padding:9px;gap:0}}
 
 /* ===== Thiết lập chi tiết: thanh nhóm + thẻ hành động cuối trang ===== */
 .sghub{margin:6px 0 14px}
@@ -1320,6 +1320,7 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   <svg class="rings" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="96"/><circle cx="100" cy="100" r="68"/><circle cx="100" cy="100" r="40"/></svg>
   <div class="bubbles" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
   <div class="topin">
+  <button class="acctFab" id="acctFab" data-act="acctOpen" aria-label="Tài khoản &amp; đăng nhập"></button>
   <div id="hring"></div>
     <div class="pill">Trợ lí thiết lập kế hoạch bán hàng · SR kênh GT</div>
     <h1 id="title">Kế hoạch bán hàng tháng</h1>
@@ -1337,7 +1338,6 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
 </div>
 <footer class="foot"><div><b>Trợ lí thiết lập kế hoạch bán hàng</b> dành cho Sales Rep kênh GT Livotec</div><div class="foot-disc">Lưu ý: số liệu, dự báo và cảnh báo chỉ mang tính tham khảo, không phải cam kết hay chỉ tiêu chính thức.</div></footer>
 <input type="file" id="restoreFile" accept=".json,application/json" hidden>
-<button class="acctFab" id="acctFab" data-act="acctOpen" aria-label="Tài khoản &amp; đăng nhập"></button>
 <div class="modalc" id="acctSheet" hidden><div class="sheetin" role="dialog" aria-label="Tài khoản & đăng nhập" id="acctSheetIn"></div></div>
 <button class="fab" id="coachFab" data-coach="open" aria-label="Hỏi trợ lý AI"></button>
 <div class="sheet" id="coach" hidden><div class="sheetin" role="dialog" aria-label="Trợ lý AI Livotec">
