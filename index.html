@@ -550,6 +550,15 @@ header.top.cmp #title{margin-bottom:6px}
 .qp-cap.bad{background:#fff1f0;color:#8a1c14}
 .qp-apply{margin-top:12px;border:0;border-radius:999px;background:#fff;color:#007A73;font:inherit;font-weight:600;padding:10px 20px;cursor:pointer;box-shadow:0 10px 20px rgba(0,50,47,.25)}
 .qp-ok{margin-top:12px;font-weight:600;font-size:14px}
+.qp-set-i{font-size:12.5px;color:var(--muted);margin-bottom:10px;line-height:1.5}
+.qp-badge{display:inline-block;margin-left:8px;background:#fff;color:#007A73;border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:600}
+.qp-sub{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
+.qp-sub>summary{cursor:pointer;font-size:13.5px;font-weight:600;color:var(--brand-deep);padding:4px 0}
+.qp-sub-b{padding-top:6px}
+.qp-how-t{font-size:13px;line-height:1.55;margin-bottom:8px;color:var(--ink)}
+.qp-tag2{display:inline-block;background:var(--brand-soft);color:var(--brand-deep);border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:600}
+.qp-cap{margin-top:12px;font-size:14px;font-weight:600}
+.qp-cap.bad{background:rgba(255,255,255,.17);color:#fff;padding:9px 12px}
 .qp-lead{margin-top:16px;font-size:13px;font-weight:600;opacity:.95}
 .qp-split{margin-top:12px;font-size:13.5px;line-height:1.5}
 .qp-split i{font-style:normal;opacity:.9;font-size:12px}
@@ -3474,7 +3483,7 @@ function benchCard(weeks,raw){
   }else r3=row('trend','Nhập hàng lần đầu so với đơn kế hoạch','—','Nhập giá trị nhập hàng lần đầu trung bình của khu vực để so với đơn kế hoạch ('+fmt(aov,0)+' tr).');
   const body='<div class="small muted">Nhập số liệu trung bình của Livotec ở khu vực bạn (hỏi quản lý khu vực). Công cụ so với kế hoạch của bạn.</div>'+
     '<div class="bn-grid">'+
-      field('ord','Số đơn nhập hàng trung bình','đơn / đại lý / tháng',ord,'đơn','VD: 2','0.1')+
+      (raw==='x'?'':field('ord','Số đơn nhập hàng trung bình','đơn / đại lý / tháng',ord,'đơn','VD: 2','0.1'))+
       field('first','Nhập hàng lần đầu trung bình','của Livotec ở khu vực này',first,'tr','VD: 15','0.5')+
       field('conv','Cửa hàng ghé thành đại lý nhập','để trống: dùng phễu ngành (≈ '+fmt(funnel().vpo,0)+' lượt ghé/đơn)',conv,'%','VD: 20','1')+
     '</div><div class="bn-res">'+r1+r2+r3+'</div>'+
@@ -3527,20 +3536,19 @@ function quickPlan(weeks){
   const n1=x=>Math.abs(x-Math.round(x))<0.05?String(Math.round(x)):fmt(x,1);
   const c=planCalc(weeks),F=c.F,total=(+S.target.bn||0)+(+S.target.gd||0);
   const chips=[10,15,20,30,50].map(v=>'<button type="button" class="qp-chip'+(c.income===v?' on':'')+'" data-act="incSet" data-v="'+v+'">'+v+'</button>').join('');
-  let route='';
+  let route='',how='';
   if(c.income>0&&c.V<=0){
-    route='<div class="qp-hint">Lương cứng '+n1(c.base)+' tr đã bằng hoặc cao hơn thu nhập bạn muốn, nên không cần thêm doanh số. Hãy nhập mức cao hơn để xem lộ trình.</div>';
+    route='<div class="qp-hint">Lương cứng '+n1(c.base)+' tr đã bằng hoặc cao hơn thu nhập bạn muốn, nên không cần thêm doanh số. Hãy nhập mức cao hơn.</div>';
   }else if(c.income>0){
     const node=(n,l)=>'<div class="qp-node"><b>'+n+'</b><span>'+l+'</span></div>',arr='<i class="qp-arrow" aria-hidden="true">›</i>';
-    route='<div class="qp-lead">Với sức đi thực tế của bạn trong tháng</div>';
-    route+='<div class="qp-route">'+node('≈ '+c.pts,'điểm bán đi được')+arr+node('≈ '+c.vis,'lượt gặp khách')+arr+node('≈ '+c.ord,'đơn chốt được')+arr+node('≈ '+fmt(c.si),'triệu doanh thu')+'</div>';
-    route+='<div class="qp-split">Thu nhập ≈ <b>'+n1(c.inc)+' tr</b> = lương cứng '+n1(c.base)+' tr'+(c.baseSet?'':' <i>(ước 50% mục tiêu)</i>')+' + hoa hồng '+n1(c.si*c.rateC/100)+' tr ('+n1(c.rateC)+'% × doanh thu)</div>';
-    route+='<div class="qp-cap '+(c.enough?'ok':'bad')+'">'+(c.enough?'✓ Đủ để đạt '+fmt(c.income)+' tr bạn muốn.':'⚠ Còn thiếu '+n1(c.income-c.inc)+' tr so với mục tiêu '+fmt(c.income)+' tr.')+
-      (c.enough?'':' Giữ nguyên sức đi, để đạt mục tiêu cần một trong: đơn trung bình ≈ '+fmt(c.leverAov,0)+' tr (đang '+fmt(c.aov,0)+'), tỷ lệ chốt ≈ '+Math.round(c.leverClose)+'% (đang '+Math.round(100/F.fc)+'%) hoặc hoa hồng ≈ '+n1(c.leverRate)+'% (đang '+n1(c.rateC)+'%).')+'</div>';
-    route+='<div class="qp-basis"><span class="qp-tag">'+(c.acct?'Theo đại lý của bạn':(F.fv===15&&F.fc===5?'Benchmark B2B':'Số bạn đã chỉnh'))+'</span><span>'+(c.acct?c.act+' đại lý × '+fmt(c.ordB,1)+' đơn = '+c.exOrd+' đơn đã có · ':'chốt ≈ '+Math.round(100/F.fc)+'% khách tư vấn · ')+'tối đa '+c.mc+' lượt/ngày × '+c.tw+' ngày = '+c.cap+' lượt, không quá '+c.maxPts+' điểm · mỗi đơn ≈ '+fmt(c.aov,0)+' tr</span></div>';
-    if(!c.acct)route+='<div class="qp-warnline">Chưa có số đại lý đang hoạt động và đơn/đại lý nên đang tính như toàn bộ là khách mới. Nhập hai số đó ở mục bên dưới để tính đúng.</div>';
+    route='<div class="qp-route">'+node('≈ '+c.pts,'điểm bán')+arr+node('≈ '+c.vis,'lượt gặp khách')+arr+node('≈ '+c.ord,'đơn chốt')+arr+node('≈ '+fmt(c.si),'triệu doanh thu')+'</div>';
+    route+='<div class="qp-cap '+(c.enough?'ok':'bad')+'">'+(c.enough?'✓ Đạt mục tiêu '+fmt(c.income)+' tr':'Làm được ≈ '+n1(c.inc)+' tr · thiếu '+n1(c.income-c.inc)+' tr so với '+fmt(c.income)+' tr')+'</div>';
     route+=(Math.round(c.si)!==total?'<button type="button" class="qp-apply" data-act="incApply">Đặt '+fmt(c.si)+' tr làm chỉ tiêu tháng</button>':'<div class="qp-ok">✓ Đã khớp với chỉ tiêu tháng</div>');
-  }else route='<div class="qp-hint">Nhập số, ví dụ 20, để xem với sức đi thực tế bạn làm được bao nhiêu điểm, đơn và doanh thu.</div>';
+    how='<div class="qp-how-t">Thu nhập ≈ <b>'+n1(c.inc)+' tr</b> = lương cứng '+n1(c.base)+' tr'+(c.baseSet?'':' (ước 50% mục tiêu)')+' + hoa hồng '+n1(c.si*c.rateC/100)+' tr ('+n1(c.rateC)+'% × doanh thu).</div>'+
+      '<div class="qp-how-t"><span class="qp-tag2">'+(c.acct?'Theo đại lý của bạn':(F.fv===15&&F.fc===5?'Benchmark B2B':'Số bạn đã chỉnh'))+'</span> '+(c.acct?c.act+' đại lý × '+fmt(c.ordB,1)+' đơn = '+c.exOrd+' đơn đã có · ':'chốt ≈ '+Math.round(100/F.fc)+'% khách tư vấn · ')+'tối đa '+c.mc+' lượt/ngày × '+c.tw+' ngày = '+c.cap+' lượt, không quá '+c.maxPts+' điểm · mỗi đơn ≈ '+fmt(c.aov,0)+' tr.</div>'+
+      (c.enough?'':'<div class="qp-how-t">Giữ nguyên sức đi, để đạt mục tiêu cần một trong: đơn trung bình ≈ '+fmt(c.leverAov,0)+' tr (đang '+fmt(c.aov,0)+'), tỷ lệ chốt ≈ '+Math.round(c.leverClose)+'% (đang '+Math.round(100/F.fc)+'%) hoặc hoa hồng ≈ '+n1(c.leverRate)+'% (đang '+n1(c.rateC)+'%).</div>')+
+      (c.acct?'':'<div class="qp-how-t">Chưa có số đại lý đang hoạt động và đơn/đại lý nên đang tính như toàn bộ là khách mới. Nhập hai số đó ở trên để tính đúng.</div>');
+  }else route='<div class="qp-hint">Nhập số, ví dụ 20, để xem bạn làm được bao nhiêu điểm, đơn và doanh thu.</div>';
   const st=(v,lo,hi)=>v<lo?['bad','Thấp hơn chuẩn']:v>hi?['warn','Cao hơn chuẩn']:['ok','Trong khoảng chuẩn'];
   const bmRows=[
     ['Tỷ lệ chốt (khách tư vấn → đơn)','19–29%','B2B bán hàng trực tiếp · HubSpot Sales Trends (TB 21%, đủ điều kiện 29%), Ebsta × Pavilion 2025 (19%)',Math.round(100/F.fc)+'%',st(100/F.fc,19,29)],
@@ -3550,10 +3558,24 @@ function quickPlan(weeks){
     ['Gặp được chủ trong mỗi lượt ghé','Chưa có benchmark','Không tìm thấy nguồn công bố',Math.round(10/F.fv*100)+'%',['mute','Giả định của bạn']]
   ];
   const refs='<div class="qp-ref"><b>Benchmark tham khảo và so với giả định của bạn</b>'+bmRows.map(r=>'<div class="bm-r"><div class="bm-l"><b>'+r[0]+'</b><span>'+r[2]+'</span></div><div class="bm-v"><em>'+r[1]+'</em><span>Bạn: <b>'+r[3]+'</b></span><i class="bm-c '+r[4][0]+'">'+r[4][1]+'</i></div></div>').join('')+
-    '<div class="bm-n"><b>Chưa có benchmark công bố riêng cho điện máy gia dụng bán qua đại lý.</b> Các số trên đến từ B2B nói chung (chủ yếu phần mềm), hàng tiêu dùng nhanh và thị trường lao động sales, nên chỉ để tham khảo; hãy nhập số của các điểm tương đồng ở dưới.</div>'+
+    '<div class="bm-n"><b>Chưa có benchmark công bố riêng cho điện máy gia dụng bán qua đại lý.</b> Các số trên đến từ B2B nói chung (chủ yếu phần mềm), hàng tiêu dùng nhanh và thị trường lao động sales, nên chỉ để tham khảo.</div>'+
     (F.fv===15&&F.fc===5?'<div class="bm-ok">✓ Đang dùng benchmark B2B cho tỷ lệ chốt</div>':'<button type="button" class="bm-apply" data-act="bmApply">Dùng benchmark B2B (chốt ≈ 20%)</button>')+'</div>';
-  const assume='<div class="fieldgrid" style="margin-bottom:10px"><div class="field"><span class="nm">Số điểm tối đa đi được mỗi tháng</span><span class="iu"><input class="num sm" type="number" inputmode="numeric" min="1" data-f="maxPts" value="'+c.maxPts+'"><span class="unit">điểm</span></span></div><div class="field"><span class="nm">Số lượt ghé tối đa mỗi ngày</span><span class="iu"><input class="num sm" type="number" inputmode="numeric" min="1" data-f="maxC" value="'+c.mc+'"><span class="unit">lượt</span></span></div><div class="field"><span class="nm">Lương cứng hiện tại</span><span class="iu"><input class="num sm" type="number" inputmode="decimal" step="0.5" min="0" data-f="base" value="'+(c.baseSet?c.base:'')+'" placeholder="ước 50%"><span class="unit">tr</span></span></div><div class="field"><span class="nm">Hoa hồng trên doanh thu</span><span class="iu"><input class="num sm" type="number" inputmode="decimal" step="0.1" min="0.1" data-f="commission" value="'+c.rateC+'"><span class="unit">%</span></span></div><div class="field"><span class="nm">Giá trị trung bình mỗi đơn</span><span class="iu"><input class="num sm" type="number" inputmode="numeric" min="1" data-f="aov" value="'+c.aov+'"><span class="unit">tr</span></span></div></div>';
-  const more='<details class="qp-more" data-sec="qp_more"'+(isOpen('qp_more',false)?' open':'')+'><summary class="qp-sum">Số liệu của bạn, điểm tương đồng và benchmark</summary><div class="qp-body">'+assume+benchCard(weeks,true)+refs+'</div></details>';
+  const fld=(label,attrs,val,unit,ph,extra)=>'<div class="field"><span class="nm">'+label+'</span><span class="iu"><input class="num sm" type="number" inputmode="decimal" min="0" '+(extra||'')+attrs+' value="'+val+'" placeholder="'+(ph||'')+'"><span class="unit">'+unit+'</span></span></div>';
+  const A=S.area||{},B=S.bench||{};
+  const rules='<div class="qp-set-i">Sửa theo quy định thật của bạn, hệ thống tính lại ngay. Để trống hoặc bấm "Về mặc định" thì dùng số mặc định.</div><div class="fieldgrid">'+
+    fld('Lương cứng hiện tại','data-f="base" step="0.5"',c.baseSet?c.base:'','tr','ước 50%')+
+    fld('Hoa hồng trên doanh thu','data-f="commission" step="0.1"',c.rateC,'%')+
+    fld('Giá trị trung bình mỗi đơn','data-f="aov"',c.aov,'tr')+
+    fld('Số lượt ghé tối đa mỗi ngày','data-f="maxC"',c.mc,'lượt')+
+    fld('Số điểm tối đa đi được mỗi tháng','data-f="maxPts"',c.maxPts,'điểm')+
+    fld('Tỷ lệ chốt (khách tư vấn → đơn)','data-f="closePct"',Math.round(100/F.fc),'%')+
+    fld('Số đại lý đang hoạt động','data-f="area" data-k="act"',(+A.act||''),'đại lý','chưa nhập')+
+    fld('Đơn trung bình mỗi đại lý / tháng','data-f="bench" data-k="ord" step="0.1"',(+B.ord||''),'đơn','chưa nhập')+
+    '</div><button type="button" class="bm-apply" data-act="qpReset">Về mặc định</button>';
+  const sub=(key,title,body)=>'<details class="qp-sub" data-sec="'+key+'"'+(isOpen(key,false)?' open':'')+'><summary>'+title+'</summary><div class="qp-sub-b">'+body+'</div></details>';
+  const over=(c.base>0&&c.baseSet?1:0)+(c.rateC!==1.5?1:0)+(c.aov!==20?1:0)+(c.mc!==6?1:0)+(c.maxPts!==150?1:0)+((F.fc!==5||F.fv!==15)?1:0)+(c.act>0?1:0)+(c.ordB>0?1:0);
+  const more='<details class="qp-more" data-sec="qp_more"'+(isOpen('qp_more',false)?' open':'')+'><summary class="qp-sum">⚙ Tùy chỉnh theo quy định thực tế'+(over?' <span class="qp-badge">'+over+' mục đã sửa</span>':'')+'</summary><div class="qp-body">'+rules+
+    (how?sub('qp_how','Xem cách tính',how):'')+sub('qp_sim','Đối chiếu điểm tương đồng',benchCard(weeks,'x'))+sub('qp_bm','Benchmark tham khảo',refs)+'</div></details>';
   return '<div class="card qplan"><div class="qp-q">Tháng này bạn muốn thu nhập bao nhiêu?</div>'+
     '<div class="qp-in"><input type="number" inputmode="numeric" min="0" data-f="income" value="'+(c.income||'')+'" placeholder="20" aria-label="Thu nhập mong muốn mỗi tháng, đơn vị triệu đồng"><span class="qp-u">triệu / tháng</span></div>'+
     '<div class="qp-chips" role="group" aria-label="Chọn nhanh mức thu nhập">'+chips+'</div>'+route+more+'</div>';
@@ -3906,6 +3928,7 @@ document.addEventListener('click',function(e){
   else if(a==='notifOff'){S.rem.notif=false;}
   else if(a==='notifTest'){notify('Livotec: thông báo thử','Nếu bạn thấy tin này, thông báo đã hoạt động.','livotec-test');toast('Đã gửi thông báo thử');return;}
   else if(a==='ics'){downloadICS();return;}
+  else if(a==='qpReset'){S.base=null;S.commission=1.5;S.aov=20;S.maxC=6;S.maxPts=150;S.fv=15;S.fc=5;if(S.bench)S.bench.ord=0;toast('Đã về số mặc định');}
   else if(a==='incSet'){S.income=Math.max(0,+d.v||0);}
   else if(a==='incApply'){applyTargetSI(planCalc(analyze()).si);}
   else if(a==='xlsx'){exportXlsx();return;}
@@ -4002,6 +4025,7 @@ document.addEventListener('change',function(e){
   else if(f==='src'){const i=+t.dataset.i,k=t.dataset.k,s=S.sources[i];if(s){if(k==='name')s.name=t.value.trim().slice(0,120);else if(k==='amt')s.amt=Math.max(0,Math.floor(+t.value||0));else if(k==='week')s.week=+t.value;else if(k==='prod')s.prod=t.value==='gd'?'gd':'bn';else if(k==='type')s.type=Math.min(3,Math.max(0,+t.value||0));else if(k==='conf')s.conf=['g','y','r'].includes(t.value)?t.value:'';else if(k==='basis')s.basis=t.value.trim().slice(0,200);else if(k==='planB')s.planB=t.value.trim().slice(0,300);else if(k==='act')s.act=t.value===''?null:Math.max(0,Math.floor(+t.value||0));}}
   else if(f==='planB'){S.planB=t.value.trim().slice(0,400);}
   else if(f==='income'){S.income=Math.max(0,Math.floor(+t.value||0));}
+  else if(f==='closePct'){const pc=Math.max(2,Math.min(100,+t.value||20));S.fc=Math.max(1,Math.min(50,Math.round(100/pc)));}
   else if(f==='maxPts'){S.maxPts=Math.max(1,Math.min(1000,Math.round(+t.value||150)));}
   else if(f==='base'){S.base=t.value===''?null:Math.max(0,Math.round((+t.value||0)*10)/10);}
   else if(f==='commission'){S.commission=Math.max(0.1,+t.value||1.5);}
