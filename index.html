@@ -1622,7 +1622,7 @@ function needCard(weeks){
       ?'<div class="note" style="color:var(--bad)">Với '+ap.usable+' điểm dùng được'+(ap.noP?' (đã trừ '+ap.noP+' điểm vướng công nợ)':'')+', bạn cần thêm khoảng <b>'+ap.gap+' điểm</b> (mở mới hoặc đánh thức điểm chưa hoạt động'+(ap.dormant?', hiện có '+ap.dormant+' điểm':'')+') hoặc tăng giá trị mỗi đơn.</div>'
       :'<div class="note">Địa bàn đủ điểm: cần dùng khoảng <b>'+Math.round(ap.uniq/Math.max(1,ap.usable)*100)+'%</b> số điểm dùng được.</div>';
   } else note='<div class="note">Nhập số điểm bán và khu vực để biết cần ghé bao nhiêu điểm, chăm sóc ra sao. <button class="link" data-act="openSec" data-k="area">Mở mục Địa bàn &amp; điểm bán</button></div>';
-  return sec('need',ic('target',18),'Để đạt '+fmt(ap.total)+' triệu',sum,funnelHtml+'<div class="fcards">'+tiles+'</div><div class="small muted fchint">Chạm vào từng thẻ để xem cách tính.</div>'+rows+note+'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">'+seasonChips()+'</div>',true);
+  return sec('need',ic('target',18),'Để đạt '+fmt(ap.total)+' triệu',sum,funnelHtml+'<div class="fcards">'+tiles+'</div><div class="small muted fchint">Chạm vào từng thẻ để xem cách tính.</div>'+rows+note+'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)">'+seasonChips()+'</div>',false);
 }
 function incomeCard(weeks){
   const income=+S.income||0,rateC=Math.max(0.1,+S.commission||1.5);
@@ -2603,8 +2603,7 @@ function targetBlock(){
   }else{
     const t=+S.tt||0,bn=+S.target.bn||0,gd=+S.target.gd||0,pb=t?Math.round(bn/t*100):0;
     h+='<div class="tc-panel"><label class="tc-in"><span class="nm">Tổng chỉ tiêu S.I</span><span class="iu"><input class="num" type="number" inputmode="numeric" min="0" data-f="ttotal" value="'+(S.tt||'')+'" placeholder="0" aria-label="Tổng chỉ tiêu S.I"><span class="unit">tr</span></span></label>';
-    if(t>0)h+='<div class="tc-split"><div class="nm">Phân bổ theo nhóm hàng</div><div class="sbar" role="img" aria-label="Bình nước nóng '+pb+'%, gia dụng '+(100-pb)+'%"><i class="bn" style="width:'+pb+'%">'+(pb>=12?pb+'%':'')+'</i><i class="gd" style="width:'+(100-pb)+'%">'+(100-pb>=12?(100-pb)+'%':'')+'</i></div>'+
-      '<div class="tc-leg"><span><i class="sw bn"></i>Bình nước nóng <b>'+fmt(bn)+' tr</b></span><span><i class="sw gd"></i>Gia dụng &amp; điện máy <b>'+fmt(gd)+' tr</b></span></div></div>';
+
     h+='</div>';
     let note=cur[2];
     if(S.strat==='season'){
@@ -3218,8 +3217,6 @@ function renderSetup(){
     '<div class="tc-body">'+targetBlock()+'</div></div>'+
   needCard(weeks)+
   aiPanel('local',weeks)+
-  factorsCard(weeks,'full')+
-  aiCard(weeks,false)+
   hub+
   go+
   '<div style="text-align:center;margin-top:10px"><button class="link" data-act="reset">'+(confirmReset?'Bấm lại để xác nhận xoá hết dữ liệu':'Làm lại từ đầu')+'</button></div>'+
@@ -3325,7 +3322,7 @@ function renderPlan(){
     const rk='<details class="rkd" data-sec="rk_'+w.i+'"'+(isOpen('rk_'+w.i,false)?' open':'')+'><summary class="rks"><b>Rủi ro tuần này ('+sel.length+')</b><span class="muted"> · chạm để chọn</span></summary>'+chips+backups+'</details>';
     const bk='<details class="rkd" data-sec="bk_'+w.i+'"'+(isOpen('bk_'+w.i,false)?' open':'')+'><summary class="rks"><b>Đơn hoặc lịch hẹn đã chắc chắn</b>'+(w.bk?'<span class="muted"> · '+w.bk+' tr</span>':'')+'</summary><div class="field"><span class="nm small">S.I đã chắc chắn</span><input class="num sm" type="number" inputmode="numeric" min="0" data-f="booked" data-w="'+w.key+'" value="'+(w.bk||'')+'" placeholder="0"><span class="unit">tr</span></div></details>';
     const sum=(w.hard?'<span class="badge hard">Nặng nhất</span> ':'')+'<b>'+w.tt+' tr</b>';
-    return sec('wk_'+w.i,'','Tuần '+(w.i+1)+' · '+w.label,sum,tl+pills+areaLine(w)+rk+bk,w.i===curW);
+    return sec('wk_'+w.i,'','Tuần '+(w.i+1)+' · '+w.label,sum,tl+pills+areaLine(w)+rk+bk,false);
   }).join('');
 
   const modeLine='<div class="row wrapx modeline"><b>Chi tiết từng tuần</b><span>'+(S.plan?'<span class="badge warn">Thủ công</span> <button class="link" data-act="autoplan">Về tự động</button>':'<span class="badge ok">Tự động</span> <span class="small muted">chỉnh bằng − / +</span>')+'</span></div>';
@@ -3334,7 +3331,7 @@ function renderPlan(){
     '<div class="h3">Kế hoạch tích lũy</div>'+lineChart(weeks,[{pts:evenPts,color:'var(--muted)',dash:true,w:2},{pts:planPts,color:'var(--brand-deep)',dots:true,w:3}],total)+
     '<div class="legend"><span style="--c:var(--brand-deep)">Kế hoạch</span><span class="dash" style="--c:var(--muted)">Chia đều theo ngày</span></div>'+
     '<div class="h3">Mục tiêu từng ngày (triệu)</div>'+heat(weeks));
-  $app.innerHTML=weekStrip(weeks,curW)+aiPanel('plan',weeks)+statTiles(weeks)+overview+banner(weeks)+todayCard+factorsCard(weeks,'compact')+
+  $app.innerHTML=weekStrip(weeks,curW)+aiPanel('plan',weeks)+overview+todayCard+
   (mismatch?'<div class="note">Tổng các tuần là <b>'+planSum+'</b> tr, chỉ tiêu tháng là <b>'+total+'</b> tr. <button class="link" data-act="autoplan">Đưa về gợi ý tự động</button></div>':'')+
   modeLine+weekCards+charts+
   '<div class="row" style="margin:6px 0 12px"><button class="btn ghost sm" data-act="autoplan">Đưa về gợi ý tự động</button><button class="btn sm" data-act="copy">Sao chép kế hoạch</button></div>'+
@@ -3390,15 +3387,11 @@ function renderCheck(){
   let cum=0;const planPts=[],actPts=[];let ca=0;
   weeks.forEach(x=>{cum+=x.tt;planPts.push({i:x.i,v:cum});const ac=S.actual[x.key];if(ac){ca+=(ac.bn||0)+(ac.gd||0);actPts.push({i:x.i,v:ca});}else if(ac===undefined){}});
   const ds=dailySeries(weeks);
-  $app.innerHTML=banner(weeks)+
-  '<div class="card herocard">'+hero+'</div>'+forecastCard(weeks)+factorsCard(weeks,'compact')+aiPanel('check',weeks)+
+  $app.innerHTML='<div class="card herocard">'+hero+'</div>'+
   '<div class="card"><h2>Nhật ký hàng ngày</h2><div class="small muted">Chỉ bạn thấy, mất ~20 giây mỗi ngày.</div><div style="margin-top:10px">'+weekChips+'</div><div style="margin-top:6px">'+dayChips+'</div>'+
     (w.work===0?'<div class="note">Tuần này không có ngày làm việc.</div>':fields)+result+(w.work>0?'<div class="savebar"><button class="btn sm" data-act="daySave" data-day="'+curDay+'">Lưu số liệu ngày '+curDay.slice(8)+'/'+curDay.slice(5,7)+'</button><span class="small muted">'+(S.daily[curDay]?'Đã lưu':'Chưa lưu')+'</span></div>':'')+'</div>'+
-  rebal+
-  '<div class="card"><h2>Tiến độ theo ngày</h2>'+dailyChart(ds,total)+
-    '<div class="legend"><span class="dash" style="--c:var(--bn)">Kế hoạch tích lũy</span><span style="--c:var(--brand-deep)">Thực tế tích lũy</span></div></div>'+
-  '<div class="card"><h2>Thực tế so với kế hoạch theo tuần</h2>'+lineChart(weeks,[{pts:planPts,color:'var(--bn)',dash:true,w:2},{pts:actPts,color:'var(--brand-deep)',dots:true,w:3}],total)+
-    '<div class="legend"><span class="dash" style="--c:var(--bn)">Kế hoạch tích lũy</span><span style="--c:var(--brand-deep)">Thực tế tích lũy</span></div></div>';
+  rebal+forecastCard(weeks)+factorsCard(weeks,'compact')+aiPanel('check',weeks)+
+  sec('checkcharts',ic('trend',18),'Biểu đồ tiến độ','<span class="small muted">chạm để mở</span>','<div class="h3">Theo ngày</div>'+dailyChart(ds,total)+'<div class="legend"><span class="dash" style="--c:var(--bn)">Kế hoạch tích lũy</span><span style="--c:var(--brand-deep)">Thực tế tích lũy</span></div>'+'<div class="h3">Theo tuần</div>'+lineChart(weeks,[{pts:planPts,color:'var(--bn)',dash:true,w:2},{pts:actPts,color:'var(--brand-deep)',dots:true,w:3}],total),false);
 }
 
 
@@ -3418,9 +3411,7 @@ function renderAlertsTab(){
   '<div class="card"><h2>'+ic('bell',18)+' Cảnh báo đang có</h2><div class="small muted">Chỉ bạn thấy.</div>'+DISC+list+
     (hid.length?'<details><summary class="small">Đã ẩn ('+hid.length+')</summary><button class="btn ghost sm" data-act="undismiss">Hiện lại tất cả</button></details>':'')+'</div>'+
   aiPanel('alerts',weeks)+
-  '<div class="card"><h2>Mức độ nhạy</h2><div class="small muted">Chọn nhanh bộ ngưỡng, sau đó chỉnh từng quy tắc bên dưới nếu muốn.</div><div class="preset">'+
-    pr.map(x=>'<button data-act="preset" data-v="'+x[0]+'" aria-pressed="'+(S.preset===x[0])+'">'+x[1]+'<small>'+x[2]+'</small></button>').join('')+'</div></div>'+
-  '<div class="card"><h2>Quy tắc cảnh báo</h2><div class="small muted">Bật hoặc tắt từng quy tắc và đặt ngưỡng phù hợp với đặc thù công việc của bạn.</div>'+rules+'</div>'+
+  sec('alertcfg',ic('bell',18),'Tùy chỉnh cảnh báo','<span class="small muted">chạm để mở</span>','<div class="h3">Mức độ nhạy</div><div class="small muted">Chọn nhanh bộ ngưỡng, sau đó chỉnh từng quy tắc bên dưới nếu muốn.</div><div class="preset">'+pr.map(x=>'<button data-act="preset" data-v="'+x[0]+'" aria-pressed="'+(S.preset===x[0])+'">'+x[1]+'<small>'+x[2]+'</small></button>').join('')+'</div>'+'<div class="h3" style="margin-top:14px">Quy tắc cảnh báo</div><div class="small muted">Bật hoặc tắt từng quy tắc và đặt ngưỡng phù hợp với đặc thù công việc của bạn.</div>'+rules,false)+
   '<div class="note">Cảnh báo được tính lại mỗi khi bạn mở công cụ hoặc nhập số liệu. Công cụ chưa gửi được thông báo đẩy khi đóng ứng dụng.</div>';
 }
 
@@ -3435,7 +3426,7 @@ function render(){
   }
   renderTabs();if(S.tab==='setup')renderSetup();else if(S.tab==='plan')renderPlan();else if(S.tab==='alerts')renderAlertsTab();else renderCheck();
   try{
-    if(S.month===monthKey(0)){const bn=dayBanner(analyze());bannerSig=bn;if(bn){if(S.tab==='plan'&&$app.firstElementChild)$app.firstElementChild.insertAdjacentHTML('afterend',bn);else $app.insertAdjacentHTML('afterbegin',bn);}}else bannerSig='';
+    if(S.month===monthKey(0)){const bn=dayBanner(analyze());bannerSig=bn;if(bn&&S.tab==='check')$app.insertAdjacentHTML('afterbegin',bn);}else bannerSig='';
     if(S.tab==='check'){const hc=histCard();if(hc)$app.insertAdjacentHTML('beforeend',hc);}
   }catch(e){}
   if(sel){const n=document.querySelector(sel);if(n){if(keepVal!==null)n.value=keepVal;if(n!==document.activeElement)try{n.focus({preventScroll:true});}catch(e){}}}
