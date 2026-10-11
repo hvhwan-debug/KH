@@ -33,8 +33,13 @@ function missing() {
   if (c.secret.length < 32) m.push("SESSION_SECRET (tối thiểu 32 ký tự)");
   if (c.storageMode !== "memory" && !c.conn) m.push("STORAGE_CONNECTION_STRING");
   if (!c.allowDomains.length && !c.allowEmails.length) m.push("ALLOWED_EMAIL_DOMAINS hoặc ALLOWED_EMAILS");
-  if (c.mailMode !== "memory" && (!c.smtp.host || !c.smtp.from)) m.push("SMTP_HOST, SMTP_USER, SMTP_PASS, MAIL_FROM");
   return m;
+}
+
+// Email tự động (SMTP) là tính năng tuỳ chọn, không bắt buộc để đăng nhập/đồng bộ hoạt động.
+function mailConfigured() {
+  const c = cfg();
+  return c.mailMode === "memory" || !!(c.smtp.host && c.smtp.from);
 }
 
 function validEmail(e) {
@@ -49,4 +54,4 @@ function emailAllowed(email) {
   return c.allowDomains.includes(dom);
 }
 
-module.exports = { cfg, missing, emailAllowed, validEmail };
+module.exports = { cfg, missing, mailConfigured, emailAllowed, validEmail };

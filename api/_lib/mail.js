@@ -9,6 +9,7 @@ async function send({ to, subject, html, text, headers }) {
     (global.__mailbox = global.__mailbox || []).push({ to, subject, html, text, headers, at: Date.now() });
     return;
   }
+  if (!c.smtp.host) return; // chưa cấu hình SMTP: email tự động là tuỳ chọn, bỏ qua thay vì báo lỗi
   if (!transport) {
     const nodemailer = require("nodemailer"); // nạp khi cần
     transport = nodemailer.createTransport({

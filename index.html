@@ -2712,7 +2712,7 @@ function factorsCard(weeks,mode){
 }
 
 /* ---------- Tài khoản, đồng bộ, email ---------- */
-let AUTH={avail:null,user:null,busy:false,step:'email',email:'',msg:'',ackOff:false,sync:{st:'idle',msg:'',conflict:false}};
+let AUTH={avail:null,user:null,busy:false,email:'',msg:'',ackOff:false,sync:{st:'idle',msg:'',conflict:false}};
 let syncTimer=null,syncBusy=false,syncDirty=false,lastCheck=0;
 const TOKEN_KEY='livotec-sr-token';
 function getToken(){try{return localStorage.getItem(TOKEN_KEY)||'';}catch(e){return '';}}
@@ -2819,26 +2819,17 @@ async function syncCheck(){
   }catch(e){}
 }
 async function acReq(){
-  const el=document.getElementById('acEmail');
-  const email=((el&&el.value)||AUTH.email||'').trim().toLowerCase();
+  const elE=document.getElementById('acEmail'),elP=document.getElementById('acPass');
+  const email=((elE&&elE.value)||AUTH.email||'').trim().toLowerCase();
+  const password=(elP&&elP.value)||'';
   if(!/^\S+@\S+\.\S+$/.test(email)){AUTH.msg='Nhập email hợp lệ.';render();return;}
-  AUTH.busy=true;AUTH.email=email;AUTH.msg='Đang gửi mã…';render();
+  if(password.length<6){AUTH.msg='Mật khẩu cần ít nhất 6 ký tự.';render();return;}
+  AUTH.busy=true;AUTH.email=email;AUTH.msg='Đang kiểm tra…';render();
   try{
-    const r=await api('POST','/api/auth/request',{email:email});
+    const r=await api('POST','/api/auth/request',{email:email,password:password});
     AUTH.busy=false;
-    if(r.s===200){AUTH.step='code';AUTH.msg=r.j.message||'Đã gửi mã.';}else AUTH.msg=r.j.error||'Không gửi được mã.';
-  }catch(e){AUTH.busy=false;AUTH.msg='Lỗi mạng. Thử lại.';}
-  render();
-}
-async function acVerify(){
-  const el=document.getElementById('acCode'),code=((el&&el.value)||'').replace(/\s/g,'');
-  if(!/^\d{6}$/.test(code)){AUTH.msg='Nhập mã gồm 6 chữ số.';render();return;}
-  AUTH.busy=true;AUTH.msg='Đang kiểm tra…';render();
-  try{
-    const r=await api('POST','/api/auth/verify',{email:AUTH.email,code:code});
-    AUTH.busy=false;
-    if(r.s===200){if(r.j.token)setToken(r.j.token);AUTH.step='email';AUTH.msg='';await authInit();toast('Đã đăng nhập');return;}
-    AUTH.msg=r.j.error||'Mã không đúng.';
+    if(r.s===200){if(r.j.token)setToken(r.j.token);AUTH.msg='';await authInit();toast(r.j.created?'Đã tạo tài khoản và đăng nhập':'Đã đăng nhập');return;}
+    AUTH.msg=r.j.error||'Không đăng nhập được.';
   }catch(e){AUTH.busy=false;AUTH.msg='Lỗi mạng. Thử lại.';}
   render();
 }
@@ -2846,7 +2837,7 @@ async function acLogout(){
   clearTimeout(syncTimer);
   try{await api('POST','/api/auth/logout',{});}catch(e){}
   setToken('');
-  AUTH.user=null;AUTH.step='email';AUTH.msg='';AUTH.sync={st:'idle',msg:'',conflict:false};
+  AUTH.user=null;AUTH.msg='';AUTH.sync={st:'idle',msg:'',conflict:false};
   toast('Đã đăng xuất. Dữ liệu vẫn còn trên máy này');render();
 }
 async function acMailTest(){
@@ -2863,15 +2854,10 @@ function acctCard(){
   }else if(!A.user){
     sum='<span class="small muted">chưa đăng nhập</span>';
     const msg=A.msg?'<div class="small" style="margin-top:6px;color:var(--muted)">'+escH(A.msg)+'</div>':'';
-    if(A.step==='code'){
-      body='<div class="small muted">Mã 6 số đã gửi tới <b>'+escH(A.email)+'</b>. Mã có hiệu lực 10 phút.</div>'+
-        '<input id="acCode" class="txt" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Mã 6 số" aria-label="Mã đăng nhập">'+
-        '<div class="askrow"><button class="btn sm" data-act="acVerify"'+(A.busy?' disabled':'')+'>Đăng nhập</button><button class="btn ghost sm" data-act="acReq"'+(A.busy?' disabled':'')+'>Gửi lại mã</button><button class="link" data-act="acBack">Đổi email</button></div>'+msg;
-    }else{
-      body='<div class="small muted">Đăng nhập để lưu dữ liệu trên máy chủ, dùng nhiều thiết bị và nhận email nhắc, cảnh báo. Không cần mật khẩu: chúng tôi gửi mã 6 số tới email của bạn.</div>'+
-        '<input id="acEmail" class="txt" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="Email của bạn" value="'+escH(A.email)+'" aria-label="Email">'+
-        '<div class="askrow"><button class="btn sm" data-act="acReq"'+(A.busy?' disabled':'')+'>Gửi mã đăng nhập</button></div>'+msg;
-    }
+    body='<div class="small muted">Đăng nhập để lưu dữ liệu trên máy chủ và dùng được nhiều thiết bị. Nhập email và tự đặt mật khẩu — nếu email này chưa có tài khoản, hệ thống tự tạo tài khoản mới với mật khẩu bạn vừa nhập.</div>'+
+      '<input id="acEmail" class="txt" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="Email của bạn" value="'+escH(A.email)+'" aria-label="Email">'+
+      '<input id="acPass" class="txt" type="password" autocomplete="current-password" maxlength="200" placeholder="Mật khẩu (ít nhất 6 ký tự)" aria-label="Mật khẩu" style="margin-top:8px">'+
+      '<div class="askrow"><button class="btn sm" data-act="acReq"'+(A.busy?' disabled':'')+'>Đăng nhập / Đăng ký</button></div>'+msg;
   }else{
     const st=A.sync.st;
     sum='<span class="badge '+(st==='err'?'bad':'ok')+'">'+(st==='err'?'Lỗi đồng bộ':'Đã đăng nhập')+'</span>';
@@ -3860,7 +3846,7 @@ let bannerSig=null;
 function render(){
   const ae=document.activeElement;let sel=null,keepVal=null;
   if(ae&&ae.dataset&&ae.dataset.tid){sel='[data-tid="'+ae.dataset.tid+'"]';}
-  else if(ae&&ae.id&&(ae.id==='dnm'||ae.id==='dpt'||ae.id==='acEmail'||ae.id==='acCode')){sel='#'+ae.id;keepVal=ae.value;}
+  else if(ae&&ae.id&&(ae.id==='dnm'||ae.id==='dpt'||ae.id==='acEmail'||ae.id==='acPass')){sel='#'+ae.id;keepVal=ae.value;}
   else if(ae&&ae!==document.body&&ae.closest&&ae.closest('#app')&&ae.dataset&&ae.dataset.f){
     const ds=ae.dataset;
     sel='[data-f="'+ds.f+'"]'+(ds.p?'[data-p="'+ds.p+'"]':'')+(ds.c?'[data-c="'+ds.c+'"]':'')+(ds.k?'[data-k="'+ds.k+'"]':'')+(ds.i?'[data-i="'+ds.i+'"]':'')+(ds.w?'[data-w="'+ds.w+'"]':'');
@@ -3925,8 +3911,6 @@ document.addEventListener('click',function(e){
   else if(a==='openWeek'){planSel=+d.w;S.pv='week';render();setTimeout(function(){const el=document.getElementById('wdetail');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);return;}
   else if(a==='selWeek'){planSel=+d.w;render();setTimeout(function(){const t=document.querySelector('.wtile.sel');if(t&&t.scrollIntoView)t.scrollIntoView({inline:'center',block:'nearest'});},30);return;}
   else if(a==='acReq'){acReq();return;}
-  else if(a==='acVerify'){acVerify();return;}
-  else if(a==='acBack'){AUTH.step='email';AUTH.msg='';}
   else if(a==='acLogout'){acLogout();return;}
   else if(a==='acSync'){syncDirty=true;syncPush({});return;}
   else if(a==='acMailTest'){acMailTest();return;}

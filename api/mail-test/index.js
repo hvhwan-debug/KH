@@ -11,6 +11,7 @@ module.exports = async function (context, req) {
     const u = requireUser(context, req);
     if (!u) return;
     if (!emailAllowed(u.email)) return reply(context, 403, { ok: false, error: "Tài khoản không còn được phép." });
+    if (!require("../_lib/config").mailConfigured()) return reply(context, 200, { ok: false, error: "Chưa cấu hình gửi email (SMTP) trên máy chủ. Đăng nhập và đồng bộ vẫn hoạt động bình thường, chỉ email tự động chưa dùng được." });
     const key = "user/" + u.uid + ".json", now = Date.now();
     const doc = (await store.get(key)) || { v: 1, uid: u.uid, email: u.email, rev: 0, state: null, digest: null, prefs: {}, sent: {} };
     doc.testSent = (doc.testSent || []).filter((t) => now - t < 86400000);
