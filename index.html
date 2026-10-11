@@ -493,6 +493,12 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 .srow .txt{margin-top:0;font-weight:500}
 .srow2{display:flex;gap:8px;align-items:center;margin-top:8px}
 .srow3{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.srcbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.srai{border-color:#e8a91e;background:#fffaf0}
+.srmore{margin-top:8px}
+.srsum{cursor:pointer;color:var(--brand-deep);font-weight:600;padding:2px 0}
+.aibadge{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#9a6700;margin-bottom:6px}
+.aiwarn{margin-top:10px;padding:10px 12px;border-radius:10px;background:#fff1f0;border:1px solid #f3b4ae;color:#8a1c14;font-size:13px;line-height:1.5}
 .srow3 select{flex:1 1 150px;min-width:0;padding:8px 10px;font-size:13px}
 .srow2 select{flex:1;min-width:0;padding:8px 10px;font-size:13px}
 .srow2 .num.sm{width:84px}
@@ -1577,7 +1583,7 @@ function needCard(weeks){
   const FN=funnel(),consults=Math.round(ap.visits*FN.reach);
   const tiles=
     fc('var(--brand-deep)','target','≈ '+fmt(ap.orders),'đơn cần chốt','Chỉ tiêu <b>'+fmt(ap.total)+' tr</b> ÷ giá trị trung bình mỗi đơn <b>'+S.aov+' tr</b>'+(hasBooked?' (đã trừ phần chắc chắn)':'')+'.')+
-    fc('var(--bn)','users','≈ '+fmt(ap.visits),'lượt ghé đại lý','Mỗi đơn cần ≈ <b>'+fmt(FN.vpo,0)+' lượt ghé</b> (benchmark ngành: '+FN.fv+' lượt ghé gặp chủ → 10 khách tư vấn; '+FN.fc+' khách tư vấn → 1 đơn)'+(S.learn?'. Tự hiệu chỉnh khi bạn nhập số liệu thật.':'.'))+
+    fc('var(--bn)','users','≈ '+fmt(ap.visits),'lượt ghé đại lý','Mỗi đơn cần ≈ <b>'+fmt(FN.vpo,0)+' lượt ghé</b> (số gợi ý ban đầu, chưa kiểm chứng: '+FN.fv+' lượt ghé gặp chủ → 10 khách tư vấn; '+FN.fc+' khách tư vấn → 1 đơn)'+(S.learn?'. Tự hiệu chỉnh khi bạn nhập số liệu thật.':'.'))+
     fc('var(--gd)','plan','≈ '+fmt(ap.uniq),'điểm bán khác nhau (ghé '+ap.vpp+' lần/điểm)','Số lượt ghé ÷ <b>'+ap.vpp+' lần</b> mỗi điểm.'+(ap.have?' Bạn có <b>'+ap.usable+'</b> điểm dùng được.':' Nhập địa bàn để so với số điểm bạn có.'))+
     fc('var(--ok)','bell',ap.act>0?'≈ '+fmt(ap.careTot):'—','lượt chăm sóc từ xa'+(ap.act>0?'':' (nhập địa bàn)'),ap.act>0?'Điểm đang hoạt động được gọi, nhắn thay cho ghé trực tiếp, theo tần suất bạn đặt ở mục Địa bàn &amp; điểm bán.':'Nhập số điểm bán đang hoạt động ở mục Địa bàn &amp; điểm bán để tính lượt chăm sóc từ xa.');
   const totWork=Math.max(1,weeks.reduce((x,w)=>x+w.work,0)),mc=Math.max(1,+S.maxC||6),capV=totWork*mc,needV=ap.visits;
@@ -1589,7 +1595,7 @@ function needCard(weeks){
     (over?'<div class="cap-res">Với sức này chỉ đạt ≈ <b>'+ordCap+' đơn ≈ '+fmt(siCap)+' tr</b> ('+pctCap+'% chỉ tiêu)</div>'+
       (ordCap>0?'<div class="cap-fix"><em>Để đủ chỉ tiêu:</em><span>đơn TB ≈ <b>'+fmt(reqAov,0)+' tr</b></span><em>hoặc</em><span>≈ <b>'+fmt(reqVpo,1)+' lượt ghé/đơn</b></span></div>':''):
       (tight?'<div class="cap-res">Sát sức: cần ≈ <b>'+fmt(needV)+' lượt</b> (đã làm tròn lên), đi được <b>'+fmt(capV)+'</b>. Gần như không còn dư cho ngày chậm.</div>':'<div class="cap-res">Trong sức: dùng <b>'+Math.round(needV/capV*100)+'%</b> số lượt ghé tối đa.</div>'))+'</div>';
-  const funnelHtml='<div class="fnl"><div class="fnl-h"><b>Phễu bán hàng</b><span class="fnl-src '+(isDef?'bm':'own')+'">'+(isDef?'Chuẩn ngành':'Tự nhập')+'</span><span class="small muted">1 đơn ≈ '+fmt(FN.vpo,0)+' lượt ghé ≈ '+FN.fc+' khách tư vấn</span></div>'+
+  const funnelHtml='<div class="fnl"><div class="fnl-h"><b>Phễu bán hàng</b><span class="fnl-src '+(isDef?'bm':'own')+'">'+(isDef?'Gợi ý ban đầu':'Tự nhập')+'</span><span class="small muted">1 đơn ≈ '+fmt(FN.vpo,0)+' lượt ghé ≈ '+FN.fc+' khách tư vấn</span></div>'+
     '<div class="fnl-bars">'+
       '<div class="fnl-bar b1" style="--w:100%"><b>≈ '+fmt(ap.visits)+'</b><span>lượt ghé đại lý</span></div>'+
       '<div class="fnl-cv"><i></i><b>'+Math.round(FN.reach*100)+'%</b> gặp được chủ</div>'+
@@ -1600,8 +1606,8 @@ function needCard(weeks){
     '<div class="fnl-edit"><label><span>Gặp được chủ</span><input class="num sm" type="number" inputmode="numeric" min="10" max="60" data-f="fnl" data-k="fv" value="'+FN.fv+'" aria-label="Số lượt ghé để tư vấn 10 khách"><span>cần bao nhiêu lượt ghé để tư vấn 10 khách</span></label>'+
     '<label><span>Chốt đơn</span><input class="num sm" type="number" inputmode="numeric" min="1" max="50" data-f="fnl" data-k="fc" value="'+FN.fc+'" aria-label="Số khách tư vấn để chốt 1 đơn"><span>cần bao nhiêu khách tư vấn để chốt 1 đơn</span></label>'+
     '<label><span>Sức đi</span><input class="num sm" type="number" inputmode="numeric" min="1" max="40" data-f="maxC" value="'+mc+'" aria-label="Số lượt ghé tối đa mỗi ngày"><span>lượt ghé tối đa mỗi ngày (SR thường đi khoảng 6)</span></label>'+
-    (isDef?'':'<button class="link" data-act="fnlReset">Về chuẩn ngành</button>')+'</div>'+
-    '<div class="small muted fnl-note">Số liệu là chuẩn ngành hoặc do bạn nhập. AI chỉ gợi ý, không tự đổi số.</div></div>';
+    (isDef?'':'<button class="link" data-act="fnlReset">Về số gợi ý ban đầu</button>')+'</div>'+
+    '<div class="small muted fnl-note">Đây là số gợi ý ban đầu (chưa có nguồn chuẩn ngành được kiểm chứng) hoặc do bạn nhập. Hãy thay bằng số thật của bạn. AI chỉ gợi ý, không tự đổi số.</div></div>';
   const sum='<span class="small muted">'+fmt(ap.orders)+' đơn · '+fmt(ap.visits)+' ghé</span>'+(over?' <span class="badge bad">vượt sức</span>':tight?' <span class="badge warn">sát sức</span>':'');
   const wkWithData=weeks.filter(w=>w.work>0&&w.tt>0),maxTt=Math.max(1,...wkWithData.map(w=>w.tt));
   const rowHtml=w=>{
@@ -1645,11 +1651,11 @@ function sourcesCard(weeks){
   if(!total)return '';
   const list=S.sources||[];
   const sum=list.reduce((s,x)=>s+(+x.amt||0),0),gap=Math.max(0,total-sum);
-  const rows=list.map((s,i)=>'<div class="srow">'+
+  const rows=list.map((s,i)=>'<div class="srow'+(s.ai?' srai':'')+'">'+(s.ai?'<div class="aibadge"><span>🤖 '+(s.mode==="rule"?'Quy tắc mẫu':'AI gợi ý')+' — cần đối chiếu</span><button class="link" data-act="srcok" data-i="'+i+'">Đã đối chiếu</button></div>':'')+
     '<input class="txt" type="text" data-f="src" data-i="'+i+'" data-k="name" value="'+escH(s.name||'')+'" placeholder="VD: Đại lý Minh Phát tăng đơn, hoặc Mở mới 3 điểm Hà Đông">'+
     '<div class="srow2"><input class="num sm" type="number" inputmode="numeric" min="0" data-f="src" data-i="'+i+'" data-k="amt" value="'+(s.amt||'')+'" placeholder="0"><span class="unit">tr</span>'+
     '<select data-f="src" data-i="'+i+'" data-k="week" aria-label="Tuần dự kiến">'+weeks.map(w=>'<option value="'+w.i+'"'+((+s.week||0)===w.i?' selected':'')+'>Tuần '+(w.i+1)+'</option>').join('')+'</select>'+
-    '<button class="xbtn" data-act="rmsrc" data-i="'+i+'" aria-label="Xoá nguồn">✕</button></div>'+'<div class="srow3"><select data-f="src" data-i="'+i+'" data-k="prod" aria-label="Ngành hàng"><option value="bn"'+(s.prod!=='gd'?' selected':'')+'>Bình nước nóng</option><option value="gd"'+(s.prod==='gd'?' selected':'')+'>Gia dụng Livotec</option></select>'+'<select data-f="src" data-i="'+i+'" data-k="type" aria-label="Loại nguồn">'+SRC_TYPES.map((t,k)=>'<option value="'+k+'"'+((+s.type||0)===k?' selected':'')+'>'+t+'</option>').join('')+'</select>'+'<select data-f="src" data-i="'+i+'" data-k="conf" aria-label="Độ tin cậy"><option value="">Độ tin cậy: chưa chọn</option>'+SRC_CONF.map(c=>'<option value="'+c[0]+'"'+(s.conf===c[0]?' selected':'')+'>'+c[1]+'</option>').join('')+'</select></div>'+'<input class="txt" type="text" data-f="src" data-i="'+i+'" data-k="basis" value="'+escH(s.basis||'')+'" placeholder="Căn cứ &amp; tín hiệu: VD lịch sử 35M/tháng, vào mùa lạnh, tồn kho thấp" style="margin-top:6px">'+'<div class="srow2"><input class="num sm" type="number" inputmode="numeric" min="0" data-f="src" data-i="'+i+'" data-k="act" value="'+(s.act===null||s.act===undefined?'':s.act)+'" placeholder="Thực tế"><span class="unit">tr đã đạt</span></div>'+'<input class="txt" type="text" data-f="src" data-i="'+i+'" data-k="planB" value="'+escH(s.planB||'')+'" placeholder="Plan B của nguồn này nếu không đạt" style="margin-top:6px"></div>').join('');
+    '<button class="xbtn" data-act="rmsrc" data-i="'+i+'" aria-label="Xoá nguồn">✕</button></div>'+'<details class="srmore" data-sec="srcd_'+i+'"'+(isOpen('srcd_'+i,false)?' open':'')+'><summary class="small srsum">'+((SRC_CONF.find(c=>c[0]===s.conf)||[0,'⚪ Chưa chọn độ tin cậy'])[1].split(' (')[0])+' · '+(s.prod==='gd'?'Gia dụng':'Bình nước nóng')+' · '+SRC_TYPES[Math.min(3,Math.max(0,+s.type||0))].split(' (')[0]+'</summary>'+'<div class="srow3"><select data-f="src" data-i="'+i+'" data-k="prod" aria-label="Ngành hàng"><option value="bn"'+(s.prod!=='gd'?' selected':'')+'>Bình nước nóng</option><option value="gd"'+(s.prod==='gd'?' selected':'')+'>Gia dụng Livotec</option></select>'+'<select data-f="src" data-i="'+i+'" data-k="type" aria-label="Loại nguồn">'+SRC_TYPES.map((t,k)=>'<option value="'+k+'"'+((+s.type||0)===k?' selected':'')+'>'+t+'</option>').join('')+'</select>'+'<select data-f="src" data-i="'+i+'" data-k="conf" aria-label="Độ tin cậy"><option value="">Độ tin cậy: chưa chọn</option>'+SRC_CONF.map(c=>'<option value="'+c[0]+'"'+(s.conf===c[0]?' selected':'')+'>'+c[1]+'</option>').join('')+'</select></div>'+'<input class="txt" type="text" data-f="src" data-i="'+i+'" data-k="basis" value="'+escH(s.basis||'')+'" placeholder="Căn cứ &amp; tín hiệu: VD lịch sử 35M/tháng, vào mùa lạnh, tồn kho thấp" style="margin-top:6px">'+'<div class="srow2"><input class="num sm" type="number" inputmode="numeric" min="0" data-f="src" data-i="'+i+'" data-k="act" value="'+(s.act===null||s.act===undefined?'':s.act)+'" placeholder="Thực tế"><span class="unit">tr đã đạt</span></div>'+'<input class="txt" type="text" data-f="src" data-i="'+i+'" data-k="planB" value="'+escH(s.planB||'')+'" placeholder="Plan B của nguồn này nếu không đạt" style="margin-top:6px"></details></div>').join('');
   let stress='';
   if(list.length&&sum>0){
     const maxS=list.reduce((a,b)=>(+b.amt||0)>(+a.amt||0)?b:a,list[0]);
@@ -1660,9 +1666,11 @@ function sourcesCard(weeks){
   }
   const planB='<div class="field" style="max-width:none;margin:12px 0 0"><span class="nm">Phương án B (nếu nguồn lớn nhất không đạt)</span></div>'+
     '<textarea class="txt" data-f="planB" placeholder="VD: chuyển sang chào thêm 2-3 điểm bán mới ở khu vực lân cận" rows="2">'+escH(S.planB||'')+'</textarea>';
+  const nAiRows=list.filter(x=>x.ai).length;
+  const aiWarn=nAiRows?'<div class="aiwarn"><b>⚠ '+nAiRows+' dòng là bản nháp do '+(list.some(x=>x.ai&&x.mode!=="rule")?'AI':'quy tắc mẫu')+' gợi ý.</b> Công cụ không biết số liệu thật của từng đại lý, nên tên, số tiền, độ tin cậy và tuần chỉ là giả định. Hãy sửa theo thực tế rồi bấm "Đã đối chiếu" ở từng dòng trước khi gửi quản lý.</div>':'';
   const sumLine='<div class="small" style="margin-top:10px"><b>'+fmt(sum)+' tr</b> / '+fmt(total)+' tr đã gắn nguồn'+(gap>0?' · <span style="color:var(--bad);font-weight:600">còn '+fmt(gap)+' tr chưa rõ nguồn</span>':' · <span style="color:var(--ok);font-weight:600">đã gắn đủ</span>')+'</div>';
   const body='<div class="small muted">Chỉ tiêu không tự sinh ra — ghi rõ tiền sẽ đến từ đâu: đại lý nào tăng đơn, điểm nào mới mở, nguồn nào khác.</div>'+rows+
-    '<button class="btn ghost sm" data-act="addsrc" style="margin-top:8px">+ Thêm nguồn doanh số</button>'+sumLine+stress+planB;
+    '<div class="srcbtns"><button class="btn ghost sm" data-act="addsrc">+ Thêm nguồn doanh số</button><button class="btn ghost sm" data-act="aisrc"'+(srcAiBusy?' disabled':'')+'>'+(srcAiBusy?'AI đang soạn nháp…':(list.length?'🤖 Soạn lại bằng AI':'🤖 AI soạn nháp từ dữ liệu của tôi'))+'</button></div>'+aiWarn+sumLine+stress+planB;
   return sec('sources',ic('trend',18),'Nguồn doanh số',list.length?('<span class="small muted">'+list.length+' nguồn</span>'):'',body,false);
 }
 function areaCard(weeks){
@@ -1713,9 +1721,9 @@ function ctxText(weeks){
   L.push('Chỉ tiêu S.I: '+PRODUCTS.map(p=>p.name+' '+fmt(+S.target[p.id]||0)+' tr').join(', ')+' (tổng '+fmt(total)+' tr).');
   L.push('Chiến lược chia chỉ tiêu: '+(STRATS.find(x=>x[0]===S.strat)||STRATS[4])[1]+(S.strat==='manual'?'':' ('+Math.round((+S.target.bn||0)/Math.max(1,total)*100)+'% bình nước nóng)')+'.');
   const on=catShares();if(on.length)L.push('Cơ cấu gia dụng & điện máy (tỷ trọng): '+on.map(x=>x.c.name+' '+Math.round(x.f*100)+'%').join(', ')+'.');
-  L.push('Giả định: giá trị trung bình mỗi đơn '+S.aov+' tr; phễu benchmark ngành: cứ '+funnel().fv+' lượt ghé đại lý gặp được chủ để tư vấn 10 khách, '+funnel().fc+' khách tư vấn chốt 1 đơn (≈ '+fmt(funnel().vpo,0)+' lượt ghé mỗi đơn); sức mua tháng này '+S.season+'%.');
+  L.push('Giả định: giá trị trung bình mỗi đơn '+S.aov+' tr; phễu gợi ý ban đầu (chưa kiểm chứng, KHÔNG phải chuẩn ngành): cứ '+funnel().fv+' lượt ghé đại lý gặp được chủ để tư vấn 10 khách, '+funnel().fc+' khách tư vấn chốt 1 đơn (≈ '+fmt(funnel().vpo,0)+' lượt ghé mỗi đơn); sức mua tháng này '+S.season+'%.');
   L.push(seasonText());
-  {const _tw=Math.max(1,weeks.reduce((a,w)=>a+w.work,0)),_mc=Math.max(1,+S.maxC||6);L.push('Sức đi tối đa của SR: '+_mc+' lượt ghé/ngày × '+_tw+' ngày làm việc = '+(_mc*_tw)+' lượt/tháng'+(ap?(ap.visits>_mc*_tw?' (nhu cầu '+ap.visits+' lượt, VƯỢT sức)':' (nhu cầu '+ap.visits+' lượt, trong sức)'):'')+'. Tỷ lệ phễu do người dùng đặt hoặc lấy chuẩn ngành; AI chỉ gợi ý, không thay số.');}
+  {const _tw=Math.max(1,weeks.reduce((a,w)=>a+w.work,0)),_mc=Math.max(1,+S.maxC||6);L.push('Sức đi tối đa của SR: '+_mc+' lượt ghé/ngày × '+_tw+' ngày làm việc = '+(_mc*_tw)+' lượt/tháng'+(ap?(ap.visits>_mc*_tw?' (nhu cầu '+ap.visits+' lượt, VƯỢT sức)':' (nhu cầu '+ap.visits+' lượt, trong sức)'):'')+'. Tỷ lệ phễu do người dùng đặt hoặc là số gợi ý ban đầu chưa kiểm chứng; AI chỉ gợi ý, không thay số.');}
   {const _m=+S.month.split('-')[1],_r=regionOf(S.province),_c=CLIM[_r];L.push('Khí hậu trung bình nhiều năm (ước lượng) của '+REG_NAME[_r]+' vào tháng '+_m+': ≈ '+_c.t[_m-1]+'°C, '+WLAB[_c.w[_m-1]]+'.');}
   if(ap){
     L.push('Cần chốt ≈ '+ap.orders+' đơn, ≈ '+ap.visits+' lượt ghé/liên hệ, ≈ '+ap.uniq+' điểm bán khác nhau (ghé '+ap.vpp+' lần/điểm).');
@@ -1858,11 +1866,88 @@ function histCard(){
   }).join('');
   return sec('hist',ic('trend',18),'Lịch sử các tháng','<span class="small muted">'+rows.length+' tháng</span>','<div class="small muted">Mỗi tháng được tự lưu trên thiết bị này khi bạn chuyển sang tháng khác. Chọn "Mở" để xem lại hoặc nhập bổ sung.</div>'+body);
 }
+/* ---------- AI soạn bản nháp "Nguồn doanh số" (luôn kèm cảnh báo cần đối chiếu) ---------- */
+let srcAiBusy=false;
+const SRC_WARN_LONG='⚠ BẢN NHÁP — CẦN ĐỐI CHIẾU TRƯỚC KHI GỬI: các dòng đánh dấu 🤖 do AI (hoặc quy tắc mẫu) gợi ý từ dữ liệu SR đã nhập và hiểu biết chung về Livotec. AI không biết số liệu thật của từng đại lý/điểm bán, nên tên, số tiền, độ tin cậy và tuần dự kiến chỉ là giả định. SR cần sửa theo thực tế và xác nhận với quản lý.';
+function srcPrompt(weeks){
+  const n=weeks.length,bn=+S.target.bn||0,gd=+S.target.gd||0;
+  return 'NHIỆM VỤ: soạn BẢN NHÁP bảng "Nguồn doanh số" để SR kênh GT dùng ngay và gửi quản lý. Chia chỉ tiêu bình nước nóng '+bn+' tr và gia dụng & điện máy '+gd+' tr thành 5–8 dòng nguồn.\n'+
+  'QUY TẮC BẮT BUỘC:\n'+
+  '1) Chỉ trả về MỘT mảng JSON hợp lệ, không có chữ nào ngoài JSON, không dùng markdown.\n'+
+  '2) Mỗi phần tử có đúng các trường: {"name":string,"prod":"bn"|"gd","type":0|1|2|3,"conf":"g"|"y"|"r","amt":số nguyên (triệu đồng),"week":số nguyên từ 0 đến '+(n-1)+',"basis":string tối đa 110 ký tự,"planB":string tối đa 110 ký tự}.\n'+
+  '3) type: 0 = đơn hàng nền tảng (đại lý hiện hữu, gần như chắc chắn); 1 = tăng trưởng từ đại lý hiện hữu; 2 = đơn có tín hiệu đàm phán; 3 = khai thác mở mới điểm bán.\n'+
+  '4) conf: g = Xanh (đã có cơ sở); y = Vàng (có tín hiệu); r = Đỏ (phải chủ động tạo mới). Nguồn type 3 luôn là r; type 2 là y; KHÔNG gán g cho nguồn không có cơ sở trong dữ liệu.\n'+
+  '5) Tổng amt của các dòng prod "bn" phải bằng đúng '+bn+'; của prod "gd" phải bằng đúng '+gd+'. Không dòng nào dưới 1.\n'+
+  '6) TUYỆT ĐỐI KHÔNG BỊA tên đại lý cụ thể hay số liệu lịch sử. Nếu dữ liệu không có tên, đặt tên theo nhóm, ví dụ "Nhóm đại lý hiện hữu quy mô lớn (điền tên)". Nếu dữ liệu có khu vực/tuyến thì dùng đúng tên khu vực đó. Số điểm bán hoặc khu vực chỉ lấy từ dữ liệu.\n'+
+  '7) Trường basis phải nêu rõ CĂN CỨ lấy từ dữ liệu (ví dụ mùa vụ, số điểm bán, tỷ trọng ngành) hoặc bắt đầu bằng "Giả định:" nếu không có dữ liệu. Không nói như thể đã biết số liệu thật.\n'+
+  '8) Phân bổ week theo mùa vụ và số ngày làm việc từng tuần trong dữ liệu; nguồn mở mới nên rơi vào nửa sau tháng vì cần thời gian tạo đơn.\n'+
+  '9) Phù hợp ngành hàng, khu vực và mùa vụ trong dữ liệu; chỉ dùng thông tin sản phẩm có trong kiến thức nền.\n\n'+
+  'DỮ LIỆU CỦA SR:\n'+ctxText(weeks)+provNote();
+}
+function srcParse(txt){
+  let t=String(txt||'').replace(/```json|```/gi,'').trim();
+  const a=t.indexOf('['),b=t.lastIndexOf(']');
+  if(a>=0&&b>a)t=t.slice(a,b+1);
+  const j=JSON.parse(t);
+  return Array.isArray(j)?j:(j&&Array.isArray(j.sources)?j.sources:[]);
+}
+function srcClean(arr,weeks,mode){
+  const n=weeks.length,out=[];
+  (Array.isArray(arr)?arr:[]).forEach(r=>{
+    if(!r||typeof r!=='object')return;
+    const prod=r.prod==='gd'?'gd':'bn';if(!(+S.target[prod]>0))return;
+    const type=Math.min(3,Math.max(0,Math.round(+r.type)||0));
+    let conf=['g','y','r'].includes(r.conf)?r.conf:'';
+    if(type===3)conf='r';else if(type===2&&conf!=='r')conf='y';else if(!conf)conf=type===0?'g':'y';
+    out.push({name:String(r.name||'').trim().slice(0,120)||'(điền tên)',amt:Math.max(0,Math.round(+r.amt)||0),week:Math.min(n-1,Math.max(0,Math.round(+r.week)||0)),prod,type,conf,
+      basis:String(r.basis||'').trim().slice(0,200),planB:String(r.planB||'').trim().slice(0,300),act:null,ai:true,mode:mode||'ai'});
+  });
+  ['bn','gd'].forEach(p=>{
+    const t=Math.round(+S.target[p]||0);if(!t)return;
+    let rows=out.filter(x=>x.prod===p);
+    if(!rows.length){const g={name:(p==='bn'?'Bình nước nóng':'Gia dụng')+' — nhóm đại lý (điền tên)',amt:t,week:0,prod:p,type:0,conf:'y',basis:'Giả định: chưa có đủ dữ liệu để chia nguồn',planB:'',act:null,ai:true,mode:mode||'ai'};out.push(g);return;}
+    const wts=rows.map(x=>x.amt>0?x.amt:0),sum=wts.reduce((a,b)=>a+b,0);
+    const parts=sum>0?allocate(t,wts):allocate(t,rows.map(()=>1));
+    rows.forEach((x,i)=>{x.amt=parts[i];});
+  });
+  return out.filter(x=>x.amt>0).sort((a,b)=>(a.prod===b.prod?0:(a.prod==='bn'?-1:1)));
+}
+function srcFallback(weeks){
+  const ap=areaPlan(weeks),ww=weeks.filter(w=>w.work>0).map(w=>w.i),pick=f=>ww.length?ww[Math.min(ww.length-1,Math.floor((ww.length-1)*f))]:0;
+  const SH=[0.45,0.20,0.15,0.20],FR=[0,0.33,0.55,0.8],out=[];
+  const NAMES=[ 'Nhóm đại lý hiện hữu — đơn nền tảng (điền tên)','Tăng trưởng từ đại lý hiện hữu (điền tên)','Đơn đang đàm phán / có tín hiệu (điền tên)',ap&&ap.gap>0?'Khai thác mở mới ≈ '+ap.gap+' điểm bán (điền tuyến)':'Khai thác mở mới điểm bán (điền tuyến)'];
+  const PLB=['Giữ nhịp ghé hằng tuần; nếu giảm nhập, chuyển nhu cầu sang nguồn tăng trưởng','Tăng tần suất ghé và gợi ý nhập theo mùa; kiểm tra tồn kho từng đại lý','Chốt sớm điều kiện đàm phán; nếu chưa chốt, đẩy sang nguồn mở mới','Tăng số điểm tiếp cận; ưu tiên điểm gần tuyến đang có'];
+  ['bn','gd'].forEach(p=>{
+    const t=Math.round(+S.target[p]||0);if(!t)return;
+    const parts=allocate(t,SH);
+    parts.forEach((a,k)=>{out.push({name:NAMES[k],amt:a,week:pick(FR[k]),prod:p,type:k,conf:k===0?'g':(k===3?'r':'y'),
+      basis:'Giả định chia mẫu '+Math.round(SH[k]*100)+'% chỉ tiêu ngành (không phải số liệu thật của đại lý)',planB:PLB[k]});});
+  });
+  return out;
+}
+async function aiSources(fromExport){
+  if(srcAiBusy)return false;
+  const weeks=analyze();let rows=null,mode='ai',err='';
+  srcAiBusy=true;
+  if(fromExport)toast('AI đang soạn bản nháp, vui lòng đợi vài giây…');else render();
+  try{
+    if(aiQuotaRemaining()<=0)throw new Error(AI_QUOTA_MSG);
+    aiQuotaUse();
+    const txt=await callAI(aiMsgs(srcPrompt(weeks)),1900);
+    rows=srcClean(srcParse(txt),weeks,'ai');
+    if(rows.length<2)throw new Error('AI trả kết quả không dùng được');
+  }catch(e){err=(e&&e.message)||'lỗi không rõ';rows=srcClean(srcFallback(weeks),weeks,'rule');mode='rule';}
+  srcAiBusy=false;
+  S.sources=rows;save();render();
+  toast(mode==='ai'?'AI đã soạn '+rows.length+' dòng nháp. Hãy đối chiếu và sửa theo thực tế':'Không gọi được AI ('+err.slice(0,70)+'): đã soạn nháp theo quy tắc mẫu, cần đối chiếu kỹ');
+  return true;
+}
+
 /* ---------- Xuất Excel (.xlsx) — One-page Sales Plan, không cần thư viện ngoài ---------- */
 const SRC_PROD={bn:'Bình nước nóng',gd:'Gia dụng Livotec'};
 const SRC_TYPES=['Đơn hàng nền tảng (Hiện hữu - Chắc chắn)','Tăng trưởng từ ĐL hiện hữu','Đơn có tín hiệu đàm phán','Khai thác mở mới điểm bán'];
 const SRC_CONF=[['g','🟢 Xanh (Chắc chắn)'],['y','🟡 Vàng (Có tín hiệu)'],['r','🔴 Đỏ (Cần tạo mới)']];
-function srcNorm(s){return{name:s.name||'',amt:Math.max(0,+s.amt||0),week:+s.week||0,prod:s.prod==='gd'?'gd':'bn',type:Math.min(3,Math.max(0,+s.type||0)),conf:['g','y','r'].includes(s.conf)?s.conf:'',basis:s.basis||'',planB:s.planB||'',act:(s.act===undefined||s.act===null||s.act==='')?null:Math.max(0,+s.act||0)};}
+function srcNorm(s){return{name:s.name||'',amt:Math.max(0,+s.amt||0),week:+s.week||0,prod:s.prod==='gd'?'gd':'bn',type:Math.min(3,Math.max(0,+s.type||0)),conf:['g','y','r'].includes(s.conf)?s.conf:'',basis:s.basis||'',planB:s.planB||'',act:(s.act===undefined||s.act===null||s.act==='')?null:Math.max(0,+s.act||0),ai:s.ai===true,mode:s.mode==='rule'?'rule':'ai'};}
 
 const XL_CRC=(function(){const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
 function xlCrc(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=XL_CRC[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0;}
@@ -1956,10 +2041,13 @@ function xlBuildBook(){
   const confSum={g:0,y:0,r:0,'':0};src.forEach(x=>confSum[x.conf]+=x.amt);
   const mm=S.month.split('-'),mlabel=mm[1]+'/'+mm[0],now=new Date();
   const dstr=pad(now.getDate())+'/'+pad(now.getMonth()+1)+'/'+now.getFullYear();
+  const hasAi=src.some(x=>x.ai),o=hasAi?1:0;
   const bk=XlBook();
   const NAVY='1F4E78',LIGHT='DDEBF7',BD='BFBFBF',GREY='595959';
   const st={
     title:bk.style({b:1,sz:18,color:NAVY,v:'center'}),
+    warn:bk.style({b:1,color:'9C0006',fill:'FFC7CE',bd:'C00000',wrap:1,v:'center'}),
+    foot:bk.style({i:1,sz:10,color:'9C0006',wrap:1,v:'center'}),
     meta:bk.style({i:1,sz:10,color:GREY,h:'right',v:'center'}),
     sub:bk.style({i:1,sz:11,color:GREY,v:'center'}),
     cardH:bk.style({b:1,sz:10,color:NAVY,fill:LIGHT,bd:BD,h:'center'}),
@@ -2001,27 +2089,28 @@ function xlBuildBook(){
   const cardsDef=[
     ['CHỈ TIÊU KPI THÁNG',{v:total*M,s:st.cardV},'Mục tiêu doanh số giao SR'],
     ['KẾ HOẠCH ĐÃ LẬP',{v:sumAmt*M,s:st.cardV},!total?'Chưa đặt chỉ tiêu':(sumAmt>=total?'Đã đủ kế hoạch cho KPI':'Còn thiếu '+(total-sumAmt)+'M so với KPI')],
-    ['CƠ CẤU ĐỘ TIN CẬY (X-V-Đ)',{v:'🟢 '+confSum.g+'M | 🟡 '+confSum.y+'M | 🔴 '+confSum.r+'M'+(confSum['']?' | ⚪ '+confSum['']+'M':''),s:st.cardT},sumAmt?'Chắc chắn '+safePct+'% kế hoạch (an toàn vs rủi ro)':'Tỷ lệ an toàn vs rủi ro'],
+    ['CƠ CẤU ĐỘ TIN CẬY (X-V-Đ)',{v:'🟢 '+confSum.g+'M | 🟡 '+confSum.y+'M | 🔴 '+confSum.r+'M'+(confSum['']?' | ⚪ '+confSum['']+'M':''),s:st.cardT},sumAmt?'Chắc chắn '+safePct+'% kế hoạch'+(hasAi?' (gồm số AI gợi ý, cần đối chiếu)':' (an toàn vs rủi ro)'):'Tỷ lệ an toàn vs rủi ro'],
     ['DOANH SỐ THỰC ĐẠT',{v:actual*M,s:st.cardV},(srcHasAct&&appAct>0&&appAct!==srcAct)?'Lũy kế theo nguồn (nhật ký tuần/ngày: '+appAct+'M)':'Cập nhật định kỳ lũy kế'],
-    ['KHOẢNG LỆCH (GAP)',{f:'MAX(0,'+xlRef(3,bounds[0][0])+'-'+xlRef(3,bounds[3][0])+')',v:Math.max(0,total-actual)*M,s:st.cardV},total-actual>0?('Cần kích hoạt Plan B'+(total>sumAmt?' (gồm '+(total-sumAmt)+'M chưa gắn nguồn)':'')):'Đã đạt chỉ tiêu'],
-    ['TIẾN ĐỘ THỰC HIỆN',{f:'IF('+xlRef(3,bounds[0][0])+'=0,"",'+xlRef(3,bounds[3][0])+'/'+xlRef(3,bounds[0][0])+')',v:total?actual/total:'',s:st.cardP},'Tỷ lệ hoàn thành KPI']
+    ['KHOẢNG LỆCH (GAP)',{f:'MAX(0,'+xlRef(3+o,bounds[0][0])+'-'+xlRef(3+o,bounds[3][0])+')',v:Math.max(0,total-actual)*M,s:st.cardV},total-actual>0?('Cần kích hoạt Plan B'+(total>sumAmt?' (gồm '+(total-sumAmt)+'M chưa gắn nguồn)':'')):'Đã đạt chỉ tiêu'],
+    ['TIẾN ĐỘ THỰC HIỆN',{f:'IF('+xlRef(3+o,bounds[0][0])+'=0,"",'+xlRef(3+o,bounds[3][0])+'/'+xlRef(3+o,bounds[0][0])+')',v:total?actual/total:'',s:st.cardP},'Tỷ lệ hoàn thành KPI']
   ];
   cardsDef.forEach((cd,i)=>{const [a,b]=bounds[i];
-    s1.merge(2,a,2,b,st.cardH).set(2,a,cd[0]);
-    s1.merge(3,a,3,b,cd[1].s).set(3,a,cd[1]);
-    s1.merge(4,a,4,b,st.cardC).set(4,a,cd[2]);
+    s1.merge(2+o,a,2+o,b,st.cardH).set(2+o,a,cd[0]);
+    s1.merge(3+o,a,3+o,b,cd[1].s).set(3+o,a,cd[1]);
+    s1.merge(4+o,a,4+o,b,st.cardC).set(4+o,a,cd[2]);
   });
-  s1.height(3,34);
+  s1.height(3+o,34);
+  if(hasAi)s1.merge(2,0,2,NC-1,st.warn).set(2,0,SRC_WARN_LONG).height(2,44);
   // Bảng chính
   const H=['Nhóm sản phẩm (Bán gì?)','Nguồn doanh số (Từ đâu?)','Đại lý / Điểm bán (Ai tạo ra?)','Căn cứ & Tín hiệu (Dựa vào đâu?)','Mức độ tin cậy','Mục mục tiêu kế hoạch (VNĐ)'];
   H[5]='Mục tiêu kế hoạch (VNĐ)';
   weeks.forEach((w,i)=>H.push('Tuần '+(i+1)+' (W'+(i+1)+')'));
   H.push('Thực tế đạt (VNĐ)','Khoảng lệch Gap (VNĐ)','Kịch bản dự phòng / Hành động bù (Plan B)');
-  const HR=6;H.forEach((h,c)=>s1.set(HR,c,{v:h,s:st.th}));s1.height(HR,38);
+  const HR=6+o;H.forEach((h,c)=>s1.set(HR,c,{v:h,s:st.th}));s1.height(HR,38);
   const r0=HR+1;
   src.forEach((x,i)=>{
     const r=r0+i,wi=Math.min(n-1,Math.max(0,x.week));
-    s1.set(r,0,{v:SRC_PROD[x.prod],s:st.tdT}).set(r,1,{v:SRC_TYPES[x.type],s:st.tdSel}).set(r,2,{v:x.name||'(chưa đặt tên)',s:st.tdB}).set(r,3,{v:x.basis,s:st.tdI});
+    s1.set(r,0,{v:SRC_PROD[x.prod],s:st.tdT}).set(r,1,{v:SRC_TYPES[x.type],s:st.tdSel}).set(r,2,{v:(x.ai?'🤖 ':'')+(x.name||'(chưa đặt tên)'),s:st.tdB}).set(r,3,{v:(x.ai?(x.mode==='rule'?'[Quy tắc mẫu — chưa kiểm chứng] ':'[Nháp AI — cần đối chiếu] '):'')+x.basis,s:st.tdI});
     const cl=SRC_CONF.find(z=>z[0]===x.conf);s1.set(r,4,{v:cl?cl[1]:'',s:st.tdConf});
     s1.set(r,5,{f:'SUM('+xlRef(r,6)+':'+xlRef(r,5+n)+')',v:x.amt*M,s:st.tdNb});
     for(let k=0;k<n;k++)s1.set(r,6+k,{v:k===wi?x.amt*M:0,s:st.tdN});
@@ -2036,7 +2125,10 @@ function xlBuildBook(){
   const rng=c=>xlRef(r0,c)+':'+xlRef(rEnd-1,c);
   s1.set(rT,0,{v:'TỔNG CỘNG TOÀN BỘ',s:st.totT}).set(rT,1,{v:src.length+' Nguồn doanh số',s:st.totT}).set(rT,2,{v:'KPI: '+(total*M).toLocaleString('en-US')+' đ',s:st.totT}).set(rT,3,{v:'BNN: '+(+S.target.bn||0)+'M | Gia dụng: '+(+S.target.gd||0)+'M',s:st.totT}).set(rT,4,{v:'',s:st.totT});
   const totalCols=[5].concat(Array.from({length:n},(_,k)=>6+k),[cAct,cGap]);
-  totalCols.forEach(c=>{s1.set(rT,c,src.length?{f:'SUM('+rng(c)+')',v:sumCol(c)*M,s:st.totN}:{v:0,s:st.totN});});
+  totalCols.forEach(c=>{
+    if(c===cGap){const planT=sumCol(5),actT=sumCol(cAct);s1.set(rT,c,{f:'MAX(0,'+xlRef(rT,5)+'-'+xlRef(rT,cAct)+')',v:Math.max(0,planT-actT)*M,s:st.totN});return;}   // khớp thẻ KHOẢNG LỆCH: kế hoạch trừ thực tế
+    s1.set(rT,c,src.length?{f:'SUM('+rng(c)+')',v:sumCol(c)*M,s:st.totN}:{v:0,s:st.totN});
+  });
   s1.set(rT,cB,{v:'TỔNG KHOẢNG LỆCH (GAP): '+(total-actual>0?'Chủ động kích hoạt Plan B bù nguồn thiếu':'Đã đạt chỉ tiêu'),s:st.totT}).height(rT,30);
   // validation + tô màu độ tin cậy
   if(src.length){
@@ -2069,7 +2161,7 @@ function xlBuildBook(){
     '3. Nếu '+(maxS?(maxS.name||'nguồn lớn nhất'):'1 đại lý lớn')+' không nhập thì sao? ('+(maxS&&sumAmt?'Hụt '+maxS.amt+'M → kế hoạch lập tức thiếu '+maxS.amt+'M, tức '+Math.round(maxS.amt/sumAmt*100)+'% kế hoạch':'Cần xác định nguồn lớn nhất và mức hụt nếu nguồn đó không nhập')+')',
     '4. Phần thiếu có thể bù bằng cách nào? ('+(S.planB?S.planB:'Chưa ghi Plan B — nêu rõ nguồn dự phòng và người phụ trách')+')',
     '5. Muốn mở thêm điểm mới cần làm gì? ('+(ap&&ap.gap>0?'Cần thêm khoảng '+ap.gap+' điểm đang làm việc; mỗi điểm nhập trung bình ~'+(+S.aov||20)+'M/đơn':'Xác định số điểm cần mở thêm từ phần Khu vực của ứng dụng')+')',
-    '6. Cần tiếp cận bao nhiêu điểm trên tuyến? (Cả tháng ≈ '+visits+' lượt ghé, ≈ '+(workD?Math.ceil(visits/workD):0)+' lượt/ngày làm việc; mỗi đơn cần ≈ '+F.vpo.toFixed(1).replace('.',',')+' lượt)',
+    '6. Cần tiếp cận bao nhiêu điểm trên tuyến? (Cả tháng ≈ '+visits+' lượt ghé, ≈ '+(workD?Math.ceil(visits/workD):0)+' lượt/ngày làm việc; mỗi đơn cần ≈ '+F.vpo.toFixed(1).replace('.',',')+' lượt theo tỷ lệ gợi ý ban đầu, chưa kiểm chứng)',
     '7. Còn đủ thời gian để triển khai không? (Còn '+remD+' ngày làm việc trong tháng; phát hiện sớm ở tuần 1-2 để kịp đổi phương án hành động)'
   ];
   for(let i=0;i<7;i++){
@@ -2079,6 +2171,8 @@ function xlBuildBook(){
     s1.merge(r,half,r,NC-1,st.rightT).set(r,half,stress[i]);
     s1.height(r,30);
   }
+  const rF=rB+9;
+  s1.merge(rF,0,rF,NC-1,st.foot).set(rF,0,'Lưu ý: tỷ lệ phễu (lượt ghé, khách tư vấn, đơn) là số gợi ý ban đầu, chưa có nguồn chuẩn ngành được kiểm chứng; mục "Thực tế đạt" do SR tự nhập'+(hasAi?'; các dòng 🤖 là bản nháp do AI/quy tắc mẫu gợi ý':'')+'. Cần đối chiếu với báo cáo bán hàng chính thức và xác nhận với quản lý trước khi dùng để ra quyết định.').height(rF,34);
   // độ rộng cột
   [22,30,28,40,22,19].forEach((w,c)=>s1.width(c,w));
   for(let k=0;k<n;k++)s1.width(6+k,16);
@@ -2117,13 +2211,16 @@ function xlBuildBook(){
   ].concat(sheets.map((x,i)=>({name:'xl/worksheets/sheet'+(i+1)+'.xml',text:x[1].xml()})));
   return xlZip(files);
 }
-function exportXlsx(){
+async function exportXlsx(){
   try{
     if(!((+S.target.bn||0)+(+S.target.gd||0))){toast('Nhập chỉ tiêu tháng trước khi xuất Excel');return;}
-    const blob=xlBuildBook();
+    if(!(S.sources||[]).length&&!srcAiBusy){
+      if(confirm('Bạn chưa nhập nguồn doanh số nên bảng sẽ trống.\n\nĐể file dùng được ngay, ứng dụng sẽ nhờ AI soạn BẢN NHÁP từ toàn bộ dữ liệu bạn đã nhập (chỉ tiêu, khu vực, mùa vụ, địa bàn...).\n\nLƯU Ý: AI không biết số liệu thật của từng đại lý. Đây chỉ là gợi ý, bạn cần đối chiếu và sửa theo thực tế trước khi gửi quản lý.\n\nBấm OK để AI soạn nháp, hoặc Hủy để xuất bảng trống.'))await aiSources(true);
+    }
+    const blob=xlBuildBook(),nAi=(S.sources||[]).filter(x=>srcNorm(x).ai).length;
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Livotec-Sales-Plan-'+S.month+'.xlsx';
     document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
-    toast('Đã tạo file Excel, sẵn sàng gửi quản lý');
+    toast(nAi?'Đã tạo file Excel. Có '+nAi+' dòng do AI/quy tắc mẫu gợi ý: hãy đối chiếu trước khi gửi quản lý':'Đã tạo file Excel, sẵn sàng gửi quản lý');
   }catch(e){console.error(e);toast('Chưa tạo được file Excel: '+(e&&e.message?e.message:'lỗi không rõ'));}
 }
 
@@ -2338,7 +2435,7 @@ function factors(weeks){
     add({id:'sens',lv,sv:'dễ vỡ nếu chốt kém',name:'Nếu chốt kém hơn',val:'−25%',
       msg:'Chốt kém 25% (cần '+fmt(fc2,1)+' khách tư vấn/đơn): thêm '+ex+' lượt ghé ('+sc+'/'+cap+'), '+(sc>cap?'vượt sức':'vẫn trong sức'),
       act:lv==='ok'?'':'Giữ khách dự phòng, nâng giá trị mỗi đơn',
-      how:'Lượt ghé tỉ lệ nghịch với tỷ lệ chốt. Sức = số ngày làm việc × số lượt ghé tối đa mỗi ngày.',src:'Tính từ phễu benchmark và giả định của bạn'});
+      how:'Lượt ghé tỉ lệ nghịch với tỷ lệ chốt. Sức = số ngày làm việc × số lượt ghé tối đa mỗi ngày.',src:'Tính từ phễu gợi ý ban đầu và giả định của bạn'});
   }
   const fc=forecast(weeks);
   if(fc&&!fc.noData){
@@ -3140,7 +3237,7 @@ function benchCard(weeks){
   const row=(icon,title,val,text,b)=>'<div class="bn-row"><span class="bn-ic">'+ic(icon,18)+'</span><div class="bn-t"><b>'+title+'</b><span class="small muted">'+text+'</span></div><div class="bn-v"><b>'+val+'</b>'+badge(b)+'</div></div>';
   const gapNote=ap&&ap.have&&ap.gap>0?' Kế hoạch còn thiếu '+ap.gap+' điểm, cần ghé ≈ <b>'+Math.ceil(ap.gap*perDealer)+' cửa hàng</b> để mở đủ.':'';
   const r1=row('users','Để có 1 đại lý nhập hàng, cần ghé','≈ '+fmt(perDealer,1)+' cửa hàng',
-    'Tỷ lệ '+fmt(effConv,1)+'%'+(conv>0?'':' (lấy từ phễu benchmark ngành)')+'. 5 đại lý ≈ '+Math.ceil(5*perDealer)+' cửa hàng, 10 đại lý ≈ '+Math.ceil(10*perDealer)+'.'+gapNote);
+    'Tỷ lệ '+fmt(effConv,1)+'%'+(conv>0?'':' (lấy từ phễu gợi ý ban đầu)')+'. 5 đại lý ≈ '+Math.ceil(5*perDealer)+' cửa hàng, 10 đại lý ≈ '+Math.ceil(10*perDealer)+'.'+gapNote);
   let r2;
   if(ap&&ord>0){
     const dealers=Math.ceil(ap.orders/ord);
@@ -3499,6 +3596,8 @@ document.addEventListener('click',function(e){
   else if(a==='notifTest'){notify('Livotec: thông báo thử','Nếu bạn thấy tin này, thông báo đã hoạt động.','livotec-test');toast('Đã gửi thông báo thử');return;}
   else if(a==='ics'){downloadICS();return;}
   else if(a==='xlsx'){exportXlsx();return;}
+  else if(a==='aisrc'){if(!(S.sources||[]).length||confirm('Thay danh sách nguồn hiện có bằng bản nháp mới do AI soạn? Các chỉnh sửa của bạn ở danh sách hiện tại sẽ mất.\n\nLưu ý: AI chỉ gợi ý, cần đối chiếu với số liệu thật.'))aiSources(false);return;}
+  else if(a==='srcok'){const r=S.sources[+d.i];if(r){r.ai=false;}}
   else if(a==='backup'){backupData();return;}
   else if(a==='restorePick'){const fi=document.getElementById('restoreFile');if(fi)fi.click();return;}
   else if(a==='briefOk'){S.rem.seen=todayKey();}
@@ -3508,7 +3607,7 @@ document.addEventListener('click',function(e){
     const wk=analyze().find(w=>w.days.some(x=>x.date===d.day));if(wk)recomputeWeekActual(wk);
     toast('Đã lưu số liệu ngày '+d.day.slice(8)+'/'+d.day.slice(5,7));
   }
-  else if(a==='fnlReset'){S.fv=15;S.fc=10;toast('Đã về chuẩn ngành');}
+  else if(a==='fnlReset'){S.fv=15;S.fc=10;toast('Đã về số gợi ý ban đầu');}
   else if(a==='sgroup'){if(['target','area','sys'].includes(d.v))S.sg=d.v;}
   else if(a==='gotoMonth'){switchMonth(d.m);S.tab='check';}
   else if(a==='openSec'){openSec[d.k]=true;}
