@@ -1087,7 +1087,6 @@ h2,.sech .st{color:var(--ink)}
 /* ===== Thiết lập chi tiết: thanh nhóm + thẻ hành động cuối trang ===== */
 .sghub{margin:6px 0 14px}
 .sg-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
-.sg-tabs.n4{grid-template-columns:repeat(4,1fr)}
 .sg-tab{position:relative;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 8px;border:0;border-radius:14px;background:transparent;color:var(--muted);font-weight:600;font-size:14px;cursor:pointer}
 .sg-tab svg{flex:none}
 .sg-tab em{font-style:normal;font-size:11px;font-weight:600;min-width:20px;padding:1px 6px;border-radius:999px;background:color-mix(in srgb,var(--ink) 9%,transparent);text-align:center}
@@ -3761,7 +3760,7 @@ function renderPlan(){
   };
   const PV=[['month','plan','Tháng'],['week','target','Tuần'],['day','check','Ngày'],['more','trend','Biểu đồ']];
   if(!views[S.pv])S.pv='month';
-  const pvTabs='<div class="sghub"><div class="sg-tabs n4" role="tablist" aria-label="Xem kế hoạch theo">'+PV.map(x=>'<button role="tab" class="sg-tab" data-act="pv" data-v="'+x[0]+'" aria-selected="'+(S.pv===x[0])+'">'+ic(x[1],17)+'<span>'+x[2]+'</span></button>').join('')+'</div></div>';
+  const pvTabs='<div class="wk" role="tablist" aria-label="Xem kế hoạch theo" style="margin:0 0 10px">'+PV.map(x=>'<button type="button" class="chip" role="tab" data-act="pv" data-v="'+x[0]+'" aria-pressed="'+(S.pv===x[0])+'" aria-selected="'+(S.pv===x[0])+'">'+ic(x[1],15)+' '+x[2]+'</button>').join('')+'</div>';
   $app.innerHTML=pvTabs+views[S.pv];
 }
 
