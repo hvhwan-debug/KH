@@ -2092,7 +2092,7 @@ function XlSheet(){
     style(r,c,s){const k=r+','+c;if(!cells[k])cells[k]={};cells[k].s=s;return sh;},
     merge(r1,c1,r2,c2,s){merges.push(xlRef(r1,c1)+':'+xlRef(r2,c2));if(s!==undefined)for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++){const k=r+','+c;if(!cells[k])cells[k]={s};else if(cells[k].s===undefined)cells[k].s=s;}return sh;},
     width(c,w){widths[c]=w;return sh;},height(r,h){rh[r]=h;return sh;},
-    cf(sqref,rules){cfs.push({sqref,rules});return sh;},dv(sqref,list){dvs.push({sqref,list});return sh;},
+    cf(sqref,rules){cfs.push({sqref,rules});return sh;},dv(sqref,list){dvs.push({sqref,list});return sh;},dvNum(sqref){dvs.push({sqref,num:true});return sh;},
     freeze(rows){freeze=rows;return sh;},
     xml(){
       const rows={};let maxR=0,maxC=0;
@@ -2115,7 +2115,7 @@ function XlSheet(){
       const view='<sheetViews><sheetView workbookViewId="0" showGridLines="0">'+(freeze?'<pane ySplit="'+freeze+'" topLeftCell="A'+(freeze+1)+'" activePane="bottomLeft" state="frozen"/>':'')+'</sheetView></sheetViews>';
       let pr=1;
       const cfx=cfs.map(g=>'<conditionalFormatting sqref="'+g.sqref+'">'+g.rules.map(rl=>'<cfRule type="containsText" dxfId="'+rl.dxf+'" priority="'+(pr++)+'" operator="containsText" text="'+xlEsc(rl.text)+'"><formula>NOT(ISERROR(SEARCH("'+xlEsc(rl.text)+'",'+g.sqref.split(':')[0]+')))</formula></cfRule>').join('')+'</conditionalFormatting>').join('');
-      const dvx=dvs.length?'<dataValidations count="'+dvs.length+'">'+dvs.map(d=>'<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="'+d.sqref+'"><formula1>"'+xlEsc(d.list.join(','))+'"</formula1></dataValidation>').join('')+'</dataValidations>':'';
+      const dvx=dvs.length?'<dataValidations count="'+dvs.length+'">'+dvs.map(d=>d.num?'<dataValidation type="decimal" operator="greaterThanOrEqual" allowBlank="1" showErrorMessage="1" errorTitle="Giá trị không hợp lệ" error="Nhập một số lớn hơn hoặc bằng 0" sqref="'+d.sqref+'"><formula1>0</formula1></dataValidation>':'<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="'+d.sqref+'"><formula1>"'+xlEsc(d.list.join(','))+'"</formula1></dataValidation>').join('')+'</dataValidations>':'';
       return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:'+xlRef(maxR,maxC)+'"/>'+view+'<sheetFormatPr defaultRowHeight="15"/>'+cols+'<sheetData>'+sd+'</sheetData>'+(merges.length?'<mergeCells count="'+merges.length+'">'+merges.map(m=>'<mergeCell ref="'+m+'"/>').join('')+'</mergeCells>':'')+cfx+dvx+'<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="'+(landscape?'landscape':'portrait')+'" fitToWidth="1" fitToHeight="'+(freeze?0:1)+'"/></worksheet>';
     }
   };
@@ -2123,18 +2123,23 @@ function XlSheet(){
 }
 function xlBuildBook(){
   const weeks=analyze(),n=weeks.length,ap=areaPlan(weeks),F=funnel();
-  const total=(+S.target.bn||0)+(+S.target.gd||0),M=1e6;
+  const bnM=+S.target.bn||0,gdM=+S.target.gd||0,total=bnM+gdM,M=1e6;
   const src=(S.sources||[]).map(srcNorm);
-  const sumAmt=src.reduce((a,x)=>a+x.amt,0),srcAct=src.reduce((a,x)=>a+(x.act||0),0);
+  const sumAmt=src.reduce((a,x)=>a+x.amt,0);
   let appAct=0;weeks.forEach(w=>{const a=S.actual[w.key];if(a)appAct+=(a.bn||0)+(a.gd||0);});
-  // Một con số thống nhất trên file gửi quản lý: ưu tiên tổng thực tế theo từng nguồn (khớp dòng TỔNG); nếu chưa nhập theo nguồn thì dùng số ghi nhận theo tuần/ngày
-  const srcHasAct=src.some(x=>x.act!==null),actual=srcHasAct?srcAct:appAct;
-  const confSum={g:0,y:0,r:0,'':0};src.forEach(x=>confSum[x.conf]+=x.amt);
   const mm=S.month.split('-'),mlabel=mm[1]+'/'+mm[0],now=new Date();
   const dstr=pad(now.getDate())+'/'+pad(now.getMonth()+1)+'/'+now.getFullYear();
   const hasAi=src.some(x=>x.ai),o=hasAi?1:0;
+  const aovM=Math.max(1,+S.aov||20),season=Math.max(1,+S.season||100),maxC=Math.max(1,+S.maxC||6);
+  const tk=todayKey(),workD=weeks.reduce((a,w)=>a+w.work,0);
+  const remD=S.month===monthKey(0)?weeks.reduce((a,w)=>a+w.days.filter(d=>!d.off&&d.date>=tk).length,0):workD;
+  const SN1='One-page Sales Plan',SN2='Kế hoạch theo tuần',SN3='Thông số';
+  const Q=t=>'"'+String(t).replace(/"/g,'""')+'"';
+  const cat=items=>({f:items.map(i=>i.t!==undefined?Q(i.t):i.f).join('&'),v:items.map(i=>i.t!==undefined?i.t:i.v).join('')});
+  const rd=(x,d)=>{const k=Math.pow(10,d||0);return Math.round(x*k)/k;};
+  const dec=x=>String(x).replace('.',',');
   const bk=XlBook();
-  const NAVY='1F4E78',LIGHT='DDEBF7',BD='BFBFBF',GREY='595959';
+  const NAVY='1F4E78',LIGHT='DDEBF7',BD='BFBFBF',GREY='595959',INK='1F4E9E',YEL='FFF9E5',VND='#,##0\\ "đ"',VND0='#,##0\\ "đ";-#,##0\\ "đ";';
   const st={
     title:bk.style({b:1,sz:18,color:NAVY,v:'center'}),
     warn:bk.style({b:1,color:'9C0006',fill:'FFC7CE',bd:'C00000',wrap:1,v:'center'}),
@@ -2142,157 +2147,263 @@ function xlBuildBook(){
     meta:bk.style({i:1,sz:10,color:GREY,h:'right',v:'center'}),
     sub:bk.style({i:1,sz:11,color:GREY,v:'center'}),
     cardH:bk.style({b:1,sz:10,color:NAVY,fill:LIGHT,bd:BD,h:'center'}),
-    cardV:bk.style({b:1,sz:16,color:'000000',bd:BD,h:'center',fmt:'#,##0\\ "đ"'}),
+    cardV:bk.style({b:1,sz:16,color:'000000',bd:BD,h:'center',fmt:VND}),
     cardT:bk.style({b:1,sz:16,color:'000000',bd:BD,h:'center'}),
     cardP:bk.style({b:1,sz:16,color:'000000',bd:BD,h:'center',fmt:'0.0%'}),
     cardC:bk.style({i:1,sz:9,color:GREY,bd:BD,h:'center'}),
     th:bk.style({b:1,color:'FFFFFF',fill:NAVY,bd:BD,h:'center',wrap:1}),
     tdT:bk.style({bd:BD,wrap:1,v:'center'}),
-    tdB:bk.style({b:1,bd:BD,wrap:1,v:'center'}),
-    tdI:bk.style({i:1,sz:10,color:GREY,bd:BD,wrap:1,v:'center'}),
-    tdSel:bk.style({bd:BD,wrap:1,v:'center',fill:'F2F2F2'}),
-    tdConf:bk.style({b:1,bd:BD,h:'center',v:'center',wrap:1}),
-    tdN:bk.style({bd:BD,v:'center',fmt:'#,##0\\ "đ"'}),
-    tdNb:bk.style({b:1,bd:BD,v:'center',fmt:'#,##0\\ "đ"'}),
+    inT:bk.style({color:INK,bd:BD,wrap:1,v:'center'}),
+    inTb:bk.style({b:1,color:INK,bd:BD,wrap:1,v:'center'}),
+    inTi:bk.style({i:1,sz:10,color:INK,bd:BD,wrap:1,v:'center'}),
+    inSel:bk.style({color:INK,bd:BD,wrap:1,v:'center',fill:'F2F2F2'}),
+    inConf:bk.style({b:1,color:INK,bd:BD,h:'center',v:'center',wrap:1}),
+    inN:bk.style({color:INK,fill:YEL,bd:BD,v:'center',fmt:VND0}),
+    fNb:bk.style({b:1,bd:BD,v:'center',fmt:VND0}),
+    fN:bk.style({bd:BD,v:'center',fmt:VND0}),
     totT:bk.style({b:1,color:NAVY,fill:LIGHT,bd:BD,wrap:1,v:'center'}),
-    totN:bk.style({b:1,color:NAVY,fill:LIGHT,bd:BD,v:'center',fmt:'#,##0\\ "đ"'}),
+    totN:bk.style({b:1,color:NAVY,fill:LIGHT,bd:BD,v:'center',fmt:VND}),
     barH:bk.style({b:1,sz:12,color:'FFFFFF',fill:NAVY,h:'center'}),
     leftH:bk.style({b:1,color:NAVY,fill:LIGHT,bd:BD,h:'center'}),
     rightH:bk.style({b:1,color:'C00000',fill:'FCE4E4',bd:BD,h:'center'}),
     leftT:bk.style({bd:BD,wrap:1,v:'center'}),
     rightT:bk.style({bd:BD,wrap:1,v:'center',fill:'FFF9F9'}),
     motto:bk.style({b:1,i:1,color:NAVY,wrap:1,v:'center'}),
+    note:bk.style({i:1,sz:10,color:GREY,wrap:1,v:'center'}),
     wInt:bk.style({bd:BD,v:'center',fmt:'#,##0'}),wDec:bk.style({bd:BD,v:'center',fmt:'0.0'}),wPct:bk.style({bd:BD,v:'center',h:'center',fmt:'0%'}),
-    wTotI:bk.style({b:1,color:NAVY,fill:LIGHT,bd:BD,v:'center',fmt:'#,##0'}),wTotP:bk.style({b:1,color:NAVY,fill:LIGHT,bd:BD,v:'center',h:'center',fmt:'0%'})
+    wIn:bk.style({color:INK,fill:YEL,bd:BD,v:'center',fmt:'#,##0'}),wInDec:bk.style({color:INK,fill:YEL,bd:BD,v:'center',fmt:'0.0'}),
+    wTotI:bk.style({b:1,color:NAVY,fill:LIGHT,bd:BD,v:'center',fmt:'#,##0'}),wTotP:bk.style({b:1,color:NAVY,fill:LIGHT,bd:BD,v:'center',h:'center',fmt:'0%'}),
+    wTxt:bk.style({bd:BD,wrap:1,v:'center'}),wTxtB:bk.style({b:1,bd:BD,wrap:1,v:'center'}),
+    pLab:bk.style({b:1,bd:BD,wrap:1,v:'center'}),pNote:bk.style({i:1,sz:10,color:GREY,bd:BD,wrap:1,v:'center'}),
+    pInM:bk.style({color:INK,fill:YEL,bd:BD,v:'center',fmt:VND}),pInI:bk.style({color:INK,fill:YEL,bd:BD,v:'center',fmt:'#,##0'}),pInT:bk.style({color:INK,fill:YEL,bd:BD,wrap:1,v:'center'}),
+    pFM:bk.style({bd:BD,v:'center',fill:'F2F2F2',fmt:VND}),pFI:bk.style({bd:BD,v:'center',fill:'F2F2F2',fmt:'#,##0'}),pFD:bk.style({bd:BD,v:'center',fill:'F2F2F2',fmt:'0.0'}),pFP:bk.style({bd:BD,v:'center',fill:'F2F2F2',fmt:'0%'})
   };
   const dG=bk.dxf('548235','E2F0D9'),dY=bk.dxf('BF8F00','FFF2CC'),dR=bk.dxf('C00000','FCE4E4');
 
+  /* ---------- Bố cục để các sheet tham chiếu chéo ---------- */
+  const NC=9+n,cAct=6+n,cGap=7+n,cB=8+n;
+  const HR=6+o,r0=HR+1,nRows=Math.max(3,src.length+2),rLast=r0+nRows-1,rT=r0+nRows;        // sheet 1
+  const w0=3,wT=w0+n;                                                                          // sheet 2: dữ liệu từ dòng w0, dòng tổng wT
+  const PR0=4;                                                                                 // sheet 3: tham số bắt đầu ở dòng PR0
+  const qn=name=>"'"+name+"'!";
+  const par={};
+  const items=[
+    ['month','Tháng báo cáo (mm/yyyy)',mlabel,'T','Hiện trên tiêu đề'],
+    ['prov','Tỉnh / thành phố phụ trách',S.province||'','T','Hiện ở góc phải tiêu đề'],
+    ['bn','Chỉ tiêu Bình nước nóng (VNĐ)',bnM*M,'M','Sửa số này, mọi bảng tự tính lại'],
+    ['gd','Chỉ tiêu Gia dụng & điện máy (VNĐ)',gdM*M,'M',''],
+    ['kpi','Tổng chỉ tiêu KPI (VNĐ)',null,'FM','= Bình nước nóng + Gia dụng'],
+    ['aov','Giá trị trung bình mỗi đơn (VNĐ)',aovM*M,'M','Dùng tính số đơn cần chốt'],
+    ['fv','Số lượt ghé để gặp chủ và tư vấn 10 khách',F.fv,'I','Giả định, chưa có benchmark công bố'],
+    ['fc','Số khách tư vấn để chốt 1 đơn',F.fc,'I','Mặc định 5 (chốt ≈ 20%) theo benchmark B2B'],
+    ['vpo','Số lượt ghé cho 1 đơn',null,'FD','= lượt ghé / 10 × khách mỗi đơn'],
+    ['close','Tỷ lệ chốt (khách tư vấn → đơn)',null,'FP','= 1 / số khách mỗi đơn'],
+    ['season','Sức mua của tháng (%)',season,'I','100 = bình thường; dưới 100 = cần nhiều lượt ghé hơn'],
+    ['maxC','Số lượt ghé tối đa mỗi ngày',maxC,'I','Trung bình ngành bán hàng trực tiếp khoảng 5,1'],
+    ['workdays','Tổng ngày làm việc trong tháng',null,'FI','Lấy từ sheet theo tuần'],
+    ['visits','Tổng lượt ghé cần trong tháng',null,'FI','Lấy từ sheet theo tuần'],
+    ['remDays','Số ngày làm việc còn lại trong tháng',remD,'I','Sửa theo lịch thực tế'],
+    ['gapPts','Số điểm bán cần mở thêm',ap&&ap.gap>0?ap.gap:0,'I','Từ phần Địa bàn của ứng dụng; 0 nếu chưa tính'],
+    ['appAct','Thực tế ghi nhận theo tuần/ngày (VNĐ)',appAct*M,'M','Dùng cho thẻ Thực đạt khi chưa nhập thực tế theo từng nguồn'],
+    ['planB','Phương án B chung',S.planB||'','T','Hiện trong câu hỏi stress-test số 4'],
+    ['date','Ngày xuất',dstr,'T','']
+  ];
+  items.forEach((it,i)=>{par[it[0]]={r:PR0+i,kind:it[3],val:it[2]};});
+  const tp=k=>qn(SN3)+'$B$'+(par[k].r+1);
+  // giá trị đã tính sẵn của các ô công thức tham số (để xem được cả khi chưa tính lại)
+  const kpiV=(bnM+gdM)*M,vpoV=F.fv/10*F.fc,closeV=1/F.fc;
+
+  // ---- tính trước phần tuần (giá trị hiển thị ban đầu của các ô công thức) ----
+  const wts0=weeks.map(w=>w.tt>0?w.tt:w.work);let lastI=-1;weeks.forEach((w,i)=>{if(w.work>0)lastI=i;});if(lastI<0)lastI=n-1;
+  const wts=wts0.map((v,i)=>i>lastI?0:v),wsum=wts.reduce((a,b)=>a+b,0);
+  const alloc=kM=>{const out=[];let acc=0;weeks.forEach((w,i)=>{if(i<lastI){const v=wsum?Math.round(kM*wts[i]/wsum):0;out.push(v);acc+=v;}else if(i===lastI)out.push(kM-acc);else out.push(0);});return out;};
+  const bnA=alloc(bnM),gdA=alloc(gdM);
+  const wkRows=weeks.map((w,i)=>{const a=S.actual[w.key],booked=+S.booked[w.key]||0,kt=bnA[i]+gdA[i];
+    const ord=kt===0?0:Math.ceil(+(Math.max(0,kt-booked)/aovM).toFixed(6)),vis=Math.ceil(+(ord*vpoV/(season/100)).toFixed(6));
+    return{a,booked,kbn:bnA[i],kgd:gdA[i],kt,ord,vis,perDay:w.work?vis/w.work:0};});
+  const wsV={work:0,bn:0,gd:0,tot:0,book:0,ord:0,vis:0,abn:0,agd:0,at:0,av:0,src:0};
+  weeks.forEach((w,i)=>{const k=wkRows[i],a=k.a;wsV.work+=w.work;wsV.bn+=k.kbn;wsV.gd+=k.kgd;wsV.tot+=k.kt;wsV.book+=k.booked;wsV.ord+=k.ord;wsV.vis+=k.vis;wsV.abn+=a?a.bn||0:0;wsV.agd+=a?a.gd||0:0;wsV.at+=a?(a.bn||0)+(a.gd||0):0;wsV.av+=a?a.v||0:0;});
+
   /* ===== Sheet 1: One-page Sales Plan ===== */
   const s1=XlSheet();
-  const NC=9+n,cW=5+n,cAct=6+n,cGap=7+n,cB=8+n;               // cột: A..E nhãn, F mục tiêu, G.. tuần, thực tế, gap, plan B
-  s1.merge(0,0,0,NC-4,st.title).set(0,0,'BẢNG KẾ HOẠCH & BÁO CÁO BÁN HÀNG THÁNG '+mlabel+' - SR (ONE-PAGE SALES PLAN)').height(0,34);
-  s1.merge(0,NC-3,0,NC-1,st.meta).set(0,NC-3,(S.province?'Tỉnh/TP: '+S.province+'  ·  ':'')+'Xuất ngày '+dstr);
-  s1.merge(1,0,1,NC-1,st.sub).set(1,0,'Mục tiêu: Phân rã KPI '+(total?total+'M':'')+' theo Ngành hàng & Nguồn doanh số • Đánh giá độ tin cậy (Xanh - Vàng - Đỏ) • Phân bổ '+weeks.map((w,i)=>'W'+(i+1)).join('-')+' • Kiểm soát Gap & Kế hoạch bù (Plan B)').height(1,22);
-  // 6 thẻ chỉ số: chia đều các cột
+  const col=c=>'$'+xlCol(c)+'$'+(r0+1)+':$'+xlCol(c)+'$'+(rLast+1);
+  const rngB=col(1),rngC=col(2),rngE=col(4),rngF=col(5);
+  const Ftot=xlRef(rT,5),Ltot=xlRef(rT,cAct);
+  const sumIf=(r,pat,sum)=>'SUMIF('+r+','+Q(pat)+','+sum+')';
+  // giá trị tính sẵn
+  const rowsData=[];for(let i=0;i<nRows;i++){const x=src[i];rowsData.push(x?{x,wi:Math.min(n-1,Math.max(0,x.week)),amt:x.amt*M,act:x.act===null?null:x.act*M}:null);}
+  const confOf=x=>x?x.conf:'';const typeOf=x=>x?x.type:-1;
+  const sumBy=(fn)=>rowsData.reduce((a,r)=>a+(r&&fn(r.x)?r.amt:0),0);
+  const Fv=sumBy(()=>true),vG=sumBy(x=>confOf(x)==='g'),vY=sumBy(x=>confOf(x)==='y'),vR=sumBy(x=>confOf(x)==='r');
+  const vExist=sumBy(x=>typeOf(x)===0||typeOf(x)===1),vSig=sumBy(x=>typeOf(x)===2),vNew=sumBy(x=>typeOf(x)===3);
+  const Lv=rowsData.reduce((a,r)=>a+(r&&r.act!==null?r.act:0),0),Mx=Math.max(0,...rowsData.map(r=>r?r.amt:0));
+  const Mv=v=>Math.round(v/M);
+  const actV=Lv>0?Lv:appAct*M,kpi=tp('kpi');
+  const rM=x=>'ROUND(('+x+')/1000000,0)';
+  s1.merge(0,0,0,NC-4,st.title).set(0,0,Object.assign(cat([{t:'BẢNG KẾ HOẠCH & BÁO CÁO BÁN HÀNG THÁNG '},{f:tp('month'),v:mlabel},{t:' - SR (ONE-PAGE SALES PLAN)'}]),{s:st.title})).height(0,34);
+  s1.merge(0,NC-3,0,NC-1,st.meta).set(0,NC-3,Object.assign(cat([{f:'IF('+tp('prov')+'="","",'+Q('Tỉnh/TP: ')+'&'+tp('prov')+'&'+Q('  ·  ')+')',v:S.province?'Tỉnh/TP: '+S.province+'  ·  ':''},{t:'Xuất ngày '},{f:tp('date'),v:dstr}]),{s:st.meta}));
+  s1.merge(1,0,1,NC-1,st.sub).set(1,0,Object.assign(cat([{t:'Mục tiêu: Phân rã KPI '},{f:rM(kpi)+'&"M"',v:Mv(kpiV)+'M'},{t:' theo Ngành hàng & Nguồn doanh số • Đánh giá độ tin cậy (Xanh - Vàng - Đỏ) • Phân bổ '+weeks.map((w,i)=>'W'+(i+1)).join('-')+' • Kiểm soát Gap & Kế hoạch bù (Plan B)'}]),{s:st.sub})).height(1,22);
   const rest=NC-6,g=[2,2,2];const base=Math.floor(rest/3),ex=rest-base*3;g.push(base+(ex>0?1:0),base+(ex>1?1:0),base);
   const bounds=[];let c0=0;g.forEach(w=>{bounds.push([c0,c0+w-1]);c0+=w;});
-  const safePct=sumAmt?Math.round(confSum.g/sumAmt*100):0;
+  const cardV=xlRef(3+o,bounds[0][0]),cardA=xlRef(3+o,bounds[3][0]);
+  const gapV=Math.max(0,kpiV-actV);
+  const xan=sumIf(rngE,'*Xanh*',rngF),van=sumIf(rngE,'*Vàng*',rngF),dor=sumIf(rngE,'*Đỏ*',rngF);
+  const unassigned='('+Ftot+'-'+xan+'-'+van+'-'+dor+')';
   const cardsDef=[
-    ['CHỈ TIÊU KPI THÁNG',{v:total*M,s:st.cardV},'Mục tiêu doanh số giao SR'],
-    ['KẾ HOẠCH ĐÃ LẬP',{v:sumAmt*M,s:st.cardV},!total?'Chưa đặt chỉ tiêu':(sumAmt>=total?'Đã đủ kế hoạch cho KPI':'Còn thiếu '+(total-sumAmt)+'M so với KPI')],
-    ['CƠ CẤU ĐỘ TIN CẬY (X-V-Đ)',{v:'🟢 '+confSum.g+'M | 🟡 '+confSum.y+'M | 🔴 '+confSum.r+'M'+(confSum['']?' | ⚪ '+confSum['']+'M':''),s:st.cardT},sumAmt?'Chắc chắn '+safePct+'% kế hoạch'+(hasAi?' (gồm số AI gợi ý, cần đối chiếu)':' (an toàn vs rủi ro)'):'Tỷ lệ an toàn vs rủi ro'],
-    ['DOANH SỐ THỰC ĐẠT',{v:actual*M,s:st.cardV},(srcHasAct&&appAct>0&&appAct!==srcAct)?'Lũy kế theo nguồn (nhật ký tuần/ngày: '+appAct+'M)':'Cập nhật định kỳ lũy kế'],
-    ['KHOẢNG LỆCH (GAP)',{f:'MAX(0,'+xlRef(3+o,bounds[0][0])+'-'+xlRef(3+o,bounds[3][0])+')',v:Math.max(0,total-actual)*M,s:st.cardV},total-actual>0?('Cần kích hoạt Plan B'+(total>sumAmt?' (gồm '+(total-sumAmt)+'M chưa gắn nguồn)':'')):'Đã đạt chỉ tiêu'],
-    ['TIẾN ĐỘ THỰC HIỆN',{f:'IF('+xlRef(3+o,bounds[0][0])+'=0,"",'+xlRef(3+o,bounds[3][0])+'/'+xlRef(3+o,bounds[0][0])+')',v:total?actual/total:'',s:st.cardP},'Tỷ lệ hoàn thành KPI']
+    ['CHỈ TIÊU KPI THÁNG',{f:kpi,v:kpiV,s:st.cardV},{v:'Mục tiêu doanh số giao SR'}],
+    ['KẾ HOẠCH ĐÃ LẬP',{f:Ftot,v:Fv,s:st.cardV},cat([{f:'IF('+kpi+'=0,'+Q('Chưa đặt chỉ tiêu')+',IF('+Ftot+'>='+kpi+','+Q('Đã đủ kế hoạch cho KPI')+','+Q('Còn thiếu ')+'&'+rM(kpi+'-'+Ftot)+'&'+Q('M so với KPI')+'))',v:!kpiV?'Chưa đặt chỉ tiêu':(Fv>=kpiV?'Đã đủ kế hoạch cho KPI':'Còn thiếu '+Mv(kpiV-Fv)+'M so với KPI')}])],
+    ['CƠ CẤU ĐỘ TIN CẬY (X-V-Đ)',cat([{t:'🟢 '},{f:rM(xan),v:Mv(vG)},{t:'M | 🟡 '},{f:rM(van),v:Mv(vY)},{t:'M | 🔴 '},{f:rM(dor),v:Mv(vR)},{t:'M'},{f:'IF('+rM(unassigned)+'>0,'+Q(' | ⚪ ')+'&'+rM(unassigned)+'&'+Q('M')+',"")',v:Mv(Fv-vG-vY-vR)>0?' | ⚪ '+Mv(Fv-vG-vY-vR)+'M':''}]),null],
+    ['DOANH SỐ THỰC ĐẠT',{f:'IF('+Ltot+'>0,'+Ltot+','+tp('appAct')+')',v:actV,s:st.cardV},{v:'Cập nhật định kỳ lũy kế'}],
+    ['KHOẢNG LỆCH (GAP)',{f:'MAX(0,'+cardV+'-'+cardA+')',v:gapV,s:st.cardV},cat([{f:'IF('+cardV+'-'+cardA+'>0,'+Q('Cần kích hoạt Plan B')+'&IF('+cardV+'>'+Ftot+','+Q(' (gồm ')+'&'+rM(cardV+'-'+Ftot)+'&'+Q('M chưa gắn nguồn)')+',""),'+Q('Đã đạt chỉ tiêu')+')',v:kpiV-actV>0?('Cần kích hoạt Plan B'+(kpiV>Fv?' (gồm '+Mv(kpiV-Fv)+'M chưa gắn nguồn)':'')):'Đã đạt chỉ tiêu'}])],
+    ['TIẾN ĐỘ THỰC HIỆN',{f:'IF('+cardV+'=0,"",'+cardA+'/'+cardV+')',v:kpiV?actV/kpiV:'',s:st.cardP},{v:'Tỷ lệ hoàn thành KPI'}]
   ];
+  // caption 3 dùng công thức riêng
+  cardsDef[2][2]=cat([{f:'IF('+Ftot+'=0,'+Q('Tỷ lệ an toàn vs rủi ro')+','+Q('Chắc chắn ')+'&ROUND('+xan+'/'+Ftot+'*100,0)&'+Q('% kế hoạch'+(hasAi?' (gồm số AI gợi ý, cần đối chiếu)':' (an toàn vs rủi ro)'))+')',v:Fv?'Chắc chắn '+Math.round(vG/Fv*100)+'% kế hoạch'+(hasAi?' (gồm số AI gợi ý, cần đối chiếu)':' (an toàn vs rủi ro)'):'Tỷ lệ an toàn vs rủi ro'}]);
   cardsDef.forEach((cd,i)=>{const [a,b]=bounds[i];
     s1.merge(2+o,a,2+o,b,st.cardH).set(2+o,a,cd[0]);
-    s1.merge(3+o,a,3+o,b,cd[1].s).set(3+o,a,cd[1]);
-    s1.merge(4+o,a,4+o,b,st.cardC).set(4+o,a,cd[2]);
+    const mid=cd[1].s?cd[1]:Object.assign({},cd[1],{s:st.cardT});
+    s1.merge(3+o,a,3+o,b,mid.s).set(3+o,a,mid);
+    const cp=cd[2];s1.merge(4+o,a,4+o,b,st.cardC).set(4+o,a,cp.f!==undefined?Object.assign({},cp,{s:st.cardC}):{v:cp.v,s:st.cardC});
   });
   s1.height(3+o,34);
   if(hasAi)s1.merge(2,0,2,NC-1,st.warn).set(2,0,SRC_WARN_LONG).height(2,44);
   // Bảng chính
-  const H=['Nhóm sản phẩm (Bán gì?)','Nguồn doanh số (Từ đâu?)','Đại lý / Điểm bán (Ai tạo ra?)','Căn cứ & Tín hiệu (Dựa vào đâu?)','Mức độ tin cậy','Mục mục tiêu kế hoạch (VNĐ)'];
-  H[5]='Mục tiêu kế hoạch (VNĐ)';
+  const H=['Nhóm sản phẩm (Bán gì?)','Nguồn doanh số (Từ đâu?)','Đại lý / Điểm bán (Ai tạo ra?)','Căn cứ & Tín hiệu (Dựa vào đâu?)','Mức độ tin cậy','Mục tiêu kế hoạch (VNĐ)'];
   weeks.forEach((w,i)=>H.push('Tuần '+(i+1)+' (W'+(i+1)+')'));
   H.push('Thực tế đạt (VNĐ)','Khoảng lệch Gap (VNĐ)','Kịch bản dự phòng / Hành động bù (Plan B)');
-  const HR=6+o;H.forEach((h,c)=>s1.set(HR,c,{v:h,s:st.th}));s1.height(HR,38);
-  const r0=HR+1;
-  src.forEach((x,i)=>{
-    const r=r0+i,wi=Math.min(n-1,Math.max(0,x.week));
-    s1.set(r,0,{v:SRC_PROD[x.prod],s:st.tdT}).set(r,1,{v:SRC_TYPES[x.type],s:st.tdSel}).set(r,2,{v:(x.ai?'🤖 ':'')+(x.name||'(chưa đặt tên)'),s:st.tdB}).set(r,3,{v:(x.ai?(x.mode==='rule'?'[Quy tắc mẫu — chưa kiểm chứng] ':'[Nháp AI — cần đối chiếu] '):'')+x.basis,s:st.tdI});
-    const cl=SRC_CONF.find(z=>z[0]===x.conf);s1.set(r,4,{v:cl?cl[1]:'',s:st.tdConf});
-    s1.set(r,5,{f:'SUM('+xlRef(r,6)+':'+xlRef(r,5+n)+')',v:x.amt*M,s:st.tdNb});
-    for(let k=0;k<n;k++)s1.set(r,6+k,{v:k===wi?x.amt*M:0,s:st.tdN});
-    s1.set(r,cAct,{v:x.act===null?'':x.act*M,s:st.tdN});
-    s1.set(r,cGap,{f:'IF('+xlRef(r,cAct)+'="","",MAX(0,'+xlRef(r,5)+'-'+xlRef(r,cAct)+'))',v:x.act===null?'':Math.max(0,x.amt-x.act)*M,s:st.tdN});
-    s1.set(r,cB,{v:x.planB,s:st.tdT});
+  H.forEach((h,c)=>s1.set(HR,c,{v:h,s:st.th}));s1.height(HR,38);
+  const colSum=c=>rowsData.reduce((a,r)=>{if(!r)return a;if(c===5)return a+r.amt;if(c===cAct)return a+(r.act||0);if(c>=6&&c<6+n)return a+(r.wi===c-6?r.amt:0);return a;},0);
+  for(let i=0;i<nRows;i++){
+    const r=r0+i,rd_=rowsData[i],x=rd_?rd_.x:null;
+    s1.set(r,0,{v:x?SRC_PROD[x.prod]:'',s:st.inT}).set(r,1,{v:x?SRC_TYPES[x.type]:'',s:st.inSel}).set(r,2,{v:x?((x.ai?'🤖 ':'')+(x.name||'(chưa đặt tên)')):'',s:st.inTb});
+    s1.set(r,3,{v:x?((x.ai?(x.mode==='rule'?'[Quy tắc mẫu — chưa kiểm chứng] ':'[Nháp AI — cần đối chiếu] '):'')+x.basis):'',s:st.inTi});
+    const cl=x?SRC_CONF.find(z=>z[0]===x.conf):null;s1.set(r,4,{v:cl?cl[1]:'',s:st.inConf});
+    s1.set(r,5,{f:'SUM('+xlRef(r,6)+':'+xlRef(r,5+n)+')',v:rd_?rd_.amt:0,s:st.fNb});
+    for(let k=0;k<n;k++)s1.set(r,6+k,{v:rd_&&rd_.wi===k?rd_.amt:0,s:st.inN});
+    s1.set(r,cAct,{v:rd_&&rd_.act!==null?rd_.act:'',s:st.inN});
+    s1.set(r,cGap,{f:'IF('+xlRef(r,cAct)+'="","",MAX(0,'+xlRef(r,5)+'-'+xlRef(r,cAct)+'))',v:rd_&&rd_.act!==null?Math.max(0,rd_.amt-rd_.act):'',s:st.fN});
+    s1.set(r,cB,{v:x?x.planB:'',s:st.inT});
     s1.height(r,34);
-  });
-  let rEnd=r0+src.length;
-  if(!src.length){s1.merge(r0,0,r0,NC-1,st.tdI).set(r0,0,'Chưa nhập nguồn doanh số. Vào tab Kế hoạch → mục "Nguồn doanh số" để thêm đại lý / điểm bán, độ tin cậy và Plan B.').height(r0,28);rEnd=r0+1;}
-  const rT=rEnd,sumCol=c=>src.reduce((a,x,i)=>a+(c===5?x.amt:(c===cAct?(x.act||0):(c===cGap?(x.act===null?0:Math.max(0,x.amt-x.act)):(Math.min(n-1,Math.max(0,x.week))===c-6?x.amt:0)))),0);
-  const rng=c=>xlRef(r0,c)+':'+xlRef(rEnd-1,c);
-  s1.set(rT,0,{v:'TỔNG CỘNG TOÀN BỘ',s:st.totT}).set(rT,1,{v:src.length+' Nguồn doanh số',s:st.totT}).set(rT,2,{v:'KPI: '+(total*M).toLocaleString('en-US')+' đ',s:st.totT}).set(rT,3,{v:'BNN: '+(+S.target.bn||0)+'M | Gia dụng: '+(+S.target.gd||0)+'M',s:st.totT}).set(rT,4,{v:'',s:st.totT});
-  const totalCols=[5].concat(Array.from({length:n},(_,k)=>6+k),[cAct,cGap]);
-  totalCols.forEach(c=>{
-    if(c===cGap){const planT=sumCol(5),actT=sumCol(cAct);s1.set(rT,c,{f:'MAX(0,'+xlRef(rT,5)+'-'+xlRef(rT,cAct)+')',v:Math.max(0,planT-actT)*M,s:st.totN});return;}   // khớp thẻ KHOẢNG LỆCH: kế hoạch trừ thực tế
-    s1.set(rT,c,src.length?{f:'SUM('+rng(c)+')',v:sumCol(c)*M,s:st.totN}:{v:0,s:st.totN});
-  });
-  s1.set(rT,cB,{v:'TỔNG KHOẢNG LỆCH (GAP): '+(total-actual>0?'Chủ động kích hoạt Plan B bù nguồn thiếu':'Đã đạt chỉ tiêu'),s:st.totT}).height(rT,30);
-  // validation + tô màu độ tin cậy
-  if(src.length){
-    s1.dv(xlRef(r0,1)+':'+xlRef(rEnd-1,1),SRC_TYPES);
-    s1.dv(xlRef(r0,4)+':'+xlRef(rEnd-1,4),SRC_CONF.map(z=>z[1]));
-    s1.cf(xlRef(r0,4)+':'+xlRef(rEnd-1,4),[{text:'Xanh',dxf:dG},{text:'Vàng',dxf:dY},{text:'Đỏ',dxf:dR}]);
   }
+  const rng=c=>xlRef(r0,c)+':'+xlRef(rLast,c);
+  const cntNames='COUNTA('+rngC+')';
+  s1.set(rT,0,{v:'TỔNG CỘNG TOÀN BỘ',s:st.totT});
+  s1.set(rT,1,Object.assign(cat([{f:cntNames,v:src.length},{t:' Nguồn doanh số'}]),{s:st.totT}));
+  s1.set(rT,2,Object.assign(cat([{t:'KPI: '},{f:rM(kpi),v:Mv(kpiV)},{t:'M'}]),{s:st.totT}));
+  s1.set(rT,3,Object.assign(cat([{t:'BNN: '},{f:rM(tp('bn')),v:Mv(bnM*M)},{t:'M | Gia dụng: '},{f:rM(tp('gd')),v:Mv(gdM*M)},{t:'M'}]),{s:st.totT}));
+  s1.set(rT,4,{v:'',s:st.totT});
+  [5].concat(Array.from({length:n},(_,k)=>6+k),[cAct]).forEach(c=>s1.set(rT,c,{f:'SUM('+rng(c)+')',v:colSum(c),s:st.totN}));
+  s1.set(rT,cGap,{f:'MAX(0,'+Ftot+'-'+Ltot+')',v:Math.max(0,colSum(5)-colSum(cAct)),s:st.totN});
+  s1.set(rT,cB,Object.assign(cat([{f:'IF('+cardV+'-'+cardA+'>0,'+Q('TỔNG KHOẢNG LỆCH (GAP): Chủ động kích hoạt Plan B bù nguồn thiếu')+','+Q('TỔNG KHOẢNG LỆCH (GAP): Đã đạt chỉ tiêu')+')',v:kpiV-actV>0?'TỔNG KHOẢNG LỆCH (GAP): Chủ động kích hoạt Plan B bù nguồn thiếu':'TỔNG KHOẢNG LỆCH (GAP): Đã đạt chỉ tiêu'}]),{s:st.totT})).height(rT,30);
+  s1.dv(xlRef(r0,1)+':'+xlRef(rLast,1),SRC_TYPES);
+  s1.dv(xlRef(r0,4)+':'+xlRef(rLast,4),SRC_CONF.map(z=>z[1]));
+  s1.dvNum(xlRef(r0,6)+':'+xlRef(rLast,cAct));
+  s1.cf(xlRef(r0,4)+':'+xlRef(rLast,4),[{text:'Xanh',dxf:dG},{text:'Vàng',dxf:dY},{text:'Đỏ',dxf:dR}]);
   // Công cụ điều hành
-  const rB=rT+2;
-  const half=Math.floor(NC/2);
+  const rB=rT+2,half=Math.floor(NC/2);
   s1.merge(rB,0,rB,NC-1,st.barH).set(rB,0,'CÔNG CỤ ĐIỀU HÀNH THỰC CHIẾN: KHUNG TƯ DUY 6 BƯỚC & 7 CÂU HỎI STRESS-TEST (SLIDE 18-20)').height(rB,26);
   s1.merge(rB+1,0,rB+1,half-1,st.leftH).set(rB+1,0,'KHUNG TƯ DUY 6 BƯỚC CỦA SR THÀNH CÔNG');
-  s1.merge(rB+1,half,rB+1,NC-1,st.rightH).set(rB+1,half,'7 CÂU HỎI STRESS-TEST BẢO VỆ CHỈ TIÊU KPI '+(total?total+'M':''));
-  const byType=t=>src.filter(x=>x.type===t).reduce((a,x)=>a+x.amt,0);
-  const exist=byType(0)+byType(1),signal=byType(2),fresh=byType(3);
-  const maxS=src.reduce((a,b)=>b.amt>(a?a.amt:-1)?b:a,null);
-  const visits=weeks.reduce((a,w)=>a+(+w.vt||0),0),workD=weeks.reduce((a,w)=>a+w.work,0),tk=todayKey();
-  const remD=S.month===monthKey(0)?weeks.reduce((a,w)=>a+w.days.filter(d=>!d.off&&d.date>=tk).length,0):workD;
+  s1.merge(rB+1,half,rB+1,NC-1,st.rightH).set(rB+1,half,Object.assign(cat([{t:'7 CÂU HỎI STRESS-TEST BẢO VỆ CHỈ TIÊU KPI '},{f:rM(kpi),v:Mv(kpiV)},{t:'M'}]),{s:st.rightH}));
+  const wsh=qn(SN2);
+  const visitsV=wsV.vis;
+  const aovRef=tp('aov');
   const steps=[
-    '1. NHẬN: Nhận KPI '+(total?total+'M':'tháng')+' là điểm khởi đầu lập kế hoạch, đích đến của thực thi.',
-    '2. HỎI: Tự vấn 4 câu hỏi cốt lõi: Bán gì? Từ đâu? Ai tạo ra? Khi nào về?',
-    '3. PHÂN: Phân rã 3 cấp: Ngành hàng ('+(+S.target.bn||0)+'M BNN + '+(+S.target.gd||0)+'M GD) → Nguồn doanh số → Điểm bán.',
-    '4. KIỂM: Gán nhãn độ tin cậy: 🟢 Đã có cơ sở | 🟡 Có tín hiệu | 🔴 Phải chủ động tạo mới.',
-    '5. PHÂN BỔ: Chia mục tiêu theo tuần '+weeks.map((w,i)=>'W'+(i+1)).join('–')+', ưu tiên các nguồn Xanh về trước.',
-    '6. ĐIỀU CHỈNH: Kiểm soát tiến độ, đo lường Gap và kích hoạt ngay phương án dự phòng (Plan B).'
+    cat([{t:'1. NHẬN: Nhận KPI '},{f:rM(kpi),v:Mv(kpiV)},{t:'M là điểm khởi đầu lập kế hoạch, đích đến của thực thi.'}]),
+    {v:'2. HỎI: Tự vấn 4 câu hỏi cốt lõi: Bán gì? Từ đâu? Ai tạo ra? Khi nào về?'},
+    cat([{t:'3. PHÂN: Phân rã 3 cấp: Ngành hàng ('},{f:rM(tp('bn')),v:Mv(bnM*M)},{t:'M BNN + '},{f:rM(tp('gd')),v:Mv(gdM*M)},{t:'M GD) → Nguồn doanh số → Điểm bán.'}]),
+    {v:'4. KIỂM: Gán nhãn độ tin cậy: 🟢 Đã có cơ sở | 🟡 Có tín hiệu | 🔴 Phải chủ động tạo mới.'},
+    {v:'5. PHÂN BỔ: Chia mục tiêu theo tuần '+weeks.map((w,i)=>'W'+(i+1)).join('–')+', ưu tiên các nguồn Xanh về trước.'},
+    {v:'6. ĐIỀU CHỈNH: Kiểm soát tiến độ, đo lường Gap và kích hoạt ngay phương án dự phòng (Plan B).'}
   ];
+  const nameOfMax=()=>{let best=null;rowsData.forEach(r=>{if(r&&(!best||r.amt>best.amt))best=r;});return best?((best.x.ai?'🤖 ':'')+(best.x.name||'(chưa đặt tên)')):'nguồn lớn nhất';};
   const stress=[
-    '1. '+(total?total+'M':'KPI')+' sẽ đến từ đâu? ('+exist+'M từ ĐL hiện hữu + '+signal+'M từ đơn có tín hiệu + '+fresh+'M từ mở điểm bán mới'+(total>sumAmt?'; còn thiếu '+(total-sumAmt)+'M chưa gắn nguồn':'')+')',
-    '2. Mỗi con số dựa vào đâu? ('+src.filter(x=>x.type<2).length+' nguồn hiện hữu theo lịch sử/trao đổi; nguồn mới theo định mức ~'+(+S.aov||20)+'M/đơn)',
-    '3. Nếu '+(maxS?(maxS.name||'nguồn lớn nhất'):'1 đại lý lớn')+' không nhập thì sao? ('+(maxS&&sumAmt?'Hụt '+maxS.amt+'M → kế hoạch lập tức thiếu '+maxS.amt+'M, tức '+Math.round(maxS.amt/sumAmt*100)+'% kế hoạch':'Cần xác định nguồn lớn nhất và mức hụt nếu nguồn đó không nhập')+')',
-    '4. Phần thiếu có thể bù bằng cách nào? ('+(S.planB?S.planB:'Chưa ghi Plan B — nêu rõ nguồn dự phòng và người phụ trách')+')',
-    '5. Muốn mở thêm điểm mới cần làm gì? ('+(ap&&ap.gap>0?'Cần thêm khoảng '+ap.gap+' điểm đang làm việc; mỗi điểm nhập trung bình ~'+(+S.aov||20)+'M/đơn':'Xác định số điểm cần mở thêm từ phần Khu vực của ứng dụng')+')',
-    '6. Cần tiếp cận bao nhiêu điểm trên tuyến? (Cả tháng ≈ '+visits+' lượt ghé, ≈ '+(workD?Math.ceil(visits/workD):0)+' lượt/ngày làm việc; mỗi đơn cần ≈ '+F.vpo.toFixed(1).replace('.',',')+' lượt, tỷ lệ chốt ≈ '+Math.round(100/F.fc)+'% theo benchmark B2B tham khảo)',
-    '7. Còn đủ thời gian để triển khai không? (Còn '+remD+' ngày làm việc trong tháng; phát hiện sớm ở tuần 1-2 để kịp đổi phương án hành động)'
+    cat([{t:'1. '},{f:rM(kpi),v:Mv(kpiV)},{t:'M sẽ đến từ đâu? ('},{f:rM(sumIf(rngB,'Đơn hàng nền tảng*',rngF)+'+'+sumIf(rngB,'Tăng trưởng*',rngF)),v:Mv(vExist)},{t:'M từ ĐL hiện hữu + '},{f:rM(sumIf(rngB,'Đơn có tín hiệu*',rngF)),v:Mv(vSig)},{t:'M từ đơn có tín hiệu + '},{f:rM(sumIf(rngB,'Khai thác mở mới*',rngF)),v:Mv(vNew)},{t:'M từ mở điểm bán mới'},{f:'IF('+rM(kpi+'-'+Ftot)+'>0,'+Q('; còn thiếu ')+'&'+rM(kpi+'-'+Ftot)+'&'+Q('M chưa gắn nguồn')+',"")',v:Mv(kpiV-Fv)>0?'; còn thiếu '+Mv(kpiV-Fv)+'M chưa gắn nguồn':''},{t:')'}]),
+    cat([{t:'2. Mỗi con số dựa vào đâu? ('},{f:'COUNTIF('+rngB+','+Q('Đơn hàng nền tảng*')+')+COUNTIF('+rngB+','+Q('Tăng trưởng*')+')',v:src.filter(x=>x.type<2).length},{t:' nguồn hiện hữu theo lịch sử/trao đổi; nguồn mới theo định mức ~'},{f:rM(aovRef),v:aovM},{t:'M/đơn)'}]),
+    cat([{t:'3. Nếu '},{f:'IF('+Ftot+'=0,'+Q('1 đại lý lớn')+',IFERROR(INDEX('+rngC+',MATCH(MAX('+rngF+'),'+rngF+',0)),'+Q('nguồn lớn nhất')+'))',v:Fv?nameOfMax():'1 đại lý lớn'},{t:' không nhập thì sao? ('},{f:'IF('+Ftot+'=0,'+Q('Cần xác định nguồn lớn nhất và mức hụt nếu nguồn đó không nhập')+','+Q('Hụt ')+'&'+rM('MAX('+rngF+')')+'&'+Q('M → kế hoạch lập tức thiếu ')+'&'+rM('MAX('+rngF+')')+'&'+Q('M, tức ')+'&ROUND(MAX('+rngF+')/'+Ftot+'*100,0)&'+Q('% kế hoạch')+')',v:Fv?'Hụt '+Mv(Mx)+'M → kế hoạch lập tức thiếu '+Mv(Mx)+'M, tức '+Math.round(Mx/Fv*100)+'% kế hoạch':'Cần xác định nguồn lớn nhất và mức hụt nếu nguồn đó không nhập'},{t:')'}]),
+    cat([{t:'4. Phần thiếu có thể bù bằng cách nào? ('},{f:'IF('+tp('planB')+'="",'+Q('Chưa ghi Plan B — nêu rõ nguồn dự phòng và người phụ trách')+','+tp('planB')+')',v:S.planB?S.planB:'Chưa ghi Plan B — nêu rõ nguồn dự phòng và người phụ trách'},{t:')'}]),
+    cat([{t:'5. Muốn mở thêm điểm mới cần làm gì? ('},{f:'IF('+tp('gapPts')+'>0,'+Q('Cần thêm khoảng ')+'&'+tp('gapPts')+'&'+Q(' điểm đang làm việc; mỗi điểm nhập trung bình ~')+'&'+rM(aovRef)+'&'+Q('M/đơn')+','+Q('Xác định số điểm cần mở thêm từ phần Khu vực của ứng dụng')+')',v:ap&&ap.gap>0?'Cần thêm khoảng '+ap.gap+' điểm đang làm việc; mỗi điểm nhập trung bình ~'+aovM+'M/đơn':'Xác định số điểm cần mở thêm từ phần Khu vực của ứng dụng'},{t:')'}]),
+    cat([{t:'6. Cần tiếp cận bao nhiêu điểm trên tuyến? (Cả tháng ≈ '},{f:tp('visits'),v:visitsV},{t:' lượt ghé, ≈ '},{f:'IF('+tp('workdays')+'=0,0,ROUNDUP('+tp('visits')+'/'+tp('workdays')+',0))',v:wsV.work?Math.ceil(visitsV/wsV.work):0},{t:' lượt/ngày làm việc; mỗi đơn cần ≈ '},{f:'ROUND('+tp('vpo')+',1)',v:dec(rd(vpoV,1))},{t:' lượt, tỷ lệ chốt ≈ '},{f:'ROUND('+tp('close')+'*100,0)',v:Math.round(closeV*100)},{t:'% theo benchmark B2B tham khảo)'}]),
+    cat([{t:'7. Còn đủ thời gian để triển khai không? (Còn '},{f:tp('remDays'),v:remD},{t:' ngày làm việc trong tháng; phát hiện sớm ở tuần 1-2 để kịp đổi phương án hành động)'}])
   ];
   for(let i=0;i<7;i++){
     const r=rB+2+i;
-    s1.merge(r,0,r,half-1,st.leftT).set(r,0,i<6?steps[i]:'Tôn chỉ: "Kế hoạch tốt là kế hoạch trả lời được: Đến từ đâu? Dựa vào đâu? Khi nào về? Thiếu thì bù ở đâu?"');
-    if(i===6)s1.style(r,0,st.motto);
-    s1.merge(r,half,r,NC-1,st.rightT).set(r,half,stress[i]);
+    const lv=i<6?steps[i]:{v:'Tôn chỉ: "Kế hoạch tốt là kế hoạch trả lời được: Đến từ đâu? Dựa vào đâu? Khi nào về? Thiếu thì bù ở đâu?"'};
+    s1.merge(r,0,r,half-1,i===6?st.motto:st.leftT).set(r,0,lv.f!==undefined?Object.assign({},lv,{s:st.leftT}):{v:lv.v,s:i===6?st.motto:st.leftT});
+    s1.merge(r,half,r,NC-1,st.rightT).set(r,half,Object.assign({},stress[i],{s:st.rightT}));
     s1.height(r,30);
   }
   const rF=rB+9;
   s1.merge(rF,0,rF,NC-1,st.foot).set(rF,0,'Lưu ý: tỷ lệ chốt lấy theo benchmark B2B bán hàng trực tiếp (≈ 19–29%, nhiều nguồn, không riêng điện máy gia dụng); tỷ lệ gặp được chủ là giả định chưa có benchmark; mục "Thực tế đạt" do SR tự nhập'+(hasAi?'; các dòng 🤖 là bản nháp do AI/quy tắc mẫu gợi ý':'')+'. Cần đối chiếu với báo cáo bán hàng chính thức và xác nhận với quản lý trước khi dùng để ra quyết định.').height(rF,34);
-  // độ rộng cột
+  s1.merge(rF+1,0,rF+1,NC-1,st.note).set(rF+1,0,'Cách dùng: chữ xanh / nền vàng nhạt là ô nhập (sửa tự do). Chữ đen là công thức, tự tính lại khi bạn sửa. KPI, giá trị đơn, tỷ lệ chốt... nằm ở sheet "Thông số". Cần thêm đại lý: ghi vào các dòng trống trong bảng (đã nằm trong vùng tính tổng).').height(rF+1,32);
   [22,30,28,40,22,19].forEach((w,c)=>s1.width(c,w));
   for(let k=0;k<n;k++)s1.width(6+k,16);
   s1.width(cAct,19).width(cGap,19).width(cB,46);
 
-  /* ===== Sheet 2: Kế hoạch theo tuần (từ ứng dụng) ===== */
+  /* ===== Sheet 2: Kế hoạch theo tuần — tự tính từ KPI và thông số ===== */
   const s2=XlSheet();
-  s2.merge(0,0,0,12,st.title).set(0,0,'KẾ HOẠCH THEO TUẦN — THÁNG '+mlabel+' (đơn vị: triệu đồng)').height(0,30);
-  const H2=['Tuần','Thời gian','Ngày làm việc','KH · Bình nước nóng','KH · Gia dụng','KH · Tổng','Khách cần liên hệ','Lượt/ngày','TT · Bình nước nóng','TT · Gia dụng','TT · Tổng','Khách đã liên hệ','% đạt'];
-  H2.forEach((h,c)=>s2.set(2,c,{v:h,s:st.th}));s2.height(2,34);
+  s2.merge(0,0,0,17,st.title).set(0,0,Object.assign(cat([{t:'KẾ HOẠCH THEO TUẦN — THÁNG '},{f:tp('month'),v:mlabel},{t:' (đơn vị: triệu đồng)'}]),{s:st.title})).height(0,30);
+  s2.merge(1,0,1,17,st.note).set(1,0,'KH tuần = chỉ tiêu × trọng số tuần / tổng trọng số (tuần cuối nhận phần còn lại để khớp KPI). Sửa KPI ở sheet "Thông số" hoặc sửa trọng số để dồn chỉ tiêu; số đơn và số khách cần liên hệ tự tính theo giá trị đơn và phễu ở "Thông số".').height(1,30);
+  const H2=['Tuần','Thời gian','Ngày làm việc','Trọng số tuần','KH · Bình nước nóng','KH · Gia dụng','KH · Tổng','Đã chốt chắc chắn','Đơn cần chốt','Khách cần liên hệ','Lượt/ngày','TT · Bình nước nóng','TT · Gia dụng','TT · Tổng','Khách đã liên hệ','% đạt','Nguồn dự kiến về (từ bảng chính)','Nguồn so với KH tuần'];
+  H2.forEach((h,c)=>s2.set(2,c,{v:h,s:st.th}));s2.height(2,48);
+  const sumW='SUM($D$'+(w0+1)+':$D$'+(wT)+')';
   weeks.forEach((w,i)=>{
-    const r=3+i,a=S.actual[w.key];
-    s2.set(r,0,{v:'Tuần '+(i+1),s:st.tdB}).set(r,1,{v:w.label,s:st.tdT}).set(r,2,{v:w.work,s:st.wInt});
-    s2.set(r,3,{v:w.t.bn,s:st.wInt}).set(r,4,{v:w.t.gd,s:st.wInt}).set(r,5,{f:xlRef(r,3)+'+'+xlRef(r,4),v:w.tt,s:st.wInt});
-    s2.set(r,6,{v:w.vt,s:st.wInt}).set(r,7,{v:w.work?Math.round(w.perDay*10)/10:0,s:st.wDec});
-    s2.set(r,8,{v:a?(a.bn||0):'',s:st.wInt}).set(r,9,{v:a?(a.gd||0):'',s:st.wInt});
-    s2.set(r,10,{f:'IF(COUNT('+xlRef(r,8)+':'+xlRef(r,9)+')=0,"",'+xlRef(r,8)+'+'+xlRef(r,9)+')',v:a?(a.bn||0)+(a.gd||0):'',s:st.wInt});
-    s2.set(r,11,{v:a?(a.v||0):'',s:st.wInt});
-    s2.set(r,12,{f:'IF(OR('+xlRef(r,10)+'="",'+xlRef(r,5)+'=0),"",'+xlRef(r,10)+'/'+xlRef(r,5)+')',v:(a&&w.tt)?((a.bn||0)+(a.gd||0))/w.tt:'',s:st.wPct});
+    const r=w0+i,k=wkRows[i],a=k.a,srcWeek=colSum(6+i)/M;
+    const kcol=(colL,kM,prevRange)=>i===lastI?{f:tp(colL)+'/1000000-'+(i===0?'0':'SUM('+prevRange+')'),v:kM}:{f:'IF('+sumW+'=0,0,ROUND('+tp(colL)+'/1000000*$D'+(r+1)+'/'+sumW+',0))',v:kM};
+    s2.set(r,0,{v:'Tuần '+(i+1),s:st.wTxtB}).set(r,1,{v:w.label,s:st.wTxt}).set(r,2,{v:w.work,s:st.wIn});
+    s2.set(r,3,{v:wts[i],s:st.wInDec});
+    s2.set(r,4,Object.assign(kcol('bn',k.kbn,'$E$'+(w0+1)+':E'+r),{s:st.wInt}));
+    s2.set(r,5,Object.assign(kcol('gd',k.kgd,'$F$'+(w0+1)+':F'+r),{s:st.wInt}));
+    s2.set(r,6,{f:xlRef(r,4)+'+'+xlRef(r,5),v:k.kt,s:st.wInt});
+    s2.set(r,7,{v:k.booked,s:st.wIn});
+    s2.set(r,8,{f:'IF('+xlRef(r,6)+'=0,0,ROUNDUP(ROUND(MAX(0,'+xlRef(r,6)+'-'+xlRef(r,7)+')/('+tp('aov')+'/1000000),6),0))',v:k.ord,s:st.wInt});
+    s2.set(r,9,{f:'ROUNDUP(ROUND('+xlRef(r,8)+'*'+tp('vpo')+'/('+tp('season')+'/100),6),0)',v:k.vis,s:st.wInt});
+    s2.set(r,10,{f:'IF('+xlRef(r,2)+'=0,0,'+xlRef(r,9)+'/'+xlRef(r,2)+')',v:k.perDay,s:st.wDec});
+    s2.set(r,11,{v:a?(a.bn||0):'',s:st.wIn}).set(r,12,{v:a?(a.gd||0):'',s:st.wIn});
+    s2.set(r,13,{f:'IF(COUNT('+xlRef(r,11)+':'+xlRef(r,12)+')=0,"",'+xlRef(r,11)+'+'+xlRef(r,12)+')',v:a?(a.bn||0)+(a.gd||0):'',s:st.wInt});
+    s2.set(r,14,{v:a?(a.v||0):'',s:st.wIn});
+    s2.set(r,15,{f:'IF(OR('+xlRef(r,13)+'="",'+xlRef(r,6)+'=0),"",'+xlRef(r,13)+'/'+xlRef(r,6)+')',v:(a&&k.kt)?((a.bn||0)+(a.gd||0))/k.kt:'',s:st.wPct});
+    s2.set(r,16,{f:qn(SN1)+xlRef(rT,6+i)+'/1000000',v:srcWeek,s:st.wDec});
+    s2.set(r,17,{f:xlRef(r,16)+'-'+xlRef(r,6),v:srcWeek-k.kt,s:st.wDec});
+    wsV.src+=srcWeek;
   });
-  const rt2=3+n,a2=3,b2=3+n-1;
-  s2.set(rt2,0,{v:'TỔNG',s:st.totT}).set(rt2,1,{v:'',s:st.totT});
-  [2,3,4,5,6,8,9,10,11].forEach(c=>{const v=weeks.reduce((acc,w)=>{const a=S.actual[w.key];return acc+(c===2?w.work:c===3?w.t.bn:c===4?w.t.gd:c===5?w.tt:c===6?w.vt:c===8?(a?a.bn||0:0):c===9?(a?a.gd||0:0):c===10?(a?(a.bn||0)+(a.gd||0):0):(a?a.v||0:0));},0);s2.set(rt2,c,{f:'SUM('+xlRef(a2,c)+':'+xlRef(b2,c)+')',v,s:st.wTotI});});
-  s2.set(rt2,7,{v:'',s:st.wTotI});
-  s2.set(rt2,12,{f:'IF('+xlRef(rt2,5)+'=0,"",'+xlRef(rt2,10)+'/'+xlRef(rt2,5)+')',v:total?appAct/total:'',s:st.wTotP});
-  [9,13,16,18,18,14,16,12,18,16,14,16,10].forEach((w,c)=>s2.width(c,w));
+  s2.set(wT,0,{v:'TỔNG',s:st.totT}).set(wT,1,{v:'',s:st.totT});
+  [[2,wsV.work],[3,wsum],[4,wsV.bn],[5,wsV.gd],[6,wsV.tot],[7,wsV.book],[8,wsV.ord],[9,wsV.vis],[11,wsV.abn],[12,wsV.agd],[13,wsV.at],[14,wsV.av],[16,wsV.src],[17,wsV.src-wsV.tot]].forEach(([c,v])=>s2.set(wT,c,{f:'SUM('+xlRef(w0,c)+':'+xlRef(wT-1,c)+')',v,s:st.wTotI}));
+  s2.set(wT,10,{f:'IF('+xlRef(wT,2)+'=0,0,'+xlRef(wT,9)+'/'+xlRef(wT,2)+')',v:wsV.work?wsV.vis/wsV.work:0,s:st.wTotI});
+  s2.set(wT,15,{f:'IF('+xlRef(wT,6)+'=0,"",'+xlRef(wT,13)+'/'+xlRef(wT,6)+')',v:wsV.tot?wsV.at/wsV.tot:'',s:st.wTotP});
+  // đối chiếu với KPI
+  const rc=wT+2,kpiMv=kpiV/M,diff=wsV.tot-kpiMv;
+  s2.merge(rc,0,rc,5,st.pLab).set(rc,0,'KPI tháng theo sheet "Thông số" (triệu)');
+  s2.set(rc,6,{f:tp('kpi')+'/1000000',v:kpiMv,s:st.wInt});
+  s2.merge(rc+1,0,rc+1,5,st.pLab).set(rc+1,0,'Chênh lệch tổng KH các tuần so với KPI (triệu)');
+  s2.set(rc+1,6,{f:xlRef(wT,6)+'-'+xlRef(rc,6),v:diff,s:st.wInt});
+  s2.merge(rc+2,0,rc+2,5,st.pLab).set(rc+2,0,'Kết luận');
+  s2.merge(rc+2,6,rc+2,12,st.wTxt).set(rc+2,6,{f:'IF(ROUND('+xlRef(rc+1,6)+',0)=0,'+Q('Khớp KPI')+','+Q('Lệch ')+'&ROUND('+xlRef(rc+1,6)+',0)&'+Q(' triệu so với KPI: hãy chỉnh KH hoặc trọng số các tuần')+')',v:Math.round(diff)===0?'Khớp KPI':'Lệch '+Math.round(diff)+' triệu so với KPI: hãy chỉnh KH hoặc trọng số các tuần',s:st.wTxt});
+  s2.dvNum(xlRef(w0,2)+':'+xlRef(wT-1,3));s2.dvNum(xlRef(w0,7)+':'+xlRef(wT-1,7));s2.dvNum(xlRef(w0,11)+':'+xlRef(wT-1,12));s2.dvNum(xlRef(w0,14)+':'+xlRef(wT-1,14));
+  [9,13,16,16,16,14,14,16,13,16,12,16,14,14,16,10,20,18].forEach((w,c)=>s2.width(c,w));
   s2.freeze(3);
 
-  const sheets=[['One-page Sales Plan',s1],['Kế hoạch theo tuần',s2]];
+  /* ===== Sheet 3: Thông số đầu vào ===== */
+  const s3=XlSheet();
+  s3.merge(0,0,0,2,st.title).set(0,0,'THÔNG SỐ ĐẦU VÀO').height(0,30);
+  s3.merge(1,0,1,2,st.note).set(1,0,'Sửa các ô nền vàng, chữ xanh: mọi bảng ở hai sheet còn lại tự tính lại. Ô nền xám là công thức, đừng ghi đè.').height(1,30);
+  ['Thông số','Giá trị','Ghi chú'].forEach((h,c)=>s3.set(PR0-1,c,{v:h,s:st.th}));
+  const wsn=qn(SN2),wTot=(c)=>wsn+'$'+xlCol(c)+'$'+(wT+1);
+  items.forEach((it,i)=>{
+    const r=PR0+i,k=it[0],kind=it[3];
+    s3.set(r,0,{v:it[1],s:st.pLab}).set(r,2,{v:it[4],s:st.pNote});
+    const sty={T:st.pInT,M:st.pInM,I:st.pInI,FM:st.pFM,FI:st.pFI,FD:st.pFD,FP:st.pFP}[kind];
+    if(k==='kpi')s3.set(r,1,{f:'B'+(par.bn.r+1)+'+B'+(par.gd.r+1),v:kpiV,s:sty});
+    else if(k==='vpo')s3.set(r,1,{f:'B'+(par.fv.r+1)+'/10*B'+(par.fc.r+1),v:vpoV,s:sty});
+    else if(k==='close')s3.set(r,1,{f:'IF(B'+(par.fc.r+1)+'=0,0,1/B'+(par.fc.r+1)+')',v:closeV,s:sty});
+    else if(k==='workdays')s3.set(r,1,{f:wTot(2),v:wsV.work,s:sty});
+    else if(k==='visits')s3.set(r,1,{f:wTot(9),v:wsV.vis,s:sty});
+    else s3.set(r,1,{v:it[2],s:sty});
+    s3.height(r,26);
+  });
+  s3.dvNum('B'+(par.bn.r+1)+':B'+(par.gd.r+1));s3.dvNum('B'+(par.aov.r+1)+':B'+(par.maxC.r+1));
+  s3.width(0,48).width(1,24).width(2,62);
+
+  const sheets=[[SN1,s1],[SN2,s2],[SN3,s3]];
   const files=[
     {name:'[Content_Types].xml',text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+sheets.map((x,i)=>'<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join('')+'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
     {name:'_rels/.rels',text:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
