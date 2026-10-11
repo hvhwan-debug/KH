@@ -556,6 +556,20 @@ header.top.cmp #title{margin-bottom:6px}
 .qp-body{background:var(--surface);color:var(--ink);border-radius:14px;padding:14px;margin-top:8px}
 .qp-ref{margin-top:12px;font-size:12.5px;line-height:1.55;color:var(--muted);background:var(--bg);border-radius:10px;padding:10px 12px}
 @media (max-width:480px){.qp-q{font-size:19px}.qp-in input{font-size:28px;width:130px}.qp-node span{font-size:10.5px}.qp-arrow{font-size:16px}}
+/* ---- Thẻ xuất kế hoạch nổi bật ---- */
+.xcard{background:linear-gradient(135deg,#0B3B38 0%,#007A73 70%,#02B6AC 100%);color:#fff;border:0;padding:18px;box-shadow:0 16px 34px rgba(0,70,65,.30);position:relative;overflow:hidden}
+.xcard::after{content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.09);pointer-events:none}
+.xc-t{position:relative;z-index:1;display:flex;flex-direction:column;gap:2px}
+.xc-t b{font-size:18px;font-weight:600}
+.xc-t span{font-size:12.5px;opacity:.9}
+.xc-b{position:relative;z-index:1;display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.xc-main,.xc-alt{flex:1 1 200px;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:12px 18px;border-radius:16px;font:inherit;font-weight:600;font-size:16px;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.xc-main{border:0;background:#fff;color:#006B65;box-shadow:0 12px 24px rgba(0,40,37,.35)}
+.xc-alt{border:2px solid rgba(255,255,255,.75);background:rgba(255,255,255,.08);color:#fff}
+.xc-main:hover,.xc-alt:hover{transform:translateY(-2px)}
+.xc-main:active,.xc-alt:active{transform:scale(.98)}
+.xc-main:focus-visible,.xc-alt:focus-visible{outline:3px solid #FFD27A;outline-offset:2px}
+@media (max-width:480px){.xc-main,.xc-alt{flex-basis:100%}}
 .srmore{margin-top:8px}
 .srsum{cursor:pointer;color:var(--brand-deep);font-weight:600;padding:2px 0}
 .aibadge{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#9a6700;margin-bottom:6px}
@@ -2272,17 +2286,34 @@ function xlBuildBook(){
   ].concat(sheets.map((x,i)=>({name:'xl/worksheets/sheet'+(i+1)+'.xml',text:x[1].xml()})));
   return xlZip(files);
 }
-async function exportXlsx(){
+function saveBlob(blob,name){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
+}
+async function exportXlsx(mode){
   try{
-    if(!((+S.target.bn||0)+(+S.target.gd||0))){toast('Nhập chỉ tiêu tháng trước khi xuất Excel');return;}
+    if(!((+S.target.bn||0)+(+S.target.gd||0))){toast('Nhập chỉ tiêu tháng trước khi xuất kế hoạch');return;}
     if(!(S.sources||[]).length&&!srcAiBusy){
       if(confirm('Bạn chưa nhập nguồn doanh số nên bảng sẽ trống.\n\nĐể file dùng được ngay, ứng dụng sẽ nhờ AI soạn BẢN NHÁP từ toàn bộ dữ liệu bạn đã nhập (chỉ tiêu, khu vực, mùa vụ, địa bàn...).\n\nLƯU Ý: AI không biết số liệu thật của từng đại lý. Đây chỉ là gợi ý, bạn cần đối chiếu và sửa theo thực tế trước khi gửi quản lý.\n\nBấm OK để AI soạn nháp, hoặc Hủy để xuất bảng trống.'))await aiSources(true);
     }
-    const blob=xlBuildBook(),nAi=(S.sources||[]).filter(x=>srcNorm(x).ai).length;
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Livotec-Sales-Plan-'+S.month+'.xlsx';
-    document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
-    toast(nAi?'Đã tạo file Excel. Có '+nAi+' dòng do AI/quy tắc mẫu gợi ý: hãy đối chiếu trước khi gửi quản lý':'Đã tạo file Excel, sẵn sàng gửi quản lý');
-  }catch(e){console.error(e);toast('Chưa tạo được file Excel: '+(e&&e.message?e.message:'lỗi không rõ'));}
+    const blob=xlBuildBook(),fname='Livotec-Sales-Plan-'+S.month+'.xlsx',nAi=(S.sources||[]).filter(x=>srcNorm(x).ai).length;
+    const warn=nAi?' Có '+nAi+' dòng do AI/quy tắc mẫu gợi ý: hãy đối chiếu trước khi gửi quản lý.':'';
+    if(mode==='drive'){
+      try{
+        const file=new File([blob],fname,{type:blob.type});
+        if(navigator.canShare&&navigator.canShare({files:[file]})){
+          await navigator.share({files:[file],title:'Kế hoạch bán hàng '+S.month});
+          toast('Đã mở bảng chia sẻ: chọn Google Drive để lưu.'+warn,4500);return;
+        }
+      }catch(e){if(e&&e.name==='AbortError')return;}   // người dùng đóng bảng chia sẻ thì dừng; lỗi khác thì chuyển sang cách tải file
+      saveBlob(blob,fname);
+      toast('Đã tải file. Trang Google Drive đang mở: bấm Mới → Tải tệp lên, rồi mở bằng Google Trang tính.'+warn,6500);
+      try{window.open('https://drive.google.com/drive/my-drive','_blank','noopener');}catch(e){}
+      return;
+    }
+    saveBlob(blob,fname);
+    toast('Đã tạo file Excel'+(nAi?'.'+warn:', sẵn sàng gửi quản lý'),nAi?5000:2600);
+  }catch(e){console.error(e);toast('Chưa tạo được file: '+(e&&e.message?e.message:'lỗi không rõ'));}
 }
 
 function backupData(){
@@ -3324,6 +3355,14 @@ function benchCard(weeks,raw){
   return sec('bench',ic('compass',18),'Đối chiếu khu vực','<span class="small muted">ghé ≈ '+fmt(perDealer,1)+' cửa hàng / đại lý</span>',body,false);
 }
 
+function exportCard(){
+  const total=(+S.target.bn||0)+(+S.target.gd||0);if(!total)return '';
+  const dl='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>';
+  const cl='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4 4 0 0 1-.5 9.5H7z"/><path d="M12 11v5m0-5l-2 2m2-2l2 2"/></svg>';
+  return '<div class="card xcard"><div class="xc-t"><b>Gửi kế hoạch cho quản lý</b><span>Bảng một trang · mở bằng Excel hoặc Google Trang tính</span></div>'+
+    '<div class="xc-b"><button type="button" class="xc-main" data-act="xlsx">'+dl+'<span>Tải file Excel</span></button><button type="button" class="xc-alt" data-act="gdrive">'+cl+'<span>Lưu vào Google Drive</span></button></div></div>';
+}
+
 /* ---------- Ô đầu trang: thu nhập mong muốn → lộ trình điểm / khách / đơn ---------- */
 function quickPlan(weeks){
   const income=+S.income||0,rateC=Math.max(0.1,+S.commission||1.5),aov=Math.max(1,+S.aov||20),F=funnel(),B=S.bench||{},ordB=+B.ord||0;
@@ -3487,7 +3526,7 @@ function renderPlan(){
       '<td class="pc '+pcls+'">'+(pct===null?'':pct+'%')+'</td><td class="stc">'+stCell+'</td></tr>';
   }).join('');
   const aSum=aSumB+aSumG,aPctAll=total?Math.round(aSum/total*100):0,remain=Math.max(0,total-aSum);
-  const overview='<div class="card"><div class="row wrapx"><h2>'+ic('plan',18)+' Bảng kế hoạch '+monthName(S.month).toLowerCase()+'</h2><span class="small muted">'+sums.wd+' ngày làm việc</span><button class="btn ghost sm" data-act="xlsx" title="Tải bảng kế hoạch dạng Excel để gửi quản lý">Xuất Excel</button></div>'+
+  const overview='<div class="card"><div class="row wrapx"><h2>'+ic('plan',18)+' Bảng kế hoạch '+monthName(S.month).toLowerCase()+'</h2><span class="small muted">'+sums.wd+' ngày làm việc</span></div>'+
     '<div class="small muted" style="margin:2px 0 6px">Nhập số thực tế từng tuần ngay trong bảng, % đạt và trạng thái tự cập nhật.<span class="swipehint"> Vuốt ngang để xem hết các cột →</span></div>'+
     '<div class="ovwrap"><table class="gtbl"><thead>'+
       '<tr><th rowspan="2" class="wk1">Tuần</th><th colspan="'+(hasCare?5:4)+'" class="grp g-plan">KẾ HOẠCH (triệu)</th><th colspan="3" class="grp g-act">THỰC TẾ (triệu)</th><th rowspan="2">% đạt</th><th rowspan="2">Trạng thái</th></tr>'+
@@ -3527,7 +3566,7 @@ function renderPlan(){
     '<div class="h3">Kế hoạch tích lũy</div>'+lineChart(weeks,[{pts:evenPts,color:'var(--muted)',dash:true,w:2},{pts:planPts,color:'var(--brand-deep)',dots:true,w:3}],total)+
     '<div class="legend"><span style="--c:var(--brand-deep)">Kế hoạch</span><span class="dash" style="--c:var(--muted)">Chia đều theo ngày</span></div>'+
     '<div class="h3">Mục tiêu từng ngày (triệu)</div>'+heat(weeks));
-  $app.innerHTML=weekStrip(weeks,curW)+aiPanel('plan',weeks)+overview+todayCard+
+  $app.innerHTML=exportCard()+weekStrip(weeks,curW)+aiPanel('plan',weeks)+overview+todayCard+
   (mismatch?'<div class="note">Tổng các tuần là <b>'+planSum+'</b> tr, chỉ tiêu tháng là <b>'+total+'</b> tr. <button class="link" data-act="autoplan">Đưa về gợi ý tự động</button></div>':'')+
   modeLine+weekCards+charts+
   '<div class="row" style="margin:6px 0 12px"><button class="btn ghost sm" data-act="autoplan">Đưa về gợi ý tự động</button><button class="btn sm" data-act="copy">Sao chép kế hoạch</button></div>'+
@@ -3629,7 +3668,7 @@ function render(){
 }
 
 /* ---------- Sự kiện ---------- */
-function toast(m){const t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>{t.hidden=true;},2200);}
+function toast(m,ms){const t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>{t.hidden=true;},ms||2200);}
 function planText(){
   const weeks=analyze();apCache=areaPlan(weeks);const L=['KẾ HOẠCH BÁN HÀNG '+monthName(S.month).toUpperCase(),'Chỉ tiêu S.I: '+PRODUCTS.map(p=>p.name+' '+(S.target[p.id]||0)+' triệu').join(' · '),''];
   weeks.forEach(w=>{
@@ -3706,6 +3745,7 @@ document.addEventListener('click',function(e){
     }
   }
   else if(a==='xlsx'){exportXlsx();return;}
+  else if(a==='gdrive'){exportXlsx('drive');return;}
   else if(a==='aisrc'){if(!(S.sources||[]).length||confirm('Thay danh sách nguồn hiện có bằng bản nháp mới do AI soạn? Các chỉnh sửa của bạn ở danh sách hiện tại sẽ mất.\n\nLưu ý: AI chỉ gợi ý, cần đối chiếu với số liệu thật.'))aiSources(false);return;}
   else if(a==='srcok'){const r=S.sources[+d.i];if(r){r.ai=false;}}
   else if(a==='backup'){backupData();return;}
