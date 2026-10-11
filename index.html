@@ -699,7 +699,7 @@ details[open]>.rks::before{transform:rotate(90deg)}
 .hring{display:flex;flex-direction:column;align-items:center;gap:4px;color:#fff;text-align:center;background:none;border:0;padding:0;cursor:default;font:inherit}
 button.hring{cursor:pointer}
 .hring span{font-size:11px;opacity:.85;font-weight:500;max-width:100px;line-height:1.2}
-.hring-fill{transition:stroke-dashoffset 1.1s cubic-bezier(.22,.8,.3,1);filter:drop-shadow(0 0 6px rgba(255,255,255,.5))}
+.hring-fill{transition:stroke-dashoffset 1.1s cubic-bezier(.22,.8,.3,1);filter:drop-shadow(0 0 3px rgba(255,255,255,.35))}
 .hs-bar{position:relative;height:10px;border-radius:6px;background:rgba(255,255,255,.28)}
 .hs-bar i{display:block;height:100%;border-radius:6px;background:#fff}
 .hs-bar u{position:absolute;top:-3px;width:3px;height:16px;border-radius:2px;background:#FFD27A;transform:translateX(-50%)}
@@ -855,7 +855,7 @@ h2,.sech .st{color:var(--ink)}
 .hring .rbub.r2{animation-duration:7s;animation-delay:1.6s}
 .hring .rbub.r3{animation-duration:6s;animation-delay:3.1s}
 @keyframes rrise{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-22px);opacity:0}}
-.hring text{paint-order:stroke;stroke:rgba(0,50,47,.4);stroke-width:2.5px;stroke-linejoin:round}
+.hring text{filter:drop-shadow(0 1px 3px rgba(0,40,37,.35))}
 @media (prefers-reduced-motion:reduce){.top .bubbles b,.top .shore svg,.hring .rw,.hring .rbub{animation:none}.top .bubbles b{opacity:.45}.hwater{transition:none}}
 
 /* ===== Dải ngày dạng thẻ + vòng tiến độ có núm sáng (theo /krf) ===== */
@@ -876,8 +876,8 @@ h2,.sech .st{color:var(--ink)}
 .dcard[aria-pressed="true"]{background:var(--grad);border-color:transparent}
 .dcard[aria-pressed="true"] .wd,.dcard[aria-pressed="true"] .dn,.dcard[aria-pressed="true"] em{color:var(--on-brand);opacity:1}
 @media (max-width:600px){.dcard{flex-basis:52px;min-height:82px;border-radius:14px}.dcard .dn{font-size:21px}.dcard em{font-size:10px}}
-.hknob{transition:transform 1.1s cubic-bezier(.22,.8,.3,1);filter:drop-shadow(0 0 5px rgba(255,255,255,.95))}
-.hring{filter:drop-shadow(0 6px 14px rgba(0,50,47,.25))}
+.hknob{transition:transform 1.1s cubic-bezier(.22,.8,.3,1);filter:drop-shadow(0 0 3px rgba(255,255,255,.7))}
+.hring{filter:drop-shadow(0 4px 10px rgba(0,50,47,.16))}
 @media (prefers-reduced-motion:reduce){.hknob{transition:none}.dcard:hover{transform:none}}
 
 /* lịch ngày làm việc / lịch nhiệt cùng kiểu thẻ ngày */
@@ -1270,7 +1270,7 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
 .hcta svg{transition:transform .15s}.hcta:hover svg{transform:translateX(3px)}
 @keyframes hctaPulse{0%{box-shadow:0 12px 24px rgba(0,50,47,.30),0 0 0 0 rgba(255,255,255,.55)}70%,100%{box-shadow:0 12px 24px rgba(0,50,47,.30),0 0 0 14px rgba(255,255,255,0)}}
 @media (prefers-reduced-motion:reduce){.hcta{animation:none}}
-#hring .hring svg{filter:drop-shadow(0 0 22px rgba(127,240,192,.42))}
+#hring .hring svg{filter:drop-shadow(0 0 12px rgba(127,240,192,.28))}
 .hdate{margin:0 0 6px}
 @media (max-width:600px){
   .top h1{font-size:40px}
@@ -2955,7 +2955,7 @@ function targetBlock(){
 /* ---------- Khối theo dõi nhanh ở tiêu đề ---------- */
 let hdrSig=null;
 function ringSVG(pct,size,sub,dayKey){
-  size=size||66;const stroke=Math.max(6,Math.round(size*0.09)),r=(size-stroke)/2,cx=size/2,c=2*Math.PI*r,P=Math.min(100,Math.max(0,pct)),off=c*(1-P/100);
+  size=size||66;const stroke=Math.max(4,Math.round(size*0.055)),r=(size-stroke)/2,cx=size/2,c=2*Math.PI*r,P=Math.min(100,Math.max(0,pct)),off=c*(1-P/100);
   const tag=dayKey?'button':'div',attrs=dayKey?' data-act="goDay" data-day="'+dayKey+'"':'';
   const rin=r-stroke/2-1.5,sc=size/100,top=cx+rin-2*rin*P/100,bot=cx+rin+6,uid='hw'+size+(dayKey?'d':'n');
   const wv='M0 0 q12.5 4 25 0 t25 0 t25 0 t25 0 t25 0 t25 0 t25 0 t25 0 V140 H0 Z',wv2='M0 0 q12.5 -4 25 0 t25 0 t25 0 t25 0 t25 0 t25 0 t25 0 t25 0 V140 H0 Z';
@@ -2966,10 +2966,10 @@ function ringSVG(pct,size,sub,dayKey){
     '<circle class="rbub r2" cx="'+(size*0.58).toFixed(1)+'" cy="'+(size*0.4).toFixed(1)+'" r="'+(size*0.024).toFixed(1)+'"/>'+
     '<circle class="rbub r3" cx="'+(size*0.47).toFixed(1)+'" cy="'+(size*0.3).toFixed(1)+'" r="'+(size*0.02).toFixed(1)+'"/></g></g>';
   return '<'+tag+' class="hring"'+attrs+'><svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'">'+
-    '<circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.25)" stroke-width="'+stroke+'"/>'+water+
+    '<circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.18)" stroke-width="'+stroke+'"/>'+water+
     '<circle class="hring-fill" cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="#fff" stroke-width="'+stroke+'" stroke-linecap="round" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+c.toFixed(1)+'" data-off="'+off.toFixed(1)+'" transform="rotate(-90 '+cx+' '+cx+')"/>'+
     '<g class="hknob" data-rot="'+(P*3.6).toFixed(1)+'" style="transform-origin:'+cx+'px '+cx+'px;transform:rotate(0deg);opacity:'+(P>0&&P<100?1:0)+'"><circle cx="'+cx+'" cy="'+(stroke/2)+'" r="'+(stroke*0.62).toFixed(1)+'" fill="#fff"/></g>'+
-        '<text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="'+(size*0.26)+'" font-weight="600">'+Math.round(pct)+'%</text></svg>'+
+        '<text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="'+(size*0.24)+'" font-weight="600" letter-spacing="-.5">'+Math.round(pct)+'%</text></svg>'+
     (sub?'<span>'+sub+'</span>':'')+'</'+tag+'>';
 }
 function animateRings(){
