@@ -527,6 +527,35 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 .wd-p{background:var(--bg);border-radius:14px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
 .wd-pn{font-size:13px;font-weight:600}
 @media (max-width:400px){.wd-big{font-size:30px}}
+/* ---- Đầu trang gọn + ô kế hoạch nhanh theo thu nhập ---- */
+header.top.cmp .htag,header.top.cmp .hcta-row,header.top.cmp .hdate,header.top.cmp .hstat{display:none}
+header.top.cmp #title{margin-bottom:6px}
+.qplan{background:linear-gradient(135deg,#007A73 0%,#02B6AC 100%);color:#fff;border:0;padding:20px 18px 14px;margin-top:-10px;box-shadow:0 14px 30px rgba(0,90,84,.28)}
+.qp-q{font-size:21px;font-weight:600;line-height:1.3}
+.qp-in{display:flex;align-items:center;gap:12px;margin:14px 0 10px;flex-wrap:wrap}
+.qp-in input{width:150px;max-width:55%;font:inherit;font-size:32px;font-weight:600;text-align:right;border:0;border-radius:16px;padding:8px 16px;background:#fff;color:#12222B;box-shadow:0 8px 18px rgba(0,50,47,.25)}
+.qp-in input::placeholder{color:#9db4b2}
+.qp-u{font-weight:600;font-size:16px}
+.qp-chips{display:flex;gap:8px;flex-wrap:wrap}
+.qp-chip{border:1.5px solid rgba(255,255,255,.6);background:transparent;color:#fff;border-radius:999px;padding:6px 16px;font:inherit;font-weight:600;cursor:pointer}
+.qp-chip.on{background:#fff;color:#007A73;border-color:#fff}
+.qp-route{display:flex;align-items:stretch;gap:4px;margin-top:18px}
+.qp-node{flex:1 1 0;min-width:0;background:rgba(255,255,255,.17);border-radius:16px;padding:12px 2px;text-align:center}
+.qp-node b{display:block;font-size:clamp(14px,4vw,24px);line-height:1.1;font-weight:600;white-space:nowrap;letter-spacing:-.01em}
+.qp-node span{display:block;font-size:11.5px;line-height:1.25;margin-top:4px;opacity:.95}
+.qp-arrow{align-self:center;font-style:normal;font-size:22px;opacity:.85;line-height:1}
+.qp-basis{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:12px;font-size:12.5px;opacity:.95}
+.qp-tag{background:#fff;color:#007A73;border-radius:999px;padding:2px 10px;font-weight:600;font-size:12px}
+.qp-cap{margin-top:10px;font-size:12.5px;line-height:1.45;border-radius:10px;padding:7px 10px;background:rgba(255,255,255,.17)}
+.qp-cap.bad{background:#fff1f0;color:#8a1c14}
+.qp-apply{margin-top:12px;border:0;border-radius:999px;background:#fff;color:#007A73;font:inherit;font-weight:600;padding:10px 20px;cursor:pointer;box-shadow:0 10px 20px rgba(0,50,47,.25)}
+.qp-ok{margin-top:12px;font-weight:600;font-size:14px}
+.qp-hint{margin-top:14px;font-size:14px;opacity:.95;line-height:1.5}
+.qp-more{margin-top:14px;border-top:1px solid rgba(255,255,255,.3);padding-top:8px}
+.qp-sum{cursor:pointer;font-size:13.5px;font-weight:600;padding:6px 0}
+.qp-body{background:var(--surface);color:var(--ink);border-radius:14px;padding:14px;margin-top:8px}
+.qp-ref{margin-top:12px;font-size:12.5px;line-height:1.55;color:var(--muted);background:var(--bg);border-radius:10px;padding:10px 12px}
+@media (max-width:480px){.qp-q{font-size:19px}.qp-in input{font-size:28px;width:130px}.qp-node span{font-size:10.5px}.qp-arrow{font-size:16px}}
 .srmore{margin-top:8px}
 .srsum{cursor:pointer;color:var(--brand-deep);font-weight:600;padding:2px 0}
 .aibadge{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#9a6700;margin-bottom:6px}
@@ -3238,6 +3267,7 @@ function renderTabs(){
   const wks=analyze(),n=evalAlerts(wks).filter(a=>!a.dismissed&&a.level!=='info').length;
   $tabs.innerHTML=[['setup','setup','Thiết lập'],['plan','plan','Kế hoạch'],['check','check','Tự soát'],['alerts','bell','Cảnh báo']].map(x=>'<button role="tab" data-act="tab" data-v="'+x[0]+'" aria-selected="'+(S.tab===x[0])+'"><span class="ti">'+ic(x[1],21)+'</span><span class="tl">'+x[2]+'</span>'+(x[0]==='alerts'&&n?'<span class="cnt">'+n+'</span>':'')+'</button>').join('');
   const _mm=S.month.split('-');document.getElementById('title').innerHTML='Tháng '+_mm[1]+'<span class="hm-y">/'+_mm[0]+'</span>';
+  try{const hd=document.querySelector('header.top');if(hd)hd.classList.toggle('cmp',S.tab==='setup');}catch(e){}
   document.getElementById('hdate').innerHTML=headerDate(wks);
   document.getElementById('htag').innerHTML=headerTag(wks);
   document.getElementById('hcta').innerHTML=headerCta();
@@ -3261,7 +3291,7 @@ function heat(weeks,withVal){
 }
 
 /* ---------- Đối chiếu khu vực: đơn nhập TB, nhập lần đầu TB, số cửa hàng cần ghé cho 1 đại lý ---------- */
-function benchCard(weeks){
+function benchCard(weeks,raw){
   const B=S.bench||{},ap=areaPlan(weeks),aov=Math.max(1,+S.aov||20);
   const ord=+B.ord||0,first=+B.first||0,conv=+B.conv||0;
   const effConv=conv>0?Math.min(100,conv):rateEff(),perDealer=100/effConv;
@@ -3290,7 +3320,32 @@ function benchCard(weeks){
       field('conv','Cửa hàng ghé thành đại lý nhập','để trống: dùng phễu ngành (≈ '+fmt(funnel().vpo,0)+' lượt ghé/đơn)',conv,'%','VD: 20','1')+
     '</div><div class="bn-res">'+r1+r2+r3+'</div>'+
     '<div class="note">Đây là số liệu do bạn nhập, không phải số liệu bán hàng thật mà công cụ có sẵn của Livotec.</div>';
+  if(raw)return body;
   return sec('bench',ic('compass',18),'Đối chiếu khu vực','<span class="small muted">ghé ≈ '+fmt(perDealer,1)+' cửa hàng / đại lý</span>',body,false);
+}
+
+/* ---------- Ô đầu trang: thu nhập mong muốn → lộ trình điểm / khách / đơn ---------- */
+function quickPlan(weeks){
+  const income=+S.income||0,rateC=Math.max(0.1,+S.commission||1.5),aov=Math.max(1,+S.aov||20),F=funnel(),B=S.bench||{},ordB=+B.ord||0;
+  const total=(+S.target.bn||0)+(+S.target.gd||0);
+  const chips=[10,15,20,30,50].map(v=>'<button type="button" class="qp-chip'+(income===v?' on':'')+'" data-act="incSet" data-v="'+v+'">'+v+'</button>').join('');
+  let route='';
+  if(income>0){
+    const si=income/(rateC/100),orders=Math.ceil(si/aov),vis=Math.ceil(orders*F.vpo),vpp=Math.max(1,+(S.area||{}).vpp||2);
+    const pts=ordB>0?Math.ceil(orders/ordB):Math.ceil(vis/vpp);
+    const mc=Math.max(1,+S.maxC||6),tw=Math.max(1,weeks.reduce((a,w)=>a+w.work,0)),cap=mc*tw;
+    const node=(n,l)=>'<div class="qp-node"><b>'+n+'</b><span>'+l+'</span></div>',arr='<i class="qp-arrow" aria-hidden="true">›</i>';
+    route='<div class="qp-route">'+node('≈ '+pts,'điểm bán cần đi')+arr+node('≈ '+vis,'lượt gặp khách')+arr+node('≈ '+orders,'đơn cần chốt')+arr+node('≈ '+fmt(si),'triệu doanh số S.I')+'</div>'+
+      '<div class="qp-basis"><span class="qp-tag">'+(ordB>0?'Theo điểm tương đồng':'Gợi ý ban đầu')+'</span><span>'+(ordB>0?'mỗi đại lý '+fmt(ordB,1)+' đơn/tháng · ':'chưa kiểm chứng · ')+'hoa hồng giả định '+fmt(rateC,1)+'% · mỗi đơn ≈ '+fmt(aov,0)+' tr</span></div>'+
+      '<div class="qp-cap '+(vis>cap?'bad':'ok')+'">'+(vis>cap?'⚠ Vượt sức đi: ':'✓ Trong sức đi: ')+'bạn đi tối đa ≈ '+cap+' lượt/tháng ('+mc+' lượt/ngày × '+tw+' ngày), kế hoạch cần '+vis+' lượt.'+(vis>cap?' Với sức đi này, theo các giả định trên bạn đạt khoảng ≈ '+fmt(Math.floor(cap/Math.max(1,F.vpo))*aov)+' tr S.I, tức thu nhập ≈ '+fmt(Math.floor(cap/Math.max(1,F.vpo))*aov*rateC/100,1)+' tr. Hãy đối chiếu giả định hoặc tăng sức đi.':'')+'</div>'+
+      (Math.round(si)!==total?'<button type="button" class="qp-apply" data-act="incApply">Đặt '+fmt(si)+' tr làm chỉ tiêu tháng</button>':'<div class="qp-ok">✓ Đã khớp với chỉ tiêu tháng</div>');
+  }else route='<div class="qp-hint">Nhập số, ví dụ 15, để xem cần đi bao nhiêu điểm, gặp bao nhiêu khách và chốt bao nhiêu đơn.</div>';
+  const refs='<div class="qp-ref"><b>Tham khảo thị trường (khác ngành, không so thẳng):</b> hàng tiêu dùng nhanh kênh GT thường có khoảng 60–75% lượt ghé ra đơn (nguồn: blog phần mềm bán hàng, 2026) và một mẫu KPI tại Việt Nam đặt tối thiểu 8 điểm bán/ngày (AMIS). Hàng điện máy giá trị lớn có tỷ lệ thấp hơn nhiều. <b>Chưa có chuẩn công bố riêng cho điện máy gia dụng qua đại lý</b>, nên hãy nhập số của các điểm tương đồng (cùng quy mô, cùng khu vực) ở dưới. Đây là số tham khảo, cần đối chiếu với thực tế.</div>';
+  const assume='<div class="fieldgrid" style="margin-bottom:10px"><div class="field"><span class="nm">Hoa hồng giả định trên S.I</span><span class="iu"><input class="num sm" type="number" inputmode="decimal" step="0.1" min="0.1" data-f="commission" value="'+rateC+'"><span class="unit">%</span></span></div><div class="field"><span class="nm">Giá trị trung bình mỗi đơn</span><span class="iu"><input class="num sm" type="number" inputmode="numeric" min="1" data-f="aov" value="'+aov+'"><span class="unit">tr</span></span></div></div>';
+  const more='<details class="qp-more" data-sec="qp_more"'+(isOpen('qp_more',false)?' open':'')+'><summary class="qp-sum">Số liệu từ điểm tương đồng và giả định</summary><div class="qp-body">'+assume+benchCard(weeks,true)+refs+'</div></details>';
+  return '<div class="card qplan"><div class="qp-q">Tháng này bạn muốn thu nhập bao nhiêu?</div>'+
+    '<div class="qp-in"><input type="number" inputmode="numeric" min="0" data-f="income" value="'+(income||'')+'" placeholder="15" aria-label="Thu nhập mong muốn mỗi tháng, đơn vị triệu đồng"><span class="qp-u">triệu / tháng</span></div>'+
+    '<div class="qp-chips" role="group" aria-label="Chọn nhanh mức thu nhập">'+chips+'</div>'+route+more+'</div>';
 }
 
 /* ---------- Tab Thiết lập ---------- */
@@ -3325,8 +3380,8 @@ function renderSetup(){
     '<div class="small muted">Tỷ lệ phễu bán hàng (lượt ghé, khách tư vấn, đơn) chỉnh ngay trong mục <b>Để đạt … triệu</b>.</div>'+
   '</div></details></div>';
   const SGS=[
-    {id:'target',label:'Chỉ tiêu',icon:'target',desc:'Nguồn doanh số, thu nhập mong muốn, kiểm tra khả thi và cơ cấu ngành hàng.',cards:[sourcesCard(weeks),incomeCard(weeks),feasCard(weeks),catsCard(tg)],need:false},
-    {id:'area',label:'Địa bàn',icon:'plan',desc:'Điểm bán bạn phụ trách, số liệu đối chiếu khu vực và ngày làm việc.',cards:[areaCard(weeks),benchCard(weeks),daysCard],need:!(+((S.area||{}).pts)||0)},
+    {id:'target',label:'Chỉ tiêu',icon:'target',desc:'Nguồn doanh số, kiểm tra khả thi và cơ cấu ngành hàng.',cards:[sourcesCard(weeks),feasCard(weeks),catsCard(tg)],need:false},
+    {id:'area',label:'Địa bàn',icon:'plan',desc:'Điểm bán bạn phụ trách và ngày làm việc.',cards:[areaCard(weeks),daysCard],need:!(+((S.area||{}).pts)||0)},
     {id:'sys',label:'Hệ thống',icon:'setup',desc:'Tài khoản, nhắc việc, lưu dữ liệu và các thông số tinh chỉnh.',cards:[acctCard(),remCard(),tuneCard],need:!AUTH.user}
   ];
   const sg=SGS.find(g=>g.id===S.sg)||SGS[0];
@@ -3336,7 +3391,7 @@ function renderSetup(){
     '<div class="go-act"><button class="btn" data-act="mkplan" data-m="auto">Tạo tự động<small>Tự chia theo tuần, ngày</small></button><button class="btn ghost" data-act="mkplan" data-m="manual">Tự tạo thủ công<small>Bạn tự chỉnh từng tuần</small></button></div>'+
     '<button class="link go-link" data-act="tab" data-v="plan">Xem kế hoạch hiện tại →</button></div>':
     '<button class="btn" data-act="tab" data-v="plan">Xem kế hoạch của tôi</button>';
-  $app.innerHTML=
+  $app.innerHTML=quickPlan(weeks)+((+S.income||0)>0?aiPanel('income',weeks):'')+
   '<div class="card herocard">'+hero+'</div>'+
   '<div class="card tcard"><div class="tc-head"><h2>Chỉ tiêu S.I tháng này</h2><span class="small muted">Chọn tháng, khu vực và cách chia, rồi nhập tổng chỉ tiêu.</span></div>'+
     '<div class="tc-grid">'+
@@ -3640,6 +3695,16 @@ document.addEventListener('click',function(e){
   else if(a==='notifOff'){S.rem.notif=false;}
   else if(a==='notifTest'){notify('Livotec: thông báo thử','Nếu bạn thấy tin này, thông báo đã hoạt động.','livotec-test');toast('Đã gửi thông báo thử');return;}
   else if(a==='ics'){downloadICS();return;}
+  else if(a==='incSet'){S.income=Math.max(0,+d.v||0);}
+  else if(a==='incApply'){
+    const rateC=Math.max(0.1,+S.commission||1.5),si=Math.round((+S.income||0)/(rateC/100));
+    if(si>0){
+      const cur=(+S.target.bn||0)+(+S.target.gd||0),ratio=cur>0?(+S.target.bn||0)/cur:0.67;
+      S.tt=si;S.plan=null;
+      if(S.strat==='manual'){S.target.bn=Math.round(si*ratio);S.target.gd=si-S.target.bn;}
+      toast('Đã đặt chỉ tiêu tháng '+si+' triệu theo thu nhập mong muốn');
+    }
+  }
   else if(a==='xlsx'){exportXlsx();return;}
   else if(a==='aisrc'){if(!(S.sources||[]).length||confirm('Thay danh sách nguồn hiện có bằng bản nháp mới do AI soạn? Các chỉnh sửa của bạn ở danh sách hiện tại sẽ mất.\n\nLưu ý: AI chỉ gợi ý, cần đối chiếu với số liệu thật.'))aiSources(false);return;}
   else if(a==='srcok'){const r=S.sources[+d.i];if(r){r.ai=false;}}
