@@ -3766,20 +3766,21 @@ function renderPlan(){
   }
   const weekCards='<div class="wtiles" role="group" aria-label="Chọn tuần">'+tilesHtml+'</div><div class="wlegend"><span><i class="lg"></i>kế hoạch</span><span><i class="lg a"></i>đã đạt</span><span><i class="lg h"></i>nặng nhất</span></div>'+detail;
   const modeLine='<div class="row wrapx modeline"><b>Các tuần</b><span>'+(S.plan?'<span class="badge warn">Thủ công</span> <button class="link" data-act="autoplan">Về tự động</button>':'<span class="badge ok">Tự động</span>')+'</span></div>';
-  const charts=sec('plancharts',ic('trend',18),'Biểu đồ và lịch từng ngày','<span class="small muted">chạm để mở</span>',
-    '<div class="small muted"><i class="sw bn"></i>Bình NN <i class="sw gd" style="margin-left:6px"></i>Gia dụng · triệu đồng</div>'+barChart(weeks)+
-    '<div class="h3">Kế hoạch tích lũy</div>'+lineChart(weeks,[{pts:evenPts,color:'var(--muted)',dash:true,w:2},{pts:planPts,color:'var(--brand-deep)',dots:true,w:3}],total)+
-    '<div class="legend"><span style="--c:var(--brand-deep)">Kế hoạch</span><span class="dash" style="--c:var(--muted)">Chia đều theo ngày</span></div>'+
-    '<div class="h3">Mục tiêu từng ngày (triệu)</div>'+heat(weeks));
+  const barCard=sec('chart_bar',ic('trend',18),'Biểu đồ theo tuần','<span class="small muted">chạm để mở</span>',
+    '<div class="small muted"><i class="sw bn"></i>Bình NN <i class="sw gd" style="margin-left:6px"></i>Gia dụng · triệu đồng</div>'+barChart(weeks));
+  const lineCard=sec('chart_line',ic('trend',18),'Kế hoạch tích lũy cả tháng','<span class="small muted">chạm để mở</span>',
+    lineChart(weeks,[{pts:evenPts,color:'var(--muted)',dash:true,w:2},{pts:planPts,color:'var(--brand-deep)',dots:true,w:3}],total)+
+    '<div class="legend"><span style="--c:var(--brand-deep)">Kế hoạch</span><span class="dash" style="--c:var(--muted)">Chia đều theo ngày</span></div>');
+  const heatCard=sec('chart_heat',ic('trend',18),'Mục tiêu từng ngày (triệu)','<span class="small muted">chạm để mở</span>',heat(weeks));
+  const planActions='<div class="row" style="margin:6px 0 12px"><button class="btn ghost sm" data-act="autoplan">Đưa về gợi ý tự động</button><button class="btn sm" data-act="copy">Sao chép kế hoạch</button></div>'+
+    (copyText?'<textarea class="copybox" id="copybox" readonly>'+copyText+'</textarea><div class="small muted">Không sao chép tự động được. Hãy chọn toàn bộ chữ ở trên rồi sao chép.</div>':'');
   const mismatchNote=mismatch?'<div class="note">Tổng các tuần là <b>'+planSum+'</b> tr, chỉ tiêu tháng là <b>'+total+'</b> tr. <button class="link" data-act="autoplan">Đưa về gợi ý tự động</button></div>':'';
   const views={
-    month:overview+mismatchNote+aiPanel('plan',weeks)+exportCard(),
-    week:modeLine+weekCards,
-    day:weekStrip(weeks,curW)+todayCard,
-    more:charts+'<div class="row" style="margin:6px 0 12px"><button class="btn ghost sm" data-act="autoplan">Đưa về gợi ý tự động</button><button class="btn sm" data-act="copy">Sao chép kế hoạch</button></div>'+
-      (copyText?'<textarea class="copybox" id="copybox" readonly>'+copyText+'</textarea><div class="small muted">Không sao chép tự động được. Hãy chọn toàn bộ chữ ở trên rồi sao chép.</div>':'')
+    month:overview+mismatchNote+lineCard+aiPanel('plan',weeks)+exportCard()+planActions,
+    week:modeLine+weekCards+barCard,
+    day:weekStrip(weeks,curW)+todayCard+heatCard
   };
-  const PV=[['month','plan','Tháng'],['week','target','Tuần'],['day','check','Ngày'],['more','trend','Biểu đồ']];
+  const PV=[['month','plan','Tháng'],['week','target','Tuần'],['day','check','Ngày']];
   if(!views[S.pv])S.pv='month';
   const pvTabs='<div class="wk" role="tablist" aria-label="Xem kế hoạch theo" style="margin:0 0 10px">'+PV.map(x=>'<button type="button" class="chip" role="tab" data-act="pv" data-v="'+x[0]+'" aria-pressed="'+(S.pv===x[0])+'" aria-selected="'+(S.pv===x[0])+'">'+ic(x[1],15)+' '+x[2]+'</button>').join('')+'</div>';
   $app.innerHTML=pvTabs+views[S.pv];
