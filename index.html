@@ -2881,7 +2881,7 @@ function acctCard(){
       '<div class="remrow"><div class="rl"><b>Nhận email</b><div class="small muted">Gửi tới '+escH(A.user.email)+'. Giờ gửi theo mục "Nhắc việc".</div></div>'+sw('on')+'</div>'+
       (R.on?row('morning','Sáng: kết quả hôm qua',['Tham khảo','ok'],'Chỉ khi hôm qua là ngày làm việc')+
         row('evening','Tối: nhắc nhập số liệu',['Nhắc','warn'],'Chỉ khi hôm nay chưa nhập')+
-        row('warn','Cảnh báo rủi ro cao',['Cảnh báo','bad'],'Gộp vào email buổi sáng, không lặp lại hằng ngày')+
+        row('warn','Khuyến nghị rủi ro cao',['Khuyến nghị','bad'],'Gộp vào email buổi sáng, không lặp lại hằng ngày')+
         row('weekly','Tổng kết tuần (thứ Hai)',['Tham khảo','ok'],'Kết quả tuần trước so với kế hoạch')+
         '<div class="askrow"><button class="btn ghost sm" data-act="acMailTest">Gửi email thử</button></div>':'')+'</div>'+
       '<div class="small muted" style="margin-top:10px">Khi đăng nhập, dữ liệu của bạn được lưu thêm trên máy chủ của ứng dụng để đồng bộ và gửi email. Trong ứng dụng, chỉ bạn xem được dữ liệu của mình; người quản trị hệ thống có quyền truy cập kho lưu trữ. Không có bảng xếp hạng giữa các SR.</div>'+
@@ -3361,7 +3361,7 @@ const AICON={bad:ic('alertOct',22),warn:ic('warnTri',22),info:ic('infoCirc',22)}
 function alertItem(a){return '<div class="al '+a.level+'"><div class="ic">'+AICON[a.level]+'</div><div class="bd"><b>'+a.title+'</b><div class="small">'+a.text+'</div><div class="small muted">'+a.act+'</div></div><button class="link" data-act="dismiss" data-k="'+a.k+'">Ẩn</button></div>';}
 function banner(weeks){
   const act=evalAlerts(weeks).filter(a=>!a.dismissed);if(!act.length)return '';
-  return '<div class="card"><div class="row"><h2>'+ic('bell',18)+' Cảnh báo ('+act.length+')</h2><button class="btn ghost sm" data-act="tab" data-v="alerts">Xem tất cả</button></div>'+act.slice(0,2).map(alertItem).join('')+'</div>';
+  return '<div class="card"><div class="row"><h2>'+ic('bell',18)+' Khuyến nghị ('+act.length+')</h2><button class="btn ghost sm" data-act="tab" data-v="alerts">Xem tất cả</button></div>'+act.slice(0,2).map(alertItem).join('')+'</div>';
 }
 
 /* ---------- Thành phần trực quan ---------- */
@@ -3436,7 +3436,7 @@ const monthName=m=>'Tháng '+m.split('-')[1]+'/'+m.split('-')[0];
 const $app=document.getElementById('app'),$tabs=document.getElementById('tabs');
 function renderTabs(){
   const wks=analyze(),n=evalAlerts(wks).filter(a=>!a.dismissed&&a.level!=='info').length;
-  $tabs.innerHTML=[['setup','setup','Thiết lập'],['plan','plan','Kế hoạch'],['check','check','Tự soát'],['alerts','bell','Cảnh báo']].map(x=>'<button role="tab" data-act="tab" data-v="'+x[0]+'" aria-selected="'+(S.tab===x[0])+'"><span class="ti">'+ic(x[1],21)+'</span><span class="tl">'+x[2]+'</span>'+(x[0]==='alerts'&&n?'<span class="cnt">'+n+'</span>':'')+'</button>').join('');
+  $tabs.innerHTML=[['setup','setup','Thiết lập'],['plan','plan','Kế hoạch'],['check','check','Tự soát'],['alerts','bell','Khuyến nghị']].map(x=>'<button role="tab" data-act="tab" data-v="'+x[0]+'" aria-selected="'+(S.tab===x[0])+'"><span class="ti">'+ic(x[1],21)+'</span><span class="tl">'+x[2]+'</span>'+(x[0]==='alerts'&&n?'<span class="cnt">'+n+'</span>':'')+'</button>').join('');
   const _mm=S.month.split('-');document.getElementById('title').innerHTML='Tháng '+_mm[1]+'<span class="hm-y">/'+_mm[0]+'</span>';
   try{const hd=document.querySelector('header.top');if(hd)hd.classList.toggle('cmp',S.tab==='setup');}catch(e){}
   document.getElementById('hdate').innerHTML=headerDate(wks);
@@ -3655,7 +3655,7 @@ function statTiles(weeks){
   return '<div class="stattiles">'+
     tile('brand','target',fmt(total)+' tr','Chỉ tiêu tháng')+
     tile('ok','trend',fmt(ach)+' tr','Đã đạt')+
-    tile(al>0?'bad':'ok','bell',al,'Cảnh báo')+
+    tile(al>0?'bad':'ok','bell',al,'Khuyến nghị')+
     tile('muted','plan',remDays,'Ngày còn lại')+
   '</div>';
 }
@@ -3841,11 +3841,11 @@ function renderAlertsTab(){
   const rules=RLV.map(g=>{const rs=RULES.filter(r=>r.level===g[0]);if(!rs.length)return '';const onN=rs.filter(r=>S.rules[r.id].on).length;
     return '<div class="rgroup lv-'+g[0]+'"><div class="rg-h"><i class="rg-dot"></i><b>'+g[1]+'</b><span class="small muted">'+g[2]+'</span><span class="rg-n">'+onN+'/'+rs.length+' bật</span></div><div class="rgrid">'+rs.map(ruleTile).join('')+'</div></div>';}).join('');
   $app.innerHTML=
-  '<div class="card"><h2>'+ic('bell',18)+' Cảnh báo đang có</h2><div class="small muted">Chỉ bạn thấy.</div>'+DISC+list+
+  '<div class="card"><h2>'+ic('bell',18)+' Khuyến nghị đang có</h2><div class="small muted">Chỉ bạn thấy.</div>'+DISC+list+
     (hid.length?'<details><summary class="small">Đã ẩn ('+hid.length+')</summary><button class="btn ghost sm" data-act="undismiss">Hiện lại tất cả</button></details>':'')+'</div>'+
   aiPanel('alerts',weeks)+
   sec('alertcfg',ic('bell',18),'Tùy chỉnh cảnh báo','<span class="small muted">chạm để mở</span>','<div class="h3">Mức độ nhạy</div><div class="small muted">Chọn nhanh bộ ngưỡng, sau đó chỉnh từng quy tắc bên dưới nếu muốn.</div><div class="preset">'+pr.map(x=>'<button data-act="preset" data-v="'+x[0]+'" aria-pressed="'+(S.preset===x[0])+'">'+x[1]+'<small>'+x[2]+'</small></button>').join('')+'</div>'+'<div class="h3" style="margin-top:14px">Quy tắc cảnh báo</div><div class="small muted">Bật hoặc tắt từng quy tắc và đặt ngưỡng phù hợp với đặc thù công việc của bạn.</div>'+rules,false)+
-  '<div class="note">Cảnh báo được tính lại mỗi khi bạn mở công cụ hoặc nhập số liệu. Công cụ chưa gửi được thông báo đẩy khi đóng ứng dụng.</div>';
+  '<div class="note">Khuyến nghị được tính lại mỗi khi bạn mở công cụ hoặc nhập số liệu. Công cụ chưa gửi được thông báo đẩy khi đóng ứng dụng.</div>';
 }
 
 let bannerSig=null;
