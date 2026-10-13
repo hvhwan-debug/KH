@@ -1298,18 +1298,15 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
 .aitbl th+th,.aitbl td+td{border-left:1px solid var(--cx-line)}
 
 /* ===== Bố cục hero: khối chữ bên trái, vòng tròn + minh hoạ tăng trưởng bên phải, nút tài khoản ở góc banner ===== */
-.acctFab{position:absolute;top:18px;right:18px;left:auto;z-index:4}
-.top .topin{display:flex;align-items:center;justify-content:space-between;gap:28px;padding:0 6px}
+.acctFab{position:absolute;top:0;right:6px;left:auto;z-index:4}
+.top .topin{position:relative;display:flex;align-items:center;justify-content:space-between;gap:28px;padding:0 6px}
 .heroflex{position:static;width:auto;max-width:none;margin:0;padding-right:0;flex:1 1 380px;min-width:0}
 .heroside{flex:0 0 auto;display:flex;align-items:center;gap:16px}
 #hring{position:static}
-.heroart{display:block;width:150px;height:auto;flex:0 0 auto;filter:drop-shadow(0 10px 20px rgba(0,30,28,.22))}
-.heroart .sparkle{transform-box:fill-box;transform-origin:center;animation:heroTwinkle 2.6s ease-in-out infinite}
-.heroart .sparkle.s2{animation-delay:.8s}
-.heroart .sparkle.s3{animation-delay:1.5s}
-@keyframes heroTwinkle{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1.2)}}
-@media (prefers-reduced-motion:reduce){.heroart .sparkle{animation:none;opacity:.85}}
-@media (max-width:860px){.heroart{display:none}}
+@media (min-width:860px){
+  .top{background-image:linear-gradient(90deg,rgba(3,36,33,.68) 0%,rgba(3,36,33,.38) 38%,rgba(3,36,33,.06) 62%),url('hero-bg.jpg');background-size:cover;background-position:center;background-repeat:no-repeat}
+  .top::after{display:none}
+}
 @media (max-width:600px){
   .acctFab{top:14px;right:14px;left:auto}
   .top .topin{padding-left:0;gap:14px}
@@ -1321,8 +1318,8 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
 <body>
 <div class="stickyhead">
 <header class="top">
-  <button class="acctFab" id="acctFab" data-act="acctOpen" aria-label="Tài khoản &amp; đăng nhập"></button>
   <div class="topin">
+  <button class="acctFab" id="acctFab" data-act="acctOpen" aria-label="Tài khoản &amp; đăng nhập"></button>
   <div class="heroflex">
     <div class="pill"><img class="brandmark" src="icon-192.png" alt="" width="22" height="22">Trợ lí thiết lập kế hoạch bán hàng · SR kênh GT</div>
     <h1 id="title">Kế hoạch bán hàng tháng</h1>
@@ -1333,39 +1330,6 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   </div>
   <div class="heroside">
     <div id="hring"></div>
-    <svg class="heroart" viewBox="0 0 300 200" aria-hidden="true">
-      <defs>
-        <linearGradient id="stepG1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".34"/><stop offset="1" stop-color="#fff" stop-opacity=".08"/></linearGradient>
-        <linearGradient id="stepG2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity=".12"/></linearGradient>
-        <linearGradient id="stepG3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".52"/><stop offset="1" stop-color="#fff" stop-opacity=".16"/></linearGradient>
-        <radialGradient id="dotGlow"><stop offset="0" stop-color="#7FF0C0" stop-opacity=".95"/><stop offset="1" stop-color="#7FF0C0" stop-opacity="0"/></radialGradient>
-        <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      </defs>
-      <rect x="14" y="132" width="62" height="54" rx="10" fill="url(#stepG1)"/>
-      <path d="M18 136 L50 131 L46 150 L18 157 Z" fill="#fff" opacity=".16"/>
-      <rect x="96" y="96" width="62" height="90" rx="10" fill="url(#stepG2)"/>
-      <path d="M100 100 L132 95 L128 121 L100 131 Z" fill="#fff" opacity=".18"/>
-      <rect x="178" y="48" width="62" height="138" rx="10" fill="url(#stepG3)"/>
-      <path d="M182 52 L214 47 L210 81 L182 91 Z" fill="#fff" opacity=".2"/>
-      <circle cx="45" cy="159" r="13" fill="none" stroke="#fff" stroke-width="2"/>
-      <circle cx="45" cy="159" r="4.5" fill="#fff"/>
-      <rect x="117" y="118" width="20" height="26" rx="3" fill="none" stroke="#fff" stroke-width="2"/>
-      <path d="M122 126h10M122 132h10M122 138h6" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
-      <circle cx="209" cy="68" r="15" fill="none" stroke="#fff" stroke-width="2"/>
-      <path d="M202 68 l5 6 l11 -13" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="45" cy="146" r="10" fill="url(#dotGlow)"/>
-      <circle cx="127" cy="112" r="10" fill="url(#dotGlow)"/>
-      <circle cx="209" cy="48" r="12" fill="url(#dotGlow)"/>
-      <path d="M45 146 C 78 112, 90 98, 127 112 C 160 124, 172 58, 209 48" fill="none" stroke="#7FF0C0" stroke-width="2.6" stroke-dasharray="1 7" stroke-linecap="round" filter="url(#softGlow)"/>
-      <circle cx="45" cy="146" r="4" fill="#fff"/>
-      <circle cx="127" cy="112" r="4" fill="#fff"/>
-      <circle cx="209" cy="48" r="5.5" fill="#fff"/>
-      <line x1="232" y1="20" x2="232" y2="48" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
-      <path d="M232 20 l22 7 l-22 7 Z" fill="#7FF0C0" filter="url(#softGlow)"/>
-      <path class="sparkle s1" d="M258 16 l3 9 9 3 -9 3 -3 9 -3 -9 -9 -3 9 -3 Z" fill="#fff"/>
-      <path class="sparkle s2" d="M271 72 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2 Z" fill="#7FF0C0"/>
-      <path class="sparkle s3" d="M16 108 l1.6 5 5 1.6 -5 1.6 -1.6 5 -1.6 -5 -5 -1.6 5 -1.6 Z" fill="#fff"/>
-    </svg>
   </div>
   </div>
 
