@@ -2730,7 +2730,7 @@ function factorsCard(weeks,mode){
 }
 
 /* ---------- Tài khoản, đồng bộ, email ---------- */
-let AUTH={avail:null,user:null,busy:false,email:'',msg:'',ackOff:false,isAdmin:false,forgot:false,forgotMsg:'',forgotBusy:false,resetToken:null,resetMsg:'',resetBusy:false,sync:{st:'idle',msg:'',conflict:false}};
+let AUTH={avail:null,user:null,busy:false,email:'',name:'',msg:'',ackOff:false,isAdmin:false,forgot:false,forgotMsg:'',forgotBusy:false,resetToken:null,resetMsg:'',resetBusy:false,sync:{st:'idle',msg:'',conflict:false}};
 let syncTimer=null,syncBusy=false,syncDirty=false,lastCheck=0;
 const TOKEN_KEY='livotec-sr-token';
 function getToken(){try{return localStorage.getItem(TOKEN_KEY)||'';}catch(e){return '';}}
@@ -2770,7 +2770,7 @@ async function authInit(){
   try{
     const r=await api('GET','/api/auth/me');
     if(r.s!==200||!r.j.avail){AUTH.avail=false;AUTH.user=null;}
-    else{AUTH.avail=true;AUTH.user=r.j.loggedIn?{email:r.j.email}:null;AUTH.isAdmin=!!r.j.isAdmin;}
+    else{AUTH.avail=true;AUTH.user=r.j.loggedIn?{email:r.j.email,name:r.j.name||''}:null;AUTH.isAdmin=!!r.j.isAdmin;}
   }catch(e){AUTH.avail=false;AUTH.user=null;}
   if(AUTH.user)await syncPull();
   softRender();
@@ -2837,14 +2837,15 @@ async function syncCheck(){
   }catch(e){}
 }
 async function acReq(){
-  const elE=document.getElementById('acEmail'),elP=document.getElementById('acPass');
+  const elN=document.getElementById('acName'),elE=document.getElementById('acEmail'),elP=document.getElementById('acPass');
+  const name=((elN&&elN.value)||'').trim().slice(0,80);
   const email=((elE&&elE.value)||AUTH.email||'').trim().toLowerCase();
   const password=(elP&&elP.value)||'';
   if(!/^\S+@\S+\.\S+$/.test(email)){AUTH.msg='Nhập email hợp lệ.';render();return;}
   if(password.length<6){AUTH.msg='Mật khẩu cần ít nhất 6 ký tự.';render();return;}
-  AUTH.busy=true;AUTH.email=email;AUTH.msg='Đang kiểm tra…';render();
+  AUTH.busy=true;AUTH.email=email;AUTH.name=name;AUTH.msg='Đang kiểm tra…';render();
   try{
-    const r=await api('POST','/api/auth/request',{email:email,password:password});
+    const r=await api('POST','/api/auth/request',{email:email,password:password,name:name});
     AUTH.busy=false;
     if(r.s===200){if(r.j.token)setToken(r.j.token);AUTH.msg='';await authInit();toast(r.j.created?'Đã tạo tài khoản và đăng nhập':'Đã đăng nhập');return;}
     AUTH.msg=r.j.error||'Không đăng nhập được.';
@@ -2920,7 +2921,8 @@ function acctData(){
     }else{
       const msg=A.msg?'<div class="small" style="margin-top:6px;color:var(--muted)">'+escH(A.msg)+'</div>':'';
       body='<div class="small muted">Đăng nhập để lưu dữ liệu trên máy chủ và dùng được nhiều thiết bị. Nhập email và tự đặt mật khẩu — nếu email này chưa có tài khoản, hệ thống tự tạo tài khoản mới với mật khẩu bạn vừa nhập.</div>'+
-        '<input id="acEmail" class="txt" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="Email của bạn" value="'+escH(A.email)+'" aria-label="Email">'+
+        '<input id="acName" class="txt" type="text" autocomplete="name" maxlength="80" placeholder="Họ tên của bạn" value="'+escH(A.name)+'" aria-label="Họ tên" style="margin-top:8px">'+
+        '<input id="acEmail" class="txt" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="Email của bạn" value="'+escH(A.email)+'" aria-label="Email" style="margin-top:8px">'+
         '<input id="acPass" class="txt" type="password" autocomplete="current-password" maxlength="200" placeholder="Mật khẩu (ít nhất 6 ký tự)" aria-label="Mật khẩu" style="margin-top:8px">'+
         '<div class="askrow"><button class="btn sm" data-act="acReq"'+(A.busy?' disabled':'')+'>Đăng nhập / Đăng ký</button><button class="link" data-act="acForgotOpen">Quên mật khẩu?</button></div>'+msg;
     }
@@ -2929,7 +2931,7 @@ function acctData(){
     sum='<span class="badge '+(st==='err'?'bad':'ok')+'">'+(st==='err'?'Lỗi đồng bộ':'Đã đăng nhập')+'</span>';
     const sw=k=>'<button class="sw2" role="switch" aria-checked="'+!!R[k]+'" data-act="mailTog" data-k="'+k+'" aria-label="Bật tắt"></button>';
     const row=(k,lab,tag,sub)=>'<div class="remrow"><div class="rl"><b>'+lab+'</b> <span class="badge '+tag[1]+'">'+tag[0]+'</span><div class="small muted">'+sub+'</div></div>'+sw(k)+'</div>';
-    body='<div class="remrow" style="border-top:0"><div class="rl"><b>'+escH(A.user.email)+'</b><div class="small'+(st==='err'?'':' muted')+'"'+(st==='err'?' style="color:var(--bad)"':'')+'>'+escH(A.sync.msg||'')+'</div></div><button class="btn ghost sm" data-act="acSync">Đồng bộ ngay</button></div>'+
+    body='<div class="remrow" style="border-top:0"><div class="rl"><b>'+escH(A.user.name||A.user.email)+'</b>'+(A.user.name?'<div class="small muted">'+escH(A.user.email)+'</div>':'')+'<div class="small'+(st==='err'?'':' muted')+'"'+(st==='err'?' style="color:var(--bad)"':'')+'>'+escH(A.sync.msg||'')+'</div></div><button class="btn ghost sm" data-act="acSync">Đồng bộ ngay</button></div>'+
       '<div class="remblk"><b>Email tự động</b>'+
       '<div class="remrow"><div class="rl"><b>Nhận email</b><div class="small muted">Gửi tới '+escH(A.user.email)+'. Giờ gửi theo mục "Nhắc việc".</div></div>'+sw('on')+'</div>'+
       (R.on?row('morning','Sáng: kết quả hôm qua',['Tham khảo','ok'],'Chỉ khi hôm qua là ngày làm việc')+
@@ -2995,7 +2997,7 @@ function renderAdminSheet(){
     else{
       const doc=ADMIN.detail||{},st=doc.state||{},target=st.target||{},total=(+target.bn||0)+(+target.gd||0);
       body='<div class="askrow" style="margin-bottom:6px"><button class="link" data-act="adminBack">← Quay lại danh sách</button></div>'+
-        '<div class="remrow" style="border-top:0"><div class="rl"><b>'+escH(doc.email||'')+'</b><div class="small muted">Mã: '+escH(doc.uid||ADMIN.detailUid)+'</div></div></div>'+
+        '<div class="remrow" style="border-top:0"><div class="rl"><b>'+escH(doc.name||doc.email||'')+'</b><div class="small muted">'+(doc.name?escH(doc.email||'')+' · ':'')+'Mã: '+escH(doc.uid||ADMIN.detailUid)+'</div></div></div>'+
         '<div class="fieldgrid" style="margin-top:4px">'+
           '<div class="field"><span class="nm small">Tháng đang thiết lập</span><b>'+escH(st.month||'—')+'</b></div>'+
           '<div class="field"><span class="nm small">Chỉ tiêu S.I</span><b>'+(total?fmt(total)+' tr':'—')+'</b></div>'+
@@ -3014,7 +3016,7 @@ function renderAdminSheet(){
     const users=ADMIN.users||[];
     body='<div class="small muted" style="margin-bottom:8px">'+users.length+' thành viên đã có dữ liệu trên máy chủ.</div>'+
       (users.length?users.map(u=>'<div class="remrow" data-act="adminView" data-uid="'+escH(u.uid)+'" style="cursor:pointer">'+
-        '<div class="rl"><b>'+escH(u.email||u.uid)+'</b><div class="small muted">'+(u.total?fmt(u.total)+' tr · ':'')+(u.province?escH(u.province)+' · ':'')+(u.updatedAt?'cập nhật '+hhmm(u.updatedAt):'chưa có hoạt động')+'</div></div>'+
+        '<div class="rl"><b>'+escH(u.name||u.email||u.uid)+'</b><div class="small muted">'+(u.name?escH(u.email)+' · ':'')+(u.total?fmt(u.total)+' tr · ':'')+(u.province?escH(u.province)+' · ':'')+(u.updatedAt?'cập nhật '+hhmm(u.updatedAt):'chưa có hoạt động')+'</div></div>'+
         '<span class="small muted">Xem →</span></div>').join(''):'<div class="empty"><div class="muted">Chưa có thành viên nào.</div></div>');
   }
   el.innerHTML=head+body;

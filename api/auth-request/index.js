@@ -12,6 +12,7 @@ module.exports = async function (context, req) {
     if (guardConfigured(context) || !requireAjax(context, req)) return;
     const email = String((req.body && req.body.email) || "").trim().toLowerCase();
     const password = String((req.body && req.body.password) || "");
+    const name = String((req.body && req.body.name) || "").trim().slice(0, 80);
     if (!validEmail(email)) return reply(context, 400, { ok: false, error: "Email không hợp lệ." });
     if (!emailAllowed(email)) return reply(context, 403, { ok: false, error: "Email này chưa được cấp quyền sử dụng ứng dụng." });
     if (password.length < 6) return reply(context, 400, { ok: false, error: "Mật khẩu cần ít nhất 6 ký tự." });
@@ -22,15 +23,16 @@ module.exports = async function (context, req) {
 
     // Chưa có tài khoản, hoặc tài khoản cũ (thời đăng nhập bằng mã email) chưa có mật khẩu: tạo mật khẩu lần đầu này.
     if (!ud) {
-      ud = { v: 1, uid, email, rev: 0, state: null, digest: null, prefs: {}, sent: {}, pwd: pwd.hash(password) };
+      ud = { v: 1, uid, email, name, rev: 0, state: null, digest: null, prefs: {}, sent: {}, pwd: pwd.hash(password) };
       await store.put(ukey, ud);
-      return reply(context, 200, { ok: true, created: true, email, token: sessionValue(email) }, { "Set-Cookie": sessionCookie(email) });
+      return reply(context, 200, { ok: true, created: true, email, name, token: sessionValue(email) }, { "Set-Cookie": sessionCookie(email) });
     }
     if (!ud.pwd) {
       ud.email = email;
+      if (name) ud.name = name;
       ud.pwd = pwd.hash(password);
       await store.put(ukey, ud);
-      return reply(context, 200, { ok: true, created: true, email, token: sessionValue(email) }, { "Set-Cookie": sessionCookie(email) });
+      return reply(context, 200, { ok: true, created: true, email, name: ud.name || "", token: sessionValue(email) }, { "Set-Cookie": sessionCookie(email) });
     }
 
     const now = Date.now();
@@ -43,8 +45,10 @@ module.exports = async function (context, req) {
       return reply(context, 400, { ok: false, error: "Email hoặc mật khẩu không đúng." });
     }
 
-    if (ud.failTimes.length) { ud.failTimes = []; await store.put(ukey, ud); }
-    return reply(context, 200, { ok: true, created: false, email, token: sessionValue(email) }, { "Set-Cookie": sessionCookie(email) });
+    if (ud.failTimes.length) ud.failTimes = [];
+    if (name && name !== ud.name) ud.name = name; // cho phép cập nhật/sửa tên khi đăng nhập lại
+    await store.put(ukey, ud);
+    return reply(context, 200, { ok: true, created: false, email, name: ud.name || "", token: sessionValue(email) }, { "Set-Cookie": sessionCookie(email) });
   } catch (e) {
     context.log.error("auth-request", e && e.message);
     return reply(context, 500, { ok: false, error: "Có lỗi xảy ra. Thử lại sau." });

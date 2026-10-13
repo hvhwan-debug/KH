@@ -23,6 +23,7 @@ module.exports = async function (context, req) {
       users.push({
         uid: doc.uid || k.replace(/^user\//, "").replace(/\.json$/, ""),
         email: doc.email || "",
+        name: doc.name || "",
         updatedAt: doc.updatedAt || null,
         rev: doc.rev || 0,
         month: st.month || null,
