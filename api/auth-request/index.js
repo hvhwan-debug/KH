@@ -47,6 +47,6 @@ module.exports = async function (context, req) {
     return reply(context, 200, { ok: true, created: false, email, token: sessionValue(email) }, { "Set-Cookie": sessionCookie(email) });
   } catch (e) {
     context.log.error("auth-request", e && e.message);
-    return reply(context, 500, { ok: false, error: "Lỗi (tạm hiện để chẩn đoán): " + (e && e.message ? e.message : String(e)) });
+    return reply(context, 500, { ok: false, error: "Có lỗi xảy ra. Thử lại sau." });
   }
 };
