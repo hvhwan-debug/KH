@@ -142,11 +142,14 @@ svg text{font-family:inherit}
 
 .tabs button{font-size:13px;padding:10px 2px;position:relative}
 .tabs .cnt{display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:9px;background:var(--bad);color:var(--on);font-size:11px;font-weight:600;margin-left:4px;padding:0 5px}
-.al{display:flex;gap:12px;align-items:flex-start;border-radius:14px;padding:12px;margin:8px 0;background:var(--bg);border-left:5px solid var(--muted)}
-.al.bad{background:var(--bad-soft);border-left-color:var(--bad)}
-.al.warn{background:var(--warn-soft);border-left-color:var(--warn)}
-.al.info{background:var(--bn-soft);border-left-color:var(--bn)}
-.al .ic{font-size:22px;line-height:1.2}
+.al{display:flex;gap:12px;align-items:flex-start;border-radius:16px;padding:14px;margin:10px 0;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--muted);box-shadow:var(--shadow,none)}
+.al.bad{border-left-color:var(--bad)}
+.al.warn{border-left-color:var(--warn)}
+.al.info{border-left-color:var(--bn)}
+.al .ic{flex:0 0 auto;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--muted);line-height:1}
+.al.bad .ic{background:var(--bad-soft);color:var(--bad)}
+.al.warn .ic{background:var(--warn-soft);color:var(--warn)}
+.al.info .ic{background:var(--bn-soft);color:var(--bn)}
 .al .bd{flex:1;min-width:0}
 .al .bd .small{margin-top:2px}
 .sw2{width:52px;height:30px;border-radius:15px;border:0;background:var(--line);position:relative;cursor:pointer;flex:0 0 auto;transition:background .15s}
@@ -2014,7 +2017,6 @@ function histCard(){
 }
 /* ---------- AI soạn bản nháp "Nguồn doanh số" (luôn kèm cảnh báo cần đối chiếu) ---------- */
 let srcAiBusy=false;
-const SRC_WARN_LONG='⚠ BẢN NHÁP — CẦN ĐỐI CHIẾU TRƯỚC KHI GỬI: các dòng đánh dấu 🤖 do AI (hoặc quy tắc mẫu) gợi ý từ dữ liệu SR đã nhập và hiểu biết chung về Livotec. AI không biết số liệu thật của từng đại lý/điểm bán, nên tên, số tiền, độ tin cậy và tuần dự kiến chỉ là giả định. SR cần sửa theo thực tế và xác nhận với quản lý.';
 function srcPrompt(weeks){
   const n=weeks.length,bn=+S.target.bn||0,gd=+S.target.gd||0;
   return 'NHIỆM VỤ: soạn BẢN NHÁP bảng "Nguồn doanh số" để SR kênh GT dùng ngay và gửi quản lý. Chia chỉ tiêu bình nước nóng '+bn+' tr và gia dụng & điện máy '+gd+' tr thành 5–8 dòng nguồn.\n'+
@@ -2184,7 +2186,7 @@ function xlBuildBook(){
   let appAct=0;weeks.forEach(w=>{const a=S.actual[w.key];if(a)appAct+=(a.bn||0)+(a.gd||0);});
   const mm=S.month.split('-'),mlabel=mm[1]+'/'+mm[0],now=new Date();
   const dstr=pad(now.getDate())+'/'+pad(now.getMonth()+1)+'/'+now.getFullYear();
-  const hasAi=src.some(x=>x.ai),o=hasAi?1:0;
+  const hasAi=src.some(x=>x.ai),o=0;
   const aovM=Math.max(1,+S.aov||20),season=Math.max(1,+S.season||100),maxC=Math.max(1,+S.maxC||6);
   const tk=todayKey(),workD=weeks.reduce((a,w)=>a+w.work,0);
   const remD=S.month===monthKey(0)?weeks.reduce((a,w)=>a+w.days.filter(d=>!d.off&&d.date>=tk).length,0):workD;
@@ -2296,7 +2298,8 @@ function xlBuildBook(){
   const actV=Lv>0?Lv:appAct*M,kpi=tp('kpi');
   const rM=x=>'ROUND(('+x+')/1000000,0)';
   s1.merge(0,0,0,NC-4,st.title).set(0,0,Object.assign(cat([{t:'BẢNG KẾ HOẠCH & BÁO CÁO BÁN HÀNG THÁNG '},{f:tp('month'),v:mlabel},{t:' - SR (ONE-PAGE SALES PLAN)'}]),{s:st.title})).height(0,34);
-  s1.merge(0,NC-3,0,NC-1,st.meta).set(0,NC-3,Object.assign(cat([{f:'IF('+tp('prov')+'="","",'+Q('Tỉnh/TP: ')+'&'+tp('prov')+'&'+Q('  ·  ')+')',v:S.province?'Tỉnh/TP: '+S.province+'  ·  ':''},{t:'Xuất ngày '},{f:tp('date'),v:dstr}]),{s:st.meta}));
+  const nmExp=(typeof AUTH!=='undefined'&&AUTH.user&&AUTH.user.name)?AUTH.user.name:'';
+  s1.merge(0,NC-3,0,NC-1,st.meta).set(0,NC-3,Object.assign(cat([{t:nmExp?'Họ tên: '+nmExp+'  ·  ':''},{f:'IF('+tp('prov')+'="","",'+Q('Tỉnh/TP: ')+'&'+tp('prov')+'&'+Q('  ·  ')+')',v:S.province?'Tỉnh/TP: '+S.province+'  ·  ':''},{t:'Xuất ngày '},{f:tp('date'),v:dstr}]),{s:st.meta}));
   s1.merge(1,0,1,NC-1,st.sub).set(1,0,Object.assign(cat([{t:'Mục tiêu: Phân rã KPI '},{f:rM(kpi)+'&"M"',v:Mv(kpiV)+'M'},{t:' theo Ngành hàng & Nguồn doanh số • Đánh giá độ tin cậy (Xanh - Vàng - Đỏ) • Phân bổ '+weeks.map((w,i)=>'W'+(i+1)).join('-')+' • Kiểm soát Gap & Kế hoạch bù (Plan B)'}]),{s:st.sub})).height(1,22);
   const rest=NC-6,g=[2,2,2];const base=Math.floor(rest/3),ex=rest-base*3;g.push(base+(ex>0?1:0),base+(ex>1?1:0),base);
   const bounds=[];let c0=0;g.forEach(w=>{bounds.push([c0,c0+w-1]);c0+=w;});
@@ -2313,7 +2316,7 @@ function xlBuildBook(){
     ['TIẾN ĐỘ THỰC HIỆN',{f:'IF('+cardV+'=0,"",'+cardA+'/'+cardV+')',v:kpiV?actV/kpiV:'',s:st.cardP},{v:'Tỷ lệ hoàn thành KPI'}]
   ];
   // caption 3 dùng công thức riêng
-  cardsDef[2][2]=cat([{f:'IF('+Ftot+'=0,'+Q('Tỷ lệ an toàn vs rủi ro')+','+Q('Chắc chắn ')+'&ROUND('+xan+'/'+Ftot+'*100,0)&'+Q('% kế hoạch'+(hasAi?' (gồm số AI gợi ý, cần đối chiếu)':' (an toàn vs rủi ro)'))+')',v:Fv?'Chắc chắn '+Math.round(vG/Fv*100)+'% kế hoạch'+(hasAi?' (gồm số AI gợi ý, cần đối chiếu)':' (an toàn vs rủi ro)'):'Tỷ lệ an toàn vs rủi ro'}]);
+  cardsDef[2][2]=cat([{f:'IF('+Ftot+'=0,'+Q('Tỷ lệ an toàn vs rủi ro')+','+Q('Chắc chắn ')+'&ROUND('+xan+'/'+Ftot+'*100,0)&'+Q('% kế hoạch (an toàn vs rủi ro)')+')',v:Fv?'Chắc chắn '+Math.round(vG/Fv*100)+'% kế hoạch (an toàn vs rủi ro)':'Tỷ lệ an toàn vs rủi ro'}]);
   cardsDef.forEach((cd,i)=>{const [a,b]=bounds[i];
     s1.merge(2+o,a,2+o,b,st.cardH).set(2+o,a,cd[0]);
     const mid=cd[1].s?cd[1]:Object.assign({},cd[1],{s:st.cardT});
@@ -2321,7 +2324,7 @@ function xlBuildBook(){
     const cp=cd[2];s1.merge(4+o,a,4+o,b,st.cardC).set(4+o,a,cp.f!==undefined?Object.assign({},cp,{s:st.cardC}):{v:cp.v,s:st.cardC});
   });
   s1.height(3+o,34);
-  if(hasAi)s1.merge(2,0,2,NC-1,st.warn).set(2,0,SRC_WARN_LONG).height(2,44);
+
   // Bảng chính
   const H=['Nhóm sản phẩm (Bán gì?)','Nguồn doanh số (Từ đâu?)','Đại lý / Điểm bán (Ai tạo ra?)','Căn cứ & Tín hiệu (Dựa vào đâu?)','Mức độ tin cậy','Mục tiêu kế hoạch (VNĐ)'];
   weeks.forEach((w,i)=>H.push('Tuần '+(i+1)+' (W'+(i+1)+')'));
@@ -2330,8 +2333,8 @@ function xlBuildBook(){
   const colSum=c=>rowsData.reduce((a,r)=>{if(!r)return a;if(c===5)return a+r.amt;if(c===cAct)return a+(r.act||0);if(c>=6&&c<6+n)return a+(r.wi===c-6?r.amt:0);return a;},0);
   for(let i=0;i<nRows;i++){
     const r=r0+i,rd_=rowsData[i],x=rd_?rd_.x:null;
-    s1.set(r,0,{v:x?SRC_PROD[x.prod]:'',s:st.inT}).set(r,1,{v:x?SRC_TYPES[x.type]:'',s:st.inSel}).set(r,2,{v:x?((x.ai?'🤖 ':'')+(x.name||'(chưa đặt tên)')):'',s:st.inTb});
-    s1.set(r,3,{v:x?((x.ai?(x.mode==='rule'?'[Quy tắc mẫu — chưa kiểm chứng] ':'[Nháp AI — cần đối chiếu] '):'')+x.basis):'',s:st.inTi});
+    s1.set(r,0,{v:x?SRC_PROD[x.prod]:'',s:st.inT}).set(r,1,{v:x?SRC_TYPES[x.type]:'',s:st.inSel}).set(r,2,{v:x?((x.name||'(chưa đặt tên)')):'',s:st.inTb});
+    s1.set(r,3,{v:x?(x.basis):'',s:st.inTi});
     const cl=x?SRC_CONF.find(z=>z[0]===x.conf):null;s1.set(r,4,{v:cl?cl[1]:'',s:st.inConf});
     s1.set(r,5,{f:'SUM('+xlRef(r,6)+':'+xlRef(r,5+n)+')',v:rd_?rd_.amt:0,s:st.fNb});
     for(let k=0;k<n;k++)s1.set(r,6+k,{v:rd_&&rd_.wi===k?rd_.amt:0,s:st.inN});
@@ -2370,7 +2373,7 @@ function xlBuildBook(){
     {v:'5. PHÂN BỔ: Chia mục tiêu theo tuần '+weeks.map((w,i)=>'W'+(i+1)).join('–')+', ưu tiên các nguồn Xanh về trước.'},
     {v:'6. ĐIỀU CHỈNH: Kiểm soát tiến độ, đo lường Gap và kích hoạt ngay phương án dự phòng (Plan B).'}
   ];
-  const nameOfMax=()=>{let best=null;rowsData.forEach(r=>{if(r&&(!best||r.amt>best.amt))best=r;});return best?((best.x.ai?'🤖 ':'')+(best.x.name||'(chưa đặt tên)')):'nguồn lớn nhất';};
+  const nameOfMax=()=>{let best=null;rowsData.forEach(r=>{if(r&&(!best||r.amt>best.amt))best=r;});return best?((best.x.name||'(chưa đặt tên)')):'nguồn lớn nhất';};
   const stress=[
     cat([{t:'1. '},{f:rM(kpi),v:Mv(kpiV)},{t:'M sẽ đến từ đâu? ('},{f:rM(sumIf(rngB,'Đơn hàng nền tảng*',rngF)+'+'+sumIf(rngB,'Tăng trưởng*',rngF)),v:Mv(vExist)},{t:'M từ ĐL hiện hữu + '},{f:rM(sumIf(rngB,'Đơn có tín hiệu*',rngF)),v:Mv(vSig)},{t:'M từ đơn có tín hiệu + '},{f:rM(sumIf(rngB,'Khai thác mở mới*',rngF)),v:Mv(vNew)},{t:'M từ mở điểm bán mới'},{f:'IF('+rM(kpi+'-'+Ftot)+'>0,'+Q('; còn thiếu ')+'&'+rM(kpi+'-'+Ftot)+'&'+Q('M chưa gắn nguồn')+',"")',v:Mv(kpiV-Fv)>0?'; còn thiếu '+Mv(kpiV-Fv)+'M chưa gắn nguồn':''},{t:')'}]),
     cat([{t:'2. Mỗi con số dựa vào đâu? ('},{f:'COUNTIF('+rngB+','+Q('Đơn hàng nền tảng*')+')+COUNTIF('+rngB+','+Q('Tăng trưởng*')+')',v:src.filter(x=>x.type<2).length},{t:' nguồn hiện hữu theo lịch sử/trao đổi; nguồn mới theo định mức ~'},{f:rM(aovRef),v:aovM},{t:'M/đơn)'}]),
@@ -2388,7 +2391,7 @@ function xlBuildBook(){
     s1.height(r,30);
   }
   const rF=rB+9;
-  s1.merge(rF,0,rF,NC-1,st.foot).set(rF,0,'Lưu ý: tỷ lệ chốt lấy theo benchmark B2B bán hàng trực tiếp (≈ 19–29%, nhiều nguồn, không riêng điện máy gia dụng); tỷ lệ gặp được chủ là giả định chưa có benchmark; mục "Thực tế đạt" do SR tự nhập'+(hasAi?'; các dòng 🤖 là bản nháp do AI/quy tắc mẫu gợi ý':'')+'. Cần đối chiếu với báo cáo bán hàng chính thức và xác nhận với quản lý trước khi dùng để ra quyết định.').height(rF,34);
+  s1.merge(rF,0,rF,NC-1,st.foot).set(rF,0,'Lưu ý: tỷ lệ chốt lấy theo benchmark B2B bán hàng trực tiếp (≈ 19–29%, nhiều nguồn, không riêng điện máy gia dụng); tỷ lệ gặp được chủ là giả định chưa có benchmark; mục "Thực tế đạt" do SR tự nhập'+'. Cần đối chiếu với báo cáo bán hàng chính thức và xác nhận với quản lý trước khi dùng để ra quyết định.').height(rF,34);
   s1.merge(rF+1,0,rF+1,NC-1,st.note).set(rF+1,0,'Cách dùng: chữ xanh / nền vàng nhạt là ô nhập (sửa tự do). Chữ đen là công thức, tự tính lại khi bạn sửa. KPI, giá trị đơn, tỷ lệ chốt... nằm ở sheet "Thông số". Cần thêm đại lý: ghi vào các dòng trống trong bảng (đã nằm trong vùng tính tổng).').height(rF+1,32);
   [22,30,28,40,22,19].forEach((w,c)=>s1.width(c,w));
   for(let k=0;k<n;k++)s1.width(6+k,16);
