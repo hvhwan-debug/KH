@@ -425,6 +425,16 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 .tiles.compact .tile b{font-size:16px}
 .tiles.compact .tile span{font-size:10.5px}
 .txt{width:100%;margin-top:6px;padding:9px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);font-size:16px}
+.txt:focus{outline:none;border-color:var(--brand-deep,var(--ink));box-shadow:0 0 0 3px var(--brand-soft,rgba(0,0,0,.06))}
+.authField{margin-top:14px}
+.authField label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.authField .inwrap{position:relative}
+.authField .inwrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.authField .txt{padding-left:38px;margin-top:0}
+.authHead{display:flex;align-items:center;gap:12px;margin-bottom:2px}
+.authHead .ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--brand-soft,var(--bg));color:var(--brand-deep,var(--ink));flex:0 0 auto}
+.authHead .tx b{display:block;font-size:15px}
+.authHead .tx span{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
 .drow{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
 .drow .dn{flex:1;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .dadd{display:flex;gap:8px;align-items:center;margin-top:8px}
@@ -561,7 +571,6 @@ header.top.cmp #title{margin-bottom:6px}
 .qp-cap.ok .qp-cap-ic{background:#fff;color:#007A73}
 .qp-cap.bad{background:#FDEBE8;color:#7A1E15}
 .qp-cap.bad .qp-cap-ic{background:#B3261E;color:#fff}
-.qp-capnote{margin-top:8px;font-size:12px;line-height:1.55;opacity:.92}
 .qp-node-goal{background:rgba(255,255,255,.28)!important}
 .qp-node-goal b{font-size:clamp(15px,4.6vw,27px)!important}
 .qp-apply{margin-top:12px;border:0;border-radius:999px;background:#fff;color:#007A73;font:inherit;font-weight:600;padding:10px 20px;cursor:pointer;box-shadow:0 10px 20px rgba(0,50,47,.25)}
@@ -1378,7 +1387,10 @@ const LICON={
   users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   warnTri:'<path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
   alertOct:'<path d="M12 16h.01"/><path d="M12 8v4"/><path d="M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z"/>',
-  infoCirc:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>'
+  infoCirc:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  mail:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/>',
+  lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'
 };
 function ic(name,size){size=size||18;return '<svg viewBox="0 0 24 24" width="'+size+'" height="'+size+'" style="stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-4px;flex:0 0 auto">'+LICON[name]+'</svg>';}
 
@@ -2909,22 +2921,23 @@ function acctData(){
   }else if(!A.user){
     sum='<span class="small muted">chưa đăng nhập</span>';
     if(A.resetToken){
-      const rmsg=A.resetMsg?'<div class="small" style="margin-top:6px;color:var(--muted)">'+escH(A.resetMsg)+'</div>':'';
-      body='<div class="small muted">Nhập mật khẩu mới cho tài khoản của bạn. Liên kết đặt lại chỉ dùng được 1 lần và có hiệu lực trong 1 giờ kể từ khi gửi.</div>'+
-        '<input id="rsPass" class="txt" type="password" autocomplete="new-password" maxlength="200" placeholder="Mật khẩu mới (ít nhất 6 ký tự)" aria-label="Mật khẩu mới" style="margin-top:8px">'+
-        '<div class="askrow"><button class="btn sm" data-act="acResetConfirm"'+(A.resetBusy?' disabled':'')+'>Đặt mật khẩu mới</button><button class="link" data-act="acResetCancel">Huỷ</button></div>'+rmsg;
+      const rmsg=A.resetMsg?'<div class="small" style="margin-top:10px;color:var(--muted)">'+escH(A.resetMsg)+'</div>':'';
+      body='<div class="authHead"><div class="ic">'+ic('lock',20)+'</div><div class="tx"><b>Đặt mật khẩu mới</b><span>Liên kết dùng được 1 lần, hiệu lực trong 1 giờ</span></div></div>'+
+        '<div class="authField"><label for="rsPass">Mật khẩu mới</label><div class="inwrap">'+ic('lock',16)+'<input id="rsPass" class="txt" type="password" autocomplete="new-password" maxlength="200" placeholder="Ít nhất 6 ký tự" aria-label="Mật khẩu mới"></div></div>'+
+        '<div class="askrow" style="margin-top:14px"><button class="btn sm" data-act="acResetConfirm"'+(A.resetBusy?' disabled':'')+'>Đặt mật khẩu mới</button><button class="link" data-act="acResetCancel">Huỷ</button></div>'+rmsg;
     }else if(A.forgot){
-      const fmsg=A.forgotMsg?'<div class="small" style="margin-top:6px;color:var(--muted)">'+escH(A.forgotMsg)+'</div>':'';
-      body='<div class="small muted">Nhập email đã đăng ký, hệ thống sẽ gửi liên kết đặt lại mật khẩu (có hiệu lực 1 giờ) tới hộp thư đó.</div>'+
-        '<input id="fgEmail" class="txt" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="Email của bạn" value="'+escH(A.email)+'" aria-label="Email" style="margin-top:8px">'+
-        '<div class="askrow"><button class="btn sm" data-act="acForgotSend"'+(A.forgotBusy?' disabled':'')+'>Gửi liên kết đặt lại</button><button class="link" data-act="acForgotCancel">Quay lại đăng nhập</button></div>'+fmsg;
+      const fmsg=A.forgotMsg?'<div class="small" style="margin-top:10px;color:var(--muted)">'+escH(A.forgotMsg)+'</div>':'';
+      body='<div class="authHead"><div class="ic">'+ic('mail',20)+'</div><div class="tx"><b>Quên mật khẩu</b><span>Gửi liên kết đặt lại tới email đã đăng ký</span></div></div>'+
+        '<div class="authField"><label for="fgEmail">Email</label><div class="inwrap">'+ic('mail',16)+'<input id="fgEmail" class="txt" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="ban@vidu.com" value="'+escH(A.email)+'" aria-label="Email"></div></div>'+
+        '<div class="askrow" style="margin-top:14px"><button class="btn sm" data-act="acForgotSend"'+(A.forgotBusy?' disabled':'')+'>Gửi liên kết đặt lại</button><button class="link" data-act="acForgotCancel">Quay lại đăng nhập</button></div>'+fmsg;
     }else{
-      const msg=A.msg?'<div class="small" style="margin-top:6px;color:var(--muted)">'+escH(A.msg)+'</div>':'';
-      body='<div class="small muted">Đăng nhập để lưu dữ liệu trên máy chủ và dùng được nhiều thiết bị. Nhập email và tự đặt mật khẩu — nếu email này chưa có tài khoản, hệ thống tự tạo tài khoản mới với mật khẩu bạn vừa nhập.</div>'+
-        '<input id="acName" class="txt" type="text" autocomplete="name" maxlength="80" placeholder="Họ tên của bạn" value="'+escH(A.name)+'" aria-label="Họ tên" style="margin-top:8px">'+
-        '<input id="acEmail" class="txt" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="Email của bạn" value="'+escH(A.email)+'" aria-label="Email" style="margin-top:8px">'+
-        '<input id="acPass" class="txt" type="password" autocomplete="current-password" maxlength="200" placeholder="Mật khẩu (ít nhất 6 ký tự)" aria-label="Mật khẩu" style="margin-top:8px">'+
-        '<div class="askrow"><button class="btn sm" data-act="acReq"'+(A.busy?' disabled':'')+'>Đăng nhập / Đăng ký</button><button class="link" data-act="acForgotOpen">Quên mật khẩu?</button></div>'+msg;
+      const msg=A.msg?'<div class="small" style="margin-top:10px;color:var(--muted)">'+escH(A.msg)+'</div>':'';
+      body='<div class="authHead"><div class="ic">'+ic('user',20)+'</div><div class="tx"><b>Đăng nhập hoặc tạo tài khoản</b><span>Lưu dữ liệu trên máy chủ, dùng được trên nhiều thiết bị</span></div></div>'+
+        '<div class="authField"><label for="acName">Họ tên</label><div class="inwrap">'+ic('user',16)+'<input id="acName" class="txt" type="text" autocomplete="name" maxlength="80" placeholder="Nguyễn Văn A" value="'+escH(A.name)+'" aria-label="Họ tên"></div></div>'+
+        '<div class="authField"><label for="acEmail">Email</label><div class="inwrap">'+ic('mail',16)+'<input id="acEmail" class="txt" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="ban@vidu.com" value="'+escH(A.email)+'" aria-label="Email"></div></div>'+
+        '<div class="authField"><label for="acPass">Mật khẩu</label><div class="inwrap">'+ic('lock',16)+'<input id="acPass" class="txt" type="password" autocomplete="current-password" maxlength="200" placeholder="Ít nhất 6 ký tự" aria-label="Mật khẩu"></div>'+
+        '<div class="small muted" style="margin-top:5px">Email chưa có tài khoản sẽ được tạo mới tự động với mật khẩu bạn vừa đặt.</div></div>'+
+        '<div class="askrow" style="margin-top:14px"><button class="btn sm" data-act="acReq"'+(A.busy?' disabled':'')+'>Đăng nhập / Đăng ký</button><button class="link" data-act="acForgotOpen">Quên mật khẩu?</button></div>'+msg;
     }
   }else{
     const st=A.sync.st;
@@ -3666,7 +3679,7 @@ function quickPlan(weeks){
     const node=(n,l,cls)=>'<div class="qp-node'+(cls?' '+cls:'')+'"><b>'+n+'</b><span>'+l+'</span></div>',arr='<i class="qp-arrow" aria-hidden="true">›</i>';
     route='<div class="qp-route">'+node('≈ '+c.pts,'điểm bán')+arr+node('≈ '+c.vis,'lượt gặp khách')+arr+node('≈ '+c.ord,'đơn chốt')+arr+node('≈ '+fmt(c.si),'triệu doanh thu','qp-node-goal')+'</div>';
     route+='<div class="qp-cap '+(c.enough?'ok':'bad')+'"><i class="qp-cap-ic" aria-hidden="true">'+(c.enough?'✓':'!')+'</i><span>'+(c.enough?'Đạt mục tiêu '+fmt(c.income)+' tr':'Làm được ≈ '+n1(c.inc)+' tr · thiếu '+n1(c.income-c.inc)+' tr so với '+fmt(c.income)+' tr')+'</span></div>';
-    if(c.ord<c.ordNeed)route+='<div class="qp-capnote">Đây là mức <b>tối đa bạn làm được</b> với sức đi hiện tại ('+c.mc+' lượt/ngày × '+c.tw+' ngày làm việc) — không phải tính riêng theo '+fmt(c.income)+' tr bạn vừa nhập, vì mục tiêu này cần nhiều hơn khả năng đi tuyến tối đa. Đổi sang mức thu nhập khác vẫn ra cùng con số này nếu mức đó cũng vượt khả năng; muốn tăng mức làm được, hãy tăng số lượt ghé/ngày, giá trị mỗi đơn, hoặc tỷ lệ hoa hồng ở mục tuỳ chỉnh bên dưới.</div>';
+
     route+=(Math.round(c.si)!==total?'<button type="button" class="qp-apply" data-act="incApply">Đặt '+fmt(c.si)+' tr làm chỉ tiêu tháng</button>':'<div class="qp-ok">✓ Đã khớp với chỉ tiêu tháng</div>');
     how='<div class="qp-how-t">Thu nhập ≈ <b>'+n1(c.inc)+' tr</b> = lương cứng '+n1(c.base)+' tr'+(c.baseSet?'':' (ước 50% mục tiêu)')+' + hoa hồng '+n1(c.si*c.rateC/100)+' tr ('+n1(c.rateC)+'% × doanh thu).</div>'+
       '<div class="qp-how-t"><span class="qp-tag2">'+(c.acct?'Theo đại lý của bạn':(F.fv===15&&F.fc===5?'Benchmark B2B':'Số bạn đã chỉnh'))+'</span> '+(c.acct?c.act+' đại lý × '+fmt(c.ordB,1)+' đơn = '+c.exOrd+' đơn đã có · ':'chốt ≈ '+Math.round(100/F.fc)+'% khách tư vấn · ')+'tối đa '+c.mc+' lượt/ngày × '+c.tw+' ngày = '+c.cap+' lượt, không quá '+c.maxPts+' điểm · mỗi đơn ≈ '+fmt(c.aov,0)+' tr.</div>'+
