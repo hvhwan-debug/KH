@@ -629,6 +629,11 @@ header.top.cmp #title{margin-bottom:6px}
 .sttile.c-bad .stic{background:var(--bad-soft);color:var(--bad)}
 .sttile.c-bad b{color:var(--bad)}
 .sttile.c-muted .stic{background:var(--bg);color:var(--muted)}
+.st-bar{height:4px;border-radius:3px;background:var(--line);margin-top:8px;overflow:hidden}
+.st-bar i{display:block;height:100%;border-radius:3px;background:var(--muted)}
+.sttile.c-brand .st-bar i{background:var(--brand-deep)}
+.sttile.c-ok .st-bar i{background:var(--ok)}
+.sttile.c-bad .st-bar i{background:var(--bad)}
 .fxw .small+.small{margin-top:4px}
 .fxs::after{margin-top:6px}
 
@@ -3665,10 +3670,10 @@ function statTiles(weeks){
   let ach=0;weeks.forEach(w=>{const a=S.actual[w.key];if(a)ach+=(a.bn||0)+(a.gd||0);});
   const al=evalAlerts(weeks).filter(a=>!a.dismissed&&a.level!=='info').length;
   const tk=todayKey();let remDays=0;weeks.forEach(w=>w.days.forEach(d=>{if(!d.off&&d.date>=tk)remDays++;}));
-  const tile=(cls,icon,val,lab)=>'<div class="sttile c-'+cls+'"><div class="stic">'+ic(icon,14)+'</div><b>'+val+'</b><span>'+lab+'</span></div>';
+  const tile=(cls,icon,val,lab,pct)=>'<div class="sttile c-'+cls+'"><div class="stic">'+ic(icon,14)+'</div><b>'+val+'</b><span>'+lab+'</span>'+(pct==null?'':'<div class="st-bar"><i style="width:'+Math.min(100,Math.max(0,pct))+'%"></i></div>')+'</div>';
   return '<div class="stattiles">'+
     tile('brand','target',fmt(total)+' tr','Chỉ tiêu tháng')+
-    tile('ok','trend',fmt(ach)+' tr','Đã đạt')+
+    tile('ok','trend',fmt(ach)+' tr','Đã đạt',Math.round(ach/total*100))+
     tile(al>0?'bad':'ok','bell',al,'Khuyến nghị')+
     tile('muted','plan',remDays,'Ngày còn lại')+
   '</div>';
