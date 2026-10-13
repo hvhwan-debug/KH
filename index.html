@@ -555,8 +555,13 @@ header.top.cmp #title{margin-bottom:6px}
 .qp-arrow{align-self:center;font-style:normal;font-size:22px;opacity:.85;line-height:1}
 .qp-basis{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:12px;font-size:12.5px;opacity:.95}
 .qp-tag{background:#fff;color:#007A73;border-radius:999px;padding:2px 10px;font-weight:600;font-size:12px}
-.qp-cap{margin-top:10px;font-size:12.5px;line-height:1.45;border-radius:10px;padding:7px 10px;background:rgba(255,255,255,.17)}
-.qp-cap.bad{background:#fff1f0;color:#8a1c14}
+.qp-cap{display:flex;align-items:center;gap:9px;margin-top:10px;font-size:13px;font-weight:600;line-height:1.4;border-radius:10px;padding:8px 12px;background:rgba(255,255,255,.17)}
+.qp-cap-ic{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:20px;height:20px;border-radius:50%;font-size:12px;font-weight:700;font-style:normal;background:rgba(255,255,255,.3)}
+.qp-cap.ok .qp-cap-ic{background:#fff;color:#007A73}
+.qp-cap.bad{background:#FDEBE8;color:#7A1E15}
+.qp-cap.bad .qp-cap-ic{background:#B3261E;color:#fff}
+.qp-node-goal{background:rgba(255,255,255,.28)!important}
+.qp-node-goal b{font-size:clamp(15px,4.6vw,27px)!important}
 .qp-apply{margin-top:12px;border:0;border-radius:999px;background:#fff;color:#007A73;font:inherit;font-weight:600;padding:10px 20px;cursor:pointer;box-shadow:0 10px 20px rgba(0,50,47,.25)}
 .qp-ok{margin-top:12px;font-weight:600;font-size:14px}
 .qp-set-i{font-size:12.5px;color:var(--muted);margin-bottom:10px;line-height:1.5}
@@ -566,8 +571,6 @@ header.top.cmp #title{margin-bottom:6px}
 .qp-sub-b{padding-top:6px}
 .qp-how-t{font-size:13px;line-height:1.55;margin-bottom:8px;color:var(--ink)}
 .qp-tag2{display:inline-block;background:var(--brand-soft);color:var(--brand-deep);border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:600}
-.qp-cap{margin-top:12px;font-size:14px;font-weight:600}
-.qp-cap.bad{background:rgba(255,255,255,.17);color:#fff;padding:9px 12px}
 .qp-lead{margin-top:16px;font-size:13px;font-weight:600;opacity:.95}
 .qp-split{margin-top:12px;font-size:13.5px;line-height:1.5}
 .qp-split i{font-style:normal;opacity:.9;font-size:12px}
@@ -3554,9 +3557,9 @@ function quickPlan(weeks){
   if(c.income>0&&c.V<=0){
     route='<div class="qp-hint">Lương cứng '+n1(c.base)+' tr đã bằng hoặc cao hơn thu nhập bạn muốn, nên không cần thêm doanh số. Hãy nhập mức cao hơn.</div>';
   }else if(c.income>0){
-    const node=(n,l)=>'<div class="qp-node"><b>'+n+'</b><span>'+l+'</span></div>',arr='<i class="qp-arrow" aria-hidden="true">›</i>';
-    route='<div class="qp-route">'+node('≈ '+c.pts,'điểm bán')+arr+node('≈ '+c.vis,'lượt gặp khách')+arr+node('≈ '+c.ord,'đơn chốt')+arr+node('≈ '+fmt(c.si),'triệu doanh thu')+'</div>';
-    route+='<div class="qp-cap '+(c.enough?'ok':'bad')+'">'+(c.enough?'✓ Đạt mục tiêu '+fmt(c.income)+' tr':'Làm được ≈ '+n1(c.inc)+' tr · thiếu '+n1(c.income-c.inc)+' tr so với '+fmt(c.income)+' tr')+'</div>';
+    const node=(n,l,cls)=>'<div class="qp-node'+(cls?' '+cls:'')+'"><b>'+n+'</b><span>'+l+'</span></div>',arr='<i class="qp-arrow" aria-hidden="true">›</i>';
+    route='<div class="qp-route">'+node('≈ '+c.pts,'điểm bán')+arr+node('≈ '+c.vis,'lượt gặp khách')+arr+node('≈ '+c.ord,'đơn chốt')+arr+node('≈ '+fmt(c.si),'triệu doanh thu','qp-node-goal')+'</div>';
+    route+='<div class="qp-cap '+(c.enough?'ok':'bad')+'"><i class="qp-cap-ic" aria-hidden="true">'+(c.enough?'✓':'!')+'</i><span>'+(c.enough?'Đạt mục tiêu '+fmt(c.income)+' tr':'Làm được ≈ '+n1(c.inc)+' tr · thiếu '+n1(c.income-c.inc)+' tr so với '+fmt(c.income)+' tr')+'</span></div>';
     route+=(Math.round(c.si)!==total?'<button type="button" class="qp-apply" data-act="incApply">Đặt '+fmt(c.si)+' tr làm chỉ tiêu tháng</button>':'<div class="qp-ok">✓ Đã khớp với chỉ tiêu tháng</div>');
     how='<div class="qp-how-t">Thu nhập ≈ <b>'+n1(c.inc)+' tr</b> = lương cứng '+n1(c.base)+' tr'+(c.baseSet?'':' (ước 50% mục tiêu)')+' + hoa hồng '+n1(c.si*c.rateC/100)+' tr ('+n1(c.rateC)+'% × doanh thu).</div>'+
       '<div class="qp-how-t"><span class="qp-tag2">'+(c.acct?'Theo đại lý của bạn':(F.fv===15&&F.fc===5?'Benchmark B2B':'Số bạn đã chỉnh'))+'</span> '+(c.acct?c.act+' đại lý × '+fmt(c.ordB,1)+' đơn = '+c.exOrd+' đơn đã có · ':'chốt ≈ '+Math.round(100/F.fc)+'% khách tư vấn · ')+'tối đa '+c.mc+' lượt/ngày × '+c.tw+' ngày = '+c.cap+' lượt, không quá '+c.maxPts+' điểm · mỗi đơn ≈ '+fmt(c.aov,0)+' tr.</div>'+
