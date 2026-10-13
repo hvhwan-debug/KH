@@ -570,10 +570,9 @@ header.top.cmp #title{margin-bottom:6px}
 .qp-cap{display:flex;align-items:center;gap:9px;margin-top:10px;font-size:13px;font-weight:600;line-height:1.4;border-radius:10px;padding:8px 12px;background:rgba(255,255,255,.17)}
 .qp-cap-ic{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:20px;height:20px;border-radius:50%;font-size:12px;font-weight:700;font-style:normal;background:rgba(255,255,255,.3)}
 .qp-cap.ok .qp-cap-ic{background:#fff;color:#007A73}
-.qp-cap.bad{background:#FDEBE8;color:#7A1E15}
-.qp-cap.bad .qp-cap-ic{background:#B3261E;color:#fff}
-.qp-node-goal{background:rgba(255,255,255,.28)!important}
-.qp-node-goal b{font-size:clamp(15px,4.6vw,27px)!important}
+.qp-cap.bad{background:#FDF3DC;color:#7A5200}
+.qp-cap.bad .qp-cap-ic{background:#B9790A;color:#fff}
+
 .qp-apply{margin-top:12px;border:0;border-radius:999px;background:#fff;color:#007A73;font:inherit;font-weight:600;padding:10px 20px;cursor:pointer;box-shadow:0 10px 20px rgba(0,50,47,.25)}
 .qp-ok{margin-top:12px;font-weight:600;font-size:14px}
 .qp-set-i{font-size:12.5px;color:var(--muted);margin-bottom:10px;line-height:1.5}
@@ -3680,7 +3679,7 @@ function quickPlan(weeks){
   }else if(c.income>0){
     const node=(n,l,cls)=>'<div class="qp-node'+(cls?' '+cls:'')+'"><b>'+n+'</b><span>'+l+'</span></div>',arr='<i class="qp-arrow" aria-hidden="true">›</i>';
     route='<div class="qp-route">'+node('≈ '+c.pts,'điểm bán')+arr+node('≈ '+c.vis,'lượt gặp khách')+arr+node('≈ '+c.ord,'đơn chốt')+arr+node('≈ '+fmt(c.si),'triệu doanh thu','qp-node-goal')+'</div>';
-    route+='<div class="qp-cap '+(c.enough?'ok':'bad')+'"><i class="qp-cap-ic" aria-hidden="true">'+(c.enough?'✓':'!')+'</i><span>'+(c.enough?'Đạt mục tiêu '+fmt(c.income)+' tr':'Làm được ≈ '+n1(c.inc)+' tr · thiếu '+n1(c.income-c.inc)+' tr so với '+fmt(c.income)+' tr')+'</span></div>';
+    route+='<div class="qp-cap '+(c.enough?'ok':'bad')+'"><i class="qp-cap-ic" aria-hidden="true">'+(c.enough?'✓':'!')+'</i><span>'+(c.enough?'Đạt mục tiêu '+fmt(c.income)+' tr':'Đang trên đường tới ≈ '+n1(c.inc)+' tr/tháng — cần thêm ≈ '+n1(c.income-c.inc)+' tr nữa để chạm mốc '+fmt(c.income)+' tr')+'</span></div>';
 
     route+=(Math.round(c.si)!==total?'<button type="button" class="qp-apply" data-act="incApply">Đặt '+fmt(c.si)+' tr làm chỉ tiêu tháng</button>':'<div class="qp-ok">✓ Đã khớp với chỉ tiêu tháng</div>');
     how='<div class="qp-how-t">Thu nhập ≈ <b>'+n1(c.inc)+' tr</b> = lương cứng '+n1(c.base)+' tr'+(c.baseSet?'':' (ước 50% mục tiêu)')+' + hoa hồng '+n1(c.si*c.rateC/100)+' tr ('+n1(c.rateC)+'% × doanh thu).</div>'+
