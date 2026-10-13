@@ -1268,6 +1268,8 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
 .brandmark{width:22px;height:22px;border-radius:50%;background:#fff;object-fit:cover;flex:0 0 auto;box-shadow:0 2px 6px rgba(0,30,28,.25)}
 .top h1{font-size:clamp(36px,7.6vw,54px);line-height:1.08;letter-spacing:-.03em;margin:10px 0 8px;font-weight:700;text-align:left;color:#fff;text-shadow:none}
 .top h1 .hm-y{color:rgba(255,255,255,.58);font-size:.42em;font-weight:500;letter-spacing:0;margin-left:8px}
+.hinc{margin:0 0 6px;font-size:14px;font-weight:500;color:rgba(255,255,255,.9)}
+.hinc b{font-weight:700;color:#D8FFF6}
 .htag{margin:0 0 16px;max-width:30em;font-size:16px;line-height:1.5;color:rgba(255,255,255,.92);text-shadow:none}
 .htag b{font-weight:600;color:#D8FFF6}
 .hcta-row{margin:0 0 14px}
@@ -1343,6 +1345,7 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   <div class="heroflex">
     <div class="pill"><img class="brandmark" src="icon-192.png" alt="" width="22" height="22">Trợ lí thiết lập kế hoạch bán hàng · SR kênh GT</div>
     <h1 id="title">Kế hoạch bán hàng tháng</h1>
+    <div class="hinc" id="hinc"></div>
     <p class="htag" id="htag"></p>
     <div class="hcta-row" id="hcta"></div>
     <div class="hdate" id="hdate"></div>
@@ -3135,21 +3138,27 @@ function paceInfo(weeks){
 }
 function headerTag(weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0);
-  if(!total)return 'Đặt chỉ tiêu tháng để <b>mở khoá kế hoạch</b> từng tuần, từng ngày.';
+  const pi=paceInfo(weeks);
+  if(!total)return 'Mỗi ngày đều có thể tạo nên khác biệt. Đặt chỉ tiêu tháng để bắt đầu hành trình.';
   let ach=0;weeks.forEach(w=>{const a=S.actual[w.key];if(a)ach+=(a.bn||0)+(a.gd||0);});
   const pct=Math.round(ach/total*100);
   if(S.month!==monthKey(0))return ach>0?'Tổng kết tháng: đạt <b>'+pct+'%</b> chỉ tiêu '+fmt(total)+' triệu.':'Chỉ tiêu tháng này: <b>'+fmt(total)+' triệu</b>.';
-  if(ach<=0)return 'Chỉ tiêu <b>'+fmt(total)+' triệu</b> đang chờ bạn. Bắt đầu từ hôm nay!';
-  if(pct<50)return 'Đã đạt <b>'+pct+'%</b> chỉ tiêu. Tăng tốc để về đích đúng hạn!';
-  if(pct<100)return 'Đã vượt nửa chặng, còn <b>'+fmt(total-ach)+' triệu</b> nữa là về đích!';
-  return 'Hoàn thành chỉ tiêu <b>'+fmt(total)+' triệu</b>. Tiếp tục bứt phá!';
+  if(ach<=0)return pi.rem+' ngày phía trước, mỗi ngày đều có thể tạo nên khác biệt. Hãy bắt đầu từ những việc bạn có thể làm hôm nay, từng bước tiến gần hơn đến mục tiêu.';
+  if(pct<50)return 'Đã đạt <b>'+pct+'%</b> chỉ tiêu, còn '+pi.rem+' ngày phía trước — mỗi bước nhỏ hôm nay đều đưa bạn tiến gần hơn.';
+  if(pct<100)return 'Đã vượt nửa chặng đường, còn <b>'+fmt(total-ach)+' triệu</b> nữa. Giữ nhịp, đích đến đang ở rất gần!';
+  return 'Hoàn thành chỉ tiêu <b>'+fmt(total)+' triệu</b>. Bạn có mục tiêu, bạn có kế hoạch — và bạn đã làm được!';
+}
+function headerIncome(){
+  const inc=+S.income||0;
+  if(!inc||S.month!==monthKey(0))return '';
+  return 'Mục tiêu thu nhập: <b>'+fmt(inc)+' triệu/tháng</b>';
 }
 function headerCta(){
   const total=(+S.target.bn||0)+(+S.target.gd||0);
   const ar='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>';
   if(!total)return '<button class="hcta" data-act="tab" data-v="setup">Đặt chỉ tiêu tháng'+ar+'</button>';
   if(S.month!==monthKey(0))return '';
-  return '<button class="hcta" data-act="goDay" data-day="'+todayKey()+'">Nhập số hôm nay<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></button>';
+  return '<button class="hcta" data-act="goDay" data-day="'+todayKey()+'">Bắt đầu ngày mới<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></button>';
 }
 function headerDate(weeks){
   const pi=paceInfo(weeks);
@@ -3583,6 +3592,7 @@ function renderTabs(){
   const _mm=S.month.split('-');document.getElementById('title').innerHTML='Tháng '+_mm[1]+'<span class="hm-y">/'+_mm[0]+'</span>';
   try{const hd=document.querySelector('header.top');if(hd)hd.classList.toggle('cmp',S.tab==='setup');}catch(e){}
   document.getElementById('hdate').innerHTML=headerDate(wks);
+  document.getElementById('hinc').innerHTML=headerIncome();
   document.getElementById('htag').innerHTML=headerTag(wks);
   document.getElementById('hcta').innerHTML=headerCta();
   const hs=headerStat(wks);hdrSig=hs;document.getElementById('hstat').innerHTML=hs;
