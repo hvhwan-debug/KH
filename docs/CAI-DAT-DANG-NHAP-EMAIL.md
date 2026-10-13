@@ -24,6 +24,16 @@ Azure Portal → Static Web App → **Settings → Environment variables** (ho�
 Phải có ít nhất một trong `ALLOWED_EMAIL_DOMAINS` hoặc `ALLOWED_EMAILS`. Đây là danh sách người được đăng ký tài khoản,
 nhằm tránh việc người lạ tự tạo tài khoản. Muốn thu hồi quyền của ai đó, bỏ họ khỏi danh sách (phiên của họ sẽ bị từ chối ở lần dùng sau; tài khoản và mật khẩu cũ của họ vẫn còn trong kho lưu trữ, không tự xoá).
 
+### Trang quản trị thành viên
+
+Thêm biến `ADMIN_EMAILS` (cùng chỗ với các biến ở trên) để bật trang quản trị:
+
+| Tên | Giá trị |
+|---|---|
+| `ADMIN_EMAILS` | email của bạn (và của ai khác cần quyền quản trị), cách nhau dấu phẩy — ví dụ `ban@livotec.vn`. Không hỗ trợ `*`, phải liệt kê đúng từng email. |
+
+Đăng nhập bằng đúng email có trong `ADMIN_EMAILS`, vào mục **Tài khoản & email** (icon người ở góc trên) sẽ thấy nút **"Quản trị thành viên"** để xem danh sách SR đã có dữ liệu trên máy chủ (chỉ tiêu, khu vực, lần đồng bộ gần nhất) và xoá dữ liệu của một thành viên nếu cần. Người không có trong `ADMIN_EMAILS` không thấy nút này và bị máy chủ từ chối nếu cố gọi thẳng vào API quản trị.
+
 Tạo chuỗi ngẫu nhiên cho `SESSION_SECRET`:
 - Mac/Linux: `openssl rand -hex 32`
 - Windows (PowerShell): `$b=New-Object byte[] 32;[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b);($b|ForEach-Object{$_.ToString('x2')}) -join ''`

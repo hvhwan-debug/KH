@@ -1350,6 +1350,7 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
 <footer class="foot"><div><b>Trợ lí thiết lập kế hoạch bán hàng</b> dành cho Sales Rep kênh GT Livotec</div><div class="foot-disc">Lưu ý: số liệu, dự báo và cảnh báo chỉ mang tính tham khảo, không phải cam kết hay chỉ tiêu chính thức.</div></footer>
 <input type="file" id="restoreFile" accept=".json,application/json" hidden>
 <div class="modalc" id="acctSheet" hidden><div class="sheetin" role="dialog" aria-label="Tài khoản & đăng nhập" id="acctSheetIn"></div></div>
+<div class="modalc" id="adminSheet" hidden><div class="sheetin" role="dialog" aria-label="Quản trị thành viên" id="adminSheetIn"></div></div>
 <button class="fab" id="coachFab" data-coach="open" aria-label="Hỏi trợ lý AI"></button>
 <div class="sheet" id="coach" hidden><div class="sheetin" role="dialog" aria-label="Trợ lý AI Livotec">
   <div class="shh"><b>Trợ lý AI Livotec</b><span><button class="link" data-coach="clear">Xoá</button><button class="xbtn" data-coach="close" aria-label="Đóng">✕</button></span></div>
@@ -2731,7 +2732,7 @@ function factorsCard(weeks,mode){
 }
 
 /* ---------- Tài khoản, đồng bộ, email ---------- */
-let AUTH={avail:null,user:null,busy:false,email:'',msg:'',ackOff:false,sync:{st:'idle',msg:'',conflict:false}};
+let AUTH={avail:null,user:null,busy:false,email:'',msg:'',ackOff:false,isAdmin:false,sync:{st:'idle',msg:'',conflict:false}};
 let syncTimer=null,syncBusy=false,syncDirty=false,lastCheck=0;
 const TOKEN_KEY='livotec-sr-token';
 function getToken(){try{return localStorage.getItem(TOKEN_KEY)||'';}catch(e){return '';}}
@@ -2771,7 +2772,7 @@ async function authInit(){
   try{
     const r=await api('GET','/api/auth/me');
     if(r.s!==200||!r.j.avail){AUTH.avail=false;AUTH.user=null;}
-    else{AUTH.avail=true;AUTH.user=r.j.loggedIn?{email:r.j.email}:null;}
+    else{AUTH.avail=true;AUTH.user=r.j.loggedIn?{email:r.j.email}:null;AUTH.isAdmin=!!r.j.isAdmin;}
   }catch(e){AUTH.avail=false;AUTH.user=null;}
   if(AUTH.user)await syncPull();
   softRender();
@@ -2891,6 +2892,7 @@ function acctData(){
         row('weekly','Tổng kết tuần (thứ Hai)',['Tham khảo','ok'],'Kết quả tuần trước so với kế hoạch')+
         '<div class="askrow"><button class="btn ghost sm" data-act="acMailTest">Gửi email thử</button></div>':'')+'</div>'+
       '<div class="small muted" style="margin-top:10px">Khi đăng nhập, dữ liệu của bạn được lưu thêm trên máy chủ của ứng dụng để đồng bộ và gửi email. Trong ứng dụng, chỉ bạn xem được dữ liệu của mình; người quản trị hệ thống có quyền truy cập kho lưu trữ. Không có bảng xếp hạng giữa các SR.</div>'+
+      (A.isAdmin?'<div class="askrow"><button class="btn ghost sm" data-act="adminOpen">'+ic('users',14)+' Quản trị thành viên</button></div>':'')+
       '<div class="askrow"><button class="btn ghost sm" data-act="acLogout">Đăng xuất</button></div>';
   }
   return{sum,body};
@@ -2901,6 +2903,76 @@ function renderAcctSheet(){
   const d=acctData();
   el.innerHTML='<div class="acctsh-h">'+ic('users',18)+'<b style="flex:1">Tài khoản &amp; email</b>'+d.sum+'<button class="xbtn" data-act="acctClose" aria-label="Đóng">✕</button></div>'+d.body;
   updateAcctFab();
+}
+let ADMIN={loading:false,err:'',users:null,detail:null,detailUid:'',detailLoading:false,detailErr:''};
+async function loadAdminUsers(){
+  ADMIN.loading=true;ADMIN.err='';renderAdminSheet();
+  try{
+    const r=await api('GET','/api/admin/users');
+    ADMIN.loading=false;
+    if(r.s===200)ADMIN.users=r.j.users||[];
+    else{ADMIN.users=null;ADMIN.err=(r.j&&r.j.error)||'Không tải được danh sách.';}
+  }catch(e){ADMIN.loading=false;ADMIN.users=null;ADMIN.err='Lỗi mạng.';}
+  renderAdminSheet();
+}
+function openAdminSheet(){
+  document.getElementById('adminSheet').hidden=false;
+  ADMIN.detail=null;ADMIN.detailUid='';ADMIN.detailErr='';
+  loadAdminUsers();
+}
+function closeAdminSheet(){document.getElementById('adminSheet').hidden=true;}
+function closeAdminDetail(){ADMIN.detail=null;ADMIN.detailUid='';ADMIN.detailErr='';renderAdminSheet();}
+async function openAdminDetail(uid){
+  ADMIN.detailUid=uid;ADMIN.detail=null;ADMIN.detailErr='';ADMIN.detailLoading=true;renderAdminSheet();
+  try{
+    const r=await api('GET','/api/admin/user?uid='+encodeURIComponent(uid));
+    ADMIN.detailLoading=false;
+    if(r.s===200)ADMIN.detail=r.j.doc;
+    else ADMIN.detailErr=(r.j&&r.j.error)||'Không tải được.';
+  }catch(e){ADMIN.detailLoading=false;ADMIN.detailErr='Lỗi mạng.';}
+  renderAdminSheet();
+}
+async function deleteAdminMember(uid,email){
+  if(!confirm('Xoá toàn bộ dữ liệu của '+(email||uid)+'? Không thể hoàn tác.'))return;
+  try{
+    const r=await api('DELETE','/api/admin/user?uid='+encodeURIComponent(uid));
+    if(r.s===200){toast('Đã xoá thành viên');ADMIN.detail=null;ADMIN.detailUid='';loadAdminUsers();}
+    else toast((r.j&&r.j.error)||'Không xoá được.');
+  }catch(e){toast('Lỗi mạng, chưa xoá được');}
+}
+function renderAdminSheet(){
+  const el=document.getElementById('adminSheetIn');if(!el)return;
+  const head='<div class="acctsh-h">'+ic('users',18)+'<b style="flex:1">Quản trị thành viên</b><button class="xbtn" data-act="adminClose" aria-label="Đóng">✕</button></div>';
+  let body;
+  if(ADMIN.detailUid){
+    if(ADMIN.detailLoading)body='<div class="small muted" style="padding:10px 0">Đang tải…</div>';
+    else if(ADMIN.detailErr)body='<div class="small" style="color:var(--bad)">'+escH(ADMIN.detailErr)+'</div><div class="askrow"><button class="btn ghost sm" data-act="adminBack">← Quay lại danh sách</button></div>';
+    else{
+      const doc=ADMIN.detail||{},st=doc.state||{},target=st.target||{},total=(+target.bn||0)+(+target.gd||0);
+      body='<div class="askrow" style="margin-bottom:6px"><button class="link" data-act="adminBack">← Quay lại danh sách</button></div>'+
+        '<div class="remrow" style="border-top:0"><div class="rl"><b>'+escH(doc.email||'')+'</b><div class="small muted">Mã: '+escH(doc.uid||ADMIN.detailUid)+'</div></div></div>'+
+        '<div class="fieldgrid" style="margin-top:4px">'+
+          '<div class="field"><span class="nm small">Tháng đang thiết lập</span><b>'+escH(st.month||'—')+'</b></div>'+
+          '<div class="field"><span class="nm small">Chỉ tiêu S.I</span><b>'+(total?fmt(total)+' tr':'—')+'</b></div>'+
+          '<div class="field"><span class="nm small">Khu vực</span><b>'+escH(st.province||'—')+'</b></div>'+
+          '<div class="field"><span class="nm small">Lần đồng bộ gần nhất</span><b>'+(doc.updatedAt?hhmm(doc.updatedAt):'—')+'</b></div>'+
+          '<div class="field"><span class="nm small">Số bản ghi (rev)</span><b>'+(doc.rev||0)+'</b></div>'+
+          '<div class="field"><span class="nm small">Email tự động</span><b>'+((doc.prefs&&doc.prefs.mail&&doc.prefs.mail.on)?'Bật':'Tắt')+'</b></div>'+
+        '</div>'+
+        '<div class="small muted" style="margin-top:10px">Dữ liệu gốc chỉ để xem hỗ trợ kỹ thuật — không chỉnh sửa từ đây để tránh lệch với thiết bị của thành viên.</div>'+
+        '<details style="margin-top:6px"><summary class="small">Xem dữ liệu gốc (JSON)</summary><textarea class="copybox" readonly style="margin-top:6px;min-height:160px;font-size:12px">'+escH(JSON.stringify(doc,null,2))+'</textarea></details>'+
+        '<div class="askrow" style="margin-top:12px"><button class="btn ghost sm" data-act="adminDelete" data-uid="'+escH(doc.uid||ADMIN.detailUid)+'" data-email="'+escH(doc.email||'')+'" style="color:var(--bad);border-color:var(--bad)">Xoá thành viên này</button></div>';
+    }
+  }else if(ADMIN.loading)body='<div class="small muted" style="padding:10px 0">Đang tải danh sách…</div>';
+  else if(ADMIN.err)body='<div class="small" style="color:var(--bad)">'+escH(ADMIN.err)+'</div>';
+  else{
+    const users=ADMIN.users||[];
+    body='<div class="small muted" style="margin-bottom:8px">'+users.length+' thành viên đã có dữ liệu trên máy chủ.</div>'+
+      (users.length?users.map(u=>'<div class="remrow" data-act="adminView" data-uid="'+escH(u.uid)+'" style="cursor:pointer">'+
+        '<div class="rl"><b>'+escH(u.email||u.uid)+'</b><div class="small muted">'+(u.total?fmt(u.total)+' tr · ':'')+(u.province?escH(u.province)+' · ':'')+(u.updatedAt?'cập nhật '+hhmm(u.updatedAt):'chưa có hoạt động')+'</div></div>'+
+        '<span class="small muted">Xem →</span></div>').join(''):'<div class="empty"><div class="muted">Chưa có thành viên nào.</div></div>');
+  }
+  el.innerHTML=head+body;
 }
 function updateAcctFab(){
   const b=document.getElementById('acctFab');if(!b)return;
@@ -3886,6 +3958,7 @@ function render(){
   }
   renderTabs();if(S.tab==='setup')renderSetup();else if(S.tab==='plan')renderPlan();else if(S.tab==='alerts')renderAlertsTab();else renderCheck();
   const acctSh=document.getElementById('acctSheet');if(acctSh&&!acctSh.hidden)renderAcctSheet();else updateAcctFab();
+  const adminSh=document.getElementById('adminSheet');if(adminSh&&!adminSh.hidden)renderAdminSheet();
   try{
     if(S.month===monthKey(0)){const bn=dayBanner(analyze());bannerSig=bn;if(bn&&S.tab==='check')$app.insertAdjacentHTML('afterbegin',bn);}else bannerSig='';
     if(S.tab==='check'){const hc=histCard();if(hc)$app.insertAdjacentHTML('beforeend',hc);}
@@ -3950,6 +4023,11 @@ document.addEventListener('click',function(e){
   else if(a==='acLogout'){acLogout();return;}
   else if(a==='acSync'){syncDirty=true;syncPush({});return;}
   else if(a==='acMailTest'){acMailTest();return;}
+  else if(a==='adminOpen'){openAdminSheet();return;}
+  else if(a==='adminClose'){closeAdminSheet();return;}
+  else if(a==='adminBack'){closeAdminDetail();return;}
+  else if(a==='adminView'){openAdminDetail(d.uid);return;}
+  else if(a==='adminDelete'){deleteAdminMember(d.uid,d.email);return;}
   else if(a==='mailTog'){S.mail[d.k]=!S.mail[d.k];}
   else if(a==='stratManual'){S.strat='manual';}
   else if(a==='fxAll'){openSec.fxall=!isOpen('fxall',false);}
@@ -4076,6 +4154,7 @@ function applyHash(){
   }
 }
 {const as=document.getElementById('acctSheet');if(as)as.addEventListener('click',function(e){if(e.target===as)as.hidden=true;});}
+{const ads=document.getElementById('adminSheet');if(ads)ads.addEventListener('click',function(e){if(e.target===ads)ads.hidden=true;});}
 const rf=document.getElementById('restoreFile');
 if(rf)rf.addEventListener('change',function(){const f=rf.files&&rf.files[0];rf.value='';restoreData(f);});
 window.addEventListener('hashchange',applyHash);

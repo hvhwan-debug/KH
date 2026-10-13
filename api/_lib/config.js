@@ -15,6 +15,7 @@ function cfg() {
     conn: env.STORAGE_CONNECTION_STRING || "",
     allowDomains: list(env.ALLOWED_EMAIL_DOMAINS),
     allowEmails: list(env.ALLOWED_EMAILS),
+    adminEmails: list(env.ADMIN_EMAILS),
     cookieInsecure: env.COOKIE_INSECURE === "1",
     smtp: {
       host: env.SMTP_HOST || "",
@@ -56,4 +57,11 @@ function emailAllowed(email) {
   return c.allowDomains.includes(dom);
 }
 
-module.exports = { cfg, missing, mailConfigured, emailAllowed, validEmail };
+// ADMIN_EMAILS (Azure Static Web App > Configuration > Application settings): danh sách email
+// (phân tách bởi dấu phẩy) được quyền vào trang quản trị /api/admin/*. Không hỗ trợ "*".
+function isAdmin(email) {
+  const c = cfg(), e = String(email || "").toLowerCase();
+  return !!e && c.adminEmails.includes(e);
+}
+
+module.exports = { cfg, missing, mailConfigured, emailAllowed, validEmail, isAdmin };
