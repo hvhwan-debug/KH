@@ -561,6 +561,7 @@ header.top.cmp #title{margin-bottom:6px}
 .qp-cap.ok .qp-cap-ic{background:#fff;color:#007A73}
 .qp-cap.bad{background:#FDEBE8;color:#7A1E15}
 .qp-cap.bad .qp-cap-ic{background:#B3261E;color:#fff}
+.qp-capnote{margin-top:8px;font-size:12px;line-height:1.55;opacity:.92}
 .qp-node-goal{background:rgba(255,255,255,.28)!important}
 .qp-node-goal b{font-size:clamp(15px,4.6vw,27px)!important}
 .qp-apply{margin-top:12px;border:0;border-radius:999px;background:#fff;color:#007A73;font:inherit;font-weight:600;padding:10px 20px;cursor:pointer;box-shadow:0 10px 20px rgba(0,50,47,.25)}
@@ -3663,6 +3664,7 @@ function quickPlan(weeks){
     const node=(n,l,cls)=>'<div class="qp-node'+(cls?' '+cls:'')+'"><b>'+n+'</b><span>'+l+'</span></div>',arr='<i class="qp-arrow" aria-hidden="true">›</i>';
     route='<div class="qp-route">'+node('≈ '+c.pts,'điểm bán')+arr+node('≈ '+c.vis,'lượt gặp khách')+arr+node('≈ '+c.ord,'đơn chốt')+arr+node('≈ '+fmt(c.si),'triệu doanh thu','qp-node-goal')+'</div>';
     route+='<div class="qp-cap '+(c.enough?'ok':'bad')+'"><i class="qp-cap-ic" aria-hidden="true">'+(c.enough?'✓':'!')+'</i><span>'+(c.enough?'Đạt mục tiêu '+fmt(c.income)+' tr':'Làm được ≈ '+n1(c.inc)+' tr · thiếu '+n1(c.income-c.inc)+' tr so với '+fmt(c.income)+' tr')+'</span></div>';
+    if(c.ord<c.ordNeed)route+='<div class="qp-capnote">Đây là mức <b>tối đa bạn làm được</b> với sức đi hiện tại ('+c.mc+' lượt/ngày × '+c.tw+' ngày làm việc) — không phải tính riêng theo '+fmt(c.income)+' tr bạn vừa nhập, vì mục tiêu này cần nhiều hơn khả năng đi tuyến tối đa. Đổi sang mức thu nhập khác vẫn ra cùng con số này nếu mức đó cũng vượt khả năng; muốn tăng mức làm được, hãy tăng số lượt ghé/ngày, giá trị mỗi đơn, hoặc tỷ lệ hoa hồng ở mục tuỳ chỉnh bên dưới.</div>';
     route+=(Math.round(c.si)!==total?'<button type="button" class="qp-apply" data-act="incApply">Đặt '+fmt(c.si)+' tr làm chỉ tiêu tháng</button>':'<div class="qp-ok">✓ Đã khớp với chỉ tiêu tháng</div>');
     how='<div class="qp-how-t">Thu nhập ≈ <b>'+n1(c.inc)+' tr</b> = lương cứng '+n1(c.base)+' tr'+(c.baseSet?'':' (ước 50% mục tiêu)')+' + hoa hồng '+n1(c.si*c.rateC/100)+' tr ('+n1(c.rateC)+'% × doanh thu).</div>'+
       '<div class="qp-how-t"><span class="qp-tag2">'+(c.acct?'Theo đại lý của bạn':(F.fv===15&&F.fc===5?'Benchmark B2B':'Số bạn đã chỉnh'))+'</span> '+(c.acct?c.act+' đại lý × '+fmt(c.ordB,1)+' đơn = '+c.exOrd+' đơn đã có · ':'chốt ≈ '+Math.round(100/F.fc)+'% khách tư vấn · ')+'tối đa '+c.mc+' lượt/ngày × '+c.tw+' ngày = '+c.cap+' lượt, không quá '+c.maxPts+' điểm · mỗi đơn ≈ '+fmt(c.aov,0)+' tr.</div>'+
