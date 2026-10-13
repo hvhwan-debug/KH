@@ -1296,21 +1296,55 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
 .aitbl tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--cx-soft) 50%,transparent)}
 .aitbl td:first-child{font-weight:600;white-space:nowrap;color:var(--brand-deep)}
 .aitbl th+th,.aitbl td+td{border-left:1px solid var(--cx-line)}
+
+/* ===== Bố cục hero: khối chữ bên trái, vòng tròn + minh hoạ tăng trưởng bên phải, nút tài khoản ở góc banner ===== */
+.acctFab{position:absolute;top:18px;right:18px;left:auto;z-index:4}
+.top .topin{display:flex;align-items:center;justify-content:space-between;gap:28px;padding:0 6px}
+.heroflex{position:static;width:auto;max-width:none;margin:0;padding-right:0;flex:1 1 380px;min-width:0}
+.heroside{flex:0 0 auto;display:flex;align-items:center;gap:16px}
+#hring{position:static}
+.heroart{display:block;width:150px;height:auto;flex:0 0 auto;filter:drop-shadow(0 10px 20px rgba(0,30,28,.22))}
+@media (max-width:860px){.heroart{display:none}}
+@media (max-width:600px){
+  .acctFab{top:14px;right:14px;left:auto}
+  .top .topin{padding-left:0;gap:14px}
+  .heroflex{display:block}
+  #hring .hring svg{width:72px;height:72px}
+}
 </style>
 </head>
 <body>
 <div class="stickyhead">
 <header class="top">
+  <button class="acctFab" id="acctFab" data-act="acctOpen" aria-label="Tài khoản &amp; đăng nhập"></button>
   <div class="topin">
   <div class="heroflex">
-  <button class="acctFab" id="acctFab" data-act="acctOpen" aria-label="Tài khoản &amp; đăng nhập"></button>
-  <div id="hring"></div>
     <div class="pill">Trợ lí thiết lập kế hoạch bán hàng · SR kênh GT</div>
     <h1 id="title">Kế hoạch bán hàng tháng</h1>
     <p class="htag" id="htag"></p>
     <div class="hcta-row" id="hcta"></div>
     <div class="hdate" id="hdate"></div>
     <div class="hstat" id="hstat"></div>
+  </div>
+  <div class="heroside">
+    <div id="hring"></div>
+    <svg class="heroart" viewBox="0 0 300 200" aria-hidden="true">
+      <rect x="14" y="132" width="62" height="54" rx="10" fill="rgba(255,255,255,.14)"/>
+      <rect x="96" y="96" width="62" height="90" rx="10" fill="rgba(255,255,255,.18)"/>
+      <rect x="178" y="48" width="62" height="138" rx="10" fill="rgba(255,255,255,.22)"/>
+      <circle cx="45" cy="159" r="13" fill="none" stroke="#fff" stroke-width="2"/>
+      <circle cx="45" cy="159" r="4.5" fill="#fff"/>
+      <rect x="117" y="118" width="20" height="26" rx="3" fill="none" stroke="#fff" stroke-width="2"/>
+      <path d="M122 126h10M122 132h10M122 138h6" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="209" cy="68" r="15" fill="none" stroke="#fff" stroke-width="2"/>
+      <path d="M202 68 l5 6 l11 -13" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M45 146 C 78 112, 90 98, 127 112 C 160 124, 172 58, 209 48" fill="none" stroke="#7FF0C0" stroke-width="2.4" stroke-dasharray="1 7" stroke-linecap="round"/>
+      <circle cx="45" cy="146" r="4" fill="#7FF0C0"/>
+      <circle cx="127" cy="112" r="4" fill="#7FF0C0"/>
+      <circle cx="209" cy="48" r="5" fill="#fff"/>
+      <line x1="232" y1="20" x2="232" y2="48" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M232 20 l22 7 l-22 7 Z" fill="#7FF0C0"/>
+    </svg>
   </div>
   </div>
 
