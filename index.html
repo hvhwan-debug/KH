@@ -435,6 +435,9 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 .authHead .ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--brand-soft,var(--bg));color:var(--brand-deep,var(--ink));flex:0 0 auto}
 .authHead .tx b{display:block;font-size:15px}
 .authHead .tx span{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.authTabs{display:flex;gap:4px;margin:14px 0 2px;padding:3px;background:var(--bg);border-radius:12px}
+.authTabs button{flex:1;border:0;background:transparent;padding:8px 10px;border-radius:9px;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer}
+.authTabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
 .drow{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
 .drow .dn{flex:1;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .dadd{display:flex;gap:8px;align-items:center;margin-top:8px}
@@ -2744,7 +2747,7 @@ function factorsCard(weeks,mode){
 }
 
 /* ---------- Tài khoản, đồng bộ, email ---------- */
-let AUTH={avail:null,user:null,busy:false,email:'',name:'',msg:'',ackOff:false,isAdmin:false,forgot:false,forgotMsg:'',forgotBusy:false,resetToken:null,resetMsg:'',resetBusy:false,sync:{st:'idle',msg:'',conflict:false}};
+let AUTH={avail:null,user:null,busy:false,email:'',name:'',authTab:'login',msg:'',ackOff:false,isAdmin:false,forgot:false,forgotMsg:'',forgotBusy:false,resetToken:null,resetMsg:'',resetBusy:false,sync:{st:'idle',msg:'',conflict:false}};
 let syncTimer=null,syncBusy=false,syncDirty=false,lastCheck=0;
 const TOKEN_KEY='livotec-sr-token';
 function getToken(){try{return localStorage.getItem(TOKEN_KEY)||'';}catch(e){return '';}}
@@ -2866,6 +2869,7 @@ async function acReq(){
   }catch(e){AUTH.busy=false;AUTH.msg='Lỗi mạng. Thử lại.';}
   render();
 }
+function setAuthTab(v){AUTH.authTab=(v==='register'?'register':'login');AUTH.msg='';render();}
 function acForgotOpen(){AUTH.forgot=true;AUTH.forgotMsg='';render();}
 function acForgotCancel(){AUTH.forgot=false;AUTH.forgotMsg='';render();}
 async function acForgotSend(){
@@ -2934,12 +2938,15 @@ function acctData(){
         '<div class="askrow" style="margin-top:14px"><button class="btn sm" data-act="acForgotSend"'+(A.forgotBusy?' disabled':'')+'>Gửi liên kết đặt lại</button><button class="link" data-act="acForgotCancel">Quay lại đăng nhập</button></div>'+fmsg;
     }else{
       const msg=A.msg?'<div class="small" style="margin-top:10px;color:var(--muted)">'+escH(A.msg)+'</div>':'';
-      body='<div class="authHead"><div class="ic">'+ic('user',20)+'</div><div class="tx"><b>Đăng nhập hoặc tạo tài khoản</b><span>Lưu dữ liệu trên máy chủ, dùng được trên nhiều thiết bị</span></div></div>'+
-        '<div class="authField"><label for="acName">Họ tên</label><div class="inwrap">'+ic('user',16)+'<input id="acName" class="txt" type="text" autocomplete="name" maxlength="80" placeholder="Nguyễn Văn A" value="'+escH(A.name)+'" aria-label="Họ tên"></div></div>'+
+      const tab=A.authTab==='register'?'register':'login';
+      const tabsHtml='<div class="authTabs" role="tablist"><button type="button" role="tab" data-act="authTab" data-v="login" aria-selected="'+(tab==='login')+'">Đăng nhập</button><button type="button" role="tab" data-act="authTab" data-v="register" aria-selected="'+(tab==='register')+'">Đăng ký</button></div>';
+      body='<div class="authHead"><div class="ic">'+ic('user',20)+'</div><div class="tx"><b>'+(tab==='register'?'Tạo tài khoản mới':'Đăng nhập')+'</b><span>Lưu dữ liệu trên máy chủ, dùng được trên nhiều thiết bị</span></div></div>'+
+        tabsHtml+
+        (tab==='register'?'<div class="authField"><label for="acName">Họ tên</label><div class="inwrap">'+ic('user',16)+'<input id="acName" class="txt" type="text" autocomplete="name" maxlength="80" placeholder="Nguyễn Văn A" value="'+escH(A.name)+'" aria-label="Họ tên"></div></div>':'')+
         '<div class="authField"><label for="acEmail">Email</label><div class="inwrap">'+ic('mail',16)+'<input id="acEmail" class="txt" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="ban@vidu.com" value="'+escH(A.email)+'" aria-label="Email"></div></div>'+
         '<div class="authField"><label for="acPass">Mật khẩu</label><div class="inwrap">'+ic('lock',16)+'<input id="acPass" class="txt" type="password" autocomplete="current-password" maxlength="200" placeholder="Ít nhất 6 ký tự" aria-label="Mật khẩu"></div>'+
-        '<div class="small muted" style="margin-top:5px">Email chưa có tài khoản sẽ được tạo mới tự động với mật khẩu bạn vừa đặt.</div></div>'+
-        '<div class="askrow" style="margin-top:14px"><button class="btn sm" data-act="acReq"'+(A.busy?' disabled':'')+'>Đăng nhập / Đăng ký</button><button class="link" data-act="acForgotOpen">Quên mật khẩu?</button></div>'+msg;
+        (tab==='register'?'<div class="small muted" style="margin-top:5px">Nếu email này đã có tài khoản, hệ thống sẽ đăng nhập luôn thay vì tạo mới.</div>':'')+'</div>'+
+        '<div class="askrow" style="margin-top:14px"><button class="btn sm" data-act="acReq"'+(A.busy?' disabled':'')+'>'+(tab==='register'?'Tạo tài khoản':'Đăng nhập')+'</button><button class="link" data-act="acForgotOpen">Quên mật khẩu?</button></div>'+msg;
     }
   }else{
     const st=A.sync.st;
@@ -4066,6 +4073,7 @@ document.addEventListener('click',function(e){
   else if(a==='openWeek'){planSel=+d.w;S.pv='week';render();setTimeout(function(){const el=document.getElementById('wdetail');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);return;}
   else if(a==='selWeek'){planSel=+d.w;render();setTimeout(function(){const t=document.querySelector('.wtile.sel');if(t&&t.scrollIntoView)t.scrollIntoView({inline:'center',block:'nearest'});},30);return;}
   else if(a==='acReq'){acReq();return;}
+  else if(a==='authTab'){setAuthTab(d.v);return;}
   else if(a==='acForgotOpen'){acForgotOpen();return;}
   else if(a==='acForgotCancel'){acForgotCancel();return;}
   else if(a==='acForgotSend'){acForgotSend();return;}
