@@ -1270,7 +1270,10 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
 .top h1 .hm-y{color:rgba(255,255,255,.58);font-size:.42em;font-weight:500;letter-spacing:0;margin-left:8px}
 .hinc{margin:0 0 6px;font-size:14px;font-weight:500;color:rgba(255,255,255,.9)}
 .hinc b{font-weight:700;color:#D8FFF6}
-.htag{margin:0 0 16px;max-width:30em;font-size:16px;line-height:1.5;color:rgba(255,255,255,.92);text-shadow:none}
+.htag{margin:0 0 16px;max-width:32em;line-height:1.4;color:rgba(255,255,255,.92);text-shadow:none}
+.htag-ctx{display:block;font-size:14.5px;font-weight:500;color:rgba(255,255,255,.72)}
+.htag-cta{display:block;font-size:19px;font-weight:700;letter-spacing:-.01em;color:#fff;margin-top:3px}
+@media (max-width:600px){.htag-ctx{font-size:13px}.htag-cta{font-size:16.5px}}
 .htag b{font-weight:600;color:#D8FFF6}
 .hcta-row{margin:0 0 14px}
 .hcta{display:inline-flex;align-items:center;gap:9px;padding:12px 20px;border:0;border-radius:14px;background:#fff;color:#00665F;font-weight:600;font-size:15px;cursor:pointer;box-shadow:0 10px 22px rgba(0,40,37,.22);transition:transform .15s,box-shadow .15s}
@@ -3139,14 +3142,15 @@ function paceInfo(weeks){
 function headerTag(weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0);
   const pi=paceInfo(weeks);
-  if(!total)return 'Mỗi ngày đều có thể tạo nên khác biệt. Đặt chỉ tiêu tháng để bắt đầu hành trình.';
+  const tag=(ctx,cta)=>'<span class="htag-ctx">'+ctx+'</span><span class="htag-cta">'+cta+'</span>';
+  if(!total)return tag('Mỗi ngày đều có thể tạo nên khác biệt.','Đặt chỉ tiêu tháng để bắt đầu hành trình!');
   let ach=0;weeks.forEach(w=>{const a=S.actual[w.key];if(a)ach+=(a.bn||0)+(a.gd||0);});
   const pct=Math.round(ach/total*100);
-  if(S.month!==monthKey(0))return ach>0?'Tổng kết tháng: đạt <b>'+pct+'%</b> chỉ tiêu '+fmt(total)+' triệu.':'Chỉ tiêu tháng này: <b>'+fmt(total)+' triệu</b>.';
-  if(ach<=0)return pi.rem+' ngày phía trước, mỗi ngày đều có thể tạo nên khác biệt. Hãy bắt đầu từ những việc bạn có thể làm hôm nay, từng bước tiến gần hơn đến mục tiêu.';
-  if(pct<50)return 'Đã đạt <b>'+pct+'%</b> chỉ tiêu, còn '+pi.rem+' ngày phía trước — mỗi bước nhỏ hôm nay đều đưa bạn tiến gần hơn.';
-  if(pct<100)return 'Đã vượt nửa chặng đường, còn <b>'+fmt(total-ach)+' triệu</b> nữa. Giữ nhịp, đích đến đang ở rất gần!';
-  return 'Hoàn thành chỉ tiêu <b>'+fmt(total)+' triệu</b>. Bạn có mục tiêu, bạn có kế hoạch — và bạn đã làm được!';
+  if(S.month!==monthKey(0))return ach>0?tag('Tổng kết tháng:','Đạt '+pct+'% chỉ tiêu '+fmt(total)+' triệu.'):tag('Chỉ tiêu tháng này:',fmt(total)+' triệu.');
+  if(ach<=0)return tag(pi.rem+' ngày phía trước, mỗi ngày đều có thể tạo nên khác biệt.','Hãy bắt đầu từ những việc bạn có thể làm hôm nay!');
+  if(pct<50)return tag('Đã đạt '+pct+'% chỉ tiêu, còn '+pi.rem+' ngày phía trước.','Mỗi bước nhỏ hôm nay đều đưa bạn tiến gần hơn!');
+  if(pct<100)return tag('Đã vượt nửa chặng đường, còn '+fmt(total-ach)+' triệu nữa.','Giữ nhịp, đích đến đang ở rất gần!');
+  return tag('Hoàn thành chỉ tiêu '+fmt(total)+' triệu!','Bạn có mục tiêu, bạn có kế hoạch — và bạn đã làm được!');
 }
 function headerIncome(){
   const inc=+S.income||0;
