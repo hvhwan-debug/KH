@@ -2739,7 +2739,7 @@ function factorsCard(weeks,mode){
 }
 
 /* ---------- Tài khoản, đồng bộ, email ---------- */
-let AUTH={avail:null,user:null,busy:false,email:'',msg:'',ackOff:false,isAdmin:false,sync:{st:'idle',msg:'',conflict:false}};
+let AUTH={avail:null,user:null,busy:false,email:'',msg:'',ackOff:false,isAdmin:false,forgot:false,forgotMsg:'',forgotBusy:false,resetToken:null,resetMsg:'',resetBusy:false,sync:{st:'idle',msg:'',conflict:false}};
 let syncTimer=null,syncBusy=false,syncDirty=false,lastCheck=0;
 const TOKEN_KEY='livotec-sr-token';
 function getToken(){try{return localStorage.getItem(TOKEN_KEY)||'';}catch(e){return '';}}
@@ -2860,6 +2860,42 @@ async function acReq(){
   }catch(e){AUTH.busy=false;AUTH.msg='Lỗi mạng. Thử lại.';}
   render();
 }
+function acForgotOpen(){AUTH.forgot=true;AUTH.forgotMsg='';render();}
+function acForgotCancel(){AUTH.forgot=false;AUTH.forgotMsg='';render();}
+async function acForgotSend(){
+  const el=document.getElementById('fgEmail');
+  const email=((el&&el.value)||AUTH.email||'').trim().toLowerCase();
+  if(!/^\S+@\S+\.\S+$/.test(email)){AUTH.forgotMsg='Nhập email hợp lệ.';render();return;}
+  AUTH.forgotBusy=true;AUTH.email=email;AUTH.forgotMsg='Đang gửi…';render();
+  try{
+    const r=await api('POST','/api/auth/reset-request',{email:email});
+    AUTH.forgotBusy=false;
+    AUTH.forgotMsg=(r.j&&r.j.message)||'Nếu email này có tài khoản, một liên kết đặt lại mật khẩu đã được gửi.';
+  }catch(e){AUTH.forgotBusy=false;AUTH.forgotMsg='Lỗi mạng. Thử lại.';}
+  render();
+}
+function clearResetParam(){try{const u=new URL(location.href);u.searchParams.delete('reset');history.replaceState(null,'',u.toString());}catch(e){}}
+function acResetCancel(){AUTH.resetToken=null;AUTH.resetMsg='';clearResetParam();render();}
+async function acResetConfirm(){
+  const el=document.getElementById('rsPass');
+  const password=(el&&el.value)||'';
+  if(password.length<6){AUTH.resetMsg='Mật khẩu cần ít nhất 6 ký tự.';render();return;}
+  AUTH.resetBusy=true;AUTH.resetMsg='Đang xử lý…';render();
+  try{
+    const r=await api('POST','/api/auth/reset-confirm',{token:AUTH.resetToken,password:password});
+    AUTH.resetBusy=false;
+    if(r.s===200){
+      if(r.j.token)setToken(r.j.token);
+      AUTH.resetToken=null;AUTH.resetMsg='';AUTH.forgot=false;
+      clearResetParam();
+      await authInit();
+      toast('Đã đặt mật khẩu mới và đăng nhập');
+      return;
+    }
+    AUTH.resetMsg=(r.j&&r.j.error)||'Không đặt lại được mật khẩu.';
+  }catch(e){AUTH.resetBusy=false;AUTH.resetMsg='Lỗi mạng. Thử lại.';}
+  render();
+}
 async function acLogout(){
   clearTimeout(syncTimer);
   try{await api('POST','/api/auth/logout',{});}catch(e){}
@@ -2880,11 +2916,23 @@ function acctData(){
     body='<div class="small muted">Đăng nhập chưa được bật trên máy chủ nên dữ liệu của bạn chỉ lưu trên thiết bị này. Bạn vẫn có thể sao lưu thủ công ở mục "Nhắc việc &amp; lưu dữ liệu".</div>';
   }else if(!A.user){
     sum='<span class="small muted">chưa đăng nhập</span>';
-    const msg=A.msg?'<div class="small" style="margin-top:6px;color:var(--muted)">'+escH(A.msg)+'</div>':'';
-    body='<div class="small muted">Đăng nhập để lưu dữ liệu trên máy chủ và dùng được nhiều thiết bị. Nhập email và tự đặt mật khẩu — nếu email này chưa có tài khoản, hệ thống tự tạo tài khoản mới với mật khẩu bạn vừa nhập.</div>'+
-      '<input id="acEmail" class="txt" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="Email của bạn" value="'+escH(A.email)+'" aria-label="Email">'+
-      '<input id="acPass" class="txt" type="password" autocomplete="current-password" maxlength="200" placeholder="Mật khẩu (ít nhất 6 ký tự)" aria-label="Mật khẩu" style="margin-top:8px">'+
-      '<div class="askrow"><button class="btn sm" data-act="acReq"'+(A.busy?' disabled':'')+'>Đăng nhập / Đăng ký</button></div>'+msg;
+    if(A.resetToken){
+      const rmsg=A.resetMsg?'<div class="small" style="margin-top:6px;color:var(--muted)">'+escH(A.resetMsg)+'</div>':'';
+      body='<div class="small muted">Nhập mật khẩu mới cho tài khoản của bạn. Liên kết đặt lại chỉ dùng được 1 lần và có hiệu lực trong 1 giờ kể từ khi gửi.</div>'+
+        '<input id="rsPass" class="txt" type="password" autocomplete="new-password" maxlength="200" placeholder="Mật khẩu mới (ít nhất 6 ký tự)" aria-label="Mật khẩu mới" style="margin-top:8px">'+
+        '<div class="askrow"><button class="btn sm" data-act="acResetConfirm"'+(A.resetBusy?' disabled':'')+'>Đặt mật khẩu mới</button><button class="link" data-act="acResetCancel">Huỷ</button></div>'+rmsg;
+    }else if(A.forgot){
+      const fmsg=A.forgotMsg?'<div class="small" style="margin-top:6px;color:var(--muted)">'+escH(A.forgotMsg)+'</div>':'';
+      body='<div class="small muted">Nhập email đã đăng ký, hệ thống sẽ gửi liên kết đặt lại mật khẩu (có hiệu lực 1 giờ) tới hộp thư đó.</div>'+
+        '<input id="fgEmail" class="txt" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="Email của bạn" value="'+escH(A.email)+'" aria-label="Email" style="margin-top:8px">'+
+        '<div class="askrow"><button class="btn sm" data-act="acForgotSend"'+(A.forgotBusy?' disabled':'')+'>Gửi liên kết đặt lại</button><button class="link" data-act="acForgotCancel">Quay lại đăng nhập</button></div>'+fmsg;
+    }else{
+      const msg=A.msg?'<div class="small" style="margin-top:6px;color:var(--muted)">'+escH(A.msg)+'</div>':'';
+      body='<div class="small muted">Đăng nhập để lưu dữ liệu trên máy chủ và dùng được nhiều thiết bị. Nhập email và tự đặt mật khẩu — nếu email này chưa có tài khoản, hệ thống tự tạo tài khoản mới với mật khẩu bạn vừa nhập.</div>'+
+        '<input id="acEmail" class="txt" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="Email của bạn" value="'+escH(A.email)+'" aria-label="Email">'+
+        '<input id="acPass" class="txt" type="password" autocomplete="current-password" maxlength="200" placeholder="Mật khẩu (ít nhất 6 ký tự)" aria-label="Mật khẩu" style="margin-top:8px">'+
+        '<div class="askrow"><button class="btn sm" data-act="acReq"'+(A.busy?' disabled':'')+'>Đăng nhập / Đăng ký</button><button class="link" data-act="acForgotOpen">Quên mật khẩu?</button></div>'+msg;
+    }
   }else{
     const st=A.sync.st;
     sum='<span class="badge '+(st==='err'?'bad':'ok')+'">'+(st==='err'?'Lỗi đồng bộ':'Đã đăng nhập')+'</span>';
@@ -4010,6 +4058,11 @@ document.addEventListener('click',function(e){
   else if(a==='openWeek'){planSel=+d.w;S.pv='week';render();setTimeout(function(){const el=document.getElementById('wdetail');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);return;}
   else if(a==='selWeek'){planSel=+d.w;render();setTimeout(function(){const t=document.querySelector('.wtile.sel');if(t&&t.scrollIntoView)t.scrollIntoView({inline:'center',block:'nearest'});},30);return;}
   else if(a==='acReq'){acReq();return;}
+  else if(a==='acForgotOpen'){acForgotOpen();return;}
+  else if(a==='acForgotCancel'){acForgotCancel();return;}
+  else if(a==='acForgotSend'){acForgotSend();return;}
+  else if(a==='acResetConfirm'){acResetConfirm();return;}
+  else if(a==='acResetCancel'){acResetCancel();return;}
   else if(a==='acLogout'){acLogout();return;}
   else if(a==='acSync'){syncDirty=true;syncPush({});return;}
   else if(a==='acMailTest'){acMailTest();return;}
@@ -4150,7 +4203,9 @@ if(rf)rf.addEventListener('change',function(){const f=rf.files&&rf.files[0];rf.v
 window.addEventListener('hashchange',applyHash);
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
 try{if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(function(){});}catch(e){}
+(function(){try{const u=new URL(location.href);const t=u.searchParams.get('reset');if(t){AUTH.resetToken=t;u.searchParams.delete('reset');history.replaceState(null,'',u.toString());}}catch(e){}})();
 render();
+if(AUTH.resetToken){renderAcctSheet();document.getElementById('acctSheet').hidden=false;}
 updateAcctFab();
 initCoach();
 (function(){

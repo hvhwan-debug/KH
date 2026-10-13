@@ -48,7 +48,7 @@ Không dán chuỗi này vào chat hay vào mã nguồn.
 ## Hoạt động như thế nào
 - **Đăng nhập:** email + mật khẩu do người dùng tự đặt khi đăng ký lần đầu. Mật khẩu được băm (scrypt) trước khi lưu, không lưu dạng chữ thường. Sai mật khẩu quá 10 lần trong 1 giờ cho một tài khoản sẽ bị tạm khoá 1 giờ. Phiên đăng nhập lưu 30 ngày trong cookie có chữ ký.
 - **Dữ liệu:** mỗi người một tệp JSON trong kho lưu trữ. Ứng dụng tự đồng bộ sau mỗi thay đổi. Nếu hai thiết bị sửa khác nhau, ứng dụng hỏi dùng bản nào.
-- **Quên mật khẩu:** hiện chưa có luồng "quên mật khẩu" tự động. Cách xử lý: xoá tệp `user/<mã>.json` tương ứng trong kho lưu trữ (xem mục Quyền riêng tư bên dưới) để người đó đăng ký lại từ đầu với mật khẩu mới — họ sẽ mất lịch sử đồng bộ cũ nếu có.
+- **Quên mật khẩu:** bấm "Quên mật khẩu?" ở khung đăng nhập, nhập email → hệ thống gửi một liên kết đặt lại mật khẩu có hiệu lực 1 giờ (cần đã bật email tự động ở mục tuỳ chọn bên dưới; nếu chưa bật SMTP thì link không gửi được, lúc đó vẫn phải xoá tệp `user/<mã>.json` như cách cũ). Bấm vào liên kết trong email sẽ mở lại ứng dụng với khung "Đặt mật khẩu mới"; đặt xong sẽ tự đăng nhập luôn, không mất dữ liệu đã đồng bộ trước đó.
 
 ## Quyền riêng tư
 - Trong ứng dụng, mỗi người chỉ xem được dữ liệu của mình và không có bảng xếp hạng giữa các SR.
@@ -56,8 +56,8 @@ Không dán chuỗi này vào chat hay vào mã nguồn.
 - Xóa dữ liệu một người: xóa tệp `user/<mã>.json` trong container `livotec-sr` của Storage Account.
 
 ## Giới hạn hiện tại
-- Chưa có trang quản lý cho quản lý/admin xem tiến độ cả đội (cố ý, để giữ cam kết riêng tư).
-- Chưa có luồng đổi mật khẩu hay quên mật khẩu trong app (xem mục trên).
+- Trang quản trị (`ADMIN_EMAILS`) chỉ xem tóm tắt và xoá thành viên, không xem được tiến độ chi tiết cả đội theo kiểu bảng xếp hạng (cố ý, để giữ cam kết riêng tư).
+- Quên mật khẩu cần đã bật SMTP (mục tuỳ chọn bên dưới) để gửi được link; chưa có luồng tự đổi mật khẩu khi đang đăng nhập (chỉ có đặt lại khi quên).
 
 ## Tuỳ chọn: bật email tự động (nhắc việc, cảnh báo)
 Đây là tính năng **thêm**, không liên quan đến việc đăng nhập ở trên vẫn hoạt động nếu bỏ qua phần này.
