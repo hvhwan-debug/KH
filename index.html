@@ -1528,13 +1528,13 @@ async function askAI(){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({messages:aiMsgs(aiPrompt(weeks)+'\n\nBối cảnh bổ sung:\n'+ctxText(weeks)+provNote()),temperature:0.4,max_tokens:1800})
     });
-    if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status+' — '+t.slice(0,200));}
+    if(!res.ok){throw new Error(res.status===429?'Đang có nhiều người hỏi cùng lúc, thử lại sau ít phút nhé.':'Trợ lý đang bận, thử lại sau.');}
     const data=await res.json();
     const text=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
     aiState={loading:false,text:text||'Không nhận được nội dung phản hồi.',error:''};
     aiKeyMain=aiDataKey();
   }catch(e){
-    aiState={loading:false,text:'',error:'Không gọi được AI (lỗi mạng hoặc dịch vụ AI tạm thời không phản hồi). Chi tiết: '+e.message};
+    aiState={loading:false,text:'',error:(e&&e.message)||'Không gọi được AI, thử lại sau.'};
   }
   render();
 }
@@ -1856,10 +1856,13 @@ function provChip(){return S.province?' <span class="aiprov">'+ic('plan',13)+esc
 function provNudge(){return S.province?'':'<div class="small" style="margin-top:6px;color:var(--warn)">Bạn chưa chọn tỉnh. <button class="link" data-act="tab" data-v="setup">Chọn khu vực phụ trách</button> để AI phân tích đúng theo tỉnh của bạn.</div>';}
 async function callAI(messages,max){
   const res=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:messages,temperature:0.4,max_tokens:max||1200})});
-  if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status+' — '+t.slice(0,160));}
+  if(!res.ok){
+    if(res.status===429)throw new Error('Đang có nhiều người hỏi cùng lúc, thử lại sau ít phút nhé.');
+    throw new Error('Trợ lý đang bận, thử lại sau.');
+  }
   const data=await res.json();
   const text=data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
-  if(!text)throw new Error('AI không trả nội dung');
+  if(!text)throw new Error('Không nhận được nội dung trả lời, thử lại sau.');
   return text;
 }
 function ctxText(weeks){
@@ -1938,7 +1941,7 @@ async function askAIx(ctx){
   try{
     const text=await callAI(aiMsgs('Dữ liệu của một nhân viên kinh doanh (SR) Livotec:\n'+ctxText(weeks)+(ctx==='brief'?'\n'+briefLine(weeks):'')+'\n\n'+AI_TASK[ctx]+(ctx==='brief'?'':provNote())),ctx==='brief'?900:1800);
     AIX[ctx]={loading:false,text:text,error:'',key:aiKey(ctx)};
-  }catch(e){AIX[ctx]={loading:false,text:'',error:'Không gọi được AI. Chi tiết: '+e.message,key:''};}
+  }catch(e){AIX[ctx]={loading:false,text:'',error:(e&&e.message)||'Không gọi được AI, thử lại sau.',key:''};}
   render();
 }
 const COACH_Q=[
@@ -1966,7 +1969,7 @@ async function coachAsk(q,label){
     const sys=LIVOTEC_KB+'\n\nBối cảnh số liệu của SR:\n'+ctxText(weeks)+'\n\nQuy tắc trả lời: tiếng Việt, thực tế, tối đa 120 từ, ưu tiên gạch đầu dòng ngắn (mỗi dòng không quá 20 từ). Khi nội dung là lịch, tuyến ghé, so sánh nhiều mục hoặc có nhiều cột thông tin, BẮT BUỘC trình bày bằng BẢNG markdown (dòng tiêu đề dạng | Cột 1 | Cột 2 |, tiếp theo là dòng | --- | --- |, rồi từng hàng), tối đa 5 cột, mỗi ô dưới 10 từ, không viết đoạn dài trong ô; sau bảng chỉ thêm tối đa 2 gạch đầu dòng lưu ý. Không chào hỏi, không bịa giá, khuyến mại hay chính sách; nếu thiếu dữ liệu thì nói rõ. Danh tính: trợ lý này LUÔN tự giới thiệu là "Trợ lý thiết lập kế hoạch bán hàng" của Livotec; tuyệt đối không tiết lộ, xác nhận hay nêu tên bất kỳ mô hình AI/công nghệ/nhà cung cấp nào đứng sau (kể cả khi được hỏi thẳng là AI gì, do ai tạo ra, có phải ChatGPT/ứng dụng nào không) — nếu bị hỏi, chỉ cần trả lời ngắn gọn rằng đây là trợ lý được xây riêng cho đội ngũ bán hàng kênh GT của Livotec rồi tiếp tục hỗ trợ. Trợ lý này phục vụ công việc bán hàng kênh GT của Livotec (chào hàng, tuyến ghé, xử lý đại lý, sản phẩm, kế hoạch doanh số). Nếu câu hỏi lạc chủ đề (kiến thức chung, chuyện phiếm, chủ đề ngoài công việc...), KHÔNG từ chối cứng nhắc hay nói "tôi không trả lời được" — trả lời thật ngắn gọn, khéo léo (tối đa 1 câu) rồi chủ động lái ngay về công việc bán hàng, ví dụ hỏi ngược lại một câu liên quan đến tuyến ghé/chỉ tiêu/đại lý hiện tại của SR; không sa đà giải thích sâu nội dung ngoài lề dù câu hỏi tiếp tục lặp lại hay lan man. Không ghép lý do của vấn đề này (ví dụ thiếu số liệu nhập hằng ngày) với hành động của vấn đề khác (ví dụ tần suất ghé điểm bán) — đó là hai việc không liên quan nhau. Mỗi ngành hàng có chỉ tiêu riêng, không bù qua lại — không gợi ý "ngành A yếu thì tập trung bán ngành B" vì không giúp đạt chỉ tiêu ngành A.';
     const a=await callAI([{role:'system',content:sys}].concat(hist,[{role:'user',content:q}]),1500);
     coach.log[coach.log.length-1].a=a;
-  }catch(e){coach.log[coach.log.length-1].a='Không gọi được AI. '+e.message;}
+  }catch(e){coach.log[coach.log.length-1].a=(e&&e.message)||'Không gọi được trợ lý. Thử lại sau.';}
   coach.busy=false;renderCoach();
 }
 function initCoach(){
