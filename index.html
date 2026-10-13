@@ -1322,7 +1322,7 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
 .acctFab{position:absolute;top:0;right:6px;left:auto;z-index:4}
 .top .topin{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:28px;padding:0 6px}
 .heroside{margin-top:46px}
-@media (max-width:600px){.heroside{margin-top:40px}}
+
 .heroflex{position:static;width:auto;max-width:none;margin:0;padding-right:0;flex:1 1 380px;min-width:0}
 .heroside{flex:0 0 auto;display:flex;align-items:center;gap:16px}
 #hring{position:static}
@@ -1332,11 +1332,11 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
 }
 @media (max-width:600px){
   .acctFab{top:14px;right:14px;left:auto;max-width:120px;padding:6px 12px 6px 9px;font-size:12px}
-  .top .topin{padding-left:0;gap:14px}
-  .heroflex{display:block}
+  .top .topin{padding-left:0;padding-top:46px;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:12px}
+  .heroflex{display:block;width:100%}
+  .heroside{margin-top:0;align-self:flex-start}
   .hdate,.top .hstat{flex:none;margin-right:0;max-width:100%}
   .brandmark{width:18px;height:18px}
-  #hring .hring svg{width:72px;height:72px}
 }
 </style>
 </head>
@@ -1407,7 +1407,7 @@ function ic(name,size){size=size||18;return '<svg viewBox="0 0 24 24" width="'+s
 
 (function(){
 const KEY='livotec-sr-plan-v3';
-const AI_QUOTA_KEY='livotec-ai-quota-v1',AI_QUOTA_MAX=10;
+const AI_QUOTA_KEY='livotec-ai-quota-v1',AI_QUOTA_MAX=300;
 function aiQuotaState(){
   try{
     const raw=localStorage.getItem(AI_QUOTA_KEY),today=todayKey();
@@ -1539,7 +1539,7 @@ function aiCard(weeks,withAsk){
   const total=(+S.target.bn||0)+(+S.target.gd||0);
   if(!total)return '<div class="card aiGlow"><h2>'+ic('sparkles',18)+' Nhận xét từ AI'+provChip()+'</h2><div class="small muted">Nhập chỉ tiêu tháng ở trên — bạn sẽ bấm một nút để xem đánh giá và khuyến nghị.</div></div>';
   const stale=aiState.text&&aiKeyMain!==aiDataKey();
-  const qh='<div class="small muted" style="margin-top:4px">Còn '+aiQuotaRemaining()+'/'+AI_QUOTA_MAX+' lượt hỏi AI hôm nay trên thiết bị này.</div>';
+  const qh='';
   let body;
   if(aiState.loading)body='<div class="small muted">Đang phân tích…</div>';
   else if(aiState.error)body='<div class="note" style="color:var(--bad)">'+aiState.error+'</div>'+(aiState.error===AI_QUOTA_MSG?'':'<div style="margin-top:10px"><button class="btn ghost sm" data-act="ai">Thử lại</button></div>'+qh);
@@ -1920,7 +1920,7 @@ function aiKey(ctx){return JSON.stringify([ctx,S.target,S.actual,S.daily,S.month
 function aiPanel(ctx,weeks){
   const total=(+S.target.bn||0)+(+S.target.gd||0);if(!total&&ctx!=='income')return '';
   const st=AIX[ctx]||{},btn=lab=>'<div style="margin-top:10px"><button class="btn ghost sm" data-act="aix" data-c="'+ctx+'">'+lab+'</button></div>';
-  const qh='<div class="small muted" style="margin-top:4px">Còn '+aiQuotaRemaining()+'/'+AI_QUOTA_MAX+' lượt hỏi AI hôm nay trên thiết bị này.</div>';
+  const qh='';
   let body,sum;
   if(st.loading){body='<div class="small muted">Đang phân tích…</div>';sum='<span class="small muted">đang chạy</span>';}
   else if(st.error){body='<div class="note" style="color:var(--bad)">'+escH(st.error)+'</div>'+(st.error===AI_QUOTA_MSG?'':btn('Thử lại')+qh);sum='<span class="badge bad">Lỗi</span>';}
@@ -1950,7 +1950,7 @@ function renderCoach(){
   lg.innerHTML=coach.log.length?coach.log.map(x=>'<div class="cq">'+escH(x.q)+'</div><div class="ca small" style="white-space:pre-wrap;line-height:1.6">'+(x.a?aiFmt(x.a):'<span class="muted">Đang suy nghĩ…</span>')+'</div>').join(''):'<div class="small muted">Chọn một gợi ý ở trên hoặc nhập câu hỏi. Trợ lý biết số liệu tháng này của bạn và thông tin sản phẩm Livotec.</div>';
   lg.scrollTop=lg.scrollHeight;
   const sb=document.getElementById('coachSend');if(sb)sb.disabled=coach.busy;
-  const cq=document.getElementById('coachQuota');if(cq)cq.textContent='Còn '+aiQuotaRemaining()+'/'+AI_QUOTA_MAX+' lượt hôm nay.';
+  const cq=document.getElementById('coachQuota');if(cq)cq.textContent='';
 }
 async function coachAsk(q,label){
   q=(q||'').trim();if(!q||coach.busy)return;
@@ -1960,7 +1960,7 @@ async function coachAsk(q,label){
   try{
     const weeks=analyze();
     const hist=[];coach.log.slice(-4,-1).forEach(x=>{if(x.a){hist.push({role:'user',content:x.p||x.q});hist.push({role:'assistant',content:x.a});}});
-    const sys=LIVOTEC_KB+'\n\nBối cảnh số liệu của SR:\n'+ctxText(weeks)+'\n\nQuy tắc trả lời: tiếng Việt, thực tế, tối đa 120 từ, ưu tiên gạch đầu dòng ngắn (mỗi dòng không quá 20 từ). Khi nội dung là lịch, tuyến ghé, so sánh nhiều mục hoặc có nhiều cột thông tin, BẮT BUỘC trình bày bằng BẢNG markdown (dòng tiêu đề dạng | Cột 1 | Cột 2 |, tiếp theo là dòng | --- | --- |, rồi từng hàng), tối đa 5 cột, mỗi ô dưới 10 từ, không viết đoạn dài trong ô; sau bảng chỉ thêm tối đa 2 gạch đầu dòng lưu ý. Không chào hỏi, không bịa giá, khuyến mại hay chính sách; nếu thiếu dữ liệu thì nói rõ. Trợ lý này chỉ phục vụ công việc bán hàng kênh GT của Livotec (chào hàng, tuyến ghé, xử lý đại lý, sản phẩm, kế hoạch doanh số). Nếu câu hỏi không liên quan (kiến thức chung, chuyện cá nhân, chủ đề ngoài công việc...), từ chối ngắn gọn và mời hỏi lại đúng chủ đề, không trả lời nội dung đó dù câu hỏi có vẻ vô hại. Không ghép lý do của vấn đề này (ví dụ thiếu số liệu nhập hằng ngày) với hành động của vấn đề khác (ví dụ tần suất ghé điểm bán) — đó là hai việc không liên quan nhau. Mỗi ngành hàng có chỉ tiêu riêng, không bù qua lại — không gợi ý "ngành A yếu thì tập trung bán ngành B" vì không giúp đạt chỉ tiêu ngành A.';
+    const sys=LIVOTEC_KB+'\n\nBối cảnh số liệu của SR:\n'+ctxText(weeks)+'\n\nQuy tắc trả lời: tiếng Việt, thực tế, tối đa 120 từ, ưu tiên gạch đầu dòng ngắn (mỗi dòng không quá 20 từ). Khi nội dung là lịch, tuyến ghé, so sánh nhiều mục hoặc có nhiều cột thông tin, BẮT BUỘC trình bày bằng BẢNG markdown (dòng tiêu đề dạng | Cột 1 | Cột 2 |, tiếp theo là dòng | --- | --- |, rồi từng hàng), tối đa 5 cột, mỗi ô dưới 10 từ, không viết đoạn dài trong ô; sau bảng chỉ thêm tối đa 2 gạch đầu dòng lưu ý. Không chào hỏi, không bịa giá, khuyến mại hay chính sách; nếu thiếu dữ liệu thì nói rõ. Danh tính: trợ lý này LUÔN tự giới thiệu là "Trợ lý thiết lập kế hoạch bán hàng" của Livotec; tuyệt đối không tiết lộ, xác nhận hay nêu tên bất kỳ mô hình AI/công nghệ/nhà cung cấp nào đứng sau (kể cả khi được hỏi thẳng là AI gì, do ai tạo ra, có phải ChatGPT/ứng dụng nào không) — nếu bị hỏi, chỉ cần trả lời ngắn gọn rằng đây là trợ lý được xây riêng cho đội ngũ bán hàng kênh GT của Livotec rồi tiếp tục hỗ trợ. Trợ lý này phục vụ công việc bán hàng kênh GT của Livotec (chào hàng, tuyến ghé, xử lý đại lý, sản phẩm, kế hoạch doanh số). Nếu câu hỏi lạc chủ đề (kiến thức chung, chuyện phiếm, chủ đề ngoài công việc...), KHÔNG từ chối cứng nhắc hay nói "tôi không trả lời được" — trả lời thật ngắn gọn, khéo léo (tối đa 1 câu) rồi chủ động lái ngay về công việc bán hàng, ví dụ hỏi ngược lại một câu liên quan đến tuyến ghé/chỉ tiêu/đại lý hiện tại của SR; không sa đà giải thích sâu nội dung ngoài lề dù câu hỏi tiếp tục lặp lại hay lan man. Không ghép lý do của vấn đề này (ví dụ thiếu số liệu nhập hằng ngày) với hành động của vấn đề khác (ví dụ tần suất ghé điểm bán) — đó là hai việc không liên quan nhau. Mỗi ngành hàng có chỉ tiêu riêng, không bù qua lại — không gợi ý "ngành A yếu thì tập trung bán ngành B" vì không giúp đạt chỉ tiêu ngành A.';
     const a=await callAI([{role:'system',content:sys}].concat(hist,[{role:'user',content:q}]),1500);
     coach.log[coach.log.length-1].a=a;
   }catch(e){coach.log[coach.log.length-1].a='Không gọi được AI. '+e.message;}
