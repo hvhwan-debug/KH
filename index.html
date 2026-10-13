@@ -2756,7 +2756,7 @@ function factorsCard(weeks,mode){
 }
 
 /* ---------- Tài khoản, đồng bộ, email ---------- */
-let AUTH={avail:null,user:null,busy:false,email:'',name:'',authTab:'login',msg:'',ackOff:false,isAdmin:false,forgot:false,forgotMsg:'',forgotBusy:false,resetToken:null,resetMsg:'',resetBusy:false,sync:{st:'idle',msg:'',conflict:false}};
+let AUTH={avail:null,user:null,busy:false,email:'',name:'',authTab:'login',msg:'',ackOff:false,isAdmin:false,forgot:false,forgotMsg:'',forgotBusy:false,resetToken:null,resetMsg:'',resetBusy:false,otpPending:false,otpPass:'',otpMsg:'',otpBusy:false,sync:{st:'idle',msg:'',conflict:false}};
 let syncTimer=null,syncBusy=false,syncDirty=false,lastCheck=0;
 const TOKEN_KEY='livotec-sr-token';
 function getToken(){try{return localStorage.getItem(TOKEN_KEY)||'';}catch(e){return '';}}
@@ -2873,9 +2873,40 @@ async function acReq(){
   try{
     const r=await api('POST','/api/auth/request',{email:email,password:password,name:name});
     AUTH.busy=false;
+    if(r.s===200&&r.j.needsOtp){AUTH.otpPending=true;AUTH.otpPass=password;AUTH.otpMsg='Đã gửi mã xác minh 6 số tới '+email+'.';render();return;}
     if(r.s===200){if(r.j.token)setToken(r.j.token);AUTH.msg='';await authInit();toast(r.j.created?'Đã tạo tài khoản và đăng nhập':'Đã đăng nhập');return;}
     AUTH.msg=r.j.error||'Không đăng nhập được.';
   }catch(e){AUTH.busy=false;AUTH.msg='Lỗi mạng. Thử lại.';}
+  render();
+}
+function acOtpCancel(){AUTH.otpPending=false;AUTH.otpPass='';AUTH.otpMsg='';render();}
+async function acOtpResend(){
+  AUTH.otpBusy=true;AUTH.otpMsg='Đang gửi lại mã…';render();
+  try{
+    const r=await api('POST','/api/auth/request',{email:AUTH.email,password:AUTH.otpPass,name:AUTH.name});
+    AUTH.otpBusy=false;
+    if(r.s===200&&r.j.needsOtp){AUTH.otpMsg='Đã gửi lại mã mới tới '+AUTH.email+'.';render();return;}
+    AUTH.otpMsg=r.j.error||'Không gửi lại được mã.';
+  }catch(e){AUTH.otpBusy=false;AUTH.otpMsg='Lỗi mạng. Thử lại.';}
+  render();
+}
+async function acOtpConfirm(){
+  const el=document.getElementById('acOtp');
+  const otp=((el&&el.value)||'').trim();
+  if(!/^\d{6}$/.test(otp)){AUTH.otpMsg='Nhập đủ 6 số.';render();return;}
+  AUTH.otpBusy=true;AUTH.otpMsg='Đang xác minh…';render();
+  try{
+    const r=await api('POST','/api/auth/request',{email:AUTH.email,password:AUTH.otpPass,name:AUTH.name,otp:otp});
+    AUTH.otpBusy=false;
+    if(r.s===200){
+      if(r.j.token)setToken(r.j.token);
+      AUTH.otpPending=false;AUTH.otpPass='';AUTH.otpMsg='';AUTH.msg='';
+      await authInit();
+      toast('Đã xác minh và tạo tài khoản');
+      return;
+    }
+    AUTH.otpMsg=r.j.error||'Mã không đúng.';
+  }catch(e){AUTH.otpBusy=false;AUTH.otpMsg='Lỗi mạng. Thử lại.';}
   render();
 }
 function setAuthTab(v){AUTH.authTab=(v==='register'?'register':'login');AUTH.msg='';render();}
@@ -2935,7 +2966,12 @@ function acctData(){
     body='<div class="small muted">Đăng nhập chưa được bật trên máy chủ nên dữ liệu của bạn chỉ lưu trên thiết bị này. Bạn vẫn có thể sao lưu thủ công ở mục "Nhắc việc &amp; lưu dữ liệu".</div>';
   }else if(!A.user){
     sum='<span class="small muted">chưa đăng nhập</span>';
-    if(A.resetToken){
+    if(A.otpPending){
+      const omsg=A.otpMsg?'<div class="small" style="margin-top:10px;color:var(--muted)">'+escH(A.otpMsg)+'</div>':'';
+      body='<div class="authHead"><div class="ic">'+ic('mail',20)+'</div><div class="tx"><b>Xác minh email</b><span>Nhập mã 6 số vừa gửi tới '+escH(A.email)+'</span></div></div>'+
+        '<div class="authField"><label for="acOtp">Mã xác minh</label><div class="inwrap">'+ic('lock',16)+'<input id="acOtp" class="txt" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" placeholder="123456" aria-label="Mã xác minh" style="letter-spacing:.3em;font-weight:700"></div></div>'+
+        '<div class="askrow" style="margin-top:14px"><button class="btn sm" data-act="acOtpConfirm"'+(A.otpBusy?' disabled':'')+'>Xác minh</button><button class="link" data-act="acOtpResend"'+(A.otpBusy?' disabled':'')+'>Gửi lại mã</button><button class="link" data-act="acOtpCancel">Huỷ</button></div>'+omsg;
+    }else if(A.resetToken){
       const rmsg=A.resetMsg?'<div class="small" style="margin-top:10px;color:var(--muted)">'+escH(A.resetMsg)+'</div>':'';
       body='<div class="authHead"><div class="ic">'+ic('lock',20)+'</div><div class="tx"><b>Đặt mật khẩu mới</b><span>Liên kết dùng được 1 lần, hiệu lực trong 1 giờ</span></div></div>'+
         '<div class="authField"><label for="rsPass">Mật khẩu mới</label><div class="inwrap">'+ic('lock',16)+'<input id="rsPass" class="txt" type="password" autocomplete="new-password" maxlength="200" placeholder="Ít nhất 6 ký tự" aria-label="Mật khẩu mới"></div></div>'+
@@ -4091,6 +4127,9 @@ document.addEventListener('click',function(e){
   else if(a==='selWeek'){planSel=+d.w;render();setTimeout(function(){const t=document.querySelector('.wtile.sel');if(t&&t.scrollIntoView)t.scrollIntoView({inline:'center',block:'nearest'});},30);return;}
   else if(a==='acReq'){acReq();return;}
   else if(a==='authTab'){setAuthTab(d.v);return;}
+  else if(a==='acOtpConfirm'){acOtpConfirm();return;}
+  else if(a==='acOtpResend'){acOtpResend();return;}
+  else if(a==='acOtpCancel'){acOtpCancel();return;}
   else if(a==='acForgotOpen'){acForgotOpen();return;}
   else if(a==='acForgotCancel'){acForgotCancel();return;}
   else if(a==='acForgotSend'){acForgotSend();return;}

@@ -46,6 +46,7 @@ function layout(o) {
     '<span style="display:inline-block;background:' + t.bg + ";color:" + t.fg + ';font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;letter-spacing:.04em">' + t.label + "</span>" +
     '<h1 style="font-size:19px;margin:10px 0 10px;color:#06302D">' + esc(o.title) + "</h1>" +
     (tiles ? '<table role="presentation" style="width:100%;border-collapse:separate"><tr>' + tiles + "</tr></table>" : "") +
+    (o.code ? '<div style="margin:14px 0;text-align:center"><span style="display:inline-block;background:#E9F6F4;color:#06302D;font-size:30px;font-weight:800;letter-spacing:8px;padding:14px 20px;border-radius:12px">' + esc(o.code) + "</span></div>" : "") +
     secs +
     (o.cta ? '<div style="margin:18px 0 6px"><a href="' + esc(o.ctaUrl) + '" style="background:#007A73;color:#fff;text-decoration:none;padding:11px 18px;border-radius:10px;font-weight:700;display:inline-block">' + esc(o.cta) + "</a></div>" : "") +
     "</td></tr>" +
@@ -57,6 +58,7 @@ function layout(o) {
     "</td></tr></table></div>";
   const text = [
     "[" + t.label + "] " + o.title, "",
+    o.code ? "Mã: " + o.code : "",
     (o.tiles || []).map((x) => x.n + " — " + x.l).join("\n"),
     (o.sections || []).map((s) => "\n" + s.h + "\n" + s.lines.map((l) => "- " + l).join("\n")).join("\n"),
     o.cta ? "\n" + o.cta + ": " + o.ctaUrl : "",

@@ -47,6 +47,7 @@ Không dán chuỗi này vào chat hay vào mã nguồn.
 
 ## Hoạt động như thế nào
 - **Đăng nhập:** email + mật khẩu do người dùng tự đặt khi đăng ký lần đầu. Mật khẩu được băm (scrypt) trước khi lưu, không lưu dạng chữ thường. Sai mật khẩu quá 10 lần trong 1 giờ cho một tài khoản sẽ bị tạm khoá 1 giờ. Phiên đăng nhập lưu 30 ngày trong cookie có chữ ký.
+- **Đăng ký (tài khoản mới):** nếu đã bật SMTP (mục tuỳ chọn bên dưới), hệ thống gửi một mã xác minh 6 số tới email trước khi kích hoạt tài khoản — chống việc ai đó đăng ký bằng email không phải của mình. Mã có hiệu lực 10 phút, tối đa 5 lần gửi lại và 8 lần thử sai mỗi giờ cho một tài khoản. Nếu chưa bật SMTP, tài khoản được kích hoạt ngay như trước đây (không yêu cầu mã).
 - **Dữ liệu:** mỗi người một tệp JSON trong kho lưu trữ. Ứng dụng tự đồng bộ sau mỗi thay đổi. Nếu hai thiết bị sửa khác nhau, ứng dụng hỏi dùng bản nào.
 - **Quên mật khẩu:** bấm "Quên mật khẩu?" ở khung đăng nhập, nhập email → hệ thống gửi một liên kết đặt lại mật khẩu có hiệu lực 1 giờ (cần đã bật email tự động ở mục tuỳ chọn bên dưới; nếu chưa bật SMTP thì link không gửi được, lúc đó vẫn phải xoá tệp `user/<mã>.json` như cách cũ). Bấm vào liên kết trong email sẽ mở lại ứng dụng với khung "Đặt mật khẩu mới"; đặt xong sẽ tự đăng nhập luôn, không mất dữ liệu đã đồng bộ trước đó.
 
