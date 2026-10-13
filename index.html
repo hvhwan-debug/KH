@@ -834,39 +834,7 @@ h2,.sech .st{color:var(--ink)}
 .swipehint{display:none;color:var(--brand-deep);font-weight:500}
 @media (max-width:600px){.gtbl .hm{display:none}.swipehint{display:inline}.gtbl{min-width:0;font-size:13px}.gtbl .gcell{min-width:46px;padding:7px 4px}.gtbl thead th{padding:8px 5px}}
 
-/* ===== Bong bóng nổi, sóng biển và bể nước (theo /krf) ===== */
-.top .bubbles{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-.top .bubbles b{position:absolute;bottom:-40px;border-radius:50%;border:1px solid rgba(255,255,255,.5);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.6),rgba(255,255,255,.06) 62%);animation:bub linear infinite;opacity:0}
-.top .bubbles b:nth-child(1){left:6%;width:14px;height:14px;animation-duration:15s;animation-delay:0s}
-.top .bubbles b:nth-child(2){left:15%;width:26px;height:26px;animation-duration:21s;animation-delay:-6s}
-.top .bubbles b:nth-child(3){left:27%;width:10px;height:10px;animation-duration:13s;animation-delay:-3s}
-.top .bubbles b:nth-child(4){left:41%;width:20px;height:20px;animation-duration:18s;animation-delay:-9s}
-.top .bubbles b:nth-child(5){left:53%;width:12px;height:12px;animation-duration:14s;animation-delay:-1s}
-.top .bubbles b:nth-child(6){left:64%;width:32px;height:32px;animation-duration:24s;animation-delay:-12s}
-.top .bubbles b:nth-child(7){left:74%;width:16px;height:16px;animation-duration:17s;animation-delay:-5s}
-.top .bubbles b:nth-child(8){left:85%;width:11px;height:11px;animation-duration:12s;animation-delay:-8s}
-.top .bubbles b:nth-child(9){left:92%;width:22px;height:22px;animation-duration:20s;animation-delay:-14s}
-.top .bubbles b:nth-child(10){left:34%;width:8px;height:8px;animation-duration:11s;animation-delay:-4s}
-@keyframes bub{0%{transform:translate(0,0);opacity:0}8%{opacity:1}100%{transform:translate(26px,-420px);opacity:0}}
-.top .wave{display:none}
-.top .shore{position:absolute;left:0;right:0;bottom:-1px;height:62px;pointer-events:none;overflow:hidden;z-index:1}
-.top .shore svg{position:absolute;left:0;bottom:0;width:200%;height:100%}
-.top .shore .s1{fill:rgba(255,255,255,.14);animation:hslide 28s linear infinite}
-.top .shore .s2{fill:rgba(2,182,172,.42);animation:hslide 19s linear infinite reverse}
-.top .shore .s3{fill:var(--bg);animation:hslide 36s linear infinite}
-@keyframes hslide{to{transform:translateX(-50%)}}
-@media (max-width:600px){.top .shore{height:46px}.top .bubbles b:nth-child(n+8){display:none}}
-.hwater{transition:transform 1.6s cubic-bezier(.2,.7,.2,1)}
-.hring .rw{animation:rslide 6s linear infinite}
-.hring .rw.a{fill:rgba(255,255,255,.34)}
-.hring .rw.b{fill:rgba(2,182,172,.55);animation-duration:9s;animation-direction:reverse}
-@keyframes rslide{to{transform:translateX(-50px)}}
-.hring .rbub{fill:#fff;fill-opacity:.6;animation:rrise 5s ease-in infinite}
-.hring .rbub.r2{animation-duration:7s;animation-delay:1.6s}
-.hring .rbub.r3{animation-duration:6s;animation-delay:3.1s}
-@keyframes rrise{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-22px);opacity:0}}
 .hring text{filter:drop-shadow(0 1px 3px rgba(0,40,37,.35))}
-@media (prefers-reduced-motion:reduce){.top .bubbles b,.top .shore svg,.hring .rw,.hring .rbub{animation:none}.top .bubbles b{opacity:.45}.hwater{transition:none}}
 
 /* ===== Dải ngày dạng thẻ + vòng tiến độ có núm sáng (theo /krf) ===== */
 .wstrip-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:2px 4px 8px}
@@ -886,9 +854,8 @@ h2,.sech .st{color:var(--ink)}
 .dcard[aria-pressed="true"]{background:var(--grad);border-color:transparent}
 .dcard[aria-pressed="true"] .wd,.dcard[aria-pressed="true"] .dn,.dcard[aria-pressed="true"] em{color:var(--on-brand);opacity:1}
 @media (max-width:600px){.dcard{flex-basis:52px;min-height:82px;border-radius:14px}.dcard .dn{font-size:21px}.dcard em{font-size:10px}}
-.hknob{transition:transform 1.1s cubic-bezier(.22,.8,.3,1);filter:drop-shadow(0 0 3px rgba(255,255,255,.7))}
 .hring{filter:drop-shadow(0 4px 10px rgba(0,50,47,.16))}
-@media (prefers-reduced-motion:reduce){.hknob{transition:none}.dcard:hover{transform:none}}
+@media (prefers-reduced-motion:reduce){.dcard:hover{transform:none}}
 
 /* lịch ngày làm việc / lịch nhiệt cùng kiểu thẻ ngày */
 .cal{gap:7px}
@@ -1266,26 +1233,35 @@ h2,.sech .st{color:var(--ink)}
 /* ===== Chữ mảnh, gọn: chỉ dùng 400 · 500 · 600; từ khoá in đậm nhẹ ===== */
 b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
 
-/* ===== Banner đầu trang kiểu thương hiệu: dòng giới thiệu, tiêu đề lớn chuyển màu, câu động lực, nút hành động ===== */
-.top{background:radial-gradient(520px 260px at 8% -25%,rgba(255,255,255,.24),transparent 65%),radial-gradient(480px 320px at 95% 0%,rgba(127,240,192,.30),transparent 62%),var(--top-grad)}
-.top .pill{display:inline-flex;align-items:center;gap:9px;margin:0;padding:0;border:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.88)}
-.top .pill::before{width:26px;height:2px;border-radius:2px;background:linear-gradient(90deg,#7FF0C0,rgba(127,240,192,0));box-shadow:none}
-.top h1{font-size:clamp(38px,8vw,56px);line-height:1.25;letter-spacing:-.03em;margin:8px 0 10px;padding-bottom:.08em;text-align:left;background:linear-gradient(180deg,#fff 35%,#C2FBF0 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 4px 14px rgba(0,60,56,.32))}
-.top h1 .hm-y{-webkit-text-fill-color:rgba(255,255,255,.72);font-size:.45em;font-weight:500;letter-spacing:.01em;margin-left:8px}
-.htag{margin:0 0 16px;max-width:30em;font-size:16px;line-height:1.5;color:rgba(255,255,255,.96);text-shadow:0 1px 8px rgba(0,50,47,.25)}
+/* ===== Banner đầu trang: nền lưới gradient có vân hạt mịn, số tháng làm trọng tâm, không hiệu ứng nhấp nháy ===== */
+.top{
+  border-radius:0 0 32px 32px;
+  background:
+    radial-gradient(620px 420px at 108% -14%,rgba(255,255,255,.16),transparent 60%),
+    radial-gradient(460px 380px at -8% 112%,rgba(238,90,36,.10),transparent 58%),
+    radial-gradient(640px 480px at 14% -22%,rgba(127,240,192,.20),transparent 62%),
+    var(--top-grad);
+}
+.top::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.35;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:140px 140px;
+}
+.top .pill{display:inline-flex;align-items:center;gap:9px;margin:0;padding:0;border:0;background:none;font-size:13px;font-weight:500;letter-spacing:0;text-transform:none;color:rgba(255,255,255,.8)}
+.top .pill::before{content:"";width:7px;height:7px;border-radius:50%;background:#7FF0C0;box-shadow:0 0 0 3px rgba(127,240,192,.22);flex:0 0 auto}
+.top h1{font-size:clamp(36px,7.6vw,54px);line-height:1.08;letter-spacing:-.03em;margin:10px 0 8px;font-weight:700;text-align:left;color:#fff;text-shadow:none}
+.top h1 .hm-y{color:rgba(255,255,255,.58);font-size:.42em;font-weight:500;letter-spacing:0;margin-left:8px}
+.htag{margin:0 0 16px;max-width:30em;font-size:16px;line-height:1.5;color:rgba(255,255,255,.92);text-shadow:none}
 .htag b{font-weight:600;color:#D8FFF6}
 .hcta-row{margin:0 0 14px}
-.hcta{display:inline-flex;align-items:center;gap:9px;padding:11px 20px;border:0;border-radius:999px;background:#fff;color:#007A73;font-weight:600;font-size:15px;cursor:pointer;box-shadow:0 12px 24px rgba(0,50,47,.30);transition:transform .15s,box-shadow .15s;animation:hctaPulse 2.6s ease-out infinite}
-.hcta:hover{transform:translateY(-2px);box-shadow:0 16px 28px rgba(0,50,47,.34)}
+.hcta{display:inline-flex;align-items:center;gap:9px;padding:12px 20px;border:0;border-radius:14px;background:#fff;color:#00665F;font-weight:600;font-size:15px;cursor:pointer;box-shadow:0 10px 22px rgba(0,40,37,.22);transition:transform .15s,box-shadow .15s}
+.hcta:hover{transform:translateY(-2px);box-shadow:0 14px 26px rgba(0,40,37,.28)}
 .hcta svg{transition:transform .15s}.hcta:hover svg{transform:translateX(3px)}
-@keyframes hctaPulse{0%{box-shadow:0 12px 24px rgba(0,50,47,.30),0 0 0 0 rgba(255,255,255,.55)}70%,100%{box-shadow:0 12px 24px rgba(0,50,47,.30),0 0 0 14px rgba(255,255,255,0)}}
-@media (prefers-reduced-motion:reduce){.hcta{animation:none}}
-#hring .hring svg{filter:drop-shadow(0 0 12px rgba(127,240,192,.28))}
+#hring .hring svg{filter:drop-shadow(0 2px 10px rgba(0,30,28,.25))}
 .hdate{margin:0 0 6px}
 @media (max-width:600px){
-  .top h1{font-size:40px}
-  .top .pill{order:0;white-space:normal;max-width:100%;line-height:1.5;font-size:10px;letter-spacing:.09em;margin-top:8px;padding:0}
-  .top .pill::before{flex:none}
+  .top h1{font-size:38px}
+  .top .pill{order:0;white-space:normal;max-width:100%;line-height:1.5;font-size:11px;margin-top:8px;padding:0}
   .htag,.hcta-row{flex:0 0 calc(100% + 88px);margin-right:-88px;max-width:none}
   .htag{font-size:15px;margin-bottom:12px}
 }
@@ -1325,9 +1301,6 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
 <body>
 <div class="stickyhead">
 <header class="top">
-  <svg class="drop" viewBox="0 0 100 120" aria-hidden="true"><path d="M50 4C50 4 12 48 12 78a38 38 0 0 0 76 0C88 48 50 4 50 4Z"/></svg>
-  <svg class="rings" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="96"/><circle cx="100" cy="100" r="68"/><circle cx="100" cy="100" r="40"/></svg>
-  <div class="bubbles" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b></div>
   <div class="topin">
   <div class="heroflex">
   <button class="acctFab" id="acctFab" data-act="acctOpen" aria-label="Tài khoản &amp; đăng nhập"></button>
@@ -1340,7 +1313,7 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
     <div class="hstat" id="hstat"></div>
   </div>
   </div>
-  <div class="shore" aria-hidden="true"><svg class="s1" viewBox="0 0 2400 130" preserveAspectRatio="none"><path d="M0 58 q75 -22 150 0 t150 0 q75 -22 150 0 t150 0 q75 -22 150 0 t150 0 q75 -22 150 0 t150 0 q75 -22 150 0 t150 0 q75 -22 150 0 t150 0 q75 -22 150 0 t150 0 q75 -22 150 0 t150 0 V130 H0 Z"/></svg><svg class="s2" viewBox="0 0 2400 130" preserveAspectRatio="none"><path d="M0 74 q75 20 150 0 t150 0 q75 20 150 0 t150 0 q75 20 150 0 t150 0 q75 20 150 0 t150 0 q75 20 150 0 t150 0 q75 20 150 0 t150 0 q75 20 150 0 t150 0 q75 20 150 0 t150 0 V130 H0 Z"/></svg><svg class="s3" viewBox="0 0 2400 130" preserveAspectRatio="none"><path d="M0 94 q75 -16 150 0 t150 0 q75 -16 150 0 t150 0 q75 -16 150 0 t150 0 q75 -16 150 0 t150 0 q75 -16 150 0 t150 0 q75 -16 150 0 t150 0 q75 -16 150 0 t150 0 q75 -16 150 0 t150 0 V130 H0 Z"/></svg></div>
+
 </header>
 </div>
 <div class="wrap">
@@ -3039,35 +3012,18 @@ function targetBlock(){
 /* ---------- Khối theo dõi nhanh ở tiêu đề ---------- */
 let hdrSig=null;
 function ringSVG(pct,size,sub,dayKey){
-  size=size||66;const stroke=Math.max(4,Math.round(size*0.055)),r=(size-stroke)/2,cx=size/2,c=2*Math.PI*r,P=Math.min(100,Math.max(0,pct)),off=c*(1-P/100);
+  size=size||66;const stroke=Math.max(4,Math.round(size*0.08)),r=(size-stroke)/2,cx=size/2,c=2*Math.PI*r,P=Math.min(100,Math.max(0,pct)),off=c*(1-P/100);
   const tag=dayKey?'button':'div',attrs=dayKey?' data-act="goDay" data-day="'+dayKey+'"':'';
-  const rin=r-stroke/2-1.5,sc=size/100,top=cx+rin-2*rin*P/100,bot=cx+rin+6,uid='hw'+size+(dayKey?'d':'n');
-  const wv='M0 0 q12.5 4 25 0 t25 0 t25 0 t25 0 t25 0 t25 0 t25 0 t25 0 V140 H0 Z',wv2='M0 0 q12.5 -4 25 0 t25 0 t25 0 t25 0 t25 0 t25 0 t25 0 t25 0 V140 H0 Z';
-  const water='<clipPath id="'+uid+'"><circle cx="'+cx+'" cy="'+cx+'" r="'+rin+'"/></clipPath>'+
-    '<g clip-path="url(#'+uid+')"><g class="hwater" data-y="'+top.toFixed(1)+'" style="transform:translateY('+bot.toFixed(1)+'px)"><g transform="scale('+sc.toFixed(3)+')">'+
-    '<path class="rw b" d="'+wv+'"/><path class="rw a" d="'+wv2+'"/></g>'+
-    '<circle class="rbub" cx="'+(size*0.36).toFixed(1)+'" cy="'+(size*0.34).toFixed(1)+'" r="'+(size*0.032).toFixed(1)+'"/>'+
-    '<circle class="rbub r2" cx="'+(size*0.58).toFixed(1)+'" cy="'+(size*0.4).toFixed(1)+'" r="'+(size*0.024).toFixed(1)+'"/>'+
-    '<circle class="rbub r3" cx="'+(size*0.47).toFixed(1)+'" cy="'+(size*0.3).toFixed(1)+'" r="'+(size*0.02).toFixed(1)+'"/></g></g>';
   return '<'+tag+' class="hring"'+attrs+'><svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'">'+
-    '<circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.18)" stroke-width="'+stroke+'"/>'+water+
+    '<circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="'+stroke+'"/>'+
     '<circle class="hring-fill" cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="#fff" stroke-width="'+stroke+'" stroke-linecap="round" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+c.toFixed(1)+'" data-off="'+off.toFixed(1)+'" transform="rotate(-90 '+cx+' '+cx+')"/>'+
-    '<g class="hknob" data-rot="'+(P*3.6).toFixed(1)+'" style="transform-origin:'+cx+'px '+cx+'px;transform:rotate(0deg);opacity:'+(P>0&&P<100?1:0)+'"><circle cx="'+cx+'" cy="'+(stroke/2)+'" r="'+(stroke*0.62).toFixed(1)+'" fill="#fff"/></g>'+
-        '<text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="'+(size*0.24)+'" font-weight="600" letter-spacing="-.5">'+Math.round(pct)+'%</text></svg>'+
+    '<text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="'+(size*0.27)+'" font-weight="700" letter-spacing="-.5">'+Math.round(pct)+'%</text></svg>'+
     (sub?'<span>'+sub+'</span>':'')+'</'+tag+'>';
 }
 function animateRings(){
   document.querySelectorAll('.hring-fill[data-off]').forEach(c=>{
     const target=c.dataset.off;
     requestAnimationFrame(()=>requestAnimationFrame(()=>{c.style.strokeDashoffset=target;}));
-  });
-  document.querySelectorAll('.hknob[data-rot]').forEach(g=>{
-    const d=g.dataset.rot;
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{g.style.transform='rotate('+d+'deg)';}));
-  });
-  document.querySelectorAll('.hwater[data-y]').forEach(g=>{
-    const y=g.dataset.y;
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{g.style.transform='translateY('+y+'px)';}));
   });
 }
 function headerRingHTML(weeks){
