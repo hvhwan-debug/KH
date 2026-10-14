@@ -21,8 +21,11 @@ async function chat(messages, opt) {
 function mock(o) {
   if (o.task === "brief") return "- Võ Đăng Khoa: gọi ngay để gỡ vướng đại lý nợ.\n- Huỳnh Quốc Nam: nhắc gửi bù 3 ngày báo cáo.\n- Lê Anh Tuấn: tụt tiến độ, cùng rà 5 đại lý lớn.\nNhận định chung: nhóm đang chậm so với mốc, cần tập trung vào người tụt tiến độ.";
   if (o.task === "analyze") {
-    const ids = o.ids || [];
-    return JSON.stringify({ canh_bao: ids.slice(0, 3).map((id, i) => ({ id, muc: ["khan", "chu_y", "thong_tin"][i], tieu_de: "Mock cảnh báo " + id, ly_do: "Mock: doanh số xu hướng giảm so với tuần trước.", hanh_dong: "Mock: gọi điện và rà 5 đại lý lớn." })).concat([{ id: "team", muc: "chu_y", tieu_de: "Mock cảnh báo chung", ly_do: "Mock: cả nhóm dưới mốc.", hanh_dong: "Mock: họp nhanh đầu ngày." }]), uu_tien: ["Mock ưu tiên 1", "Mock ưu tiên 2"], nhan_dinh: "Mock: nhóm đang chậm so với mốc." });
+    const ids = o.ids || [], ci = ["khan", "chu_y", "chu_y", "thong_tin", "thong_tin", "thong_tin"];
+    const cb = ids.slice(0, 6).map((id, i) => ({ id, muc: ci[i], tieu_de: "Mock cảnh báo " + id, ly_do: i === 0 ? id + " có bc_hom_nay = 'quá giờ', doanh_so_ngay = 0" : "Mock: doanh số xu hướng giảm so với tuần trước.", hanh_dong: "Mock: gọi điện và rà 5 đại lý lớn." }));
+    cb.push({ id: "team", muc: "chu_y", tieu_de: "Mock cảnh báo chung", ly_do: "Mock: cả nhóm dưới mốc.", hanh_dong: "Mock: họp nhanh đầu ngày." });
+    cb.push({ id: ids[0], muc: "chu_y", tieu_de: "Mock lộ", ly_do: "giá trị foo_bar_baz bất thường", hanh_dong: "x" });
+    return JSON.stringify({ canh_bao: cb, uu_tien: ["Mock ưu tiên 1", "Mock ưu tiên 2"], nhan_dinh: "Mock: nhóm đang chậm so với mốc." });
   }
   if (o.task === "plan") return JSON.stringify((o.ids || []).map((id) => ({ id, text: "Mock trọng tâm cho " + id + ": chốt đơn đã hẹn." })));
   if (o.task === "coach") return "- Điểm tốt: giữ nhịp ghé đều.\n- Rủi ro: độ phủ thấp hơn tiến độ.\n- Hành động: mở thêm 2 điểm bán mới mỗi ngày.";

@@ -223,6 +223,20 @@ table.t td.r,table.t th.r{text-align:right}
 .ai-out{margin-top:10px;display:flex;flex-direction:column;gap:6px}
 .ai-l{display:flex;gap:8px;font-size:13.5px;line-height:1.45}.ai-l i{flex:0 0 auto;color:var(--brand-deep);font-style:normal;font-weight:700}
 .ai-l.sum{background:var(--surface2);border-radius:10px;padding:7px 10px;margin-top:2px}
+.aic{padding:12px 14px}
+.aih{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.aih .sp{flex:1}
+.aiic{border:1px solid var(--line);background:var(--surface);border-radius:8px;width:28px;height:28px;font-size:13px;color:var(--muted);line-height:1}
+.aiic:hover{border-color:var(--brand)}.aiic[disabled]{opacity:.5}
+.aisum{font-size:13px;margin-top:8px;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.aisum.ok{color:var(--ok);font-weight:600}
+.aiwl{margin-top:8px;display:flex;flex-direction:column;gap:4px}.aiwl.all{max-height:300px;overflow:auto;padding-right:2px}
+.aiw{border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
+.aiw.bad{border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}.aiw.open{background:var(--surface)}
+.aiw-h{display:flex;align-items:center;gap:8px;width:100%;border:0;background:transparent;text-align:left;padding:7px 10px;font-size:13px}
+.aiw-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.aiw.open .aiw-t{white-space:normal}
+.aiw-c{color:var(--muted);font-size:11px}
+.aiw .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;background:var(--n1)}.aiw.bad .dot{background:var(--bad)}.aiw.warn .dot{background:#E3A63B}
+.aiw-b{padding:0 10px 9px 26px;font-size:12.5px;color:var(--muted)}
 .aibtn{border:0;border-radius:999px;padding:7px 14px;font-weight:700;font-size:13px;color:#fff;background:linear-gradient(120deg,var(--brand-deep),#7C4DDB)}
 .aibtn[disabled]{opacity:.6;cursor:default}
 .aibtn.sm{padding:4px 10px;font-size:12px}
@@ -468,23 +482,33 @@ function aiAutoMaybe(){
   if(A.err&&Date.now()-(A.at||0)<600000)return;
   const all=members().map(m=>calc(m,ST.date));if(!all.length)return;
   const sig=aiSig(all,ST.date);if(A.sig===sig)return;
+  const hasData=all.some(c=>c.ach>0||c.dayAch>0||Object.keys(c.m.days||{}).length>0||(c.mp&&c.mp.wk&&c.mp.wk.some(w=>w.ac)));
+  if(!hasData){A.res={canh_bao:[],uu_tien:[],nhan_dinh:'Chưa có báo cáo nào trong tháng nên chưa đủ số liệu để phân tích.'};A.idmap={};A.at=Date.now();A.sig=sig;A.err='';A.local=true;render();return;}
+  A.local=false;
   if(!A.res){try{const c=JSON.parse(sessionStorage.getItem('asm-ai-an')||'null');if(c&&c.sig===sig&&Date.now()-c.at<1800000){Object.assign(A,c);render();return;}}catch(e){}}
   else if(Date.now()-A.at<600000)return;
   aiAnalyze();
 }
 function aiPanelHTML(){
-  const A=ST.ai.an||{},R=A.res,off=autoOff(),mem=ST.data?ST.data.members:[];
-  const khan=R?R.canh_bao.filter(w=>w.muc==='khan').length:0;
-  const cls={khan:'bad',chu_y:'warn',thong_tin:'info'},icn={khan:'!',chu_y:'▲',thong_tin:'i'};
-  const warns=R?R.canh_bao.map(w=>{
-    const uid=A.idmap&&A.idmap[w.id],m=uid&&mem.find(x=>x.uid===uid),nm=m?(m.name||m.email.split('@')[0]):'',team=w.id==='team';
-    if(!team&&!m)return '';
-    return '<div class="fi '+cls[w.muc]+'"><div class="fic">'+icn[w.muc]+'</div><div style="min-width:0"><div class="ft">'+(team?'Cả nhóm':esc(nm))+': '+esc(w.tieu_de)+'</div><div class="fx">'+esc(w.ly_do)+'</div>'+(w.hanh_dong?'<div class="fx" style="color:var(--ink)"><b>Nên làm:</b> '+esc(w.hanh_dong)+'</div>':'')+'</div><div class="fa"><button class="linkbtn" data-act="'+(team?'composeAll':'compose')+'" data-uid="'+esc(uid||'')+'" data-sug="'+esc(w.hanh_dong||'')+'">Giao việc</button></div></div>';}).join(''):'';
-  const sub=A.busy?'Đang phân tích số liệu…':R?'Phân tích lúc '+hhmm(A.at)+(off?' · tự động đang tắt':' · tự cập nhật khi số liệu đổi'):(ST.ai.off?'':off?'Tự động đang tắt.':'Sẽ tự phân tích ngay khi có số liệu.');
-  return '<div class="card ai"><h2><span class="sp2">✦</span> Trợ lý AI · Cảnh báo tự động'+(khan?' <span class="badge bad">'+khan+' khẩn</span>':'')+'</h2><div class="hsub">'+esc(sub)+'</div>'+
-    (R?(warns?'<div class="feed">'+warns+'</div>':'<div class="allgood" style="padding:10px"><b>AI không thấy vấn đề đáng lo</b></div>')+(R.uu_tien.length?'<div class="ai-out" style="margin-top:10px"><div class="b small">Ưu tiên hôm nay</div>'+aiLines(R.uu_tien.map(x=>'- '+x).join('\n'))+'</div>':'')+(R.nhan_dinh?'<div class="ai-out">'+aiLines('Nhận định chung: '+R.nhan_dinh)+'</div>':''):'')+
-    (A.err?'<div class="msg">'+esc(A.err)+'</div>':'')+
-    '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="aibtn sm" data-act="aiAn"'+(A.busy?' disabled':'')+'>'+(A.busy?'Đang phân tích…':R?'Phân tích lại':'Phân tích ngay')+'</button><button class="linkbtn" data-act="aiAutoToggle">'+(off?'Bật tự phân tích':'Tắt tự phân tích')+'</button></div><div class="aiwarn">Cảnh báo do AI tạo từ số liệu báo cáo; hãy kiểm tra lại trước khi hành động. AI chỉ nhận số liệu đã tính, không nhận email, số điện thoại hay địa chỉ.</div></div>';
+  const A=ST.ai.an||{},R=A.res,off=autoOff(),mem=ST.data?ST.data.members:[],X=ST.ai;
+  const cls={khan:'bad',chu_y:'warn',thong_tin:'info'};
+  const items=R?R.canh_bao.map((w,i)=>{const uid=A.idmap&&A.idmap[w.id],m=uid&&mem.find(x=>x.uid===uid);return(w.id==='team'||m)?Object.assign({},w,{i,uid:uid||'',nm:w.id==='team'?'Cả nhóm':(m.name||m.email.split('@')[0])}):null;}).filter(Boolean):[];
+  const nK=items.filter(w=>w.muc==='khan').length,nC=items.filter(w=>w.muc==='chu_y').length,nI=items.length-nK-nC;
+  const SHOW=3,list=X.all?items:items.slice(0,SHOW);
+  const row=w=>{const open=X.exp===w.i;
+    return '<div class="aiw '+cls[w.muc]+(open?' open':'')+'"><button class="aiw-h" data-act="aiExp" data-i="'+w.i+'" aria-expanded="'+open+'"><i class="dot"></i><span class="aiw-t"><b>'+esc(w.nm)+':</b> '+esc(w.tieu_de)+'</span><span class="aiw-c">'+(open?'▴':'▾')+'</span></button>'+
+      (open?'<div class="aiw-b"><div>'+esc(w.ly_do)+'</div>'+(w.hanh_dong?'<div style="margin-top:3px"><b>Nên làm:</b> '+esc(w.hanh_dong)+'</div>':'')+'<button class="aibtn sm" style="margin-top:7px" data-act="'+(w.id==='team'?'composeAll':'compose')+'" data-uid="'+esc(w.uid)+'" data-sug="'+esc(w.hanh_dong||'')+'">Giao việc</button></div>':'')+'</div>';};
+  const chips=(nK?'<span class="badge bad">'+nK+' khẩn</span> ':'')+(nC?'<span class="badge warn">'+nC+' chú ý</span> ':'')+(nI?'<span class="badge">'+nI+' thông tin</span>':'');
+  const status=A.busy?'Đang phân tích…':R?(A.local?'':'Lúc '+hhmm(A.at)+(off?' · tự động tắt':' · tự cập nhật')):(ST.ai.off?'':off?'Tự động đang tắt':'Sẽ tự phân tích khi có số liệu');
+  return '<div class="card ai aic"><div class="aih"><span class="sp2">✦</span><b>Trợ lý AI</b>'+(R&&items.length?' '+chips:'')+'<span class="sp"></span><span class="tiny muted">'+esc(status)+'</span>'+
+    '<button class="aiic" data-act="aiAn" title="Phân tích lại" aria-label="Phân tích lại"'+(A.busy?' disabled':'')+'>↻</button><button class="aiic" data-act="aiAutoToggle" title="'+(off?'Bật tự phân tích':'Tắt tự phân tích')+'" aria-label="'+(off?'Bật tự phân tích':'Tắt tự phân tích')+'">'+(off?'▶':'⏸')+'</button></div>'+
+    (R&&R.nhan_dinh?'<div class="aisum">'+esc(R.nhan_dinh)+'</div>':'')+
+    (R&&!items.length&&!A.local?'<div class="aisum ok">✓ AI không thấy vấn đề đáng lo.</div>':'')+
+    (items.length?'<div class="aiwl'+(X.all?' all':'')+'">'+list.map(row).join('')+'</div>':'')+
+    (items.length>SHOW?'<button class="linkbtn" data-act="aiAll">'+(X.all?'Thu gọn':'Xem thêm '+(items.length-SHOW)+' cảnh báo')+'</button>':'')+
+    (R&&R.uu_tien.length&&(X.all||!items.length)?'<div class="ai-out" style="margin-top:8px"><div class="b small">Ưu tiên hôm nay</div>'+aiLines(R.uu_tien.map(x=>'- '+x).join('\n'))+'</div>':'')+
+    (A.err?'<div class="msg" style="margin-top:6px">'+esc(A.err)+'</div>':'')+
+    '<div class="aiwarn">AI tạo từ số liệu báo cáo, hãy kiểm tra lại trước khi làm theo.</div></div>';
 }
 
 /* ====== Xuất Excel ====== */
@@ -1135,7 +1159,9 @@ document.addEventListener('click',function(e){
   else if(a==='closeDrawer'){if(b.classList.contains('scrim')&&e.target!==b)return;ST.drawer=null;}
   else if(a==='compose'){openCompose({uid:d.uid,text:d.sug||''});return;}
   else if(a==='composeAll'){openCompose({uid:'',nganh:ST.ng,text:d.sug||''});return;}
-  else if(a==='aiAn'){aiAnalyze();return;}
+  else if(a==='aiAn'){ST.ai.an=ST.ai.an||{};ST.ai.an.sig='';ST.ai.an.at=0;aiAnalyze();return;}
+  else if(a==='aiExp'){ST.ai.exp=ST.ai.exp===+d.i?-1:+d.i;}
+  else if(a==='aiAll'){ST.ai.all=!ST.ai.all;}
   else if(a==='aiAutoToggle'){try{localStorage.setItem('asm-ai-auto',autoOff()?'1':'0');}catch(e){}ST.ai.off=false;}
   else if(a==='expTeam'){exportTeam();return;}
   else if(a==='expRoster'){exportRoster();return;}
