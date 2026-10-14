@@ -1343,6 +1343,20 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   .hdate,.top .hstat{flex:none;margin-right:0;max-width:100%}
   .brandmark{width:18px;height:18px}
 }
+
+/* Ngành, hồ sơ công việc, báo cáo cuối ngày */
+.wk-ngs{display:grid;gap:8px;margin:8px 0}
+.wk-ng{display:flex;flex-direction:column;gap:2px;text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:14px;padding:11px 12px;cursor:pointer}
+.wk-ng b{font-size:14.5px}
+.wk-ng.on{border-color:var(--brand-deep);background:var(--brand-soft)}
+.wk-priv{margin-top:12px;border-radius:12px;padding:10px 12px;background:var(--bg);border:1px dashed var(--line)}
+.wk-priv b{display:block;margin-bottom:2px;font-size:13px}
+.wk-nudge{border-style:dashed}
+.wk-strip .row{align-items:center}
+.rp-note{width:100%;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:9px 12px;font-size:14px;resize:vertical;min-height:60px;margin-bottom:6px}
+.rp-send{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.dir-card{border-left:4px solid var(--brand)}
+.dir-card .remrow:first-of-type{border-top:0}
 </style>
 </head>
 <body>
@@ -1351,7 +1365,7 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   <div class="topin">
   <button class="acctFab" id="acctFab" data-act="acctOpen" aria-label="Tài khoản &amp; đăng nhập"></button>
   <div class="heroflex">
-    <div class="pill"><img class="brandmark" src="icon-192.png" alt="" width="22" height="22">Trợ lí thiết lập kế hoạch bán hàng · SR kênh GT</div>
+    <div class="pill"><img class="brandmark" src="icon-192.png" alt="" width="22" height="22"><span id="pilltx">Trợ lí thiết lập kế hoạch bán hàng · SR kênh GT</span></div>
     <h1 id="title">Kế hoạch bán hàng tháng</h1>
     <div class="hinc" id="hinc"></div>
     <p class="htag" id="htag"></p>
@@ -1382,6 +1396,7 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   <div class="coin"><textarea id="coachQ" rows="2" maxlength="600" placeholder="Hỏi về lời chào hàng, tuyến ghé, xử lý đại lý..."></textarea><button class="btn sm" id="coachSend" data-coach="send">Gửi</button></div>
   <div class="small muted">Câu trả lời do AI tạo tự động, chỉ mang tính tham khảo. <span id="coachQuota"></span></div>
 </div></div>
+<div class="modalc" id="workSheet" hidden><div class="sheetin" role="dialog" aria-label="Công việc của bạn" id="workSheetIn"></div></div>
 <div id="toast" class="toast" hidden></div>
 
 <script>
@@ -1432,10 +1447,31 @@ const PRODUCTS=[
   {id:'bn',name:'Bình nước nóng',short:'Bình NN',icon:'droplet'},
   {id:'gd',name:'Gia dụng & điện máy',short:'Gia dụng',icon:'plug'}
 ];
+/* ---------- Ngành hàng: nội dung hiển thị đổi theo ngành SR đang phụ trách ----------
+   Ngành 2 (mặc định, đúng như công cụ chạy thử trước đây): Livotec bình nước nóng + gia dụng, không gồm máy lọc nước.
+   Ngành 1: máy lọc nước và nhóm lọc của 2 thương hiệu Karofi, Livotec.
+   Khoá lưu trữ nội bộ vẫn là 'bn' và 'gd' (nhóm 1, nhóm 2) để dữ liệu cũ và báo cáo không phải đổi định dạng. */
+const NGANH_CFG={
+  2:{id:2,short:'Gia dụng Livotec',name:'Ngành 2 · Livotec gia dụng',sub:'Bình nước nóng, gia dụng & điện máy (không gồm máy lọc nước)',
+     prods:[{id:'bn',name:'Bình nước nóng',short:'Bình NN',icon:'droplet'},{id:'gd',name:'Gia dụng & điện máy',short:'Gia dụng',icon:'plug'}],
+     cat:'bình nước nóng và gia dụng nhà bếp',ab:'ngành hàng điện gia dụng',unit:'bình',defList:3.7},
+  1:{id:1,short:'Máy lọc Karofi · Livotec',name:'Ngành 1 · Karofi & Livotec máy lọc',sub:'Máy lọc nước và nhóm sản phẩm lọc của 2 thương hiệu Karofi, Livotec',
+     prods:[{id:'bn',name:'Karofi',short:'Karofi',icon:'droplet'},{id:'gd',name:'Livotec (máy lọc)',short:'Livotec',icon:'droplet'}],
+     cat:'máy lọc nước và các sản phẩm lọc của hai thương hiệu Karofi, Livotec',ab:'ngành hàng máy lọc nước',unit:'máy',defList:7.5}
+};
+let CUR_NG=2;
+function applyNganh(n){
+  CUR_NG=(+n===1)?1:2;
+  PRODUCTS.length=0;NGANH_CFG[CUR_NG].prods.forEach(p=>PRODUCTS.push(Object.assign({},p)));
+  if(typeof STRATS!=='undefined'){STRATS.length=0;(CUR_NG===1?STRATS_N1:STRATS_N2).forEach(x=>STRATS.push(x));}
+}
+const NGX=()=>NGANH_CFG[CUR_NG];
+const PN=id=>(PRODUCTS.find(p=>p.id===id)||{}).name||id;
+const PS=id=>(PRODUCTS.find(p=>p.id===id)||{}).short||id;
 const DOW=['Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7','Chủ nhật'];
 const RISKS=[
   {id:'hoan',name:'Khách hoãn lịch hẹn',backup:v=>'Chuẩn bị sẵn '+Math.max(1,Math.ceil(v*0.25))+' khách dự phòng để thay thế'},
-  {id:'gia',name:'Đối thủ chào giá tốt hơn',backup:()=>'Chuẩn bị điểm khác biệt (giữ nhiệt 48 giờ, bảo hành) và chương trình hỗ trợ để trao đổi'},
+  {id:'gia',name:'Đối thủ chào giá tốt hơn',backup:()=>CUR_NG===1?'Chuẩn bị điểm khác biệt (chất lượng lọc, bảo hành, lắp đặt) và chương trình hỗ trợ để trao đổi':'Chuẩn bị điểm khác biệt (giữ nhiệt 48 giờ, bảo hành) và chương trình hỗ trợ để trao đổi'},
   {id:'hang',name:'Hàng về chậm / thiếu hàng',backup:()=>'Báo khách sớm, đề xuất mẫu tương đương hoặc hẹn ngày giao cụ thể'},
   {id:'lap',name:'Lịch lắp đặt bị lùi',backup:()=>'Thống nhất lịch lắp với khách ngay lúc chốt đơn'},
   {id:'km',name:'Khách chờ khuyến mãi',backup:()=>'Nêu rõ thời hạn ưu đãi khi chào, hẹn lại đúng ngày'},
@@ -1450,7 +1486,7 @@ const RULES=[
   {id:'si_low',level:'bad',title:'S.I tuần thấp',pre:'Báo khi S.I đã chốt trong tuần dưới',post:'% kế hoạch tuần',step:5,min:20,max:100,p:{soft:60,std:70,tight:80}},
   {id:'mid_week',level:'warn',title:'Giữa tuần đang chậm',pre:'Báo khi S.I chốt được thấp hơn tiến độ ngày làm việc quá',post:'điểm phần trăm',step:5,min:5,max:50,p:{soft:30,std:20,tight:15}},
   {id:'cum_lag',level:'warn',title:'S.I tích lũy tụt mốc',pre:'Báo khi S.I tích lũy dưới',post:'% mốc kế hoạch cùng kỳ',step:5,min:50,max:100,p:{soft:75,std:85,tight:90}},
-  {id:'group_low',level:'warn',title:'Một nhóm hàng bị tụt',pre:'Báo khi bình nước nóng hoặc gia dụng dưới',post:'% mốc kế hoạch của nhóm đó',step:5,min:30,max:100,p:{soft:60,std:70,tight:80}},
+  {id:'group_low',level:'warn',title:'Một nhóm hàng bị tụt',pre:'Báo khi một nhóm hàng của bạn dưới',post:'% mốc kế hoạch của nhóm đó',step:5,min:30,max:100,p:{soft:60,std:70,tight:80}},
   {id:'month_pace',level:'bad',title:'Đã qua 75% tháng mà chưa đủ số',pre:'Báo khi S.I tích lũy dưới',post:'% chỉ tiêu tháng (từ khi qua 75% ngày làm việc)',step:5,min:30,max:95,p:{soft:50,std:60,tight:70}},
   {id:'forecast',level:'warn',title:'Dự báo khó đạt chỉ tiêu',pre:'Báo khi khả năng đạt chỉ tiêu tháng (theo dự báo) dưới',post:'%',step:5,min:10,max:80,p:{soft:25,std:40,tight:55}},
   {id:'capacity',level:'warn',title:'Chỉ tiêu vượt năng lực ước tính',pre:'Báo khi số khách cần liên hệ mỗi ngày bằng',post:'% mức tối đa bạn đặt, trở lên',step:5,min:50,max:200,p:{soft:120,std:100,tight:85}},
@@ -1487,7 +1523,7 @@ function aiPrompt(weeks){
   const f=feasibility(weeks);
   const lines=[];
   if(S.province)lines.push('Khu vực phụ trách: '+S.province+'.');
-  lines.push('Chỉ tiêu tháng: '+fmt(total)+' triệu (Bình nước nóng '+fmt(+S.target.bn||0)+', Gia dụng '+fmt(+S.target.gd||0)+').');
+  lines.push('Chỉ tiêu tháng: '+fmt(total)+' triệu ('+PN('bn')+' '+fmt(+S.target.bn||0)+', '+PN('gd')+' '+fmt(+S.target.gd||0)+').');
   if(f)lines.push('Khả năng đáp ứng: cần liên hệ ≈ '+fmt(f.perDay,1)+' khách/ngày, tương đương '+Math.round(f.ratio*100)+'% mức tối đa bạn có thể làm ('+f.mc+' khách/ngày). Năng lực ước tính của tuyến ≈ '+fmt(f.cap)+' triệu.');
 
   if(hasActual){
@@ -1508,13 +1544,13 @@ function aiPrompt(weeks){
     lines.push('Chưa có số liệu tự soát nào được nhập — đây là giai đoạn lập kế hoạch đầu tháng.');
   }
 
-  const regionNote=S.province?' Khi đưa ra nhận xét và đề xuất, hãy nêu rõ tên tỉnh "'+S.province+'" ít nhất một lần, cân nhắc đặc điểm thị trường, khí hậu theo mùa và mức độ cạnh tranh điển hình của khu vực này đối với ngành hàng bình nước nóng và gia dụng nhà bếp, và gợi ý ít nhất 1 TÊN DÒNG sản phẩm Livotec cụ thể (không chỉ nói chung "bình nước nóng") phù hợp với mùa vụ/khí hậu khu vực đó, không bịa giá hay khuyến mại.':' Nếu chưa biết khu vực phụ trách, nói rõ điều này ngay ở câu đầu và khuyên chọn tỉnh ở tab Thiết lập để được gợi ý sát hơn.';
-  const guard=' QUAN TRỌNG: mỗi đề xuất chỉ giải quyết đúng 1 vấn đề, dùng đúng lý do của chính vấn đề đó — không ghép lý do của việc này (ví dụ thiếu số liệu nhập hằng ngày) với hành động của việc khác (ví dụ tần suất ghé điểm bán, số lượt liên hệ ngoài thực địa); đó là hai việc không liên quan. Đề xuất về ghé điểm bán/tần suất liên hệ phải có lý do là đạt chỉ tiêu bán hàng hoặc phủ điểm bán, không bao giờ lấy lý do "cải thiện dự báo" hay "thiếu dữ liệu" làm căn cứ. Mỗi ngành hàng (bình nước nóng, gia dụng) có chỉ tiêu RIÊNG, không thể bù qua lại cho nhau — không được đề xuất kiểu "ngành A yếu nên tập trung bán ngành B để bù" vì bán thêm ngành B không giúp đạt chỉ tiêu của ngành A; nếu một ngành có rủi ro riêng (ví dụ thấp mùa), đề xuất xử lý phải nhắm đúng vào ngành đó.';
+  const regionNote=S.province?' Khi đưa ra nhận xét và đề xuất, hãy nêu rõ tên tỉnh "'+S.province+'" ít nhất một lần, cân nhắc đặc điểm thị trường, khí hậu theo mùa và mức độ cạnh tranh điển hình của khu vực này đối với ngành hàng '+NGX().cat+', và gợi ý ít nhất 1 TÊN DÒNG sản phẩm Livotec cụ thể (không chỉ nói chung "bình nước nóng") phù hợp với mùa vụ/khí hậu khu vực đó, không bịa giá hay khuyến mại.':' Nếu chưa biết khu vực phụ trách, nói rõ điều này ngay ở câu đầu và khuyên chọn tỉnh ở tab Thiết lập để được gợi ý sát hơn.';
+  const guard=' QUAN TRỌNG: mỗi đề xuất chỉ giải quyết đúng 1 vấn đề, dùng đúng lý do của chính vấn đề đó — không ghép lý do của việc này (ví dụ thiếu số liệu nhập hằng ngày) với hành động của việc khác (ví dụ tần suất ghé điểm bán, số lượt liên hệ ngoài thực địa); đó là hai việc không liên quan. Đề xuất về ghé điểm bán/tần suất liên hệ phải có lý do là đạt chỉ tiêu bán hàng hoặc phủ điểm bán, không bao giờ lấy lý do "cải thiện dự báo" hay "thiếu dữ liệu" làm căn cứ. Mỗi ngành hàng ('+PN('bn').toLowerCase()+', '+PN('gd').toLowerCase()+') có chỉ tiêu RIÊNG, không thể bù qua lại cho nhau — không được đề xuất kiểu "ngành A yếu nên tập trung bán ngành B để bù" vì bán thêm ngành B không giúp đạt chỉ tiêu của ngành A; nếu một ngành có rủi ro riêng (ví dụ thấp mùa), đề xuất xử lý phải nhắm đúng vào ngành đó.';
   const depth=' Viết sâu, cụ thể, đọc xong phải thấy rõ ngay nên làm gì — tuyệt đối không dùng câu sáo rỗng kiểu "cần cố gắng hơn", "tập trung hơn", "nỗ lực hơn" nếu không gắn với một con số hoặc tên cụ thể (tuần, khu vực, điểm bán, sản phẩm) lấy từ dữ liệu đã cho.';
   const task=hasActual
     ? 'Hãy phân tích tình hình hiện tại một cách đầy đủ và có lý lẽ (tiếng Việt, không ẩn dụ, không chào hỏi): bắt đầu bằng 1–2 câu nhận định tổng quan nêu rõ vì sao (dựa trên số liệu/yếu tố nào), nêu rõ mức độ rủi ro không đạt chỉ tiêu (thấp / trung bình / cao) kèm lý do cụ thể dựa trên diễn biến gần đây, sau đó nêu 3–4 đề xuất hành động cho phần còn lại của tháng, mỗi đề xuất là một câu đầy đủ kèm lý do ngắn vì sao nên làm vậy; trong số đó bắt buộc có ít nhất 1 đề xuất nêu rõ TÊN DÒNG sản phẩm Livotec nên chào và vì sao đúng thời điểm này (mùa vụ/khu vực/nhóm khách hàng).'+guard+depth+' Khoảng 220–280 từ.'
     : 'Hãy đánh giá mức độ khả thi của chỉ tiêu này một cách đầy đủ và có lý lẽ (tiếng Việt, không ẩn dụ, không chào hỏi): bắt đầu bằng 1–2 câu nhận định tổng quan nêu rõ vì sao so với năng lực làm việc, sau đó nêu 3–4 khuyến nghị để triển khai hiệu quả từ đầu tháng, mỗi khuyến nghị là một câu đầy đủ kèm lý do ngắn vì sao nên làm vậy; trong số đó bắt buộc có ít nhất 1 khuyến nghị nêu rõ TÊN DÒNG sản phẩm Livotec nên chào trước và vì sao phù hợp mùa vụ/khu vực hiện tại.'+guard+depth+' Khoảng 220–280 từ.';
-  return 'Bạn là trợ lý phân tích kinh doanh, hỗ trợ một nhân viên kinh doanh (SR) ngành hàng điện gia dụng đánh giá kế hoạch và tiến độ doanh số tháng dựa trên dữ liệu sau:\n\n'+
+  return 'Bạn là trợ lý phân tích kinh doanh, hỗ trợ một nhân viên kinh doanh (SR) '+NGX().ab+' đánh giá kế hoạch và tiến độ doanh số tháng dựa trên dữ liệu sau:\n\n'+
     lines.join('\n')+'\n\n'+task+regionNote;
 }
 let aiKeyMain='';
@@ -1597,13 +1633,17 @@ const REG_NAM=['An Giang','Bà Rịa - Vũng Tàu','Bạc Liêu','Bến Tre','B�
 const REG_TRUNG=['Bình Định','Bình Thuận','Đà Nẵng','Đắk Lắk','Đắk Nông','Gia Lai','Hà Tĩnh','Khánh Hòa','Kon Tum','Lâm Đồng','Nghệ An','Ninh Thuận','Phú Yên','Quảng Bình','Quảng Nam','Quảng Ngãi','Quảng Trị','Thanh Hóa','Thừa Thiên Huế'];
 const REG_NAME={bac:'miền Bắc',trung:'miền Trung',nam:'miền Nam'};
 function regionOf(p){if(!p)return 'bac';if(REG_NAM.includes(p))return 'nam';if(REG_TRUNG.includes(p))return 'trung';return 'bac';}
-const SEASON_G=[['bn','Bình nước nóng'],['bep','Bếp, gia dụng nấu ăn'],['mat','Quạt, điều hòa'],['suoi','Sưởi, hút ẩm']];
+const SEASON_G_N2=[['bn','Bình nước nóng'],['bep','Bếp, gia dụng nấu ăn'],['mat','Quạt, điều hòa'],['suoi','Sưởi, hút ẩm']];
+const SEASON_G_N1=[['loc','Máy lọc nước (Karofi, Livotec)']];
+function SG(){return CUR_NG===1?SEASON_G_N1:SEASON_G_N2;}
 const SEASON={
   bac:{bn:[2,2,1,0,0,0,0,0,1,2,2,2],bep:[2,1,1,1,1,1,1,1,1,1,2,2],mat:[0,0,1,1,2,2,2,2,1,0,0,0],suoi:[2,2,1,0,0,0,0,0,0,1,2,2]},
   trung:{bn:[2,2,1,0,0,0,0,0,1,1,2,2],bep:[2,1,1,1,1,1,1,1,1,1,2,2],mat:[0,1,1,2,2,2,2,2,1,0,0,0],suoi:[1,1,0,0,0,0,0,0,0,0,1,1]},
   nam:{bn:[1,1,0,0,0,0,0,0,0,0,1,1],bep:[2,1,1,1,1,1,1,1,1,1,2,2],mat:[1,2,2,2,2,1,1,1,1,1,1,1],suoi:[0,0,0,0,0,0,0,0,0,0,0,0]}
 };
 const LV=['thấp','trung bình','cao'];
+/* Máy lọc nước: dùng quanh năm, chưa có căn cứ mùa vụ riêng nên để mức trung bình đều các tháng (không suy diễn thêm). */
+['bac','trung','nam'].forEach(r=>{SEASON[r].loc=[1,1,1,1,1,1,1,1,1,1,1,1];});
 
 /* Khí hậu trung bình nhiều năm (ước lượng): t = nhiệt độ TB (°C), w = 0 ít mưa · 1 ẩm/mưa nhẹ · 2 mưa nhiều */
 const CLIM={
@@ -1675,11 +1715,11 @@ function szWhy(g,r,m){
 }
 function seasonText(){
   const m=+S.month.split('-')[1],r=regionOf(S.province);
-  return 'Mùa vụ ước lượng tháng '+m+' ('+REG_NAME[r]+(S.province?'':', chưa chọn khu vực nên tạm tính theo miền Bắc')+'): '+SEASON_G.map(g=>g[1]+' '+LV[SEASON[r][g[0]][m-1]]).join('; ')+'. Đây là ước lượng theo khí hậu, không phải số liệu bán hàng của Livotec.';
+  return 'Mùa vụ ước lượng tháng '+m+' ('+REG_NAME[r]+(S.province?'':', chưa chọn khu vực nên tạm tính theo miền Bắc')+'): '+SG().map(g=>g[1]+' '+LV[SEASON[r][g[0]][m-1]]).join('; ')+'. Đây là ước lượng theo khí hậu, không phải số liệu bán hàng của Livotec.';
 }
 function seasonChips(){
   const m=+S.month.split('-')[1],r=regionOf(S.province),cls=['low','mid','high'],ICO={bn:'droplet',bep:'pot',mat:'fan',suoi:'flame'},ARW={'1':'▲','0':'●','-1':'▼'},MON=['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
-  const cards=SEASON_G.map(g=>{const arr=SEASON[r][g[0]],lv=arr[m-1],W=szWhy(g[0],r,m);
+  const cards=SG().map(g=>{const arr=SEASON[r][g[0]],lv=arr[m-1],W=szWhy(g[0],r,m);
     const chart='<span class="sz-chart" aria-hidden="true">'+arr.map((v,i)=>'<span class="sz-col l'+v+(i+1===m?' now':'')+'"><i></i><em>'+(i+1)+'</em></span>').join('')+'</span>';
     const front='<span class="sz-f"><span class="sz-top"><span class="sz-ic">'+ic(ICO[g[0]]||'droplet',20)+'</span><span class="sz-tx"><b>'+g[1]+'</b><span class="sz-lv">Nhu cầu '+LV[lv]+'</span></span>'+
       '<span class="sz-meter n'+(lv+1)+'"><i></i><i></i><i></i></span></span>'+chart+'<span class="sz-hint">'+ic('trend',12)+' chạm để xem vì sao</span></span>';
@@ -1806,7 +1846,7 @@ function sourcesCard(weeks){
     '<input class="txt" type="text" data-f="src" data-i="'+i+'" data-k="name" value="'+escH(s.name||'')+'" placeholder="VD: Đại lý Minh Phát tăng đơn, hoặc Mở mới 3 điểm Hà Đông">'+
     '<div class="srow2"><input class="num sm" type="number" inputmode="numeric" min="0" data-f="src" data-i="'+i+'" data-k="amt" value="'+(s.amt||'')+'" placeholder="0"><span class="unit">tr</span>'+
     '<select data-f="src" data-i="'+i+'" data-k="week" aria-label="Tuần dự kiến">'+weeks.map(w=>'<option value="'+w.i+'"'+((+s.week||0)===w.i?' selected':'')+'>Tuần '+(w.i+1)+'</option>').join('')+'</select>'+
-    '<button class="xbtn" data-act="rmsrc" data-i="'+i+'" aria-label="Xoá nguồn">✕</button></div>'+'<details class="srmore" data-sec="srcd_'+i+'"'+(isOpen('srcd_'+i,false)?' open':'')+'><summary class="small srsum">'+((SRC_CONF.find(c=>c[0]===s.conf)||[0,'⚪ Chưa chọn độ tin cậy'])[1].split(' (')[0])+' · '+(s.prod==='gd'?'Gia dụng':'Bình nước nóng')+' · '+SRC_TYPES[Math.min(3,Math.max(0,+s.type||0))].split(' (')[0]+'</summary>'+'<div class="srow3"><select data-f="src" data-i="'+i+'" data-k="prod" aria-label="Ngành hàng"><option value="bn"'+(s.prod!=='gd'?' selected':'')+'>Bình nước nóng</option><option value="gd"'+(s.prod==='gd'?' selected':'')+'>Gia dụng Livotec</option></select>'+'<select data-f="src" data-i="'+i+'" data-k="type" aria-label="Loại nguồn">'+SRC_TYPES.map((t,k)=>'<option value="'+k+'"'+((+s.type||0)===k?' selected':'')+'>'+t+'</option>').join('')+'</select>'+'<select data-f="src" data-i="'+i+'" data-k="conf" aria-label="Độ tin cậy"><option value="">Độ tin cậy: chưa chọn</option>'+SRC_CONF.map(c=>'<option value="'+c[0]+'"'+(s.conf===c[0]?' selected':'')+'>'+c[1]+'</option>').join('')+'</select></div>'+'<input class="txt" type="text" data-f="src" data-i="'+i+'" data-k="basis" value="'+escH(s.basis||'')+'" placeholder="Căn cứ &amp; tín hiệu: VD lịch sử 35M/tháng, vào mùa lạnh, tồn kho thấp" style="margin-top:6px">'+'<div class="srow2"><input class="num sm" type="number" inputmode="numeric" min="0" data-f="src" data-i="'+i+'" data-k="act" value="'+(s.act===null||s.act===undefined?'':s.act)+'" placeholder="Thực tế"><span class="unit">tr đã đạt</span></div>'+'<input class="txt" type="text" data-f="src" data-i="'+i+'" data-k="planB" value="'+escH(s.planB||'')+'" placeholder="Plan B của nguồn này nếu không đạt" style="margin-top:6px"></details></div>').join('');
+    '<button class="xbtn" data-act="rmsrc" data-i="'+i+'" aria-label="Xoá nguồn">✕</button></div>'+'<details class="srmore" data-sec="srcd_'+i+'"'+(isOpen('srcd_'+i,false)?' open':'')+'><summary class="small srsum">'+((SRC_CONF.find(c=>c[0]===s.conf)||[0,'⚪ Chưa chọn độ tin cậy'])[1].split(' (')[0])+' · '+PN(s.prod==='gd'?'gd':'bn')+' · '+SRC_TYPES[Math.min(3,Math.max(0,+s.type||0))].split(' (')[0]+'</summary>'+'<div class="srow3"><select data-f="src" data-i="'+i+'" data-k="prod" aria-label="Ngành hàng"><option value="bn"'+(s.prod!=='gd'?' selected':'')+'>'+PN('bn')+'</option><option value="gd"'+(s.prod==='gd'?' selected':'')+'>'+PN('gd')+'</option></select>'+'<select data-f="src" data-i="'+i+'" data-k="type" aria-label="Loại nguồn">'+SRC_TYPES.map((t,k)=>'<option value="'+k+'"'+((+s.type||0)===k?' selected':'')+'>'+t+'</option>').join('')+'</select>'+'<select data-f="src" data-i="'+i+'" data-k="conf" aria-label="Độ tin cậy"><option value="">Độ tin cậy: chưa chọn</option>'+SRC_CONF.map(c=>'<option value="'+c[0]+'"'+(s.conf===c[0]?' selected':'')+'>'+c[1]+'</option>').join('')+'</select></div>'+'<input class="txt" type="text" data-f="src" data-i="'+i+'" data-k="basis" value="'+escH(s.basis||'')+'" placeholder="Căn cứ &amp; tín hiệu: VD lịch sử 35M/tháng, vào mùa lạnh, tồn kho thấp" style="margin-top:6px">'+'<div class="srow2"><input class="num sm" type="number" inputmode="numeric" min="0" data-f="src" data-i="'+i+'" data-k="act" value="'+(s.act===null||s.act===undefined?'':s.act)+'" placeholder="Thực tế"><span class="unit">tr đã đạt</span></div>'+'<input class="txt" type="text" data-f="src" data-i="'+i+'" data-k="planB" value="'+escH(s.planB||'')+'" placeholder="Plan B của nguồn này nếu không đạt" style="margin-top:6px"></details></div>').join('');
   let stress='';
   if(list.length&&sum>0){
     const maxS=list.reduce((a,b)=>(+b.amt||0)>(+a.amt||0)?b:a,list[0]);
@@ -1847,7 +1887,13 @@ function areaCard(weeks){
 /* ---------- AI cho từng tab + trợ lý ---------- */
 const AIX={};
 let coach={busy:false,log:[]};
-function aiMsgs(u){return [{role:'system',content:LIVOTEC_KB},{role:'user',content:u}];}
+const KB_N1=`THÔNG TIN NGÀNH 1 (SR phụ trách máy lọc nước và nhóm sản phẩm lọc của 2 thương hiệu Karofi và Livotec, kênh GT):
+- Hai nhóm chỉ tiêu của SR này là Karofi và Livotec (máy lọc nước). Mỗi nhóm có chỉ tiêu RIÊNG, không bù qua lại.
+- Kênh GT: SR bán sell-in cho đại lý, cửa hàng điện máy / điện nước; không phụ trách siêu thị điện máy.
+- QUY TẮC ƯU TIÊN: mọi yêu cầu "nêu TÊN DÒNG sản phẩm Livotec" được hiểu là nêu thương hiệu (Karofi hoặc Livotec) và NHÓM sản phẩm lọc (ví dụ máy lọc nước gia đình, để bàn, âm tủ, nóng lạnh) khi phù hợp với số liệu SR đã nhập. KHÔNG bịa tên model, giá, thông số, khuyến mại; nếu không chắc thì ghi "cần kiểm tra với ASM / bảng giá hiện hành".
+- Nhu cầu máy lọc nước ít phụ thuộc mùa vụ hơn bình nước nóng; đừng suy diễn mùa lạnh/mùa nóng cho nhóm hàng này.`;
+function kbText(){return CUR_NG===1?KB_N1:LIVOTEC_KB;}
+function aiMsgs(u){return [{role:'system',content:kbText()},{role:'user',content:u}];}
 /* Buộc AI gọi đích danh tỉnh của người dùng và gắn nhận định với đặc điểm địa phương */
 function provNote(){
   if(!S.province)return ' Người dùng chưa chọn khu vực phụ trách: ở câu đầu tiên hãy nói rõ chưa biết tỉnh nên phân tích còn chung chung và nhắc chọn tỉnh ở tab Thiết lập.';
@@ -1873,9 +1919,9 @@ function ctxText(weeks){
    L.push('Hôm nay: '+DOW[dw]+', '+f(t)+'/'+t.getFullYear()+'. Tuần hiện tại: Thứ 2 ('+f(mon)+') đến Chủ nhật ('+f(sun)+'/'+sun.getFullYear()+'). Chỉ dùng đúng ngày, tháng, năm này khi nhắc đến thời gian.');}
   L.push(monthName(S.month)+(S.province?', khu vực '+S.province+' ('+REG_NAME[regionOf(S.province)]+')':', chưa chọn khu vực')+'.');
   L.push('Chỉ tiêu S.I: '+PRODUCTS.map(p=>p.name+' '+fmt(+S.target[p.id]||0)+' tr').join(', ')+' (tổng '+fmt(total)+' tr).');
-  L.push('Chiến lược chia chỉ tiêu: '+(STRATS.find(x=>x[0]===S.strat)||STRATS[4])[1]+(S.strat==='manual'?'':' ('+Math.round((+S.target.bn||0)/Math.max(1,total)*100)+'% bình nước nóng)')+'.');
+  L.push('Chiến lược chia chỉ tiêu: '+(STRATS.find(x=>x[0]===S.strat)||STRATS[4])[1]+(S.strat==='manual'?'':' ('+Math.round((+S.target.bn||0)/Math.max(1,total)*100)+'% '+PN('bn').toLowerCase()+')')+'.');
   const on=catShares();if(on.length)L.push('Cơ cấu gia dụng & điện máy (tỷ trọng): '+on.map(x=>x.c.name+' '+Math.round(x.f*100)+'%').join(', ')+'.');
-  L.push('Giả định: giá trị trung bình mỗi đơn '+S.aov+' tr; phễu gồm 2 bước có căn cứ: (1) tỷ lệ chốt theo benchmark B2B bán hàng trực tiếp 19–29% (không riêng điện máy gia dụng), hiện dùng '+Math.round(100/funnel().fc)+'%; (2) tỷ lệ gặp đúng người quyết định mỗi lượt ghé không hẹn trước, ước theo thông lệ field sales 50–70%, hiện dùng '+Math.round(10/funnel().fv*100)+'% — nhân hai bước này ra ≈ '+fmt(100/funnel().vpo,1)+'% đơn trên mỗi lượt ghé, tức '+fmt(funnel().vpo,1)+' lượt ghé mỗi đơn; sức mua tháng này '+S.season+'%.');
+  L.push('Giả định: giá trị trung bình mỗi đơn '+S.aov+' tr; phễu gồm 2 bước có căn cứ: (1) tỷ lệ chốt theo benchmark B2B bán hàng trực tiếp 19–29% (không riêng ngành hàng này), hiện dùng '+Math.round(100/funnel().fc)+'%; (2) tỷ lệ gặp đúng người quyết định mỗi lượt ghé không hẹn trước, ước theo thông lệ field sales 50–70%, hiện dùng '+Math.round(10/funnel().fv*100)+'% — nhân hai bước này ra ≈ '+fmt(100/funnel().vpo,1)+'% đơn trên mỗi lượt ghé, tức '+fmt(funnel().vpo,1)+' lượt ghé mỗi đơn; sức mua tháng này '+S.season+'%.');
   L.push(seasonText());
   {const _tw=Math.max(1,weeks.reduce((a,w)=>a+w.work,0)),_mc=Math.max(1,+S.maxC||6);L.push('Sức đi tối đa của SR: '+_mc+' lượt ghé/ngày × '+_tw+' ngày làm việc = '+(_mc*_tw)+' lượt/tháng'+(ap?(ap.visits>_mc*_tw?' (nhu cầu '+ap.visits+' lượt, VƯỢT sức)':' (nhu cầu '+ap.visits+' lượt, trong sức)'):'')+'. Tỷ lệ phễu do người dùng đặt hoặc là số gợi ý ban đầu chưa kiểm chứng; AI chỉ gợi ý, không thay số.');}
   {const _m=+S.month.split('-')[1],_r=regionOf(S.province),_c=CLIM[_r];L.push('Khí hậu trung bình nhiều năm (ước lượng) của '+REG_NAME[_r]+' vào tháng '+_m+': ≈ '+_c.t[_m-1]+'°C, '+WLAB[_c.w[_m-1]]+'.');}
@@ -1912,10 +1958,10 @@ function ctxText(weeks){
   if(S.bench&&(S.bench.ord||S.bench.first||S.bench.conv))L.push('Số liệu đối chiếu khu vực (SR tự nhập): '+(S.bench.ord?'đơn nhập hàng trung bình '+S.bench.ord+' đơn/đại lý/tháng; ':'')+(S.bench.first?'nhập hàng lần đầu trung bình '+S.bench.first+' tr; ':'')+(S.bench.conv?'cứ ghé ≈ '+(100/S.bench.conv).toFixed(1)+' cửa hàng thì có 1 đại lý nhập hàng.':'')); 
   return L.join('\n');
 }
-const AI_FORMAT=' Trả lời tiếng Việt, sâu sắc, cụ thể, đọc xong phải thấy ngay nên làm gì — tuyệt đối không chung chung hay chiếu lệ: mở đầu bằng 1–2 câu nhận định tổng quan nêu rõ vì sao (dựa trên số liệu/yếu tố nào) và mức độ rủi ro hoặc cơ hội liên quan, sau đó liệt kê 4–6 gạch đầu dòng, mỗi gạch là một câu đầy đủ (không cắt cụt thành cụm từ rời rạc), mở đầu bằng cụm in đậm dạng **cụm từ**, kèm số cụ thể từ dữ liệu và lý do ngắn gọn vì sao; mỗi gạch phải nói rõ nên làm gì, ở đâu/với nhóm điểm bán nào và khi nào trong tháng — không dừng lại ở nhận xét chung chung. BẮT BUỘC trong số các gạch đầu dòng có ít nhất 1 gạch khuyến nghị TÊN DÒNG sản phẩm Livotec cụ thể (lấy đúng tên từ thông tin thương hiệu ở trên, không bịa giá/khuyến mại), chọn đúng theo NHU CẦU và CĂN CỨ ĐỊA PHƯƠNG — không chào ngẫu nhiên: (1) mùa vụ/khí hậu khu vực hiện tại, (2) mức sống và khả năng chi trả phổ biến tại khu vực để chọn đúng phân khúc giá (dòng phổ thông hay dòng cao cấp hơn), (3) cơ cấu khách hàng và mức độ cạnh tranh ngành hàng tại khu vực — kèm lý do ngắn vì sao đúng sản phẩm này, đúng khu vực này, đúng thời điểm này. Không chào hỏi, không ẩn dụ, không dùng câu sáo rỗng kiểu "cần nỗ lực hơn", "tập trung hơn" nếu không gắn số liệu hoặc tên cụ thể. Dùng đúng các kết luận trong mục "Yếu tố chính đã tính sẵn"; không bịa giá, khuyến mại, chính sách; điều gì không chắc thì ghi "cần kiểm tra". QUAN TRỌNG: mỗi gạch đầu dòng chỉ giải quyết đúng 1 vấn đề, dùng đúng lý do của chính vấn đề đó — tuyệt đối không ghép lý do của yếu tố này (ví dụ thiếu số liệu nhập hằng ngày) với hành động dành cho yếu tố khác (ví dụ tần suất ghé điểm bán, số lượt liên hệ); đây là hai việc khác nhau, không có quan hệ nhân quả. Nếu đề xuất liên quan đến ghé điểm bán/tần suất liên hệ, lý do phải là để đạt chỉ tiêu bán hàng hoặc phủ đủ điểm bán — không bao giờ lấy lý do "cải thiện độ tin cậy dự báo" hay "thiếu dữ liệu" làm căn cứ cho hành động ngoài thực địa. Mỗi ngành hàng (bình nước nóng, gia dụng) có chỉ tiêu RIÊNG, không bù qua lại được — không đề xuất kiểu "ngành A yếu nên tập trung bán ngành B để bù", vì bán thêm ngành B không giúp đạt chỉ tiêu ngành A; rủi ro riêng của một ngành phải có đề xuất nhắm đúng vào ngành đó. Khoảng 250–320 từ.';
+const AI_FORMAT=' Trả lời tiếng Việt, sâu sắc, cụ thể, đọc xong phải thấy ngay nên làm gì — tuyệt đối không chung chung hay chiếu lệ: mở đầu bằng 1–2 câu nhận định tổng quan nêu rõ vì sao (dựa trên số liệu/yếu tố nào) và mức độ rủi ro hoặc cơ hội liên quan, sau đó liệt kê 4–6 gạch đầu dòng, mỗi gạch là một câu đầy đủ (không cắt cụt thành cụm từ rời rạc), mở đầu bằng cụm in đậm dạng **cụm từ**, kèm số cụ thể từ dữ liệu và lý do ngắn gọn vì sao; mỗi gạch phải nói rõ nên làm gì, ở đâu/với nhóm điểm bán nào và khi nào trong tháng — không dừng lại ở nhận xét chung chung. BẮT BUỘC trong số các gạch đầu dòng có ít nhất 1 gạch khuyến nghị TÊN DÒNG sản phẩm Livotec cụ thể (lấy đúng tên từ thông tin thương hiệu ở trên, không bịa giá/khuyến mại), chọn đúng theo NHU CẦU và CĂN CỨ ĐỊA PHƯƠNG — không chào ngẫu nhiên: (1) mùa vụ/khí hậu khu vực hiện tại, (2) mức sống và khả năng chi trả phổ biến tại khu vực để chọn đúng phân khúc giá (dòng phổ thông hay dòng cao cấp hơn), (3) cơ cấu khách hàng và mức độ cạnh tranh ngành hàng tại khu vực — kèm lý do ngắn vì sao đúng sản phẩm này, đúng khu vực này, đúng thời điểm này. Không chào hỏi, không ẩn dụ, không dùng câu sáo rỗng kiểu "cần nỗ lực hơn", "tập trung hơn" nếu không gắn số liệu hoặc tên cụ thể. Dùng đúng các kết luận trong mục "Yếu tố chính đã tính sẵn"; không bịa giá, khuyến mại, chính sách; điều gì không chắc thì ghi "cần kiểm tra". QUAN TRỌNG: mỗi gạch đầu dòng chỉ giải quyết đúng 1 vấn đề, dùng đúng lý do của chính vấn đề đó — tuyệt đối không ghép lý do của yếu tố này (ví dụ thiếu số liệu nhập hằng ngày) với hành động dành cho yếu tố khác (ví dụ tần suất ghé điểm bán, số lượt liên hệ); đây là hai việc khác nhau, không có quan hệ nhân quả. Nếu đề xuất liên quan đến ghé điểm bán/tần suất liên hệ, lý do phải là để đạt chỉ tiêu bán hàng hoặc phủ đủ điểm bán — không bao giờ lấy lý do "cải thiện độ tin cậy dự báo" hay "thiếu dữ liệu" làm căn cứ cho hành động ngoài thực địa. Mỗi nhóm hàng của SR có chỉ tiêu RIÊNG, không bù qua lại được — không đề xuất kiểu "ngành A yếu nên tập trung bán ngành B để bù", vì bán thêm ngành B không giúp đạt chỉ tiêu ngành A; rủi ro riêng của một ngành phải có đề xuất nhắm đúng vào ngành đó. Khoảng 250–320 từ.';
 const AI_FORMAT_SHORT=' Trả lời tiếng Việt, ngắn gọn nhưng cụ thể, không chung chung: mỗi câu có số liệu hoặc tên cụ thể, mở đầu các ý bằng cụm in đậm dạng **cụm từ**. Không chào hỏi, không ẩn dụ. Không bịa giá, khuyến mại, chính sách; điều gì không chắc thì ghi "cần kiểm tra". Nếu phù hợp, nêu đúng 1 TÊN DÒNG sản phẩm Livotec cụ thể nên ưu tiên chào hôm nay, chọn theo mùa vụ và phù hợp mức sống phổ biến của khu vực (phổ thông hay cao cấp). Khoảng 80–110 từ.';
 const AI_TASK={
-  plan:'Đánh giá việc chia chỉ tiêu theo tuần và khu vực: tuần hoặc khu vực rủi ro nhất và lý do cụ thể; nên chỉnh tỷ lệ ghé trực tiếp so với chăm sóc từ xa thế nào (có số lượt cụ thể); nêu rõ TÊN DÒNG sản phẩm Livotec (không chỉ nói chung "bình nước nóng" hay "gia dụng") nên ưu tiên chào theo mùa vụ và khu vực, kèm 1–2 điểm bán hàng (lợi ích) của đúng dòng đó và vì sao hợp với nhóm khách hàng/khí hậu hiện tại; một phương án dự phòng cụ thể nếu tuần đầu chậm; nhận xét phễu (lượt ghé → khách tư vấn → đơn) so với sức đi tối đa mỗi ngày, nếu vượt sức thì gợi ý hướng xử lý (tăng giá trị đơn, tăng tỷ lệ gặp chủ hoặc chốt đơn) và chỉ GỢI Ý, không tự thay tỷ lệ phễu người dùng đã đặt.'+AI_FORMAT,
+  plan:'Đánh giá việc chia chỉ tiêu theo tuần và khu vực: tuần hoặc khu vực rủi ro nhất và lý do cụ thể; nên chỉnh tỷ lệ ghé trực tiếp so với chăm sóc từ xa thế nào (có số lượt cụ thể); nêu rõ TÊN DÒNG sản phẩm Livotec (không chỉ nói chung tên nhóm hàng) nên ưu tiên chào theo mùa vụ và khu vực, kèm 1–2 điểm bán hàng (lợi ích) của đúng dòng đó và vì sao hợp với nhóm khách hàng/khí hậu hiện tại; một phương án dự phòng cụ thể nếu tuần đầu chậm; nhận xét phễu (lượt ghé → khách tư vấn → đơn) so với sức đi tối đa mỗi ngày, nếu vượt sức thì gợi ý hướng xử lý (tăng giá trị đơn, tăng tỷ lệ gặp chủ hoặc chốt đơn) và chỉ GỢI Ý, không tự thay tỷ lệ phễu người dùng đã đặt.'+AI_FORMAT,
   check:'Phân tích tiến độ một cách sâu: mức đạt so với kế hoạch và vì sao (dựa trên số liệu nào); nguyên nhân khả dĩ (nói rõ là giả thuyết, không khẳng định chắc chắn); 3–4 việc cụ thể cho 1–2 ngày tới, có số điểm bán/khu vực cụ thể và TÊN DÒNG sản phẩm Livotec nên tập trung chào ở đó theo mùa vụ hiện tại; có nên cân lại các tuần còn lại và cân như thế nào. Nếu chưa có số liệu thực tế, nói rõ và nêu 3 việc nên làm ngay kèm sản phẩm ưu tiên.'+AI_FORMAT,
   brief:'Nhận xét kết quả hôm qua so với kế hoạch ngày trong 1 gạch (có số liệu cụ thể), rồi 2 việc cụ thể cho sáng nay (có số điểm bán hoặc khu vực nếu có, và nếu phù hợp nêu đúng 1 sản phẩm Livotec nên ưu tiên chào hôm nay theo mùa vụ). Nếu hôm qua chưa nhập số liệu, nói rõ và gợi ý nhập bù nhanh.'+AI_FORMAT_SHORT,
   alerts:'Xếp các cảnh báo đang hoạt động theo mức ưu tiên (giải thích rõ vì sao cảnh báo này ưu tiên hơn cảnh báo kia) và nêu một hành động cụ thể, đủ chi tiết để làm ngay cho từng cảnh báo — ai, ở đâu/nhóm điểm bán nào, làm gì, khi nào; nếu cảnh báo liên quan đến một ngành hàng cụ thể, nêu rõ TÊN DÒNG sản phẩm Livotec nên dùng để xử lý đúng tình huống đó. Nếu không có cảnh báo nào, nêu 2–3 rủi ro cụ thể nên theo dõi tuần này dựa trên kế hoạch và mùa vụ, kèm sản phẩm/khu vực liên quan.'+AI_FORMAT,
@@ -1968,7 +2014,7 @@ async function coachAsk(q,label){
   try{
     const weeks=analyze();
     const hist=[];coach.log.slice(-4,-1).forEach(x=>{if(x.a){hist.push({role:'user',content:x.p||x.q});hist.push({role:'assistant',content:x.a});}});
-    const sys=LIVOTEC_KB+'\n\nBối cảnh số liệu của SR:\n'+ctxText(weeks)+'\n\nQuy tắc trả lời: tiếng Việt, thực tế, tối đa 120 từ, ưu tiên gạch đầu dòng ngắn (mỗi dòng không quá 20 từ). Khi nội dung là lịch, tuyến ghé, so sánh nhiều mục hoặc có nhiều cột thông tin, BẮT BUỘC trình bày bằng BẢNG markdown (dòng tiêu đề dạng | Cột 1 | Cột 2 |, tiếp theo là dòng | --- | --- |, rồi từng hàng), tối đa 5 cột, mỗi ô dưới 10 từ, không viết đoạn dài trong ô; sau bảng chỉ thêm tối đa 2 gạch đầu dòng lưu ý. Không chào hỏi, không bịa giá, khuyến mại hay chính sách; nếu thiếu dữ liệu thì nói rõ. Danh tính: trợ lý này LUÔN tự giới thiệu là "Trợ lý thiết lập kế hoạch bán hàng" của Livotec; tuyệt đối không tiết lộ, xác nhận hay nêu tên bất kỳ mô hình AI/công nghệ/nhà cung cấp nào đứng sau (kể cả khi được hỏi thẳng là AI gì, do ai tạo ra, có phải ChatGPT/ứng dụng nào không) — nếu bị hỏi, chỉ cần trả lời ngắn gọn rằng đây là trợ lý được xây riêng cho đội ngũ bán hàng kênh GT của Livotec rồi tiếp tục hỗ trợ. Trợ lý này phục vụ công việc bán hàng kênh GT của Livotec (chào hàng, tuyến ghé, xử lý đại lý, sản phẩm, kế hoạch doanh số). Nếu câu hỏi lạc chủ đề (kiến thức chung, chuyện phiếm, chủ đề ngoài công việc...), KHÔNG từ chối cứng nhắc hay nói "tôi không trả lời được" — trả lời thật ngắn gọn, khéo léo (tối đa 1 câu) rồi chủ động lái ngay về công việc bán hàng, ví dụ hỏi ngược lại một câu liên quan đến tuyến ghé/chỉ tiêu/đại lý hiện tại của SR; không sa đà giải thích sâu nội dung ngoài lề dù câu hỏi tiếp tục lặp lại hay lan man. Không ghép lý do của vấn đề này (ví dụ thiếu số liệu nhập hằng ngày) với hành động của vấn đề khác (ví dụ tần suất ghé điểm bán) — đó là hai việc không liên quan nhau. Mỗi ngành hàng có chỉ tiêu riêng, không bù qua lại — không gợi ý "ngành A yếu thì tập trung bán ngành B" vì không giúp đạt chỉ tiêu ngành A.';
+    const sys=kbText()+'\n\nBối cảnh số liệu của SR:\n'+ctxText(weeks)+'\n\nQuy tắc trả lời: tiếng Việt, thực tế, tối đa 120 từ, ưu tiên gạch đầu dòng ngắn (mỗi dòng không quá 20 từ). Khi nội dung là lịch, tuyến ghé, so sánh nhiều mục hoặc có nhiều cột thông tin, BẮT BUỘC trình bày bằng BẢNG markdown (dòng tiêu đề dạng | Cột 1 | Cột 2 |, tiếp theo là dòng | --- | --- |, rồi từng hàng), tối đa 5 cột, mỗi ô dưới 10 từ, không viết đoạn dài trong ô; sau bảng chỉ thêm tối đa 2 gạch đầu dòng lưu ý. Không chào hỏi, không bịa giá, khuyến mại hay chính sách; nếu thiếu dữ liệu thì nói rõ. Danh tính: trợ lý này LUÔN tự giới thiệu là "Trợ lý thiết lập kế hoạch bán hàng" của Livotec; tuyệt đối không tiết lộ, xác nhận hay nêu tên bất kỳ mô hình AI/công nghệ/nhà cung cấp nào đứng sau (kể cả khi được hỏi thẳng là AI gì, do ai tạo ra, có phải ChatGPT/ứng dụng nào không) — nếu bị hỏi, chỉ cần trả lời ngắn gọn rằng đây là trợ lý được xây riêng cho đội ngũ bán hàng kênh GT của Livotec rồi tiếp tục hỗ trợ. Trợ lý này phục vụ công việc bán hàng kênh GT của Livotec (chào hàng, tuyến ghé, xử lý đại lý, sản phẩm, kế hoạch doanh số). Nếu câu hỏi lạc chủ đề (kiến thức chung, chuyện phiếm, chủ đề ngoài công việc...), KHÔNG từ chối cứng nhắc hay nói "tôi không trả lời được" — trả lời thật ngắn gọn, khéo léo (tối đa 1 câu) rồi chủ động lái ngay về công việc bán hàng, ví dụ hỏi ngược lại một câu liên quan đến tuyến ghé/chỉ tiêu/đại lý hiện tại của SR; không sa đà giải thích sâu nội dung ngoài lề dù câu hỏi tiếp tục lặp lại hay lan man. Không ghép lý do của vấn đề này (ví dụ thiếu số liệu nhập hằng ngày) với hành động của vấn đề khác (ví dụ tần suất ghé điểm bán) — đó là hai việc không liên quan nhau. Mỗi ngành hàng có chỉ tiêu riêng, không bù qua lại — không gợi ý "ngành A yếu thì tập trung bán ngành B" vì không giúp đạt chỉ tiêu ngành A.';
     const a=await callAI([{role:'system',content:sys}].concat(hist,[{role:'user',content:q}]),1500);
     coach.log[coach.log.length-1].a=a;
   }catch(e){coach.log[coach.log.length-1].a=(e&&e.message)||'Không gọi được trợ lý. Thử lại sau.';}
@@ -2024,7 +2070,7 @@ function histCard(){
 let srcAiBusy=false;
 function srcPrompt(weeks){
   const n=weeks.length,bn=+S.target.bn||0,gd=+S.target.gd||0;
-  return 'NHIỆM VỤ: soạn BẢN NHÁP bảng "Nguồn doanh số" để SR kênh GT dùng ngay và gửi quản lý. Chia chỉ tiêu bình nước nóng '+bn+' tr và gia dụng & điện máy '+gd+' tr thành 5–8 dòng nguồn.\n'+
+  return 'NHIỆM VỤ: soạn BẢN NHÁP bảng "Nguồn doanh số" để SR kênh GT dùng ngay và gửi quản lý. Chia chỉ tiêu '+PN('bn').toLowerCase()+' '+bn+' tr và '+PN('gd').toLowerCase()+' '+gd+' tr thành 5–8 dòng nguồn.\n'+
   'QUY TẮC BẮT BUỘC:\n'+
   '1) Chỉ trả về MỘT mảng JSON hợp lệ, không có chữ nào ngoài JSON, không dùng markdown.\n'+
   '2) Mỗi phần tử có đúng các trường: {"name":string,"prod":"bn"|"gd","type":0|1|2|3,"conf":"g"|"y"|"r","amt":số nguyên (triệu đồng),"week":số nguyên từ 0 đến '+(n-1)+',"basis":string tối đa 110 ký tự,"planB":string tối đa 110 ký tự}.\n'+
@@ -2058,7 +2104,7 @@ function srcClean(arr,weeks,mode){
   ['bn','gd'].forEach(p=>{
     const t=Math.round(+S.target[p]||0);if(!t)return;
     let rows=out.filter(x=>x.prod===p);
-    if(!rows.length){const g={name:(p==='bn'?'Bình nước nóng':'Gia dụng')+' — nhóm đại lý (điền tên)',amt:t,week:0,prod:p,type:0,conf:'y',basis:'Giả định: chưa có đủ dữ liệu để chia nguồn',planB:'',act:null,ai:true,mode:mode||'ai'};out.push(g);return;}
+    if(!rows.length){const g={name:PN(p==='bn'?'bn':'gd')+' — nhóm đại lý (điền tên)',amt:t,week:0,prod:p,type:0,conf:'y',basis:'Giả định: chưa có đủ dữ liệu để chia nguồn',planB:'',act:null,ai:true,mode:mode||'ai'};out.push(g);return;}
     const wts=rows.map(x=>x.amt>0?x.amt:0),sum=wts.reduce((a,b)=>a+b,0);
     const parts=sum>0?allocate(t,wts):allocate(t,rows.map(()=>1));
     rows.forEach((x,i)=>{x.amt=parts[i];});
@@ -2097,7 +2143,7 @@ async function aiSources(fromExport){
 }
 
 /* ---------- Xuất Excel (.xlsx) — One-page Sales Plan, không cần thư viện ngoài ---------- */
-const SRC_PROD={bn:'Bình nước nóng',gd:'Gia dụng Livotec'};
+const SRC_PROD={get bn(){return PN('bn');},get gd(){return PN('gd');}};
 const SRC_TYPES=['Đơn hàng nền tảng (Hiện hữu - Chắc chắn)','Tăng trưởng từ ĐL hiện hữu','Đơn có tín hiệu đàm phán','Khai thác mở mới điểm bán'];
 const SRC_CONF=[['g','🟢 Xanh (Chắc chắn)'],['y','🟡 Vàng (Có tín hiệu)'],['r','🔴 Đỏ (Cần tạo mới)']];
 function srcNorm(s){return{name:s.name||'',amt:Math.max(0,+s.amt||0),week:+s.week||0,prod:s.prod==='gd'?'gd':'bn',type:Math.min(3,Math.max(0,+s.type||0)),conf:['g','y','r'].includes(s.conf)?s.conf:'',basis:s.basis||'',planB:s.planB||'',act:(s.act===undefined||s.act===null||s.act==='')?null:Math.max(0,+s.act||0),ai:s.ai===true,mode:s.mode==='rule'?'rule':'ai'};}
@@ -2252,9 +2298,9 @@ function xlBuildBook(){
   const items=[
     ['month','Tháng báo cáo (mm/yyyy)',mlabel,'T','Hiện trên tiêu đề'],
     ['prov','Tỉnh / thành phố phụ trách',S.province||'','T','Hiện ở góc phải tiêu đề'],
-    ['bn','Chỉ tiêu Bình nước nóng (VNĐ)',bnM*M,'M','Sửa số này, mọi bảng tự tính lại'],
-    ['gd','Chỉ tiêu Gia dụng & điện máy (VNĐ)',gdM*M,'M',''],
-    ['kpi','Tổng chỉ tiêu KPI (VNĐ)',null,'FM','= Bình nước nóng + Gia dụng'],
+    ['bn','Chỉ tiêu '+PN('bn')+' (VNĐ)',bnM*M,'M','Sửa số này, mọi bảng tự tính lại'],
+    ['gd','Chỉ tiêu '+PN('gd')+' (VNĐ)',gdM*M,'M',''],
+    ['kpi','Tổng chỉ tiêu KPI (VNĐ)',null,'FM','= '+PN('bn')+' + '+PN('gd')],
     ['aov','Giá trị trung bình mỗi đơn (VNĐ)',aovM*M,'M','Dùng tính số đơn cần chốt'],
     ['fv','Số lượt ghé để gặp chủ và tư vấn 10 khách',F.fv,'I','Ước theo thông lệ field sales: gặp đúng người quyết định 50–70% mỗi lượt ghé không hẹn trước'],
     ['fc','Số khách tư vấn để chốt 1 đơn',F.fc,'I','Mặc định 5 (chốt ≈ 20%) theo benchmark B2B (19–29%)'],
@@ -2353,7 +2399,7 @@ function xlBuildBook(){
   s1.set(rT,0,{v:'TỔNG CỘNG TOÀN BỘ',s:st.totT});
   s1.set(rT,1,Object.assign(cat([{f:cntNames,v:src.length},{t:' Nguồn doanh số'}]),{s:st.totT}));
   s1.set(rT,2,Object.assign(cat([{t:'KPI: '},{f:rM(kpi),v:Mv(kpiV)},{t:'M'}]),{s:st.totT}));
-  s1.set(rT,3,Object.assign(cat([{t:'BNN: '},{f:rM(tp('bn')),v:Mv(bnM*M)},{t:'M | Gia dụng: '},{f:rM(tp('gd')),v:Mv(gdM*M)},{t:'M'}]),{s:st.totT}));
+  s1.set(rT,3,Object.assign(cat([{t:PS('bn')+': '},{f:rM(tp('bn')),v:Mv(bnM*M)},{t:'M | '+PS('gd')+': '},{f:rM(tp('gd')),v:Mv(gdM*M)},{t:'M'}]),{s:st.totT}));
   s1.set(rT,4,{v:'',s:st.totT});
   [5].concat(Array.from({length:n},(_,k)=>6+k),[cAct]).forEach(c=>s1.set(rT,c,{f:'SUM('+rng(c)+')',v:colSum(c),s:st.totN}));
   s1.set(rT,cGap,{f:'MAX(0,'+Ftot+'-'+Ltot+')',v:Math.max(0,colSum(5)-colSum(cAct)),s:st.totN});
@@ -2396,7 +2442,7 @@ function xlBuildBook(){
     s1.height(r,30);
   }
   const rF=rB+9;
-  s1.merge(rF,0,rF,NC-1,st.foot).set(rF,0,'Lưu ý: tỷ lệ chốt lấy theo benchmark B2B bán hàng trực tiếp (≈ 19–29%, nhiều nguồn, không riêng điện máy gia dụng); tỷ lệ gặp được chủ là giả định chưa có benchmark; mục "Thực tế đạt" do SR tự nhập'+'. Cần đối chiếu với báo cáo bán hàng chính thức và xác nhận với quản lý trước khi dùng để ra quyết định.').height(rF,34);
+  s1.merge(rF,0,rF,NC-1,st.foot).set(rF,0,'Lưu ý: tỷ lệ chốt lấy theo benchmark B2B bán hàng trực tiếp (≈ 19–29%, nhiều nguồn, không riêng ngành hàng này); tỷ lệ gặp được chủ là giả định chưa có benchmark; mục "Thực tế đạt" do SR tự nhập'+'. Cần đối chiếu với báo cáo bán hàng chính thức và xác nhận với quản lý trước khi dùng để ra quyết định.').height(rF,34);
   s1.merge(rF+1,0,rF+1,NC-1,st.note).set(rF+1,0,'Cách dùng: chữ xanh / nền vàng nhạt là ô nhập (sửa tự do). Chữ đen là công thức, tự tính lại khi bạn sửa. KPI, giá trị đơn, tỷ lệ chốt... nằm ở sheet "Thông số". Cần thêm đại lý: ghi vào các dòng trống trong bảng (đã nằm trong vùng tính tổng).').height(rF+1,32);
   [22,30,28,40,22,19].forEach((w,c)=>s1.width(c,w));
   for(let k=0;k<n;k++)s1.width(6+k,16);
@@ -2406,7 +2452,7 @@ function xlBuildBook(){
   const s2=XlSheet();
   s2.merge(0,0,0,17,st.title).set(0,0,Object.assign(cat([{t:'KẾ HOẠCH THEO TUẦN — THÁNG '},{f:tp('month'),v:mlabel},{t:' (đơn vị: triệu đồng)'}]),{s:st.title})).height(0,30);
   s2.merge(1,0,1,17,st.note).set(1,0,'KH tuần = chỉ tiêu × trọng số tuần / tổng trọng số (tuần cuối nhận phần còn lại để khớp KPI). Sửa KPI ở sheet "Thông số" hoặc sửa trọng số để dồn chỉ tiêu; số đơn và số khách cần liên hệ tự tính theo giá trị đơn và phễu ở "Thông số".').height(1,30);
-  const H2=['Tuần','Thời gian','Ngày làm việc','Trọng số tuần','KH · Bình nước nóng','KH · Gia dụng','KH · Tổng','Đã chốt chắc chắn','Đơn cần chốt','Khách cần liên hệ','Lượt/ngày','TT · Bình nước nóng','TT · Gia dụng','TT · Tổng','Khách đã liên hệ','% đạt','Nguồn dự kiến về (từ bảng chính)','Nguồn so với KH tuần'];
+  const H2=['Tuần','Thời gian','Ngày làm việc','Trọng số tuần','KH · '+PN('bn'),'KH · '+PN('gd'),'KH · Tổng','Đã chốt chắc chắn','Đơn cần chốt','Khách cần liên hệ','Lượt/ngày','TT · '+PN('bn'),'TT · '+PN('gd'),'TT · Tổng','Khách đã liên hệ','% đạt','Nguồn dự kiến về (từ bảng chính)','Nguồn so với KH tuần'];
   H2.forEach((h,c)=>s2.set(2,c,{v:h,s:st.th}));s2.height(2,48);
   const sumW='SUM($D$'+(w0+1)+':$D$'+(wT)+')';
   weeks.forEach((w,i)=>{
@@ -2654,6 +2700,7 @@ function remCard(){
 /* ---------- Yếu tố ảnh hưởng & rủi ro (tính bằng công thức từ số liệu của SR) ---------- */
 const CAT_GROUP={doi:'bep',don:'bep',com:'bep',noi:'bep',chien:'bep',xay:'bep',ep:'bep',mui:'bep',quat:'mat',dh:'mat',suoi:'suoi',ham:'suoi'};
 function seasonMix(){
+  if(CUR_NG===1)return null;
   const tb=+S.target.bn||0,tg=+S.target.gd||0,total=tb+tg;if(!total)return null;
   const m=+S.month.split('-')[1],r=regionOf(S.province),lv=g=>SEASON[r][g][m-1];
   const parts=[];if(tb)parts.push({n:'Bình nước nóng',sh:tb/total,lv:lv('bn')});
@@ -2794,6 +2841,7 @@ function buildDigest(weeks){
 }
 function scheduleSync(){
   if(!AUTH.user)return;
+  scheduleReport();
   syncDirty=true;clearTimeout(syncTimer);
   syncTimer=setTimeout(function(){syncTimer=null;syncPush({});},4000);
 }
@@ -2801,9 +2849,9 @@ async function authInit(){
   try{
     const r=await api('GET','/api/auth/me');
     if(r.s!==200||!r.j.avail){AUTH.avail=false;AUTH.user=null;}
-    else{AUTH.avail=true;AUTH.user=r.j.loggedIn?{email:r.j.email,name:r.j.name||''}:null;AUTH.isAdmin=!!r.j.isAdmin;}
+    else{AUTH.avail=true;AUTH.user=r.j.loggedIn?{email:r.j.email,name:r.j.name||''}:null;AUTH.isAdmin=!!r.j.isAdmin;AUTH.isAsm=!!r.j.isAsm;}
   }catch(e){AUTH.avail=false;AUTH.user=null;}
-  if(AUTH.user)await syncPull();
+  if(AUTH.user){await syncPull();await profileLoad();dirLoad();}
   softRender();
 }
 function adoptServer(doc){
@@ -3011,6 +3059,8 @@ function acctData(){
         row('warn','Khuyến nghị rủi ro cao',['Khuyến nghị','bad'],'Gộp vào email buổi sáng, không lặp lại hằng ngày')+
         row('weekly','Tổng kết tuần (thứ Hai)',['Tham khảo','ok'],'Kết quả tuần trước so với kế hoạch')+
         '<div class="askrow"><button class="btn ghost sm" data-act="acMailTest">Gửi email thử</button></div>':'')+'</div>'+
+      '<div class="remblk"><b>Công việc</b><div class="small muted">'+NGX().name+(S.asm&&S.asm.email?' · ASM '+escH(S.asm.name||S.asm.email):' · chưa chọn ASM')+'</div><div class="askrow"><button class="btn ghost sm" data-act="workOpen">Đổi ngành / ASM</button></div></div>'+
+      (A.isAdmin||A.isAsm?'<div class="askrow"><a class="btn ghost sm" href="/asm/" style="text-decoration:none">'+ic('users',14)+' Mở trang quản lý ASM</a></div>':'')+
       (A.isAdmin?'<div class="askrow"><button class="btn ghost sm" data-act="adminOpen">'+ic('users',14)+' Quản trị thành viên</button></div>':'')+
       '<div class="askrow"><button class="btn ghost sm" data-act="acLogout">Đăng xuất</button></div>';
   }
@@ -3102,14 +3152,23 @@ function updateAcctFab(){
 }
 
 /* ---------- Chiến lược chia chỉ tiêu ---------- */
-const STRATS=[
+const STRATS_N2=[
   ['season','Theo mùa vụ (gợi ý)','Chia theo nhu cầu mùa vụ của tháng và khu vực.'],
   ['bn','Tập trung bình nước nóng','70% bình nước nóng, 30% gia dụng & điện máy.'],
   ['gd','Tập trung gia dụng & điện máy','30% bình nước nóng, 70% gia dụng & điện máy.'],
   ['balance','Cân bằng','50% bình nước nóng, 50% gia dụng & điện máy.'],
   ['manual','Tự nhập từng nhóm','Nhập riêng chỉ tiêu bình nước nóng và gia dụng.']
 ];
+const STRATS_N1=[
+  ['season','Chia đều (gợi ý)','Máy lọc nước ít theo mùa vụ nên chia đều giữa Karofi và Livotec.'],
+  ['bn','Tập trung Karofi','70% Karofi, 30% Livotec.'],
+  ['gd','Tập trung Livotec','30% Karofi, 70% Livotec.'],
+  ['balance','Cân bằng','50% Karofi, 50% Livotec.'],
+  ['manual','Tự nhập từng nhóm','Nhập riêng chỉ tiêu Karofi và Livotec.']
+];
+const STRATS=STRATS_N2.slice();
 function seasonLevels(){
+  if(CUR_NG===1)return{bn:1,gd:1,m:+S.month.split('-')[1],r:regionOf(S.province)};
   const m=+S.month.split('-')[1],r=regionOf(S.province),sh=catShares();
   let lvGd=SEASON[r].bep[m-1];
   if(sh.length){lvGd=0;sh.forEach(x=>{lvGd+=x.f*SEASON[r][CAT_GROUP[x.c.id]||'bep'][m-1];});}
@@ -3148,7 +3207,7 @@ function targetBlock(){
     let note=cur[2];
     if(S.strat==='season'){
       const L=seasonLevels();
-      note+=' Tháng '+L.m+' ('+REG_NAME[L.r]+'): bình nước nóng nhu cầu '+LV[L.bn]+', gia dụng '+LV[Math.round(L.gd)]+'. Ước lượng theo khí hậu, không phải số bán hàng của Livotec.';
+      note+=' Tháng '+L.m+' ('+REG_NAME[L.r]+'): '+(CUR_NG===1?'máy lọc nước nhu cầu '+LV[L.bn]+' (ít phụ thuộc mùa vụ).':PN('bn').toLowerCase()+' nhu cầu '+LV[L.bn]+', '+PN('gd').toLowerCase()+' '+LV[Math.round(L.gd)]+'.')+' Ước lượng theo khí hậu, không phải số bán hàng của Livotec.';
     }
     h+='<div class="tc-note">'+note+'</div>';
     h+='<div class="tc-act"><button class="btn ghost sm" data-act="stratManual">Chỉnh tay từng nhóm</button></div>';
@@ -3234,13 +3293,15 @@ function cxDefs(){return '<defs>'+
   '<linearGradient id="gcxArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#02B6AC" stop-opacity=".30"/><stop offset="1" stop-color="#02B6AC" stop-opacity="0"/></linearGradient>'+
   '</defs>';}
 function monthKey(o){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+o);return d.getFullYear()+'-'+pad(d.getMonth()+1);}
-function defaults(){return{month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,fv:15,fc:5,bmv:1,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',pv:'month',cw:null,preset:'std',season:100,maxC:6,cap6:1,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,strat:'season',tt:0,sync:{rev:0,lastOk:0},mail:{on:false,morning:true,evening:true,warn:true,weekly:true},rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''},sources:[],planB:'',income:0,commission:1.5,bench:{ord:0,first:0,conv:0},sg:'target'};}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{strat:o.strat||'manual',tt:+o.tt||0,sync:Object.assign(d.sync,o.sync||{}),mail:Object.assign(d.mail,o.mail||{}),hist:o.hist||{},rem:Object.assign(d.rem,o.rem||{}),area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats,fv:+o.fv||15,fc:(!o.bmv&&+o.fv===15&&+o.fc===10)?5:(+o.fc||5),bmv:1,maxC:(o.cap6?(+o.maxC||6):((!o.maxC||[4,9,12,15].includes(+o.maxC))?6:+o.maxC)),cap6:1,});}}catch(e){}return defaults();}
+function defaults(){return{nganh:0,ngStash:{},asm:{email:'',name:'',locked:false},month:monthKey(0),province:'',target:{bn:0,gd:0},disc:25,list:{bn:3.7},cats:defaultCats(),aov:20,rate:40,fv:15,fc:5,bmv:1,flip:[],pace:'front',plan:null,booked:{},actual:{},daily:{},cd:null,risks:{},tab:'setup',pv:'month',cw:null,preset:'std',season:100,maxC:6,cap6:1,learn:true,dismissed:[],rules:defaultRules('std'),area:{pts:0,act:0,vpp:2,care:4,promo:'',comp:'',dist:[]},hist:{},savedAt:0,strat:'season',tt:0,sync:{rev:0,lastOk:0},mail:{on:false,morning:true,evening:true,warn:true,weekly:true},rem:{m:'08:00',e:'20:00',a:'21:30',mOn:true,eOn:true,aOn:true,notif:false,fired:{},seen:''},sources:[],planB:'',income:0,commission:1.5,bench:{ord:0,first:0,conv:0},sg:'target'};}
+function load(){const o=load0();applyNganh(o.nganh||2);return o;}
+function load0(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r),d=defaults();const rules=d.rules;Object.keys(o.rules||{}).forEach(k=>{if(rules[k])Object.assign(rules[k],o.rules[k]);});const cats=d.cats;Object.keys(o.cats||{}).forEach(k=>{if(cats[k])Object.assign(cats[k],o.cats[k]);});return Object.assign(d,o,{strat:o.strat||'manual',tt:+o.tt||0,sync:Object.assign(d.sync,o.sync||{}),mail:Object.assign(d.mail,o.mail||{}),hist:o.hist||{},rem:Object.assign(d.rem,o.rem||{}),area:Object.assign(d.area,o.area||{}),list:Object.assign(d.list,o.list||{}),target:Object.assign(d.target,o.target||{}),rules,cats,fv:+o.fv||15,fc:(!o.bmv&&+o.fv===15&&+o.fc===10)?5:(+o.fc||5),bmv:1,maxC:(o.cap6?(+o.maxC||6):((!o.maxC||[4,9,12,15].includes(+o.maxC))?6:+o.maxC)),cap6:1,});}}catch(e){}return defaults();}
 let S=load(),confirmReset=false,copyText=null;
+function defaultsFor(n){const d=defaults();if(+n===1)d.list={bn:NGANH_CFG[1].defList,gd:NGANH_CFG[1].defList};return d;}
 function save(){try{S.savedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}if(typeof scheduleSync==='function')scheduleSync();}
 
 /* ---------- Logic lõi ---------- */
-function si(k){return Math.max(0.1,(+S.list[k]||1)*(1-(+S.disc||0)/100));}
+function si(k){return Math.max(0.1,(+S.list[k]||(CUR_NG===1?NGANH_CFG[1].defList:1))*(1-(+S.disc||0)/100));}
 /* Phễu benchmark ngành: fv lượt ghé đại lý để gặp được chủ và tư vấn 10 khách; fc khách tư vấn để chốt 1 đơn */
 function funnel(){
   const fv=Math.max(10,Math.min(60,+S.fv||15)),fc=Math.max(1,Math.min(50,+S.fc||5));
@@ -3248,11 +3309,13 @@ function funnel(){
 }
 function rateEff(){return funnel().rate;}
 function catShares(){
+  if(CUR_NG===1)return[];
   const on=CATS.filter(c=>S.cats[c.id].on&&S.cats[c.id].w>0),tot=on.reduce((a,c)=>a+S.cats[c.id].w,0);
   return on.map(c=>({c,f:S.cats[c.id].w/tot}));
 }
 function siCat(id){return (+S.cats[id].p||0)*(1-(+S.disc||0)/100);}
 function units(pid,t){
+  if(CUR_NG===1)return[{n:Math.round(t/si(pid)),l:'máy'}];
   if(pid==='bn')return[{n:Math.round(t/si('bn')),l:'bình'}];
   return catShares().map(x=>{const sp=siCat(x.c.id),v=t*x.f;return sp>0?{n:Math.round(v/sp),l:x.c.u}:{n:0,l:x.c.name.toLowerCase(),v:Math.round(v)};});
 }
@@ -3517,6 +3580,7 @@ function catBar(){
   return '<div class="split" style="height:26px;border-radius:13px">'+sh.map(x=>'<i style="flex:'+x.f+';background:'+x.c.col+'">'+(x.f>=0.12?Math.round(x.f*100)+'%':'')+'</i>').join('')+'</div>';
 }
 function catsCard(tg){
+  if(CUR_NG===1)return '';
   const fr={};catShares().forEach(x=>{fr[x.c.id]=x.f;});
   const on=CATS.filter(c=>S.cats[c.id].on),off=CATS.filter(c=>!S.cats[c.id].on);
   const rows=on.map(c=>{
@@ -3640,6 +3704,7 @@ function renderTabs(){
   const _mm=S.month.split('-');document.getElementById('title').innerHTML='Tháng '+_mm[1]+'<span class="hm-y">/'+_mm[0]+'</span>';
   try{const hd=document.querySelector('header.top');if(hd)hd.classList.toggle('cmp',S.tab==='setup');}catch(e){}
   document.getElementById('hdate').innerHTML=headerDate(wks);
+  {const pt=document.getElementById('pilltx');if(pt)pt.textContent='Kế hoạch bán hàng · '+NGX().short+(S.asm&&S.asm.name?' · ASM '+S.asm.name:'');}
   document.getElementById('hinc').innerHTML=headerIncome();
   document.getElementById('htag').innerHTML=headerTag(wks);
   document.getElementById('hcta').innerHTML=headerCta();
@@ -3760,11 +3825,11 @@ function quickPlan(weeks){
     ['Tỷ lệ chốt (khách tư vấn → đơn)',closeLo+'–'+closeHi+'%','B2B bán hàng trực tiếp · HubSpot Sales Trends (TB 21%, đủ điều kiện 29%), Ebsta × Pavilion 2025 (19%)',Math.round(100/F.fc)+'%',st(100/F.fc,closeLo,closeHi)],
     ['Số lượt ghé mỗi ngày','TB 5,1 (2,1–13,9)','B2B bán hàng trực tiếp (outside sales) · RepMove, 10% thấp nhất đến 10% cao nhất',fmt(c.mc,0),st(c.mc,2.1,13.9)],
     ['Lương cứng trong thu nhập mục tiêu','40–60%','Sales tại Việt Nam · CareerLink cẩm nang lương',Math.round(c.base/Math.max(1,c.income)*100)+'%',st(c.base/Math.max(1,c.income)*100,40,60)],
-    ['Gặp đúng người quyết định mỗi lượt ghé',reachLo+'–'+reachHi+'%','Thông lệ bán hàng trực tiếp (field sales): ghé đại lý không hẹn trước chỉ gặp đúng chủ/người quyết định '+reachLo+'–'+reachHi+'% do vắng mặt, bận hoặc ủy quyền nhân viên — đây là ước tính theo kinh nghiệm ngành, không phải số liệu công bố riêng cho điện máy gia dụng',Math.round(10/F.fv*100)+'%',st(10/F.fv*100,reachLo,reachHi)],
+    ['Gặp đúng người quyết định mỗi lượt ghé',reachLo+'–'+reachHi+'%','Thông lệ bán hàng trực tiếp (field sales): ghé đại lý không hẹn trước chỉ gặp đúng chủ/người quyết định '+reachLo+'–'+reachHi+'% do vắng mặt, bận hoặc ủy quyền nhân viên — đây là ước tính theo kinh nghiệm ngành, không phải số liệu công bố riêng cho ngành hàng này',Math.round(10/F.fv*100)+'%',st(10/F.fv*100,reachLo,reachHi)],
     ['Tỷ lệ ra đơn mỗi lượt ghé (suy ra từ 2 dòng trên)',fmt(combLo,1)+'–'+fmt(combHi,1)+'%','Phép nhân, không phải benchmark riêng: gặp đúng người ('+reachLo+'–'+reachHi+'%) × tỷ lệ chốt ('+closeLo+'–'+closeHi+'%) — dùng để kiểm tra 2 dòng trên có nhất quán với nhau không',fmt(100/F.vpo,1)+'%',st(100/F.vpo,combLo,combHi)]
   ];
   const refs='<div class="qp-ref"><b>Benchmark tham khảo và so với giả định của bạn</b>'+bmRows.map(r=>'<div class="bm-r"><div class="bm-l"><b>'+r[0]+'</b><span>'+r[2]+'</span></div><div class="bm-v"><em>'+r[1]+'</em><span>Bạn: <b>'+r[3]+'</b></span><i class="bm-c '+r[4][0]+'">'+r[4][1]+'</i></div></div>').join('')+
-    '<div class="bm-n"><b>Chưa có benchmark công bố riêng cho điện máy gia dụng bán qua đại lý.</b> 3 dòng đầu lấy từ B2B nói chung (chủ yếu phần mềm) và thị trường lao động sales tại Việt Nam; dòng "gặp đúng người" là ước tính theo thông lệ field sales; dòng cuối chỉ là phép nhân để kiểm tra tính nhất quán nội bộ, không phải dữ liệu đo riêng. Nên dùng số liệu thật của Livotec (nếu có) thay cho các benchmark này.</div>'+
+    '<div class="bm-n"><b>Chưa có benchmark công bố riêng cho ngành hàng này bán qua đại lý.</b> 3 dòng đầu lấy từ B2B nói chung (chủ yếu phần mềm) và thị trường lao động sales tại Việt Nam; dòng "gặp đúng người" là ước tính theo thông lệ field sales; dòng cuối chỉ là phép nhân để kiểm tra tính nhất quán nội bộ, không phải dữ liệu đo riêng. Nên dùng số liệu thật của Livotec (nếu có) thay cho các benchmark này.</div>'+
     (F.fv===15&&F.fc===5?'<div class="bm-ok">✓ Đang dùng benchmark B2B cho tỷ lệ chốt</div>':'<button type="button" class="bm-apply" data-act="bmApply">Dùng benchmark B2B (chốt ≈ 20%)</button>')+'</div>';
   const fld=(label,attrs,val,unit,ph,extra)=>'<div class="field"><span class="nm">'+label+'</span><span class="iu"><input class="num sm" type="number" inputmode="decimal" min="0" '+(extra||'')+attrs+' value="'+val+'" placeholder="'+(ph||'')+'"><span class="unit">'+unit+'</span></span></div>';
   const A=S.area||{},B=S.bench||{};
@@ -3794,8 +3859,8 @@ function renderSetup(){
   const hero=total?
     '<div class="shero"><div class="sh-ring">'+ring([{f:tb/total,c:C.bn},{f:tg/total,c:C.gd}],null,fmt(total),'triệu S.I')+'</div>'+
     '<div class="sh-info"><div class="sh-tiles">'+
-      '<div class="sh-tile bn"><span class="sh-lab"><i class="sw bn"></i>Bình nước nóng</span><div class="sh-row"><b class="sh-num">'+fmt(tb)+'<small>tr</small></b><span class="sh-pct">'+Math.round(tb/total*100)+'%</span></div><span class="sh-sub">'+unitText('bn',tb)+'</span></div>'+
-      '<div class="sh-tile gd"><span class="sh-lab"><i class="sw gd"></i>Gia dụng</span><div class="sh-row"><b class="sh-num">'+fmt(tg)+'<small>tr</small></b><span class="sh-pct">'+(100-Math.round(tb/total*100))+'%</span></div><span class="sh-sub">'+unitText('gd',tg)+'</span></div>'+
+      '<div class="sh-tile bn"><span class="sh-lab"><i class="sw bn"></i>'+PN('bn')+'</span><div class="sh-row"><b class="sh-num">'+fmt(tb)+'<small>tr</small></b><span class="sh-pct">'+Math.round(tb/total*100)+'%</span></div><span class="sh-sub">'+unitText('bn',tb)+'</span></div>'+
+      '<div class="sh-tile gd"><span class="sh-lab"><i class="sw gd"></i>'+PN('gd')+'</span><div class="sh-row"><b class="sh-num">'+fmt(tg)+'<small>tr</small></b><span class="sh-pct">'+(100-Math.round(tb/total*100))+'%</span></div><span class="sh-sub">'+unitText('gd',tg)+'</span></div>'+
     '</div><div class="sh-foot"><div><b>'+workDays+'</b><span>ngày làm việc</span></div><div><b>≈ '+fmt(total/Math.max(1,workDays),1)+'</b><span>triệu mỗi ngày</span></div></div></div></div>':
     '<div class="empty" style="padding:10px"><div style="color:var(--brand-deep)">'+ic('target',40)+'</div><div class="muted">Nhập chỉ tiêu bên dưới, biểu đồ sẽ hiện ra ngay.</div></div>';
   const cal='<div class="cal">'+['T2','T3','T4','T5','T6','T7','CN'].map(x=>'<div class="h">'+x+'</div>').join('')+
@@ -3813,7 +3878,7 @@ function renderSetup(){
     '<div class="small muted" style="margin-top:10px">Giá S.I tạm tính = giá niêm yết trên livotec.com trừ chiết khấu. Hãy sửa theo bảng giá S.I thật.</div>'+
     '<input type="range" min="0" max="50" step="1" value="'+S.disc+'" data-f="disc" data-live="discv" aria-label="Chiết khấu S.I">'+
     '<div class="small"><b id="discv">Chiết khấu '+S.disc+'%</b> so với giá niêm yết</div>'+
-    [['bn','Bình nước nóng (niêm yết TB, triệu/bình)']].map(x=>'<div class="field"><span class="nm small">'+x[1]+'<div class="muted" style="font-weight:400">Giá S.I ≈ '+fmt(si(x[0]),2)+' tr</div></span><input class="num sm" type="number" inputmode="decimal" step="0.1" min="0.1" data-f="list" data-p="'+x[0]+'" value="'+S.list[x[0]]+'"><span class="unit">tr</span></div>').join('')+
+    PRODUCTS.filter(p=>CUR_NG===1||p.id==='bn').map(p=>[p.id,p.name+' (niêm yết TB, triệu/'+NGX().unit+')']).map(x=>'<div class="field"><span class="nm small">'+x[1]+'<div class="muted" style="font-weight:400">Giá S.I ≈ '+fmt(si(x[0]),2)+' tr</div></span><input class="num sm" type="number" inputmode="decimal" step="0.1" min="0.1" data-f="list" data-p="'+x[0]+'" value="'+S.list[x[0]]+'"><span class="unit">tr</span></div>').join('')+
     '<div class="small muted" style="margin-top:10px">Để tính số lượt ghé và số đơn cần chốt:</div>'+
     '<div class="field"><span class="nm small">Giá trị trung bình mỗi đơn</span><input class="num sm" type="number" inputmode="numeric" min="1" data-f="aov" value="'+S.aov+'"><span class="unit">tr</span></div>'+
     '<div class="small muted">Tỷ lệ phễu bán hàng (lượt ghé, khách tư vấn, đơn) chỉnh ngay trong mục <b>Để đạt … triệu</b>.</div>'+
@@ -3844,7 +3909,7 @@ function renderSetup(){
   hub+
   go+
   '<div style="text-align:center;margin-top:10px"><button class="link" data-act="reset">'+(confirmReset?'Bấm lại để xác nhận xoá hết dữ liệu':'Làm lại từ đầu')+'</button></div>'+
-  '<div class="small muted" style="text-align:center">'+(AUTH.user?'Dữ liệu lưu trên thiết bị này và đồng bộ lên máy chủ vì bạn đã đăng nhập. Không xếp hạng giữa các SR.':'Dữ liệu chỉ lưu trên thiết bị này. Đăng nhập (mục Tài khoản) nếu muốn lưu trên máy chủ. Không xếp hạng giữa các SR.')+'</div>';
+  '<div class="small muted" style="text-align:center">'+(AUTH.user?'Dữ liệu lưu trên thiết bị này và đồng bộ lên máy chủ vì bạn đã đăng nhập. SR không thấy số liệu của nhau; ASM chỉ thấy phần bạn đã gửi.':'Dữ liệu chỉ lưu trên thiết bị này. Đăng nhập (mục Tài khoản) nếu muốn lưu trên máy chủ và gửi báo cáo cho ASM. SR không thấy số liệu của nhau.')+'</div>';
 }
 
 /* ---------- Tab Kế hoạch ---------- */
@@ -3887,8 +3952,8 @@ function renderPlan(){
     if(d&&!d.off&&w.work>0){
       const dn=Math.round(w.t.bn/w.work),dg=Math.round(w.t.gd/w.work);
       todayCard='<div class="todaycard"><div class="small" style="opacity:.85">Hôm nay · '+DOW[d.dow]+' '+pad(d.d)+'/'+S.month.split('-')[1]+' · Tuần '+(w.i+1)+'</div>'+
-        '<div class="cols"><div class="c"><div class="lab">'+ic('droplet',16)+' Bình nước nóng</div><div class="big">'+dn+' tr</div><div class="lab">'+unitText('bn',dn)+'</div></div>'+
-        '<div class="c"><div class="lab">'+ic('plug',16)+' Gia dụng</div><div class="big">'+dg+' tr</div><div class="lab">'+unitText('gd',dg)+'</div></div>'+
+        '<div class="cols"><div class="c"><div class="lab">'+ic(PRODUCTS[0].icon,16)+' '+PN('bn')+'</div><div class="big">'+dn+' tr</div><div class="lab">'+unitText('bn',dn)+'</div></div>'+
+        '<div class="c"><div class="lab">'+ic(PRODUCTS[1].icon,16)+' '+PN('gd')+'</div><div class="big">'+dg+' tr</div><div class="lab">'+unitText('gd',dg)+'</div></div>'+
         '<div class="c"><div class="lab">'+ic('users',16)+' Khách cần liên hệ</div><div class="big">≈ '+Math.max(1,Math.round(w.perDay))+'</div><div class="lab">để chốt ≈ '+fmt(w.o/w.work,1)+' đơn</div></div></div></div>';
     }}
   const lastW=[...weeks].reverse().find(w=>w.work>0),share=lastW&&total?Math.round(lastW.tt/total*100):0;
@@ -3913,7 +3978,7 @@ function renderPlan(){
     if(a){aSumB+=ab;aSumG+=ag;aSumV+=av;planDone+=w.tt;}
     const cell=(k,val)=>locked
       ?'<td class="act lk" title="Số lấy từ Nhật ký hàng ngày">'+(a?val:'')+'</td>'
-      :'<td class="act"><input class="gcell" type="number" inputmode="numeric" min="0" data-f="wact" data-w="'+w.key+'" data-k="'+k+'" value="'+(a?val:'')+'" placeholder="0" aria-label="Thực tế tuần '+(w.i+1)+' '+(k==='bn'?'bình nước nóng':k==='gd'?'gia dụng':'khách đã liên hệ')+'"></td>';
+      :'<td class="act"><input class="gcell" type="number" inputmode="numeric" min="0" data-f="wact" data-w="'+w.key+'" data-k="'+k+'" value="'+(a?val:'')+'" placeholder="0" aria-label="Thực tế tuần '+(w.i+1)+' '+(k==='bn'?PN('bn').toLowerCase():k==='gd'?PN('gd').toLowerCase():'khách đã liên hệ')+'"></td>';
     const pct=a&&w.tt?Math.round(as/w.tt*100):null;
     let stCell='<span class="muted">—</span>';
     if(a&&w.tt){const st=statusOf(as/w.tt),sl={ok:'Đúng tiến độ',warn:'Hơi chậm',bad:'Cần chỉnh'}[st[0]]||st[1];stCell='<span class="badge '+st[0]+'" title="'+st[1]+'">'+sl+'</span>';}
@@ -3930,7 +3995,7 @@ function renderPlan(){
     '<div class="small muted" style="margin:2px 0 6px">Nhập số thực tế từng tuần ngay trong bảng, % đạt và trạng thái tự cập nhật.<span class="swipehint"> Vuốt ngang để xem hết các cột →</span></div>'+
     '<div class="ovwrap"><table class="gtbl"><thead>'+
       '<tr><th rowspan="2" class="wk1">Tuần</th><th colspan="'+(hasCare?5:4)+'" class="grp g-plan">KẾ HOẠCH (triệu)</th><th colspan="3" class="grp g-act">THỰC TẾ (triệu)</th><th rowspan="2">% đạt</th><th rowspan="2">Trạng thái</th></tr>'+
-      '<tr><th class="sp">Bình NN</th><th class="sp">Gia dụng</th><th class="sp">Tổng</th><th class="sp hm">Ghé</th>'+(hasCare?'<th class="sp hm">Chăm</th>':'')+'<th class="sa gs">Bình NN</th><th class="sa">Gia dụng</th><th class="sa">Tổng</th></tr>'+
+      '<tr><th class="sp">'+PS('bn')+'</th><th class="sp">'+PS('gd')+'</th><th class="sp">Tổng</th><th class="sp hm">Ghé</th>'+(hasCare?'<th class="sp hm">Chăm</th>':'')+'<th class="sa gs">'+PS('bn')+'</th><th class="sa">'+PS('gd')+'</th><th class="sa">Tổng</th></tr>'+
     '</thead><tbody>'+ovRows+'</tbody>'+
     '<tfoot><tr><td class="wk1">Cả tháng</td><td>'+sums.bn+'</td><td>'+sums.gd+'</td><td>'+(sums.bn+sums.gd)+'</td><td class="hm">'+sums.vt+'</td>'+(hasCare?'<td class="hm">'+careSum+'</td>':'')+
       '<td>'+aSumB+'</td><td>'+aSumG+'</td><td>'+aSum+'</td><td class="pc">'+aPctAll+'%</td><td></td></tr></tfoot></table></div>'+
@@ -3962,7 +4027,7 @@ function renderPlan(){
   const weekCards='<div class="wtiles" role="group" aria-label="Chọn tuần">'+tilesHtml+'</div><div class="wlegend"><span><i class="lg"></i>kế hoạch</span><span><i class="lg a"></i>đã đạt</span><span><i class="lg h"></i>nặng nhất</span></div>'+detail;
   const modeLine='<div class="row wrapx modeline"><b>Các tuần</b><span>'+(S.plan?'<span class="badge warn">Thủ công</span> <button class="link" data-act="autoplan">Về tự động</button>':'<span class="badge ok">Tự động</span>')+'</span></div>';
   const barCard=sec('chart_bar',ic('trend',18),'Biểu đồ theo tuần','<span class="small muted">chạm để mở</span>',
-    '<div class="small muted"><i class="sw bn"></i>Bình NN <i class="sw gd" style="margin-left:6px"></i>Gia dụng · triệu đồng</div>'+barChart(weeks));
+    '<div class="small muted"><i class="sw bn"></i>'+PS('bn')+' <i class="sw gd" style="margin-left:6px"></i>'+PS('gd')+' · triệu đồng</div>'+barChart(weeks));
   const lineCard=sec('chart_line',ic('trend',18),'Kế hoạch tích lũy cả tháng','<span class="small muted">chạm để mở</span>',
     lineChart(weeks,[{pts:evenPts,color:'var(--muted)',dash:true,w:2},{pts:planPts,color:'var(--brand-deep)',dots:true,w:3}],total)+
     '<div class="legend"><span style="--c:var(--brand-deep)">Kế hoạch</span><span class="dash" style="--c:var(--muted)">Chia đều theo ngày</span></div>');
@@ -3994,8 +4059,8 @@ function renderCheck(){
   let verdict='<span class="badge">Chưa có số liệu</span>';
   if(anyData){const r=exp?ach/exp:1,st=statusOf(r);verdict='<span class="badge '+st[0]+'">'+st[1]+'</span>';}
   const hero='<div class="hero">'+ring([{f:achB/total,c:C.bn},{f:achG/total,c:C.gd}],exp/total,pctM+'%',fmt(ach)+' / '+fmt(total)+' tr')+
-    '<div class="leg"><div class="li"><span><i class="sw bn"></i>Bình nước nóng</span><b>'+fmt(achB)+' / '+fmt(tb)+'</b></div>'+
-    '<div class="li"><span><i class="sw gd"></i>Gia dụng</span><b>'+fmt(achG)+' / '+fmt(tg)+'</b></div>'+
+    '<div class="leg"><div class="li"><span><i class="sw bn"></i>'+PN('bn')+'</span><b>'+fmt(achB)+' / '+fmt(tb)+'</b></div>'+
+    '<div class="li"><span><i class="sw gd"></i>'+PN('gd')+'</span><b>'+fmt(achG)+' / '+fmt(tg)+'</b></div>'+
     '<div class="li"><span>Vạch đen: mốc đến hết tuần '+(k+1)+'</span><b>'+fmt(exp)+' tr</b></div>'+
     '<div class="li"><span>So với mốc</span>'+verdict+'</div></div></div>';
 
@@ -4007,8 +4072,8 @@ function renderCheck(){
   const dayChips='<div class="wstrip" role="group" aria-label="Chọn ngày">'+w.days.map(d=>dayCard(d,'cd','',d.date===curDay)).join('')+'</div>';
   const dd=S.daily[curDay]||{v:0,bn:0,gd:0};
   const perVt=w.work>0?fmt(w.vt/w.work,1):'0',perBn=w.work>0?fmt(w.t.bn/w.work,1):'0',perGd=w.work>0?fmt(w.t.gd/w.work,1):'0';
-  const fields=[['v',''+ic('users',16)+' Số lượt ghé / liên hệ đại lý hôm nay','',perVt,1],['bn',''+ic('droplet',16)+' Đã chốt hôm nay · Bình nước nóng',' (triệu)',perBn,5],['gd',''+ic('plug',16)+' Đã chốt hôm nay · Gia dụng',' (triệu)',perGd,5]]
-    .map(f=>'<div class="tline"><span class="nm">'+f[1]+f[2]+'<div class="small muted" style="font-weight:400">Tham khảo/ngày: '+f[3]+'</div></span>'+stepper('data-act="dk" data-f="'+f[0]+'" data-day="'+curDay+'"',dd[f[0]]||0,f[4])+'</div>').join('');
+  const fields=[['v',''+ic('users',16)+' Số lượt ghé / liên hệ đại lý hôm nay','',perVt,1],['bn',''+ic(PRODUCTS[0].icon,16)+' Đã chốt hôm nay · '+PN('bn'),' (triệu)',perBn,5],['gd',''+ic(PRODUCTS[1].icon,16)+' Đã chốt hôm nay · '+PN('gd'),' (triệu)',perGd,5],['htpp',''+ic('compass',16)+' HTPP','','',1],['dp',''+ic('plan',16)+' Độ phủ · số điểm bán MỚI phủ hôm nay','','',1],['so',''+ic('trend',16)+' Số bán SO (sell-out)',' (sản phẩm)','',1]]
+    .map(f=>'<div class="tline"><span class="nm">'+f[1]+f[2]+(f[3]!==''?'<div class="small muted" style="font-weight:400">Tham khảo/ngày: '+f[3]+'</div>':'')+'</span>'+stepper('data-act="dk" data-f="'+f[0]+'" data-day="'+curDay+'"',dd[f[0]]||0,f[4])+'</div>').join('');
 
   let result='';
   if(has&&w.work>0){
@@ -4022,7 +4087,7 @@ function renderCheck(){
   if(has&&rb){
     const later=weeks.filter(x=>x.i>k&&x.work>0),mx=Math.max(1,...later.map(x=>Math.max(x.tt,rb.np.bn[x.i]+rb.np.gd[x.i])));
     const rows=later.map(x=>{const nw=rb.np.bn[x.i]+rb.np.gd[x.i];return '<div class="ba"><span>Tuần '+(x.i+1)+'</span><span class="bars"><i style="width:'+(x.tt/mx*100)+'%;background:var(--cx-soft);box-shadow:inset 0 0 0 1px var(--cx-line)"></i><i style="width:'+(nw/mx*100)+'%;background:linear-gradient(90deg,#17C7BB,#0B86C2)"></i></span><b>'+x.tt+' → '+nw+'</b></div>';}).join('');
-    rebal='<div class="card"><h2>Cân lại các tuần còn lại</h2><div class="small muted">Còn thiếu: Bình NN '+rb.remain.bn+' tr · Gia dụng '+rb.remain.gd+' tr. Chia đều cho các tuần sau thay vì để dồn cuối tháng.</div>'+
+    rebal='<div class="card"><h2>Cân lại các tuần còn lại</h2><div class="small muted">Còn thiếu: '+PS('bn')+' '+rb.remain.bn+' tr · '+PS('gd')+' '+rb.remain.gd+' tr. Chia đều cho các tuần sau thay vì để dồn cuối tháng.</div>'+
       '<div style="margin:8px 0">'+rows+'</div><div class="legend"><span style="--c:var(--cx-line)">Kế hoạch cũ</span><span style="--c:var(--brand-deep)">Sau khi cân lại</span></div>'+
       '<div class="small muted" style="margin-top:6px">Tuần chưa nhập số liệu được tính theo kế hoạch. Bạn quyết định có áp dụng hay không.</div><div style="margin-top:10px"><button class="btn" data-act="rebalance">Áp dụng cách chia này</button></div></div>';
   }else if(has&&!rb){rebal='<div class="note">Đây là tuần cuối của tháng, không còn tuần nào để chia lại.</div>';}
@@ -4031,8 +4096,8 @@ function renderCheck(){
   weeks.forEach(x=>{cum+=x.tt;planPts.push({i:x.i,v:cum});const ac=S.actual[x.key];if(ac){ca+=(ac.bn||0)+(ac.gd||0);actPts.push({i:x.i,v:ca});}else if(ac===undefined){}});
   const ds=dailySeries(weeks);
   $app.innerHTML='<div class="card herocard">'+hero+'</div>'+
-  '<div class="card"><h2>Nhật ký hàng ngày</h2><div class="small muted">Chỉ bạn thấy, mất ~20 giây mỗi ngày.</div><div style="margin-top:10px">'+weekChips+'</div><div style="margin-top:6px">'+dayChips+'</div>'+
-    (w.work===0?'<div class="note">Tuần này không có ngày làm việc.</div>':fields)+result+(w.work>0?'<div class="savebar"><button class="btn sm" data-act="daySave" data-day="'+curDay+'">Lưu số liệu ngày '+curDay.slice(8)+'/'+curDay.slice(5,7)+'</button><span class="small muted">'+(S.daily[curDay]?'Đã lưu':'Chưa lưu')+'</span></div>':'')+'</div>'+
+  '<div class="card"><h2>Nhật ký hàng ngày</h2><div class="small muted">'+(S.asm&&S.asm.email?'Bạn và ASM '+escH(S.asm.name||'')+' thấy các ngày bạn đã bấm “Gửi báo cáo”. Mất ~20 giây mỗi ngày.':'Chỉ bạn thấy cho đến khi bạn gửi cho ASM. Mất ~20 giây mỗi ngày.')+'</div><div style="margin-top:10px">'+weekChips+'</div><div style="margin-top:6px">'+dayChips+'</div>'+
+    (w.work===0?'<div class="note">Tuần này không có ngày làm việc.</div>':fields+dayExtra(curDay,dd))+result+(w.work>0?'<div class="savebar"><button class="btn sm" data-act="daySave" data-day="'+curDay+'">Lưu số liệu ngày '+curDay.slice(8)+'/'+curDay.slice(5,7)+'</button><span class="small muted">'+(S.daily[curDay]?'Đã lưu':'Chưa lưu')+'</span></div>':'')+'</div>'+
   rebal+forecastCard(weeks)+factorsCard(weeks,'compact')+aiPanel('check',weeks)+
   sec('checkcharts',ic('trend',18),'Biểu đồ tiến độ','<span class="small muted">chạm để mở</span>','<div class="h3">Theo ngày</div>'+dailyChart(ds,total)+'<div class="legend"><span class="dash" style="--c:var(--bn)">Kế hoạch tích lũy</span><span style="--c:var(--brand-deep)">Thực tế tích lũy</span></div>'+'<div class="h3">Theo tuần</div>'+lineChart(weeks,[{pts:planPts,color:'var(--bn)',dash:true,w:2},{pts:actPts,color:'var(--brand-deep)',dots:true,w:3}],total),false);
 }
@@ -4051,7 +4116,7 @@ function renderAlertsTab(){
   const rules=RLV.map(g=>{const rs=RULES.filter(r=>r.level===g[0]);if(!rs.length)return '';const onN=rs.filter(r=>S.rules[r.id].on).length;
     return '<div class="rgroup lv-'+g[0]+'"><div class="rg-h"><i class="rg-dot"></i><b>'+g[1]+'</b><span class="small muted">'+g[2]+'</span><span class="rg-n">'+onN+'/'+rs.length+' bật</span></div><div class="rgrid">'+rs.map(ruleTile).join('')+'</div></div>';}).join('');
   $app.innerHTML=
-  '<div class="card"><h2>'+ic('bell',18)+' Khuyến nghị đang có</h2><div class="small muted">Chỉ bạn thấy.</div>'+DISC+list+
+  '<div class="card"><h2>'+ic('bell',18)+' Khuyến nghị đang có</h2><div class="small muted">'+(S.asm&&S.asm.email?'Bạn thấy đầy đủ. ASM thấy tối đa 5 cảnh báo mức đỏ/vàng đang bật.':'Chỉ bạn thấy.')+'</div>'+DISC+list+
     (hid.length?'<details><summary class="small">Đã ẩn ('+hid.length+')</summary><button class="btn ghost sm" data-act="undismiss">Hiện lại tất cả</button></details>':'')+'</div>'+
   aiPanel('alerts',weeks)+
   sec('alertcfg',ic('bell',18),'Tùy chỉnh cảnh báo','<span class="small muted">chạm để mở</span>','<div class="h3">Mức độ nhạy</div><div class="small muted">Chọn nhanh bộ ngưỡng, sau đó chỉnh từng quy tắc bên dưới nếu muốn.</div><div class="preset">'+pr.map(x=>'<button data-act="preset" data-v="'+x[0]+'" aria-pressed="'+(S.preset===x[0])+'">'+x[1]+'<small>'+x[2]+'</small></button>').join('')+'</div>'+'<div class="h3" style="margin-top:14px">Quy tắc cảnh báo</div><div class="small muted">Bật hoặc tắt từng quy tắc và đặt ngưỡng phù hợp với đặc thù công việc của bạn.</div>'+rules,false)+
@@ -4073,8 +4138,166 @@ function render(){
   try{
     if(S.month===monthKey(0)){const bn=dayBanner(analyze());bannerSig=bn;if(bn&&S.tab==='check')$app.insertAdjacentHTML('afterbegin',bn);}else bannerSig='';
     if(S.tab==='check'){const hc=histCard();if(hc)$app.insertAdjacentHTML('beforeend',hc);}
+    if(S.tab==='setup'||S.tab==='check'){const pn=profNudge();if(pn)$app.insertAdjacentHTML('afterbegin',pn);else if(S.tab==='setup')$app.insertAdjacentHTML('afterbegin',workStrip());}
+    if(S.tab==='check'||S.tab==='plan'){const dc=dirCard();if(dc)$app.insertAdjacentHTML('afterbegin',dc);}
   }catch(e){}
   if(sel){const n=document.querySelector(sel);if(n){if(keepVal!==null)n.value=keepVal;if(n!==document.activeElement)try{n.focus({preventScroll:true});}catch(e){}}}
+}
+
+/* ---------- Hồ sơ công việc (ngành + ASM), báo cáo cuối ngày, việc ASM giao ---------- */
+let PROF={asms:[],loaded:false,busy:false,msg:'',dirs:[],auto:false,pick:0,pickAsm:null};
+// Phần dữ liệu thuộc về một ngành: khi đổi ngành được cất lại và khôi phục khi quay về, không mất.
+const NG_KEYS=['target','tt','strat','plan','list','cats','sources','booked','actual','daily','risks','hist','area','planB','flip','income','commission','bench','cd','cw','season','aov','rate','fv','fc','dismissed'];
+function switchNganh(n){
+  n=(+n===1)?1:2;
+  const cur=S.nganh||2;
+  if(cur===n){S.nganh=n;applyNganh(n);return;}
+  const st={};NG_KEYS.forEach(k=>{st[k]=S[k]===undefined?null:JSON.parse(JSON.stringify(S[k]));});
+  S.ngStash=S.ngStash||{};S.ngStash[cur]=st;
+  const d=defaultsFor(n),nx=S.ngStash[n];
+  NG_KEYS.forEach(k=>{S[k]=(nx&&nx[k]!==null&&nx[k]!==undefined)?nx[k]:JSON.parse(JSON.stringify(d[k]));});
+  delete S.ngStash[n];
+  S.nganh=n;applyNganh(n);S.tab='setup';
+}
+async function profileLoad(){
+  if(!AUTH.user)return;
+  try{
+    const r=await api('GET','/api/profile');
+    if(r.s!==200)return;
+    PROF.asms=r.j.asms||[];PROF.loaded=true;
+    const p=r.j.profile;
+    if(p){
+      if(p.nganh&&p.nganh!==S.nganh)switchNganh(p.nganh);   // máy chủ là nguồn đúng (quản trị viên có thể đổi ngành)
+      S.asm={email:p.asmEmail||'',name:r.j.asmName||'',locked:!!p.locked};
+      if(p.province&&!S.province)S.province=p.province;
+      saveQuiet();
+    }
+  }catch(e){}
+  softRender();
+}
+function asmDisplay(e){const a=PROF.asms.find(x=>x.email===e);return a?(a.name||a.email):(S.asm&&S.asm.email===e?(S.asm.name||e):e);}
+async function profileSave(){
+  const P_=PROF;if(P_.busy)return;
+  const sel=document.getElementById('workAsm'),ng=P_.pick||S.nganh||2,asmEmail=sel?sel.value:(P_.pickAsm!=null?P_.pickAsm:(S.asm&&S.asm.email)||'');
+  if(S.nganh&&ng!==S.nganh){
+    if(!confirm('Đổi sang '+NANGANH(ng)+'?\n\nSố liệu của '+NANGANH(S.nganh)+' được cất lại, khi bạn quay về sẽ khôi phục nguyên vẹn.'))return;
+  }
+  switchNganh(ng);
+  if(!AUTH.user){S.asm={email:'',name:'',locked:false};save();P_.msg='';closeWork();render();toast('Đã lưu ngành. Đăng nhập để chọn ASM và gửi báo cáo hằng ngày.');return;}
+  P_.busy=true;P_.msg='Đang lưu…';renderWorkSheet();
+  try{
+    const r=await api('POST','/api/profile',{nganh:ng,asmEmail:asmEmail,province:S.province||''});
+    if(r.s===200){
+      const p=r.j.profile;S.asm={email:p.asmEmail||'',name:p.asmEmail?asmDisplay(p.asmEmail):'',locked:!!p.locked};
+      P_.busy=false;P_.msg='';save();closeWork();render();
+      toast(r.j.note||('Đã lưu: '+NANGANH(ng)+(S.asm.email?' · ASM '+S.asm.name:'')));
+      pushReport(false);dirLoad();return;
+    }
+    P_.msg=(r.j&&r.j.error)||'Không lưu được. Thử lại sau.';
+  }catch(e){P_.msg='Lỗi mạng. Thử lại.';}
+  P_.busy=false;renderWorkSheet();
+}
+const NANGANH=n=>NANGANH_NAME[n===1?1:2];
+const NANGANH_NAME={1:NGANH_CFG[1].name,2:NGANH_CFG[2].name};
+function openWork(){PROF.pick=S.nganh||CUR_NG;PROF.pickAsm=null;PROF.msg='';renderWorkSheet();document.getElementById('workSheet').hidden=false;if(AUTH.user&&!PROF.loaded)profileLoad().then(renderWorkSheet);}
+function closeWork(){document.getElementById('workSheet').hidden=true;}
+function workSheetHTML(){
+  const P_=PROF,pick=P_.pick||S.nganh||CUR_NG,cur=S.asm&&S.asm.email||'';
+  const opt=(n)=>'<button type="button" class="wk-ng'+(pick===n?' on':'')+'" data-act="workNg" data-v="'+n+'" aria-pressed="'+(pick===n)+'"><b>'+NGANH_CFG[n].name+'</b><span class="small muted">'+NGANH_CFG[n].sub+'</span></button>';
+  let asmBlock;
+  if(!AUTH.user)asmBlock='<div class="note">Đăng nhập (mục Tài khoản) để chọn ASM phụ trách và gửi báo cáo cuối ngày.</div>';
+  else if(S.asm&&S.asm.locked)asmBlock='<div class="note"><b>ASM phụ trách: '+escH(S.asm.name||S.asm.email)+'</b><div class="small muted">Quản trị viên đã gán, bạn không tự đổi được. Cần đổi hãy nhờ quản trị viên.</div></div>';
+  else{
+    const sel=P_.pickAsm!=null?P_.pickAsm:cur;
+    asmBlock=(P_.asms.length?'<div class="authField"><label for="workAsm">ASM phụ trách của bạn</label><select id="workAsm" class="txt" style="padding-left:12px"><option value="">— Chưa chọn —</option>'+P_.asms.map(a=>'<option value="'+escH(a.email)+'"'+(sel===a.email?' selected':'')+'>'+escH(a.name||a.email)+(a.area?' · '+escH(a.area):'')+'</option>').join('')+'</select></div>':'<div class="note">'+(P_.loaded?'Quản trị viên chưa khai báo ASM nào. Bạn vẫn dùng bình thường, chọn ASM sau cũng được.':'Đang tải danh sách ASM…')+'</div>');
+  }
+  const disc='<div class="wk-priv"><b>ASM của bạn sẽ thấy gì?</b><div class="small">Chỉ tiêu và kế hoạch tháng, các ngày bạn bấm <b>“Gửi báo cáo”</b> (lượt ghé, doanh số, HTPP, độ phủ, số bán SO, ghi chú), và tối đa 5 cảnh báo đang bật. ASM <b>không</b> thấy nhận xét AI hay các ghi chú riêng khác của bạn. SR khác không thấy số liệu của bạn.</div></div>';
+  return '<div class="acctsh-h">'+ic('users',18)+'<b style="flex:1">Công việc của bạn</b><button class="xbtn" data-act="workClose" aria-label="Đóng">✕</button></div>'+
+    '<div class="small muted" style="margin:6px 0 4px">Bạn phụ trách ngành nào? Nội dung hiển thị (nhóm hàng, chỉ tiêu, báo cáo) sẽ đổi theo.</div>'+
+    '<div class="wk-ngs">'+opt(2)+opt(1)+'</div>'+asmBlock+disc+
+    (P_.msg?'<div class="small" style="margin-top:8px;color:var(--muted)">'+escH(P_.msg)+'</div>':'')+
+    '<div class="askrow" style="margin-top:14px"><button class="btn sm" data-act="workSave"'+(P_.busy?' disabled':'')+'>Lưu</button><button class="btn ghost sm" data-act="workClose">Để sau</button></div>';
+}
+function renderWorkSheet(){const el=document.getElementById('workSheetIn');if(el)el.innerHTML=workSheetHTML();}
+function workStrip(){
+  return '<div class="card wk-strip"><div class="row"><div style="min-width:0"><div class="small muted">Bạn đang phụ trách</div><b>'+NGX().name+'</b><div class="small muted">'+(S.asm&&S.asm.email?'ASM '+escH(S.asm.name||S.asm.email):(AUTH.user?'Chưa chọn ASM':'Đăng nhập để chọn ASM'))+'</div></div><button class="btn ghost sm" data-act="workOpen">Đổi</button></div></div>';
+}
+function profNudge(){
+  if(S.nganh&&(S.asm&&S.asm.email||!AUTH.user||(PROF.loaded&&!PROF.asms.length)))return '';
+  const need=!S.nganh?'Chọn ngành bạn phụ trách':'Chọn ASM phụ trách để gửi báo cáo cuối ngày';
+  return '<div class="card wk-nudge"><div class="row"><div><b>Hoàn tất hồ sơ công việc</b><div class="small muted">'+need+(AUTH.user?'':' (đăng nhập để chọn ASM)')+'.</div></div><button class="btn sm" data-act="workOpen">Thiết lập</button></div></div>';
+}
+
+/* Báo cáo cuối ngày: SR bấm "Gửi báo cáo" → ASM thấy. Các ngày đã gửi được đồng bộ tự động khi sửa lại. */
+let repTimer=null,repSig='',repBusy=false;
+function touchDay(day){const e=S.daily[day];if(e&&e.sub)e.ts=Date.now();}
+function reportPayload(){
+  const days={};
+  Object.keys(S.daily||{}).sort().slice(-70).forEach(k=>{
+    const e=S.daily[k];if(!e||!e.sub)return;
+    days[k]={v:e.v||0,bn:e.bn||0,gd:e.gd||0,htpp:e.htpp||0,dp:e.dp||0,so:e.so||0,note:e.note||'',help:!!e.help,ng:e.ng||CUR_NG,sub:e.sub,ts:e.ts||e.sub};
+  });
+  const body={days};
+  if(S.month===monthKey(0)){
+    try{
+      const dg=buildDigest(analyze());
+      body.plan={month:S.month,total:dg.total,target:{bn:+S.target.bn||0,gd:+S.target.gd||0},pts:+((S.area||{}).pts)||0,act:+((S.area||{}).act)||0,labels:{bn:PS('bn'),gd:PS('gd')},days:dg.days,alerts:dg.alerts.map(a=>({lv:a.lv,t:a.t,x:a.x}))};
+    }catch(e){}
+  }
+  return body;
+}
+async function pushReport(manual){
+  if(!AUTH.user||!S.asm||!S.asm.email||repBusy)return false;
+  const body=reportPayload(),sig=JSON.stringify(body);
+  if(!manual&&sig===repSig)return true;
+  repBusy=true;let ok=false;
+  try{
+    let r=await api('POST','/api/report',body);
+    if(r.s===409&&r.j.needProfile){await api('POST','/api/profile',{nganh:S.nganh||CUR_NG,asmEmail:S.asm.email,province:S.province||''});r=await api('POST','/api/report',body);}
+    ok=r.s===200;if(ok)repSig=sig;
+  }catch(e){}
+  repBusy=false;return ok;
+}
+function scheduleReport(){
+  if(!AUTH.user||!S.asm||!S.asm.email)return;
+  clearTimeout(repTimer);repTimer=setTimeout(function(){repTimer=null;pushReport(false);},5000);
+}
+async function daySubmit(day){
+  if(!AUTH.user){toast('Đăng nhập để gửi báo cáo cho ASM');renderAcctSheet();document.getElementById('acctSheet').hidden=false;return;}
+  if(!S.asm||!S.asm.email){toast('Hãy chọn ASM phụ trách trước');openWork();return;}
+  const cur=S.daily[day]||{v:0,bn:0,gd:0},now=Date.now();
+  if(!cur.sub)cur.sub=now;cur.ts=now;cur.ng=CUR_NG;cur.ok=1;S.daily[day]=cur;
+  const wk=analyze().find(w=>w.days.some(x=>x.date===day));if(wk)recomputeWeekActual(wk);
+  save();render();
+  const ok=await pushReport(true);
+  toast(ok?'Đã gửi báo cáo ngày '+day.slice(8)+'/'+day.slice(5,7)+' cho ASM '+(S.asm.name||''):'Chưa gửi được, sẽ tự thử lại khi có mạng',3200);
+  if(!ok)scheduleReport();
+}
+function dayExtra(day,dd){
+  const sent=dd.sub?'<span class="badge ok">Đã gửi ASM lúc '+hhmm(dd.sub).slice(0,5)+'</span>':'<span class="badge">Chưa gửi ASM</span>';
+  const who=S.asm&&S.asm.email?'ASM '+escH(S.asm.name||S.asm.email):'ASM của bạn';
+  return '<div class="tline" style="align-items:flex-start"><span class="nm">'+ic('mail',16)+' Ghi chú / vướng mắc<div class="small muted" style="font-weight:400">Ví dụ: đại lý nợ, đối thủ chào giá, hàng về chậm…</div></span></div>'+
+    '<textarea class="rp-note" data-f="dnote" data-day="'+day+'" rows="2" maxlength="400" placeholder="Ghi ngắn gọn để ASM nắm tình hình…">'+escH(dd.note||'')+'</textarea>'+
+    '<div class="tline"><span class="nm">'+ic('warnTri',16)+' Cần '+who+' hỗ trợ<div class="small muted" style="font-weight:400">Bật lên, ASM sẽ thấy ngay ở đầu trang quản lý</div></span><button class="sw2" role="switch" aria-checked="'+!!dd.help+'" aria-label="Cần ASM hỗ trợ" data-act="dhelp" data-day="'+day+'"></button></div>'+
+    '<div class="rp-send"><button class="btn" data-act="daySubmit" data-day="'+day+'">'+(dd.sub?'Cập nhật báo cáo gửi ASM':'Gửi báo cáo cuối ngày cho ASM')+'</button><div class="small muted" style="margin-top:6px">'+sent+' '+(dd.sub?'Sửa số rồi bấm lại để cập nhật.':(AUTH.user?'':'Cần đăng nhập. ')+'Báo cáo chỉ đến ASM khi bạn bấm gửi.')+'</div></div>';
+}
+
+/* Việc ASM giao */
+async function dirLoad(){
+  if(!AUTH.user)return;
+  try{const r=await api('GET','/api/directive');if(r.s===200){PROF.dirs=r.j.items||[];softRender();}}catch(e){}
+}
+function dirCard(){
+  const tk=todayKey(),list=(PROF.dirs||[]).filter(x=>x.date>=prevKey(prevKey(tk))&&(!x.done||x.date>=tk)).sort((a,b)=>(a.done-b.done)||(a.date<b.date?-1:1));
+  if(!list.length)return '';
+  const IC={focus:'target',note:'mail',praise:'sparkles'};
+  const lab=d=>d===tk?'Hôm nay':d>tk?'Ngày '+d.slice(8)+'/'+d.slice(5,7):'Ngày '+d.slice(8)+'/'+d.slice(5,7);
+  return '<div class="card dir-card"><h2>'+ic('users',18)+' Việc ASM giao cho bạn</h2><div class="small muted">Từ ASM '+escH(list[0].from||'')+'. Làm xong bấm “Đã làm”.</div>'+
+    list.slice(0,6).map(x=>'<div class="remrow"><div class="rl"><div class="small muted"><span class="badge'+(x.date<tk&&!x.done?' bad':'')+'">'+lab(x.date)+'</span> '+({focus:'Trọng tâm',note:'Nhắc nhở',praise:'Khen ngợi'}[x.kind]||'')+'</div><div'+(x.done?' style="text-decoration:line-through;opacity:.6"':'')+'>'+escH(x.text)+'</div></div><button class="btn ghost sm" data-act="dirDone" data-id="'+escH(x.id)+'" data-done="'+(x.done?'0':'1')+'">'+(x.done?'Bỏ đánh dấu':'Đã làm ✓')+'</button></div>').join('')+'</div>';
+}
+async function dirAck(id,done){
+  const it=(PROF.dirs||[]).find(x=>x.id===id);if(it){it.done=done;render();}
+  try{await api('POST','/api/directive',{op:'ack',id:id,done:done});}catch(e){}
 }
 
 /* ---------- Sự kiện ---------- */
@@ -4108,7 +4331,7 @@ document.addEventListener('click',function(e){
   else if(a==='dk'){
     const cur=S.daily[d.day]||{v:0,bn:0,gd:0};
     cur[d.f]=Math.max(0,(cur[d.f]||0)+(+d.d));
-    S.daily[d.day]=cur;
+    S.daily[d.day]=cur;touchDay(d.day);
     const weeks=analyze();
     const wk=weeks.find(w=>w.days.some(dd=>dd.date===d.day));
     if(wk)recomputeWeekActual(wk);
@@ -4169,6 +4392,13 @@ document.addEventListener('click',function(e){
   else if(a==='backup'){backupData();return;}
   else if(a==='restorePick'){const fi=document.getElementById('restoreFile');if(fi)fi.click();return;}
   else if(a==='briefOk'){S.rem.seen=todayKey();}
+  else if(a==='dhelp'){const cur=S.daily[d.day]||{v:0,bn:0,gd:0};cur.help=!cur.help;S.daily[d.day]=cur;touchDay(d.day);}
+  else if(a==='daySubmit'){daySubmit(d.day);return;}
+  else if(a==='workOpen'){openWork();return;}
+  else if(a==='workClose'){closeWork();return;}
+  else if(a==='workNg'){const sl=document.getElementById('workAsm');if(sl)PROF.pickAsm=sl.value;PROF.pick=+d.v===1?1:2;renderWorkSheet();return;}
+  else if(a==='workSave'){profileSave();return;}
+  else if(a==='dirDone'){dirAck(d.id,d.done==='1');return;}
   else if(a==='goDay'){const wk=analyze().find(w=>w.days.some(x=>x.date===d.day));S.tab='check';S.cd=d.day;S.cw=wk?wk.i:null;copyText=null;}
   else if(a==='daySave'){
     const cur=S.daily[d.day]||{v:0,bn:0,gd:0};cur.ok=1;S.daily[d.day]=cur;
@@ -4188,7 +4418,7 @@ document.addEventListener('click',function(e){
   else if(a==='preset'){S.preset=d.v;RULES.forEach(r=>{S.rules[r.id].v=r.p[d.v];});}
   else if(a==='dismiss'){if(!S.dismissed.includes(d.k))S.dismissed.push(d.k);}
   else if(a==='undismiss'){S.dismissed=[];}
-  else if(a==='reset'){if(confirmReset){S=defaults();confirmReset=false;copyText=null;toast('Đã xoá dữ liệu');}else confirmReset=true;}
+  else if(a==='reset'){if(confirmReset){const keep={nganh:S.nganh,asm:S.asm};S=Object.assign(defaultsFor(S.nganh||2),keep);applyNganh(S.nganh||2);confirmReset=false;copyText=null;toast('Đã xoá dữ liệu');}else confirmReset=true;}
   if(S.strat!=='manual'){const ob=S.target.bn;applyStrategy();if(S.target.bn!==ob)S.plan=null;}
   save();render();
   if(a==='tab'||a==='goDay'||a==='pv')window.scrollTo(0,0);
@@ -4212,7 +4442,7 @@ document.addEventListener('change',function(e){
     const a=t.dataset.tact,d=t.dataset;let v=parseFloat(String(t.value).replace(',','.'));if(!isFinite(v)||v<0)v=0;
     const i1=Math.round(v*10)/10,i0=Math.round(v);
     if(a==='dk'){
-      const cur=S.daily[d.day]||{v:0,bn:0,gd:0};cur[d.f]=d.f==='v'?i0:i1;S.daily[d.day]=cur;
+      const cur=S.daily[d.day]||{v:0,bn:0,gd:0};cur[d.f]=['v','htpp','dp','so'].includes(d.f)?i0:i1;S.daily[d.day]=cur;touchDay(d.day);
       const wk=analyze().find(w=>w.days.some(dd=>dd.date===d.day));if(wk)recomputeWeekActual(wk);
     }else if(a==='wt'){
       const weeks=analyze(),T=targets(weeks);if(!S.plan){S.plan={};PRODUCTS.forEach(p=>{S.plan[p.id]=T[p.id].slice();});}
@@ -4228,6 +4458,7 @@ document.addEventListener('change',function(e){
   if(!f)return;
   if(f==='month'){switchMonth(t.value);}
   else if(f==='province'){S.province=t.value.trim();}
+  else if(f==='dnote'){const cur=S.daily[t.dataset.day]||{v:0,bn:0,gd:0};cur.note=t.value.trim().slice(0,400);S.daily[t.dataset.day]=cur;touchDay(t.dataset.day);}
   else if(f==='target'){S.target[t.dataset.p]=Math.max(0,Math.floor(+t.value||0));S.tt=(+S.target.bn||0)+(+S.target.gd||0);S.plan=null;}
   else if(f==='strat'){const v=t.value;if(STRATS.some(x=>x[0]===v)){S.strat=v;S.plan=null;if(v!=='manual'&&!(+S.tt>0))S.tt=(+S.target.bn||0)+(+S.target.gd||0);}}
   else if(f==='ttotal'){S.tt=Math.max(0,Math.floor(+t.value||0));S.plan=null;}
@@ -4275,6 +4506,7 @@ function applyHash(){
 }
 {const as=document.getElementById('acctSheet');if(as)as.addEventListener('click',function(e){if(e.target===as)as.hidden=true;});}
 {const ads=document.getElementById('adminSheet');if(ads)ads.addEventListener('click',function(e){if(e.target===ads)ads.hidden=true;});}
+{const wks=document.getElementById('workSheet');if(wks)wks.addEventListener('click',function(e){if(e.target===wks)wks.hidden=true;});}
 const rf=document.getElementById('restoreFile');
 if(rf)rf.addEventListener('change',function(){const f=rf.files&&rf.files[0];rf.value='';restoreData(f);});
 window.addEventListener('hashchange',applyHash);
@@ -4300,7 +4532,7 @@ applyHash();
 remTick();
 authInit();
 function refreshIfNeeded(){
-  remTick();syncCheck();
+  remTick();syncCheck();dirLoad();
   if(document.visibilityState!=='visible')return;
   const a=document.activeElement;if(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT'))return;
   const wk2=analyze(),sg=S.month===monthKey(0)?dayBanner(wk2):'';
