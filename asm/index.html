@@ -512,53 +512,149 @@ function aiPanelHTML(){
 }
 
 /* ====== Xuất Excel ====== */
-const xlDate=d=>Date.UTC(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10))/864e5+25569;
-function download(X,wb,name){
-  const buf=X.write(wb,{bookType:'xlsx',type:'array'}),a=document.createElement('a');
+/* Excel có định dạng: dùng ExcelJS (SheetJS bản miễn phí không tạo được màu, viền, cố định hàng) */
+let xjsP=null;
+function loadExcelJS(){
+  if(window.ExcelJS)return Promise.resolve(window.ExcelJS);
+  if(!xjsP)xjsP=new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';sc.onload=()=>ok(window.ExcelJS);sc.onerror=()=>{xjsP=null;no(new Error('load'));};document.head.appendChild(sc);});
+  return xjsP;
+}
+const XC={head:'FF0B4A6E',brand:'FF0A78AB',band:'FFE3F0F7',zebra:'FFF5F9FB',line:'FFD3DEE4',white:'FFFFFFFF',grey:'FF5B6B74',sun:'FFEDEFF1',
+  ok:'FFD9F0E4',okT:'FF1E7F4F',warn:'FFFBEBC8',warnT:'FF955D00',bad:'FFF9DAD7',badT:'FFB3261E',info:'FFDCEBFA',infoT:'FF0B5FA5'};
+const xFill=a=>({type:'pattern',pattern:'solid',fgColor:{argb:a}});
+const xBorder=()=>{const t={style:'thin',color:{argb:XC.line}};return{top:t,left:t,bottom:t,right:t};};
+const xFont=o=>Object.assign({name:'Arial',size:10},o||{});
+const cfStyle=(bg,fg)=>({font:{color:{argb:fg},bold:true},fill:{type:'pattern',pattern:'solid',bgColor:{argb:bg}}});
+const cfLevels=(ref,b)=>{b=b||0;const t=ref.split(':')[0];return{ref,rules:[
+  {type:'expression',priority:b+1,formulae:['AND(ISNUMBER('+t+'),'+t+'>=0.9)'],style:cfStyle(XC.ok,XC.okT)},
+  {type:'expression',priority:b+2,formulae:['AND(ISNUMBER('+t+'),'+t+'>=0.7,'+t+'<0.9)'],style:cfStyle(XC.warn,XC.warnT)},
+  {type:'expression',priority:b+3,formulae:['AND(ISNUMBER('+t+'),'+t+'<0.7)'],style:cfStyle(XC.bad,XC.badT)}]};};
+const xDate=d=>Date.UTC(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10))/864e5+25569;   // số serial ngày của Excel (chạy đúng ở mọi trình duyệt)
+const cfText=(ref,list,b)=>{const t=ref.split(':')[0];return{ref,rules:list.map((x,i)=>({type:'expression',priority:(b||0)+i+1,formulae:['NOT(ISERROR(SEARCH("'+x[0]+'",'+t+')))'],style:cfStyle(x[1],x[2])}))};};
+const nowVN=()=>{const d=vnNow();return pad(d.getUTCDate())+'/'+pad(d.getUTCMonth()+1)+'/'+d.getUTCFullYear()+' '+pad(d.getUTCHours())+':'+pad(d.getUTCMinutes());};
+
+/* Dựng một sheet: dòng tiêu đề lớn, dòng ghi chú, (tuỳ chọn) hàng nhóm cột, hàng tiêu đề, dữ liệu kẻ viền + kẻ sọc, cố định hàng/cột đầu, lọc, khổ in ngang. */
+function xSheet(wb,o){
+  const n=o.widths.length,hr=o.groups?5:4;
+  const ws=wb.addWorksheet(o.name,{properties:{tabColor:{argb:o.tab||XC.brand}},views:[{state:'frozen',xSplit:o.freezeX||0,ySplit:hr,showGridLines:false}],
+    pageSetup:{orientation:'landscape',paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:0,printTitlesRow:hr+':'+hr,margins:{left:.4,right:.4,top:.5,bottom:.5,header:.2,footer:.2}},headerFooter:{oddFooter:'&L&8Quản lý ASM&R&8Trang &P / &N'}});
+  o.widths.forEach((w,i)=>{ws.getColumn(i+1).width=w;});
+  ws.mergeCells(1,1,1,n);const t=ws.getCell(1,1);t.value=o.title;t.font=xFont({size:15,bold:true,color:{argb:XC.head}});t.alignment={vertical:'middle'};ws.getRow(1).height=26;
+  ws.mergeCells(2,1,2,n);const sb=ws.getCell(2,1);sb.value=o.sub;sb.font=xFont({size:9,italic:true,color:{argb:XC.grey}});sb.alignment={vertical:'top',wrapText:true};ws.getRow(2).height=o.subH||26;
+  ws.getRow(3).height=6;
+  if(o.groups){o.groups.forEach(g=>{ws.mergeCells(4,g.from,4,g.to);const c=ws.getCell(4,g.from);c.value=g.text;c.font=xFont({bold:true,size:9,color:{argb:XC.head}});c.fill=xFill(XC.band);c.alignment={horizontal:'center',vertical:'middle'};for(let k=g.from;k<=g.to;k++)ws.getCell(4,k).border=xBorder();});ws.getRow(4).height=18;}
+  o.headers.forEach((h,i)=>{const c=ws.getCell(hr,i+1);c.value=h;c.font=xFont({bold:true,color:{argb:XC.white}});c.fill=xFill(o.headFills&&o.headFills[i]||XC.head);c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=xBorder();});
+  ws.getRow(hr).height=o.headH||36;
+  o.rows.forEach((r,ri)=>{
+    const row=ws.getRow(hr+1+ri);
+    r.forEach((v,ci)=>{const c=row.getCell(ci+1);if(v!==null&&v!==undefined&&v!=='')c.value=v;
+      c.font=xFont();c.border=xBorder();if(ri%2)c.fill=xFill(XC.zebra);
+      const al=(o.align&&o.align[ci])||'left';c.alignment={horizontal:al,vertical:'middle',wrapText:!!(o.wrap&&o.wrap[ci])};
+      if(o.fmts&&o.fmts[ci])c.numFmt=o.fmts[ci];});
+    row.commit&&row.commit();
+  });
+  const last=hr+o.rows.length;
+  if(o.rows.length)ws.autoFilter={from:{row:hr,column:1},to:{row:last,column:n}};
+  return{ws,hr,first:hr+1,last,n};
+}
+function xDownload(buf,name){
+  const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 }
-function sheet(X,rows,widths,fmts){
-  const ws=X.utils.aoa_to_sheet(rows);
-  ws['!cols']=widths.map(w=>({wch:w}));
-  if(rows.length>1)ws['!autofilter']={ref:X.utils.encode_range({s:{r:0,c:0},e:{r:rows.length-1,c:rows[0].length-1}})};
-  Object.keys(fmts||{}).forEach(col=>{for(let r=1;r<rows.length;r++){const c=ws[X.utils.encode_cell({r,c:+col})];if(c&&c.t==='n')c.z=fmts[col];}});
-  return ws;
-}
 async function exportTeam(){
-  let X;try{X=await loadXlsx();}catch(e){toast('Không tải được thư viện Excel, hãy kiểm tra mạng.',3200);return;}
+  let E;try{E=await loadExcelJS();}catch(e){toast('Không tải được thư viện Excel, hãy kiểm tra mạng.',3200);return;}
   const date=ST.date,all=members().map(m=>calc(m,date)).sort((a,b)=>(a.m.nganh-b.m.nganh)||a.name.localeCompare(b.name,'vi')),dl=monthDays(ST.month);
+  const mm=ST.month.slice(5)+'/'+ST.month.slice(0,4),dmyFull=date.slice(8)+'/'+date.slice(5,7)+'/'+date.slice(0,4);
   const STX={weekly:'Nhập theo tuần',done:'Đã gửi',wait:'Chờ báo cáo',late:'Quá giờ, chưa gửi',missed:'Chưa gửi',off:'Nghỉ',future:'Chưa tới'};
   const asmName=e=>{const a=(ST.data.asms||[]).find(x=>x.email===e);return a?(a.name||e):(e===ST.data.me.email?ST.data.me.name:e||'');};
-  const wb=X.utils.book_new();
-  const r1s=[['Họ tên','Email','Ngành','Tỉnh/thành','ASM phụ trách','Chỉ tiêu tháng (tr)','Lũy kế (tr)','Mốc kế hoạch đến ngày (tr)','% so với mốc','% chỉ tiêu','Dự báo cuối tháng (% chỉ tiêu)','Cần mỗi ngày (tr)','Đang làm mỗi ngày (tr)','Độ phủ (%)','Điểm bán mới phủ','HTPP (cộng dồn)','Số bán SO (cộng dồn)','Ngày chưa báo cáo liên tiếp','Báo cáo ngày '+date.slice(8)+'/'+date.slice(5,7),'Đã nhập nhưng chưa gửi (tr)']];
-  all.forEach(c=>r1s.push([c.name,c.m.email,'Ngành '+c.m.nganh,c.m.province||'',asmName(c.m.asmEmail),c.total,r1(c.ach),r1(c.expected),c.ratio,c.pct,c.projPct,r1(c.need),r1(c.avg),c.cov,c.covN,r1(c.htpp),r1(c.so),c.streak,STX[c.status],r1(c.unsent)]));
-  X.utils.book_append_sheet(wb,sheet(X,r1s,[24,28,10,16,22,14,12,16,12,12,16,14,16,11,12,12,14,16,20,18],{8:'0%',9:'0%',10:'0%',13:'0%'}),'Tổng hợp tháng');
-  const r2=[['Ngày','Họ tên','Ngành','Lượt ghé','Doanh số nhóm 1 (tr)','Doanh số nhóm 2 (tr)','Tổng doanh số (tr)','Kế hoạch ngày (tr)','HTPP','Điểm bán mới phủ','Số bán SO','Cần hỗ trợ','Ghi chú','Giờ gửi']];
-  all.forEach(c=>{const L=(c.mp&&c.mp.labels)||{};dl.forEach(d=>{const e=(c.m.days||{})[d];if(!e)return;const pl=c.mp&&c.mp.days[d]&&c.mp.days[d].si||0;
-    r2.push([{t:'n',v:xlDate(d),z:'dd/mm/yyyy'},c.name,'Ngành '+c.m.nganh,num(e.v),num(e.bn),num(e.gd),r1(num(e.bn)+num(e.gd)),r1(pl),num(e.htpp),num(e.dp),num(e.so),e.help?'Có':'',e.note||'',e.sub?hhmm(e.sub):'']);});});
-  X.utils.book_append_sheet(wb,sheet(X,r2,[12,24,10,10,16,16,16,16,8,14,12,10,40,9],{}),'Báo cáo ngày');
-  const r3=[['Họ tên','Ngành'].concat(dl.map(d=>d.slice(8)+'/'+d.slice(5,7))).concat(['Tổng'])];
-  all.forEach(c=>{const row=[c.name,'Ngành '+c.m.nganh];let sum=0;dl.forEach(d=>{const e=(c.m.days||{})[d];if(e&&e.sub>0){const v=r1(num(e.bn)+num(e.gd));sum+=v;row.push(v);}else row.push('');});row.push(r1(sum));r3.push(row);});
-  X.utils.book_append_sheet(wb,sheet(X,r3,[24,10].concat(dl.map(()=>7)).concat([10]),{}),'Doanh số theo ngày');
-  const A=ST.ai.an&&ST.ai.an.res,r4=[['Nguồn','Mức','Nhân sự','Nội dung','Chi tiết / việc nên làm']];
-  buildFeed(all,date).forEach(i=>r4.push(['Hệ thống',i.lv==='bad'?'Khẩn':i.lv==='warn'?'Chú ý':'Thông tin',i.name,i.t,i.x]));
-  if(A)A.canh_bao.forEach(w=>{const uid=ST.ai.an.idmap&&ST.ai.an.idmap[w.id],m=uid&&ST.data.members.find(x=>x.uid===uid);r4.push(['AI',{khan:'Khẩn',chu_y:'Chú ý',thong_tin:'Thông tin'}[w.muc],w.id==='team'?'Cả nhóm':(m?(m.name||m.email):''),w.tieu_de,w.ly_do+(w.hanh_dong?' | Nên làm: '+w.hanh_dong:'')]);});
-  X.utils.book_append_sheet(wb,sheet(X,r4,[10,10,24,44,80],{}),'Cảnh báo');
-  download(X,wb,'bao-cao-asm-'+date+'.xlsx');toast('Đã xuất file Excel ('+all.length+' nhân sự).');
+  const who=ST.data.me.name||'ASM',scope=(ST.ng?NG[ST.ng].n:'Tất cả ngành')+' · '+all.length+' nhân sự';
+  const wb=new E.Workbook();wb.creator='Quản lý ASM';wb.created=new Date();
+
+  /* 1. Tổng hợp tháng */
+  const R=[];all.forEach(c=>R.push([c.name,c.m.email,'Ngành '+c.m.nganh,c.m.province||'',asmName(c.m.asmEmail),c.total||null,r1(c.ach),c.expected?r1(c.expected):null,null,null,c.projPct,c.need?r1(c.need):null,c.avg?r1(c.avg):null,c.cov,c.covN,r1(c.htpp),r1(c.so),c.streak,r1(c.unsent)||null,STX[c.status]]));
+  const s1=xSheet(wb,{name:'Tổng hợp tháng',title:'TỔNG HỢP TIẾN ĐỘ THÁNG '+mm+' · '+who,sub:scope+' · Tính đến hết ngày '+dmyFull+' · Xuất lúc '+nowVN()+'\nĐơn vị doanh số: triệu đồng (tr). "Mốc kế hoạch" là số cần đạt lũy kế đến ngày hôm nay theo kế hoạch tháng của từng người.',
+    groups:[{from:1,to:5,text:'NHÂN SỰ'},{from:6,to:12,text:'TIẾN ĐỘ THÁNG (triệu đồng)'},{from:13,to:19,text:'HOẠT ĐỘNG & BÁO CÁO'},{from:20,to:20,text:'HÔM NAY'}],
+    headers:['Họ tên','Email','Ngành','Tỉnh / thành','ASM phụ trách','Chỉ tiêu tháng','Lũy kế','Mốc kế hoạch','% so với mốc','% chỉ tiêu','Dự báo cuối tháng (% chỉ tiêu)','Cần mỗi ngày','Đang làm mỗi ngày','Độ phủ','Điểm bán mới phủ','HTPP (cộng dồn)','Số bán SO (cộng dồn)','Ngày chưa báo cáo liên tiếp','Đã nhập chưa gửi (tr)','Báo cáo '+date.slice(8)+'/'+date.slice(5,7)],
+    widths:[24,27,9,16,22,12,11,12,11,11,15,11,12,9,11,11,12,13,12,19],freezeX:1,headH:46,subH:34,rows:R,
+    align:['left','left','center','left','left','right','right','right','center','center','center','right','right','center','right','right','right','center','right','center'],
+    fmts:[null,null,null,null,null,'#,##0','#,##0.0','#,##0.0','0%','0%','0%','0.0','0.0','0%','0','0','0','0','0.0',null]});
+  const w1=s1.ws;
+  for(let r=s1.first;r<=s1.last;r++){
+    w1.getCell(r,9).value={formula:'IF(H'+r+'>0,G'+r+'/H'+r+',"")',result:R[r-s1.first][7]?R[r-s1.first][6]/R[r-s1.first][7]:''};
+    w1.getCell(r,10).value={formula:'IF(F'+r+'>0,G'+r+'/F'+r+',"")',result:R[r-s1.first][5]?R[r-s1.first][6]/R[r-s1.first][5]:''};
+  }
+  const tr=s1.last+1,sum=i=>R.reduce((x,r)=>x+(+r[i]||0),0),tt=w1.getRow(tr);
+  tt.getCell(1).value='TỔNG CẢ NHÓM';
+  [[6,5,'#,##0'],[7,6,'#,##0.0'],[8,7,'#,##0.0'],[15,14,'0'],[16,15,'0'],[17,16,'0'],[19,18,'0.0']].forEach(([col,idx,f])=>{const L=w1.getColumn(col).letter;tt.getCell(col).value={formula:'SUM('+L+s1.first+':'+L+s1.last+')',result:sum(idx)};tt.getCell(col).numFmt=f;});
+  tt.getCell(9).value={formula:'IF(H'+tr+'>0,G'+tr+'/H'+tr+',"")',result:sum(7)?sum(6)/sum(7):''};tt.getCell(10).value={formula:'IF(F'+tr+'>0,G'+tr+'/F'+tr+',"")',result:sum(5)?sum(6)/sum(5):''};
+  tt.getCell(9).numFmt='0%';tt.getCell(10).numFmt='0%';
+  for(let k=1;k<=20;k++){const c=tt.getCell(k);c.font=xFont({bold:true,color:{argb:XC.head}});c.fill=xFill(XC.band);c.border={top:{style:'medium',color:{argb:XC.head}},bottom:{style:'thin',color:{argb:XC.head}},left:{style:'thin',color:{argb:XC.line}},right:{style:'thin',color:{argb:XC.line}}};c.alignment={horizontal:k<=5?'left':(k===9||k===10?'center':'right'),vertical:'middle'};}
+  tt.height=22;
+  if(s1.last>=s1.first){
+    w1.addConditionalFormatting(cfLevels('I'+s1.first+':I'+s1.last,0));   // % so với mốc
+    w1.addConditionalFormatting(cfLevels('K'+s1.first+':K'+s1.last,10));  // dự báo cuối tháng (cột % chỉ tiêu không tô: giữa tháng thấp là bình thường)
+    w1.addConditionalFormatting(cfText('T'+s1.first+':T'+s1.last,[['Đã gửi',XC.ok,XC.okT],['Chưa gửi',XC.bad,XC.badT],['Quá giờ',XC.bad,XC.badT],['theo tuần',XC.info,XC.infoT]],20));
+    w1.addConditionalFormatting({ref:'S'+s1.first+':S'+s1.last,rules:[{type:'cellIs',operator:'greaterThan',formulae:[0.5],priority:8,style:cfStyle(XC.warn,XC.warnT)}]});
+  }
+
+  /* 2. Báo cáo ngày */
+  const D=[];all.forEach(c=>dl.forEach(d=>{const e=(c.m.days||{})[d];if(!e)return;const pl=c.mp&&c.mp.days[d]&&c.mp.days[d].si||0;
+    D.push([d,c.name,'Ngành '+c.m.nganh,num(e.v),num(e.bn),num(e.gd),null,pl?r1(pl):null,null,num(e.htpp),num(e.dp),num(e.so),e.help?'Có':null,e.note||null,e.sub?hhmm(e.sub):null]);}));
+  D.sort((x,y)=>x[0]<y[0]?1:x[0]>y[0]?-1:x[1].localeCompare(y[1],'vi'));
+  const s2=xSheet(wb,{name:'Báo cáo ngày',tab:'FF2E9D68',title:'BÁO CÁO TỪNG NGÀY · THÁNG '+mm,sub:scope+' · Xuất lúc '+nowVN()+'\nNhóm 1 / nhóm 2: Ngành 1 là Karofi / Livotec máy lọc; Ngành 2 là Bình nước nóng / Gia dụng. Đơn vị doanh số: triệu đồng. Mới nhất ở trên cùng.',
+    headers:['Ngày','Họ tên','Ngành','Lượt ghé','Doanh số nhóm 1','Doanh số nhóm 2','Tổng doanh số','Kế hoạch ngày','% kế hoạch ngày','HTPP','Điểm bán mới phủ','Số bán SO','Cần hỗ trợ','Ghi chú','Giờ gửi'],
+    widths:[12,24,9,9,13,13,13,13,12,8,12,10,10,46,9],freezeX:2,headH:40,subH:34,
+    rows:D.map(r=>[xDate(r[0])].concat(r.slice(1))),wrap:{13:true},
+    align:['center','left','center','right','right','right','right','right','center','right','right','right','center','left','center'],
+    fmts:['dd/mm/yyyy',null,null,'0','#,##0.0','#,##0.0','#,##0.0','#,##0.0','0%','0','0','0',null,null,null]});
+  for(let r=s2.first;r<=s2.last;r++){const x=D[r-s2.first],tot=num(x[4])+num(x[5]),pl=x[7]||0;
+    s2.ws.getCell(r,7).value={formula:'E'+r+'+F'+r,result:tot};s2.ws.getCell(r,9).value={formula:'IF(H'+r+'>0,G'+r+'/H'+r+',"")',result:pl?tot/pl:''};}
+  if(s2.last>=s2.first){
+    s2.ws.addConditionalFormatting(cfLevels('I'+s2.first+':I'+s2.last));
+    s2.ws.addConditionalFormatting({ref:'M'+s2.first+':M'+s2.last,rules:[{type:'cellIs',operator:'equal',formulae:['"Có"'],priority:9,style:cfStyle(XC.bad,XC.badT)}]});
+  }
+
+  /* 3. Ma trận doanh số theo ngày */
+  const hdrDay=dl.map(d=>+d.slice(8)),Mx=all.map(c=>{const row=[c.name,'N'+c.m.nganh];dl.forEach(d=>{const e=(c.m.days||{})[d];row.push(e&&e.sub>0?r1(num(e.bn)+num(e.gd)):null);});row.push(null);return row;});
+  const s3=xSheet(wb,{name:'Doanh số theo ngày',tab:'FFE3A63B',title:'DOANH SỐ TỪNG NGÀY · THÁNG '+mm,sub:scope+' · Xuất lúc '+nowVN()+'\nMỗi ô là doanh số (triệu đồng) của một người trong ngày; màu càng đậm doanh số càng cao. Ô trống: chưa có báo cáo hoặc ngày nghỉ.',
+    groups:[{from:1,to:2,text:''}].concat(dl.map((d,i)=>({from:3+i,to:3+i,text:DOWL[dowOf(d)]})),[{from:3+dl.length,to:3+dl.length,text:''}]),
+    headers:['Họ tên','Ngành'].concat(hdrDay,['Tổng']),widths:[24,8].concat(dl.map(()=>5.6),[10]),freezeX:2,headH:22,subH:34,rows:Mx,
+    align:['left','center'].concat(dl.map(()=>'center'),['right']),fmts:[null,null].concat(dl.map(()=>'0.0'),['#,##0.0'])});
+  const lastDay=s3.ws.getColumn(2+dl.length).letter,totCol=3+dl.length;
+  for(let r=s3.first;r<=s3.last;r++){const row=Mx[r-s3.first];s3.ws.getCell(r,totCol).value={formula:'SUM(C'+r+':'+lastDay+r+')',result:row.slice(2,2+dl.length).reduce((x,v)=>x+(+v||0),0)};s3.ws.getCell(r,totCol).font=xFont({bold:true});}
+  dl.forEach((d,i)=>{if(dowOf(d)===0){const c=s3.ws.getCell(4,3+i);c.fill=xFill(XC.sun);c.font=xFont({bold:true,size:9,color:{argb:XC.badT}});}else s3.ws.getCell(4,3+i).font=xFont({bold:true,size:9,color:{argb:XC.head}});});
+  s3.ws.getRow(4).height=18;
+  if(s3.last>=s3.first)s3.ws.addConditionalFormatting({ref:'C'+s3.first+':'+lastDay+s3.last,rules:[{type:'colorScale',priority:10,cfvo:[{type:'num',value:0},{type:'max'}],color:[{argb:'FFFFFFFF'},{argb:'FF63BE7B'}]}]});
+
+  /* 4. Cảnh báo */
+  const An=ST.ai.an&&ST.ai.an.res,W=[],lvT={bad:'Khẩn',warn:'Chú ý',info:'Thông tin',khan:'Khẩn',chu_y:'Chú ý',thong_tin:'Thông tin'};
+  buildFeed(all,date).forEach(i=>W.push(['Hệ thống',lvT[i.lv],i.name,i.t,i.x]));
+  if(An)An.canh_bao.forEach(w=>{const uid=ST.ai.an.idmap&&ST.ai.an.idmap[w.id],m=uid&&ST.data.members.find(x=>x.uid===uid);W.push(['AI',lvT[w.muc],w.id==='team'?'Cả nhóm':(m?(m.name||m.email):''),w.tieu_de,w.ly_do+(w.hanh_dong?'\nNên làm: '+w.hanh_dong:'')]);});
+  const ord={'Khẩn':0,'Chú ý':1,'Thông tin':2};W.sort((x,y)=>ord[x[1]]-ord[y[1]]);
+  if(!W.length)W.push(['','','','Không có cảnh báo nào tại thời điểm xuất.','']);
+  const s4=xSheet(wb,{name:'Cảnh báo',tab:'FFB3261E',title:'CẢNH BÁO & VIỆC CẦN XỬ LÝ · '+dmyFull,sub:'Cảnh báo "Hệ thống" tính từ số liệu báo cáo theo quy tắc cố định; cảnh báo "AI" do trợ lý phân tích, cần kiểm tra lại trước khi làm theo. Xuất lúc '+nowVN()+'.',
+    headers:['Nguồn','Mức','Nhân sự','Nội dung','Chi tiết / việc nên làm'],widths:[11,11,24,46,84],freezeX:0,headH:26,rows:W,wrap:{3:true,4:true},align:['center','center','left','left','left']});
+  for(let r=s4.first;r<=s4.last;r++){const lv=W[r-s4.first][1],c=s4.ws.getCell(r,2);if(lv==='Khẩn'){c.fill=xFill(XC.bad);c.font=xFont({bold:true,color:{argb:XC.badT}});}else if(lv==='Chú ý'){c.fill=xFill(XC.warn);c.font=xFont({bold:true,color:{argb:XC.warnT}});}else if(lv==='Thông tin'){c.fill=xFill(XC.info);c.font=xFont({bold:true,color:{argb:XC.infoT}});}
+    s4.ws.getCell(r,4).font=xFont({bold:true});s4.ws.getCell(r,3).alignment={vertical:'top',wrapText:true};[1,2,4,5].forEach(k=>{const cc=s4.ws.getCell(r,k);cc.alignment=Object.assign({},cc.alignment,{vertical:'top'});});}
+
+  const buf=await wb.xlsx.writeBuffer();
+  xDownload(buf,'bao-cao-asm-'+date+'.xlsx');toast('Đã xuất file Excel ('+all.length+' nhân sự).');
 }
 async function exportRoster(){
-  let X;try{X=await loadXlsx();}catch(e){toast('Không tải được thư viện Excel, hãy kiểm tra mạng.',3200);return;}
+  let E;try{E=await loadExcelJS();}catch(e){toast('Không tải được thư viện Excel, hãy kiểm tra mạng.',3200);return;}
   const O=ST.org;if(!O)return;
-  const asmE={};O.asms.forEach(a=>{asmE[a.email]=a;});
-  const wb=X.utils.book_new(),r=[['Họ tên','Email','Vai trò','Ngành','ASM phụ trách','Tỉnh/thành','ASM đã khoá','Trạng thái tài khoản']];
-  O.profiles.forEach(p=>r.push([p.name||'',p.email,asmE[p.email]?'ASM':'SR','Ngành '+p.nganh,p.asmEmail?(asmE[p.asmEmail]?asmE[p.asmEmail].name||p.asmEmail:p.asmEmail):'',p.province||'',p.locked?'Có':'',p.disabled?'Đã khoá':'Hoạt động']));
-  O.orphans.forEach(p=>r.push([p.name||'',p.email,asmE[p.email]?'ASM':'Chưa chọn','','','','',p.disabled?'Đã khoá':'Hoạt động']));
-  (O.invites||[]).forEach(i=>r.push([i.name||'',i.email,'SR (chờ đăng nhập)','Ngành '+i.nganh,i.asmEmail?(asmE[i.asmEmail]?asmE[i.asmEmail].name||i.asmEmail:i.asmEmail):'',i.province||'','','Chưa đăng nhập']));
-  X.utils.book_append_sheet(wb,sheet(X,r,[24,30,18,10,24,16,12,18],{}),'Nhân sự');
-  const r2=[['Họ tên ASM','Email','Ngành phụ trách','Tỉnh/thành phụ trách','Khu vực']];
-  O.asms.forEach(a=>r2.push([a.name||'',a.email,(a.nganh&&a.nganh.length?a.nganh:[1,2]).map(n=>'Ngành '+n).join(', '),(a.provinces||[]).join(', '),a.area||'']));
-  X.utils.book_append_sheet(wb,sheet(X,r2,[24,30,20,70,16],{}),'ASM');
-  download(X,wb,'nhan-su-phan-cong-'+ST.today+'.xlsx');toast('Đã xuất danh sách nhân sự.');
+  const asmE={};O.asms.forEach(a=>{asmE[a.email]=a;});const an=e=>e?(asmE[e]?asmE[e].name||e:e):'';
+  const wb=new E.Workbook();wb.creator='Quản lý ASM';
+  const R=[];
+  O.profiles.forEach(p=>R.push([p.name||'',p.email,asmE[p.email]?'ASM':'SR','Ngành '+p.nganh,an(p.asmEmail),p.province||'',p.locked?'Có':'',p.disabled?'Đã khoá':'Hoạt động']));
+  O.orphans.forEach(p=>R.push([p.name||'',p.email,asmE[p.email]?'ASM':'Chưa chọn','','','','',p.disabled?'Đã khoá':'Hoạt động']));
+  (O.invites||[]).forEach(i=>R.push([i.name||'',i.email,'SR (chờ đăng nhập)','Ngành '+i.nganh,an(i.asmEmail),i.province||'','','Chưa đăng nhập']));
+  const s1=xSheet(wb,{name:'Nhân sự',title:'DANH SÁCH NHÂN SỰ & PHÂN CÔNG',sub:R.length+' người · Xuất lúc '+nowVN(),headers:['Họ tên','Email','Vai trò','Ngành','ASM phụ trách','Tỉnh / thành','ASM đã khoá','Trạng thái'],widths:[26,32,18,10,24,18,12,16],freezeX:1,headH:30,subH:18,rows:R,align:['left','left','center','center','left','left','center','center']});
+  if(s1.last>=s1.first)s1.ws.addConditionalFormatting(cfText('H'+s1.first+':H'+s1.last,[['Hoạt động',XC.ok,XC.okT],['Đã khoá',XC.bad,XC.badT],['Chưa đăng nhập',XC.warn,XC.warnT]],0));
+  const A=O.asms.map(a=>[a.name||'',a.email,(a.nganh&&a.nganh.length?a.nganh:[1,2]).map(n=>'Ngành '+n).join(', '),(a.provinces||[]).join(', '),a.area||'']);
+  xSheet(wb,{name:'ASM',tab:'FF2E9D68',title:'DANH SÁCH ASM & TỈNH / THÀNH PHỤ TRÁCH',sub:A.length+' ASM · Xuất lúc '+nowVN(),headers:['Họ tên ASM','Email','Ngành phụ trách','Tỉnh / thành phụ trách','Khu vực'],widths:[26,32,20,80,16],freezeX:1,headH:30,subH:18,rows:A,wrap:{3:true},align:['left','left','center','left','left']});
+  const buf=await wb.xlsx.writeBuffer();
+  xDownload(buf,'nhan-su-phan-cong-'+ST.today+'.xlsx');toast('Đã xuất danh sách nhân sự.');
 }
 
 /* ====== Tổng hợp cả nhóm ====== */

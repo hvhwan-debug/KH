@@ -30,6 +30,7 @@ Tab Quản trị > **Nhập từ file Excel nhân sự**. File cần có sheet `
 Tab Quản trị, cuối trang, thẻ viền đỏ: chọn các ASM **giữ lại** (kèm toàn bộ nhân sự thuộc ASM đó) > **Xem trước** (số lượng + tên) > **Tải bản sao lưu JSON** > gõ `XOA HET` > **Xoá vĩnh viễn**. Luôn giữ: chính bạn và các email trong `ADMIN_EMAILS`. Máy chủ tính lại danh sách khi xoá và từ chối nếu khác bản xem trước. Ghi vào Nhật ký thao tác. Nhân sự chưa được gán đúng ASM giữ lại sẽ bị xoá, nên gán trước khi xoá.
 
 ## Xuất Excel
+File có định dạng sẵn: tiêu đề và ghi chú, hàng nhóm cột, tiêu đề màu, kẻ viền + kẻ sọc, cố định hàng tiêu đề và cột họ tên, bộ lọc, tô màu theo mức đạt (xanh ≥90%, vàng 70–90%, đỏ <70% ở cột % so với mốc và dự báo), hàng tổng, ma trận doanh số theo ngày dạng bản đồ nhiệt, khổ in ngang vừa 1 trang. Cột % và tổng là **công thức thật**. Dùng thư viện ExcelJS (tải từ cdnjs).
 - Tab Hôm nay > **Xuất Excel** (theo bộ lọc ngành đang chọn): 4 sheet **Tổng hợp tháng** (chỉ tiêu, lũy kế, % mốc, dự báo, độ phủ, HTPP, SO...), **Báo cáo ngày** (từng ngày từng người), **Doanh số theo ngày** (ma trận người × ngày), **Cảnh báo** (của hệ thống và của AI).
 - Tab Quản trị > **Xuất danh sách nhân sự**: sheet Nhân sự (vai trò, ngành, ASM, tỉnh, trạng thái) và sheet ASM. File không chứa số điện thoại, địa chỉ hay ngày sinh.
 
