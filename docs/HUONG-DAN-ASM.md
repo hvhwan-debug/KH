@@ -26,7 +26,12 @@ Tab Quản trị > **Nhập từ file Excel nhân sự**. File cần có sheet `
 - Không tự khoá/xoá chính mình. Mọi thao tác ghi vào **Nhật ký thao tác** (không ghi mật khẩu).
 - Cơ chế: tài khoản có cờ `disabled` và mốc `sessAfter`; mọi API kiểm tra phiên với hai giá trị này.
 
+## Xuất Excel
+- Tab Hôm nay > **Xuất Excel** (theo bộ lọc ngành đang chọn): 4 sheet **Tổng hợp tháng** (chỉ tiêu, lũy kế, % mốc, dự báo, độ phủ, HTPP, SO...), **Báo cáo ngày** (từng ngày từng người), **Doanh số theo ngày** (ma trận người × ngày), **Cảnh báo** (của hệ thống và của AI).
+- Tab Quản trị > **Xuất danh sách nhân sự**: sheet Nhân sự (vai trò, ngành, ASM, tỉnh, trạng thái) và sheet ASM. File không chứa số điện thoại, địa chỉ hay ngày sinh.
+
 ## Trợ lý AI cho ASM
+**Cảnh báo tự động:** khi ASM mở trang (và khi số liệu hôm nay đổi, tối đa 1 lần / 10 phút) trang tự gửi số liệu đã tính cho AI. AI trả về cảnh báo theo mức khẩn / chú ý / thông tin, mỗi cảnh báo có lý do dẫn số liệu và việc nên làm (kèm nút Giao việc), cùng ưu tiên trong ngày. AI bổ sung cho các quy tắc cố định: xu hướng 3 ngày gần nhất, doanh số tốt nhưng độ phủ thấp, SO thấp so với doanh số nhập, ngày bất thường. Có nút tắt/bật tự phân tích. Kết quả được giữ trong phiên trình duyệt 30 phút để không gọi lại khi tải lại trang.
 Dùng chung cấu hình AI của app (`AZURE_OPENAI_ENDPOINT/KEY/DEPLOYMENT`, hoặc `GROQ_API_KEY` dự phòng). Chỉ ASM/quản trị viên dùng được (`/api/asm/ai`, tối đa 20 lượt / 5 phút / người).
 - Tab Hôm nay: **Ưu tiên hôm nay** (AI đọc số liệu cả nhóm, nêu việc nên làm trước).
 - Hộp Giao việc: **AI soạn giúp** (từ ý chính của ASM + số liệu của SR).

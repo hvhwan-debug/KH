@@ -419,6 +419,113 @@ async function aiCompose(){
   render();
 }
 
+
+/* ====== AI tự phân tích + cảnh báo (tự chạy khi mở trang / khi số liệu đổi; tối đa 1 lần / 10 phút) ====== */
+const autoOff=()=>{try{return localStorage.getItem('asm-ai-auto')==='0';}catch(e){return false;}};
+function trendPct(c,date){
+  const E=c.m.days||{},d=Object.keys(E).filter(k=>k<=date&&E[k].sub>0).sort().map(k=>num(E[k].bn)+num(E[k].gd));
+  if(d.length<5)return null;
+  const a=d.slice(-3),b=d.slice(-7,-3),ma=a.reduce((x,y)=>x+y,0)/a.length,mb=b.reduce((x,y)=>x+y,0)/b.length;
+  return mb>0?Math.round((ma/mb-1)*100):null;
+}
+function factsLite(c,date,id){
+  const E=c.m.days||{},e=c.e||{},mx=Math.max(0,...Object.keys(E).filter(k=>k<=date&&E[k].sub>0).map(k=>num(E[k].bn)+num(E[k].gd)));
+  return{id,ten:c.name,nganh:c.m.nganh,tinh:c.m.province||'',
+    bc_hom_nay:{done:'đã gửi',wait:'chưa tới giờ chốt',late:'quá giờ, chưa gửi',missed:'chưa gửi',off:'nghỉ',future:''}[c.status],ngay_chua_bc_lien_tiep:c.streak,
+    dat_moc_pct:rp(c.ratio),dat_chi_tieu_pct:rp(c.pct),du_bao_pct:rp(c.projPct),can_moi_ngay:r1(c.need),dang_lam_moi_ngay:r1(c.avg),ngay_lam_viec_con_lai:c.workLeft,
+    do_phu_pct:rp(c.cov),xu_huong_pct:trendPct(c,date),so_thang:r1(c.so),htpp_thang:r1(c.htpp),so_tren_ty_si:c.ach>0?r1(c.so/c.ach):null,ds_cao_nhat_1_ngay:r1(mx),
+    hom_nay:c.e?{ds:r1(c.dayAch),ke_hoach:r1(c.dayPlan),so:r1(e.so),diem_phu_moi:r1(e.dp),can_ho_tro:!!e.help,ghi_chu:String(e.note||'').slice(0,80)}:null};
+}
+function aiSig(all,date){
+  const raw=[date,all.map(c=>c.m.uid.slice(0,6)+':'+c.status+':'+Math.round(c.ach)+':'+(c.e&&c.e.help?1:0)).join(',')].join('|');
+  let h=5381;for(let i=0;i<raw.length;i++)h=((h<<5)+h+raw.charCodeAt(i))>>>0;return String(h);
+}
+async function aiAnalyze(){
+  const A=ST.ai.an=ST.ai.an||{};if(A.busy)return;
+  const date=ST.date,all=members().map(m=>calc(m,date));if(!all.length)return;
+  const sig=aiSig(all,date);A.busy=true;A.err='';render();
+  const idmap={},list=all.slice(0,45).map((c,i)=>{const id='s'+(i+1);idmap[id]=c.m.uid;return factsLite(c,date,id);}),t=team(all);
+  const r=await aiCall('analyze',{ngay:date,tong:{da_gui_bao_cao:t.done+'/'+t.work,doanh_so_ngay:r1(t.dayAch),ke_hoach_ngay:r1(t.dayPlan),luy_ke_thang:r1(t.ach),chi_tieu_thang:r1(t.total),dat_moc_pct:rp(t.ratio),do_phu_pct:rp(t.cov)},nhan_su:list});
+  A.busy=false;A.at=Date.now();A.sig=sig;
+  if(r.result){A.res=r.result;A.idmap=idmap;A.err='';try{sessionStorage.setItem('asm-ai-an',JSON.stringify({sig,at:A.at,res:A.res,idmap}));}catch(e){}}
+  else{A.err=r.error||'Không phân tích được.';if(/chưa được cấu hình/.test(A.err))ST.ai.off=true;}
+  render();
+}
+function aiAutoMaybe(){
+  const A=ST.ai.an=ST.ai.an||{};
+  if(ST.boot!=='ready'||ST.tab!=='today'||ST.ai.off||A.busy||autoOff()||ST.date!==ST.today)return;
+  if(A.err&&Date.now()-(A.at||0)<600000)return;
+  const all=members().map(m=>calc(m,ST.date));if(!all.length)return;
+  const sig=aiSig(all,ST.date);if(A.sig===sig)return;
+  if(!A.res){try{const c=JSON.parse(sessionStorage.getItem('asm-ai-an')||'null');if(c&&c.sig===sig&&Date.now()-c.at<1800000){Object.assign(A,c);render();return;}}catch(e){}}
+  else if(Date.now()-A.at<600000)return;
+  aiAnalyze();
+}
+function aiPanelHTML(){
+  const A=ST.ai.an||{},R=A.res,off=autoOff(),mem=ST.data?ST.data.members:[];
+  const khan=R?R.canh_bao.filter(w=>w.muc==='khan').length:0;
+  const cls={khan:'bad',chu_y:'warn',thong_tin:'info'},icn={khan:'!',chu_y:'▲',thong_tin:'i'};
+  const warns=R?R.canh_bao.map(w=>{
+    const uid=A.idmap&&A.idmap[w.id],m=uid&&mem.find(x=>x.uid===uid),nm=m?(m.name||m.email.split('@')[0]):'',team=w.id==='team';
+    if(!team&&!m)return '';
+    return '<div class="fi '+cls[w.muc]+'"><div class="fic">'+icn[w.muc]+'</div><div style="min-width:0"><div class="ft">'+(team?'Cả nhóm':esc(nm))+': '+esc(w.tieu_de)+'</div><div class="fx">'+esc(w.ly_do)+'</div>'+(w.hanh_dong?'<div class="fx" style="color:var(--ink)"><b>Nên làm:</b> '+esc(w.hanh_dong)+'</div>':'')+'</div><div class="fa"><button class="linkbtn" data-act="'+(team?'composeAll':'compose')+'" data-uid="'+esc(uid||'')+'" data-sug="'+esc(w.hanh_dong||'')+'">Giao việc</button></div></div>';}).join(''):'';
+  const sub=A.busy?'Đang phân tích số liệu…':R?'Phân tích lúc '+hhmm(A.at)+(off?' · tự động đang tắt':' · tự cập nhật khi số liệu đổi'):(ST.ai.off?'':off?'Tự động đang tắt.':'Sẽ tự phân tích ngay khi có số liệu.');
+  return '<div class="card ai"><h2><span class="sp2">✦</span> Trợ lý AI · Cảnh báo tự động'+(khan?' <span class="badge bad">'+khan+' khẩn</span>':'')+'</h2><div class="hsub">'+esc(sub)+'</div>'+
+    (R?(warns?'<div class="feed">'+warns+'</div>':'<div class="allgood" style="padding:10px"><b>AI không thấy vấn đề đáng lo</b></div>')+(R.uu_tien.length?'<div class="ai-out" style="margin-top:10px"><div class="b small">Ưu tiên hôm nay</div>'+aiLines(R.uu_tien.map(x=>'- '+x).join('\n'))+'</div>':'')+(R.nhan_dinh?'<div class="ai-out">'+aiLines('Nhận định chung: '+R.nhan_dinh)+'</div>':''):'')+
+    (A.err?'<div class="msg">'+esc(A.err)+'</div>':'')+
+    '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="aibtn sm" data-act="aiAn"'+(A.busy?' disabled':'')+'>'+(A.busy?'Đang phân tích…':R?'Phân tích lại':'Phân tích ngay')+'</button><button class="linkbtn" data-act="aiAutoToggle">'+(off?'Bật tự phân tích':'Tắt tự phân tích')+'</button></div><div class="aiwarn">Cảnh báo do AI tạo từ số liệu báo cáo; hãy kiểm tra lại trước khi hành động. AI chỉ nhận số liệu đã tính, không nhận email, số điện thoại hay địa chỉ.</div></div>';
+}
+
+/* ====== Xuất Excel ====== */
+const xlDate=d=>Date.UTC(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10))/864e5+25569;
+function download(X,wb,name){
+  const buf=X.write(wb,{bookType:'xlsx',type:'array'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+function sheet(X,rows,widths,fmts){
+  const ws=X.utils.aoa_to_sheet(rows);
+  ws['!cols']=widths.map(w=>({wch:w}));
+  if(rows.length>1)ws['!autofilter']={ref:X.utils.encode_range({s:{r:0,c:0},e:{r:rows.length-1,c:rows[0].length-1}})};
+  Object.keys(fmts||{}).forEach(col=>{for(let r=1;r<rows.length;r++){const c=ws[X.utils.encode_cell({r,c:+col})];if(c&&c.t==='n')c.z=fmts[col];}});
+  return ws;
+}
+async function exportTeam(){
+  let X;try{X=await loadXlsx();}catch(e){toast('Không tải được thư viện Excel, hãy kiểm tra mạng.',3200);return;}
+  const date=ST.date,all=members().map(m=>calc(m,date)).sort((a,b)=>(a.m.nganh-b.m.nganh)||a.name.localeCompare(b.name,'vi')),dl=monthDays(ST.month);
+  const STX={done:'Đã gửi',wait:'Chờ báo cáo',late:'Quá giờ, chưa gửi',missed:'Chưa gửi',off:'Nghỉ',future:'Chưa tới'};
+  const asmName=e=>{const a=(ST.data.asms||[]).find(x=>x.email===e);return a?(a.name||e):(e===ST.data.me.email?ST.data.me.name:e||'');};
+  const wb=X.utils.book_new();
+  const r1s=[['Họ tên','Email','Ngành','Tỉnh/thành','ASM phụ trách','Chỉ tiêu tháng (tr)','Lũy kế (tr)','Mốc kế hoạch đến ngày (tr)','% so với mốc','% chỉ tiêu','Dự báo cuối tháng (% chỉ tiêu)','Cần mỗi ngày (tr)','Đang làm mỗi ngày (tr)','Độ phủ (%)','Điểm bán mới phủ','HTPP (cộng dồn)','Số bán SO (cộng dồn)','Ngày chưa báo cáo liên tiếp','Báo cáo ngày '+date.slice(8)+'/'+date.slice(5,7)]];
+  all.forEach(c=>r1s.push([c.name,c.m.email,'Ngành '+c.m.nganh,c.m.province||'',asmName(c.m.asmEmail),c.total,r1(c.ach),r1(c.expected),c.ratio,c.pct,c.projPct,r1(c.need),r1(c.avg),c.cov,c.covN,r1(c.htpp),r1(c.so),c.streak,STX[c.status]]));
+  X.utils.book_append_sheet(wb,sheet(X,r1s,[24,28,10,16,22,14,12,16,12,12,16,14,16,11,12,12,14,16,20],{8:'0%',9:'0%',10:'0%',13:'0%'}),'Tổng hợp tháng');
+  const r2=[['Ngày','Họ tên','Ngành','Lượt ghé','Doanh số nhóm 1 (tr)','Doanh số nhóm 2 (tr)','Tổng doanh số (tr)','Kế hoạch ngày (tr)','HTPP','Điểm bán mới phủ','Số bán SO','Cần hỗ trợ','Ghi chú','Giờ gửi']];
+  all.forEach(c=>{const L=(c.mp&&c.mp.labels)||{};dl.forEach(d=>{const e=(c.m.days||{})[d];if(!e)return;const pl=c.mp&&c.mp.days[d]&&c.mp.days[d].si||0;
+    r2.push([{t:'n',v:xlDate(d),z:'dd/mm/yyyy'},c.name,'Ngành '+c.m.nganh,num(e.v),num(e.bn),num(e.gd),r1(num(e.bn)+num(e.gd)),r1(pl),num(e.htpp),num(e.dp),num(e.so),e.help?'Có':'',e.note||'',e.sub?hhmm(e.sub):'']);});});
+  X.utils.book_append_sheet(wb,sheet(X,r2,[12,24,10,10,16,16,16,16,8,14,12,10,40,9],{}),'Báo cáo ngày');
+  const r3=[['Họ tên','Ngành'].concat(dl.map(d=>d.slice(8)+'/'+d.slice(5,7))).concat(['Tổng'])];
+  all.forEach(c=>{const row=[c.name,'Ngành '+c.m.nganh];let sum=0;dl.forEach(d=>{const e=(c.m.days||{})[d];if(e&&e.sub>0){const v=r1(num(e.bn)+num(e.gd));sum+=v;row.push(v);}else row.push('');});row.push(r1(sum));r3.push(row);});
+  X.utils.book_append_sheet(wb,sheet(X,r3,[24,10].concat(dl.map(()=>7)).concat([10]),{}),'Doanh số theo ngày');
+  const A=ST.ai.an&&ST.ai.an.res,r4=[['Nguồn','Mức','Nhân sự','Nội dung','Chi tiết / việc nên làm']];
+  buildFeed(all,date).forEach(i=>r4.push(['Hệ thống',i.lv==='bad'?'Khẩn':i.lv==='warn'?'Chú ý':'Thông tin',i.name,i.t,i.x]));
+  if(A)A.canh_bao.forEach(w=>{const uid=ST.ai.an.idmap&&ST.ai.an.idmap[w.id],m=uid&&ST.data.members.find(x=>x.uid===uid);r4.push(['AI',{khan:'Khẩn',chu_y:'Chú ý',thong_tin:'Thông tin'}[w.muc],w.id==='team'?'Cả nhóm':(m?(m.name||m.email):''),w.tieu_de,w.ly_do+(w.hanh_dong?' | Nên làm: '+w.hanh_dong:'')]);});
+  X.utils.book_append_sheet(wb,sheet(X,r4,[10,10,24,44,80],{}),'Cảnh báo');
+  download(X,wb,'bao-cao-asm-'+date+'.xlsx');toast('Đã xuất file Excel ('+all.length+' nhân sự).');
+}
+async function exportRoster(){
+  let X;try{X=await loadXlsx();}catch(e){toast('Không tải được thư viện Excel, hãy kiểm tra mạng.',3200);return;}
+  const O=ST.org;if(!O)return;
+  const asmE={};O.asms.forEach(a=>{asmE[a.email]=a;});
+  const wb=X.utils.book_new(),r=[['Họ tên','Email','Vai trò','Ngành','ASM phụ trách','Tỉnh/thành','ASM đã khoá','Trạng thái tài khoản']];
+  O.profiles.forEach(p=>r.push([p.name||'',p.email,asmE[p.email]?'ASM':'SR','Ngành '+p.nganh,p.asmEmail?(asmE[p.asmEmail]?asmE[p.asmEmail].name||p.asmEmail:p.asmEmail):'',p.province||'',p.locked?'Có':'',p.disabled?'Đã khoá':'Hoạt động']));
+  O.orphans.forEach(p=>r.push([p.name||'',p.email,asmE[p.email]?'ASM':'Chưa chọn','','','','',p.disabled?'Đã khoá':'Hoạt động']));
+  (O.invites||[]).forEach(i=>r.push([i.name||'',i.email,'SR (chờ đăng nhập)','Ngành '+i.nganh,i.asmEmail?(asmE[i.asmEmail]?asmE[i.asmEmail].name||i.asmEmail:i.asmEmail):'',i.province||'','','Chưa đăng nhập']));
+  X.utils.book_append_sheet(wb,sheet(X,r,[24,30,18,10,24,16,12,18],{}),'Nhân sự');
+  const r2=[['Họ tên ASM','Email','Ngành phụ trách','Tỉnh/thành phụ trách','Khu vực']];
+  O.asms.forEach(a=>r2.push([a.name||'',a.email,(a.nganh&&a.nganh.length?a.nganh:[1,2]).map(n=>'Ngành '+n).join(', '),(a.provinces||[]).join(', '),a.area||'']));
+  X.utils.book_append_sheet(wb,sheet(X,r2,[24,30,20,70,16],{}),'ASM');
+  download(X,wb,'nhan-su-phan-cong-'+ST.today+'.xlsx');toast('Đã xuất danh sách nhân sự.');
+}
+
 /* ====== Tổng hợp cả nhóm ====== */
 function members(){
   const d=ST.data;if(!d)return[];
@@ -591,7 +698,7 @@ function todayHTML(){
   const shown=filterList(all),cs=cumSeries(all);
   const chart=all.length?'<div class="card" style="margin-top:14px"><h2>Nhịp cả nhóm trong tháng</h2><div class="hsub">Đường liền: thực tế lũy kế · đường đứt: kế hoạch lũy kế · vạch dọc: hôm nay</div>'+lineChart(cs.plan,cs.act,cs.todayIdx,760,170)+'</div>':'';
   return heroHTML(all,t,date)+
-    '<div class="grid2"><div>'+aiBriefHTML()+'<div style="margin-top:12px">'+feedHTML(feed)+'</div>'+'<div style="margin-top:12px" class="card"><h2>Bản tin cuối ngày</h2><div class="hsub">Tổng hợp sẵn để dán vào Zalo nhóm.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="pillbtn pri" data-act="copySum">Sao chép bản tin</button><button class="pillbtn" data-act="composeAll">Giao việc cả nhóm</button></div></div></div>'+
+    '<div class="grid2"><div>'+aiPanelHTML()+'<div style="margin-top:12px">'+feedHTML(feed)+'</div>'+'<div style="margin-top:12px" class="card"><h2>Bản tin cuối ngày</h2><div class="hsub">Tổng hợp sẵn để dán vào Zalo nhóm.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="pillbtn pri" data-act="copySum">Sao chép bản tin</button><button class="pillbtn" data-act="expTeam">⬇ Xuất Excel</button><button class="pillbtn" data-act="composeAll">Giao việc cả nhóm</button></div></div></div>'+
     '<div>'+toolsHTML(counts)+(shown.length?'<div class="cards">'+shown.map(c=>srCard(c,date)).join('')+'</div>':'<div class="card empty"><div class="big">🔍</div>'+(all.length?'Không có nhân sự nào khớp bộ lọc.':'Chưa có nhân sự nào được gán cho bạn.<br><span class="small">Nhân sự cần đăng nhập app, chọn ngành và chọn ASM là bạn.</span>')+'</div>')+'</div></div>'+chart;
 }
 
@@ -697,7 +804,7 @@ function orgHTML(){
     '<div class="card" style="margin-top:14px"><h2>Tạo trước thành viên</h2><div class="hsub">Khai báo sẵn ngành, ASM, tỉnh cho một email. Khi người đó đăng nhập app lần đầu sẽ tự có hồ sơ này (ASM bị khoá).</div>'+(invs||'')+
     '<div class="fld"><label for="ivEmail">Email</label><input id="ivEmail" type="email" placeholder="email@livotec.vn" autocomplete="off"></div><div class="fld"><input id="ivName" type="text" maxlength="80" placeholder="Họ tên" aria-label="Họ tên"></div>'+
     '<div class="fld"><label for="ivNg">Ngành</label><select id="ivNg"><option value="1">Ngành 1 · Karofi & Livotec máy lọc</option><option value="2">Ngành 2 · Livotec gia dụng</option></select></div><div class="fld"><label for="ivAsm">ASM phụ trách</label><select id="ivAsm">'+asmOpts('')+'</select></div><div class="fld"><input id="ivProv" type="text" maxlength="60" placeholder="Tỉnh / thành phố" aria-label="Tỉnh/thành"></div><button class="btn" data-act="invite">Tạo trước</button></div></div>'+
-    '<div class="card"><h2>Thành viên &amp; vai trò <span class="badge">'+(O.profiles.length+O.orphans.length)+'</span></h2><div class="hsub">Cấp vai trò ASM, đổi ngành hoặc gán ASM cho từng người. “Khoá” để SR không tự đổi được ASM. Quản trị viên cao nhất được đặt trong cấu hình máy chủ (ADMIN_EMAILS).</div>'+
+    '<div class="card"><h2>Thành viên &amp; vai trò <span class="badge">'+(O.profiles.length+O.orphans.length)+'</span></h2><div class="hsub">Cấp vai trò ASM, đổi ngành hoặc gán ASM cho từng người. “Khoá” để SR không tự đổi được ASM. Quản trị viên cao nhất được đặt trong cấu hình máy chủ (ADMIN_EMAILS).</div><div style="margin-bottom:8px"><button class="pillbtn" data-act="expRoster">⬇ Xuất danh sách nhân sự (Excel)</button></div>'+
     (O.orphans.length?'<div class="note" style="margin-bottom:10px"><b>'+O.orphans.length+' tài khoản chưa chọn ngành/ASM.</b> Gán trực tiếp bên dưới hoặc nhắc họ mở app.</div>':'')+
     '<div class="tblwrap"><table class="t"><thead><tr><th>Nhân sự</th><th>Vai trò</th><th>Ngành</th><th>ASM phụ trách</th><th></th><th></th></tr></thead><tbody>'+O.profiles.map(p=>row(p,false)).join('')+O.orphans.map(p=>row(p,true)).join('')+'</tbody></table></div></div></div>'+auditHTML();
 }
@@ -900,6 +1007,7 @@ function render(){
   root.innerHTML=headerHTML()+'<div class="wrap">'+(ST.err?'<div class="note" style="margin-top:10px">'+esc(ST.err)+'</div>':'')+tabsHTML(nFeed)+view+'</div>'+(ST.drawer?drawerHTML():'')+(ST.compose?composeHTML():'')+(ST.mm?mgmtHTML():'');
   if(keep){const n=document.getElementById(keep.id);if(n){n.focus({preventScroll:true});try{n.setSelectionRange(keep.s,keep.e);}catch(e){}}}
   window.scrollTo(0,sy);
+  setTimeout(aiAutoMaybe,0);
 }
 
 /* ====== Hành động ====== */
@@ -958,7 +1066,11 @@ document.addEventListener('click',function(e){
   else if(a==='detail'){ST.drawer={uid:d.uid,day:d.day||''};}
   else if(a==='closeDrawer'){if(b.classList.contains('scrim')&&e.target!==b)return;ST.drawer=null;}
   else if(a==='compose'){openCompose({uid:d.uid,text:d.sug||''});return;}
-  else if(a==='composeAll'){openCompose({uid:'',nganh:ST.ng,text:''});return;}
+  else if(a==='composeAll'){openCompose({uid:'',nganh:ST.ng,text:d.sug||''});return;}
+  else if(a==='aiAn'){aiAnalyze();return;}
+  else if(a==='aiAutoToggle'){try{localStorage.setItem('asm-ai-auto',autoOff()?'1':'0');}catch(e){}ST.ai.off=false;}
+  else if(a==='expTeam'){exportTeam();return;}
+  else if(a==='expRoster'){exportRoster();return;}
   else if(a==='closeCompose'){if(b.classList.contains('scrim')&&e.target!==b)return;ST.compose=null;}
   else if(a==='ckind'){ST.compose.text=$('#ctext').value;ST.compose.kind=d.v;}
   else if(a==='cdate'){ST.compose.text=$('#ctext').value;ST.compose.date=d.v;}
