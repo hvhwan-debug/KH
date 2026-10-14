@@ -1,13 +1,13 @@
 // Quản trị: xem toàn bộ dữ liệu của 1 thành viên, hoặc xoá hẳn tài khoản đó khỏi kho lưu trữ.
 // Chỉ email trong ADMIN_EMAILS mới gọi được.
-const { reply, guardConfigured, requireUser, requireAjax } = require("../_lib/http");
+const { reply, guardConfigured, requireUserActive, requireAjax } = require("../_lib/http");
 const { isAdmin } = require("../_lib/config");
 const store = require("../_lib/store");
 
 module.exports = async function (context, req) {
   try {
     if (guardConfigured(context)) return;
-    const u = requireUser(context, req);
+    const u = await requireUserActive(context, req);
     if (!u) return;
     if (!isAdmin(u.email)) return reply(context, 403, { ok: false, error: "Bạn không có quyền quản trị." });
 

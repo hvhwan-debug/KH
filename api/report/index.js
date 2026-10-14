@@ -1,5 +1,5 @@
 // Báo cáo cuối ngày của SR. SR gửi lên các ngày đã nhập + ảnh chụp kế hoạch; ASM đọc qua /api/team.
-const { reply, guardConfigured, requireAjax, requireUser } = require("../_lib/http");
+const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const { emailAllowed } = require("../_lib/config");
 const { clearCookie } = require("../_lib/session");
 const store = require("../_lib/store");
@@ -10,7 +10,7 @@ const KEEP_DAYS = 100;
 module.exports = async function (context, req) {
   try {
     if (guardConfigured(context)) return;
-    const u = requireUser(context, req);
+    const u = await requireUserActive(context, req);
     if (!u) return;
     if (!emailAllowed(u.email)) return reply(context, 403, { ok: false, error: "Tài khoản không còn được phép." }, { "Set-Cookie": clearCookie() });
     const key = "report/" + u.uid + ".json";

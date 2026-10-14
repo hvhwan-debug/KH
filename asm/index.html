@@ -683,11 +683,11 @@ function orgHTML(){
   const F=ST.of||(ST.of={email:'',name:'',n1:true,n2:true,prov:''}),asmEmails=O.asms.map(a=>a.email);
   const asmOpts=sel=>'<option value="">— Chưa gán —</option>'+O.asms.map(a=>'<option value="'+esc(a.email)+'"'+(sel===a.email?' selected':'')+'>'+esc(a.name||a.email)+'</option>').join('');
   const ngBadges=a=>(a.nganh&&a.nganh.length?a.nganh:[1,2]).map(n=>'<span class="badge n'+n+'">'+NG[n].n+'</span>').join(' ');
-  const row=(p,orphan)=>{const isA=asmEmails.indexOf(p.email)>=0;return '<tr><td><div class="b">'+esc(p.name||p.email.split('@')[0])+'</div><div class="tiny muted">'+esc(p.email)+(p.province?' · '+esc(p.province):'')+'</div></td>'+
+  const row=(p,orphan)=>{const isA=asmEmails.indexOf(p.email)>=0;return '<tr><td><div class="b">'+esc(p.name||p.email.split('@')[0])+(p.disabled?' <span class="badge bad">Đã khoá</span>':'')+'</div><div class="tiny muted">'+esc(p.email)+(p.province?' · '+esc(p.province):'')+'</div></td>'+
     '<td><select class="sel" data-orgrole="'+esc(p.email)+'" data-name="'+esc(p.name||'')+'" aria-label="Vai trò"><option value="sr"'+(isA?'':' selected')+'>SR</option><option value="asm"'+(isA?' selected':'')+'>ASM</option></select></td>'+
     '<td>'+(orphan?'<span class="badge warn">Chưa chọn</span>':'<select class="sel" data-orgng="'+p.uid+'" aria-label="Ngành"><option value="1"'+(p.nganh===1?' selected':'')+'>Ngành 1</option><option value="2"'+(p.nganh===2?' selected':'')+'>Ngành 2</option></select>')+'</td>'+
     '<td><select class="sel" data-orgasm="'+p.uid+'" aria-label="ASM phụ trách">'+asmOpts(p.asmEmail||'')+'</select></td>'+
-    '<td>'+(orphan?'':'<label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-orglock="'+p.uid+'"'+(p.locked?' checked':'')+(p.asmEmail?'':' disabled')+'> Khoá</label>')+'</td></tr>';};
+    '<td>'+(orphan?'':'<label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-orglock="'+p.uid+'"'+(p.locked?' checked':'')+(p.asmEmail?'':' disabled')+'> Khoá</label>')+'</td><td><button class="mini" data-act="mgmt" data-uid="'+p.uid+'">Quản lý</button></td></tr>';};
   const asmList=O.asms.length?O.asms.map(a=>'<div class="di" style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)"><span class="av" style="background:'+avCol(a.email)+';width:32px;height:32px;font-size:12px">'+esc(ini(a.name||a.email))+'</span><div style="flex:1;min-width:0"><div class="b">'+esc(a.name||a.email)+'</div><div class="tiny muted">'+esc(a.email)+'</div><div style="margin-top:3px">'+ngBadges(a)+'</div><div class="tiny muted" style="margin-top:2px">'+(a.provinces&&a.provinces.length?'Tỉnh/thành: '+esc(a.provinces.join(', ')):'Chưa gắn tỉnh/thành')+'</div></div><button class="linkbtn" data-act="editAsm" data-email="'+esc(a.email)+'">Sửa</button><button class="linkbtn" style="color:var(--bad)" data-act="rmAsm" data-email="'+esc(a.email)+'">Xoá</button></div>').join(''):'<div class="muted small">Chưa có ASM nào. Hãy thêm ASM đầu tiên bên dưới.</div>';
   const invs=(O.invites||[]).map(i=>'<div class="di" style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)"><div style="flex:1;min-width:0"><div class="b">'+esc(i.name||i.email)+'</div><div class="tiny muted">'+esc(i.email)+' · '+NG[i.nganh].n+(i.asmEmail?' · ASM '+esc((O.asms.find(a=>a.email===i.asmEmail)||{}).name||i.asmEmail):'')+(i.province?' · '+esc(i.province):'')+'</div></div><span class="badge warn">Chờ đăng nhập</span><button class="linkbtn" style="color:var(--bad)" data-act="rmInvite" data-email="'+esc(i.email)+'">Xoá</button></div>').join('');
   return '<div class="grid2" style="margin-top:14px"><div>'+impHTML()+'<div class="card" style="margin-top:14px"><h2>Danh sách ASM</h2><div class="hsub">Chỉ email trong danh sách này mới vào được trang quản lý. Mỗi ASM phụ trách một hoặc hai ngành và một số tỉnh/thành; SR chỉ chọn được ASM đúng ngành của mình.</div>'+asmList+
@@ -699,7 +699,27 @@ function orgHTML(){
     '<div class="fld"><label for="ivNg">Ngành</label><select id="ivNg"><option value="1">Ngành 1 · Karofi & Livotec máy lọc</option><option value="2">Ngành 2 · Livotec gia dụng</option></select></div><div class="fld"><label for="ivAsm">ASM phụ trách</label><select id="ivAsm">'+asmOpts('')+'</select></div><div class="fld"><input id="ivProv" type="text" maxlength="60" placeholder="Tỉnh / thành phố" aria-label="Tỉnh/thành"></div><button class="btn" data-act="invite">Tạo trước</button></div></div>'+
     '<div class="card"><h2>Thành viên &amp; vai trò <span class="badge">'+(O.profiles.length+O.orphans.length)+'</span></h2><div class="hsub">Cấp vai trò ASM, đổi ngành hoặc gán ASM cho từng người. “Khoá” để SR không tự đổi được ASM. Quản trị viên cao nhất được đặt trong cấu hình máy chủ (ADMIN_EMAILS).</div>'+
     (O.orphans.length?'<div class="note" style="margin-bottom:10px"><b>'+O.orphans.length+' tài khoản chưa chọn ngành/ASM.</b> Gán trực tiếp bên dưới hoặc nhắc họ mở app.</div>':'')+
-    '<div class="tblwrap"><table class="t"><thead><tr><th>Nhân sự</th><th>Vai trò</th><th>Ngành</th><th>ASM phụ trách</th><th></th></tr></thead><tbody>'+O.profiles.map(p=>row(p,false)).join('')+O.orphans.map(p=>row(p,true)).join('')+'</tbody></table></div></div></div>';
+    '<div class="tblwrap"><table class="t"><thead><tr><th>Nhân sự</th><th>Vai trò</th><th>Ngành</th><th>ASM phụ trách</th><th></th><th></th></tr></thead><tbody>'+O.profiles.map(p=>row(p,false)).join('')+O.orphans.map(p=>row(p,true)).join('')+'</tbody></table></div></div></div>'+auditHTML();
+}
+function auditHTML(){
+  const A=(ST.org&&ST.org.audit)||[];
+  return '<div class="card" style="margin-top:14px"><h2>Nhật ký thao tác quản trị</h2><div class="hsub">Ai đã làm gì, với tài khoản nào, lúc nào (25 thao tác gần nhất).</div>'+(A.length?'<div class="tblwrap"><table class="t"><thead><tr><th>Thời gian</th><th>Người thực hiện</th><th>Thao tác</th><th>Đối tượng</th></tr></thead><tbody>'+A.map(x=>'<tr><td class="nowrap small">'+dmy(new Date(x.ts+7*36e5).toISOString().slice(0,10))+' '+hhmm(x.ts)+'</td><td class="small">'+esc(x.by)+'</td><td class="b small">'+esc(x.op)+'</td><td class="small">'+esc(x.target)+'</td></tr>').join('')+'</tbody></table></div>':'<div class="muted small">Chưa có thao tác nào.</div>')+'</div>';
+}
+function mmFind(uid){const O=ST.org;return O&&O.profiles.concat(O.orphans).find(x=>x.uid===uid);}
+function mgmtHTML(){
+  const M=ST.mm,p=mmFind(M.uid);if(!p)return '';
+  const self=ST.org.me===p.uid;
+  return '<div class="scrim center" data-act="mmClose"><div class="modal" role="dialog" aria-label="Quản lý thành viên" data-stop="1"><div style="display:flex;gap:10px;align-items:center"><span class="av" style="background:'+avCol(p.email)+'">'+esc(ini(p.name||p.email))+'</span><div style="min-width:0"><h3 style="margin:0">'+esc(p.name||p.email)+'</h3><div class="tiny muted">'+esc(p.email)+(p.disabled?' · <b style="color:var(--bad)">Đã khoá</b>':'')+'</div></div></div>'+
+    '<div class="fld"><label for="mmName">Họ tên</label><input id="mmName" type="text" maxlength="80" value="'+esc(p.name||'')+'"></div><div class="fld"><label for="mmProv">Tỉnh / thành phố</label><input id="mmProv" type="text" maxlength="60" value="'+esc(p.province||'')+'"></div><button class="btn" data-act="mmSave">Lưu thông tin</button>'+
+    '<h3 style="margin:18px 0 4px;font-size:14px">Đặt mật khẩu mới</h3><div class="small muted">Người này sẽ bị đăng xuất khỏi mọi thiết bị và phải đăng nhập bằng mật khẩu mới. Hãy gửi mật khẩu qua kênh an toàn và nhắc họ đổi lại.</div><div class="fld"><input id="mmPw" type="password" autocomplete="new-password" maxlength="200" placeholder="Mật khẩu mới (từ 8 ký tự)" aria-label="Mật khẩu mới"></div><button class="btn ghost" data-act="mmPw">Đặt mật khẩu</button>'+
+    (self?'<div class="small muted" style="margin-top:16px">Đây là tài khoản của bạn, nên không thể khoá, xoá hay đăng xuất từ đây.</div>':
+    '<h3 style="margin:18px 0 6px;font-size:14px">Tài khoản</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" style="flex:1" data-act="mmDis" data-v="'+(p.disabled?'0':'1')+'">'+(p.disabled?'Mở khoá tài khoản':'Khoá tài khoản')+'</button><button class="btn ghost" style="flex:1" data-act="mmOut">Đăng xuất mọi thiết bị</button></div><button class="btn" style="margin-top:10px;background:var(--bad);color:#fff" data-act="mmDel">Xoá tài khoản</button><div class="tiny muted" style="margin-top:6px">Xoá tài khoản là xoá vĩnh viễn số liệu của người đó trên máy chủ, không khôi phục được.</div>')+
+    (M.err?'<div class="msg">'+esc(M.err)+'</div>':'')+'<button class="btn ghost" style="margin-top:14px" data-act="mmClose">Đóng</button></div></div>';
+}
+async function mmCall(body,okMsg,close){
+  const r=await api('POST','/api/org',body);
+  if(r.s===200){ST.mm.err='';if(close)ST.mm=null;toast(okMsg);await loadOrg();}
+  else{ST.mm.err=(r.j&&r.j.error)||'Không thực hiện được.';render();}
 }
 async function loadOrg(){
   const r=await api('GET','/api/org');
@@ -854,7 +874,7 @@ async function loadData(silent){
   ST.loading=false;
   if(!silent||ST.boot!=='ready')render();else softRender();
 }
-function softRender(){const a=document.activeElement;if(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT'))return;if(ST.compose)return;render();}
+function softRender(){const a=document.activeElement;if(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT'))return;if(ST.compose||ST.mm)return;render();}
 async function boot(){
   ST.boot='loading';render();
   try{
@@ -877,7 +897,7 @@ function render(){
   let view='';
   try{view=ST.tab==='plan'?planHTML():ST.tab==='heat'?heatHTML():ST.tab==='org'?orgHTML():todayHTML();}
   catch(e){console.error(e);view='<div class="card empty">Có lỗi khi hiển thị. Hãy tải lại trang.</div>';}
-  root.innerHTML=headerHTML()+'<div class="wrap">'+(ST.err?'<div class="note" style="margin-top:10px">'+esc(ST.err)+'</div>':'')+tabsHTML(nFeed)+view+'</div>'+(ST.drawer?drawerHTML():'')+(ST.compose?composeHTML():'');
+  root.innerHTML=headerHTML()+'<div class="wrap">'+(ST.err?'<div class="note" style="margin-top:10px">'+esc(ST.err)+'</div>':'')+tabsHTML(nFeed)+view+'</div>'+(ST.drawer?drawerHTML():'')+(ST.compose?composeHTML():'')+(ST.mm?mgmtHTML():'');
   if(keep){const n=document.getElementById(keep.id);if(n){n.focus({preventScroll:true});try{n.setSelectionRange(keep.s,keep.e);}catch(e){}}}
   window.scrollTo(0,sy);
 }
@@ -958,6 +978,13 @@ document.addEventListener('click',function(e){
   else if(a==='oaNg'){const F0=ST.of;if($('#oaEmail')){F0.email=$('#oaEmail').value;F0.name=$('#oaName').value;F0.prov=$('#oaProv').value;}ST.of[d.v==='1'?'n1':'n2']=!ST.of[d.v==='1'?'n1':'n2'];}
   else if(a==='editAsm'){const x=ST.org.asms.find(z=>z.email===d.email);if(x){const ng=x.nganh&&x.nganh.length?x.nganh:[1,2];ST.of={email:x.email,name:x.name||'',n1:ng.indexOf(1)>=0,n2:ng.indexOf(2)>=0,prov:(x.provinces||[]).join(', ')};}}
   else if(a==='addAsm'){const F=ST.of;F.email=$('#oaEmail').value.trim();F.name=$('#oaName').value;F.prov=$('#oaProv').value;if(!F.n1&&!F.n2){ST.orgErr='Chọn ít nhất một ngành.';render();return;}orgCall({op:'addAsm',email:F.email,name:F.name,nganh:[F.n1?1:null,F.n2?2:null].filter(Boolean),provinces:F.prov},'Đã lưu ASM').then(r=>{if(r&&r.s===200)ST.of=null;render();});return;}
+  else if(a==='mgmt'){ST.mm={uid:d.uid,err:''};}
+  else if(a==='mmClose'){if(b.classList.contains('scrim')&&e.target!==b)return;ST.mm=null;}
+  else if(a==='mmSave'){mmCall({op:'editMember',uid:ST.mm.uid,name:$('#mmName').value,province:$('#mmProv').value},'Đã lưu thông tin');return;}
+  else if(a==='mmPw'){const pw=$('#mmPw').value;if(pw.length<8){ST.mm.err='Mật khẩu cần ít nhất 8 ký tự.';render();return;}mmCall({op:'setPassword',uid:ST.mm.uid,password:pw},'Đã đặt mật khẩu mới');return;}
+  else if(a==='mmDis'){mmCall({op:'setDisabled',uid:ST.mm.uid,disabled:d.v==='1'},d.v==='1'?'Đã khoá tài khoản':'Đã mở khoá');return;}
+  else if(a==='mmOut'){if(confirm('Đăng xuất người này khỏi mọi thiết bị?'))mmCall({op:'signOut',uid:ST.mm.uid},'Đã đăng xuất mọi thiết bị');return;}
+  else if(a==='mmDel'){const x=mmFind(ST.mm.uid);if(x&&confirm('XOÁ VĨNH VIỄN tài khoản '+x.email+'?\n\nToàn bộ số liệu của người này trên máy chủ sẽ mất, không khôi phục được.'))mmCall({op:'deleteMember',uid:ST.mm.uid},'Đã xoá tài khoản',true);return;}
   else if(a==='impGo'){impGo();return;}
   else if(a==='impReset'){ST.imp={};}
   else if(a==='impCsv'){impCsv();return;}
@@ -984,12 +1011,12 @@ document.addEventListener('input',function(e){
   else if(t.dataset.ndraft)ST.ndraft[t.dataset.ndraft]=t.value;   // không dựng lại giao diện khi đang gõ
 });
 document.addEventListener('keydown',function(e){
-  if(e.key==='Escape'){if(ST.compose){ST.compose=null;render();}else if(ST.drawer){ST.drawer=null;render();}}
+  if(e.key==='Escape'){if(ST.mm){ST.mm=null;render();}else if(ST.compose){ST.compose=null;render();}else if(ST.drawer){ST.drawer=null;render();}}
   else if(e.key==='Enter'&&(e.target.id==='lPass'||e.target.id==='lEmail'||e.target.id==='lOtp'))lsubmit();
 });
 // Tự làm mới mỗi phút khi đang mở trang (không ngắt lúc đang gõ / có hộp thoại)
-setInterval(function(){if(document.visibilityState==='visible'&&ST.boot==='ready'&&!ST.compose&&ST.tab!=='plan')loadData(true);},60000);
-document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&ST.boot==='ready'&&!ST.compose&&ST.tab!=='plan'&&Date.now()-(ST.loadedAt-ST.skew)>30000)loadData(true);});
+setInterval(function(){if(document.visibilityState==='visible'&&ST.boot==='ready'&&!ST.compose&&!ST.mm&&ST.tab!=='plan')loadData(true);},60000);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&ST.boot==='ready'&&!ST.compose&&!ST.mm&&ST.tab!=='plan'&&Date.now()-(ST.loadedAt-ST.skew)>30000)loadData(true);});
 boot();
 })();
 </script>

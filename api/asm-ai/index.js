@@ -1,6 +1,6 @@
 // Trợ lý AI cho ASM: tóm tắt ưu tiên trong ngày, soạn nội dung giao việc, soạn trọng tâm cả nhóm, nhận định từng SR.
 // Chỉ ASM/quản trị viên dùng được. Prompt dựng ở máy chủ (khách chỉ gửi số liệu), nên không dùng được như chatbot tự do.
-const { reply, guardConfigured, requireAjax, requireUser } = require("../_lib/http");
+const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const org = require("../_lib/org");
 const { chat } = require("../_lib/llm");
 
@@ -20,7 +20,7 @@ const J = (x) => JSON.stringify(x);
 module.exports = async function (context, req) {
   try {
     if (guardConfigured(context)) return;
-    const u = requireUser(context, req); if (!u) return;
+    const u = await requireUserActive(context, req); if (!u) return;
     if (!requireAjax(context, req)) return;
     const roles = await org.rolesOf(u.email);
     if (!roles.manager) return reply(context, 403, { ok: false, error: "Chỉ ASM hoặc quản trị viên dùng được trợ lý." });

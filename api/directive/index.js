@@ -1,5 +1,5 @@
 // Việc ASM giao cho SR trong ngày ("chỉ đạo ngày"). SR đọc và bấm "Đã làm"; ASM thấy trạng thái.
-const { reply, guardConfigured, requireAjax, requireUser } = require("../_lib/http");
+const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const store = require("../_lib/store");
 const org = require("../_lib/org");
 
@@ -9,7 +9,7 @@ const KINDS = ["focus", "note", "praise"];
 module.exports = async function (context, req) {
   try {
     if (guardConfigured(context)) return;
-    const u = requireUser(context, req);
+    const u = await requireUserActive(context, req);
     if (!u) return;
 
     if (req.method === "GET") {

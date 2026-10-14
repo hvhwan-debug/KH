@@ -18,6 +18,14 @@ Tab Quản trị > **Nhập từ file Excel nhân sự**. File cần có sheet `
 - Chỉ nhập "Đại diện Bán hàng" còn làm việc và có email công ty; ASM lấy theo cột "Quản lý trực tiếp". AQUALINK/Tư vấn sản phẩm không nhập.
 - Cần `ALLOWED_EMAILS=*` (hoặc cho phép tên miền karofi.vn, karofi.com). Có thể nhập lại nhiều lần, không nhân đôi. Trường hợp thiếu email / không khớp ASM được liệt kê và tải về CSV.
 
+## Quản lý thành viên (chỉ quản trị viên, tab Quản trị > nút Quản lý)
+- **Sửa** họ tên, tỉnh/thành. (Email là định danh tài khoản nên không đổi được; cần đổi email thì tạo tài khoản mới.)
+- **Đặt mật khẩu mới** (từ 8 ký tự): người đó bị đăng xuất khỏi mọi thiết bị, phải đăng nhập bằng mật khẩu mới. Gửi mật khẩu qua kênh an toàn.
+- **Khoá / mở khoá** tài khoản: tài khoản khoá bị chặn ở mọi API và không đăng nhập được.
+- **Đăng xuất mọi thiết bị**, **Xoá tài khoản** (vĩnh viễn; nếu là ASM thì bỏ khỏi danh sách ASM và nhóm của họ thành "chưa gán").
+- Không tự khoá/xoá chính mình. Mọi thao tác ghi vào **Nhật ký thao tác** (không ghi mật khẩu).
+- Cơ chế: tài khoản có cờ `disabled` và mốc `sessAfter`; mọi API kiểm tra phiên với hai giá trị này.
+
 ## Trợ lý AI cho ASM
 Dùng chung cấu hình AI của app (`AZURE_OPENAI_ENDPOINT/KEY/DEPLOYMENT`, hoặc `GROQ_API_KEY` dự phòng). Chỉ ASM/quản trị viên dùng được (`/api/asm/ai`, tối đa 20 lượt / 5 phút / người).
 - Tab Hôm nay: **Ưu tiên hôm nay** (AI đọc số liệu cả nhóm, nêu việc nên làm trước).

@@ -1,13 +1,13 @@
 // Quản trị: liệt kê toàn bộ thành viên (SR) đã có dữ liệu, kèm tóm tắt để xem nhanh.
 // Chỉ email trong ADMIN_EMAILS (Azure > Configuration > Application settings) mới gọi được.
-const { reply, guardConfigured, requireUser } = require("../_lib/http");
+const { reply, guardConfigured, requireUserActive } = require("../_lib/http");
 const { isAdmin } = require("../_lib/config");
 const store = require("../_lib/store");
 
 module.exports = async function (context, req) {
   try {
     if (guardConfigured(context)) return;
-    const u = requireUser(context, req);
+    const u = await requireUserActive(context, req);
     if (!u) return;
     if (!isAdmin(u.email)) return reply(context, 403, { ok: false, error: "Bạn không có quyền quản trị." });
 

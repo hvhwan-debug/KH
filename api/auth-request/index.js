@@ -39,6 +39,7 @@ module.exports = async function (context, req) {
 
     const uid = uidOf(email), ukey = "user/" + uid + ".json";
     let ud = await store.get(ukey);
+    if (ud && ud.disabled) return reply(context, 403, { ok: false, error: "Tài khoản đã bị khoá. Hãy liên hệ quản trị viên." });
     const now = Date.now();
     const canSendOtp = mailConfigured();
 

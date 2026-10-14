@@ -1,6 +1,6 @@
 // Hồ sơ công việc của SR: ngành đang làm + ASM phụ trách. SR tự chọn khi đăng nhập lần đầu;
 // quản trị viên có thể gán và "khoá" ASM (khi đó SR không tự đổi được).
-const { reply, guardConfigured, requireAjax, requireUser } = require("../_lib/http");
+const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const { emailAllowed } = require("../_lib/config");
 const { clearCookie } = require("../_lib/session");
 const store = require("../_lib/store");
@@ -9,7 +9,7 @@ const org = require("../_lib/org");
 module.exports = async function (context, req) {
   try {
     if (guardConfigured(context)) return;
-    const u = requireUser(context, req);
+    const u = await requireUserActive(context, req);
     if (!u) return;
     if (!emailAllowed(u.email)) return reply(context, 403, { ok: false, error: "Tài khoản không còn được phép." }, { "Set-Cookie": clearCookie() });
 

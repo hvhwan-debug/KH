@@ -1,5 +1,7 @@
 const { missing } = require("./config");
-const { userFromReq } = require("./session");
+const { userFromReq, clearCookie } = require("./session");
+const store = require("./store");
+const SESSION_MS = 30 * 24 * 3600 * 1000; // phải khớp MAX_AGE trong session.js
 
 function reply(context, status, body, headers) {
   context.res = {
@@ -38,4 +40,23 @@ function requireUser(context, req) {
   return u;
 }
 
-module.exports = { reply, guardConfigured, requireAjax, requireUser };
+// Phiên là cookie có chữ ký nên bản thân nó không thu hồi được. Ở đây đối chiếu với hồ sơ tài khoản:
+// tài khoản bị khoá, hoặc phiên được cấp trước thời điểm "đăng xuất mọi thiết bị" (sessAfter) đều bị từ chối.
+async function sessionState(u) {
+  let ud = null;
+  try { ud = await store.get("user/" + u.uid + ".json"); } catch (e) { return "ok"; }
+  if (!ud) return "ok";
+  if (ud.disabled) return "disabled";
+  if (ud.sessAfter && u.exp && (u.exp - SESSION_MS) < ud.sessAfter) return "revoked";
+  return "ok";
+}
+async function requireUserActive(context, req) {
+  const u = requireUser(context, req);
+  if (!u) return null;
+  const st = await sessionState(u);
+  if (st === "disabled") { reply(context, 403, { ok: false, disabled: true, error: "Tài khoản đã bị khoá. Hãy liên hệ quản trị viên." }, { "Set-Cookie": clearCookie() }); return null; }
+  if (st === "revoked") { reply(context, 401, { ok: false, error: "Phiên đăng nhập đã hết hiệu lực, hãy đăng nhập lại." }, { "Set-Cookie": clearCookie() }); return null; }
+  return u;
+}
+
+module.exports = { reply, guardConfigured, requireAjax, requireUser, requireUserActive, sessionState };

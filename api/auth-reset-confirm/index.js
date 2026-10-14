@@ -19,7 +19,9 @@ module.exports = async function (context, req) {
     const ud = await store.get(key);
     if (!ud) return reply(context, 400, { ok: false, error: "Không tìm thấy tài khoản tương ứng." });
 
+    if (ud.disabled) return reply(context, 403, { ok: false, error: "Tài khoản đã bị khoá. Hãy liên hệ quản trị viên." });
     ud.pwd = pwd.hash(password);
+    ud.sessAfter = Date.now();
     ud.failTimes = [];
     ud.resetTimes = [];
     await store.put(key, ud);

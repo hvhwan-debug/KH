@@ -1,13 +1,14 @@
 // Quản trị tổ chức (chỉ ADMIN_EMAILS): khai báo ASM, gán SR vào ASM, đổi ngành cho SR.
-const { reply, guardConfigured, requireAjax, requireUser } = require("../_lib/http");
+const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const { isAdmin, emailAllowed } = require("../_lib/config");
 const store = require("../_lib/store");
+const pwdlib = require("../_lib/pwd");
 const org = require("../_lib/org");
 
 module.exports = async function (context, req) {
   try {
     if (guardConfigured(context)) return;
-    const u = requireUser(context, req);
+    const u = await requireUserActive(context, req);
     if (!u) return;
     if (!isAdmin(u.email)) return reply(context, 403, { ok: false, error: "Bạn không có quyền quản trị." });
     const roster = await org.getRoster();
@@ -21,17 +22,65 @@ module.exports = async function (context, req) {
         const uid = k.replace(/^user\//, "").replace(/\.json$/, "");
         if (known[uid]) continue;
         let d = null; try { d = await store.get(k); } catch (e) { continue; }
-        if (d && d.email) orphans.push({ uid, email: d.email, name: d.name || "" });
+        if (d && d.email) orphans.push({ uid, email: d.email, name: d.name || "", disabled: !!d.disabled });
+      }
+      const plist = [];
+      for (const p of profiles) {
+        let ud = null; try { ud = await store.get("user/" + p.uid + ".json"); } catch (e) {}
+        plist.push({ uid: p.uid, email: p.email, name: (ud && ud.name) || p.name || "", nganh: p.nganh, asmEmail: p.asmEmail || "", locked: !!p.locked, province: p.province || "", disabled: !!(ud && ud.disabled) });
       }
       return reply(context, 200, {
-        ok: true, asms: roster.asms,
-        profiles: profiles.map((p) => ({ uid: p.uid, email: p.email, name: p.name || "", nganh: p.nganh, asmEmail: p.asmEmail || "", locked: !!p.locked, province: p.province || "" })),
-        orphans, invites: Object.values((await org.getInvites()).items)
+        ok: true, asms: roster.asms, profiles: plist, orphans, invites: Object.values((await org.getInvites()).items), audit: (await org.getAudit()).slice(-25).reverse(), me: u.uid
       });
     }
 
     if (!requireAjax(context, req)) return;
     const b = req.body || {};
+
+    if (["editMember", "setPassword", "setDisabled", "signOut", "deleteMember"].indexOf(b.op) >= 0) {
+      const uid = String(b.uid || "");
+      if (!/^[a-f0-9]{16,40}$/.test(uid)) return reply(context, 400, { ok: false, error: "Sai mã thành viên." });
+      const ukey = "user/" + uid + ".json", ud = await store.get(ukey);
+      if (!ud) return reply(context, 404, { ok: false, error: "Không tìm thấy thành viên." });
+      const self = uid === u.uid, now = Date.now();
+      if (b.op === "editMember") {
+        const name = org.str(b.name, 80);
+        if (!name) return reply(context, 400, { ok: false, error: "Họ tên không được để trống." });
+        ud.name = name; await store.put(ukey, ud);
+        const p = await org.getProfile(uid);
+        if (p) { p.name = name; if (b.province != null) p.province = org.str(b.province, 60); await org.putProfile(p); }
+        await org.audit(u.email, "Sửa thông tin", ud.email);
+      } else if (b.op === "setPassword") {
+        const pw = String(b.password || "");
+        if (pw.length < 8) return reply(context, 400, { ok: false, error: "Mật khẩu do quản trị viên đặt cần ít nhất 8 ký tự." });
+        if (pw.length > 200) return reply(context, 400, { ok: false, error: "Mật khẩu quá dài." });
+        ud.pwd = pwdlib.hash(pw); ud.verified = true; ud.failTimes = []; ud.otp = ""; ud.otpExp = 0;
+        if (!self) ud.sessAfter = now;           // người đó bị đăng xuất khỏi mọi thiết bị, phải đăng nhập bằng mật khẩu mới
+        await store.put(ukey, ud);
+        await org.audit(u.email, "Đặt mật khẩu mới", ud.email);
+      } else if (b.op === "setDisabled") {
+        if (self) return reply(context, 400, { ok: false, error: "Không thể tự khoá tài khoản đang đăng nhập." });
+        ud.disabled = !!b.disabled; if (ud.disabled) ud.sessAfter = now;
+        await store.put(ukey, ud);
+        await org.audit(u.email, ud.disabled ? "Khoá tài khoản" : "Mở khoá tài khoản", ud.email);
+      } else if (b.op === "signOut") {
+        if (self) return reply(context, 400, { ok: false, error: "Hãy dùng nút Đăng xuất để thoát tài khoản của chính bạn." });
+        ud.sessAfter = now; await store.put(ukey, ud);
+        await org.audit(u.email, "Đăng xuất mọi thiết bị", ud.email);
+      } else { // deleteMember
+        if (self) return reply(context, 400, { ok: false, error: "Không thể tự xoá chính tài khoản đang đăng nhập." });
+        const email = org.lc(ud.email);
+        await store.del(ukey);
+        for (const k of ["profile/", "report/", "directive/"]) { try { await store.del(k + uid + ".json"); } catch (e) {} }
+        const inv = await org.getInvites(); if (inv.items[email]) { delete inv.items[email]; await org.putInvites(inv); }
+        if (org.findAsm(roster, email)) { // nếu là ASM: bỏ khỏi danh sách ASM và thả nhóm của họ về "chưa gán"
+          roster.asms = roster.asms.filter((a) => a.email !== email); await org.putRoster(roster);
+          for (const p of await org.listProfiles()) { if (org.lc(p.asmEmail) === email) { p.asmEmail = ""; p.locked = false; await org.putProfile(p); } }
+        }
+        await org.audit(u.email, "Xoá tài khoản", email);
+      }
+      return reply(context, 200, { ok: true });
+    }
 
     if (b.op === "addAsm") {
       const email = org.lc(b.email);
@@ -40,6 +89,7 @@ module.exports = async function (context, req) {
       const rec = org.asmRec(b, cur, email);
       roster.asms = roster.asms.filter((a) => a.email !== email).concat([rec]).slice(0, 200);
       await org.putRoster(roster);
+      await org.audit(u.email, "Lưu ASM", email);
       return reply(context, 200, { ok: true, asms: roster.asms });
     }
 
@@ -88,6 +138,7 @@ module.exports = async function (context, req) {
         }
         await org.putInvites(inv);
       }
+      await org.audit(u.email, "Nhập hàng loạt", res.asms + " ASM, " + (res.applied + res.invited) + " nhân sự");
       return reply(context, 200, Object.assign({ ok: true }, res));
     }
 
@@ -100,6 +151,7 @@ module.exports = async function (context, req) {
       const email = org.lc(b.email);
       roster.asms = roster.asms.filter((a) => a.email !== email);
       await org.putRoster(roster);
+      await org.audit(u.email, "Bỏ quyền ASM", email);
       for (const p of await org.listProfiles()) { // SR của ASM này trở thành "chưa gán"
         if (org.lc(p.asmEmail) === email) { p.asmEmail = ""; p.locked = false; await org.putProfile(p); }
       }

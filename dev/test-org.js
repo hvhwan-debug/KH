@@ -140,5 +140,35 @@ const dayOff = (n) => new Date(Date.now() + 7 * 3600e3 + n * 864e5).toISOString(
   r = await s1.call("POST", "/api/profile", { nganh: 1, asmEmail: "asm3@livotec.vn" }); ok(r.s === 200 && r.j.profile.asmEmail === "asm3@livotec.vn", "SR vẫn chọn được ASM khác");
   r = await admin.call("POST", "/api/org", { op: "assign", uid: sr1uid, asmEmail: "asm1@livotec.vn", lock: false }); r = await s1.call("GET", "/api/profile"); ok(r.j.profile.asmEmail === "asm1@livotec.vn" && !r.j.profile.blocked.includes("asm1@livotec.vn"), "quản trị viên gán lại thì được thêm lại");
 
+  // Quản trị viên: sửa / đổi mật khẩu / khoá / đăng xuất mọi thiết bị / xoá
+  const rawLogin = async (email, password) => { const x = await fetch(BASE + "/api/auth/request", { method: "POST", headers: H, body: JSON.stringify({ email, password, name: "Mm" }) }); return { s: x.status, j: await x.json().catch(() => ({})) }; };
+  const mm = client(); await mm.login("mm@livotec.vn", "Thành Viên MM");
+  const findUid = async (email) => { const o = (await admin.call("GET", "/api/org")).j; const x = o.profiles.concat(o.orphans).find((p) => p.email === email); return x && x.uid; };
+  const mmUid = await findUid("mm@livotec.vn");
+  r = await s1.call("POST", "/api/org", { op: "setPassword", uid: mmUid, password: "MatKhauMoi99" }); ok(r.s === 403, "SR không đổi được mật khẩu người khác");
+  r = await admin.call("POST", "/api/org", { op: "setPassword", uid: mmUid, password: "ngan" }); ok(r.s === 400, "mật khẩu quá ngắn bị từ chối");
+  r = await mm.call("GET", "/api/auth/me"); ok(r.j.loggedIn === true, "trước khi đổi: thành viên đang đăng nhập");
+  r = await admin.call("POST", "/api/org", { op: "setPassword", uid: mmUid, password: "MatKhauMoi99" }); ok(r.s === 200, "quản trị viên đặt mật khẩu mới");
+  r = await mm.call("GET", "/api/auth/me"); ok(r.j.loggedIn === false, "phiên cũ bị đăng xuất ngay sau khi đổi mật khẩu");
+  r = await mm.call("GET", "/api/profile"); ok(r.s === 401, "phiên cũ bị từ chối ở API (401)");
+  r = await rawLogin("mm@livotec.vn", "matkhau123"); ok(r.s === 400, "mật khẩu cũ không còn dùng được");
+  r = await rawLogin("mm@livotec.vn", "MatKhauMoi99"); ok(r.s === 200 && !!r.j.token, "đăng nhập được bằng mật khẩu mới");
+  mm.token = r.j.token;
+  r = await mm.call("GET", "/api/auth/me"); ok(r.j.loggedIn === true, "phiên mới hoạt động bình thường");
+  r = await admin.call("POST", "/api/org", { op: "setDisabled", uid: mmUid, disabled: true }); ok(r.s === 200, "khoá tài khoản");
+  r = await mm.call("GET", "/api/profile"); ok(r.s === 403 && r.j.disabled === true, "tài khoản bị khoá: API từ chối ngay");
+  r = await rawLogin("mm@livotec.vn", "MatKhauMoi99"); ok(r.s === 403, "tài khoản bị khoá: không đăng nhập được");
+  r = await admin.call("POST", "/api/org", { op: "setDisabled", uid: mmUid, disabled: false }); r = await rawLogin("mm@livotec.vn", "MatKhauMoi99"); ok(r.s === 200, "mở khoá: đăng nhập lại được"); mm.token = r.j.token;
+  r = await admin.call("POST", "/api/org", { op: "signOut", uid: mmUid }); r = await mm.call("GET", "/api/profile"); ok(r.s === 401, "đăng xuất mọi thiết bị: phiên cũ mất hiệu lực");
+  r = await admin.call("POST", "/api/org", { op: "editMember", uid: mmUid, name: "Tên Mới MM", province: "Cần Thơ" }); ok(r.s === 200, "sửa họ tên, tỉnh");
+  r = await admin.call("GET", "/api/org"); ok(r.j.orphans.concat(r.j.profiles).some((p) => p.uid === mmUid && p.name === "Tên Mới MM"), "tên mới hiện trong danh sách");
+  const adminUid = (await admin.call("GET", "/api/org")).j.me;
+  r = await admin.call("POST", "/api/org", { op: "deleteMember", uid: adminUid }); ok(r.s === 400, "không tự xoá chính mình");
+  r = await admin.call("POST", "/api/org", { op: "setDisabled", uid: adminUid, disabled: true }); ok(r.s === 400, "không tự khoá chính mình");
+  const asm3uid = await findUid("asm3@livotec.vn");
+  r = await admin.call("POST", "/api/org", { op: "deleteMember", uid: asm3uid }); ok(r.s === 200, "xoá tài khoản một ASM");
+  r = await admin.call("GET", "/api/org"); ok(!r.j.asms.some((a) => a.email === "asm3@livotec.vn") && !r.j.profiles.concat(r.j.orphans).some((p) => p.email === "asm3@livotec.vn"), "ASM bị xoá cũng được bỏ khỏi danh sách ASM");
+  ok(r.j.audit.length >= 8 && r.j.audit.some((a) => a.op === "Đặt mật khẩu mới") && !JSON.stringify(r.j.audit).includes("MatKhauMoi99"), "nhật ký thao tác có ghi, không chứa mật khẩu");
+
   console.log("\n" + pass + " đạt, " + fail + " lỗi"); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

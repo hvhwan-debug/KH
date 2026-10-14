@@ -1,12 +1,12 @@
 // ASM (hoặc quản trị viên) xem toàn bộ nhân sự do mình phụ trách: hồ sơ, kế hoạch, báo cáo từng ngày, việc đã giao.
-const { reply, guardConfigured, requireAjax, requireUser } = require("../_lib/http");
+const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const store = require("../_lib/store");
 const org = require("../_lib/org");
 
 module.exports = async function (context, req) {
   try {
     if (guardConfigured(context)) return;
-    const u = requireUser(context, req);
+    const u = await requireUserActive(context, req);
     if (!u) return;
     const roster = await org.getRoster();
     const roles = await org.rolesOf(u.email, roster);

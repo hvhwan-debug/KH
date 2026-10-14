@@ -36,6 +36,16 @@ const asmCovers = (a, nganh) => !a.nganh || !a.nganh.length || a.nganh.indexOf(n
 async function getInvites() { const r = await store.get("org/invites.json"); return r && r.items ? r : { v: 1, items: {} }; }
 async function putInvites(r) { await store.put("org/invites.json", r); }
 
+// Nhật ký thao tác quản trị (giữ 200 dòng gần nhất): ai làm gì với ai, lúc nào. Không ghi mật khẩu hay dữ liệu cá nhân.
+async function audit(by, op, target) {
+  try {
+    const a = (await store.get("org/audit.json")) || { items: [] };
+    a.items = (a.items || []).concat([{ ts: Date.now(), by: lc(by), op: str(op, 30), target: str(target, 120) }]).slice(-200);
+    await store.put("org/audit.json", a);
+  } catch (e) { /* nhật ký lỗi không được chặn thao tác chính */ }
+}
+async function getAudit() { const a = await store.get("org/audit.json"); return (a && a.items) || []; }
+
 async function getProfile(uid) { return store.get("profile/" + uid + ".json"); }
 async function putProfile(p) { p.updatedAt = Date.now(); await store.put("profile/" + p.uid + ".json", p); }
 
@@ -107,4 +117,4 @@ function cleanPlan(p) {
   };
 }
 
-module.exports = { normProv, asmRec, asmCovers, getInvites, putInvites, NGANH, DATE_RE, MONTH_RE, num, str, lc, validEmail, getRoster, putRoster, findAsm, getProfile, putProfile, rolesOf, listProfiles, validDate, vnToday, addDays, cleanEntry, cleanPlan };
+module.exports = { audit, getAudit, normProv, asmRec, asmCovers, getInvites, putInvites, NGANH, DATE_RE, MONTH_RE, num, str, lc, validEmail, getRoster, putRoster, findAsm, getProfile, putProfile, rolesOf, listProfiles, validDate, vnToday, addDays, cleanEntry, cleanPlan };
