@@ -689,7 +689,7 @@ function orgHTML(){
     '<td>'+(orphan?'':'<label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-orglock="'+p.uid+'"'+(p.locked?' checked':'')+(p.asmEmail?'':' disabled')+'> Khoá</label>')+'</td></tr>';};
   const asmList=O.asms.length?O.asms.map(a=>'<div class="di" style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)"><span class="av" style="background:'+avCol(a.email)+';width:32px;height:32px;font-size:12px">'+esc(ini(a.name||a.email))+'</span><div style="flex:1;min-width:0"><div class="b">'+esc(a.name||a.email)+'</div><div class="tiny muted">'+esc(a.email)+'</div><div style="margin-top:3px">'+ngBadges(a)+'</div><div class="tiny muted" style="margin-top:2px">'+(a.provinces&&a.provinces.length?'Tỉnh/thành: '+esc(a.provinces.join(', ')):'Chưa gắn tỉnh/thành')+'</div></div><button class="linkbtn" data-act="editAsm" data-email="'+esc(a.email)+'">Sửa</button><button class="linkbtn" style="color:var(--bad)" data-act="rmAsm" data-email="'+esc(a.email)+'">Xoá</button></div>').join(''):'<div class="muted small">Chưa có ASM nào. Hãy thêm ASM đầu tiên bên dưới.</div>';
   const invs=(O.invites||[]).map(i=>'<div class="di" style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)"><div style="flex:1;min-width:0"><div class="b">'+esc(i.name||i.email)+'</div><div class="tiny muted">'+esc(i.email)+' · '+NG[i.nganh].n+(i.asmEmail?' · ASM '+esc((O.asms.find(a=>a.email===i.asmEmail)||{}).name||i.asmEmail):'')+(i.province?' · '+esc(i.province):'')+'</div></div><span class="badge warn">Chờ đăng nhập</span><button class="linkbtn" style="color:var(--bad)" data-act="rmInvite" data-email="'+esc(i.email)+'">Xoá</button></div>').join('');
-  return '<div class="grid2" style="margin-top:14px"><div><div class="card"><h2>Danh sách ASM</h2><div class="hsub">Chỉ email trong danh sách này mới vào được trang quản lý. Mỗi ASM phụ trách một hoặc hai ngành và một số tỉnh/thành; SR chỉ chọn được ASM đúng ngành của mình.</div>'+asmList+
+  return '<div class="grid2" style="margin-top:14px"><div>'+impHTML()+'<div class="card" style="margin-top:14px"><h2>Danh sách ASM</h2><div class="hsub">Chỉ email trong danh sách này mới vào được trang quản lý. Mỗi ASM phụ trách một hoặc hai ngành và một số tỉnh/thành; SR chỉ chọn được ASM đúng ngành của mình.</div>'+asmList+
     '<h3 style="margin:16px 0 4px;font-size:14px">'+(O.asms.some(a=>a.email===F.email)?'Sửa ASM':'Thêm ASM')+'</h3><div class="fld"><label for="oaEmail">Email</label><input id="oaEmail" type="email" placeholder="email@livotec.vn" autocomplete="off" value="'+esc(F.email)+'"></div><div class="fld"><label for="oaName">Họ tên</label><input id="oaName" type="text" maxlength="80" value="'+esc(F.name)+'"></div>'+
     '<div class="fld"><label>Ngành phụ trách</label><div class="seg"><button data-act="oaNg" data-v="1" aria-pressed="'+!!F.n1+'">Ngành 1 · Karofi & Livotec máy lọc</button><button data-act="oaNg" data-v="2" aria-pressed="'+!!F.n2+'">Ngành 2 · Livotec gia dụng</button></div></div>'+
     '<div class="fld"><label for="oaProv">Tỉnh / thành phố phụ trách (cách nhau dấu phẩy)</label><textarea id="oaProv" rows="2" placeholder="VD: Đồng Nai, TP. Hồ Chí Minh, Bình Dương">'+esc(F.prov)+'</textarea></div><button class="btn" data-act="addAsm">Lưu ASM</button>'+(ST.orgErr?'<div class="msg">'+esc(ST.orgErr)+'</div>':'')+'</div>'+
@@ -710,6 +710,103 @@ async function orgCall(body,okMsg){
   if(r.s===200){ST.orgErr='';if(okMsg)toast(okMsg);await loadOrg();await loadData(true);}
   else{ST.orgErr=(r.j&&r.j.error)||'Không thực hiện được.';render();}
   return r;
+}
+
+
+/* ====== Nhập từ file Excel nhân sự (đọc ngay trong trình duyệt; chỉ gửi tên, email công ty, ngành, ASM, tỉnh) ====== */
+const strip=t=>String(t==null?'':t).normalize('NFC').replace(/\s+/g,' ').trim();
+const nkey=t=>strip(t).toLowerCase();
+const emailOk=e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+function sheetRows(wb,X,name){const ws=wb.Sheets[name];return ws?X.utils.sheet_to_json(ws,{header:1,defval:'',raw:false}):null;}
+function tableOf(rows,must){
+  for(let i=0;i<Math.min(rows.length,15);i++){const h=rows[i].map(nkey);if(must.every(m=>h.indexOf(nkey(m))>=0)){const idx={};h.forEach((x,j)=>{if(x&&idx[x]===undefined)idx[x]=j;});return{idx,data:rows.slice(i+1)};}}
+  return null;
+}
+const cellOf=(r,t,name)=>{const j=t.idx[nkey(name)];return j===undefined?'':strip(r[j]);};
+const splitProv=t=>strip(t).split(/[,+;\n]/).map(x=>strip(x.replace(/^1\/2\s*/,''))).filter(Boolean);
+function parseRoster(wb,X){
+  const out={asms:[],members:[],issues:[],stats:{},error:''};
+  const need={'ASM GT1':['Họ và tên','Chức vụ','Provices','Email'],'ASM GT2':['Họ và tên đầy đủ','Chức danh','Email công ty','Các tỉnh phụ trách'],'GT1':['Họ và tên đầy đủ','Chức danh','Quản lý trực tiếp','Email công ty'],'GT2':['Họ và tên đầy đủ','Chức danh','Quản lý trực tiếp','Email công ty']};
+  const T={};
+  for(const k of Object.keys(need)){const rows=sheetRows(wb,X,k);if(!rows){out.error='Không thấy sheet "'+k+'" trong file.';return out;}T[k]=tableOf(rows,need[k]);if(!T[k]){out.error='Sheet "'+k+'" thiếu cột cần thiết ('+need[k].join(', ')+').';return out;}}
+  const asmMap={},names={1:{},2:{}};
+  const addAsm=(email,name,ng,prov)=>{const a=asmMap[email]||(asmMap[email]={email,name,nganh:[],provinces:[]});if(a.nganh.indexOf(ng)<0)a.nganh.push(ng);prov.forEach(x=>{if(!a.provinces.some(y=>nkey(y)===nkey(x)))a.provinces.push(x);});};
+  // ASM ngành 1
+  T['ASM GT1'].data.forEach(r=>{const name=cellOf(r,T['ASM GT1'],'Họ và tên');if(!name)return;const role=cellOf(r,T['ASM GT1'],'Chức vụ'),email=cellOf(r,T['ASM GT1'],'Email').toLowerCase(),isAsm=/asm/i.test(role);
+    names[1][nkey(name)]={email,role:isAsm?'asm':'senior',title:role};
+    if(isAsm){if(emailOk(email))addAsm(email,name,1,splitProv(cellOf(r,T['ASM GT1'],'Provices')));else out.issues.push({ten:name,ng:1,ly:'ASM thiếu email công ty'});}});
+  // ASM ngành 2 (một người có thể nằm nhiều dòng theo khu vực: gộp theo MSNV)
+  const g2={};
+  T['ASM GT2'].data.forEach(r=>{const name=cellOf(r,T['ASM GT2'],'Họ và tên đầy đủ');if(!name)return;const key=cellOf(r,T['ASM GT2'],'MSNV mới')||nkey(name),g=g2[key]||(g2[key]={name,email:'',prov:[]});
+    const em=cellOf(r,T['ASM GT2'],'Email công ty').toLowerCase();if(em&&!g.email)g.email=em;splitProv(cellOf(r,T['ASM GT2'],'Các tỉnh phụ trách')).forEach(x=>g.prov.push(x));});
+  Object.keys(g2).forEach(k=>{const g=g2[k];names[2][nkey(g.name)]={email:g.email,role:'asm',title:'ASM'};if(emailOk(g.email))addAsm(g.email,g.name,2,g.prov);else out.issues.push({ten:g.name,ng:2,ly:'ASM thiếu email công ty'});});
+  out.asms=Object.keys(asmMap).map(k=>asmMap[k]);
+  // Nhân viên bán hàng (bỏ AQUALINK, người đã thôi việc, và các chức danh không phải Đại diện Bán hàng)
+  const seen={},st={bo_chuc_danh:0,bo_aqualink:0,bo_thoi_viec:0};
+  [['GT1',1],['GT2',2]].forEach(([sh,ng])=>{const t=T[sh];t.data.forEach(r=>{
+    const name=cellOf(r,t,'Họ và tên đầy đủ');if(!name)return;
+    if(!/^đại diện bán hàng/.test(nkey(cellOf(r,t,'Chức danh')))){st.bo_chuc_danh++;return;}
+    if(/aqualink/i.test(cellOf(r,t,'Đơn vị thành viên'))){st.bo_aqualink++;return;}
+    if(cellOf(r,t,'Ngày thôi việc')){st.bo_thoi_viec++;return;}
+    const email=cellOf(r,t,'Email công ty').toLowerCase();
+    if(!emailOk(email)){out.issues.push({ten:name,ng,ly:'thiếu email công ty (chưa thể đăng nhập)'});return;}
+    if(seen[email])return;seen[email]=1;
+    const mgr=strip(cellOf(r,t,'Quản lý trực tiếp').replace(/^[^-]*-/,'')),hit=names[ng][nkey(mgr)]||names[3-ng][nkey(mgr)];
+    let asmEmail='';
+    if(!mgr)out.issues.push({ten:name,ng,ly:'chưa có quản lý trực tiếp'});
+    else if(!hit)out.issues.push({ten:name,ng,ly:'quản lý "'+mgr+'" không có trong danh sách ASM'});
+    else if(hit.role!=='asm')out.issues.push({ten:name,ng,ly:'quản lý "'+mgr+'" là '+hit.title+', chưa phải ASM'});
+    else if(!emailOk(hit.email))out.issues.push({ten:name,ng,ly:'ASM "'+mgr+'" thiếu email nên chưa gán được'});
+    else asmEmail=hit.email;
+    out.members.push({email,name,nganh:ng,asmEmail});});});
+  out.stats=Object.assign(st,{asm:out.asms.length,sr:out.members.length,co_asm:out.members.filter(m=>m.asmEmail).length,sr1:out.members.filter(m=>m.nganh===1).length,sr2:out.members.filter(m=>m.nganh===2).length});
+  return out;
+}
+let xlsxP=null;
+function loadXlsx(){
+  if(window.XLSX)return Promise.resolve(window.XLSX);
+  if(!xlsxP)xlsxP=new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';sc.onload=()=>ok(window.XLSX);sc.onerror=()=>{xlsxP=null;no(new Error('load'));};document.head.appendChild(sc);});
+  return xlsxP;
+}
+function impHTML(){
+  const I=ST.imp||(ST.imp={});
+  let body='<input type="file" id="impFile" accept=".xlsx,.xlsm,.xls" aria-label="Chọn file Excel nhân sự">';
+  if(I.busy&&!I.res)body='<div class="muted small">Đang đọc file…</div>';
+  if(I.err)body+='<div class="msg">'+esc(I.err)+'</div>';
+  if(I.done)body+='<div class="note" style="margin-top:10px"><b>Đã nhập xong.</b> ASM: '+I.done.asms+' · SR đã có tài khoản được cập nhật: '+I.done.applied+' · SR chờ đăng nhập lần đầu: '+I.done.invited+(I.done.skipped?' · bỏ qua: '+I.done.skipped:'')+'.</div>';
+  const R=I.res;
+  if(R&&!I.done){const s=R.stats;
+    body+='<div class="stats" style="margin-top:12px"><div class="stat"><div class="sl">ASM</div><div class="sv">'+s.asm+'</div></div><div class="stat"><div class="sl">Nhân viên bán hàng</div><div class="sv">'+s.sr+'</div><div class="ss">N1: '+s.sr1+' · N2: '+s.sr2+'</div></div><div class="stat"><div class="sl">Đã gán được ASM</div><div class="sv">'+s.co_asm+'</div></div><div class="stat"><div class="sl">Cần bổ sung</div><div class="sv" style="color:var(--'+(R.issues.length?'warn':'ok')+')">'+R.issues.length+'</div></div></div>'+
+      '<div class="tiny muted" style="margin-top:8px">Đã bỏ qua: '+s.bo_chuc_danh+' người không phải Đại diện Bán hàng (Trưởng Kinh doanh khu vực, Task Force, Tư vấn sản phẩm AQUALINK, văn phòng…)'+(s.bo_aqualink?', '+s.bo_aqualink+' người AQUALINK':'')+', '+s.bo_thoi_viec+' người đã thôi việc.</div>'+
+      '<div class="tblwrap" style="margin-top:8px;max-height:200px;overflow:auto"><table class="t"><thead><tr><th>ASM</th><th>Ngành</th><th>Tỉnh/thành</th></tr></thead><tbody>'+R.asms.map(a=>'<tr><td class="b">'+esc(a.name)+'</td><td>'+a.nganh.map(n=>'N'+n).join(', ')+'</td><td class="small">'+esc(a.provinces.slice(0,6).join(', ')+(a.provinces.length>6?'…':''))+'</td></tr>').join('')+'</tbody></table></div>'+
+      (R.issues.length?'<details style="margin-top:8px"><summary class="b small">'+R.issues.length+' trường hợp cần bổ sung</summary><div class="small" style="max-height:160px;overflow:auto;margin-top:6px">'+R.issues.slice(0,60).map(i=>'<div>• <b>'+esc(i.ten)+'</b> (N'+i.ng+'): '+esc(i.ly)+'</div>').join('')+'</div><button class="linkbtn" data-act="impCsv">Tải danh sách này (CSV)</button></details>':'')+
+      '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" style="flex:2" data-act="impGo"'+(I.busy?' disabled':'')+'>'+(I.busy?'Đang nhập '+(I.prog||'')+'…':'Nhập '+s.asm+' ASM và '+s.sr+' nhân viên')+'</button><button class="btn ghost" style="flex:1" data-act="impReset">Huỷ</button></div><div class="tiny muted" style="margin-top:6px">Nhân viên chưa có tài khoản sẽ tự có ngành + ASM (khoá) khi đăng nhập app lần đầu. Có thể nhập lại nhiều lần, dữ liệu cũ được cập nhật chứ không nhân đôi.</div>';}
+  return '<div class="card"><h2>Nhập từ file Excel nhân sự</h2><div class="hsub">Chọn file danh sách nhân sự (có các sheet GT1, GT2, ASM GT1, ASM GT2). File được đọc ngay trên máy bạn; chỉ gửi lên tên, email công ty, ngành, ASM phụ trách và tỉnh/thành. Số điện thoại, địa chỉ, ngày sinh, email cá nhân <b>không</b> được gửi đi.</div>'+body+'</div>';
+}
+async function impFile(file){
+  const I=ST.imp=ST.imp||{};I.err='';I.done=null;I.res=null;
+  if(!file)return;
+  I.busy=true;render();
+  try{const X=await loadXlsx(),buf=await file.arrayBuffer(),wb=X.read(buf,{type:'array'}),R=parseRoster(wb,X);
+    if(R.error)I.err=R.error;else I.res=R;}
+  catch(e){I.err='Không đọc được file. Hãy chọn đúng file Excel (.xlsx).';}
+  I.busy=false;render();
+}
+async function impGo(){
+  const I=ST.imp;if(!I||!I.res||I.busy)return;I.busy=true;I.err='';const R=I.res,tot={asms:0,applied:0,invited:0,skipped:0};
+  const chunks=[];for(let i=0;i<R.members.length;i+=100)chunks.push(R.members.slice(i,i+100));if(!chunks.length)chunks.push([]);
+  for(let i=0;i<chunks.length;i++){
+    I.prog=(i+1)+'/'+chunks.length;render();
+    const r=await api('POST','/api/org',{op:'bulkImport',asms:i===0?R.asms:[],members:chunks[i]});
+    if(r.s!==200){I.err=(r.j&&r.j.error)||'Nhập bị gián đoạn, bạn có thể bấm nhập lại.';I.busy=false;render();return;}
+    ['asms','applied','invited','skipped'].forEach(k=>{tot[k]+=r.j[k]||0;});
+  }
+  I.busy=false;I.done=tot;I.res=null;render();await loadOrg();await loadData(true);
+}
+function impCsv(){
+  const rows=[['Họ tên','Ngành','Lý do cần bổ sung']].concat(ST.imp.res.issues.map(i=>[i.ten,'Ngành '+i.ng,i.ly]));
+  const csv='\ufeff'+rows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='nhan-su-can-bo-sung.csv';document.body.appendChild(a);a.click();a.remove();
 }
 
 /* ====== Đăng nhập ====== */
@@ -859,6 +956,9 @@ document.addEventListener('click',function(e){
   else if(a==='oaNg'){const F0=ST.of;if($('#oaEmail')){F0.email=$('#oaEmail').value;F0.name=$('#oaName').value;F0.prov=$('#oaProv').value;}ST.of[d.v==='1'?'n1':'n2']=!ST.of[d.v==='1'?'n1':'n2'];}
   else if(a==='editAsm'){const x=ST.org.asms.find(z=>z.email===d.email);if(x){const ng=x.nganh&&x.nganh.length?x.nganh:[1,2];ST.of={email:x.email,name:x.name||'',n1:ng.indexOf(1)>=0,n2:ng.indexOf(2)>=0,prov:(x.provinces||[]).join(', ')};}}
   else if(a==='addAsm'){const F=ST.of;F.email=$('#oaEmail').value.trim();F.name=$('#oaName').value;F.prov=$('#oaProv').value;if(!F.n1&&!F.n2){ST.orgErr='Chọn ít nhất một ngành.';render();return;}orgCall({op:'addAsm',email:F.email,name:F.name,nganh:[F.n1?1:null,F.n2?2:null].filter(Boolean),provinces:F.prov},'Đã lưu ASM').then(r=>{if(r&&r.s===200)ST.of=null;render();});return;}
+  else if(a==='impGo'){impGo();return;}
+  else if(a==='impReset'){ST.imp={};}
+  else if(a==='impCsv'){impCsv();return;}
   else if(a==='invite'){orgCall({op:'invite',email:$('#ivEmail').value,name:$('#ivName').value,nganh:+$('#ivNg').value,asmEmail:$('#ivAsm').value,province:$('#ivProv').value},'Đã tạo trước thành viên');return;}
   else if(a==='rmInvite'){orgCall({op:'removeInvite',email:d.email},'Đã xoá');return;}
   else if(a==='rmAsm'){if(confirm('Xoá ASM '+d.email+'? Nhân sự của ASM này sẽ thành "chưa gán".'))orgCall({op:'removeAsm',email:d.email},'Đã xoá ASM');return;}
@@ -867,6 +967,7 @@ document.addEventListener('click',function(e){
 });
 document.addEventListener('change',function(e){
   const t=e.target;
+  if(t.id==='impFile'){impFile(t.files&&t.files[0]);return;}
   if(t.id==='asmSel'){ST.asm=t.value;loadData();}
   else if(t.id==='sortSel'){ST.sort=t.value;render();}
   else if(t.dataset.nsel){ST.nsel[t.dataset.nsel]=t.checked;render();}

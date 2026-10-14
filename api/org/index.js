@@ -63,6 +63,34 @@ module.exports = async function (context, req) {
       return reply(context, 200, { ok: true, applied: false, invites: Object.values(inv.items) });
     }
 
+    if (b.op === "bulkImport") { // nhập hàng loạt từ file nhân sự: ASM (kèm ngành, tỉnh) và SR (kèm ngành, ASM)
+      const asmsIn = Array.isArray(b.asms) ? b.asms.slice(0, 300) : [], memIn = Array.isArray(b.members) ? b.members.slice(0, 300) : [];
+      const res = { asms: 0, applied: 0, invited: 0, skipped: 0 };
+      if (asmsIn.length) {
+        for (const x of asmsIn) {
+          const email = org.lc(x && x.email);
+          if (!org.validEmail(email) || !emailAllowed(email)) { res.skipped++; continue; }
+          const rec = org.asmRec(x, org.findAsm(roster, email), email);
+          roster.asms = roster.asms.filter((r) => r.email !== email).concat([rec]); res.asms++;
+        }
+        roster.asms = roster.asms.slice(0, 200); await org.putRoster(roster);
+      }
+      if (memIn.length) {
+        const byEmail = {}; (await org.listProfiles()).forEach((p) => { byEmail[org.lc(p.email)] = p; });
+        const inv = await org.getInvites();
+        for (const x of memIn) {
+          const email = org.lc(x && x.email), nganh = Number(x && x.nganh);
+          if (!org.validEmail(email) || !emailAllowed(email) || (nganh !== 1 && nganh !== 2)) { res.skipped++; continue; }
+          const asmEmail = org.findAsm(roster, x.asmEmail) ? org.lc(x.asmEmail) : "";
+          const ex = byEmail[email];
+          if (ex) { Object.assign(ex, { nganh, asmEmail, locked: !!asmEmail }); await org.putProfile(ex); res.applied++; }
+          else { inv.items[email] = { email, name: org.str(x.name, 80), nganh, asmEmail, province: org.str(x.province, 60), createdAt: Date.now() }; res.invited++; }
+        }
+        await org.putInvites(inv);
+      }
+      return reply(context, 200, Object.assign({ ok: true }, res));
+    }
+
     if (b.op === "removeInvite") {
       const inv = await org.getInvites(); delete inv.items[org.lc(b.email)]; await org.putInvites(inv);
       return reply(context, 200, { ok: true, invites: Object.values(inv.items) });

@@ -121,5 +121,12 @@ const dayOff = (n) => new Date(Date.now() + 7 * 3600e3 + n * 864e5).toISOString(
   r = await admin.call("POST", "/api/org", { op: "invite", email: ivMail, nganh: 2 }); ok(r.s === 200 && r.j.applied === true, "mời email đã có tài khoản: áp dụng ngay");
   r = await s1.call("POST", "/api/org", { op: "invite", email: ivMail, nganh: 2 }); ok(r.s === 403, "SR không tạo được lời mời");
 
+  // Nhập hàng loạt
+  r = await admin.call("POST", "/api/org", { op: "bulkImport", asms: [{ email: "bulk.asm@livotec.vn", name: "Bulk ASM", nganh: [2], provinces: ["Hà Nội", "Hòa Bình"] }, { email: "xxx", name: "hỏng" }], members: [{ email: "bulk.sr1@livotec.vn", name: "B1", nganh: 2, asmEmail: "bulk.asm@livotec.vn" }, { email: "bulk.sr2@livotec.vn", name: "B2", nganh: 2, asmEmail: "khong.co@livotec.vn" }, { email: "bulk.sr3@livotec.vn", nganh: 5 }] });
+  ok(r.s === 200 && r.j.asms === 1 && r.j.invited === 2 && r.j.skipped === 2, "nhập hàng loạt: 1 ASM, 2 SR chờ, bỏ 2 dòng sai " + JSON.stringify(r.j));
+  r = await admin.call("GET", "/api/org"); const i1 = r.j.invites.find((i) => i.email === "bulk.sr1@livotec.vn"), i2 = r.j.invites.find((i) => i.email === "bulk.sr2@livotec.vn");
+  ok(i1 && i1.asmEmail === "bulk.asm@livotec.vn" && i2 && i2.asmEmail === "", "ASM không tồn tại thì để trống, không gán bừa");
+  r = await s1.call("POST", "/api/org", { op: "bulkImport", asms: [], members: [] }); ok(r.s === 403, "SR không nhập hàng loạt được");
+
   console.log("\n" + pass + " đạt, " + fail + " lỗi"); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

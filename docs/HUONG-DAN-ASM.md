@@ -11,6 +11,12 @@
 - **Tạo trước thành viên**: khai báo email + ngành + ASM + tỉnh, người đó đăng nhập app lần đầu sẽ tự có hồ sơ (ASM bị khoá).
 - **Giao việc**: ở tab Hôm nay, ASM/quản trị viên giao việc cho một người, một ngành hoặc cả nhóm.
 
+## Nhập từ file Excel nhân sự
+Tab Quản trị > **Nhập từ file Excel nhân sự**. File cần có sheet `GT1`, `GT2`, `ASM GT1`, `ASM GT2`. Trình duyệt đọc file tại máy, chỉ gửi tên, email công ty, ngành, ASM, tỉnh/thành.
+- GT1 = Ngành 1, GT2 = Ngành 2. ASM lấy từ hai sheet ASM (kèm tỉnh phụ trách); RSM/GĐKD không được tự cấp quyền ASM.
+- Chỉ nhập "Đại diện Bán hàng" còn làm việc và có email công ty; ASM lấy theo cột "Quản lý trực tiếp". AQUALINK/Tư vấn sản phẩm không nhập.
+- Cần `ALLOWED_EMAILS=*` (hoặc cho phép tên miền karofi.vn, karofi.com). Có thể nhập lại nhiều lần, không nhân đôi. Trường hợp thiếu email / không khớp ASM được liệt kê và tải về CSV.
+
 ## Trợ lý AI cho ASM
 Dùng chung cấu hình AI của app (`AZURE_OPENAI_ENDPOINT/KEY/DEPLOYMENT`, hoặc `GROQ_API_KEY` dự phòng). Chỉ ASM/quản trị viên dùng được (`/api/asm/ai`, tối đa 20 lượt / 5 phút / người).
 - Tab Hôm nay: **Ưu tiên hôm nay** (AI đọc số liệu cả nhóm, nêu việc nên làm trước).
