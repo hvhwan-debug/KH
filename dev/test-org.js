@@ -128,5 +128,17 @@ const dayOff = (n) => new Date(Date.now() + 7 * 3600e3 + n * 864e5).toISOString(
   ok(i1 && i1.asmEmail === "bulk.asm@livotec.vn" && i2 && i2.asmEmail === "", "ASM không tồn tại thì để trống, không gán bừa");
   r = await s1.call("POST", "/api/org", { op: "bulkImport", asms: [], members: [] }); ok(r.s === 403, "SR không nhập hàng loạt được");
 
+  // ASM gỡ thành viên; SR không tự gỡ
+  r = await admin.call("POST", "/api/org", { op: "assign", uid: sr1uid, asmEmail: "asm1@livotec.vn", lock: false }); r = await s1.call("POST", "/api/profile", { nganh: 1, asmEmail: "asm1@livotec.vn" });
+  r = await s1.call("POST", "/api/profile", { nganh: 1, asmEmail: "" }); ok(r.s === 200 && /không tự gỡ/.test(r.j.note) && r.j.profile.asmEmail === "asm1@livotec.vn", "SR không tự gỡ ASM của mình được");
+  r = await a2.call("POST", "/api/team", { op: "removeMember", uid: sr1uid }); ok(r.s === 403, "ASM khác không gỡ được SR không thuộc nhóm mình");
+  r = await s1.call("POST", "/api/team", { op: "removeMember", uid: sr1uid }); ok(r.s === 403, "SR không dùng được chức năng gỡ thành viên");
+  r = await a1.call("POST", "/api/team", { op: "removeMember", uid: sr1uid }); ok(r.s === 200, "ASM gỡ thành viên khỏi nhóm của mình");
+  r = await a1.call("GET", "/api/team"); ok(!r.j.members.some((m) => m.uid === sr1uid), "thành viên đã gỡ biến khỏi nhóm của ASM");
+  r = await s1.call("GET", "/api/profile"); ok(r.j.profile.asmEmail === "" && r.j.profile.blocked.includes("asm1@livotec.vn"), "SR giờ chưa có ASM và bị chặn chọn lại ASM đã gỡ");
+  r = await s1.call("POST", "/api/profile", { nganh: 1, asmEmail: "asm1@livotec.vn" }); ok(r.s === 400, "SR không tự chọn lại ASM đã gỡ mình");
+  r = await s1.call("POST", "/api/profile", { nganh: 1, asmEmail: "asm3@livotec.vn" }); ok(r.s === 200 && r.j.profile.asmEmail === "asm3@livotec.vn", "SR vẫn chọn được ASM khác");
+  r = await admin.call("POST", "/api/org", { op: "assign", uid: sr1uid, asmEmail: "asm1@livotec.vn", lock: false }); r = await s1.call("GET", "/api/profile"); ok(r.j.profile.asmEmail === "asm1@livotec.vn" && !r.j.profile.blocked.includes("asm1@livotec.vn"), "quản trị viên gán lại thì được thêm lại");
+
   console.log("\n" + pass + " đạt, " + fail + " lỗi"); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

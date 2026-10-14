@@ -9,6 +9,7 @@
 - **Cấp vai trò**: chọn SR hoặc ASM cho từng thành viên. Quản trị viên cao nhất đặt trong `ADMIN_EMAILS`.
 - **ASM phụ trách ngành nào, tỉnh/thành nào**: nút Sửa ở mỗi ASM. SR chỉ chọn được ASM đúng ngành của mình; nhập tỉnh thì app gợi ý ASM phụ trách tỉnh đó (chỉ khi chưa chọn ASM).
 - **Tạo trước thành viên**: khai báo email + ngành + ASM + tỉnh, người đó đăng nhập app lần đầu sẽ tự có hồ sơ (ASM bị khoá).
+- **Gỡ thành viên khỏi nhóm**: ASM (và quản trị viên) bấm Chi tiết > **Gỡ khỏi nhóm**. Tài khoản và số liệu vẫn giữ; người bị gỡ không tự chọn lại ASM đó được, quản trị viên gán lại thì được. SR chỉ chọn hoặc đổi ASM, không tự gỡ.
 - **Giao việc**: ở tab Hôm nay, ASM/quản trị viên giao việc cho một người, một ngành hoặc cả nhóm.
 
 ## Nhập từ file Excel nhân sự

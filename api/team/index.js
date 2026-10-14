@@ -1,5 +1,5 @@
 // ASM (hoặc quản trị viên) xem toàn bộ nhân sự do mình phụ trách: hồ sơ, kế hoạch, báo cáo từng ngày, việc đã giao.
-const { reply, guardConfigured, requireUser } = require("../_lib/http");
+const { reply, guardConfigured, requireAjax, requireUser } = require("../_lib/http");
 const store = require("../_lib/store");
 const org = require("../_lib/org");
 
@@ -12,6 +12,19 @@ module.exports = async function (context, req) {
     const roles = await org.rolesOf(u.email, roster);
     if (!roles.manager) return reply(context, 403, { ok: false, error: "Bạn không có quyền xem trang quản lý." });
 
+    if (req.method === "POST") { // ASM gỡ một thành viên khỏi nhóm của mình (không xoá tài khoản)
+      if (!requireAjax(context, req)) return;
+      const b = req.body || {};
+      if (b.op !== "removeMember" || !/^[a-f0-9]{16,40}$/.test(String(b.uid || ""))) return reply(context, 400, { ok: false, error: "Yêu cầu không hợp lệ." });
+      const p = await org.getProfile(b.uid);
+      if (!p || !p.asmEmail) return reply(context, 404, { ok: false, error: "Nhân sự này không thuộc nhóm nào." });
+      if (!roles.admin && org.lc(p.asmEmail) !== u.email) return reply(context, 403, { ok: false, error: "Nhân sự này không thuộc nhóm của bạn." });
+      const old = org.lc(p.asmEmail);
+      p.blocked = (p.blocked || []).filter((x) => x !== old).concat([old]).slice(-20); // không tự chọn lại ASM đã gỡ mình
+      p.asmEmail = ""; p.locked = false;
+      await org.putProfile(p);
+      return reply(context, 200, { ok: true });
+    }
     const q = req.query || {};
     const month = org.MONTH_RE.test(String(q.month || "")) ? q.month : org.vnToday().slice(0, 7);
     const from = org.addDays(month + "-01", -10);

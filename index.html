@@ -4282,7 +4282,7 @@ async function profileLoad(){
     const p=r.j.profile;
     if(p){
       if(p.nganh&&p.nganh!==S.nganh)switchNganh(p.nganh);   // máy chủ là nguồn đúng (quản trị viên có thể đổi ngành)
-      S.asm={email:p.asmEmail||'',name:r.j.asmName||'',locked:!!p.locked};
+      S.asm={email:p.asmEmail||'',name:r.j.asmName||'',locked:!!p.locked,blocked:p.blocked||[]};
       if(p.province&&!S.province)S.province=p.province;
       saveQuiet();
     }
@@ -4304,7 +4304,7 @@ async function profileSave(){
   try{
     const r=await api('POST','/api/profile',{nganh:ng,asmEmail:asmEmail,province:S.province||''});
     if(r.s===200){
-      const p=r.j.profile;S.asm={email:p.asmEmail||'',name:p.asmEmail?asmDisplay(p.asmEmail):'',locked:!!p.locked};
+      const p=r.j.profile;S.asm={email:p.asmEmail||'',name:p.asmEmail?asmDisplay(p.asmEmail):'',locked:!!p.locked,blocked:p.blocked||[]};
       P_.busy=false;P_.msg='';save();closeWork();render();
       toast(r.j.note||('Đã lưu: '+NANGANH(ng)+(S.asm.email?' · ASM '+S.asm.name:'')));
       pushReport(false);dirLoad();return;
@@ -4324,11 +4324,11 @@ function workSheetHTML(){
   if(!AUTH.user)asmBlock='<div class="note">Đăng nhập (mục Tài khoản) để chọn ASM phụ trách và gửi báo cáo cuối ngày.</div>';
   else if(S.asm&&S.asm.locked)asmBlock='<div class="note"><b>ASM phụ trách: '+escH(S.asm.name||S.asm.email)+'</b><div class="small muted">Quản trị viên đã gán, bạn không tự đổi được. Cần đổi hãy nhờ quản trị viên.</div></div>';
   else{
-    const prov=P_.pickProv!=null?P_.pickProv:(S.province||''),asmsF=P_.asms.filter(a=>!a.nganh||!a.nganh.length||a.nganh.indexOf(pick)>=0);
+    const prov=P_.pickProv!=null?P_.pickProv:(S.province||''),asmsF=P_.asms.filter(a=>a.email===cur||((!a.nganh||!a.nganh.length||a.nganh.indexOf(pick)>=0)&&((S.asm&&S.asm.blocked)||[]).indexOf(a.email)<0));
     const sug=prov?asmsF.find(a=>(a.provinces||[]).some(x=>normProv(x)===normProv(prov))):null;
     let sel=P_.pickAsm!=null?P_.pickAsm:cur;if(!sel&&sug)sel=sug.email;
     asmBlock='<div class="authField"><label for="workProv">Tỉnh / thành phố bạn phụ trách</label><input id="workProv" class="txt" style="padding-left:12px" type="text" maxlength="60" value="'+escH(prov)+'" placeholder="VD: Đồng Nai"></div>'+
-    (asmsF.length?'<div class="authField"><label for="workAsm">ASM phụ trách của bạn</label><select id="workAsm" class="txt" style="padding-left:12px"><option value="">— Chưa chọn —</option>'+asmsF.map(a=>'<option value="'+escH(a.email)+'"'+(sel===a.email?' selected':'')+'>'+escH(a.name||a.email)+(a.provinces&&a.provinces.length?' · '+escH(a.provinces.slice(0,3).join(', ')):(a.area?' · '+escH(a.area):''))+'</option>').join('')+'</select>'+(sug&&sel===sug.email&&!cur?'<div class="small muted" style="margin-top:4px">Gợi ý theo tỉnh bạn nhập.</div>':'')+'</div>':'<div class="note">'+(P_.loaded?(P_.asms.length?'Chưa có ASM nào phụ trách ngành này. Bạn vẫn dùng bình thường, chọn ASM sau cũng được.':'Quản trị viên chưa khai báo ASM nào. Bạn vẫn dùng bình thường, chọn ASM sau cũng được.'):'Đang tải danh sách ASM…')+'</div>');
+    (asmsF.length?'<div class="authField"><label for="workAsm">ASM phụ trách của bạn</label><select id="workAsm" class="txt" style="padding-left:12px">'+(cur?'':'<option value="">— Chưa chọn —</option>')+asmsF.map(a=>'<option value="'+escH(a.email)+'"'+(sel===a.email?' selected':'')+'>'+escH(a.name||a.email)+(a.provinces&&a.provinces.length?' · '+escH(a.provinces.slice(0,3).join(', ')):(a.area?' · '+escH(a.area):''))+'</option>').join('')+'</select>'+(sug&&sel===sug.email&&!cur?'<div class="small muted" style="margin-top:4px">Gợi ý theo tỉnh bạn nhập.</div>':'')+(cur?'<div class="small muted" style="margin-top:4px">Bạn có thể đổi sang ASM khác, nhưng không tự gỡ được. Việc gỡ khỏi nhóm do ASM hoặc quản trị viên thực hiện.</div>':'')+'</div>':'<div class="note">'+(P_.loaded?(P_.asms.length?'Chưa có ASM nào phụ trách ngành này. Bạn vẫn dùng bình thường, chọn ASM sau cũng được.':'Quản trị viên chưa khai báo ASM nào. Bạn vẫn dùng bình thường, chọn ASM sau cũng được.'):'Đang tải danh sách ASM…')+'</div>');
   }
   const disc='<div class="wk-priv"><b>ASM của bạn sẽ thấy gì?</b><div class="small">Chỉ tiêu và kế hoạch tháng, các ngày bạn bấm <b>“Gửi báo cáo”</b> (lượt ghé, doanh số, HTPP, độ phủ, số bán SO, ghi chú), và tối đa 5 cảnh báo đang bật. ASM <b>không</b> thấy nhận xét AI hay các ghi chú riêng khác của bạn. SR khác không thấy số liệu của bạn.</div></div>';
   return '<div class="acctsh-h">'+ic('users',18)+'<b style="flex:1">Công việc của bạn</b><button class="xbtn" data-act="workClose" aria-label="Đóng">✕</button></div>'+

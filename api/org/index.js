@@ -53,7 +53,7 @@ module.exports = async function (context, req) {
       const rec = { email, name: org.str(b.name, 80), nganh, asmEmail, province: org.str(b.province, 60), createdAt: Date.now() };
       const existing = (await org.listProfiles()).find((p) => org.lc(p.email) === email);
       if (existing) { // đã có tài khoản: áp dụng luôn
-        Object.assign(existing, { nganh, asmEmail, locked: !!asmEmail, province: rec.province || existing.province });
+        Object.assign(existing, { nganh, asmEmail, locked: !!asmEmail, province: rec.province || existing.province, blocked: (existing.blocked || []).filter((x) => x !== asmEmail) });
         await org.putProfile(existing);
         return reply(context, 200, { ok: true, applied: true });
       }
@@ -83,7 +83,7 @@ module.exports = async function (context, req) {
           if (!org.validEmail(email) || !emailAllowed(email) || (nganh !== 1 && nganh !== 2)) { res.skipped++; continue; }
           const asmEmail = org.findAsm(roster, x.asmEmail) ? org.lc(x.asmEmail) : "";
           const ex = byEmail[email];
-          if (ex) { Object.assign(ex, { nganh, asmEmail, locked: !!asmEmail }); await org.putProfile(ex); res.applied++; }
+          if (ex) { Object.assign(ex, { nganh, asmEmail, locked: !!asmEmail, blocked: (ex.blocked || []).filter((y) => y !== asmEmail) }); await org.putProfile(ex); res.applied++; }
           else { inv.items[email] = { email, name: org.str(x.name, 80), nganh, asmEmail, province: org.str(x.province, 60), createdAt: Date.now() }; res.invited++; }
         }
         await org.putInvites(inv);
@@ -119,6 +119,7 @@ module.exports = async function (context, req) {
         const asmEmail = org.lc(b.asmEmail);
         if (asmEmail && !org.findAsm(roster, asmEmail)) return reply(context, 400, { ok: false, error: "ASM chưa có trong danh sách." });
         p.asmEmail = asmEmail; p.locked = !!asmEmail && b.lock !== false;
+        if (asmEmail) p.blocked = (p.blocked || []).filter((x) => x !== asmEmail);
       } else {
         if (Number(b.nganh) !== 1 && Number(b.nganh) !== 2) return reply(context, 400, { ok: false, error: "Ngành không hợp lệ." });
         p.nganh = Number(b.nganh);

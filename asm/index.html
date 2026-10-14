@@ -658,6 +658,7 @@ function drawerHTML(){
     '<div class="card"><h2>Gợi ý cho ngày làm việc tới</h2><div class="small" style="margin:4px 0 10px">'+esc(suggestFocus(c,ST.date))+'</div><button class="pillbtn pri" data-act="compose" data-uid="'+m.uid+'" data-sug="'+esc(suggestFocus(c,ST.date))+'">Giao việc cho '+esc(c.name.split(' ').slice(-1)[0])+'</button></div>'+
     '<div class="card ai"><h2><span class="sp2">✦</span> AI nhận định</h2>'+((ST.ai.coach[m.uid]||{}).text?'<div class="ai-out">'+aiLines(ST.ai.coach[m.uid].text)+'</div>':(ST.ai.coach[m.uid]||{}).err?'<div class="msg">'+esc(ST.ai.coach[m.uid].err)+'</div>':'<div class="hsub">Điểm tốt, rủi ro và việc ASM nên làm trong 2 ngày tới.</div>')+'<div style="margin-top:8px"><button class="aibtn sm" data-act="aiCoach" data-uid="'+m.uid+'"'+((ST.ai.coach[m.uid]||{}).busy?' disabled':'')+'>'+((ST.ai.coach[m.uid]||{}).busy?'Đang phân tích…':(ST.ai.coach[m.uid]||{}).text?'Phân tích lại':'Nhận định về '+esc(c.name.split(' ').slice(-1)[0]))+'</button></div></div>'+
     '<div class="card"><h2>Báo cáo từng ngày</h2><div class="tblwrap"><table class="t"><thead><tr><th>Ngày</th><th class="r">Ghé</th><th class="r">DS (tr)</th><th class="r">HTPP</th><th class="r">Phủ mới</th><th class="r">SO</th><th>Ghi chú</th></tr></thead><tbody>'+(rows||'<tr><td colspan="7" class="muted">Chưa có dữ liệu.</td></tr>')+'</tbody></table></div></div>'+
+    (m.asmEmail?'<div class="card"><h2>Quản lý nhóm</h2><div class="hsub">Gỡ '+esc(c.name)+' khỏi nhóm '+(ST.data.me.admin?'của ASM hiện tại':'của bạn')+'. Tài khoản và số liệu vẫn được giữ; bạn ấy sẽ không tự chọn lại ASM này được (quản trị viên có thể thêm lại).</div><button class="pillbtn" style="color:var(--bad);border-color:var(--bad)" data-act="rmMember" data-uid="'+m.uid+'" data-name="'+esc(c.name)+'">Gỡ khỏi nhóm</button></div>':'')+
     '<div class="card"><h2>Việc đã giao</h2><div class="dirs">'+(dirs||'<div class="muted small">Chưa giao việc nào.</div>')+'</div></div></div></aside></div>';
 }
 
@@ -946,6 +947,7 @@ document.addEventListener('click',function(e){
   else if(a==='copySum'){copySummary();return;}
   else if(a==='selAll'){const all=filterList(members().map(m=>calc(m,ST.date))),any=all.some(c=>ST.nsel[c.m.uid]!==false);all.forEach(c=>{ST.nsel[c.m.uid]=!any;});}
   else if(a==='sendPlan'){sendPlan();return;}
+  else if(a==='rmMember'){if(confirm('Gỡ '+d.name+' khỏi nhóm của bạn?\n\nTài khoản và số liệu vẫn được giữ. Bạn ấy sẽ không tự chọn lại ASM này được.')){api('POST','/api/team',{op:'removeMember',uid:d.uid}).then(async r=>{if(r.s===200){ST.drawer=null;toast('Đã gỡ '+d.name+' khỏi nhóm');await loadData(true);render();}else toast((r.j&&r.j.error)||'Không gỡ được.',3000);});}return;}
   else if(a==='aiBrief'){aiBrief();return;}
   else if(a==='aiPlan'){aiPlan();return;}
   else if(a==='aiCoach'){aiCoach(d.uid);return;}
