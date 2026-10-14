@@ -1344,6 +1344,39 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   .brandmark{width:18px;height:18px}
 }
 
+/* ===== Ngành 1: tông xanh thương hiệu Karofi (Ngành 2 giữ teal Livotec). Đổi màu ở đây nếu cần đúng mã thương hiệu. ===== */
+:root[data-ng="1"]{
+  --karofi:#0B5CAD; --livotec:#02B6AC;
+  --bg:#EAF2FA; --surface:#FFFFFF; --surface-2:#F2F7FD; --ink:#0A2540; --muted:#52708F; --line:#C8DBEE;
+  --brand:#1A7BD0; --brand-deep:#0B5CAD; --brand-soft:#DCEBFA; --on-brand:#FFFFFF; --teal-text:#0B5CAD;
+  --grad:linear-gradient(135deg,#0B5CAD,#1A7BD0); --btn-grad:var(--grad);
+  --top-grad:linear-gradient(160deg,#1A7BD0 0%,#0F66B8 52%,#0A4A8F 100%); --top-flat:#1A7BD0;
+  --shadow:0 1px 2px rgba(10,40,80,.05),0 10px 26px rgba(11,92,173,.10); --btn-shadow:0 8px 18px rgba(11,92,173,.25);
+  --thead:#0A2540; --focus:#0B5CAD; --bn:#0B5CAD; --bn-soft:#DCEBFA; --gd:#02A79E; --gd-soft:#D6F3F0; --gd-rgb:2,167,158;
+}
+@media (prefers-color-scheme: dark){
+  :root[data-ng="1"]:not([data-theme="light"]){
+    --karofi:#4DA3F0; --livotec:#14D4C6;
+    --bg:#061A2E; --surface:#0D2940; --surface-2:#10304B; --ink:#E3EFFA; --muted:#8FB0CF; --line:#1A4569;
+    --on:#061A2E; --brand:#4DA3F0; --brand-deep:#6DB8F5; --brand-soft:#123A5E; --on-brand:#04182A; --teal-text:#8CC8F8;
+    --grad:linear-gradient(135deg,#5AB0F5,#2F8EDD); --btn-grad:var(--grad);
+    --top-grad:linear-gradient(160deg,#0F5FA8 0%,#0A3F73 55%,#062A4D 100%); --top-flat:#0F5FA8;
+    --thead:#123A5E; --focus:#6DB8F5; --bn:#5AB0F5; --bn-soft:#123A5E; --gd:#2EDDD0; --gd-soft:#0F403C; --gd-rgb:46,221,208;
+  }
+}
+:root[data-ng="1"][data-theme="dark"]{
+  --karofi:#4DA3F0; --livotec:#14D4C6;
+  --bg:#061A2E; --surface:#0D2940; --surface-2:#10304B; --ink:#E3EFFA; --muted:#8FB0CF; --line:#1A4569;
+  --on:#061A2E; --brand:#4DA3F0; --brand-deep:#6DB8F5; --brand-soft:#123A5E; --on-brand:#04182A; --teal-text:#8CC8F8;
+  --grad:linear-gradient(135deg,#5AB0F5,#2F8EDD); --btn-grad:var(--grad);
+  --top-grad:linear-gradient(160deg,#0F5FA8 0%,#0A3F73 55%,#062A4D 100%); --top-flat:#0F5FA8;
+  --thead:#123A5E; --focus:#6DB8F5; --bn:#5AB0F5; --bn-soft:#123A5E; --gd:#2EDDD0; --gd-soft:#0F403C; --gd-rgb:46,221,208;
+}
+:root[data-ng="1"] .tabs button[aria-selected="true"]{box-shadow:0 6px 16px rgba(11,92,173,.3)}
+:root[data-ng="1"] .top h1,:root[data-ng="1"] .top .sub{text-shadow:0 1px 8px rgba(5,35,70,.35)}
+@media (min-width:860px){
+  :root[data-ng="1"] .top{background-image:linear-gradient(90deg,rgba(4,30,64,.66) 0%,rgba(4,30,64,.36) 38%,rgba(4,30,64,.05) 62%),linear-gradient(135deg,#1A7BD0,#0A4A8F),url('hero-bg.jpg');background-blend-mode:normal,color,normal}
+}
 /* Ngành, hồ sơ công việc, báo cáo cuối ngày */
 .wk-ngs{display:grid;gap:8px;margin:8px 0}
 .wk-ng{display:flex;flex-direction:column;gap:2px;text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:14px;padding:11px 12px;cursor:pointer}
@@ -1462,6 +1495,8 @@ const NGANH_CFG={
 let CUR_NG=2;
 function applyNganh(n){
   CUR_NG=(+n===1)?1:2;
+  document.documentElement.setAttribute('data-ng',String(CUR_NG));
+  {const tc=document.querySelector('meta[name="theme-color"]');if(tc)tc.setAttribute('content',CUR_NG===1?'#1A7BD0':'#02A79E');}
   PRODUCTS.length=0;NGANH_CFG[CUR_NG].prods.forEach(p=>PRODUCTS.push(Object.assign({},p)));
   if(typeof STRATS!=='undefined'){STRATS.length=0;(CUR_NG===1?STRATS_N1:STRATS_N2).forEach(x=>STRATS.push(x));}
 }
