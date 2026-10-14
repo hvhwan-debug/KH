@@ -677,7 +677,7 @@ async function boot(){
     const r=await api('GET','/api/auth/me');
     if(r.s!==200||!r.j.avail){ST.boot='error';ST.err='Đăng nhập chưa được cấu hình trên máy chủ.';render();return;}
     if(!r.j.loggedIn){ST.boot='login';render();return;}
-    if(!r.j.isAdmin&&!r.j.isAsm){ST.boot='denied';render();return;}
+    if(!r.j.isAdmin&&!r.j.isAsm){ST.boot='denied';ST.who=r.j.email||'';render();return;}
     await loadData();
   }catch(e){ST.boot='error';ST.err='Không kết nối được máy chủ.';render();}
 }
@@ -687,7 +687,7 @@ function render(){
   const root=$('#root'),ae=document.activeElement,keep=ae&&ae.id&&(ae.id==='q'||ae.id==='ctext')?{id:ae.id,s:ae.selectionStart,e:ae.selectionEnd}:null,sy=window.scrollY;
   if(ST.boot==='loading'){root.innerHTML='<div class="wrap" style="padding-top:60px"><div class="skel" style="height:180px;margin-bottom:12px"></div><div class="cards"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div></div>';return;}
   if(ST.boot==='login'){root.innerHTML=loginHTML();return;}
-  if(ST.boot==='denied'){root.innerHTML='<div class="login"><div class="card"><h1 style="font-size:19px;margin:0 0 6px">Chưa có quyền truy cập</h1><p class="muted" style="margin:0 0 14px">Tài khoản này chưa được khai báo là ASM. Hãy nhờ quản trị viên thêm email của bạn vào danh sách ASM.</p><a class="btn ghost" style="display:block;text-align:center;text-decoration:none;padding:11px" href="../">Về ứng dụng chính</a><button class="btn ghost" data-act="logout" style="margin-top:8px">Đăng xuất</button></div></div>';return;}
+  if(ST.boot==='denied'){root.innerHTML='<div class="login"><div class="card"><h1 style="font-size:19px;margin:0 0 6px">Chưa có quyền truy cập</h1><p class="muted" style="margin:0 0 14px">Bạn đang đăng nhập bằng <b>'+esc(ST.who||'?')+'</b>, email này chưa được khai báo là ASM hay quản trị viên. Nếu đây không phải email của bạn, hãy đăng xuất rồi đăng nhập lại đúng email. Nếu đúng, nhờ quản trị viên thêm email vào danh sách ASM.</p><a class="btn ghost" style="display:block;text-align:center;text-decoration:none;padding:11px" href="../">Về ứng dụng chính</a><button class="btn ghost" data-act="logout" style="margin-top:8px">Đăng xuất</button></div></div>';return;}
   if(ST.boot==='error'){root.innerHTML='<div class="login"><div class="card"><h1 style="font-size:19px;margin:0 0 6px">Không tải được</h1><p class="muted">'+esc(ST.err)+'</p><button class="btn" data-act="refresh">Thử lại</button></div></div>';return;}
   const all=members().map(m=>calc(m,ST.date)),nFeed=buildFeed(all,ST.date).filter(i=>i.lv!=='info').length;
   let view='';
