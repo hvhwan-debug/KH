@@ -3087,7 +3087,7 @@ async function acForgotSend(){
   try{
     const r=await api('POST','/api/auth/reset-request',{email:email});
     AUTH.forgotBusy=false;
-    AUTH.forgotMsg=(r.j&&r.j.message)||'Nếu email này có tài khoản, một liên kết đặt lại mật khẩu đã được gửi.';
+    AUTH.forgotMsg=(r.j&&r.j.message)||'Nếu email này có tài khoản, một liên kết đặt lại mật khẩu đã được gửi.';if(r.j&&r.j.mail===false)AUTH.forgotMsg=r.j.message;
   }catch(e){AUTH.forgotBusy=false;AUTH.forgotMsg='Lỗi mạng. Thử lại.';}
   render();
 }

@@ -10,7 +10,7 @@ const mail = require("../_lib/mail");
 const MAXREQ = 5; // mỗi giờ, theo từng tài khoản — chống gửi email dồn dập
 
 module.exports = async function (context, req) {
-  const generic = { ok: true, message: "Nếu email này có tài khoản, một liên kết đặt lại mật khẩu đã được gửi tới hộp thư." };
+  const generic = { ok: true, mail: mailConfigured(), message: mailConfigured() ? "Nếu email này có tài khoản, một liên kết đặt lại mật khẩu đã được gửi tới hộp thư." : "Hệ thống chưa cấu hình gửi email nên không thể gửi liên kết đặt lại. Hãy nhờ quản trị viên đặt lại mật khẩu cho bạn." };
   try {
     if (guardConfigured(context) || !requireAjax(context, req)) return;
     const email = String((req.body && req.body.email) || "").trim().toLowerCase();

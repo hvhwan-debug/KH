@@ -942,10 +942,20 @@ function loginHTML(){
   const L=ST.login,reg=L.tab==='register';
   return '<div class="login"><div class="card fadein"><div class="logo"><img src="../icon-192.png" alt=""><div><h1>Quản lý ASM</h1><p>Theo dõi nhân sự bán hàng kênh GT</p></div></div>'+
     (L.otp?'<div class="fld"><label for="lOtp">Mã xác minh 6 số đã gửi tới '+esc(L.email)+'</label><input id="lOtp" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" style="letter-spacing:.3em;font-weight:700"></div><button class="btn" data-act="lsubmit"'+(L.busy?' disabled':'')+'>Xác minh</button><div style="margin-top:8px"><button class="linkbtn" data-act="lcancel">Quay lại</button></div>':
+    (L.tab==='forgot'?'<div class="b" style="font-size:16px;margin:4px 0">Quên mật khẩu</div><div class="small muted">Nhập email đã đăng ký. Chúng tôi gửi một liên kết đặt mật khẩu mới (có hiệu lực 1 giờ). Đặt xong, bạn quay lại trang này để đăng nhập.</div><div class="fld"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="email" maxlength="120" value="'+esc(L.email)+'"></div><button class="btn" data-act="lforgot"'+(L.busy?' disabled':'')+'>Gửi liên kết đặt lại</button><div style="margin-top:8px"><button class="linkbtn" data-act="ltab" data-v="login">← Quay lại đăng nhập</button></div>':
     '<div class="seg" style="margin-bottom:6px"><button data-act="ltab" data-v="login" aria-pressed="'+!reg+'">Đăng nhập</button><button data-act="ltab" data-v="register" aria-pressed="'+reg+'">Đăng ký</button></div>'+
     (reg?'<div class="fld"><label for="lName">Họ tên</label><input id="lName" type="text" autocomplete="name" maxlength="80" value="'+esc(L.name)+'"></div>':'')+
-    '<div class="fld"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="email" maxlength="120" value="'+esc(L.email)+'"></div><div class="fld"><label for="lPass">Mật khẩu</label><input id="lPass" type="password" autocomplete="'+(reg?'new':'current')+'-password" maxlength="200"></div><button class="btn" data-act="lsubmit"'+(L.busy?' disabled':'')+'>'+(reg?'Tạo tài khoản':'Đăng nhập')+'</button><div class="small muted" style="margin-top:10px">Quên mật khẩu? Dùng chức năng “Quên mật khẩu” ở <a href="../" style="color:var(--n1)">ứng dụng chính</a>.</div>')+
-    (L.msg?'<div class="msg">'+esc(L.msg)+'</div>':'')+'</div></div>';
+    '<div class="fld"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="email" maxlength="120" value="'+esc(L.email)+'"></div><div class="fld"><label for="lPass">Mật khẩu</label><input id="lPass" type="password" autocomplete="'+(reg?'new':'current')+'-password" maxlength="200"></div><button class="btn" data-act="lsubmit"'+(L.busy?' disabled':'')+'>'+(reg?'Tạo tài khoản':'Đăng nhập')+'</button><div class="small muted" style="margin-top:10px"><button class="linkbtn" data-act="ltab" data-v="forgot" style="padding:0">Quên mật khẩu?</button></div>'))+
+    (L.msg?'<div class="msg'+(L.ok?' okm':'')+'">'+esc(L.msg)+'</div>':'')+'</div></div>';
+}
+async function lforgot(){
+  const L=ST.login;if(L.busy)return;
+  L.email=($('#lEmail')?$('#lEmail').value:L.email).trim().toLowerCase();
+  if(!emailOk(L.email)){L.msg='Nhập email hợp lệ.';render();return;}
+  L.busy=true;L.msg='';render();
+  try{const r=await api('POST','/api/auth/reset-request',{email:L.email});L.msg=(r.j&&r.j.message)||'Nếu email này có tài khoản, liên kết đặt lại đã được gửi.';L.ok=!(r.j&&r.j.mail===false);}
+  catch(e){L.msg='Không kết nối được máy chủ.';L.ok=false;}
+  L.busy=false;render();
 }
 async function lsubmit(){
   const L=ST.login;if(L.busy)return;
@@ -1086,6 +1096,7 @@ document.addEventListener('click',function(e){
   else if(a==='aiCompose'){aiCompose();return;}
   else if(a==='ltab'){ST.login.tab=d.v;ST.login.msg='';if($('#lEmail'))ST.login.email=$('#lEmail').value;}
   else if(a==='lsubmit'){lsubmit();return;}
+  else if(a==='lforgot'){lforgot();return;}
   else if(a==='lcancel'){ST.login.otp=false;ST.login.msg='';}
   else if(a==='oaNg'){const F0=ST.of;if($('#oaEmail')){F0.email=$('#oaEmail').value;F0.name=$('#oaName').value;F0.prov=$('#oaProv').value;}ST.of[d.v==='1'?'n1':'n2']=!ST.of[d.v==='1'?'n1':'n2'];}
   else if(a==='editAsm'){const x=ST.org.asms.find(z=>z.email===d.email);if(x){const ng=x.nganh&&x.nganh.length?x.nganh:[1,2];ST.of={email:x.email,name:x.name||'',n1:ng.indexOf(1)>=0,n2:ng.indexOf(2)>=0,prov:(x.provinces||[]).join(', ')};}}
@@ -1124,7 +1135,7 @@ document.addEventListener('input',function(e){
 });
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){if(ST.mm){ST.mm=null;render();}else if(ST.compose){ST.compose=null;render();}else if(ST.drawer){ST.drawer=null;render();}}
-  else if(e.key==='Enter'&&(e.target.id==='lPass'||e.target.id==='lEmail'||e.target.id==='lOtp'))lsubmit();
+  else if(e.key==='Enter'&&(e.target.id==='lPass'||e.target.id==='lEmail'||e.target.id==='lOtp'))(ST.login.tab==='forgot'?lforgot():lsubmit());
 });
 // Tự làm mới mỗi phút khi đang mở trang (không ngắt lúc đang gõ / có hộp thoại)
 setInterval(function(){if(document.visibilityState==='visible'&&ST.boot==='ready'&&!ST.compose&&!ST.mm&&ST.tab!=='plan')loadData(true);},60000);
