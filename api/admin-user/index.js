@@ -18,6 +18,8 @@ module.exports = async function (context, req) {
     if (req.method === "GET") {
       const doc = await store.get(key);
       if (!doc) return reply(context, 404, { ok: false, error: "Không tìm thấy thành viên." });
+      // Không bao giờ trả băm mật khẩu, mã OTP hay bộ đếm đăng nhập ra trình duyệt.
+      ["pwd", "otp", "otpExp", "otpFails", "otpSendTimes", "failTimes"].forEach((k) => { delete doc[k]; });
       return reply(context, 200, { ok: true, doc: doc });
     }
 
@@ -25,6 +27,7 @@ module.exports = async function (context, req) {
       if (!requireAjax(context, req)) return;
       if (uid === u.uid) return reply(context, 400, { ok: false, error: "Không thể tự xoá chính tài khoản đang đăng nhập." });
       await store.del(key);
+      for (const k of ["profile/", "report/", "directive/"]) { try { await store.del(k + uid + ".json"); } catch (e) {} }
       return reply(context, 200, { ok: true });
     }
 
