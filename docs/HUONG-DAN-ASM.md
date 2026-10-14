@@ -43,7 +43,7 @@ Dùng chung cấu hình AI của app (`AZURE_OPENAI_ENDPOINT/KEY/DEPLOYMENT`, ho
 AI chỉ nhận số liệu đã tính (không gửi email, số điện thoại, địa chỉ) và được dặn không bịa tên đại lý, giá, model.
 
 ## Màu theo ngành
-Ngành 2 giữ teal Livotec; Ngành 1 đổi toàn bộ sang xanh Karofi (thuộc tính `data-ng` trên thẻ html). Phần lớn CSS Ngành 1 được **sinh tự động** từ CSS gốc: sau khi sửa CSS trong `index.html`, chạy `python3 dev/gen-ng1-theme.py` để cập nhật. Mã màu Karofi chỉnh trong khối "Ngành 1: tông xanh thương hiệu Karofi" và hằng `SHIFT` của bộ sinh.
+Ngành 2 giữ teal Livotec; Ngành 1 đổi toàn bộ sang xanh Karofi, lấy từ logo (#25A8E1) (thuộc tính `data-ng` trên thẻ html). Phần lớn CSS Ngành 1 được **sinh tự động** từ CSS gốc: sau khi sửa CSS trong `index.html`, chạy `python3 dev/gen-ng1-theme.py` để cập nhật. Mã màu Karofi chỉnh trong khối "Ngành 1: tông xanh thương hiệu Karofi" và hằng `SHIFT` của bộ sinh.
 
 ## Hai ngành
 - **Ngành 1**: Karofi và Livotec máy lọc nước (hai nhóm chỉ tiêu: Karofi, Livotec).

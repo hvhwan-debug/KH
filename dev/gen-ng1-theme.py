@@ -5,7 +5,7 @@ Chạy lại khi sửa CSS:  python3 dev/gen-ng1-theme.py   (ghi đè khối gi�
 import re, colorsys, sys
 P = sys.argv[1] if len(sys.argv) > 1 else 'index.html'
 BEGIN, END = '/* AUTO-NG1-BEGIN (dev/gen-ng1-theme.py) */', '/* AUTO-NG1-END */'
-SHIFT = 32 / 360.0   # teal ~178° -> xanh Karofi ~210°
+SHIFT = 21 / 360.0   # teal ~177° -> xanh Karofi ~198° (logo: #25A8E1)
 
 s = open(P, encoding='utf-8').read()
 # bỏ khối cũ nếu có
