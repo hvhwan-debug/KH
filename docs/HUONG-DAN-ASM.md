@@ -5,6 +5,12 @@
 2. Quản trị viên đăng nhập, mở `/asm/` > tab **Quản trị** > thêm từng ASM (email phải thuộc tên miền đã cho phép dùng ứng dụng).
 3. SR mở app, bấm **Thiết lập > Đổi** (hoặc thẻ "Hoàn tất hồ sơ"), chọn ngành và ASM. Quản trị viên có thể gán/khoá ASM và đổi ngành cho SR.
 
+## Quản trị (tab Quản trị trên /asm/)
+- **Cấp vai trò**: chọn SR hoặc ASM cho từng thành viên. Quản trị viên cao nhất đặt trong `ADMIN_EMAILS`.
+- **ASM phụ trách ngành nào, tỉnh/thành nào**: nút Sửa ở mỗi ASM. SR chỉ chọn được ASM đúng ngành của mình; nhập tỉnh thì app gợi ý ASM phụ trách tỉnh đó (chỉ khi chưa chọn ASM).
+- **Tạo trước thành viên**: khai báo email + ngành + ASM + tỉnh, người đó đăng nhập app lần đầu sẽ tự có hồ sơ (ASM bị khoá).
+- **Giao việc**: ở tab Hôm nay, ASM/quản trị viên giao việc cho một người, một ngành hoặc cả nhóm.
+
 ## Hai ngành
 - **Ngành 1**: Karofi và Livotec máy lọc nước (hai nhóm chỉ tiêu: Karofi, Livotec).
 - **Ngành 2**: Livotec gia dụng, không gồm máy lọc nước (bình nước nóng, gia dụng & điện máy).

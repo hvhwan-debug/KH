@@ -103,5 +103,23 @@ const dayOff = (n) => new Date(Date.now() + 7 * 3600e3 + n * 864e5).toISOString(
   r = await admin.call("DELETE", "/api/admin/user?uid=" + sr1uid); ok(r.s === 200, "xoá thành viên");
   r = await admin.call("GET", "/api/org"); ok(!r.j.profiles.some((p) => p.uid === sr1uid), "xoá thành viên cũng xoá hồ sơ");
 
+  // Ngành + tỉnh/thành của ASM, tạo trước thành viên
+  const a3 = client(); await a3.login("asm3@livotec.vn", "ASM Ba");
+  r = await admin.call("POST", "/api/org", { op: "addAsm", email: "asm3@livotec.vn", name: "ASM Ba", nganh: [1], provinces: "Tỉnh Đồng Nai, TP. Hồ Chí Minh, đồng nai" });
+  const rec3 = r.j.asms.find((a) => a.email === "asm3@livotec.vn");
+  ok(r.s === 200 && rec3.nganh.join() === "1" && rec3.provinces.length === 2, "ASM chỉ phụ trách ngành 1, 2 tỉnh (bỏ trùng)");
+  r = await s3.call("GET", "/api/profile"); const x3 = r.j.asms.find((a) => a.email === "asm3@livotec.vn");
+  ok(x3 && x3.nganh.join() === "1" && x3.provinces.includes("Tỉnh Đồng Nai"), "SR thấy ngành + tỉnh của ASM khi chọn");
+  r = await s3.call("POST", "/api/profile", { nganh: 2, asmEmail: "asm3@livotec.vn" }); ok(r.s === 400, "không chọn được ASM không phụ trách ngành mình");
+  r = await s3.call("POST", "/api/profile", { nganh: 1, asmEmail: "asm3@livotec.vn", province: "Đồng Nai" }); ok(r.s === 200, "chọn đúng ngành thì được");
+  const ivMail = "moi" + Date.now().toString(36) + "@livotec.vn";
+  r = await admin.call("POST", "/api/org", { op: "invite", email: ivMail, name: "Nhân sự mới", nganh: 1, asmEmail: "asm3@livotec.vn", province: "Biên Hòa" }); ok(r.s === 200 && r.j.applied === false, "tạo trước thành viên chưa có tài khoản");
+  r = await admin.call("GET", "/api/org"); ok(r.j.invites.some((i) => i.email === ivMail), "danh sách lời mời hiện thành viên chờ");
+  const nw = client(); await nw.login(ivMail, "Nhân sự mới");
+  r = await nw.call("GET", "/api/profile"); ok(r.j.profile && r.j.profile.nganh === 1 && r.j.profile.asmEmail === "asm3@livotec.vn" && r.j.profile.locked === true, "đăng nhập lần đầu: tự có ngành 1 + ASM (khoá)");
+  r = await admin.call("GET", "/api/org"); ok(!r.j.invites.some((i) => i.email === ivMail), "lời mời được dùng xong thì bỏ");
+  r = await admin.call("POST", "/api/org", { op: "invite", email: ivMail, nganh: 2 }); ok(r.s === 200 && r.j.applied === true, "mời email đã có tài khoản: áp dụng ngay");
+  r = await s1.call("POST", "/api/org", { op: "invite", email: ivMail, nganh: 2 }); ok(r.s === 403, "SR không tạo được lời mời");
+
   console.log("\n" + pass + " đạt, " + fail + " lỗi"); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

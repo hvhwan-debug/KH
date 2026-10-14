@@ -22,6 +22,20 @@ async function getRoster() {
 async function putRoster(r) { r.updatedAt = Date.now(); await store.put("org/roster.json", r); }
 const findAsm = (roster, email) => roster.asms.find((a) => a.email === lc(email)) || null;
 
+// Tỉnh/thành: so khớp không phân biệt hoa thường, bỏ tiền tố "Tỉnh", "TP."
+const normProv = (s) => String(s || "").toLowerCase().replace(/^(tp\.?|thành phố|tỉnh)\s+/, "").replace(/\s+/g, " ").trim();
+// Bản ghi ASM: phụ trách những ngành nào, những tỉnh/thành nào. Bản ghi cũ không có nganh = phụ trách cả hai ngành.
+function asmRec(b, cur, email) {
+  let ng = Array.isArray(b.nganh) ? b.nganh.map(Number).filter((x) => x === 1 || x === 2) : (cur && cur.nganh) || [1, 2];
+  ng = ng.filter((x, i) => ng.indexOf(x) === i); if (!ng.length) ng = [1, 2];
+  let pv = Array.isArray(b.provinces) ? b.provinces : typeof b.provinces === "string" ? b.provinces.split(/[,;\n]/) : (cur && cur.provinces) || [];
+  pv = pv.map((x) => str(x, 60)).filter(Boolean).filter((x, i, a) => a.findIndex((y) => normProv(y) === normProv(x)) === i).slice(0, 40);
+  return { email, name: str(b.name, 80), area: str(b.area != null ? b.area : (cur && cur.area), 80), nganh: ng, provinces: pv, addedAt: cur ? cur.addedAt : Date.now() };
+}
+const asmCovers = (a, nganh) => !a.nganh || !a.nganh.length || a.nganh.indexOf(nganh) >= 0;
+async function getInvites() { const r = await store.get("org/invites.json"); return r && r.items ? r : { v: 1, items: {} }; }
+async function putInvites(r) { await store.put("org/invites.json", r); }
+
 async function getProfile(uid) { return store.get("profile/" + uid + ".json"); }
 async function putProfile(p) { p.updatedAt = Date.now(); await store.put("profile/" + p.uid + ".json", p); }
 
@@ -93,4 +107,4 @@ function cleanPlan(p) {
   };
 }
 
-module.exports = { NGANH, DATE_RE, MONTH_RE, num, str, lc, validEmail, getRoster, putRoster, findAsm, getProfile, putProfile, rolesOf, listProfiles, validDate, vnToday, addDays, cleanEntry, cleanPlan };
+module.exports = { normProv, asmRec, asmCovers, getInvites, putInvites, NGANH, DATE_RE, MONTH_RE, num, str, lc, validEmail, getRoster, putRoster, findAsm, getProfile, putProfile, rolesOf, listProfiles, validDate, vnToday, addDays, cleanEntry, cleanPlan };

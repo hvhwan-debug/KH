@@ -26,7 +26,7 @@ module.exports = async function (context, req) {
       return reply(context, 200, {
         ok: true, asms: roster.asms,
         profiles: profiles.map((p) => ({ uid: p.uid, email: p.email, name: p.name || "", nganh: p.nganh, asmEmail: p.asmEmail || "", locked: !!p.locked, province: p.province || "" })),
-        orphans
+        orphans, invites: Object.values((await org.getInvites()).items)
       });
     }
 
@@ -37,10 +37,35 @@ module.exports = async function (context, req) {
       const email = org.lc(b.email);
       if (!org.validEmail(email) || !emailAllowed(email)) return reply(context, 400, { ok: false, error: "Email không hợp lệ hoặc chưa được phép dùng ứng dụng." });
       const cur = org.findAsm(roster, email);
-      const rec = { email, name: org.str(b.name, 80), area: org.str(b.area, 80), addedAt: cur ? cur.addedAt : Date.now() };
+      const rec = org.asmRec(b, cur, email);
       roster.asms = roster.asms.filter((a) => a.email !== email).concat([rec]).slice(0, 200);
       await org.putRoster(roster);
       return reply(context, 200, { ok: true, asms: roster.asms });
+    }
+
+    if (b.op === "invite") { // tạo trước thành viên: khi họ đăng nhập app lần đầu sẽ tự có ngành + ASM + tỉnh
+      const email = org.lc(b.email);
+      if (!org.validEmail(email) || !emailAllowed(email)) return reply(context, 400, { ok: false, error: "Email không hợp lệ hoặc chưa được phép dùng ứng dụng." });
+      const nganh = Number(b.nganh);
+      if (nganh !== 1 && nganh !== 2) return reply(context, 400, { ok: false, error: "Hãy chọn ngành." });
+      const asmEmail = org.lc(b.asmEmail);
+      if (asmEmail && !org.findAsm(roster, asmEmail)) return reply(context, 400, { ok: false, error: "ASM chưa có trong danh sách." });
+      const rec = { email, name: org.str(b.name, 80), nganh, asmEmail, province: org.str(b.province, 60), createdAt: Date.now() };
+      const existing = (await org.listProfiles()).find((p) => org.lc(p.email) === email);
+      if (existing) { // đã có tài khoản: áp dụng luôn
+        Object.assign(existing, { nganh, asmEmail, locked: !!asmEmail, province: rec.province || existing.province });
+        await org.putProfile(existing);
+        return reply(context, 200, { ok: true, applied: true });
+      }
+      const inv = await org.getInvites(); inv.items[email] = rec;
+      const keys = Object.keys(inv.items); if (keys.length > 500) delete inv.items[keys[0]];
+      await org.putInvites(inv);
+      return reply(context, 200, { ok: true, applied: false, invites: Object.values(inv.items) });
+    }
+
+    if (b.op === "removeInvite") {
+      const inv = await org.getInvites(); delete inv.items[org.lc(b.email)]; await org.putInvites(inv);
+      return reply(context, 200, { ok: true, invites: Object.values(inv.items) });
     }
 
     if (b.op === "removeAsm") {

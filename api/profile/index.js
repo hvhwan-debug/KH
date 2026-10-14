@@ -16,7 +16,15 @@ module.exports = async function (context, req) {
     const roster = await org.getRoster();
     const roles = await org.rolesOf(u.email, roster);
     let p = await org.getProfile(u.uid);
-    const asms = roster.asms.map((a) => ({ email: a.email, name: a.name || a.email, area: a.area || "" }));
+    if (!p) { // quản trị viên đã tạo trước thành viên này
+      const inv = await org.getInvites(), it = inv.items[org.lc(u.email)];
+      if (it) {
+        const ud0 = (await store.get("user/" + u.uid + ".json")) || {};
+        p = { uid: u.uid, email: u.email, name: org.str(ud0.name, 80) || it.name || "", nganh: it.nganh, asmEmail: it.asmEmail || "", province: it.province || "", locked: !!it.asmEmail, createdAt: Date.now() };
+        await org.putProfile(p); delete inv.items[org.lc(u.email)]; await org.putInvites(inv);
+      }
+    }
+    const asms = roster.asms.map((a) => ({ email: a.email, name: a.name || a.email, area: a.area || "", nganh: a.nganh && a.nganh.length ? a.nganh : [1, 2], provinces: a.provinces || [] }));
     const pub = (x) => x && ({ nganh: x.nganh, asmEmail: x.asmEmail || "", province: x.province || "", locked: !!x.locked, updatedAt: x.updatedAt });
 
     if (req.method === "GET") {
@@ -31,6 +39,7 @@ module.exports = async function (context, req) {
     if (nganh !== 1 && nganh !== 2) return reply(context, 400, { ok: false, error: "Hãy chọn ngành 1 hoặc ngành 2." });
     const asmEmail = org.lc(b.asmEmail);
     if (asmEmail && !org.findAsm(roster, asmEmail)) return reply(context, 400, { ok: false, error: "ASM này chưa có trong danh sách." });
+    if (asmEmail && !org.asmCovers(org.findAsm(roster, asmEmail), nganh)) return reply(context, 400, { ok: false, error: "ASM này không phụ trách ngành bạn chọn." });
 
     const ud = (await store.get("user/" + u.uid + ".json")) || {};
     const now = Date.now();

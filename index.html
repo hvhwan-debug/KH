@@ -4210,10 +4210,12 @@ async function profileLoad(){
   }catch(e){}
   softRender();
 }
+const normProv=x=>String(x||'').toLowerCase().replace(/^(tp\.?|thành phố|tỉnh)\s+/,'').replace(/\s+/g,' ').trim();
 function asmDisplay(e){const a=PROF.asms.find(x=>x.email===e);return a?(a.name||a.email):(S.asm&&S.asm.email===e?(S.asm.name||e):e);}
 async function profileSave(){
   const P_=PROF;if(P_.busy)return;
-  const sel=document.getElementById('workAsm'),ng=P_.pick||S.nganh||2,asmEmail=sel?sel.value:(P_.pickAsm!=null?P_.pickAsm:(S.asm&&S.asm.email)||'');
+  const sel=document.getElementById('workAsm'),pv=document.getElementById('workProv'),ng=P_.pick||S.nganh||2,asmEmail=sel?sel.value:(P_.pickAsm!=null?P_.pickAsm:(S.asm&&S.asm.email)||'');
+  if(pv)S.province=pv.value.trim();
   if(S.nganh&&ng!==S.nganh){
     if(!confirm('Đổi sang '+NANGANH(ng)+'?\n\nSố liệu của '+NANGANH(S.nganh)+' được cất lại, khi bạn quay về sẽ khôi phục nguyên vẹn.'))return;
   }
@@ -4234,7 +4236,7 @@ async function profileSave(){
 }
 const NANGANH=n=>NANGANH_NAME[n===1?1:2];
 const NANGANH_NAME={1:NGANH_CFG[1].name,2:NGANH_CFG[2].name};
-function openWork(){PROF.pick=S.nganh||CUR_NG;PROF.pickAsm=null;PROF.msg='';renderWorkSheet();document.getElementById('workSheet').hidden=false;if(AUTH.user&&!PROF.loaded)profileLoad().then(renderWorkSheet);}
+function openWork(){PROF.pick=S.nganh||CUR_NG;PROF.pickAsm=null;PROF.pickProv=null;PROF.msg='';renderWorkSheet();document.getElementById('workSheet').hidden=false;if(AUTH.user&&!PROF.loaded)profileLoad().then(renderWorkSheet);}
 function closeWork(){document.getElementById('workSheet').hidden=true;}
 function workSheetHTML(){
   const P_=PROF,pick=P_.pick||S.nganh||CUR_NG,cur=S.asm&&S.asm.email||'';
@@ -4243,8 +4245,11 @@ function workSheetHTML(){
   if(!AUTH.user)asmBlock='<div class="note">Đăng nhập (mục Tài khoản) để chọn ASM phụ trách và gửi báo cáo cuối ngày.</div>';
   else if(S.asm&&S.asm.locked)asmBlock='<div class="note"><b>ASM phụ trách: '+escH(S.asm.name||S.asm.email)+'</b><div class="small muted">Quản trị viên đã gán, bạn không tự đổi được. Cần đổi hãy nhờ quản trị viên.</div></div>';
   else{
-    const sel=P_.pickAsm!=null?P_.pickAsm:cur;
-    asmBlock=(P_.asms.length?'<div class="authField"><label for="workAsm">ASM phụ trách của bạn</label><select id="workAsm" class="txt" style="padding-left:12px"><option value="">— Chưa chọn —</option>'+P_.asms.map(a=>'<option value="'+escH(a.email)+'"'+(sel===a.email?' selected':'')+'>'+escH(a.name||a.email)+(a.area?' · '+escH(a.area):'')+'</option>').join('')+'</select></div>':'<div class="note">'+(P_.loaded?'Quản trị viên chưa khai báo ASM nào. Bạn vẫn dùng bình thường, chọn ASM sau cũng được.':'Đang tải danh sách ASM…')+'</div>');
+    const prov=P_.pickProv!=null?P_.pickProv:(S.province||''),asmsF=P_.asms.filter(a=>!a.nganh||!a.nganh.length||a.nganh.indexOf(pick)>=0);
+    const sug=prov?asmsF.find(a=>(a.provinces||[]).some(x=>normProv(x)===normProv(prov))):null;
+    let sel=P_.pickAsm!=null?P_.pickAsm:cur;if(!sel&&sug)sel=sug.email;
+    asmBlock='<div class="authField"><label for="workProv">Tỉnh / thành phố bạn phụ trách</label><input id="workProv" class="txt" style="padding-left:12px" type="text" maxlength="60" value="'+escH(prov)+'" placeholder="VD: Đồng Nai"></div>'+
+    (asmsF.length?'<div class="authField"><label for="workAsm">ASM phụ trách của bạn</label><select id="workAsm" class="txt" style="padding-left:12px"><option value="">— Chưa chọn —</option>'+asmsF.map(a=>'<option value="'+escH(a.email)+'"'+(sel===a.email?' selected':'')+'>'+escH(a.name||a.email)+(a.provinces&&a.provinces.length?' · '+escH(a.provinces.slice(0,3).join(', ')):(a.area?' · '+escH(a.area):''))+'</option>').join('')+'</select>'+(sug&&sel===sug.email&&!cur?'<div class="small muted" style="margin-top:4px">Gợi ý theo tỉnh bạn nhập.</div>':'')+'</div>':'<div class="note">'+(P_.loaded?(P_.asms.length?'Chưa có ASM nào phụ trách ngành này. Bạn vẫn dùng bình thường, chọn ASM sau cũng được.':'Quản trị viên chưa khai báo ASM nào. Bạn vẫn dùng bình thường, chọn ASM sau cũng được.'):'Đang tải danh sách ASM…')+'</div>');
   }
   const disc='<div class="wk-priv"><b>ASM của bạn sẽ thấy gì?</b><div class="small">Chỉ tiêu và kế hoạch tháng, các ngày bạn bấm <b>“Gửi báo cáo”</b> (lượt ghé, doanh số, HTPP, độ phủ, số bán SO, ghi chú), và tối đa 5 cảnh báo đang bật. ASM <b>không</b> thấy nhận xét AI hay các ghi chú riêng khác của bạn. SR khác không thấy số liệu của bạn.</div></div>';
   return '<div class="acctsh-h">'+ic('users',18)+'<b style="flex:1">Công việc của bạn</b><button class="xbtn" data-act="workClose" aria-label="Đóng">✕</button></div>'+
@@ -4431,7 +4436,7 @@ document.addEventListener('click',function(e){
   else if(a==='daySubmit'){daySubmit(d.day);return;}
   else if(a==='workOpen'){openWork();return;}
   else if(a==='workClose'){closeWork();return;}
-  else if(a==='workNg'){const sl=document.getElementById('workAsm');if(sl)PROF.pickAsm=sl.value;PROF.pick=+d.v===1?1:2;renderWorkSheet();return;}
+  else if(a==='workNg'){const sl=document.getElementById('workAsm'),pv=document.getElementById('workProv');if(pv)PROF.pickProv=pv.value;if(sl&&PROF.pick!==+d.v)PROF.pickAsm='';else if(sl)PROF.pickAsm=sl.value;PROF.pick=+d.v===1?1:2;renderWorkSheet();return;}
   else if(a==='workSave'){profileSave();return;}
   else if(a==='dirDone'){dirAck(d.id,d.done==='1');return;}
   else if(a==='goDay'){const wk=analyze().find(w=>w.days.some(x=>x.date===d.day));S.tab='check';S.cd=d.day;S.cw=wk?wk.i:null;copyText=null;}
@@ -4473,6 +4478,7 @@ document.addEventListener('input',function(e){
 });
 document.addEventListener('change',function(e){
   const t=e.target,f=t.dataset&&t.dataset.f;
+  if(t.id==='workProv'){PROF.pickProv=t.value;const sl=document.getElementById('workAsm');PROF.pickAsm=sl?sl.value:null;renderWorkSheet();return;}
   if(t.dataset&&t.dataset.tact){
     const a=t.dataset.tact,d=t.dataset;let v=parseFloat(String(t.value).replace(',','.'));if(!isFinite(v)||v<0)v=0;
     const i1=Math.round(v*10)/10,i0=Math.round(v);
