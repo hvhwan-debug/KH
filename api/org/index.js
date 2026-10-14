@@ -82,6 +82,52 @@ module.exports = async function (context, req) {
       return reply(context, 200, { ok: true });
     }
 
+    // ---- Dọn dữ liệu hàng loạt: giữ lại một số ASM + nhân sự của họ, xoá phần còn lại ----
+    if (["purgePreview", "purgeBackup", "purgeRun"].indexOf(b.op) >= 0) {
+      const keepIn = (Array.isArray(b.keep) ? b.keep : []).map(org.lc).filter((e) => org.findAsm(roster, e));
+      if (!keepIn.length) return reply(context, 400, { ok: false, error: "Hãy chọn ít nhất một ASM để giữ lại." });
+      const keep = new Set(keepIn);
+      const profiles = await org.listProfiles(), keepUids = new Set();
+      profiles.forEach((p) => { if (keep.has(org.lc(p.asmEmail))) keepUids.add(p.uid); });
+      const plan = { users: [], invites: [], asms: [], keepStaff: keepUids.size, keepInvites: 0 };
+      for (const k of await store.list("user/")) {
+        let d = null; try { d = await store.get(k); } catch (e) { continue; }
+        if (!d || !d.email) continue;
+        const uid = k.replace(/^user\//, "").replace(/\.json$/, ""), email = org.lc(d.email);
+        if (uid === u.uid || isAdmin(email) || keep.has(email) || keepUids.has(uid)) continue; // luôn giữ: chính bạn, quản trị viên, ASM giữ lại, nhân sự của họ
+        plan.users.push({ uid, email, name: d.name || "" });
+      }
+      const inv = await org.getInvites();
+      Object.values(inv.items).forEach((i) => { if (keep.has(org.lc(i.asmEmail))) plan.keepInvites++; else plan.invites.push({ email: i.email, name: i.name || "" }); });
+      roster.asms.forEach((a) => { if (!keep.has(a.email) && !isAdmin(a.email)) plan.asms.push({ email: a.email, name: a.name || "" }); });
+      const counts = { users: plan.users.length, invites: plan.invites.length, asms: plan.asms.length };
+
+      if (b.op === "purgePreview") {
+        return reply(context, 200, { ok: true, counts, keepStaff: plan.keepStaff, keepInvites: plan.keepInvites, keepAsms: keepIn.map((e) => (org.findAsm(roster, e) || {}).name || e),
+          users: plan.users.slice(0, 400), invites: plan.invites.slice(0, 400), asms: plan.asms });
+      }
+      if (b.op === "purgeBackup") { // bản sao lưu để khôi phục thủ công nếu cần (không chứa mật khẩu và dữ liệu lập kế hoạch cá nhân)
+        const backup = { createdAt: new Date().toISOString(), by: u.email, asms: roster.asms.filter((a) => !keep.has(a.email) && !isAdmin(a.email)), invites: Object.values(inv.items).filter((i) => !keep.has(org.lc(i.asmEmail))), users: [] };
+        for (const x of plan.users) backup.users.push({ email: x.email, name: x.name, profile: await org.getProfile(x.uid), report: await store.get("report/" + x.uid + ".json"), directive: await store.get("directive/" + x.uid + ".json") });
+        return reply(context, 200, { ok: true, backup });
+      }
+      // purgeRun
+      if (String(b.confirm || "") !== "XOA HET") return reply(context, 400, { ok: false, error: "Hãy gõ đúng cụm XOA HET để xác nhận." });
+      const ex = b.expect || {};
+      if (Number(ex.users) !== counts.users || Number(ex.invites) !== counts.invites || Number(ex.asms) !== counts.asms) return reply(context, 409, { ok: false, error: "Dữ liệu vừa thay đổi so với bản xem trước. Hãy xem trước lại rồi xác nhận.", counts });
+      for (const x of plan.users) {
+        await store.del("user/" + x.uid + ".json");
+        for (const k of ["profile/", "report/", "directive/"]) { try { await store.del(k + x.uid + ".json"); } catch (e) {} }
+      }
+      const drop = new Set(plan.invites.map((i) => org.lc(i.email)));
+      Object.keys(inv.items).forEach((e) => { if (drop.has(org.lc(e))) delete inv.items[e]; });
+      await org.putInvites(inv);
+      const dropA = new Set(plan.asms.map((a) => a.email));
+      roster.asms = roster.asms.filter((a) => !dropA.has(a.email)); await org.putRoster(roster);
+      await org.audit(u.email, "Xoá hàng loạt", counts.users + " tài khoản, " + counts.invites + " hồ sơ chờ, " + counts.asms + " ASM; giữ " + keepIn.join(", "));
+      return reply(context, 200, { ok: true, deleted: counts });
+    }
+
     if (b.op === "addAsm") {
       const email = org.lc(b.email);
       if (!org.validEmail(email) || !emailAllowed(email)) return reply(context, 400, { ok: false, error: "Email không hợp lệ hoặc chưa được phép dùng ứng dụng." });

@@ -806,7 +806,7 @@ function orgHTML(){
     '<div class="fld"><label for="ivNg">Ngành</label><select id="ivNg"><option value="1">Ngành 1 · Karofi & Livotec máy lọc</option><option value="2">Ngành 2 · Livotec gia dụng</option></select></div><div class="fld"><label for="ivAsm">ASM phụ trách</label><select id="ivAsm">'+asmOpts('')+'</select></div><div class="fld"><input id="ivProv" type="text" maxlength="60" placeholder="Tỉnh / thành phố" aria-label="Tỉnh/thành"></div><button class="btn" data-act="invite">Tạo trước</button></div></div>'+
     '<div class="card"><h2>Thành viên &amp; vai trò <span class="badge">'+(O.profiles.length+O.orphans.length)+'</span></h2><div class="hsub">Cấp vai trò ASM, đổi ngành hoặc gán ASM cho từng người. “Khoá” để SR không tự đổi được ASM. Quản trị viên cao nhất được đặt trong cấu hình máy chủ (ADMIN_EMAILS).</div><div style="margin-bottom:8px"><button class="pillbtn" data-act="expRoster">⬇ Xuất danh sách nhân sự (Excel)</button></div>'+
     (O.orphans.length?'<div class="note" style="margin-bottom:10px"><b>'+O.orphans.length+' tài khoản chưa chọn ngành/ASM.</b> Gán trực tiếp bên dưới hoặc nhắc họ mở app.</div>':'')+
-    '<div class="tblwrap"><table class="t"><thead><tr><th>Nhân sự</th><th>Vai trò</th><th>Ngành</th><th>ASM phụ trách</th><th></th><th></th></tr></thead><tbody>'+O.profiles.map(p=>row(p,false)).join('')+O.orphans.map(p=>row(p,true)).join('')+'</tbody></table></div></div></div>'+auditHTML();
+    '<div class="tblwrap"><table class="t"><thead><tr><th>Nhân sự</th><th>Vai trò</th><th>Ngành</th><th>ASM phụ trách</th><th></th><th></th></tr></thead><tbody>'+O.profiles.map(p=>row(p,false)).join('')+O.orphans.map(p=>row(p,true)).join('')+'</tbody></table></div></div></div>'+pgHTML()+auditHTML();
 }
 function auditHTML(){
   const A=(ST.org&&ST.org.audit)||[];
@@ -935,6 +935,50 @@ function impCsv(){
   const rows=[['Họ tên','Ngành','Lý do cần bổ sung']].concat(ST.imp.res.issues.map(i=>[i.ten,'Ngành '+i.ng,i.ly]));
   const csv='\ufeff'+rows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='nhan-su-can-bo-sung.csv';document.body.appendChild(a);a.click();a.remove();
+}
+
+
+/* ====== Dọn dữ liệu hàng loạt (nguy hiểm): giữ lại ASM được chọn + nhân sự của họ ====== */
+function pgHTML(){
+  const O=ST.org,G=ST.pg||(ST.pg={keep:{},prev:null,confirm:'',busy:false,err:'',done:null});
+  if(!O)return '';
+  const keepN=Object.keys(G.keep).filter(k=>G.keep[k]).length,V=G.prev;
+  let body='<div class="fld"><label>Giữ lại các ASM sau (cùng toàn bộ nhân sự của họ)</label>'+(O.asms.length?O.asms.map(a=>'<label class="small" style="display:flex;gap:8px;align-items:center;padding:4px 0"><input type="checkbox" data-pgkeep="'+esc(a.email)+'"'+(G.keep[a.email]?' checked':'')+'> <b>'+esc(a.name||a.email)+'</b> <span class="muted">'+esc(a.email)+'</span></label>').join(''):'<div class="muted small">Chưa có ASM nào.</div>')+'</div>'+
+    '<button class="btn ghost" data-act="pgPrev"'+(keepN&&!G.busy?'':' disabled')+'>'+(G.busy&&!V?'Đang tính…':'Xem trước những gì sẽ bị xoá')+'</button>';
+  if(G.err)body+='<div class="msg">'+esc(G.err)+'</div>';
+  if(G.done)body+='<div class="note" style="margin-top:10px"><b>Đã xoá xong:</b> '+G.done.users+' tài khoản, '+G.done.invites+' hồ sơ chờ, '+G.done.asms+' ASM.</div>';
+  if(V&&!G.done){
+    body+='<div class="stats" style="margin-top:12px"><div class="stat"><div class="sl">Sẽ xoá: tài khoản</div><div class="sv" style="color:var(--bad)">'+V.counts.users+'</div></div><div class="stat"><div class="sl">Sẽ xoá: hồ sơ chờ</div><div class="sv" style="color:var(--bad)">'+V.counts.invites+'</div></div><div class="stat"><div class="sl">Sẽ xoá: ASM</div><div class="sv" style="color:var(--bad)">'+V.counts.asms+'</div></div><div class="stat"><div class="sl">Giữ lại</div><div class="sv" style="color:var(--ok)">'+V.keepAsms.length+' ASM</div><div class="ss">+ '+V.keepStaff+' nhân sự có tài khoản, '+V.keepInvites+' hồ sơ chờ</div></div></div>'+
+      '<div class="tiny muted" style="margin-top:6px">Luôn được giữ: bạn, các quản trị viên (ADMIN_EMAILS), ASM đã chọn và nhân sự thuộc ASM đó. Giữ lại: <b>'+esc(V.keepAsms.join(', '))+'</b></div>'+
+      '<details style="margin-top:8px"><summary class="b small">Danh sách người sẽ bị xoá ('+(V.counts.users+V.counts.invites+V.counts.asms)+')</summary><div class="small" style="max-height:180px;overflow:auto;margin-top:6px">'+V.users.map(x=>'<div>• '+esc(x.name||x.email)+' <span class="muted">'+esc(x.email)+'</span></div>').join('')+V.invites.map(x=>'<div>• '+esc(x.name||x.email)+' <span class="muted">(hồ sơ chờ)</span></div>').join('')+V.asms.map(x=>'<div>• ASM '+esc(x.name||x.email)+'</div>').join('')+'</div></details>'+
+      '<div style="margin-top:12px"><button class="pillbtn" data-act="pgBackup">⬇ Tải bản sao lưu (JSON) trước khi xoá</button></div><div class="fld" style="margin-top:12px"><label for="pgConf">Để xác nhận, gõ đúng: <b>XOA HET</b></label><input id="pgConf" type="text" autocomplete="off" value="'+esc(G.confirm)+'"></div>'+
+      '<button class="btn" style="background:var(--bad);color:#fff" data-act="pgRun"'+(G.confirm==='XOA HET'&&!G.busy?'':' disabled')+'>'+(G.busy?'Đang xoá…':'Xoá vĩnh viễn')+'</button>';
+  }
+  return '<div class="card" style="margin-top:14px;border-color:var(--bad)"><h2 style="color:var(--bad)">Dọn dữ liệu (xoá hàng loạt)</h2><div class="hsub">Xoá <b>tất cả</b> tài khoản, hồ sơ chờ và ASM, <b>trừ</b> những ASM bạn chọn giữ lại cùng nhân sự của họ, các quản trị viên và chính bạn. Việc này <b>không khôi phục được</b>: hãy xem trước và tải bản sao lưu.</div>'+body+'</div>';
+}
+async function pgCall(op,extra){
+  const G=ST.pg,keep=Object.keys(G.keep).filter(k=>G.keep[k]);
+  return api('POST','/api/org',Object.assign({op,keep},extra||{}));
+}
+async function pgPrev(){
+  const G=ST.pg;G.busy=true;G.err='';G.done=null;G.confirm='';render();
+  const r=await pgCall('purgePreview');G.busy=false;
+  if(r.s===200)G.prev=r.j;else{G.prev=null;G.err=(r.j&&r.j.error)||'Không xem trước được.';}
+  render();
+}
+async function pgBackup(){
+  const r=await pgCall('purgeBackup');
+  if(r.s!==200){toast((r.j&&r.j.error)||'Không tạo được bản sao lưu.',3000);return;}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(r.j.backup,null,1)],{type:'application/json'}));a.download='sao-luu-truoc-khi-xoa-'+ST.today+'.json';document.body.appendChild(a);a.click();a.remove();toast('Đã tải bản sao lưu ('+r.j.backup.users.length+' tài khoản).',3000);
+}
+async function pgRun(){
+  const G=ST.pg;if(!G.prev||G.confirm!=='XOA HET'||G.busy)return;
+  G.busy=true;G.err='';render();
+  const r=await pgCall('purgeRun',{confirm:G.confirm,expect:G.prev.counts});
+  G.busy=false;
+  if(r.s===200){G.done=r.j.deleted;G.prev=null;G.confirm='';toast('Đã xoá hàng loạt.',3000);await loadOrg();await loadData(true);}
+  else{G.err=(r.j&&r.j.error)||'Không xoá được.';if(r.s===409)G.prev=null;}
+  render();
 }
 
 /* ====== Đăng nhập ====== */
@@ -1108,6 +1152,9 @@ document.addEventListener('click',function(e){
   else if(a==='mmDis'){mmCall({op:'setDisabled',uid:ST.mm.uid,disabled:d.v==='1'},d.v==='1'?'Đã khoá tài khoản':'Đã mở khoá');return;}
   else if(a==='mmOut'){if(confirm('Đăng xuất người này khỏi mọi thiết bị?'))mmCall({op:'signOut',uid:ST.mm.uid},'Đã đăng xuất mọi thiết bị');return;}
   else if(a==='mmDel'){const x=mmFind(ST.mm.uid);if(x&&confirm('XOÁ VĨNH VIỄN tài khoản '+x.email+'?\n\nToàn bộ số liệu của người này trên máy chủ sẽ mất, không khôi phục được.'))mmCall({op:'deleteMember',uid:ST.mm.uid},'Đã xoá tài khoản',true);return;}
+  else if(a==='pgPrev'){pgPrev();return;}
+  else if(a==='pgBackup'){pgBackup();return;}
+  else if(a==='pgRun'){pgRun();return;}
   else if(a==='impGo'){impGo();return;}
   else if(a==='impReset'){ST.imp={};}
   else if(a==='impCsv'){impCsv();return;}
@@ -1123,6 +1170,7 @@ document.addEventListener('change',function(e){
   if(t.id==='asmSel'){ST.asm=t.value;loadData();}
   else if(t.id==='sortSel'){ST.sort=t.value;render();}
   else if(t.dataset.nsel){ST.nsel[t.dataset.nsel]=t.checked;render();}
+  else if(t.dataset.pgkeep){const G=ST.pg;G.keep[t.dataset.pgkeep]=t.checked;G.prev=null;G.confirm='';G.done=null;G.err='';render();}
   else if(t.dataset.orgrole){if(t.value==='asm')orgCall({op:'addAsm',email:t.dataset.orgrole,name:t.dataset.name||''},'Đã cấp quyền ASM');else if(confirm('Bỏ quyền ASM của '+t.dataset.orgrole+'? Nhân sự của họ sẽ thành "chưa gán".'))orgCall({op:'removeAsm',email:t.dataset.orgrole},'Đã bỏ quyền ASM');else render();}
   else if(t.dataset.orgng)orgCall({op:'setNganh',uid:t.dataset.orgng,nganh:+t.value},'Đã đổi ngành');
   else if(t.dataset.orgasm)orgCall({op:'assign',uid:t.dataset.orgasm,asmEmail:t.value,lock:true},'Đã gán ASM');
@@ -1131,6 +1179,7 @@ document.addEventListener('change',function(e){
 document.addEventListener('input',function(e){
   const t=e.target;
   if(t.id==='q'){ST.q=t.value;render();}
+  else if(t.id==='pgConf'){ST.pg.confirm=t.value;const bt=document.querySelector('[data-act="pgRun"]');if(bt)bt.disabled=!(t.value==='XOA HET'&&!ST.pg.busy);}
   else if(t.dataset.ndraft)ST.ndraft[t.dataset.ndraft]=t.value;   // không dựng lại giao diện khi đang gõ
 });
 document.addEventListener('keydown',function(e){

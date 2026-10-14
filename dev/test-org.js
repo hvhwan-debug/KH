@@ -170,5 +170,26 @@ const dayOff = (n) => new Date(Date.now() + 7 * 3600e3 + n * 864e5).toISOString(
   r = await admin.call("GET", "/api/org"); ok(!r.j.asms.some((a) => a.email === "asm3@livotec.vn") && !r.j.profiles.concat(r.j.orphans).some((p) => p.email === "asm3@livotec.vn"), "ASM bị xoá cũng được bỏ khỏi danh sách ASM");
   ok(r.j.audit.length >= 8 && r.j.audit.some((a) => a.op === "Đặt mật khẩu mới") && !JSON.stringify(r.j.audit).includes("MatKhauMoi99"), "nhật ký thao tác có ghi, không chứa mật khẩu");
 
+  // Dọn dữ liệu hàng loạt: giữ lại ASM + nhân sự của họ
+  const keepAsm = "asm1@livotec.vn";
+  r = await a1.call("POST", "/api/org", { op: "purgePreview", keep: [keepAsm] }); ok(r.s === 403, "ASM không dùng được chức năng dọn dữ liệu");
+  r = await admin.call("POST", "/api/org", { op: "purgePreview", keep: [] }); ok(r.s === 400, "phải chọn ít nhất một ASM giữ lại");
+  r = await admin.call("POST", "/api/org", { op: "purgePreview", keep: ["khong.co@x.vn"] }); ok(r.s === 400, "ASM không tồn tại thì từ chối");
+  const keptStaff = (await a1.call("GET", "/api/team")).j.members.map((m) => m.email);
+  r = await admin.call("POST", "/api/org", { op: "purgePreview", keep: [keepAsm] }); const pv = r.j;
+  ok(r.s === 200 && pv.counts.users > 0, "xem trước: có người sẽ bị xoá (" + JSON.stringify(pv.counts) + ")");
+  ok(!pv.users.some((x) => x.email === "boss@livotec.vn" || x.email === keepAsm || keptStaff.includes(x.email)), "xem trước KHÔNG chứa admin, ASM giữ lại và nhân sự của ASM đó");
+  r = await admin.call("POST", "/api/org", { op: "purgeBackup", keep: [keepAsm] }); ok(r.s === 200 && r.j.backup.users.length === pv.counts.users && !JSON.stringify(r.j.backup).includes('"pwd"'), "bản sao lưu đủ số người, không chứa mật khẩu");
+  r = await admin.call("POST", "/api/org", { op: "purgeRun", keep: [keepAsm], confirm: "xoa", expect: pv.counts }); ok(r.s === 400, "gõ sai cụm xác nhận thì không xoá");
+  r = await admin.call("POST", "/api/org", { op: "purgeRun", keep: [keepAsm], confirm: "XOA HET", expect: { users: 999, invites: 0, asms: 0 } }); ok(r.s === 409, "số liệu khác bản xem trước thì không xoá (409)");
+  r = await admin.call("POST", "/api/org", { op: "purgeRun", keep: [keepAsm], confirm: "XOA HET", expect: pv.counts }); ok(r.s === 200 && r.j.deleted.users === pv.counts.users, "xoá hàng loạt thành công");
+  r = await admin.call("GET", "/api/org"); const left = r.j.profiles.concat(r.j.orphans).map((p) => p.email);
+  ok(left.includes("boss@livotec.vn") && left.includes(keepAsm) && keptStaff.every((e) => left.includes(e)), "còn lại: admin + ASM giữ lại + toàn bộ nhân sự của ASM đó");
+  ok(left.length === 2 + keptStaff.length, "không còn ai khác (" + left.length + " người)");
+  ok(r.j.asms.length === 1 && r.j.asms[0].email === keepAsm, "danh sách ASM chỉ còn ASM giữ lại");
+  r = await a1.call("GET", "/api/team"); ok(r.j.members.length === keptStaff.length, "nhóm của ASM giữ lại vẫn nguyên");
+  r = await a2.call("GET", "/api/team"); ok(r.s === 403, "ASM đã bị xoá không còn quyền");
+  r = await admin.call("GET", "/api/org"); ok(r.j.audit.some((x) => x.op === "Xoá hàng loạt"), "ghi vào nhật ký thao tác");
+
   console.log("\n" + pass + " đạt, " + fail + " lỗi"); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -26,6 +26,9 @@ Tab Quản trị > **Nhập từ file Excel nhân sự**. File cần có sheet `
 - Không tự khoá/xoá chính mình. Mọi thao tác ghi vào **Nhật ký thao tác** (không ghi mật khẩu).
 - Cơ chế: tài khoản có cờ `disabled` và mốc `sessAfter`; mọi API kiểm tra phiên với hai giá trị này.
 
+## Dọn dữ liệu hàng loạt (chỉ quản trị viên, nguy hiểm)
+Tab Quản trị, cuối trang, thẻ viền đỏ: chọn các ASM **giữ lại** (kèm toàn bộ nhân sự thuộc ASM đó) > **Xem trước** (số lượng + tên) > **Tải bản sao lưu JSON** > gõ `XOA HET` > **Xoá vĩnh viễn**. Luôn giữ: chính bạn và các email trong `ADMIN_EMAILS`. Máy chủ tính lại danh sách khi xoá và từ chối nếu khác bản xem trước. Ghi vào Nhật ký thao tác. Nhân sự chưa được gán đúng ASM giữ lại sẽ bị xoá, nên gán trước khi xoá.
+
 ## Xuất Excel
 - Tab Hôm nay > **Xuất Excel** (theo bộ lọc ngành đang chọn): 4 sheet **Tổng hợp tháng** (chỉ tiêu, lũy kế, % mốc, dự báo, độ phủ, HTPP, SO...), **Báo cáo ngày** (từng ngày từng người), **Doanh số theo ngày** (ma trận người × ngày), **Cảnh báo** (của hệ thống và của AI).
 - Tab Quản trị > **Xuất danh sách nhân sự**: sheet Nhân sự (vai trò, ngành, ASM, tỉnh, trạng thái) và sheet ASM. File không chứa số điện thoại, địa chỉ hay ngày sinh.
