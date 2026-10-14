@@ -110,6 +110,13 @@ function cleanPlan(p) {
     pts: num(p.pts, 100000),   // tổng số điểm bán trên tuyến (mẫu số độ phủ)
     act: num(p.act, 100000),   // số điểm bán đang hoạt động
     labels: { bn: str((p.labels || {}).bn, 40), gd: str((p.labels || {}).gd, 40) },
+    // Bảng kế hoạch theo tuần của SR: kế hoạch + số thực tế SR thấy (nhập tay hoặc tự cộng từ nhật ký ngày) để ASM khớp số
+    wk: (Array.isArray(p.wk) ? p.wk : []).slice(0, 8).filter((w) => w && validDate(w.f) && validDate(w.t)).map((w) => ({
+      f: w.f, t: w.t,
+      pl: { bn: num(w.pl && w.pl.bn), gd: num(w.pl && w.pl.gd), vt: num(w.pl && w.pl.vt, 5000) },
+      ac: w.ac ? { v: num(w.ac.v, 5000), bn: num(w.ac.bn), gd: num(w.ac.gd) } : null,
+      src: w.src === "daily" || w.src === "manual" ? w.src : "", ds: num(w.ds, 40), dn: num(w.dn, 40)
+    })),
     days,
     alerts: (Array.isArray(p.alerts) ? p.alerts : []).slice(0, 5).map((a) => ({
       lv: ["bad", "warn", "info"].indexOf(a && a.lv) >= 0 ? a.lv : "info", t: str(a && a.t, 90), x: str(a && a.x, 240)

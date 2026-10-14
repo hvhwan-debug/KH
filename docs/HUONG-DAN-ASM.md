@@ -50,6 +50,11 @@ Ngành 2 giữ teal Livotec; Ngành 1 đổi toàn bộ sang xanh Karofi, lấy 
 - **Ngành 2**: Livotec gia dụng, không gồm máy lọc nước (bình nước nóng, gia dụng & điện máy).
 Đổi ngành sẽ cất riêng số liệu ngành cũ và khôi phục khi quay lại. Khoá lưu nội bộ vẫn là `bn`/`gd`.
 
+## Số của SR và ASM khớp nhau như thế nào
+Bảng kế hoạch theo tuần của SR có 2 nguồn số thực tế: ô trắng **nhập tay theo tuần**, ô xám **tự cộng từ nhật ký ngày**. App gửi cả bảng tuần lên ASM nên:
+- Tuần nhập tay: ASM thấy đúng số đó, ghi **"Nhập theo tuần"**, không bị tính là quên báo cáo.
+- Tuần có nhật ký ngày: ASM cộng các ngày **đã gửi**. Ngày đã nhập mà chưa gửi hiện thành **"Chưa gửi: X tr"** ở cả ASM và SR (SR có nút **Gửi tất cả**), để hai bên không lệch mà không biết.
+
 ## Báo cáo cuối ngày (SR)
 Lượt ghé, doanh số S.I từng nhóm, **HTPP**, **độ phủ** (số điểm bán mới phủ trong ngày), **số bán SO** (sản phẩm), ghi chú, cờ "cần ASM hỗ trợ". Chỉ khi bấm **Gửi báo cáo** ASM mới thấy; sửa lại sau khi gửi sẽ tự cập nhật.
 ASM thấy thêm: chỉ tiêu/kế hoạch tháng và tối đa 5 cảnh báo. ASM không thấy nhận xét AI. SR không thấy số của nhau.

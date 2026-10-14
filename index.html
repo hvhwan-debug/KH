@@ -4253,7 +4253,7 @@ function render(){
     if(S.month===monthKey(0)){const bn=dayBanner(analyze());bannerSig=bn;if(bn&&S.tab==='check')$app.insertAdjacentHTML('afterbegin',bn);}else bannerSig='';
     if(S.tab==='check'){const hc=histCard();if(hc)$app.insertAdjacentHTML('beforeend',hc);}
     if(S.tab==='setup'||S.tab==='check'){const pn=profNudge();if(pn)$app.insertAdjacentHTML('afterbegin',pn);else if(S.tab==='setup')$app.insertAdjacentHTML('afterbegin',workStrip());}
-    if(S.tab==='check'||S.tab==='plan'){const dc=dirCard();if(dc)$app.insertAdjacentHTML('afterbegin',dc);}
+    if(S.tab==='check'||S.tab==='plan'){const sc=syncCard();if(sc)$app.insertAdjacentHTML('afterbegin',sc);const dc=dirCard();if(dc)$app.insertAdjacentHTML('afterbegin',dc);}
   }catch(e){}
   if(sel){const n=document.querySelector(sel);if(n){if(keepVal!==null)n.value=keepVal;if(n!==document.activeElement)try{n.focus({preventScroll:true});}catch(e){}}}
 }
@@ -4330,7 +4330,7 @@ function workSheetHTML(){
     asmBlock='<div class="authField"><label for="workProv">Tỉnh / thành phố bạn phụ trách</label><input id="workProv" class="txt" style="padding-left:12px" type="text" maxlength="60" value="'+escH(prov)+'" placeholder="VD: Đồng Nai"></div>'+
     (asmsF.length?'<div class="authField"><label for="workAsm">ASM phụ trách của bạn</label><select id="workAsm" class="txt" style="padding-left:12px">'+(cur?'':'<option value="">— Chưa chọn —</option>')+asmsF.map(a=>'<option value="'+escH(a.email)+'"'+(sel===a.email?' selected':'')+'>'+escH(a.name||a.email)+(a.provinces&&a.provinces.length?' · '+escH(a.provinces.slice(0,3).join(', ')):(a.area?' · '+escH(a.area):''))+'</option>').join('')+'</select>'+(sug&&sel===sug.email&&!cur?'<div class="small muted" style="margin-top:4px">Gợi ý theo tỉnh bạn nhập.</div>':'')+(cur?'<div class="small muted" style="margin-top:4px">Bạn có thể đổi sang ASM khác, nhưng không tự gỡ được. Việc gỡ khỏi nhóm do ASM hoặc quản trị viên thực hiện.</div>':'')+'</div>':'<div class="note">'+(P_.loaded?(P_.asms.length?'Chưa có ASM nào phụ trách ngành này. Bạn vẫn dùng bình thường, chọn ASM sau cũng được.':'Quản trị viên chưa khai báo ASM nào. Bạn vẫn dùng bình thường, chọn ASM sau cũng được.'):'Đang tải danh sách ASM…')+'</div>');
   }
-  const disc='<div class="wk-priv"><b>ASM của bạn sẽ thấy gì?</b><div class="small">Chỉ tiêu và kế hoạch tháng, các ngày bạn bấm <b>“Gửi báo cáo”</b> (lượt ghé, doanh số, HTPP, độ phủ, số bán SO, ghi chú), và tối đa 5 cảnh báo đang bật. ASM <b>không</b> thấy nhận xét AI hay các ghi chú riêng khác của bạn. SR khác không thấy số liệu của bạn.</div></div>';
+  const disc='<div class="wk-priv"><b>ASM của bạn sẽ thấy gì?</b><div class="small">Chỉ tiêu và bảng kế hoạch theo tuần (kể cả số thực tế theo tuần bạn nhập tay), các ngày bạn bấm <b>“Gửi báo cáo”</b> (lượt ghé, doanh số, HTPP, độ phủ, số bán SO, ghi chú), và tối đa 5 cảnh báo đang bật. ASM <b>không</b> thấy nhận xét AI hay các ghi chú riêng khác của bạn. SR khác không thấy số liệu của bạn.</div></div>';
   return '<div class="acctsh-h">'+ic('users',18)+'<b style="flex:1">Công việc của bạn</b><button class="xbtn" data-act="workClose" aria-label="Đóng">✕</button></div>'+
     '<div class="small muted" style="margin:6px 0 4px">Bạn phụ trách ngành nào? Nội dung hiển thị (nhóm hàng, chỉ tiêu, báo cáo) sẽ đổi theo.</div>'+
     '<div class="wk-ngs">'+opt(2)+opt(1)+'</div>'+asmBlock+disc+
@@ -4360,7 +4360,10 @@ function reportPayload(){
   if(S.month===monthKey(0)){
     try{
       const dg=buildDigest(analyze());
-      body.plan={month:S.month,total:dg.total,target:{bn:+S.target.bn||0,gd:+S.target.gd||0},pts:+((S.area||{}).pts)||0,act:+((S.area||{}).act)||0,labels:{bn:PS('bn'),gd:PS('gd')},days:dg.days,alerts:dg.alerts.map(a=>({lv:a.lv,t:a.t,x:a.x}))};
+      const wks=analyze().filter(w=>w.work>0).map(w=>{
+        const a=S.actual[w.key],dl=w.days.filter(d=>!d.off),hasD=w.days.some(d=>S.daily[d.date]);
+        return{f:w.days[0].date,t:w.days[w.days.length-1].date,pl:{bn:(w.t&&w.t.bn)||0,gd:(w.t&&w.t.gd)||0,vt:w.vt||0},ac:a?{v:a.v||0,bn:a.bn||0,gd:a.gd||0}:null,src:a?(hasD?'daily':'manual'):'',ds:dl.filter(d=>S.daily[d.date]&&S.daily[d.date].sub).length,dn:dl.length};});
+      body.plan={month:S.month,total:dg.total,target:{bn:+S.target.bn||0,gd:+S.target.gd||0},pts:+((S.area||{}).pts)||0,act:+((S.area||{}).act)||0,labels:{bn:PS('bn'),gd:PS('gd')},days:dg.days,wk:wks,alerts:dg.alerts.map(a=>({lv:a.lv,t:a.t,x:a.x}))};
     }catch(e){}
   }
   return body;
@@ -4390,6 +4393,27 @@ async function daySubmit(day){
   save();render();
   const ok=await pushReport(true);
   toast(ok?'Đã gửi báo cáo ngày '+day.slice(8)+'/'+day.slice(5,7)+' cho ASM '+(S.asm.name||''):'Chưa gửi được, sẽ tự thử lại khi có mạng',3200);
+  if(!ok)scheduleReport();
+}
+/* Các ngày đã nhập nhưng chưa gửi ASM (bảng kế hoạch đang cộng cả các ngày này, ASM thì chưa thấy) */
+function pendingDays(){
+  const tk=todayKey(),out=[];let tr=0;
+  Object.keys(S.daily||{}).sort().forEach(k=>{const e=S.daily[k];if(!e||e.sub||k>tk||k.slice(0,7)!==monthKey(0))return;
+    const v=(e.bn||0)+(e.gd||0);if(v||e.v||e.htpp||e.dp||e.so){out.push(k);tr+=v;}});
+  return{days:out,tr:Math.round(tr*10)/10};
+}
+function syncCard(){
+  if(!AUTH.user||!S.asm||!S.asm.email||S.month!==monthKey(0))return '';
+  const P_=pendingDays();if(!P_.days.length)return '';
+  return '<div class="card wk-nudge"><div class="row"><div><b>Còn '+P_.days.length+' ngày chưa gửi ASM</b><div class="small muted">Bảng kế hoạch đang tính cả '+P_.tr+' triệu của các ngày này ('+P_.days.map(d=>d.slice(8)+'/'+d.slice(5,7)).join(', ')+'), nhưng ASM <b>chưa thấy</b> nên số của hai bên sẽ lệch.</div></div><button class="btn sm" data-act="sendPending">Gửi tất cả</button></div></div>';
+}
+async function sendPending(){
+  const P_=pendingDays(),now=Date.now();if(!P_.days.length)return;
+  P_.days.forEach(k=>{const e=S.daily[k];e.sub=now;e.ts=now;e.ng=CUR_NG;e.ok=1;});
+  analyze().forEach(w=>{if(w.days.some(d=>P_.days.indexOf(d.date)>=0))recomputeWeekActual(w);});
+  save();render();
+  const ok=await pushReport(true);
+  toast(ok?'Đã gửi '+P_.days.length+' ngày cho ASM '+(S.asm.name||''):'Chưa gửi được, sẽ tự thử lại khi có mạng',3200);
   if(!ok)scheduleReport();
 }
 function dayExtra(day,dd){
@@ -4514,6 +4538,7 @@ document.addEventListener('click',function(e){
   else if(a==='dhelp'){const cur=S.daily[d.day]||{v:0,bn:0,gd:0};cur.help=!cur.help;S.daily[d.day]=cur;touchDay(d.day);}
   else if(a==='daySubmit'){daySubmit(d.day);return;}
   else if(a==='workOpen'){openWork();return;}
+  else if(a==='sendPending'){sendPending();return;}
   else if(a==='workClose'){closeWork();return;}
   else if(a==='workNg'){const sl=document.getElementById('workAsm'),pv=document.getElementById('workProv');if(pv)PROF.pickProv=pv.value;if(sl&&PROF.pick!==+d.v)PROF.pickAsm='';else if(sl)PROF.pickAsm=sl.value;PROF.pick=+d.v===1?1:2;renderWorkSheet();return;}
   else if(a==='workSave'){profileSave();return;}
