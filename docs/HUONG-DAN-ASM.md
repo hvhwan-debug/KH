@@ -11,6 +11,14 @@
 - **Tạo trước thành viên**: khai báo email + ngành + ASM + tỉnh, người đó đăng nhập app lần đầu sẽ tự có hồ sơ (ASM bị khoá).
 - **Giao việc**: ở tab Hôm nay, ASM/quản trị viên giao việc cho một người, một ngành hoặc cả nhóm.
 
+## Trợ lý AI cho ASM
+Dùng chung cấu hình AI của app (`AZURE_OPENAI_ENDPOINT/KEY/DEPLOYMENT`, hoặc `GROQ_API_KEY` dự phòng). Chỉ ASM/quản trị viên dùng được (`/api/asm/ai`, tối đa 20 lượt / 5 phút / người).
+- Tab Hôm nay: **Ưu tiên hôm nay** (AI đọc số liệu cả nhóm, nêu việc nên làm trước).
+- Hộp Giao việc: **AI soạn giúp** (từ ý chính của ASM + số liệu của SR).
+- Tab Kế hoạch: **AI soạn trọng tâm cho cả nhóm**, ASM đọc và sửa trước khi gửi.
+- Ngăn chi tiết SR: **AI nhận định** (điểm tốt, rủi ro, việc nên làm trong 2 ngày).
+AI chỉ nhận số liệu đã tính (không gửi email, số điện thoại, địa chỉ) và được dặn không bịa tên đại lý, giá, model.
+
 ## Hai ngành
 - **Ngành 1**: Karofi và Livotec máy lọc nước (hai nhóm chỉ tiêu: Karofi, Livotec).
 - **Ngành 2**: Livotec gia dụng, không gồm máy lọc nước (bình nước nóng, gia dụng & điện máy).

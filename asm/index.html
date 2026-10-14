@@ -217,6 +217,15 @@ table.t td.r,table.t th.r{text-align:right}
 .msg{font-size:13px;margin-top:10px;color:var(--bad)}.msg.okm{color:var(--ok)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:13.5px;z-index:90;box-shadow:0 10px 30px rgba(0,0,0,.3);max-width:92vw}
 .toast[hidden]{display:none}
+.ai{position:relative;border:1.5px solid transparent;background:linear-gradient(var(--surface),var(--surface)) padding-box,linear-gradient(120deg,var(--brand),var(--n1),#8B5CF6) border-box}
+.ai h2{gap:6px}.ai .sp2{color:#8B5CF6}
+.ai-out{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.ai-l{display:flex;gap:8px;font-size:13.5px;line-height:1.45}.ai-l i{flex:0 0 auto;color:var(--brand-deep);font-style:normal;font-weight:700}
+.ai-l.sum{background:var(--surface2);border-radius:10px;padding:7px 10px;margin-top:2px}
+.aibtn{border:0;border-radius:999px;padding:7px 14px;font-weight:700;font-size:13px;color:#fff;background:linear-gradient(120deg,var(--brand-deep),#7C4DDB)}
+.aibtn[disabled]{opacity:.6;cursor:default}
+.aibtn.sm{padding:4px 10px;font-size:12px}
+.aiwarn{font-size:11.5px;color:var(--muted);margin-top:8px}
 .fadein{animation:fi .35s ease-out both}@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:560px){.hero{padding:16px}.hero h1{font-size:20px}.mets{grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:1fr}.datenav .dv{min-width:96px}.who span{display:none}}
@@ -267,7 +276,7 @@ const ST={
   tab:'today',ng:0,asm:'',flt:'all',sort:'risk',q:'',
   drawer:null,compose:null,org:null,orgErr:'',
   login:{tab:'login',email:'',name:'',otp:false,msg:'',busy:false},
-  ndraft:{},nsel:{},sending:false,loadedAt:0,loading:false
+  ndraft:{},nsel:{},sending:false,loadedAt:0,loading:false,ai:{brief:null,coach:{},plan:false}
 };
 function vnNow(){return new Date(Date.now()+ST.skew+7*36e5);}
 function vnToday(){return vnNow().toISOString().slice(0,10);}
@@ -341,6 +350,73 @@ function suggestFocus(c,date){
   if(c.projPct!=null&&c.projPct<0.9&&c.workLeft>0)return 'Dự báo ~'+pc(c.projPct)+' chỉ tiêu. Tăng nhịp lên '+fmt(c.need,1)+' tr/ngày: dồn lượt ghé vào nhóm đại lý có khả năng nhập thêm.';
   if(c.e&&num(c.e.so)===0&&c.sub&&num(c.e.htpp)===0)return 'Hôm nay chưa ghi nhận SO và HTPP. Ngày mai tập trung đẩy sell-out tại điểm bán đã nhập hàng.';
   return pl?'Giữ nhịp theo kế hoạch: '+fmt(pl.si,1)+' tr và '+pl.vt+' lượt ghé.':'Giữ nhịp, ưu tiên các điểm bán chưa ghé 2 tuần gần nhất.';
+}
+
+
+/* ====== Trợ lý AI cho ASM (gọi /api/asm/ai; máy chủ dựng prompt, ở đây chỉ gửi số liệu đã tính) ====== */
+const r1=x=>Math.round(num(x)*10)/10,rp=x=>x==null?null:Math.round(x*100);
+function factsOf(c,date){
+  const E=c.m.days||{},e=c.e||{},L=(c.mp&&c.mp.labels)||{},ds=[];
+  for(let i=6;i>=0;i--){const d=addD(date,-i);if(isOffDay(c.mp,d))continue;const x=E[d],pl=c.mp&&c.mp.days[d]&&c.mp.days[d].si;ds.push({ngay:d.slice(5),doanh_so:x&&x.sub>0?r1(num(x.bn)+num(x.gd)):null,ke_hoach:pl?r1(pl):null});}
+  const grp={};if(c.e){grp[L.bn||'nhom1']=r1(e.bn);grp[L.gd||'nhom2']=r1(e.gd);}
+  return{ten:c.name,nganh:c.m.nganh===1?'Ngành 1':'Ngành 2',tinh:c.m.province||'',
+    bao_cao_hom_nay:{done:'đã gửi',wait:'chưa tới giờ chốt',late:'quá giờ, chưa gửi',missed:'chưa gửi',off:'ngày nghỉ',future:'chưa tới'}[c.status],
+    ngay_lam_viec_chua_bao_cao_lien_tiep:c.streak,
+    hom_nay:c.e?{doanh_so_theo_nhom:grp,ke_hoach:r1(c.dayPlan),HTPP:r1(e.htpp),diem_ban_moi_phu:r1(e.dp),SO:r1(e.so),luot_ghe:r1(e.v),can_ho_tro:!!e.help,ghi_chu:e.note||''}:null,
+    thang:{chi_tieu:r1(c.total),luy_ke:r1(c.ach),moc_ke_hoach:r1(c.expected),dat_so_voi_moc_pct:rp(c.ratio),du_bao_cuoi_thang_pct:rp(c.projPct),can_moi_ngay:r1(c.need),dang_lam_moi_ngay:r1(c.avg),ngay_lam_viec_con_lai:c.workLeft,do_phu_pct:rp(c.cov),so_diem_ban_moi_phu:c.covN,tong_diem_ban_tren_tuyen:c.mp?c.mp.pts:0,SO:r1(c.so),HTPP:r1(c.htpp)},
+    bay_ngay_gan_nhat:ds};
+}
+async function aiCall(task,data){
+  try{const r=await api('POST','/api/asm/ai',{task,data});if(r.s===200&&r.j.ok)return r.j;return{error:r.j.error||'Trợ lý đang bận, thử lại sau.'};}
+  catch(e){return{error:'Mất kết nối, thử lại sau.'};}
+}
+function aiLines(t){
+  return String(t||'').split(/\n+/).map(x=>x.trim()).filter(Boolean).map(l=>{
+    const sum=/^nhận định/i.test(l),b=/^[-•*]\s*/.test(l);
+    return '<div class="ai-l'+(sum?' sum':'')+'">'+(b?'<i>•</i>':'')+'<span>'+esc(l.replace(/^[-•*]\s*/,''))+'</span></div>';
+  }).join('');
+}
+function aiBriefHTML(){
+  const A=ST.ai.brief;
+  return '<div class="card ai"><h2><span class="sp2">✦</span> Trợ lý AI · Ưu tiên hôm nay</h2><div class="hsub">AI đọc số liệu của cả nhóm và gợi ý bạn nên làm gì trước.</div>'+
+    (A&&A.text?'<div class="ai-out">'+aiLines(A.text)+'</div>':A&&A.err?'<div class="msg">'+esc(A.err)+'</div>':'')+
+    '<div style="margin-top:10px"><button class="aibtn" data-act="aiBrief"'+(A&&A.busy?' disabled':'')+'>'+(A&&A.busy?'Đang phân tích…':A&&A.text?'Phân tích lại':'Phân tích ngay')+'</button></div><div class="aiwarn">Nội dung do AI tạo từ số liệu báo cáo, hãy kiểm tra lại trước khi hành động.</div></div>';
+}
+async function aiBrief(){
+  const date=ST.date,all=members().map(m=>calc(m,date)),t=team(all),feed=buildFeed(all,date);
+  ST.ai.brief={busy:true};render();
+  const data={ngay:date,so_nhan_su:all.length,da_gui_bao_cao:t.done+'/'+t.work,doanh_so_ngay:r1(t.dayAch),ke_hoach_ngay:r1(t.dayPlan),luy_ke_thang:r1(t.ach),chi_tieu_thang:r1(t.total),dat_so_voi_moc_pct:rp(t.ratio),do_phu_pct:rp(t.cov),HTPP:r1(t.htpp),SO:r1(t.so),
+    viec_he_thong_phat_hien:feed.slice(0,8).map(i=>i.t+(i.x?' — '+i.x:'')),nhan_su:all.slice(0,40).map(c=>({ten:c.name,nganh:c.m.nganh,trang_thai:c.status,dat_moc_pct:rp(c.ratio),du_bao_pct:rp(c.projPct),can_ho_tro:!!(c.e&&c.e.help)}))};
+  const r=await aiCall('brief',data);
+  ST.ai.brief=r.text?{text:r.text}:{err:r.error};render();
+}
+async function aiCoach(uid){
+  const m=ST.data.members.find(x=>x.uid===uid);if(!m)return;
+  ST.ai.coach[uid]={busy:true};render();
+  const r=await aiCall('coach',factsOf(calc(m,ST.date),ST.date));
+  ST.ai.coach[uid]=r.text?{text:r.text}:{err:r.error};render();
+}
+async function aiPlan(){
+  if(ST.ai.plan)return;
+  const date=ST.date,list=filterList(members().map(m=>calc(m,date)));
+  if(!list.length)return;
+  ST.ai.plan=true;render();
+  const idmap={};const data={nhan_su:list.map((c,i)=>{const id='s'+(i+1);idmap[id]=c.m.uid;return Object.assign({id},factsOf(c,date));})};
+  const r=await aiCall('plan',data);
+  ST.ai.plan=false;
+  if(r.items){let n=0;r.items.forEach(x=>{if(idmap[x.id]){ST.ndraft[idmap[x.id]]=x.text;n++;}});toast('AI đã soạn trọng tâm cho '+n+' người. Hãy đọc và sửa trước khi gửi.',3600);}
+  else toast(r.error||'Không soạn được.',3000);
+  render();
+}
+async function aiCompose(){
+  const C=ST.compose;if(C.aiBusy)return;
+  C.text=$('#ctext').value;C.aiBusy=true;C.msg='';render();
+  const one=C.uid?ST.data.members.find(x=>x.uid===C.uid):null;
+  const data={ten:one?(one.name||one.email):(C.nganh?NG[C.nganh].n:'cả nhóm'),loai:C.kind,y:C.text,facts:one?factsOf(calc(one,ST.date),ST.date):{ghi_chu:'Giao việc chung cho nhiều người, chưa có số liệu riêng.'}};
+  const r=await aiCall('task',data);
+  C.aiBusy=false;
+  if(r.text)C.text=r.text;else C.msg=r.error;
+  render();
 }
 
 /* ====== Tổng hợp cả nhóm ====== */
@@ -515,7 +591,7 @@ function todayHTML(){
   const shown=filterList(all),cs=cumSeries(all);
   const chart=all.length?'<div class="card" style="margin-top:14px"><h2>Nhịp cả nhóm trong tháng</h2><div class="hsub">Đường liền: thực tế lũy kế · đường đứt: kế hoạch lũy kế · vạch dọc: hôm nay</div>'+lineChart(cs.plan,cs.act,cs.todayIdx,760,170)+'</div>':'';
   return heroHTML(all,t,date)+
-    '<div class="grid2"><div>'+feedHTML(feed)+'<div style="margin-top:12px" class="card"><h2>Bản tin cuối ngày</h2><div class="hsub">Tổng hợp sẵn để dán vào Zalo nhóm.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="pillbtn pri" data-act="copySum">Sao chép bản tin</button><button class="pillbtn" data-act="composeAll">Giao việc cả nhóm</button></div></div></div>'+
+    '<div class="grid2"><div>'+aiBriefHTML()+'<div style="margin-top:12px">'+feedHTML(feed)+'</div>'+'<div style="margin-top:12px" class="card"><h2>Bản tin cuối ngày</h2><div class="hsub">Tổng hợp sẵn để dán vào Zalo nhóm.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="pillbtn pri" data-act="copySum">Sao chép bản tin</button><button class="pillbtn" data-act="composeAll">Giao việc cả nhóm</button></div></div></div>'+
     '<div>'+toolsHTML(counts)+(shown.length?'<div class="cards">'+shown.map(c=>srCard(c,date)).join('')+'</div>':'<div class="card empty"><div class="big">🔍</div>'+(all.length?'Không có nhân sự nào khớp bộ lọc.':'Chưa có nhân sự nào được gán cho bạn.<br><span class="small">Nhân sự cần đăng nhập app, chọn ngành và chọn ASM là bạn.</span>')+'</div>')+'</div></div>'+chart;
 }
 
@@ -535,7 +611,7 @@ function planHTML(){
       (given.length?given.map(x=>'<div class="done">✓ Đã giao: “'+esc(x.text.slice(0,70))+(x.text.length>70?'…':'')+'” '+(x.done?'· SR đã làm':'· SR chưa xác nhận')+'</div>').join(''):'')+'</div></div>';
   }).join('');
   const nSel=all.filter(c=>ST.nsel[c.m.uid]!==false).length;
-  return '<div class="card" style="margin-top:14px"><h2>Kế hoạch làm việc '+DOWL[dowOf(nd0)]+' '+dmy(nd0)+'</h2><div class="hsub">Mỗi người có sẵn một <b>trọng tâm gợi ý</b> dựa trên khoảng cách tiến độ, độ phủ và dự báo của họ. Sửa lại nếu cần rồi gửi một lần cho cả nhóm — nhân sự sẽ thấy trong app của mình.</div>'+rows+'</div>'+
+  return '<div class="card" style="margin-top:14px"><h2>Kế hoạch làm việc '+DOWL[dowOf(nd0)]+' '+dmy(nd0)+'</h2><div class="hsub">Mỗi người có sẵn một <b>trọng tâm gợi ý</b> dựa trên khoảng cách tiến độ, độ phủ và dự báo của họ. Sửa lại nếu cần rồi gửi một lần cho cả nhóm — nhân sự sẽ thấy trong app của mình.</div><div style="margin-bottom:6px"><button class="aibtn" data-act="aiPlan"'+(ST.ai.plan?' disabled':'')+'>'+(ST.ai.plan?'Đang soạn…':'✦ AI soạn trọng tâm cho cả nhóm')+'</button><div class="aiwarn">AI viết lại từng trọng tâm dựa trên số liệu; bạn vẫn đọc và sửa được trước khi gửi.</div></div>'+rows+'</div>'+
     '<div class="bar"><span><b>'+nSel+'</b> người được chọn</span><span class="sp"></span><button class="pillbtn" data-act="selAll">Chọn/bỏ tất cả</button><button class="pillbtn" data-act="sendPlan"'+(ST.sending||!nSel?' disabled':'')+'>'+(ST.sending?'Đang gửi…':'Gửi trọng tâm cho '+nSel+' người')+'</button></div>';
 }
 
@@ -580,6 +656,7 @@ function drawerHTML(){
     '<div class="stat"><div class="sl">HTPP · SO</div><div class="sv">'+fmt(c.htpp)+' · '+fmt(c.so)+'</div><div class="ss">cả tháng</div></div></div>'+
     '<div class="card"><h2>Lũy kế thực tế / kế hoạch</h2>'+lineChart(cs.plan,cs.act,cs.todayIdx,560,150)+(c.mp&&c.mp.alerts&&c.mp.alerts.length?'<div class="feed" style="margin-top:8px">'+c.mp.alerts.map(a=>'<div class="fi '+(a.lv==='bad'?'bad':a.lv==='warn'?'warn':'info')+'"><div class="fic">!</div><div><div class="ft">'+esc(a.t)+'</div><div class="fx">'+esc(a.x)+'</div></div></div>').join('')+'</div>':'')+'</div>'+
     '<div class="card"><h2>Gợi ý cho ngày làm việc tới</h2><div class="small" style="margin:4px 0 10px">'+esc(suggestFocus(c,ST.date))+'</div><button class="pillbtn pri" data-act="compose" data-uid="'+m.uid+'" data-sug="'+esc(suggestFocus(c,ST.date))+'">Giao việc cho '+esc(c.name.split(' ').slice(-1)[0])+'</button></div>'+
+    '<div class="card ai"><h2><span class="sp2">✦</span> AI nhận định</h2>'+((ST.ai.coach[m.uid]||{}).text?'<div class="ai-out">'+aiLines(ST.ai.coach[m.uid].text)+'</div>':(ST.ai.coach[m.uid]||{}).err?'<div class="msg">'+esc(ST.ai.coach[m.uid].err)+'</div>':'<div class="hsub">Điểm tốt, rủi ro và việc ASM nên làm trong 2 ngày tới.</div>')+'<div style="margin-top:8px"><button class="aibtn sm" data-act="aiCoach" data-uid="'+m.uid+'"'+((ST.ai.coach[m.uid]||{}).busy?' disabled':'')+'>'+((ST.ai.coach[m.uid]||{}).busy?'Đang phân tích…':(ST.ai.coach[m.uid]||{}).text?'Phân tích lại':'Nhận định về '+esc(c.name.split(' ').slice(-1)[0]))+'</button></div></div>'+
     '<div class="card"><h2>Báo cáo từng ngày</h2><div class="tblwrap"><table class="t"><thead><tr><th>Ngày</th><th class="r">Ghé</th><th class="r">DS (tr)</th><th class="r">HTPP</th><th class="r">Phủ mới</th><th class="r">SO</th><th>Ghi chú</th></tr></thead><tbody>'+(rows||'<tr><td colspan="7" class="muted">Chưa có dữ liệu.</td></tr>')+'</tbody></table></div></div>'+
     '<div class="card"><h2>Việc đã giao</h2><div class="dirs">'+(dirs||'<div class="muted small">Chưa giao việc nào.</div>')+'</div></div></div></aside></div>';
 }
@@ -593,7 +670,7 @@ function composeHTML(){
   return '<div class="scrim center" data-act="closeCompose"><div class="modal" role="dialog" aria-label="Giao việc" data-stop="1"><h3>Giao việc'+(one?' cho '+esc(one.name||one.email):C.nganh?' cho '+NG[C.nganh].n:' cho cả nhóm')+'</h3>'+
     '<div class="fld"><label>Loại</label><div class="seg">'+kinds.map(k=>'<button data-act="ckind" data-v="'+k[0]+'" aria-pressed="'+(C.kind===k[0])+'">'+k[1]+'</button>').join('')+'</div></div>'+
     '<div class="fld"><label>Cho ngày</label><div class="seg"><button data-act="cdate" data-v="'+ST.today+'" aria-pressed="'+(C.date===ST.today)+'">Hôm nay</button><button data-act="cdate" data-v="'+nd+'" aria-pressed="'+(C.date===nd)+'">Ngày mai</button></div></div>'+
-    '<div class="fld"><label for="ctext">Nội dung (tối đa 500 ký tự)</label><textarea id="ctext" rows="4" maxlength="500" placeholder="VD: Ưu tiên chăm lại đại lý A, B; mở thêm 2 điểm bán mới…">'+esc(C.text)+'</textarea><div class="sugs">'+sugs.map(s=>'<button data-act="csug" data-s="'+esc(s)+'">'+esc(s.length>90?s.slice(0,88)+'…':s)+'</button>').join('')+'</div></div>'+
+    '<div class="fld"><label for="ctext">Nội dung (tối đa 500 ký tự)</label><textarea id="ctext" rows="4" maxlength="500" placeholder="VD: Ưu tiên chăm lại đại lý A, B; mở thêm 2 điểm bán mới…">'+esc(C.text)+'</textarea><div style="margin-top:6px"><button class="aibtn sm" data-act="aiCompose"'+(C.aiBusy?' disabled':'')+'>'+(C.aiBusy?'Đang viết…':'✦ AI soạn giúp')+'</button> <span class="tiny muted">Gõ ý chính (hoặc để trống) rồi bấm, AI viết thành nội dung rõ ràng.</span></div><div class="sugs">'+sugs.map(s=>'<button data-act="csug" data-s="'+esc(s)+'">'+esc(s.length>90?s.slice(0,88)+'…':s)+'</button>').join('')+'</div></div>'+
     (C.msg?'<div class="msg">'+esc(C.msg)+'</div>':'')+
     '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn ghost" data-act="closeCompose" style="flex:1">Huỷ</button><button class="btn" data-act="sendCompose" style="flex:2"'+(C.busy?' disabled':'')+'>'+(C.busy?'Đang gửi…':'Gửi')+'</button></div></div></div>';
 }
@@ -772,6 +849,10 @@ document.addEventListener('click',function(e){
   else if(a==='copySum'){copySummary();return;}
   else if(a==='selAll'){const all=filterList(members().map(m=>calc(m,ST.date))),any=all.some(c=>ST.nsel[c.m.uid]!==false);all.forEach(c=>{ST.nsel[c.m.uid]=!any;});}
   else if(a==='sendPlan'){sendPlan();return;}
+  else if(a==='aiBrief'){aiBrief();return;}
+  else if(a==='aiPlan'){aiPlan();return;}
+  else if(a==='aiCoach'){aiCoach(d.uid);return;}
+  else if(a==='aiCompose'){aiCompose();return;}
   else if(a==='ltab'){ST.login.tab=d.v;ST.login.msg='';if($('#lEmail'))ST.login.email=$('#lEmail').value;}
   else if(a==='lsubmit'){lsubmit();return;}
   else if(a==='lcancel'){ST.login.otp=false;ST.login.msg='';}
