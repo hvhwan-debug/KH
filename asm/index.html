@@ -369,6 +369,7 @@ table.plt td{vertical-align:top}table.plt .pn .av{width:34px;height:34px;font-si
 .subtabs button[aria-selected=true]{color:var(--brand-deep);border-bottom-color:var(--brand)}
 .subtabs button.dng{margin-left:auto;color:var(--bad)}.subtabs button.dng[aria-selected=true]{border-bottom-color:var(--bad);color:var(--bad)}
 .subtabs .cnt{background:var(--warn);color:#fff;border-radius:999px;font-size:11px;padding:0 6px;line-height:18px}
+.zin{width:100%;min-width:120px;border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 9px;font-size:14px}.zt td{padding:6px 8px}
 .scopenote{font-size:12.5px;color:var(--muted);background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;margin:-2px 0 6px}
 .permg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.permg>div{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}.permg .small{margin-top:6px;line-height:1.5}
 @media (max-width:900px){.permg{grid-template-columns:minmax(0,1fr)}}
@@ -979,11 +980,9 @@ function tabsHTML(nFeed){
 
 /* ====== Hero + KPI ====== */
 function missingList(list){return list.filter(c=>!c.off&&!c.sub&&c.status!=='weekly'&&c.status!=='future');}
-async function remindMissing(){
+function remindMissing(){
   const list=missingList(members().map(m=>calc(m,ST.date)));if(!list.length){toast('Mọi người đều đã gửi báo cáo.');return;}
-  if(!confirm('Gửi nhắc "gửi báo cáo cuối ngày" cho '+list.length+' người chưa gửi?\n\n'+list.slice(0,12).map(c=>'• '+c.name).join('\n')+(list.length>12?'\n… và '+(list.length-12)+' người nữa':'')))return;
-  const r=await api('POST','/api/directive',{op:'send',to:list.map(c=>c.m.uid),text:'Nhắc: anh/chị gửi báo cáo cuối ngày '+dmy(ST.today)+' trước '+DEADLINE+'h hôm nay giúp em nhé.',date:ST.today,kind:'note'});
-  if(r.s===200){toast('Đã nhắc '+r.j.sent+' người gửi báo cáo');await loadData(true);}else toast(r.j.error||'Không gửi được.',3000);
+  openCompose({uids:list.map(c=>c.m.uid),kind:'note',date:ST.today,text:'Nhắc: anh/chị gửi báo cáo cuối ngày '+dmy(ST.today)+' trước '+DEADLINE+'h hôm nay giúp em nhé.'});
 }
 function heroHTML(list,t,date){
   const isT=date===ST.today,done=t.work?t.done/t.work:null,late=isT&&vnHour()>=DEADLINE;
@@ -1239,6 +1238,31 @@ function drawerHTML(){
 }
 
 /* ====== Hộp thoại giao việc ====== */
+/* ====== Kênh gửi: email (qua máy chủ) và Zalo (mở khung chat + sao chép tin) ====== */
+function zpGet(){try{return JSON.parse(localStorage.getItem('asm-zalo')||'{}')||{};}catch(e){return{};}}
+function zpSet(uid,v){try{const z=zpGet();if(String(v).trim())z[uid]=String(v).trim();else delete z[uid];localStorage.setItem('asm-zalo',JSON.stringify(z));}catch(e){}}
+const mailPref=()=>{try{return localStorage.getItem('asm-mail')==='1';}catch(e){return false;}};
+function normPhone(v){let p=String(v||'').replace(/[\s.\-()]/g,'');if(p.indexOf('+84')===0)p='0'+p.slice(3);else if(/^84\d{9,10}$/.test(p))p='0'+p.slice(2);return /^0\d{9,10}$/.test(p)?p:'';}
+function composeRecips(C){const mem=ST.data.members;if(C.uids&&C.uids.length)return mem.filter(x=>C.uids.indexOf(x.uid)>=0);if(C.uid)return mem.filter(x=>x.uid===C.uid);return mem.filter(x=>!C.nganh||x.nganh===C.nganh);}
+function zaloMsg(C,m){const nm=String(m.name||m.email.split('@')[0]).trim().split(/\s+/).pop(),txt=($('#ctext')?$('#ctext').value:C.text).trim();return 'Chào '+nm+', '+txt+(ST.data.me.name?' — ASM '+ST.data.me.name:'');}
+function fallbackCopy(t,cb){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');cb();}catch(e){toast('Không sao chép được, hãy tự chọn và sao chép nội dung.');}ta.remove();}
+function openZalo(uid){
+  const C=ST.compose,m=ST.data.members.find(x=>x.uid===uid);if(!C||!m)return;
+  const inp=document.getElementById('zp_'+uid),ph=normPhone(inp?inp.value:zpGet()[uid]);
+  if(!ph){toast('Nhập số Zalo hợp lệ của '+(m.name||m.email)+' (10–11 số, bắt đầu bằng 0).',3400);if(inp)inp.focus();return;}
+  zpSet(uid,ph);const msg=zaloMsg(C,m),done=()=>toast('Đã sao chép tin nhắn. Dán vào ô chat Zalo rồi gửi nhé!',3800);
+  let p=null;try{if(navigator.clipboard&&navigator.clipboard.writeText)p=navigator.clipboard.writeText(msg);}catch(e){}   // sao chép trước khi mở tab mới
+  window.open('https://zalo.me/'+ph,'_blank','noopener');
+  if(p)p.then(done,()=>fallbackCopy(msg,done));else fallbackCopy(msg,done);
+}
+function composeChannels(C){
+  const rc=composeRecips(C),Z=zpGet();
+  let h='<div class="fld"><label>Kênh gửi</label><div class="seg"><button type="button" aria-pressed="true" disabled>✓ Trong app</button><button type="button" data-act="cmail" aria-pressed="'+!!C.email+'">✉ Gửi kèm email</button><button type="button" data-act="czalo" aria-pressed="'+!!C.zalo+'">💬 Nhắn Zalo</button></div>'+
+    '<div class="tiny muted" style="margin-top:5px">'+(C.email?'Email gửi tới địa chỉ email công ty của <b>'+rc.length+'</b> người, tối đa 60 email/ngày. Họ trả lời ASM qua email này.':'Trong app luôn gửi. Bật thêm email hoặc Zalo nếu cần nhắc chắc chắn hơn.')+'</div></div>';
+  if(C.zalo)h+='<div class="fld"><div class="tiny muted" style="margin-bottom:6px">Zalo không cho điền sẵn nội dung: bấm <b>Nhắn Zalo</b> sẽ sao chép tin và mở khung chat, bạn chỉ cần dán và gửi. Số Zalo chỉ lưu trên máy bạn, không gửi lên máy chủ.</div>'+
+    '<div class="tblwrap"><table class="t zt"><thead><tr><th>Người nhận</th><th>Số Zalo</th><th></th></tr></thead><tbody>'+(rc.length?rc.map(m=>'<tr><td><b>'+esc(shortName(m.name||m.email))+'</b></td><td><input id="zp_'+m.uid+'" class="zin" data-zp="'+m.uid+'" type="tel" inputmode="tel" autocomplete="off" placeholder="09xx xxx xxx" value="'+esc(Z[m.uid]||'')+'"></td><td class="r"><button type="button" class="mini pri" data-act="zalo" data-uid="'+m.uid+'">Nhắn Zalo</button></td></tr>').join(''):'<tr><td colspan="3" class="muted">Chưa có người nhận.</td></tr>')+'</tbody></table></div></div>';
+  return h;
+}
 function composeHTML(){
   const C=ST.compose,mem=ST.data.members,nd=addD(ST.today,1);
   const one=C.uid?mem.find(x=>x.uid===C.uid):null,nu=C.uids?C.uids.length:0;
@@ -1246,10 +1270,11 @@ function composeHTML(){
   const preset=ng1?['Chăm lại 3–5 đại lý lớn: chốt đơn máy lọc kèm combo lõi lọc thay thế.','Tại mỗi điểm bán đã nhập máy: hướng dẫn nhân viên đại lý tư vấn test nước và đẩy sell-out (SO).','Mở ≥ 2 điểm bán mới mỗi ngày, để lại máy trưng bày và tài liệu bán hàng.']:['Gọi điện xác nhận lịch hẹn với các đại lý lớn trước 9h.','Tuần này ưu tiên mở thêm điểm bán mới, mỗi ngày ít nhất 2 điểm.'];
   const sugs=C.uid&&one?[suggestFocus(calc(one,ST.date),ST.date)].concat(preset):['Hoàn thành báo cáo cuối ngày trước '+DEADLINE+'h mỗi ngày.'].concat(nu||C.nganh?preset:[],['Nhóm xuất sắc hôm nay: cảm ơn cả team đã giữ nhịp tốt!']);
   const kinds=[['focus','🎯 Trọng tâm'],['note','📝 Nhắc nhở'],['praise','👏 Khen ngợi']];
-  return '<div class="scrim center" data-act="closeCompose"><div class="modal" role="dialog" aria-label="Giao việc" data-stop="1"><h3>Giao việc'+(one?' cho '+esc(one.name||one.email):nu?' cho '+nu+' người đã chọn':C.nganh?' cho '+NG[C.nganh].n:' cho cả nhóm')+'</h3><div class="scopenote">'+(ST.data.me.admin?'Quản trị viên giao được cho mọi nhân sự.':'Chỉ giao được cho nhân sự thuộc nhóm của bạn. Máy chủ tự loại bất kỳ ai ngoài nhóm.')+'</div>'+
+  return '<div class="scrim center" data-act="closeCompose"><div class="modal" role="dialog" aria-label="Giao việc" data-stop="1"><h3>Giao việc'+(one?' cho '+esc(one.name||one.email):nu?' cho '+nu+' người đã chọn':C.nganh?' cho '+NG[C.nganh].n:' cho cả nhóm')+'</h3><div class="scopenote">'+(nu?'Gửi tới: <b>'+esc(composeRecips(C).slice(0,12).map(m=>shortName(m.name||m.email)).join(', '))+(nu>12?'…':'')+'</b>. ':'')+(ST.data.me.admin?'Quản trị viên giao được cho mọi nhân sự.':'Chỉ giao được cho nhân sự thuộc nhóm của bạn. Máy chủ tự loại bất kỳ ai ngoài nhóm.')+'</div>'+
     '<div class="fld"><label>Loại</label><div class="seg">'+kinds.map(k=>'<button data-act="ckind" data-v="'+k[0]+'" aria-pressed="'+(C.kind===k[0])+'">'+k[1]+'</button>').join('')+'</div></div>'+
     '<div class="fld"><label>Cho ngày</label><div class="seg"><button data-act="cdate" data-v="'+ST.today+'" aria-pressed="'+(C.date===ST.today)+'">Hôm nay</button><button data-act="cdate" data-v="'+nd+'" aria-pressed="'+(C.date===nd)+'">Ngày mai</button></div></div>'+
     '<div class="fld"><label for="ctext">Nội dung (tối đa 500 ký tự)</label><textarea id="ctext" rows="4" maxlength="500" placeholder="VD: Ưu tiên chăm lại đại lý A, B; mở thêm 2 điểm bán mới…">'+esc(C.text)+'</textarea><div style="margin-top:6px"><button class="aibtn sm" data-act="aiCompose"'+(C.aiBusy?' disabled':'')+'>'+(C.aiBusy?'Đang viết…':'✦ AI soạn giúp')+'</button> <span class="tiny muted">Gõ ý chính (hoặc để trống) rồi bấm, AI viết thành nội dung rõ ràng.</span></div><div class="sugs">'+sugs.map(s=>'<button data-act="csug" data-s="'+esc(s)+'">'+esc(s.length>90?s.slice(0,88)+'…':s)+'</button>').join('')+'</div></div>'+
+    composeChannels(C)+
     (C.msg?'<div class="msg">'+esc(C.msg)+'</div>':'')+
     '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn ghost" data-act="closeCompose" style="flex:1">Huỷ</button><button class="btn" data-act="sendCompose" style="flex:2"'+(C.busy?' disabled':'')+'>'+(C.busy?'Đang gửi…':'Gửi')+'</button></div></div></div>';
 }
@@ -1555,16 +1580,16 @@ function render(){
 }
 
 /* ====== Hành động ====== */
-function openCompose(o){ST.compose=Object.assign({uid:'',uids:null,nganh:0,kind:'focus',date:addD(ST.today,1),text:'',msg:'',busy:false},o);render();}
+function openCompose(o){ST.compose=Object.assign({email:mailPref(),zalo:false,uid:'',uids:null,nganh:0,kind:'focus',date:addD(ST.today,1),text:'',msg:'',busy:false},o);render();}
 async function sendCompose(){
   const C=ST.compose;if(C.busy)return;
   C.text=$('#ctext').value.trim();
   if(C.text.length<2){C.msg='Hãy nhập nội dung việc cần giao.';render();return;}
   C.busy=true;C.msg='';render();
-  const body={op:'send',text:C.text,date:C.date,kind:C.kind};
+  const body={op:'send',text:C.text,date:C.date,kind:C.kind,email:!!C.email};
   if(C.uids&&C.uids.length)body.to=C.uids;else if(C.uid)body.to=[C.uid];else{body.to='all';if(C.nganh)body.nganh=C.nganh;}
   const r=await api('POST','/api/directive',body);
-  if(r.s===200){ST.compose=null;if(C.uids)ST.sel={};toast('Đã giao việc cho '+r.j.sent+' người');await loadData(true);}
+  if(r.s===200){ST.compose=null;if(C.uids)ST.sel={};const em=r.j.email;let ex='';if(em)ex=!em.configured?' · Email chưa gửi được: máy chủ chưa cấu hình SMTP':' · Email: đã gửi '+em.sent+(em.skipped?', bỏ qua '+em.skipped:'')+(em.failed?', lỗi '+em.failed:'');toast('Đã giao việc cho '+r.j.sent+' người'+ex,em?5200:2400);await loadData(true);}
   else{C.busy=false;C.msg=r.j.error||'Không gửi được.';render();}
 }
 async function sendPlan(){
@@ -1661,6 +1686,9 @@ document.addEventListener('click',function(e){
   else if(a==='ot'){ST.ot=d.v;}
   else if(a==='omf'){ST.om=ST.om||{q:'',f:'all'};ST.om.f=d.v;}
   else if(a==='remind'){remindMissing();return;}
+  else if(a==='cmail'){ST.compose.text=$('#ctext').value;ST.compose.email=!ST.compose.email;try{localStorage.setItem('asm-mail',ST.compose.email?'1':'0');}catch(e){}}
+  else if(a==='czalo'){ST.compose.text=$('#ctext').value;ST.compose.zalo=!ST.compose.zalo;}
+  else if(a==='zalo'){openZalo(d.uid);return;}
   else if(a==='selClear'){ST.sel={};}
   else if(a==='composeSel'){const u=Object.keys(ST.sel).filter(k=>ST.sel[k]);if(u.length){openCompose({uids:u,text:''});return;}}
   else if(a==='view'){ST.view=d.v;try{localStorage.setItem('asm-view',d.v);}catch(e){}}
@@ -1684,6 +1712,7 @@ document.addEventListener('change',function(e){
 document.addEventListener('input',function(e){
   const t=e.target;
   if(t.id==='q'){ST.q=t.value;clearTimeout(ST._qt);ST._qt=setTimeout(render,140);}
+  else if(t.dataset.zp){zpSet(t.dataset.zp,t.value);}
   else if(t.id==='oq'){ST.om=ST.om||{q:'',f:'all'};ST.om.q=t.value;clearTimeout(ST._qt);ST._qt=setTimeout(render,140);}
   else if(t.id==='pgConf'){ST.pg.confirm=t.value;const bt=document.querySelector('[data-act="pgRun"]');if(bt)bt.disabled=!(t.value==='XOA HET'&&!ST.pg.busy);}
   else if(t.dataset.ndraft)ST.ndraft[t.dataset.ndraft]=t.value;   // không dựng lại giao diện khi đang gõ

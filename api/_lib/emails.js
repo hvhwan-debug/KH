@@ -51,7 +51,7 @@ function layout(o) {
     (o.cta ? '<div style="margin:18px 0 6px"><a href="' + esc(o.ctaUrl) + '" style="background:#007A73;color:#fff;text-decoration:none;padding:11px 18px;border-radius:10px;font-weight:700;display:inline-block">' + esc(o.cta) + "</a></div>" : "") +
     "</td></tr>" +
     '<tr><td style="padding:12px 18px 16px;font-size:11.5px;color:#4F6F6C;border-top:1px solid #C6E4E0;line-height:1.5">' +
-    (o.unsub
+    (o.footer ? esc(o.footer) : o.unsub
       ? "Email tự động, số liệu chỉ mang tính tham khảo, tính từ các số bạn tự nhập; không phải cam kết hay chỉ tiêu chính thức.<br>" +
         '<a href="' + esc(o.unsub) + '" style="color:#007A73">Tắt email tự động</a> · Hoặc vào Thiết lập › Tài khoản &amp; email trong ứng dụng.'
       : "Email bảo mật — không chia sẻ liên kết này cho người khác. Nếu không phải bạn yêu cầu, hãy bỏ qua email này.") +
@@ -62,7 +62,7 @@ function layout(o) {
     (o.tiles || []).map((x) => x.n + " — " + x.l).join("\n"),
     (o.sections || []).map((s) => "\n" + s.h + "\n" + s.lines.map((l) => "- " + l).join("\n")).join("\n"),
     o.cta ? "\n" + o.cta + ": " + o.ctaUrl : "",
-    o.unsub ? "\n—\nEmail tự động, chỉ mang tính tham khảo. Tắt email: " + o.unsub : "\n—\nEmail bảo mật, không chia sẻ liên kết này cho người khác."
+    o.footer ? "\n—\n" + o.footer : o.unsub ? "\n—\nEmail tự động, chỉ mang tính tham khảo. Tắt email: " + o.unsub : "\n—\nEmail bảo mật, không chia sẻ liên kết này cho người khác."
   ].filter((x) => x !== "").join("\n");
   return { html, text };
 }

@@ -65,3 +65,12 @@ HTPP là số đếm hằng ngày (ý nghĩa chính xác chưa xác nhận); SO 
 
 ## Chạy thử trên máy
 `ADMIN_EMAILS=boss@livotec.vn node dev/server.js`, rồi `node dev/seed-demo.js`, mở `/asm/` (asm@livotec.vn / matkhau123). Kiểm thử: `node dev/test-org.js` (cần server mới khởi động).
+
+## Nhắc việc qua email và Zalo (ASM)
+Mọi nơi giao việc (nút **Giao việc** ở từng người, **Giao việc cả nhóm**, chọn nhiều người trong bảng, nút **Nhắc n người chưa gửi báo cáo**) đều mở cùng một hộp thoại có mục **Kênh gửi**:
+- **Trong app**: luôn gửi, nhân sự thấy ở mục "Việc ASM giao cho bạn".
+- **Gửi kèm email**: máy chủ gửi thư tới email công ty của nhân sự (chỉ người thuộc nhóm của ASM). Tối đa **60 email/ngày/ASM**, nội dung bị thoát HTML, `Reply-To` là email ASM. Cần cấu hình SMTP (`SMTP_HOST`, `SMTP_FROM`...); nếu chưa cấu hình, hệ thống báo "chưa cấu hình SMTP" thay vì gửi lỗi. Lựa chọn bật/tắt email được nhớ cho lần sau.
+- **Nhắn Zalo**: Zalo không cho điền sẵn nội dung và việc gửi tự động cần tài khoản Zalo OA, nên nút này **sao chép tin nhắn** ("Chào <tên>, <nội dung> — ASM <tên ASM>") rồi mở `https://zalo.me/<số điện thoại>`; ASM dán vào ô chat và gửi. Số Zalo của từng người chỉ lưu trong trình duyệt của ASM (localStorage), **không gửi lên máy chủ**.
+
+Kiểm thử: `node dev/test-email.js` (sau `dev/seed-demo.js`) và `node dev/test-scope.js` (phân quyền).
+

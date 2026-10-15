@@ -2,9 +2,14 @@
 const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const store = require("../_lib/store");
 const org = require("../_lib/org");
+const mail = require("../_lib/mail");
+const { cfg } = require("../_lib/config");
+const { layout } = require("../_lib/emails");
 
 const MAX_ITEMS = 120;
 const KINDS = ["focus", "note", "praise"];
+const KIND_LABEL = { focus: "Trọng tâm", note: "Nhắc nhở", praise: "Khen ngợi" };
+const MAX_MAIL_DAY = 60; // mỗi ASM tối đa 60 email/ngày để tránh gửi tràn lan
 
 module.exports = async function (context, req) {
   try {
@@ -53,7 +58,32 @@ module.exports = async function (context, req) {
         d.items = (d.items || []).concat([{ id: now.toString(36) + Math.random().toString(36).slice(2, 7), date, text, kind, from, fromEmail: u.email, ts: now, done: false, doneAt: 0 }]).slice(-MAX_ITEMS);
         await store.put(key, d);
       }
-      return reply(context, 200, { ok: true, sent: targets.length });
+      // Gửi kèm email (tuỳ chọn): chỉ tới nhân sự thuộc quyền của ASM, có hạn mức mỗi ngày
+      let emailRes = null;
+      if (b.email === true) {
+        const c = cfg(), ready = c.mailMode === "memory" || !!(c.smtp && c.smtp.host);
+        if (!ready) emailRes = { configured: false, sent: 0, failed: 0, skipped: targets.length };
+        else {
+          const qk = "mailq/" + u.uid + ".json", day = org.vnToday();
+          let q = (await store.get(qk)) || { d: day, n: 0 };
+          if (q.d !== day) q = { d: day, n: 0 };
+          let ok = 0, failed = 0, skipped = 0;
+          for (const p of targets) {
+            if (q.n >= MAX_MAIL_DAY) { skipped++; continue; }
+            let ud = null; try { ud = await store.get("user/" + p.uid + ".json"); } catch (e) {}
+            if (!ud || !ud.email || ud.disabled) { skipped++; continue; }
+            try {
+              const label = (KIND_LABEL[kind] || "Nhắc nhở") + " · " + date.slice(8) + "/" + date.slice(5, 7);
+              const m = layout({ tone: kind === "praise" ? "info" : "remind", title: "ASM " + from + " gửi bạn lời nhắn", sections: [{ h: label, lines: [text] }], cta: "Mở ứng dụng", ctaUrl: cfg().appUrl, footer: "Email do ASM gửi trực tiếp qua hệ thống. Hãy phản hồi ASM của bạn qua Zalo hoặc điện thoại." });
+              await mail.send({ to: ud.email, subject: "[" + (KIND_LABEL[kind] || "Nhắc nhở") + "] " + from + ": " + text.slice(0, 60), html: m.html, text: m.text, headers: { "Reply-To": u.email } });
+              q.n++; ok++;
+            } catch (e) { failed++; context.log.error("directive mail", e && e.message); }
+          }
+          try { await store.put(qk, q); } catch (e) {}
+          emailRes = { configured: true, sent: ok, failed, skipped, limit: MAX_MAIL_DAY, left: Math.max(0, MAX_MAIL_DAY - q.n) };
+        }
+      }
+      return reply(context, 200, { ok: true, sent: targets.length, email: emailRes });
     }
     return reply(context, 400, { ok: false, error: "Yêu cầu không hợp lệ." });
   } catch (e) {
