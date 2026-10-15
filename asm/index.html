@@ -246,6 +246,20 @@ table.t td.r,table.t th.r{text-align:right}
 .bar .pillbtn{background:var(--brand);border-color:var(--brand);color:#fff}
 
 /* Ngăn kéo + hộp thoại */
+.asmai-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:41;background:var(--brand);color:#fff;border:0;border-radius:999px;padding:12px 18px;font-weight:700;font-size:14px;box-shadow:0 10px 24px rgba(0,0,0,.28);cursor:pointer}
+.asmai-fab:hover{filter:brightness(1.06)}
+@media (min-width:1100px){.asmai-fab{right:28px;bottom:28px}}
+.asmchat{display:flex;flex-direction:column}
+.asmchat-log{flex:1;overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px;min-height:200px}
+.asmchat-q,.asmchat-a{max-width:88%;padding:9px 12px;border-radius:14px;font-size:13.5px;line-height:1.45;white-space:pre-wrap}
+.asmchat-q{align-self:flex-end;background:var(--brand);color:#fff;border-bottom-right-radius:4px}
+.asmchat-a{align-self:flex-start;background:var(--surface2);color:var(--ink);border-bottom-left-radius:4px}
+.asmchat-sugs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.asmchat-sugs button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 11px;font-size:12px;color:var(--ink);cursor:pointer;text-align:left}
+.asmchat-in{display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--line);padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.asmchat-in textarea{flex:1;resize:none;border:1.5px solid var(--line);border-radius:12px;padding:9px 12px;font:inherit;max-height:100px;background:var(--surface);color:var(--ink)}
+.asmchat-in button{border:0;background:var(--brand);color:#fff;border-radius:12px;padding:0 16px;font-weight:700;cursor:pointer}
+.asmchat-in button:disabled{opacity:.5}
 .scrim{position:fixed;inset:0;background:rgba(8,16,20,.5);z-index:50;display:flex;justify-content:flex-end}
 .scrim.center{justify-content:center;align-items:center;padding:16px}
 .drawer{width:min(640px,100%);height:100%;background:var(--bg);overflow:auto;padding:0 0 40px;animation:slide .22s ease-out;padding-top:env(safe-area-inset-top,0px)}
@@ -544,7 +558,8 @@ const ST={
   tab:'overview',ng:0,asm:'',flt:'all',sort:'risk',q:'',
   drawer:null,compose:null,org:null,orgErr:'',
   login:{tab:'login',email:'',name:'',otp:false,msg:'',busy:false},
-  ndraft:{},nsel:{},sel:{},sending:false,loadedAt:0,loading:false,ai:{brief:null,coach:{},plan:false}
+  ndraft:{},nsel:{},sel:{},sending:false,loadedAt:0,loading:false,ai:{brief:null,coach:{},plan:false},
+  chatAi:null
 };
 function vnNow(){return new Date(Date.now()+ST.skew+7*36e5);}
 function vnToday(){return vnNow().toISOString().slice(0,10);}
@@ -1918,7 +1933,7 @@ function render(){
   let view='';
   try{view=ST.tab==='overview'?dashHTML():ST.tab==='staff'?staffHTML():ST.tab==='plan'?planHTML():ST.tab==='heat'?heatHTML():ST.tab==='org'?orgHTML():todayHTML();}
   catch(e){console.error(e);view='<div class="card empty">Có lỗi khi hiển thị. Hãy tải lại trang.</div>';}
-  root.innerHTML=headerHTML()+'<div class="wrap">'+(ST.err?'<div class="note" style="margin-top:10px">'+esc(ST.err)+'</div>':'')+(ST.data.truncated&&ST.tab!=='staff'&&ST.tab!=='org'&&ST.tab!=='overview'?'<div class="note bignote"><b>'+fmt(ST.data.total)+' nhân sự</b> trong phạm vi này, quá nhiều để hiển thị cùng lúc. Các số tổng hợp bên dưới chỉ tính trên <b>'+fmt(ST.data.members.length)+'</b> người đầu tiên. Hãy <button class="linkbtn" data-act="tab" data-v="staff">mở tab Nhân sự</button> hoặc chọn một ASM ở ô phía trên để xem đầy đủ.</div>':'')+tabsHTML(nFeed,navSum(all))+view+'</div>'+(ST.drawer?drawerHTML():'')+(ST.compose?composeHTML():'')+(ST.mm?mgmtHTML():'')+(ST.nm?newMemberHTML():'')+(ST.pv?provModalHTML():'');
+  root.innerHTML=headerHTML()+'<div class="wrap">'+(ST.err?'<div class="note" style="margin-top:10px">'+esc(ST.err)+'</div>':'')+(ST.data.truncated&&ST.tab!=='staff'&&ST.tab!=='org'&&ST.tab!=='overview'?'<div class="note bignote"><b>'+fmt(ST.data.total)+' nhân sự</b> trong phạm vi này, quá nhiều để hiển thị cùng lúc. Các số tổng hợp bên dưới chỉ tính trên <b>'+fmt(ST.data.members.length)+'</b> người đầu tiên. Hãy <button class="linkbtn" data-act="tab" data-v="staff">mở tab Nhân sự</button> hoặc chọn một ASM ở ô phía trên để xem đầy đủ.</div>':'')+tabsHTML(nFeed,navSum(all))+view+'</div>'+(ST.drawer?drawerHTML():'')+(ST.compose?composeHTML():'')+(ST.mm?mgmtHTML():'')+(ST.nm?newMemberHTML():'')+(ST.pv?provModalHTML():'')+(ST.chatAi?chatHTML():'<button class="asmai-fab" data-act="chatOpen">✦ Hỏi AI</button>');
   if(keep){const n=document.getElementById(keep.id);if(n){n.focus({preventScroll:true});try{n.setSelectionRange(keep.s,keep.e);}catch(e){}}}
   window.scrollTo(0,sy);
   setTimeout(aiAutoMaybe,0);setTimeout(bigEnsure,0);
@@ -1962,6 +1977,40 @@ function setDate(d){
   if(mo!==ST.month){ST.month=mo;loadData();}else render();
 }
 async function logout(){try{await api('POST','/api/auth/logout',{});}catch(e){}setToken('');ST.data=null;ST.boot='login';render();}
+
+/* ====== Hỏi AI (trợ lý mở, dành riêng cho nghiệp vụ quản lý của ASM) ====== */
+const ASMAI_SYS="Bạn là trợ lý dành cho ASM (quản lý khu vực bán hàng) kênh GT của Livotec/Karofi, bán qua đại lý. Giúp ASM trong công việc QUẢN LÝ: hiểu ý nghĩa các chỉ số trong công cụ này (HTPP, độ phủ, SO, mốc kế hoạch, dự báo...), cách ưu tiên công việc trong ngày, cách nhắc nhở/động viên nhân viên (SR) hiệu quả mà không gây áp lực, cách dùng các tính năng của trang quản lý ASM, và kỹ năng quản lý đội ngũ bán hàng nói chung. "+
+  "Luôn tự nhận là trợ lý quản lý dành cho ASM của Livotec, không bao giờ tiết lộ, xác nhận hay nêu tên bất kỳ mô hình AI/nhà cung cấp công nghệ nào đứng sau dù được hỏi thẳng — chỉ cần trả lời ngắn gọn rằng đây là trợ lý được xây riêng cho ASM rồi tiếp tục hỗ trợ. "+
+  "Bạn KHÔNG có quyền xem số liệu thật của từng nhân sự trong cuộc trò chuyện này — nếu được hỏi số liệu cụ thể của ai đó, hướng dẫn ASM xem ở tab tương ứng (Hôm nay, Nhân sự, Tổng quan) thay vì bịa số. "+
+  "Nếu câu hỏi lạc chủ đề (ngoài công việc quản lý bán hàng), trả lời thật ngắn gọn khéo léo (tối đa 1 câu) rồi chủ động lái về công việc quản lý của ASM, không chặn cứng, không sa đà theo. Trả lời tiếng Việt, ngắn gọn, thực tế, giọng đồng hành, không đổ lỗi cho nhân viên.";
+function chatOpen(){ST.chatAi={msgs:[],q:'',busy:false};}
+function chatClose(){ST.chatAi=null;}
+function chatSug(s){if(!ST.chatAi)ST.chatAi={msgs:[],q:'',busy:false};ST.chatAi.q=s;chatSend();}
+async function chatSend(){
+  const C=ST.chatAi;if(!C||C.busy)return;
+  const el=$('#chatQ'),q=((el&&el.value)||C.q||'').trim();
+  if(!q)return;
+  C.msgs.push({role:'user',text:q});C.q='';C.busy=true;render();
+  try{
+    const hist=[{role:'system',content:ASMAI_SYS}].concat(C.msgs.slice(-8).map(m=>({role:m.role,content:m.text})));
+    const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist,temperature:0.4,max_tokens:500})});
+    let text;
+    if(r.ok){const j=await r.json();text=(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||'Không nhận được nội dung trả lời, thử lại sau.';}
+    else text=r.status===429?'Đang có nhiều người hỏi cùng lúc, thử lại sau ít phút nhé.':'Trợ lý đang bận, thử lại sau.';
+    C.msgs.push({role:'assistant',text:text});
+  }catch(e){C.msgs.push({role:'assistant',text:'Lỗi mạng, thử lại sau.'});}
+  C.busy=false;render();
+  setTimeout(()=>{const log=document.querySelector('.asmchat-log');if(log)log.scrollTop=log.scrollHeight;},30);
+}
+function chatHTML(){
+  const C=ST.chatAi;
+  const sugs=['Giải thích chỉ số HTPP và độ phủ là gì','Cách nhắc SR báo cáo muộn mà không gây áp lực','Hôm nay nên ưu tiên việc gì trước','Cách động viên SR đang tụt lại chỉ tiêu'];
+  return '<div class="scrim" data-act="chatClose"><aside class="drawer asmchat" role="dialog" aria-label="Hỏi AI" data-stop="1">'+
+    '<div class="dh"><div><div class="b" style="font-size:16px">✦ Hỏi AI</div><div class="tiny muted">Dành cho công việc quản lý của ASM</div></div><button class="x" data-act="chatClose" aria-label="Đóng">✕</button></div>'+
+    '<div class="asmchat-log">'+(C.msgs.length?C.msgs.map(m=>'<div class="'+(m.role==='user'?'asmchat-q':'asmchat-a')+'">'+esc(m.text)+'</div>').join(''):'<div class="muted small" style="padding:4px 0 10px">Hỏi về cách quản lý nhóm, ý nghĩa các chỉ số, hay cách dùng trang này — trợ lý không thấy số liệu riêng của từng nhân sự.</div>'+(sugs.length?'<div class="asmchat-sugs">'+sugs.map(s=>'<button data-act="chatSug" data-s="'+esc(s)+'">'+esc(s)+'</button>').join('')+'</div>':''))+(C.busy?'<div class="asmchat-a">Đang trả lời…</div>':'')+'</div>'+
+    '<div class="asmchat-in"><textarea id="chatQ" rows="1" placeholder="Nhập câu hỏi…" '+(C.busy?'disabled':'')+'>'+esc(C.q||'')+'</textarea><button data-act="chatSend"'+(C.busy?' disabled':'')+'>Gửi</button></div>'+
+    '</aside></div>';
+}
 
 document.addEventListener('click',function(e){
   if(e.target.closest('.selc,.provsel'))return;                                  // bấm ô chọn không mở chi tiết
@@ -2055,6 +2104,10 @@ document.addEventListener('click',function(e){
   else if(a==='selClear'){ST.sel={};}
   else if(a==='composeSel'){const u=Object.keys(ST.sel).filter(k=>ST.sel[k]);if(u.length){openCompose({uids:u,text:''});return;}}
   else if(a==='view'){ST.view=d.v;try{localStorage.setItem('asm-view',d.v);}catch(e){}}
+  else if(a==='chatOpen'){chatOpen();}
+  else if(a==='chatClose'){if(b.classList.contains('scrim')&&e.target!==b)return;chatClose();}
+  else if(a==='chatSug'){chatSug(d.s);return;}
+  else if(a==='chatSend'){chatSend();return;}
   else return;
   render();
 });
