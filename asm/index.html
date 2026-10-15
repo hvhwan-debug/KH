@@ -245,6 +245,10 @@ table.t td.r,table.t th.r{text-align:right}
 .plr .done{color:var(--ok);font-size:12px;font-weight:600;margin-top:4px}
 .bar{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:20;margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--ink);color:var(--bg);border-radius:16px;padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .bar .pillbtn{background:var(--brand);border-color:var(--brand);color:#fff}
+.pl-short{display:none}
+@media (max-width:700px){.pl-long{display:none}.pl-short{display:inline}.bar{flex-wrap:nowrap;gap:8px;padding:8px 10px;margin-top:10px}.bar .barc{white-space:nowrap;font-size:13px}.bar .sp{flex:1 1 0;min-width:0}.bar .pillbtn{white-space:nowrap;padding:8px 12px}}
+table.plt textarea{resize:none;overflow:hidden}
+@media (max-width:370px){.bar .barc .pl-short{display:none}.bar .pillbtn{padding:8px 10px;font-size:12.5px}.bar{padding:8px;gap:6px}}
 
 /* Ngăn kéo + hộp thoại */
 .asmhero{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:16px;border-radius:20px;padding:26px 24px;margin-bottom:14px;color:#fff;background:linear-gradient(100deg,rgba(6,42,38,.82) 0%,rgba(6,42,38,.5) 45%,rgba(6,42,38,.08) 78%),url('../hero-bg.jpg');background-size:cover;background-position:center;box-shadow:var(--shadow)}
@@ -261,7 +265,7 @@ table.t td.r,table.t th.r{text-align:right}
 @media (max-width:700px){.asmhero{padding:20px 18px}.asmhero-t{font-size:21px}.asmhero-kpi{display:none}}
 .asmai-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:41;background:var(--brand);color:#fff;border:0;border-radius:999px;padding:12px 18px;font-weight:700;font-size:14px;box-shadow:0 10px 24px rgba(0,0,0,.28);cursor:pointer}
 .asmai-fab:hover{filter:brightness(1.06)}
-@media (min-width:1100px){.asmai-fab{right:28px;bottom:28px}}
+@media (min-width:1100px){.asmai-fab{right:28px;bottom:calc(28px + var(--barh,0px))}}
 .asmchat{display:flex;flex-direction:column}
 .asmchat-log{flex:1;overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px;min-height:200px}
 .asmchat-q,.asmchat-a{max-width:88%;padding:9px 12px;border-radius:14px;font-size:13.5px;line-height:1.45;white-space:pre-wrap}
@@ -517,7 +521,7 @@ table.tv .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin
   .tabs button[aria-selected=true] .tic{transform:none;box-shadow:none;background:color-mix(in srgb,var(--brand) 14%,#fff)!important}
   .tabs .cnt{box-shadow:0 0 0 2px #fff}
   .tabs button{padding-left:2px;padding-right:2px}.tabs .ts{white-space:nowrap;font-size:10.5px;letter-spacing:-.01em}
-  .asmai-fab{bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+  .asmai-fab{bottom:calc(88px + var(--barh,0px) + env(safe-area-inset-bottom,0px))}
 }
 /* ===== Tab Nhân sự ===== */
 .t-staff{background:rgba(255,255,255,.16)}
@@ -1326,7 +1330,7 @@ function planHTML(){
   }).join('');
   const nSel=all.filter(c=>ST.nsel[c.m.uid]!==false).length;
   return '<div class="card" style="margin-top:14px"><h2>Kế hoạch làm việc '+DOWL[dowOf(nd0)]+' '+dmy(nd0)+'</h2><div class="hsub">Mỗi người có sẵn một <b>trọng tâm gợi ý</b> dựa trên khoảng cách tiến độ, độ phủ và dự báo của họ. Sửa lại nếu cần rồi gửi một lần cho cả nhóm — nhân sự sẽ thấy trong app của mình.</div><div style="margin-bottom:6px"><button class="aibtn" data-act="aiPlan"'+(ST.ai.plan?' disabled':'')+'>'+(ST.ai.plan?'Đang soạn…':'✦ AI soạn trọng tâm cho cả nhóm')+'</button><div class="aiwarn">AI viết lại từng trọng tâm dựa trên số liệu; bạn vẫn đọc và sửa được trước khi gửi.</div></div>'+'<div class="tblwrap"><table class="t plt"><thead><tr><th>Nhân sự</th><th>Ngày làm việc kế tiếp</th><th>Trọng tâm giao (sửa được trước khi gửi)</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
-    '<div class="bar"><span><b>'+nSel+'</b> người được chọn</span><span class="sp"></span><button class="pillbtn" data-act="selAll">Chọn/bỏ tất cả</button><button class="pillbtn" data-act="sendPlan"'+(ST.sending||!nSel?' disabled':'')+'>'+(ST.sending?'Đang gửi…':'Gửi trọng tâm cho '+nSel+' người')+'</button></div>';
+    '<div class="bar"><span class="barc"><b>'+nSel+'</b><span class="pl-long"> người được chọn</span><span class="pl-short"> chọn</span></span><span class="sp"></span><button class="pillbtn" data-act="selAll"><span class="pl-long">Chọn/bỏ tất cả</span><span class="pl-short">Tất cả</span></button><button class="pillbtn" data-act="sendPlan"'+(ST.sending||!nSel?' disabled':'')+'>'+(ST.sending?'Đang gửi…':'<span class="pl-long">Gửi trọng tâm cho '+nSel+' người</span><span class="pl-short">Gửi cho '+nSel+' người</span>')+'</button></div>';
 }
 
 /* ====== Tab: Bản đồ nhiệt tháng ====== */
@@ -1969,6 +1973,13 @@ async function lforgot(){
   L.busy=false;render();
 }
 function nameOk(v){const t=String(v||'').replace(/\s+/g,' ').trim();return /^[\p{L}][\p{L}'.\-]*(?: [\p{L}][\p{L}'.\-]*)+$/u.test(t)&&(t.match(/\p{L}/gu)||[]).length>=4;}
+function autoSizeTA(t){t.style.height='auto';t.style.height=Math.max(t.scrollHeight+2,62)+'px';}
+function planLayout(){
+  const b=document.querySelector('.bar');
+  document.documentElement.style.setProperty('--barh',b?(Math.round(b.offsetHeight)+8)+'px':'0px');
+  document.querySelectorAll('textarea[data-ndraft]').forEach(autoSizeTA);
+}
+window.addEventListener('resize',()=>{if(ST&&ST.boot==='ready')planLayout();});
 function phoneOk(v){let t=String(v||'').replace(/[\s.\-()]/g,'');if(/^\+84/.test(t))t='0'+t.slice(3);else if(/^84\d{9}$/.test(t))t='0'+t.slice(2);return /^0[2-9]\d{8}$/.test(t);}
 async function lsubmit(){
   const L=ST.login;if(L.busy)return;
@@ -2038,7 +2049,7 @@ function render(){
   root.innerHTML=headerHTML()+'<div class="wrap">'+(ST.err?'<div class="note" style="margin-top:10px">'+esc(ST.err)+'</div>':'')+(ST.data.truncated&&ST.tab!=='staff'&&ST.tab!=='org'&&ST.tab!=='overview'?'<div class="note bignote"><b>'+fmt(ST.data.total)+' nhân sự</b> trong phạm vi này, quá nhiều để hiển thị cùng lúc. Các số tổng hợp bên dưới chỉ tính trên <b>'+fmt(ST.data.members.length)+'</b> người đầu tiên. Hãy <button class="linkbtn" data-act="tab" data-v="staff">mở tab Nhân sự</button> hoặc chọn một ASM ở ô phía trên để xem đầy đủ.</div>':'')+tabsHTML(nFeed,navSum(all))+view+'</div>'+(ST.drawer?drawerHTML():'')+(ST.compose?composeHTML():'')+(ST.mm?mgmtHTML():'')+(ST.nm?newMemberHTML():'')+(ST.pv?provModalHTML():'')+(ST.chatAi?chatHTML():'<button class="asmai-fab" data-act="chatOpen">✦ Hỏi AI</button>');
   if(keep){const n=document.getElementById(keep.id);if(n){n.focus({preventScroll:true});try{n.setSelectionRange(keep.s,keep.e);}catch(e){}}}
   window.scrollTo(0,sy);
-  setTimeout(aiAutoMaybe,0);setTimeout(bigEnsure,0);
+  setTimeout(aiAutoMaybe,0);setTimeout(bigEnsure,0);setTimeout(planLayout,0);
 }
 
 /* ====== Hành động ====== */
@@ -2249,7 +2260,7 @@ document.addEventListener('input',function(e){
   else if(t.id==='mq'){ST.ms=ST.ms||{q:'',f:'all',k:'risk',d:1};ST.ms.q=t.value;clearTimeout(ST._qt);ST._qt=setTimeout(render,140);}
   else if(t.id==='oq'){ST.om=ST.om||{q:'',f:'all'};ST.om.q=t.value;ST.op=0;clearTimeout(ST._qt);ST._qt=setTimeout(render,140);}
   else if(t.id==='pgConf'){ST.pg.confirm=t.value;const bt=document.querySelector('[data-act="pgRun"]');if(bt)bt.disabled=!(t.value==='XOA HET'&&!ST.pg.busy);}
-  else if(t.dataset.ndraft)ST.ndraft[t.dataset.ndraft]=t.value;   // không dựng lại giao diện khi đang gõ
+  else if(t.dataset.ndraft){ST.ndraft[t.dataset.ndraft]=t.value;autoSizeTA(t);}   // không dựng lại giao diện khi đang gõ
 });
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){if(ST.pv){ST.pv=null;render();}else if(ST.nm){ST.nm=null;render();}else if(ST.mm){ST.mm=null;render();}else if(ST.compose){ST.compose=null;render();}else if(ST.drawer){ST.drawer=null;render();}}
