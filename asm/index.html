@@ -15,7 +15,7 @@
 :root{
   --bg:#EEF3F5;--surface:#fff;--surface2:#F6F9FA;--ink:#12222B;--muted:#5B6B74;--line:#D7E0E5;--on:#fff;
   --brand:#02A79E;--brand-deep:#067A8C;--n1:#0B86C2;--n1-soft:#DCEFF9;--n2:#D8481F;--n2-soft:#FBE3DA;
-  --ok:#1E7F4F;--ok-soft:#D9F0E4;--warn:#955D00;--warn-soft:#FBEBC8;--bad:#B3261E;--bad-soft:#F9DAD7;
+  --ok:#1E7F4F;--ok-soft:#D9F0E4;--warn:#955D00;--warn-soft:#FBEBC8;--bad:#B3261E;--bad-soft:#F9DAD7;--purp:#6E4AC4;--purp-soft:#EAE2FA;
   --focus:#0B86C2;--shadow:0 1px 2px rgba(18,34,43,.05),0 6px 20px rgba(18,34,43,.06);
   --hero1:#06807F;--hero2:#0B5E9C;
   box-sizing:border-box;
@@ -23,12 +23,12 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0E171C;--surface:#16232A;--surface2:#1B2B33;--ink:#E6EEF1;--muted:#8FA2AC;--line:#2A3C45;--on:#0E171C;
   --brand:#2BC4B9;--brand-deep:#5AD0D6;--n1:#5BB6EA;--n1-soft:#17324A;--n2:#FF8A5E;--n2-soft:#3A2119;
-  --ok:#4CC38A;--ok-soft:#14352A;--warn:#E3A63B;--warn-soft:#3A2D10;--bad:#FF8A80;--bad-soft:#3C1B19;--focus:#5BB6EA;
+  --ok:#4CC38A;--ok-soft:#14352A;--warn:#E3A63B;--warn-soft:#3A2D10;--bad:#FF8A80;--bad-soft:#3C1B19;--purp:#B79CF0;--purp-soft:#2A2145;--focus:#5BB6EA;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);--hero1:#0A4F52;--hero2:#123F66;}}
 :root[data-theme="dark"]{
   --bg:#0E171C;--surface:#16232A;--surface2:#1B2B33;--ink:#E6EEF1;--muted:#8FA2AC;--line:#2A3C45;--on:#0E171C;
   --brand:#2BC4B9;--brand-deep:#5AD0D6;--n1:#5BB6EA;--n1-soft:#17324A;--n2:#FF8A5E;--n2-soft:#3A2119;
-  --ok:#4CC38A;--ok-soft:#14352A;--warn:#E3A63B;--warn-soft:#3A2D10;--bad:#FF8A80;--bad-soft:#3C1B19;--focus:#5BB6EA;
+  --ok:#4CC38A;--ok-soft:#14352A;--warn:#E3A63B;--warn-soft:#3A2D10;--bad:#FF8A80;--bad-soft:#3C1B19;--purp:#B79CF0;--purp-soft:#2A2145;--focus:#5BB6EA;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);--hero1:#0A4F52;--hero2:#123F66;}
 html{overflow-x:hidden;scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:border-box}
@@ -93,6 +93,14 @@ svg{display:block}
 .pactions{display:flex;gap:8px;flex-wrap:wrap}
 .kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
 .kt{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow);min-width:0}
+.kt .klrow{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.kico{flex:0 0 auto;width:26px;height:26px;border-radius:8px;display:grid;place-items:center}
+.kico.a-brand{background:color-mix(in srgb,var(--brand) 16%,var(--surface));color:var(--brand-deep)}
+.kico.a-ok{background:var(--ok-soft);color:var(--ok)}
+.kico.a-n1{background:var(--n1-soft);color:var(--n1)}
+.kico.a-n2{background:var(--n2-soft);color:var(--n2)}
+.kico.a-purp{background:var(--purp-soft);color:var(--purp)}
+.kt .klrow .kl{margin:0}
 .kt .kl{font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kt .kv{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.2;margin-top:2px;white-space:nowrap}
 .kt .kv small{font-size:12px;font-weight:500;color:var(--muted);margin-left:3px}
@@ -1069,7 +1077,9 @@ const IC={
   down:'<path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/>',
   chart:'<path d="M3 3v18h18"/><path d="M7 15v3M12 9v9M17 5v13"/>',
   users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-  send:'<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/>'
+  send:'<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/>',
+  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+  pin:'<path d="M12 22s7-7.58 7-12A7 7 0 0 0 5 10c0 4.42 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/>'
 };
 function ic(n,s){s=s||18;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(IC[n]||'')+'</svg>';}
 const isNarrow=w=>!!(window.matchMedia&&window.matchMedia('(max-width:'+(w||700)+'px)').matches);
@@ -1109,16 +1119,16 @@ function heroHTML(list,t,date){
   const lead=t.help?t.help+' người cần bạn hỗ trợ.':t.work&&t.done<t.work&&late?(t.work-t.done)+' người chưa gửi báo cáo.':t.ratio!=null&&t.ratio<0.9?'Nhóm đang đạt '+pc(t.ratio)+' mốc kế hoạch tháng.':'Nhóm đang đi đúng nhịp.';
   const tone=r=>r==null?'':r>=0.9?'ok':r>=0.7?'warn':'bad';
   const bar=(p,mk)=>'<div class="kb"><i style="width:'+Math.max(0,Math.min(100,(p||0)*100)).toFixed(0)+'%"></i>'+(mk!=null?'<span class="mk" style="left:'+Math.min(100,mk*100).toFixed(1)+'%" title="Mốc kế hoạch"></span>':'')+'</div>';
-  const tile=(cls,lbl,val,p,sub,mk)=>'<div class="kt'+(cls?' '+cls:'')+'"><div class="kl">'+lbl+'</div><div class="kv">'+val+'</div>'+bar(p,mk)+'<div class="ks">'+sub+'</div></div>';
+  const tile=(cls,lbl,val,p,sub,mk,icn,accent)=>'<div class="kt'+(cls?' '+cls:'')+'">'+(icn?'<div class="klrow"><div class="kico '+(accent||'')+'">'+ic(icn,14)+'</div><div class="kl">'+lbl+'</div></div>':'<div class="kl">'+lbl+'</div>')+'<div class="kv">'+val+'</div>'+bar(p,mk)+'<div class="ks">'+sub+'</div></div>';
   const who=(ST.data.me.name||'').split(' ').slice(-1)[0]||'ASM',nMiss=missingList(list).length;
   return '<section class="phead fadein"><div><h1>'+(isT?greet+', '+esc(who):'Báo cáo ngày '+dmy(date))+'</h1><div class="sub">'+lead+' '+t.n+(ST.data.me.admin?' nhân sự':' nhân sự trong nhóm của bạn')+(ST.ng?' · '+NG[ST.ng].n:'')+' · cập nhật '+hhmm(ST.loadedAt)+'</div></div>'+
     '<div class="pactions">'+(nMiss?'<button class="pillbtn warnb" data-act="remind">'+ic('send',16)+' Nhắc '+nMiss+' người chưa gửi báo cáo</button>':'')+'<button class="pillbtn pri" data-act="copySum">'+ic('copy',16)+' Sao chép bản tin</button><button class="pillbtn" data-act="expTeam">'+ic('down',16)+' Xuất Excel</button><button class="pillbtn" data-act="composeAll">'+ic('send',16)+' Giao việc cả nhóm</button></div></section>'+
     '<div class="kpis">'+
-    tile(late&&done!=null&&done<1?'bad':done===1?'ok':'','Báo cáo cuối ngày',t.work?t.done+'<small>/ '+t.work+' người</small>':'–',done,done==null?'chưa có ai cần gửi':'đã gửi '+pc(done)+(late&&done<1?' · quá giờ chốt':''))+
-    tile(isT&&!late?'':tone(dayR),'Doanh số ngày',fmt(t.dayAch,1)+'<small>tr</small>',dayR,'kế hoạch '+fmt(t.dayPlan,1)+' tr'+(dayR!=null?' · '+pc(dayR):''))+
-    tile(tone(t.ratio),'Thực đạt / chỉ tiêu',fmt(t.ach)+'<small>/ '+fmt(t.total)+' tr</small>',t.pct,(t.pct==null?'chưa có chỉ tiêu':'đạt '+pc(t.pct)+' chỉ tiêu')+' · mốc hôm nay '+pc(t.expPct)+(t.ratio==null?'':' ('+pc(t.ratio)+' mốc)'),t.expPct)+
-    tile('','Độ phủ tháng',t.cov==null?'–':pc(t.cov),t.cov,fmt(t.covN)+' / '+fmt(t.pts)+' điểm bán · hôm nay +'+fmt(t.dp))+
-    '<div class="kt"><div class="kl">HTPP · Số bán SO</div><div class="kv">'+fmt(t.htpp)+'<small>HTPP</small></div><div class="kb" style="background:transparent"></div><div class="ks"><b>'+fmt(t.so)+'</b> sản phẩm SO hôm nay</div></div>'+
+    tile(late&&done!=null&&done<1?'bad':done===1?'ok':'','Báo cáo cuối ngày',t.work?t.done+'<small>/ '+t.work+' người</small>':'–',done,done==null?'chưa có ai cần gửi':'đã gửi '+pc(done)+(late&&done<1?' · quá giờ chốt':''),null,'send','a-brand')+
+    tile(isT&&!late?'':tone(dayR),'Doanh số ngày',fmt(t.dayAch,1)+'<small>tr</small>',dayR,'kế hoạch '+fmt(t.dayPlan,1)+' tr'+(dayR!=null?' · '+pc(dayR):''),null,'chart','a-ok')+
+    tile(tone(t.ratio),'Thực đạt / chỉ tiêu',fmt(t.ach)+'<small>/ '+fmt(t.total)+' tr</small>',t.pct,(t.pct==null?'chưa có chỉ tiêu':'đạt '+pc(t.pct)+' chỉ tiêu')+' · mốc hôm nay '+pc(t.expPct)+(t.ratio==null?'':' ('+pc(t.ratio)+' mốc)'),t.expPct,'target','a-n1')+
+    tile('','Độ phủ tháng',t.cov==null?'–':pc(t.cov),t.cov,fmt(t.covN)+' / '+fmt(t.pts)+' điểm bán · hôm nay +'+fmt(t.dp),null,'pin','a-purp')+
+    tile('','HTPP · Số bán SO',fmt(t.htpp)+'<small>HTPP</small>',null,'<b>'+fmt(t.so)+'</b> sản phẩm SO hôm nay',null,'cards','a-n2')+
     '</div><div class="ngsum">'+hi+'</div>';
 }
 
