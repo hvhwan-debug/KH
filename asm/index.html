@@ -570,6 +570,8 @@ table.stt select.provsel{max-width:190px}
 const DEADLINE=19;                       // giờ chốt báo cáo cuối ngày (giờ VN)
 const TOKEN_KEY='livotec-sr-token';      // dùng chung phiên đăng nhập với app SR
 const NG={1:{n:'Ngành 1',s:'Karofi · Livotec máy lọc',cls:'n1',col:'var(--n1)'},2:{n:'Ngành 2',s:'Livotec gia dụng',cls:'n2',col:'var(--n2)'}};
+/* Tên nhóm hàng mặc định khi nhân sự chưa gửi nhãn (kế hoạch chưa có labels): bn = nhóm 1, gd = nhóm 2 */
+const PS=(g,k)=>(+k===1?{bn:'Karofi',gd:'Livotec'}:{bn:'Bình nước nóng',gd:'Gia dụng'})[g==='gd'?'gd':'bn'];
 const DOWL=['CN','T2','T3','T4','T5','T6','T7'];
 const $=s=>document.querySelector(s);
 const pad=n=>String(n).padStart(2,'0');
@@ -1004,7 +1006,7 @@ function attainHTML(all,t){
   ngs.forEach(k=>{
     const L=all.filter(c=>c.m.nganh===k),S=attainSum(L),lb=t.byNg[k]?t.byNg[k].lb:{bn:'',gd:''};
     rows.push(row(NG[k].n+' <span class="muted tiny hm">· '+S.n+' người</span>',S,{mk:1,lvl:1}));
-    [['bn',lb.bn||PS('bn')],['gd',lb.gd||PS('gd')]].forEach(g=>{const G=attainGroup(L,g[0]);if(G.total>0||G.ach>0)rows.push(row('↳ '+esc(g[1]),G,{sub:1}));});
+    [['bn',lb.bn||PS('bn',k)],['gd',lb.gd||PS('gd',k)]].forEach(g=>{const G=attainGroup(L,g[0]);if(G.total>0||G.ach>0)rows.push(row('↳ '+esc(g[1]),G,{sub:1}));});
   });
   const lvl=T.ratio!=null?lvOf(T.ratio):'',col=lvl==='ok'?'ok':lvl==='warn'?'warn':'bad';
   const sum='<div class="hsub">Đã đạt <b>'+fmt(T.ach,1)+' / '+fmt(T.total)+' tr ('+pc(T.pct)+')</b> chỉ tiêu. Mốc kế hoạch đến nay là '+pc(T.expPct)+' → đạt <b style="color:var(--'+col+')">'+pc(T.ratio)+' mốc</b>. Còn '+T.left+' ngày làm việc: cần <b>'+fmt(T.need,1)+' tr/ngày</b>, đang làm '+fmt(T.avg,1)+' tr/ngày → dự báo cuối tháng ≈ <b>'+pc(T.projPct)+'</b> chỉ tiêu.</div>';
@@ -1722,7 +1724,7 @@ function dashHTML(){
   const rowBar=(label,s,o)=>{const lvl=o.mk&&s.ratio!=null?tone(s.ratio):'',w=Math.max(0,Math.min(100,(s.pct||0)*100)).toFixed(1);return '<div class="br'+(o.sub?' sub':'')+'"><div class="brh"><span class="brn">'+label+'</span><span class="brv"><b>'+(s.pct==null?'–':pc(s.pct))+'</b>'+(o.mk&&s.ratio!=null?' <span class="pill2 '+lvl+'">'+pc(s.ratio)+' mốc</span>':'')+'</span></div><div class="prog '+(lvl==='bad'?'bad':lvl==='warn'?'warn':'')+'"><i style="width:'+w+'%"></i>'+(o.mk&&s.expPct!=null?'<span class="mk" style="left:'+Math.min(100,s.expPct*100).toFixed(1)+'%"></span>':'')+'</div><div class="tiny muted">'+fmt(s.ach,1)+' / '+fmt(s.total)+' tr · còn thiếu '+fmt(Math.max(0,s.total-s.ach),1)+' tr</div></div>';};
   const ngs=[1,2].filter(k=>all.some(c=>c.m.nganh===k));let bars='';
   ngs.forEach(k=>{const L=all.filter(c=>c.m.nganh===k),S=attainSum(L),lb=t.byNg[k]?t.byNg[k].lb:{bn:'',gd:''};bars+=rowBar(NG[k].n+' <span class="muted tiny">· '+S.n+' người</span>',S,{mk:1});
-    [['bn',lb.bn||PS('bn')],['gd',lb.gd||PS('gd')]].forEach(g=>{const G=attainGroup(L,g[0]);if(G.total>0||G.ach>0)bars+=rowBar('↳ '+esc(g[1]),G,{sub:1});});});
+    [['bn',lb.bn||PS('bn',k)],['gd',lb.gd||PS('gd',k)]].forEach(g=>{const G=attainGroup(L,g[0]);if(G.total>0||G.ach>0)bars+=rowBar('↳ '+esc(g[1]),G,{sub:1});});});
   const byNg='<div class="card"><h2>Theo ngành và nhóm hàng</h2><div class="hsub">Thực đạt so với chỉ tiêu tháng; vạch đen là mốc hôm nay.</div>'+(bars||'<div class="muted small">Chưa có chỉ tiêu.</div>')+'</div>';
   // theo tỉnh
   const pm={};all.forEach(c=>{const p=canonProv(c.m.province)||String(c.m.province||'').trim(),k=p||'\u0000',g=pm[k]||(pm[k]={p:p,n:0,ach:0,exp:0,total:0});g.n++;g.ach+=c.ach;g.exp+=c.expected;g.total+=c.total;});
@@ -1984,7 +1986,7 @@ function render(){
   const all=members().map(m=>calc(m,ST.date)),nFeed=(ST.data.truncated?[]:buildFeed(all,ST.date)).filter(i=>i.lv!=='info').length;
   let view='';
   try{view=ST.tab==='overview'?dashHTML():ST.tab==='staff'?staffHTML():ST.tab==='plan'?planHTML():ST.tab==='heat'?heatHTML():ST.tab==='org'?orgHTML():todayHTML();}
-  catch(e){console.error(e);view='<div class="card empty">Có lỗi khi hiển thị. Hãy tải lại trang.</div>';}
+  catch(e){console.error(e);view='<div class="card empty">Có lỗi khi hiển thị. Hãy tải lại trang.<div class="tiny muted" style="margin-top:8px">Chi tiết lỗi (gửi cho người hỗ trợ): '+esc(String((e&&e.message)||e).slice(0,160))+'</div></div>';}
   root.innerHTML=headerHTML()+'<div class="wrap">'+(ST.err?'<div class="note" style="margin-top:10px">'+esc(ST.err)+'</div>':'')+(ST.data.truncated&&ST.tab!=='staff'&&ST.tab!=='org'&&ST.tab!=='overview'?'<div class="note bignote"><b>'+fmt(ST.data.total)+' nhân sự</b> trong phạm vi này, quá nhiều để hiển thị cùng lúc. Các số tổng hợp bên dưới chỉ tính trên <b>'+fmt(ST.data.members.length)+'</b> người đầu tiên. Hãy <button class="linkbtn" data-act="tab" data-v="staff">mở tab Nhân sự</button> hoặc chọn một ASM ở ô phía trên để xem đầy đủ.</div>':'')+tabsHTML(nFeed,navSum(all))+view+'</div>'+(ST.drawer?drawerHTML():'')+(ST.compose?composeHTML():'')+(ST.mm?mgmtHTML():'')+(ST.nm?newMemberHTML():'')+(ST.pv?provModalHTML():'')+(ST.chatAi?chatHTML():'<button class="asmai-fab" data-act="chatOpen">✦ Hỏi AI</button>');
   if(keep){const n=document.getElementById(keep.id);if(n){n.focus({preventScroll:true});try{n.setSelectionRange(keep.s,keep.e);}catch(e){}}}
   window.scrollTo(0,sy);
