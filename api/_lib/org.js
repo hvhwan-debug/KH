@@ -5,6 +5,7 @@
 //   directive/<uid>.json   việc ASM giao cho SR
 // Hồ sơ/báo cáo tách riêng khỏi user/<uid>.json để không bị ghi đè khi SR đồng bộ dữ liệu cá nhân.
 const store = require("./store");
+const prov = require("./provinces");
 const { isAdmin, validEmail } = require("./config");
 
 const NGANH = { 1: "Ngành 1 · Karofi & Livotec (máy lọc)", 2: "Ngành 2 · Livotec gia dụng" };
@@ -29,7 +30,7 @@ function asmRec(b, cur, email) {
   let ng = Array.isArray(b.nganh) ? b.nganh.map(Number).filter((x) => x === 1 || x === 2) : (cur && cur.nganh) || [1, 2];
   ng = ng.filter((x, i) => ng.indexOf(x) === i); if (!ng.length) ng = [1, 2];
   let pv = Array.isArray(b.provinces) ? b.provinces : typeof b.provinces === "string" ? b.provinces.split(/[,;\n]/) : (cur && cur.provinces) || [];
-  pv = pv.map((x) => str(x, 60)).filter(Boolean).filter((x, i, a) => a.findIndex((y) => normProv(y) === normProv(x)) === i).slice(0, 40);
+  pv = pv.map((x) => { const t = str(x, 60); return prov.canonProvince(t) || t; }).filter(Boolean).filter((x, i, a) => a.findIndex((y) => normProv(y) === normProv(x)) === i).slice(0, 40);
   return { email, name: str(b.name, 80), area: str(b.area != null ? b.area : (cur && cur.area), 80), nganh: ng, provinces: pv, addedAt: cur ? cur.addedAt : Date.now() };
 }
 const asmCovers = (a, nganh) => !a.nganh || !a.nganh.length || a.nganh.indexOf(nganh) >= 0;

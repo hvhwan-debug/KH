@@ -4,6 +4,7 @@ const { isAdmin, emailAllowed } = require("../_lib/config");
 const store = require("../_lib/store");
 const pwdlib = require("../_lib/pwd");
 const org = require("../_lib/org");
+const PROV = require("../_lib/provinces");
 const crypto = require("crypto");
 const { uidOf } = require("../_lib/session");
 
@@ -48,8 +49,10 @@ module.exports = async function (context, req) {
         const name = org.str(b.name, 80);
         if (!name) return reply(context, 400, { ok: false, error: "Họ tên không được để trống." });
         ud.name = name; await store.put(ukey, ud);
+        let pv = null;
+        if (b.province != null && String(b.province).trim()) { pv = PROV.canonProvince(b.province); if (!pv) return reply(context, 400, { ok: false, error: "Tỉnh/thành không có trong danh sách. Hãy chọn từ danh sách." }); }
         const p = await org.getProfile(uid);
-        if (p) { p.name = name; if (b.province != null) p.province = org.str(b.province, 60); await org.putProfile(p); }
+        if (p) { p.name = name; if (b.province != null) p.province = pv || ""; await org.putProfile(p); }
         await org.audit(u.email, "Sửa thông tin", ud.email);
       } else if (b.op === "setPassword") {
         const pw = String(b.password || "");
@@ -143,6 +146,9 @@ module.exports = async function (context, req) {
         if (nganh !== 1 && nganh !== 2) return reply(context, 400, { ok: false, error: "Hãy chọn ngành cho SR." });
         if (asmEmail && !org.findAsm(roster, asmEmail)) return reply(context, 400, { ok: false, error: "ASM chưa có trong danh sách." });
       }
+      let cpv = ""; const cpl = PROV.canonList(b.provinces);
+      if (role === "sr" && String(b.province || "").trim()) { cpv = PROV.canonProvince(b.province); if (!cpv) return reply(context, 400, { ok: false, error: "Tỉnh/thành không có trong danh sách. Hãy chọn từ danh sách." }); }
+      if (role === "asm" && cpl.bad.length) return reply(context, 400, { ok: false, error: "Tỉnh/thành không có trong danh sách: " + cpl.bad.slice(0, 3).join(", ") + ". Hãy chọn từ danh sách." });
       let pw = String(b.password || "");
       if (pw && (pw.length < 8 || pw.length > 200)) return reply(context, 400, { ok: false, error: "Mật khẩu cần từ 8 đến 200 ký tự (hoặc để trống để hệ thống tự tạo)." });
       const uid = uidOf(email), ukey = "user/" + uid + ".json";
@@ -161,7 +167,7 @@ module.exports = async function (context, req) {
         await store.put(ukey, ud);
       }
       if (role === "asm") {
-        const rec = org.asmRec({ name, nganh: Array.isArray(b.nganhs) ? b.nganhs : undefined, provinces: b.provinces }, org.findAsm(roster, email), email);
+        const rec = org.asmRec({ name, nganh: Array.isArray(b.nganhs) ? b.nganhs : undefined, provinces: cpl.list }, org.findAsm(roster, email), email);
         roster.asms = roster.asms.filter((a) => a.email !== email).concat([rec]).slice(0, 200);
         await org.putRoster(roster);
         const old = await org.getProfile(uid); // đang là SR thì bỏ hồ sơ SR, chuyển sang ASM
@@ -169,7 +175,7 @@ module.exports = async function (context, req) {
       } else {
         if (org.findAsm(roster, email)) { roster.asms = roster.asms.filter((a) => a.email !== email); await org.putRoster(roster); }
         let p = await org.getProfile(uid);
-        p = Object.assign(p || { uid, createdAt: Date.now() }, { uid, email, name, nganh, asmEmail, locked: !!asmEmail, province: org.str(b.province, 60), blocked: ((p && p.blocked) || []).filter((x) => x !== asmEmail) });
+        p = Object.assign(p || { uid, createdAt: Date.now() }, { uid, email, name, nganh, asmEmail, locked: !!asmEmail, province: cpv, blocked: ((p && p.blocked) || []).filter((x) => x !== asmEmail) });
         await org.putProfile(p);
       }
       const inv = await org.getInvites(); if (inv.items[email]) { delete inv.items[email]; await org.putInvites(inv); }
@@ -180,8 +186,9 @@ module.exports = async function (context, req) {
     if (b.op === "addAsm") {
       const email = org.lc(b.email);
       if (!org.validEmail(email) || !emailAllowed(email)) return reply(context, 400, { ok: false, error: "Email không hợp lệ hoặc chưa được phép dùng ứng dụng." });
+      const cl = PROV.canonList(b.provinces); if (cl.bad.length) return reply(context, 400, { ok: false, error: "Tỉnh/thành không có trong danh sách: " + cl.bad.slice(0, 3).join(", ") + ". Hãy chọn từ danh sách." });
       const cur = org.findAsm(roster, email);
-      const rec = org.asmRec(b, cur, email);
+      const rec = org.asmRec(Object.assign({}, b, { provinces: cl.list }), cur, email);
       roster.asms = roster.asms.filter((a) => a.email !== email).concat([rec]).slice(0, 200);
       await org.putRoster(roster);
       await org.audit(u.email, "Lưu ASM", email);
@@ -195,7 +202,8 @@ module.exports = async function (context, req) {
       if (nganh !== 1 && nganh !== 2) return reply(context, 400, { ok: false, error: "Hãy chọn ngành." });
       const asmEmail = org.lc(b.asmEmail);
       if (asmEmail && !org.findAsm(roster, asmEmail)) return reply(context, 400, { ok: false, error: "ASM chưa có trong danh sách." });
-      const rec = { email, name: org.str(b.name, 80), nganh, asmEmail, province: org.str(b.province, 60), createdAt: Date.now() };
+      let ipv = ""; if (String(b.province || "").trim()) { ipv = PROV.canonProvince(b.province); if (!ipv) return reply(context, 400, { ok: false, error: "Tỉnh/thành không có trong danh sách. Hãy chọn từ danh sách." }); }
+      const rec = { email, name: org.str(b.name, 80), nganh, asmEmail, province: ipv, createdAt: Date.now() };
       const existing = (await org.listProfiles()).find((p) => org.lc(p.email) === email);
       if (existing) { // đã có tài khoản: áp dụng luôn
         Object.assign(existing, { nganh, asmEmail, locked: !!asmEmail, province: rec.province || existing.province, blocked: (existing.blocked || []).filter((x) => x !== asmEmail) });

@@ -92,3 +92,10 @@ Thiết kế chịu được >10.000 nhân sự (đã đo bằng `node dev/test-
 - **Tab Quản trị › Thành viên**: bảng chia trang 50 dòng. Với trên vài nghìn tài khoản, lần mở đầu tab này còn chậm vì đọc hồ sơ tài khoản (đã song song); nếu cần hơn nữa nên bổ sung phân trang phía máy chủ cho `/api/org`.
 - Thử giao diện với dữ liệu lớn: `node dev/start-big.js 10001 300` rồi mở `/asm/index.html`.
 
+## Gán tỉnh / thành phố (chọn từ danh sách, không gõ tay)
+- **ASM** gán tỉnh cho nhân sự **thuộc nhóm của mình** ở tab **Nhân sự**: mỗi dòng có ô chọn tỉnh (lưu ngay khi chọn). Chọn nhiều người rồi bấm **📍 Gán tỉnh** để gán một tỉnh cho cả nhóm đã chọn. Trên điện thoại chọn tỉnh trong ngăn **Chi tiết**.
+- **Quản trị viên** chọn tỉnh bằng ô chọn ở mọi nơi: thêm thành viên, sửa thông tin, tạo trước, và **chọn nhiều tỉnh phụ trách cho ASM** (thẻ tỉnh, bấm ✕ để bỏ).
+- Danh sách là 63 tỉnh/thành, **dùng chung** với app nhân viên (`PROVINCES`) để mùa vụ và gợi ý ASM theo tỉnh luôn khớp. Máy chủ cũng kiểm tra: tỉnh ngoài danh sách bị từ chối; tên viết khác (không dấu, "TP. Hồ Chí Minh", "Tỉnh Đắk Nông") được chuẩn hoá về tên chuẩn. Dữ liệu cũ gõ tay không nhận ra được vẫn giữ nguyên và hiện nhãn "nhập tay, hãy chọn lại".
+- Nhập Excel nhân sự vẫn giữ nguyên giá trị tỉnh trong file nếu không nhận ra (để không mất dữ liệu).
+- Kiểm thử: `node dev/test-province.js` (gồm kiểm tra ba danh sách tỉnh khớp nhau).
+

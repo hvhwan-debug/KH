@@ -48,7 +48,7 @@ module.exports = async function (context, req) {
     let note = "";
     p = Object.assign({}, prev, {
       uid: u.uid, email: u.email, name: org.str(ud.name, 80) || prev.name || "",
-      nganh, province: org.str(b.province != null ? b.province : prev.province, 60)
+      nganh, province: (function () { const raw = org.str(b.province != null ? b.province : prev.province, 60); return require("../_lib/provinces").canonProvince(raw) || raw; })()
     });
     if (prev.locked && asmEmail !== (prev.asmEmail || "")) note = "ASM đã được quản trị viên gán, bạn không tự đổi được.";
     else if (!asmEmail && prev.asmEmail) note = "Bạn không tự gỡ ASM được. Cần đổi hãy chọn ASM khác, hoặc nhờ ASM/quản trị viên.";

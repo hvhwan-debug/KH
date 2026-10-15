@@ -2,6 +2,7 @@
 const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const store = require("../_lib/store");
 const org = require("../_lib/org");
+const PROV = require("../_lib/provinces");
 
 module.exports = async function (context, req) {
   try {
@@ -15,6 +16,19 @@ module.exports = async function (context, req) {
     if (req.method === "POST") { // ASM gỡ một thành viên khỏi nhóm của mình (không xoá tài khoản)
       if (!requireAjax(context, req)) return;
       const b = req.body || {};
+      if (b.op === "setProvince") { // gán tỉnh/thành cho một hoặc nhiều nhân sự (ASM chỉ với nhân sự thuộc nhóm của mình)
+        const ids = (Array.isArray(b.uids) ? b.uids : [b.uid]).map(String).filter((x) => /^[a-f0-9]{16,40}$/.test(x));
+        if (!ids.length) return reply(context, 400, { ok: false, error: "Yêu cầu không hợp lệ." });
+        if (ids.length > 500) return reply(context, 400, { ok: false, error: "Tối đa 500 người mỗi lần." });
+        const pv = String(b.province || "").trim() ? PROV.canonProvince(b.province) : "";
+        if (String(b.province || "").trim() && !pv) return reply(context, 400, { ok: false, error: "Tỉnh/thành không có trong danh sách. Hãy chọn từ danh sách." });
+        const mine = new Map((await org.listProfiles()).filter((p) => roles.admin || org.lc(p.asmEmail) === u.email).map((p) => [p.uid, p]));
+        const todo = ids.filter((id) => mine.has(id));
+        if (!todo.length) return reply(context, 403, { ok: false, error: "Nhân sự này không thuộc nhóm của bạn." });
+        await org.pmap(todo, async (id) => { const p = await org.getProfile(id); if (p) { p.province = pv; await org.putProfile(p); } }, 20);
+        await org.audit(u.email, pv ? "Gán tỉnh " + pv : "Xoá tỉnh", todo.length === 1 ? (mine.get(todo[0]).email || "") : todo.length + " nhân sự");
+        return reply(context, 200, { ok: true, updated: todo.length, province: pv, skipped: ids.length - todo.length });
+      }
       if (b.op !== "removeMember" || !/^[a-f0-9]{16,40}$/.test(String(b.uid || ""))) return reply(context, 400, { ok: false, error: "Yêu cầu không hợp lệ." });
       const p = await org.getProfile(b.uid);
       if (!p || !p.asmEmail) return reply(context, 404, { ok: false, error: "Nhân sự này không thuộc nhóm nào." });
