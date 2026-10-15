@@ -255,7 +255,9 @@ table.t td.r,table.t th.r{text-align:right}
 .asmhero-s b{font-weight:700}
 .asmhero-kpi{flex:0 0 auto;text-align:right}
 .asmhero-kpi b{display:block;font-size:34px;font-weight:800;letter-spacing:-.02em}
-.asmhero-kpi span{font-size:12px;opacity:.85}
+.asmhero-kpi span{font-size:12px;opacity:.9}
+.asmhero-kpi b,.asmhero-kpi span,.asmhero-t,.asmhero-s,.asmhero-eb{text-shadow:0 1px 8px rgba(0,25,22,.65)}
+.asmhero.compact{padding:14px 22px;margin:14px 0 4px}.asmhero.compact .asmhero-eb{margin-bottom:2px}.asmhero.compact .asmhero-t{font-size:20px;margin:0 0 2px;line-height:1.2}.asmhero.compact .asmhero-s{font-size:13px}.asmhero.compact .asmhero-kpi b{font-size:26px}
 @media (max-width:700px){.asmhero{padding:20px 18px}.asmhero-t{font-size:21px}.asmhero-kpi{display:none}}
 .asmai-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:41;background:var(--brand);color:#fff;border:0;border-radius:999px;padding:12px 18px;font-weight:700;font-size:14px;box-shadow:0 10px 24px rgba(0,0,0,.28);cursor:pointer}
 .asmai-fab:hover{filter:brightness(1.06)}
@@ -576,6 +578,7 @@ const TOKEN_KEY='livotec-sr-token';      // dùng chung phiên đăng nhập v�
 const NG={1:{n:'Ngành 1',s:'Karofi · Livotec máy lọc',cls:'n1',col:'var(--n1)'},2:{n:'Ngành 2',s:'Livotec gia dụng',cls:'n2',col:'var(--n2)'}};
 /* Tên nhóm hàng mặc định khi nhân sự chưa gửi nhãn (kế hoạch chưa có labels): bn = nhóm 1, gd = nhóm 2 */
 /* Mỗi ASM thường chỉ phụ trách một ngành nên không hiện nhãn ngành cho ASM; chỉ quản trị viên (xem nhiều ASM) mới cần phân biệt */
+const greetName=me=>nameOk(me&&me.name)?String(me.name).trim().split(/\s+/).slice(-1)[0]:(me&&me.admin?'quản trị viên':'ASM');
 const showNg=()=>!!(ST&&ST.data&&ST.data.me&&ST.data.me.admin);
 const ngBadge=g=>showNg()?'<span class="badge '+g.cls+'">'+g.n+'</span>':'';
 const PS=(g,k)=>(+k===1?{bn:'Karofi',gd:'Livotec'}:{bn:'Bình nước nóng',gd:'Gia dụng'})[g==='gd'?'gd':'bn'];
@@ -1191,7 +1194,7 @@ function heroHTML(list,t,date){
   const bar=(p,mk)=>'<div class="kb"><i style="width:'+Math.max(0,Math.min(100,(p||0)*100)).toFixed(0)+'%"></i>'+(mk!=null?'<span class="mk" style="left:'+Math.min(100,mk*100).toFixed(1)+'%" title="Mốc kế hoạch"></span>':'')+'</div>';
   const tile=(cls,lbl,val,p,sub,mk,icn,accent)=>'<div class="kt'+(cls?' '+cls:'')+'">'+(icn?'<div class="klrow"><div class="kico '+(accent||'')+'">'+ic(icn,14)+'</div><div class="kl">'+lbl+'</div></div>':'<div class="kl">'+lbl+'</div>')+'<div class="kv">'+val+'</div>'+bar(p,mk)+'<div class="ks">'+sub+'</div></div>';
   const who=(ST.data.me.name||'').split(' ').slice(-1)[0]||'ASM',nMiss=missingList(list).length;
-  return '<section class="phead fadein"><div><h1>'+(isT?greet+', '+esc(who):'Báo cáo ngày '+dmy(date))+'</h1><div class="sub">'+lead+' '+t.n+(ST.data.me.admin?' nhân sự':' nhân sự trong nhóm của bạn')+(ST.ng?' · '+NG[ST.ng].n:'')+' · cập nhật '+hhmm(ST.loadedAt)+'</div></div>'+
+  return '<section class="phead fadein"><div><h1>'+(isT?'Báo cáo hôm nay':'Báo cáo ngày '+dmy(date))+'</h1><div class="sub">'+lead+' '+t.n+(ST.data.me.admin?' nhân sự':' nhân sự trong nhóm của bạn')+(ST.ng?' · '+NG[ST.ng].n:'')+' · cập nhật '+hhmm(ST.loadedAt)+'</div></div>'+
     '<div class="pactions">'+(nMiss?'<button class="pillbtn warnb" data-act="remind">'+ic('send',16)+' Nhắc '+nMiss+' người chưa gửi báo cáo</button>':'')+'<button class="pillbtn pri" data-act="copySum">'+ic('copy',16)+' Sao chép bản tin</button><button class="pillbtn" data-act="expTeam">'+ic('down',16)+' Xuất Excel</button><button class="pillbtn" data-act="composeAll">'+ic('send',16)+' Giao việc cả nhóm</button></div></section>'+
     '<div class="kpis">'+
     tile(late&&done!=null&&done<1?'bad':done===1?'ok':'','Báo cáo cuối ngày',t.work?t.done+'<small>/ '+t.work+' người</small>':'–',done,done==null?'chưa có ai cần gửi':'đã gửi '+pc(done)+(late&&done<1?' · quá giờ chốt':''),null,'send','a-brand')+
@@ -1689,12 +1692,29 @@ function trendChart(plan,act,fc,todayIdx,w,h){
 }
 function inviteMsg(){const me=ST.data.me;return 'Chào bạn, để ASM '+(me.name||'')+' theo dõi báo cáo của bạn:\n1) Mở '+location.origin+'/ và đăng nhập bằng email công ty.\n2) Nếu app hỏi, vào Thiết lập › Công việc › chọn đúng ngành và chọn ASM là "'+(me.name||'')+'" (chỉ chọn được một lần).\n3) Mỗi ngày bấm "Gửi báo cáo" trong app.';}
 function onbHTML(){const me=ST.data.me;return '<div class="card onb"><h2>Bắt đầu: đưa nhân sự vào nhóm của bạn</h2><div class="hsub">Chưa có nhân sự nào thuộc nhóm của bạn nên chưa có số liệu để tổng hợp.</div><ol class="onbl"><li><b>Quản trị viên</b> thêm thành viên và gán vào nhóm của bạn (tab Quản trị › Thành viên › ＋ Thêm thành viên). Đây là cách chính.</li><li>Nhân sự tự đăng ký mà <b>chưa có ASM</b> có thể chọn <b>'+esc(me.name||'bạn')+'</b> làm ASM <b>một lần</b> ở Thiết lập › Công việc. Sau khi đã có ASM, họ không tự đổi được; chỉ ASM hoặc quản trị viên đổi giúp.</li><li>Khi nhân sự gửi báo cáo, các trang Tổng quan, Hôm nay, Nhân sự tự có số liệu, biểu đồ và cảnh báo.</li></ol><div class="pactions"><button class="pillbtn pri" data-act="copyInvite">'+ic('copy',16)+' Sao chép hướng dẫn gửi nhân sự</button>'+(me.admin?'<button class="pillbtn" data-act="nmOpen">＋ Thêm thành viên</button>':'')+'</div></div>';}
+/* Banner có ảnh ở đầu MỌI tab (bản gọn), mỗi tab một dòng mô tả riêng */
+function asmBanner(tab,all){
+  const me=ST.data.me,big=!!ST.data.truncated,n=big?ST.data.total:all.length;
+  const t=big?null:team(all),T=big?{total:0}:attainSum(all);
+  const mm=ST.month.slice(5)+'/'+ST.month.slice(0,4);
+  const greet=vnHour()<11?'Chào buổi sáng':vnHour()<18?'Chào buổi chiều':'Chào buổi tối';
+  const SUB={
+    today:t&&t.work?'Đã báo cáo <b>'+t.done+'/'+t.work+'</b> người'+(ST.date===ST.today?' hôm nay':'')+(t.help?' · <b>'+t.help+'</b> người cần hỗ trợ':'')+'.':'Theo dõi báo cáo hằng ngày của cả nhóm.',
+    staff:'Tiến độ từng người và giao việc nhanh cho cả nhóm.',
+    plan:'Soạn trọng tâm cho ngày mai rồi gửi một lần cho cả nhóm.',
+    heat:'Xem ai báo cáo, ai hụt doanh số theo từng ngày trong tháng.',
+    org:'Quản lý thành viên, ASM và nhật ký thao tác.'
+  };
+  return '<div class="asmhero compact"><div class="asmhero-in"><div class="asmhero-eb">Tháng '+mm+' · '+fmt(n)+' nhân sự'+(me.admin?'':' trong nhóm của bạn')+'</div>'+
+    '<div class="asmhero-t">'+greet+', '+esc(greetName(me))+'</div><p class="asmhero-s">'+(SUB[tab]||'')+'</p></div>'+
+    (T.total>0?'<div class="asmhero-kpi"><b>'+pc(T.pct)+'</b><span>thực đạt / chỉ tiêu</span></div>':'')+'</div>';
+}
 function dashHTML(){
   const me=ST.data.me,date=ST.date,all=members().map(m=>calc(m,date)),t=team(all),T=attainSum(all),big=!!ST.data.truncated;
   const tone=r=>r==null?'':r>=0.9?'ok':r>=0.7?'warn':'bad',COL={ok:'#2E9D68',warn:'#E3A63B',bad:'#D8473E','':'#6B8FA3'};
   const mm=ST.month.slice(5)+'/'+ST.month.slice(0,4);
   const greet=vnHour()<11?'Chào buổi sáng':vnHour()<18?'Chào buổi chiều':'Chào buổi tối';
-  const heroWho=(me.name||'').split(' ').slice(-1)[0]||(me.admin?'quản trị viên':'ASM');
+  const heroWho=greetName(me);
   const hero='<div class="asmhero"><div class="asmhero-in"><div class="asmhero-eb">Tháng '+mm+' · '+fmt(big?ST.data.total:all.length)+' nhân sự'+(me.admin?'':' trong nhóm của bạn')+'</div>'+
     '<h1 class="asmhero-t">'+greet+', '+esc(heroWho)+'</h1>'+
     '<p class="asmhero-s">'+(T.total>0?'Cả nhóm đang đạt <b>'+pc(T.pct)+'</b> chỉ tiêu tháng — còn '+T.left+' ngày làm việc để về đích.':'Thêm nhân sự và chỉ tiêu tháng để bắt đầu theo dõi cả nhóm.')+'</p></div>'+
@@ -2002,6 +2022,7 @@ function render(){
   let view='';
   try{view=ST.tab==='overview'?dashHTML():ST.tab==='staff'?staffHTML():ST.tab==='plan'?planHTML():ST.tab==='heat'?heatHTML():ST.tab==='org'?orgHTML():todayHTML();}
   catch(e){console.error(e);view='<div class="card empty">Có lỗi khi hiển thị. Hãy tải lại trang.<div class="tiny muted" style="margin-top:8px">Chi tiết lỗi (gửi cho người hỗ trợ): '+esc(String((e&&e.message)||e).slice(0,160))+'</div></div>';}
+  if(ST.tab!=='overview'&&view.indexOf('Có lỗi khi hiển thị')<0){try{view=asmBanner(ST.tab,all)+view;}catch(e){console.error(e);}}
   root.innerHTML=headerHTML()+'<div class="wrap">'+(ST.err?'<div class="note" style="margin-top:10px">'+esc(ST.err)+'</div>':'')+(ST.data.truncated&&ST.tab!=='staff'&&ST.tab!=='org'&&ST.tab!=='overview'?'<div class="note bignote"><b>'+fmt(ST.data.total)+' nhân sự</b> trong phạm vi này, quá nhiều để hiển thị cùng lúc. Các số tổng hợp bên dưới chỉ tính trên <b>'+fmt(ST.data.members.length)+'</b> người đầu tiên. Hãy <button class="linkbtn" data-act="tab" data-v="staff">mở tab Nhân sự</button> hoặc chọn một ASM ở ô phía trên để xem đầy đủ.</div>':'')+tabsHTML(nFeed,navSum(all))+view+'</div>'+(ST.drawer?drawerHTML():'')+(ST.compose?composeHTML():'')+(ST.mm?mgmtHTML():'')+(ST.nm?newMemberHTML():'')+(ST.pv?provModalHTML():'')+(ST.chatAi?chatHTML():'<button class="asmai-fab" data-act="chatOpen">✦ Hỏi AI</button>');
   if(keep){const n=document.getElementById(keep.id);if(n){n.focus({preventScroll:true});try{n.setSelectionRange(keep.s,keep.e);}catch(e){}}}
   window.scrollTo(0,sy);
