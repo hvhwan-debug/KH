@@ -305,6 +305,42 @@ table.t td.r,table.t th.r{text-align:right}
 .login .card{padding:24px}
 .login .logo{display:flex;align-items:center;gap:12px;margin-bottom:14px}.login .logo img{width:44px;height:44px;border-radius:12px}
 .login h1{font-size:20px;margin:0;letter-spacing:-.015em}.login p{margin:2px 0 0;color:var(--muted);font-size:13px}
+/* ===== Màn hình đăng nhập ASM: ảnh lớn + form kính mờ ===== */
+.lgn{min-height:100vh;min-height:100dvh;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(380px,.85fr);background:var(--bg)}
+.lg-hero{position:relative;overflow:hidden;color:#fff;display:flex;align-items:flex-end;padding:48px 56px;
+  background:linear-gradient(160deg,rgba(2,60,64,.78) 0%,rgba(6,122,140,.55) 45%,rgba(2,167,158,.35) 100%),url('login-hero.jpg') 68% 40%/cover no-repeat,#067A8C}
+.lg-hero::after{content:"";position:absolute;inset:auto 0 0 0;height:55%;background:linear-gradient(0deg,rgba(2,30,36,.82),transparent);pointer-events:none}
+.lg-hero-in{position:relative;z-index:1;max-width:520px}
+.lg-brand{display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:14px;letter-spacing:.02em;padding:6px 14px 6px 8px;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.lg-brand img{width:26px;height:26px;border-radius:8px}
+.lg-hero h2{margin:18px 0 16px;font-size:clamp(28px,3.2vw,40px);line-height:1.15;letter-spacing:-.02em;font-weight:700;text-shadow:0 2px 18px rgba(0,30,34,.45)}
+.lg-feats{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.lg-feats li{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.4;color:rgba(255,255,255,.94)}
+.lg-feats li::before{content:"";flex:0 0 auto;width:20px;height:20px;margin-top:1px;border-radius:50%;background:rgba(255,255,255,.2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.5l3 3 6-6.5' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/20px no-repeat}
+.lg-pane{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:32px 24px;gap:14px;
+  background:radial-gradient(900px 500px at 100% 0%,color-mix(in srgb,var(--brand) 14%,transparent),transparent 60%),var(--bg)}
+.lg-card{width:100%;max-width:400px;padding:28px 26px 24px;border-radius:24px;box-shadow:0 24px 60px -20px rgba(6,60,70,.35),0 2px 6px rgba(6,60,70,.06)}
+.lg-card h1{font-size:23px;margin:0;letter-spacing:-.02em}
+.lg-card .lg-sub{margin:4px 0 16px;color:var(--muted);font-size:13.5px}
+.lg-card .seg{background:var(--surface2);border-radius:12px;padding:4px;gap:4px;flex-wrap:nowrap}
+.lg-card .seg button{flex:1;border:0;background:transparent;border-radius:9px;padding:8px 10px;font-size:13px}
+.lg-card .seg button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,40,50,.14)}
+.lg-card .fld input[type=text],.lg-card .fld input[type=email],.lg-card .fld input[type=password]{padding:12px 14px;font-size:15px;border-radius:13px;background:var(--surface2)}
+.lg-card .fld input:focus{outline:none;border-color:var(--brand);background:var(--surface);box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 18%,transparent)}
+.lg-card .btn{margin-top:6px;padding:13px 16px;font-size:15px;border-radius:13px;color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand-deep));box-shadow:0 10px 22px -8px color-mix(in srgb,var(--brand-deep) 70%,transparent)}
+.lg-card .btn:hover{filter:brightness(1.05)}
+.lg-card .btn.ghost{background:transparent;color:var(--ink);box-shadow:none}
+.lg-pw{position:relative}.lg-pw input{padding-right:64px!important}
+.lg-pw button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--brand-deep);font-weight:700;font-size:12.5px;padding:8px 10px;border-radius:8px}
+.lg-foot{margin:0;font-size:12px;color:var(--muted);text-align:center}
+@media (max-width:899px){
+  .lgn{display:block}
+  .lg-hero{min-height:230px;padding:28px 22px 56px;align-items:flex-start;background-position:center,72% 35%}
+  .lg-hero h2{font-size:23px;margin:14px 0 0}.lg-feats{display:none}
+  .lg-pane{padding:0 16px 28px;margin-top:-34px;position:relative;z-index:2;background:transparent}
+  .lg-card{padding:24px 20px 20px}
+}
+
 .btn{border:0;background:var(--ink);color:var(--bg);border-radius:12px;padding:11px 16px;font-weight:700;width:100%;font-size:14.5px}
 .btn[disabled]{opacity:.55}
 .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
@@ -1874,13 +1910,13 @@ async function pgRun(){
 /* ====== Đăng nhập ====== */
 function loginHTML(){
   const L=ST.login,reg=L.tab==='register';
-  return '<div class="login"><div class="card fadein"><div class="logo"><img src="../icon-192.png" alt=""><div><h1>Quản lý ASM</h1><p>Theo dõi nhân sự bán hàng kênh GT</p></div></div>'+
+  return '<div class="lgn"><aside class="lg-hero" aria-hidden="true"><div class="lg-hero-in"><div class="lg-brand"><img src="../icon-192.png" alt="">Livotec · Karofi</div><h2>Quản lý đội bán hàng kênh GT trong một màn hình</h2><ul class="lg-feats"><li>Theo dõi báo cáo và doanh số từng SR theo ngày</li><li>Cảnh báo sớm người chậm tiến độ hoặc cần hỗ trợ</li><li>Giao việc và nhắc nhở cả nhóm chỉ với vài chạm</li></ul></div></aside><main class="lg-pane"><div class="card lg-card fadein"><h1>Quản lý ASM</h1><p class="lg-sub">Đăng nhập để theo dõi nhân sự bán hàng kênh GT</p>'+
     (L.otp?'<div class="fld"><label for="lOtp">Mã xác minh 6 số đã gửi tới '+esc(L.email)+'</label><input id="lOtp" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" style="letter-spacing:.3em;font-weight:700"></div><button class="btn" data-act="lsubmit"'+(L.busy?' disabled':'')+'>Xác minh</button><div style="margin-top:8px"><button class="linkbtn" data-act="lcancel">Quay lại</button></div>':
     (L.tab==='forgot'?'<div class="b" style="font-size:16px;margin:4px 0">Quên mật khẩu</div><div class="small muted">Nhập email đã đăng ký. Chúng tôi gửi một liên kết đặt mật khẩu mới (có hiệu lực 1 giờ). Đặt xong, bạn quay lại trang này để đăng nhập.</div><div class="fld"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="email" maxlength="120" value="'+esc(L.email)+'"></div><button class="btn" data-act="lforgot"'+(L.busy?' disabled':'')+'>Gửi liên kết đặt lại</button><div style="margin-top:8px"><button class="linkbtn" data-act="ltab" data-v="login">← Quay lại đăng nhập</button></div>':
     '<div class="seg" style="margin-bottom:6px"><button data-act="ltab" data-v="login" aria-pressed="'+!reg+'">Đăng nhập</button><button data-act="ltab" data-v="register" aria-pressed="'+reg+'">Đăng ký</button></div>'+
     (reg?'<div class="fld"><label for="lName">Họ tên</label><input id="lName" type="text" autocomplete="name" maxlength="80" value="'+esc(L.name)+'"></div>':'')+
-    '<div class="fld"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="email" maxlength="120" value="'+esc(L.email)+'"></div><div class="fld"><label for="lPass">Mật khẩu</label><input id="lPass" type="password" autocomplete="'+(reg?'new':'current')+'-password" maxlength="200"></div><button class="btn" data-act="lsubmit"'+(L.busy?' disabled':'')+'>'+(reg?'Tạo tài khoản':'Đăng nhập')+'</button><div class="small muted" style="margin-top:10px"><button class="linkbtn" data-act="ltab" data-v="forgot" style="padding:0">Quên mật khẩu?</button></div>'))+
-    (L.msg?'<div class="msg'+(L.ok?' okm':'')+'">'+esc(L.msg)+'</div>':'')+'</div></div>';
+    '<div class="fld"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="email" maxlength="120" value="'+esc(L.email)+'"></div><div class="fld"><label for="lPass">Mật khẩu</label><div class="lg-pw"><input id="lPass" type="password" autocomplete="'+(reg?'new':'current')+'-password" maxlength="200"><button type="button" data-act="lpw" aria-label="Hiện hoặc ẩn mật khẩu">Hiện</button></div></div><button class="btn" data-act="lsubmit"'+(L.busy?' disabled':'')+'>'+(reg?'Tạo tài khoản':'Đăng nhập')+'</button><div class="small muted" style="margin-top:10px"><button class="linkbtn" data-act="ltab" data-v="forgot" style="padding:0">Quên mật khẩu?</button></div>'))+
+    (L.msg?'<div class="msg'+(L.ok?' okm':'')+'">'+esc(L.msg)+'</div>':'')+'</div><p class="lg-foot">Chỉ email được quản trị viên cấp quyền ASM mới vào được trang này.</p></main></div>';
 }
 async function lforgot(){
   const L=ST.login;if(L.busy)return;
@@ -2043,6 +2079,7 @@ document.addEventListener('click',function(e){
   if(!b)return;
   if(stop&&b.classList.contains('scrim')&&e.target!==b)return;           // bấm trong hộp thoại không đóng
   const a=b.dataset.act,d=b.dataset;
+  if(a==='lpw'){const pi=$('#lPass');if(pi){const hid=pi.type==='password';pi.type=hid?'text':'password';b.textContent=hid?'Ẩn':'Hiện';}return;}
   if(a==='tab'){ST.tab=d.v;if(d.v==='org'&&!ST.org)loadOrg();}
   else if(a==='ng'){ST.ng=+d.v;if(ST.tab==='staff'&&ST.data&&ST.data.truncated){ST.sp=0;ST.sd=null;}}
   else if(a==='flt')ST.flt=d.v;
