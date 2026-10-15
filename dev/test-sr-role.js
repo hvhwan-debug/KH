@@ -8,11 +8,11 @@ function client() { const c = { token: "" };
     c.token = r.j.token; return c; }; return c; }
 (async () => {
   const ok = (n, c) => console.log((c ? "PASS " : "FAIL ") + n);
-  const admin = await client().login("boss@livotec.vn", "Admin"), asm = await client().login("asm@livotec.vn", "ASM");
+  const admin = await client().login("boss@livotec.vn", "Quản Trị Viên"), asm = await client().login("asm@livotec.vn", "Quản Lý Một");
   await admin.call("POST", "/api/org", { op: "addAsm", email: "asm2@livotec.vn", name: "ASM Hai", nganh: [1, 2] });
   // SR do quản trị viên tạo, đã gán ASM
   await admin.call("POST", "/api/org", { op: "createMember", role: "sr", email: "sr.a@livotec.vn", name: "SR A", nganh: 1, asmEmail: "asm@livotec.vn", password: "matkhau123" });
-  const sr = await client().login("sr.a@livotec.vn", "");
+  const sr = await client().login("sr.a@livotec.vn", "Nguyễn Văn Ẩn");
   let r = await sr.call("POST", "/api/profile", { nganh: 2, asmEmail: "asm2@livotec.vn", province: "Cà Mau" });
   ok("SR đã có ASM: đổi ngành + ASM không được (ghi chú: " + (r.j.note ? "có" : "không") + ")", r.s === 200 && r.j.profile.nganh === 1 && r.j.profile.asmEmail === "asm@livotec.vn" && !!r.j.note);
   ok("…nhưng vẫn lưu được tỉnh của chính mình (" + r.j.profile.province + ")", r.j.profile.province === "Cà Mau");
@@ -21,13 +21,13 @@ function client() { const c = { token: "" };
   r = await sr.call("POST", "/api/profile", { nganh: 1, asmEmail: "asm@livotec.vn", province: "Cà Mau" });
   ok("gửi lại đúng giá trị hiện tại: không có ghi chú lỗi", r.s === 200 && !r.j.note);
   // SR tự đăng ký, chưa có ASM: được chọn một lần
-  const sr2 = await client().login("sr.b@livotec.vn", "SR B");
+  const sr2 = await client().login("sr.b@livotec.vn", "SR Bình An");
   r = await sr2.call("POST", "/api/profile", { nganh: 2, asmEmail: "asm2@livotec.vn", province: "" });
   ok("SR chưa có ASM: tự chọn lần đầu được", r.s === 200 && r.j.profile.nganh === 2 && r.j.profile.asmEmail === "asm2@livotec.vn");
   r = await sr2.call("POST", "/api/profile", { nganh: 1, asmEmail: "asm@livotec.vn", province: "" });
   ok("…rồi không tự đổi sang ASM/ngành khác được", r.j.profile.nganh === 2 && r.j.profile.asmEmail === "asm2@livotec.vn" && !!r.j.note);
   // ASM gỡ khỏi nhóm → SR chọn lại được, nhưng không chọn lại ASM đã gỡ
-  const asm2 = await client().login("asm2@livotec.vn", "ASM Hai"), t = await asm2.call("GET", "/api/team"), m = t.j.members.find((x) => x.email === "sr.b@livotec.vn");
+  const asm2 = await client().login("asm2@livotec.vn", "Quản Lý Hai"), t = await asm2.call("GET", "/api/team"), m = t.j.members.find((x) => x.email === "sr.b@livotec.vn");
   r = await asm2.call("POST", "/api/team", { op: "removeMember", uid: m.uid }); ok("ASM gỡ SR khỏi nhóm (" + r.s + ")", r.s === 200);
   r = await sr2.call("POST", "/api/profile", { nganh: 2, asmEmail: "asm2@livotec.vn", province: "" }); ok("SR không chọn lại ASM đã gỡ mình (" + r.s + ")", r.s === 400);
   r = await sr2.call("POST", "/api/profile", { nganh: 1, asmEmail: "asm@livotec.vn", province: "" }); ok("SR chọn ASM khác được sau khi bị gỡ", r.s === 200 && r.j.profile.asmEmail === "asm@livotec.vn");

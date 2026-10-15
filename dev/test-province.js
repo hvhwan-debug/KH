@@ -16,7 +16,7 @@ function client() { const c = { token: "" };
 })();
 (async () => {
   const ok = (n, c) => console.log((c ? "PASS " : "FAIL ") + n);
-  const admin = await client().login("boss@livotec.vn", "Admin"), asm = await client().login("asm@livotec.vn", "ASM"), asm2 = await client().login("asm2@livotec.vn", "ASM2");
+  const admin = await client().login("boss@livotec.vn", "Quản Trị Viên"), asm = await client().login("asm@livotec.vn", "Quản Lý Một"), asm2 = await client().login("asm2@livotec.vn", "Quản Lý Hai");
   await admin.call("POST", "/api/org", { op: "addAsm", email: "asm2@livotec.vn", name: "ASM Hai", nganh: [1, 2] });
   const t = await asm.call("GET", "/api/team"), mine = t.j.members.map((m) => m.uid);
   let r = await asm.call("POST", "/api/team", { op: "setProvince", uid: mine[0], province: "Đắk Nông" });

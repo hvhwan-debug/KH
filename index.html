@@ -1535,6 +1535,7 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
   <div class="small muted">Câu trả lời do AI tạo tự động, chỉ mang tính tham khảo. <span id="coachQuota"></span></div>
 </div></div>
 <div class="modalc" id="workSheet" hidden><div class="sheetin" role="dialog" aria-label="Công việc của bạn" id="workSheetIn"></div></div>
+<div class="modalc" id="contactGate" hidden style="z-index:80"><div class="sheetin" role="dialog" aria-modal="true" aria-label="Hoàn thiện hồ sơ" id="contactGateIn"></div></div>
 <div id="toast" class="toast" hidden></div>
 
 <script>
@@ -2990,8 +2991,9 @@ async function authInit(){
   try{
     const r=await api('GET','/api/auth/me');
     if(r.s!==200||!r.j.avail){AUTH.avail=false;AUTH.user=null;}
-    else{AUTH.avail=true;AUTH.user=r.j.loggedIn?{email:r.j.email,name:r.j.name||''}:null;AUTH.isAdmin=!!r.j.isAdmin;AUTH.isAsm=!!r.j.isAsm;}
+    else{AUTH.avail=true;AUTH.user=r.j.loggedIn?{email:r.j.email,name:r.j.name||'',phone:r.j.phone||''}:null;AUTH.contactOk=r.j.contactOk!==false;AUTH.isAdmin=!!r.j.isAdmin;AUTH.isAsm=!!r.j.isAsm;}
   }catch(e){AUTH.avail=false;AUTH.user=null;}
+  contactGateRender();
   if(AUTH.user){await syncPull();await profileLoad();dirLoad();}
   softRender();
 }
@@ -3057,6 +3059,35 @@ async function syncCheck(){
   }catch(e){}
 }
 function phoneOk(v){let t=String(v||'').replace(/[\s.\-()]/g,'');if(/^\+84/.test(t))t='0'+t.slice(3);else if(/^84\d{9}$/.test(t))t='0'+t.slice(2);return /^0[2-9]\d{8}$/.test(t);}
+function nameOk(v){const t=String(v||'').replace(/\s+/g,' ').trim();return /^[\p{L}][\p{L}'.\-]*(?: [\p{L}][\p{L}'.\-]*)+$/u.test(t)&&(t.match(/\p{L}/gu)||[]).length>=4;}
+/* Màn hình bắt buộc: tài khoản chưa có họ và tên đầy đủ + số điện thoại phải cập nhật mới dùng tiếp */
+function contactGateRender(){
+  const el=document.getElementById('contactGate'),inn=document.getElementById('contactGateIn');if(!el||!inn)return;
+  if(!AUTH.user||AUTH.contactOk!==false){el.hidden=true;return;}
+  const nm=nameOk(AUTH.user.name)?AUTH.user.name:'',ph=AUTH.user.phone||'';
+  el.hidden=false;
+  inn.innerHTML='<div class="authHead"><div class="ic">'+ic('user',20)+'</div><div class="tx"><b>Hoàn thiện hồ sơ của bạn</b><span>ASM cần thấy đúng họ và tên đầy đủ cùng số điện thoại của bạn. Chỉ mất 10 giây.</span></div></div>'+
+    '<div class="authField"><label for="cgName">Họ và tên đầy đủ <span style="color:var(--bad)">*</span></label><div class="inwrap">'+ic('user',16)+'<input id="cgName" class="txt" type="text" autocomplete="name" maxlength="80" placeholder="Nguyễn Văn A" value="'+escH(nm)+'" aria-required="true"></div></div>'+
+    '<div class="authField"><label for="cgPhone">Số điện thoại <span style="color:var(--bad)">*</span></label><div class="inwrap">'+ic('phone',16)+'<input id="cgPhone" class="txt" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="0901 234 567" value="'+escH(ph)+'" aria-required="true"></div></div>'+
+    '<div class="askrow" style="margin-top:14px"><button class="btn sm" data-act="cgSave">Lưu và tiếp tục</button><button class="link" data-act="cgLogout">Đăng xuất</button></div>'+
+    '<div id="cgMsg" class="small" style="margin-top:10px;color:var(--bad)" role="alert"></div>';
+  inn.onkeydown=function(e){if(e.key==='Enter'&&e.target&&e.target.tagName==='INPUT'){e.preventDefault();cgSave();}};
+}
+let CG_BUSY=false;
+async function cgSave(){
+  if(CG_BUSY)return;
+  const n=document.getElementById('cgName'),p=document.getElementById('cgPhone'),m=document.getElementById('cgMsg');if(!n||!p||!m)return;
+  const name=(n.value||'').replace(/\s+/g,' ').trim(),phone=(p.value||'').trim();
+  if(!nameOk(name)){m.textContent='Vui lòng nhập đầy đủ họ và tên (ví dụ: Nguyễn Văn A).';n.focus();return;}
+  if(!phoneOk(phone)){m.textContent='Vui lòng nhập số điện thoại hợp lệ (10 số, ví dụ 0901234567).';p.focus();return;}
+  CG_BUSY=true;m.style.color='var(--muted)';m.textContent='Đang lưu…';
+  try{
+    const r=await api('POST','/api/account',{name:name,phone:phone});
+    CG_BUSY=false;
+    if(r.s===200&&r.j.ok){AUTH.user.name=r.j.name;AUTH.user.phone=r.j.phone;AUTH.contactOk=true;contactGateRender();toast('Đã cập nhật hồ sơ');await profileLoad();softRender();return;}
+    m.style.color='var(--bad)';m.textContent=r.j.error||'Không lưu được. Thử lại.';
+  }catch(e){CG_BUSY=false;m.style.color='var(--bad)';m.textContent='Lỗi mạng. Thử lại.';}
+}
 async function acReq(){
   const elN=document.getElementById('acName'),elE=document.getElementById('acEmail'),elP=document.getElementById('acPass');
   const name=((elN&&elN.value)||'').trim().slice(0,80);
@@ -3068,7 +3099,7 @@ async function acReq(){
   AUTH.email=email;
   if(isReg){
     AUTH.name=name;AUTH.phone=phone;
-    if(name.replace(/\s/g,'').length<2){AUTH.msg='Vui lòng nhập họ tên đầy đủ.';render();return;}
+    if(!nameOk(name)){AUTH.msg='Vui lòng nhập đầy đủ họ và tên (ví dụ: Nguyễn Văn A).';render();return;}
     if(!phoneOk(phone)){AUTH.msg='Vui lòng nhập số điện thoại hợp lệ (10 số, ví dụ 0901234567).';render();return;}
   }
   AUTH.busy=true;AUTH.email=email;AUTH.name=name;if(isReg)AUTH.phone=phone;AUTH.msg='Đang kiểm tra…';render();
@@ -3189,7 +3220,7 @@ function acctData(){
       const tabsHtml='<div class="authTabs" role="tablist"><button type="button" role="tab" data-act="authTab" data-v="login" aria-selected="'+(tab==='login')+'">Đăng nhập</button><button type="button" role="tab" data-act="authTab" data-v="register" aria-selected="'+(tab==='register')+'">Đăng ký</button></div>';
       body='<div class="authHead"><div class="ic">'+ic('user',20)+'</div><div class="tx"><b>'+(tab==='register'?'Tạo tài khoản mới':'Đăng nhập')+'</b><span>Lưu dữ liệu trên máy chủ, dùng được trên nhiều thiết bị</span></div></div>'+
         tabsHtml+
-        (tab==='register'?'<div class="authField"><label for="acName">Họ tên <span style="color:var(--bad)">*</span></label><div class="inwrap">'+ic('user',16)+'<input id="acName" class="txt" type="text" autocomplete="name" maxlength="80" placeholder="Nguyễn Văn A" value="'+escH(A.name)+'" aria-label="Họ tên" aria-required="true"></div></div><div class="authField"><label for="acPhone">Số điện thoại <span style="color:var(--bad)">*</span></label><div class="inwrap">'+ic('phone',16)+'<input id="acPhone" class="txt" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="0901 234 567" value="'+escH(A.phone)+'" aria-label="Số điện thoại" aria-required="true"></div></div>':'')+
+        (tab==='register'?'<div class="authField"><label for="acName">Họ và tên đầy đủ <span style="color:var(--bad)">*</span></label><div class="inwrap">'+ic('user',16)+'<input id="acName" class="txt" type="text" autocomplete="name" maxlength="80" placeholder="Nguyễn Văn A" value="'+escH(A.name)+'" aria-label="Họ tên" aria-required="true"></div></div><div class="authField"><label for="acPhone">Số điện thoại <span style="color:var(--bad)">*</span></label><div class="inwrap">'+ic('phone',16)+'<input id="acPhone" class="txt" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="0901 234 567" value="'+escH(A.phone)+'" aria-label="Số điện thoại" aria-required="true"></div></div>':'')+
         '<div class="authField"><label for="acEmail">Email</label><div class="inwrap">'+ic('mail',16)+'<input id="acEmail" class="txt" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="ban@vidu.com" value="'+escH(A.email)+'" aria-label="Email"></div></div>'+
         '<div class="authField"><label for="acPass">Mật khẩu</label><div class="inwrap">'+ic('lock',16)+'<input id="acPass" class="txt" type="password" autocomplete="current-password" maxlength="200" placeholder="Ít nhất 6 ký tự" aria-label="Mật khẩu"></div>'+
         (tab==='register'?'<div class="small muted" style="margin-top:5px">Nếu email này đã có tài khoản, hệ thống sẽ đăng nhập luôn thay vì tạo mới.</div>':'')+'</div>'+
@@ -4587,6 +4618,8 @@ document.addEventListener('click',function(e){
   else if(a==='aix'){askAIx(d.c);return;}
   else if(a==='openWeek'){planSel=+d.w;S.pv='week';render();setTimeout(function(){const el=document.getElementById('wdetail');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);return;}
   else if(a==='selWeek'){planSel=+d.w;render();setTimeout(function(){const t=document.querySelector('.wtile.sel');if(t&&t.scrollIntoView)t.scrollIntoView({inline:'center',block:'nearest'});},30);return;}
+  else if(a==='cgSave'){cgSave();return;}
+  else if(a==='cgLogout'){acLogout().then(contactGateRender);return;}
   else if(a==='acReq'){acReq();return;}
   else if(a==='authTab'){setAuthTab(d.v);return;}
   else if(a==='acOtpConfirm'){acOtpConfirm();return;}

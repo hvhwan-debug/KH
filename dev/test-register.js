@@ -18,6 +18,10 @@ const finish = async (email, extra) => { let r = await reg(email, extra); if (r.
     r = await reg("a5@livotec.vn", { name: "Nguyễn Văn A", phone: bad });
     ok(r.s === 400 && r.j.field === "phone", "SĐT sai '" + bad + "' bị từ chối");
   }
+  for (const bad of ["hvhwan", "SR2", "H", "htn@dr.com", "Nguyen 2", "A B"]) {
+    r = await reg("n" + Math.floor(Math.random() * 1e6) + "@livotec.vn", { name: bad, phone: "0901234567" });
+    ok(r.s === 400 && r.j.field === "name", "tên không phải họ và tên đầy đủ '" + bad + "' bị từ chối");
+  }
   const fmts = ["0901234567", "+84 901 234 567", "84901234567", "090.123.4567", "090-123-4567"];
   for (let i = 0; i < fmts.length; i++) {
     const email = "ok" + i + "@livotec.vn";
@@ -33,6 +37,20 @@ const finish = async (email, extra) => { let r = await reg(email, extra); if (r.
   const t = await call("GET", "/api/team", null, asm.j.token);
   const m = ((t.j && t.j.members) || []).find((x) => x.email === "sr.reg@livotec.vn");
   ok(m && m.phone === "0988777666", "ASM thấy SĐT đã chuẩn hoá của SR (" + (m && m.phone) + ")");
+  // API cập nhật tài khoản: họ và tên + SĐT, đồng bộ sang hồ sơ để ASM thấy
+  let me = await call("GET", "/api/auth/me", null, sr.j.token);
+  ok(me.j.contactOk === true && me.j.phone === "0988777666", "auth/me báo hồ sơ đầy đủ (contactOk) + SĐT");
+  r = await call("POST", "/api/account", { name: "hvhwan", phone: "0988777666" }, sr.j.token);
+  ok(r.s === 400 && r.j.field === "name", "api/account từ chối tên một từ");
+  r = await call("POST", "/api/account", { name: "Nguyễn Văn Đúng", phone: "123" }, sr.j.token);
+  ok(r.s === 400 && r.j.field === "phone", "api/account từ chối SĐT sai");
+  r = await call("POST", "/api/account", { name: "  Nguyễn   Văn  Đúng ", phone: "0977 111 222" }, sr.j.token);
+  ok(r.s === 200 && r.j.name === "Nguyễn Văn Đúng" && r.j.phone === "0977111222", "api/account cập nhật + chuẩn hoá");
+  r = await call("POST", "/api/account", { name: "Nguyễn Văn Đúng", phone: "0977111222" });
+  ok(r.s === 401, "api/account cần đăng nhập (" + r.s + ")");
+  const t2 = await call("GET", "/api/team", null, asm.j.token);
+  const m2 = ((t2.j && t2.j.members) || []).find((x) => x.email === "sr.reg@livotec.vn");
+  ok(m2 && m2.name === "Nguyễn Văn Đúng" && m2.phone === "0977111222", "ASM thấy họ tên + SĐT mới (" + (m2 && m2.name) + ")");
   // Đăng nhập tài khoản cũ không cần SĐT
   r = await call("POST", "/api/auth/request", { email: "sr.reg@livotec.vn", password: "matkhau123" });
   ok(r.s === 200 && r.j.token, "đăng nhập tài khoản đã có không yêu cầu họ tên/SĐT");

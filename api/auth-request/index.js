@@ -7,7 +7,7 @@ const { layout } = require("../_lib/emails");
 const store = require("../_lib/store");
 const pwd = require("../_lib/pwd");
 const mail = require("../_lib/mail");
-const { normPhone } = require("../_lib/phone");
+const { normPhone, normName } = require("../_lib/phone");
 
 const MAXFAILS = 10; // mỗi giờ, theo từng tài khoản
 const OTP_TTL = 10 * 60 * 1000; // mã có hiệu lực 10 phút
@@ -31,7 +31,7 @@ module.exports = async function (context, req) {
     if (guardConfigured(context) || !requireAjax(context, req)) return;
     const email = String((req.body && req.body.email) || "").trim().toLowerCase();
     const password = String((req.body && req.body.password) || "");
-    const name = String((req.body && req.body.name) || "").trim().slice(0, 80);
+    let name = String((req.body && req.body.name) || "").trim().slice(0, 80);
     const otpInput = String((req.body && req.body.otp) || "").trim();
     const phoneRaw = String((req.body && req.body.phone) || "").trim(), phone = normPhone(phoneRaw);
     if (!validEmail(email)) return reply(context, 400, { ok: false, error: "Email không hợp lệ." });
@@ -66,7 +66,8 @@ module.exports = async function (context, req) {
     if (!ud) {
       // Đăng ký tài khoản mới: BẮT BUỘC họ tên và số điện thoại hợp lệ
       if (!name && !phoneRaw) return reply(context, 400, { ok: false, error: "Email hoặc mật khẩu không đúng. Nếu bạn chưa có tài khoản, hãy chọn tab Đăng ký và nhập họ tên, số điện thoại." });
-      if (name.replace(/\s/g, "").length < 2) return reply(context, 400, { ok: false, field: "name", error: "Vui lòng nhập họ tên đầy đủ khi đăng ký." });
+      name = normName(name);
+      if (!name) return reply(context, 400, { ok: false, field: "name", error: "Vui lòng nhập đầy đủ họ và tên (ví dụ: Nguyễn Văn A)." });
       if (!phone) return reply(context, 400, { ok: false, field: "phone", error: "Vui lòng nhập số điện thoại hợp lệ (10 số, ví dụ 0901234567)." });
       if (canSendOtp) {
         const otp = genOtp();
