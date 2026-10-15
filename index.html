@@ -2257,7 +2257,7 @@ function srcFallback(weeks){
   const ap=areaPlan(weeks),ww=weeks.filter(w=>w.work>0).map(w=>w.i),pick=f=>ww.length?ww[Math.min(ww.length-1,Math.floor((ww.length-1)*f))]:0;
   const SH=[0.45,0.20,0.15,0.20],FR=[0,0.33,0.55,0.8],out=[];
   const NAMES=[ 'Nhóm đại lý hiện hữu — đơn nền tảng (điền tên)','Tăng trưởng từ đại lý hiện hữu (điền tên)','Đơn đang đàm phán / có tín hiệu (điền tên)',ap&&ap.gap>0?'Khai thác mở mới ≈ '+ap.gap+' điểm bán (điền tuyến)':'Khai thác mở mới điểm bán (điền tuyến)'];
-  const PLB=['Giữ nhịp ghé hằng tuần; nếu giảm nhập, chuyển nhu cầu sang nguồn tăng trưởng','Tăng tần suất ghé và gợi ý nhập theo mùa; kiểm tra tồn kho từng đại lý','Chốt sớm điều kiện đàm phán; nếu chưa chốt, đẩy sang nguồn mở mới','Tăng số điểm tiếp cận; ưu tiên điểm gần tuyến đang có'];
+  const PLB=['Giữ đều lượt ghé hằng tuần; nếu giảm nhập, chuyển nhu cầu sang nguồn tăng trưởng','Tăng tần suất ghé và gợi ý nhập theo mùa; kiểm tra tồn kho từng đại lý','Chốt sớm điều kiện đàm phán; nếu chưa chốt, đẩy sang nguồn mở mới','Tăng số điểm tiếp cận; ưu tiên điểm gần tuyến đang có'];
   ['bn','gd'].forEach(p=>{
     const t=Math.round(+S.target[p]||0);if(!t)return;
     const parts=allocate(t,SH);
@@ -2913,7 +2913,7 @@ function factors(weeks){
     const P=fc.P,lv=P>=0.7?'ok':P>=0.4?'warn':'bad';
     add({id:'prog',lv,sv:'tiến độ chậm',name:'Tiến độ thực tế',val:Math.round(P*100)+'%',
       msg:'Dự báo chốt ≈ '+fmt(fc.mu)+' tr, khả năng đạt chỉ tiêu '+Math.round(P*100)+'%',
-      act:lv==='ok'?'':(fc.total-fc.mu>=1?'Thiếu ≈ '+fmt(fc.total-fc.mu)+' tr'+(fc.extra>0?': thêm ≈ '+fmt(fc.extra,1)+' khách/ngày':''):'Đang sát chỉ tiêu, giữ nhịp đều mỗi ngày'),
+      act:lv==='ok'?'':(fc.total-fc.mu>=1?'Thiếu ≈ '+fmt(fc.total-fc.mu)+' tr'+(fc.extra>0?': thêm ≈ '+fmt(fc.extra,1)+' khách/ngày':''):'Đang sát chỉ tiêu, giữ đều mỗi ngày'),
       how:'Ước lượng thống kê đơn giản từ số liệu đã nhập, độ tin cậy '+fc.conf+'.',src:'Từ số liệu bạn nhập'});
   }
   if(S.month===monthKey(0)){
@@ -3436,7 +3436,7 @@ function headerTag(weeks){
   if(S.month!==monthKey(0))return ach>0?tag('Tổng kết tháng:','Đạt '+pct+'% chỉ tiêu '+fmt(total)+' triệu.'):tag('Chỉ tiêu tháng này:',fmt(total)+' triệu.');
   if(ach<=0)return tag(pi.rem+' ngày phía trước, mỗi ngày đều có thể tạo nên khác biệt.','Hãy bắt đầu từ những việc bạn có thể làm hôm nay!');
   if(pct<50)return tag('Đã đạt '+pct+'% chỉ tiêu, còn '+pi.rem+' ngày phía trước.','Mỗi bước nhỏ hôm nay đều đưa bạn tiến gần hơn!');
-  if(pct<100)return tag('Đã vượt nửa chặng đường, còn '+fmt(total-ach)+' triệu nữa.','Giữ nhịp, đích đến đang ở rất gần!');
+  if(pct<100)return tag('Đã vượt nửa chặng đường, còn '+fmt(total-ach)+' triệu nữa.','Cứ giữ đều, đích đến đang ở rất gần!');
   return tag('Hoàn thành chỉ tiêu '+fmt(total)+' triệu!','Bạn có mục tiêu, bạn có kế hoạch — và bạn đã làm được!');
 }
 function headerIncome(){
@@ -4014,14 +4014,14 @@ function mktForecast(c){
     if(need<=MKT.vpd[1])add('warn','Kế hoạch đang <b>chạm trần '+c.mc+' lượt/ngày</b> do bạn đặt. Để đủ mục tiêu cần <b>≈ '+nn(need)+' lượt/ngày</b>, vẫn trong ngưỡng thực tế ('+MKT.vpd[0]+'–'+MKT.vpd[1]+'): nâng trần "lượt gặp tối đa/ngày" là cách nhanh nhất.');
     else add('bad','Để đủ mục tiêu cần <b>≈ '+nn(need)+' lượt/ngày</b>, vượt ngưỡng thực tế ('+MKT.vpd[0]+'–'+MKT.vpd[1]+'). Nên giảm mục tiêu, tăng giá trị mỗi đơn hoặc tăng lương cứng/phần thưởng cố định.');
   }else if(c.perDay>MKT.vpd[1])add('warn','Cần <b>≈ '+nn(c.perDay)+' lượt/ngày</b>, cao hơn mức thực tế '+MKT.vpd[0]+'–'+MKT.vpd[1]+' lượt/ngày.');
-  else if(c.perDay>0)add('ok','Nhịp <b>≈ '+nn(c.perDay)+' lượt/ngày</b>'+(c.perDay<MKT.vpd[0]?' nhẹ hơn':' trong ngưỡng')+' mức thực tế ('+MKT.vpd[0]+'–'+MKT.vpd[1]+' lượt/ngày).');
+  else if(c.perDay>0)add('ok','Tốc độ ghé <b>≈ '+nn(c.perDay)+' lượt/ngày</b>'+(c.perDay<MKT.vpd[0]?' nhẹ hơn':' trong ngưỡng')+' mức thực tế ('+MKT.vpd[0]+'–'+MKT.vpd[1]+' lượt/ngày).');
   // 6) Dự báo cuối tháng và phần thiếu quy ra việc làm thêm
   let fc='';
   const pct=I>0?Math.round(c.inc/I*100):0;
   if(!c.enough&&c.rateC>0&&c.aov>0){
     const exSI=(I-c.inc)/(c.rateC/100),exOrd=Math.ceil(exSI/c.aov),exVis=Math.ceil(exOrd*c.F.vpo),perDay=exVis/Math.max(1,c.tw);
     fc='<div class="mk-fc"><b>Dự báo theo sức đi hiện tại: ≈ '+nn(c.inc)+' tr ('+pct+'% mục tiêu).</b> Để chạm '+nn(I)+' tr cần thêm ≈ <b>'+exOrd+' đơn</b> ≈ <b>'+exVis+' lượt ghé</b> (≈ '+nn(perDay)+' lượt/ngày làm việc) hoặc nâng giá trị mỗi đơn.</div>';
-  }else if(c.enough)fc='<div class="mk-fc"><b>Dự báo: đạt ≈ '+nn(Math.max(c.inc,I))+' tr (≥ 100% mục tiêu)</b> với nhịp kế hoạch hiện tại.</div>';
+  }else if(c.enough)fc='<div class="mk-fc"><b>Dự báo: đạt ≈ '+nn(Math.max(c.inc,I))+' tr (≥ 100% mục tiêu)</b> với tốc độ theo kế hoạch hiện tại.</div>';
   const src='<details class="mk-src"><summary>Nguồn & độ tin cậy ('+MKT.asOf+')</summary><div>'+
     '• <b>Thu nhập (độ tin cậy trung bình):</b> tin tuyển dụng Karofi 2026 (CareerViet, Joboko, 123job, Bejob): CV kinh doanh khu vực 15–25 tr; KD thị trường kênh GT 15–20 tr (đạt 100% KPI 16–22 tr, gồm lương cơ bản + phụ cấp + thưởng DS); KD phát triển thị trường 12–20 tr; CV điện máy gia dụng (≥ 3 năm) 18–25 tr. Là khoảng chào mời, không phải thu nhập thực nhận.<br>'+
     '• <b>Hoa hồng (độ tin cậy thấp):</b> không có số công khai cho kênh GT Karofi; một số tin bán lẻ máy lọc nước tại TP.HCM ghi hoa hồng đến 3–4,2%, không cùng kênh.<br>'+

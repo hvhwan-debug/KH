@@ -28,7 +28,7 @@ function mock(o) {
     return JSON.stringify({ canh_bao: cb, uu_tien: ["Mock ưu tiên 1", "Mock ưu tiên 2"], nhan_dinh: "Mock: nhóm đang chậm so với mốc." });
   }
   if (o.task === "plan") return JSON.stringify((o.ids || []).map((id) => ({ id, text: "Mock trọng tâm cho " + id + ": chốt đơn đã hẹn." })));
-  if (o.task === "coach") return "- Điểm tốt: giữ nhịp ghé đều.\n- Rủi ro: độ phủ thấp hơn tiến độ.\n- Hành động: mở thêm 2 điểm bán mới mỗi ngày.";
+  if (o.task === "coach") return "- Điểm tốt: giữ đều lượt ghé.\n- Rủi ro: độ phủ thấp hơn tiến độ.\n- Hành động: mở thêm 2 điểm bán mới mỗi ngày.";
   return "Mock: ưu tiên chốt các đơn đã hẹn trong ngày mai.";
 }
 module.exports = { chat };
