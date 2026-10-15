@@ -485,7 +485,7 @@ table.tv .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin
 @media (max-width:1099px){.bar{bottom:calc(72px + env(safe-area-inset-bottom,0px))}.toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}.asmai-fab{bottom:calc(78px + env(safe-area-inset-bottom,0px));right:12px;padding:10px 15px;font-size:13px}.selbar{bottom:calc(72px + env(safe-area-inset-bottom,0px))}}
 /* ===== Thanh điều hướng nhiều màu ===== */
 .tic{flex:0 0 auto;display:grid;place-items:center;width:36px;height:36px;border-radius:12px;color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.22);transition:transform .15s,background .15s,color .15s,box-shadow .15s}
-.tabs button[aria-selected=true] .tic{background:#fff!important;color:var(--brand-deep)!important;box-shadow:0 4px 10px rgba(0,0,0,.18)}
+.tabs button[aria-selected=true] .tic{background:#fff!important;color:#0A5E7A!important;box-shadow:0 4px 10px rgba(0,0,0,.18)}
 .tic svg{filter:none!important}
 .t-home,.t-plan,.t-heat,.t-org{background:rgba(255,255,255,.16)}
 .tic svg{filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
@@ -506,11 +506,17 @@ table.tv .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin
 }
 @media (max-width:1099px){
   .tfoot{display:none}
-  .tic{width:30px;height:30px;border-radius:10px;filter:saturate(.75);opacity:.88}
+  /* Thanh menu dưới: cùng phong cách với thanh bên của máy tính (nền gradient xanh, viên thuốc trắng cho mục đang chọn) */
+  .tic{width:30px;height:30px;border-radius:10px;filter:none;opacity:1}
   .tic svg{width:17px;height:17px}
-  .tabs button[aria-selected=true] .tic{filter:none;opacity:1;transform:translateY(-2px) scale(1.08);box-shadow:0 6px 12px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.35)}
-  .tabs button[aria-selected=true]{background:transparent!important;color:var(--brand-deep);font-weight:700}
-  .tabs{background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(10px)}
+  .tabs{background:radial-gradient(240px 120px at 0% 0%,rgba(255,255,255,.22),transparent 70%),radial-gradient(260px 140px at 100% 100%,rgba(255,255,255,.14),transparent 70%),radial-gradient(rgba(255,255,255,.09) 1px,transparent 1.2px) 0 0/16px 16px,linear-gradient(135deg,var(--hero1),var(--hero2));border-top:0;border-radius:20px 20px 0 0;box-shadow:0 -10px 28px rgba(8,40,60,.28);backdrop-filter:none;-webkit-backdrop-filter:none;gap:4px}
+  .tabs button{color:rgba(255,255,255,.92);-webkit-tap-highlight-color:transparent}
+  .tabs button:active{background:rgba(255,255,255,.16)}
+  .tabs button[aria-selected=true]{background:#fff!important;color:#0A5E7A;font-weight:700;box-shadow:0 6px 16px rgba(0,30,50,.3)}
+  .tabs button[aria-selected=true] .tic{transform:none;box-shadow:none;background:color-mix(in srgb,var(--brand) 14%,#fff)!important}
+  .tabs .cnt{box-shadow:0 0 0 2px #fff}
+  .tabs button{padding-left:2px;padding-right:2px}.tabs .ts{white-space:nowrap;font-size:10.5px;letter-spacing:-.01em}
+  .asmai-fab{bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 }
 /* ===== Tab Nhân sự ===== */
 .t-staff{background:rgba(255,255,255,.16)}
