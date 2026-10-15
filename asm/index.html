@@ -307,6 +307,9 @@ table.t td.r,table.t th.r{text-align:right}
 .subtabs button[aria-selected=true]{color:var(--brand-deep);border-bottom-color:var(--brand)}
 .subtabs button.dng{margin-left:auto;color:var(--bad)}.subtabs button.dng[aria-selected=true]{border-bottom-color:var(--bad);color:var(--bad)}
 .subtabs .cnt{background:var(--warn);color:#fff;border-radius:999px;font-size:11px;padding:0 6px;line-height:18px}
+.scopenote{font-size:12.5px;color:var(--muted);background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;margin:-2px 0 6px}
+.permg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.permg>div{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}.permg .small{margin-top:6px;line-height:1.5}
+@media (max-width:900px){.permg{grid-template-columns:minmax(0,1fr)}}
 .og2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
 @media (max-width:1000px){.og2{grid-template-columns:minmax(0,1fr)}}
 .oform{margin:16px 0 4px;font-size:14px;padding-top:12px;border-top:1px solid var(--line)}
@@ -892,7 +895,7 @@ function heroHTML(list,t,date){
   const bar=(p,mk)=>'<div class="kb"><i style="width:'+Math.max(0,Math.min(100,(p||0)*100)).toFixed(0)+'%"></i>'+(mk!=null?'<span class="mk" style="left:'+Math.min(100,mk*100).toFixed(1)+'%" title="Mốc kế hoạch"></span>':'')+'</div>';
   const tile=(cls,lbl,val,p,sub,mk)=>'<div class="kt'+(cls?' '+cls:'')+'"><div class="kl">'+lbl+'</div><div class="kv">'+val+'</div>'+bar(p,mk)+'<div class="ks">'+sub+'</div></div>';
   const who=(ST.data.me.name||'').split(' ').slice(-1)[0]||'ASM',nMiss=missingList(list).length;
-  return '<section class="phead fadein"><div><h1>'+(isT?greet+', '+esc(who):'Báo cáo ngày '+dmy(date))+'</h1><div class="sub">'+lead+' '+t.n+' nhân sự'+(ST.ng?' · '+NG[ST.ng].n:'')+' · cập nhật '+hhmm(ST.loadedAt)+'</div></div>'+
+  return '<section class="phead fadein"><div><h1>'+(isT?greet+', '+esc(who):'Báo cáo ngày '+dmy(date))+'</h1><div class="sub">'+lead+' '+t.n+(ST.data.me.admin?' nhân sự':' nhân sự trong nhóm của bạn')+(ST.ng?' · '+NG[ST.ng].n:'')+' · cập nhật '+hhmm(ST.loadedAt)+'</div></div>'+
     '<div class="pactions">'+(nMiss?'<button class="pillbtn warnb" data-act="remind">'+ic('send',16)+' Nhắc '+nMiss+' người chưa gửi báo cáo</button>':'')+'<button class="pillbtn pri" data-act="copySum">'+ic('copy',16)+' Sao chép bản tin</button><button class="pillbtn" data-act="expTeam">'+ic('down',16)+' Xuất Excel</button><button class="pillbtn" data-act="composeAll">'+ic('send',16)+' Giao việc cả nhóm</button></div></section>'+
     '<div class="kpis">'+
     tile(late&&done!=null&&done<1?'bad':done===1?'ok':'','Báo cáo cuối ngày',t.work?t.done+'<small>/ '+t.work+' người</small>':'–',done,done==null?'chưa có ai cần gửi':'đã gửi '+pc(done)+(late&&done<1?' · quá giờ chốt':''))+
@@ -1086,7 +1089,7 @@ function composeHTML(){
   const preset=ng1?['Chăm lại 3–5 đại lý lớn: chốt đơn máy lọc kèm combo lõi lọc thay thế.','Tại mỗi điểm bán đã nhập máy: hướng dẫn nhân viên đại lý tư vấn test nước và đẩy sell-out (SO).','Mở ≥ 2 điểm bán mới mỗi ngày, để lại máy trưng bày và tài liệu bán hàng.']:['Gọi điện xác nhận lịch hẹn với các đại lý lớn trước 9h.','Tuần này ưu tiên mở thêm điểm bán mới, mỗi ngày ít nhất 2 điểm.'];
   const sugs=C.uid&&one?[suggestFocus(calc(one,ST.date),ST.date)].concat(preset):['Hoàn thành báo cáo cuối ngày trước '+DEADLINE+'h mỗi ngày.'].concat(nu||C.nganh?preset:[],['Nhóm xuất sắc hôm nay: cảm ơn cả team đã giữ nhịp tốt!']);
   const kinds=[['focus','🎯 Trọng tâm'],['note','📝 Nhắc nhở'],['praise','👏 Khen ngợi']];
-  return '<div class="scrim center" data-act="closeCompose"><div class="modal" role="dialog" aria-label="Giao việc" data-stop="1"><h3>Giao việc'+(one?' cho '+esc(one.name||one.email):nu?' cho '+nu+' người đã chọn':C.nganh?' cho '+NG[C.nganh].n:' cho cả nhóm')+'</h3>'+
+  return '<div class="scrim center" data-act="closeCompose"><div class="modal" role="dialog" aria-label="Giao việc" data-stop="1"><h3>Giao việc'+(one?' cho '+esc(one.name||one.email):nu?' cho '+nu+' người đã chọn':C.nganh?' cho '+NG[C.nganh].n:' cho cả nhóm')+'</h3><div class="scopenote">'+(ST.data.me.admin?'Quản trị viên giao được cho mọi nhân sự.':'Chỉ giao được cho nhân sự thuộc nhóm của bạn. Máy chủ tự loại bất kỳ ai ngoài nhóm.')+'</div>'+
     '<div class="fld"><label>Loại</label><div class="seg">'+kinds.map(k=>'<button data-act="ckind" data-v="'+k[0]+'" aria-pressed="'+(C.kind===k[0])+'">'+k[1]+'</button>').join('')+'</div></div>'+
     '<div class="fld"><label>Cho ngày</label><div class="seg"><button data-act="cdate" data-v="'+ST.today+'" aria-pressed="'+(C.date===ST.today)+'">Hôm nay</button><button data-act="cdate" data-v="'+nd+'" aria-pressed="'+(C.date===nd)+'">Ngày mai</button></div></div>'+
     '<div class="fld"><label for="ctext">Nội dung (tối đa 500 ký tự)</label><textarea id="ctext" rows="4" maxlength="500" placeholder="VD: Ưu tiên chăm lại đại lý A, B; mở thêm 2 điểm bán mới…">'+esc(C.text)+'</textarea><div style="margin-top:6px"><button class="aibtn sm" data-act="aiCompose"'+(C.aiBusy?' disabled':'')+'>'+(C.aiBusy?'Đang viết…':'✦ AI soạn giúp')+'</button> <span class="tiny muted">Gõ ý chính (hoặc để trống) rồi bấm, AI viết thành nội dung rõ ràng.</span></div><div class="sugs">'+sugs.map(s=>'<button data-act="csug" data-s="'+esc(s)+'">'+esc(s.length>90?s.slice(0,88)+'…':s)+'</button>').join('')+'</div></div>'+
@@ -1130,7 +1133,11 @@ function orgHTML(){
     '<div class="tblwrap orgtbl"><table class="t"><thead><tr><th>Nhân sự</th><th>Vai trò</th><th>Ngành</th><th>ASM phụ trách</th><th></th><th></th></tr></thead><tbody>'+(flt.length?flt.map(x=>row(x.p,x.o)).join(''):'<tr><td colspan="6" class="muted" style="text-align:center;padding:24px">Không có thành viên nào khớp.</td></tr>')+'</tbody></table></div></div>';
   const T=[['members','Thành viên'+(cnt.un?' <span class="cnt">'+cnt.un+'</span>':'')],['asm','ASM & phân công'],['import','Nhập & tạo trước'],['log','Nhật ký'],['danger','Dọn dữ liệu']];
   const nav='<div class="subtabs" role="tablist" aria-label="Quản trị">'+T.map(t=>'<button role="tab" data-act="ot" data-v="'+t[0]+'" aria-selected="'+(sub===t[0])+'"'+(t[0]==='danger'?' class="dng"':'')+'>'+t[1]+'</button>').join('')+'</div>';
-  const body=sub==='asm'?'<div class="og2">'+asmCard.replace('<h3 style="margin:16px 0 4px;font-size:14px">','<h3 class="oform">')+'</div>':sub==='import'?'<div class="og2"><div>'+impHTML()+'</div>'+invCard+'</div>':sub==='log'?auditHTML().replace('style="margin-top:14px"',''):sub==='danger'?pgHTML().replace('style="margin-top:14px;','style="'):memCard;
+  const permCard='<div class="card" style="margin-bottom:14px"><h2>Ai được làm gì</h2><div class="hsub">Quyền được máy chủ kiểm tra ở từng thao tác, không chỉ ẩn nút trên giao diện.</div><div class="permg">'+
+    '<div><span class="badge bad">Quản trị viên</span><div class="small">Toàn quyền: cấp/thu quyền ASM, gán nhân sự cho ASM, đổi ngành, khoá hoặc xoá tài khoản, nhập Excel, dọn dữ liệu. Chỉ các email trong <b>ADMIN_EMAILS</b>.</div></div>'+
+    '<div><span class="badge n1">ASM</span><div class="small"><b>Chỉ với nhân sự của chính mình</b>: xem số liệu, giao việc, nhắc báo cáo, gỡ khỏi nhóm. Không xem hay giao việc cho nhóm ASM khác, không tự cấp quyền, không tự chuyển nhân sự.</div></div>'+
+    '<div><span class="badge">SR</span><div class="small">Chỉ thấy dữ liệu và việc được giao của chính mình; chọn ASM đúng ngành (trừ khi quản trị viên đã khoá).</div></div></div></div>';
+  const body=sub==='asm'?permCard+'<div class="og2">'+asmCard.replace('<h3 style="margin:16px 0 4px;font-size:14px">','<h3 class="oform">')+'</div>':sub==='import'?'<div class="og2"><div>'+impHTML()+'</div>'+invCard+'</div>':sub==='log'?auditHTML().replace('style="margin-top:14px"',''):sub==='danger'?pgHTML().replace('style="margin-top:14px;','style="'):memCard;
   return nav+'<div style="margin-top:14px">'+body+'</div>';
 }
 function auditHTML(){
