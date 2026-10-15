@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Quản lý ASM · Trợ lí kế hoạch bán hàng</title>
+<title>Quản lý ASM · Nền tảng quản lí báo cáo nhân sự SR</title>
 <meta name="theme-color" content="#02A79E">
 <meta name="robots" content="noindex">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -75,7 +75,6 @@ svg{display:block}
   .tabs button[aria-selected=true]{background:color-mix(in srgb,var(--brand) 14%,var(--surface));color:var(--brand-deep)}
   .tabs .ts{display:none}.tabs .cnt{margin-left:auto}
   .wrap{margin:0 0 0 var(--navw);max-width:1520px;padding:0 24px 48px}
-  .brand{width:calc(var(--navw) - 20px)}
 }
 @media (max-width:1099px){
   .tabs{left:0;right:0;bottom:0;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);box-shadow:0 -6px 18px rgba(18,34,43,.07)}
@@ -902,7 +901,7 @@ const isNarrow=w=>!!(window.matchMedia&&window.matchMedia('(max-width:'+(w||700)
 function headerHTML(){
   const me=ST.data&&ST.data.me,asms=ST.data&&ST.data.asms||[];
   const dn=ST.date===ST.today?'Hôm nay · '+dmy(ST.date):DOWL[dowOf(ST.date)]+' · '+dmy(ST.date)+'/'+ST.date.slice(0,4);
-  return '<div class="top"><div class="topin"><div class="brand"><img src="../icon-192.png" alt=""><div class="bt"><b>Quản lý ASM</b><span>Kế hoạch bán hàng</span></div></div><div class="sp"></div>'+
+  return '<div class="top"><div class="topin"><div class="brand"><img src="../icon-192.png" alt=""><div class="bt"><b>Quản lý ASM</b><span>Nền tảng quản lí báo cáo nhân sự SR</span></div></div><div class="sp"></div>'+
     (me&&me.admin?'<select class="sel" id="asmSel" aria-label="Xem theo ASM"><option value="">Tất cả ASM</option>'+asms.map(a=>'<option value="'+esc(a.email)+'"'+(ST.asm===a.email?' selected':'')+'>'+esc(a.name||a.email)+'</option>').join('')+'</select>':'')+
     '<div class="datenav"><button data-act="dprev" aria-label="Ngày trước" title="Ngày trước">'+ic('prev',18)+'</button><span class="dv" aria-live="polite">'+dn+'</span><button data-act="dnext" aria-label="Ngày sau" title="Ngày sau"'+(ST.date>=ST.today?' disabled':'')+'>'+ic('next',18)+'</button></div>'+
     (ST.date!==ST.today?'<button class="pillbtn" data-act="dtoday">Hôm nay</button>':'')+
