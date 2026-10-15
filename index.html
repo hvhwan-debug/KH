@@ -3818,7 +3818,7 @@ function renderTabs(){
   const _mm=S.month.split('-');document.getElementById('title').innerHTML='Tháng '+_mm[1]+'<span class="hm-y">/'+_mm[0]+'</span>';
   try{const hd=document.querySelector('header.top');if(hd)hd.classList.toggle('cmp',S.tab==='setup');}catch(e){}
   document.getElementById('hdate').innerHTML=headerDate(wks);
-  {const pt=document.getElementById('pilltx');if(pt)pt.textContent='Kế hoạch bán hàng · '+NGX().short+(S.asm&&S.asm.name?' · ASM '+S.asm.name:'');}
+  {const pt=document.getElementById('pilltx');if(pt)pt.textContent='Kế hoạch bán hàng · '+NGX().short+(AUTH&&AUTH.user&&(AUTH.user.name||AUTH.user.email)?' · '+(AUTH.user.name||String(AUTH.user.email).split('@')[0]):'');}
   document.getElementById('hinc').innerHTML=headerIncome();
   document.getElementById('htag').innerHTML=headerTag(wks);
   document.getElementById('hcta').innerHTML=headerCta();
