@@ -12,12 +12,6 @@ module.exports = async function (context, req) {
     if (!u) return;
     if (!emailAllowed(u.email)) return reply(context, 403, { ok: false, error: "Tài khoản không còn được phép." });
     if (!require("../_lib/config").mailConfigured()) return reply(context, 200, { ok: false, error: "Chưa cấu hình gửi email (SMTP) trên máy chủ. Đăng nhập và đồng bộ vẫn hoạt động bình thường, chỉ email tự động chưa dùng được." });
-    const key = "user/" + u.uid + ".json", now = Date.now();
-    const doc = (await store.get(key)) || { v: 1, uid: u.uid, email: u.email, rev: 0, state: null, digest: null, prefs: {}, sent: {} };
-    doc.testSent = (doc.testSent || []).filter((t) => now - t < 86400000);
-    if (doc.testSent.length >= 20) return reply(context, 429, { ok: false, error: "Đã gửi thử khá nhiều lần hôm nay, thử lại sau 1 giờ." });
-    doc.testSent.push(now);
-    await store.put(key, doc);
     const L = layout({
       tone: "info", title: "Email thử: thông báo đã hoạt động",
       sections: [{ h: "Bạn sẽ nhận được", lines: ["Sáng: kết quả hôm qua (chỉ khi hôm qua là ngày làm việc).", "Tối: nhắc nhập số liệu nếu hôm nay chưa nhập.", "Cảnh báo khi có rủi ro cao; tổng kết tuần vào thứ Hai."] }],
