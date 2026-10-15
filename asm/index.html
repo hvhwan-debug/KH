@@ -300,6 +300,26 @@ table.t td.r,table.t th.r{text-align:right}
 @media (max-width:560px){.cards{grid-template-columns:1fr}.mets{gap:5px}.met{padding:6px}.met .mv{font-size:15px}.met .mp{font-size:10.5px}}
 @media (max-width:389px){.mets{grid-template-columns:repeat(2,1fr)}}
 @media print{.top,.tabs,.toolbar,.pactions,.vt,.bar,.srf .mini{display:none!important}.wrap{margin:0!important;padding:0!important;max-width:none!important}body{background:#fff}.card,.sr{box-shadow:none}}
+/* ===== Bản đồ tháng (mobile-first) ===== */
+.lg{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 3px 0 4px;vertical-align:0}.lg.ok{background:#2E9D68}.lg.warn{background:#E3A63B}.lg.bad{background:#D8473E}
+.dotnow{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--brand);margin-left:3px}
+.iconbtn.sm{width:40px;height:40px}.iconbtn[disabled]{opacity:.35;cursor:default}
+.dhd{display:flex;align-items:center;gap:8px;margin-bottom:8px}.dhm{flex:1;text-align:center;min-width:0}
+.dlist{display:flex;flex-direction:column}
+.dr{display:flex;align-items:center;gap:10px;padding:10px 4px;border-top:1px solid var(--line);cursor:pointer;min-height:56px}.dr:first-child{border-top:0}.dr:hover{background:var(--surface2)}
+.dr .av{width:36px;height:36px;font-size:12.5px}.drt{flex:1;min-width:0}.drt b{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dpill{display:flex;flex-direction:column;align-items:flex-end;border-radius:12px;padding:5px 10px;background:var(--surface2);color:var(--muted);line-height:1.25;white-space:nowrap}.dpill b{font-size:13.5px}.dpill small{font-size:11px;font-weight:500;opacity:.9}
+.dpill.ok{background:var(--ok-soft);color:var(--ok)}.dpill.warn{background:var(--warn-soft);color:var(--warn)}.dpill.bad,.dpill.miss{background:var(--bad-soft);color:var(--bad)}.dpill.wait{background:var(--surface2);color:var(--muted);border:1px dashed var(--line)}
+.wg{--nw:96px}.wg-h,.wg-r{display:grid;grid-template-columns:minmax(var(--nw),1.5fr) repeat(var(--n),minmax(0,1fr));gap:4px;align-items:center}
+.wg-r{margin-top:6px}.wg-h{margin-bottom:2px}
+.wg-d{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;line-height:1.2;color:var(--muted);padding:2px 0;border-radius:8px;min-height:36px}.wg-d span{font-size:10.5px;font-weight:600}.wg-d b{font-size:13px;color:var(--ink)}
+.wg-d.today{background:color-mix(in srgb,var(--brand) 14%,transparent)}.wg-d.today b{color:var(--brand-deep)}.wg-d.sun span,.wg-d.sun b{color:var(--bad)}
+.wg-n{min-width:0}.wg-n .lnk{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.wg-n .pill2{padding:0 6px;font-size:11px;margin-left:2px}
+.wg .hc{width:100%;height:auto;aspect-ratio:1/1;min-height:34px;border-radius:10px;font-size:12.5px}
+.wg .hf{text-align:center;font-size:11px;font-weight:700;color:var(--muted)}
+.wg.m{--nw:200px}.wg.m .wg-h,.wg.m .wg-r{gap:3px}.wg.m .hc{aspect-ratio:auto;height:32px;min-height:0;border-radius:7px;font-size:10.5px}.wg.m .wg-d{min-height:34px}.wg.m .wg-d span{font-size:9.5px}.wg.m .wg-d b{font-size:11.5px}
+.heat{display:none}
+@media (max-width:420px){.wg{--nw:88px}.wg .hc{font-size:11.5px;min-height:32px}.wg-n .lnk{font-size:12.5px}}
 /* ===== Quản trị ===== */
 .subtabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin-top:16px;border-bottom:1px solid var(--line)}.subtabs::-webkit-scrollbar{display:none}
 .subtabs button{flex:0 0 auto;border:0;background:transparent;padding:10px 14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px;display:inline-flex;gap:6px;align-items:center}
@@ -1067,33 +1087,89 @@ function chartOrEmpty(cs,w,h){
   const has=cs.plan.some(v=>v>0)||cs.act.some(v=>v>0);
   return has?lineChart(cs.plan,cs.act,cs.todayIdx,w,h):'<div class="muted small" style="padding:18px 0;text-align:center">Chưa có kế hoạch hoặc báo cáo nào trong tháng này nên chưa vẽ được biểu đồ.</div>';
 }
+/* ====== Tab Bản đồ tháng: biểu đồ cột theo ngày + chi tiết ngày + lưới tuần/tháng (ưu tiên điện thoại) ====== */
+function monthRep(c){const E=c.m.days||{};return Object.keys(E).some(d=>d.slice(0,7)===ST.month&&E[d].sub>0);}
+function cellState(c,d){
+  const E=c.m.days||{},e=E[d],late=vnHour()>=DEADLINE,pl=c.mp&&c.mp.days[d]&&!c.mp.days[d].o?c.mp.days[d].si:0,v=e?num(e.bn)+num(e.gd):0;
+  const o={d,v,pl,cls:'',txt:'',tip:dmy(d),req:0,got:0,help:false,sent:e&&e.sub>0?e.sub:0};
+  if(isOffDay(c.mp,d)){o.cls='off';o.txt='·';o.tip+=' · nghỉ';}
+  else if(e&&e.sub>0){const r=pl>0?v/pl:null;o.r=r;o.cls=r==null?'nodata':r>=.9?'ok':r>=.7?'warn':'bad';o.txt=fmt(v);o.got=1;o.req=1;o.help=!!e.help;o.tip+=': '+fmt(v,1)+' tr'+(pl?' / kế hoạch '+fmt(pl,1)+' tr ('+pc(r)+')':'')+(e.help?' · CẦN HỖ TRỢ':'');}
+  else if(c.weeklyDay(d)){o.cls='nodata';o.txt='T';o.weekly=1;o.tip+=' · số nhập theo tuần (không có báo cáo từng ngày)';}
+  else if(d>ST.today){o.cls='future';o.tip+=' · chưa tới';}
+  else if(!c.hasPlan&&!monthRep(c)){o.cls='nodata';o.txt='–';o.noplan=1;o.tip+=' · chưa lập kế hoạch và chưa có báo cáo nào';}
+  else if(d===ST.today&&!late){o.cls='wait';o.txt='…';o.tip+=' · chưa tới giờ chốt báo cáo ('+DEADLINE+'h)';}
+  else{o.cls='miss';o.txt='!';o.req=1;o.tip+=' · quá hạn, chưa gửi báo cáo';}
+  return o;
+}
+function dayStats(list,d){
+  const s={d,act:0,plan:0,sent:0,need:0,pend:0};
+  list.forEach(c=>{const x=cellState(c,d);if(x.cls==='off')return;s.plan+=x.pl;if(x.got){s.act+=x.v;s.sent++;}if(x.req)s.need++;if(x.cls==='wait')s.pend++;});
+  s.exp=s.need+s.pend;s.r=s.plan>0&&s.act>0?s.act/s.plan:null;
+  return s;
+}
+function weeksOf(dl){const W=[];let cur=null;dl.forEach(d=>{if(!cur||dowOf(d)===1){cur=[];W.push(cur);}cur.push(d);});return W;}
+function heatDay(dl){
+  const last=dl.filter(d=>d<=ST.today).pop()||dl[0];let d=ST.hd;
+  if(!d||d.slice(0,7)!==ST.month||d>ST.today)d=(ST.date.slice(0,7)===ST.month&&ST.date<=ST.today)?ST.date:last;
+  return d;
+}
+const toneCol=r=>r==null?'#6B8FA3':r>=.9?'#2E9D68':r>=.7?'#E3A63B':'#D8473E';
+function dayChart(all,dl,sel){
+  const nw=isNarrow(700),W=nw?340:900,H=nw?190:220,pl=nw?30:44,pr=6,pt=10,pb=34,n=dl.length,sl=(W-pl-pr)/n,bw=Math.max(5,sl*0.62);
+  const st=dl.map(d=>dayStats(all,d)),mx0=Math.max(1,...st.map(s=>Math.max(s.act,s.plan))),mx=mx0*1.08,ih=H-pt-pb,Y=v=>pt+ih*(1-v/mx);
+  let g='';
+  [0,.5,1].forEach(f=>{const v=mx0*f;g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="var(--line)" stroke-dasharray="'+(f?'3 3':'0')+'"/><text x="'+(pl-5)+'" y="'+(Y(v)+3.5).toFixed(1)+'" font-size="10" fill="var(--muted)" text-anchor="end">'+fmt(v)+'</text>';});
+  dl.forEach((d,i)=>{
+    const s=st[i],x=pl+i*sl,cx=x+sl/2,isSel=d===sel,isT=d===ST.today;
+    if(isSel)g+='<rect x="'+x.toFixed(1)+'" y="'+(pt-4)+'" width="'+sl.toFixed(1)+'" height="'+(H-pt-pb+8+14)+'" rx="5" fill="var(--brand)" opacity=".13"/>';
+    if(s.act>0){const h=Math.max(2,ih*s.act/mx);g+='<rect x="'+(cx-bw/2).toFixed(1)+'" y="'+(Y(s.act)).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2.5" fill="'+toneCol(s.r)+'"/>';}
+    if(s.plan>0)g+='<line x1="'+(cx-bw/2-1.5).toFixed(1)+'" x2="'+(cx+bw/2+1.5).toFixed(1)+'" y1="'+Y(s.plan).toFixed(1)+'" y2="'+Y(s.plan).toFixed(1)+'" stroke="var(--ink)" stroke-width="1.8" opacity=".75"/>';
+    let dc='';if(s.exp>0){dc=s.sent>=s.exp?'#2E9D68':s.sent===0?(d===ST.today&&s.pend?'var(--line)':'#D8473E'):'#E3A63B';}
+    if(dc)g+='<circle cx="'+cx.toFixed(1)+'" cy="'+(H-pb+9)+'" r="'+(nw?2.4:3)+'" fill="'+dc+'"/>';
+    if(!nw||dowOf(d)===1||i===0||i===n-1||isSel||isT)g+='<text x="'+cx.toFixed(1)+'" y="'+(H-8)+'" font-size="'+(nw?10:11)+'" text-anchor="middle" fill="'+(isT?'var(--brand-deep)':dowOf(d)===0?'var(--bad)':'var(--muted)')+'" font-weight="'+(isT||isSel?700:500)+'">'+(+d.slice(8))+'</text>';
+  });
+  dl.forEach((d,i)=>{const s=st[i];g+='<rect x="'+(pl+i*sl).toFixed(1)+'" y="0" width="'+sl.toFixed(1)+'" height="'+H+'" fill="transparent" data-act="hday" data-d="'+d+'" tabindex="0" role="button" aria-label="Ngày '+dmy(d)+(s.exp?': đã gửi '+s.sent+'/'+s.exp+' người':'')+(s.act?', doanh số '+fmt(s.act,1)+' triệu':'')+'" style="cursor:pointer"/>';});
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Doanh số cả nhóm theo từng ngày" style="max-height:'+H+'px;touch-action:manipulation">'+g+'</svg>';
+}
+function dayDetailHTML(all,d){
+  const S=dayStats(all,d),dl=monthDays(ST.month),first=dl[0],canPrev=d>first,canNext=d<ST.today&&d<dl[dl.length-1];
+  const rank=x=>x.s.cls==='miss'?0:x.s.help?1:x.s.cls==='bad'?2:x.s.cls==='warn'?3:x.s.cls==='wait'?4:x.s.cls==='ok'?5:6;
+  const rows=all.map(c=>({c,s:cellState(c,d)})).sort((a,b)=>rank(a)-rank(b)||a.c.name.localeCompare(b.c.name,'vi'));
+  const pill=s=>s.got?'<span class="dpill '+s.cls+'"><b>'+fmt(s.v,1)+' tr</b>'+(s.pl?'<small>KH '+fmt(s.pl,1)+' · '+pc(s.r)+'</small>':'')+'</span>':
+    s.cls==='miss'?'<span class="dpill miss"><b>Chưa gửi</b><small>quá hạn</small></span>':s.cls==='wait'?'<span class="dpill wait"><b>Chờ báo cáo</b><small>trước '+DEADLINE+'h</small></span>':
+    s.cls==='off'?'<span class="dpill off"><b>Nghỉ</b></span>':s.weekly?'<span class="dpill off"><b>Nhập theo tuần</b></span>':s.noplan?'<span class="dpill off"><b>Chưa có kế hoạch</b></span>':s.cls==='future'?'<span class="dpill off"><b>Chưa tới</b></span>':'';
+  const list=rows.map(x=>'<div class="dr" data-act="detail" data-uid="'+x.c.m.uid+'" data-day="'+d+'"><span class="av" style="background:'+avCol(x.c.m.email)+'">'+esc(ini(x.c.name))+'</span><div class="drt"><b>'+esc(x.c.name)+'</b><div class="tiny muted">'+(NG[x.c.m.nganh]||NG[2]).n+(x.c.m.province?' · '+esc(x.c.m.province):'')+(x.s.help?' · <span style="color:var(--bad);font-weight:700">Cần hỗ trợ</span>':'')+'</div></div>'+pill(x.s)+'</div>').join('');
+  const sub=S.exp?'Đã gửi <b>'+S.sent+'/'+S.exp+'</b> người'+(S.plan>0?' · doanh số <b>'+fmt(S.act,1)+'</b> / kế hoạch '+fmt(S.plan,1)+' tr'+(S.r!=null?' ('+pc(S.r)+')':''):''):'Ngày nghỉ hoặc chưa tới.';
+  return '<div class="card" style="margin-top:12px"><div class="dhd"><button class="iconbtn sm" data-act="hstep" data-v="-1" aria-label="Ngày trước"'+(canPrev?'':' disabled')+'>'+ic('prev',18)+'</button><div class="dhm"><h2 style="margin:0;justify-content:center">'+DOWL[dowOf(d)]+' '+dmy(d)+'/'+d.slice(0,4)+(d===ST.today?' <span class="badge n1">Hôm nay</span>':'')+'</h2><div class="small muted">'+sub+'</div></div><button class="iconbtn sm" data-act="hstep" data-v="1" aria-label="Ngày sau"'+(canNext?'':' disabled')+'>'+ic('next',18)+'</button></div><div class="dlist">'+list+'</div></div>';
+}
+const shortName=n=>{const w=String(n||'').trim().split(/\s+/);return w.length>2?w.slice(-2).join(' '):w.join(' ');};
+function heatGridHTML(all,days,mode){
+  const n=days.length,dl=monthDays(ST.month),tot=days.map(d=>dayStats(all,d));
+  const head='<div class="wg-h"><div></div>'+days.map(d=>'<button class="wg-d'+(d===ST.today?' today':'')+(dowOf(d)===0?' sun':'')+'" data-act="hday" data-d="'+d+'" aria-label="Chọn ngày '+dmy(d)+'"><span>'+DOWL[dowOf(d)]+'</span><b>'+d.slice(8)+'</b></button>').join('')+'</div>';
+  const body=all.map(c=>{
+    let req=0,got=0;dl.forEach(d=>{const s=cellState(c,d);req+=s.req;got+=s.got;});
+    const pill=c.ratio!=null?'<span class="pill2 '+(c.level==='ok'||c.level==='warn'||c.level==='bad'?c.level:'')+'">'+pc(c.ratio)+'</span>':'';
+    return '<div class="wg-r"><div class="wg-n"><button class="lnk" data-act="detail" data-uid="'+c.m.uid+'" title="'+esc(c.name)+'">'+esc(mode==='month'?c.name:shortName(c.name))+'</button><div class="tiny muted"><b'+(req>got?' style="color:var(--bad)"':'')+'>'+got+'</b>/'+req+' ngày '+pill+'</div></div>'+
+      days.map(d=>{const s=cellState(c,d);return '<button class="hc '+s.cls+(d===ST.today?' todayc':'')+'" data-act="detail" data-uid="'+c.m.uid+'" data-day="'+d+'" title="'+esc(s.tip)+'" aria-label="'+esc(c.name+' '+s.tip)+'">'+s.txt+'</button>';}).join('')+'</div>';
+  }).join('');
+  const foot='<div class="wg-r foot"><div class="wg-n tiny muted">Tổng nhóm (tr)</div>'+tot.map(s=>'<div class="hf">'+(s.sent?fmt(s.act):'')+'</div>').join('')+'</div>';
+  return '<div class="wg'+(mode==='month'?' m':'')+'" style="--n:'+n+'">'+head+body+foot+'</div>';
+}
 function heatHTML(){
   const date=ST.date,all=filterList(members().map(m=>calc(m,date)));
   if(!all.length)return '<div class="card empty" style="margin-top:14px"><div class="big">🗺️</div>Chưa có nhân sự nào.</div>';
-  const dl=monthDays(ST.month),late=vnHour()>=DEADLINE,tot=dl.map(()=>0),cn=dl.map(()=>0);
-  const head='<tr><th></th><th class="sumh">Đã báo cáo</th><th class="sumh">So mốc</th>'+dl.map(d=>'<th class="'+(d===ST.today?'today':'')+'">'+d.slice(8)+'<br>'+DOWL[dowOf(d)]+'</th>').join('')+'</tr>';
-  const body=all.map(c=>{
-    const E=c.m.days||{};let req=0,got=0;
-    const cells=dl.map((d,i)=>{
-      const off=isOffDay(c.mp,d),e=E[d],pl=c.mp&&c.mp.days[d]&&c.mp.days[d].si||0,v=e?num(e.bn)+num(e.gd):0;
-      let cls,txt='',tip=dmy(d);
-      if(off){cls='off';txt='·';tip+=' · nghỉ';}
-      else if(e&&e.sub>0){const r=pl>0?v/pl:null;cls=r==null?'nodata':r>=.9?'ok':r>=.7?'warn':'bad';txt=fmt(v);tip+=': '+fmt(v,1)+' tr'+(pl?' / kế hoạch '+fmt(pl,1)+' tr ('+pc(r)+')':'')+(e.help?' · CẦN HỖ TRỢ':'');tot[i]+=v;cn[i]++;got++;req++;}
-      else if(c.weeklyDay(d)){cls='nodata';txt='T';tip+=' · số nhập theo tuần (không có báo cáo từng ngày)';}
-      else if(d>ST.today){cls='future';tip+=' · chưa tới';}
-      else if(!c.hasPlan&&!c.ever){cls='nodata';txt='–';tip+=' · chưa lập kế hoạch và chưa có báo cáo nào';}
-      else if(d===ST.today&&!late){cls='wait';txt='…';tip+=' · chưa tới giờ chốt báo cáo ('+DEADLINE+'h)';}
-      else{cls='miss';txt='!';tip+=' · quá hạn, chưa gửi báo cáo';req++;}
-      return '<td><button class="hc '+cls+(d===ST.today?' todayc':'')+'" data-act="detail" data-uid="'+c.m.uid+'" data-day="'+d+'" title="'+esc(tip)+'" aria-label="'+esc(c.name+' '+tip)+'">'+txt+'</button></td>';
-    }).join('');
-    const sum='<td class="sumc nowrap"><b'+(req>got?' style="color:var(--bad)"':'')+'>'+got+'</b> / '+req+' ngày</td><td class="sumc">'+(c.ratio!=null?'<span class="pill2 '+(c.level==='ok'||c.level==='warn'||c.level==='bad'?c.level:'')+'">'+pc(c.ratio)+'</span>':'<span class="muted">–</span>')+'</td>';
-    return '<tr><td class="nm" title="'+esc(c.name)+'"><button class="lnk" data-act="detail" data-uid="'+c.m.uid+'">'+esc(c.name)+'</button></td>'+sum+cells+'</tr>';
-  }).join('');
-  const foot='<tr class="foot"><td class="nm">Tổng nhóm (tr)</td><td></td><td></td>'+dl.map((d,i)=>'<td>'+(cn[i]?'<div class="hf" title="'+cn[i]+' người đã gửi · '+fmt(tot[i],1)+' tr">'+fmt(tot[i])+'</div>':'')+'</td>').join('')+'</tr>';
-  const cs=cumSeries(all.map(c=>c));
-  return '<div class="card" style="margin-top:14px"><h2>Báo cáo & doanh số theo ngày · tháng '+ST.month.slice(5)+'/'+ST.month.slice(0,4)+'</h2><div class="hsub">Mỗi <b>hàng</b> là một nhân sự, mỗi <b>ô</b> là một ngày làm việc. Số trong ô là doanh số ngày (triệu đồng); màu cho biết so với <b>kế hoạch ngày của chính người đó</b>. Ô viền đỏ <b>!</b> là đã quá hạn mà chưa gửi báo cáo. Chạm vào ô để xem chi tiết và giao việc.</div><div class="tblwrap"><table class="heat">'+head+body+foot+'</table></div>'+
-    '<div class="legend"><span><i style="background:#2E9D68"></i>≥ 90% kế hoạch ngày</span><span><i style="background:#E3A63B"></i>70–90%</span><span><i style="background:#D8473E"></i>&lt; 70%</span><span><i style="border:1.5px dashed var(--bad)"></i>! Quá hạn, chưa báo cáo</span><span><i style="border:1.5px solid var(--line)"></i>… Hôm nay, chưa tới giờ chốt</span><span><i style="background:var(--surface2)"></i>– / T / · : chưa có kế hoạch / nhập theo tuần / nghỉ</span></div></div>'+
-    '<div class="card" style="margin-top:14px"><h2>Lũy kế cả nhóm</h2><div class="hsub">Đường liền: thực tế · đường đứt: kế hoạch (triệu đồng).</div>'+chartOrEmpty(cs,760,190)+'</div>';
+  const dl=monthDays(ST.month),sel=heatDay(dl),W=weeksOf(dl),wide=!isNarrow(1100),mode=wide&&(ST.hv||(isNarrow(1500)?'week':'month'))==='month'?'month':'week';
+  let wi=ST.hw!=null?ST.hw:W.findIndex(w=>w.indexOf(sel)>=0);if(wi<0||wi>=W.length)wi=0;
+  const mm=ST.month.slice(5)+'/'+ST.month.slice(0,4),cs=cumSeries(all.map(c=>c));
+  const chips=mode==='week'?'<div class="chips" role="group" aria-label="Chọn tuần">'+W.map((w,i)=>'<button class="chip" data-act="hweek" data-v="'+i+'" aria-pressed="'+(i===wi)+'">Tuần '+(i+1)+' · '+(+w[0].slice(8))+'–'+(+w[w.length-1].slice(8))+(w.indexOf(ST.today)>=0?' <span class="dotnow"></span>':'')+'</button>').join('')+'</div>':'<span class="sp"></span>';
+  const seg=wide?'<div class="vt" role="group" aria-label="Kiểu xem"><button data-act="hview" data-v="week" aria-pressed="'+(mode==='week')+'" style="width:auto;padding:0 10px;font-weight:600;font-size:12.5px">Tuần</button><button data-act="hview" data-v="month" aria-pressed="'+(mode==='month')+'" style="width:auto;padding:0 10px;font-weight:600;font-size:12.5px">Tháng</button></div>':'';
+  return '<div class="card" style="margin-top:14px"><h2>Doanh số cả nhóm theo ngày · tháng '+mm+'</h2><div class="hsub">Mỗi cột là doanh số cả nhóm trong ngày (màu theo % so với kế hoạch), vạch đen là kế hoạch ngày. Chấm dưới cột: <span class="lg ok"></span>đủ người báo cáo <span class="lg warn"></span>thiếu <span class="lg bad"></span>chưa ai gửi. <b>Chạm vào một ngày</b> để xem từng người.</div>'+dayChart(all,dl,sel)+
+    '<div class="legend"><span><i style="background:#2E9D68"></i>≥ 90% kế hoạch</span><span><i style="background:#E3A63B"></i>70–90%</span><span><i style="background:#D8473E"></i>&lt; 70%</span><span><i style="background:var(--ink);height:3px;width:14px;border-radius:2px;vertical-align:3px"></i>Kế hoạch ngày</span></div></div>'+
+    dayDetailHTML(all,sel)+
+    '<div class="card" style="margin-top:12px"><h2>Bản đồ báo cáo '+(mode==='week'?'theo tuần':'cả tháng')+'</h2><div class="hsub">Hàng là nhân sự, ô là ngày (số = doanh số triệu đồng, màu so với kế hoạch ngày của chính người đó). <b>!</b> = quá hạn chưa gửi, <b>…</b> = hôm nay chưa tới giờ chốt. Chạm ô để xem chi tiết và giao việc.</div><div class="tb1" style="margin-bottom:10px">'+chips+seg+'</div>'+
+    heatGridHTML(all,mode==='week'?W[wi]:dl,mode)+
+    '<div class="legend"><span><i style="background:#2E9D68"></i>≥ 90%</span><span><i style="background:#E3A63B"></i>70–90%</span><span><i style="background:#D8473E"></i>&lt; 70%</span><span><i style="border:1.5px dashed var(--bad)"></i>! quá hạn</span><span><i style="border:1.5px solid var(--line)"></i>… chờ</span><span><i style="background:var(--surface2)"></i>– / T / · chưa có kế hoạch / theo tuần / nghỉ</span></div></div>'+
+    '<div class="card" style="margin-top:12px"><h2>Lũy kế cả nhóm</h2><div class="hsub">Đường liền: thực tế · đường đứt: kế hoạch (triệu đồng).</div>'+chartOrEmpty(cs,isNarrow(700)?340:760,180)+'</div>';
 }
 
 /* ====== Ngăn chi tiết một nhân sự ====== */
@@ -1535,6 +1611,10 @@ document.addEventListener('click',function(e){
   else if(a==='invite'){orgCall({op:'invite',email:$('#ivEmail').value,name:$('#ivName').value,nganh:+$('#ivNg').value,asmEmail:$('#ivAsm').value,province:$('#ivProv').value},'Đã tạo trước thành viên');return;}
   else if(a==='rmInvite'){orgCall({op:'removeInvite',email:d.email},'Đã xoá');return;}
   else if(a==='rmAsm'){if(confirm('Xoá ASM '+d.email+'? Nhân sự của ASM này sẽ thành "chưa gán".'))orgCall({op:'removeAsm',email:d.email},'Đã xoá ASM');return;}
+  else if(a==='hday'){ST.hd=d.d;ST.hw=null;}
+  else if(a==='hweek'){ST.hw=+d.v;}
+  else if(a==='hview'){ST.hv=d.v;ST.hw=null;}
+  else if(a==='hstep'){const cur=heatDay(monthDays(ST.month)),nd=addD(cur,+d.v);if(nd.slice(0,7)===ST.month&&nd<=ST.today){ST.hd=nd;ST.hw=null;}}
   else if(a==='ot'){ST.ot=d.v;}
   else if(a==='omf'){ST.om=ST.om||{q:'',f:'all'};ST.om.f=d.v;}
   else if(a==='remind'){remindMissing();return;}
