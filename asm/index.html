@@ -115,7 +115,7 @@ svg{display:block}
 @media (max-width:1099px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:700px){
   .phead{margin:14px 0 10px}.phead h1{font-size:20px}
-  .pactions{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px;width:calc(100% + 32px)}.pactions::-webkit-scrollbar{display:none}
+  .pactions{flex-wrap:wrap;gap:8px;width:100%}.pactions .pillbtn{flex:1 1 auto;justify-content:center}
   .kt{padding:10px 12px}.kt .kv{font-size:20px}
 }
 
@@ -337,8 +337,8 @@ table.t td.r,table.t th.r{text-align:right}
 .fadein{animation:fi .35s ease-out both}@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:700px){.topin{flex-wrap:wrap;padding:8px 12px;row-gap:8px}.topin select.sel{order:5;flex:1 1 100%;max-width:none}.who{display:none}.brand .bt{display:none}.datenav .dv{min-width:0;padding:0 6px;font-size:13px}.datenav button{width:32px}.topin{gap:6px}.sbox{max-width:none}
-  .kpis{display:flex;overflow-x:auto;scroll-snap-type:x proximity;gap:8px;margin:0 -16px;padding:2px 16px 4px;scrollbar-width:none}.kpis::-webkit-scrollbar{display:none}.kt{flex:0 0 52%;scroll-snap-align:start}.kt:last-child{grid-column:auto}
-  .ngsum{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:8px -16px 0;padding:0 16px}.ngsum::-webkit-scrollbar{display:none}.hs{white-space:nowrap}}
+  .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0;padding:0;overflow:visible}.kt{flex:none}.kt:last-child:nth-child(odd){grid-column:1/-1}
+  .ngsum{flex-wrap:wrap;margin:8px 0 0;padding:0}.hs{white-space:normal;border-radius:12px;line-height:1.35}}
 @media (max-width:560px){.cards{grid-template-columns:1fr}.mets{gap:5px}.met{padding:6px}.met .mv{font-size:15px}.met .mp{font-size:10.5px}}
 @media (max-width:389px){.mets{grid-template-columns:repeat(2,1fr)}}
 @media print{.top,.tabs,.toolbar,.pactions,.vt,.bar,.srf .mini{display:none!important}.wrap{margin:0!important;padding:0!important;max-width:none!important}body{background:#fff}.card,.sr{box-shadow:none}}
@@ -440,7 +440,7 @@ table.tv .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin
 .mp2{display:flex;align-items:center;gap:8px;min-width:170px}.mp2 .prog{flex:1;height:8px}
 .pill2{display:inline-block;border-radius:999px;padding:2px 9px;font-weight:700;font-size:12px;background:var(--surface2);color:var(--muted)}
 .pill2.ok{background:var(--ok-soft);color:var(--ok)}.pill2.warn{background:var(--warn-soft);color:var(--warn)}.pill2.bad{background:var(--bad-soft);color:var(--bad)}
-@media (max-width:1099px){.bar{bottom:calc(72px + env(safe-area-inset-bottom,0px))}.toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:1099px){.bar{bottom:calc(72px + env(safe-area-inset-bottom,0px))}.toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}.asmai-fab{bottom:calc(78px + env(safe-area-inset-bottom,0px));right:12px;padding:10px 15px;font-size:13px}.selbar{bottom:calc(72px + env(safe-area-inset-bottom,0px))}}
 /* ===== Thanh điều hướng nhiều màu ===== */
 .tic{flex:0 0 auto;display:grid;place-items:center;width:36px;height:36px;border-radius:12px;color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.22);transition:transform .15s,background .15s,color .15s,box-shadow .15s}
 .tabs button[aria-selected=true] .tic{background:#fff!important;color:var(--brand-deep)!important;box-shadow:0 4px 10px rgba(0,0,0,.18)}
@@ -1542,10 +1542,10 @@ function staffRows(big){
     pct:(a,b)=>num2(a.c.pct,-1)-num2(b.c.pct,-1),ratio:(a,b)=>num2(a.c.ratio,9)-num2(b.c.ratio,9),debt:(a,b)=>a.c.streak-b.c.streak,last:(a,b)=>(a.last||'').localeCompare(b.last||'')};
   const all=rows.slice(),cnt={};Object.keys(pass).forEach(k=>{cnt[k]=all.filter(pass[k]).length;});
   const list=big?all:all.filter(pass[S.f]||pass.all).filter(r=>!q||(r.c.name+' '+r.c.m.email+' '+(r.c.m.province||'')).toLowerCase().includes(q)).sort((a,b)=>(cmp[S.k]||cmp.risk)(a,b)*(S.d||1));
-  return{list,cnt,total:big?(ST.sd?ST.sd.total:0):all.length};
+  return{list,cnt,all,pass,total:big?(ST.sd?ST.sd.total:0):all.length};
 }
 function staffHTML(){
-  const S=ST.ms||(ST.ms={q:'',f:'all',k:'risk',d:1}),me=ST.data.me,big=!!ST.data.truncated,R=staffRows(big),list=R.list,date=ST.date;
+  const S=ST.ms||(ST.ms={q:'',f:'all',k:'risk',d:1}),me=ST.data.me,big=!!ST.data.truncated,R=staffRows(big),list=R.list,all=R.all,pass=R.pass,date=ST.date;
   const asmName=e=>{const a=(ST.data.asms||[]).find(x=>x.email===e);return a?(a.name||e):(e===me.email?me.name:(e||'—'));};
   const lvCls=l=>l==='ok'||l==='warn'||l==='bad'?l:'';
   const stat=(k,lbl,v,tone,sub)=>'<button class="stat sbtn" data-act="msf" data-v="'+k+'" aria-pressed="'+(S.f===k)+'"><div class="sl">'+lbl+'</div><div class="sv'+(tone&&v?' '+tone:'')+'">'+v+'</div><div class="ss">'+sub+'</div></button>';
