@@ -47,7 +47,7 @@ async function audit(by, op, target) {
 async function getAudit() { const a = await store.get("org/audit.json"); return (a && a.items) || []; }
 
 async function getProfile(uid) { return store.get("profile/" + uid + ".json"); }
-async function putProfile(p) { p.updatedAt = Date.now(); await store.put("profile/" + p.uid + ".json", p); }
+async function putProfile(p) { p.updatedAt = Date.now(); await store.put("profile/" + p.uid + ".json", p); await patchIndex(p.uid, p); }
 
 // Quyền của một tài khoản: quản trị viên (ADMIN_EMAILS) và/hoặc ASM (có trong danh sách ASM).
 async function rolesOf(email, roster) {
@@ -56,16 +56,43 @@ async function rolesOf(email, roster) {
   return { admin, asm, manager: admin || asm, roster };
 }
 
-async function listProfiles() {
-  const keys = await store.list("profile/");
-  const out = [];
-  for (const k of keys) {
-    let p = null;
-    try { p = await store.get(k); } catch (e) { continue; }
-    if (p && p.uid) out.push(p);
-  }
+// Chạy fn trên từng phần tử với tối đa `conc` tác vụ song song (đọc blob nhanh hơn nhiều so với tuần tự).
+async function pmap(items, fn, conc) {
+  const out = new Array(items.length); let i = 0;
+  await Promise.all(Array.from({ length: Math.min(conc || 30, items.length) }, async () => {
+    while (i < items.length) { const k = i++; out[k] = await fn(items[k], k); }
+  }));
   return out;
 }
+
+// Danh sách hồ sơ: đọc từ MỘT file chỉ mục (org/pindex.json) thay vì mở từng hồ sơ; có bộ nhớ đệm 15 giây.
+// Chỉ mục được cập nhật mỗi khi lưu/xoá hồ sơ và tự dựng lại từ các hồ sơ gốc sau 6 giờ (tự chữa lệch).
+const PIDX = "org/pindex.json";
+let _pcache = null, _pcacheAt = 0;
+async function rebuildIndex() {
+  const keys = await store.list("profile/");
+  const items = (await pmap(keys, async (k) => { try { return await store.get(k); } catch (e) { return null; } }, 40)).filter((p) => p && p.uid);
+  await store.put(PIDX, { v: 1, builtAt: Date.now(), items });
+  return items;
+}
+async function listProfiles() {
+  const now = Date.now();
+  if (_pcache && now - _pcacheAt < 15000) return _pcache.slice();
+  let ix = null; try { ix = await store.get(PIDX); } catch (e) {}
+  const items = ix && Array.isArray(ix.items) && now - (ix.builtAt || 0) < 21600000 ? ix.items : await rebuildIndex();
+  _pcache = items; _pcacheAt = now;
+  return items.slice();
+}
+async function patchIndex(uid, p) {
+  _pcache = null;
+  try {
+    const ix = await store.get(PIDX); if (!ix || !Array.isArray(ix.items)) return;
+    const i = ix.items.findIndex((x) => x.uid === uid);
+    if (p) { if (i >= 0) ix.items[i] = p; else ix.items.push(p); } else if (i >= 0) ix.items.splice(i, 1); else return;
+    await store.put(PIDX, ix);
+  } catch (e) {}
+}
+async function dropProfile(uid) { try { await store.del("profile/" + uid + ".json"); } catch (e) {} await patchIndex(uid, null); }
 
 function validDate(d) {
   if (!DATE_RE.test(String(d))) return false;
@@ -124,4 +151,4 @@ function cleanPlan(p) {
   };
 }
 
-module.exports = { audit, getAudit, normProv, asmRec, asmCovers, getInvites, putInvites, NGANH, DATE_RE, MONTH_RE, num, str, lc, validEmail, getRoster, putRoster, findAsm, getProfile, putProfile, rolesOf, listProfiles, validDate, vnToday, addDays, cleanEntry, cleanPlan };
+module.exports = { pmap, dropProfile, audit, getAudit, normProv, asmRec, asmCovers, getInvites, putInvites, NGANH, DATE_RE, MONTH_RE, num, str, lc, validEmail, getRoster, putRoster, findAsm, getProfile, putProfile, rolesOf, listProfiles, validDate, vnToday, addDays, cleanEntry, cleanPlan };

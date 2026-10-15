@@ -27,7 +27,8 @@ module.exports = async function (context, req) {
       if (!requireAjax(context, req)) return;
       if (uid === u.uid) return reply(context, 400, { ok: false, error: "Không thể tự xoá chính tài khoản đang đăng nhập." });
       await store.del(key);
-      for (const k of ["profile/", "report/", "directive/"]) { try { await store.del(k + uid + ".json"); } catch (e) {} }
+      for (const k of ["report/", "directive/"]) { try { await store.del(k + uid + ".json"); } catch (e) {} }
+      await require("../_lib/org").dropProfile(uid);
       return reply(context, 200, { ok: true });
     }
 

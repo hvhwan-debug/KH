@@ -32,25 +32,38 @@ module.exports = async function (context, req) {
 
     // ASM chỉ thấy người của mình; quản trị viên thấy tất cả hoặc lọc theo một ASM.
     let scope = roles.admin ? org.lc(q.asm) : u.email;
-    const profiles = (await org.listProfiles()).filter((p) => !scope || org.lc(p.asmEmail) === scope);
+    const all = (await org.listProfiles()).filter((p) => !scope || org.lc(p.asmEmail) === scope);
 
-    const members = [];
-    for (const p of profiles) {
+    // Tổng quan theo ASM (chỉ quản trị viên): đếm nhanh từ chỉ mục hồ sơ, không đọc báo cáo
+    if (roles.admin && String(q.overview || "") === "1") {
+      const by = {}; let unassigned = 0;
+      all.forEach((p) => { const e = org.lc(p.asmEmail); if (!e) { unassigned++; return; } const r = by[e] || (by[e] = { email: e, n1: 0, n2: 0 }); if (p.nganh === 1) r.n1++; else r.n2++; });
+      const asms = roster.asms.map((a) => { const r = by[a.email] || { n1: 0, n2: 0 }; return { email: a.email, name: a.name || "", n1: r.n1, n2: r.n2, count: r.n1 + r.n2 }; }).sort((x, y) => y.count - x.count || String(x.name || x.email).localeCompare(String(y.name || y.email), "vi"));
+      return reply(context, 200, { ok: true, total: all.length, unassigned, asms });
+    }
+
+    // Lọc, sắp xếp, phân trang: chỉ mở báo cáo / việc đã giao của những người nằm trong trang trả về
+    const LIMIT = Math.min(200, Math.max(1, parseInt(q.limit, 10) || 200)), OFFSET = Math.max(0, parseInt(q.offset, 10) || 0);
+    const needle = String(q.q || "").trim().toLowerCase().slice(0, 60), ng = Number(q.nganh);
+    const profiles = all.filter((p) => (ng !== 1 && ng !== 2) || p.nganh === ng)
+      .filter((p) => !needle || ((p.name || "") + " " + p.email + " " + (p.province || "")).toLowerCase().indexOf(needle) >= 0)
+      .sort((a, b) => (a.nganh - b.nganh) || String(a.name || a.email).localeCompare(String(b.name || b.email), "vi"));
+    const total = profiles.length, page = profiles.slice(OFFSET, OFFSET + LIMIT);
+    const members = await org.pmap(page, async (p) => {
       const rep = (await store.get("report/" + p.uid + ".json")) || {};
       const dir = (await store.get("directive/" + p.uid + ".json")) || { items: [] };
       const days = {};
       Object.keys(rep.days || {}).forEach((d) => { if (d >= from && d <= to) days[d] = rep.days[d]; });
-      members.push({
+      return {
         uid: p.uid, email: p.email, name: rep.name || p.name || "", nganh: p.nganh, province: p.province || "",
         asmEmail: p.asmEmail || "", locked: !!p.locked, plan: rep.plan || null, days, reportAt: rep.updatedAt || 0,
         dir: (dir.items || []).slice(-12)
-      });
-    }
-    members.sort((a, b) => (a.nganh - b.nganh) || String(a.name || a.email).localeCompare(String(b.name || b.email), "vi"));
+      };
+    }, 25);
     const ud = (await store.get("user/" + u.uid + ".json")) || {};
     const meAsm = org.findAsm(roster, u.email);
     return reply(context, 200, {
-      ok: true, now: Date.now(), today: org.vnToday(), month, scope,
+      ok: true, now: Date.now(), today: org.vnToday(), month, scope, total, limit: LIMIT, offset: OFFSET, truncated: total > members.length,
       me: { email: u.email, name: (meAsm && meAsm.name) || ud.name || u.email, admin: roles.admin, asm: roles.asm },
       asms: roles.admin ? roster.asms : [], members
     });

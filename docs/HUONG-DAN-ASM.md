@@ -84,3 +84,11 @@ Tab Quản trị › **Thành viên** › nút **＋ Thêm thành viên**: chọ
 
 Kiểm thử: `node dev/test-create.js`.
 
+## Quy mô lớn (hàng nghìn nhân sự)
+Thiết kế chịu được >10.000 nhân sự (đã đo bằng `node dev/test-scale.js`):
+- **Máy chủ**: danh sách hồ sơ đọc từ một file chỉ mục (`org/pindex.json`, bộ nhớ đệm 15 giây, tự dựng lại sau 6 giờ) thay vì mở từng hồ sơ; `/api/team` lọc, tìm kiếm và **phân trang phía máy chủ** (tối đa 200 người/lần), chỉ mở báo cáo của người trong trang; đọc song song. Một ASM chỉ phải đọc dữ liệu của nhóm mình (≈ 70 lần đọc thay vì 10.000+).
+- **Tab Nhân sự**: khi một phạm vi có hơn 200 người (thường chỉ là quản trị viên chọn "Tất cả ASM") bảng tự chuyển sang chế độ **chia trang 50 người/trang, tìm kiếm trên toàn bộ dữ liệu**, và hiện **Tổng quan theo ASM** để chọn một ASM xem đầy đủ số liệu, thực đạt so với chỉ tiêu và giao việc. Các tab tổng hợp có dòng cảnh báo số liệu chỉ tính trên phần đã tải.
+- **Giao việc**: tối đa **500 người/lần** (chọn một ASM, một ngành hoặc chia đợt). Email tối đa 60/ngày/ASM.
+- **Tab Quản trị › Thành viên**: bảng chia trang 50 dòng. Với trên vài nghìn tài khoản, lần mở đầu tab này còn chậm vì đọc hồ sơ tài khoản (đã song song); nếu cần hơn nữa nên bổ sung phân trang phía máy chủ cho `/api/org`.
+- Thử giao diện với dữ liệu lớn: `node dev/start-big.js 10001 300` rồi mở `/asm/index.html`.
+

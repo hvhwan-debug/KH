@@ -26,11 +26,10 @@ module.exports = async function (context, req) {
         let d = null; try { d = await store.get(k); } catch (e) { continue; }
         if (d && d.email) orphans.push({ uid, email: d.email, name: d.name || "", disabled: !!d.disabled });
       }
-      const plist = [];
-      for (const p of profiles) {
+      const plist = await org.pmap(profiles, async (p) => {
         let ud = null; try { ud = await store.get("user/" + p.uid + ".json"); } catch (e) {}
-        plist.push({ uid: p.uid, email: p.email, name: (ud && ud.name) || p.name || "", nganh: p.nganh, asmEmail: p.asmEmail || "", locked: !!p.locked, province: p.province || "", disabled: !!(ud && ud.disabled) });
-      }
+        return { uid: p.uid, email: p.email, name: (ud && ud.name) || p.name || "", nganh: p.nganh, asmEmail: p.asmEmail || "", locked: !!p.locked, province: p.province || "", disabled: !!(ud && ud.disabled) };
+      }, 40);
       return reply(context, 200, {
         ok: true, asms: roster.asms, profiles: plist, orphans, invites: Object.values((await org.getInvites()).items), audit: (await org.getAudit()).slice(-25).reverse(), me: u.uid
       });
@@ -73,7 +72,8 @@ module.exports = async function (context, req) {
         if (self) return reply(context, 400, { ok: false, error: "Không thể tự xoá chính tài khoản đang đăng nhập." });
         const email = org.lc(ud.email);
         await store.del(ukey);
-        for (const k of ["profile/", "report/", "directive/"]) { try { await store.del(k + uid + ".json"); } catch (e) {} }
+        for (const k of ["report/", "directive/"]) { try { await store.del(k + uid + ".json"); } catch (e) {} }
+        await org.dropProfile(uid);
         const inv = await org.getInvites(); if (inv.items[email]) { delete inv.items[email]; await org.putInvites(inv); }
         if (org.findAsm(roster, email)) { // nếu là ASM: bỏ khỏi danh sách ASM và thả nhóm của họ về "chưa gán"
           roster.asms = roster.asms.filter((a) => a.email !== email); await org.putRoster(roster);
@@ -119,7 +119,8 @@ module.exports = async function (context, req) {
       if (Number(ex.users) !== counts.users || Number(ex.invites) !== counts.invites || Number(ex.asms) !== counts.asms) return reply(context, 409, { ok: false, error: "Dữ liệu vừa thay đổi so với bản xem trước. Hãy xem trước lại rồi xác nhận.", counts });
       for (const x of plan.users) {
         await store.del("user/" + x.uid + ".json");
-        for (const k of ["profile/", "report/", "directive/"]) { try { await store.del(k + x.uid + ".json"); } catch (e) {} }
+        for (const k of ["report/", "directive/"]) { try { await store.del(k + x.uid + ".json"); } catch (e) {} }
+        await org.dropProfile(x.uid);
       }
       const drop = new Set(plan.invites.map((i) => org.lc(i.email)));
       Object.keys(inv.items).forEach((e) => { if (drop.has(org.lc(e))) delete inv.items[e]; });
@@ -164,7 +165,7 @@ module.exports = async function (context, req) {
         roster.asms = roster.asms.filter((a) => a.email !== email).concat([rec]).slice(0, 200);
         await org.putRoster(roster);
         const old = await org.getProfile(uid); // đang là SR thì bỏ hồ sơ SR, chuyển sang ASM
-        if (old) { try { await store.del("profile/" + uid + ".json"); } catch (e) {} }
+        if (old) await org.dropProfile(uid);
       } else {
         if (org.findAsm(roster, email)) { roster.asms = roster.asms.filter((a) => a.email !== email); await org.putRoster(roster); }
         let p = await org.getProfile(uid);

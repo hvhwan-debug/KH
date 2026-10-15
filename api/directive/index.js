@@ -9,6 +9,7 @@ const { layout } = require("../_lib/emails");
 const MAX_ITEMS = 120;
 const KINDS = ["focus", "note", "praise"];
 const KIND_LABEL = { focus: "Trọng tâm", note: "Nhắc nhở", praise: "Khen ngợi" };
+const MAX_TARGETS = 500; // giới hạn người nhận mỗi lần giao việc
 const MAX_MAIL_DAY = 60; // mỗi ASM tối đa 60 email/ngày để tránh gửi tràn lan
 
 module.exports = async function (context, req) {
@@ -49,15 +50,16 @@ module.exports = async function (context, req) {
       if (b.to === "all") targets = mine;
       if (b.nganh === 1 || b.nganh === 2) targets = (b.to === "all" ? mine : targets).filter((p) => p.nganh === b.nganh);
       if (!targets.length) return reply(context, 400, { ok: false, error: "Không có nhân sự nào thuộc quyền của bạn trong danh sách đã chọn." });
+      if (targets.length > MAX_TARGETS) return reply(context, 400, { ok: false, error: "Có " + targets.length + " người nhận, vượt giới hạn " + MAX_TARGETS + " người mỗi lần. Hãy chọn một ASM hoặc ngành cụ thể, hoặc chia thành nhiều đợt." });
       const ud = (await store.get("user/" + u.uid + ".json")) || {};
       const asm = org.findAsm(roster, u.email);
       const from = (asm && asm.name) || ud.name || u.email, now = Date.now();
-      for (const p of targets) {
+      await org.pmap(targets, async (p) => {
         const key = "directive/" + p.uid + ".json";
         const d = (await store.get(key)) || { items: [] };
         d.items = (d.items || []).concat([{ id: now.toString(36) + Math.random().toString(36).slice(2, 7), date, text, kind, from, fromEmail: u.email, ts: now, done: false, doneAt: 0 }]).slice(-MAX_ITEMS);
         await store.put(key, d);
-      }
+      }, 25);
       // Gửi kèm email (tuỳ chọn): chỉ tới nhân sự thuộc quyền của ASM, có hạn mức mỗi ngày
       let emailRes = null;
       if (b.email === true) {
