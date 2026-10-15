@@ -333,6 +333,7 @@ table.t td.r,table.t th.r{text-align:right}
 .lg-card .btn{margin-top:6px;padding:13px 16px;font-size:15px;border-radius:13px;color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand-deep));box-shadow:0 10px 22px -8px color-mix(in srgb,var(--brand-deep) 70%,transparent)}
 .lg-card .btn:hover{filter:brightness(1.05)}
 .lg-card .btn.ghost{background:transparent;color:var(--ink);box-shadow:none}
+.zl{color:var(--brand-deep);font-weight:600;text-decoration:none}.zl:hover{text-decoration:underline}.zph{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
 .lg-req{color:var(--bad)}
 .lg-card .fld input[type=tel]{width:100%;border:1.5px solid var(--line);background:var(--surface2);border-radius:13px;padding:12px 14px;font-size:15px}
 .lg-card .fld input[type=tel]:focus{outline:none;border-color:var(--brand);background:var(--surface);box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 18%,transparent)}
@@ -1429,7 +1430,7 @@ function drawerHTML(){
   const rows=dl.filter(d=>E[d]||!isOffDay(c.mp,d)).map(d=>{const e=E[d];
     return '<tr'+(d===ST.drawer.day?' style="background:var(--warn-soft)"':'')+'><td class="nowrap">'+DOWL[dowOf(d)]+' '+dmy(d)+'</td>'+(e?'<td class="r">'+fmt(e.v)+'</td><td class="r">'+fmt(num(e.bn)+num(e.gd),1)+'</td><td class="r">'+fmt(e.htpp)+'</td><td class="r">'+fmt(e.dp)+'</td><td class="r">'+fmt(e.so)+'</td><td>'+(e.help?'<span class="badge bad">Cần hỗ trợ</span> ':'')+esc(e.note||'')+'</td>':'<td colspan="6" style="color:var(--bad)">Chưa gửi báo cáo</td>')+'</tr>';}).join('');
   const dirs=(m.dir||[]).slice().reverse().map(x=>'<div class="di"><span>'+({focus:'🎯',note:'📝',praise:'👏'}[x.kind]||'📝')+'</span><div style="flex:1"><div><b>'+dmy(x.date)+'</b> · '+esc(x.text)+'</div><div class="tiny muted">'+esc(x.from||'')+' · '+(x.done?'<span style="color:var(--ok);font-weight:600">SR đã làm ✓</span>':'chưa xác nhận')+'</div></div></div>').join('');
-  return '<div class="scrim" data-act="closeDrawer"><aside class="drawer" role="dialog" aria-label="Chi tiết '+esc(c.name)+'" data-stop="1"><div class="dh"><div class="av" style="background:'+avCol(m.email)+'">'+esc(ini(c.name))+'</div><div><div class="b" style="font-size:16px">'+esc(c.name)+'</div><div class="tiny muted">'+ngBadge(g)+(showNg()?' ':'')+(m.province?esc(m.province)+' · ':'')+esc(m.email)+(m.phone?' · <a href="tel:'+esc(m.phone)+'" style="color:var(--brand-deep);font-weight:600;text-decoration:none">'+esc(m.phone)+'</a>':'')+'</div></div><button class="x" data-act="closeDrawer" aria-label="Đóng">✕</button></div><div class="db">'+
+  return '<div class="scrim" data-act="closeDrawer"><aside class="drawer" role="dialog" aria-label="Chi tiết '+esc(c.name)+'" data-stop="1"><div class="dh"><div class="av" style="background:'+avCol(m.email)+'">'+esc(ini(c.name))+'</div><div><div class="b" style="font-size:16px">'+esc(c.name)+'</div><div class="tiny muted">'+ngBadge(g)+(showNg()?' ':'')+(m.province?esc(m.province)+' · ':'')+esc(m.email)+(m.phone?' · <a class="zl" href="'+zaloUrl(m.phone)+'" target="_blank" rel="noopener" title="Mở Zalo nhắn '+esc(c.name)+'">💬 '+fmtPhone(m.phone)+'</a> <a class="zl" href="tel:'+esc(m.phone)+'" title="Gọi điện">Gọi</a>':'')+'</div></div><button class="x" data-act="closeDrawer" aria-label="Đóng">✕</button></div><div class="db">'+
     '<div class="stats"><div class="stat"><div class="sl">Lũy kế tháng</div><div class="sv">'+fmt(c.ach,1)+' tr</div><div class="ss">'+pc(c.pct)+' chỉ tiêu '+fmt(c.total)+' tr</div></div>'+
     '<div class="stat"><div class="sl">So với mốc</div><div class="sv" style="color:var(--'+(c.level==='ok'?'ok':c.level==='warn'?'warn':c.level==='bad'?'bad':'muted')+')">'+pc(c.ratio)+'</div><div class="ss">'+LVT[c.level]+'</div></div>'+
     '<div class="stat"><div class="sl">Dự báo cuối tháng</div><div class="sv">'+(c.projPct==null?'–':pc(c.projPct))+'</div><div class="ss">'+fmt(c.proj)+' tr · cần '+fmt(c.need,1)+' tr/ngày</div></div>'+
@@ -1446,6 +1447,8 @@ function drawerHTML(){
 
 /* ====== Hộp thoại giao việc ====== */
 /* ====== Kênh gửi: email (qua máy chủ) và Zalo (mở khung chat + sao chép tin) ====== */
+const fmtPhone=v=>{const t=String(v||'').replace(/\D/g,'');return t.length===10?t.slice(0,4)+' '+t.slice(4,7)+' '+t.slice(7):t;};
+const zaloUrl=v=>'https://zalo.me/'+encodeURIComponent(String(v||'').replace(/\D/g,''));
 function zpGet(){try{return JSON.parse(localStorage.getItem('asm-zalo')||'{}')||{};}catch(e){return{};}}
 function zpSet(uid,v){try{const z=zpGet();if(String(v).trim())z[uid]=String(v).trim();else delete z[uid];localStorage.setItem('asm-zalo',JSON.stringify(z));}catch(e){}}
 const mailPref=()=>{try{return localStorage.getItem('asm-mail')==='1';}catch(e){return false;}};
@@ -1455,19 +1458,21 @@ function zaloMsg(C,m){const nm=String(m.name||m.email.split('@')[0]).trim().spli
 function fallbackCopy(t,cb){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');cb();}catch(e){toast('Không sao chép được, hãy tự chọn và sao chép nội dung.');}ta.remove();}
 function openZalo(uid){
   const C=ST.compose,m=ST.data.members.find(x=>x.uid===uid);if(!C||!m)return;
-  const inp=document.getElementById('zp_'+uid),ph=normPhone(inp?inp.value:zpGet()[uid]);
-  if(!ph){toast('Nhập số Zalo hợp lệ của '+(m.name||m.email)+' (10–11 số, bắt đầu bằng 0).',3400);if(inp)inp.focus();return;}
-  zpSet(uid,ph);const msg=zaloMsg(C,m),done=()=>toast('Đã sao chép tin nhắn. Dán vào ô chat Zalo rồi gửi nhé!',3800);
+  const reg=normPhone(m.phone),inp=document.getElementById('zp_'+uid),ph=reg||normPhone(inp?inp.value:zpGet()[uid]);
+  if(!ph){toast((m.name||m.email)+' chưa đăng ký số điện thoại. Nhập số Zalo (10 số, bắt đầu bằng 0) hoặc nhờ họ cập nhật hồ sơ.',4200);if(inp)inp.focus();return;}
+  if(!reg)zpSet(uid,ph);const msg=zaloMsg(C,m),done=()=>toast('Đã sao chép tin nhắn. Dán vào ô chat Zalo rồi gửi nhé!',3800);
   let p=null;try{if(navigator.clipboard&&navigator.clipboard.writeText)p=navigator.clipboard.writeText(msg);}catch(e){}   // sao chép trước khi mở tab mới
-  window.open('https://zalo.me/'+ph,'_blank','noopener');
+  window.open(zaloUrl(ph),'_blank','noopener');
   if(p)p.then(done,()=>fallbackCopy(msg,done));else fallbackCopy(msg,done);
 }
 function composeChannels(C){
   const rc=composeRecips(C),Z=zpGet();
   let h='<div class="fld"><label>Kênh gửi</label><div class="seg"><button type="button" aria-pressed="true" disabled>✓ Trong app</button><button type="button" data-act="cmail" aria-pressed="'+!!C.email+'">✉ Gửi kèm email</button><button type="button" data-act="czalo" aria-pressed="'+!!C.zalo+'">💬 Nhắn Zalo</button></div>'+
     '<div class="tiny muted" style="margin-top:5px">'+(C.email?'Email gửi tới địa chỉ email công ty của <b>'+rc.length+'</b> người, tối đa 60 email/ngày. Họ trả lời ASM qua email này.':'Trong app luôn gửi. Bật thêm email hoặc Zalo nếu cần nhắc chắc chắn hơn.')+'</div></div>';
-  if(C.zalo)h+='<div class="fld"><div class="tiny muted" style="margin-bottom:6px">Zalo không cho điền sẵn nội dung: bấm <b>Nhắn Zalo</b> sẽ sao chép tin và mở khung chat, bạn chỉ cần dán và gửi. Số Zalo chỉ lưu trên máy bạn, không gửi lên máy chủ.</div>'+
-    '<div class="tblwrap"><table class="t zt"><thead><tr><th>Người nhận</th><th>Số Zalo</th><th></th></tr></thead><tbody>'+(rc.length?rc.map(m=>'<tr><td><b>'+esc(m.name||m.email)+'</b></td><td><input id="zp_'+m.uid+'" class="zin" data-zp="'+m.uid+'" type="tel" inputmode="tel" autocomplete="off" placeholder="09xx xxx xxx" value="'+esc(Z[m.uid]||'')+'"></td><td class="r"><button type="button" class="mini pri" data-act="zalo" data-uid="'+m.uid+'">Nhắn Zalo</button></td></tr>').join(''):'<tr><td colspan="3" class="muted">Chưa có người nhận.</td></tr>')+'</tbody></table></div></div>';
+  if(C.zalo){const miss=rc.filter(m=>!normPhone(m.phone)).length;
+    h+='<div class="fld"><div class="tiny muted" style="margin-bottom:6px">Zalo không cho điền sẵn nội dung: bấm <b>Nhắn Zalo</b> sẽ sao chép tin và mở khung chat của người đó, bạn chỉ cần dán và gửi. Số điện thoại lấy từ lúc nhân sự đăng ký.'+(miss?' <b style="color:var(--bad)">'+miss+' người chưa có số điện thoại</b>, bạn có thể tự nhập số cho họ (chỉ lưu trên máy bạn).':'')+'</div>'+
+    '<div class="tblwrap"><table class="t zt"><thead><tr><th>Người nhận</th><th>Số điện thoại</th><th></th></tr></thead><tbody>'+(rc.length?rc.map(m=>{const ph=normPhone(m.phone);return '<tr><td><b>'+esc(m.name||m.email)+'</b></td><td>'+(ph?'<span class="zph">'+fmtPhone(ph)+'</span>':'<input id="zp_'+m.uid+'" class="zin" data-zp="'+m.uid+'" type="tel" inputmode="tel" autocomplete="off" placeholder="09xx xxx xxx" value="'+esc(Z[m.uid]||'')+'">')+'</td><td class="r"><button type="button" class="mini pri" data-act="zalo" data-uid="'+m.uid+'">Nhắn Zalo</button></td></tr>';}).join(''):'<tr><td colspan="3" class="muted">Chưa có người nhận.</td></tr>')+'</tbody></table></div></div>';
+  }
   return h;
 }
 function composeHTML(){
@@ -1614,7 +1619,7 @@ function staffHTML(){
     const bar=c.total>0?'<div class="mp2"><div class="prog '+(c.level==='bad'?'bad':c.level==='warn'?'warn':'')+'"><i style="width:'+Math.min(100,(c.pct||0)*100).toFixed(1)+'%"></i>'+(c.expPct!=null?'<span class="mk" style="left:'+Math.min(100,c.expPct*100).toFixed(1)+'%"></span>':'')+'</div><span class="small nowrap"><b>'+fmt(c.ach,1)+'</b> / '+fmt(c.total)+' <span class="muted">('+pc(c.pct)+')</span></span></div>':'<span class="muted small">Chưa lập kế hoạch</span>';
     return '<tr class="trow'+(c.level==='bad'||c.streak>=2?' lv-bad':'')+'" data-act="detail" data-uid="'+c.m.uid+'">'+
       '<td class="selc hm"><input type="checkbox" data-tsel="'+c.m.uid+'"'+(ST.sel[c.m.uid]?' checked':'')+' aria-label="Chọn '+esc(c.name)+'"></td>'+
-      '<td class="nmc"><div class="pn"><span class="av" style="background:'+avCol(c.m.email)+'">'+esc(ini(c.name))+'</span><div style="min-width:0"><button class="lnk" data-act="detail" data-uid="'+c.m.uid+'" title="'+esc(c.name)+'"><span class="fn">'+esc(c.name)+'</span><span class="sn">'+esc(shortName(c.name))+'</span></button>'+(nameOk(c.name)?'':'<div class="tiny" style="color:var(--bad);font-weight:600">Chưa có họ và tên đầy đủ</div>')+'<div class="em hm">'+esc(c.m.email)+'</div>'+(showNg()?'<div class="tiny muted mo2" style="display:none"><i class="dot" style="background:'+g.col+'"></i>'+g.n+'</div>':'')+'</div></div></td>'+
+      '<td class="nmc"><div class="pn"><span class="av" style="background:'+avCol(c.m.email)+'">'+esc(ini(c.name))+'</span><div style="min-width:0"><button class="lnk" data-act="detail" data-uid="'+c.m.uid+'" title="'+esc(c.name)+'"><span class="fn">'+esc(c.name)+'</span><span class="sn">'+esc(shortName(c.name))+'</span></button>'+(nameOk(c.name)?'':'<div class="tiny" style="color:var(--bad);font-weight:600">Chưa có họ và tên đầy đủ</div>')+'<div class="em hm">'+esc(c.m.email)+'</div>'+(c.m.phone?'<div class="tiny hm"><a class="zl" href="'+zaloUrl(c.m.phone)+'" target="_blank" rel="noopener" title="Mở Zalo nhắn '+esc(c.name)+'">💬 '+fmtPhone(c.m.phone)+'</a></div>':'')+(showNg()?'<div class="tiny muted mo2" style="display:none"><i class="dot" style="background:'+g.col+'"></i>'+g.n+'</div>':'')+'</div></div></td>'+
       '<td class="hm">'+ngBadge(g)+'<div'+(showNg()?' style="margin-top:4px"':'')+'>'+provSelect('class="provsel" data-prov="'+c.m.uid+'" aria-label="Tỉnh của '+esc(c.name)+'"',c.m.province,'— Chọn tỉnh —')+'</div></td>'+
       (me.admin?'<td class="hm small">'+esc(asmName(c.m.asmEmail))+(c.m.locked?' <span title="Đã khoá ASM">🔒</span>':'')+'</td>':'')+
       '<td><span class="st '+c.status+'"><span class="hm">'+stText(c)+'</span><span class="mo2">'+({done:'✓ '+(c.e&&c.e.sub?hhmm(c.e.sub):''),wait:'Chờ',late:'Quá giờ',missed:'Chưa gửi',weekly:'Theo tuần',off:'Nghỉ',future:'—'}[c.status])+'</span></span>'+help+'</td>'+
@@ -2118,7 +2123,7 @@ function chatHTML(){
 }
 
 document.addEventListener('click',function(e){
-  if(e.target.closest('.selc,.provsel'))return;                                  // bấm ô chọn không mở chi tiết
+  if(e.target.closest('.selc,.provsel,.zl'))return;                                  // bấm ô chọn không mở chi tiết
   const stop=e.target.closest('[data-stop]'),b=e.target.closest('[data-act]');
   if(!b)return;
   if(stop&&b.classList.contains('scrim')&&e.target!==b)return;           // bấm trong hộp thoại không đóng
