@@ -8,8 +8,8 @@ function client() {
   const c = { token: "" };
   c.call = async (method, p, body) => { const r = await fetch(BASE + p, { method, headers: Object.assign({}, H, c.token ? { "X-SR-Token": c.token } : {}), body: body ? JSON.stringify(body) : undefined }); let j = {}; try { j = await r.json(); } catch (e) {} return { s: r.status, j }; };
   c.login = async (email, name) => {
-    let r = await c.call("POST", "/api/auth/request", { email, password: "matkhau123", name });
-    if (r.j.needsOtp) { const m = (await mailbox()).filter((x) => x.to === email).pop(); r = await c.call("POST", "/api/auth/request", { email, password: "matkhau123", name, otp: (m.subject.match(/(\d{6})/) || [])[1] }); }
+    let r = await c.call("POST", "/api/auth/request", { email, password: "matkhau123", name, phone: "0901234567" });
+    if (r.j.needsOtp) { const m = (await mailbox()).filter((x) => x.to === email).pop(); r = await c.call("POST", "/api/auth/request", { email, password: "matkhau123", name, phone: "0901234567", otp: (m.subject.match(/(\d{6})/) || [])[1] }); }
     c.token = r.j.token; return c;
   };
   return c;

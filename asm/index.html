@@ -330,6 +330,9 @@ table.t td.r,table.t th.r{text-align:right}
 .lg-card .btn{margin-top:6px;padding:13px 16px;font-size:15px;border-radius:13px;color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand-deep));box-shadow:0 10px 22px -8px color-mix(in srgb,var(--brand-deep) 70%,transparent)}
 .lg-card .btn:hover{filter:brightness(1.05)}
 .lg-card .btn.ghost{background:transparent;color:var(--ink);box-shadow:none}
+.lg-req{color:var(--bad)}
+.lg-card .fld input[type=tel]{width:100%;border:1.5px solid var(--line);background:var(--surface2);border-radius:13px;padding:12px 14px;font-size:15px}
+.lg-card .fld input[type=tel]:focus{outline:none;border-color:var(--brand);background:var(--surface);box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 18%,transparent)}
 .lg-pw{position:relative}.lg-pw input{padding-right:64px!important}
 .lg-pw button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--brand-deep);font-weight:700;font-size:12.5px;padding:8px 10px;border-radius:8px}
 .lg-foot{margin:0;font-size:12px;color:var(--muted);text-align:center}
@@ -605,7 +608,7 @@ const ST={
   month:'',today:'',date:'',skew:0,
   tab:'overview',ng:0,asm:'',flt:'all',sort:'risk',q:'',
   drawer:null,compose:null,org:null,orgErr:'',
-  login:{tab:'login',email:'',name:'',otp:false,msg:'',busy:false},
+  login:{tab:'login',email:'',name:'',phone:'',otp:false,msg:'',busy:false},
   ndraft:{},nsel:{},sel:{},sending:false,loadedAt:0,loading:false,ai:{brief:null,coach:{},plan:false},
   chatAi:null
 };
@@ -1413,7 +1416,7 @@ function drawerHTML(){
   const rows=dl.filter(d=>E[d]||!isOffDay(c.mp,d)).map(d=>{const e=E[d];
     return '<tr'+(d===ST.drawer.day?' style="background:var(--warn-soft)"':'')+'><td class="nowrap">'+DOWL[dowOf(d)]+' '+dmy(d)+'</td>'+(e?'<td class="r">'+fmt(e.v)+'</td><td class="r">'+fmt(num(e.bn)+num(e.gd),1)+'</td><td class="r">'+fmt(e.htpp)+'</td><td class="r">'+fmt(e.dp)+'</td><td class="r">'+fmt(e.so)+'</td><td>'+(e.help?'<span class="badge bad">Cần hỗ trợ</span> ':'')+esc(e.note||'')+'</td>':'<td colspan="6" style="color:var(--bad)">Chưa gửi báo cáo</td>')+'</tr>';}).join('');
   const dirs=(m.dir||[]).slice().reverse().map(x=>'<div class="di"><span>'+({focus:'🎯',note:'📝',praise:'👏'}[x.kind]||'📝')+'</span><div style="flex:1"><div><b>'+dmy(x.date)+'</b> · '+esc(x.text)+'</div><div class="tiny muted">'+esc(x.from||'')+' · '+(x.done?'<span style="color:var(--ok);font-weight:600">SR đã làm ✓</span>':'chưa xác nhận')+'</div></div></div>').join('');
-  return '<div class="scrim" data-act="closeDrawer"><aside class="drawer" role="dialog" aria-label="Chi tiết '+esc(c.name)+'" data-stop="1"><div class="dh"><div class="av" style="background:'+avCol(m.email)+'">'+esc(ini(c.name))+'</div><div><div class="b" style="font-size:16px">'+esc(c.name)+'</div><div class="tiny muted"><span class="badge '+g.cls+'">'+g.n+'</span> '+esc(m.province||'')+' · '+esc(m.email)+'</div></div><button class="x" data-act="closeDrawer" aria-label="Đóng">✕</button></div><div class="db">'+
+  return '<div class="scrim" data-act="closeDrawer"><aside class="drawer" role="dialog" aria-label="Chi tiết '+esc(c.name)+'" data-stop="1"><div class="dh"><div class="av" style="background:'+avCol(m.email)+'">'+esc(ini(c.name))+'</div><div><div class="b" style="font-size:16px">'+esc(c.name)+'</div><div class="tiny muted"><span class="badge '+g.cls+'">'+g.n+'</span> '+esc(m.province||'')+' · '+esc(m.email)+(m.phone?' · <a href="tel:'+esc(m.phone)+'" style="color:var(--brand-deep);font-weight:600;text-decoration:none">'+esc(m.phone)+'</a>':'')+'</div></div><button class="x" data-act="closeDrawer" aria-label="Đóng">✕</button></div><div class="db">'+
     '<div class="stats"><div class="stat"><div class="sl">Lũy kế tháng</div><div class="sv">'+fmt(c.ach,1)+' tr</div><div class="ss">'+pc(c.pct)+' chỉ tiêu '+fmt(c.total)+' tr</div></div>'+
     '<div class="stat"><div class="sl">So với mốc</div><div class="sv" style="color:var(--'+(c.level==='ok'?'ok':c.level==='warn'?'warn':c.level==='bad'?'bad':'muted')+')">'+pc(c.ratio)+'</div><div class="ss">'+LVT[c.level]+'</div></div>'+
     '<div class="stat"><div class="sl">Dự báo cuối tháng</div><div class="sv">'+(c.projPct==null?'–':pc(c.projPct))+'</div><div class="ss">'+fmt(c.proj)+' tr · cần '+fmt(c.need,1)+' tr/ngày</div></div>'+
@@ -1916,8 +1919,8 @@ function loginHTML(){
     (L.otp?'<div class="fld"><label for="lOtp">Mã xác minh 6 số đã gửi tới '+esc(L.email)+'</label><input id="lOtp" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" style="letter-spacing:.3em;font-weight:700"></div><button class="btn" data-act="lsubmit"'+(L.busy?' disabled':'')+'>Xác minh</button><div style="margin-top:8px"><button class="linkbtn" data-act="lcancel">Quay lại</button></div>':
     (L.tab==='forgot'?'<div class="b" style="font-size:16px;margin:4px 0">Quên mật khẩu</div><div class="small muted">Nhập email đã đăng ký. Chúng tôi gửi một liên kết đặt mật khẩu mới (có hiệu lực 1 giờ). Đặt xong, bạn quay lại trang này để đăng nhập.</div><div class="fld"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="email" maxlength="120" value="'+esc(L.email)+'"></div><button class="btn" data-act="lforgot"'+(L.busy?' disabled':'')+'>Gửi liên kết đặt lại</button><div style="margin-top:8px"><button class="linkbtn" data-act="ltab" data-v="login">← Quay lại đăng nhập</button></div>':
     '<div class="seg" style="margin-bottom:6px"><button data-act="ltab" data-v="login" aria-pressed="'+!reg+'">Đăng nhập</button><button data-act="ltab" data-v="register" aria-pressed="'+reg+'">Đăng ký</button></div>'+
-    (reg?'<div class="fld"><label for="lName">Họ tên</label><input id="lName" type="text" autocomplete="name" maxlength="80" value="'+esc(L.name)+'"></div>':'')+
-    '<div class="fld"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="email" maxlength="120" value="'+esc(L.email)+'"></div><div class="fld"><label for="lPass">Mật khẩu</label><div class="lg-pw"><input id="lPass" type="password" autocomplete="'+(reg?'new':'current')+'-password" maxlength="200"><button type="button" data-act="lpw" aria-label="Hiện hoặc ẩn mật khẩu">Hiện</button></div></div><button class="btn" data-act="lsubmit"'+(L.busy?' disabled':'')+'>'+(reg?'Tạo tài khoản':'Đăng nhập')+'</button><div class="small muted" style="margin-top:10px"><button class="linkbtn" data-act="ltab" data-v="forgot" style="padding:0">Quên mật khẩu?</button></div>'))+
+    (reg?'<div class="fld"><label for="lName">Họ tên <span class="lg-req">*</span></label><input id="lName" type="text" autocomplete="name" maxlength="80" placeholder="Nguyễn Văn A" required value="'+esc(L.name)+'"></div><div class="fld"><label for="lPhone">Số điện thoại <span class="lg-req">*</span></label><input id="lPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="0901 234 567" required value="'+esc(L.phone)+'"></div>':'')+
+    '<div class="fld"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="email" maxlength="120" value="'+esc(L.email)+'"></div><div class="fld"><label for="lPass">Mật khẩu</label><div class="lg-pw"><input id="lPass" type="password" autocomplete="'+(reg?'new':'current')+'-password" maxlength="200" value="'+esc(L.pass||'')+'"><button type="button" data-act="lpw" aria-label="Hiện hoặc ẩn mật khẩu">Hiện</button></div></div><button class="btn" data-act="lsubmit"'+(L.busy?' disabled':'')+'>'+(reg?'Tạo tài khoản':'Đăng nhập')+'</button><div class="small muted" style="margin-top:10px"><button class="linkbtn" data-act="ltab" data-v="forgot" style="padding:0">Quên mật khẩu?</button></div>'))+
     (L.msg?'<div class="msg'+(L.ok?' okm':'')+'">'+esc(L.msg)+'</div>':'')+'</div><p class="lg-foot">Chỉ email được quản trị viên cấp quyền ASM mới vào được trang này.</p></main></div>';
 }
 async function lforgot(){
@@ -1929,16 +1932,23 @@ async function lforgot(){
   catch(e){L.msg='Không kết nối được máy chủ.';L.ok=false;}
   L.busy=false;render();
 }
+function phoneOk(v){let t=String(v||'').replace(/[\s.\-()]/g,'');if(/^\+84/.test(t))t='0'+t.slice(3);else if(/^84\d{9}$/.test(t))t='0'+t.slice(2);return /^0[2-9]\d{8}$/.test(t);}
 async function lsubmit(){
   const L=ST.login;if(L.busy)return;
   L.email=($('#lEmail')?$('#lEmail').value:L.email).trim().toLowerCase();
   if($('#lName'))L.name=$('#lName').value.trim();
+  if($('#lPhone'))L.phone=$('#lPhone').value.trim();
+  const reg=L.tab==='register';
   const pass=$('#lPass')?$('#lPass').value:L.pass,otp=$('#lOtp')?$('#lOtp').value.trim():'';
   if($('#lPass'))L.pass=pass;
   if(!L.email||!pass){L.msg='Nhập email và mật khẩu.';render();return;}
+  if(reg&&!otp){
+    if(L.name.replace(/\s/g,'').length<2){L.msg='Vui lòng nhập họ tên đầy đủ.';L.ok=false;render();return;}
+    if(!phoneOk(L.phone)){L.msg='Vui lòng nhập số điện thoại hợp lệ (10 số, ví dụ 0901234567).';L.ok=false;render();return;}
+  }
   L.busy=true;L.msg='';render();
   try{
-    const r=await api('POST','/api/auth/request',{email:L.email,password:pass,name:L.name,otp:otp||undefined});
+    const r=await api('POST','/api/auth/request',reg||otp?{email:L.email,password:pass,name:L.name,phone:L.phone,otp:otp||undefined}:{email:L.email,password:pass,otp:otp||undefined});
     if(r.j.needsOtp){L.otp=true;L.msg='Đã gửi mã xác minh tới email của bạn.';}
     else if(r.j.token){setToken(r.j.token);L.pass='';L.otp=false;L.busy=false;await boot();return;}
     else L.msg=r.j.error||'Không đăng nhập được.';

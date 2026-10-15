@@ -53,7 +53,7 @@ module.exports = async function (context, req) {
     const now = Date.now();
     const prev = p || { uid: u.uid, createdAt: now, locked: false, asmEmail: "" };
     p = Object.assign({}, prev, {
-      uid: u.uid, email: u.email, name: org.str(ud.name, 80) || prev.name || "",
+      uid: u.uid, email: u.email, name: org.str(ud.name, 80) || prev.name || "", phone: org.str(ud.phone, 20) || prev.phone || "",
       nganh: nganhIn, province: (function () { const raw = org.str(b.province != null ? b.province : prev.province, 60); return require("../_lib/provinces").canonProvince(raw) || raw; })()
     });
     if (fixed) { /* giữ nguyên ngành + ASM */ }

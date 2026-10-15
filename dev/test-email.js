@@ -3,8 +3,8 @@ const BASE = process.env.BASE || "http://localhost:7071", H = { "Content-Type": 
 const mailbox = async () => (await fetch(BASE + "/__mailbox")).json();
 function client() { const c = { token: "" };
   c.call = async (m, p, b) => { const r = await fetch(BASE + p, { method: m, headers: Object.assign({}, H, c.token ? { "X-SR-Token": c.token } : {}), body: b ? JSON.stringify(b) : undefined }); let j = {}; try { j = await r.json(); } catch (e) {} return { s: r.status, j }; };
-  c.login = async (email, name) => { let r = await c.call("POST", "/api/auth/request", { email, password: "matkhau123", name });
-    if (r.j.needsOtp) { const m = (await mailbox()).filter((x) => x.to === email).pop(); r = await c.call("POST", "/api/auth/request", { email, password: "matkhau123", name, otp: (m.subject.match(/(\d{6})/) || [])[1] }); }
+  c.login = async (email, name) => { let r = await c.call("POST", "/api/auth/request", { email, password: "matkhau123", name, phone: "0901234567" });
+    if (r.j.needsOtp) { const m = (await mailbox()).filter((x) => x.to === email).pop(); r = await c.call("POST", "/api/auth/request", { email, password: "matkhau123", name, phone: "0901234567", otp: (m.subject.match(/(\d{6})/) || [])[1] }); }
     c.token = r.j.token; return c; }; return c; }
 (async () => {
   const ok = (n, c) => console.log((c ? "PASS " : "FAIL ") + n);

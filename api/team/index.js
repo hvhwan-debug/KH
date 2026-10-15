@@ -69,7 +69,7 @@ module.exports = async function (context, req) {
       const days = {};
       Object.keys(rep.days || {}).forEach((d) => { if (d >= from && d <= to) days[d] = rep.days[d]; });
       return {
-        uid: p.uid, email: p.email, name: rep.name || p.name || "", nganh: p.nganh, province: p.province || "",
+        uid: p.uid, email: p.email, name: rep.name || p.name || "", phone: p.phone || "", nganh: p.nganh, province: p.province || "",
         asmEmail: p.asmEmail || "", locked: !!p.locked, plan: rep.plan || null, days, reportAt: rep.updatedAt || 0,
         dir: (dir.items || []).slice(-12)
       };

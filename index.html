@@ -1540,6 +1540,7 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
 <script>
 /* ---------- Bộ icon đường nét dùng chung (thay cho emoji) ---------- */
 const LICON={
+  phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
   fan:'<path d="M10.827 16.379a6.082 6.082 0 0 1-8.618-7.002l5.412 1.45a6.082 6.082 0 0 1 7.002-8.618l-1.45 5.412a6.082 6.082 0 0 1 8.618 7.002l-5.412-1.45a6.082 6.082 0 0 1-7.002 8.618l1.45-5.412Z"/><path d="M12 12v.01"/>',
   flame:'<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
   pot:'<path d="M2 12h20"/><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="m4 8 16-4"/><path d="m8.86 6.78-.45-1.81a2 2 0 0 1 1.45-2.43l1.94-.48a2 2 0 0 1 2.43 1.46l.45 1.8"/>',
@@ -2948,7 +2949,7 @@ function factorsCard(weeks,mode){
 }
 
 /* ---------- Tài khoản, đồng bộ, email ---------- */
-let AUTH={avail:null,user:null,busy:false,email:'',name:'',authTab:'login',msg:'',ackOff:false,isAdmin:false,forgot:false,forgotMsg:'',forgotBusy:false,resetToken:null,resetMsg:'',resetBusy:false,otpPending:false,otpPass:'',otpMsg:'',otpBusy:false,mailExpand:false,sync:{st:'idle',msg:'',conflict:false}};
+let AUTH={avail:null,user:null,busy:false,email:'',name:'',phone:'',authTab:'login',msg:'',ackOff:false,isAdmin:false,forgot:false,forgotMsg:'',forgotBusy:false,resetToken:null,resetMsg:'',resetBusy:false,otpPending:false,otpPass:'',otpMsg:'',otpBusy:false,mailExpand:false,sync:{st:'idle',msg:'',conflict:false}};
 let syncTimer=null,syncBusy=false,syncDirty=false,lastCheck=0;
 const TOKEN_KEY='livotec-sr-token';
 function getToken(){try{return localStorage.getItem(TOKEN_KEY)||'';}catch(e){return '';}}
@@ -3055,16 +3056,24 @@ async function syncCheck(){
     if(doc.rev!==S.sync.rev&&((doc.state&&doc.state.savedAt)||0)>(S.savedAt||0)){adoptServer(doc);toast('Đã cập nhật dữ liệu từ thiết bị khác');softRender();}
   }catch(e){}
 }
+function phoneOk(v){let t=String(v||'').replace(/[\s.\-()]/g,'');if(/^\+84/.test(t))t='0'+t.slice(3);else if(/^84\d{9}$/.test(t))t='0'+t.slice(2);return /^0[2-9]\d{8}$/.test(t);}
 async function acReq(){
   const elN=document.getElementById('acName'),elE=document.getElementById('acEmail'),elP=document.getElementById('acPass');
   const name=((elN&&elN.value)||'').trim().slice(0,80);
+  const elPh=document.getElementById('acPhone'),phone=((elPh&&elPh.value)||'').trim().slice(0,20),isReg=AUTH.authTab==='register';
   const email=((elE&&elE.value)||AUTH.email||'').trim().toLowerCase();
   const password=(elP&&elP.value)||'';
   if(!/^\S+@\S+\.\S+$/.test(email)){AUTH.msg='Nhập email hợp lệ.';render();return;}
   if(password.length<6){AUTH.msg='Mật khẩu cần ít nhất 6 ký tự.';render();return;}
-  AUTH.busy=true;AUTH.email=email;AUTH.name=name;AUTH.msg='Đang kiểm tra…';render();
+  AUTH.email=email;
+  if(isReg){
+    AUTH.name=name;AUTH.phone=phone;
+    if(name.replace(/\s/g,'').length<2){AUTH.msg='Vui lòng nhập họ tên đầy đủ.';render();return;}
+    if(!phoneOk(phone)){AUTH.msg='Vui lòng nhập số điện thoại hợp lệ (10 số, ví dụ 0901234567).';render();return;}
+  }
+  AUTH.busy=true;AUTH.email=email;AUTH.name=name;if(isReg)AUTH.phone=phone;AUTH.msg='Đang kiểm tra…';render();
   try{
-    const r=await api('POST','/api/auth/request',{email:email,password:password,name:name});
+    const r=await api('POST','/api/auth/request',isReg?{email:email,password:password,name:name,phone:phone}:{email:email,password:password});
     AUTH.busy=false;
     if(r.s===200&&r.j.needsOtp){AUTH.otpPending=true;AUTH.otpPass=password;AUTH.otpMsg='Đã gửi mã xác minh 6 số tới '+email+'.';render();return;}
     if(r.s===200){if(r.j.token)setToken(r.j.token);AUTH.msg='';await authInit();toast(r.j.created?'Đã tạo tài khoản và đăng nhập':'Đã đăng nhập');return;}
@@ -3076,7 +3085,7 @@ function acOtpCancel(){AUTH.otpPending=false;AUTH.otpPass='';AUTH.otpMsg='';rend
 async function acOtpResend(){
   AUTH.otpBusy=true;AUTH.otpMsg='Đang gửi lại mã…';render();
   try{
-    const r=await api('POST','/api/auth/request',{email:AUTH.email,password:AUTH.otpPass,name:AUTH.name});
+    const r=await api('POST','/api/auth/request',{email:AUTH.email,password:AUTH.otpPass,name:AUTH.name,phone:AUTH.phone});
     AUTH.otpBusy=false;
     if(r.s===200&&r.j.needsOtp){AUTH.otpMsg='Đã gửi lại mã mới tới '+AUTH.email+'.';render();return;}
     AUTH.otpMsg=r.j.error||'Không gửi lại được mã.';
@@ -3089,7 +3098,7 @@ async function acOtpConfirm(){
   if(!/^\d{6}$/.test(otp)){AUTH.otpMsg='Nhập đủ 6 số.';render();return;}
   AUTH.otpBusy=true;AUTH.otpMsg='Đang xác minh…';render();
   try{
-    const r=await api('POST','/api/auth/request',{email:AUTH.email,password:AUTH.otpPass,name:AUTH.name,otp:otp});
+    const r=await api('POST','/api/auth/request',{email:AUTH.email,password:AUTH.otpPass,name:AUTH.name,phone:AUTH.phone,otp:otp});
     AUTH.otpBusy=false;
     if(r.s===200){
       if(r.j.token)setToken(r.j.token);
@@ -3180,7 +3189,7 @@ function acctData(){
       const tabsHtml='<div class="authTabs" role="tablist"><button type="button" role="tab" data-act="authTab" data-v="login" aria-selected="'+(tab==='login')+'">Đăng nhập</button><button type="button" role="tab" data-act="authTab" data-v="register" aria-selected="'+(tab==='register')+'">Đăng ký</button></div>';
       body='<div class="authHead"><div class="ic">'+ic('user',20)+'</div><div class="tx"><b>'+(tab==='register'?'Tạo tài khoản mới':'Đăng nhập')+'</b><span>Lưu dữ liệu trên máy chủ, dùng được trên nhiều thiết bị</span></div></div>'+
         tabsHtml+
-        (tab==='register'?'<div class="authField"><label for="acName">Họ tên</label><div class="inwrap">'+ic('user',16)+'<input id="acName" class="txt" type="text" autocomplete="name" maxlength="80" placeholder="Nguyễn Văn A" value="'+escH(A.name)+'" aria-label="Họ tên"></div></div>':'')+
+        (tab==='register'?'<div class="authField"><label for="acName">Họ tên <span style="color:var(--bad)">*</span></label><div class="inwrap">'+ic('user',16)+'<input id="acName" class="txt" type="text" autocomplete="name" maxlength="80" placeholder="Nguyễn Văn A" value="'+escH(A.name)+'" aria-label="Họ tên" aria-required="true"></div></div><div class="authField"><label for="acPhone">Số điện thoại <span style="color:var(--bad)">*</span></label><div class="inwrap">'+ic('phone',16)+'<input id="acPhone" class="txt" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="0901 234 567" value="'+escH(A.phone)+'" aria-label="Số điện thoại" aria-required="true"></div></div>':'')+
         '<div class="authField"><label for="acEmail">Email</label><div class="inwrap">'+ic('mail',16)+'<input id="acEmail" class="txt" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="ban@vidu.com" value="'+escH(A.email)+'" aria-label="Email"></div></div>'+
         '<div class="authField"><label for="acPass">Mật khẩu</label><div class="inwrap">'+ic('lock',16)+'<input id="acPass" class="txt" type="password" autocomplete="current-password" maxlength="200" placeholder="Ít nhất 6 ký tự" aria-label="Mật khẩu"></div>'+
         (tab==='register'?'<div class="small muted" style="margin-top:5px">Nếu email này đã có tài khoản, hệ thống sẽ đăng nhập luôn thay vì tạo mới.</div>':'')+'</div>'+

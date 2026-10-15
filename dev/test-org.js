@@ -14,11 +14,11 @@ function client() {
     return { s: r.status, j };
   };
   c.login = async (email, name) => {
-    let r = await c.call("POST", "/api/auth/request", { email, password: "matkhau123", name });
+    let r = await c.call("POST", "/api/auth/request", { email, password: "matkhau123", name, phone: "0901234567" });
     if (r.j.needsOtp) {
       const mb = await mailbox(); const m = mb.filter((x) => x.to === email).pop();
       const otp = (m.subject.match(/(\d{6})/) || [])[1];
-      r = await c.call("POST", "/api/auth/request", { email, password: "matkhau123", name, otp });
+      r = await c.call("POST", "/api/auth/request", { email, password: "matkhau123", name, phone: "0901234567", otp });
     }
     c.token = r.j.token; return r.j;
   };
@@ -141,7 +141,7 @@ const dayOff = (n) => new Date(Date.now() + 7 * 3600e3 + n * 864e5).toISOString(
   r = await admin.call("POST", "/api/org", { op: "assign", uid: sr1uid, asmEmail: "asm1@livotec.vn", lock: false }); r = await s1.call("GET", "/api/profile"); ok(r.j.profile.asmEmail === "asm1@livotec.vn" && !r.j.profile.blocked.includes("asm1@livotec.vn"), "quản trị viên gán lại thì được thêm lại");
 
   // Quản trị viên: sửa / đổi mật khẩu / khoá / đăng xuất mọi thiết bị / xoá
-  const rawLogin = async (email, password) => { const x = await fetch(BASE + "/api/auth/request", { method: "POST", headers: H, body: JSON.stringify({ email, password, name: "Mm" }) }); return { s: x.status, j: await x.json().catch(() => ({})) }; };
+  const rawLogin = async (email, password) => { const x = await fetch(BASE + "/api/auth/request", { method: "POST", headers: H, body: JSON.stringify({ email, password, name: "Mm" , phone: "0901234567"}) }); return { s: x.status, j: await x.json().catch(() => ({})) }; };
   const mm = client(); await mm.login("mm@livotec.vn", "Thành Viên MM");
   const findUid = async (email) => { const o = (await admin.call("GET", "/api/org")).j; const x = o.profiles.concat(o.orphans).find((p) => p.email === email); return x && x.uid; };
   const mmUid = await findUid("mm@livotec.vn");

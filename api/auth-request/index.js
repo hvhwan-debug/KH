@@ -7,6 +7,7 @@ const { layout } = require("../_lib/emails");
 const store = require("../_lib/store");
 const pwd = require("../_lib/pwd");
 const mail = require("../_lib/mail");
+const { normPhone } = require("../_lib/phone");
 
 const MAXFAILS = 10; // mỗi giờ, theo từng tài khoản
 const OTP_TTL = 10 * 60 * 1000; // mã có hiệu lực 10 phút
@@ -32,6 +33,7 @@ module.exports = async function (context, req) {
     const password = String((req.body && req.body.password) || "");
     const name = String((req.body && req.body.name) || "").trim().slice(0, 80);
     const otpInput = String((req.body && req.body.otp) || "").trim();
+    const phoneRaw = String((req.body && req.body.phone) || "").trim(), phone = normPhone(phoneRaw);
     if (!validEmail(email)) return reply(context, 400, { ok: false, error: "Email không hợp lệ." });
     if (!emailAllowed(email)) return reply(context, 403, { ok: false, error: "Email này chưa được cấp quyền sử dụng ứng dụng." });
     if (password.length < 6) return reply(context, 400, { ok: false, error: "Mật khẩu cần ít nhất 6 ký tự." });
@@ -62,14 +64,18 @@ module.exports = async function (context, req) {
 
     // Chưa có tài khoản: tạo mới, cần xác minh OTP trước khi kích hoạt (nếu server đã bật gửi email)
     if (!ud) {
+      // Đăng ký tài khoản mới: BẮT BUỘC họ tên và số điện thoại hợp lệ
+      if (!name && !phoneRaw) return reply(context, 400, { ok: false, error: "Email hoặc mật khẩu không đúng. Nếu bạn chưa có tài khoản, hãy chọn tab Đăng ký và nhập họ tên, số điện thoại." });
+      if (name.replace(/\s/g, "").length < 2) return reply(context, 400, { ok: false, field: "name", error: "Vui lòng nhập họ tên đầy đủ khi đăng ký." });
+      if (!phone) return reply(context, 400, { ok: false, field: "phone", error: "Vui lòng nhập số điện thoại hợp lệ (10 số, ví dụ 0901234567)." });
       if (canSendOtp) {
         const otp = genOtp();
-        ud = { v: 1, uid, email, name, rev: 0, state: null, digest: null, prefs: {}, sent: {}, pwd: pwd.hash(password), verified: false, otp, otpExp: now + OTP_TTL, otpSendTimes: [now] };
+        ud = { v: 1, uid, email, name, phone, rev: 0, state: null, digest: null, prefs: {}, sent: {}, pwd: pwd.hash(password), verified: false, otp, otpExp: now + OTP_TTL, otpSendTimes: [now] };
         await store.put(ukey, ud);
         await sendOtpEmail(email, otp);
         return reply(context, 200, { ok: true, needsOtp: true, email });
       }
-      ud = { v: 1, uid, email, name, rev: 0, state: null, digest: null, prefs: {}, sent: {}, pwd: pwd.hash(password), verified: true };
+      ud = { v: 1, uid, email, name, phone, rev: 0, state: null, digest: null, prefs: {}, sent: {}, pwd: pwd.hash(password), verified: true };
       await store.put(ukey, ud);
       return reply(context, 200, { ok: true, created: true, email, name, token: sessionValue(email) }, { "Set-Cookie": sessionCookie(email) });
     }
@@ -78,6 +84,7 @@ module.exports = async function (context, req) {
     if (!ud.pwd) {
       ud.email = email;
       if (name) ud.name = name;
+      if (phone && !ud.phone) ud.phone = phone;
       ud.pwd = pwd.hash(password);
       ud.verified = true;
       await store.put(ukey, ud);
