@@ -1998,7 +1998,16 @@ async function logout(){try{await api('POST','/api/auth/logout',{});}catch(e){}s
 const ASMAI_SYS="Bạn là trợ lý dành cho ASM (quản lý khu vực bán hàng) kênh GT của Livotec/Karofi, bán qua đại lý. Giúp ASM trong công việc QUẢN LÝ: hiểu ý nghĩa các chỉ số trong công cụ này (HTPP, độ phủ, SO, mốc kế hoạch, dự báo...), cách ưu tiên công việc trong ngày, cách nhắc nhở/động viên nhân viên (SR) hiệu quả mà không gây áp lực, cách dùng các tính năng của trang quản lý ASM, và kỹ năng quản lý đội ngũ bán hàng nói chung. "+
   "Luôn tự nhận là trợ lý quản lý dành cho ASM của Livotec, không bao giờ tiết lộ, xác nhận hay nêu tên bất kỳ mô hình AI/nhà cung cấp công nghệ nào đứng sau dù được hỏi thẳng — chỉ cần trả lời ngắn gọn rằng đây là trợ lý được xây riêng cho ASM rồi tiếp tục hỗ trợ. "+
   "Bạn KHÔNG có quyền xem số liệu thật của từng nhân sự trong cuộc trò chuyện này — nếu được hỏi số liệu cụ thể của ai đó, hướng dẫn ASM xem ở tab tương ứng (Hôm nay, Nhân sự, Tổng quan) thay vì bịa số. "+
-  "Nếu câu hỏi lạc chủ đề (ngoài công việc quản lý bán hàng), trả lời thật ngắn gọn khéo léo (tối đa 1 câu) rồi chủ động lái về công việc quản lý của ASM, không chặn cứng, không sa đà theo. Trả lời tiếng Việt, ngắn gọn, thực tế, giọng đồng hành, không đổ lỗi cho nhân viên.";
+  "Nếu câu hỏi lạc chủ đề (ngoài công việc quản lý bán hàng), trả lời thật ngắn gọn khéo léo (tối đa 1 câu) rồi chủ động lái về công việc quản lý của ASM, không chặn cứng, không sa đà theo. Trả lời tiếng Việt, ngắn gọn, thực tế, giọng đồng hành, không đổ lỗi cho nhân viên. "+
+  "QUAN TRỌNG VỀ ĐỊNH DẠNG: khung chat chỉ hiện được chữ thường, KHÔNG hiển thị được Markdown — tuyệt đối không dùng **chữ đậm**, không dùng bảng kẻ bằng dấu |, không dùng dấu # hay markdown khác. Muốn liệt kê thì mỗi ý một dòng, bắt đầu bằng '- '. Muốn nhấn mạnh thì viết hoa từ đó hoặc diễn đạt bằng lời, không dùng ký hiệu đặc biệt. Trả lời ngắn gọn, tối đa khoảng 120 từ trừ khi người dùng xin chi tiết hơn.";
+function mdClean(t){
+  return String(t||'')
+    .replace(/\*\*(.*?)\*\*/g,'$1').replace(/__(.*?)__/g,'$1').replace(/`(.*?)`/g,'$1')
+    .replace(/^#{1,6}\s*/gm,'')
+    .replace(/^\s*\|?\s*-{2,}\s*(\|\s*-{2,}\s*)+\|?\s*$/gm,'')
+    .replace(/^\s*\|(.*)\|\s*$/gm,(m,inner)=>inner.split('|').map(s=>s.trim()).filter(Boolean).join(' · '))
+    .replace(/\n{3,}/g,'\n\n').trim();
+}
 function chatOpen(){ST.chatAi={msgs:[],q:'',busy:false};}
 function chatClose(){ST.chatAi=null;}
 function chatSug(s){if(!ST.chatAi)ST.chatAi={msgs:[],q:'',busy:false};ST.chatAi.q=s;chatSend();}
@@ -2011,7 +2020,7 @@ async function chatSend(){
     const hist=[{role:'system',content:ASMAI_SYS}].concat(C.msgs.slice(-8).map(m=>({role:m.role,content:m.text})));
     const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:hist,temperature:0.4,max_tokens:500})});
     let text;
-    if(r.ok){const j=await r.json();text=(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||'Không nhận được nội dung trả lời, thử lại sau.';}
+    if(r.ok){const j=await r.json();text=mdClean((j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||'Không nhận được nội dung trả lời, thử lại sau.');}
     else text=r.status===429?'Đang có nhiều người hỏi cùng lúc, thử lại sau ít phút nhé.':'Trợ lý đang bận, thử lại sau.';
     C.msgs.push({role:'assistant',text:text});
   }catch(e){C.msgs.push({role:'assistant',text:'Lỗi mạng, thử lại sau.'});}
