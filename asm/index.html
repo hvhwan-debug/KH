@@ -246,6 +246,16 @@ table.t td.r,table.t th.r{text-align:right}
 .bar .pillbtn{background:var(--brand);border-color:var(--brand);color:#fff}
 
 /* Ngăn kéo + hộp thoại */
+.asmhero{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:16px;border-radius:20px;padding:26px 24px;margin-bottom:14px;color:#fff;background:linear-gradient(100deg,rgba(6,42,38,.82) 0%,rgba(6,42,38,.5) 45%,rgba(6,42,38,.08) 78%),url('../hero-bg.jpg');background-size:cover;background-position:center;box-shadow:var(--shadow)}
+.asmhero-in{position:relative;max-width:36em}
+.asmhero-eb{font-size:12.5px;font-weight:600;opacity:.85;margin-bottom:6px}
+.asmhero-t{margin:0 0 6px;font-size:27px;font-weight:700;letter-spacing:-.01em;line-height:1.15}
+.asmhero-s{margin:0;font-size:14px;line-height:1.5;opacity:.95}
+.asmhero-s b{font-weight:700}
+.asmhero-kpi{flex:0 0 auto;text-align:right}
+.asmhero-kpi b{display:block;font-size:34px;font-weight:800;letter-spacing:-.02em}
+.asmhero-kpi span{font-size:12px;opacity:.85}
+@media (max-width:700px){.asmhero{padding:20px 18px}.asmhero-t{font-size:21px}.asmhero-kpi{display:none}}
 .asmai-fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:41;background:var(--brand);color:#fff;border:0;border-radius:999px;padding:12px 18px;font-weight:700;font-size:14px;box-shadow:0 10px 24px rgba(0,0,0,.28);cursor:pointer}
 .asmai-fab:hover{filter:brightness(1.06)}
 @media (min-width:1100px){.asmai-fab{right:28px;bottom:28px}}
@@ -1638,7 +1648,13 @@ function dashHTML(){
   const me=ST.data.me,date=ST.date,all=members().map(m=>calc(m,date)),t=team(all),T=attainSum(all),big=!!ST.data.truncated;
   const tone=r=>r==null?'':r>=0.9?'ok':r>=0.7?'warn':'bad',COL={ok:'#2E9D68',warn:'#E3A63B',bad:'#D8473E','':'#6B8FA3'};
   const mm=ST.month.slice(5)+'/'+ST.month.slice(0,4);
-  const head='<div class="phead"><div><h1>Tổng quan</h1><div class="sub">Tháng '+mm+' · '+fmt(big?ST.data.total:all.length)+' nhân sự'+(me.admin?'':' trong nhóm của bạn')+' · cập nhật '+hhmm(ST.loadedAt)+'</div></div><div class="pactions"><button class="pillbtn pri" data-act="copySum">'+ic('copy',16)+' Sao chép bản tin</button><button class="pillbtn" data-act="expTeam">'+ic('down',16)+' Xuất Excel</button><button class="pillbtn" data-act="composeAll">'+ic('send',16)+' Giao việc cả nhóm</button></div></div>';
+  const greet=vnHour()<11?'Chào buổi sáng':vnHour()<18?'Chào buổi chiều':'Chào buổi tối';
+  const heroWho=(me.name||'').split(' ').slice(-1)[0]||(me.admin?'quản trị viên':'ASM');
+  const hero='<div class="asmhero"><div class="asmhero-in"><div class="asmhero-eb">Tháng '+mm+' · '+fmt(big?ST.data.total:all.length)+' nhân sự'+(me.admin?'':' trong nhóm của bạn')+'</div>'+
+    '<h1 class="asmhero-t">'+greet+', '+esc(heroWho)+'</h1>'+
+    '<p class="asmhero-s">'+(T.total>0?'Cả nhóm đang đạt <b>'+pc(T.pct)+'</b> chỉ tiêu tháng — còn '+T.left+' ngày làm việc để về đích.':'Thêm nhân sự và chỉ tiêu tháng để bắt đầu theo dõi cả nhóm.')+'</p></div>'+
+    (T.total>0?'<div class="asmhero-kpi"><b>'+pc(T.pct)+'</b><span>thực đạt / chỉ tiêu</span></div>':'')+'</div>';
+  const head=hero+'<div class="phead"><div><h1>Tổng quan</h1><div class="sub">Tháng '+mm+' · '+fmt(big?ST.data.total:all.length)+' nhân sự'+(me.admin?'':' trong nhóm của bạn')+' · cập nhật '+hhmm(ST.loadedAt)+'</div></div><div class="pactions"><button class="pillbtn pri" data-act="copySum">'+ic('copy',16)+' Sao chép bản tin</button><button class="pillbtn" data-act="expTeam">'+ic('down',16)+' Xuất Excel</button><button class="pillbtn" data-act="composeAll">'+ic('send',16)+' Giao việc cả nhóm</button></div></div>';
   // Chưa có nhân sự: hướng dẫn bắt đầu
   if(!all.length&&!big){
     return head+onbHTML();
