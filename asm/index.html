@@ -153,6 +153,7 @@ select.sel{border:1.5px solid var(--line);background:var(--surface);border-radiu
 .chip{flex:0 0 auto;border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-weight:600;font-size:13px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
 .chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.att{margin-top:12px}.attt{min-width:600px}.attt td:first-child,.attt th:first-child{white-space:nowrap;position:sticky;left:0;background:var(--surface);z-index:1}.attt th:first-child{background:var(--surface2)}.attt tr.sub td:first-child{background:var(--surface2)}.attt td{vertical-align:middle}.attt tr.sub td{background:var(--surface2);font-size:12.5px}.attt tr.sub td:first-child{padding-left:22px;color:var(--muted)}.attb{min-width:220px}.attb .prog{height:9px}
 .tgrid{display:grid;grid-template-columns:minmax(0,1fr) 350px;grid-template-areas:"main side";gap:14px;margin-top:12px;align-items:start}
 .tmain{grid-area:main;min-width:0}.tside{grid-area:side;display:flex;flex-direction:column;gap:12px;min-width:0}
 @media (max-width:1279px){.tgrid{grid-template-columns:minmax(0,1fr);grid-template-areas:"side" "main"}}
@@ -321,7 +322,7 @@ table.t td.r,table.t th.r{text-align:right}
 table.tv{min-width:1000px}
 table.tv td{padding:9px 10px}
 table.tv .selc{width:34px;padding-right:0}table.tv .selc input,.plr input{width:17px;height:17px;accent-color:var(--brand)}
-.grp{display:flex;gap:6px;justify-content:space-between;min-width:112px;line-height:1.5}.grp span{color:var(--muted)}.grp.low b{color:var(--bad)}
+.grp{display:flex;gap:8px;justify-content:space-between;min-width:170px;line-height:1.5}.grp span{color:var(--muted)}.grp.low b{color:var(--bad)}
 .selbar{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:20;margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--ink);color:var(--bg);border-radius:16px;padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}.selbar .pillbtn{background:var(--brand);border-color:var(--brand);color:#fff}.selbar .pillbtn.g{background:transparent;color:var(--bg);border-color:color-mix(in srgb,var(--bg) 40%,transparent)}
 @media (max-width:1099px){.selbar{bottom:calc(72px + env(safe-area-inset-bottom,0px))}}
 table.tv tr.trow{cursor:pointer}
@@ -417,6 +418,9 @@ function calcRaw(m,date){
       else{tot+=sub;if(w.ac){const full=num(w.ac.bn)+num(w.ac.gd);if(full-sub>0.5)c.unsent+=full-sub;}}});
     c.ach=tot;
   }
+  {const AG=(d,k)=>E[d]?num(E[d][k]):0;let b=upto(d=>AG(d,'bn')),g=upto(d=>AG(d,'gd'));
+    if(mp&&mp.wk&&mp.wk.length){b=0;g=0;mp.wk.forEach(w=>{if(w.f>date)return;if(w.src==='manual'&&w.ac){b+=num(w.ac.bn);g+=num(w.ac.gd);}else dl.forEach(d=>{if(d>=w.f&&d<=w.t&&d<=date){b+=AG(d,'bn');g+=AG(d,'gd');}});});}
+    c.achG={bn:b,gd:g};c.tg={bn:mp&&mp.target?num(mp.target.bn):0,gd:mp&&mp.target?num(mp.target.gd):0};}
   c.expected=mp?upto(d=>(mp.days[d]&&!mp.days[d].o)?mp.days[d].si:0):0;
   c.total=mp?mp.total:0;
   c.workTotal=dl.filter(d=>!isOffDay(mp,d)).length;
@@ -754,6 +758,41 @@ async function exportRoster(){
   xDownload(buf,'nhan-su-phan-cong-'+ST.today+'.xlsx');toast('Đã xuất danh sách nhân sự.');
 }
 
+/* ====== Thực đạt so với chỉ tiêu (cả nhóm → ngành → nhóm hàng) ====== */
+function attainSum(list){
+  const s={n:list.length,total:0,ach:0,exp:0,proj:0,need:0,avg:0,left:0,noPlan:0};
+  list.forEach(c=>{s.total+=c.total;s.ach+=c.ach;s.exp+=c.expected;s.proj+=c.proj;s.need+=c.need;s.avg+=c.avg;s.left=Math.max(s.left,c.workLeft);if(!c.hasPlan)s.noPlan++;});
+  s.pct=s.total>0?s.ach/s.total:null;s.expPct=s.total>0?s.exp/s.total:null;s.ratio=s.exp>0?s.ach/s.exp:null;s.projPct=s.total>0?s.proj/s.total:null;
+  return s;
+}
+function attainGroup(list,k){
+  const g={total:0,ach:0,proj:0};
+  list.forEach(c=>{g.total+=c.tg[k];g.ach+=c.achG[k];if(c.workDone>0)g.proj+=c.achG[k]/c.workDone*c.workTotal;});
+  g.pct=g.total>0?g.ach/g.total:null;g.projPct=g.total>0?g.proj/g.total:null;
+  return g;
+}
+function attainHTML(all,t){
+  const T=attainSum(all);
+  const head='<div class="card att"><h2>Thực đạt so với chỉ tiêu tháng '+ST.month.slice(5)+'/'+ST.month.slice(0,4)+'</h2>';
+  if(!(T.total>0))return head+'<div class="hsub">Chưa có chỉ tiêu nên chưa so sánh được. '+(T.noPlan?'<b>'+T.noPlan+'/'+T.n+' nhân sự</b> chưa lập kế hoạch tháng trong app (mục "Thu nhập mong muốn" / chỉ tiêu tháng). Khi họ lập kế hoạch và gửi báo cáo, số thực đạt sẽ hiện ở đây.':'Nhân sự cần nhập chỉ tiêu tháng trong app.')+'</div></div>';
+  const row=(label,s,o)=>{
+    const lvl=o.lvl&&s.ratio!=null?lvOf(s.ratio):'',w=Math.max(0,Math.min(100,(s.pct||0)*100)).toFixed(1);
+    return '<tr class="'+(o.sub?'sub':'')+'"><td class="'+(o.sub?'':'b')+'">'+label+'</td><td class="r">'+fmt(s.total)+'</td><td class="r"><b>'+fmt(s.ach,1)+'</b></td>'+
+      '<td class="attb"><div class="prog '+(lvl==='bad'?'bad':lvl==='warn'?'warn':'')+'"><i style="width:'+w+'%"></i>'+(o.mk&&s.expPct!=null?'<span class="mk" style="left:'+Math.min(100,s.expPct*100).toFixed(1)+'%" title="Mốc kế hoạch hôm nay"></span>':'')+'</div><div class="tiny muted"><b style="color:var(--ink)">'+pc(s.pct)+'</b> chỉ tiêu'+(o.mk&&s.ratio!=null?' · <b style="color:var(--'+(lvl==='ok'?'ok':lvl==='warn'?'warn':'bad')+')">'+pc(s.ratio)+'</b> mốc':'')+'</div></td>'+
+      '<td class="r">'+fmt(Math.max(0,s.total-s.ach),1)+'</td><td class="r">'+(s.projPct!=null?pc(s.projPct):'–')+'</td></tr>';
+  };
+  const rows=[],ngs=[1,2].filter(k=>all.some(c=>c.m.nganh===k));
+  if(ngs.length>1)rows.push(row('Cả nhóm',T,{mk:1,lvl:1}));
+  ngs.forEach(k=>{
+    const L=all.filter(c=>c.m.nganh===k),S=attainSum(L),lb=t.byNg[k]?t.byNg[k].lb:{bn:'',gd:''};
+    rows.push(row(NG[k].n+' <span class="muted tiny">· '+S.n+' người</span>',S,{mk:1,lvl:1}));
+    [['bn',lb.bn||PS('bn')],['gd',lb.gd||PS('gd')]].forEach(g=>{const G=attainGroup(L,g[0]);if(G.total>0||G.ach>0)rows.push(row('↳ '+esc(g[1]),G,{sub:1}));});
+  });
+  const lvl=T.ratio!=null?lvOf(T.ratio):'',col=lvl==='ok'?'ok':lvl==='warn'?'warn':'bad';
+  const sum='<div class="hsub">Đã đạt <b>'+fmt(T.ach,1)+' / '+fmt(T.total)+' tr ('+pc(T.pct)+')</b> chỉ tiêu. Mốc kế hoạch đến nay là '+pc(T.expPct)+' → đạt <b style="color:var(--'+col+')">'+pc(T.ratio)+' mốc</b>. Còn '+T.left+' ngày làm việc: cần <b>'+fmt(T.need,1)+' tr/ngày</b>, đang làm '+fmt(T.avg,1)+' tr/ngày → dự báo cuối tháng ≈ <b>'+pc(T.projPct)+'</b> chỉ tiêu.</div>';
+  return head+sum+'<div class="tblwrap"><table class="t attt"><thead><tr><th>Phạm vi</th><th class="r">Chỉ tiêu (tr)</th><th class="r">Thực đạt (tr)</th><th>Tiến độ (vạch đen = mốc hôm nay)</th><th class="r">Còn thiếu (tr)</th><th class="r">Dự báo cuối tháng</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div></div>';
+}
+
 /* ====== Tổng hợp cả nhóm ====== */
 function members(){
   const d=ST.data;if(!d)return[];
@@ -900,7 +939,7 @@ function heroHTML(list,t,date){
     '<div class="kpis">'+
     tile(late&&done!=null&&done<1?'bad':done===1?'ok':'','Báo cáo cuối ngày',t.work?t.done+'<small>/ '+t.work+' người</small>':'–',done,done==null?'chưa có ai cần gửi':'đã gửi '+pc(done)+(late&&done<1?' · quá giờ chốt':''))+
     tile(isT&&!late?'':tone(dayR),'Doanh số ngày',fmt(t.dayAch,1)+'<small>tr</small>',dayR,'kế hoạch '+fmt(t.dayPlan,1)+' tr'+(dayR!=null?' · '+pc(dayR):''))+
-    tile(tone(t.ratio),'Lũy kế tháng',fmt(t.ach)+'<small>/ '+fmt(t.total)+' tr</small>',t.pct,'mốc hôm nay '+pc(t.expPct)+' · '+(t.ratio==null?'chưa có mốc':'đạt '+pc(t.ratio)+' mốc'),t.expPct)+
+    tile(tone(t.ratio),'Thực đạt / chỉ tiêu',fmt(t.ach)+'<small>/ '+fmt(t.total)+' tr</small>',t.pct,(t.pct==null?'chưa có chỉ tiêu':'đạt '+pc(t.pct)+' chỉ tiêu')+' · mốc hôm nay '+pc(t.expPct)+(t.ratio==null?'':' ('+pc(t.ratio)+' mốc)'),t.expPct)+
     tile('','Độ phủ tháng',t.cov==null?'–':pc(t.cov),t.cov,fmt(t.covN)+' / '+fmt(t.pts)+' điểm bán · hôm nay +'+fmt(t.dp))+
     '<div class="kt"><div class="kl">HTPP · Số bán SO</div><div class="kv">'+fmt(t.htpp)+'<small>HTPP</small></div><div class="kb" style="background:transparent"></div><div class="ks"><b>'+fmt(t.so)+'</b> sản phẩm SO hôm nay</div></div>'+
     '</div><div class="ngsum">'+hi+'</div>';
@@ -962,16 +1001,16 @@ function toolsHTML(counts,n){
     '<div class="chips" role="group" aria-label="Bộ lọc nhanh">'+fl.map(f=>'<button class="chip" data-act="flt" data-v="'+f[0]+'" aria-pressed="'+(ST.flt===f[0])+'">'+f[1]+'</button>').join('')+'</div></div>';
 }
 function groupCell(c,date){
-  const E=c.m.days||{},T=(c.mp&&c.mp.target)||{},L=(c.mp&&c.mp.labels)||{},ds=Object.keys(E).filter(d=>d<=date&&E[d].sub>0);
-  return ['bn','gd'].map(k=>{const v=ds.reduce((x,d)=>x+num(E[d][k]),0),tg=num(T[k]),p=tg>0?v/tg:null,low=p!=null&&c.expPct!=null&&p<c.expPct-0.15;
-    return '<div class="grp'+(low?' low':'')+'" title="'+esc((L[k]||k)+': '+fmt(v,1)+(tg?' / '+fmt(tg)+' tr':' tr'))+' (theo báo cáo ngày)"><span>'+esc(String(L[k]||k).split(' ')[0])+'</span><b>'+(p!=null?pc(p):fmt(v,1)+' tr')+'</b></div>';}).join('');
+  const L=(c.mp&&c.mp.labels)||{};
+  return ['bn','gd'].map(k=>{const v=c.achG[k],tg=c.tg[k],p=tg>0?v/tg:null,low=p!=null&&c.expPct!=null&&p<c.expPct-0.15;
+    return '<div class="grp'+(low?' low':'')+'" title="'+esc((L[k]||k)+': thực đạt '+fmt(v,1)+(tg?' / chỉ tiêu '+fmt(tg)+' tr':' tr'))+'"><span>'+esc(String(L[k]||k).split(' ')[0])+'</span><b>'+fmt(v,1)+(tg>0?' / '+fmt(tg)+' · '+pc(p):' tr')+'</b></div>';}).join('');
 }
 function tableViewHTML(list,date){
   const lvCls=l=>l==='ok'||l==='warn'||l==='bad'?l:'';
   const rows=list.map(c=>{
     const e=c.e||{},g=NG[c.m.nganh]||NG[2],dayR=c.dayPlan>0&&c.sub?c.dayAch/c.dayPlan:null;
     const help=e.help?'<div style="margin-top:3px"><span class="badge bad" title="'+esc(e.note||'')+'">Cần hỗ trợ</span></div>':'';
-    const bar=c.total>0?'<div class="mp2"><div class="prog '+(c.level==='bad'?'bad':c.level==='warn'?'warn':'')+'"><i style="width:'+Math.min(100,(c.pct||0)*100).toFixed(1)+'%"></i>'+(c.expPct!=null?'<span class="mk" style="left:'+Math.min(100,c.expPct*100).toFixed(1)+'%" title="Mốc kế hoạch"></span>':'')+'</div><span class="small nowrap"><b>'+fmt(c.ach,1)+'</b> / '+fmt(c.total)+' <span class="muted">('+pc(c.pct)+')</span></span></div>':'<span class="muted small">Chưa lập kế hoạch</span>';
+    const bar=c.total>0?'<div class="mp2"><div class="prog '+(c.level==='bad'?'bad':c.level==='warn'?'warn':'')+'"><i style="width:'+Math.min(100,(c.pct||0)*100).toFixed(1)+'%"></i>'+(c.expPct!=null?'<span class="mk" style="left:'+Math.min(100,c.expPct*100).toFixed(1)+'%" title="Mốc kế hoạch"></span>':'')+'</div><span class="small nowrap"><b>'+fmt(c.ach,1)+'</b> / '+fmt(c.total)+' <span class="muted">('+pc(c.pct)+')</span></span></div><div class="tiny muted">còn thiếu '+fmt(Math.max(0,c.total-c.ach),1)+' tr</div>':'<span class="muted small">Chưa lập kế hoạch</span>';
     return '<tr class="trow'+(c.level==='bad'?' lv-bad':'')+'" data-act="detail" data-uid="'+c.m.uid+'">'+
       '<td class="selc"><input type="checkbox" data-tsel="'+c.m.uid+'"'+(ST.sel[c.m.uid]?' checked':'')+' aria-label="Chọn '+esc(c.name)+'"></td>'+
       '<td class="nmc"><div class="pn"><span class="av" style="background:'+avCol(c.m.email)+'">'+esc(ini(c.name))+'</span><div style="min-width:0"><button class="lnk" data-act="detail" data-uid="'+c.m.uid+'">'+esc(c.name)+'</button><div class="tiny muted"><i class="dot" style="background:'+g.col+'"></i>'+g.n+(c.m.province?' · '+esc(c.m.province):'')+'</div></div></div></td>'+
@@ -985,7 +1024,7 @@ function tableViewHTML(list,date){
       '<td class="r nowrap">'+fmt(e.htpp)+' · '+fmt(e.so)+'</td>'+
       '<td class="r nowrap"><button class="mini" data-act="compose" data-uid="'+c.m.uid+'">Giao việc</button></td></tr>';
   }).join('');
-  return '<div class="card tcard"><div class="tblwrap"><table class="t tv"><thead><tr><th class="selc"><input type="checkbox" data-tselall="1" aria-label="Chọn tất cả"'+(list.length&&list.every(c=>ST.sel[c.m.uid])?' checked':'')+'></th><th class="nmc">Nhân sự</th><th>Báo cáo</th><th class="r">DS ngày (tr)</th><th>Lũy kế tháng (tr)</th><th>Theo nhóm hàng</th><th class="r">So mốc</th><th class="r">Dự báo</th><th class="r">Độ phủ</th><th class="r">HTPP · SO</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  return '<div class="card tcard"><div class="tblwrap"><table class="t tv"><thead><tr><th class="selc"><input type="checkbox" data-tselall="1" aria-label="Chọn tất cả"'+(list.length&&list.every(c=>ST.sel[c.m.uid])?' checked':'')+'></th><th class="nmc">Nhân sự</th><th>Báo cáo</th><th class="r">DS ngày (tr)</th><th>Thực đạt / chỉ tiêu (tr)</th><th>Thực đạt / chỉ tiêu theo nhóm hàng</th><th class="r">So mốc</th><th class="r">Dự báo</th><th class="r">Độ phủ</th><th class="r">HTPP · SO</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
 /* ====== Tab: Hôm nay ====== */
@@ -999,7 +1038,7 @@ function todayHTML(){
   const shown=filterList(all),cs=cumSeries(all),mode=viewMode(all.length);
   const chart=all.length?'<div class="card" style="margin-top:14px"><h2>Nhịp cả nhóm trong tháng</h2><div class="hsub">Đường liền: thực tế lũy kế · đường đứt: kế hoạch lũy kế · vạch dọc: hôm nay</div>'+chartOrEmpty(cs,760,170)+'</div>':'';
   const list=shown.length?(mode==='table'?tableViewHTML(shown,date):'<div class="cards">'+shown.map(c=>srCard(c,date)).join('')+'</div>'):'<div class="card empty"><div class="big">🔍</div>'+(all.length?'Không có nhân sự nào khớp bộ lọc.':'Chưa có nhân sự nào được gán cho bạn.<br><span class="small">Nhân sự cần đăng nhập app, chọn ngành và chọn ASM là bạn.</span>')+'</div>';
-  return heroHTML(all,t,date)+
+  return heroHTML(all,t,date)+attainHTML(all,t)+
     '<div class="tgrid'+(mode==='table'?' tbl':'')+'"><aside class="tside">'+(ST.ai.off?'':aiPanelHTML())+feedHTML(feed)+'</aside>'+
     '<section class="tmain">'+toolsHTML(counts,all.length)+list+'</section></div>'+selBarHTML(all)+chart;
 }
