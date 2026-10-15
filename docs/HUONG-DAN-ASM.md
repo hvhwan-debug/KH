@@ -108,3 +108,10 @@ Nhìn một lần biết cả tháng đang thế nào:
 - **Theo ngành và nhóm hàng**, **theo tỉnh/thành** (có cảnh báo số người chưa gán tỉnh), **việc cần xử lý** (giao việc ngay), **nổi bật & cần chú ý**.
 - Chưa có nhân sự: hiện **hướng dẫn bắt đầu** và nút sao chép tin nhắn gửi nhân sự. Quản trị viên xem "Tất cả ASM" với quá nhiều người sẽ thấy bảng tổng quan theo ASM để chọn.
 
+## Nhân sự (SR) không tự đổi ngành / ASM
+- SR **chưa có ASM** (tự đăng ký) được chọn ngành và ASM **một lần** ở Thiết lập › Công việc.
+- Sau khi đã có ASM (tự chọn hoặc quản trị viên tạo/gán), SR **không còn nút đổi** và máy chủ cũng từ chối đổi: ngành và ASM chỉ do **quản trị viên** (tab Quản trị) hoặc **ASM** (Gỡ khỏi nhóm, sau đó SR chọn lại ASM khác với ASM đã gỡ) thay đổi. SR vẫn tự cập nhật được tỉnh/thành và dữ liệu báo cáo của mình.
+- Tài khoản ASM / quản trị viên không bị giới hạn này. Kiểm thử: `node dev/test-sr-role.js`.
+
+> Lưu ý chạy kiểm thử: các bài `dev/test-*.js` giả định dữ liệu mẫu còn nguyên (`dev/seed-demo.js`). Hãy **khởi động lại máy chủ thử và nạp lại dữ liệu mẫu trước mỗi bài** (một số bài tạo/gỡ thành viên nên bài sau có thể báo lỗi giả).
+

@@ -1,5 +1,6 @@
-// Hồ sơ công việc của SR: ngành đang làm + ASM phụ trách. SR tự chọn khi đăng nhập lần đầu;
-// quản trị viên có thể gán và "khoá" ASM (khi đó SR không tự đổi được).
+// Hồ sơ công việc của SR: ngành đang làm + ASM phụ trách. SR chỉ được tự chọn MỘT LẦN khi chưa có ASM;
+// sau khi đã có ASM (tự chọn hoặc do quản trị viên gán) SR không tự đổi ngành/ASM nữa: chỉ quản trị viên
+// hoặc ASM (gỡ khỏi nhóm) mới thay đổi. Tài khoản ASM / quản trị viên không bị giới hạn này.
 const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const { emailAllowed } = require("../_lib/config");
 const { clearCookie } = require("../_lib/session");
@@ -37,20 +38,26 @@ module.exports = async function (context, req) {
     const b = req.body || {};
     const nganh = Number(b.nganh);
     if (nganh !== 1 && nganh !== 2) return reply(context, 400, { ok: false, error: "Hãy chọn ngành 1 hoặc ngành 2." });
-    const asmEmail = org.lc(b.asmEmail);
+    let asmEmail = org.lc(b.asmEmail), nganhIn = nganh;
+    const fixed = !!(p && p.asmEmail) && !roles.manager; // SR đã có ASM: ngành + ASM cố định
+    let note = "";
+    if (fixed) {
+      if (nganhIn !== p.nganh || asmEmail !== org.lc(p.asmEmail)) note = "Ngành và ASM do ASM/quản trị viên quản lý, bạn không tự đổi được. Cần đổi hãy nhờ ASM của bạn.";
+      nganhIn = p.nganh; asmEmail = org.lc(p.asmEmail);
+    }
     if (asmEmail && !org.findAsm(roster, asmEmail)) return reply(context, 400, { ok: false, error: "ASM này chưa có trong danh sách." });
-    if (asmEmail && p && (p.blocked || []).indexOf(asmEmail) >= 0) return reply(context, 400, { ok: false, error: "ASM này đã gỡ bạn khỏi nhóm. Hãy liên hệ ASM hoặc quản trị viên để được thêm lại." });
-    if (asmEmail && !org.asmCovers(org.findAsm(roster, asmEmail), nganh)) return reply(context, 400, { ok: false, error: "ASM này không phụ trách ngành bạn chọn." });
+    if (!fixed && asmEmail && p && (p.blocked || []).indexOf(asmEmail) >= 0) return reply(context, 400, { ok: false, error: "ASM này đã gỡ bạn khỏi nhóm. Hãy liên hệ ASM hoặc quản trị viên để được thêm lại." });
+    if (!fixed && asmEmail && !org.asmCovers(org.findAsm(roster, asmEmail), nganhIn)) return reply(context, 400, { ok: false, error: "ASM này không phụ trách ngành bạn chọn." });
 
     const ud = (await store.get("user/" + u.uid + ".json")) || {};
     const now = Date.now();
     const prev = p || { uid: u.uid, createdAt: now, locked: false, asmEmail: "" };
-    let note = "";
     p = Object.assign({}, prev, {
       uid: u.uid, email: u.email, name: org.str(ud.name, 80) || prev.name || "",
-      nganh, province: (function () { const raw = org.str(b.province != null ? b.province : prev.province, 60); return require("../_lib/provinces").canonProvince(raw) || raw; })()
+      nganh: nganhIn, province: (function () { const raw = org.str(b.province != null ? b.province : prev.province, 60); return require("../_lib/provinces").canonProvince(raw) || raw; })()
     });
-    if (prev.locked && asmEmail !== (prev.asmEmail || "")) note = "ASM đã được quản trị viên gán, bạn không tự đổi được.";
+    if (fixed) { /* giữ nguyên ngành + ASM */ }
+    else if (prev.locked && asmEmail !== (prev.asmEmail || "")) note = "ASM đã được quản trị viên gán, bạn không tự đổi được.";
     else if (!asmEmail && prev.asmEmail) note = "Bạn không tự gỡ ASM được. Cần đổi hãy chọn ASM khác, hoặc nhờ ASM/quản trị viên.";
     else p.asmEmail = asmEmail;
     await org.putProfile(p);

@@ -3190,7 +3190,7 @@ function acctData(){
         row('warn','Khuyến nghị rủi ro cao',['Khuyến nghị','bad'],'Gộp vào email buổi sáng, không lặp lại hằng ngày')+
         row('weekly','Tổng kết tuần (thứ Hai)',['Tham khảo','ok'],'Kết quả tuần trước so với kế hoạch')+
         '<div class="askrow"><button class="btn ghost sm" data-act="acMailTest">Gửi email thử</button></div>':'')+'</div>'+
-      '<div class="remblk"><b>Công việc</b><div class="small muted">'+NGX().name+(S.asm&&S.asm.email?' · ASM '+escH(S.asm.name||S.asm.email):' · chưa chọn ASM')+'</div><div class="askrow"><button class="btn ghost sm" data-act="workOpen">Đổi ngành / ASM</button></div></div>'+
+      '<div class="remblk"><b>Công việc</b><div class="small muted">'+NGX().name+(S.asm&&S.asm.email?' · ASM '+escH(S.asm.name||S.asm.email):' · chưa chọn ASM')+'</div>'+(canChangeWork()?'<div class="askrow"><button class="btn ghost sm" data-act="workOpen">'+(S.asm&&S.asm.email?'Đổi ngành / ASM':'Chọn ngành / ASM')+'</button></div>':'<div class="small muted" style="margin-top:6px">Ngành và ASM do ASM hoặc quản trị viên quản lý, bạn không tự đổi được. Cần đổi hãy nhờ ASM của bạn.</div>')+'</div>'+
       (A.isAdmin||A.isAsm?'<div class="askrow"><a class="btn ghost sm" href="/asm/" style="text-decoration:none">'+ic('users',14)+' Mở trang quản lý ASM</a></div>':'')+
       (A.isAdmin?'<div class="askrow"><button class="btn ghost sm" data-act="adminOpen">'+ic('users',14)+' Quản trị thành viên</button></div>':'')+
       '<div class="askrow"><button class="btn ghost sm" data-act="acLogout">Đăng xuất</button></div>';
@@ -4383,7 +4383,7 @@ async function profileSave(){
 }
 const NANGANH=n=>NANGANH_NAME[n===1?1:2];
 const NANGANH_NAME={1:NGANH_CFG[1].name,2:NGANH_CFG[2].name};
-function openWork(){PROF.pick=S.nganh||CUR_NG;PROF.pickAsm=null;PROF.pickProv=null;PROF.msg='';renderWorkSheet();document.getElementById('workSheet').hidden=false;if(AUTH.user&&!PROF.loaded)profileLoad().then(renderWorkSheet);}
+function openWork(){if(!canChangeWork()){toast('Ngành và ASM do ASM/quản trị viên quản lý, bạn không tự đổi được. Hãy nhờ ASM của bạn.',3600);return;}PROF.pick=S.nganh||CUR_NG;PROF.pickAsm=null;PROF.pickProv=null;PROF.msg='';renderWorkSheet();document.getElementById('workSheet').hidden=false;if(AUTH.user&&!PROF.loaded)profileLoad().then(renderWorkSheet);}
 function closeWork(){document.getElementById('workSheet').hidden=true;}
 function workSheetHTML(){
   const P_=PROF,pick=P_.pick||S.nganh||CUR_NG,cur=S.asm&&S.asm.email||'';
@@ -4407,8 +4407,9 @@ function workSheetHTML(){
 }
 function renderWorkSheet(){const el=document.getElementById('workSheetIn');if(el)el.innerHTML=workSheetHTML();}
 function workStrip(){
-  return '<div class="card wk-strip"><div class="row"><div style="min-width:0"><div class="small muted">Bạn đang phụ trách</div><b>'+NGX().name+'</b><div class="small muted">'+(S.asm&&S.asm.email?'ASM '+escH(S.asm.name||S.asm.email):(AUTH.user?'Chưa chọn ASM':'Đăng nhập để chọn ASM'))+'</div></div><button class="btn ghost sm" data-act="workOpen">Đổi</button></div></div>';
+  return '<div class="card wk-strip"><div class="row"><div style="min-width:0"><div class="small muted">Bạn đang phụ trách</div><b>'+NGX().name+'</b><div class="small muted">'+(S.asm&&S.asm.email?'ASM '+escH(S.asm.name||S.asm.email):(AUTH.user?'Chưa chọn ASM':'Đăng nhập để chọn ASM'))+'</div></div>'+(canChangeWork()?'<button class="btn ghost sm" data-act="workOpen">'+(S.asm&&S.asm.email?'Đổi':'Chọn')+'</button>':'<span class="small muted" title="Do ASM/quản trị viên quản lý">🔒 Cố định</span>')+'</div></div>';
 }
+function canChangeWork(){return !(AUTH.user&&S.asm&&S.asm.email)||!!AUTH.isAdmin||!!AUTH.isAsm;}   // SR đã có ASM thì không tự đổi ngành/ASM
 function profNudge(){
   if(S.nganh&&(S.asm&&S.asm.email||!AUTH.user||(PROF.loaded&&!PROF.asms.length)))return '';
   const need=!S.nganh?'Chọn ngành bạn phụ trách':'Chọn ASM phụ trách để gửi báo cáo cuối ngày';
