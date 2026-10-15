@@ -3922,30 +3922,36 @@ function applyTargetSI(si){
   toast('Đã đặt chỉ tiêu tháng '+si+' triệu');
 }
 /* ====== Đối chiếu & dự báo theo benchmark thị trường (số liệu công khai, tra cứu 10/2026; chỉ mang tính tham khảo) ====== */
-const MKT={asOf:'10/2026',inc:[12,25],incMid:[15,22],comm:[1.5,2],commRetail:[3,4.2],close:[19,29],reach:[50,70],vpd:[6,10]};
+const MKT={asOf:'10/2026',close:[19,29],reach:[50,70],vpd:[6,10],
+  n1:{lbl:'SR kênh GT máy lọc nước',inc:[12,25],mid:[15,22]},
+  n2:{lbl:'SR kênh GT điện gia dụng (chưa có benchmark riêng cho bình nước nóng)',inc:[15,25],mid:[18,25]}};
 function mktForecast(c){
   const nn=x=>Math.abs(x-Math.round(x))<0.05?String(Math.round(x)):fmt(x,1);
-  const L=[],add=(lv,t)=>L.push('<div class="mk-i '+lv+'"><i></i><span>'+t+'</span></div>');
-  // 1) Mức thu nhập mong muốn so với mặt bằng tuyển dụng kênh GT máy lọc nước
-  const I=c.income;
-  if(I<MKT.inc[0])add('warn','Thu nhập <b>'+nn(I)+' tr</b> thấp hơn mặt bằng tin tuyển dụng SR kênh GT máy lọc nước (<b>'+MKT.inc[0]+'–'+MKT.inc[1]+' tr</b>/tháng, gồm lương cứng).');
-  else if(I<=MKT.incMid[1])add('ok','Thu nhập <b>'+nn(I)+' tr</b> nằm trong mặt bằng thị trường (<b>'+MKT.inc[0]+'–'+MKT.inc[1]+' tr</b>/tháng; mốc đạt 100% KPI thường <b>16–22 tr</b>). Mục tiêu thực tế.');
-  else if(I<=MKT.inc[1])add('warn','Thu nhập <b>'+nn(I)+' tr</b> ở mức cao của mặt bằng (<b>'+MKT.inc[0]+'–'+MKT.inc[1]+' tr</b>); tin tuyển dụng mức này thường đòi ≥ 3 năm kinh nghiệm kênh GT.');
-  else add('bad','Thu nhập <b>'+nn(I)+' tr</b> vượt mặt bằng tin tuyển dụng công khai (tối đa ≈ '+MKT.inc[1]+' tr). Chỉ nhóm top mới đạt, hãy kiểm tra lại độ khả thi.');
-  // 2) Các giả định của phễu so với benchmark
+  const B=CUR_NG===1?MKT.n1:MKT.n2,L=[],add=(lv,t)=>L.push('<div class="mk-i '+lv+'"><i></i><span>'+t+'</span></div>');
+  const I=c.income,rng='<b>'+B.inc[0]+'–'+B.inc[1]+' tr</b>/tháng';
+  // 1) Mức thu nhập mong muốn so với mặt bằng tuyển dụng của đúng ngành
+  if(I<B.inc[0])add('warn','Thu nhập <b>'+nn(I)+' tr</b> thấp hơn mặt bằng tin tuyển dụng '+B.lbl+' ('+rng+', gồm lương cứng).');
+  else if(I<=B.mid[1])add('ok','Thu nhập <b>'+nn(I)+' tr</b> nằm trong mặt bằng '+B.lbl+' ('+rng+(CUR_NG===1?'; mốc đạt 100% KPI thường <b>16–22 tr</b>':'')+').');
+  else if(I<=B.inc[1])add('warn','Thu nhập <b>'+nn(I)+' tr</b> ở mức cao của mặt bằng ('+rng+'); tin tuyển dụng mức này thường đòi ≥ 3 năm kinh nghiệm kênh GT.');
+  else add('bad','Thu nhập <b>'+nn(I)+' tr</b> vượt mặt bằng tin tuyển dụng công khai (tối đa ≈ '+B.inc[1]+' tr). Chỉ nhóm top mới đạt.');
+  // 2) Cơ cấu thu nhập: bao nhiêu phải kiếm từ doanh số
+  const share=I>0?Math.round(c.V/I*100):0;
+  add(share>60?'warn':'ok','Lương cứng <b>'+nn(c.base)+' tr</b>'+(c.baseSet?'':' (đang <b>giả định</b> bằng 50% thu nhập, hãy nhập số thật trong "Tùy chỉnh")')+' → phần phải kiếm từ doanh số là <b>'+nn(c.V)+' tr ('+share+'%)</b>, tương ứng S.I ≈ <b>'+fmt(c.siNeed)+' tr</b> ở hoa hồng '+nn(c.rateC)+'%.');
+  // 3) Hoa hồng: không có benchmark GT đáng tin → nói thẳng
+  add('warn','Hoa hồng <b>'+nn(c.rateC)+'%</b> là giả định của bạn. '+(CUR_NG===1?'Tin tuyển dụng Karofi không công bố %; họ ghi thu nhập = lương cơ bản + phụ cấp + <b>thưởng DS/KPI</b> (tính theo % đạt KPI). Chỉ vài tin bán lẻ trực tiếp ghi 3–4,2%. ':'Chưa có số công khai cho kênh GT điện gia dụng. ')+'Hãy nhập đúng chính sách thật.');
+  // 4) Phễu so với benchmark
   const closeP=Math.round(100/c.F.fc),reachP=Math.round(1000/c.F.fv);
-  if(c.rateC<MKT.comm[0]-0.01||c.rateC>MKT.commRetail[1]+0.01)add('warn','Hoa hồng giả định <b>'+nn(c.rateC)+'%</b> lệch khỏi mức tham chiếu <b>'+MKT.comm[0]+'–'+MKT.comm[1]+'%</b> (kênh GT) hoặc tới '+MKT.commRetail[1]+'% (bán lẻ trực tiếp). Hãy nhập đúng chính sách của bạn.');
-  else add('ok','Hoa hồng <b>'+nn(c.rateC)+'%</b> và lương cứng <b>'+nn(c.base)+' tr</b>'+(c.baseSet?'':' (đang giả định bằng 50% thu nhập, sửa trong "Tùy chỉnh")')+' hợp lý so với tham chiếu '+MKT.comm[0]+'–'+MKT.comm[1]+'%.');
   if(closeP>MKT.close[1]+3||reachP>MKT.reach[1]+10)add('bad','Phễu đang lạc quan: tỷ lệ chốt <b>'+closeP+'%</b> / gặp đúng người <b>'+reachP+'%</b> cao hơn benchmark ('+MKT.close[0]+'–'+MKT.close[1]+'% và '+MKT.reach[0]+'–'+MKT.reach[1]+'%). Kế hoạch dễ hụt.');
   else if(closeP<MKT.close[0]-4)add('warn','Tỷ lệ chốt <b>'+closeP+'%</b> thấp hơn benchmark '+MKT.close[0]+'–'+MKT.close[1]+'%: kế hoạch đang dự phòng khá dư lượt ghé.');
   else add('ok','Phễu <b>chốt '+closeP+'% × gặp đúng người '+reachP+'%</b> nằm trong benchmark B2B ('+MKT.close[0]+'–'+MKT.close[1]+'% và '+MKT.reach[0]+'–'+MKT.reach[1]+'%).');
-  if(c.perDay>0){
-    if(c.perDay>MKT.vpd[1]+4)add('bad','Cần <b>≈ '+nn(c.perDay)+' lượt/ngày</b>, quá nhiều cho hàng giá trị cao cần tư vấn 20–40 phút/điểm (thực tế '+MKT.vpd[0]+'–'+MKT.vpd[1]+' lượt/ngày).');
-    else if(c.perDay>MKT.vpd[1])add('warn','Cần <b>≈ '+nn(c.perDay)+' lượt/ngày</b>, hơi cao so với mức thực tế '+MKT.vpd[0]+'–'+MKT.vpd[1]+' lượt/ngày.');
-    else if(c.perDay<MKT.vpd[0])add('ok','Nhịp <b>≈ '+nn(c.perDay)+' lượt/ngày</b> nhẹ hơn mức thường gặp ('+MKT.vpd[0]+'–'+MKT.vpd[1]+' lượt/ngày): còn dư sức để tăng.');
-    else add('ok','Nhịp <b>≈ '+nn(c.perDay)+' lượt/ngày</b> trong ngưỡng thực tế ('+MKT.vpd[0]+'–'+MKT.vpd[1]+' lượt/ngày).');
-  }
-  // 3) Dự báo cuối tháng và phần còn thiếu quy ra việc cần làm thêm
+  // 5) Nhịp ghé/ngày: so với trần bạn tự đặt và với benchmark
+  const need=c.tw>0?c.visNeed/c.tw:0;
+  if(!c.enough&&c.perDay>=c.mc-0.15){
+    if(need<=MKT.vpd[1])add('warn','Kế hoạch đang <b>chạm trần '+c.mc+' lượt/ngày</b> do bạn đặt. Để đủ mục tiêu cần <b>≈ '+nn(need)+' lượt/ngày</b>, vẫn trong ngưỡng thực tế ('+MKT.vpd[0]+'–'+MKT.vpd[1]+'): nâng trần "lượt gặp tối đa/ngày" là cách nhanh nhất.');
+    else add('bad','Để đủ mục tiêu cần <b>≈ '+nn(need)+' lượt/ngày</b>, vượt ngưỡng thực tế ('+MKT.vpd[0]+'–'+MKT.vpd[1]+'). Nên giảm mục tiêu, tăng giá trị mỗi đơn hoặc tăng lương cứng/phần thưởng cố định.');
+  }else if(c.perDay>MKT.vpd[1])add('warn','Cần <b>≈ '+nn(c.perDay)+' lượt/ngày</b>, cao hơn mức thực tế '+MKT.vpd[0]+'–'+MKT.vpd[1]+' lượt/ngày.');
+  else if(c.perDay>0)add('ok','Nhịp <b>≈ '+nn(c.perDay)+' lượt/ngày</b>'+(c.perDay<MKT.vpd[0]?' nhẹ hơn':' trong ngưỡng')+' mức thực tế ('+MKT.vpd[0]+'–'+MKT.vpd[1]+' lượt/ngày).');
+  // 6) Dự báo cuối tháng và phần thiếu quy ra việc làm thêm
   let fc='';
   const pct=I>0?Math.round(c.inc/I*100):0;
   if(!c.enough&&c.rateC>0&&c.aov>0){
@@ -3953,11 +3959,11 @@ function mktForecast(c){
     fc='<div class="mk-fc"><b>Dự báo theo sức đi hiện tại: ≈ '+nn(c.inc)+' tr ('+pct+'% mục tiêu).</b> Để chạm '+nn(I)+' tr cần thêm ≈ <b>'+exOrd+' đơn</b> ≈ <b>'+exVis+' lượt ghé</b> (≈ '+nn(perDay)+' lượt/ngày làm việc) hoặc nâng giá trị mỗi đơn.</div>';
   }else if(c.enough)fc='<div class="mk-fc"><b>Dự báo: đạt ≈ '+nn(Math.max(c.inc,I))+' tr (≥ 100% mục tiêu)</b> với nhịp kế hoạch hiện tại.</div>';
   const src='<details class="mk-src"><summary>Nguồn & độ tin cậy ('+MKT.asOf+')</summary><div>'+
-    '• <b>Thu nhập:</b> tin tuyển dụng Karofi 2026 (CareerViet, Joboko, 123job, Bejob): CV kinh doanh khu vực 15–25 tr; KD thị trường kênh GT 15–20 tr (đạt 100% KPI 16–22 tr, gồm lương cơ bản + phụ cấp + thưởng DS); KD phát triển thị trường 12–20 tr; CV điện máy gia dụng (≥ 3 năm) 18–25 tr.<br>'+
-    '• <b>Hoa hồng:</b> tin Sales Engineer Karofi (8/2026) dự kiến 1,5–2% giá trị đơn; một số tin bán lẻ trực tiếp ghi 3–4,2%.<br>'+
-    '• <b>Phễu:</b> chốt 19–29% theo benchmark B2B bán hàng trực tiếp; 6–10 lượt ghé/ngày theo thông lệ field sales hàng giá trị cao. Chỉ số strike rate 60–75% của FMCG áp dụng cho hàng tiêu dùng nhanh nên <b>không</b> dùng ở đây.<br>'+
-    '• <b>Thị trường:</b> ước tính &gt; 6.000 tỷ đồng năm 2025; BlueWeave dự báo tăng ≈ 9,5%/năm đến 2029; chuỗi điện máy lớn chiếm khoảng một nửa số máy bán ra nên kênh GT tăng chậm hơn thị trường chung.<br>'+
-    '<i>Lưu ý: đây là khoảng chào mời công khai và ước tính thứ cấp, không phải số liệu nội bộ hay thu nhập thực nhận. Hãy ưu tiên chính sách thật của công ty.</i></div></details>';
+    '• <b>Thu nhập (độ tin cậy trung bình):</b> tin tuyển dụng Karofi 2026 (CareerViet, Joboko, 123job, Bejob): CV kinh doanh khu vực 15–25 tr; KD thị trường kênh GT 15–20 tr (đạt 100% KPI 16–22 tr, gồm lương cơ bản + phụ cấp + thưởng DS); KD phát triển thị trường 12–20 tr; CV điện máy gia dụng (≥ 3 năm) 18–25 tr. Là khoảng chào mời, không phải thu nhập thực nhận.<br>'+
+    '• <b>Hoa hồng (độ tin cậy thấp):</b> không có số công khai cho kênh GT Karofi; một số tin bán lẻ máy lọc nước tại TP.HCM ghi hoa hồng đến 3–4,2%, không cùng kênh.<br>'+
+    '• <b>Phễu:</b> chốt 19–29% theo benchmark B2B bán hàng trực tiếp; 6–10 lượt ghé/ngày theo thông lệ field sales hàng giá trị cao. Strike rate 60–75% của FMCG áp dụng cho hàng tiêu dùng nhanh nên không dùng ở đây.<br>'+
+    '• <b>Thị trường:</b> ước tính &gt; 6.000 tỷ đồng năm 2025; BlueWeave dự báo tăng ≈ 9,5%/năm đến 2029; chuỗi điện máy lớn chiếm khoảng một nửa số máy bán ra.<br>'+
+    '<i>Ưu tiên chính sách thật của công ty. Ngành 2 (bình nước nóng, gia dụng) chưa có benchmark riêng nên chỉ tham khảo mặt bằng GT điện gia dụng.</i></div></details>';
   return '<div class="qp-mkt"><div class="mk-t">Đối chiếu thị trường & dự báo</div>'+L.join('')+fc+src+'</div>';
 }
 function quickPlan(weeks){
