@@ -21,6 +21,6 @@ module.exports = async function (context, req) {
     return reply(context, 200, { ok: true });
   } catch (e) {
     context.log.error("mail-test", e && e.message);
-    return reply(context, 500, { ok: false, error: "Không gửi được email thử." });
+    return reply(context, 500, { ok: false, error: "Lỗi gửi mail (tạm hiện để chẩn đoán): " + (e && e.message ? e.message : String(e)) });
   }
 };
