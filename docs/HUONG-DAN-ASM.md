@@ -74,3 +74,13 @@ Mọi nơi giao việc (nút **Giao việc** ở từng người, **Giao việc 
 
 Kiểm thử: `node dev/test-email.js` (sau `dev/seed-demo.js`) và `node dev/test-scope.js` (phân quyền).
 
+## Quản trị viên tạo thành viên trực tiếp
+Tab Quản trị › **Thành viên** › nút **＋ Thêm thành viên**: chọn vai trò rồi nhập thông tin.
+- **SR**: email, họ tên, ngành, ASM phụ trách (có thể để trống rồi gán sau), tỉnh/thành. SR được gán ASM sẽ bị khoá ASM (không tự đổi).
+- **ASM**: email, họ tên, ngành phụ trách (một hoặc hai), tỉnh/thành phụ trách. ASM chỉ thấy và giao việc cho nhân sự của chính mình.
+- **Mật khẩu tạm**: để trống thì hệ thống tự tạo mật khẩu ngẫu nhiên 10 ký tự và **chỉ hiện một lần** sau khi tạo (kèm nút sao chép tin nhắn đăng nhập để gửi qua Zalo). Có thể tự đặt mật khẩu (từ 8 ký tự). Tài khoản tạo bằng cách này đã xác minh sẵn, đăng nhập không cần mã OTP.
+- Email phải thuộc tên miền được phép (`ALLOWED_EMAILS` / `ALLOWED_EMAIL_DOMAINS`). Nếu người đó đã có tài khoản, thao tác này chỉ **đổi vai trò / gán lại** (đổi SR thành ASM sẽ bỏ hồ sơ SR), không tạo trùng.
+- Quản trị viên cao nhất vẫn chỉ đặt bằng `ADMIN_EMAILS`. Mọi thao tác ghi vào Nhật ký.
+
+Kiểm thử: `node dev/test-create.js`.
+

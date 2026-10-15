@@ -4,6 +4,8 @@ const { isAdmin, emailAllowed } = require("../_lib/config");
 const store = require("../_lib/store");
 const pwdlib = require("../_lib/pwd");
 const org = require("../_lib/org");
+const crypto = require("crypto");
+const { uidOf } = require("../_lib/session");
 
 module.exports = async function (context, req) {
   try {
@@ -126,6 +128,52 @@ module.exports = async function (context, req) {
       roster.asms = roster.asms.filter((a) => !dropA.has(a.email)); await org.putRoster(roster);
       await org.audit(u.email, "Xoá hàng loạt", counts.users + " tài khoản, " + counts.invites + " hồ sơ chờ, " + counts.asms + " ASM; giữ " + keepIn.join(", "));
       return reply(context, 200, { ok: true, deleted: counts });
+    }
+
+    // Quản trị viên tạo thành viên trực tiếp: tài khoản + vai trò (ASM hoặc SR) + ngành / ASM / tỉnh trong một lần
+    if (b.op === "createMember") {
+      const email = org.lc(b.email), name = org.str(b.name, 80), role = b.role === "asm" ? "asm" : b.role === "sr" ? "sr" : "";
+      if (!org.validEmail(email) || !emailAllowed(email)) return reply(context, 400, { ok: false, error: "Email không hợp lệ hoặc chưa được phép dùng ứng dụng (kiểm tra ALLOWED_EMAILS / tên miền cho phép)." });
+      if (!name) return reply(context, 400, { ok: false, error: "Hãy nhập họ tên." });
+      if (!role) return reply(context, 400, { ok: false, error: "Hãy chọn vai trò ASM hoặc SR." });
+      if (isAdmin(email) && role === "sr") return reply(context, 400, { ok: false, error: "Email này là quản trị viên (ADMIN_EMAILS), không đặt làm SR." });
+      let nganh = Number(b.nganh), asmEmail = org.lc(b.asmEmail);
+      if (role === "sr") {
+        if (nganh !== 1 && nganh !== 2) return reply(context, 400, { ok: false, error: "Hãy chọn ngành cho SR." });
+        if (asmEmail && !org.findAsm(roster, asmEmail)) return reply(context, 400, { ok: false, error: "ASM chưa có trong danh sách." });
+      }
+      let pw = String(b.password || "");
+      if (pw && (pw.length < 8 || pw.length > 200)) return reply(context, 400, { ok: false, error: "Mật khẩu cần từ 8 đến 200 ký tự (hoặc để trống để hệ thống tự tạo)." });
+      const uid = uidOf(email), ukey = "user/" + uid + ".json";
+      let ud = await store.get(ukey), created = false, tempPassword = "";
+      if (!ud) {
+        if (!pw) { // mật khẩu tạm ngẫu nhiên, chỉ hiện một lần cho quản trị viên
+          const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+          pw = Array.from(crypto.randomBytes(10)).map((x) => chars[x % chars.length]).join("");
+          tempPassword = pw;
+        }
+        ud = { v: 1, uid, email, name, rev: 0, state: null, digest: null, prefs: {}, sent: {}, pwd: pwdlib.hash(pw), verified: true };
+        await store.put(ukey, ud); created = true;
+      } else {
+        if (name) ud.name = name;
+        if (pw) { ud.pwd = pwdlib.hash(pw); ud.verified = true; ud.failTimes = []; ud.otp = ""; ud.otpExp = 0; ud.sessAfter = Date.now(); }
+        await store.put(ukey, ud);
+      }
+      if (role === "asm") {
+        const rec = org.asmRec({ name, nganh: Array.isArray(b.nganhs) ? b.nganhs : undefined, provinces: b.provinces }, org.findAsm(roster, email), email);
+        roster.asms = roster.asms.filter((a) => a.email !== email).concat([rec]).slice(0, 200);
+        await org.putRoster(roster);
+        const old = await org.getProfile(uid); // đang là SR thì bỏ hồ sơ SR, chuyển sang ASM
+        if (old) { try { await store.del("profile/" + uid + ".json"); } catch (e) {} }
+      } else {
+        if (org.findAsm(roster, email)) { roster.asms = roster.asms.filter((a) => a.email !== email); await org.putRoster(roster); }
+        let p = await org.getProfile(uid);
+        p = Object.assign(p || { uid, createdAt: Date.now() }, { uid, email, name, nganh, asmEmail, locked: !!asmEmail, province: org.str(b.province, 60), blocked: ((p && p.blocked) || []).filter((x) => x !== asmEmail) });
+        await org.putProfile(p);
+      }
+      const inv = await org.getInvites(); if (inv.items[email]) { delete inv.items[email]; await org.putInvites(inv); }
+      await org.audit(u.email, created ? "Tạo thành viên (" + role.toUpperCase() + ")" : "Gán vai trò " + role.toUpperCase(), email);
+      return reply(context, 200, { ok: true, uid, created, role, tempPassword });
     }
 
     if (b.op === "addAsm") {
