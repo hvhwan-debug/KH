@@ -99,3 +99,12 @@ Thiết kế chịu được >10.000 nhân sự (đã đo bằng `node dev/test-
 - Nhập Excel nhân sự vẫn giữ nguyên giá trị tỉnh trong file nếu không nhận ra (để không mất dữ liệu).
 - Kiểm thử: `node dev/test-province.js` (gồm kiểm tra ba danh sách tỉnh khớp nhau).
 
+## Tab Tổng quan (trang đầu tiên)
+Nhìn một lần biết cả tháng đang thế nào:
+- **Dòng kết luận** có màu (xanh đúng nhịp / vàng hơi chậm / đỏ tụt tiến độ) kèm: đã đạt, mốc hôm nay, số tr/ngày còn cần và dự báo cuối tháng.
+- **4 đồng hồ**: Thực đạt/chỉ tiêu, So với mốc hôm nay, Dự báo cuối tháng, Báo cáo hôm nay.
+- **Biểu đồ nhịp cả tháng**: kế hoạch, thực tế và **đường dự báo** nếu giữ nhịp hiện tại.
+- **Mức đạt của nhân sự**: thanh chia theo ≥ 90% / 70–90% / dưới 70% / chưa có mốc; chạm để mở danh sách đã lọc ở tab Nhân sự.
+- **Theo ngành và nhóm hàng**, **theo tỉnh/thành** (có cảnh báo số người chưa gán tỉnh), **việc cần xử lý** (giao việc ngay), **nổi bật & cần chú ý**.
+- Chưa có nhân sự: hiện **hướng dẫn bắt đầu** và nút sao chép tin nhắn gửi nhân sự. Quản trị viên xem "Tất cả ASM" với quá nhiều người sẽ thấy bảng tổng quan theo ASM để chọn.
+
