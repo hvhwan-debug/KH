@@ -158,7 +158,7 @@ select.sel{border:1.5px solid var(--line);background:var(--surface);border-radiu
 @media (max-width:1279px){.tgrid{grid-template-columns:minmax(0,1fr);grid-template-areas:"side" "main"}}
 .tgrid.tbl{grid-template-columns:minmax(0,1fr);grid-template-areas:"side" "main"}
 .tgrid.tbl .tside .feed{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
-@media (max-width:900px){.vt{display:none}}
+
 
 /* Thẻ nhân sự */
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
@@ -202,11 +202,16 @@ select.sel{border:1.5px solid var(--line);background:var(--surface);border-radiu
 @keyframes sk{to{background-position:-200% 0}}
 
 /* Bảng / bản đồ nhiệt */
-.tblwrap{overflow-x:auto;border-radius:12px}
+.tblwrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line)}
 table.t{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
-table.t th,table.t td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
-table.t th{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600;white-space:nowrap;background:var(--surface2);position:sticky;top:0}
+table.t th,table.t td{padding:8px 10px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);text-align:left;vertical-align:middle}
+table.t th:last-child,table.t td:last-child{border-right:0}
+table.t tbody tr:last-child td{border-bottom:0}
+table.t tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--surface2) 70%,var(--surface))}
+table.t th{font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:700;white-space:nowrap;background:var(--surface2);border-bottom:2px solid var(--line);position:sticky;top:0}
+table.t tfoot td{background:var(--surface2);font-weight:700;border-top:2px solid var(--line);border-bottom:0}
 table.t td.r,table.t th.r{text-align:right}
+.tcard .tblwrap{border:0;border-radius:0}
 .heat{border-collapse:separate;border-spacing:3px;font-size:11px}
 .heat th{font-weight:600;color:var(--muted);font-size:10.5px;padding:0 0 2px;text-align:center}
 .heat th.today{color:var(--brand-deep)}
@@ -300,6 +305,43 @@ table.t td.r,table.t th.r{text-align:right}
 @media (max-width:560px){.cards{grid-template-columns:1fr}.mets{gap:5px}.met{padding:6px}.met .mv{font-size:15px}.met .mp{font-size:10.5px}}
 @media (max-width:389px){.mets{grid-template-columns:repeat(2,1fr)}}
 @media print{.top,.tabs,.toolbar,.pactions,.vt,.bar,.srf .mini{display:none!important}.wrap{margin:0!important;padding:0!important;max-width:none!important}body{background:#fff}.card,.sr{box-shadow:none}}
+/* ===== Bảng kẻ ô ===== */
+.fdot{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:9px;font-size:14px;background:var(--n1-soft);color:var(--n1)}.fdot.bad{background:var(--bad-soft);color:var(--bad)}.fdot.warn{background:var(--warn-soft);color:var(--warn)}
+table.ftb td.fl{width:44px;text-align:center;padding:8px 6px}table.ftb .ft{font-weight:700;font-size:13.5px;line-height:1.3}table.ftb .fx{font-size:12.5px;color:var(--muted);margin-top:2px}
+table.ftb tbody tr.fr.bad td{background:color-mix(in srgb,var(--bad-soft) 45%,var(--surface))}
+table.dtb tr.trow{cursor:pointer}table.dtb tr.trow:hover td{background:var(--surface2)}table.dtb tr.lv-bad td:first-child{box-shadow:inset 3px 0 0 var(--bad)}
+table.dtb .pn .av{width:30px;height:30px;font-size:11px}
+table.wgt{table-layout:fixed}table.wgt th.nmc,table.wgt td.nmc{width:190px;position:sticky;left:0;z-index:2;background:var(--surface)}table.wgt th.nmc{background:var(--surface2)}
+table.wgt tbody tr:nth-child(even) td.nmc{background:color-mix(in srgb,var(--surface2) 70%,var(--surface))}
+table.wgt th.hm,table.wgt td.hm{width:96px}
+table.wgt th.dhc{padding:3px 1px;text-align:center;text-transform:none;letter-spacing:0}
+table.wgt td.hcell{padding:3px}
+table.wgt .hc{width:100%;height:38px;aspect-ratio:auto;min-height:0;border-radius:8px;font-size:12.5px}
+table.wgt .wg-d{width:100%}
+table.wgt.m th.nmc,table.wgt.m td.nmc{width:170px}table.wgt.m td.hcell{padding:2px}table.wgt.m .hc{height:30px;border-radius:6px;font-size:10.5px}table.wgt.m .wg-d span{font-size:9.5px}table.wgt.m .wg-d b{font-size:11.5px}
+table.wgt .mo{display:none}
+table.plt textarea{width:100%;min-width:260px;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 10px;font-size:13.5px;resize:vertical;min-height:62px}
+table.plt td{vertical-align:top}table.plt .pn .av{width:34px;height:34px;font-size:12px}table.plt td.small{min-width:190px}
+.sn{display:none}.mo2{display:none}.dtb .lnk{white-space:normal}
+.pn input[type=checkbox]{width:18px;height:18px;accent-color:var(--brand);flex:0 0 auto}
+@media (max-width:700px){
+  .hm{display:none!important}
+  table.t.tv{min-width:0}.mp2{min-width:0}.mp2 .prog{display:none}
+  table.t th,table.t td{padding:7px 8px}
+  table.t.tv .nmc{min-width:0!important;left:0!important}table.t.tv th{white-space:normal;font-size:10px;letter-spacing:0}table.t.tv th.nmc{width:auto}table.tv .pn .av{display:none}.mp2{flex-direction:column;align-items:flex-start;gap:0}table.tv .mp2{min-width:0!important}table.tv .mp2 .small{white-space:normal!important;line-height:1.3}table.tv .mp2 .small .muted{display:block}table.tv th,table.tv td{padding:7px 5px!important}table.tv td.r{white-space:nowrap}table.tv .tiny{white-space:nowrap}table.tv .st{font-size:11px;padding:3px 7px}table.tv .mp2 .small{white-space:normal}table.tv th,table.tv td{padding:7px 6px}table.tv th.nmc{width:30%}.mo2{display:inline}
+  table.dtb .pn .av{display:none}.fn{display:none}.sn{display:inline}table.dtb .lnk{font-size:13px}table.dtb td.nmc{min-width:0}table.dtb .sn{white-space:nowrap}table.dtb .st{font-size:11px;padding:3px 7px}table.dtb th,table.dtb td{padding:7px 6px}table.dtb .tiny{white-space:nowrap}
+  .att .attt{min-width:0}.attb{min-width:118px}
+  table.wgt th.nmc,table.wgt td.nmc{width:92px}table.wgt td.nmc{padding:5px 6px}table.wgt th.nmc{padding:5px 6px}
+  table.wgt .mo{display:block;margin-top:2px;line-height:1.5}
+  table.wgt .hc{height:36px;font-size:11.5px}
+  table.plt,table.plt thead,table.plt tbody,table.plt tr,table.plt td{display:block;width:100%}
+  table.plt thead{display:none}
+  table.plt tr{border-bottom:3px solid var(--line);padding:8px 0}table.plt tbody tr:last-child{border-bottom:0}
+  table.plt td{border:0!important;padding:5px 10px;background:transparent!important}
+  table.plt td::before{content:attr(data-l);display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:3px}
+  table.plt td:first-child::before{display:none}
+  table.plt textarea{min-width:0}
+}
 /* ===== Bản đồ tháng (mobile-first) ===== */
 .lg{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 3px 0 4px;vertical-align:0}.lg.ok{background:#2E9D68}.lg.warn{background:#E3A63B}.lg.bad{background:#D8473E}
 .dotnow{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--brand);margin-left:3px}
@@ -798,7 +840,7 @@ function attainHTML(all,t){
     const lvl=o.lvl&&s.ratio!=null?lvOf(s.ratio):'',w=Math.max(0,Math.min(100,(s.pct||0)*100)).toFixed(1);
     return '<tr class="'+(o.sub?'sub':'')+'"><td class="'+(o.sub?'':'b')+'">'+label+'</td><td class="r">'+fmt(s.total)+'</td><td class="r"><b>'+fmt(s.ach,1)+'</b></td>'+
       '<td class="attb"><div class="prog '+(lvl==='bad'?'bad':lvl==='warn'?'warn':'')+'"><i style="width:'+w+'%"></i>'+(o.mk&&s.expPct!=null?'<span class="mk" style="left:'+Math.min(100,s.expPct*100).toFixed(1)+'%" title="Mốc kế hoạch hôm nay"></span>':'')+'</div><div class="tiny muted"><b style="color:var(--ink)">'+pc(s.pct)+'</b> chỉ tiêu'+(o.mk&&s.ratio!=null?' · <b style="color:var(--'+(lvl==='ok'?'ok':lvl==='warn'?'warn':'bad')+')">'+pc(s.ratio)+'</b> mốc':'')+'</div></td>'+
-      '<td class="r">'+fmt(Math.max(0,s.total-s.ach),1)+'</td><td class="r">'+(s.projPct!=null?pc(s.projPct):'–')+'</td></tr>';
+      '<td class="r hm">'+fmt(Math.max(0,s.total-s.ach),1)+'</td><td class="r hm">'+(s.projPct!=null?pc(s.projPct):'–')+'</td></tr>';
   };
   const rows=[],ngs=[1,2].filter(k=>all.some(c=>c.m.nganh===k));
   if(ngs.length>1)rows.push(row('Cả nhóm',T,{mk:1,lvl:1}));
@@ -809,7 +851,7 @@ function attainHTML(all,t){
   });
   const lvl=T.ratio!=null?lvOf(T.ratio):'',col=lvl==='ok'?'ok':lvl==='warn'?'warn':'bad';
   const sum='<div class="hsub">Đã đạt <b>'+fmt(T.ach,1)+' / '+fmt(T.total)+' tr ('+pc(T.pct)+')</b> chỉ tiêu. Mốc kế hoạch đến nay là '+pc(T.expPct)+' → đạt <b style="color:var(--'+col+')">'+pc(T.ratio)+' mốc</b>. Còn '+T.left+' ngày làm việc: cần <b>'+fmt(T.need,1)+' tr/ngày</b>, đang làm '+fmt(T.avg,1)+' tr/ngày → dự báo cuối tháng ≈ <b>'+pc(T.projPct)+'</b> chỉ tiêu.</div>';
-  return head+sum+'<div class="tblwrap"><table class="t attt"><thead><tr><th>Phạm vi</th><th class="r">Chỉ tiêu (tr)</th><th class="r">Thực đạt (tr)</th><th>Tiến độ (vạch đen = mốc hôm nay)</th><th class="r">Còn thiếu (tr)</th><th class="r">Dự báo cuối tháng</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div></div>';
+  return head+sum+'<div class="tblwrap"><table class="t attt"><thead><tr><th>Phạm vi</th><th class="r">Chỉ tiêu (tr)</th><th class="r">Thực đạt (tr)</th><th>Tiến độ <span class="hm">(vạch đen = mốc hôm nay)</span></th><th class="r hm">Còn thiếu (tr)</th><th class="r hm">Dự báo cuối tháng</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div></div>';
 }
 
 /* ====== Tổng hợp cả nhóm ====== */
@@ -966,11 +1008,12 @@ function heroHTML(list,t,date){
 
 /* ====== Việc cần xử lý ====== */
 function feedHTML(items){
-  const LIM=isNarrow(700)||viewMode(members().length)==='table'?3:5;
+  const LIM=isNarrow(700)?3:5;
   if(!items.length)return '<div class="card"><h2>Việc cần xử lý</h2><div class="allgood"><div style="font-size:30px">🎉</div><b>Không có việc nào cần can thiệp</b><div class="small">Mọi người đã báo cáo và đang đúng nhịp.</div></div></div>';
-  const rows=items.slice(0,ST.showAll?60:LIM).map(i=>'<div class="fi '+i.lv+'"><div class="fic">'+esc(i.ic)+'</div><div style="min-width:0"><div class="ft">'+esc(i.t)+'</div><div class="fx">'+esc(i.x)+'</div></div><div class="fa"><button class="linkbtn" data-act="compose" data-uid="'+i.uid+'" data-sug="'+esc(i.sug)+'">Giao việc</button></div></div>').join('');
-  return '<div class="card"><h2>Việc cần xử lý <span class="badge '+(items.some(i=>i.lv==='bad')?'bad':'warn')+'">'+items.length+'</span></h2><div class="hsub">Xếp theo độ khẩn, hệ thống tự phát hiện từ báo cáo của nhân sự.</div><div class="feed">'+rows+'</div>'+(items.length>LIM?'<div style="margin-top:8px"><button class="linkbtn" data-act="showAll">'+(ST.showAll?'Thu gọn':'Xem thêm '+(items.length-LIM)+' việc')+'</button></div>':'')+'</div>';
+  const rows=items.slice(0,ST.showAll?60:LIM).map(i=>'<tr class="fr '+i.lv+'"><td class="fl"><span class="fdot '+i.lv+'">'+esc(i.ic)+'</span></td><td><div class="ft">'+esc(i.t)+'</div><div class="fx">'+esc(i.x)+'</div></td><td class="r nowrap"><button class="mini" data-act="compose" data-uid="'+i.uid+'" data-sug="'+esc(i.sug)+'">Giao việc</button></td></tr>').join('');
+  return '<div class="card"><h2>Việc cần xử lý <span class="badge '+(items.some(i=>i.lv==='bad')?'bad':'warn')+'">'+items.length+'</span></h2><div class="hsub">Xếp theo độ khẩn, hệ thống tự phát hiện từ báo cáo của nhân sự.</div><div class="tblwrap"><table class="t ftb"><thead><tr><th></th><th>Việc</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+(items.length>LIM?'<div style="margin-top:8px"><button class="linkbtn" data-act="showAll">'+(ST.showAll?'Thu gọn':'Xem thêm '+(items.length-LIM)+' việc')+'</button></div>':'')+'</div>';
 }
+
 
 /* ====== Thẻ nhân sự ====== */
 function srCard(c,date){
@@ -1006,9 +1049,8 @@ function filterList(list){
   return l;
 }
 function viewMode(n){
-  if(isNarrow(900))return 'cards';
   let v=ST.view;if(!v){try{v=localStorage.getItem('asm-view');}catch(e){}}
-  return v==='cards'||v==='table'?v:(n>8?'table':'cards');
+  return v==='cards'||v==='table'?v:'table';
 }
 function toolsHTML(counts,n){
   const fl=[['all','Tất cả'],['call','🔥 Cần gọi ngay ('+counts.call+')'],['todo','Chưa gửi ('+counts.todo+')'],['help','Cần hỗ trợ ('+counts.help+')'],['behind','Chậm tiến độ ('+counts.behind+')']],vm=viewMode(n);
@@ -1028,22 +1070,22 @@ function tableViewHTML(list,date){
   const lvCls=l=>l==='ok'||l==='warn'||l==='bad'?l:'';
   const rows=list.map(c=>{
     const e=c.e||{},g=NG[c.m.nganh]||NG[2],dayR=c.dayPlan>0&&c.sub?c.dayAch/c.dayPlan:null;
-    const help=e.help?'<div style="margin-top:3px"><span class="badge bad" title="'+esc(e.note||'')+'">Cần hỗ trợ</span></div>':'';
-    const bar=c.total>0?'<div class="mp2"><div class="prog '+(c.level==='bad'?'bad':c.level==='warn'?'warn':'')+'"><i style="width:'+Math.min(100,(c.pct||0)*100).toFixed(1)+'%"></i>'+(c.expPct!=null?'<span class="mk" style="left:'+Math.min(100,c.expPct*100).toFixed(1)+'%" title="Mốc kế hoạch"></span>':'')+'</div><span class="small nowrap"><b>'+fmt(c.ach,1)+'</b> / '+fmt(c.total)+' <span class="muted">('+pc(c.pct)+')</span></span></div><div class="tiny muted">còn thiếu '+fmt(Math.max(0,c.total-c.ach),1)+' tr</div>':'<span class="muted small">Chưa lập kế hoạch</span>';
+    const help=e.help?'<div style="margin-top:3px"><span class="badge bad" title="'+esc(e.note||'')+'"><span class="hm">Cần hỗ trợ</span><span class="mo2">Hỗ trợ</span></span></div>':'';
+    const bar=c.total>0?'<div class="mp2"><div class="prog '+(c.level==='bad'?'bad':c.level==='warn'?'warn':'')+'"><i style="width:'+Math.min(100,(c.pct||0)*100).toFixed(1)+'%"></i>'+(c.expPct!=null?'<span class="mk" style="left:'+Math.min(100,c.expPct*100).toFixed(1)+'%" title="Mốc kế hoạch"></span>':'')+'</div><span class="small nowrap"><b>'+fmt(c.ach,1)+'</b> / '+fmt(c.total)+' <span class="muted">('+pc(c.pct)+')</span></span></div><div class="tiny muted hm">còn thiếu '+fmt(Math.max(0,c.total-c.ach),1)+' tr</div>':'<span class="muted small">Chưa lập kế hoạch</span>';
     return '<tr class="trow'+(c.level==='bad'?' lv-bad':'')+'" data-act="detail" data-uid="'+c.m.uid+'">'+
-      '<td class="selc"><input type="checkbox" data-tsel="'+c.m.uid+'"'+(ST.sel[c.m.uid]?' checked':'')+' aria-label="Chọn '+esc(c.name)+'"></td>'+
-      '<td class="nmc"><div class="pn"><span class="av" style="background:'+avCol(c.m.email)+'">'+esc(ini(c.name))+'</span><div style="min-width:0"><button class="lnk" data-act="detail" data-uid="'+c.m.uid+'">'+esc(c.name)+'</button><div class="tiny muted"><i class="dot" style="background:'+g.col+'"></i>'+g.n+(c.m.province?' · '+esc(c.m.province):'')+'</div></div></div></td>'+
-      '<td><span class="st '+c.status+'">'+stText(c)+'</span>'+help+'</td>'+
-      '<td class="r nowrap">'+(c.e?'<b>'+fmt(c.dayAch,1)+'</b>':'<span class="muted">–</span>')+'<div class="tiny muted">KH '+fmt(c.dayPlan,1)+(dayR!=null?' · '+pc(dayR):'')+'</div></td>'+
+      '<td class="selc hm"><input type="checkbox" data-tsel="'+c.m.uid+'"'+(ST.sel[c.m.uid]?' checked':'')+' aria-label="Chọn '+esc(c.name)+'"></td>'+
+      '<td class="nmc"><div class="pn"><span class="av" style="background:'+avCol(c.m.email)+'">'+esc(ini(c.name))+'</span><div style="min-width:0"><button class="lnk" data-act="detail" data-uid="'+c.m.uid+'" title="'+esc(c.name)+'"><span class="fn">'+esc(c.name)+'</span><span class="sn">'+esc(shortName(c.name))+'</span></button><div class="tiny muted"><i class="dot" style="background:'+g.col+'"></i>'+g.n+(c.m.province?'<span class="hm"> · '+esc(c.m.province)+'</span>':'')+'</div></div></div></td>'+
+      '<td><span class="st '+c.status+'"><span class="hm">'+stText(c)+'</span><span class="mo2">'+({done:'✓ '+(c.e&&c.e.sub?hhmm(c.e.sub):''),wait:'Chờ',late:'Quá giờ',missed:'Chưa gửi',weekly:'Theo tuần',off:'Nghỉ',future:'—'}[c.status])+'</span></span>'+help+'</td>'+
+      '<td class="r nowrap">'+(c.e?'<b>'+fmt(c.dayAch,1)+'</b>':'<span class="muted">–</span>')+'<div class="tiny muted"><span class="hm">KH '+fmt(c.dayPlan,1)+(dayR!=null?' · ':'')+'</span>'+(dayR!=null?pc(dayR):'')+'</div></td>'+
       '<td>'+bar+'</td>'+
-      '<td class="small">'+groupCell(c,date)+'</td>'+
+      '<td class="small hm">'+groupCell(c,date)+'</td>'+
       '<td class="r">'+(c.ratio!=null?'<span class="pill2 '+lvCls(c.level)+'">'+pc(c.ratio)+'</span>':'<span class="muted">–</span>')+'</td>'+
-      '<td class="r">'+(c.projPct!=null?pc(c.projPct):'–')+'</td>'+
-      '<td class="r">'+(c.cov==null?'–':pc(c.cov))+'</td>'+
-      '<td class="r nowrap">'+fmt(e.htpp)+' · '+fmt(e.so)+'</td>'+
-      '<td class="r nowrap"><button class="mini" data-act="compose" data-uid="'+c.m.uid+'">Giao việc</button></td></tr>';
+      '<td class="r hm">'+(c.projPct!=null?pc(c.projPct):'–')+'</td>'+
+      '<td class="r hm">'+(c.cov==null?'–':pc(c.cov))+'</td>'+
+      '<td class="r nowrap hm">'+fmt(e.htpp)+' · '+fmt(e.so)+'</td>'+
+      '<td class="r nowrap hm"><button class="mini" data-act="compose" data-uid="'+c.m.uid+'">Giao việc</button></td></tr>';
   }).join('');
-  return '<div class="card tcard"><div class="tblwrap"><table class="t tv"><thead><tr><th class="selc"><input type="checkbox" data-tselall="1" aria-label="Chọn tất cả"'+(list.length&&list.every(c=>ST.sel[c.m.uid])?' checked':'')+'></th><th class="nmc">Nhân sự</th><th>Báo cáo</th><th class="r">DS ngày (tr)</th><th>Thực đạt / chỉ tiêu (tr)</th><th>Thực đạt / chỉ tiêu theo nhóm hàng</th><th class="r">So mốc</th><th class="r">Dự báo</th><th class="r">Độ phủ</th><th class="r">HTPP · SO</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  return '<div class="card tcard"><div class="tblwrap"><table class="t tv"><thead><tr><th class="selc hm"><input type="checkbox" data-tselall="1" aria-label="Chọn tất cả"'+(list.length&&list.every(c=>ST.sel[c.m.uid])?' checked':'')+'></th><th class="nmc">Nhân sự</th><th>Báo cáo</th><th class="r">DS ngày<span class="hm"> (tr)</span></th><th>Thực đạt<span class="hm"> / chỉ tiêu (tr)</span></th><th class="hm">Thực đạt / chỉ tiêu theo nhóm hàng</th><th class="r">So mốc</th><th class="r hm">Dự báo</th><th class="r hm">Độ phủ</th><th class="r hm">HTPP · SO</th><th class="hm"></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
 /* ====== Tab: Hôm nay ====== */
@@ -1071,14 +1113,13 @@ function planHTML(){
     const nd=nextWork(c,date),p=c.mp&&c.mp.days[nd]&&!c.mp.days[nd].o?c.mp.days[nd]:null,g=NG[c.m.nganh]||NG[2];
     const given=(c.m.dir||[]).filter(x=>x.date===nd);
     const draft=ST.ndraft[c.m.uid]!=null?ST.ndraft[c.m.uid]:suggestFocus(c,date);
-    return '<div class="plr"><div><div style="display:flex;gap:8px;align-items:center"><label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" data-nsel="'+c.m.uid+'"'+(ST.nsel[c.m.uid]!==false?' checked':'')+' aria-label="Chọn '+esc(c.name)+'"><span class="av" style="background:'+avCol(c.m.email)+';width:34px;height:34px;font-size:12px">'+esc(ini(c.name))+'</span></label><div><div class="b">'+esc(c.name)+'</div><div class="tiny muted"><span class="badge '+g.cls+'">'+g.n+'</span> '+esc(c.m.province||'')+'</div></div></div></div>'+
-      '<div class="small"><div class="b">'+DOWL[dowOf(nd)]+' '+dmy(nd)+'</div>'+(p?'<div>Kế hoạch: <b>'+fmt(p.si,1)+' tr</b> · <b>'+p.vt+'</b> lượt ghé</div>':'<div class="muted">'+(c.hasPlan?'Không có kế hoạch':'Chưa lập kế hoạch tháng')+'</div>')+
-      '<div class="muted">Lũy kế '+pc(c.pct)+' · '+(c.ratio!=null?pc(c.ratio)+' mốc':'chưa có mốc')+'</div></div>'+
-      '<div><textarea data-ndraft="'+c.m.uid+'" rows="3" maxlength="500" aria-label="Trọng tâm cho '+esc(c.name)+'">'+esc(draft)+'</textarea>'+
-      (given.length?given.map(x=>'<div class="done">✓ Đã giao: “'+esc(x.text.slice(0,70))+(x.text.length>70?'…':'')+'” '+(x.done?'· SR đã làm':'· SR chưa xác nhận')+'</div>').join(''):'')+'</div></div>';
+    return '<tr><td data-l="Nhân sự"><label class="pn" style="cursor:pointer"><input type="checkbox" data-nsel="'+c.m.uid+'"'+(ST.nsel[c.m.uid]!==false?' checked':'')+' aria-label="Chọn '+esc(c.name)+'"><span class="av" style="background:'+avCol(c.m.email)+'">'+esc(ini(c.name))+'</span><span style="min-width:0"><b>'+esc(c.name)+'</b><span class="tiny muted" style="display:block"><span class="badge '+g.cls+'">'+g.n+'</span> '+esc(c.m.province||'')+'</span></span></label></td>'+
+      '<td class="small" data-l="Kế hoạch ngày"><div class="b">'+DOWL[dowOf(nd)]+' '+dmy(nd)+'</div>'+(p?'<div>Kế hoạch: <b>'+fmt(p.si,1)+' tr</b> · <b>'+p.vt+'</b> lượt ghé</div>':'<div class="muted">'+(c.hasPlan?'Không có kế hoạch':'Chưa lập kế hoạch tháng')+'</div>')+'<div class="muted">Thực đạt '+pc(c.pct)+' chỉ tiêu · '+(c.ratio!=null?pc(c.ratio)+' mốc':'chưa có mốc')+'</div></td>'+
+      '<td data-l="Trọng tâm giao"><textarea data-ndraft="'+c.m.uid+'" rows="3" maxlength="500" aria-label="Trọng tâm cho '+esc(c.name)+'">'+esc(draft)+'</textarea>'+
+      (given.length?given.map(x=>'<div class="done">✓ Đã giao: “'+esc(x.text.slice(0,70))+(x.text.length>70?'…':'')+'” '+(x.done?'· SR đã làm':'· SR chưa xác nhận')+'</div>').join(''):'')+'</td></tr>';
   }).join('');
   const nSel=all.filter(c=>ST.nsel[c.m.uid]!==false).length;
-  return '<div class="card" style="margin-top:14px"><h2>Kế hoạch làm việc '+DOWL[dowOf(nd0)]+' '+dmy(nd0)+'</h2><div class="hsub">Mỗi người có sẵn một <b>trọng tâm gợi ý</b> dựa trên khoảng cách tiến độ, độ phủ và dự báo của họ. Sửa lại nếu cần rồi gửi một lần cho cả nhóm — nhân sự sẽ thấy trong app của mình.</div><div style="margin-bottom:6px"><button class="aibtn" data-act="aiPlan"'+(ST.ai.plan?' disabled':'')+'>'+(ST.ai.plan?'Đang soạn…':'✦ AI soạn trọng tâm cho cả nhóm')+'</button><div class="aiwarn">AI viết lại từng trọng tâm dựa trên số liệu; bạn vẫn đọc và sửa được trước khi gửi.</div></div>'+rows+'</div>'+
+  return '<div class="card" style="margin-top:14px"><h2>Kế hoạch làm việc '+DOWL[dowOf(nd0)]+' '+dmy(nd0)+'</h2><div class="hsub">Mỗi người có sẵn một <b>trọng tâm gợi ý</b> dựa trên khoảng cách tiến độ, độ phủ và dự báo của họ. Sửa lại nếu cần rồi gửi một lần cho cả nhóm — nhân sự sẽ thấy trong app của mình.</div><div style="margin-bottom:6px"><button class="aibtn" data-act="aiPlan"'+(ST.ai.plan?' disabled':'')+'>'+(ST.ai.plan?'Đang soạn…':'✦ AI soạn trọng tâm cho cả nhóm')+'</button><div class="aiwarn">AI viết lại từng trọng tâm dựa trên số liệu; bạn vẫn đọc và sửa được trước khi gửi.</div></div>'+'<div class="tblwrap"><table class="t plt"><thead><tr><th>Nhân sự</th><th>Ngày làm việc kế tiếp</th><th>Trọng tâm giao (sửa được trước khi gửi)</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
     '<div class="bar"><span><b>'+nSel+'</b> người được chọn</span><span class="sp"></span><button class="pillbtn" data-act="selAll">Chọn/bỏ tất cả</button><button class="pillbtn" data-act="sendPlan"'+(ST.sending||!nSel?' disabled':'')+'>'+(ST.sending?'Đang gửi…':'Gửi trọng tâm cho '+nSel+' người')+'</button></div>';
 }
 
@@ -1132,28 +1173,30 @@ function dayChart(all,dl,sel){
   return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Doanh số cả nhóm theo từng ngày" style="max-height:'+H+'px;touch-action:manipulation">'+g+'</svg>';
 }
 function dayDetailHTML(all,d){
-  const S=dayStats(all,d),dl=monthDays(ST.month),first=dl[0],canPrev=d>first,canNext=d<ST.today&&d<dl[dl.length-1];
+  const S=dayStats(all,d),dl=monthDays(ST.month),canPrev=d>dl[0],canNext=d<ST.today&&d<dl[dl.length-1];
   const rank=x=>x.s.cls==='miss'?0:x.s.help?1:x.s.cls==='bad'?2:x.s.cls==='warn'?3:x.s.cls==='wait'?4:x.s.cls==='ok'?5:6;
   const rows=all.map(c=>({c,s:cellState(c,d)})).sort((a,b)=>rank(a)-rank(b)||a.c.name.localeCompare(b.c.name,'vi'));
-  const pill=s=>s.got?'<span class="dpill '+s.cls+'"><b>'+fmt(s.v,1)+' tr</b>'+(s.pl?'<small>KH '+fmt(s.pl,1)+' · '+pc(s.r)+'</small>':'')+'</span>':
-    s.cls==='miss'?'<span class="dpill miss"><b>Chưa gửi</b><small>quá hạn</small></span>':s.cls==='wait'?'<span class="dpill wait"><b>Chờ báo cáo</b><small>trước '+DEADLINE+'h</small></span>':
-    s.cls==='off'?'<span class="dpill off"><b>Nghỉ</b></span>':s.weekly?'<span class="dpill off"><b>Nhập theo tuần</b></span>':s.noplan?'<span class="dpill off"><b>Chưa có kế hoạch</b></span>':s.cls==='future'?'<span class="dpill off"><b>Chưa tới</b></span>':'';
-  const list=rows.map(x=>'<div class="dr" data-act="detail" data-uid="'+x.c.m.uid+'" data-day="'+d+'"><span class="av" style="background:'+avCol(x.c.m.email)+'">'+esc(ini(x.c.name))+'</span><div class="drt"><b>'+esc(x.c.name)+'</b><div class="tiny muted">'+(NG[x.c.m.nganh]||NG[2]).n+(x.c.m.province?' · '+esc(x.c.m.province):'')+(x.s.help?' · <span style="color:var(--bad);font-weight:700">Cần hỗ trợ</span>':'')+'</div></div>'+pill(x.s)+'</div>').join('');
-  const sub=S.exp?'Đã gửi <b>'+S.sent+'/'+S.exp+'</b> người'+(S.plan>0?' · doanh số <b>'+fmt(S.act,1)+'</b> / kế hoạch '+fmt(S.plan,1)+' tr'+(S.r!=null?' ('+pc(S.r)+')':''):''):'Ngày nghỉ hoặc chưa tới.';
-  return '<div class="card" style="margin-top:12px"><div class="dhd"><button class="iconbtn sm" data-act="hstep" data-v="-1" aria-label="Ngày trước"'+(canPrev?'':' disabled')+'>'+ic('prev',18)+'</button><div class="dhm"><h2 style="margin:0;justify-content:center">'+DOWL[dowOf(d)]+' '+dmy(d)+'/'+d.slice(0,4)+(d===ST.today?' <span class="badge n1">Hôm nay</span>':'')+'</h2><div class="small muted">'+sub+'</div></div><button class="iconbtn sm" data-act="hstep" data-v="1" aria-label="Ngày sau"'+(canNext?'':' disabled')+'>'+ic('next',18)+'</button></div><div class="dlist">'+list+'</div></div>';
+  const stt=s=>s.got?'<span class="st done">✓ <span class="hm">Đã gửi </span>'+hhmm(s.sent)+'</span>':s.cls==='miss'?'<span class="st late">Chưa gửi<span class="hm"> · quá hạn</span></span>':s.cls==='wait'?'<span class="st wait">Chờ<span class="hm"> báo cáo</span></span>':s.cls==='off'?'<span class="st off">Nghỉ</span>':s.weekly?'<span class="st weekly">Nhập theo tuần</span>':s.noplan?'<span class="st off">Chưa có kế hoạch</span>':'<span class="st future">Chưa tới</span>';
+  const body=rows.map(x=>{const s=x.s;return '<tr class="trow'+(s.cls==='miss'||s.help?' lv-bad':'')+'" data-act="detail" data-uid="'+x.c.m.uid+'" data-day="'+d+'"><td class="nmc"><div class="pn"><span class="av" style="background:'+avCol(x.c.m.email)+'">'+esc(ini(x.c.name))+'</span><div style="min-width:0"><button class="lnk" data-act="detail" data-uid="'+x.c.m.uid+'" data-day="'+d+'" title="'+esc(x.c.name)+'"><span class="fn">'+esc(x.c.name)+'</span><span class="sn">'+esc(shortName(x.c.name))+'</span></button>'+(s.help?'<div class="tiny" style="color:var(--bad);font-weight:700">Cần hỗ trợ</div>':'')+'</div></div></td>'+
+    '<td class="hm small">'+(NG[x.c.m.nganh]||NG[2]).n+(x.c.m.province?' · '+esc(x.c.m.province):'')+'</td><td>'+stt(s)+'</td>'+
+    '<td class="r">'+(s.got?'<b>'+fmt(s.v,1)+'</b>':'<span class="muted">–</span>')+'</td><td class="r hm">'+(s.pl?fmt(s.pl,1):'<span class="muted">–</span>')+'</td>'+
+    '<td class="r">'+(s.got&&s.pl?'<span class="pill2 '+(s.cls==='ok'||s.cls==='warn'||s.cls==='bad'?s.cls:'')+'">'+pc(s.r)+'</span>':'<span class="muted">–</span>')+'</td></tr>';}).join('');
+  const foot='<tr><td>Tổng ('+rows.length+' người)</td><td class="hm"></td><td>'+(S.exp?S.sent+'/'+S.exp+' đã gửi':'')+'</td><td class="r">'+fmt(S.act,1)+'</td><td class="r hm">'+fmt(S.plan,1)+'</td><td class="r">'+(S.r!=null?pc(S.r):'–')+'</td></tr>';
+  return '<div class="card" style="margin-top:12px"><div class="dhd"><button class="iconbtn sm" data-act="hstep" data-v="-1" aria-label="Ngày trước"'+(canPrev?'':' disabled')+'>'+ic('prev',18)+'</button><div class="dhm"><h2 style="margin:0;justify-content:center">'+DOWL[dowOf(d)]+' '+dmy(d)+'/'+d.slice(0,4)+(d===ST.today?' <span class="badge n1">Hôm nay</span>':'')+'</h2><div class="small muted">Chạm vào một người để xem chi tiết và giao việc</div></div><button class="iconbtn sm" data-act="hstep" data-v="1" aria-label="Ngày sau"'+(canNext?'':' disabled')+'>'+ic('next',18)+'</button></div><div class="tblwrap"><table class="t dtb"><thead><tr><th class="nmc">Nhân sự</th><th class="hm">Ngành · tỉnh</th><th>Trạng thái</th><th class="r">DS (tr)</th><th class="r hm">KH (tr)</th><th class="r">% KH</th></tr></thead><tbody>'+body+'</tbody><tfoot>'+foot+'</tfoot></table></div></div>';
 }
 const shortName=n=>{const w=String(n||'').trim().split(/\s+/);return w.length>2?w.slice(-2).join(' '):w.join(' ');};
 function heatGridHTML(all,days,mode){
-  const n=days.length,dl=monthDays(ST.month),tot=days.map(d=>dayStats(all,d));
-  const head='<div class="wg-h"><div></div>'+days.map(d=>'<button class="wg-d'+(d===ST.today?' today':'')+(dowOf(d)===0?' sun':'')+'" data-act="hday" data-d="'+d+'" aria-label="Chọn ngày '+dmy(d)+'"><span>'+DOWL[dowOf(d)]+'</span><b>'+d.slice(8)+'</b></button>').join('')+'</div>';
+  const dl=monthDays(ST.month),tot=days.map(d=>dayStats(all,d)),month=mode==='month';
+  const head='<tr><th class="nmc">Nhân sự</th><th class="r hm">Đã báo cáo</th><th class="r hm">So mốc</th>'+days.map(d=>'<th class="dhc"><button class="wg-d'+(d===ST.today?' today':'')+(dowOf(d)===0?' sun':'')+'" data-act="hday" data-d="'+d+'" aria-label="Chọn ngày '+dmy(d)+'"><span>'+DOWL[dowOf(d)]+'</span><b>'+d.slice(8)+'</b></button></th>').join('')+'</tr>';
   const body=all.map(c=>{
     let req=0,got=0;dl.forEach(d=>{const s=cellState(c,d);req+=s.req;got+=s.got;});
-    const pill=c.ratio!=null?'<span class="pill2 '+(c.level==='ok'||c.level==='warn'||c.level==='bad'?c.level:'')+'">'+pc(c.ratio)+'</span>':'';
-    return '<div class="wg-r"><div class="wg-n"><button class="lnk" data-act="detail" data-uid="'+c.m.uid+'" title="'+esc(c.name)+'">'+esc(mode==='month'?c.name:shortName(c.name))+'</button><div class="tiny muted"><b'+(req>got?' style="color:var(--bad)"':'')+'>'+got+'</b>/'+req+' ngày '+pill+'</div></div>'+
-      days.map(d=>{const s=cellState(c,d);return '<button class="hc '+s.cls+(d===ST.today?' todayc':'')+'" data-act="detail" data-uid="'+c.m.uid+'" data-day="'+d+'" title="'+esc(s.tip)+'" aria-label="'+esc(c.name+' '+s.tip)+'">'+s.txt+'</button>';}).join('')+'</div>';
+    const pill=c.ratio!=null?'<span class="pill2 '+(c.level==='ok'||c.level==='warn'||c.level==='bad'?c.level:'')+'">'+pc(c.ratio)+'</span>':'<span class="muted">–</span>';
+    const gt='<b'+(req>got?' style="color:var(--bad)"':'')+'>'+got+'</b>/'+req+' ngày';
+    return '<tr><td class="nmc"><button class="lnk" data-act="detail" data-uid="'+c.m.uid+'" title="'+esc(c.name)+'">'+esc(month?c.name:shortName(c.name))+'</button><div class="tiny muted mo">'+gt+' '+(c.ratio!=null?pill:'')+'</div></td><td class="r hm nowrap">'+gt+'</td><td class="r hm">'+pill+'</td>'+
+      days.map(d=>{const s=cellState(c,d);return '<td class="hcell"><button class="hc '+s.cls+(d===ST.today?' todayc':'')+'" data-act="detail" data-uid="'+c.m.uid+'" data-day="'+d+'" title="'+esc(s.tip)+'" aria-label="'+esc(c.name+' '+s.tip)+'">'+s.txt+'</button></td>';}).join('')+'</tr>';
   }).join('');
-  const foot='<div class="wg-r foot"><div class="wg-n tiny muted">Tổng nhóm (tr)</div>'+tot.map(s=>'<div class="hf">'+(s.sent?fmt(s.act):'')+'</div>').join('')+'</div>';
-  return '<div class="wg'+(mode==='month'?' m':'')+'" style="--n:'+n+'">'+head+body+foot+'</div>';
+  const foot='<tr><td class="nmc">Tổng nhóm (tr)</td><td class="hm"></td><td class="hm"></td>'+tot.map(s=>'<td class="hcell" style="text-align:center">'+(s.sent?fmt(s.act):'')+'</td>').join('')+'</tr>';
+  return '<div class="tblwrap"><table class="t wgt'+(month?' m':'')+'"><thead>'+head+'</thead><tbody>'+body+'</tbody><tfoot>'+foot+'</tfoot></table></div>';
 }
 function heatHTML(){
   const date=ST.date,all=filterList(members().map(m=>calc(m,date)));
