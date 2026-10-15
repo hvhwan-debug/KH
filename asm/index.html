@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Quản lý ASM · Nền tảng quản lí báo cáo nhân sự SR</title>
+<title>Trang quản lý dành cho ASM · Quản lí báo cáo nhân sự SR</title>
 <meta name="theme-color" content="#02A79E">
 <meta name="robots" content="noindex">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -1149,7 +1149,7 @@ const isNarrow=w=>!!(window.matchMedia&&window.matchMedia('(max-width:'+(w||700)
 function headerHTML(){
   const me=ST.data&&ST.data.me,asms=ST.data&&ST.data.asms||[];
   const dn=ST.date===ST.today?'Hôm nay · '+dmy(ST.date):DOWL[dowOf(ST.date)]+' · '+dmy(ST.date)+'/'+ST.date.slice(0,4);
-  return '<div class="top"><div class="topin"><div class="brand"><img src="../icon-192.png" alt=""><div class="bt"><b>Quản lý ASM</b><span>Nền tảng quản lí báo cáo nhân sự SR</span></div></div><div class="sp"></div>'+
+  return '<div class="top"><div class="topin"><div class="brand"><img src="../icon-192.png" alt=""><div class="bt"><b>Quản lý đội bán hàng</b><span>Nền tảng quản lí báo cáo nhân sự SR</span></div></div><div class="sp"></div>'+
     (me&&me.admin?'<select class="sel" id="asmSel" aria-label="Xem theo ASM"><option value="">Tất cả ASM</option>'+asms.map(a=>'<option value="'+esc(a.email)+'"'+(ST.asm===a.email?' selected':'')+'>'+esc(a.name||a.email)+'</option>').join('')+'</select>':'')+
     '<div class="datenav"><button data-act="dprev" aria-label="Ngày trước" title="Ngày trước">'+ic('prev',18)+'</button><span class="dv" aria-live="polite">'+dn+'</span><button data-act="dnext" aria-label="Ngày sau" title="Ngày sau"'+(ST.date>=ST.today?' disabled':'')+'>'+ic('next',18)+'</button></div>'+
     (ST.date!==ST.today?'<button class="pillbtn" data-act="dtoday">Hôm nay</button>':'')+
@@ -1910,7 +1910,7 @@ async function pgRun(){
 /* ====== Đăng nhập ====== */
 function loginHTML(){
   const L=ST.login,reg=L.tab==='register';
-  return '<div class="lgn"><aside class="lg-hero" aria-hidden="true"><div class="lg-hero-in"><div class="lg-brand"><img src="../icon-192.png" alt="">Livotec · Karofi</div><h2>Quản lý đội bán hàng kênh GT trong một màn hình</h2><ul class="lg-feats"><li>Theo dõi báo cáo và doanh số từng SR theo ngày</li><li>Cảnh báo sớm người chậm tiến độ hoặc cần hỗ trợ</li><li>Giao việc và nhắc nhở cả nhóm chỉ với vài chạm</li></ul></div></aside><main class="lg-pane"><div class="card lg-card fadein"><h1>Quản lý ASM</h1><p class="lg-sub">Đăng nhập để theo dõi nhân sự bán hàng kênh GT</p>'+
+  return '<div class="lgn"><aside class="lg-hero" aria-hidden="true"><div class="lg-hero-in"><div class="lg-brand"><img src="../icon-192.png" alt="">Livotec · Karofi</div><h2>Quản lý đội bán hàng kênh GT trong một màn hình</h2><ul class="lg-feats"><li>Theo dõi báo cáo và doanh số từng SR theo ngày</li><li>Cảnh báo sớm người chậm tiến độ hoặc cần hỗ trợ</li><li>Giao việc và nhắc nhở cả nhóm chỉ với vài chạm</li></ul></div></aside><main class="lg-pane"><div class="card lg-card fadein"><h1>Trang quản lý dành cho ASM</h1><p class="lg-sub">ASM là quản lý bán hàng khu vực. Đăng nhập để theo dõi nhân sự bán hàng (SR) kênh GT của bạn.</p>'+
     (L.otp?'<div class="fld"><label for="lOtp">Mã xác minh 6 số đã gửi tới '+esc(L.email)+'</label><input id="lOtp" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" style="letter-spacing:.3em;font-weight:700"></div><button class="btn" data-act="lsubmit"'+(L.busy?' disabled':'')+'>Xác minh</button><div style="margin-top:8px"><button class="linkbtn" data-act="lcancel">Quay lại</button></div>':
     (L.tab==='forgot'?'<div class="b" style="font-size:16px;margin:4px 0">Quên mật khẩu</div><div class="small muted">Nhập email đã đăng ký. Chúng tôi gửi một liên kết đặt mật khẩu mới (có hiệu lực 1 giờ). Đặt xong, bạn quay lại trang này để đăng nhập.</div><div class="fld"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="email" maxlength="120" value="'+esc(L.email)+'"></div><button class="btn" data-act="lforgot"'+(L.busy?' disabled':'')+'>Gửi liên kết đặt lại</button><div style="margin-top:8px"><button class="linkbtn" data-act="ltab" data-v="login">← Quay lại đăng nhập</button></div>':
     '<div class="seg" style="margin-bottom:6px"><button data-act="ltab" data-v="login" aria-pressed="'+!reg+'">Đăng nhập</button><button data-act="ltab" data-v="register" aria-pressed="'+reg+'">Đăng ký</button></div>'+
