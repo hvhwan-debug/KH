@@ -24,38 +24,69 @@ function daysBetween(a, b) {
 }
 
 const TAGS = {
-  info: { label: "THAM KHẢO", bg: "#DDF4F1", fg: "#007A73" },
-  warn: { label: "CẢNH BÁO", bg: "#FBDEDA", fg: "#C0352B" },
-  remind: { label: "NHẮC VIỆC", bg: "#FFEFC9", fg: "#9A6200" }
+  info: { label: "THAM KHẢO", bg: "#DDF4F1", fg: "#007A73", accent: "#02A79E" },
+  warn: { label: "CẢNH BÁO", bg: "#FBE3DF", fg: "#C0352B", accent: "#D64535" },
+  remind: { label: "NHẮC VIỆC", bg: "#FFF0CF", fg: "#9A6200", accent: "#E3A63B" }
 };
+const FONT = "'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
 
 function layout(o) {
   const t = TAGS[o.tone] || TAGS.info;
-  const tiles = (o.tiles || []).map((x) =>
-    '<td style="background:#DDF4F1;border-radius:10px;padding:10px 12px;vertical-align:top;width:' + Math.floor(100 / o.tiles.length) + '%">' +
-    '<div style="font-size:22px;font-weight:800;color:#007A73;line-height:1.2">' + esc(x.n) + "</div>" +
-    '<div style="font-size:12px;color:#4F6F6C;line-height:1.35">' + esc(x.l) + "</div></td>").join('<td style="width:8px"></td>');
-  const secs = (o.sections || []).map((s) =>
-    '<div style="margin:14px 0 4px;font-weight:700;color:' + (s.warn ? "#C0352B" : "#06302D") + '">' + esc(s.h) + "</div>" +
-    '<ul style="margin:0;padding-left:18px;color:#06302D;line-height:1.5">' + s.lines.map((l) => "<li>" + esc(l) + "</li>").join("") + "</ul>").join("");
+  const app = cfg().appUrl || "";
+  const n = (o.tiles || []).length;
+  const tiles = n
+    ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:0;margin:6px 0 4px"><tr>' +
+      o.tiles.map((x) =>
+        '<td class="tile" valign="top" style="width:' + Math.floor(100 / n) + '%;padding:0 ' + (n > 1 ? "4px" : "0") + '">' +
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:#F4FAF9;border:1px solid #D5EAE7;border-radius:12px"><tr><td style="padding:14px 14px 12px">' +
+        '<div style="font-size:24px;line-height:1.15;font-weight:700;color:#06302D;letter-spacing:-.01em">' + esc(x.n) + "</div>" +
+        '<div style="margin-top:4px;font-size:12px;line-height:1.4;color:#5B7471">' + esc(x.l) + "</div></td></tr></table></td>").join("") +
+      "</tr></table>"
+    : "";
+  const secs = (o.sections || []).map((s) => {
+    const c = s.warn ? "#C0352B" : o.tone === "remind" ? "#E3A63B" : "#02A79E";
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 0"><tr>' +
+      '<td width="4" style="width:4px;background:' + c + ';border-radius:4px;font-size:0;line-height:0">&nbsp;</td>' +
+      '<td style="padding:2px 0 2px 14px">' +
+      '<div style="font-size:15px;font-weight:700;line-height:1.35;color:' + (s.warn ? "#C0352B" : "#06302D") + '">' + esc(s.h) + "</div>" +
+      '<ul style="margin:8px 0 0;padding-left:18px;color:#2B4543;font-size:14px;line-height:1.6">' +
+      s.lines.map((l) => '<li style="margin:0 0 4px">' + esc(l) + "</li>").join("") + "</ul></td></tr></table>";
+  }).join("");
+  const code = o.code
+    ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 4px"><tr><td align="center" style="background:#F4FAF9;border:1.5px dashed #9ED6CF;border-radius:14px;padding:20px 12px">' +
+      '<div style="font-size:12px;color:#5B7471;letter-spacing:.08em;font-weight:600;margin-bottom:6px">MÃ XÁC MINH</div>' +
+      '<div style="font-family:Consolas,\'SF Mono\',Menlo,monospace;font-size:34px;font-weight:700;letter-spacing:10px;color:#067A8C;padding-left:10px">' + esc(o.code) + "</div></td></tr></table>"
+    : "";
+  const cta = o.cta
+    ? '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 4px"><tr><td align="center" bgcolor="#067A8C" style="border-radius:12px;background:linear-gradient(135deg,#02A79E,#067A8C)">' +
+      '<a href="' + esc(o.ctaUrl) + '" target="_blank" style="display:inline-block;padding:13px 28px;font-family:' + FONT + ';font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px">' + esc(o.cta) + "</a></td></tr></table>" +
+      '<div style="margin-top:10px;font-size:11.5px;line-height:1.5;color:#7A8E8B;word-break:break-all">Nếu nút không bấm được, sao chép liên kết này vào trình duyệt:<br><a href="' + esc(o.ctaUrl) + '" style="color:#067A8C;text-decoration:underline">' + esc(o.ctaUrl) + "</a></div>"
+    : "";
+  const foot = o.footer ? esc(o.footer) : o.unsub
+    ? "Email tự động, số liệu chỉ mang tính tham khảo, tính từ các số bạn tự nhập; không phải cam kết hay chỉ tiêu chính thức.<br>" +
+      '<a href="' + esc(o.unsub) + '" style="color:#067A8C;text-decoration:underline">Tắt email tự động</a> &nbsp;·&nbsp; hoặc vào Thiết lập › Tài khoản &amp; email trong ứng dụng.'
+    : "Email bảo mật: không chia sẻ nội dung này cho người khác. Nếu không phải bạn yêu cầu, hãy bỏ qua email này.";
   const html =
-    '<div style="background:#E9F6F4;padding:16px;font-family:Arial,Helvetica,sans-serif">' +
-    '<table role="presentation" style="max-width:560px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;width:100%;border-collapse:collapse">' +
-    '<tr><td style="background:#02A79E;color:#fff;padding:14px 18px;font-weight:700">Livotec · Trợ lí thiết lập kế hoạch bán hàng</td></tr>' +
-    '<tr><td style="padding:18px">' +
-    '<span style="display:inline-block;background:' + t.bg + ";color:" + t.fg + ';font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;letter-spacing:.04em">' + t.label + "</span>" +
-    '<h1 style="font-size:19px;margin:10px 0 10px;color:#06302D">' + esc(o.title) + "</h1>" +
-    (tiles ? '<table role="presentation" style="width:100%;border-collapse:separate"><tr>' + tiles + "</tr></table>" : "") +
-    (o.code ? '<div style="margin:14px 0;text-align:center"><span style="display:inline-block;background:#E9F6F4;color:#06302D;font-size:30px;font-weight:800;letter-spacing:8px;padding:14px 20px;border-radius:12px">' + esc(o.code) + "</span></div>" : "") +
-    secs +
-    (o.cta ? '<div style="margin:18px 0 6px"><a href="' + esc(o.ctaUrl) + '" style="background:#007A73;color:#fff;text-decoration:none;padding:11px 18px;border-radius:10px;font-weight:700;display:inline-block">' + esc(o.cta) + "</a></div>" : "") +
+    '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">' +
+    "<style>@media only screen and (max-width:520px){.wrap{padding:12px 8px!important}.pad{padding:22px 18px!important}.fpad{padding-left:18px!important;padding-right:18px!important}.hpad{padding:18px!important}.tile{display:block!important;width:100%!important;padding:0 0 8px!important}.h1{font-size:20px!important}}</style></head>" +
+    '<body style="margin:0;padding:0;background:#EEF3F5">' +
+    '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:#EEF3F5">' + esc(o.title) + "&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>" +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EEF3F5"><tr><td class="wrap" align="center" style="padding:28px 16px">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border:1px solid #DCE5E9;border-radius:18px;border-collapse:separate;overflow:hidden;font-family:' + FONT + '">' +
+    '<tr><td class="hpad" bgcolor="#067A8C" style="background:#067A8C;background:linear-gradient(135deg,#02A79E 0%,#067A8C 100%);padding:22px 28px">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
+    '<td valign="middle" style="padding-right:12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td width="40" height="40" align="center" valign="middle" bgcolor="#ffffff" style="width:40px;height:40px;background:#ffffff;border-radius:11px;font-family:' + FONT + ';font-size:22px;font-weight:800;color:#067A8C;line-height:40px">L</td></tr></table></td>' +
+    '<td valign="middle"><div style="font-size:17px;font-weight:700;color:#ffffff;letter-spacing:.01em;line-height:1.2">Livotec</div>' +
+    '<div style="font-size:12.5px;color:#D3F1EE;line-height:1.35;margin-top:2px">Trợ lí thiết lập kế hoạch bán hàng · Kênh GT</div></td></tr></table></td></tr>' +
+    '<tr><td class="pad" style="padding:28px 30px 26px;color:#06302D">' +
+    '<span style="display:inline-block;background:' + t.bg + ";color:" + t.fg + ';font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;letter-spacing:.07em">' + t.label + "</span>" +
+    '<h1 class="h1" style="font-size:23px;line-height:1.3;margin:12px 0 16px;color:#06302D;font-weight:700;letter-spacing:-.01em">' + esc(o.title) + "</h1>" +
+    tiles + code + secs + cta +
     "</td></tr>" +
-    '<tr><td style="padding:12px 18px 16px;font-size:11.5px;color:#4F6F6C;border-top:1px solid #C6E4E0;line-height:1.5">' +
-    (o.footer ? esc(o.footer) : o.unsub
-      ? "Email tự động, số liệu chỉ mang tính tham khảo, tính từ các số bạn tự nhập; không phải cam kết hay chỉ tiêu chính thức.<br>" +
-        '<a href="' + esc(o.unsub) + '" style="color:#007A73">Tắt email tự động</a> · Hoặc vào Thiết lập › Tài khoản &amp; email trong ứng dụng.'
-      : "Email bảo mật — không chia sẻ liên kết này cho người khác. Nếu không phải bạn yêu cầu, hãy bỏ qua email này.") +
-    "</td></tr></table></div>";
+    '<tr><td class="fpad" style="background:#F6F9FA;border-top:1px solid #E3EBEE;padding:16px 30px 20px;font-size:12px;line-height:1.6;color:#6A7C80">' + foot +
+    '<div style="margin-top:10px;font-size:11.5px;color:#9AABAF">© Livotec · Trợ lí thiết lập kế hoạch bán hàng kênh GT</div></td></tr>' +
+    "</table></td></tr></table></body></html>";
   const text = [
     "[" + t.label + "] " + o.title, "",
     o.code ? "Mã: " + o.code : "",
