@@ -575,6 +575,22 @@ table.stt select.provsel{max-width:190px}
 .onb{max-width:760px}.onbl{margin:8px 0 14px;padding-left:20px;line-height:1.7}.onbl li{margin-bottom:6px}
 @media (max-width:1099px){.dg4{grid-template-columns:repeat(2,minmax(0,1fr))}.dgrid{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:700px){.dg4{gap:8px}.gk{padding:10px;gap:8px}.gk-v{font-size:18px}.gk .gg{width:60px;height:60px}.pcols{grid-template-columns:1fr}.dbt{font-size:15px}}
+
+/* ===== Điện thoại: thanh đầu trang một hàng, banner gọn, vẫn thấy % thực đạt ===== */
+@media (max-width:480px){
+  .topin{padding:8px 10px;gap:6px}
+  .brand img{width:30px;height:30px}
+  .datenav button{width:30px;height:32px}
+  .datenav .dv{font-size:13px;padding:0 4px}
+  .iconbtn{width:34px;height:34px}
+}
+@media (max-width:340px){.asmhero.compact .asmhero-t{font-size:18px}.topin{gap:4px;padding:8px}.datenav button{width:26px}.datenav .dv{font-size:12px;padding:0 2px}.iconbtn{width:32px;height:32px}}
+@media (max-width:700px){
+  .asmhero.compact .asmhero-in{padding-right:62px}
+  .asmhero.compact .asmhero-kpi{display:block;position:absolute;right:16px;top:12px}
+  .asmhero.compact .asmhero-kpi b{font-size:22px}
+  .asmhero.compact .asmhero-kpi span{font-size:10.5px;display:block;max-width:60px;line-height:1.2}
+}
 </style>
 </head>
 <body>
@@ -1720,7 +1736,7 @@ function asmBanner(tab,all){
     heat:'Xem ai báo cáo, ai hụt doanh số theo từng ngày trong tháng.',
     org:'Quản lý thành viên, ASM và nhật ký thao tác.'
   };
-  return '<div class="asmhero compact"><div class="asmhero-in"><div class="asmhero-eb">Tháng '+mm+' · '+fmt(n)+' nhân sự'+(me.admin?'':' trong nhóm của bạn')+'</div>'+
+  return '<div class="asmhero compact"><div class="asmhero-in"><div class="asmhero-eb">Tháng '+mm+' · '+fmt(n)+' nhân sự'+(me.admin?'':'<span class="hm"> trong nhóm của bạn</span>')+'</div>'+
     '<div class="asmhero-t">'+greet+', '+esc(greetName(me))+'</div><p class="asmhero-s">'+(SUB[tab]||'')+'</p></div>'+
     (T.total>0?'<div class="asmhero-kpi"><b>'+pc(T.pct)+'</b><span>thực đạt / chỉ tiêu</span></div>':'')+'</div>';
 }
@@ -1730,7 +1746,7 @@ function dashHTML(){
   const mm=ST.month.slice(5)+'/'+ST.month.slice(0,4);
   const greet=vnHour()<11?'Chào buổi sáng':vnHour()<18?'Chào buổi chiều':'Chào buổi tối';
   const heroWho=greetName(me);
-  const hero='<div class="asmhero"><div class="asmhero-in"><div class="asmhero-eb">Tháng '+mm+' · '+fmt(big?ST.data.total:all.length)+' nhân sự'+(me.admin?'':' trong nhóm của bạn')+'</div>'+
+  const hero='<div class="asmhero"><div class="asmhero-in"><div class="asmhero-eb">Tháng '+mm+' · '+fmt(big?ST.data.total:all.length)+' nhân sự'+(me.admin?'':'<span class="hm"> trong nhóm của bạn</span>')+'</div>'+
     '<h1 class="asmhero-t">'+greet+', '+esc(heroWho)+'</h1>'+
     '<p class="asmhero-s">'+(T.total>0?'Cả nhóm đang đạt <b>'+pc(T.pct)+'</b> chỉ tiêu tháng — còn '+T.left+' ngày làm việc để về đích.':'Thêm nhân sự và chỉ tiêu tháng để bắt đầu theo dõi cả nhóm.')+'</p></div>'+
     (T.total>0?'<div class="asmhero-kpi"><b>'+pc(T.pct)+'</b><span>thực đạt / chỉ tiêu</span></div>':'')+'</div>';

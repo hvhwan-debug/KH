@@ -1517,6 +1517,35 @@ b,strong,th,h1,h2,h3,h4,h5,h6{font-weight:600}
 .rp-send{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 .dir-card{border-left:4px solid var(--brand)}
 .dir-card .remrow:first-of-type{border-top:0}
+
+/* ===== Điện thoại: banner đầu trang gọn, dạng lưới (nhãn một dòng, vòng tiến độ nằm cạnh nút, tên ngắn trên nút tài khoản) ===== */
+.af-short{display:none}
+@media (max-width:600px){
+  .pt-a,.pt-c{display:none}
+  .af-full{display:none}.af-short{display:inline}
+  .top{padding-bottom:34px}
+  .top .topin{display:grid!important;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;row-gap:4px;align-items:center;justify-content:stretch!important;flex-direction:initial!important;padding:16px 16px 4px!important}
+  .heroflex{display:contents!important}
+  .top .pill{grid-column:1/-1;grid-row:1;max-width:calc(100% - 112px)!important;min-height:30px;display:inline-flex!important;align-items:center;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis;justify-self:start}
+  #title{grid-column:1/-1;grid-row:2;margin:2px 0 0!important}
+  #hinc{grid-column:1/-1;grid-row:3}
+  #htag{display:none!important}
+  .hcta-row{grid-column:1;grid-row:4;margin:6px 0 0!important}
+  .heroside{grid-column:2;grid-row:4;margin:6px 0 0!important;align-self:center!important;justify-self:end}
+  .hdate{grid-column:1/-1;grid-row:5;margin:6px 0 0!important}
+  #hstat{grid-column:1/-1;grid-row:6}
+  header.top.cmp #title{grid-column:1}
+  header.top.cmp .heroside{grid-row:2;grid-column:2;margin:0!important}
+  .hring{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:16px;padding:8px 12px;gap:3px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .hpct{font-size:24px}
+  .hring span{font-size:10.5px;max-width:84px}
+  .hcta{white-space:nowrap}
+}
+@media (max-width:370px){.hcta{padding:11px 12px;font-size:13.5px;gap:6px}.hring{padding:6px 10px}.hpct{font-size:22px}}
+/* thẻ nhắc "Hôm qua chưa nhập / Kết quả hôm qua": tiêu đề dài không đẩy nút Ẩn xuống dòng riêng */
+.daybar .row.wrapx{flex-wrap:nowrap;align-items:flex-start}
+.daybar .row.wrapx>h2,.daybar .row.wrapx>b{flex:1 1 auto;min-width:0}
+.daybar .row.wrapx>.link{flex:0 0 auto;padding-top:2px}
 </style>
 </head>
 <body>
@@ -3354,7 +3383,8 @@ function updateAcctFab(){
   b.className='acctFab'+(acctNeedsLogin()?' needs':'');
   const label=AUTH.user?(AUTH.user.name||AUTH.user.email.split('@')[0]):'Đăng nhập';
   b.title=AUTH.user?(AUTH.user.name?AUTH.user.name+' · '+AUTH.user.email:AUTH.user.email):'Đăng nhập';
-  b.innerHTML=ic('user',15)+'<span class="acctFab-tx">'+escH(label)+'</span>';
+  const short=String(label).trim().split(/\s+/).pop();
+  b.innerHTML=ic('user',15)+'<span class="acctFab-tx"><span class="af-full">'+escH(label)+'</span><span class="af-short">'+escH(short)+'</span></span>';
 }
 
 /* ---------- Chiến lược chia chỉ tiêu ---------- */
@@ -3910,7 +3940,7 @@ function renderTabs(){
   const _mm=S.month.split('-');document.getElementById('title').innerHTML='Tháng '+_mm[1]+'<span class="hm-y">/'+_mm[0]+'</span>';
   try{const hd=document.querySelector('header.top');if(hd)hd.classList.toggle('cmp',S.tab==='setup');}catch(e){}
   document.getElementById('hdate').innerHTML=headerDate(wks);
-  {const pt=document.getElementById('pilltx');if(pt)pt.textContent='Kế hoạch bán hàng · '+NGX().short+(AUTH&&AUTH.user&&(AUTH.user.name||AUTH.user.email)?' · '+(AUTH.user.name||String(AUTH.user.email).split('@')[0]):'');}
+  {const pt=document.getElementById('pilltx');if(pt){const nm=(AUTH&&AUTH.user&&(AUTH.user.name||AUTH.user.email))?(AUTH.user.name||String(AUTH.user.email).split('@')[0]):'';pt.innerHTML='<span class="pt-a">Kế hoạch bán hàng · </span><span class="pt-b">'+escH(NGX().short)+'</span>'+(nm?'<span class="pt-c"> · '+escH(nm)+'</span>':'');}}
   document.getElementById('hinc').innerHTML=headerIncome();
   document.getElementById('htag').innerHTML=headerTag(wks);
   document.getElementById('hcta').innerHTML=headerCta();
