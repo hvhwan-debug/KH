@@ -15,7 +15,7 @@ module.exports = async function (context, req) {
     const key = "user/" + u.uid + ".json", now = Date.now();
     const doc = (await store.get(key)) || { v: 1, uid: u.uid, email: u.email, rev: 0, state: null, digest: null, prefs: {}, sent: {} };
     doc.testSent = (doc.testSent || []).filter((t) => now - t < 86400000);
-    if (doc.testSent.length >= 3) return reply(context, 429, { ok: false, error: "Chỉ gửi thử tối đa 3 lần mỗi ngày." });
+    if (doc.testSent.length >= 20) return reply(context, 429, { ok: false, error: "Đã gửi thử khá nhiều lần hôm nay, thử lại sau 1 giờ." });
     doc.testSent.push(now);
     await store.put(key, doc);
     const L = layout({
