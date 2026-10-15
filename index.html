@@ -490,6 +490,12 @@ details[open]>.sech::after{transform:rotate(-135deg);margin-top:3px}
 .num.sm.tm{width:132px;min-width:132px;font-size:15px;text-align:center;padding-left:6px;padding-right:6px}
 .remrow .rl{flex:1 1 90px}
 .remblk{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.acctsec{background:var(--bg);border-radius:14px;padding:4px 14px 10px;margin-top:12px}
+.acctsec-h{display:flex;align-items:center;gap:7px;font-weight:700;font-size:13px;padding-top:10px;padding-bottom:2px}
+.acctsec .remrow{padding:9px 0}
+.acctsec .remrow+.remrow{border-top:1px solid var(--line)}
+.acctsec-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:0;border-top:1px solid var(--line);padding:9px 0;cursor:pointer;font:inherit;font-weight:600;color:var(--muted);text-align:left}
+.acctsec-toggle i{font-style:normal;font-size:11px}
 .savebar{display:flex;align-items:center;gap:10px;margin-top:12px}
 
 /* ===== Điểm cần chú ý ===== */
@@ -2939,7 +2945,7 @@ function factorsCard(weeks,mode){
 }
 
 /* ---------- Tài khoản, đồng bộ, email ---------- */
-let AUTH={avail:null,user:null,busy:false,email:'',name:'',authTab:'login',msg:'',ackOff:false,isAdmin:false,forgot:false,forgotMsg:'',forgotBusy:false,resetToken:null,resetMsg:'',resetBusy:false,otpPending:false,otpPass:'',otpMsg:'',otpBusy:false,sync:{st:'idle',msg:'',conflict:false}};
+let AUTH={avail:null,user:null,busy:false,email:'',name:'',authTab:'login',msg:'',ackOff:false,isAdmin:false,forgot:false,forgotMsg:'',forgotBusy:false,resetToken:null,resetMsg:'',resetBusy:false,otpPending:false,otpPass:'',otpMsg:'',otpBusy:false,mailExpand:false,sync:{st:'idle',msg:'',conflict:false}};
 let syncTimer=null,syncBusy=false,syncDirty=false,lastCheck=0;
 const TOKEN_KEY='livotec-sr-token';
 function getToken(){try{return localStorage.getItem(TOKEN_KEY)||'';}catch(e){return '';}}
@@ -3183,17 +3189,21 @@ function acctData(){
     const sw=k=>'<button class="sw2" role="switch" aria-checked="'+!!R[k]+'" data-act="mailTog" data-k="'+k+'" aria-label="Bật tắt"></button>';
     const row=(k,lab,tag,sub)=>'<div class="remrow"><div class="rl"><b>'+lab+'</b> <span class="badge '+tag[1]+'">'+tag[0]+'</span><div class="small muted">'+sub+'</div></div>'+sw(k)+'</div>';
     body='<div class="remrow" style="border-top:0"><div class="rl"><b>'+escH(A.user.name||A.user.email)+'</b>'+(A.user.name?'<div class="small muted">'+escH(A.user.email)+'</div>':'')+'<div class="small'+(st==='err'?'':' muted')+'"'+(st==='err'?' style="color:var(--bad)"':'')+'>'+escH(A.sync.msg||'')+'</div></div><button class="btn ghost sm" data-act="acSync">Đồng bộ ngay</button></div>'+
-      '<div class="remblk"><b>Email tự động</b>'+
-      '<div class="remrow"><div class="rl"><b>Nhận email</b><div class="small muted">Gửi tới '+escH(A.user.email)+'. Giờ gửi theo mục "Nhắc việc".</div></div>'+sw('on')+'</div>'+
-      (R.on?row('morning','Sáng: kết quả hôm qua',['Tham khảo','ok'],'Chỉ khi hôm qua là ngày làm việc')+
-        row('evening','Tối: nhắc nhập số liệu',['Nhắc','warn'],'Chỉ khi hôm nay chưa nhập')+
-        row('warn','Khuyến nghị rủi ro cao',['Khuyến nghị','bad'],'Gộp vào email buổi sáng, không lặp lại hằng ngày')+
-        row('weekly','Tổng kết tuần (thứ Hai)',['Tham khảo','ok'],'Kết quả tuần trước so với kế hoạch')+
-        '<div class="askrow"><button class="btn ghost sm" data-act="acMailTest">Gửi email thử</button></div>':'')+'</div>'+
-      '<div class="remblk"><b>Công việc</b><div class="small muted">'+NGX().name+(S.asm&&S.asm.email?' · ASM '+escH(S.asm.name||S.asm.email):' · chưa chọn ASM')+'</div>'+(canChangeWork()?'<div class="askrow"><button class="btn ghost sm" data-act="workOpen">'+(S.asm&&S.asm.email?'Đổi ngành / ASM':'Chọn ngành / ASM')+'</button></div>':'<div class="small muted" style="margin-top:6px">Ngành và ASM do ASM hoặc quản trị viên quản lý, bạn không tự đổi được. Cần đổi hãy nhờ ASM của bạn.</div>')+'</div>'+
-      (A.isAdmin||A.isAsm?'<div class="askrow"><a class="btn ghost sm" href="/asm/" style="text-decoration:none">'+ic('users',14)+' Mở trang quản lý ASM</a></div>':'')+
-      (A.isAdmin?'<div class="askrow"><button class="btn ghost sm" data-act="adminOpen">'+ic('users',14)+' Quản trị thành viên</button></div>':'')+
-      '<div class="askrow"><button class="btn ghost sm" data-act="acLogout">Đăng xuất</button></div>';
+      '<div class="acctsec"><div class="acctsec-h">'+ic('mail',15)+' Email tự động</div>'+
+      '<div class="remrow" style="border-top:0"><div class="rl"><b>Nhận email</b><div class="small muted">Gửi tới '+escH(A.user.email)+'. Giờ gửi theo mục "Nhắc việc".</div></div>'+sw('on')+'</div>'+
+      (R.on?('<button class="acctsec-toggle small" data-act="mailExpand">'+(A.mailExpand?'Ẩn bớt tuỳ chỉnh':'Tuỳ chỉnh loại email nhận')+'<i>'+(A.mailExpand?'▲':'▼')+'</i></button>'+
+        (A.mailExpand?row('morning','Sáng: kết quả hôm qua',['Tham khảo','ok'],'Chỉ khi hôm qua là ngày làm việc')+
+          row('evening','Tối: nhắc nhập số liệu',['Nhắc','warn'],'Chỉ khi hôm nay chưa nhập')+
+          row('warn','Khuyến nghị rủi ro cao',['Khuyến nghị','bad'],'Gộp vào email buổi sáng, không lặp lại hằng ngày')+
+          row('weekly','Tổng kết tuần (thứ Hai)',['Tham khảo','ok'],'Kết quả tuần trước so với kế hoạch'):'')+
+        '<div class="askrow" style="padding:10px 0 2px"><button class="btn ghost sm" data-act="acMailTest">Gửi email thử</button></div>'):'')+'</div>'+
+      '<div class="acctsec"><div class="acctsec-h">'+ic('users',15)+' Công việc</div>'+
+        '<div class="small muted" style="padding-bottom:10px">'+NGX().name+(S.asm&&S.asm.email?' · ASM '+escH(S.asm.name||S.asm.email):' · chưa chọn ASM')+'</div>'+
+        (canChangeWork()?'<div class="askrow" style="padding-bottom:10px"><button class="btn ghost sm" data-act="workOpen">'+(S.asm&&S.asm.email?'Đổi ngành / ASM':'Chọn ngành / ASM')+'</button></div>':'<div class="small muted" style="padding-bottom:10px">Ngành và ASM do ASM hoặc quản trị viên quản lý, bạn không tự đổi được. Cần đổi hãy nhờ ASM của bạn.</div>')+
+        (A.isAdmin||A.isAsm?'<a class="btn ghost sm" href="/asm/" style="text-decoration:none;display:block;text-align:center;margin-bottom:10px">'+ic('users',14)+' Mở trang quản lý ASM</a>':'')+
+        (A.isAdmin?'<button class="btn ghost sm" data-act="adminOpen" style="margin-bottom:2px">'+ic('users',14)+' Quản trị thành viên</button>':'')+
+      '</div>'+
+      '<div class="askrow" style="margin-top:16px"><button class="btn ghost sm" data-act="acLogout" style="color:var(--bad);border-color:var(--bad)">Đăng xuất</button></div>';
   }
   return{sum,body};
 }
@@ -4578,6 +4588,7 @@ document.addEventListener('click',function(e){
   else if(a==='acLogout'){acLogout();return;}
   else if(a==='acSync'){syncDirty=true;syncPush({});return;}
   else if(a==='acMailTest'){acMailTest();return;}
+  else if(a==='mailExpand'){AUTH.mailExpand=!AUTH.mailExpand;render();return;}
   else if(a==='adminOpen'){openAdminSheet();return;}
   else if(a==='adminClose'){closeAdminSheet();return;}
   else if(a==='adminBack'){closeAdminDetail();return;}
