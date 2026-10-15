@@ -7,6 +7,7 @@ const org = require("../_lib/org");
 const PROV = require("../_lib/provinces");
 const crypto = require("crypto");
 const { uidOf } = require("../_lib/session");
+const { normName, normPhone } = require("../_lib/phone");
 
 module.exports = async function (context, req) {
   try {
@@ -25,11 +26,11 @@ module.exports = async function (context, req) {
         const uid = k.replace(/^user\//, "").replace(/\.json$/, "");
         if (known[uid]) continue;
         let d = null; try { d = await store.get(k); } catch (e) { continue; }
-        if (d && d.email) orphans.push({ uid, email: d.email, name: d.name || "", disabled: !!d.disabled });
+        if (d && d.email) orphans.push({ uid, email: d.email, name: d.name || "", phone: d.phone || "", disabled: !!d.disabled });
       }
       const plist = await org.pmap(profiles, async (p) => {
         let ud = null; try { ud = await store.get("user/" + p.uid + ".json"); } catch (e) {}
-        return { uid: p.uid, email: p.email, name: (ud && ud.name) || p.name || "", nganh: p.nganh, asmEmail: p.asmEmail || "", locked: !!p.locked, province: p.province || "", disabled: !!(ud && ud.disabled) };
+        return { uid: p.uid, email: p.email, name: (ud && ud.name) || p.name || "", phone: (ud && ud.phone) || p.phone || "", nganh: p.nganh, asmEmail: p.asmEmail || "", locked: !!p.locked, province: p.province || "", disabled: !!(ud && ud.disabled) };
       }, 40);
       return reply(context, 200, {
         ok: true, asms: roster.asms, profiles: plist, orphans, invites: Object.values((await org.getInvites()).items), audit: (await org.getAudit()).slice(-25).reverse(), me: u.uid
@@ -39,21 +40,69 @@ module.exports = async function (context, req) {
     if (!requireAjax(context, req)) return;
     const b = req.body || {};
 
-    if (["editMember", "setPassword", "setDisabled", "signOut", "deleteMember"].indexOf(b.op) >= 0) {
+    if (["editMember", "changeEmail", "setPassword", "setDisabled", "signOut", "deleteMember"].indexOf(b.op) >= 0) {
       const uid = String(b.uid || "");
       if (!/^[a-f0-9]{16,40}$/.test(uid)) return reply(context, 400, { ok: false, error: "Sai mã thành viên." });
       const ukey = "user/" + uid + ".json", ud = await store.get(ukey);
       if (!ud) return reply(context, 404, { ok: false, error: "Không tìm thấy thành viên." });
       const self = uid === u.uid, now = Date.now();
       if (b.op === "editMember") {
-        const name = org.str(b.name, 80);
-        if (!name) return reply(context, 400, { ok: false, error: "Họ tên không được để trống." });
-        ud.name = name; await store.put(ukey, ud);
+        const name = normName(b.name);
+        if (!name) return reply(context, 400, { ok: false, field: "name", error: "Họ và tên phải đầy đủ (ít nhất 2 từ, ví dụ: Nguyễn Văn A)." });
+        let phone = ud.phone || "";
+        if (b.phone != null) {
+          if (String(b.phone).trim()) { phone = normPhone(b.phone); if (!phone) return reply(context, 400, { ok: false, field: "phone", error: "Số điện thoại không hợp lệ (10 số, ví dụ 0901234567)." }); }
+          else phone = "";
+        }
         let pv = null;
         if (b.province != null && String(b.province).trim()) { pv = PROV.canonProvince(b.province); if (!pv) return reply(context, 400, { ok: false, error: "Tỉnh/thành không có trong danh sách. Hãy chọn từ danh sách." }); }
+        ud.name = name; ud.phone = phone; await store.put(ukey, ud);
         const p = await org.getProfile(uid);
-        if (p) { p.name = name; if (b.province != null) p.province = pv || ""; await org.putProfile(p); }
+        if (p) { p.name = name; p.phone = phone; if (b.province != null) p.province = pv || ""; await org.putProfile(p); }
+        const rkey = "report/" + uid + ".json", rp = await store.get(rkey);
+        if (rp) { rp.name = name; await store.put(rkey, rp); }
         await org.audit(u.email, "Sửa thông tin", ud.email);
+      } else if (b.op === "changeEmail") {
+        // Đổi email đăng nhập: mã tài khoản (uid) được tính từ email nên phải chuyển toàn bộ dữ liệu sang uid mới.
+        const oldEmail = org.lc(ud.email), newEmail = org.lc(b.email);
+        if (!org.validEmail(newEmail)) return reply(context, 400, { ok: false, field: "email", error: "Email mới không hợp lệ." });
+        if (newEmail === oldEmail) return reply(context, 400, { ok: false, field: "email", error: "Email mới trùng với email hiện tại." });
+        if (!emailAllowed(newEmail)) return reply(context, 400, { ok: false, field: "email", error: "Email mới chưa được phép dùng ứng dụng (kiểm tra ALLOWED_EMAILS / tên miền cho phép)." });
+        if (self) return reply(context, 400, { ok: false, error: "Không thể tự đổi email của tài khoản đang đăng nhập." });
+        if (isAdmin(oldEmail)) return reply(context, 400, { ok: false, error: "Email quản trị viên được đặt trong cấu hình máy chủ (ADMIN_EMAILS), không đổi tại đây." });
+        if (isAdmin(newEmail)) return reply(context, 400, { ok: false, field: "email", error: "Email mới trùng email quản trị viên (ADMIN_EMAILS), hãy chọn email khác." });
+        const nuid = uidOf(newEmail), nkey = "user/" + nuid + ".json";
+        if (await store.get(nkey)) return reply(context, 409, { ok: false, field: "email", error: "Email này đã có tài khoản khác." });
+        const inv0 = await org.getInvites();
+        if (inv0.items[newEmail]) return reply(context, 409, { ok: false, field: "email", error: "Email này đang có lời mời chờ đăng nhập. Hãy xoá lời mời đó trước." });
+
+        // 1) Ghi bản mới trước (nếu lỗi giữa chừng, dữ liệu cũ vẫn còn nguyên)
+        await store.put(nkey, Object.assign({}, ud, { uid: nuid, email: newEmail, sessAfter: now }));
+        for (const k of ["report/", "directive/"]) {
+          const d = await store.get(k + uid + ".json");
+          if (d) { if (d.email) d.email = newEmail; if (d.uid) d.uid = nuid; await store.put(k + nuid + ".json", d); }
+        }
+        const pr = await org.getProfile(uid);
+        if (pr) { await org.dropProfile(uid); pr.uid = nuid; pr.email = newEmail; await org.putProfile(pr); }
+        // 2) Cập nhật nơi tham chiếu email cũ (nếu là ASM: danh sách ASM, nhóm của họ, lời mời)
+        if (org.findAsm(roster, oldEmail)) {
+          roster.asms = roster.asms.map((a) => (a.email === oldEmail ? Object.assign({}, a, { email: newEmail }) : a));
+          await org.putRoster(roster);
+          for (const q of await org.listProfiles()) {
+            let ch = false;
+            if (org.lc(q.asmEmail) === oldEmail) { q.asmEmail = newEmail; ch = true; }
+            if (Array.isArray(q.blocked) && q.blocked.indexOf(oldEmail) >= 0) { q.blocked = q.blocked.map((x) => (x === oldEmail ? newEmail : x)); ch = true; }
+            if (ch) await org.putProfile(q);
+          }
+          const inv = await org.getInvites(); let ci = false;
+          Object.values(inv.items).forEach((i) => { if (org.lc(i.asmEmail) === oldEmail) { i.asmEmail = newEmail; ci = true; } });
+          if (ci) await org.putInvites(inv);
+        }
+        // 3) Xoá khoá cũ
+        await store.del(ukey);
+        for (const k of ["report/", "directive/"]) { try { await store.del(k + uid + ".json"); } catch (e) {} }
+        await org.audit(u.email, "Đổi email từ " + oldEmail, newEmail);
+        return reply(context, 200, { ok: true, uid: nuid, email: newEmail });
       } else if (b.op === "setPassword") {
         const pw = String(b.password || "");
         if (pw.length < 8) return reply(context, 400, { ok: false, error: "Mật khẩu do quản trị viên đặt cần ít nhất 8 ký tự." });

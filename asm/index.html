@@ -284,7 +284,7 @@ table.t td.r,table.t th.r{text-align:right}
 .modal{width:min(520px,100%);background:var(--surface);border-radius:20px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.35);max-height:92vh;overflow:auto}
 .modal h3{margin:0 0 10px;font-size:17px}
 .fld{margin:10px 0}.fld label{display:block;font-weight:600;font-size:12.5px;margin-bottom:5px;color:var(--muted)}
-.fld input[type=text],.fld input[type=email],.fld input[type=password],.fld input[type=date],.fld select{width:100%;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:9px 12px;font-size:14px}
+.fld input[type=text],.fld input[type=email],.fld input[type=tel],.fld input[type=password],.fld input[type=date],.fld select{width:100%;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:9px 12px;font-size:14px}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
 .seg button{border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 11px;font-weight:600;font-size:12.5px;color:var(--muted)}
 .seg button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -1783,7 +1783,8 @@ function mgmtHTML(){
   const M=ST.mm,p=mmFind(M.uid);if(!p)return '';
   const self=ST.org.me===p.uid;
   return '<div class="scrim center" data-act="mmClose"><div class="modal" role="dialog" aria-label="Quản lý thành viên" data-stop="1"><div style="display:flex;gap:10px;align-items:center"><span class="av" style="background:'+avCol(p.email)+'">'+esc(ini(p.name||p.email))+'</span><div style="min-width:0"><h3 style="margin:0">'+esc(p.name||p.email)+'</h3><div class="tiny muted">'+esc(p.email)+(p.disabled?' · <b style="color:var(--bad)">Đã khoá</b>':'')+'</div></div></div>'+
-    '<div class="fld"><label for="mmName">Họ tên</label><input id="mmName" type="text" maxlength="80" value="'+esc(p.name||'')+'"></div><div class="fld"><label for="mmProv">Tỉnh / thành phố</label>'+provSelect('id="mmProv"',p.province,'— Chưa chọn —')+'</div><button class="btn" data-act="mmSave">Lưu thông tin</button>'+
+    '<div class="fld"><label for="mmName">Họ và tên đầy đủ</label><input id="mmName" type="text" maxlength="80" value="'+esc(p.name||'')+'"></div><div class="fld"><label for="mmPhone">Số điện thoại</label><input id="mmPhone" type="tel" inputmode="tel" maxlength="20" placeholder="0901 234 567" value="'+esc(p.phone||'')+'"></div><div class="fld"><label for="mmProv">Tỉnh / thành phố</label>'+provSelect('id="mmProv"',p.province,'— Chưa chọn —')+'</div><button class="btn" data-act="mmSave">Lưu thông tin</button>'+
+    (self?'':'<h3 style="margin:18px 0 4px;font-size:14px">Đổi email đăng nhập</h3><div class="small muted">Toàn bộ dữ liệu (báo cáo, việc đã giao, nhóm) chuyển theo email mới. Người này bị đăng xuất khỏi mọi thiết bị và đăng nhập lại bằng email mới với mật khẩu hiện tại.</div><div class="fld"><input id="mmEmail" type="email" autocomplete="off" maxlength="120" placeholder="Email mới" aria-label="Email mới"></div><button class="btn ghost" data-act="mmEmail">Đổi email</button>')+
     '<h3 style="margin:18px 0 4px;font-size:14px">Đặt mật khẩu mới</h3><div class="small muted">Người này sẽ bị đăng xuất khỏi mọi thiết bị và phải đăng nhập bằng mật khẩu mới. Hãy gửi mật khẩu qua kênh an toàn và nhắc họ đổi lại.</div><div class="fld"><input id="mmPw" type="password" autocomplete="new-password" maxlength="200" placeholder="Mật khẩu mới (từ 8 ký tự)" aria-label="Mật khẩu mới"></div><button class="btn ghost" data-act="mmPw">Đặt mật khẩu</button>'+
     (self?'<div class="small muted" style="margin-top:16px">Đây là tài khoản của bạn, nên không thể khoá, xoá hay đăng xuất từ đây.</div>':
     '<h3 style="margin:18px 0 6px;font-size:14px">Tài khoản</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" style="flex:1" data-act="mmDis" data-v="'+(p.disabled?'0':'1')+'">'+(p.disabled?'Mở khoá tài khoản':'Khoá tài khoản')+'</button><button class="btn ghost" style="flex:1" data-act="mmOut">Đăng xuất mọi thiết bị</button></div><button class="btn" style="margin-top:10px;background:var(--bad);color:#fff" data-act="mmDel">Xoá tài khoản</button><div class="tiny muted" style="margin-top:6px">Xoá tài khoản là xoá vĩnh viễn số liệu của người đó trên máy chủ, không khôi phục được.</div>')+
@@ -1791,7 +1792,7 @@ function mgmtHTML(){
 }
 async function mmCall(body,okMsg,close){
   const r=await api('POST','/api/org',body);
-  if(r.s===200){ST.mm.err='';if(close)ST.mm=null;toast(okMsg);await loadOrg();}
+  if(r.s===200){ST.mm.err='';if(close)ST.mm=null;toast(okMsg);await loadOrg();if(body.op==='changeEmail'||body.op==='editMember')await loadData(true);}
   else{ST.mm.err=(r.j&&r.j.error)||'Không thực hiện được.';render();}
 }
 async function loadOrg(){
@@ -2170,7 +2171,8 @@ document.addEventListener('click',function(e){
   else if(a==='addAsm'){const F=ST.of;oaSync();if(!F.n1&&!F.n2){ST.orgErr='Chọn ít nhất một ngành.';render();return;}orgCall({op:'addAsm',email:F.email,name:F.name,nganh:[F.n1?1:null,F.n2?2:null].filter(Boolean),provinces:F.pa||[]},'Đã lưu ASM').then(r=>{if(r&&r.s===200)ST.of=null;render();});return;}
   else if(a==='mgmt'){ST.mm={uid:d.uid,err:''};}
   else if(a==='mmClose'){if(b.classList.contains('scrim')&&e.target!==b)return;ST.mm=null;}
-  else if(a==='mmSave'){mmCall({op:'editMember',uid:ST.mm.uid,name:$('#mmName').value,province:$('#mmProv').value},'Đã lưu thông tin');return;}
+  else if(a==='mmSave'){mmCall({op:'editMember',uid:ST.mm.uid,name:$('#mmName').value,phone:$('#mmPhone').value,province:$('#mmProv').value},'Đã lưu thông tin');return;}
+  else if(a==='mmEmail'){const em=String($('#mmEmail').value||'').trim().toLowerCase(),x=mmFind(ST.mm.uid);if(!emailOk(em)){ST.mm.err='Nhập email mới hợp lệ.';render();return;}if(x&&confirm('ĐỔI EMAIL ĐĂNG NHẬP\n\nTừ: '+x.email+'\nSang: '+em+'\n\nNgười này sẽ bị đăng xuất khỏi mọi thiết bị và phải đăng nhập bằng email mới (mật khẩu giữ nguyên). Tiếp tục?'))mmCall({op:'changeEmail',uid:ST.mm.uid,email:em},'Đã đổi email thành '+em,true);return;}
   else if(a==='mmPw'){const pw=$('#mmPw').value;if(pw.length<8){ST.mm.err='Mật khẩu cần ít nhất 8 ký tự.';render();return;}mmCall({op:'setPassword',uid:ST.mm.uid,password:pw},'Đã đặt mật khẩu mới');return;}
   else if(a==='mmDis'){mmCall({op:'setDisabled',uid:ST.mm.uid,disabled:d.v==='1'},d.v==='1'?'Đã khoá tài khoản':'Đã mở khoá');return;}
   else if(a==='mmOut'){if(confirm('Đăng xuất người này khỏi mọi thiết bị?'))mmCall({op:'signOut',uid:ST.mm.uid},'Đã đăng xuất mọi thiết bị');return;}
