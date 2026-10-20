@@ -65,8 +65,10 @@ module.exports = async function (context, req) {
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
         if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
         const settings = await quiz.getSettings();
-        const entry = (await quiz.getIndex()).filter((a) => a.status === "submitted" && quiz.normCode(a.code) === quiz.normCode(c.code))
-          .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0))[0];
+        const mineAll = (await quiz.getIndex()).filter((a) => a.status === "submitted" && quiz.normCode(a.code) === quiz.normCode(c.code))
+          .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
+        const wantId = String((req.query && req.query.id) || "");
+        const entry = wantId ? mineAll.find((a) => a.id === wantId) : mineAll[0];
         const attempt = entry && (await quiz.getAttempt(entry.id));
         if (!attempt || attempt.status !== "submitted") return reply(context, 404, { ok: false, error: "Nhân viên này chưa có bài làm đã nộp." });
         let paper = attempt.paper, source = "snapshot", partial = false;
@@ -77,6 +79,53 @@ module.exports = async function (context, req) {
         }
         if (!paper.length) return reply(context, 404, { ok: false, error: "Không còn bản sao bài làm này (câu hỏi đã bị xoá khỏi ngân hàng đề trước khi bài được lưu bản sao)." });
         return reply(context, 200, { ok: true, employee: { code: c.code, name: c.name || "" }, summary: summaryOf(entry, settings, !!viewer.isAdmin), paper, source, partial, photo: typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "", serverNow: Date.now() });
+      }
+      if (op === "profile") {
+        // Hồ sơ kiểm tra của MỘT nhân viên trong phạm vi: điểm từng kỳ (so với trung bình đội & thứ hạng),
+        // kết quả theo mảng kiến thức, câu sai lặp lại. Không kèm thiết bị/vị trí.
+        const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
+        if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
+        const settings = await quiz.getSettings();
+        const idx = (await quiz.getIndex()).filter((a) => a.status === "submitted");
+        const inMine = {}; mine.forEach((x) => { inMine[quiz.normCode(x.code)] = 1; });
+        // Bài nộp gần nhất của mỗi người trong phạm vi, theo từng kỳ -> trung bình đội & thứ hạng
+        const team = {};
+        idx.forEach((a) => { const k = quiz.normCode(a.code); if (!inMine[k]) return; const p = a.period || "";
+          const t = (team[p] = team[p] || {}); if (!t[k] || (a.submittedAt || 0) > (t[k].submittedAt || 0)) t[k] = a; });
+        const mineList = idx.filter((a) => quiz.normCode(a.code) === quiz.normCode(c.code)).sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0));
+        const lo = settings.complianceLowMin * 10;
+        const history = mineList.map((a) => {
+          const t = Object.values(team[a.period || ""] || {}); const ps = t.map((x) => x.pct || 0);
+          const latestInPeriod = (team[a.period || ""] || {})[quiz.normCode(c.code)];
+          return { id: a.id, period: a.period || "", score: a.score, total: a.total, pct: a.pct, passed: quiz.passState(a.pct, settings), compliancePoints: a.compliancePoints,
+            submittedAt: a.submittedAt, durationSec: a.durationSec, flags: a.flags || null, proof: quiz.proofCode(a.id), wrong: a.wrong, blank: a.blank,
+            latest: !!latestInPeriod && latestInPeriod.id === a.id,
+            teamAvg: ps.length ? Math.round(ps.reduce((x, y) => x + y, 0) / ps.length * 10) / 10 : null, teamSize: ps.length,
+            rank: ps.length ? 1 + ps.filter((v) => v > (a.pct || 0)).length : null, weak: (a.pct || 0) < lo };
+        });
+        // Mảng kiến thức + câu sai lặp lại: đọc bản sao bài làm (tối đa 12 bài gần nhất)
+        const cats = {}, wq = {};
+        const recent = mineList.slice(-12);
+        const atts = await Promise.all(recent.map((a) => quiz.getAttempt(a.id).catch(() => null)));
+        const lastId = mineList.length ? mineList[mineList.length - 1].id : "";
+        let lastWrong = [];
+        atts.forEach((at, i) => {
+          if (!at || !Array.isArray(at.paper)) return; const p = recent[i].period || "";
+          at.paper.forEach((q) => {
+            const cat = q.category || "Khác"; const x = (cats[cat] = cats[cat] || { category: cat, n: 0, ok: 0, last: { n: 0, ok: 0 } });
+            x.n++; if (q.ok) x.ok++; if (recent[i].id === lastId) { x.last.n++; if (q.ok) x.last.ok++; }
+            if (!q.ok) { const w = (wq[q.text] = wq[q.text] || { text: q.text, category: cat, answer: (q.options || [])[q.correct] || "", times: 0, periods: [] });
+              w.times++; if (w.periods.indexOf(p) < 0) w.periods.push(p);
+              if (recent[i].id === lastId) lastWrong.push({ text: q.text, category: cat, answer: (q.options || [])[q.correct] || "", chosen: q.chosen >= 0 ? (q.options || [])[q.chosen] || "" : null }); }
+          });
+        });
+        const categories = Object.values(cats).map((x) => ({ category: x.category, n: x.n, pct: x.n ? Math.round(x.ok / x.n * 100) : null, lastN: x.last.n, lastPct: x.last.n ? Math.round(x.last.ok / x.last.n * 100) : null })).sort((a, b) => (a.pct || 0) - (b.pct || 0));
+        const repeatWrong = Object.values(wq).filter((w) => w.times >= 2).sort((a, b) => b.times - a.times).slice(0, 10);
+        let status = "none";
+        const act = await quiz.getActive(c.code);
+        if (act) { const t = Object.assign({}, act); quiz.syncAttempt(t, Date.now()); if (t.cursor < t.questionIds.length) status = "doing"; }
+        return reply(context, 200, { ok: true, employee: empView(c), currentPeriod: settings.examPeriod, status, passEnabled: !!settings.passEnabled,
+          complianceLowMin: settings.complianceLowMin, history, categories, repeatWrong, lastWrong: lastWrong.slice(0, 15), papersRead: atts.filter(Boolean).length });
       }
       if (op === "photo") {
         // Ảnh xác nhận khuôn mặt chụp lúc bắt đầu làm bài (bài đã nộp gần nhất, hoặc bài đang làm) - chỉ nhân viên trong phạm vi
