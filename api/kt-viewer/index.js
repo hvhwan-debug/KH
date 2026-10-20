@@ -75,7 +75,18 @@ module.exports = async function (context, req) {
           partial = paper.length < (attempt.questionIds || []).length;
         }
         if (!paper.length) return reply(context, 404, { ok: false, error: "Không còn bản sao bài làm này (câu hỏi đã bị xoá khỏi ngân hàng đề trước khi bài được lưu bản sao)." });
-        return reply(context, 200, { ok: true, employee: { code: c.code, name: c.name || "" }, summary: summaryOf(entry, settings), paper, source, partial, serverNow: Date.now() });
+        return reply(context, 200, { ok: true, employee: { code: c.code, name: c.name || "" }, summary: summaryOf(entry, settings), paper, source, partial, photo: typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "", serverNow: Date.now() });
+      }
+      if (op === "photo") {
+        // Ảnh xác nhận khuôn mặt chụp lúc bắt đầu làm bài (bài đã nộp gần nhất, hoặc bài đang làm) - chỉ nhân viên trong phạm vi
+        const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
+        if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
+        const entry = (await quiz.getIndex()).filter((a) => a.status === "submitted" && quiz.normCode(a.code) === quiz.normCode(c.code))
+          .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0))[0];
+        let attempt = entry && (await quiz.getAttempt(entry.id));
+        if (!attempt) attempt = await quiz.getActive(c.code);
+        const photo = attempt && typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "";
+        return reply(context, 200, { ok: true, photo, takenAt: (attempt && attempt.startedAt) || null });
       }
       if (op === "employee") {
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
