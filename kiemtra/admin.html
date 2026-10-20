@@ -208,6 +208,7 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
           </div>
         </div>
         <label style="display:flex;align-items:center;gap:8px;margin-top:14px"><input type="checkbox" id="exRetake" style="width:18px;height:18px"> Cho phép thí sinh làm lại nhiều lần (đề này)</label>
+        <label style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;padding:10px 12px;border-radius:10px;background:#FFF6E0;border:1.5px solid #F0D58A;color:#6B4A00"><input type="checkbox" id="exPractice" style="width:18px;height:18px;margin-top:2px"> <span><b>Đề thi thử (không phải thi chính thức)</b><br><span class="small" style="color:#6B4A00">Thí sinh thấy dải chữ "THI THỬ" ở mọi màn hình; phiếu kết quả, ảnh chia sẻ và email đều ghi rõ "Thi thử, không phải thi chính thức". Điểm tuân thủ học tập <b>vẫn được quy đổi bình thường</b> (ghi là "nếu thi thật") để thí sinh hình dung điểm của mình.</span></span></label>
         <div class="grid2" style="margin-top:14px">
           <div><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="exComplianceOn" style="width:18px;height:18px"> Bật điểm tuân thủ học tập (đề này)</label></div>
           <div></div>
@@ -679,7 +680,7 @@ async function loadExams(){
   EXAMS = j.exams || [];
   $('exList').innerHTML = EXAMS.map(e =>
     '<tr><td><code>'+esc(e.id)+'</code>'+(e.id===j.currentPeriod?' <span class="badge y">Mặc định</span>':'')+'</td>'+
-    '<td>'+esc(e.title||e.id)+'<div class="small"><a href="/kiemtra/?exam='+encodeURIComponent(e.id)+'" target="_blank" rel="noopener">link thi</a></div></td>'+
+    '<td>'+esc(e.title||e.id)+(e.practice?' <span class="badge" style="background:#FDEBC8;color:#8A5200">Thi thử</span>':'')+'<div class="small"><a href="/kiemtra/?exam='+encodeURIComponent(e.id)+'" target="_blank" rel="noopener">link thi</a></div></td>'+
     '<td class="small">'+(bpTotalOf(e.blueprint) ? '<span class="badge y">Theo quy tắc</span> '+bpTotalOf(e.blueprint)+' câu / '+e.blueprint.rules.length+' quy tắc' : 'Cách cũ · '+(e.questionCount||0)+' câu trong kỳ')+'</td>'+
     '<td class="small">'+esc(examWindowText(e))+'</td><td>'+(e.resultCount||0)+'</td>'+
     '<td class="small">'+examStatusText(e, j.currentPeriod)+'</td>'+
@@ -694,7 +695,7 @@ async function loadExams(){
 function clearExamForm(){
   $('exEditingId').value=''; $('exId').value=''; $('exId').disabled=false; $('exTitle').value=''; $('exShareTitle').value='';
   $('exCount').value=''; $('exBothGD').value=''; $('exSeconds').value=''; $('exPass').value=''; $('exPassOn').checked=false;
-  $('exRetake').checked=false; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
+  $('exRetake').checked=false; $('exPractice').checked=false; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
   $('exDesc').value=''; $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
   BP_RULES = []; renderBpRules(); $('bpPreview').innerHTML=''; $('bpTotal').textContent='';
   msg('exMsg','');
@@ -712,7 +713,7 @@ function editExam(id){
   $('exTitle').value = e.title || ''; $('exShareTitle').value = e.shareTitle || '';
   $('exCount').value = e.questionCount || ''; $('exBothGD').value = e.bothGiaDungCount || '';
   $('exSeconds').value = e.secondsPerQuestion || ''; $('exPass').value = e.passScore || ''; $('exPassOn').checked = !!e.passEnabled;
-  $('exRetake').checked = !!e.allowRetake; $('exComplianceOn').checked = !!e.complianceEnabled;
+  $('exRetake').checked = !!e.allowRetake; $('exPractice').checked = !!e.practice; $('exComplianceOn').checked = !!e.complianceEnabled;
   $('exCHigh').value = e.complianceHighMin || ''; $('exCMid').value = e.complianceMidMin || ''; $('exCLow').value = e.complianceLowMin || '';
   $('exDesc').value = e.description || ''; $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
   document.querySelectorAll('.exSeg').forEach(c => c.checked = (e.segments || []).indexOf(c.value) >= 0);
@@ -726,7 +727,7 @@ async function saveExam(){
     id: $('exEditingId').value || $('exId').value.trim(),
     title: $('exTitle').value.trim(), shareTitle: $('exShareTitle').value.trim(),
     questionCount: $('exCount').value, bothGiaDungCount: $('exBothGD').value, secondsPerQuestion: $('exSeconds').value,
-    passEnabled: $('exPassOn').checked, passScore: $('exPass').value, allowRetake: $('exRetake').checked,
+    passEnabled: $('exPassOn').checked, passScore: $('exPass').value, allowRetake: $('exRetake').checked, practice: $('exPractice').checked,
     complianceEnabled: $('exComplianceOn').checked, complianceHighMin: $('exCHigh').value, complianceMidMin: $('exCMid').value, complianceLowMin: $('exCLow').value,
     description: $('exDesc').value.trim(),
     openAt: localToMs($('exOpen').value), closeAt: localToMs($('exClose').value),

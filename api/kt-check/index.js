@@ -36,7 +36,8 @@ module.exports = async function (context, req) {
       shareTitle: String(settings.shareTitle || "").trim() || settings.examTitle,
       questionCount: settings.blueprint && settings.blueprint.rules && settings.blueprint.rules.length ? quiz.blueprintTotal(settings.blueprint) : settings.questionCount,
       secondsPerQuestion: Math.max(10, settings.secondsPerQuestion || 60),
-      passScore: quiz.passScoreOf(settings)
+      passScore: quiz.passScoreOf(settings),
+      practice: !!settings.practice
     };
 
     if (!settings.allowRetake) {

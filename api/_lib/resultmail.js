@@ -22,7 +22,8 @@ function rebuildDetail(attempt, byId) {
 
 // Gửi email kết quả tới địa chỉ của thí sinh. Ném lỗi nếu không gửi được.
 async function send(attempt, settings, detailLines) {
-  const title = settings.examTitle || "Bài kiểm tra";
+  const practice = !!settings.practice;
+  const title = (practice ? "[THI THỬ] " : "") + (settings.examTitle || "Bài kiểm tra");
   const compliance = attempt.compliancePoints;
   const ps = quiz.passState(attempt.pct, settings); // true/false, hoặc null nếu bài không có ngưỡng đạt
   const { html, text } = layout({
@@ -32,8 +33,8 @@ async function send(attempt, settings, detailLines) {
     tiles: [
       { n: attempt.score + "/" + attempt.total, l: "Số câu đúng" },
       { n: attempt.pct + "%", l: "Tỉ lệ đúng" }
-    ].concat(ps === null ? [] : [{ n: ps ? "ĐẠT" : "CHƯA ĐẠT", l: "Kết quả" }]).concat(compliance != null ? [{ n: compliance + " điểm", l: "Điểm tuân thủ học tập" }] : []),
-    sections: [
+    ].concat(ps === null ? [] : [{ n: ps ? "ĐẠT" : "CHƯA ĐẠT", l: "Kết quả" }]).concat(compliance != null ? [{ n: compliance + " điểm", l: practice ? "Điểm tuân thủ (nếu thi thật)" : "Điểm tuân thủ học tập" }] : []),
+    sections: (practice ? [{ h: "Lưu ý", lines: ["Đây là bài THI THỬ, KHÔNG PHẢI thi chính thức.", compliance != null ? "Điểm tuân thủ ghi trên đây chỉ để bạn hình dung điểm của mình nếu thi thật, không được ghi nhận chính thức." : "Kết quả không được ghi nhận chính thức."] }] : []).concat([
       {
         h: "Thông tin thí sinh",
         lines: [
@@ -45,7 +46,7 @@ async function send(attempt, settings, detailLines) {
         ]
       },
       { h: "Chi tiết bài làm (bản sao câu trả lời)", lines: detailLines }
-    ],
+    ]),
     footer: "Đây là email tự động từ hệ thống kiểm tra. Nếu có thắc mắc về kết quả, vui lòng liên hệ quản trị viên phụ trách."
   });
   const sent = await mail.send({ to: attempt.email, subject: "Kết quả bài kiểm tra: " + title, html, text });

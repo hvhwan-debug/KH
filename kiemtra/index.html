@@ -232,6 +232,13 @@ button,input{font:inherit;color:inherit}
 .proof .qr{margin-left:auto;display:flex;flex-direction:column;align-items:center;gap:5px;flex:0 0 auto;text-decoration:none;color:var(--muted);font-size:11px;font-weight:700;text-align:center}
 .proof .qr canvas{box-sizing:content-box;padding:7px;background:#fff;border:1px solid #D5E9EC;border-radius:12px;display:block;transition:box-shadow .15s,border-color .15s}
 .proof .qr:hover canvas{border-color:var(--brand);box-shadow:0 8px 18px -10px rgba(6,122,140,.7)}
+/* Đề thi thử: dải chữ luôn hiện ở đầu trang + chữ mờ chéo trên nền */
+.practice-bar{position:sticky;top:0;z-index:45;display:flex;align-items:center;justify-content:center;gap:10px;padding:9px 14px;background:repeating-linear-gradient(-45deg,#F59E0B,#F59E0B 14px,#F7B02F 14px,#F7B02F 28px);color:#3D2800;font-weight:800;font-size:14px;letter-spacing:.04em;text-align:center;box-shadow:0 6px 16px -10px rgba(120,70,0,.7)}
+.practice-bar small{font-weight:600;letter-spacing:0;font-size:12.5px}
+.practice-bar.hide{display:none}
+body.practice::before{content:'THI THỬ';position:fixed;inset:0;z-index:0;pointer-events:none;display:grid;place-items:center;font-size:min(34vw,220px);font-weight:900;letter-spacing:.06em;color:rgba(245,158,11,.10);transform:rotate(-24deg);white-space:nowrap}
+body.practice .wrap{position:relative;z-index:1}
+.badge.p{background:#FDEBC8;color:#8A5200}
 .agree{display:flex;align-items:flex-start;gap:12px;padding:13px 15px;border-radius:14px;background:#FFF6E0;border:1.5px solid #F0D58A;color:#6B4A00;text-align:left}
 .agree svg{flex:0 0 auto;margin-top:1px}
 .agree p{margin:0;font-size:13.5px;line-height:1.6}
@@ -254,6 +261,7 @@ body.exam #wm{display:block}
 </style>
 </head>
 <body>
+<div class="practice-bar hide" id="practiceBar" role="status"><span>THI THỬ</span><small>Không phải thi chính thức</small></div>
 <div class="wrap intro" id="app">
   <header class="top">
     <div class="logo" aria-hidden="true">KT</div>
@@ -478,6 +486,7 @@ $('scrCheck').addEventListener('submit', async function(e){
   if (!j.ok){ msg('checkMsg', j.error || 'Có lỗi xảy ra, thử lại sau.'); return; }
   ST.cand = { code:j.candidate.code, name:j.candidate.name, email:j.candidate.email, manager:j.candidate.manager, inCode:code, inEmail:email };
   ST.exam = j.exam || {};
+  applyPractice();
   if (ST.exam.title) $('examTitle').textContent = ST.exam.title;
   if (j.alreadyDone){ renderResult(j.result, true); return; }
   ST.inProgress = j.inProgress || null;
@@ -871,16 +880,28 @@ $('resMail').addEventListener('click', async function(e){
   else { btn.disabled = false; btn.textContent = RESEND_LABEL; resendMsg(esc(j.error || 'Không gửi được email, vui lòng thử lại.'), 'err'); }
 });
 
+// Đề thi thử: hiện dải chữ THI THỬ ở mọi màn hình; vẫn chấm và quy đổi điểm tuân thủ bình thường
+function isPractice(){ return !!(ST.exam && ST.exam.practice); }
+var BASE_TITLE = document.title;
+function applyPractice(){
+  var p = isPractice();
+  $('practiceBar').classList.toggle('hide', !p);
+  document.body.classList.toggle('practice', p);
+  document.title = (p ? '[THI THỬ] ' : '') + BASE_TITLE;
+}
 function renderResult(r, already){
   ST.res = { r:r, already:already };
+  var prac = isPractice();
   var ps = (r.passed === true || r.passed === false) ? r.passed : null; // null = bài không có ngưỡng đạt
   var pct = r.pct == null ? 0 : r.pct, c = ST.cand || {};
   $('rvTitle').textContent = (ST.exam && ST.exam.title) || $('examTitle').textContent || 'Bài kiểm tra';
   $('rvName').textContent = c.name || c.code || '';
   $('rvCode').textContent = c.code ? ('Mã nhân viên: ' + c.code) : '';
   $('rvAv').textContent = initials(c.name || c.code);
-  $('resBadge').innerHTML = '<span class="badge '+(ps===null?'d':ps?'y':'n')+'" style="margin:0">'+(ps===null?ICO_Y+'ĐÃ HOÀN THÀNH':ps?ICO_Y+'ĐẠT':ICO_N+'CHƯA ĐẠT')+'</span>';
-  $('resCheer').textContent = ps === null
+  $('resBadge').innerHTML = '<span class="badge '+(prac?'p':ps===null?'d':ps?'y':'n')+'" style="margin:0">'+(prac?'THI THỬ'+(ps===null?'':ps?' · ĐẠT':' · CHƯA ĐẠT'):ps===null?ICO_Y+'ĐÃ HOÀN THÀNH':ps?ICO_Y+'ĐẠT':ICO_N+'CHƯA ĐẠT')+'</span>';
+  $('resCheer').textContent = prac
+    ? 'Đây là bài thi thử, không phải thi chính thức.' + (r.compliancePoints != null ? ' Điểm tuân thủ bên dưới chỉ để bạn hình dung điểm của mình nếu thi thật.' : '')
+    : ps === null
     ? 'Kết quả của bạn đã được hệ thống ghi nhận.'
     : ps ? 'Chúc mừng bạn đã đạt yêu cầu của bài kiểm tra.'
     : 'Bạn chưa đạt ở lần này. Hãy liên hệ quản trị viên phụ trách để được hướng dẫn thêm.';
@@ -892,7 +913,7 @@ function renderResult(r, already){
   $('resThr').textContent = (ps !== null && r.passScore) ? ('Ngưỡng đạt: ' + r.passScore + '%') : '';
 
   var tl = [{ v:(r.score!=null?r.score:'–')+'/'+(r.total!=null?r.total:'–'), l:'Số câu đúng' }];
-  if (r.compliancePoints != null) tl.push({ v:r.compliancePoints+' điểm', l:'Điểm tuân thủ học tập' });
+  if (r.compliancePoints != null) tl.push({ v:r.compliancePoints+' điểm', l: prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ học tập' });
   if (r.durationSec != null) tl.push({ v:fmtClock(r.durationSec), l:'Thời gian hoàn thành' });
   $('resStats').className = 'stats ' + (tl.length === 3 ? 'c3' : tl.length === 1 ? 'c1' : '');
   $('resStats').innerHTML = tl.map(function(t){ return '<div><b>'+esc(t.v)+'</b><span>'+t.l+'</span></div>'; }).join('');
@@ -983,8 +1004,8 @@ function drawShareCard(ctx, W, H, d){
   tl.forEach(function(l, i){ txt(l, cx + 166, cy + 80 + i * 46, 38, 700, '#fff'); });
   txt('Nền tảng kiểm tra trực tuyến', cx + 166, cy + 80 + tl.length * 46 + 4, 25, 500, 'rgba(255,255,255,.85)');
   // huy hiệu
-  var neutral = (d.passed !== true && d.passed !== false); // bài không có ngưỡng đạt
-  var label = neutral ? 'ĐÃ HOÀN THÀNH' : d.passed ? 'ĐẠT' : 'CHƯA ĐẠT';
+  var neutral = d.practice || (d.passed !== true && d.passed !== false); // bài không có ngưỡng đạt (hoặc thi thử: huy hiệu luôn là THI THỬ)
+  var label = d.practice ? 'THI THỬ' : neutral ? 'ĐÃ HOÀN THÀNH' : d.passed ? 'ĐẠT' : 'CHƯA ĐẠT';
   ctx.font = '800 30px ' + F; var bw = ctx.measureText(label).width + 84;
   rr(cx + 52, cy + 218, bw, 64, 32); ctx.fillStyle = neutral ? '#E4F3F5' : d.passed ? '#DDF1E6' : '#FBE3E0'; ctx.fill();
   var bc = neutral ? '#055A68' : d.passed ? '#17794A' : '#B3261E';
@@ -1016,7 +1037,7 @@ function drawShareCard(ctx, W, H, d){
   // ô số liệu
   y += 38;
   var tiles = [{ v: (d.score != null ? d.score : '–') + '/' + (d.total != null ? d.total : '–'), l: 'Số câu đúng' }];
-  if (d.compliance != null) tiles.push({ v: d.compliance + ' điểm', l: 'Điểm tuân thủ học tập' });
+  if (d.compliance != null) tiles.push({ v: d.compliance + ' điểm', l: d.practice ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ học tập' });
   if (d.clock) tiles.push({ v: d.clock, l: 'Thời gian hoàn thành' });
   var gap = 20, tw = (cw - 104 - gap * (tiles.length - 1)) / tiles.length, th = 150;
   tiles.forEach(function(t, i){
@@ -1084,6 +1105,12 @@ function drawShareCard(ctx, W, H, d){
   wrap('Bằng việc gửi minh chứng này, người gửi xác nhận đã xem và đồng ý với kết quả bài kiểm tra.', cw - 104, 2).forEach(function(l, i){ txt(l, W / 2, sy - 66 + i * 30, 22, 600, '#7A5600', 'center'); });
   txt('Xác nhận bởi hệ thống lúc ' + d.stampText, W / 2, sy, 24, 700, DEEP, 'center');
   txt(d.host, W / 2, sy + 36, 22, 500, MUTED, 'center');
+  if (d.practice){ // đề thi thử: chữ mờ chéo toàn thẻ + dải cam trên cùng, để ảnh không bị nhầm là kết quả chính thức
+    ctx.save(); ctx.translate(cx + cw / 2, cy + ch / 2); ctx.rotate(-0.42);
+    ctx.font = '900 190px ' + F; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = 'rgba(245,158,11,.16)'; ctx.fillText('THI THỬ', 0, 0); ctx.restore();
+    ctx.fillStyle = '#F59E0B'; ctx.fillRect(cx, cy, cw, 40);
+    txt('THI THỬ · KHÔNG PHẢI THI CHÍNH THỨC', cx + cw / 2, cy + 28, 24, 800, '#3D2800', 'center');
+  }
   ctx.restore();
 }
 /*</share-card>*/
@@ -1093,6 +1120,7 @@ function shareData(){
   return {
     title: (ST.exam && ST.exam.title) || $('examTitle').textContent || 'Bài kiểm tra',
     name: c.name || c.code || '', code: c.code || '', initials: initials(c.name || c.code),
+    practice: isPractice(),
     passed: (r.passed === true || r.passed === false) ? r.passed : null, pct: r.pct == null ? 0 : r.pct, score: r.score, total: r.total,
     compliance: r.compliancePoints, passScore: r.passScore,
     clock: r.durationSec != null ? fmtClock(r.durationSec) : '',
@@ -1128,7 +1156,7 @@ function shareText(){
   var r = ST.res.r, c = ST.cand || {};
   var title = String((ST.exam && (ST.exam.shareTitle || ST.exam.title)) || $('examTitle').textContent || 'Bài kiểm tra').trim();
   var name = String(c.name || c.code || '').trim().toLocaleUpperCase('vi-VN');
-  return title + '\n' + name + '\nĐIỂM: ' + (r.score != null ? r.score : '–') + '/' + (r.total != null ? r.total : '–');
+  return (isPractice() ? '[THI THỬ - KHÔNG PHẢI THI CHÍNH THỨC] ' : '') + title + '\n' + name + '\nĐIỂM: ' + (r.score != null ? r.score : '–') + '/' + (r.total != null ? r.total : '–');
 }
 async function copyText(t){
   try { if (navigator.clipboard && navigator.clipboard.writeText){ await navigator.clipboard.writeText(t); return true; } } catch(e){}

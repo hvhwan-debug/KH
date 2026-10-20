@@ -234,6 +234,9 @@ async function getExamSettings(examId) {
   effective.closeAt = ex && ex.closeAt ? ex.closeAt : 0;
   effective.segments = ex && Array.isArray(ex.segments) ? ex.segments : [];
   effective.description = ex && ex.description ? ex.description : "";
+  // Đề thi thử: chấm và quy đổi điểm tuân thủ NHƯ BÌNH THƯỜNG (để thí sinh hình dung điểm nếu thi thật),
+  // nhưng mọi màn hình, ảnh kết quả và email đều ghi rõ "THI THỬ - không phải thi chính thức".
+  effective.practice = !!(ex && ex.practice);
   return effective;
 }
 function pick(obj, keys) {
@@ -253,6 +256,7 @@ async function upsertExam(data) {
     { id, title: String((data && data.title) || id).trim().slice(0, 150), createdAt: i >= 0 ? exams[i].createdAt : now },
     pick(data || {}, OVERRIDABLE_FIELDS)
   );
+  if (data && data.practice !== undefined) entry.practice = !!data.practice;
   if (data && data.description !== undefined) entry.description = String(data.description || "").trim().slice(0, 500);
   if (data && data.blueprint !== undefined) {
     const bp = cleanBlueprint(data.blueprint);

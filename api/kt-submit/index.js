@@ -50,7 +50,7 @@ module.exports = async function (context, req) {
     const pct = total ? Math.round((correct / total) * 100) : 0;
     const passed = quiz.passState(pct, settings); // null nếu bài không có ngưỡng đạt
     const scoreOutOf10 = total ? (correct / total) * 10 : 0;
-    const compliance = settings.complianceEnabled ? quiz.compliancePoints(scoreOutOf10, settings) : null;
+    const compliance = settings.complianceEnabled ? quiz.compliancePoints(scoreOutOf10, settings) : null; // thi thử vẫn quy đổi bình thường
 
     try { device.record(attempt, device.capture(req, b.device, "submit")); } catch (e) { (context.log.warn || context.log)("kt-submit device", e && e.message); }
     const devBrief = device.brief(attempt);
@@ -60,6 +60,7 @@ module.exports = async function (context, req) {
     attempt.total = total;
     attempt.pct = pct;
     attempt.passed = passed;
+    attempt.practice = !!settings.practice;
     attempt.scoreOutOf10 = Math.round(scoreOutOf10 * 100) / 100;
     attempt.compliancePoints = compliance;
     attempt.detailLines = detailLines; // bản sao câu trả lời, dùng khi gửi lại email
@@ -71,7 +72,7 @@ module.exports = async function (context, req) {
     await quiz.upsertIndex({
       id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "", period: attempt.period || "",
       score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
-      submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief, face: attempt.faceCheck ? attempt.faceCheck.status : null
+      submittedAt: attempt.submittedAt, status: "submitted", practice: !!settings.practice, flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief, face: attempt.faceCheck ? attempt.faceCheck.status : null
     });
 
     let mailOk = false;
@@ -88,7 +89,7 @@ module.exports = async function (context, req) {
       await quiz.upsertIndex({
         id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "", period: attempt.period || "",
         score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
-        submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief, face: attempt.faceCheck ? attempt.faceCheck.status : null, mailOk
+        submittedAt: attempt.submittedAt, status: "submitted", practice: !!settings.practice, flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief, face: attempt.faceCheck ? attempt.faceCheck.status : null, mailOk
       });
     } catch (e) {
       context.log.error("kt-submit mailOk", e && e.message);

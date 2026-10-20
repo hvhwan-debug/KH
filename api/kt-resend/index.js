@@ -41,7 +41,7 @@ module.exports = async function (context, req) {
       return reply(context, 429, { ok: false, retryAfterSec: wait, error: "Vui lòng đợi " + wait + " giây rồi gửi lại." });
     }
 
-    const settings = await quiz.getSettings();
+    const settings = await quiz.getExamSettings(attempt.period || ""); // cài đặt của ĐÚNG đề thí sinh đã làm (tiêu đề, thi thử...)
     let lines = attempt.detailLines;
     if (!Array.isArray(lines)) { // bài nộp trước khi có tính năng này
       const byId = {};

@@ -17,7 +17,7 @@ const empView = (c) => ({
 function summaryOf(r, settings, admin) {
   return {
     id: r.id, period: r.period || "",
-    score: r.score, total: r.total, pct: r.pct, compliancePoints: r.compliancePoints, passed: quiz.passState(r.pct, settings),
+    score: r.score, total: r.total, pct: r.pct, compliancePoints: r.compliancePoints, passed: quiz.passState(r.pct, settings), practice: !!r.practice,
     submittedAt: r.submittedAt, startedAt: r.startedAt, durationSec: r.durationSec, wrong: r.wrong, blank: r.blank,
     proof: quiz.proofCode(r.id), verify: quiz.verifyToken(r.id), flags: r.flags || null, mailOk: r.mailOk, device: admin ? (r.device || null) : undefined
   };
@@ -104,7 +104,7 @@ const handler = async function (context, req) {
         const history = mineList.map((a) => {
           const t = Object.values(team[a.period || ""] || {}); const ps = t.map((x) => x.pct || 0);
           const latestInPeriod = (team[a.period || ""] || {})[quiz.normCode(c.code)];
-          return { id: a.id, period: a.period || "", score: a.score, total: a.total, pct: a.pct, passed: quiz.passState(a.pct, settings), compliancePoints: a.compliancePoints,
+          return { id: a.id, period: a.period || "", score: a.score, total: a.total, pct: a.pct, passed: quiz.passState(a.pct, settings), practice: !!a.practice, compliancePoints: a.compliancePoints,
             submittedAt: a.submittedAt, durationSec: a.durationSec, flags: a.flags || null, proof: quiz.proofCode(a.id), wrong: a.wrong, blank: a.blank,
             latest: !!latestInPeriod && latestInPeriod.id === a.id,
             teamAvg: ps.length ? Math.round(ps.reduce((x, y) => x + y, 0) / ps.length * 10) / 10 : null, teamSize: ps.length,
