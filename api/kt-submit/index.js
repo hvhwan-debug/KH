@@ -69,7 +69,7 @@ module.exports = async function (context, req) {
     await quiz.upsertIndex({
       id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "",
       score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
-      submittedAt: attempt.submittedAt, status: "submitted"
+      submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null
     });
 
     let mailOk = false;
@@ -109,7 +109,7 @@ module.exports = async function (context, req) {
       await quiz.upsertIndex({
         id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "",
         score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
-        submittedAt: attempt.submittedAt, status: "submitted", mailOk
+        submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null, mailOk
       });
     } catch (e) {
       context.log.error("kt-submit mailOk", e && e.message);

@@ -188,7 +188,7 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
           <h1 style="margin:0">Kết quả (<span id="resCount">0</span>)</h1>
           <button class="btn ghost sm" onclick="exportResultsXlsx()">⬇ Xuất Excel</button>
         </div>
-        <table style="margin-top:14px"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Quản lí</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
+        <table style="margin-top:14px"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Quản lí</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Cảnh báo</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
       </div>
       <div class="card hide" id="resDetailCard">
         <h1>Chi tiết bài làm</h1>
@@ -405,7 +405,8 @@ async function exportResultsXlsx(){
     { header:'Tỉ lệ đúng (%)', key:'pct', width:13 },
     { header:'Điểm tuân thủ', key:'compliance', width:13 },
     { header:'Kết quả', key:'result', width:12 },
-    { header:'Thời điểm nộp bài', key:'submitted', width:20 }
+    { header:'Thời điểm nộp bài', key:'submitted', width:20 },
+    { header:'Cảnh báo', key:'flags', width:26 }
   ];
   const header = ws.getRow(1);
   header.eachCell(c => {
@@ -420,14 +421,15 @@ async function exportResultsXlsx(){
       code: r.code, name: r.name||'', manager: r.manager||'', segment: segLabel[r.segment]||'Cả hai',
       score: r.score, total: r.total, pct: r.pct, compliance: r.compliancePoints!=null?r.compliancePoints:'',
       result: r.passed ? 'Đạt' : 'Chưa đạt',
-      submitted: r.submittedAt ? new Date(r.submittedAt).toLocaleString('vi-VN') : ''
+      submitted: r.submittedAt ? new Date(r.submittedAt).toLocaleString('vi-VN') : '',
+      flags: flagText(r)
     });
     const resultCell = row.getCell('result');
     if (r.passed) { resultCell.font = { bold:true, color:{ argb:'FF1E7F4F' } }; }
     else { resultCell.font = { bold:true, color:{ argb:'FFB3261E' } }; }
     ['score','total','pct','compliance'].forEach(k => { row.getCell(k).alignment = { horizontal:'center' }; });
   });
-  ws.autoFilter = { from:'A1', to:'J1' };
+  ws.autoFilter = { from:'A1', to:'K1' };
 
   const buf = await wb.xlsx.writeBuffer();
   const a = document.createElement('a');
@@ -438,6 +440,13 @@ async function exportResultsXlsx(){
 }
 
 /* ---------- Kết quả ---------- */
+function flagText(r){
+  const f = r && r.flags; if (!f) return '';
+  const a = [];
+  if (f.shot) a.push('Chụp màn hình ' + f.shot + ' lần');
+  if (f.blur) a.push('Rời trang ' + f.blur + ' lần');
+  return a.join(', ');
+}
 async function loadResults(){
   const { j } = await api('GET','/api/kt-admin?op=results');
   if (!j.ok) return;
@@ -446,9 +455,10 @@ async function loadResults(){
     '<tr><td>'+esc(r.code)+'</td><td>'+esc(r.name||'')+'</td><td>'+esc(r.manager||'')+'</td><td>'+r.score+'/'+r.total+'</td><td>'+r.pct+'%</td>'+
     '<td>'+(r.compliancePoints!=null?r.compliancePoints:'–')+'</td>'+
     '<td>'+(r.passed?'<span class="badge y">Đạt</span>':'<span class="badge n">Chưa đạt</span>')+'</td>'+
+    '<td class="small">'+esc(flagText(r)||'–')+'</td>'+
     '<td class="small">'+new Date(r.submittedAt).toLocaleString('vi-VN')+'</td>'+
     '<td><button class="btn ghost sm" onclick="viewResult(\''+r.id+'\')">Xem</button></td></tr>'
-  ).join('') || '<tr><td colspan="9" class="small">Chưa có bài làm nào được nộp.</td></tr>';
+  ).join('') || '<tr><td colspan="10" class="small">Chưa có bài làm nào được nộp.</td></tr>';
 }
 async function viewResult(id){
   const { j } = await api('GET','/api/kt-admin?op=result&id='+encodeURIComponent(id));

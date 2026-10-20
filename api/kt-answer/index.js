@@ -18,6 +18,12 @@ module.exports = async function (context, req) {
     if (attempt.questionIds.indexOf(questionId) === -1) return reply(context, 400, { ok: false, error: "Câu hỏi không thuộc bài làm này." });
 
     const now = Date.now();
+    // Số lần có dấu hiệu chụp màn hình / rời khỏi trang bài thi (do trình duyệt báo lên; chỉ tăng, không giảm).
+    if (b.flags && typeof b.flags === "object") {
+      const cl = (v) => Math.max(0, Math.min(999, Number.isInteger(v) ? v : 0));
+      const old = attempt.flags || { blur: 0, shot: 0 };
+      attempt.flags = { blur: Math.max(old.blur || 0, cl(b.flags.blur)), shot: Math.max(old.shot || 0, cl(b.flags.shot)) };
+    }
     quiz.syncAttempt(attempt, now); // câu quá hạn tự tính là bỏ trống, con trỏ nhảy tới câu hiện tại
 
     let accepted = false;
