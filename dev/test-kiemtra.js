@@ -17,7 +17,7 @@ async function getV(t) { const ctx = { log: Object.assign(() => {}, { error: con
   for (let i = 0; i < 12; i++) qs.push({ id: "q" + i, text: "Câu hỏi " + i, category: i < 5 ? "Gia dụng" : "Máy lọc nước", options: ["Đúng", "Sai 1", "Sai 2", "Sai 3"], correctIndex: 0, active: true });
   await quiz.saveQuestions(qs);
   await quiz.saveCandidates([{ code: "NV1", name: "Nguyễn A", email: "a@x.vn", segment: "both" }]);
-  await quiz.saveSettings({ examTitle: "Thi thử", questionCount: 5, bothGiaDungCount: 2, secondsPerQuestion: 30, passScore: 60, allowRetake: false, complianceEnabled: true, complianceHighMin: 9, complianceMidMin: 7, complianceLowMin: 6 });
+  await quiz.saveSettings({ examTitle: "Thi thử", questionCount: 5, bothGiaDungCount: 2, secondsPerQuestion: 30, passEnabled: true, passScore: 60, allowRetake: false, complianceEnabled: true, complianceHighMin: 9, complianceMidMin: 7, complianceLowMin: 6 });
 
   let r = await call("check", { code: "NV1", email: "a@x.vn" }, {}); ok(r.s === 400, "thiếu header chống CSRF bị từ chối");
   r = await call("check", { code: "NV1", email: "a@x.vn" });
@@ -81,6 +81,19 @@ async function getV(t) { const ctx = { log: Object.assign(() => {}, { error: con
   v = await getV("x" + vtok); ok(v.s === 404, "sửa mã bài làm: không xác thực được");
   v = await getV(att0.id); ok(v.s === 404, "chỉ có mã bài làm, thiếu chữ ký: bị từ chối (không đoán được từ mã minh chứng)");
   v = await getV(null); ok(v.s === 404, "thiếu mã: bị từ chối");
+
+  // Bài KHÔNG có ngưỡng đạt: không hiện Đạt/Chưa đạt ở bất kỳ đâu (kể cả bài đã nộp trước đó)
+  ok(quiz.passState(80, { passEnabled: true, passScore: 70 }) === true && quiz.passState(50, { passEnabled: true, passScore: 70 }) === false && quiz.passState(80, { passEnabled: false, passScore: 70 }) === null && quiz.passState(80, {}) === null && quiz.passState(80, { passEnabled: true, passScore: 0 }) === null, "passState: true/false khi bật ngưỡng, null khi tắt hoặc ngưỡng 0");
+  r = await call("check", { code: "NV1", email: "a@x.vn" }); ok(r.j.result.passed === true && r.j.exam.passScore === 60, "đang bật ngưỡng 60%: bài 80% là ĐẠT");
+  const st0 = await quiz.getSettings(); await quiz.saveSettings(Object.assign({}, st0, { passEnabled: false }));
+  r = await call("check", { code: "NV1", email: "a@x.vn" }); ok(r.j.result.passed === null && r.j.result.passScore === 0 && r.j.exam.passScore === 0, "tắt ngưỡng: bài đã nộp trước đó trả passed=null, không có ngưỡng");
+  v = await getV(vtok); ok(v.j.result.passed === null && v.j.result.passScore === 0, "trang xác thực QR: không có Đạt/Chưa đạt, không có ngưỡng");
+  { const at = await quiz.getAttempt(att); at.mailLastAt = 0; at.mailSends = 0; await quiz.putAttempt(at); }
+  const mbN = (global.__mailbox || []).length;
+  r = await call("resend", { code: "NV1", email: "a@x.vn" }); const mNo = (global.__mailbox || [])[mbN];
+  ok(r.s === 200 && mNo && !/CHƯA ĐẠT|ĐẠT/.test(mNo.text) && /Số câu đúng/.test(mNo.text), "email kết quả: bỏ ô 'ĐẠT / CHƯA ĐẠT', vẫn có số câu đúng");
+  await quiz.saveSettings(st0);
+  { const at = await quiz.getAttempt(att); at.mailLastAt = 0; at.mailSends = 0; await quiz.putAttempt(at); }
 
   // Gửi lại email xác nhận
   const mb0 = (global.__mailbox || []).length;

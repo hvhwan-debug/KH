@@ -16,9 +16,9 @@ module.exports = async function (context, req) {
     if (attempt.status === "submitted") {
       const st = await quiz.getSettings();
       return reply(context, 200, {
-        ok: true, score: attempt.score, total: attempt.total, pct: attempt.pct, passed: attempt.passed,
+        ok: true, score: attempt.score, total: attempt.total, pct: attempt.pct, passed: quiz.passState(attempt.pct, st),
         compliancePoints: attempt.compliancePoints, already: true, mailOk: attempt.mailOk,
-        passScore: st.passScore || 0, submittedAt: attempt.submittedAt, serverNow: Date.now(),
+        passScore: quiz.passScoreOf(st), submittedAt: attempt.submittedAt, serverNow: Date.now(),
         startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), verify: quiz.verifyToken(attempt.id),
         durationSec: Math.round(((attempt.submittedAt || 0) - (attempt.startedAt || 0)) / 1000)
       });
@@ -52,7 +52,7 @@ module.exports = async function (context, req) {
     const total = attempt.questionIds.length;
     const settings = await quiz.getSettings();
     const pct = total ? Math.round((correct / total) * 100) : 0;
-    const passed = pct >= (settings.passScore || 0);
+    const passed = quiz.passState(pct, settings); // null nếu bài không có ngưỡng đạt
     const scoreOutOf10 = total ? (correct / total) * 10 : 0;
     const compliance = settings.complianceEnabled ? quiz.compliancePoints(scoreOutOf10, settings) : null;
 
@@ -97,7 +97,7 @@ module.exports = async function (context, req) {
 
     return reply(context, 200, {
       ok: true, score: correct, total, pct, passed, compliancePoints: compliance, mailOk,
-      passScore: settings.passScore || 0, submittedAt: attempt.submittedAt, serverNow: Date.now(),
+      passScore: quiz.passScoreOf(settings), submittedAt: attempt.submittedAt, serverNow: Date.now(),
       startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), verify: quiz.verifyToken(attempt.id),
       durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000)
     });

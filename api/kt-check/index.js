@@ -29,7 +29,7 @@ module.exports = async function (context, req) {
       title: settings.examTitle,
       questionCount: settings.questionCount,
       secondsPerQuestion: Math.max(10, settings.secondsPerQuestion || 60),
-      passScore: settings.passScore || 0
+      passScore: quiz.passScoreOf(settings)
     };
 
     if (!settings.allowRetake) {
@@ -39,7 +39,7 @@ module.exports = async function (context, req) {
         return reply(context, 200, {
           ok: true, candidate, exam, alreadyDone: true,
           result: {
-            score: prior.score, total: prior.total, pct: prior.pct, passed: prior.passed,
+            score: prior.score, total: prior.total, pct: prior.pct, passed: quiz.passState(prior.pct, settings),
             compliancePoints: prior.compliancePoints, submittedAt: prior.submittedAt,
             mailOk: prior.mailOk, passScore: exam.passScore, durationSec: prior.durationSec,
             startedAt: prior.startedAt, wrong: prior.wrong, blank: prior.blank, proof: quiz.proofCode(prior.id), verify: quiz.verifyToken(prior.id)

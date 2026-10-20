@@ -15,6 +15,8 @@ const DEFAULT_SETTINGS = {
   // lay tu moi cau hoi KHONG thuoc "Gia dụng" (Máy lọc nước, Kiến thức khác... — tu dong gom moi category khac).
   bothGiaDungCount: 10,
   secondsPerQuestion: 60,
+  // Ngưỡng đạt chỉ áp dụng khi bật (passEnabled). Mặc định TẮT: bài không có ngưỡng thì không hiện Đạt/Chưa đạt.
+  passEnabled: false,
   passScore: 70,
   allowRetake: false,
   // Điểm tuân thủ học tập: quy đổi từ tỉ lệ đúng (thang điểm 10) sang một mốc điểm cố định
@@ -33,6 +35,13 @@ function compliancePoints(scoreOutOf10, settings) {
   if (scoreOutOf10 >= s.complianceLowMin) return 10;
   return 0;
 }
+
+// Trạng thái đạt: true/false nếu bài có ngưỡng đạt, null nếu bài không có ngưỡng (luôn tính theo cài đặt hiện tại).
+function passState(pct, settings) {
+  const s = settings || DEFAULT_SETTINGS;
+  return s.passEnabled && (s.passScore || 0) > 0 ? pct >= s.passScore : null;
+}
+function passScoreOf(settings) { return settings && settings.passEnabled ? (settings.passScore || 0) : 0; }
 
 function normCode(s) { return String(s || "").trim().toLowerCase(); }
 function normEmail(s) { return String(s || "").trim().toLowerCase(); }
@@ -199,5 +208,5 @@ module.exports = {
   getAttempt, putAttempt,
   getIndex, upsertIndex,
   shuffle, genId, compliancePoints,
-  verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
+  passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
 };

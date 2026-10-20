@@ -48,6 +48,13 @@ async function call(fn, method, query, body, email) {
   await start(c4, { method: "POST", headers: { "x-requested-with": "livotec" }, body: { code: "NV7", email: "g@x.vn" } });
   ok(c4.res.status === 503, "thí sinh mới: được báo 'ngân hàng đề chưa có câu hỏi' khi đề trống");
 
+  // ngưỡng đạt: cài đặt + bảng kết quả
+  r = await call(admin, "GET", { op: "settings" }); ok(r.j.settings.passEnabled === false, "mặc định: bài KHÔNG có ngưỡng đạt");
+  await quiz.upsertIndex({ id: "abc", code: "NV1", name: "A", email: "a@x.vn", score: 2, total: 10, pct: 20, passed: false, status: "submitted", submittedAt: 1 });
+  r = await call(admin, "GET", { op: "results" }); ok(r.j.results[0].passed === null, "bảng kết quả quản trị: không ngưỡng => không gán Đạt/Chưa đạt (kể cả bài cũ đã lưu passed=false)");
+  r = await call(admin, "POST", {}, { op: "saveSettings", passEnabled: true, passScore: 70 }); ok(r.j.settings.passEnabled === true && r.j.settings.passScore === 70, "quản trị bật ngưỡng 70%");
+  r = await call(admin, "GET", { op: "results" }); ok(r.j.results[0].passed === false, "bật ngưỡng: bài 20% thành Chưa đạt");
+  r = await call(admin, "POST", {}, { op: "saveSettings", passEnabled: false, passScore: 70 }); ok(r.j.settings.passEnabled === false, "quản trị tắt lại ngưỡng");
   // khôi phục
   r = await call(admin, "POST", {}, { op: "restoreQuestions" }); ok(r.j.ok && r.j.restored === 6 && (await quiz.getQuestions()).length === 6, "khôi phục: thêm lại đủ 6 câu");
   r = await call(admin, "POST", {}, { op: "restoreQuestions" }); ok(r.j.ok && r.j.restored === 0 && (await quiz.getQuestions()).length === 6, "khôi phục lần nữa: không tạo câu trùng");

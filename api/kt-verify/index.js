@@ -21,8 +21,8 @@ module.exports = async function (context, req) {
       result: {
         title: settings.examTitle || "Bài kiểm tra",
         name: attempt.name || "", code: attempt.code || "",
-        score: attempt.score, total: attempt.total, pct: attempt.pct, passed: !!attempt.passed,
-        compliancePoints: attempt.compliancePoints, passScore: settings.passScore || 0,
+        score: attempt.score, total: attempt.total, pct: attempt.pct, passed: quiz.passState(attempt.pct, settings),
+        compliancePoints: attempt.compliancePoints, passScore: quiz.passScoreOf(settings),
         wrong: attempt.wrong, blank: attempt.blank,
         startedAt: attempt.startedAt, submittedAt: attempt.submittedAt,
         durationSec: Math.round(((attempt.submittedAt || 0) - (attempt.startedAt || attempt.submittedAt || 0)) / 1000),

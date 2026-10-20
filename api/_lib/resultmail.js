@@ -27,15 +27,15 @@ function rebuildDetail(attempt, byId) {
 async function send(attempt, settings, detailLines) {
   const title = settings.examTitle || "Bài kiểm tra";
   const compliance = attempt.compliancePoints;
+  const ps = quiz.passState(attempt.pct, settings); // true/false, hoặc null nếu bài không có ngưỡng đạt
   const { html, text } = layout({
     brand: "Hệ thống kiểm tra", brandSub: "Bài kiểm tra nội bộ", brandLetter: "KT",
-    tone: attempt.passed ? "info" : "warn",
+    tone: ps === false ? "warn" : "info",
     title: "Kết quả bài kiểm tra: " + title,
     tiles: [
       { n: attempt.score + "/" + attempt.total, l: "Số câu đúng" },
-      { n: attempt.pct + "%", l: "Tỉ lệ đúng" },
-      { n: attempt.passed ? "ĐẠT" : "CHƯA ĐẠT", l: "Kết quả" }
-    ].concat(compliance != null ? [{ n: compliance + " điểm", l: "Điểm tuân thủ học tập" }] : []),
+      { n: attempt.pct + "%", l: "Tỉ lệ đúng" }
+    ].concat(ps === null ? [] : [{ n: ps ? "ĐẠT" : "CHƯA ĐẠT", l: "Kết quả" }]).concat(compliance != null ? [{ n: compliance + " điểm", l: "Điểm tuân thủ học tập" }] : []),
     sections: [
       {
         h: "Thông tin thí sinh",

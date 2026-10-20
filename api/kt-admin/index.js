@@ -27,7 +27,9 @@ module.exports = async function (context, req) {
       if (op === "candidates") return reply(context, 200, { ok: true, candidates: await quiz.getCandidates() });
       if (op === "settings") return reply(context, 200, { ok: true, settings: await quiz.getSettings() });
       if (op === "results") {
-        const list = (await quiz.getIndex()).slice().sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
+        const st = await quiz.getSettings();
+        const list = (await quiz.getIndex()).slice().sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0))
+          .map((r) => Object.assign({}, r, { passed: quiz.passState(r.pct, st) })); // luôn theo cài đặt hiện tại; null = bài không có ngưỡng
         return reply(context, 200, { ok: true, results: list });
       }
       if (op === "result") {
@@ -156,6 +158,7 @@ module.exports = async function (context, req) {
         questionCount: Math.max(1, parseInt(b.questionCount, 10) || cur.questionCount),
         bothGiaDungCount: Math.max(0, parseInt(b.bothGiaDungCount, 10) || 0),
         secondsPerQuestion: Math.max(10, parseInt(b.secondsPerQuestion, 10) || cur.secondsPerQuestion),
+        passEnabled: !!b.passEnabled,
         passScore: Math.min(100, Math.max(0, parseInt(b.passScore, 10) || 0)),
         allowRetake: !!b.allowRetake,
         complianceEnabled: !!b.complianceEnabled,

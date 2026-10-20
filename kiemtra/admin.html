@@ -166,6 +166,8 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
           <div>
             <label>Điểm đạt (% số câu đúng)</label>
             <input type="text" inputmode="numeric" id="setPass">
+            <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:600"><input type="checkbox" id="setPassOn" style="width:18px;height:18px" onchange="$('setPass').disabled=!this.checked"> Bài này có ngưỡng đạt</label>
+            <div class="small">Tắt = chỉ hiện điểm và tỉ lệ đúng, không hiện Đạt / Chưa đạt.</div>
           </div>
         </div>
         <label style="display:flex;align-items:center;gap:8px;margin-top:14px"><input type="checkbox" id="setRetake" style="width:18px;height:18px"> Cho phép thí sinh làm lại nhiều lần</label>
@@ -397,7 +399,7 @@ async function loadSettings(){
   const s = j.settings;
   $('setTitle').value = s.examTitle; $('setCount').value = s.questionCount;
   $('setBothGD').value = s.bothGiaDungCount;
-  $('setSeconds').value = s.secondsPerQuestion; $('setPass').value = s.passScore;
+  $('setSeconds').value = s.secondsPerQuestion; $('setPass').value = s.passScore; $('setPassOn').checked = !!s.passEnabled; $('setPass').disabled = !s.passEnabled;
   $('setRetake').checked = !!s.allowRetake;
   $('setComplianceOn').checked = !!s.complianceEnabled;
   $('setCHigh').value = s.complianceHighMin; $('setCMid').value = s.complianceMidMin; $('setCLow').value = s.complianceLowMin;
@@ -405,7 +407,7 @@ async function loadSettings(){
 async function saveSettings(){
   const { j } = await api('POST','/api/kt-admin', {
     op:'saveSettings', examTitle: $('setTitle').value, questionCount: $('setCount').value, bothGiaDungCount: $('setBothGD').value,
-    secondsPerQuestion: $('setSeconds').value, passScore: $('setPass').value, allowRetake: $('setRetake').checked,
+    secondsPerQuestion: $('setSeconds').value, passEnabled: $('setPassOn').checked, passScore: $('setPass').value, allowRetake: $('setRetake').checked,
     complianceEnabled: $('setComplianceOn').checked, complianceHighMin: $('setCHigh').value,
     complianceMidMin: $('setCMid').value, complianceLowMin: $('setCLow').value
   });
@@ -461,13 +463,14 @@ async function exportResultsXlsx(){
     const row = ws.addRow({
       code: r.code, name: r.name||'', manager: r.manager||'', segment: segLabel[r.segment]||'Cả hai',
       score: r.score, total: r.total, pct: r.pct, compliance: r.compliancePoints!=null?r.compliancePoints:'',
-      result: r.passed ? 'Đạt' : 'Chưa đạt',
+      result: r.passed == null ? '' : (r.passed ? 'Đạt' : 'Chưa đạt'),
       submitted: r.submittedAt ? new Date(r.submittedAt).toLocaleString('vi-VN') : '',
       flags: flagText(r),
       proof: r.proof || ('KT-' + String(r.id || '').slice(-8).toUpperCase())
     });
     const resultCell = row.getCell('result');
-    if (r.passed) { resultCell.font = { bold:true, color:{ argb:'FF1E7F4F' } }; }
+    if (r.passed == null) { /* bài không có ngưỡng đạt */ }
+    else if (r.passed) { resultCell.font = { bold:true, color:{ argb:'FF1E7F4F' } }; }
     else { resultCell.font = { bold:true, color:{ argb:'FFB3261E' } }; }
     ['score','total','pct','compliance'].forEach(k => { row.getCell(k).alignment = { horizontal:'center' }; });
   });
@@ -496,7 +499,7 @@ async function loadResults(){
   $('resList').innerHTML = j.results.map(r =>
     '<tr><td>'+esc(r.code)+'</td><td>'+esc(r.name||'')+'</td><td>'+esc(r.manager||'')+'</td><td>'+r.score+'/'+r.total+'</td><td>'+r.pct+'%</td>'+
     '<td>'+(r.compliancePoints!=null?r.compliancePoints:'–')+'</td>'+
-    '<td>'+(r.passed?'<span class="badge y">Đạt</span>':'<span class="badge n">Chưa đạt</span>')+'</td>'+
+    '<td>'+(r.passed==null?'<span class="small">–</span>':(r.passed?'<span class="badge y">Đạt</span>':'<span class="badge n">Chưa đạt</span>'))+'</td>'+
     '<td class="small"><b>'+esc(r.proof||('KT-'+String(r.id||'').slice(-8).toUpperCase()))+'</b></td>'+
     '<td class="small">'+esc(flagText(r)||'–')+'</td>'+
     '<td class="small">'+new Date(r.submittedAt).toLocaleString('vi-VN')+'</td>'+
