@@ -13,11 +13,12 @@ const empView = (c) => ({
   confirmed: c.confirmed ? { by: c.confirmed.by, byName: c.confirmed.byName || c.confirmed.by, at: c.confirmed.at } : null
 });
 
-function summaryOf(r, settings) {
+// admin = true: kèm thiết bị và vị trí (chỉ quản trị viên được xem, quản lí thường không nhận dữ liệu này)
+function summaryOf(r, settings, admin) {
   return {
     score: r.score, total: r.total, pct: r.pct, compliancePoints: r.compliancePoints, passed: quiz.passState(r.pct, settings),
     submittedAt: r.submittedAt, startedAt: r.startedAt, durationSec: r.durationSec, wrong: r.wrong, blank: r.blank,
-    proof: quiz.proofCode(r.id), verify: quiz.verifyToken(r.id), flags: r.flags || null, mailOk: r.mailOk, device: r.device || null
+    proof: quiz.proofCode(r.id), verify: quiz.verifyToken(r.id), flags: r.flags || null, mailOk: r.mailOk, device: admin ? (r.device || null) : undefined
   };
 }
 
@@ -55,7 +56,7 @@ module.exports = async function (context, req) {
           let status = "none", active = null;
           if (r) status = "done";
           else { active = await quiz.getActive(c.code); if (active) { const t = Object.assign({}, active); quiz.syncAttempt(t, Date.now()); if (t.cursor < t.questionIds.length) status = "doing"; } }
-          return Object.assign(empView(c), { status, result: r ? summaryOf(r, settings) : null });
+          return Object.assign(empView(c), { status, result: r ? summaryOf(r, settings, !!viewer.isAdmin) : null });
         }));
         return reply(context, 200, { ok: true, employees: list, serverNow: Date.now() });
       }
@@ -75,7 +76,7 @@ module.exports = async function (context, req) {
           partial = paper.length < (attempt.questionIds || []).length;
         }
         if (!paper.length) return reply(context, 404, { ok: false, error: "Không còn bản sao bài làm này (câu hỏi đã bị xoá khỏi ngân hàng đề trước khi bài được lưu bản sao)." });
-        return reply(context, 200, { ok: true, employee: { code: c.code, name: c.name || "" }, summary: summaryOf(entry, settings), paper, source, partial, photo: typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "", serverNow: Date.now() });
+        return reply(context, 200, { ok: true, employee: { code: c.code, name: c.name || "" }, summary: summaryOf(entry, settings, !!viewer.isAdmin), paper, source, partial, photo: typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "", serverNow: Date.now() });
       }
       if (op === "photo") {
         // Ảnh xác nhận khuôn mặt chụp lúc bắt đầu làm bài (bài đã nộp gần nhất, hoặc bài đang làm) - chỉ nhân viên trong phạm vi
@@ -86,9 +87,9 @@ module.exports = async function (context, req) {
         let attempt = entry && (await quiz.getAttempt(entry.id));
         if (!attempt) attempt = await quiz.getActive(c.code);
         const photo = attempt && typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "";
-        const devices = attempt ? (Array.isArray(attempt.devices) ? attempt.devices : (attempt.device ? [attempt.device] : [])) : [];
+        const devices = !viewer.isAdmin ? [] : attempt ? (Array.isArray(attempt.devices) ? attempt.devices : (attempt.device ? [attempt.device] : [])) : [];
         return reply(context, 200, { ok: true, photo, takenAt: (attempt && attempt.startedAt) || null,
-          devices: devices.map((d) => ({ type: d.type, os: d.os, browser: d.browser, model: d.model, ip: d.ip, screen: d.screen, tz: d.tz, lang: d.lang, stage: d.stage, at: d.at, ua: d.ua, loc: d.loc || null, locErr: d.locErr || "" })) });
+          devices: !viewer.isAdmin ? undefined : devices.map((d) => ({ type: d.type, os: d.os, browser: d.browser, model: d.model, ip: d.ip, screen: d.screen, tz: d.tz, lang: d.lang, stage: d.stage, at: d.at, ua: d.ua, loc: d.loc || null, locErr: d.locErr || "" })) });
       }
       if (op === "employee") {
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));

@@ -1,6 +1,6 @@
 // Ghi nhận thiết bị thí sinh dùng khi làm bài (loại máy, hệ điều hành, trình duyệt, đời máy, IP...)
 // để quản lí đối chiếu. Chỉ đọc từ User-Agent + vài gợi ý do trình duyệt gửi lên, không dùng cookie theo dõi.
-const clip = (v, n) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f<>]/g, "").trim().slice(0, n || 60);
+const clip = (v, n) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f<>"`]/g, "").trim().slice(0, n || 60);
 
 function ipOf(req) {
   const h = (req && req.headers) || {};

@@ -661,12 +661,29 @@ async function resetAttempt(code){
   if (!j.ok){ alert(j.error||'Có lỗi xảy ra.'); return; }
   loadResults();
 }
+// Thiết bị + vị trí khi làm bài (chỉ quản trị viên xem được)
+function devHtml(a){
+  var L = Array.isArray(a.devices) ? a.devices : (a.device ? [a.device] : []);
+  if (!L.length) return '<p class="small">Không có thông tin thiết bị (bài làm trước khi có tính năng này).</p>';
+  var ST = { start:'Bắt đầu', resume:'Làm tiếp', submit:'Nộp bài' };
+  var ER = { denied:'Đã chặn quyền vị trí', unsupported:'Trình duyệt không hỗ trợ vị trí', timeout:'Không lấy được vị trí', unavailable:'Không lấy được vị trí', pending:'Chưa kịp lấy vị trí', none:'Không có vị trí' };
+  var sig = {}; L.forEach(function(d){ sig[[d.type,d.os,d.browser,d.model].join('|')] = 1; });
+  var fmtT = function(ms){ try { return new Date(ms).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour12:false}); } catch(e){ return ''; } };
+  return '<div style="margin:0 0 14px"><b>Thiết bị và vị trí khi làm bài</b>' +
+    (Object.keys(sig).length > 1 ? '<p class="small" style="color:#B3261E;font-weight:700;margin:4px 0">⚠ Đã dùng ' + Object.keys(sig).length + ' thiết bị khác nhau</p>' : '') +
+    '<ul style="margin:6px 0 0;padding-left:18px;line-height:1.6">' + L.map(function(d){
+      var name = [d.type, d.model, d.os, d.browser].filter(Boolean).join(' · ') || 'Không rõ';
+      var loc = d.loc ? '<a href="https://www.google.com/maps?q=' + d.loc.lat + ',' + d.loc.lng + '" target="_blank" rel="noopener">📍 ' + d.loc.lat + ', ' + d.loc.lng + '</a>' + (d.loc.acc != null ? ' (±' + d.loc.acc + ' m)' : '') : esc(ER[d.locErr] || ER.none);
+      return '<li title="' + esc(d.ua || '').replace(/"/g,'&quot;') + '"><b>' + esc(ST[d.stage] || '') + '</b> ' + esc(fmtT(d.at)) + ': ' + esc(name) + (d.ip ? ' · IP ' + esc(d.ip) : '') + (d.screen ? ' · ' + esc(d.screen) : '') + '<br>' + loc + '</li>';
+    }).join('') + '</ul></div>';
+}
 async function viewResult(id){
   const { j } = await api('GET','/api/kt-admin?op=result&id='+encodeURIComponent(id));
   if (!j.ok){ alert(j.error); return; }
   $('resDetailCard').classList.remove('hide');
   $('resDetail').innerHTML = '<p><b>'+esc(j.attempt.name||'')+'</b> ('+esc(j.attempt.code)+') — '+j.attempt.score+'/'+j.attempt.total+' câu đúng, '+j.attempt.pct+'%</p>' +
     (j.attempt.photo ? '<img src="'+j.attempt.photo+'" alt="Ảnh xác nhận của thí sinh" style="max-width:220px;border-radius:12px;border:1px solid var(--line);margin-bottom:14px;display:block">' : '<p class="small">Không có ảnh xác nhận (bài làm trước khi có tính năng này).</p>') +
+    devHtml(j.attempt) +
     j.detail.map((d,i) =>
       '<div style="border-top:1px solid var(--line);padding:10px 0"><b>Câu '+(i+1)+'.</b> '+esc(d.text)+'<ul style="margin:6px 0 0;padding-left:20px">' +
       d.options.map((o,oi) => {

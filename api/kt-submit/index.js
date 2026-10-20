@@ -103,7 +103,7 @@ module.exports = async function (context, req) {
       ok: true, score: correct, total, pct, passed, compliancePoints: compliance, mailOk,
       passScore: quiz.passScoreOf(settings), submittedAt: attempt.submittedAt, serverNow: Date.now(),
       startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), verify: quiz.verifyToken(attempt.id),
-      durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief
+      durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000)
     });
   } catch (e) {
     context.log.error("kt-submit", e && e.message);
