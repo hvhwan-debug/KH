@@ -3,312 +3,385 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
 <title>Bài kiểm tra</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --brand:#02A79E;--brand-deep:#067A8C;--accent:#7C5CFF;--accent2:#FF7A59;--ink:#06302D;--muted:#5B7471;--line:#DCE5E9;
-  --bg:#EEF3F5;--surface:#fff;--ok:#1E7F4F;--ok-soft:#D9F0E4;--bad:#B3261E;--bad-soft:#F9DAD7;--warn:#955D00;--warn-soft:#FBEBC8;
+  --desk:#E8EEED; --sheet:#FFFFFF; --ink:#12302F; --muted:#587270; --rule:#CCD9D7; --rule-soft:#E4ECEA;
+  --teal:#02A79E; --teal-deep:#066F7E; --teal-wash:#E3F4F2;
+  --amber:#D99100; --amber-wash:#FFF1D2; --red:#B5342A; --red-wash:#FBE4E1; --green:#1E7F4F; --green-wash:#DCF1E5;
 }
 *{box-sizing:border-box}
-body{
-  margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;
-  min-height:100vh;background:
-    radial-gradient(900px 500px at -10% -15%, rgba(124,92,255,.18), transparent 60%),
-    radial-gradient(800px 500px at 110% 10%, rgba(255,122,89,.14), transparent 55%),
-    radial-gradient(1000px 700px at 50% 120%, rgba(2,167,158,.16), transparent 60%),
-    var(--bg);
-  background-attachment:fixed;
-}
-.wrap{max-width:640px;margin:0 auto;padding:24px 18px 60px;min-height:100vh;display:flex;flex-direction:column}
-.top{display:flex;align-items:center;gap:11px;margin-bottom:24px;animation:fadeDown .5s ease both}
-.top .dot{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--accent));display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px;flex:0 0 auto;box-shadow:0 6px 16px -4px rgba(2,167,158,.5)}
-.top b{font-size:16px}
-.top span{display:block;font-size:11.5px;color:var(--muted)}
-.card{
-  position:relative;overflow:hidden;background:var(--surface);border:1px solid rgba(255,255,255,.6);border-radius:22px;padding:26px 24px;
-  box-shadow:0 24px 60px -24px rgba(6,48,45,.35),0 2px 8px rgba(6,48,45,.06);
-  animation:cardIn .55s cubic-bezier(.2,.8,.2,1) both .08s;
-}
-.card::before{
-  content:'';position:absolute;inset:0 0 auto 0;height:5px;
-  background:linear-gradient(90deg,var(--brand),var(--accent),var(--accent2));
-}
-@keyframes fadeDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
-@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
-.hero-badge{
-  width:52px;height:52px;border-radius:16px;display:grid;place-items:center;margin-bottom:14px;
-  background:linear-gradient(135deg,var(--brand),var(--accent));color:#fff;font-size:24px;
-  box-shadow:0 10px 22px -6px rgba(2,167,158,.55);
-}
-h1{font-size:21px;margin:0 0 6px;letter-spacing:-.015em;font-weight:800}
-.sub{font-size:13.5px;color:var(--muted);margin:0 0 20px;line-height:1.55}
-label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:16px 0 7px;letter-spacing:.01em}
-label:first-of-type{margin-top:0}
-.inwrap{position:relative}
-.inwrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
-input[type=text],input[type=email]{
-  width:100%;border:1.5px solid var(--line);border-radius:13px;padding:12px 14px 12px 40px;font:inherit;font-size:14.5px;
-  background:#fbfdfd;transition:border-color .15s,box-shadow .15s;
-}
-input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px rgba(2,167,158,.14)}
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:13px;padding:14px 20px;
-  font:inherit;font-weight:800;font-size:15px;cursor:pointer;width:100%;margin-top:22px;color:#fff;
-  background:linear-gradient(135deg,var(--brand),var(--brand-deep));
-  box-shadow:0 14px 28px -10px rgba(2,167,158,.55);
-  transition:transform .15s,box-shadow .15s,filter .15s;
-}
-.btn:hover{transform:translateY(-1px);box-shadow:0 18px 34px -10px rgba(2,167,158,.65)}
-.btn:active{transform:translateY(0)}
-.btn:disabled{opacity:.55;cursor:default;transform:none;box-shadow:none}
-.btn.ghost{background:#fff;color:var(--brand-deep);border:1.5px solid var(--line);box-shadow:none}
-.btn.ghost:hover{box-shadow:0 6px 16px -8px rgba(6,48,45,.2)}
-.msg{font-size:13px;border-radius:10px;padding:10px 13px;margin-top:14px;line-height:1.5}
-.msg.err{background:var(--bad-soft);color:var(--bad)}
-.msg.ok{background:var(--ok-soft);color:var(--ok)}
-.msg.warn{background:var(--warn-soft);color:var(--warn)}
-.qhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px}
-.qprog{font-size:12.5px;font-weight:700;color:var(--muted)}
-.timer{display:flex;align-items:center;gap:6px;font-weight:800;font-size:15px;padding:6px 12px;border-radius:999px;background:var(--ok-soft);color:var(--ok);transition:background .3s,color .3s}
-.timer.warn{background:var(--warn-soft);color:var(--warn)}
-.timer.bad{background:var(--bad-soft);color:var(--bad)}
-.bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:20px}
-.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand-deep));transition:width .25s linear}
-.qtext{font-size:16.5px;font-weight:700;line-height:1.5;margin-bottom:18px}
-.opt{display:flex;align-items:flex-start;gap:11px;border:1.5px solid var(--line);border-radius:13px;padding:13px 14px;margin-bottom:10px;cursor:pointer;transition:border-color .15s,background .15s}
-.opt:hover{border-color:var(--brand)}
-.opt.sel{border-color:var(--brand);background:#F0FAF9}
-.opt .ring{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:0 0 auto;margin-top:1px;position:relative}
-.opt.sel .ring{border-color:var(--brand)}
-.opt.sel .ring::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--brand)}
-.opt p{margin:0;font-size:14.5px;line-height:1.5}
-.resrow{display:flex;gap:14px;margin:18px 0}
-.rescell{flex:1;background:#F6FAFA;border-radius:14px;padding:16px 10px;text-align:center}
-.rescell b{display:block;font-size:26px;font-weight:800;color:var(--brand-deep)}
-.rescell span{font-size:11.5px;color:var(--muted)}
-.pass-badge{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:15px;padding:8px 16px;border-radius:999px;margin-bottom:6px}
-.pass-badge.y{background:var(--ok-soft);color:var(--ok)}
-.pass-badge.n{background:var(--bad-soft);color:var(--bad)}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--desk);color:var(--ink);font-family:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.5;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.page{max-width:720px;margin:0 auto;padding:clamp(14px,4vw,40px) 16px 48px}
+.mast{display:flex;align-items:center;gap:10px;margin:0 2px 14px;font-size:13px;color:var(--muted);font-weight:600}
+.mast i{width:9px;height:9px;border-radius:50%;background:var(--teal);display:block}
+
+.sheet{position:relative;background:var(--sheet);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.sheet-pad{padding:clamp(22px,5vw,40px)}
+h1{margin:0 0 8px;font-size:clamp(24px,5.4vw,32px);line-height:1.2;font-weight:800;letter-spacing:-.02em}
+.lead{margin:0 0 26px;color:var(--muted);font-size:15px;max-width:46ch}
 .hide{display:none!important}
-.foot-note{text-align:center;font-size:11.5px;color:var(--muted);margin-top:16px;line-height:1.6}
-.confirm-box{background:#F6FAFA;border:1.5px solid var(--line);border-radius:14px;padding:4px 16px;margin-bottom:16px}
-.confirm-row{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
-.confirm-row:first-child{border-top:0}
-.confirm-row span:first-child{font-size:12.5px;color:var(--muted);font-weight:600;flex:0 0 auto}
-.confirm-row span:last-child{font-size:14px;font-weight:700;text-align:right}
+
+/* biểu mẫu */
+.field{margin-bottom:18px}
+label{display:block;font-size:13.5px;font-weight:700;margin-bottom:6px}
+input[type=text],input[type=email]{width:100%;border:1.5px solid var(--rule);border-radius:6px;padding:12px 14px;font:inherit;font-size:16px;background:#fff;color:var(--ink);transition:border-color .12s}
+input::placeholder{color:#9DB0AE}
+input:hover{border-color:#A9BCBA}
+input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(2,167,158,.18)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:1.5px solid var(--teal-deep);border-radius:6px;background:var(--teal-deep);color:#fff;
+  font:inherit;font-weight:700;font-size:16px;padding:13px 18px;cursor:pointer;transition:background .12s,transform .06s}
+.btn:hover{background:#05606D}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--teal-deep);border-color:var(--rule);margin-top:10px}
+.btn.ghost:hover{background:var(--teal-wash);border-color:var(--teal)}
+:focus-visible{outline:3px solid #0A84C6;outline-offset:2px}
+.notice{border-left:4px solid var(--red);background:var(--red-wash);color:#7C1F18;padding:11px 14px;border-radius:0 6px 6px 0;font-size:14px;margin-top:16px}
+.notice.info{border-color:var(--teal);background:var(--teal-wash);color:#04504A}
+.notice.warn{border-color:var(--amber);background:var(--amber-wash);color:#6B4500}
+
+/* xác nhận thông tin */
+.ident{margin:0 0 22px;border-top:1px solid var(--rule)}
+.ident div{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--rule)}
+.ident dt{color:var(--muted);font-size:14px}
+.ident dd{margin:0;font-weight:700;text-align:right;font-size:15px;overflow-wrap:anywhere}
+.rules{margin:0 0 22px;padding:0;list-style:none;font-size:14.5px;color:var(--ink)}
+.rules li{padding:7px 0 7px 22px;position:relative}
+.rules li::before{content:"";position:absolute;left:3px;top:15px;width:7px;height:7px;border-radius:50%;background:var(--teal)}
+
+/* làm bài */
+.timebar{height:6px;background:var(--rule-soft)}
+.timebar i{display:block;height:100%;width:100%;background:var(--teal);transform-origin:left center}
+.timebar.warn i{background:var(--amber)}
+.timebar.bad i{background:var(--red)}
+.strip{display:flex;flex-wrap:wrap;gap:5px;padding:16px clamp(22px,5vw,40px) 0}
+.strip b{width:11px;height:11px;border-radius:50%;border:1.5px solid #9DB5B2;background:#fff;display:block}
+.strip b.done{background:var(--teal);border-color:var(--teal)}
+.strip b.miss{background:var(--amber);border-color:var(--amber)}
+.strip b.now{border-color:var(--teal-deep);box-shadow:0 0 0 3px rgba(2,167,158,.25);background:#fff}
+.qrow{display:grid;grid-template-columns:auto 1fr;column-gap:22px;align-items:start}
+.qnum{font-size:44px;line-height:1;font-weight:800;letter-spacing:-.03em;color:var(--teal-deep);font-variant-numeric:tabular-nums;min-width:2ch}
+.qmeta{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px;font-size:13.5px;color:var(--muted);font-weight:600}
+.clock{font-variant-numeric:tabular-nums;font-weight:800;font-size:17px;color:var(--teal-deep)}
+.clock.warn{color:#9A6400}.clock.bad{color:var(--red)}
+.qtext{margin:0 0 20px;font-size:clamp(17px,4.2vw,20px);line-height:1.5;font-weight:700;overflow-wrap:anywhere;white-space:pre-line}
+.opts{display:grid;gap:9px;margin:0;padding:0;border:0}
+.opt{display:flex;align-items:flex-start;gap:13px;width:100%;text-align:left;border:1.5px solid var(--rule);background:#fff;border-radius:6px;padding:12px 14px;font:inherit;color:var(--ink);cursor:pointer;transition:border-color .1s,background .1s}
+.opt:hover{border-color:var(--teal)}
+.bub{flex:0 0 auto;width:30px;height:30px;border-radius:50%;border:2px solid #7F9C99;display:grid;place-items:center;font-weight:800;font-size:13px;color:#4A6764;background:#fff;transition:background .12s,color .12s,border-color .12s}
+.opt[aria-checked=true]{border-color:var(--teal-deep);background:var(--teal-wash)}
+.opt[aria-checked=true] .bub{background:var(--teal-deep);border-color:var(--teal-deep);color:#fff}
+.opt span.t{padding-top:3px;font-size:15.5px;overflow-wrap:anywhere}
+.qfoot{margin-top:22px;display:flex;align-items:center;gap:14px}
+.qfoot .btn{width:auto;min-width:180px}
+.qfoot .hint{color:var(--muted);font-size:12.5px}
+@media(max-width:560px){
+  .qrow{grid-template-columns:1fr}
+  .qnum{font-size:30px;margin-bottom:2px}
+  .qfoot{flex-direction:column;align-items:stretch}.qfoot .btn{width:100%}.qfoot .hint{display:none}
+}
+
+/* kết quả */
+.verdict{display:inline-block;font-weight:800;font-size:14px;padding:5px 12px;border-radius:4px;margin-bottom:14px}
+.verdict.y{background:var(--green-wash);color:var(--green)}.verdict.n{background:var(--red-wash);color:var(--red)}
+.big{display:flex;align-items:baseline;gap:10px;margin:18px 0 4px}
+.big b{font-size:clamp(52px,14vw,76px);line-height:1;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.big span{font-size:20px;font-weight:700;color:var(--muted)}
+.facts{display:flex;flex-wrap:wrap;gap:0 28px;margin:14px 0 20px;padding-top:14px;border-top:1px solid var(--rule)}
+.facts div{padding:4px 0}.facts dt{font-size:12.5px;color:var(--muted)}.facts dd{margin:0;font-size:20px;font-weight:800}
+.review{margin-top:26px;border-top:1px solid var(--rule)}
+.review h2{font-size:16px;margin:18px 0 4px}
+.rv{padding:14px 0;border-bottom:1px solid var(--rule-soft);font-size:14.5px}
+.rv p{margin:0 0 6px;font-weight:700}
+.rv .a{display:flex;gap:8px;padding:2px 0;color:#415a58}
+.rv .a.ok{color:var(--green);font-weight:700}.rv .a.no{color:var(--red);font-weight:700}
+.foot{margin:16px 2px 0;font-size:12.5px;color:var(--muted)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="top"><div class="dot">KT</div><div><b id="examTitle">Bài kiểm tra</b><span>Không cần đăng nhập — chỉ cần mã nhân viên và email</span></div></div>
+<main class="page">
+  <div class="mast"><i></i><span id="mastTitle">Bài kiểm tra nội bộ</span></div>
 
-  <!-- Màn hình nhập thông tin -->
-  <div class="card" id="scrCheck">
-    <div class="hero-badge">🚀</div>
-    <h1>Bắt đầu bài kiểm tra</h1>
-    <label for="inCode">Mã nhân viên</label>
-    <div class="inwrap">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="2"/><path d="M6 16c.6-1.8 2-2.6 3-2.6s2.4.8 3 2.6"/><path d="M14 9h4M14 13h4"/></svg>
-      <input type="text" id="inCode" placeholder="NV0012" autocomplete="off">
+  <!-- 1. Nhập thông tin -->
+  <section class="sheet" id="scrCheck">
+    <div class="sheet-pad">
+      <h1 id="h1Title">Bài kiểm tra</h1>
+      <p class="lead">Nhập mã nhân viên và email đã đăng ký với quản trị viên để vào bài.</p>
+      <div class="field">
+        <label for="inCode">Mã nhân viên</label>
+        <input type="text" id="inCode" placeholder="Ví dụ: NV0012" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="inEmail">Email</label>
+        <input type="email" id="inEmail" placeholder="ten@congty.vn" autocomplete="email" inputmode="email">
+      </div>
+      <button class="btn" id="btnCheck">Tiếp tục</button>
+      <div id="checkMsg" role="alert"></div>
     </div>
-    <label for="inEmail">Email</label>
-    <div class="inwrap">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2.5"/><path d="m22 6.5-10 7L2 6.5"/></svg>
-      <input type="email" id="inEmail" placeholder="ten@congty.vn" autocomplete="email">
-    </div>
-    <button class="btn" id="btnCheck" onclick="doCheck()">Kiểm tra thông tin</button>
-    <div id="checkMsg"></div>
-  </div>
+  </section>
 
-  <!-- Màn hình xác nhận bắt đầu -->
-  <div class="card hide" id="scrConfirm">
-    <h1>Xác nhận thông tin</h1>
-    <p class="sub">Kiểm tra lại thông tin dưới đây — nếu đúng là bạn, bấm xác nhận để nhận đề và bắt đầu làm bài.</p>
-    <div class="confirm-box" id="confirmBox"></div>
-    <button class="btn" id="btnStart" onclick="doStart()">✓ Đúng, bắt đầu làm bài</button>
-    <button class="btn ghost" onclick="resetToCheck()">✗ Không đúng, nhập lại</button>
-  </div>
-
-  <!-- Màn hình làm bài -->
-  <div class="card hide" id="scrQuiz">
-    <div class="qhead">
-      <div class="qprog" id="qProg">Câu 1/20</div>
-      <div class="timer" id="qTimer">60s</div>
+  <!-- 2. Xác nhận -->
+  <section class="sheet hide" id="scrConfirm">
+    <div class="sheet-pad">
+      <h1 id="confTitle">Xác nhận thông tin</h1>
+      <p class="lead" id="confLead">Kiểm tra lại thông tin bên dưới. Nếu đúng là bạn, bấm bắt đầu để nhận đề.</p>
+      <dl class="ident" id="ident"></dl>
+      <ul class="rules" id="rules"></ul>
+      <button class="btn" id="btnStart">Bắt đầu làm bài</button>
+      <button class="btn ghost" id="btnBack">Không phải tôi, nhập lại</button>
+      <div id="startMsg" role="alert"></div>
     </div>
-    <div class="bar"><i id="qBar" style="width:100%"></i></div>
-    <div class="qtext" id="qText"></div>
-    <div id="qOpts"></div>
-    <button class="btn" id="btnNext" onclick="submitAnswer()" disabled>Câu tiếp theo</button>
-  </div>
+  </section>
 
-  <!-- Màn hình kết quả -->
-  <div class="card hide" id="scrResult">
-    <div id="resBadgeWrap" style="text-align:center;margin-bottom:6px"></div>
-    <h1 style="text-align:center">Đã hoàn thành bài kiểm tra</h1>
-    <p class="sub" style="text-align:center" id="resSub"></p>
-    <div class="resrow">
-      <div class="rescell"><b id="resScore">0/0</b><span>Số câu đúng</span></div>
-      <div class="rescell"><b id="resPct">0%</b><span>Tỉ lệ đúng</span></div>
+  <!-- 3. Làm bài -->
+  <section class="sheet hide" id="scrQuiz" aria-live="off">
+    <div class="timebar" id="tBar"><i id="tFill"></i></div>
+    <div class="strip" id="strip" aria-hidden="true"></div>
+    <div class="sheet-pad">
+      <div class="qrow">
+        <div class="qnum" id="qNum">1</div>
+        <div>
+          <div class="qmeta"><span id="qOf">Câu 1 / 20</span><span class="clock" id="clock" role="timer">60 giây</span></div>
+          <p class="qtext" id="qText"></p>
+          <div class="opts" id="opts" role="radiogroup" aria-labelledby="qText"></div>
+          <div class="qfoot">
+            <button class="btn" id="btnNext" disabled>Câu tiếp theo</button>
+            <span class="hint">Phím A–D để chọn, Enter để sang câu</span>
+          </div>
+          <div id="quizMsg" role="alert"></div>
+        </div>
+      </div>
     </div>
-    <div class="resrow hide" id="resComplianceRow">
-      <div class="rescell"><b id="resCompliance">0</b><span>Điểm tuân thủ học tập</span></div>
-    </div>
-    <div class="msg ok" id="resMailMsg">Kết quả đã được gửi tự động về email bạn đã nhập.</div>
-  </div>
+  </section>
 
-  <div class="foot-note">Hệ thống kiểm tra nội bộ · Mọi thắc mắc liên hệ quản trị viên phụ trách</div>
-</div>
+  <!-- 4. Kết quả -->
+  <section class="sheet hide" id="scrResult">
+    <div class="sheet-pad">
+      <span class="verdict y" id="verdict">Đạt</span>
+      <h1 id="resTitle">Bạn đã hoàn thành bài kiểm tra</h1>
+      <div class="big"><b id="resScore">0</b><span id="resOf">/ 0 câu đúng</span></div>
+      <dl class="facts" id="facts"></dl>
+      <div id="resNote"></div>
+      <div class="review hide" id="review"></div>
+    </div>
+  </section>
+
+  <p class="foot">Hệ thống kiểm tra nội bộ. Có thắc mắc, liên hệ quản trị viên phụ trách.</p>
+</main>
 
 <script>
-const ST = { candidate: null, examTitle: '', attemptId: '', questions: [], idx: 0, secondsPerQuestion: 60, selected: -1, timer: null, deadline: 0 };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const LETTERS = 'ABCDEFGH';
+const ST = { cand:null, input:null, attemptId:'', total:0, index:0, q:null, secs:60, endAt:0, selected:-1, busy:false, timer:null, marks:[], title:'Bài kiểm tra', pendingSecs:60 };
+const SKEY = 'kt_active';
 
-function $(id){ return document.getElementById(id); }
-function show(id){ ['scrCheck','scrConfirm','scrQuiz','scrResult'].forEach(s => $(s).classList.toggle('hide', s !== id)); }
-function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function show(id){ ['scrCheck','scrConfirm','scrQuiz','scrResult'].forEach(s => $(s).classList.toggle('hide', s !== id)); window.scrollTo(0,0); }
+function note(id, text, cls){ $(id).innerHTML = text ? '<div class="notice '+(cls||'')+'">'+esc(text)+'</div>' : ''; }
+function setTitle(t){ if(!t) return; ST.title = t; $('h1Title').textContent = t; $('mastTitle').textContent = t; document.title = t; }
 
-async function api(method, path, body){
-  const h = { 'Content-Type':'application/json', 'X-Requested-With':'livotec' };
-  const r = await fetch(path, { method, headers:h, credentials:'same-origin', body: body ? JSON.stringify(body) : undefined });
-  let j = null; try { j = await r.json(); } catch(e){}
-  return { s:r.status, j:j||{} };
+async function api(path, body){
+  const r = await fetch(path, { method:'POST', headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: JSON.stringify(body) });
+  let j = {}; try { j = await r.json(); } catch(e){}
+  return { s:r.status, j };
 }
 
-function msg(elId, text, cls){
-  $(elId).innerHTML = text ? '<div class="msg '+(cls||'err')+'">'+esc(text)+'</div>' : '';
-}
-
+/* ---------- 1. đối chiếu ---------- */
 async function doCheck(){
-  const code = $('inCode').value.trim();
-  const email = $('inEmail').value.trim();
-  msg('checkMsg','');
-  if (!code || !email){ msg('checkMsg','Nhập đầy đủ mã nhân viên và email.'); return; }
-  $('btnCheck').disabled = true; $('btnCheck').textContent = 'Đang kiểm tra…';
-  let j;
-  try { ({ j } = await api('POST','/api/kt-check', { code, email })); }
-  catch (e) { $('btnCheck').disabled = false; $('btnCheck').textContent = 'Kiểm tra thông tin'; msg('checkMsg','Không kết nối được máy chủ, thử lại.'); return; }
-  $('btnCheck').disabled = false; $('btnCheck').textContent = 'Kiểm tra thông tin';
-  if (!j.ok){ msg('checkMsg', j.error || 'Có lỗi xảy ra, thử lại sau.'); return; }
-  ST.candidate = Object.assign({}, j.candidate, { codeInput: code, emailInput: email });
-  ST.examTitle = j.examTitle || (j.result ? '' : 'Bài kiểm tra');
-  if (j.examTitle) $('examTitle').textContent = j.examTitle;
-  if (j.alreadyDone){
-    showFinalResult(j.result, true);
-    return;
-  }
+  const code = $('inCode').value.trim(), email = $('inEmail').value.trim();
+  note('checkMsg','');
+  if (!code || !email){ note('checkMsg','Nhập đủ mã nhân viên và email.'); return; }
+  const b = $('btnCheck'); b.disabled = true; b.textContent = 'Đang kiểm tra…';
+  let res;
+  try { res = await api('/api/kt-check', { code, email }); }
+  catch(e){ note('checkMsg','Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.'); return; }
+  finally { b.disabled = false; b.textContent = 'Tiếp tục'; }
+  const j = res.j;
+  if (!j.ok){ note('checkMsg', j.error || 'Có lỗi xảy ra, thử lại sau.'); return; }
+  ST.cand = j.candidate; ST.input = { code, email }; ST.pendingSecs = j.secondsPerQuestion || 60;
+  setTitle(j.examTitle);
+  if (j.state === 'done'){ showResult(j.result, true); return; }
+  if (j.state === 'closed'){ note('checkMsg', j.message || 'Bài kiểm tra hiện chưa mở.', 'warn'); return; }
   const c = j.candidate;
-  $('confirmBox').innerHTML =
-    '<div class="confirm-row"><span>Họ và tên</span><span>'+esc(c.name||'(chưa rõ)')+'</span></div>'+
-    '<div class="confirm-row"><span>Mã nhân viên</span><span>'+esc(c.code)+'</span></div>'+
-    '<div class="confirm-row"><span>Email</span><span>'+esc(c.email)+'</span></div>'+
-    (c.manager?'<div class="confirm-row"><span>Quản lí</span><span>'+esc(c.manager)+'</span></div>':'');
+  $('ident').innerHTML =
+    '<div><dt>Họ và tên</dt><dd>'+esc(c.name||'(chưa có tên)')+'</dd></div>'+
+    '<div><dt>Mã nhân viên</dt><dd>'+esc(c.code)+'</dd></div>'+
+    '<div><dt>Email</dt><dd>'+esc(c.email)+'</dd></div>'+
+    (c.manager ? '<div><dt>Quản lí</dt><dd>'+esc(c.manager)+'</dd></div>' : '');
+  if (j.state === 'resume'){
+    $('confTitle').textContent = 'Bạn đang làm dở bài';
+    $('confLead').textContent = 'Bạn đã làm ' + j.progress.answered + '/' + j.progress.total + ' câu. Thời gian vẫn tiếp tục tính, bấm làm tiếp để vào câu đang dở.';
+    $('rules').innerHTML = '';
+    $('btnStart').textContent = 'Làm tiếp';
+  } else {
+    $('confTitle').textContent = 'Xác nhận thông tin';
+    $('confLead').textContent = 'Kiểm tra lại thông tin bên dưới. Nếu đúng là bạn, bấm bắt đầu để nhận đề.';
+    $('rules').innerHTML =
+      '<li>Mỗi câu có <b>'+ST.pendingSecs+' giây</b>. Hết giờ, câu đó tính là bỏ trống và tự chuyển sang câu sau.</li>'+
+      '<li>Không quay lại câu trước. Tải lại trang không đổi đề, thời gian vẫn trôi.</li>'+
+      '<li>Kết quả được gửi về email của bạn sau khi nộp bài.</li>';
+    $('btnStart').textContent = 'Bắt đầu làm bài';
+  }
+  note('startMsg','');
   show('scrConfirm');
 }
 
-function resetToCheck(){ show('scrCheck'); }
-
-async function doStart(){
-  $('btnStart').disabled = true; $('btnStart').textContent = 'Đang chuẩn bị đề…';
-  let j;
-  try { ({ j } = await api('POST','/api/kt-start', { code: ST.candidate.codeInput, email: ST.candidate.emailInput })); }
-  catch (e) { $('btnStart').disabled = false; $('btnStart').textContent = 'Bắt đầu làm bài'; alert('Không kết nối được máy chủ, thử lại.'); return; }
-  $('btnStart').disabled = false; $('btnStart').textContent = 'Bắt đầu làm bài';
-  if (!j.ok){ alert(j.error || 'Không thể bắt đầu bài kiểm tra.'); return; }
+/* ---------- 2. bắt đầu / làm tiếp ---------- */
+async function doStart(auto){
+  const inp = ST.input; if (!inp) return;
+  const b = $('btnStart'); b.disabled = true; const old = b.textContent; b.textContent = 'Đang chuẩn bị…';
+  let res;
+  try { res = await api('/api/kt-start', inp); }
+  catch(e){ b.disabled = false; b.textContent = old; if(auto){ sessionStorage.removeItem(SKEY); show('scrCheck'); } else note('startMsg','Không kết nối được máy chủ. Thử lại.'); return; }
+  b.disabled = false; b.textContent = old;
+  const j = res.j;
+  if (j.finished){ sessionStorage.removeItem(SKEY); setTitle(ST.title); showResult(j.result, false, 'Thời gian làm bài đã kết thúc, bài của bạn đã được chấm.'); return; }
+  if (!j.ok){ sessionStorage.removeItem(SKEY); if(auto){ show('scrCheck'); } else note('startMsg', j.error || 'Không thể bắt đầu bài.'); return; }
   ST.attemptId = j.attemptId;
-  ST.questions = j.questions;
-  ST.secondsPerQuestion = j.secondsPerQuestion;
-  ST.idx = 0;
-  if (j.examTitle) $('examTitle').textContent = j.examTitle;
+  sessionStorage.setItem(SKEY, JSON.stringify({ attemptId:j.attemptId, code:inp.code, email:inp.email }));
+  ST.marks = new Array(j.total).fill(0);
+  setTitle(j.examTitle);
+  applyState(j);
   show('scrQuiz');
-  renderQuestion();
 }
 
-function renderQuestion(){
-  ST.selected = -1;
-  const q = ST.questions[ST.idx];
-  $('qProg').textContent = 'Câu ' + (ST.idx+1) + '/' + ST.questions.length;
+/* ---------- 3. làm bài ---------- */
+function applyState(j){
+  clearInterval(ST.timer);
+  if (j.done){ finish(); return; }
+  ST.total = j.total; ST.index = j.index; ST.q = j.question; ST.secs = j.secondsPerQuestion; ST.selected = -1; ST.busy = false;
+  ST.endAt = performance.now() + j.remainingMs;
+  for (let i = 0; i < j.index; i++) if (!ST.marks[i]) ST.marks[i] = 1;
+  renderQ(); tick(); ST.timer = setInterval(tick, 200);
+}
+function renderStrip(){
+  $('strip').innerHTML = ST.marks.map((m,i) => '<b class="'+(i===ST.index?'now':m===2?'miss':m===1?'done':'')+'"></b>').join('');
+}
+function renderQ(){
+  const q = ST.q;
+  $('qNum').textContent = ST.index + 1;
+  $('qOf').textContent = 'Câu ' + (ST.index+1) + ' / ' + ST.total;
   $('qText').textContent = q.text;
-  $('qOpts').innerHTML = q.options.map((o,i) =>
-    '<div class="opt" data-i="'+i+'" onclick="selectOpt('+i+')"><div class="ring"></div><p>'+esc(o)+'</p></div>'
-  ).join('');
+  $('opts').innerHTML = q.options.map((o,i) =>
+    '<button type="button" class="opt" role="radio" aria-checked="false" data-i="'+i+'"><span class="bub">'+LETTERS[i]+'</span><span class="t">'+esc(o)+'</span></button>').join('');
   $('btnNext').disabled = true;
-  $('btnNext').textContent = (ST.idx === ST.questions.length - 1) ? 'Nộp bài' : 'Câu tiếp theo';
-  startTimer();
+  $('btnNext').textContent = ST.index === ST.total - 1 ? 'Nộp bài' : 'Câu tiếp theo';
+  note('quizMsg','');
+  renderStrip();
 }
-
-function selectOpt(i){
+function choose(i){
+  if (ST.busy) return;
   ST.selected = i;
-  document.querySelectorAll('.opt').forEach(el => el.classList.toggle('sel', +el.dataset.i === i));
+  document.querySelectorAll('.opt').forEach(el => el.setAttribute('aria-checked', String(+el.dataset.i === i)));
   $('btnNext').disabled = false;
 }
-
-function startTimer(){
-  clearInterval(ST.timer);
-  ST.deadline = Date.now() + ST.secondsPerQuestion * 1000;
-  tickTimer();
-  ST.timer = setInterval(tickTimer, 250);
+function tick(){
+  const left = Math.max(0, ST.endAt - performance.now());
+  const s = Math.ceil(left / 1000);
+  $('clock').textContent = s + ' giây';
+  const f = left / (ST.secs * 1000);
+  $('tFill').style.transform = 'scaleX(' + Math.max(0,Math.min(1,f)) + ')';
+  const cls = s <= 10 ? 'bad' : s <= 20 ? 'warn' : '';
+  $('clock').className = 'clock ' + cls; $('tBar').className = 'timebar ' + cls;
+  if (left <= 0 && !ST.busy){ clearInterval(ST.timer); sendAnswer(true); }
 }
-
-function tickTimer(){
-  const left = Math.max(0, ST.deadline - Date.now());
-  const secs = Math.ceil(left/1000);
-  const pct = Math.max(0, left / (ST.secondsPerQuestion*1000) * 100);
-  $('qTimer').textContent = secs + 's';
-  $('qBar').style.width = pct + '%';
-  $('qTimer').className = 'timer' + (secs<=10?' bad':secs<=20?' warn':'');
-  if (left <= 0){
-    clearInterval(ST.timer);
-    submitAnswer(true);
-  }
-}
-
-async function submitAnswer(timedOut){
-  clearInterval(ST.timer);
-  const q = ST.questions[ST.idx];
-  if (ST.selected >= 0 || timedOut){
-    try { await api('POST','/api/kt-answer', { attemptId: ST.attemptId, questionId: q.id, answerIndex: ST.selected }); }
-    catch (e) { /* lỗi mạng tạm thời khi ghi 1 câu trả lời: vẫn tiếp tục bài làm, không chặn thí sinh */ }
-  }
-  if (ST.idx < ST.questions.length - 1){
-    ST.idx++;
-    renderQuestion();
-  } else {
-    finishQuiz();
-  }
-}
-
-async function finishQuiz(){
-  $('btnNext').disabled = true;
-  $('qText').textContent = 'Đang chấm điểm…';
-  $('qOpts').innerHTML = '';
-  let j;
-  try { ({ j } = await api('POST','/api/kt-submit', { attemptId: ST.attemptId })); }
-  catch (e) {
-    $('qText').innerHTML = 'Không kết nối được máy chủ để nộp bài.';
-    $('qOpts').innerHTML = '<button class="btn" onclick="finishQuiz()">Thử nộp bài lại</button>';
+async function sendAnswer(timedOut){
+  if (ST.busy) return; ST.busy = true; clearInterval(ST.timer);
+  const ans = timedOut ? -1 : ST.selected;
+  const idxNow = ST.index;
+  $('btnNext').disabled = true; $('btnNext').textContent = 'Đang gửi…';
+  let res;
+  try { res = await api('/api/kt-answer', { attemptId: ST.attemptId, questionId: ST.q.id, answerIndex: ans }); }
+  catch(e){ res = null; }
+  if (!res || !res.j.ok){
+    if (res && res.j.finished){ finish(); return; }
+    // lỗi mạng: giữ nguyên lựa chọn, cho thử lại; đồng hồ vẫn chạy theo máy chủ
+    ST.busy = false;
+    $('btnNext').disabled = ST.selected < 0; $('btnNext').textContent = ST.index === ST.total - 1 ? 'Nộp bài' : 'Câu tiếp theo';
+    note('quizMsg','Chưa gửi được câu trả lời. Kiểm tra mạng rồi bấm gửi lại.');
+    if (timedOut){ ST.timer = setInterval(() => { clearInterval(ST.timer); sendAnswer(true); }, 3000); }
     return;
   }
-  if (!j.ok){
-    $('qText').innerHTML = 'Có lỗi khi nộp bài: ' + esc(j.error || 'thử lại sau.');
-    $('qOpts').innerHTML = '<button class="btn" onclick="finishQuiz()">Thử nộp bài lại</button>';
-    return;
+  if (!res.j.synced) ST.marks[idxNow] = (ans < 0) ? 2 : 1;
+  applyState(res.j);
+}
+async function finish(){
+  clearInterval(ST.timer);
+  $('qText').textContent = 'Đang chấm điểm…'; $('opts').innerHTML = ''; $('btnNext').disabled = true;
+  let res;
+  try { res = await api('/api/kt-submit', { attemptId: ST.attemptId }); }
+  catch(e){ res = null; }
+  if (!res || !res.j.ok){
+    $('qText').textContent = 'Chưa nộp được bài (' + ((res && res.j.error) || 'mất kết nối') + ').';
+    $('opts').innerHTML = '<button class="btn" id="btnRetry">Thử nộp lại</button>';
+    $('btnRetry').onclick = finish; return;
   }
-  showFinalResult(j, false);
+  sessionStorage.removeItem(SKEY);
+  showResult(res.j, false, null, res.j.mailSent);
 }
 
-function showFinalResult(r, already){
+/* ---------- 4. kết quả ---------- */
+function showResult(r, already, extra, mailSent){
   show('scrResult');
   const passed = !!r.passed;
-  $('resBadgeWrap').innerHTML = '<span class="pass-badge '+(passed?'y':'n')+'">'+(passed?'✓ ĐẠT':'✗ CHƯA ĐẠT')+'</span>';
-  $('resSub').textContent = already ? 'Bạn đã hoàn thành bài kiểm tra này trước đó.' : 'Cảm ơn bạn đã hoàn thành bài kiểm tra.';
-  $('resScore').textContent = (r.score!=null?r.score:'–') + '/' + (r.total!=null?r.total:'–');
-  $('resPct').textContent = (r.pct!=null?r.pct:'–') + '%';
-  if (r.compliancePoints != null){
-    $('resCompliance').textContent = r.compliancePoints;
-    $('resComplianceRow').classList.remove('hide');
-  }
+  $('verdict').className = 'verdict ' + (passed ? 'y' : 'n');
+  $('verdict').textContent = passed ? 'Đạt' : 'Chưa đạt';
+  $('resTitle').textContent = already ? 'Bạn đã làm bài này trước đó' : 'Bạn đã hoàn thành bài kiểm tra';
+  $('resScore').textContent = r.score != null ? r.score : '–';
+  $('resOf').textContent = '/ ' + (r.total != null ? r.total : '–') + ' câu đúng';
+  let f = '<div><dt>Tỉ lệ đúng</dt><dd>'+(r.pct != null ? r.pct : '–')+'%</dd></div>';
+  if (r.compliancePoints != null) f += '<div><dt>Điểm tuân thủ học tập</dt><dd>'+r.compliancePoints+' điểm</dd></div>';
+  $('facts').innerHTML = f;
+  let n = '';
+  if (extra) n += '<div class="notice warn">'+esc(extra)+'</div>';
+  if (!already) n += mailSent === false
+    ? '<div class="notice warn">Chưa gửi được email kết quả. Quản trị viên có thể gửi lại cho bạn.</div>'
+    : '<div class="notice info">Kết quả chi tiết đã được gửi về email của bạn.</div>';
+  $('resNote').innerHTML = n;
+  const rv = $('review');
+  if (r.review && r.review.length){
+    rv.classList.remove('hide');
+    rv.innerHTML = '<h2>Đáp án từng câu</h2>' + r.review.map((x,i) =>
+      '<div class="rv"><p>'+(i+1)+'. '+esc(x.text)+'</p>' + x.options.map((o,oi) => {
+        const cls = oi === x.correct ? 'ok' : (oi === x.chosen ? 'no' : '');
+        const tag = oi === x.correct ? ' (đáp án đúng)' : (oi === x.chosen ? ' (bạn chọn)' : '');
+        return '<div class="a '+cls+'"><span>'+LETTERS[oi]+'.</span><span>'+esc(o)+tag+'</span></div>';
+      }).join('') + (x.chosen < 0 ? '<div class="a">Bạn không trả lời câu này.</div>' : '') + '</div>').join('');
+  } else rv.classList.add('hide');
 }
+
+/* ---------- sự kiện ---------- */
+$('btnCheck').onclick = doCheck;
+$('btnStart').onclick = () => doStart(false);
+$('btnBack').onclick = () => { show('scrCheck'); };
+$('btnNext').onclick = () => { if (ST.selected >= 0) sendAnswer(false); };
+$('opts').addEventListener('click', (e) => { const b = e.target.closest('.opt'); if (b) choose(+b.dataset.i); });
+['inCode','inEmail'].forEach(id => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') doCheck(); }));
+document.addEventListener('keydown', (e) => {
+  if ($('scrQuiz').classList.contains('hide') || ST.busy || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toUpperCase(), i = LETTERS.indexOf(k);
+  if (k.length === 1 && i >= 0 && ST.q && i < ST.q.options.length){ choose(i); return; }
+  if (/^[1-8]$/.test(e.key) && ST.q && +e.key <= ST.q.options.length){ choose(+e.key - 1); return; }
+  if (e.key === 'Enter' && ST.selected >= 0){ e.preventDefault(); sendAnswer(false); }
+});
+
+// Tải lại giữa chừng: tự vào lại bài đang làm (đồng hồ vẫn chạy theo máy chủ).
+(function resumeIfAny(){
+  let s = null; try { s = JSON.parse(sessionStorage.getItem(SKEY) || 'null'); } catch(e){}
+  if (!s || !s.code || !s.email) return;
+  ST.input = { code:s.code, email:s.email };
+  show('scrQuiz'); $('qText').textContent = 'Đang vào lại bài làm…'; $('opts').innerHTML = '';
+  $('btnStart').textContent = 'Làm tiếp';
+  doStart(true);
+})();
 </script>
 </body>
 </html>
