@@ -601,6 +601,33 @@ function initials(n){
   return ((p.length > 1 ? p[0].charAt(0) : '') + p[p.length - 1].charAt(0)).toUpperCase();
 }
 
+var RESEND_LABEL = 'Gửi lại email xác nhận', resendT = null;
+function resendMsg(html, cls){ var el = $('resendMsg'); if (el) el.innerHTML = html ? '<div class="msg '+(cls||'info')+'" style="text-align:left">'+html+'</div>' : ''; }
+function resendCountdown(sec){
+  clearInterval(resendT);
+  var btn = $('btnResend'); if (!btn) return;
+  btn.disabled = true;
+  function paint(){
+    if (sec <= 0){ clearInterval(resendT); btn.disabled = false; btn.textContent = RESEND_LABEL; return; }
+    btn.textContent = 'Có thể gửi lại sau ' + sec + 's'; sec--;
+  }
+  paint(); resendT = setInterval(paint, 1000);
+}
+$('resMail').addEventListener('click', async function(e){
+  var btn = e.target.closest('#btnResend'); if (!btn || btn.disabled || !ST.cand) return;
+  btn.disabled = true; btn.textContent = 'Đang gửi email…'; resendMsg('');
+  var res; try { res = await api('/api/kt-resend', { code:ST.cand.inCode, email:ST.cand.inEmail }); } catch(err){ res = null; }
+  if (!res){ btn.disabled = false; btn.textContent = RESEND_LABEL; resendMsg('Không kết nối được máy chủ, vui lòng thử lại.', 'err'); return; }
+  var j = res.j;
+  if (j.ok){
+    resendMsg('Đã gửi lại email xác nhận tới <b>' + esc(j.to) + '</b>. Nếu chưa thấy, hãy kiểm tra cả thư rác (Spam).' + (j.remaining != null ? ' Còn ' + j.remaining + ' lần gửi lại.' : ''), 'ok');
+    if (j.remaining === 0){ btn.textContent = 'Đã hết lượt gửi lại'; btn.disabled = true; }
+    else resendCountdown(j.retryAfterSec || 60);
+  } else if (j.limit){ resendMsg(esc(j.error), 'warn'); btn.textContent = 'Đã hết lượt gửi lại'; }
+  else if (j.retryAfterSec){ resendMsg(esc(j.error), 'warn'); resendCountdown(j.retryAfterSec); }
+  else { btn.disabled = false; btn.textContent = RESEND_LABEL; resendMsg(esc(j.error || 'Không gửi được email, vui lòng thử lại.'), 'err'); }
+});
+
 function renderResult(r, already){
   ST.res = { r:r, already:already };
   var passed = !!r.passed, pct = r.pct == null ? 0 : r.pct, c = ST.cand || {};
@@ -650,9 +677,12 @@ function renderResult(r, already){
     pf.classList.remove('hide');
   } else pf.classList.add('hide');
 
-  $('resMail').innerHTML = (r.mailOk === false)
-    ? '<div class="msg warn" style="text-align:left">Kết quả đã được lưu nhưng hệ thống chưa gửi được email. Vui lòng liên hệ quản trị viên nếu cần bản sao chi tiết.</div>'
-    : '<div class="msg ok" style="text-align:left">Kết quả chi tiết đã được gửi tự động về email bạn đã nhập.</div>';
+  RESEND_LABEL = r.mailOk === false ? 'Thử gửi lại email xác nhận' : 'Gửi lại email xác nhận';
+  clearInterval(resendT);
+  $('resMail').innerHTML = (r.mailOk === false
+    ? '<div class="msg warn" style="text-align:left">Kết quả đã được lưu nhưng hệ thống chưa gửi được email. Bạn có thể bấm gửi lại bên dưới, hoặc liên hệ quản trị viên nếu vẫn không nhận được.</div>'
+    : '<div class="msg ok" style="text-align:left">Kết quả chi tiết đã được gửi tự động về email bạn đã nhập.</div>') +
+    '<button class="btn ghost" id="btnResend" type="button" style="margin-top:10px;min-height:46px">' + RESEND_LABEL + '</button><div id="resendMsg" role="status"></div>';
   shareMsg('');
   show('result');
   if (passed && !already) confetti();

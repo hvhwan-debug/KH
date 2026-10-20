@@ -3,7 +3,7 @@ process.env.STORAGE_MODE = "memory"; process.env.MAIL_MODE = "memory";
 process.env.SESSION_SECRET = "dev-session-secret-dev-session-secret-1234"; process.env.ALLOWED_EMAIL_DOMAINS = "x.vn";
 const quiz = require("../api/_lib/quiz");
 const H = { "x-requested-with": "livotec" };
-const fn = { check: require("../api/kt-check"), start: require("../api/kt-start"), answer: require("../api/kt-answer"), submit: require("../api/kt-submit") };
+const fn = { check: require("../api/kt-check"), start: require("../api/kt-start"), answer: require("../api/kt-answer"), submit: require("../api/kt-submit"), resend: require("../api/kt-resend") };
 let pass = 0, fail = 0;
 const ok = (c, m) => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + m); };
 async function call(name, body, headers) {
@@ -68,6 +68,29 @@ async function call(name, body, headers) {
   r = await call("check", { code: "NV1", email: "a@x.vn" });
   ok(r.j.alreadyDone && r.j.result.score === 4 && r.j.result.mailOk === true && r.j.result.submittedAt > 0, "check sau khi nộp: trả kết quả cũ + trạng thái email");
   ok(r.j.result.proof === proofCode1 && r.j.result.blank === 1 && r.j.result.startedAt > 0 && r.j.serverNow > 0, "check sau khi nộp: mã minh chứng khớp lúc nộp + đủ số liệu");
+
+  // Gửi lại email xác nhận
+  const mb0 = (global.__mailbox || []).length;
+  r = await call("resend", { code: "NV1", email: "sai@x.vn" }); ok(r.s === 404 && (global.__mailbox || []).length === mb0, "gửi lại với thông tin sai: từ chối, không gửi mail");
+  r = await call("resend", { code: "NV1", email: "a@x.vn" });
+  ok(r.s === 200 && r.j.to === "a***@x.vn" && r.j.remaining === 4 && (global.__mailbox || []).length === mb0 + 1, "gửi lại lần 1: gửi mail, email được che, còn 4 lần");
+  const rm = (global.__mailbox || [])[mb0]; ok(rm.to === "a@x.vn" && /Kết quả bài kiểm tra/.test(rm.subject) && rm.html.indexOf(proofCode1) >= 0 && /Câu 1 \[/.test(rm.text), "email gửi lại: đúng người nhận, có mã minh chứng và bản sao câu trả lời");
+  r = await call("resend", { code: "NV1", email: "a@x.vn" });
+  ok(r.s === 429 && r.j.retryAfterSec > 0 && (global.__mailbox || []).length === mb0 + 1, "bấm liên tục: bị giãn cách 60 giây, không gửi thêm");
+  for (let i = 0; i < 4; i++) { const at = await quiz.getAttempt(att); at.mailLastAt = Date.now() - 61000; await quiz.putAttempt(at); r = await call("resend", { code: "NV1", email: "a@x.vn" }); }
+  ok((global.__mailbox || []).length === mb0 + 5, "đủ 5 lần gửi lại đều thành công khi đã hết thời gian chờ");
+  { const at = await quiz.getAttempt(att); at.mailLastAt = Date.now() - 61000; await quiz.putAttempt(at); }
+  r = await call("resend", { code: "NV1", email: "a@x.vn" }); ok(r.s === 429 && r.j.limit === true && (global.__mailbox || []).length === mb0 + 5, "quá 5 lần: chặn, hướng dẫn liên hệ quản trị viên");
+  await quiz.saveCandidates([{ code: "NV1", name: "Nguyễn A", email: "a@x.vn", segment: "both" }, { code: "NV2", name: "B", email: "b@x.vn", segment: "both" }]);
+  r = await call("resend", { code: "NV2", email: "b@x.vn" }); ok(r.s === 404 && (global.__mailbox || []).length === mb0 + 5, "chưa nộp bài: không có gì để gửi lại");
+
+  // Máy chủ chưa cấu hình SMTP: phải báo THẬT là chưa gửi được (không giả vờ đã gửi)
+  { const old = { m: process.env.MAIL_MODE, h: process.env.SMTP_HOST }; process.env.MAIL_MODE = "smtp"; delete process.env.SMTP_HOST;
+    const at = await quiz.getAttempt(att); at.mailSends = 0; at.mailLastAt = 0; await quiz.putAttempt(at);
+    r = await call("resend", { code: "NV1", email: "a@x.vn" });
+    ok(r.s === 502 && r.j.ok === false, "chưa cấu hình SMTP: gửi lại báo lỗi 502, không nói dối là đã gửi");
+    ok((await quiz.getIndex())[0].mailOk === false, "trạng thái email trong bảng kết quả chuyển thành 'chưa gửi'");
+    process.env.MAIL_MODE = old.m; if (old.h) process.env.SMTP_HOST = old.h; }
 
   // Giới hạn dò mã
   let last; for (let i = 0; i < 9; i++) last = await call("check", { code: "X" + i, email: "z@x.vn" });

@@ -7,9 +7,9 @@ async function send({ to, subject, html, text, headers }) {
   const c = cfg();
   if (c.mailMode === "memory") {
     (global.__mailbox = global.__mailbox || []).push({ to, subject, html, text, headers, at: Date.now() });
-    return;
+    return true;
   }
-  if (!c.smtp.host) return; // chưa cấu hình SMTP: email tự động là tuỳ chọn, bỏ qua thay vì báo lỗi
+  if (!c.smtp.host) return false; // chưa cấu hình SMTP: email tự động là tuỳ chọn, bỏ qua thay vì báo lỗi (trả về false để nơi gọi biết là CHƯA gửi)
   if (!transport) {
     const nodemailer = require("nodemailer"); // nạp khi cần
     transport = nodemailer.createTransport({
@@ -20,6 +20,7 @@ async function send({ to, subject, html, text, headers }) {
     });
   }
   await transport.sendMail({ from: c.smtp.from, to, subject, html, text, headers });
+  return true;
 }
 
 module.exports = { send };

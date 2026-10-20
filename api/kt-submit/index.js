@@ -1,8 +1,7 @@
 // Công khai: chấm điểm bài làm và gửi email kết quả tự động cho thí sinh.
 const { reply, guardConfigured, requireAjax } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
-const mail = require("../_lib/mail");
-const { layout } = require("../_lib/emails");
+const resultmail = require("../_lib/resultmail");
 
 module.exports = async function (context, req) {
   try {
@@ -65,6 +64,7 @@ module.exports = async function (context, req) {
     attempt.passed = passed;
     attempt.scoreOutOf10 = Math.round(scoreOutOf10 * 100) / 100;
     attempt.compliancePoints = compliance;
+    attempt.detailLines = detailLines; // bản sao câu trả lời, dùng khi gửi lại email
     attempt.wrong = wrongN;
     attempt.blank = Math.max(0, total - correct - wrongN);
     await quiz.putAttempt(attempt);
@@ -77,30 +77,7 @@ module.exports = async function (context, req) {
 
     let mailOk = false;
     try {
-      const { html, text } = layout({
-        brand: "Hệ thống kiểm tra", brandSub: "Bài kiểm tra nội bộ", brandLetter: "KT",
-        tone: passed ? "info" : "warn",
-        title: "Kết quả bài kiểm tra: " + (settings.examTitle || "Bài kiểm tra"),
-        tiles: [
-          { n: correct + "/" + total, l: "Số câu đúng" },
-          { n: pct + "%", l: "Tỉ lệ đúng" },
-          { n: passed ? "ĐẠT" : "CHƯA ĐẠT", l: "Kết quả" }
-        ].concat(compliance != null ? [{ n: compliance + " điểm", l: "Điểm tuân thủ học tập" }] : []),
-        sections: [
-          {
-            h: "Thông tin thí sinh",
-            lines: [
-              "Họ tên: " + (attempt.name || ""),
-              "Mã nhân viên: " + (attempt.code || ""),
-              "Quản lí: " + (attempt.manager || "(chưa rõ)"),
-              "Thời điểm nộp bài: " + new Date(attempt.submittedAt).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
-            ]
-          },
-          { h: "Chi tiết bài làm (bản sao câu trả lời)", lines: detailLines }
-        ],
-        footer: "Đây là email tự động từ hệ thống kiểm tra. Nếu có thắc mắc về kết quả, vui lòng liên hệ quản trị viên phụ trách."
-      });
-      await mail.send({ to: attempt.email, subject: "Kết quả bài kiểm tra: " + (settings.examTitle || "Bài kiểm tra"), html, text });
+      await resultmail.send(attempt, settings, detailLines);
       mailOk = true;
     } catch (e) {
       context.log.error("kt-submit mail", e && e.message);
