@@ -171,6 +171,14 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
     <!-- Cài đặt -->
     <div id="tab-settings" class="tabpane hide">
       <div class="card">
+        <h1>Kỳ kiểm tra</h1>
+        <p class="small">Mỗi bài làm được gắn đúng kỳ đang chọn khi nộp bài. Thí sinh chỉ bị chặn "đã làm bài" trong <b>cùng một kỳ</b> — đổi sang kỳ mới (ví dụ sang tháng sau) là <b>mọi thí sinh tự động được làm lại từ đầu</b>, không cần reset tay từng người. Kết quả các kỳ cũ vẫn được lưu nguyên vẹn, xem lại ở tab Kết quả.</p>
+        <label>Kỳ hiện tại (định dạng năm-tháng, ví dụ 2026-10)</label>
+        <input type="text" id="setPeriod" placeholder="2026-10" style="max-width:160px">
+        <button class="btn" style="margin-top:14px" onclick="saveSettings()">Lưu kỳ kiểm tra</button>
+        <div id="setPeriodMsg"></div>
+      </div>
+      <div class="card">
         <h1>Cài đặt bài kiểm tra</h1>
         <div class="grid2">
           <div>
@@ -250,9 +258,13 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h1 style="margin:0">Kết quả (<span id="resCount">0</span>)</h1>
-          <button class="btn ghost sm" onclick="exportResultsXlsx()">⬇ Xuất Excel</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <label style="margin:0;font-weight:600;font-size:12.5px;color:var(--muted)">Kỳ:</label>
+            <select id="resPeriod" onchange="loadResults()" style="max-width:160px"></select>
+            <button class="btn ghost sm" onclick="exportResultsXlsx()">⬇ Xuất Excel</button>
+          </div>
         </div>
-        <table style="margin-top:14px"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Quản lí</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Mã minh chứng</th><th>Cảnh báo</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
+        <table style="margin-top:14px"><thead><tr><th>Kỳ</th><th>Mã NV</th><th>Họ tên</th><th>Quản lí</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Mã minh chứng</th><th>Cảnh báo</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
       </div>
       <div class="card hide" id="resDetailCard">
         <h1>Chi tiết bài làm</h1>
@@ -481,6 +493,7 @@ async function loadSettings(){
   const { j } = await api('GET','/api/kt-admin?op=settings');
   if (!j.ok) return;
   const s = j.settings;
+  $('setPeriod').value = s.examPeriod || ''; CUR_PERIOD = s.examPeriod || '';
   $('setTitle').value = s.examTitle; $('setShareTitle').value = s.shareTitle || ''; $('setCount').value = s.questionCount;
   $('setBothGD').value = s.bothGiaDungCount;
   $('setSeconds').value = s.secondsPerQuestion; $('setPass').value = s.passScore; $('setPassOn').checked = !!s.passEnabled; $('setPass').disabled = !s.passEnabled;
@@ -489,15 +502,20 @@ async function loadSettings(){
   $('setCHigh').value = s.complianceHighMin; $('setCMid').value = s.complianceMidMin; $('setCLow').value = s.complianceLowMin;
 }
 async function saveSettings(){
+  const period = $('setPeriod').value.trim();
+  if (period && !/^\d{4}-\d{2}$/.test(period)){ msg('setPeriodMsg','Kỳ phải theo định dạng năm-tháng, ví dụ 2026-10.'); return; }
+  if (period && period !== CUR_PERIOD && !confirm('Đổi kỳ kiểm tra sang "'+period+'"? Mọi thí sinh sẽ được làm lại bài từ đầu (kết quả kỳ cũ vẫn giữ nguyên).')) return;
   const { j } = await api('POST','/api/kt-admin', {
-    op:'saveSettings', examTitle: $('setTitle').value, shareTitle: $('setShareTitle').value, questionCount: $('setCount').value, bothGiaDungCount: $('setBothGD').value,
+    op:'saveSettings', examPeriod: period, examTitle: $('setTitle').value, shareTitle: $('setShareTitle').value, questionCount: $('setCount').value, bothGiaDungCount: $('setBothGD').value,
     secondsPerQuestion: $('setSeconds').value, passEnabled: $('setPassOn').checked, passScore: $('setPass').value, allowRetake: $('setRetake').checked,
     complianceEnabled: $('setComplianceOn').checked, complianceHighMin: $('setCHigh').value,
     complianceMidMin: $('setCMid').value, complianceLowMin: $('setCLow').value
   });
-  if (!j.ok){ msg('setMsg', j.error, 'err'); return; }
-  msg('setMsg','Đã lưu cài đặt.','ok');
+  if (!j.ok){ msg('setMsg', j.error, 'err'); msg('setPeriodMsg', j.error, 'err'); return; }
+  CUR_PERIOD = j.settings.examPeriod;
+  msg('setMsg','Đã lưu cài đặt.','ok'); msg('setPeriodMsg','Đã lưu kỳ kiểm tra: '+CUR_PERIOD+'.','ok');
 }
+let CUR_PERIOD = '';
 
 /* ---------- Xuất Excel ---------- */
 let xjsP=null;
@@ -513,7 +531,8 @@ function loadExcelJS(){
 }
 async function exportResultsXlsx(){
   let E; try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel, kiểm tra kết nối mạng.'); return; }
-  const { j } = await api('GET','/api/kt-admin?op=results');
+  const selPeriod = $('resPeriod').value;
+  const { j } = await api('GET','/api/kt-admin?op=results'+(selPeriod?'&period='+encodeURIComponent(selPeriod):''));
   if (!j.ok){ alert(j.error||'Không lấy được dữ liệu kết quả.'); return; }
   const results = (j.results||[]).slice().sort((a,b)=>(b.submittedAt||0)-(a.submittedAt||0));
   const segLabel = { both:'Cả hai', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };
@@ -522,6 +541,7 @@ async function exportResultsXlsx(){
   wb.creator = 'Hệ thống kiểm tra'; wb.created = new Date();
   const ws = wb.addWorksheet('Kết quả', { views:[{ state:'frozen', ySplit:1 }] });
   ws.columns = [
+    { header:'Kỳ', key:'period', width:10 },
     { header:'Mã nhân viên', key:'code', width:16 },
     { header:'Họ tên', key:'name', width:24 },
     { header:'Quản lí', key:'manager', width:22 },
@@ -545,7 +565,7 @@ async function exportResultsXlsx(){
 
   results.forEach(r => {
     const row = ws.addRow({
-      code: r.code, name: r.name||'', manager: r.manager||'', segment: segLabel[r.segment]||'Cả hai',
+      period: r.period || '', code: r.code, name: r.name||'', manager: r.manager||'', segment: segLabel[r.segment]||'Cả hai',
       score: r.score, total: r.total, pct: r.pct, compliance: r.compliancePoints!=null?r.compliancePoints:'',
       result: r.passed == null ? '' : (r.passed ? 'Đạt' : 'Chưa đạt'),
       submitted: r.submittedAt ? new Date(r.submittedAt).toLocaleString('vi-VN') : '',
@@ -558,7 +578,7 @@ async function exportResultsXlsx(){
     else { resultCell.font = { bold:true, color:{ argb:'FFB3261E' } }; }
     ['score','total','pct','compliance'].forEach(k => { row.getCell(k).alignment = { horizontal:'center' }; });
   });
-  ws.autoFilter = { from:'A1', to:'L1' };
+  ws.autoFilter = { from:'A1', to:'M1' };
 
   const buf = await wb.xlsx.writeBuffer();
   const a = document.createElement('a');
@@ -619,18 +639,21 @@ function flagText(r){
   return a.join(', ');
 }
 async function loadResults(){
-  const { j } = await api('GET','/api/kt-admin?op=results');
+  const selBefore = $('resPeriod').value;
+  const { j } = await api('GET','/api/kt-admin?op=results'+(selBefore?'&period='+encodeURIComponent(selBefore):''));
   if (!j.ok) return;
+  const opts = (j.periods||[]).map(p => p === j.currentPeriod ? p+' (hiện tại)' : p);
+  $('resPeriod').innerHTML = '<option value="">Tất cả các kỳ</option>' + (j.periods||[]).map((p,i) => '<option value="'+esc(p)+'" '+(p===selBefore?'selected':'')+'>'+esc(opts[i])+'</option>').join('');
   $('resCount').textContent = j.results.length;
   $('resList').innerHTML = j.results.map(r =>
-    '<tr><td>'+esc(r.code)+'</td><td>'+esc(r.name||'')+'</td><td>'+esc(r.manager||'')+'</td><td>'+r.score+'/'+r.total+'</td><td>'+r.pct+'%</td>'+
+    '<tr><td class="small">'+esc(r.period||'–')+'</td><td>'+esc(r.code)+'</td><td>'+esc(r.name||'')+'</td><td>'+esc(r.manager||'')+'</td><td>'+r.score+'/'+r.total+'</td><td>'+r.pct+'%</td>'+
     '<td>'+(r.compliancePoints!=null?r.compliancePoints:'–')+'</td>'+
     '<td>'+(r.passed==null?'<span class="small">–</span>':(r.passed?'<span class="badge y">Đạt</span>':'<span class="badge n">Chưa đạt</span>'))+'</td>'+
     '<td class="small"><b>'+esc(r.proof||('KT-'+String(r.id||'').slice(-8).toUpperCase()))+'</b></td>'+
     '<td class="small">'+esc(flagText(r)||'–')+'</td>'+
     '<td class="small">'+new Date(r.submittedAt).toLocaleString('vi-VN')+'</td>'+
     '<td style="white-space:nowrap"><button class="btn ghost sm" onclick="viewResult(\''+r.id+'\')">Xem</button> <button class="btn danger sm" onclick="resetAttempt(\''+esc(r.code)+'\')">↺ Làm lại</button></td></tr>'
-  ).join('') || '<tr><td colspan="11" class="small">Chưa có bài làm nào được nộp.</td></tr>';
+  ).join('') || '<tr><td colspan="12" class="small">Chưa có bài làm nào được nộp.</td></tr>';
 }
 async function resetAttempt(code){
   if (!confirm('Xoá kết quả hiện tại của mã '+code+' và cho phép làm lại bài kiểm tra từ đầu?')) return;

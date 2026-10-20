@@ -26,7 +26,7 @@ module.exports = async function (context, req) {
     const settings = await quiz.getSettings();
     if (!settings.allowRetake) {
       const idx = await quiz.getIndex();
-      const prior = idx.find((a) => quiz.normCode(a.code) === code && a.status === "submitted");
+      const prior = idx.find((a) => quiz.normCode(a.code) === code && a.status === "submitted" && (a.period || "") === settings.examPeriod);
       if (prior) return reply(context, 409, { ok: false, error: "Bạn đã hoàn thành bài kiểm tra này rồi." });
     }
 
@@ -67,6 +67,7 @@ module.exports = async function (context, req) {
       picked.forEach((q) => { orders[q.id] = quiz.shuffle(q.options.map((_, i) => i)); }); // order[vị trí hiển thị] = chỉ số gốc
       attempt = {
         id: quiz.genId(), code: found.code, name: found.name, email: found.email, manager: found.manager || "", segment,
+        period: settings.examPeriod,
         questionIds: picked.map((q) => q.id), orders,
         answers: {},
         photo,

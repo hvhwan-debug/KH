@@ -26,8 +26,17 @@ const DEFAULT_SETTINGS = {
   complianceEnabled: true,
   complianceHighMin: 9,   // >= mốc này: 20 điểm
   complianceMidMin: 7,    // >= mốc này (và < mốc trên): 15 điểm
-  complianceLowMin: 6     // >= mốc này (và < mốc trên): 10 điểm; dưới mốc này: 0 điểm
+  complianceLowMin: 6,    // >= mốc này (và < mốc trên): 10 điểm; dưới mốc này: 0 điểm
+  // Kỳ kiểm tra hiện tại (vd "2026-10"): bài làm được gắn đúng kỳ lúc nộp. "Đã làm bài" chỉ chặn trong
+  // CÙNG kỳ - đổi giá trị này (ví dụ sang tháng mới) là mọi thí sinh tự động được làm lại, không cần
+  // quản trị viên reset tay từng người; kết quả các kỳ cũ vẫn giữ nguyên để đối chiếu.
+  examPeriod: defaultPeriod()
 };
+
+function defaultPeriod() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+}
 
 // Quy đổi điểm thang 10 (tỉ lệ đúng * 10) sang điểm tuân thủ học tập theo mốc đã cấu hình.
 function compliancePoints(scoreOutOf10, settings) {

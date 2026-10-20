@@ -35,7 +35,7 @@ module.exports = async function (context, req) {
 
     if (!settings.allowRetake) {
       const idx = await quiz.getIndex();
-      const prior = idx.find((a) => quiz.normCode(a.code) === code && a.status === "submitted");
+      const prior = idx.find((a) => quiz.normCode(a.code) === code && a.status === "submitted" && (a.period || "") === settings.examPeriod);
       if (prior) {
         return reply(context, 200, {
           ok: true, candidate, exam, alreadyDone: true,

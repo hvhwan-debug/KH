@@ -38,9 +38,13 @@ module.exports = async function (context, req) {
       if (op === "settings") return reply(context, 200, { ok: true, settings: await quiz.getSettings() });
       if (op === "results") {
         const st = await quiz.getSettings();
-        const list = (await quiz.getIndex()).slice().sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0))
+        const all = await quiz.getIndex();
+        const periods = Array.from(new Set(all.map((r) => r.period || "(chưa gắn kỳ)"))).sort().reverse();
+        const wantPeriod = (req.query && req.query.period) || "";
+        const list = all.filter((r) => !wantPeriod || (r.period || "(chưa gắn kỳ)") === wantPeriod)
+          .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0))
           .map((r) => Object.assign({}, r, { passed: quiz.passState(r.pct, st) })); // luôn theo cài đặt hiện tại; null = bài không có ngưỡng
-        return reply(context, 200, { ok: true, results: list });
+        return reply(context, 200, { ok: true, results: list, periods, currentPeriod: st.examPeriod });
       }
       if (op === "result") {
         const a = await quiz.getAttempt(String(req.query.id || ""));
@@ -241,7 +245,8 @@ module.exports = async function (context, req) {
         complianceEnabled: !!b.complianceEnabled,
         complianceHighMin: Math.min(10, Math.max(0, parseFloat(b.complianceHighMin) || 0)),
         complianceMidMin: Math.min(10, Math.max(0, parseFloat(b.complianceMidMin) || 0)),
-        complianceLowMin: Math.min(10, Math.max(0, parseFloat(b.complianceLowMin) || 0))
+        complianceLowMin: Math.min(10, Math.max(0, parseFloat(b.complianceLowMin) || 0)),
+        examPeriod: /^\d{4}-\d{2}$/.test(String(b.examPeriod || "").trim()) ? String(b.examPeriod).trim() : cur.examPeriod
       });
       await quiz.saveSettings(next);
       return reply(context, 200, { ok: true, settings: next });
