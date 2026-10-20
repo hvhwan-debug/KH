@@ -238,6 +238,26 @@ button,input{font:inherit;color:inherit}
 .sharehint{margin:4px 0 0;font-size:12px;line-height:1.65;color:var(--muted);text-align:center}
 .sharehint a,.msg a{color:inherit;font-weight:700;text-decoration:underline}
 @media(max-width:480px){.rv-head{padding:18px 16px}.rv-body{padding:22px 16px 8px}.share{padding:12px 16px 22px}}
+/* Nhắc chia sẻ kết quả thay vì chụp màn hình */
+.nudge-bg{position:fixed;inset:0;z-index:70;display:none;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));background:rgba(8,32,36,.58)}
+.nudge-bg.on{display:flex}
+.nudge{width:100%;max-width:420px;background:#fff;border-radius:24px;padding:24px 20px 14px;text-align:center;box-shadow:0 30px 60px -20px rgba(0,30,40,.55);animation:nudgeUp .3s cubic-bezier(.2,.8,.2,1)}
+.nudge .ic{width:60px;height:60px;border-radius:20px;background:#E6F0FF;display:grid;place-items:center;margin:0 auto 14px}
+.nudge h2{font-size:20px;line-height:1.3;margin:0 0 10px;color:var(--ink,#0F2A30)}
+.nudge p{font-size:14.5px;line-height:1.65;color:var(--muted);margin:0 0 16px}
+.nudge p b{color:var(--ink,#0F2A30)}
+.nudge .btn{width:100%;margin-top:0}
+.nudge .row2{display:flex;gap:10px;margin-top:10px}
+.nudge .later{background:none;border:0;color:var(--muted);font:inherit;font-size:13.5px;padding:12px;cursor:pointer;text-decoration:underline}
+@keyframes nudgeUp{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
+@media(min-width:560px){.nudge-bg{align-items:center}}
+@media(prefers-reduced-motion:reduce){.nudge{animation:none}}
+.sticky-share{position:fixed;left:0;right:0;bottom:0;z-index:50;display:none;align-items:center;gap:12px;padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));background:rgba(255,255,255,.96);border-top:1px solid var(--line);box-shadow:0 -12px 28px -18px rgba(0,40,50,.5)}
+.sticky-share.on{display:flex}
+.sticky-share span{flex:1 1 auto;font-size:12.5px;line-height:1.45;color:var(--muted);text-align:left}
+.sticky-share span b{color:var(--ink,#0F2A30)}
+.sticky-share .btn{flex:0 0 auto;width:auto;min-height:44px;padding:0 18px;margin:0;font-size:14px}
+body.has-sticky #scrResult{padding-bottom:84px}
 /* Bảo vệ nội dung đề */
 body.exam,body.exam *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #wm{position:fixed;inset:0;z-index:50;pointer-events:none;opacity:.075;display:none;background-repeat:repeat}
@@ -399,6 +419,20 @@ body.exam #wm{display:block}
 <div id="wm" aria-hidden="true"></div>
 <div id="shield" role="alert"><div><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.2 8 8 9 4.8-1 8-4.5 8-9V6z"/><path d="M9.5 12.5l2 2 3.5-4"/></svg><div id="shieldMsg"></div></div></div>
 
+<div class="nudge-bg" id="nudgeBg" aria-hidden="true">
+  <div class="nudge" role="dialog" aria-modal="true" aria-labelledby="nudgeWhy" aria-describedby="nudgeDesc">
+    <div class="ic" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0068FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.6L3 21l1.4-5.2A8.5 8.5 0 1 1 21 12Z"/></svg></div>
+    <h2 id="nudgeWhy">Đừng chụp màn hình nhé</h2>
+    <p id="nudgeDesc">Ảnh chụp màn hình dễ bị <b>cắt thiếu</b> mã minh chứng và thời gian xác nhận của hệ thống. Bấm nút bên dưới để gửi <b>ảnh kết quả chính thức</b> cho quản lí qua Zalo.</p>
+    <button class="btn zalo" id="nudgeGo" type="button">Bấm vào đây để chia sẻ kết quả qua Zalo</button>
+    <div class="row2"><button class="btn ghost" id="nudgeSave" type="button" style="margin-top:0">Lưu ảnh kết quả</button></div>
+    <button class="later" id="nudgeLater" type="button">Để sau</button>
+  </div>
+</div>
+<div class="sticky-share" id="stickyShare" aria-hidden="true">
+  <span><b>Đừng chụp màn hình.</b> Gửi ảnh kết quả chính thức cho quản lí:</span>
+  <button class="btn zalo" id="stickyZalo" type="button" tabindex="-1">Chia sẻ qua Zalo</button>
+</div>
 <script>
 /* QR Code Generator for JavaScript (c) 2009 Kazuhiko Arase, MIT license - http://www.d-project.com/ - "QR Code" is a registered trademark of DENSO WAVE INCORPORATED */
 // Copyright (c) 2009 Kazuhiko Arase
@@ -901,6 +935,7 @@ function renderResult(r, already){
     '<button class="btn ghost" id="btnResend" type="button" style="margin-top:10px;min-height:46px">' + RESEND_LABEL + '</button><div id="resendMsg" role="status"></div>';
   shareMsg('');
   show('result');
+  scheduleNudge();
   if (ps === true && !already) confetti();
   var arc = $('resArc');
   arc.style.strokeDashoffset = '326.73';
@@ -1124,6 +1159,55 @@ $('btnSave').addEventListener('click', async function(){
   catch(e){ shareMsg('Không tạo được ảnh kết quả, vui lòng thử lại.', 'err'); }
   btn.disabled = false;
 });
+
+/* ---------- Nhắc chia sẻ kết quả thay vì chụp màn hình ---------- */
+// Nhân viên quen chụp màn hình (thường bị cắt thiếu mã minh chứng/QR). Hiện popup một lần khi có kết quả,
+// hiện lại khi phát hiện phím chụp màn hình (máy tính), và luôn có thanh chia sẻ cố định khi nút chính đã cuộn khuất.
+var nudgeShown = false, nudgeBack = null, nudgeTimer = null;
+function resultOn(){ return !$('scrResult').classList.contains('hide'); }
+function nudgeOpen(title){
+  if (!resultOn() || $('nudgeBg').classList.contains('on')) return;
+  $('nudgeWhy').textContent = title || 'Đừng chụp màn hình nhé';
+  nudgeBack = document.activeElement;
+  $('nudgeBg').classList.add('on'); $('nudgeBg').setAttribute('aria-hidden', 'false');
+  $('nudgeGo').focus({ preventScroll:true });
+}
+function nudgeClose(){
+  $('nudgeBg').classList.remove('on'); $('nudgeBg').setAttribute('aria-hidden', 'true');
+  try { if (nudgeBack && nudgeBack.focus) nudgeBack.focus({ preventScroll:true }); } catch(e){}
+}
+function scheduleNudge(){
+  if (nudgeShown) return;
+  nudgeShown = true;
+  clearTimeout(nudgeTimer);
+  nudgeTimer = setTimeout(function(){ nudgeOpen(); }, 1200); // để họ kịp nhìn thấy điểm của mình trước
+}
+$('nudgeGo').addEventListener('click', function(){ nudgeClose(); $('btnZalo').click(); });
+$('nudgeSave').addEventListener('click', function(){ nudgeClose(); $('btnSave').click(); });
+$('nudgeLater').addEventListener('click', nudgeClose);
+$('nudgeBg').addEventListener('click', function(e){ if (e.target === this) nudgeClose(); });
+$('stickyZalo').addEventListener('click', function(){ $('btnZalo').click(); });
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && $('nudgeBg').classList.contains('on')) nudgeClose();
+});
+// Phím chụp màn hình trên máy tính (điện thoại không báo được sự kiện chụp, nên dựa vào popup + thanh cố định)
+function shotKeyOnResult(e){
+  if (!resultOn()) return;
+  var low = String(e.key || '').toLowerCase(), mod = e.metaKey || e.ctrlKey;
+  if (e.key === 'PrintScreen' || (mod && e.shiftKey && (low === 's' || low === '3' || low === '4' || low === '5' || e.key === '#' || e.key === '$' || e.key === '%')))
+    nudgeOpen('Bạn vừa chụp màn hình?');
+}
+document.addEventListener('keyup', shotKeyOnResult);
+document.addEventListener('keydown', function(e){ if (e.key === 'PrintScreen') shotKeyOnResult(e); });
+// Thanh chia sẻ cố định: chỉ hiện khi đang ở màn kết quả và nút Zalo chính đã cuộn ra khỏi tầm nhìn
+if ('IntersectionObserver' in window){
+  new IntersectionObserver(function(es){
+    var on = resultOn() && !es[es.length - 1].isIntersecting;
+    $('stickyShare').classList.toggle('on', on); $('stickyShare').setAttribute('aria-hidden', on ? 'false' : 'true');
+    $('stickyZalo').tabIndex = on ? 0 : -1;
+    document.body.classList.toggle('has-sticky', on);
+  }, { threshold:0.1 }).observe($('btnZalo'));
+}
 
 /* ---------- Bảo vệ nội dung đề (hạn chế, không thể chặn tuyệt đối) ---------- */
 var holdUntil = 0, holdTimer = null, away = false;
