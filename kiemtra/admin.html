@@ -87,6 +87,21 @@ table.dt td.num,table.dt th.num{text-align:right;font-variant-numeric:tabular-nu
 details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
 .ndg{margin-top:10px;font-size:13px;line-height:1.6}
 .ndg b{display:block;margin-top:8px}
+.aufil{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.aufil input[type=date]{width:auto}.aufil select{width:auto}.aufil input[type=search]{flex:1 1 200px;width:auto}
+.ausum{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.ausum span{font-size:12.5px;padding:4px 10px;border-radius:999px;background:#EEF3F5;color:var(--muted)}.ausum b{color:var(--ink)}
+.autab td{vertical-align:top}
+.autab .t{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--muted)}
+.autab .who b{display:block;font-weight:600}.autab .who small{color:var(--muted);font-size:12px}
+.rb{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;margin-top:3px}
+.rb.admin{background:#E7E3FF;color:#4B3BB8}.rb.manager{background:#DDF1EF;color:#067A8C}
+.kd{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.kd.change{background:#E0A030}.kd.read{background:#9DB4B9}.kd.export{background:#6D5BF6}.kd.auth{background:#02A79E}.kd.denied{background:var(--bad)}
+.autab tr.denied td{background:#FFF6F5}
+.autab .det{font-size:12.5px;line-height:1.5;max-width:380px;word-break:break-word}
+.autab .det i{font-style:normal;color:var(--muted)}
+.autab .dv{font-size:12px;color:var(--muted);white-space:nowrap}
 .hide{display:none!important}
 </style>
 </head>
@@ -127,6 +142,7 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
       <button data-tab="settings" onclick="switchTab('settings')">Cài đặt</button>
       <button data-tab="results" onclick="switchTab('results')">Kết quả</button>
       <button data-tab="viewers" onclick="switchTab('viewers')">Quản lí xem</button>
+      <button data-tab="audit" onclick="switchTab('audit')">Nhật ký</button>
     </div>
 
     <!-- Ngân hàng đề -->
@@ -293,6 +309,24 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
       </div>
     </div>
 
+<!-- Nhật ký thao tác -->
+    <div id="tab-audit" class="tabpane hide">
+      <div class="card">
+        <div class="dash-h"><h1>Nhật ký thao tác</h1><p class="small">Ghi tự động mọi thao tác của quản trị viên và quản lí. Chỉ thêm, không sửa hay xoá được. Không ghi mật khẩu và ảnh.</p></div>
+        <div class="aufil">
+          <button class="btn ghost sm" type="button" id="auPrev" aria-label="Ngày trước">‹</button>
+          <input type="date" id="auDay" aria-label="Ngày">
+          <button class="btn ghost sm" type="button" id="auNext" aria-label="Ngày sau">›</button>
+          <select id="auRole" aria-label="Vai trò"><option value="">Mọi vai trò</option><option value="admin">Quản trị viên</option><option value="manager">Quản lí</option></select>
+          <select id="auKind" aria-label="Loại thao tác"><option value="">Mọi loại</option><option value="change">Thay đổi dữ liệu</option><option value="read">Xem dữ liệu</option><option value="export">Xuất file, in, AI</option><option value="auth">Đăng nhập / đăng xuất</option><option value="denied">Bị từ chối</option></select>
+          <input type="search" id="auQ" placeholder="Tìm người, mã NV, nội dung…" aria-label="Tìm trong nhật ký">
+          <button class="btn ghost sm" type="button" id="auXlsx">⬇ Excel</button>
+        </div>
+        <div class="ausum" id="auSum"></div>
+        <div style="overflow-x:auto"><table class="dt autab"><thead><tr><th>Giờ</th><th>Người thực hiện</th><th>Thao tác</th><th>Chi tiết</th><th>IP / thiết bị</th></tr></thead><tbody id="auList"></tbody></table></div>
+      </div>
+    </div>
+
     <!-- Kết quả -->
     <div id="tab-results" class="tabpane hide">
       <div class="card" id="dashCard">
@@ -366,9 +400,69 @@ async function doLogin(){
 }
 async function doLogout(){ await api('POST','/api/auth/logout', {}); location.reload(); }
 
+/* ---------- Nhật ký thao tác ---------- */
+function logEv(event, extra){ try { api('POST','/api/kt-admin', Object.assign({ op:'logEvent', event }, extra || {})); } catch(e){} }
+let AU = [];
+const AUK = { change:'Thay đổi', read:'Xem', export:'Xuất / AI', auth:'Đăng nhập', denied:'Bị từ chối' };
+const AUD = { period:'kỳ', code:'mã NV', name:'tên', email:'email', manager:'quản lí', count:'số dòng', attempt:'mã bài', changes:'thay đổi', question:'câu hỏi',
+  added:'thêm', skipped:'bỏ qua', updated:'cập nhật', removed:'đã xoá', assigned:'đã gắn', restored:'khôi phục', scopes:'phạm vi', before:'trước đó', created:'tạo mới',
+  rows:'số dòng gửi', id:'mã', day:'ngày', reason:'lý do' };
+function vnToday(){ return new Date(Date.now() + 7*3600e3).toISOString().slice(0,10); }
+function shiftDay(d, n){ const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0,10); }
+function auDet(x){
+  const d = x.details || {};
+  const parts = Object.keys(d).map(k => {
+    let v = d[k]; if (k === 'period') v = /^\d{4}-\d{2}$/.test(v) ? perLabel(v) : v; if (k === 'created') v = v ? 'có' : 'không';
+    return '<i>' + esc(AUD[k] || k) + ':</i> ' + esc(String(v));
+  });
+  if (x.error) parts.push('<span style="color:var(--bad)">' + esc(x.error) + '</span>');
+  return parts.join(' · ') || '<i>–</i>';
+}
+async function loadAudit(){
+  if (!$('auDay').value) $('auDay').value = vnToday();
+  $('auNext').disabled = $('auDay').value >= vnToday();
+  $('auList').innerHTML = '<tr><td colspan="5" class="small">Đang tải…</td></tr>';
+  const { j } = await api('GET','/api/kt-admin?op=audit&day=' + encodeURIComponent($('auDay').value));
+  if (!j.ok){ $('auList').innerHTML = '<tr><td colspan="5" class="small">' + esc(j.error || 'Không tải được nhật ký.') + '</td></tr>'; return; }
+  AU = (j.items || []).sort((a,b) => b.ts - a.ts); renderAudit();
+}
+function auFiltered(){
+  const r = $('auRole').value, k = $('auKind').value, q = $('auQ').value.trim().toLowerCase();
+  return AU.filter(x => (!r || x.role === r) && (!k || x.kind === k) &&
+    (!q || ((x.by||'') + ' ' + (x.name||'') + ' ' + (x.label||'') + ' ' + JSON.stringify(x.details||{}) + ' ' + (x.ip||'')).toLowerCase().indexOf(q) >= 0));
+}
+function renderAudit(){
+  const L = auFiltered(), cnt = {}; AU.forEach(x => { cnt[x.kind] = (cnt[x.kind]||0) + 1; });
+  const people = new Set(AU.map(x => x.by)).size;
+  $('auSum').innerHTML = '<span><b>' + AU.length + '</b> thao tác · <b>' + people + '</b> người</span>' + Object.keys(AUK).filter(k => cnt[k]).map(k => '<span><i class="kd ' + k + '"></i>' + AUK[k] + ' <b>' + cnt[k] + '</b></span>').join('') +
+    (L.length !== AU.length ? '<span>Đang lọc: <b>' + L.length + '</b></span>' : '');
+  $('auList').innerHTML = L.map(x => '<tr class="' + (x.kind === 'denied' ? 'denied' : '') + '"><td class="t">' + esc(new Date(x.ts).toLocaleTimeString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour12:false})) + '</td>' +
+    '<td class="who"><b>' + esc(x.name || x.by) + '</b>' + (x.name && x.name !== x.by ? '<small>' + esc(x.by) + '</small>' : '')<br><span class="rb ' + x.role + '">' + (x.role === 'admin' ? 'Quản trị viên' : 'Quản lí') + '</span></td>' +
+    '<td><span class="kd ' + esc(x.kind) + '" title="' + esc(AUK[x.kind]||'') + '"></span>' + esc(x.label) + (x.ok === false && x.kind !== 'denied' ? ' <span class="badge n">lỗi</span>' : '') + (x.kind === 'denied' ? ' <span class="badge n">bị từ chối</span>' : '') + '</td>' +
+    '<td class="det">' + auDet(x) + '</td><td class="dv">' + esc(x.ip || '–') + '<br>' + esc(x.dev || '') + '</td></tr>').join('') ||
+    '<tr><td colspan="5" class="small">' + (AU.length ? 'Không có thao tác nào khớp bộ lọc.' : 'Chưa có thao tác nào trong ngày này.') + '</td></tr>';
+}
+$('auDay').addEventListener('change', loadAudit);
+$('auPrev').addEventListener('click', () => { $('auDay').value = shiftDay($('auDay').value || vnToday(), -1); loadAudit(); });
+$('auNext').addEventListener('click', () => { const n = shiftDay($('auDay').value || vnToday(), 1); if (n <= vnToday()){ $('auDay').value = n; loadAudit(); } });
+['auRole','auKind','auQ'].forEach(id => $(id).addEventListener('input', renderAudit));
+$('auXlsx').addEventListener('click', async function(){
+  let E; try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel.'); return; }
+  const wb = new E.Workbook(), ws = wb.addWorksheet('Nhật ký ' + $('auDay').value, { views:[{ state:'frozen', ySplit:1 }] });
+  ws.columns = [{ header:'Thời gian', key:'t', width:20 }, { header:'Email', key:'by', width:28 }, { header:'Tên', key:'name', width:22 }, { header:'Vai trò', key:'role', width:14 },
+    { header:'Loại', key:'kind', width:12 }, { header:'Thao tác', key:'label', width:34 }, { header:'Chi tiết', key:'det', width:70 }, { header:'Kết quả', key:'st', width:10 }, { header:'IP', key:'ip', width:16 }, { header:'Thiết bị', key:'dev', width:26 }];
+  ws.getRow(1).font = { bold:true, color:{ argb:'FFFFFFFF' } }; ws.getRow(1).eachCell(c => { c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF067A8C' } }; });
+  auFiltered().forEach(x => { const r = ws.addRow({ t: new Date(x.ts).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour12:false}), by:x.by, name:x.name||'', role: x.role === 'admin' ? 'Quản trị viên' : 'Quản lí',
+    kind: AUK[x.kind] || x.kind, label: x.label, det: auDet(x).replace(/<[^>]+>/g,''), st: x.status, ip: x.ip||'', dev: x.dev||'' }); r.getCell('det').alignment = { wrapText:true, vertical:'top' }; });
+  const buf = await wb.xlsx.writeBuffer(), a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })); a.download = 'nhat-ky-thao-tac-' + $('auDay').value + '.xlsx';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  logEv('exportExcel', { period: 'nhật ký ' + $('auDay').value });
+});
 function switchTab(t){
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab===t));
   document.querySelectorAll('.tabpane').forEach(p => p.classList.toggle('hide', p.id !== 'tab-'+t));
+  if (t === 'audit') loadAudit();
 }
 
 function loadAll(){ loadQuestions(); loadCandidates(); loadSettings(); loadResults(); loadViewers(); }
@@ -657,6 +751,7 @@ async function exportResultsXlsx(){
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
   a.download = 'ket-qua-kiem-tra-' + new Date().toISOString().slice(0,10) + '.xlsx';
+  logEv('exportExcel', { period: selPeriod || 'tất cả các kỳ', count: results.length });
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
 }
@@ -760,7 +855,7 @@ async function loadDashboard(sel){
   $('dashNdList').innerHTML = j.notDoneCount ? '<button class="btn ghost sm" type="button" id="ndCopy">Sao chép danh sách</button>' + Object.keys(g).sort().map(k => '<b>' + esc(k) + ' (' + g[k].length + ')</b>' + g[k].map(c => esc(c.name) + ' <span class="small">(' + esc(c.code) + ')</span>').join(', ')).join('') : '<p class="small">Tất cả thí sinh đã làm bài.</p>';
   if (j.notDoneCount) $('ndCopy').onclick = async function(){
     const t = 'Danh sách chưa làm bài kiểm tra ' + perLabel(j.period) + ':\n' + Object.keys(g).sort().map(k => '\n' + k + ':\n' + g[k].map(c => '- ' + c.name + ' (' + c.code + ')').join('\n')).join('\n');
-    try { await navigator.clipboard.writeText(t); this.textContent = 'Đã sao chép ✓'; } catch(e){ prompt('Sao chép danh sách:', t); }
+    try { await navigator.clipboard.writeText(t); this.textContent = 'Đã sao chép ✓'; logEv('copyList', { period: j.period, count: j.notDoneCount }); } catch(e){ prompt('Sao chép danh sách:', t); }
   };
 }
 async function assignPeriod(){

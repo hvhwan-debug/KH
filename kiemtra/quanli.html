@@ -527,7 +527,7 @@ function mdCleanAI(t){
 async function askDataAI(){
   var q = $('aiQ').value.trim();
   if (!q) return;
-  $('aiAsk').disabled = true;
+  $('aiAsk').disabled = true; logEv('aiAsk', { period: CURP });
   $('aiAns').innerHTML = '<div class="ai-find-busy">Đang tìm trong dữ liệu của bạn…</div>';
   var rows = EMP.map(function(e){
     var r = e.result;
@@ -743,7 +743,7 @@ function renderPaper(){
   }).join('') || '<div class="empty">Không có câu nào thuộc nhóm này.</div>';
 }
 $('pFilter').addEventListener('click', function(ev){ var b = ev.target.closest('button[data-f]'); if (b && PAPER){ pFilter = b.getAttribute('data-f'); renderPaper(); } });
-$('pPrintBtn').addEventListener('click', function(){ document.body.classList.add('pp'); window.print(); });
+$('pPrintBtn').addEventListener('click', function(){ if (PEMP) logEv('printPaper', { code: PEMP.code }); document.body.classList.add('pp'); window.print(); });
 window.addEventListener('afterprint', function(){ document.body.classList.remove('pp'); });
 
 /* ---------- Sửa / xác nhận thông tin ---------- */
@@ -811,6 +811,9 @@ $('aSave').addEventListener('click', async function(){
   $('ovAdd').classList.add('hide'); await load();
   msg('listMsg', 'Đã thêm nhân viên ' + (r.j.employee.name || r.j.employee.code) + '.', 'ok');
 });
+/* ---------- Ghi nhật ký các thao tác chỉ diễn ra trên trình duyệt (xuất file, AI, in) ---------- */
+function logEv(event, extra){ try { api('POST','/api/kt-viewer', Object.assign({ op:'logEvent', event:event }, extra || {})); } catch(e){} }
+
 /* ---------- Hồ sơ kiểm tra + AI phân tích ---------- */
 var PROF = null, AIC = {};
 function perL(p){ return /^\d{4}-\d{2}$/.test(p||'') ? p.slice(5) + '/' + p.slice(0,4) : 'Chưa gắn kỳ'; }
@@ -919,7 +922,7 @@ async function runProfileAI(){
     var j = null; try { j = await r.json(); } catch(x){}
     var text = r.ok && j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
     if (!text){ $('aiProfOut').innerHTML = '<div class="msg err">' + (r.status === 429 ? 'Đang có nhiều người dùng cùng lúc, thử lại sau ít phút.' : 'Trợ lí đang bận, thử lại sau.') + '</div>'; btn.disabled = false; return; }
-    text = mdCleanAI(text); AIC[aiKey()] = text;
+    text = mdCleanAI(text); AIC[aiKey()] = text; logEv('aiProfile', { code: e.code });
     $('aiProfOut').innerHTML = fmtAI(text) + '<p class="fine" style="margin-top:10px">Phân tích do AI tạo từ dữ liệu kiểm tra, chỉ để tham khảo.</p>';
     btn.textContent = 'Phân tích lại'; $('aiProfCopy').classList.remove('hide');
   } catch(x){ $('aiProfOut').innerHTML = '<div class="msg err">Không kết nối được máy chủ, thử lại.</div>'; }
@@ -1113,8 +1116,8 @@ async function exportXLSX(rows){
 $('csvBtn').addEventListener('click', async function(){
   var btn = this, label = btn.textContent, rows = exportRows();
   btn.disabled = true; btn.textContent = 'Đang tạo file…';
-  try { await exportXLSX(rows); }
-  catch(e){ exportCSV(rows); msg('listMsg','Không tạo được file Excel nên đã tải bản CSV thay thế.','warn'); }
+  try { await exportXLSX(rows); logEv('exportExcel', { period: CURP, count: rows.length }); }
+  catch(e){ exportCSV(rows); logEv('exportCsv', { period: CURP, count: rows.length }); msg('listMsg','Không tạo được file Excel nên đã tải bản CSV thay thế.','warn'); }
   btn.disabled = false; btn.textContent = label;
 });
 

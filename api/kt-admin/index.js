@@ -7,7 +7,7 @@ const pwdlib = require("../_lib/pwd");
 const crypto = require("crypto");
 const { uidOf } = require("../_lib/session");
 
-module.exports = async function (context, req) {
+const handler = async function (context, req) {
   try {
     if (guardConfigured(context)) return;
     const u = await requireUserActive(context, req);
@@ -45,6 +45,13 @@ module.exports = async function (context, req) {
           .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0))
           .map((r) => Object.assign({}, r, { passed: quiz.passState(r.pct, st) })); // luôn theo cài đặt hiện tại; null = bài không có ngưỡng
         return reply(context, 200, { ok: true, results: list, periods, currentPeriod: st.examPeriod });
+      }
+      if (op === "audit") {
+        // Nhật ký thao tác theo ngày (giờ Việt Nam). Chỉ quản trị viên xem được; không có thao tác xoá.
+        const al = require("../_lib/auditlog");
+        const day = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.day || "")) ? String(req.query.day) : al.vnDay(Date.now());
+        const r = await al.readDay(day, 3000);
+        return reply(context, 200, { ok: true, day, items: r.items, total: r.total });
       }
       if (op === "dashboard") {
         // Tổng quan để đánh giá một kỳ: hoàn thành, phân bố điểm, điểm tuân thủ, theo quản lí / nhóm ngành,
@@ -333,3 +340,6 @@ module.exports = async function (context, req) {
     return reply(context, 500, { ok: false, error: "Có lỗi xảy ra." });
   }
 };
+
+// Mọi thao tác qua API này đều được ghi vào nhật ký (xem _lib/auditlog.js)
+module.exports = require("../_lib/auditlog").wrap(handler, "admin");

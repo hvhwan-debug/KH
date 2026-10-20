@@ -23,7 +23,7 @@ function summaryOf(r, settings, admin) {
   };
 }
 
-module.exports = async function (context, req) {
+const handler = async function (context, req) {
   try {
     if (guardConfigured(context)) return;
     const u = await requireUserActive(context, req);
@@ -244,3 +244,6 @@ module.exports = async function (context, req) {
     return reply(context, 500, { ok: false, error: "Có lỗi xảy ra, thử lại sau." });
   }
 };
+
+// Mọi thao tác qua API này đều được ghi vào nhật ký (xem _lib/auditlog.js)
+module.exports = require("../_lib/auditlog").wrap(handler, "viewer");

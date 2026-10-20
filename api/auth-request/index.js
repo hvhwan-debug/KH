@@ -26,7 +26,7 @@ async function sendOtpEmail(email, otp) {
   await mail.send({ to: email, subject: "Mã xác minh " + otp + " — Trợ lý kế hoạch bán hàng", html: L.html, text: L.text });
 }
 
-module.exports = async function (context, req) {
+const handler = async function (context, req) {
   try {
     if (guardConfigured(context) || !requireAjax(context, req)) return;
     const email = String((req.body && req.body.email) || "").trim().toLowerCase();
@@ -127,4 +127,17 @@ module.exports = async function (context, req) {
     context.log.error("auth-request", e && e.message);
     return reply(context, 500, { ok: false, error: "Có lỗi xảy ra. Thử lại sau." });
   }
+};
+
+// Ghi nhật ký đăng nhập của quản trị viên / quản lí hệ thống kiểm tra (không ghi mật khẩu, mã OTP)
+module.exports = async function (context, req) {
+  await handler(context, req);
+  try {
+    const al = require("../_lib/auditlog");
+    const b = (req.body && typeof req.body === "object") ? req.body : {};
+    const res = context.res || {}, body = res.body || {};
+    const email = String(body.email || b.email || "").trim().toLowerCase();
+    if (body.ok && body.token) await al.auth(req, email, "login", true);
+    else if (!body.ok && b.password && res.status !== 429) await al.auth(req, email, "login_fail", false, { reason: String(body.error || "").slice(0, 120) });
+  } catch (e) { /* bỏ qua */ }
 };
