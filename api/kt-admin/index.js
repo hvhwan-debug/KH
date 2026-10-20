@@ -13,6 +13,17 @@ module.exports = async function (context, req) {
     if (req.method === "GET") {
       const op = (req.query && req.query.op) || "";
       if (op === "questions") return reply(context, 200, { ok: true, questions: await quiz.getQuestions() });
+      if (op === "questionsBackup") {
+        const bk = await quiz.getQuestionsBackup();
+        return reply(context, 200, { ok: true, backup: bk && Array.isArray(bk.questions) ? { count: bk.questions.length, at: bk.at } : null });
+      }
+      if (op === "deleteAllPreview") {
+        const bk = await quiz.getQuestionsBackup();
+        return reply(context, 200, {
+          ok: true, count: (await quiz.getQuestions()).length, inProgress: await quiz.countInProgress(),
+          backup: bk && Array.isArray(bk.questions) ? { count: bk.questions.length, at: bk.at } : null
+        });
+      }
       if (op === "candidates") return reply(context, 200, { ok: true, candidates: await quiz.getCandidates() });
       if (op === "settings") return reply(context, 200, { ok: true, settings: await quiz.getSettings() });
       if (op === "results") {
@@ -81,6 +92,29 @@ module.exports = async function (context, req) {
       list = list.filter((x) => x.id !== b.id);
       await quiz.saveQuestions(list);
       return reply(context, 200, { ok: true, questions: list });
+    }
+
+    // Xoá TẤT CẢ câu hỏi: bắt buộc xác nhận bằng cụm chữ + số lượng đang thấy; tự sao lưu trước khi xoá.
+    if (op === "deleteAllQuestions") {
+      const list = await quiz.getQuestions();
+      if (b.confirm !== "XOA TAT CA") return reply(context, 400, { ok: false, error: "Chưa xác nhận đúng cụm 'XOA TAT CA'." });
+      if (!list.length) return reply(context, 400, { ok: false, error: "Ngân hàng đề đang trống." });
+      if (b.expected !== list.length) return reply(context, 409, { ok: false, error: "Danh sách câu hỏi vừa thay đổi (" + list.length + " câu). Hãy tải lại trang rồi thử lại." });
+      await quiz.backupQuestions(list);
+      await quiz.saveQuestions([]);
+      return reply(context, 200, { ok: true, deleted: list.length, questions: [], backup: { count: list.length, at: Date.now() } });
+    }
+
+    // Khôi phục từ bản sao lưu gần nhất: chỉ thêm lại câu chưa có (không ghi đè câu hiện tại).
+    if (op === "restoreQuestions") {
+      const bk = await quiz.getQuestionsBackup();
+      if (!bk || !Array.isArray(bk.questions) || !bk.questions.length) return reply(context, 404, { ok: false, error: "Không có bản sao lưu để khôi phục." });
+      const list = await quiz.getQuestions();
+      const have = new Set(list.map((q) => q.id));
+      let restored = 0;
+      bk.questions.forEach((q) => { if (!have.has(q.id)) { list.push(q); restored++; } });
+      await quiz.saveQuestions(list);
+      return reply(context, 200, { ok: true, restored, questions: list });
     }
 
     if (op === "addCandidates") {

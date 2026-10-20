@@ -58,6 +58,7 @@ module.exports = async function (context, req) {
         const otherN = Math.min(Math.max(total - giaDungN, 0), otherPool.length);
         picked = quiz.shuffle(quiz.shuffle(giaDungPool).slice(0, giaDungN).concat(quiz.shuffle(otherPool).slice(0, otherN)));
       }
+      if (!picked.length) return reply(context, 503, { ok: false, error: "Chưa có câu hỏi nào phù hợp để tạo đề (kiểm tra ngân hàng đề và cài đặt số câu), liên hệ quản trị viên." });
       const orders = {};
       picked.forEach((q) => { orders[q.id] = quiz.shuffle(q.options.map((_, i) => i)); }); // order[vị trí hiển thị] = chỉ số gốc
       attempt = {

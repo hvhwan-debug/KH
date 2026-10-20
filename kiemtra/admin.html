@@ -117,7 +117,12 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
         <div id="qBulkMsg"></div>
       </div>
       <div class="card">
-        <h1>Danh sách câu hỏi (<span id="qCount">0</span>)</h1>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <h1 style="margin:0">Danh sách câu hỏi (<span id="qCount">0</span>)</h1>
+          <button class="btn danger sm" id="btnDelAllQ" onclick="deleteAllQuestions()">🗑 Xoá tất cả câu hỏi</button>
+        </div>
+        <div id="qBackupBar"></div>
+        <div id="qDelMsg"></div>
         <table><thead><tr><th>Câu hỏi</th><th>Phân loại</th><th>Trạng thái</th><th></th></tr></thead><tbody id="qList"></tbody></table>
       </div>
     </div>
@@ -267,6 +272,41 @@ async function loadQuestions(){
     '<td><button class="btn ghost sm" onclick="editQuestion(\''+q.id+'\')">Sửa</button> <button class="btn danger sm" onclick="deleteQuestion(\''+q.id+'\')">Xoá</button></td></tr>'
   ).join('') || '<tr><td colspan="4" class="small">Chưa có câu hỏi nào.</td></tr>';
   if (!$('qOptsEdit').children.length) clearQForm();
+  loadQBackup();
+}
+async function loadQBackup(){
+  const { j } = await api('GET','/api/kt-admin?op=questionsBackup');
+  const bar = $('qBackupBar');
+  if (!j.ok || !j.backup){ bar.innerHTML = ''; return; }
+  bar.innerHTML = '<div class="small" style="margin-top:12px;padding:10px 12px;border:1.5px dashed var(--line);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">'+
+    '<span>Bản sao lưu gần nhất: <b>'+j.backup.count+' câu</b> (lúc '+new Date(j.backup.at).toLocaleString('vi-VN')+')</span>'+
+    '<button class="btn ghost sm" onclick="restoreQuestions()">↩ Khôi phục</button></div>';
+}
+async function restoreQuestions(){
+  if (!confirm('Khôi phục các câu hỏi từ bản sao lưu gần nhất? Câu đang có sẽ được giữ nguyên, chỉ thêm lại các câu đã bị xoá.')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'restoreQuestions' });
+  if (!j.ok){ msg('qDelMsg', j.error || 'Không khôi phục được.'); return; }
+  QUESTIONS = j.questions; loadQuestions(); msg('qDelMsg','Đã khôi phục '+j.restored+' câu hỏi.','ok');
+}
+async function deleteAllQuestions(){
+  const btn = $('btnDelAllQ'); msg('qDelMsg','');
+  btn.disabled = true;
+  try {
+    const { j: pv } = await api('GET','/api/kt-admin?op=deleteAllPreview');
+    if (!pv.ok){ alert(pv.error || 'Không kiểm tra được ngân hàng đề.'); return; }
+    if (!pv.count){ alert('Ngân hàng đề đang trống, không có gì để xoá.'); return; }
+    let m = 'XOÁ TẤT CẢ ' + pv.count + ' câu hỏi trong ngân hàng đề?\n\n';
+    if (pv.inProgress) m += '⚠ Đang có ' + pv.inProgress + ' thí sinh làm bài dở: bài của họ sẽ kết thúc ngay và bị tính điểm 0.\n\n';
+    m += 'Hệ thống tự sao lưu trước khi xoá nên bạn có thể khôi phục lại.\n\nGõ đúng cụm  XOA TAT CA  để xác nhận:';
+    const typed = prompt(m);
+    if (typed === null) return;
+    const norm = typed.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').trim().toUpperCase();
+    if (norm !== 'XOA TAT CA'){ alert('Chưa đúng cụm xác nhận, không xoá gì cả.'); return; }
+    const { j } = await api('POST','/api/kt-admin', { op:'deleteAllQuestions', confirm:'XOA TAT CA', expected: pv.count });
+    if (!j.ok){ msg('qDelMsg', j.error || 'Không xoá được.'); return; }
+    QUESTIONS = []; await loadQuestions();
+    msg('qDelMsg','Đã xoá ' + j.deleted + ' câu hỏi. Bạn có thể khôi phục bằng nút ở trên nếu xoá nhầm.','ok');
+  } finally { btn.disabled = false; }
 }
 function editQuestion(id){
   const q = QUESTIONS.find(x => x.id===id);

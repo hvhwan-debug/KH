@@ -44,6 +44,24 @@ function normSegment(s) {
 }
 const CATEGORY_BY_SEGMENT = { gia_dung: "Gia dụng", may_loc: "Máy lọc nước" };
 
+// Bản sao lưu ngân hàng đề trước khi xoá hàng loạt (giữ bản gần nhất để khôi phục).
+const QB_KEY = "kt/questions-backup.json";
+async function backupQuestions(list) { await store.put(QB_KEY, { at: Date.now(), questions: list }); }
+async function getQuestionsBackup() { return store.get(QB_KEY); }
+// Số thí sinh đang làm bài dở (chưa hết giờ).
+async function countInProgress() {
+  let n = 0;
+  const names = (await store.list("kt/active/")).slice(0, 300);
+  for (const name of names) {
+    try {
+      const p = await store.get(name);
+      const a = p && p.attemptId ? await getAttempt(p.attemptId) : null;
+      if (a && a.status === "in_progress") { const c = Object.assign({}, a); syncAttempt(c, Date.now()); if (c.cursor < c.questionIds.length) n++; }
+    } catch (e) { /* bỏ qua mục lỗi */ }
+  }
+  return n;
+}
+
 async function getQuestions() { return (await store.get(Q_KEY)) || []; }
 async function saveQuestions(list) { await store.put(Q_KEY, list); }
 
@@ -168,5 +186,5 @@ module.exports = {
   getAttempt, putAttempt,
   getIndex, upsertIndex,
   shuffle, genId, compliancePoints,
-  proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
+  backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
 };
