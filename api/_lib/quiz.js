@@ -32,6 +32,15 @@ function compliancePoints(scoreOutOf10, settings) {
 function normCode(s) { return String(s || "").trim().toLowerCase(); }
 function normEmail(s) { return String(s || "").trim().toLowerCase(); }
 
+// Nhóm ngành hàng của thí sinh, quyết định đề sẽ trộn từ nhóm câu hỏi nào.
+// "both": cả hai ngành (đề trộn từ toàn bộ ngân hàng) · "gia_dung" / "may_loc": chỉ một ngành.
+const SEGMENTS = { both: "both", ca_hai: "both", "cả hai": "both", gia_dung: "gia_dung", "gia dụng": "gia_dung", may_loc: "may_loc", "máy lọc": "may_loc", "máy lọc nước": "may_loc" };
+function normSegment(s) {
+  const k = String(s || "").trim().toLowerCase();
+  return SEGMENTS[k] || "both"; // mặc định: không rõ thì coi như bán cả hai (đề đầy đủ hơn, an toàn hơn)
+}
+const CATEGORY_BY_SEGMENT = { gia_dung: "Gia dụng", may_loc: "Máy lọc nước" };
+
 async function getQuestions() { return (await store.get(Q_KEY)) || []; }
 async function saveQuestions(list) { await store.put(Q_KEY, list); }
 
@@ -71,7 +80,7 @@ function genId() {
 }
 
 module.exports = {
-  normCode, normEmail,
+  normCode, normEmail, normSegment, CATEGORY_BY_SEGMENT,
   getQuestions, saveQuestions,
   getCandidates, saveCandidates,
   getSettings, saveSettings,

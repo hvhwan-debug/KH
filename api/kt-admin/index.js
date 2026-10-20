@@ -60,6 +60,22 @@ module.exports = async function (context, req) {
       return reply(context, 200, { ok: true, questions: list });
     }
 
+    if (op === "addQuestions") {
+      const incoming = Array.isArray(b.questions) ? b.questions : [];
+      const list = await quiz.getQuestions();
+      let added = 0, skipped = 0;
+      incoming.forEach((q) => {
+        const text = String(q.text || "").trim().slice(0, 2000);
+        const options = Array.isArray(q.options) ? q.options.map((o) => String(o || "").trim().slice(0, 500)).filter(Boolean) : [];
+        const correctIndex = Number.isInteger(q.correctIndex) ? q.correctIndex : -1;
+        if (!text || options.length < 2 || correctIndex < 0 || correctIndex >= options.length) { skipped++; return; }
+        list.push({ id: quiz.genId(), text, options, correctIndex, category: String(q.category || "").trim().slice(0, 100), active: true });
+        added++;
+      });
+      await quiz.saveQuestions(list);
+      return reply(context, 200, { ok: true, questions: list, added, skipped });
+    }
+
     if (op === "deleteQuestion") {
       let list = await quiz.getQuestions();
       list = list.filter((x) => x.id !== b.id);
@@ -72,7 +88,7 @@ module.exports = async function (context, req) {
       if (!rows.length && b.text) {
         rows = String(b.text).split("\n").map((line) => {
           const parts = line.split(",").map((s) => s.trim());
-          return { code: parts[0] || "", name: parts[1] || "", email: parts[2] || "", manager: parts[3] || "" };
+          return { code: parts[0] || "", name: parts[1] || "", email: parts[2] || "", manager: parts[3] || "", segment: parts[4] || "" };
         }).filter((r) => r.code && r.email);
       }
       const list = await quiz.getCandidates();
@@ -83,7 +99,8 @@ module.exports = async function (context, req) {
         const code = quiz.normCode(r.code);
         const email = quiz.normEmail(r.email);
         if (!code || !email) return;
-        const entry = { code: String(r.code).trim().slice(0, 50), name: String(r.name || "").trim().slice(0, 100), email, manager: String(r.manager || "").trim().slice(0, 100) };
+        const seg = quiz.normSegment(r.segment);
+        const entry = { code: String(r.code).trim().slice(0, 50), name: String(r.name || "").trim().slice(0, 100), email, manager: String(r.manager || "").trim().slice(0, 100), segment: seg };
         if (byCode[code] != null) { list[byCode[code]] = entry; updated++; }
         else { list.push(entry); byCode[code] = list.length - 1; added++; }
       });

@@ -23,8 +23,13 @@ module.exports = async function (context, req) {
       if (prior) return reply(context, 409, { ok: false, error: "Bạn đã hoàn thành bài kiểm tra này rồi." });
     }
 
-    const all = (await quiz.getQuestions()).filter((q) => q.active !== false && q.text && Array.isArray(q.options) && q.options.length >= 2);
-    if (!all.length) return reply(context, 503, { ok: false, error: "Ngân hàng đề chưa có câu hỏi, liên hệ quản trị viên." });
+    const activeQuestions = (await quiz.getQuestions()).filter((q) => q.active !== false && q.text && Array.isArray(q.options) && q.options.length >= 2);
+    // Nhóm ngành của thí sinh quyết định trộn đề từ nhóm câu hỏi nào: bán cả 2 ngành -> toàn bộ ngân hàng;
+    // chỉ bán 1 ngành -> chỉ lấy câu hỏi được gắn đúng danh mục ngành đó.
+    const segment = quiz.normSegment(found.segment);
+    const wantCategory = quiz.CATEGORY_BY_SEGMENT[segment];
+    const all = wantCategory ? activeQuestions.filter((q) => q.category === wantCategory) : activeQuestions;
+    if (!all.length) return reply(context, 503, { ok: false, error: "Ngân hàng đề chưa có câu hỏi phù hợp với nhóm ngành của bạn, liên hệ quản trị viên." });
 
     const n = Math.min(settings.questionCount || all.length, all.length);
     const picked = quiz.shuffle(all).slice(0, n);
@@ -42,7 +47,7 @@ module.exports = async function (context, req) {
 
     const secondsPerQuestion = Math.max(10, settings.secondsPerQuestion || 60);
     const attempt = {
-      id, code: found.code, name: found.name, email: found.email, manager: found.manager || "",
+      id, code: found.code, name: found.name, email: found.email, manager: found.manager || "", segment,
       questionIds, orders,
       answers: {},
       startedAt: now,

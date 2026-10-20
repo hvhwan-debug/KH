@@ -106,6 +106,13 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
         <div id="qMsg"></div>
       </div>
       <div class="card">
+        <h1>Nhập câu hỏi hàng loạt</h1>
+        <p class="small">Dán vào đây một mảng JSON các câu hỏi, dạng <code>[{"text":"...","options":["A","B","C","D"],"correctIndex":0,"category":"Gia dụng"}, ...]</code>. <code>correctIndex</code> đếm từ 0 (0=phương án đầu tiên).</p>
+        <textarea id="qBulkText" style="min-height:120px" placeholder='[{"text":"Câu hỏi...","options":["A","B","C","D"],"correctIndex":0,"category":"Gia dụng"}]'></textarea>
+        <button class="btn" style="margin-top:10px" onclick="addQuestionsBulk()">Nhập vào ngân hàng đề</button>
+        <div id="qBulkMsg"></div>
+      </div>
+      <div class="card">
         <h1>Danh sách câu hỏi (<span id="qCount">0</span>)</h1>
         <table><thead><tr><th>Câu hỏi</th><th>Phân loại</th><th>Trạng thái</th><th></th></tr></thead><tbody id="qList"></tbody></table>
       </div>
@@ -115,14 +122,14 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
     <div id="tab-candidates" class="tabpane hide">
       <div class="card">
         <h1>Thêm thí sinh</h1>
-        <p class="small">Mỗi dòng một thí sinh, định dạng: <b>mã nhân viên, họ tên, email, quản lí</b> (quản lí có thể để trống). Có thể dán nhiều dòng cùng lúc (ví dụ copy từ Excel).</p>
-        <textarea id="candText" placeholder="NV001, Nguyễn Văn A, a@congty.vn, Nguyễn Dạ Thảo&#10;NV002, Trần Thị B, b@congty.vn, Lê Thị Thanh Loan"></textarea>
+        <p class="small">Mỗi dòng một thí sinh, định dạng: <b>mã nhân viên, họ tên, email, quản lí, nhóm ngành</b>. Nhóm ngành ghi <code>ca_hai</code> (bán cả gia dụng &amp; máy lọc nước — đề trộn từ toàn bộ ngân hàng), <code>gia_dung</code> (chỉ đề Gia dụng) hoặc <code>may_loc</code> (chỉ đề Máy lọc nước); để trống sẽ hiểu là cả hai. Có thể dán nhiều dòng cùng lúc.</p>
+        <textarea id="candText" placeholder="NV001, Nguyễn Văn A, a@congty.vn, Nguyễn Dạ Thảo, ca_hai&#10;NV002, Trần Thị B, b@congty.vn, Lê Thị Thanh Loan, may_loc"></textarea>
         <button class="btn" style="margin-top:10px" onclick="addCandidates()">Thêm vào danh sách</button>
         <div id="candMsg"></div>
       </div>
       <div class="card">
         <h1>Danh sách thí sinh (<span id="candCount">0</span>)</h1>
-        <table><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Email</th><th>Quản lí</th><th></th></tr></thead><tbody id="candList"></tbody></table>
+        <table><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Email</th><th>Quản lí</th><th>Nhóm ngành</th><th></th></tr></thead><tbody id="candList"></tbody></table>
       </div>
     </div>
 
@@ -269,6 +276,19 @@ async function deleteQuestion(id){
   const { j } = await api('POST','/api/kt-admin', { op:'deleteQuestion', id });
   if (j.ok){ QUESTIONS = j.questions; loadQuestions(); }
 }
+async function addQuestionsBulk(){
+  const raw = $('qBulkText').value.trim();
+  if (!raw){ msg('qBulkMsg','Dán nội dung JSON trước.'); return; }
+  let questions;
+  try { questions = JSON.parse(raw); if (!Array.isArray(questions)) throw new Error('not array'); }
+  catch(e){ msg('qBulkMsg','JSON không hợp lệ — kiểm tra lại định dạng.'); return; }
+  const { j } = await api('POST','/api/kt-admin', { op:'addQuestions', questions });
+  if (!j.ok){ msg('qBulkMsg', j.error, 'err'); return; }
+  msg('qBulkMsg', 'Đã thêm '+j.added+' câu hỏi'+(j.skipped?', bỏ qua '+j.skipped+' câu thiếu dữ liệu':'')+'.', 'ok');
+  $('qBulkText').value='';
+  QUESTIONS = j.questions;
+  loadQuestions();
+}
 async function saveQuestion(){
   const options = Array.from(document.querySelectorAll('#qOptsEdit .opt-row')).map(r => r.querySelector('input[type=text]').value.trim());
   const checkedEl = document.querySelector('#qOptsEdit input[type=radio]:checked');
@@ -287,9 +307,10 @@ async function loadCandidates(){
   const { j } = await api('GET','/api/kt-admin?op=candidates');
   if (!j.ok) return;
   $('candCount').textContent = j.candidates.length;
+  const segLabel = { both:'Cả hai', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };
   $('candList').innerHTML = j.candidates.map(c =>
-    '<tr><td>'+esc(c.code)+'</td><td>'+esc(c.name||'')+'</td><td>'+esc(c.email)+'</td><td>'+esc(c.manager||'')+'</td><td><button class="btn danger sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
-  ).join('') || '<tr><td colspan="5" class="small">Chưa có thí sinh nào.</td></tr>';
+    '<tr><td>'+esc(c.code)+'</td><td>'+esc(c.name||'')+'</td><td>'+esc(c.email)+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td><button class="btn danger sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
+  ).join('') || '<tr><td colspan="6" class="small">Chưa có thí sinh nào.</td></tr>';
 }
 async function addCandidates(){
   const text = $('candText').value;
