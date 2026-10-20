@@ -127,6 +127,21 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
 .qready .ok{color:var(--ok);font-weight:700}.qready .bad{color:var(--warn);font-weight:700}
 .qready .hd{font-weight:700;margin-bottom:4px}
 .qtools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.qtools select{width:auto;min-width:150px}
+/* thanh tiến độ trong banner */
+.khero-in.wide{max-width:none;flex:1;min-width:0}
+.hm{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px;max-width:760px}
+@media(max-width:760px){.hm{grid-template-columns:1fr}}
+.hm-c{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:10px 12px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.hm-l{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;opacity:.92}
+.hm-v{font-size:22px;font-weight:800;line-height:1.15;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.hm-v small{font-size:13px;font-weight:600;opacity:.85}
+.hm-b{position:relative;height:8px;border-radius:5px;background:rgba(255,255,255,.22);margin-top:7px;overflow:visible}
+.hm-b i{display:block;height:100%;border-radius:5px;min-width:3px;transition:width .5s ease}
+.hm-b .mk{position:absolute;top:-4px;bottom:-4px;width:2px;background:#fff;border-radius:1px;opacity:.9}
+.hm-n{font-size:11.5px;opacity:.85;margin-top:5px}
+.hm-c b,.hm-l,.hm-n{text-shadow:0 1px 6px rgba(0,25,22,.5)}
+.hm-link{display:inline-block;margin-top:10px;border:0;background:rgba(255,214,120,.95);color:#4F3600;font:inherit;font-size:12.5px;font-weight:700;border-radius:999px;padding:5px 12px;cursor:pointer}
+.hm-link:hover{background:#FFD678}
 .hide{display:none!important}
 </style>
 </head>
@@ -925,11 +940,20 @@ function heroHTML(o){
 }
 // Banner luôn tóm tắt KỲ HIỆN TẠI (lấy từ dashboard khi đang xem kỳ hiện tại)
 function renderAdminHero(j){
-  const rate = j.candidates ? Math.round(j.submitted / j.candidates * 100) : 0, weak = j.bands && j.bands[0] ? j.bands[0].n : 0;
-  let s = j.candidates ? 'Đã có <b>' + j.submitted + '/' + j.candidates + '</b> thí sinh làm bài kỳ này' + (j.avgPct != null ? ', tỉ lệ đúng trung bình <b>' + pctTxt(j.avgPct) + '</b>' : '') + '.' : 'Thêm thí sinh và câu hỏi để bắt đầu kỳ kiểm tra.';
-  if (weak) s += ' <b>' + weak + '</b> người dưới chuẩn cần đào tạo lại.';
-  if (j.untagged) s += ' Có <b>' + j.untagged + '</b> bài chưa gắn kỳ.';
-  $('hero').innerHTML = heroHTML({ eb: 'Kỳ kiểm tra ' + perLabel(j.currentPeriod) + ' · ' + j.candidates + ' thí sinh', t: vnGreet() + ', quản trị viên', s, kpi: j.candidates ? rate + '%' : null, kl: 'đã làm bài' });
+  const n = j.candidates, done = j.submitted, rate = n ? Math.round(done / n * 100) : 0;
+  const weak = j.bands && j.bands[0] ? j.bands[0].n : 0, low = j.lowPct || 60, avg = j.avgPct;
+  const avgCol = avg == null ? 'rgba(255,255,255,.5)' : avg >= low ? '#7FE3B0' : avg >= low - 15 ? '#FFD678' : '#FF9A8F';
+  const card = (label, right, value, barW, barCol, note, mark) => '<div class="hm-c"><div class="hm-l"><span>' + label + '</span><span>' + right + '</span></div>' +
+    '<div class="hm-v">' + value + '</div><div class="hm-b"><i style="width:' + Math.max(0, Math.min(100, barW)) + '%;background:' + barCol + '"></i>' + (mark != null ? '<span class="mk" style="left:calc(' + mark + '% - 1px)" title="Mức chuẩn ' + mark + '%"></span>' : '') + '</div>' +
+    (note ? '<div class="hm-n">' + note + '</div>' : '') + '</div>';
+  const meters = n ? '<div class="hm">' +
+    card('Đã làm bài', rate + '%', done + '<small> / ' + n + '</small>', rate, '#7FE0D2', n - done ? 'Còn ' + (n - done) + ' thí sinh chưa làm' : 'Tất cả đã làm bài') +
+    card('Tỉ lệ đúng trung bình', 'chuẩn ' + low + '%', avg == null ? '–' : pctTxt(avg), avg || 0, avgCol, avg == null ? 'Chưa có bài nộp' : avg >= low ? 'Đạt mức chuẩn' : 'Dưới mức chuẩn ' + (Math.round((low - avg) * 10) / 10).toString().replace('.', ',') + ' điểm', low) +
+    card('Dưới chuẩn', done ? Math.round(weak / done * 100) + '% bài nộp' : '', weak + '<small> người</small>', done ? weak / done * 100 : 0, '#FF9A8F', weak ? 'Cần đào tạo lại' : (done ? 'Không ai dưới chuẩn' : '')) +
+    '</div>' : '<p class="khero-s">Thêm thí sinh và câu hỏi để bắt đầu kỳ kiểm tra.</p>';
+  const tag = j.untagged ? '<button type="button" class="hm-link" id="heroUntagged">' + j.untagged + ' bài chưa gắn kỳ · Gắn kỳ →</button>' : '';
+  $('hero').innerHTML = '<div class="khero-in wide"><div class="khero-eb">Kỳ kiểm tra ' + perLabel(j.currentPeriod) + ' · ' + n + ' thí sinh</div><h1 class="khero-t">' + vnGreet() + ', quản trị viên</h1>' + meters + tag + '</div>';
+  if (j.untagged) $('heroUntagged').onclick = () => { switchTab('results'); setTimeout(() => { const b = $('dashBanner'); if (b) b.scrollIntoView({ behavior:'smooth', block:'center' }); }, 50); };
   $('hero').classList.remove('hide');
 }
 

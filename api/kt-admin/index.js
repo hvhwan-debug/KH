@@ -116,7 +116,7 @@ const handler = async function (context, req) {
           candidates: cands.length, submitted: rows.length, avgPct: avg(pcts), medianPct: median, minPct: pcts[0] == null ? null : pcts[0], maxPct: pcts.length ? pcts[pcts.length - 1] : null,
           avgDurationSec: durs.length ? Math.round(durs.reduce((a, b) => a + b, 0) / durs.length) : null,
           passEnabled: !!st.passEnabled, passed: st.passEnabled ? rows.filter((r) => quiz.passState(r.pct, st) === true).length : null,
-          complianceEnabled: !!st.complianceEnabled, bands, byManager, bySegment, notDone: notDone.slice(0, 1000), notDoneCount: notDone.length, flags, prev, topWrong, papersRead: atts.filter(Boolean).length });
+          complianceEnabled: !!st.complianceEnabled, lowPct: st.complianceLowMin * 10, bands, byManager, bySegment, notDone: notDone.slice(0, 1000), notDoneCount: notDone.length, flags, prev, topWrong, papersRead: atts.filter(Boolean).length });
       }
       if (op === "result") {
         const a = await quiz.getAttempt(String(req.query.id || ""));
