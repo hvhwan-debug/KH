@@ -2,6 +2,7 @@
 // Trả về: thông tin thí sinh, thể lệ bài thi, và trạng thái (chưa làm / đang làm dở / đã hoàn thành).
 const { reply, guardConfigured, requireAjax } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
+const advicelib = require("../_lib/advice");
 
 module.exports = async function (context, req) {
   try {
@@ -48,13 +49,15 @@ module.exports = async function (context, req) {
       const idx = await quiz.getIndex();
       const prior = idx.find((a) => quiz.normCode(a.code) === code && a.status === "submitted" && (a.period || "") === settings.examPeriod);
       if (prior) {
+        let adv = null;
+        try { const pa = await quiz.getAttempt(prior.id); adv = pa ? (pa.advice || advicelib.rulesAdvice(advicelib.facts(pa, settings, quiz.previousResult(idx, pa.code, pa.period, pa.id)))) : null; } catch (e) { adv = null; }
         return reply(context, 200, {
           ok: true, candidate, exam, alreadyDone: true,
           result: {
             score: prior.score, total: prior.total, pct: prior.pct, passed: quiz.passState(prior.pct, settings),
             compliancePoints: prior.compliancePoints, submittedAt: prior.submittedAt,
             mailOk: prior.mailOk, passScore: exam.passScore, durationSec: prior.durationSec,
-            startedAt: prior.startedAt, wrong: prior.wrong, blank: prior.blank, proof: quiz.proofCode(prior.id), verify: quiz.verifyToken(prior.id)
+            startedAt: prior.startedAt, wrong: prior.wrong, blank: prior.blank, proof: quiz.proofCode(prior.id), verify: quiz.verifyToken(prior.id), advice: adv
           },
           serverNow: Date.now()
         });

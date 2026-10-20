@@ -145,19 +145,23 @@ const handler = async function (context, req) {
         let prev = null;
         if (prevP) { const pr = Object.values(latestOf(prevP)); prev = { period: prevP, submitted: pr.length, avgPct: avg(pr.map((r) => r.pct || 0)), weak: pr.filter((r) => (r.pct || 0) < lo).length }; }
         // Câu hỏi sai nhiều nhất: đọc bản sao bài làm (tối đa 400 bài gần nhất của kỳ)
-        const qs = {};
+        const qs = {}, cs = {};
         const sample = rows.slice().sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0)).slice(0, 400);
         const atts = await Promise.all(sample.map((r) => quiz.getAttempt(r.id).catch(() => null)));
         atts.forEach((a) => { if (!a || !Array.isArray(a.paper)) return; a.paper.forEach((q) => {
           const k = q.text; const x = (qs[k] = qs[k] || { text: q.text, answer: q.answerText || (q.options || [])[q.correct] || "", n: 0, wrong: 0, blank: 0 });
-          x.n++; if (q.chosen < 0) x.blank++; else if (!q.ok) x.wrong++; }); });
+          x.n++; if (q.chosen < 0) x.blank++; else if (!q.ok) x.wrong++;
+          const ck = (q.category || "").trim() || "Kiến thức chung", cx = (cs[ck] = cs[ck] || { name: ck, n: 0, miss: 0 });
+          cx.n++; if (!q.ok) cx.miss++; }); });
+        // Mảng kiến thức cả nhóm làm yếu nhất (tỉ lệ sai + bỏ trống), chỉ xét mảng đủ số lượt để đáng tin
+        const weakCats = Object.values(cs).filter((c) => c.n >= 5 && c.miss > 0).map((c) => Object.assign(c, { rate: Math.round(c.miss / c.n * 100) })).sort((a, b) => b.rate - a.rate || b.n - a.n).slice(0, 6);
         const topWrong = Object.values(qs).filter((x) => x.n >= Math.min(3, rows.length)).map((x) => Object.assign(x, { rate: Math.round((x.wrong + x.blank) / x.n * 100) }))
           .filter((x) => x.rate > 0).sort((a, b) => b.rate - a.rate || b.n - a.n).slice(0, 8);
         return reply(context, 200, { ok: true, period, currentPeriod: st.examPeriod, periods, untagged,
           candidates: cands.length, submitted: rows.length, avgPct: avg(pcts), medianPct: median, minPct: pcts[0] == null ? null : pcts[0], maxPct: pcts.length ? pcts[pcts.length - 1] : null,
           avgDurationSec: durs.length ? Math.round(durs.reduce((a, b) => a + b, 0) / durs.length) : null,
           passEnabled: !!st.passEnabled, passed: st.passEnabled ? rows.filter((r) => quiz.passState(r.pct, st) === true).length : null,
-          complianceEnabled: !!st.complianceEnabled, lowPct: st.complianceLowMin * 10, bands, byManager, bySegment, notDone: notDone.slice(0, 1000), notDoneCount: notDone.length, flags, prev, topWrong, papersRead: atts.filter(Boolean).length });
+          complianceEnabled: !!st.complianceEnabled, lowPct: st.complianceLowMin * 10, bands, byManager, bySegment, notDone: notDone.slice(0, 1000), notDoneCount: notDone.length, flags, prev, topWrong, weakCats, papersRead: atts.filter(Boolean).length });
       }
       if (op === "result") {
         const a = await quiz.getAttempt(String(req.query.id || ""));
@@ -309,8 +313,9 @@ const handler = async function (context, req) {
             complianceBefore: a.compliancePoints == null ? null : a.compliancePoints, complianceAfter: sc.compliance, passedBefore: a.passed == null ? null : a.passed, passedAfter: sc.passed });
           if (apply) {
             (a.regrade = a.regrade || []).push({ at: Date.now(), by: u.email, scoreBefore: a.score, pctBefore: a.pct, complianceBefore: a.compliancePoints == null ? null : a.compliancePoints, passedBefore: a.passed == null ? null : a.passed });
-            Object.assign(a, { score: sc.correct, total: sc.total, pct: sc.pct, passed: sc.passed, scoreOutOf10: sc.scoreOutOf10, compliancePoints: sc.compliance, wrong: sc.wrongN, blank: sc.blank, detailLines: sc.detailLines, regradedAt: Date.now() });
+            Object.assign(a, { score: sc.correct, total: sc.total, pct: sc.pct, passed: sc.passed, scoreOutOf10: sc.scoreOutOf10, compliancePoints: sc.compliance, wrong: sc.wrongN, blank: sc.blank, regradedAt: Date.now() });
             a.paper = quiz.buildPaper(a, byId);
+            a.advice = require("../_lib/advice").rulesAdvice(require("../_lib/advice").facts(a, settings, null)); // điểm đã đổi nên lời khuyên cũ không còn đúng: dựng lại theo luật
             await quiz.putAttempt(a);
             patches[a.id] = { score: sc.correct, total: sc.total, pct: sc.pct, passed: sc.passed, scoreOutOf10: sc.scoreOutOf10, compliancePoints: sc.compliance, wrong: sc.wrongN, blank: sc.blank, regradedAt: a.regradedAt };
           }

@@ -2,6 +2,7 @@
 const { reply, guardConfigured, requireAjax } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
 const resultmail = require("../_lib/resultmail");
+const advicelib = require("../_lib/advice");
 
 const COOLDOWN_MS = 60 * 1000; // giãn cách giữa 2 lần gửi
 const MAX_RESENDS = 5;         // tối đa số lần gửi lại cho mỗi bài làm
@@ -27,7 +28,8 @@ module.exports = async function (context, req) {
     const found = (await quiz.getCandidates()).find((c) => quiz.normCode(c.code) === code && quiz.normEmail(c.email) === email);
     if (!found) { quiz.noteFail(req); return reply(context, 404, { ok: false, error: "Không tìm thấy thí sinh." }); }
 
-    const prior = (await quiz.getIndex()).find((a) => quiz.normCode(a.code) === code && a.status === "submitted");
+    // Bài nộp MỚI NHẤT của thí sinh (trước đây lấy bài đầu tiên tìm thấy nên có thể gửi nhầm kỳ cũ)
+    const prior = (await quiz.getIndex()).filter((a) => quiz.normCode(a.code) === code && a.status === "submitted").sort((x, y) => (y.submittedAt || 0) - (x.submittedAt || 0))[0];
     const attempt = prior && (await quiz.getAttempt(prior.id));
     if (!attempt || attempt.status !== "submitted") return reply(context, 404, { ok: false, error: "Chưa có bài làm đã nộp để gửi lại kết quả." });
 
@@ -42,16 +44,12 @@ module.exports = async function (context, req) {
     }
 
     const settings = await quiz.getExamSettings(attempt.period || ""); // cài đặt của ĐÚNG đề thí sinh đã làm (tiêu đề, thi thử...)
-    let lines = attempt.detailLines;
-    if (!Array.isArray(lines)) { // bài nộp trước khi có tính năng này
-      const byId = {};
-      (await quiz.getQuestions()).forEach((q) => { byId[q.id] = q; });
-      lines = resultmail.rebuildDetail(attempt, byId);
-    }
+    // Email chỉ gồm điểm và lời khuyên (không kèm bản sao câu hỏi). Bài cũ chưa có lời khuyên thì dựng theo luật từ bản sao bài làm.
+    const advice = attempt.advice || advicelib.rulesAdvice(advicelib.facts(attempt, settings, quiz.previousResult(await quiz.getIndex(), attempt.code, attempt.period, attempt.id)));
 
     attempt.email = found.email; // gửi tới email hiện tại (có thể đã được quản lí chỉnh sửa)
     let mailOk = false;
-    try { await resultmail.send(attempt, settings, lines); mailOk = true; }
+    try { await resultmail.send(attempt, settings, advice); mailOk = true; }
     catch (e) { context.log.error("kt-resend mail", e && e.message); }
 
     attempt.mailSends = sends + 1; attempt.mailLastAt = now; attempt.mailOk = mailOk;

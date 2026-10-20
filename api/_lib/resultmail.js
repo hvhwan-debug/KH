@@ -5,23 +5,8 @@ const quiz = require("./quiz");
 
 const vn = (ms) => new Date(ms).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 
-// Dựng lại bản sao câu trả lời từ ngân hàng đề (chỉ dùng cho bài cũ chưa lưu sẵn bản sao lúc nộp).
-function rebuildDetail(attempt, byId) {
-  const lines = [];
-  attempt.questionIds.forEach((qid, idx) => {
-    const q = byId[qid];
-    if (!q) return;
-    const g = quiz.gradeAnswer(q, attempt.answers[qid], attempt.orders[qid]);
-    lines.push(
-      "Câu " + (idx + 1) + " [" + (g.ok ? "Đúng" : "Sai") + "]: " + q.text + " — Bạn chọn: " + g.chosenText +
-      (g.ok ? "" : " (Đáp án đúng: " + g.correctText + ")")
-    );
-  });
-  return lines;
-}
-
 // Gửi email kết quả tới địa chỉ của thí sinh. Ném lỗi nếu không gửi được.
-async function send(attempt, settings, detailLines) {
+async function send(attempt, settings, advice) {
   const practice = !!settings.practice;
   const title = (practice ? "[THI THỬ] " : "") + (settings.examTitle || "Bài kiểm tra");
   const compliance = attempt.compliancePoints;
@@ -45,7 +30,7 @@ async function send(attempt, settings, detailLines) {
           "Mã minh chứng: " + quiz.proofCode(attempt.id)
         ]
       },
-      { h: "Chi tiết bài làm (bản sao câu trả lời)", lines: detailLines }
+      ...adviceSections(advice)
     ]),
     footer: "Đây là email tự động từ hệ thống kiểm tra. Nếu có thắc mắc về kết quả, vui lòng liên hệ quản trị viên phụ trách."
   });
@@ -53,4 +38,14 @@ async function send(attempt, settings, detailLines) {
   if (sent === false) throw new Error("Chưa cấu hình SMTP trên máy chủ, email không được gửi");
 }
 
-module.exports = { send, rebuildDetail };
+// Mục "Lời khuyên để cải thiện": chỉ gồm nhận xét và việc nên làm; KHÔNG kèm nội dung câu hỏi hay đáp án
+// (đề dùng trong nhiều ngày, gửi bản sao câu hỏi qua email là làm lộ ngân hàng đề).
+function adviceSections(advice) {
+  const a = advice || {};
+  const head = [a.headline, a.summary].filter(Boolean).join(". ").replace(/\.\./g, ".");
+  const out = [{ h: a.source === "ai" ? "Lời khuyên để cải thiện (gợi ý bởi AI)" : "Lời khuyên để cải thiện", lines: [head || "Hãy xem lại các mảng kiến thức còn yếu và trao đổi với quản lí để được hỗ trợ."] }];
+  if (a.actions && a.actions.length) out.push({ h: "Việc nên làm", lines: a.actions.slice() }); // layout tự thêm gạch đầu dòng
+  return out;
+}
+
+module.exports = { send };

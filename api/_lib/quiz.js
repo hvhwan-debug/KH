@@ -456,24 +456,29 @@ function checkVerifyToken(t) {
 // Câu đã bị xoá khỏi ngân hàng được tính là bỏ trống (tổng số câu vẫn là số câu đã ra cho thí sinh).
 function scoreAttempt(attempt, byId, settings) {
   let correct = 0, wrongN = 0;
-  const detailLines = [];
-  (attempt.questionIds || []).forEach((qid, idx) => {
+  (attempt.questionIds || []).forEach((qid) => {
     const q = byId[qid];
     if (!q) return;
     const g = gradeAnswer(q, attempt.answers && attempt.answers[qid], attempt.orders && attempt.orders[qid]);
     if (g.state === "correct") correct++; else if (g.state === "wrong") wrongN++;
-    detailLines.push("Câu " + (idx + 1) + " [" + (g.ok ? "Đúng" : "Sai") + "]: " + q.text + " — Bạn chọn: " + g.chosenText + (g.ok ? "" : " (Đáp án đúng: " + g.correctText + ")"));
   });
   const total = (attempt.questionIds || []).length;
   const pct = total ? Math.round((correct / total) * 100) : 0;
   const scoreOutOf10 = total ? (correct / total) * 10 : 0;
   return {
-    correct, wrongN, total, pct, detailLines,
+    correct, wrongN, total, pct,
     blank: Math.max(0, total - correct - wrongN),
     passed: passState(pct, settings), // null nếu bài không có ngưỡng đạt
     scoreOutOf10: Math.round(scoreOutOf10 * 100) / 100,
     compliance: settings.complianceEnabled ? compliancePoints(scoreOutOf10, settings) : null
   };
+}
+// Kết quả gần nhất của cùng một thí sinh ở kỳ KHÁC (không tính thi thử), để lời khuyên so sánh tiến bộ.
+function previousResult(idx, code, period, exceptId) {
+  const norm = normCode(code);
+  const list = (idx || []).filter((x) => x.status === "submitted" && !x.practice && x.id !== exceptId && normCode(x.code) === norm && (x.period || "") !== (period || ""));
+  list.sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
+  return list.length ? { pct: list[0].pct, period: list[0].period || "" } : null;
 }
 // Sửa nhiều dòng của bảng chỉ số trong MỘT lần ghi nguyên tử: patches = { <id bài làm>: { trường: giá trị, ... } }
 async function patchIndex(patches) {
@@ -613,7 +618,7 @@ module.exports = {
   getAttempt, putAttempt, saveIndex, activeForPeriod,
   getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary,
   getBanks, saveBanks, bankOf, validBankId, slugify, cleanQuestionMeta, DEFAULT_BANK, DIFFICULTIES,
-  cleanBlueprint, buildFromBlueprint, blueprintTotal, examAccessError, inAudience, examKnown, scoreAttempt, patchIndex,
+  cleanBlueprint, buildFromBlueprint, blueprintTotal, examAccessError, inAudience, examKnown, scoreAttempt, patchIndex, previousResult,
   TYPES, qType, normText, normalizeQuestionInput, gradeAnswer,
   getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,

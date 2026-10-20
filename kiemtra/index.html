@@ -250,6 +250,18 @@ body.practice .wrap{position:relative;z-index:1}
 .sharehint a,.msg a{color:inherit;font-weight:700;text-decoration:underline}
 @media(max-width:480px){.rv-head{padding:18px 16px}.rv-body{padding:22px 16px 8px}.share{padding:12px 16px 22px}}
 /* Nhắc chia sẻ kết quả thay vì chụp màn hình */
+/* Lời khuyên cải thiện sau khi nộp bài */
+.advice{margin:18px 0 0;text-align:left;border:1.5px solid #CDE6EA;border-radius:18px;background:linear-gradient(180deg,#F5FBFC,#EDF7F9);padding:16px 16px 14px}
+.advice.hide{display:none}
+.advice .adh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.advice .adh .ic{flex:0 0 auto;width:34px;height:34px;border-radius:11px;background:var(--grad);display:grid;place-items:center}
+.advice .adh b{font-size:15px;color:var(--ink)}
+.advice .adh .tag{margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.02em;color:#055A68;background:#DDF0F3;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.advice h3{margin:0 0 6px;font-size:16.5px;line-height:1.4;color:var(--ink)}
+.advice p{margin:0 0 10px;font-size:14px;line-height:1.65;color:var(--muted)}
+.advice ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.advice li{position:relative;padding:10px 12px 10px 38px;background:#fff;border:1px solid #DDEBEE;border-radius:12px;font-size:14px;line-height:1.6;color:var(--ink)}
+.advice li::before{content:'';position:absolute;left:12px;top:13px;width:18px;height:18px;border-radius:50%;background:var(--brand-soft,#E3F3F5) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23067A8C' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12.5 4 4 8-9'/%3E%3C/svg%3E") center/11px no-repeat}
 .nudge-bg{position:fixed;inset:0;z-index:70;display:none;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));background:rgba(8,32,36,.58)}
 .nudge-bg.on{display:flex}
 .nudge{width:100%;max-width:420px;background:#fff;border-radius:24px;padding:24px 20px 14px;text-align:center;box-shadow:0 30px 60px -20px rgba(0,30,40,.55);animation:nudgeUp .3s cubic-bezier(.2,.8,.2,1)}
@@ -417,6 +429,7 @@ body.exam #wm{display:block}
         <p class="cheer" id="resCheer"></p>
         <div class="stats" id="resStats"></div>
         <div class="bk hide" id="resBk"></div>
+        <section class="advice hide" id="resAdvice" aria-labelledby="advTitle"></section>
         <dl class="kv" id="resDetails" style="margin:16px 0 0;text-align:left"></dl>
         <div class="proof hide" id="resProof"></div>
         <div id="resMail"></div>
@@ -831,7 +844,7 @@ function fatal(text){
 /* ---------- Nộp bài ---------- */
 async function finish(){
   ST.quizOn = true; ST.busy = true; clearInterval(ST.timer);
-  $('qText').textContent = 'Đang chấm điểm…';
+  $('qText').textContent = 'Đang chấm điểm và soạn lời khuyên cho bạn…';
   $('qOpts').innerHTML = ''; $('btnNext').classList.add('hide'); $('qTimer').classList.add('hide');
   if (DEV.loc && 'geolocation' in navigator) await Promise.race([getPos({ enableHighAccuracy:true, timeout:3000, maximumAge:30000 }), new Promise(function(r){ setTimeout(r, 3500); })]);
   var out = null, tries = 0;
@@ -923,6 +936,16 @@ function applyPractice(){
   document.body.classList.toggle('practice', p);
   document.title = (p ? '[THI THỬ] ' : '') + BASE_TITLE;
 }
+// Lời khuyên cải thiện (AI hoặc theo luật) hiển thị ngay dưới điểm; không kèm đáp án đúng.
+function renderAdvice(a){
+  var box = $('resAdvice');
+  if (!a || !a.headline || !a.actions || !a.actions.length){ box.classList.add('hide'); box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="adh"><span class="ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3Z"/></svg></span>' +
+    '<b id="advTitle">Lời khuyên để cải thiện</b><span class="tag">' + (a.source === 'ai' ? 'Gợi ý bởi AI' : 'Gợi ý tự động') + '</span></div>' +
+    '<h3>' + esc(a.headline) + '</h3>' + (a.summary ? '<p>' + esc(a.summary) + '</p>' : '') +
+    '<ul>' + a.actions.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+  box.classList.remove('hide');
+}
 function renderResult(r, already){
   ST.res = { r:r, already:already };
   var prac = isPractice();
@@ -986,6 +1009,7 @@ function renderResult(r, already){
     ? '<div class="msg warn" style="text-align:left">Kết quả đã được lưu nhưng hệ thống chưa gửi được email. Bạn có thể bấm gửi lại bên dưới, hoặc liên hệ quản trị viên nếu vẫn không nhận được.</div>'
     : '<div class="msg ok" style="text-align:left">Kết quả chi tiết đã được gửi tự động về email bạn đã nhập.</div>') +
     '<button class="btn ghost" id="btnResend" type="button" style="margin-top:10px;min-height:46px">' + RESEND_LABEL + '</button><div id="resendMsg" role="status"></div>';
+  renderAdvice(r.advice);
   shareMsg('');
   show('result');
   scheduleNudge();

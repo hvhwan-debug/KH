@@ -552,6 +552,7 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
           <div class="panel"><h2>Theo quản lí</h2><div style="overflow-x:auto"><table class="dt"><thead><tr><th>Quản lí</th><th class="num">NV</th><th>Hoàn thành</th><th class="num">Đúng TB</th><th class="num">Dưới chuẩn</th></tr></thead><tbody id="dashMgr"></tbody></table></div></div>
           <div class="panel"><h2>Theo nhóm ngành</h2><table class="dt"><thead><tr><th>Nhóm ngành</th><th>Hoàn thành</th><th class="num">Đúng TB</th></tr></thead><tbody id="dashSeg"></tbody></table></div>
         </div>
+        <div class="panel" style="margin-bottom:14px"><h2>Mảng kiến thức cả nhóm làm yếu nhất <span class="small" style="font-weight:400">· nên ưu tiên đào tạo lại</span></h2><ul class="wq" id="dashWeakCat"></ul></div>
         <div class="panel" style="margin-bottom:14px"><h2>Câu hỏi sai nhiều nhất <span class="small" id="dashWqNote" style="font-weight:400"></span></h2><ul class="wq" id="dashWq"></ul></div>
         <div class="panel"><details class="nd" id="dashNd"><summary id="dashNdSum">Chưa làm bài</summary><div class="ndg" id="dashNdList"></div></details></div>
       </div>
@@ -1502,6 +1503,7 @@ async function loadDashboard(sel){
   $('dashMgr').innerHTML = j.byManager.map(m => '<tr><td>' + esc(m.name) + '</td><td class="num">' + m.total + '</td><td style="min-width:150px">' + cbar(m.done, m.total) + '</td><td class="num">' + pctTxt(m.avgPct) + '</td><td class="num">' + (m.weak ? '<b style="color:var(--bad)">' + m.weak + '</b>' : '0') + '</td></tr>').join('') || '<tr><td colspan="5" class="small">Chưa có dữ liệu.</td></tr>';
   $('dashSeg').innerHTML = j.bySegment.map(m => '<tr><td>' + esc(m.name) + '</td><td style="min-width:130px">' + cbar(m.done, m.total) + '</td><td class="num">' + pctTxt(m.avgPct) + '</td></tr>').join('') || '<tr><td colspan="3" class="small">Chưa có dữ liệu.</td></tr>';
   // Câu hỏi sai nhiều nhất
+  $('dashWeakCat').innerHTML = (j.weakCats || []).map(c => '<li><span class="r">' + c.rate + '%</span><div>' + esc(c.name) + '<span class="m">sai hoặc bỏ trống ' + c.miss + '/' + c.n + ' lượt trả lời</span></div></li>').join('') || '<li class="small">Chưa đủ dữ liệu theo mảng kiến thức (cần ít nhất 5 lượt trả lời mỗi mảng, và câu hỏi có điền "Phân loại").</li>';
   $('dashWqNote').textContent = j.papersRead ? '· từ ' + j.papersRead + ' bài làm, tính cả bỏ trống' : '';
   $('dashWq').innerHTML = j.topWrong.map(q => '<li><span class="r">' + q.rate + '%</span><div>' + esc(q.text) + '<span class="a">Đáp án đúng: ' + esc(q.answer) + '</span><span class="m">' + q.wrong + ' sai, ' + q.blank + ' bỏ trống / ' + q.n + ' lượt</span></div></li>').join('') || '<li class="small" style="display:block">Chưa đủ dữ liệu.</li>';
   // Chưa làm
