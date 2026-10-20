@@ -166,8 +166,8 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .ins-plan{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .ins-plan li{display:flex;gap:8px;align-items:flex-start;background:#fff;border:1px solid #DDEBEE;border-radius:10px;padding:8px 10px;font-size:13.5px;line-height:1.55}
 .ins-plan .when{flex:0 0 auto;font-weight:700;font-size:11.5px;color:#055A68;background:#E4F3F5;border-radius:6px;padding:2px 7px;white-space:nowrap}
-.who{flex:0 0 auto;font-weight:700;font-size:11px;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#EEF5F6;color:#4B666D}
-.who.ql{background:#E6EFFD;color:#1F4FB4}.who.nv{background:#E3F5EC;color:#17794A}.who.dt{background:#F1E9FB;color:#5B3FA8}
+.iwho{flex:0 0 auto;font-weight:700;font-size:11px;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#EEF5F6;color:#4B666D}
+.iwho.ql{background:#E6EFFD;color:#1F4FB4}.iwho.nv{background:#E3F5EC;color:#17794A}.iwho.dt{background:#F1E9FB;color:#5B3FA8}
 .ins-caut{font-size:12px!important;color:#6B4A00!important;background:#FFF6E0;border:1px solid #F0D58A;border-radius:10px;padding:8px 10px;margin:10px 0 0!important}
 .ins-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .insf{border:1.5px solid #DAE5E8;border-left-width:5px;border-radius:12px;background:#fff;margin:0 0 10px;padding:10px 14px;text-align:left}
@@ -175,7 +175,7 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .insf .insf-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}.insf .insf-h b{font-size:14px}
 .insf .conf{margin-left:auto;font-size:11px;font-weight:700;color:#4B666D;background:#EEF5F6;border-radius:999px;padding:2px 9px;white-space:nowrap}
 .insf h5{margin:8px 0 3px;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;color:#4B666D}
-.insf ul{margin:0;padding-left:18px;font-size:13px;line-height:1.6}.insf li .who{margin-right:6px}
+.insf ul{margin:0;padding-left:18px;font-size:13px;line-height:1.6}.insf li .iwho{margin-right:6px}
 .ov{position:fixed;inset:0;z-index:50;background:rgba(13,42,49,.55);display:flex;align-items:flex-start;justify-content:center;padding:4vh 14px;overflow:auto}
 .dlg{width:100%;max-width:520px;background:#fff;border-radius:22px;padding:22px 22px 20px;box-shadow:0 40px 80px -30px rgba(0,0,0,.6)}
 .dlg h2{margin:0 0 4px;font-size:19px}.dlg .sub{margin:0 0 16px;font-size:13px;color:var(--muted)}
@@ -952,7 +952,7 @@ function insHTML(j, wantAI){
   h += '<div class="ins-narr">' + note + '<div class="ins-hd"><b>Tóm tắt và kế hoạch khắc phục</b><span class="tag">' + (n.source === 'ai' ? 'Tổng hợp bởi AI' : 'Tổng hợp theo luật') + '</span></div>';
   h += '<p>' + esc(n.summary || '') + '</p>';
   if (n.rootCauses && n.rootCauses.length) h += '<h4>Nguyên nhân gốc (giả thuyết)</h4><ul>' + n.rootCauses.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
-  if (n.plan && n.plan.length) h += '<h4>Kế hoạch khắc phục</h4><ol class="ins-plan">' + n.plan.map(function(p){ return '<li>' + (p.when ? '<span class="when">' + esc(p.when) + '</span>' : '') + '<span class="who ' + esc(p.owner) + '">' + esc(WHO_LBL[p.owner] || '') + '</span><span>' + esc(p.action) + '</span></li>'; }).join('') + '</ol>';
+  if (n.plan && n.plan.length) h += '<h4>Kế hoạch khắc phục</h4><ol class="ins-plan">' + n.plan.map(function(p){ return '<li>' + (p.when ? '<span class="when">' + esc(p.when) + '</span>' : '') + '<span class="iwho ' + esc(p.owner) + '">' + esc(WHO_LBL[p.owner] || '') + '</span><span>' + esc(p.action) + '</span></li>'; }).join('') + '</ol>';
   h += '<p class="ins-caut">' + esc(n.caution || '') + '</p>';
   h += '<div class="ins-act"><button class="btn sm" type="button" data-ins-ai>' + (n.source === 'ai' ? 'Nhờ AI tổng hợp lại' : 'Nhờ AI tổng hợp') + '</button><button class="btn ghost sm" type="button" data-ins-copy>Sao chép kế hoạch</button></div></div>';
   h += '<div class="psec" style="margin-bottom:0"><h3>Chi tiết các phát hiện <small>' + (j.attemptsUsed ? 'từ ' + j.attemptsUsed + ' lần làm bài' : (j.stats && j.stats.attempts ? 'từ ' + j.stats.attempts + ' bài' : '')) + (j.capped ? ' · chỉ đọc 300 bài mới nhất' : '') + '</small></h3>';
@@ -961,7 +961,7 @@ function insHTML(j, wantAI){
     return '<div class="insf ' + esc(f.level) + '"><div class="insf-h"><b>' + esc(f.title) + '</b><span class="conf">Tin cậy: ' + esc(f.confidence) + '</span></div>' +
       sec('Bằng chứng', (f.evidence || []).map(function(x){ return '<li>' + esc(x) + '</li>'; })) +
       sec('Nguyên nhân có thể', (f.causes || []).map(function(x){ return '<li>' + esc(x) + '</li>'; })) +
-      sec('Nên làm', (f.actions || []).map(function(a){ return '<li><span class="who ' + esc(a.who) + '">' + esc(WHO_LBL[a.who] || '') + '</span>' + esc(a.t) + '</li>'; })) + '</div>';
+      sec('Nên làm', (f.actions || []).map(function(a){ return '<li><span class="iwho ' + esc(a.who) + '">' + esc(WHO_LBL[a.who] || '') + '</span>' + esc(a.t) + '</li>'; })) + '</div>';
   }).join('') + '</div>';
   return h;
 }
