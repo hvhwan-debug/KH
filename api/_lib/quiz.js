@@ -175,6 +175,17 @@ async function getActive(code) {
 }
 async function setActive(code, attemptId) { await store.put(actKey(code), { attemptId, at: Date.now() }); }
 
+// Xoá (các) bản ghi kết quả "đã nộp" của một mã nhân viên khỏi bảng chỉ số, để họ được làm bài lại từ đầu
+// (không đụng tới bài làm cũ đã lưu riêng trong kt/attempt/<id>.json, chỉ bỏ dấu "đã nộp" đang chặn check/start).
+async function resetByCode(code) {
+  const norm = normCode(code);
+  const list = await getIndex();
+  const kept = list.filter((x) => normCode(x.code) !== norm);
+  await store.put(IDX_KEY, kept);
+  await setActive(code, null);
+  return list.length - kept.length;
+}
+
 // Đưa con trỏ câu hỏi về đúng hiện tại: câu nào đã quá hạn mà chưa trả lời thì tính là bỏ trống.
 // Trả về true nếu bài làm bị thay đổi (cần lưu lại).
 function syncAttempt(a, now) {
@@ -239,7 +250,7 @@ module.exports = {
   getCandidates, saveCandidates,
   getSettings, saveSettings,
   getAttempt, putAttempt,
-  getIndex, upsertIndex,
+  getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,
   buildPaper, getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
 };

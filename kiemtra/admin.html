@@ -131,6 +131,30 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
 
     <!-- Thí sinh -->
     <div id="tab-candidates" class="tabpane hide">
+      <div class="card hide" id="candEditCard">
+        <h1>Sửa thông tin thí sinh</h1>
+        <p class="small">Mã nhân viên không đổi được ở đây (đổi mã coi như thí sinh khác) — cần đổi mã thì xoá rồi thêm lại.</p>
+        <input type="hidden" id="candEditCode">
+        <div class="grid2">
+          <div><label>Mã nhân viên</label><input type="text" id="candEditCodeShow" disabled style="background:#f3f6f6;color:var(--muted)"></div>
+          <div><label>Họ tên</label><input type="text" id="candEditName"></div>
+          <div><label>Email</label><input type="text" id="candEditEmail"></div>
+          <div><label>Quản lí</label><input type="text" id="candEditManager"></div>
+          <div>
+            <label>Nhóm ngành</label>
+            <select id="candEditSegment">
+              <option value="both">Cả hai (Gia dụng + Máy lọc nước)</option>
+              <option value="gia_dung">Chỉ Gia dụng</option>
+              <option value="may_loc">Chỉ Máy lọc nước</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn" onclick="saveCandidateEdit()">Lưu thay đổi</button>
+          <button class="btn ghost" onclick="document.getElementById('candEditCard').classList.add('hide')">Huỷ</button>
+        </div>
+        <div id="candEditMsg"></div>
+      </div>
       <div class="card">
         <h1>Thêm thí sinh</h1>
         <p class="small">Mỗi dòng một thí sinh, định dạng: <b>mã nhân viên, họ tên, email, quản lí, nhóm ngành</b>. Nhóm ngành ghi <code>ca_hai</code> (bán cả gia dụng &amp; máy lọc nước — đề trộn từ toàn bộ ngân hàng), <code>gia_dung</code> (chỉ đề Gia dụng) hoặc <code>may_loc</code> (chỉ đề Máy lọc nước); để trống sẽ hiểu là cả hai. Có thể dán nhiều dòng cùng lúc.</p>
@@ -400,10 +424,37 @@ async function loadCandidates(){
   const { j } = await api('GET','/api/kt-admin?op=candidates');
   if (!j.ok) return;
   $('candCount').textContent = j.candidates.length;
+  CANDIDATES = j.candidates;
   const segLabel = { both:'Cả hai', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };
   $('candList').innerHTML = j.candidates.map(c =>
-    '<tr><td>'+esc(c.code)+'</td><td>'+esc(c.name||'')+'</td><td>'+esc(c.email)+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.confirmed?'<span class="badge y">Đã xác nhận</span><br>'+esc(c.confirmed.byName||c.confirmed.by||'')+' · '+new Date(c.confirmed.at).toLocaleDateString('vi-VN'):'<span class="small">Chưa xác nhận</span>')+'</td><td><button class="btn danger sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
+    '<tr><td>'+esc(c.code)+'</td><td>'+esc(c.name||'')+'</td><td>'+esc(c.email)+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.confirmed?'<span class="badge y">Đã xác nhận</span><br>'+esc(c.confirmed.byName||c.confirmed.by||'')+' · '+new Date(c.confirmed.at).toLocaleDateString('vi-VN'):'<span class="small">Chưa xác nhận</span>')+'</td><td style="white-space:nowrap"><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn danger sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
   ).join('') || '<tr><td colspan="7" class="small">Chưa có thí sinh nào.</td></tr>';
+}
+let CANDIDATES = [];
+function editCandidateOpen(code){
+  const c = CANDIDATES.find(x => x.code === code);
+  if (!c) return;
+  $('candEditCode').value = c.code;
+  $('candEditCodeShow').value = c.code;
+  $('candEditName').value = c.name||'';
+  $('candEditEmail').value = c.email||'';
+  $('candEditManager').value = c.manager||'';
+  $('candEditSegment').value = c.segment||'both';
+  $('candEditCard').classList.remove('hide');
+  msg('candEditMsg','');
+  $('candEditCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function saveCandidateEdit(){
+  const code = $('candEditCode').value;
+  const email = $('candEditEmail').value.trim();
+  if (!email){ msg('candEditMsg','Nhập email.'); return; }
+  const { j } = await api('POST','/api/kt-admin', {
+    op:'addCandidates', rows:[{ code, name: $('candEditName').value.trim(), email, manager: $('candEditManager').value.trim(), segment: $('candEditSegment').value }]
+  });
+  if (!j.ok){ msg('candEditMsg', j.error, 'err'); return; }
+  msg('candEditMsg','Đã lưu.','ok');
+  $('candEditCard').classList.add('hide');
+  loadCandidates();
 }
 async function addCandidates(){
   const text = $('candText').value;
@@ -563,8 +614,14 @@ async function loadResults(){
     '<td class="small"><b>'+esc(r.proof||('KT-'+String(r.id||'').slice(-8).toUpperCase()))+'</b></td>'+
     '<td class="small">'+esc(flagText(r)||'–')+'</td>'+
     '<td class="small">'+new Date(r.submittedAt).toLocaleString('vi-VN')+'</td>'+
-    '<td><button class="btn ghost sm" onclick="viewResult(\''+r.id+'\')">Xem</button></td></tr>'
+    '<td style="white-space:nowrap"><button class="btn ghost sm" onclick="viewResult(\''+r.id+'\')">Xem</button> <button class="btn danger sm" onclick="resetAttempt(\''+esc(r.code)+'\')">↺ Làm lại</button></td></tr>'
   ).join('') || '<tr><td colspan="11" class="small">Chưa có bài làm nào được nộp.</td></tr>';
+}
+async function resetAttempt(code){
+  if (!confirm('Xoá kết quả hiện tại của mã '+code+' và cho phép làm lại bài kiểm tra từ đầu?')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'resetAttempt', code });
+  if (!j.ok){ alert(j.error||'Có lỗi xảy ra.'); return; }
+  loadResults();
 }
 async function viewResult(id){
   const { j } = await api('GET','/api/kt-admin?op=result&id='+encodeURIComponent(id));

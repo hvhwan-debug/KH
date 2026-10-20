@@ -185,6 +185,11 @@ module.exports = async function (context, req) {
       return reply(context, 200, { ok: true, candidates: list, added, updated });
     }
 
+    if (op === "resetAttempt") {
+      const removed = await quiz.resetByCode(b.code);
+      return reply(context, 200, { ok: true, removed });
+    }
+
     if (op === "deleteCandidate") {
       let list = await quiz.getCandidates();
       list = list.filter((c) => quiz.normCode(c.code) !== quiz.normCode(b.code));
