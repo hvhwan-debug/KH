@@ -54,14 +54,18 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .proof span{display:block;font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px}
 .foot{padding:16px 24px 22px;text-align:center;font-size:12.5px;color:var(--muted);line-height:1.7}
 .foot b{color:var(--brand-deep)}
-/* Đề thi thử: dải cảnh báo + chữ mờ chéo, để ảnh chụp trang này không bị nhầm là kết quả chính thức */
-.pbar{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 16px;background:repeating-linear-gradient(-45deg,#F59E0B,#F59E0B 14px,#F7B02F 14px,#F7B02F 28px);color:#3D2800;font-weight:800;font-size:14px;letter-spacing:.04em;text-align:center}
-.pbar small{font-weight:600;letter-spacing:0;font-size:12.5px}
-.vbar.pr{background:#FFF1D6;color:#8A5200}
-.badge.p{background:#FDEBC8;color:#8A5200}
-.pnote{margin:0 0 14px;padding:10px 14px;border-radius:12px;background:#FFF6E0;border:1.5px solid #F0D58A;color:#6B4A00;font-size:13px;line-height:1.6;text-align:left}
-body.practice::after{content:'THI THỬ';position:fixed;inset:0;z-index:0;pointer-events:none;display:grid;place-items:center;font-size:min(34vw,200px);font-weight:900;letter-spacing:.06em;color:rgba(245,158,11,.10);transform:rotate(-24deg);white-space:nowrap}
-body.practice .wrap{position:relative;z-index:1}
+/* Đề thi thử: MỘT khung thông báo dịu + hoa văn chữ chìm phủ thẻ (hiện ở mọi ảnh chụp, không đè lên số liệu) */
+.card.pr{position:relative}
+.card.pr::before{content:'';position:absolute;left:0;right:0;top:0;height:4px;z-index:3;background:linear-gradient(90deg,#E4AE45,#F6D07C 50%,#E4AE45)}
+.card.pr::after{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='170'%3E%3Ctext x='130' y='91' text-anchor='middle' transform='rotate%28-24 130 85%29' font-family='Arial%2CHelvetica%2Csans-serif' font-size='17' font-weight='800' letter-spacing='4' fill='%23C98A1B' fill-opacity='0.11'%3ETHI TH%E1%BB%AC%3C/text%3E%3C/svg%3E")}
+.vbar.pr{align-items:center;gap:14px;padding:20px 22px 16px;background:linear-gradient(180deg,#FFFAF0,#FFF4DE);border-bottom:1px solid #F1DFB6;color:#7A4B00}
+.vbar.pr .pi{flex:0 0 auto;width:40px;height:40px;border-radius:13px;background:#FCE9BF;display:grid;place-items:center}
+.vbar.pr b{display:block;font-size:15.5px;line-height:1.35;color:#6B4000}
+.vbar.pr small{display:block;font-size:12.5px;font-weight:500;line-height:1.5;color:#8A6420;margin-top:2px}
+.badge.p{background:#FFF8EA;border:1.5px solid #EBCB84;color:#8A5200;letter-spacing:.16em;font-size:12px;padding:6px 16px 6px 14px;gap:9px}
+.badge.p::before{content:'';width:7px;height:7px;border-radius:50%;background:#E0A030}
+.ring.p .prg{stroke:url(#gP)}
+.stats div.ref{border:1.5px dashed #E8CF99;background:linear-gradient(180deg,#FFFDF7,#FFF7E8)}.stats div.ref b{color:#8A5200}
 .state{padding:44px 24px;text-align:center;color:var(--muted);font-size:15px;line-height:1.7}
 .hide{display:none!important}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -75,14 +79,12 @@ body.practice .wrap{position:relative;z-index:1}
     <div class="state" id="state">Đang xác thực kết quả…</div>
     <div class="hide" id="okView">
       <div class="vbar" id="vbar"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z" fill="currentColor"/><path d="m8.2 12.3 2.6 2.6 5-5.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Kết quả này đã được hệ thống xác thực</span></div>
-      <div class="pbar hide" id="pbar" role="status"><span>THI THỬ</span><small>Không phải thi chính thức</small></div>
       <div class="head"><b id="vTitle"></b><small>Nền tảng kiểm tra trực tuyến</small></div>
       <div class="body">
         <div id="vBadge"></div>
         <div class="person"><span class="av" id="vAv" aria-hidden="true"></span><div><b id="vName"></b><span id="vCode"></span></div></div>
-        <div class="ring" id="vRing"><svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="gY" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0EB5A6"/><stop offset="1" stop-color="#17794A"/></linearGradient><linearGradient id="gN" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B3261E"/></linearGradient><linearGradient id="gT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0EB5A6"/><stop offset="1" stop-color="#067A8C"/></linearGradient></defs><circle class="trk" cx="60" cy="60" r="52" fill="none" stroke-width="10"/><circle class="prg" id="vArc" cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73"/></svg><div class="c"><b id="vPct">0%</b><span>Tỉ lệ đúng</span></div></div>
+        <div class="ring" id="vRing"><svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="gP" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5C25E"/><stop offset="1" stop-color="#D68F1E"/></linearGradient><linearGradient id="gY" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0EB5A6"/><stop offset="1" stop-color="#17794A"/></linearGradient><linearGradient id="gN" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B3261E"/></linearGradient><linearGradient id="gT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0EB5A6"/><stop offset="1" stop-color="#067A8C"/></linearGradient></defs><circle class="trk" cx="60" cy="60" r="52" fill="none" stroke-width="10"/><circle class="prg" id="vArc" cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73"/></svg><div class="c"><b id="vPct">0%</b><span>Tỉ lệ đúng</span></div></div>
         <p class="thr" id="vThr"></p>
-        <p class="pnote hide" id="pnote">Đây là kết quả <b>THI THỬ</b>, không phải thi chính thức. Điểm tuân thủ bên dưới chỉ để hình dung điểm nếu thi thật.</p>
         <div class="stats" id="vStats"></div>
         <div class="bk hide" id="vBk"></div>
         <dl class="kv" id="vRows"></dl>
@@ -96,7 +98,7 @@ body.practice .wrap{position:relative;z-index:1}
 (function(){
 'use strict';
 var $ = function(id){ return document.getElementById(id); };
-var ZONE = 'Asia/Ho_Chi_Minh', off = 0;
+var ZONE = 'Asia/Ho_Chi_Minh', off = 0, VBAR_OFFICIAL = '';
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function full(ms){ try { return new Date(ms).toLocaleString('vi-VN',{timeZone:ZONE,hour:'2-digit',minute:'2-digit',second:'2-digit',day:'2-digit',month:'2-digit',year:'numeric',hour12:false}); } catch(e){ return ''; } }
 function dur(sec){ sec = Math.max(0, Math.round(sec||0)); var m = Math.floor(sec/60), s = sec%60; return m+' phút '+(s<10?'0':'')+s+' giây'; }
@@ -114,21 +116,23 @@ function fail(text){ $('state').textContent = text; $('state').classList.remove(
   off = (j.serverNow || Date.now()) - Date.now();
   var r = j.result, ps = (r.passed === true || r.passed === false) ? r.passed : null, pct = r.pct == null ? 0 : r.pct;
   var prac = !!r.practice;
+  if (!VBAR_OFFICIAL) VBAR_OFFICIAL = $('vbar').innerHTML;
   document.title = (prac ? '[THI THỬ] ' : '') + 'Xác thực kết quả - ' + r.name;
-  $('pbar').classList.toggle('hide', !prac); $('pnote').classList.toggle('hide', !prac); document.body.classList.toggle('practice', prac);
-  $('vbar').classList.toggle('pr', prac); $('vbar').querySelector('span').textContent = prac ? 'Kết quả THI THỬ đã được hệ thống xác thực (không phải thi chính thức)' : 'Kết quả này đã được hệ thống xác thực';
+  $('card').classList.toggle('pr', prac);
+  var vb = $('vbar'); vb.classList.toggle('pr', prac);
+  if (prac) vb.innerHTML = '<span class="pi" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B7791F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.2L5.2 18a2 2 0 0 0 1.8 3h10a2 2 0 0 0 1.8-3L14 9.2V3M7.6 14.5h8.8"/></svg></span><div><b>Kết quả thi thử</b><small>Không phải thi chính thức. Điểm tuân thủ chỉ để hình dung nếu thi thật.</small></div>';
   $('vTitle').textContent = r.title;
   $('vName').textContent = r.name || r.code; $('vCode').textContent = r.code ? 'Mã nhân viên: ' + r.code : ''; $('vAv').textContent = initials(r.name || r.code);
   var I_Y = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path d="m7.5 12.5 3 3 6-7"/></svg>';
   var I_N = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path d="m9 9 6 6M15 9l-6 6"/></svg>';
   $('vBadge').innerHTML = '<span class="badge '+(prac?'p':ps===null?'d':ps?'y':'n')+'">'+(prac?'THI THỬ'+(ps===null?'':ps?' · ĐẠT':' · CHƯA ĐẠT'):ps===null?I_Y+'ĐÃ HOÀN THÀNH':ps?I_Y+'ĐẠT':I_N+'CHƯA ĐẠT')+'</span>';
-  $('vRing').className = 'ring ' + (ps===null?'d':ps?'y':'n'); $('vPct').textContent = pct + '%';
+  $('vRing').className = 'ring ' + (prac?'p':ps===null?'d':ps?'y':'n'); $('vPct').textContent = pct + '%';
   $('vThr').textContent = (ps !== null && r.passScore) ? 'Ngưỡng đạt: ' + r.passScore + '%' : '';
   var tl = [{v:(r.score!=null?r.score:'–')+'/'+(r.total!=null?r.total:'–'),l:'Số câu đúng'}];
-  if (r.compliancePoints != null) tl.push({v:r.compliancePoints+' điểm',l: prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ học tập'});
+  if (r.compliancePoints != null) tl.push({v:r.compliancePoints+' điểm',l: prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ học tập', ref: prac});
   if (r.durationSec != null) tl.push({v:clock(r.durationSec),l:'Thời gian hoàn thành'});
   $('vStats').className = 'stats c' + tl.length;
-  $('vStats').innerHTML = tl.map(function(x){ return '<div><b>'+esc(x.v)+'</b><span>'+x.l+'</span></div>'; }).join('');
+  $('vStats').innerHTML = tl.map(function(x){ return '<div'+(x.ref?' class="ref"':'')+'><b>'+esc(x.v)+'</b><span>'+x.l+'</span></div>'; }).join('');
   if (r.wrong != null && r.blank != null && r.total){
     var seg = [{n:r.score||0,c:'#17794A',l:'Đúng'},{n:r.wrong,c:'#B3261E',l:'Sai'},{n:r.blank,c:'#AEBDC1',l:'Bỏ trống'}];
     $('vBk').innerHTML = '<div class="bar" aria-hidden="true">'+seg.map(function(g){ return g.n>0?'<i style="--c:'+g.c+';width:'+(g.n/r.total*100)+'%"></i>':''; }).join('')+'</div><div class="lg">'+seg.map(function(g){ return '<span style="--c:'+g.c+'">'+g.l+' <b>'+g.n+'</b></span>'; }).join('')+'</div>';

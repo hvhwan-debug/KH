@@ -45,7 +45,8 @@ module.exports = async function (context, req) {
 
     const settings = await quiz.getExamSettings(attempt.period || ""); // cài đặt của ĐÚNG đề thí sinh đã làm (tiêu đề, thi thử...)
     // Email chỉ gồm điểm và lời khuyên (không kèm bản sao câu hỏi). Bài cũ chưa có lời khuyên thì dựng theo luật từ bản sao bài làm.
-    const advice = attempt.advice || advicelib.rulesAdvice(advicelib.facts(attempt, settings, quiz.previousResult(await quiz.getIndex(), attempt.code, attempt.period, attempt.id)));
+    const pv = quiz.previousResult(await quiz.getIndex(), attempt.code, attempt.period, attempt.id);
+    const advice = advicelib.ensureAnalysis(attempt.advice || advicelib.rulesAdvice(advicelib.facts(attempt, settings, pv)), attempt, settings, pv);
 
     attempt.email = found.email; // gửi tới email hiện tại (có thể đã được quản lí chỉnh sửa)
     let mailOk = false;

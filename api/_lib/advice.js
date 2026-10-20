@@ -78,6 +78,23 @@ function trendSentence(f) {
   return "Kết quả tương đương" + where + " (" + f.prev.pct + "%).";
 }
 
+// Số liệu phân tích có cấu trúc để màn hình kết quả và email vẽ biểu đồ từ CÙNG một nguồn.
+function analysisOf(f) {
+  const rnd = f.beh && f.beh.random ? f.beh.random.chancePct : null;
+  return {
+    correct: f.correct, total: f.total, pct: f.pct,
+    // Làm bừa thì thống kê theo mảng chỉ là nhiễu: không đưa ra để không gây hiểu nhầm
+    categories: rnd != null ? [] : f.categories.map((c) => ({ name: c.name, n: c.n, ok: c.ok, pct: c.pct })),
+    avgSec: f.avgSecPerQ, limitSec: f.secsPerQ, timeouts: f.timeouts,
+    prev: f.prev, nextBand: f.nextBand, random: rnd
+  };
+}
+// Bài lưu trước khi có phần phân tích: bổ sung từ bản sao bài làm (không đụng đến nội dung lời khuyên đã lưu)
+function ensureAnalysis(adv, attempt, settings, prev) {
+  if (adv && !adv.analysis) { try { adv.analysis = analysisOf(facts(attempt, settings, prev)); } catch (e) { /* bỏ qua */ } }
+  return adv;
+}
+
 // ---- Bản dựa trên luật ----
 // Thứ tự ưu tiên: (1) điều quan trọng nhất của bài này, (2) mảng cần ôn (gộp, không lặp mẫu câu), (3) cách làm bài, (4) mốc điểm, (5) bước tiếp theo.
 function rulesAdvice(f) {
@@ -126,7 +143,7 @@ function rulesAdvice(f) {
   // Câu kết luôn có, dù danh sách phía trên dài đến đâu
   const closing = rnd ? "Nếu sau khi làm lại nghiêm túc vẫn còn phần chưa chắc, hãy hỏi quản lí trực tiếp để được giải đáp."
     : p >= 90 ? "Bạn nắm kiến thức rất vững: hãy chia sẻ cách học của mình với đồng nghiệp trong nhóm." : "Sau khi ôn, hãy hỏi quản lí trực tiếp để được giải đáp những phần còn mơ hồ.";
-  return { source: "rules", headline, summary: parts.join(" "), actions: actions.slice(0, MAX_ACTIONS - 1).concat([closing]) };
+  return { source: "rules", headline, summary: parts.join(" "), actions: actions.slice(0, MAX_ACTIONS - 1).concat([closing]), analysis: analysisOf(f) };
 }
 
 // ---- Bản AI ----
@@ -188,6 +205,7 @@ async function build(attempt, settings, prev, opt) {
   const useAI = !(opt && opt.ai === false);
   const r = useAI ? await aiAdvice(f, opt && opt.timeoutMs) : { advice: null, status: "skipped" };
   const out = r.advice || rules;
+  out.analysis = rules.analysis; // phần số liệu luôn lấy từ bản luật (AI chỉ viết lại lời văn)
   out.aiStatus = r.status; // lưu để quản trị viên biết vì sao một lời khuyên là bản luật
   out.at = Date.now();
   return out;
@@ -202,4 +220,4 @@ async function selfTest(timeoutMs) {
   return { status: r.status, ms: Date.now() - t0, headline: r.advice ? r.advice.headline : null };
 }
 
-module.exports = { build, facts, rulesAdvice, parseAi, categoryStats, nextBand, aiConfigured, selfTest, aiAdvice };
+module.exports = { ensureAnalysis, analysisOf, build, facts, rulesAdvice, parseAi, categoryStats, nextBand, aiConfigured, selfTest, aiAdvice };

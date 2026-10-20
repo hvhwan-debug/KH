@@ -50,7 +50,7 @@ module.exports = async function (context, req) {
       const prior = idx.find((a) => quiz.normCode(a.code) === code && a.status === "submitted" && (a.period || "") === settings.examPeriod);
       if (prior) {
         let adv = null;
-        try { const pa = await quiz.getAttempt(prior.id); adv = pa ? (pa.advice || advicelib.rulesAdvice(advicelib.facts(pa, settings, quiz.previousResult(idx, pa.code, pa.period, pa.id)))) : null; } catch (e) { adv = null; }
+        try { const pa = await quiz.getAttempt(prior.id); if (pa) { const pv = quiz.previousResult(idx, pa.code, pa.period, pa.id); adv = advicelib.ensureAnalysis(pa.advice || advicelib.rulesAdvice(advicelib.facts(pa, settings, pv)), pa, settings, pv); } } catch (e) { adv = null; }
         return reply(context, 200, {
           ok: true, candidate, exam, alreadyDone: true,
           result: {

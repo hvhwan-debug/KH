@@ -189,6 +189,7 @@ button,input{font:inherit;color:inherit}
 .ring .c span{font-size:12px;color:var(--muted);margin-top:6px}
 .thr{font-size:13px;color:var(--muted);margin:0 0 4px}
 .cheer{font-size:14.5px;line-height:1.65;color:var(--ink);margin:12px auto 20px;max-width:44ch}
+.cheer:empty{display:none}
 .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:4px;text-align:left}
 .stats div{background:linear-gradient(180deg,#F4FAFA,#EAF5F6);border:1px solid #D5E9EC;border-radius:16px;padding:15px 17px}
 .stats b{display:block;font-size:23px;font-weight:800;color:var(--brand-deep);line-height:1.2}
@@ -233,17 +234,49 @@ button,input{font:inherit;color:inherit}
 .proof .qr canvas{box-sizing:content-box;padding:7px;background:#fff;border:1px solid #D5E9EC;border-radius:12px;display:block;transition:box-shadow .15s,border-color .15s}
 .proof .qr:hover canvas{border-color:var(--brand);box-shadow:0 8px 18px -10px rgba(6,122,140,.7)}
 /* Đề thi thử: dải chữ luôn hiện ở đầu trang + chữ mờ chéo trên nền */
-.practice-bar{position:sticky;top:0;z-index:45;display:flex;align-items:center;justify-content:center;gap:10px;padding:9px 14px;background:repeating-linear-gradient(-45deg,#F59E0B,#F59E0B 14px,#F7B02F 14px,#F7B02F 28px);color:#3D2800;font-weight:800;font-size:14px;letter-spacing:.04em;text-align:center;box-shadow:0 6px 16px -10px rgba(120,70,0,.7)}
-.practice-bar small{font-weight:600;letter-spacing:0;font-size:12.5px}
+.practice-bar{position:sticky;top:0;z-index:45;display:flex;align-items:center;justify-content:center;gap:9px;padding:8px 14px;background:rgba(255,249,236,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid #F1DFB6;color:#7A4B00;font-weight:800;font-size:12px;letter-spacing:.18em;text-align:center}
+.practice-bar::before{content:'';flex:0 0 auto;width:7px;height:7px;border-radius:50%;background:#E0A030}
+.practice-bar small{font-weight:600;letter-spacing:.02em;font-size:12.5px;color:#8A6420}
+.practice-bar small::before{content:'\00B7';margin-right:9px}
 .practice-bar.hide{display:none}
-body.practice::before{content:'THI THỬ';position:fixed;inset:0;z-index:0;pointer-events:none;display:grid;place-items:center;font-size:min(34vw,220px);font-weight:900;letter-spacing:.06em;color:rgba(245,158,11,.10);transform:rotate(-24deg);white-space:nowrap}
-body.practice .wrap{position:relative;z-index:1}
-.badge.p{background:#FDEBC8;color:#8A5200}
+/* Hoa văn chữ chìm rất mờ phủ toàn trang: hiện ở mọi ảnh chụp dù cắt ở đâu, không đè lên nội dung */
+body.practice::after{content:'';position:fixed;inset:0;z-index:44;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='170'%3E%3Ctext x='130' y='91' text-anchor='middle' transform='rotate%28-24 130 85%29' font-family='Arial%2CHelvetica%2Csans-serif' font-size='17' font-weight='800' letter-spacing='4' fill='%23C98A1B' fill-opacity='0.11'%3ETHI TH%E1%BB%AC%3C/text%3E%3C/svg%3E")}
+.badge.p{background:#FFF8EA;border:1.5px solid #EBCB84;color:#8A5200;letter-spacing:.16em;font-size:12px;padding:6px 16px 6px 14px;gap:9px}
+.badge.p::before{content:'';flex:0 0 auto;width:7px;height:7px;border-radius:50%;background:#E0A030}
+.ring.p .prg{stroke:url(#gP)}
+.stats div.ref{border:1.5px dashed #E8CF99;background:linear-gradient(180deg,#FFFDF7,#FFF7E8)}.stats div.ref b{color:#8A5200}
 .agree{display:flex;align-items:flex-start;gap:12px;padding:13px 15px;border-radius:14px;background:#FFF6E0;border:1.5px solid #F0D58A;color:#6B4A00;text-align:left}
 .agree svg{flex:0 0 auto;margin-top:1px}
 .agree p{margin:0;font-size:13.5px;line-height:1.6}
 .agree b{color:#4F3600}
-.share{padding:14px 24px 26px;display:flex;flex-direction:column;gap:10px}
+.share{padding:0;display:flex;flex-direction:column;gap:10px}
+body.rs .top{display:none}
+body.rs .stage{margin-top:6px}
+.rv-body h1{font-size:22px;margin:0 0 4px}
+/* Tiêu đề từng phần: chữ nhỏ, cách chữ, có đường kẻ mảnh, tạo nhịp đọc chuyên nghiệp */
+.sec{margin:26px 0 0;text-align:left}
+.sec-h{display:flex;align-items:center;gap:12px;margin:0 0 12px;font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#5B7279}
+.sec-h::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#D3E3E7,rgba(211,227,231,0))}
+.ana{border:1px solid #DDEBEE;border-radius:18px;background:#fff;padding:16px 16px 6px}
+.ana .at{margin:0 0 12px;font-size:13px;font-weight:700;color:var(--ink)}
+.ana .at small{font-weight:500;color:var(--muted);margin-left:6px}
+.cat{margin:0 0 14px}
+.cat .rw{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.cat .nm{flex:1 1 auto;min-width:0;font-size:13.5px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat .vl{flex:0 0 auto;font-size:12.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cat .vl b{color:var(--ink)}
+.cat .tr{display:block;margin-top:6px;position:relative;height:9px;border-radius:99px;background:#EAF1F3;overflow:hidden}
+.cat .tr i{display:block;height:100%;border-radius:99px;background:var(--c)}
+.ana .lgd{display:flex;flex-wrap:wrap;gap:4px 14px;margin:2px 0 14px;font-size:11.5px;color:var(--muted)}
+.ana .lgd span::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--c)}
+.mini{display:flex;flex-wrap:wrap;gap:10px;margin:2px 0 10px}
+.mini>div{flex:1 1 140px;min-width:0;border:1px solid #E3EDF0;border-radius:14px;padding:11px 12px;background:#FAFCFC}
+.mini small{display:block;font-size:11.5px;color:var(--muted);line-height:1.45}
+.mini b{display:block;font-size:16px;line-height:1.3;color:var(--ink);margin:2px 0}
+.mini b.up{color:#17794A}.mini b.down{color:#B3261E}
+.gauge{height:6px;border-radius:99px;background:#E4EDF0;margin:7px 0 5px;overflow:hidden}
+.gauge i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#0EB5A6,#067A8C)}
+.ana .note{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#FFF6E2;border:1px solid #F0DDB0;color:#6B4A00;font-size:12.5px;line-height:1.6}
 .btn.zalo{background:#0068FF;box-shadow:0 16px 28px -14px rgba(0,104,255,.85)}
 .btn.zalo:hover{filter:brightness(1.07)}
 .sharehint{margin:4px 0 0;font-size:12px;line-height:1.65;color:var(--muted);text-align:center}
@@ -297,7 +330,7 @@ body.exam #wm{display:block}
 <div class="wrap intro" id="app">
   <header class="top">
     <div class="logo" aria-hidden="true">KT</div>
-    <div><h2 id="examTitle">Bài kiểm tra</h2><p>Không cần đăng nhập — chỉ cần mã nhân viên và email</p></div>
+    <div><h2 id="examTitle">Bài kiểm tra</h2><p id="examSub">Không cần đăng nhập — chỉ cần mã nhân viên và email</p></div>
   </header>
 
   <div class="stage">
@@ -410,29 +443,44 @@ body.exam #wm{display:block}
     <section class="card res hide" id="scrResult">
       <canvas class="confetti hide" id="confetti" aria-hidden="true"></canvas>
       <div class="rv-head">
-        <div class="rv-brand"><span class="logo" aria-hidden="true">KT</span><div><b id="rvTitle">Bài kiểm tra</b><small>Nền tảng kiểm tra trực tuyến</small></div></div>
+        <div class="rv-brand"><span class="logo" aria-hidden="true">KT</span><div><b id="rvTitle">Bài kiểm tra</b><small>Kết quả bài kiểm tra</small></div></div>
         <div id="resBadge"></div>
       </div>
-      <div class="share">
-        <div class="agree" id="agreeNote" role="note"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12.3 2.8 2.8 5.2-5.8"/></svg><p>Bằng việc <b>gửi minh chứng kết quả</b>, bạn xác nhận đã xem và <b>đồng ý với kết quả</b> bài kiểm tra này.</p></div>
-        <button class="btn zalo" id="btnZalo" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.6L3 21l1.5-5A8.5 8.5 0 1 1 21 12z"/><path d="M8.5 10h7M8.5 13.5h4"/></svg><span>Chia sẻ kết quả qua Zalo</span></button>
-        <button class="btn ghost" id="btnSave" type="button" style="margin-top:0">Lưu ảnh kết quả</button>
-        <div id="shareMsg" role="status"></div>
-        <p class="sharehint">Ảnh kết quả có họ tên, điểm số và thời gian xác nhận của hệ thống. Trên điện thoại, bấm nút Zalo rồi chọn Zalo trong bảng chia sẻ. Trên máy tính, ảnh sẽ được lưu để bạn gửi qua <a href="https://chat.zalo.me/" target="_blank" rel="noopener">Zalo</a>.</p>
-      </div>
       <div class="rv-body">
-        <h1 tabindex="-1">Đã hoàn thành bài kiểm tra</h1>
-        <p class="lead" id="resSub" style="margin-bottom:16px"></p>
+        <!-- 1. Kết quả -->
+        <h1 tabindex="-1">Kết quả của bạn</h1>
+        <p class="lead" id="resSub" style="margin-bottom:14px"></p>
         <div class="rv-person"><span class="av" id="rvAv" aria-hidden="true">?</span><div><b id="rvName"></b><span id="rvCode"></span></div></div>
-        <div class="ring" id="resRing"><svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="gY" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0EB5A6"/><stop offset="1" stop-color="#17794A"/></linearGradient><linearGradient id="gN" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B3261E"/></linearGradient><linearGradient id="gT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0EB5A6"/><stop offset="1" stop-color="#067A8C"/></linearGradient></defs><circle class="trk" cx="60" cy="60" r="52" fill="none" stroke-width="10"/><circle class="prg" id="resArc" cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73"/></svg><div class="c"><b id="resPct">0%</b><span>Tỉ lệ đúng</span></div></div>
+        <div class="ring" id="resRing"><svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="gP" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5C25E"/><stop offset="1" stop-color="#D68F1E"/></linearGradient><linearGradient id="gY" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0EB5A6"/><stop offset="1" stop-color="#17794A"/></linearGradient><linearGradient id="gN" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B3261E"/></linearGradient><linearGradient id="gT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0EB5A6"/><stop offset="1" stop-color="#067A8C"/></linearGradient></defs><circle class="trk" cx="60" cy="60" r="52" fill="none" stroke-width="10"/><circle class="prg" id="resArc" cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73"/></svg><div class="c"><b id="resPct">0%</b><span>Tỉ lệ đúng</span></div></div>
         <p class="thr" id="resThr"></p>
         <p class="cheer" id="resCheer"></p>
         <div class="stats" id="resStats"></div>
         <div class="bk hide" id="resBk"></div>
+
+        <!-- 2. Phân tích -->
+        <section class="sec hide" id="resAnalysis" aria-labelledby="anaT"></section>
+        <!-- 3. Lời khuyên -->
         <section class="advice hide" id="resAdvice" aria-labelledby="advTitle"></section>
-        <dl class="kv" id="resDetails" style="margin:16px 0 0;text-align:left"></dl>
-        <div class="proof hide" id="resProof"></div>
-        <div id="resMail"></div>
+
+        <!-- 4. Gửi kết quả cho quản lí (thao tác phụ, đặt sau kết quả) -->
+        <section class="sec" aria-labelledby="shT">
+          <h2 class="sec-h" id="shT">Gửi kết quả cho quản lí</h2>
+          <div class="share">
+          <div class="agree" id="agreeNote" role="note"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12.3 2.8 2.8 5.2-5.8"/></svg><p>Bằng việc <b>gửi minh chứng kết quả</b>, bạn xác nhận đã xem và <b>đồng ý với kết quả</b> bài kiểm tra này.</p></div>
+          <button class="btn zalo" id="btnZalo" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.6L3 21l1.5-5A8.5 8.5 0 1 1 21 12z"/><path d="M8.5 10h7M8.5 13.5h4"/></svg><span>Chia sẻ kết quả qua Zalo</span></button>
+          <button class="btn ghost" id="btnSave" type="button" style="margin-top:0">Lưu ảnh kết quả</button>
+          <div id="shareMsg" role="status"></div>
+          <p class="sharehint">Ảnh kết quả có họ tên, điểm số và thời gian xác nhận của hệ thống. Trên điện thoại, bấm nút Zalo rồi chọn Zalo trong bảng chia sẻ. Trên máy tính, ảnh sẽ được lưu để bạn gửi qua <a href="https://chat.zalo.me/" target="_blank" rel="noopener">Zalo</a>.</p>
+          </div>
+        </section>
+
+        <!-- 5. Biên nhận -->
+        <section class="sec" aria-labelledby="rcT">
+          <h2 class="sec-h" id="rcT">Biên nhận nộp bài</h2>
+          <dl class="kv" id="resDetails" style="margin:0;text-align:left"></dl>
+          <div class="proof hide" id="resProof"></div>
+          <div id="resMail"></div>
+        </section>
       </div>
     </section>
   </main>
@@ -507,6 +555,7 @@ function show(name){
   });
   ST.quizOn = (name === 'quiz');
   document.body.classList.toggle('exam', name === 'quiz');
+  document.body.classList.toggle('rs', name === 'result'); // bước kết quả: ẩn tiêu đề trang vì thẻ kết quả đã có tên đề
   $('app').className = 'wrap ' + ((name === 'check' || name === 'confirm') ? 'intro' : 'focus');
   var h = document.querySelector('#'+SCREENS[name]+' [tabindex="-1"]');
   if (h) h.focus({preventScroll:true});
@@ -936,6 +985,36 @@ function applyPractice(){
   document.body.classList.toggle('practice', p);
   document.title = (p ? '[THI THỬ] ' : '') + BASE_TITLE;
 }
+// Phân tích kết quả: theo mảng kiến thức (yếu nhất lên đầu), tốc độ làm bài, xu hướng so với kỳ trước, mốc điểm tuân thủ kế tiếp.
+function bandColor(p){ return p >= 80 ? '#17794A' : p >= 60 ? '#D68F1E' : '#B3261E'; }
+function renderAnalysis(a){
+  var box = $('resAnalysis'), an = a && a.analysis;
+  if (!an){ box.classList.add('hide'); box.innerHTML = ''; return; }
+  var cats = an.categories || [], mini = '';
+  if (an.avgSec != null && an.limitSec){
+    var use = Math.max(3, Math.min(100, Math.round(an.avgSec / an.limitSec * 100)));
+    mini += '<div><small>Tốc độ làm bài trung bình</small><b>' + an.avgSec + ' giây/câu</b><div class="gauge" aria-hidden="true"><i style="width:' + use + '%"></i></div><small>Giới hạn ' + an.limitSec + ' giây/câu</small></div>';
+  }
+  if (an.timeouts > 0) mini += '<div><small>Câu hết giờ</small><b>' + an.timeouts + ' câu</b><small>chưa kịp trả lời</small></div>';
+  if (an.prev && an.prev.pct != null){
+    var d = (an.pct || 0) - an.prev.pct, cls = d >= 5 ? 'up' : d <= -5 ? 'down' : '';
+    mini += '<div><small>So với kỳ trước</small><b class="' + cls + '">' + (d > 0 ? '▲ +' : d < 0 ? '▼ ' : '≈ ') + d + ' điểm %</b><small>' + (an.prev.period ? 'kỳ ' + esc(an.prev.period) + ': ' : 'trước: ') + an.prev.pct + '%</small></div>';
+  }
+  if (an.nextBand && an.total){
+    var pr = Math.max(3, Math.min(100, Math.round((an.correct || 0) / an.nextBand.needCorrect * 100)));
+    mini += '<div><small>Mốc tuân thủ kế tiếp</small><b>' + an.nextBand.points + ' điểm</b><div class="gauge" aria-hidden="true"><i style="width:' + pr + '%"></i></div><small>cần đúng ' + an.nextBand.needCorrect + '/' + an.total + ' (thiếu ' + an.nextBand.gap + ' câu)</small></div>';
+  }
+  var h = '<h2 class="sec-h" id="anaT">Phân tích kết quả</h2><div class="ana">';
+  if (an.random != null) h += '<p class="note">Kết quả gần bằng mức chọn bừa (khoảng ' + an.random + '%) nên chưa phản ánh kiến thức theo từng mảng; hãy làm lại nghiêm túc để có phân tích chính xác.</p>';
+  else if (cats.length){
+    h += '<p class="at">Kết quả theo mảng kiến thức<small>yếu nhất ở trên</small></p>' +
+      cats.map(function(c){ return '<div class="cat"><div class="rw"><span class="nm" title="' + esc(c.name) + '">' + esc(c.name) + '</span><span class="vl"><b>' + c.ok + '/' + c.n + '</b> · ' + c.pct + '%</span></div><span class="tr" role="img" aria-label="' + esc(c.name) + ': ' + c.pct + '%"><i style="--c:' + bandColor(c.pct) + ';width:' + Math.max(c.pct, 2) + '%"></i></span></div>'; }).join('') +
+      '<div class="lgd"><span style="--c:#17794A">từ 80%</span><span style="--c:#D68F1E">60 đến 79%</span><span style="--c:#B3261E">dưới 60%</span></div>';
+  }
+  if (mini) h += '<div class="mini">' + mini + '</div>';
+  box.innerHTML = h + '</div>';
+  box.classList.toggle('hide', !(cats.length || mini || an.random != null));
+}
 // Lời khuyên cải thiện (AI hoặc theo luật) hiển thị ngay dưới điểm; không kèm đáp án đúng.
 function renderAdvice(a){
   var box = $('resAdvice');
@@ -959,21 +1038,21 @@ function renderResult(r, already){
   $('resCheer').textContent = prac
     ? 'Đây là bài thi thử, không phải thi chính thức.' + (r.compliancePoints != null ? ' Điểm tuân thủ bên dưới chỉ để bạn hình dung điểm của mình nếu thi thật.' : '')
     : ps === null
-    ? 'Kết quả của bạn đã được hệ thống ghi nhận.'
+    ? ''
     : ps ? 'Chúc mừng bạn đã đạt yêu cầu của bài kiểm tra.'
     : 'Bạn chưa đạt ở lần này. Hãy liên hệ quản trị viên phụ trách để được hướng dẫn thêm.';
   $('resSub').textContent = already
     ? ('Bạn đã hoàn thành bài kiểm tra này' + (r.submittedAt ? ' lúc ' + fmtTime(r.submittedAt) : ' trước đó') + '.')
     : 'Cảm ơn bạn đã hoàn thành bài kiểm tra.';
-  $('resRing').className = 'ring ' + (ps === null ? 'd' : ps ? 'y' : 'n');
+  $('resRing').className = 'ring ' + (prac ? 'p' : ps === null ? 'd' : ps ? 'y' : 'n');
   $('resPct').textContent = pct + '%';
   $('resThr').textContent = (ps !== null && r.passScore) ? ('Ngưỡng đạt: ' + r.passScore + '%') : '';
 
   var tl = [{ v:(r.score!=null?r.score:'–')+'/'+(r.total!=null?r.total:'–'), l:'Số câu đúng' }];
-  if (r.compliancePoints != null) tl.push({ v:r.compliancePoints+' điểm', l: prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ học tập' });
+  if (r.compliancePoints != null) tl.push({ v:r.compliancePoints+' điểm', l: prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ học tập', ref: prac });
   if (r.durationSec != null) tl.push({ v:fmtClock(r.durationSec), l:'Thời gian hoàn thành' });
   $('resStats').className = 'stats ' + (tl.length === 3 ? 'c3' : tl.length === 1 ? 'c1' : '');
-  $('resStats').innerHTML = tl.map(function(t){ return '<div><b>'+esc(t.v)+'</b><span>'+t.l+'</span></div>'; }).join('');
+  $('resStats').innerHTML = tl.map(function(t){ return '<div'+(t.ref?' class="ref"':'')+'><b>'+esc(t.v)+'</b><span>'+t.l+'</span></div>'; }).join('');
 
   var bk = $('resBk');
   if (r.wrong != null && r.blank != null && r.total){
@@ -1009,6 +1088,7 @@ function renderResult(r, already){
     ? '<div class="msg warn" style="text-align:left">Kết quả đã được lưu nhưng hệ thống chưa gửi được email. Bạn có thể bấm gửi lại bên dưới, hoặc liên hệ quản trị viên nếu vẫn không nhận được.</div>'
     : '<div class="msg ok" style="text-align:left">Kết quả chi tiết đã được gửi tự động về email bạn đã nhập.</div>') +
     '<button class="btn ghost" id="btnResend" type="button" style="margin-top:10px;min-height:46px">' + RESEND_LABEL + '</button><div id="resendMsg" role="status"></div>';
+  renderAnalysis(r.advice);
   renderAdvice(r.advice);
   shareMsg('');
   show('result');
@@ -1048,6 +1128,7 @@ function drawShareCard(ctx, W, H, d){
   ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
   var glow2 = ctx.createRadialGradient(0, H, 0, 0, H, 560); glow2.addColorStop(0, 'rgba(109,91,246,.2)'); glow2.addColorStop(1, 'rgba(109,91,246,0)');
   ctx.fillStyle = glow2; ctx.fillRect(0, 0, W, H);
+  var qrBox = null; // khung mã QR: hoa văn thi thử KHÔNG được phủ lên vùng này để không làm giảm khả năng quét
   // thẻ trắng
   var cx = 56, cy = 56, cw = W - 112, ch = H - 112;
   ctx.save(); ctx.shadowColor = 'rgba(13,42,49,.25)'; ctx.shadowBlur = 50; ctx.shadowOffsetY = 20; rr(cx, cy, cw, ch, 44); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
@@ -1064,16 +1145,26 @@ function drawShareCard(ctx, W, H, d){
   txt('Nền tảng kiểm tra trực tuyến', cx + 166, cy + 80 + tl.length * 46 + 4, 25, 500, 'rgba(255,255,255,.85)');
   // huy hiệu
   var neutral = d.practice || (d.passed !== true && d.passed !== false); // bài không có ngưỡng đạt (hoặc thi thử: huy hiệu luôn là THI THỬ)
-  var label = d.practice ? 'THI THỬ' : neutral ? 'ĐÃ HOÀN THÀNH' : d.passed ? 'ĐẠT' : 'CHƯA ĐẠT';
-  ctx.font = '800 30px ' + F; var bw = ctx.measureText(label).width + 84;
-  rr(cx + 52, cy + 218, bw, 64, 32); ctx.fillStyle = neutral ? '#E4F3F5' : d.passed ? '#DDF1E6' : '#FBE3E0'; ctx.fill();
-  var bc = neutral ? '#055A68' : d.passed ? '#17794A' : '#B3261E';
-  ctx.beginPath(); ctx.arc(cx + 52 + 38, cy + 250, 14, 0, Math.PI*2); ctx.lineWidth = 3.5; ctx.strokeStyle = bc; ctx.stroke();
-  ctx.beginPath(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  if (neutral || d.passed){ ctx.moveTo(cx+52+31, cy+250); ctx.lineTo(cx+52+36, cy+255); ctx.lineTo(cx+52+46, cy+244); }
-  else { ctx.moveTo(cx+52+33, cy+245); ctx.lineTo(cx+52+43, cy+255); ctx.moveTo(cx+52+43, cy+245); ctx.lineTo(cx+52+33, cy+255); }
-  ctx.stroke();
-  txt(label, cx + 52 + 62, cy + 260, 30, 800, bc);
+  var label = d.practice ? 'THI THỬ · KHÔNG PHẢI THI CHÍNH THỨC' : neutral ? 'ĐÃ HOÀN THÀNH' : d.passed ? 'ĐẠT' : 'CHƯA ĐẠT';
+  ctx.font = '800 30px ' + F; var bw = ctx.measureText(label).width + (d.practice ? 96 : 84);
+  if (d.practice){
+    // khung kem viền mảnh + chấm vàng, chữ cách chữ: nhẹ nhàng nhưng không thể nhầm là kết quả chính thức
+    var lw = 0, pad = 3, chars = label.split('');
+    ctx.font = '800 26px ' + F; chars.forEach(function(c){ lw += ctx.measureText(c).width + pad; }); bw = lw + 86;
+    rr(cx + 52, cy + 218, bw, 64, 32); ctx.fillStyle = '#FFF6E2'; ctx.fill(); ctx.strokeStyle = '#E9C97F'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx + 52 + 36, cy + 250, 8, 0, Math.PI*2); ctx.fillStyle = '#E0A030'; ctx.fill();
+    var lx = cx + 52 + 62; ctx.fillStyle = '#8A5200'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.font = '800 26px ' + F;
+    chars.forEach(function(c){ ctx.fillText(c, lx, cy + 259); lx += ctx.measureText(c).width + pad; });
+  } else {
+    rr(cx + 52, cy + 218, bw, 64, 32); ctx.fillStyle = neutral ? '#E4F3F5' : d.passed ? '#DDF1E6' : '#FBE3E0'; ctx.fill();
+    var bc = neutral ? '#055A68' : d.passed ? '#17794A' : '#B3261E';
+    ctx.beginPath(); ctx.arc(cx + 52 + 38, cy + 250, 14, 0, Math.PI*2); ctx.lineWidth = 3.5; ctx.strokeStyle = bc; ctx.stroke();
+    ctx.beginPath(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    if (neutral || d.passed){ ctx.moveTo(cx+52+31, cy+250); ctx.lineTo(cx+52+36, cy+255); ctx.lineTo(cx+52+46, cy+244); }
+    else { ctx.moveTo(cx+52+33, cy+245); ctx.lineTo(cx+52+43, cy+255); ctx.moveTo(cx+52+43, cy+245); ctx.lineTo(cx+52+33, cy+255); }
+    ctx.stroke();
+    txt(label, cx + 52 + 62, cy + 260, 30, 800, bc);
+  }
   // người làm bài
   var py = cy + hh + 70;
   var ag = ctx.createLinearGradient(cx+52, py-44, cx+52+88, py+44); ag.addColorStop(0, '#067A8C'); ag.addColorStop(1, '#068073');
@@ -1087,7 +1178,7 @@ function drawShareCard(ctx, W, H, d){
   ctx.lineWidth = 32; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.arc(rx, ry, R, 0, Math.PI*2); ctx.strokeStyle = '#E6EEF0'; ctx.stroke();
   var rg = ctx.createLinearGradient(rx - R, ry - R, rx + R, ry + R);
-  if (neutral){ rg.addColorStop(0, '#0EB5A6'); rg.addColorStop(1, '#067A8C'); } else if (d.passed){ rg.addColorStop(0, '#0EB5A6'); rg.addColorStop(1, '#17794A'); } else { rg.addColorStop(0, '#F08A4B'); rg.addColorStop(1, '#B3261E'); }
+  if (d.practice){ rg.addColorStop(0, '#F5C25E'); rg.addColorStop(1, '#D68F1E'); } else if (neutral){ rg.addColorStop(0, '#0EB5A6'); rg.addColorStop(1, '#067A8C'); } else if (d.passed){ rg.addColorStop(0, '#0EB5A6'); rg.addColorStop(1, '#17794A'); } else { rg.addColorStop(0, '#F08A4B'); rg.addColorStop(1, '#B3261E'); }
   if (pct > 0){ ctx.beginPath(); ctx.arc(rx, ry, R, -Math.PI/2, -Math.PI/2 + Math.PI*2*pct/100); ctx.strokeStyle = rg; ctx.stroke(); }
   txt(pct + '%', rx, ry + 26, 96, 800, INK, 'center');
   txt('Tỉ lệ đúng', rx, ry + 76, 26, 500, MUTED, 'center');
@@ -1096,14 +1187,14 @@ function drawShareCard(ctx, W, H, d){
   // ô số liệu
   y += 38;
   var tiles = [{ v: (d.score != null ? d.score : '–') + '/' + (d.total != null ? d.total : '–'), l: 'Số câu đúng' }];
-  if (d.compliance != null) tiles.push({ v: d.compliance + ' điểm', l: d.practice ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ học tập' });
+  if (d.compliance != null) tiles.push({ v: d.compliance + ' điểm', l: d.practice ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ học tập', ref: !!d.practice });
   if (d.clock) tiles.push({ v: d.clock, l: 'Thời gian hoàn thành' });
   var gap = 20, tw = (cw - 104 - gap * (tiles.length - 1)) / tiles.length, th = 150;
   tiles.forEach(function(t, i){
     var tx = cx + 52 + i * (tw + gap);
-    rr(tx, y, tw, th, 26); var tg = ctx.createLinearGradient(tx, y, tx, y + th); tg.addColorStop(0, '#F4FAFA'); tg.addColorStop(1, '#EAF5F6'); ctx.fillStyle = tg; ctx.fill();
-    ctx.strokeStyle = '#D5E9EC'; ctx.lineWidth = 2; ctx.stroke();
-    txt(t.v, tx + tw/2, y + 74, tiles.length >= 3 ? 40 : 48, 800, DEEP, 'center');
+    rr(tx, y, tw, th, 26); var tg = ctx.createLinearGradient(tx, y, tx, y + th); tg.addColorStop(0, t.ref ? '#FFFDF7' : '#F4FAFA'); tg.addColorStop(1, t.ref ? '#FFF7E8' : '#EAF5F6'); ctx.fillStyle = tg; ctx.fill();
+    ctx.strokeStyle = t.ref ? '#E8CF99' : '#D5E9EC'; ctx.lineWidth = 2; if (t.ref && ctx.setLineDash) ctx.setLineDash([10, 8]); ctx.stroke(); if (ctx.setLineDash) ctx.setLineDash([]);
+    txt(t.v, tx + tw/2, y + 74, tiles.length >= 3 ? 40 : 48, 800, t.ref ? '#8A5200' : DEEP, 'center');
     txt(t.l, tx + tw/2, y + 116, 22, 500, MUTED, 'center');
   });
   y += th + 30;
@@ -1148,7 +1239,8 @@ function drawShareCard(ctx, W, H, d){
     if (d.qr){
       ctx.font = '500 22px ' + F;
       wrap('Quét mã QR bên phải để xem ngay kết quả đã được hệ thống xác thực.', lw - 60, 3).forEach(function(l, i){ txt(l, pxl + 30, y + 132 + i * 30, 22, 500, MUTED); });
-      var qx = pxl + lw + 20, n = d.qr.length, cell = Math.max(3, Math.floor(176 / n)), qs = n * cell, ox = qx + (qbox - qs) / 2, oy = y + (qbox - qs) / 2;
+      var qx = pxl + lw + 20; qrBox = { x: qx, y: y, w: qbox, h: qbox };
+      var n = d.qr.length, cell = Math.max(3, Math.floor(176 / n)), qs = n * cell, ox = qx + (qbox - qs) / 2, oy = y + (qbox - qs) / 2;
       rr(qx, y, qbox, qbox, 22); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#D5E9EC'; ctx.stroke();
       ctx.fillStyle = '#0D2A31';
       for (var qr = 0; qr < n; qr++) for (var qc = 0; qc < n; qc++) if (d.qr[qr][qc]) ctx.fillRect(ox + qc * cell, oy + qr * cell, cell, cell);
@@ -1164,11 +1256,21 @@ function drawShareCard(ctx, W, H, d){
   wrap('Bằng việc gửi minh chứng này, người gửi xác nhận đã xem và đồng ý với kết quả bài kiểm tra.', cw - 104, 2).forEach(function(l, i){ txt(l, W / 2, sy - 66 + i * 30, 22, 600, '#7A5600', 'center'); });
   txt('Xác nhận bởi hệ thống lúc ' + d.stampText, W / 2, sy, 24, 700, DEEP, 'center');
   txt(d.host, W / 2, sy + 36, 22, 500, MUTED, 'center');
-  if (d.practice){ // đề thi thử: chữ mờ chéo toàn thẻ + dải cam trên cùng, để ảnh không bị nhầm là kết quả chính thức
-    ctx.save(); ctx.translate(cx + cw / 2, cy + ch / 2); ctx.rotate(-0.42);
-    ctx.font = '900 190px ' + F; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = 'rgba(245,158,11,.16)'; ctx.fillText('THI THỬ', 0, 0); ctx.restore();
-    ctx.fillStyle = '#F59E0B'; ctx.fillRect(cx, cy, cw, 40);
-    txt('THI THỬ · KHÔNG PHẢI THI CHÍNH THỨC', cx + cw / 2, cy + 28, 24, 800, '#3D2800', 'center');
+  if (d.practice){
+    // đề thi thử: hoa văn chữ "THI THỬ" nhỏ, rất mờ, lặp chéo phủ cả thẻ (ảnh bị cắt ở đâu vẫn còn dấu), không đè lên số liệu
+    ctx.save();
+    if (qrBox && ctx.clip){ ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.rect(qrBox.x - 6, qrBox.y - 6, qrBox.w + 12, qrBox.h + 12); try { ctx.clip('evenodd'); } catch (e) {} }
+    ctx.fillStyle = 'rgba(201,138,27,.10)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '800 30px ' + F;
+    for (var ty = cy - 40, row = 0; ty < cy + ch + 120; ty += 168, row++){
+      for (var tx2 = cx - 60 + (row % 2 ? 150 : 0); tx2 < cx + cw + 120; tx2 += 300){
+        ctx.save(); ctx.translate(tx2, ty); ctx.rotate(-0.42);
+        var sp = 'T H I   T H Ử'; ctx.fillText(sp, 0, 0); ctx.restore();
+      }
+    }
+    ctx.restore();
+    // đường viền vàng mảnh trên cùng của thẻ, đồng bộ với trang xác thực
+    var tg2 = ctx.createLinearGradient(cx, cy, cx + cw, cy); tg2.addColorStop(0, '#E4AE45'); tg2.addColorStop(0.5, '#F6D07C'); tg2.addColorStop(1, '#E4AE45');
+    ctx.fillStyle = tg2; ctx.fillRect(cx, cy, cw, 8);
   }
   ctx.restore();
 }

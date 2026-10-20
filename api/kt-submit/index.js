@@ -19,7 +19,7 @@ module.exports = async function (context, req) {
       const st = await quiz.getExamSettings(attempt.period || "");
       return reply(context, 200, {
         ok: true, score: attempt.score, total: attempt.total, pct: attempt.pct, passed: quiz.passState(attempt.pct, st),
-        compliancePoints: attempt.compliancePoints, already: true, mailOk: attempt.mailOk, advice: attempt.advice || advicelib.rulesAdvice(advicelib.facts(attempt, st, null)),
+        compliancePoints: attempt.compliancePoints, already: true, mailOk: attempt.mailOk, advice: advicelib.ensureAnalysis(attempt.advice || advicelib.rulesAdvice(advicelib.facts(attempt, st, null)), attempt, st, null),
         passScore: quiz.passScoreOf(st), submittedAt: attempt.submittedAt, serverNow: Date.now(),
         startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), verify: quiz.verifyToken(attempt.id),
         durationSec: Math.round(((attempt.submittedAt || 0) - (attempt.startedAt || 0)) / 1000)
