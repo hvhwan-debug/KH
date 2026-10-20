@@ -13,7 +13,7 @@
   --ok:#17794A;--ok-soft:#DDF1E6;--bad:#B3261E;--bad-soft:#FBE3E0;--warn:#8A5500;--warn-soft:#FBEBC8;--grad:linear-gradient(135deg,#067A8C 0%,#068073 100%)}
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;color:var(--ink);font-family:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;background:var(--bg)}
-body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(700px 420px at 8% -8%,rgba(109,91,246,.14),transparent 62%),radial-gradient(760px 480px at 100% 4%,rgba(14,181,166,.16),transparent 60%)}
+body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(700px 420px at 8% -8%,rgba(109,91,246,.14),transparent 62%),radial-gradient(760px 480px at 100% 20%,rgba(14,181,166,.12),transparent 52%),radial-gradient(820px 500px at 40% 120%,rgba(6,122,140,.14),transparent 48%)}
 button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:3px solid #7CC6D0;outline-offset:2px}
 .hide{display:none!important}
@@ -25,7 +25,7 @@ button,input,select{font:inherit;color:inherit}
 .me{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
 .me b{color:var(--ink)}
 .card{background:#fff;border:1px solid rgba(218,229,232,.9);border-radius:22px;box-shadow:0 24px 50px -30px rgba(13,42,49,.4),0 2px 8px rgba(13,42,49,.05)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:10px 16px;min-height:44px;font-weight:700;font-size:14px;cursor:pointer;background:var(--grad);color:#fff;transition:filter .15s,transform .1s}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:10px 16px;min-height:44px;font-weight:700;font-size:14px;cursor:pointer;background:var(--grad);color:#fff;box-shadow:0 12px 24px -14px rgba(6,122,140,.8)}
 .btn:hover{filter:brightness(1.06)}.btn:active{transform:translateY(1px)}.btn:disabled{opacity:.5;cursor:not-allowed;filter:none}
 .btn.ghost{background:#fff;color:var(--brand-deep);border:1.5px solid var(--line)}.btn.ghost:hover{background:var(--brand-soft)}
 .btn.ghost.danger{color:var(--bad);border-color:var(--bad-soft)}.btn.ghost.danger:hover{background:var(--bad-soft)}
@@ -49,6 +49,7 @@ button,input,select{font:inherit;color:inherit}
 .field input,.field select{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-size:15px;background:#FAFCFC;min-height:46px}
 .field input:focus,.field select:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 4px var(--brand-soft)}
 .field input[readonly]{background:#F1F5F6;color:var(--muted)}
+.field input.is-invalid,.field select.is-invalid{border-color:var(--bad)!important;box-shadow:0 0 0 4px rgba(179,38,30,.12)!important}
 .fine{font-size:12.5px;color:var(--muted);line-height:1.6;margin-top:10px}
 .fine a{color:var(--brand-deep);font-weight:700}
 /* trang chính */
@@ -152,7 +153,7 @@ button,input,select{font:inherit;color:inherit}
       <div class="me"><span>Xin chào, <b id="meName"></b></span><button class="btn ghost sm" id="logoutBtn" type="button">Đăng xuất</button></div>
     </header>
 
-    <div class="perm" role="note"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z"/><path d="m8.5 12.3 2.5 2.5 4.5-5"/></svg><div>Bạn được <b>xem, thêm, sửa, xoá và xác nhận thông tin</b> nhân viên thuộc phạm vi của mình. Bạn <b>không xoá được kết quả</b> bài làm (chỉ quản trị viên mới làm được). Mọi thêm/sửa/xoá đều được ghi lại.</div></div>
+    <div class="perm" role="note"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 9.3-8 12-4.5-2.7-8-7-8-12V6l8-4z"/><path d="M9.5 12.5l1.6 1.6 3.4-4.1"/></svg> <div><b>Thông tin:</b> Bạn chỉ được xem và quản lí nhân viên trong phạm vi được phân quyền bởi quản trị viên. Không có quyền xoá kết quả kiểm tra.</div></div>
 
     <div class="stats" id="stats"></div>
 
@@ -183,7 +184,7 @@ button,input,select{font:inherit;color:inherit}
   <h2 id="rTitle"></h2><p class="sub" id="rSub"></p>
   <div class="tiles" id="rTiles"></div><div class="bk" id="rBk"></div>
   <dl class="kv" id="rRows"></dl>
-  <div class="dact"><button class="btn ghost" id="rPaper" type="button">Xem bài làm</button><a class="btn ghost" id="rVerify" target="_blank" rel="noopener">Mở trang xác thực</a><button class="btn" type="button" data-close="ovRes">Đóng</button></div>
+  <div class="dact"><button class="btn ghost" id="rPaper" type="button">Xem bài làm</button><a class="btn ghost" id="rVerify" target="_blank" rel="noopener">Mở trang xác thực</a><button class="btn ghost" type="button" data-close="ovRes">Đóng</button></div>
   <p class="fine">Quản lí chỉ xem kết quả, không xoá hay chỉnh sửa được kết quả.</p>
 </div></div>
 
@@ -235,8 +236,8 @@ var SEG = { both:'Cả hai ngành', gia_dung:'Gia dụng', may_loc:'Máy lọc n
 
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function msg(id, text, cls){ var el = $(id); if (el) el.innerHTML = text ? '<div class="msg '+(cls||'err')+'">'+esc(text)+'</div>' : ''; }
-function fmt(ms){ try { return new Date(ms).toLocaleString('vi-VN',{timeZone:ZONE,hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric',hour12:false}); } catch(e){ return ''; } }
-function clock(sec){ sec = Math.max(0, Math.round(sec||0)); var h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60, p = function(x){ return (x<10?'0':'')+x; }; return h ? h+':'+p(m)+':'+p(s) : m+':'+p(s); }
+function fmt(ms){ try { return new Date(ms).toLocaleString('vi-VN',{timeZone:ZONE,hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric',hour12:false}); } catch(e){ return '—'; } }
+function clock(sec){ sec = Math.max(0, Math.round(sec||0)); var h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60, p = function(x){ return (x<10?'0':'')+x; }; return h ? h+':'+p(m)+':'+p(s) : p(m)+':'+p(s); }
 function initials(n){ var p = String(n||'').trim().split(/\s+/).filter(Boolean); if(!p.length) return '?'; return ((p.length>1?p[0].charAt(0):'')+p[p.length-1].charAt(0)).toUpperCase(); }
 async function api(method, path, body){
   var r = await fetch(path, { method:method, headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: body ? JSON.stringify(body) : undefined });
@@ -244,6 +245,30 @@ async function api(method, path, body){
   return { s:r.status, j:j||{} };
 }
 function show(which){ ['loginScreen','deniedScreen','app'].forEach(function(id){ $(id).classList.toggle('hide', id !== which); }); }
+
+function validateAddName(){
+  var input = $('aName');
+  var msgNode = $('aMsg');
+  if (!input) return true;
+  var name = String(input.value || '').trim();
+  var valid = name.length >= 2;
+  input.classList.toggle('is-invalid', !valid);
+  if (!valid) {
+    msg('aMsg', 'Nhập họ tên.', 'err');
+    input.focus();
+    return false;
+  }
+  input.classList.remove('is-invalid');
+  msgNode.innerHTML = '';
+  return true;
+}
+
+$('aName').addEventListener('input', function(){
+  if (this.value.trim().length > 0) {
+    this.classList.remove('is-invalid');
+    msg('aMsg', '');
+  }
+});
 
 /* ---------- Đăng nhập / đăng ký (dùng chung hệ thống tài khoản của trang chính) ---------- */
 function setMode(m){
@@ -267,7 +292,8 @@ $('authForm').addEventListener('submit', async function(e){
   btn.disabled = false; btn.textContent = label;
   if (!res){ msg('authMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
   var j = res.j;
-  if (j.ok && j.needsOtp){ $('fOtp').classList.remove('hide'); $('aOtp').focus(); msg('authMsg','Mã xác minh đã được gửi tới ' + j.email + '. Nhập mã rồi bấm lại nút để hoàn tất.','info'); return; }
+  if (j.ok && j.needsOtp){ $('fOtp').classList.remove('hide'); $('aOtp').focus(); msg('authMsg','Mã xác minh đã được gửi tới ' + j.email + '. Nhập mã rồi bấm lại nút để hoàn tất.'); return; }
+  if (j.ok && !j.needsOtp){ return boot(); }
   if (!j.ok){ msg('authMsg', j.error || 'Đăng nhập thất bại.'); return; }
   boot();
 });
@@ -313,10 +339,10 @@ async function askDataAI(){
       (r ? ' | điểm: ' + r.score + '/' + r.total + ' (' + r.pct + '%)' + (r.passed!=null?(r.passed?' · đạt':' · chưa đạt'):'') : '') +
       ' | xác nhận thông tin: ' + (e.confirmed ? 'đã xác nhận' : 'chưa xác nhận');
   }).join('\n');
-  var sys = 'Bạn là trợ lí tìm dữ liệu cho quản lí trong hệ thống kiểm tra nội bộ. Dưới đây là danh sách nhân viên thuộc phạm vi quản lí đang hỏi, mỗi dòng một người (định dạng: mã | họ tên | quản lí | nhóm ngành | trạng thái | điểm | xác nhận thông tin):\n\n' + rows +
-    '\n\nTrả lời đúng câu hỏi của quản lí dựa trên dữ liệu trên, liệt kê rõ tên/mã nhân viên liên quan nếu có. Nếu không tìm thấy ai khớp, nói rõ là không có. Không bịa thêm người hay số liệu ngoài danh sách trên. ' +
+  var sys = 'Bạn là trợ lí tìm dữ liệu cho quản lí trong hệ thống kiểm tra nội bộ. Dưới đây là danh sách nhân viên thuộc phạm vi quản lí đang hỏi, mỗi dòng gồm mã nhân viên, tên, quản lí, nhóm ngành, trạng thái, điểm và xác nhận thông tin.\n' + rows +
+    '\n\nTrả lời đúng câu hỏi của quản lí dựa trên dữ liệu trên, liệt kê rõ tên/mã nhân viên liên quan nếu có. Nếu không tìm thấy ai khớp, nói rõ là không có dữ liệu phù hợp.\n' +
     'Luôn tự nhận là trợ lí tìm dữ liệu của hệ thống kiểm tra, không tiết lộ mô hình AI/nhà cung cấp công nghệ đứng sau dù được hỏi thẳng. ' +
-    'Khung chat chỉ hiện được chữ thường, không hiển thị được Markdown - không dùng **chữ đậm**, không dùng bảng kẻ bằng dấu |, mỗi ý một dòng bắt đầu bằng "- " nếu cần liệt kê. Trả lời ngắn gọn, đi thẳng vào trọng tâm.';
+    'Khung chat chỉ hiện được chữ thường, không hiển thị được Markdown - không dùng **chữ đậm**, không dùng bảng kẻ bằng dấu |, mỗi ý một dòng bắt đầu bằng dấu gạch đầu dòng hoặc câu hoàn chỉnh.\n';
   try {
     var r = await fetch('/api/ai', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
       messages:[{role:'system',content:sys},{role:'user',content:q}], temperature:0.3, max_tokens:500
@@ -360,21 +386,22 @@ function render(){
   var list = filtered();
   $('list').innerHTML = list.map(function(e){
     var res = e.result, resHtml;
-    if (e.status === 'done') resHtml = '<div class="res"><div class="sc">'+res.score+'/'+res.total+' <small>câu đúng · '+res.pct+'%</small></div><div class="mini" aria-hidden="true"><i style="width:'+Math.max(0,Math.min(100,res.pct))+'%"></i></div><div class="when">Nộp lúc '+esc(fmt(res.submittedAt))+'</div></div>';
+    if (e.status === 'done') resHtml = '<div class="res"><div class="sc">'+res.score+'/'+res.total+' <small>câu đúng · '+res.pct+'%</small></div><div class="mini" aria-hidden="true"><i style="width:'+(res.pct||0)+'%"></i></div><div class="when">'+esc((res.submittedAt ? fmt(res.submittedAt) : ''))+'</div></div>';
     else if (e.status === 'doing') resHtml = '<div class="res"><span class="chip info">Đang làm bài</span></div>';
     else resHtml = '<div class="res"><span class="chip">Chưa làm bài</span></div>';
-    var cf = e.confirmed ? '<span class="chip ok">Đã xác nhận · '+esc(e.confirmed.byName||'')+' · '+esc(new Date(e.confirmed.at).toLocaleDateString('vi-VN'))+'</span>' : '<span class="chip warn">Chưa xác nhận thông tin</span>';
+    var cf = e.confirmed ? '<span class="chip ok">Đã xác nhận · '+esc(e.confirmed.byName||'')+' · '+esc(new Date(e.confirmed.at).toLocaleDateString('vi-VN'))+'</span>' : '<span class="chip warn">Chưa xác nhận</span>';
     return '<article class="card emp" data-code="'+esc(e.code)+'">'+
-      '<div class="who"><span class="av" aria-hidden="true">'+esc(initials(e.name||e.code))+'</span><div><b>'+esc(e.name||e.code)+'</b><span>Mã '+esc(e.code)+' · '+esc(e.email)+'</span><span class="chip">'+esc(SEG[e.segment]||'')+'</span>'+cf+'</div></div>'+
-      resHtml+
-      '<div class="acts"><button class="btn ghost sm" data-act="res" '+(e.status==='done'?'':'disabled')+'>Xem kết quả</button><button class="btn ghost sm" data-act="paper" '+(e.status==='done'?'':'disabled')+'>Xem bài làm</button><button class="btn ghost sm" data-act="edit">Sửa thông tin</button><button class="btn sm" data-act="cf">'+(e.confirmed?'Xác nhận lại':'Xác nhận thông tin')+'</button><button class="btn ghost sm danger" data-act="del">Xoá</button></div></article>';
-  }).join('') || '<div class="card empty">'+(EMP.length ? 'Không có nhân viên nào khớp bộ lọc.' : 'Chưa có nhân viên nào trong phạm vi của bạn. Hãy liên hệ quản trị viên.')+'</div>';
+      '<div class="who"><span class="av" aria-hidden="true">'+esc(initials(e.name||e.code))+'</span><div><b>'+esc(e.name||e.code)+'</b><span>Mã '+esc(e.code)+' · '+esc(e.email)+'</span><span class="chip '+(e.segment==='gia_dung'?'info':(e.segment==='may_loc'?'ok':'') )+'">'+esc(SEG[e.segment]||'Chưa phân nhóm')+'</span></div></div>'+
+      '<div class="res">'+resHtml+'</div>'+ cf +
+      '<div class="acts"><button class="btn ghost sm" data-act="res" '+(e.status==='done'?'':'disabled')+'>Xem kết quả</button><button class="btn ghost sm" data-act="paper" '+(e.status==='done'?'':'disabled')+'>Xem bài làm</button><button class="btn ghost sm" data-act="edit">Sửa</button><button class="btn ghost sm danger" data-act="del">Xoá</button></div>'+
+    '</article>';
+  }).join('') || '<div class="card empty">'+(EMP.length ? 'Không có nhân viên nào khớp bộ lọc.' : 'Chưa có nhân viên nào trong phạm vi của bạn. Hãy liên hệ quản trị viên để thêm nhân viên.')+'</div>';
 }
 ['q','fSt','fCf'].forEach(function(id){ $(id).addEventListener('input', render); $(id).addEventListener('change', render); });
 $('list').addEventListener('click', function(ev){
   var b = ev.target.closest('button[data-act]'); if (!b || b.disabled) return;
   var code = b.closest('.emp').getAttribute('data-code'), e = EMP.filter(function(x){ return x.code === code; })[0]; if (!e) return;
-  if (b.dataset.act === 'res') openRes(e); else if (b.dataset.act === 'paper') openPaper(e); else if (b.dataset.act === 'edit') openEdit(e); else if (b.dataset.act === 'del') deleteEmp(e); else confirmEmp(e, b);
+  if (b.dataset.act === 'res') openRes(e); else if (b.dataset.act === 'paper') openPaper(e); else if (b.dataset.act === 'edit') openEdit(e); else if (b.dataset.act === 'del') deleteEmp(e);
 });
 async function deleteEmp(e){
   if (!confirm('Xoá nhân viên "'+(e.name||e.code)+'" ('+e.code+') khỏi hệ thống? Không thể hoàn tác.')) return;
@@ -395,7 +422,7 @@ function openRes(e){
   $('rTiles').innerHTML = t.map(function(x){ return '<div><b>'+esc(x.v)+'</b><span>'+x.l+'</span></div>'; }).join('');
   if (r.wrong != null && r.blank != null && r.total){
     var s = [{n:r.score||0,c:'#17794A',l:'Đúng'},{n:r.wrong,c:'#B3261E',l:'Sai'},{n:r.blank,c:'#AEBDC1',l:'Bỏ trống'}];
-    $('rBk').innerHTML = '<div class="b" aria-hidden="true">'+s.map(function(g){ return g.n>0?'<i style="--c:'+g.c+';width:'+(g.n/r.total*100)+'%"></i>':''; }).join('')+'</div><div class="lg">'+s.map(function(g){ return '<span style="--c:'+g.c+'">'+g.l+' <b>'+g.n+'</b></span>'; }).join('')+'</div>';
+    $('rBk').innerHTML = '<div class="b" aria-hidden="true">'+s.map(function(g){ return g.n>0?'<i style="--c:'+g.c+';width:'+(g.n/r.total*100)+'%"></i>':''; }).join('')+'</div><div class="lg">'+s.map(function(g){ return '<span style="--c:'+g.c+'"><b>'+g.n+'</b> '+g.l+'</span>'; }).join('')+'</div>';
   } else $('rBk').innerHTML = '';
   var rows = '<div><dt>Tỉ lệ đúng</dt><dd>'+r.pct+'%</dd></div>';
   if (r.passed === true || r.passed === false) rows += '<div><dt>Kết quả</dt><dd>'+(r.passed?'Đạt':'Chưa đạt')+'</dd></div>';
@@ -427,7 +454,7 @@ function renderPaper(){
   var n = { all:P.length, bad:P.filter(function(q){ return q.chosen >= 0 && !q.ok; }).length, blank:P.filter(function(q){ return q.chosen < 0; }).length, good:P.filter(function(q){ return q.ok; }).length };
   var t = [{v:sm.score+'/'+sm.total,l:'Số câu đúng'},{v:n.bad,l:'Câu sai'},{v:n.blank,l:'Bỏ trống'}];
   $('pTiles').innerHTML = t.map(function(x){ return '<div><b>'+esc(x.v)+'</b><span>'+x.l+'</span></div>'; }).join('');
-  $('pPrint').textContent = 'Bản sao bài làm - ' + (PEMP.name || PEMP.code) + ' (' + PEMP.code + ') - Nộp lúc ' + fmt(sm.submittedAt) + ' - Mã minh chứng ' + sm.proof + ' - In bởi ' + (VIEWER.name || VIEWER.email) + ' lúc ' + fmt(Date.now() + off);
+  $('pPrint').textContent = 'Bản sao bài làm - ' + (PEMP.name || PEMP.code) + ' (' + PEMP.code + ') - Nộp lúc ' + fmt(sm.submittedAt) + ' - Mã minh chứng ' + sm.proof + ' - In bởi ' + (VIEWER.name || VIEWER.email);
   var F = [['all','Tất cả ('+n.all+')'],['bad','Câu sai ('+n.bad+')'],['blank','Bỏ trống ('+n.blank+')'],['good','Câu đúng ('+n.good+')']];
   $('pFilter').innerHTML = F.map(function(f){ return '<button type="button" data-f="'+f[0]+'" aria-pressed="'+(pFilter===f[0])+'">'+f[1]+'</button>'; }).join('');
   var L = 'ABCDEFGH';
@@ -435,12 +462,11 @@ function renderPaper(){
   $('pList').innerHTML = list.map(function(q){
     var cls = q.ok ? 'good' : (q.chosen < 0 ? 'blank' : 'bad');
     var head = q.chosen < 0 ? ' <span class="chip warn">Không trả lời</span>' : (q.ok ? ' <span class="chip ok">Đúng</span>' : ' <span class="chip" style="background:var(--bad-soft);color:var(--bad)">Sai</span>');
-    return '<article class="pq '+cls+'"><h3><span class="n">Câu '+q.n+'.</span> '+esc(q.text)+head+'</h3>'+
-      q.options.map(function(o, i){
-        var isC = i === q.correct, isS = i === q.chosen, c = isC ? 'correct' : (isS ? 'wrong' : ''), tag = '';
-        if (isS && isC) tag = 'Đã chọn · Đúng'; else if (isS) tag = 'Đã chọn · Sai'; else if (isC) tag = 'Đáp án đúng';
-        return '<div class="po '+c+'"><span class="k">'+L.charAt(i)+'</span><span class="t">'+esc(o)+'</span>'+(tag?'<span class="tag">'+tag+'</span>':'')+'</div>';
-      }).join('')+'</article>';
+    return '<article class="pq '+cls+'"><h3><span class="n">Câu '+q.n+'.</span> '+esc(q.text)+head+'</h3>'+q.options.map(function(o, i){
+      var isC = i === q.correct, isS = i === q.chosen, c = isC ? 'correct' : (isS ? 'wrong' : ''), tag = '';
+      if (isS && isC) tag = 'Đã chọn · Đúng'; else if (isS) tag = 'Đã chọn · Sai'; else if (isC) tag = 'Đáp án đúng';
+      return '<div class="po '+c+'"><span class="k">'+L.charAt(i)+'</span><span class="t">'+esc(o)+'</span>'+(tag?'<span class="tag">'+tag+'</span>':'')+'</div>';
+    }).join('')+'</article>';
   }).join('') || '<div class="empty">Không có câu nào thuộc nhóm này.</div>';
 }
 $('pFilter').addEventListener('click', function(ev){ var b = ev.target.closest('button[data-f]'); if (b && PAPER){ pFilter = b.getAttribute('data-f'); renderPaper(); } });
@@ -478,7 +504,7 @@ async function saveEdit(andConfirm){
   }
   btns.forEach(function(b){ b.disabled = false; });
   $('ovEdit').classList.add('hide'); await load();
-  msg('listMsg', r.j.unchanged && !andConfirm ? 'Không có thay đổi nào.' : (andConfirm ? 'Đã lưu và xác nhận thông tin của ' : 'Đã lưu thông tin của ') + (emp.name || emp.code) + (!andConfirm && r.j.needReconfirm ? '. Hãy xác nhận lại thông tin.' : '.'), 'ok');
+  msg('listMsg', r.j.unchanged && !andConfirm ? 'Không có thay đổi nào.' : (andConfirm ? 'Đã lưu và xác nhận thông tin của ' : 'Đã lưu thông tin của ') + (emp.name || emp.code) + '.','ok');
 }
 $('eSave').addEventListener('click', function(){ saveEdit(false); });
 $('eSaveConf').addEventListener('click', function(){ saveEdit(true); });
@@ -486,11 +512,10 @@ $('eSaveConf').addEventListener('click', function(){ saveEdit(true); });
 /* ---------- Thêm nhân viên ---------- */
 function openAdd(){
   msg('aMsg','');
-  $('aCode').value=''; $('aName').value=''; $('aEmail').value=''; $('aSeg').value='both';
+  $('aCode').value=''; $('aName').value=''; $('aEmail').value=''; $('aSeg').value='both'; $('aName').classList.remove('is-invalid');
   var scopes = VIEWER.scopes || [];
   $('aScopeField').classList.add('hide'); $('aScopeFreeField').classList.add('hide');
   if (VIEWER.isAdmin){
-    // Admin: pham vi khong gioi han theo 1 ten - cho go tu do, goi y tu danh sach quan li da co trong EMP.
     $('aScopeFreeField').classList.remove('hide'); $('aScopeFree').value='';
     var names = Array.from(new Set(EMP.map(function(e){ return e.manager; }).filter(Boolean))).sort();
     $('aScopeList').innerHTML = names.map(function(s){ return '<option value="'+esc(s).replace(/"/g,'&quot;')+'">'; }).join('');
@@ -502,6 +527,7 @@ function openAdd(){
 }
 $('addBtn').addEventListener('click', openAdd);
 $('aSave').addEventListener('click', async function(){
+  if (!validateAddName()) return;
   msg('aMsg','');
   var btn = $('aSave'); btn.disabled = true;
   var scopes = VIEWER.scopes || [];
@@ -523,15 +549,16 @@ async function confirmEmp(e, btn){
 
 /* ---------- Đóng hộp thoại ---------- */
 document.addEventListener('click', function(ev){ var c = ev.target.closest('[data-close]'); if (c) $(c.getAttribute('data-close')).classList.add('hide'); if (ev.target.classList && ev.target.classList.contains('ov')) ev.target.classList.add('hide'); });
-document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') ['ovRes','ovEdit','ovPaper'].forEach(function(id){ $(id).classList.add('hide'); }); });
+document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') ['ovRes','ovEdit','ovPaper','ovAdd'].forEach(function(id){ $(id).classList.add('hide'); }); });
 
 /* ---------- Tải CSV (mở được bằng Excel) ---------- */
 function cell(v){ var s = String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g,'""') + '"'; }
 $('csvBtn').addEventListener('click', function(){
-  var rows = [['Mã nhân viên','Họ tên','Email','Nhóm ngành','Trạng thái','Số câu đúng','Tổng số câu','Tỉ lệ đúng (%)','Điểm tuân thủ','Nộp bài lúc','Thời gian hoàn thành','Mã minh chứng','Xác nhận thông tin']];
+  var rows = [['Mã nhân viên','Họ tên','Email','Nhóm ngành','Trạng thái','Số câu đúng','Tổng số câu','Tỉ lệ đúng (%)','Điểm tuân thủ','Nộp bài lúc','Thời gian làm bài','Mã minh chứng']];
   var ST = { done:'Đã làm bài', doing:'Đang làm bài', none:'Chưa làm bài' };
   filtered().forEach(function(e){ var r = e.result || {};
-    rows.push([e.code,e.name,e.email,SEG[e.segment]||'',ST[e.status]||'',r.score,r.total,r.pct,r.compliancePoints,r.submittedAt?fmt(r.submittedAt):'',r.durationSec!=null?clock(r.durationSec):'',r.proof||'',e.confirmed?('Đã xác nhận - '+(e.confirmed.byName||'')+' - '+new Date(e.confirmed.at).toLocaleDateString('vi-VN')):'Chưa xác nhận']); });
+    rows.push([e.code,e.name,e.email,SEG[e.segment]||'',ST[e.status]||'',r.score,r.total,r.pct,r.compliancePoints,r.submittedAt?fmt(r.submittedAt):'',r.durationSec!=null?clock(r.durationSec):'',r.proof||'']);
+  });
   var blob = new Blob(['\ufeff' + rows.map(function(r){ return r.map(cell).join(','); }).join('\r\n')], { type:'text/csv;charset=utf-8' });
   var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'nhan-vien-ket-qua.csv'; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
