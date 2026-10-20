@@ -115,14 +115,14 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
     <div id="tab-candidates" class="tabpane hide">
       <div class="card">
         <h1>Thêm thí sinh</h1>
-        <p class="small">Mỗi dòng một thí sinh, định dạng: <b>mã nhân viên, họ tên, email</b>. Có thể dán nhiều dòng cùng lúc (ví dụ copy từ Excel).</p>
-        <textarea id="candText" placeholder="NV001, Nguyễn Văn A, a@congty.vn&#10;NV002, Trần Thị B, b@congty.vn"></textarea>
+        <p class="small">Mỗi dòng một thí sinh, định dạng: <b>mã nhân viên, họ tên, email, quản lí</b> (quản lí có thể để trống). Có thể dán nhiều dòng cùng lúc (ví dụ copy từ Excel).</p>
+        <textarea id="candText" placeholder="NV001, Nguyễn Văn A, a@congty.vn, Nguyễn Dạ Thảo&#10;NV002, Trần Thị B, b@congty.vn, Lê Thị Thanh Loan"></textarea>
         <button class="btn" style="margin-top:10px" onclick="addCandidates()">Thêm vào danh sách</button>
         <div id="candMsg"></div>
       </div>
       <div class="card">
         <h1>Danh sách thí sinh (<span id="candCount">0</span>)</h1>
-        <table><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Email</th><th></th></tr></thead><tbody id="candList"></tbody></table>
+        <table><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Email</th><th>Quản lí</th><th></th></tr></thead><tbody id="candList"></tbody></table>
       </div>
     </div>
 
@@ -170,7 +170,7 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
     <div id="tab-results" class="tabpane hide">
       <div class="card">
         <h1>Kết quả (<span id="resCount">0</span>)</h1>
-        <table><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
+        <table><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Quản lí</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
       </div>
       <div class="card hide" id="resDetailCard">
         <h1>Chi tiết bài làm</h1>
@@ -288,8 +288,8 @@ async function loadCandidates(){
   if (!j.ok) return;
   $('candCount').textContent = j.candidates.length;
   $('candList').innerHTML = j.candidates.map(c =>
-    '<tr><td>'+esc(c.code)+'</td><td>'+esc(c.name||'')+'</td><td>'+esc(c.email)+'</td><td><button class="btn danger sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
-  ).join('') || '<tr><td colspan="4" class="small">Chưa có thí sinh nào.</td></tr>';
+    '<tr><td>'+esc(c.code)+'</td><td>'+esc(c.name||'')+'</td><td>'+esc(c.email)+'</td><td>'+esc(c.manager||'')+'</td><td><button class="btn danger sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
+  ).join('') || '<tr><td colspan="5" class="small">Chưa có thí sinh nào.</td></tr>';
 }
 async function addCandidates(){
   const text = $('candText').value;
@@ -334,12 +334,12 @@ async function loadResults(){
   if (!j.ok) return;
   $('resCount').textContent = j.results.length;
   $('resList').innerHTML = j.results.map(r =>
-    '<tr><td>'+esc(r.code)+'</td><td>'+esc(r.name||'')+'</td><td>'+r.score+'/'+r.total+'</td><td>'+r.pct+'%</td>'+
+    '<tr><td>'+esc(r.code)+'</td><td>'+esc(r.name||'')+'</td><td>'+esc(r.manager||'')+'</td><td>'+r.score+'/'+r.total+'</td><td>'+r.pct+'%</td>'+
     '<td>'+(r.compliancePoints!=null?r.compliancePoints:'–')+'</td>'+
     '<td>'+(r.passed?'<span class="badge y">Đạt</span>':'<span class="badge n">Chưa đạt</span>')+'</td>'+
     '<td class="small">'+new Date(r.submittedAt).toLocaleString('vi-VN')+'</td>'+
     '<td><button class="btn ghost sm" onclick="viewResult(\''+r.id+'\')">Xem</button></td></tr>'
-  ).join('') || '<tr><td colspan="8" class="small">Chưa có bài làm nào được nộp.</td></tr>';
+  ).join('') || '<tr><td colspan="9" class="small">Chưa có bài làm nào được nộp.</td></tr>';
 }
 async function viewResult(id){
   const { j } = await api('GET','/api/kt-admin?op=result&id='+encodeURIComponent(id));

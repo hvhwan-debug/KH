@@ -42,7 +42,7 @@ module.exports = async function (context, req) {
 
     const secondsPerQuestion = Math.max(10, settings.secondsPerQuestion || 60);
     const attempt = {
-      id, code: found.code, name: found.name, email: found.email,
+      id, code: found.code, name: found.name, email: found.email, manager: found.manager || "",
       questionIds, orders,
       answers: {},
       startedAt: now,

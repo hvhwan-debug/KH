@@ -51,7 +51,7 @@ module.exports = async function (context, req) {
     await quiz.putAttempt(attempt);
 
     await quiz.upsertIndex({
-      id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email,
+      id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "",
       score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
       submittedAt: attempt.submittedAt, status: "submitted"
     });
@@ -70,6 +70,7 @@ module.exports = async function (context, req) {
           lines: [
             "Họ tên: " + (attempt.name || ""),
             "Mã nhân viên: " + (attempt.code || ""),
+            "Quản lí: " + (attempt.manager || "(chưa rõ)"),
             "Thời điểm nộp bài: " + new Date(attempt.submittedAt).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
           ]
         }],

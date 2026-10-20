@@ -72,7 +72,7 @@ module.exports = async function (context, req) {
       if (!rows.length && b.text) {
         rows = String(b.text).split("\n").map((line) => {
           const parts = line.split(",").map((s) => s.trim());
-          return { code: parts[0] || "", name: parts[1] || "", email: parts[2] || "" };
+          return { code: parts[0] || "", name: parts[1] || "", email: parts[2] || "", manager: parts[3] || "" };
         }).filter((r) => r.code && r.email);
       }
       const list = await quiz.getCandidates();
@@ -83,7 +83,7 @@ module.exports = async function (context, req) {
         const code = quiz.normCode(r.code);
         const email = quiz.normEmail(r.email);
         if (!code || !email) return;
-        const entry = { code: String(r.code).trim().slice(0, 50), name: String(r.name || "").trim().slice(0, 100), email };
+        const entry = { code: String(r.code).trim().slice(0, 50), name: String(r.name || "").trim().slice(0, 100), email, manager: String(r.manager || "").trim().slice(0, 100) };
         if (byCode[code] != null) { list[byCode[code]] = entry; updated++; }
         else { list.push(entry); byCode[code] = list.length - 1; added++; }
       });

@@ -25,7 +25,7 @@ module.exports = async function (context, req) {
       if (prior) {
         return reply(context, 200, {
           ok: true,
-          candidate: { code: found.code, name: found.name, email: found.email },
+          candidate: { code: found.code, name: found.name, email: found.email, manager: found.manager || "" },
           alreadyDone: true,
           result: { score: prior.score, total: prior.total, pct: prior.pct, passed: prior.passed, compliancePoints: prior.compliancePoints }
         });
@@ -33,7 +33,7 @@ module.exports = async function (context, req) {
     }
     return reply(context, 200, {
       ok: true,
-      candidate: { code: found.code, name: found.name, email: found.email },
+      candidate: { code: found.code, name: found.name, email: found.email, manager: found.manager || "" },
       examTitle: settings.examTitle
     });
   } catch (e) {
