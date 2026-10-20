@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bài kiểm tra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand:#02A79E;--brand-deep:#067A8C;--ink:#06302D;--muted:#5B7471;--line:#DCE5E9;
+  --bg:#EEF3F5;--surface:#fff;--ok:#1E7F4F;--ok-soft:#D9F0E4;--bad:#B3261E;--bad-soft:#F9DAD7;--warn:#955D00;--warn-soft:#FBEBC8;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.wrap{max-width:640px;margin:0 auto;padding:24px 18px 60px;min-height:100vh;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.top .dot{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-deep));display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px;flex:0 0 auto}
+.top b{font-size:15px}
+.top span{display:block;font-size:11.5px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 10px 26px -14px rgba(0,60,56,.18)}
+h1{font-size:19px;margin:0 0 6px;letter-spacing:-.01em}
+.sub{font-size:13.5px;color:var(--muted);margin:0 0 18px;line-height:1.5}
+label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:14px 0 6px}
+label:first-of-type{margin-top:0}
+input[type=text],input[type=email]{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:11px 13px;font:inherit;font-size:14.5px;background:#fbfdfd}
+input:focus{outline:2px solid var(--brand);outline-offset:1px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:0;border-radius:12px;padding:13px 20px;font:inherit;font-weight:700;font-size:14.5px;cursor:pointer;width:100%;margin-top:18px;background:var(--brand);color:#fff;transition:filter .15s}
+.btn:hover{filter:brightness(1.05)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.ghost{background:#fff;color:var(--brand-deep);border:1.5px solid var(--line)}
+.msg{font-size:13px;border-radius:10px;padding:10px 13px;margin-top:14px;line-height:1.5}
+.msg.err{background:var(--bad-soft);color:var(--bad)}
+.msg.ok{background:var(--ok-soft);color:var(--ok)}
+.msg.warn{background:var(--warn-soft);color:var(--warn)}
+.qhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px}
+.qprog{font-size:12.5px;font-weight:700;color:var(--muted)}
+.timer{display:flex;align-items:center;gap:6px;font-weight:800;font-size:15px;padding:6px 12px;border-radius:999px;background:var(--ok-soft);color:var(--ok);transition:background .3s,color .3s}
+.timer.warn{background:var(--warn-soft);color:var(--warn)}
+.timer.bad{background:var(--bad-soft);color:var(--bad)}
+.bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:20px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand-deep));transition:width .25s linear}
+.qtext{font-size:16.5px;font-weight:700;line-height:1.5;margin-bottom:18px}
+.opt{display:flex;align-items:flex-start;gap:11px;border:1.5px solid var(--line);border-radius:13px;padding:13px 14px;margin-bottom:10px;cursor:pointer;transition:border-color .15s,background .15s}
+.opt:hover{border-color:var(--brand)}
+.opt.sel{border-color:var(--brand);background:#F0FAF9}
+.opt .ring{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:0 0 auto;margin-top:1px;position:relative}
+.opt.sel .ring{border-color:var(--brand)}
+.opt.sel .ring::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--brand)}
+.opt p{margin:0;font-size:14.5px;line-height:1.5}
+.resrow{display:flex;gap:14px;margin:18px 0}
+.rescell{flex:1;background:#F6FAFA;border-radius:14px;padding:16px 10px;text-align:center}
+.rescell b{display:block;font-size:26px;font-weight:800;color:var(--brand-deep)}
+.rescell span{font-size:11.5px;color:var(--muted)}
+.pass-badge{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:15px;padding:8px 16px;border-radius:999px;margin-bottom:6px}
+.pass-badge.y{background:var(--ok-soft);color:var(--ok)}
+.pass-badge.n{background:var(--bad-soft);color:var(--bad)}
+.hide{display:none!important}
+.foot-note{text-align:center;font-size:11.5px;color:var(--muted);margin-top:16px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div class="dot">KT</div><div><b id="examTitle">Bài kiểm tra</b><span>Không cần đăng nhập — chỉ cần mã nhân viên và email</span></div></div>
+
+  <!-- Màn hình nhập thông tin -->
+  <div class="card" id="scrCheck">
+    <h1>Bắt đầu bài kiểm tra</h1>
+    <p class="sub">Nhập đúng thông tin đã được quản trị viên đăng ký để vào làm bài. Mỗi câu hỏi có giới hạn thời gian riêng, hãy chuẩn bị sẵn sàng trước khi bắt đầu.</p>
+    <label for="inName">Họ và tên</label>
+    <input type="text" id="inName" placeholder="Nguyễn Văn A" autocomplete="name">
+    <label for="inCode">Mã nhân viên</label>
+    <input type="text" id="inCode" placeholder="NV0012" autocomplete="off">
+    <label for="inEmail">Email</label>
+    <input type="email" id="inEmail" placeholder="ten@congty.vn" autocomplete="email">
+    <button class="btn" id="btnCheck" onclick="doCheck()">Kiểm tra thông tin</button>
+    <div id="checkMsg"></div>
+  </div>
+
+  <!-- Màn hình xác nhận bắt đầu -->
+  <div class="card hide" id="scrConfirm">
+    <h1>Xin chào, <span id="confirmName"></span></h1>
+    <p class="sub" id="confirmSub"></p>
+    <div class="msg warn">Khi bấm "Bắt đầu làm bài", mỗi câu hỏi sẽ được tính giờ riêng và tự động chuyển câu khi hết giờ. Không thể quay lại câu trước. Đề bài được trộn ngẫu nhiên, mỗi thí sinh có thể nhận đề khác nhau.</div>
+    <button class="btn" id="btnStart" onclick="doStart()">Bắt đầu làm bài</button>
+    <button class="btn ghost" onclick="resetToCheck()">Quay lại</button>
+  </div>
+
+  <!-- Màn hình làm bài -->
+  <div class="card hide" id="scrQuiz">
+    <div class="qhead">
+      <div class="qprog" id="qProg">Câu 1/20</div>
+      <div class="timer" id="qTimer">60s</div>
+    </div>
+    <div class="bar"><i id="qBar" style="width:100%"></i></div>
+    <div class="qtext" id="qText"></div>
+    <div id="qOpts"></div>
+    <button class="btn" id="btnNext" onclick="submitAnswer()" disabled>Câu tiếp theo</button>
+  </div>
+
+  <!-- Màn hình kết quả -->
+  <div class="card hide" id="scrResult">
+    <div id="resBadgeWrap" style="text-align:center;margin-bottom:6px"></div>
+    <h1 style="text-align:center">Đã hoàn thành bài kiểm tra</h1>
+    <p class="sub" style="text-align:center" id="resSub"></p>
+    <div class="resrow">
+      <div class="rescell"><b id="resScore">0/0</b><span>Số câu đúng</span></div>
+      <div class="rescell"><b id="resPct">0%</b><span>Tỉ lệ đúng</span></div>
+    </div>
+    <div class="msg ok" id="resMailMsg">Kết quả đã được gửi tự động về email bạn đã nhập.</div>
+  </div>
+
+  <div class="foot-note">Hệ thống kiểm tra nội bộ · Mọi thắc mắc liên hệ quản trị viên phụ trách</div>
+</div>
+
+<script>
+const ST = { candidate: null, examTitle: '', attemptId: '', questions: [], idx: 0, secondsPerQuestion: 60, selected: -1, timer: null, deadline: 0 };
+
+function $(id){ return document.getElementById(id); }
+function show(id){ ['scrCheck','scrConfirm','scrQuiz','scrResult'].forEach(s => $(s).classList.toggle('hide', s !== id)); }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function api(method, path, body){
+  const h = { 'Content-Type':'application/json', 'X-Requested-With':'livotec' };
+  const r = await fetch(path, { method, headers:h, credentials:'same-origin', body: body ? JSON.stringify(body) : undefined });
+  let j = null; try { j = await r.json(); } catch(e){}
+  return { s:r.status, j:j||{} };
+}
+
+function msg(elId, text, cls){
+  $(elId).innerHTML = text ? '<div class="msg '+(cls||'err')+'">'+esc(text)+'</div>' : '';
+}
+
+async function doCheck(){
+  const name = $('inName').value.trim();
+  const code = $('inCode').value.trim();
+  const email = $('inEmail').value.trim();
+  msg('checkMsg','');
+  if (!code || !email){ msg('checkMsg','Nhập đầy đủ mã nhân viên và email.'); return; }
+  $('btnCheck').disabled = true; $('btnCheck').textContent = 'Đang kiểm tra…';
+  let j;
+  try { ({ j } = await api('POST','/api/kt-check', { name, code, email })); }
+  catch (e) { $('btnCheck').disabled = false; $('btnCheck').textContent = 'Kiểm tra thông tin'; msg('checkMsg','Không kết nối được máy chủ, thử lại.'); return; }
+  $('btnCheck').disabled = false; $('btnCheck').textContent = 'Kiểm tra thông tin';
+  if (!j.ok){ msg('checkMsg', j.error || 'Có lỗi xảy ra, thử lại sau.'); return; }
+  ST.candidate = Object.assign({}, j.candidate, { codeInput: code, emailInput: email });
+  ST.examTitle = j.examTitle || (j.result ? '' : 'Bài kiểm tra');
+  if (j.examTitle) $('examTitle').textContent = j.examTitle;
+  if (j.alreadyDone){
+    showFinalResult(j.result, true);
+    return;
+  }
+  $('confirmName').textContent = j.candidate.name || j.candidate.code;
+  $('confirmSub').textContent = 'Mã nhân viên ' + j.candidate.code + ' · ' + j.candidate.email;
+  show('scrConfirm');
+}
+
+function resetToCheck(){ show('scrCheck'); }
+
+async function doStart(){
+  $('btnStart').disabled = true; $('btnStart').textContent = 'Đang chuẩn bị đề…';
+  let j;
+  try { ({ j } = await api('POST','/api/kt-start', { code: ST.candidate.codeInput, email: ST.candidate.emailInput })); }
+  catch (e) { $('btnStart').disabled = false; $('btnStart').textContent = 'Bắt đầu làm bài'; alert('Không kết nối được máy chủ, thử lại.'); return; }
+  $('btnStart').disabled = false; $('btnStart').textContent = 'Bắt đầu làm bài';
+  if (!j.ok){ alert(j.error || 'Không thể bắt đầu bài kiểm tra.'); return; }
+  ST.attemptId = j.attemptId;
+  ST.questions = j.questions;
+  ST.secondsPerQuestion = j.secondsPerQuestion;
+  ST.idx = 0;
+  if (j.examTitle) $('examTitle').textContent = j.examTitle;
+  show('scrQuiz');
+  renderQuestion();
+}
+
+function renderQuestion(){
+  ST.selected = -1;
+  const q = ST.questions[ST.idx];
+  $('qProg').textContent = 'Câu ' + (ST.idx+1) + '/' + ST.questions.length;
+  $('qText').textContent = q.text;
+  $('qOpts').innerHTML = q.options.map((o,i) =>
+    '<div class="opt" data-i="'+i+'" onclick="selectOpt('+i+')"><div class="ring"></div><p>'+esc(o)+'</p></div>'
+  ).join('');
+  $('btnNext').disabled = true;
+  $('btnNext').textContent = (ST.idx === ST.questions.length - 1) ? 'Nộp bài' : 'Câu tiếp theo';
+  startTimer();
+}
+
+function selectOpt(i){
+  ST.selected = i;
+  document.querySelectorAll('.opt').forEach(el => el.classList.toggle('sel', +el.dataset.i === i));
+  $('btnNext').disabled = false;
+}
+
+function startTimer(){
+  clearInterval(ST.timer);
+  ST.deadline = Date.now() + ST.secondsPerQuestion * 1000;
+  tickTimer();
+  ST.timer = setInterval(tickTimer, 250);
+}
+
+function tickTimer(){
+  const left = Math.max(0, ST.deadline - Date.now());
+  const secs = Math.ceil(left/1000);
+  const pct = Math.max(0, left / (ST.secondsPerQuestion*1000) * 100);
+  $('qTimer').textContent = secs + 's';
+  $('qBar').style.width = pct + '%';
+  $('qTimer').className = 'timer' + (secs<=10?' bad':secs<=20?' warn':'');
+  if (left <= 0){
+    clearInterval(ST.timer);
+    submitAnswer(true);
+  }
+}
+
+async function submitAnswer(timedOut){
+  clearInterval(ST.timer);
+  const q = ST.questions[ST.idx];
+  if (ST.selected >= 0 || timedOut){
+    try { await api('POST','/api/kt-answer', { attemptId: ST.attemptId, questionId: q.id, answerIndex: ST.selected }); }
+    catch (e) { /* lỗi mạng tạm thời khi ghi 1 câu trả lời: vẫn tiếp tục bài làm, không chặn thí sinh */ }
+  }
+  if (ST.idx < ST.questions.length - 1){
+    ST.idx++;
+    renderQuestion();
+  } else {
+    finishQuiz();
+  }
+}
+
+async function finishQuiz(){
+  $('btnNext').disabled = true;
+  $('qText').textContent = 'Đang chấm điểm…';
+  $('qOpts').innerHTML = '';
+  let j;
+  try { ({ j } = await api('POST','/api/kt-submit', { attemptId: ST.attemptId })); }
+  catch (e) {
+    $('qText').innerHTML = 'Không kết nối được máy chủ để nộp bài.';
+    $('qOpts').innerHTML = '<button class="btn" onclick="finishQuiz()">Thử nộp bài lại</button>';
+    return;
+  }
+  if (!j.ok){
+    $('qText').innerHTML = 'Có lỗi khi nộp bài: ' + esc(j.error || 'thử lại sau.');
+    $('qOpts').innerHTML = '<button class="btn" onclick="finishQuiz()">Thử nộp bài lại</button>';
+    return;
+  }
+  showFinalResult(j, false);
+}
+
+function showFinalResult(r, already){
+  show('scrResult');
+  const passed = !!r.passed;
+  $('resBadgeWrap').innerHTML = '<span class="pass-badge '+(passed?'y':'n')+'">'+(passed?'✓ ĐẠT':'✗ CHƯA ĐẠT')+'</span>';
+  $('resSub').textContent = already ? 'Bạn đã hoàn thành bài kiểm tra này trước đó.' : 'Cảm ơn bạn đã hoàn thành bài kiểm tra.';
+  $('resScore').textContent = (r.score!=null?r.score:'–') + '/' + (r.total!=null?r.total:'–');
+  $('resPct').textContent = (r.pct!=null?r.pct:'–') + '%';
+}
+</script>
+</body>
+</html>
