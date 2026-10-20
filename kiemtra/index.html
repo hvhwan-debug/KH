@@ -183,6 +183,32 @@ button,input{font:inherit;color:inherit}
 .stats span{display:block;font-size:12px;color:var(--muted);margin-top:3px}
 .stats .wide{grid-column:1/-1}
 .foot{text-align:center;font-size:12px;color:var(--muted);line-height:1.7;margin-top:auto;padding-top:6px}
+/* Màn kết quả dạng thẻ trực quan */
+.card.res{padding:0;text-align:left}
+.card.res::before{display:none}
+.rv-head{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:22px 24px;color:#fff;background:linear-gradient(135deg,#043B46 0%,#067A8C 62%,#0C9C8C 100%)}
+.rv-head::after{content:'';position:absolute;right:-70px;top:-80px;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.24),transparent 70%);pointer-events:none}
+.rv-head>*{position:relative;z-index:1}
+.rv-brand{display:flex;align-items:center;gap:12px;min-width:0}
+.rv-brand .logo{width:40px;height:40px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);box-shadow:none}
+.rv-brand b{display:block;font-size:15.5px;line-height:1.35;word-break:break-word}
+.rv-brand small{display:block;font-size:12px;opacity:.85;margin-top:1px}
+.rv-body{padding:26px 24px 10px;text-align:center}
+.rv-body .lead{margin-bottom:16px}
+.rv-person{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 0 6px}
+.av{width:48px;height:48px;border-radius:50%;background:var(--grad);color:#fff;display:grid;place-items:center;font-weight:800;font-size:16px;flex:0 0 auto}
+.rv-person b{display:block;font-size:17px;text-align:left;line-height:1.3}
+.rv-person span{display:block;font-size:12.5px;color:var(--muted);text-align:left}
+.stats.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rv-body .stats{margin-top:4px}
+.rv-body .stats div{padding:14px 12px;text-align:center}
+.rv-body .stats b{font-size:21px}
+.share{padding:14px 24px 26px;display:flex;flex-direction:column;gap:10px}
+.btn.zalo{background:#0068FF;box-shadow:0 16px 28px -14px rgba(0,104,255,.85)}
+.btn.zalo:hover{filter:brightness(1.07)}
+.sharehint{margin:4px 0 0;font-size:12px;line-height:1.65;color:var(--muted);text-align:center}
+.sharehint a,.msg a{color:inherit;font-weight:700;text-decoration:underline}
+@media(max-width:480px){.rv-head{padding:18px 16px}.rv-body{padding:22px 16px 8px}.share{padding:12px 16px 22px}}
 /* Bảo vệ nội dung đề */
 body.exam,body.exam *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #wm{position:fixed;inset:0;z-index:50;pointer-events:none;opacity:.075;display:none;background-repeat:repeat}
@@ -278,14 +304,27 @@ body.exam #wm{display:block}
     <!-- 4. Kết quả -->
     <section class="card res hide" id="scrResult">
       <canvas class="confetti hide" id="confetti" aria-hidden="true"></canvas>
-      <div id="resBadge"></div>
-      <h1 tabindex="-1">Đã hoàn thành bài kiểm tra</h1>
-      <p class="lead" id="resSub" style="margin-bottom:12px"></p>
-      <div class="ring" id="resRing"><svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="gY" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0EB5A6"/><stop offset="1" stop-color="#17794A"/></linearGradient><linearGradient id="gN" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B3261E"/></linearGradient></defs><circle class="trk" cx="60" cy="60" r="52" fill="none" stroke-width="10"/><circle class="prg" id="resArc" cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73"/></svg><div class="c"><b id="resPct">0%</b><span>Tỉ lệ đúng</span></div></div>
-      <p class="thr" id="resThr"></p>
-      <p class="cheer" id="resCheer"></p>
-      <div class="stats" id="resStats"></div>
-      <div id="resMail"></div>
+      <div class="rv-head">
+        <div class="rv-brand"><span class="logo" aria-hidden="true">KT</span><div><b id="rvTitle">Bài kiểm tra</b><small>Nền tảng kiểm tra trực tuyến</small></div></div>
+        <div id="resBadge"></div>
+      </div>
+      <div class="rv-body">
+        <h1 tabindex="-1">Đã hoàn thành bài kiểm tra</h1>
+        <p class="lead" id="resSub" style="margin-bottom:16px"></p>
+        <div class="rv-person"><span class="av" id="rvAv" aria-hidden="true">?</span><div><b id="rvName"></b><span id="rvCode"></span></div></div>
+        <div class="ring" id="resRing"><svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="gY" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0EB5A6"/><stop offset="1" stop-color="#17794A"/></linearGradient><linearGradient id="gN" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B3261E"/></linearGradient></defs><circle class="trk" cx="60" cy="60" r="52" fill="none" stroke-width="10"/><circle class="prg" id="resArc" cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73"/></svg><div class="c"><b id="resPct">0%</b><span>Tỉ lệ đúng</span></div></div>
+        <p class="thr" id="resThr"></p>
+        <p class="cheer" id="resCheer"></p>
+        <div class="stats" id="resStats"></div>
+        <dl class="kv" id="resDetails" style="margin:14px 0 0;text-align:left"></dl>
+        <div id="resMail"></div>
+      </div>
+      <div class="share">
+        <button class="btn zalo" id="btnZalo" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.6L3 21l1.5-5A8.5 8.5 0 1 1 21 12z"/><path d="M8.5 10h7M8.5 13.5h4"/></svg><span>Chia sẻ kết quả qua Zalo</span></button>
+        <button class="btn ghost" id="btnSave" type="button" style="margin-top:0">Lưu ảnh kết quả</button>
+        <div id="shareMsg" role="status"></div>
+        <p class="sharehint">Ảnh kết quả có họ tên, điểm số và thời gian xác nhận của hệ thống. Trên điện thoại, bấm nút Zalo rồi chọn Zalo trong bảng chia sẻ. Trên máy tính, ảnh sẽ được lưu để bạn gửi qua <a href="https://chat.zalo.me/" target="_blank" rel="noopener">Zalo</a>.</p>
+      </div>
     </section>
   </main>
   </div>
@@ -300,7 +339,7 @@ body.exam #wm{display:block}
 (function(){
 'use strict';
 var $ = function(id){ return document.getElementById(id); };
-var ST = { flags:{ blur:0, shot:0 }, cand:null, exam:null, inProgress:null, attemptId:'', q:null, index:0, total:0, secs:60, endsAt:0, timer:null, selected:-1, busy:false, quizOn:false };
+var ST = { off:0, res:null, sysT:null, flags:{ blur:0, shot:0 }, cand:null, exam:null, inProgress:null, attemptId:'', q:null, index:0, total:0, secs:60, endsAt:0, timer:null, selected:-1, busy:false, quizOn:false };
 var SCREENS = { check:'scrCheck', confirm:'scrConfirm', quiz:'scrQuiz', result:'scrResult' };
 var STEP_OF = { check:1, confirm:2, quiz:3, result:4 };
 
@@ -349,6 +388,7 @@ $('scrCheck').addEventListener('submit', async function(e){
   btn.disabled = false; btn.textContent = 'Tiếp tục';
   if (!res){ msg('checkMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
   var j = res.j;
+  noteServerTime(j);
   if (!j.ok){ msg('checkMsg', j.error || 'Có lỗi xảy ra, thử lại sau.'); return; }
   ST.cand = { code:j.candidate.code, name:j.candidate.name, email:j.candidate.email, manager:j.candidate.manager, inCode:code, inEmail:email };
   ST.exam = j.exam || {};
@@ -522,17 +562,38 @@ async function finish(){
     } catch(e){ tries++; setNet(true); await sleep(Math.min(4000, 600 * tries)); }
   }
   setNet(false);
+  noteServerTime(out);
   ST.quizOn = false;
   $('btnNext').classList.remove('hide'); $('qTimer').classList.remove('hide');
   renderResult(out, !!out.already);
 }
 
-/* ---------- Bước 4: kết quả ---------- */
+/* ---------- Bước 4: kết quả + chia sẻ ---------- */
+var ICO_Y = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path d="m7.5 12.5 3 3 6-7"/></svg>';
+var ICO_N = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path d="m9 9 6 6M15 9l-6 6"/></svg>';
+var ZONE = 'Asia/Ho_Chi_Minh';
+
+// Giờ hệ thống = giờ máy chủ (đã trừ độ lệch với đồng hồ máy người dùng).
+function sysNow(){ return Date.now() + (ST.off || 0); }
+function noteServerTime(j){ if (j && j.serverNow) ST.off = j.serverNow - Date.now(); }
+function fmtFull(ms){
+  try { return new Date(ms).toLocaleString('vi-VN', { timeZone:ZONE, hour:'2-digit', minute:'2-digit', second:'2-digit', day:'2-digit', month:'2-digit', year:'numeric', hour12:false }); }
+  catch(e){ return ''; }
+}
+function initials(n){
+  var p = String(n || '').trim().split(/\s+/).filter(Boolean);
+  if (!p.length) return '?';
+  return ((p.length > 1 ? p[0].charAt(0) : '') + p[p.length - 1].charAt(0)).toUpperCase();
+}
+
 function renderResult(r, already){
-  var passed = !!r.passed, pct = r.pct == null ? 0 : r.pct;
-  var ICO_Y = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path d="m7.5 12.5 3 3 6-7"/></svg>';
-  var ICO_N = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path d="m9 9 6 6M15 9l-6 6"/></svg>';
-  $('resBadge').innerHTML = '<span class="badge '+(passed?'y':'n')+'">'+(passed?ICO_Y+'ĐẠT':ICO_N+'CHƯA ĐẠT')+'</span>';
+  ST.res = { r:r, already:already };
+  var passed = !!r.passed, pct = r.pct == null ? 0 : r.pct, c = ST.cand || {};
+  $('rvTitle').textContent = (ST.exam && ST.exam.title) || $('examTitle').textContent || 'Bài kiểm tra';
+  $('rvName').textContent = c.name || c.code || '';
+  $('rvCode').textContent = c.code ? ('Mã nhân viên: ' + c.code) : '';
+  $('rvAv').textContent = initials(c.name || c.code);
+  $('resBadge').innerHTML = '<span class="badge '+(passed?'y':'n')+'" style="margin:0">'+(passed?ICO_Y+'ĐẠT':ICO_N+'CHƯA ĐẠT')+'</span>';
   $('resCheer').textContent = passed
     ? 'Chúc mừng bạn đã đạt yêu cầu của bài kiểm tra.'
     : 'Bạn chưa đạt ở lần này. Hãy liên hệ quản trị viên phụ trách để được hướng dẫn thêm.';
@@ -542,20 +603,177 @@ function renderResult(r, already){
   $('resRing').className = 'ring ' + (passed ? 'y' : 'n');
   $('resPct').textContent = pct + '%';
   $('resThr').textContent = r.passScore ? ('Ngưỡng đạt: ' + r.passScore + '%') : '';
-  var stats = '<div><b>'+(r.score!=null?r.score:'–')+'/'+(r.total!=null?r.total:'–')+'</b><span>Số câu đúng</span></div>';
-  stats += '<div><b>'+pct+'%</b><span>Tỉ lệ đúng</span></div>';
-  if (r.compliancePoints != null) stats += '<div class="wide"><b>'+r.compliancePoints+' điểm</b><span>Điểm tuân thủ học tập</span></div>';
-  if (r.durationSec != null && !already) stats += '<div class="wide"><b>'+fmtDur(r.durationSec)+'</b><span>Thời gian làm bài</span></div>';
-  $('resStats').innerHTML = stats;
+
+  var tiles = '<div><b>'+(r.score!=null?r.score:'–')+'/'+(r.total!=null?r.total:'–')+'</b><span>Số câu đúng</span></div>' +
+              '<div><b>'+pct+'%</b><span>Tỉ lệ đúng</span></div>';
+  if (r.compliancePoints != null) tiles += '<div><b>'+r.compliancePoints+' điểm</b><span>Điểm tuân thủ học tập</span></div>';
+  $('resStats').className = 'stats ' + (r.compliancePoints != null ? 'c3' : '');
+  $('resStats').innerHTML = tiles;
+
+  var rows = '';
+  if (r.durationSec != null) rows += '<div><dt>Thời gian hoàn thành</dt><dd>'+fmtDur(r.durationSec)+'</dd></div>';
+  if (r.submittedAt) rows += '<div><dt>Nộp bài lúc</dt><dd>'+fmtFull(r.submittedAt)+'</dd></div>';
+  rows += '<div><dt>Giờ hệ thống</dt><dd id="resSys">'+fmtFull(sysNow())+'</dd></div>';
+  $('resDetails').innerHTML = rows;
+  clearInterval(ST.sysT);
+  ST.sysT = setInterval(function(){ var el = $('resSys'); if (el) el.textContent = fmtFull(sysNow()); }, 1000);
+
   $('resMail').innerHTML = (r.mailOk === false)
-    ? '<div class="msg warn">Kết quả đã được lưu nhưng hệ thống chưa gửi được email. Vui lòng liên hệ quản trị viên nếu cần bản sao chi tiết.</div>'
-    : '<div class="msg ok">Kết quả chi tiết đã được gửi tự động về email bạn đã nhập.</div>';
+    ? '<div class="msg warn" style="text-align:left">Kết quả đã được lưu nhưng hệ thống chưa gửi được email. Vui lòng liên hệ quản trị viên nếu cần bản sao chi tiết.</div>'
+    : '<div class="msg ok" style="text-align:left">Kết quả chi tiết đã được gửi tự động về email bạn đã nhập.</div>';
+  shareMsg('');
   show('result');
   if (passed && !already) confetti();
   var arc = $('resArc');
   arc.style.strokeDashoffset = '326.73';
   requestAnimationFrame(function(){ requestAnimationFrame(function(){ arc.style.strokeDashoffset = String(326.73 * (1 - Math.max(0, Math.min(100, pct)) / 100)); }); });
 }
+
+/*<share-card>*/
+// Vẽ ảnh kết quả (PNG) để chia sẻ. Hàm thuần: nhận ctx + dữ liệu, không đụng tới DOM.
+function drawShareCard(ctx, W, H, d){
+  var F = '"Be Vietnam Pro","Segoe UI",Roboto,Arial,sans-serif';
+  var BRAND = '#067A8C', DEEP = '#055A68', MUTED = '#4B666D', INK = '#0D2A31';
+  function rr(x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  function txt(t, x, y, size, weight, color, align){ ctx.font = weight + ' ' + size + 'px ' + F; ctx.fillStyle = color; ctx.textAlign = align || 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText(t, x, y); }
+  function wrap(t, maxW, maxLines){
+    var words = String(t||'').split(/\s+/), lines = [], cur = '';
+    words.forEach(function(w){ var tryL = cur ? cur + ' ' + w : w; if (ctx.measureText(tryL).width > maxW && cur){ lines.push(cur); cur = w; } else cur = tryL; });
+    if (cur) lines.push(cur);
+    if (lines.length > maxLines){ lines = lines.slice(0, maxLines); lines[maxLines-1] = lines[maxLines-1].replace(/\s*\S*$/, '') + '…'; }
+    return lines;
+  }
+  // nền
+  var bg = ctx.createLinearGradient(0, 0, W, H); bg.addColorStop(0, '#E4F1F4'); bg.addColorStop(1, '#F7FAFB');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  var glow = ctx.createRadialGradient(W*0.9, 0, 0, W*0.9, 0, 520); glow.addColorStop(0, 'rgba(14,181,166,.28)'); glow.addColorStop(1, 'rgba(14,181,166,0)');
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+  var glow2 = ctx.createRadialGradient(0, H, 0, 0, H, 560); glow2.addColorStop(0, 'rgba(109,91,246,.2)'); glow2.addColorStop(1, 'rgba(109,91,246,0)');
+  ctx.fillStyle = glow2; ctx.fillRect(0, 0, W, H);
+  // thẻ trắng
+  var cx = 56, cy = 56, cw = W - 112, ch = H - 112;
+  ctx.save(); ctx.shadowColor = 'rgba(13,42,49,.25)'; ctx.shadowBlur = 50; ctx.shadowOffsetY = 20; rr(cx, cy, cw, ch, 44); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
+  ctx.save(); rr(cx, cy, cw, ch, 44); ctx.clip();
+  // đầu thẻ
+  var hh = 312, hg = ctx.createLinearGradient(cx, cy, cx + cw, cy + hh); hg.addColorStop(0, '#043B46'); hg.addColorStop(0.62, '#067A8C'); hg.addColorStop(1, '#0C9C8C');
+  ctx.fillStyle = hg; ctx.fillRect(cx, cy, cw, hh);
+  var hgl = ctx.createRadialGradient(cx + cw - 40, cy - 30, 0, cx + cw - 40, cy - 30, 300); hgl.addColorStop(0, 'rgba(255,255,255,.28)'); hgl.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = hgl; ctx.fillRect(cx, cy, cw, hh);
+  rr(cx + 52, cy + 48, 84, 84, 24); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 2; ctx.stroke();
+  txt('KT', cx + 94, cy + 105, 34, 800, '#fff', 'center');
+  ctx.font = '700 38px ' + F; var tl = wrap(d.title, cw - 52 - 84 - 28 - 52, 2);
+  tl.forEach(function(l, i){ txt(l, cx + 166, cy + 80 + i * 46, 38, 700, '#fff'); });
+  txt('Nền tảng kiểm tra trực tuyến', cx + 166, cy + 80 + tl.length * 46 + 4, 25, 500, 'rgba(255,255,255,.85)');
+  // huy hiệu
+  var label = d.passed ? 'ĐẠT' : 'CHƯA ĐẠT';
+  ctx.font = '800 30px ' + F; var bw = ctx.measureText(label).width + 84;
+  rr(cx + 52, cy + 218, bw, 64, 32); ctx.fillStyle = d.passed ? '#DDF1E6' : '#FBE3E0'; ctx.fill();
+  var bc = d.passed ? '#17794A' : '#B3261E';
+  ctx.beginPath(); ctx.arc(cx + 52 + 38, cy + 250, 14, 0, Math.PI*2); ctx.lineWidth = 3.5; ctx.strokeStyle = bc; ctx.stroke();
+  ctx.beginPath(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (d.passed){ ctx.moveTo(cx+52+31, cy+250); ctx.lineTo(cx+52+36, cy+255); ctx.lineTo(cx+52+46, cy+244); }
+  else { ctx.moveTo(cx+52+33, cy+245); ctx.lineTo(cx+52+43, cy+255); ctx.moveTo(cx+52+43, cy+245); ctx.lineTo(cx+52+33, cy+255); }
+  ctx.stroke();
+  txt(label, cx + 52 + 62, cy + 260, 30, 800, bc);
+  // người làm bài
+  var py = cy + hh + 70;
+  var ag = ctx.createLinearGradient(cx+52, py-44, cx+52+88, py+44); ag.addColorStop(0, '#067A8C'); ag.addColorStop(1, '#068073');
+  ctx.beginPath(); ctx.arc(cx + 52 + 44, py, 44, 0, Math.PI*2); ctx.fillStyle = ag; ctx.fill();
+  txt(d.initials || '?', cx + 52 + 44, py + 11, 32, 800, '#fff', 'center');
+  ctx.font = '800 46px ' + F; var nm = wrap(d.name, cw - 52 - 88 - 28 - 52, 1)[0] || '';
+  txt(nm, cx + 52 + 112, py - 2, 46, 800, INK);
+  if (d.code) txt('Mã nhân viên: ' + d.code, cx + 52 + 112, py + 38, 27, 500, MUTED);
+  // vòng phần trăm
+  var rx = W / 2, ry = py + 44 + 34 + 160, R = 142, pct = Math.max(0, Math.min(100, d.pct || 0));
+  ctx.lineWidth = 32; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(rx, ry, R, 0, Math.PI*2); ctx.strokeStyle = '#E6EEF0'; ctx.stroke();
+  var rg = ctx.createLinearGradient(rx - R, ry - R, rx + R, ry + R);
+  if (d.passed){ rg.addColorStop(0, '#0EB5A6'); rg.addColorStop(1, '#17794A'); } else { rg.addColorStop(0, '#F08A4B'); rg.addColorStop(1, '#B3261E'); }
+  if (pct > 0){ ctx.beginPath(); ctx.arc(rx, ry, R, -Math.PI/2, -Math.PI/2 + Math.PI*2*pct/100); ctx.strokeStyle = rg; ctx.stroke(); }
+  txt(pct + '%', rx, ry + 26, 96, 800, INK, 'center');
+  txt('Tỉ lệ đúng', rx, ry + 76, 26, 500, MUTED, 'center');
+  var y = ry + R + 56;
+  if (d.passScore) { txt('Ngưỡng đạt: ' + d.passScore + '%', rx, y, 26, 500, MUTED, 'center'); }
+  // ô số liệu
+  y += 38;
+  var tiles = [{ v: (d.score != null ? d.score : '–') + '/' + (d.total != null ? d.total : '–'), l: 'Số câu đúng' }, { v: pct + '%', l: 'Tỉ lệ đúng' }];
+  if (d.compliance != null) tiles.push({ v: d.compliance + ' điểm', l: 'Điểm tuân thủ học tập' });
+  var gap = 20, tw = (cw - 104 - gap * (tiles.length - 1)) / tiles.length, th = 150;
+  tiles.forEach(function(t, i){
+    var tx = cx + 52 + i * (tw + gap);
+    rr(tx, y, tw, th, 26); var tg = ctx.createLinearGradient(tx, y, tx, y + th); tg.addColorStop(0, '#F4FAFA'); tg.addColorStop(1, '#EAF5F6'); ctx.fillStyle = tg; ctx.fill();
+    ctx.strokeStyle = '#D5E9EC'; ctx.lineWidth = 2; ctx.stroke();
+    txt(t.v, tx + tw/2, y + 74, tiles.length === 3 ? 40 : 48, 800, DEEP, 'center');
+    txt(t.l, tx + tw/2, y + 116, 22, 500, MUTED, 'center');
+  });
+  // dòng thông tin
+  y += th + 34;
+  var rows = [];
+  if (d.durationText) rows.push(['Thời gian hoàn thành', d.durationText]);
+  if (d.submittedText) rows.push(['Nộp bài lúc', d.submittedText]);
+  rows.forEach(function(r, i){
+    var ry2 = y + i * 62;
+    ctx.strokeStyle = '#E3EBED'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx + 52, ry2); ctx.lineTo(cx + cw - 52, ry2); ctx.stroke();
+    txt(r[0], cx + 52, ry2 + 40, 26, 500, MUTED);
+    txt(r[1], cx + cw - 52, ry2 + 40, 26, 700, INK, 'right');
+  });
+  // dấu xác nhận của hệ thống
+  var sy = cy + ch - 74;
+  ctx.strokeStyle = '#E3EBED'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx + 52, sy - 34); ctx.lineTo(cx + cw - 52, sy - 34); ctx.stroke();
+  txt('Xác nhận bởi hệ thống lúc ' + d.stampText, W / 2, sy, 24, 700, DEEP, 'center');
+  txt(d.host, W / 2, sy + 36, 22, 500, MUTED, 'center');
+  ctx.restore();
+}
+/*</share-card>*/
+
+function shareData(){
+  var r = ST.res.r, c = ST.cand || {};
+  return {
+    title: (ST.exam && ST.exam.title) || $('examTitle').textContent || 'Bài kiểm tra',
+    name: c.name || c.code || '', code: c.code || '', initials: initials(c.name || c.code),
+    passed: !!r.passed, pct: r.pct == null ? 0 : r.pct, score: r.score, total: r.total,
+    compliance: r.compliancePoints, passScore: r.passScore,
+    durationText: r.durationSec != null ? fmtDur(r.durationSec) : '',
+    submittedText: r.submittedAt ? fmtFull(r.submittedAt) : '',
+    stampText: fmtFull(sysNow()),
+    host: location.host + '/kiemtra'
+  };
+}
+async function makePng(){
+  try { if (document.fonts && document.fonts.load) await Promise.all(['500','700','800'].map(function(w){ return document.fonts.load(w + ' 28px "Be Vietnam Pro"'); })); } catch(e){}
+  var cv = document.createElement('canvas'); cv.width = 1080; cv.height = 1440;
+  drawShareCard(cv.getContext('2d'), 1080, 1440, shareData());
+  return new Promise(function(res){ cv.toBlob(res, 'image/png'); });
+}
+function shareMsg(html, cls){ $('shareMsg').innerHTML = html ? '<div class="msg '+(cls||'info')+'" style="margin-top:0">'+html+'</div>' : ''; }
+function saveBlob(blob){
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ket-qua-kiem-tra-' + ((ST.cand && ST.cand.code) || 'ketqua') + '.png';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+}
+var SAVED_MSG = 'Đã lưu ảnh kết quả vào máy. Mở <a href="https://chat.zalo.me/" target="_blank" rel="noopener">Zalo</a> và gửi ảnh này cho người cần nhận.';
+$('btnZalo').addEventListener('click', async function(){
+  var btn = this; btn.disabled = true; shareMsg('Đang tạo ảnh kết quả…');
+  try {
+    var blob = await makePng(); if (!blob) throw new Error('png');
+    var file = new File([blob], 'ket-qua-kiem-tra.png', { type:'image/png' });
+    var r = ST.res.r;
+    var text = 'Kết quả ' + shareData().title + ': ' + r.score + '/' + r.total + ' câu đúng (' + r.pct + '%) - ' + (r.passed ? 'ĐẠT' : 'CHƯA ĐẠT');
+    if (navigator.share && navigator.canShare && navigator.canShare({ files:[file] })){
+      try { await navigator.share({ files:[file], title:text, text:text }); shareMsg('Đã mở bảng chia sẻ. Hãy chọn <b>Zalo</b> để gửi ảnh kết quả.', 'ok'); }
+      catch(e){ if (e && e.name === 'AbortError') shareMsg(''); else { saveBlob(blob); shareMsg(SAVED_MSG, 'info'); } }
+    } else { saveBlob(blob); shareMsg(SAVED_MSG, 'info'); }
+  } catch(e){ shareMsg('Không tạo được ảnh kết quả, vui lòng thử lại.', 'err'); }
+  btn.disabled = false;
+});
+$('btnSave').addEventListener('click', async function(){
+  var btn = this; btn.disabled = true; shareMsg('Đang tạo ảnh kết quả…');
+  try { var blob = await makePng(); if (!blob) throw new Error('png'); saveBlob(blob); shareMsg(SAVED_MSG, 'info'); }
+  catch(e){ shareMsg('Không tạo được ảnh kết quả, vui lòng thử lại.', 'err'); }
+  btn.disabled = false;
+});
 
 /* ---------- Bảo vệ nội dung đề (hạn chế, không thể chặn tuyệt đối) ---------- */
 var holdUntil = 0, holdTimer = null, away = false;

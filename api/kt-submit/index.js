@@ -19,7 +19,7 @@ module.exports = async function (context, req) {
       return reply(context, 200, {
         ok: true, score: attempt.score, total: attempt.total, pct: attempt.pct, passed: attempt.passed,
         compliancePoints: attempt.compliancePoints, already: true, mailOk: attempt.mailOk,
-        passScore: st.passScore || 0, submittedAt: attempt.submittedAt,
+        passScore: st.passScore || 0, submittedAt: attempt.submittedAt, serverNow: Date.now(),
         durationSec: Math.round(((attempt.submittedAt || 0) - (attempt.startedAt || 0)) / 1000)
       });
     }
@@ -69,7 +69,7 @@ module.exports = async function (context, req) {
     await quiz.upsertIndex({
       id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "",
       score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
-      submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null
+      submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null, durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000)
     });
 
     let mailOk = false;
@@ -109,7 +109,7 @@ module.exports = async function (context, req) {
       await quiz.upsertIndex({
         id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "",
         score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
-        submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null, mailOk
+        submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null, durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), mailOk
       });
     } catch (e) {
       context.log.error("kt-submit mailOk", e && e.message);
@@ -117,7 +117,7 @@ module.exports = async function (context, req) {
 
     return reply(context, 200, {
       ok: true, score: correct, total, pct, passed, compliancePoints: compliance, mailOk,
-      passScore: settings.passScore || 0, submittedAt: attempt.submittedAt,
+      passScore: settings.passScore || 0, submittedAt: attempt.submittedAt, serverNow: Date.now(),
       durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000)
     });
   } catch (e) {

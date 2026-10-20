@@ -41,8 +41,9 @@ module.exports = async function (context, req) {
           result: {
             score: prior.score, total: prior.total, pct: prior.pct, passed: prior.passed,
             compliancePoints: prior.compliancePoints, submittedAt: prior.submittedAt,
-            mailOk: prior.mailOk, passScore: exam.passScore
-          }
+            mailOk: prior.mailOk, passScore: exam.passScore, durationSec: prior.durationSec
+          },
+          serverNow: Date.now()
         });
       }
     }
@@ -54,7 +55,7 @@ module.exports = async function (context, req) {
       quiz.syncAttempt(active, Date.now());
       inProgress = { answered: Math.min(active.cursor, active.questionIds.length), total: active.questionIds.length };
     }
-    return reply(context, 200, { ok: true, candidate, exam, inProgress, examTitle: settings.examTitle });
+    return reply(context, 200, { ok: true, candidate, exam, inProgress, examTitle: settings.examTitle, serverNow: Date.now() });
   } catch (e) {
     context.log.error("kt-check", e && e.message);
     return reply(context, 500, { ok: false, error: "Có lỗi xảy ra, thử lại sau." });
