@@ -89,6 +89,7 @@ async function findViewer(email) {
 }
 // Nhân viên có thuộc phạm vi của quản lí này không (theo tên quản lí ghi trong danh sách thí sinh).
 function inScope(viewer, candidate) {
+  if (viewer && viewer.isAdmin) return true; // quản trị viên: toàn quyền, không giới hạn theo quản lí nào
   const mine = new Set(((viewer && viewer.scopes) || []).map(normPerson).filter(Boolean));
   return mine.size > 0 && mine.has(normPerson(candidate && candidate.manager));
 }

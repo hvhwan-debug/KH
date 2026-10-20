@@ -1,7 +1,7 @@
 // Tài khoản QUẢN LÍ (do quản trị viên cấp): xem nhân viên thuộc phạm vi của mình và kết quả của họ,
 // sửa / điều chỉnh thông tin nhân viên và xác nhận thông tin. KHÔNG có thao tác xoá (kết quả hay nhân viên).
 const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
-const { validEmail } = require("../_lib/config");
+const { validEmail, isAdmin } = require("../_lib/config");
 const quiz = require("../_lib/quiz");
 
 const SEGMENT_INPUTS = ["both", "ca_hai", "gia_dung", "may_loc"]; // giá trị được chấp nhận; lưu dạng chuẩn: both | gia_dung | may_loc
@@ -25,7 +25,16 @@ module.exports = async function (context, req) {
     if (guardConfigured(context)) return;
     const u = await requireUserActive(context, req);
     if (!u) return;
-    const viewer = await quiz.findViewer(u.email);
+    // Quản trị viên (ADMIN_EMAILS) luôn được vào, xem/thao tác được với MỌI quản lí và MỌI nhân viên,
+    // không cần (và không bị giới hạn bởi) quyền quản lí riêng như các viewer thường, kể cả khi email
+    // đó cũng có mặt trong danh sách viewer với phạm vi hẹp hơn - admin luôn ưu tiên toàn quyền.
+    let viewer;
+    if (isAdmin(u.email)) {
+      const own = await quiz.findViewer(u.email);
+      viewer = { email: u.email, name: (own && own.name) || u.name || "Quản trị viên", scopes: [], isAdmin: true };
+    } else {
+      viewer = await quiz.findViewer(u.email);
+    }
     if (!viewer) return reply(context, 403, { ok: false, error: "Tài khoản này chưa được cấp quyền quản lí. Hãy liên hệ quản trị viên." });
     const mine = (await quiz.getCandidates()).filter((c) => quiz.inScope(viewer, c));
 
