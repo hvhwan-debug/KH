@@ -283,6 +283,21 @@ body.exam #wm{display:block}
 
     <div class="net msg warn hide" id="net" role="status">Mất kết nối mạng, đang thử lại… Đồng hồ vẫn chạy trên máy chủ, bạn sẽ làm tiếp được khi có mạng.</div>
 
+    <!-- Chặn trình duyệt trong app (Zalo/Facebook/Messenger...): không cho làm bài cho tới khi mở bằng trình duyệt mặc định -->
+    <section class="card hide" id="scrInAppBlock">
+      <h1 tabindex="-1">Hãy mở bằng trình duyệt mặc định</h1>
+      <p class="lead">Bạn đang mở trang này trong <b id="inAppName">một ứng dụng nhắn tin</b> — trình duyệt này thường chặn camera/vị trí nên <b>không làm bài được</b>. Hãy mở lại bằng Chrome, Safari hoặc trình duyệt mặc định của máy.</p>
+      <div class="msg warn" style="margin-top:4px">
+        <b>Cách mở:</b> bấm vào biểu tượng <b>⋯</b> (dấu ba chấm, thường ở góc trên bên phải) → chọn <b>"Mở bằng trình duyệt"</b> / <b>"Open in browser"</b>. Nếu không thấy, sao chép đường link bên dưới rồi dán vào Chrome/Safari.
+      </div>
+      <div class="inwrap" style="margin-top:16px">
+        <input type="text" id="inAppUrl" readonly style="padding-left:14px">
+      </div>
+      <button class="btn go" id="btnCopyLink" type="button" style="margin-top:14px">Sao chép đường link</button>
+      <button class="btn ghost" id="btnInAppRetry" type="button">Tôi đã mở bằng trình duyệt khác, thử lại</button>
+      <div id="inAppMsg" role="status"></div>
+    </section>
+
     <!-- 1. Nhập thông tin -->
     <form class="card" id="scrCheck" novalidate>
       <h1 tabindex="-1">Bắt đầu bài kiểm tra</h1>
@@ -397,7 +412,7 @@ var $ = function(id){ return document.getElementById(id); };
 var ST = { off:0, res:null, sysT:null, flags:{ blur:0, shot:0 }, cand:null, exam:null, inProgress:null, attemptId:'', q:null, index:0, total:0, secs:60, endsAt:0, timer:null, selected:-1, busy:false, quizOn:false };
 // Mỗi đề thi có thể có link riêng dạng ...?exam=<mã đề>; không truyền thì dùng đúng đề đang đặt mặc định phía máy chủ.
 var EXAM_ID = new URLSearchParams(location.search).get('exam') || '';
-var SCREENS = { check:'scrCheck', confirm:'scrConfirm', photo:'scrPhoto', quiz:'scrQuiz', result:'scrResult' };
+var SCREENS = { check:'scrCheck', confirm:'scrConfirm', photo:'scrPhoto', quiz:'scrQuiz', result:'scrResult', inapp:'scrInAppBlock' };
 var STEP_OF = { check:1, confirm:2, photo:2, quiz:3, result:4 };
 
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -1175,7 +1190,33 @@ function confetti(){
   })(t0);
 }
 
-$('inCode').focus();
+/* Chặn trình duyệt trong app (Zalo, Facebook/Messenger, Instagram...): camera/vị trí thường bị chặn ở đó. */
+function inAppInfo(){
+  var ua = navigator.userAgent || '';
+  if (/Zalo/i.test(ua)) return 'Zalo';
+  if (/FBAN|FBAV|FB_IAB|Messenger/i.test(ua)) return 'Facebook/Messenger';
+  if (/Instagram/i.test(ua)) return 'Instagram';
+  if (/Line\//i.test(ua)) return 'Line';
+  return '';
+}
+function checkInApp(){
+  var name = inAppInfo();
+  if (!name) return false;
+  $('inAppName').textContent = 'ứng dụng ' + name;
+  $('inAppUrl').value = location.href;
+  show('inapp');
+  return true;
+}
+$('btnCopyLink').addEventListener('click', async function(){
+  try { await navigator.clipboard.writeText(location.href); msg('inAppMsg','Đã sao chép. Dán vào Chrome/Safari để mở.', 'ok'); }
+  catch(e){ $('inAppUrl').select(); document.execCommand('copy'); msg('inAppMsg','Đã sao chép. Dán vào Chrome/Safari để mở.', 'ok'); }
+});
+$('btnInAppRetry').addEventListener('click', function(){
+  if (!checkInApp()){ show('check'); $('inCode').focus(); }
+  else msg('inAppMsg','Vẫn đang mở trong '+$('inAppName').textContent+'. Hãy mở bằng trình duyệt mặc định trước.', 'err');
+});
+
+if (!checkInApp()) $('inCode').focus();
 })();
 </script>
 </body>
