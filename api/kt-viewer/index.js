@@ -1,5 +1,6 @@
 // Tài khoản QUẢN LÍ (do quản trị viên cấp): xem nhân viên thuộc phạm vi của mình và kết quả của họ,
-// sửa / điều chỉnh thông tin nhân viên và xác nhận thông tin. KHÔNG có thao tác xoá (kết quả hay nhân viên).
+// thêm nhân viên mới, sửa / xoá / xác nhận thông tin nhân viên thuộc phạm vi của mình.
+// Không xoá được KẾT QUẢ bài làm (chỉ quản trị viên mới reset được bài làm, qua kt-admin).
 const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const { validEmail, isAdmin } = require("../_lib/config");
 const quiz = require("../_lib/quiz");
@@ -40,7 +41,7 @@ module.exports = async function (context, req) {
 
     if (req.method === "GET") {
       const op = (req.query && req.query.op) || "";
-      if (op === "me") return reply(context, 200, { ok: true, viewer: { email: viewer.email, name: viewer.name || "", scopes: viewer.scopes || [] }, serverNow: Date.now() });
+      if (op === "me") return reply(context, 200, { ok: true, viewer: { email: viewer.email, name: viewer.name || "", scopes: viewer.scopes || [], isAdmin: !!viewer.isAdmin }, serverNow: Date.now() });
       if (op === "employees") {
         const settings = await quiz.getSettings();
         const idx = await quiz.getIndex();
@@ -90,10 +91,42 @@ module.exports = async function (context, req) {
     const all = await quiz.getCandidates();
     const i = all.findIndex((x) => quiz.normCode(x.code) === quiz.normCode(b.code));
     // Chỉ thao tác được trên nhân viên thuộc phạm vi của mình
-    if ((op === "updateEmployee" || op === "confirmEmployee") && (i < 0 || !quiz.inScope(viewer, all[i]))) {
+    if (["updateEmployee", "confirmEmployee", "deleteEmployee"].indexOf(op) >= 0 && (i < 0 || !quiz.inScope(viewer, all[i]))) {
       return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
     }
     const who = { by: viewer.email, byName: viewer.name || viewer.email };
+
+    // Thêm nhân viên mới vào phạm vi của mình. Quản trị viên (scopes rỗng) phải tự nêu rõ quản lí phụ trách qua b.scope.
+    if (op === "addEmployee") {
+      const myScopes = viewer.scopes || [];
+      let scope = String(b.scope || "").trim();
+      if (!scope && myScopes.length === 1) scope = myScopes[0];
+      if (!viewer.isAdmin && myScopes.indexOf(scope) < 0) return reply(context, 400, { ok: false, field: "scope", error: "Chọn đúng một tên quản lí thuộc phạm vi của bạn." });
+      if (!scope) return reply(context, 400, { ok: false, field: "scope", error: "Cần chọn quản lí phụ trách cho nhân viên này." });
+      const code = String(b.code || "").trim().slice(0, 50);
+      const name = String(b.name || "").trim().slice(0, 100);
+      const email = quiz.normEmail(b.email);
+      const segIn = String(b.segment || "both").trim().toLowerCase();
+      if (!code) return reply(context, 400, { ok: false, field: "code", error: "Nhập mã nhân viên." });
+      if (!name) return reply(context, 400, { ok: false, field: "name", error: "Nhập họ tên." });
+      if (!validEmail(email)) return reply(context, 400, { ok: false, field: "email", error: "Email không hợp lệ." });
+      if (SEGMENT_INPUTS.indexOf(segIn) < 0) return reply(context, 400, { ok: false, field: "segment", error: "Nhóm ngành không hợp lệ." });
+      if (all.some((x) => quiz.normCode(x.code) === quiz.normCode(code))) return reply(context, 409, { ok: false, field: "code", error: "Mã nhân viên này đã có trong hệ thống." });
+      if (all.some((x) => quiz.normEmail(x.email) === email)) return reply(context, 409, { ok: false, field: "email", error: "Email này đã được dùng cho nhân viên khác." });
+      const entry = {
+        code, name, email, manager: scope, segment: quiz.normSegment(segIn),
+        audit: [Object.assign({ at: Date.now(), kind: "create" }, who)]
+      };
+      all.push(entry);
+      await quiz.saveCandidates(all);
+      return reply(context, 200, { ok: true, employee: empView(entry) });
+    }
+
+    if (op === "deleteEmployee") {
+      const removed = all.splice(i, 1)[0];
+      await quiz.saveCandidates(all);
+      return reply(context, 200, { ok: true, removed: empView(removed) });
+    }
 
     if (op === "updateEmployee") {
       const c = all[i];

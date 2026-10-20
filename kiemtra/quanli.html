@@ -28,6 +28,7 @@ button,input,select{font:inherit;color:inherit}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:10px 16px;min-height:44px;font-weight:700;font-size:14px;cursor:pointer;background:var(--grad);color:#fff;transition:filter .15s,transform .1s}
 .btn:hover{filter:brightness(1.06)}.btn:active{transform:translateY(1px)}.btn:disabled{opacity:.5;cursor:not-allowed;filter:none}
 .btn.ghost{background:#fff;color:var(--brand-deep);border:1.5px solid var(--line)}.btn.ghost:hover{background:var(--brand-soft)}
+.btn.ghost.danger{color:var(--bad);border-color:var(--bad-soft)}.btn.ghost.danger:hover{background:var(--bad-soft)}
 .btn.sm{min-height:38px;padding:7px 13px;font-size:13px;border-radius:10px}
 .btn.block{width:100%}
 .msg{font-size:13.5px;line-height:1.55;border-radius:12px;padding:11px 14px;margin:12px 0 0}
@@ -145,7 +146,7 @@ button,input,select{font:inherit;color:inherit}
       <div class="me"><span>Xin chào, <b id="meName"></b></span><button class="btn ghost sm" id="logoutBtn" type="button">Đăng xuất</button></div>
     </header>
 
-    <div class="perm" role="note"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z"/><path d="m8.5 12.3 2.5 2.5 4.5-5"/></svg><div>Bạn được <b>xem nhân viên, kết quả và bài làm</b> của mình, <b>sửa / xác nhận thông tin</b> nhân viên. Bạn <b>không thể xoá</b> kết quả hay nhân viên. Mọi chỉnh sửa đều được ghi lại.</div></div>
+    <div class="perm" role="note"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z"/><path d="m8.5 12.3 2.5 2.5 4.5-5"/></svg><div>Bạn được <b>xem, thêm, sửa, xoá và xác nhận thông tin</b> nhân viên thuộc phạm vi của mình. Bạn <b>không xoá được kết quả</b> bài làm (chỉ quản trị viên mới làm được). Mọi thêm/sửa/xoá đều được ghi lại.</div></div>
 
     <div class="stats" id="stats"></div>
 
@@ -153,6 +154,7 @@ button,input,select{font:inherit;color:inherit}
       <input type="search" id="q" placeholder="Tìm theo tên, mã nhân viên hoặc email…" aria-label="Tìm nhân viên">
       <select id="fSt" aria-label="Lọc theo trạng thái"><option value="">Tất cả trạng thái</option><option value="done">Đã làm bài</option><option value="doing">Đang làm bài</option><option value="none">Chưa làm bài</option></select>
       <select id="fCf" aria-label="Lọc theo xác nhận"><option value="">Mọi xác nhận</option><option value="yes">Đã xác nhận thông tin</option><option value="no">Chưa xác nhận thông tin</option></select>
+      <button class="btn" id="addBtn" type="button">+ Thêm nhân viên</button>
       <button class="btn ghost" id="csvBtn" type="button">Tải CSV</button>
     </div>
     <div id="listMsg" role="status"></div>
@@ -193,6 +195,19 @@ button,input,select{font:inherit;color:inherit}
   <div id="eMsg" role="alert"></div>
   <div class="dact"><button class="btn" id="eSave" type="button">Lưu thay đổi</button><button class="btn" id="eSaveConf" type="button">Lưu và xác nhận</button><button class="btn ghost" type="button" data-close="ovEdit">Huỷ</button></div>
   <ul class="hist" id="eHist" aria-label="Lịch sử chỉnh sửa"></ul>
+</div></div>
+
+<!-- Hộp thoại thêm nhân viên -->
+<div class="ov hide" id="ovAdd" role="dialog" aria-modal="true" aria-labelledby="aTitle"><div class="dlg">
+  <h2 id="aTitle">Thêm nhân viên</h2><p class="sub">Thêm nhân viên mới vào phạm vi của bạn.</p>
+  <div class="field"><label for="aCode">Mã nhân viên</label><input id="aCode" autocomplete="off"></div>
+  <div class="field"><label for="aName">Họ và tên</label><input id="aName" autocomplete="off"></div>
+  <div class="field"><label for="aEmail">Email (dùng để vào bài kiểm tra và nhận kết quả)</label><input id="aEmail" type="email" autocomplete="off"></div>
+  <div class="field"><label for="aSeg">Nhóm ngành</label><select id="aSeg"><option value="both">Cả hai ngành</option><option value="gia_dung">Gia dụng</option><option value="may_loc">Máy lọc nước</option></select></div>
+  <div class="field hide" id="aScopeField"><label for="aScope">Quản lí phụ trách</label><select id="aScope"></select></div>
+  <div class="field hide" id="aScopeFreeField"><label for="aScopeFree">Quản lí phụ trách (đúng như sẽ hiển thị)</label><input id="aScopeFree" list="aScopeList" autocomplete="off"><datalist id="aScopeList"></datalist></div>
+  <div id="aMsg" role="alert"></div>
+  <div class="dact"><button class="btn" id="aSave" type="button">Thêm nhân viên</button><button class="btn ghost" type="button" data-close="ovAdd">Huỷ</button></div>
 </div></div>
 
 <script>
@@ -294,15 +309,21 @@ function render(){
     return '<article class="card emp" data-code="'+esc(e.code)+'">'+
       '<div class="who"><span class="av" aria-hidden="true">'+esc(initials(e.name||e.code))+'</span><div><b>'+esc(e.name||e.code)+'</b><span>Mã '+esc(e.code)+' · '+esc(e.email)+'</span><span class="chip">'+esc(SEG[e.segment]||'')+'</span>'+cf+'</div></div>'+
       resHtml+
-      '<div class="acts"><button class="btn ghost sm" data-act="res" '+(e.status==='done'?'':'disabled')+'>Xem kết quả</button><button class="btn ghost sm" data-act="paper" '+(e.status==='done'?'':'disabled')+'>Xem bài làm</button><button class="btn ghost sm" data-act="edit">Sửa thông tin</button><button class="btn sm" data-act="cf">'+(e.confirmed?'Xác nhận lại':'Xác nhận thông tin')+'</button></div></article>';
+      '<div class="acts"><button class="btn ghost sm" data-act="res" '+(e.status==='done'?'':'disabled')+'>Xem kết quả</button><button class="btn ghost sm" data-act="paper" '+(e.status==='done'?'':'disabled')+'>Xem bài làm</button><button class="btn ghost sm" data-act="edit">Sửa thông tin</button><button class="btn sm" data-act="cf">'+(e.confirmed?'Xác nhận lại':'Xác nhận thông tin')+'</button><button class="btn ghost sm danger" data-act="del">Xoá</button></div></article>';
   }).join('') || '<div class="card empty">'+(EMP.length ? 'Không có nhân viên nào khớp bộ lọc.' : 'Chưa có nhân viên nào trong phạm vi của bạn. Hãy liên hệ quản trị viên.')+'</div>';
 }
 ['q','fSt','fCf'].forEach(function(id){ $(id).addEventListener('input', render); $(id).addEventListener('change', render); });
 $('list').addEventListener('click', function(ev){
   var b = ev.target.closest('button[data-act]'); if (!b || b.disabled) return;
   var code = b.closest('.emp').getAttribute('data-code'), e = EMP.filter(function(x){ return x.code === code; })[0]; if (!e) return;
-  if (b.dataset.act === 'res') openRes(e); else if (b.dataset.act === 'paper') openPaper(e); else if (b.dataset.act === 'edit') openEdit(e); else confirmEmp(e, b);
+  if (b.dataset.act === 'res') openRes(e); else if (b.dataset.act === 'paper') openPaper(e); else if (b.dataset.act === 'edit') openEdit(e); else if (b.dataset.act === 'del') deleteEmp(e); else confirmEmp(e, b);
 });
+async function deleteEmp(e){
+  if (!confirm('Xoá nhân viên "'+(e.name||e.code)+'" ('+e.code+') khỏi hệ thống? Không thể hoàn tác.')) return;
+  var r = await api('POST','/api/kt-viewer', { op:'deleteEmployee', code:e.code });
+  if (!r.j.ok){ msg('listMsg', r.j.error || 'Không xoá được.'); return; }
+  await load();
+}
 
 /* ---------- Xem kết quả ---------- */
 var curRes = null;
@@ -403,6 +424,36 @@ async function saveEdit(andConfirm){
 }
 $('eSave').addEventListener('click', function(){ saveEdit(false); });
 $('eSaveConf').addEventListener('click', function(){ saveEdit(true); });
+
+/* ---------- Thêm nhân viên ---------- */
+function openAdd(){
+  msg('aMsg','');
+  $('aCode').value=''; $('aName').value=''; $('aEmail').value=''; $('aSeg').value='both';
+  var scopes = VIEWER.scopes || [];
+  $('aScopeField').classList.add('hide'); $('aScopeFreeField').classList.add('hide');
+  if (VIEWER.isAdmin){
+    // Admin: pham vi khong gioi han theo 1 ten - cho go tu do, goi y tu danh sach quan li da co trong EMP.
+    $('aScopeFreeField').classList.remove('hide'); $('aScopeFree').value='';
+    var names = Array.from(new Set(EMP.map(function(e){ return e.manager; }).filter(Boolean))).sort();
+    $('aScopeList').innerHTML = names.map(function(s){ return '<option value="'+esc(s).replace(/"/g,'&quot;')+'">'; }).join('');
+  } else if (scopes.length > 1){
+    $('aScopeField').classList.remove('hide');
+    $('aScope').innerHTML = scopes.map(function(s){ return '<option value="'+esc(s).replace(/"/g,'&quot;')+'">'+esc(s)+'</option>'; }).join('');
+  }
+  $('ovAdd').classList.remove('hide'); $('aCode').focus();
+}
+$('addBtn').addEventListener('click', openAdd);
+$('aSave').addEventListener('click', async function(){
+  msg('aMsg','');
+  var btn = $('aSave'); btn.disabled = true;
+  var scopes = VIEWER.scopes || [];
+  var scope = VIEWER.isAdmin ? $('aScopeFree').value.trim() : (scopes.length > 1 ? $('aScope').value : (scopes[0] || ''));
+  var r = await api('POST','/api/kt-viewer', { op:'addEmployee', code:$('aCode').value, name:$('aName').value, email:$('aEmail').value, segment:$('aSeg').value, scope:scope });
+  btn.disabled = false;
+  if (!r.j.ok){ msg('aMsg', r.j.error || 'Không thêm được.'); return; }
+  $('ovAdd').classList.add('hide'); await load();
+  msg('listMsg', 'Đã thêm nhân viên ' + (r.j.employee.name || r.j.employee.code) + '.', 'ok');
+});
 async function confirmEmp(e, btn){
   if (!confirm('Xác nhận thông tin của ' + (e.name || e.code) + ' (mã ' + e.code + ', ' + e.email + ') là chính xác?')) return;
   btn.disabled = true;
