@@ -23,14 +23,22 @@ module.exports = async function (context, req) {
     allQuestions.forEach((q) => { byId[q.id] = q; });
 
     let correct = 0;
-    attempt.questionIds.forEach((qid) => {
+    const detailLines = [];
+    attempt.questionIds.forEach((qid, idx) => {
       const q = byId[qid];
       if (!q) return;
       const ans = attempt.answers[qid];
       const order = attempt.orders[qid] || q.options.map((_, i) => i);
       // ans.answerIndex là vị trí hiển thị (đã xáo trộn) phía thí sinh; đưa về chỉ số gốc để so với đáp án đúng.
       const originalIndex = ans && ans.answerIndex >= 0 ? order[ans.answerIndex] : -1;
-      if (originalIndex === q.correctIndex) correct++;
+      const isCorrect = originalIndex === q.correctIndex;
+      if (isCorrect) correct++;
+      const chosenText = originalIndex >= 0 ? q.options[originalIndex] : "(không trả lời)";
+      const correctText = q.options[q.correctIndex];
+      detailLines.push(
+        "Câu " + (idx + 1) + " [" + (isCorrect ? "Đúng" : "Sai") + "]: " + q.text +
+        " — Bạn chọn: " + chosenText + (isCorrect ? "" : " (Đáp án đúng: " + correctText + ")")
+      );
     });
 
     const total = attempt.questionIds.length;
@@ -65,15 +73,18 @@ module.exports = async function (context, req) {
           { n: pct + "%", l: "Tỉ lệ đúng" },
           { n: passed ? "ĐẠT" : "CHƯA ĐẠT", l: "Kết quả" }
         ].concat(compliance != null ? [{ n: compliance + " điểm", l: "Điểm tuân thủ học tập" }] : []),
-        sections: [{
-          h: "Thông tin thí sinh",
-          lines: [
-            "Họ tên: " + (attempt.name || ""),
-            "Mã nhân viên: " + (attempt.code || ""),
-            "Quản lí: " + (attempt.manager || "(chưa rõ)"),
-            "Thời điểm nộp bài: " + new Date(attempt.submittedAt).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
-          ]
-        }],
+        sections: [
+          {
+            h: "Thông tin thí sinh",
+            lines: [
+              "Họ tên: " + (attempt.name || ""),
+              "Mã nhân viên: " + (attempt.code || ""),
+              "Quản lí: " + (attempt.manager || "(chưa rõ)"),
+              "Thời điểm nộp bài: " + new Date(attempt.submittedAt).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
+            ]
+          },
+          { h: "Chi tiết bài làm (bản sao câu trả lời)", lines: detailLines }
+        ],
         footer: "Đây là email tự động từ hệ thống kiểm tra. Nếu có thắc mắc về kết quả, vui lòng liên hệ quản trị viên phụ trách."
       });
       await mail.send({ to: attempt.email, subject: "Kết quả bài kiểm tra: " + (settings.examTitle || "Bài kiểm tra"), html, text });
