@@ -47,14 +47,17 @@ const A = {
       questions: ["Xem ngân hàng đề", "read"], questionsBackup: ["Xem bản sao lưu ngân hàng đề", "read"], deleteAllPreview: ["Mở bước xoá toàn bộ ngân hàng đề", "read"],
       viewers: ["Xem danh sách quản lí", "read"], candidates: ["Xem danh sách thí sinh", "read"], settings: ["Xem cài đặt", "read"],
       results: ["Xem bảng kết quả", "read"], result: ["Xem chi tiết bài làm (ảnh, thiết bị, vị trí)", "read"], dashboard: ["Xem dashboard đánh giá", "read"],
-      audit: ["Xem nhật ký thao tác", "read"]
+      audit: ["Xem nhật ký thao tác", "read"], banks: ["Xem ngân hàng câu hỏi", "read"], exams: ["Xem danh sách đề thi", "read"],
+      previewBlueprint: ["Kiểm tra cấu trúc đề", "read"], itemAnalysis: ["Xem phân tích chất lượng câu hỏi", "read"]
     },
     POST: {
       saveQuestion: ["Lưu câu hỏi", "change"], addQuestions: ["Thêm câu hỏi hàng loạt", "change"], deleteQuestion: ["Xoá câu hỏi", "change"],
       deleteAllQuestions: ["XOÁ TOÀN BỘ ngân hàng đề của kỳ", "change"], copyQuestions: ["Sao chép đề sang kỳ khác", "change"], moveQuestions: ["Chuyển câu hỏi sang kỳ khác", "change"], restoreQuestions: ["Khôi phục ngân hàng đề", "change"],
       saveViewer: ["Cấp / sửa quyền quản lí", "change"], setViewerPassword: ["Đặt mật khẩu cho quản lí", "change"], deleteViewer: ["Thu hồi quyền quản lí", "change"],
       addCandidates: ["Thêm / cập nhật thí sinh", "change"], deleteCandidate: ["Xoá thí sinh", "change"], resetAttempt: ["Cho làm lại (xoá kết quả kỳ)", "change"],
-      saveSettings: ["Đổi cài đặt", "change"], assignPeriod: ["Gắn kỳ cho bài chưa có kỳ", "change"]
+      saveSettings: ["Đổi cài đặt", "change"], assignPeriod: ["Gắn kỳ cho bài chưa có kỳ", "change"],
+      saveBank: ["Lưu ngân hàng câu hỏi", "change"], deleteBank: ["Xoá ngân hàng câu hỏi", "change"], moveToBank: ["Chuyển câu hỏi sang ngân hàng khác", "change"],
+      setQuestionActive: ["Ẩn / hiện câu hỏi", "change"], saveExam: ["Lưu đề thi", "change"], deleteExam: ["Xoá đề thi", "change"], setDefaultExam: ["Đặt đề thi mặc định", "change"]
     }
   },
   viewer: {
@@ -108,6 +111,13 @@ function details(area, op, q, b, res, pre) {
     case "audit": d.day = q.day; break;
     case "saveQuestion": { const qq = b.question || {}; d.question = s(qq.text, 100); if (qq.id) d.id = qq.id; if (typeof qq.period === "string") d.period = qq.period || "chưa gắn kỳ"; break; }
     case "addQuestions": d.period = b.period; d.added = r.added; d.skipped = r.skipped; break;
+    case "saveBank": d.bank = s(b.name, 80); if (b.id) d.id = b.id; break;
+    case "deleteBank": d.id = b.id; d.moved = r.moved; break;
+    case "moveToBank": d.to = b.to; d.moved = r.moved; break;
+    case "setQuestionActive": d.id = b.id; d.active = !!b.active; break;
+    case "saveExam": { const ex = b.exam || b; d.exam = s(ex.id, 40); d.rules = ex.blueprint && Array.isArray(ex.blueprint.rules) ? ex.blueprint.rules.length : 0; break; }
+    case "deleteExam": case "setDefaultExam": d.exam = s(b.id, 40); break;
+    case "itemAnalysis": d.exam = q.exam; d.items = Array.isArray(r.items) ? r.items.length : undefined; break;
     case "copyQuestions": case "moveQuestions": d.from = b.from || "chưa gắn kỳ"; d.to = b.to; d.added = r.added; d.skipped = r.skipped; d.moved = r.moved; break;
     case "deleteQuestion": d.id = b.id; d.question = pre.q; break;
     case "deleteAllQuestions": d.period = typeof b.period === "string" ? (b.period || "chưa gắn kỳ") : "mọi kỳ"; d.count = r.deleted != null ? r.deleted : pre.n; break;

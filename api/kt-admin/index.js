@@ -32,6 +32,23 @@ const handler = async function (context, req) {
         };
         return reply(context, 200, { ok: true, banks: banks.map(stat) });
       }
+      // Phân tích chất lượng câu hỏi của một đề thi: độ khó thực tế, độ phân biệt, phương án gây nhiễu.
+      if (op === "itemAnalysis") {
+        const examId = String((req.query && req.query.exam) || "");
+        const latest = {};
+        (await quiz.getIndex()).filter((r) => r.status === "submitted" && (r.period || "") === examId).forEach((r) => {
+          const k = quiz.normCode(r.code); if (!latest[k] || (r.submittedAt || 0) > (latest[k].submittedAt || 0)) latest[k] = r; // mỗi người tính bài mới nhất
+        });
+        const rows = Object.values(latest).sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0)).slice(0, 500);
+        const atts = [];
+        for (let i = 0; i < rows.length; i += 25) { // đọc từng nhóm nhỏ: bài làm có kèm ảnh nên khá nặng
+          const chunk = await Promise.all(rows.slice(i, i + 25).map((r) => quiz.getAttempt(r.id).catch(() => null)));
+          chunk.forEach((a) => { if (a && a.status === "submitted") atts.push({ questionIds: a.questionIds, answers: a.answers, orders: a.orders }); });
+        }
+        const byId = {}; (await quiz.getQuestions()).forEach((q) => { byId[q.id] = q; });
+        const r = require("../_lib/itemstats").analyze(atts, byId);
+        return reply(context, 200, { ok: true, exam: examId, capped: rows.length >= 500, summary: r.summary, items: r.items });
+      }
       // Xem trước cấu trúc đề: mỗi quy tắc có bao nhiêu câu khả dụng, có thiếu không.
       if (op === "previewBlueprint") {
         let bp; try { bp = quiz.cleanBlueprint(JSON.parse(String(req.query.blueprint || "null"))); } catch (e) { bp = { error: "Cấu trúc đề không hợp lệ." }; }
@@ -263,6 +280,16 @@ const handler = async function (context, req) {
       bk.questions.forEach((q) => { if (!have.has(q.id)) { list.push(q); restored++; } });
       await quiz.saveQuestions(list);
       return reply(context, 200, { ok: true, restored, questions: list });
+    }
+
+    // Ẩn / hiện nhanh một câu hỏi (câu ẩn không được rút vào đề mới; bài đã làm vẫn giữ nguyên)
+    if (op === "setQuestionActive") {
+      const list = await quiz.getQuestions();
+      const q = list.find((x) => x.id === b.id);
+      if (!q) return reply(context, 404, { ok: false, error: "Không tìm thấy câu hỏi." });
+      q.active = !!b.active;
+      await quiz.saveQuestions(list);
+      return reply(context, 200, { ok: true, id: q.id, active: q.active });
     }
 
     // ---------- Ngân hàng câu hỏi ----------

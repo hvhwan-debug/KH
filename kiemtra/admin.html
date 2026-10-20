@@ -248,6 +248,16 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
         </div>
         <div id="exMsg"></div>
       </div>
+      <div class="card hide" id="itemCard">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <h1 style="margin:0" id="itemTitle">Phân tích câu hỏi</h1>
+          <button class="btn ghost sm" onclick="document.getElementById('itemCard').classList.add('hide')">Đóng</button>
+        </div>
+        <p class="small" style="margin-top:6px">Đọc từ bài làm đã nộp (mỗi người tính bài mới nhất). <b>% đúng</b> là độ khó thực tế. <b>Độ phân biệt</b> (−1 đến 1) cho biết câu đó có tách được người giỏi khỏi người yếu không: từ 0,3 là tốt, dưới 0,15 là kém, âm rõ rệt thường do đáp án bị gắn sai hoặc câu mơ hồ. Cần ít nhất <span id="itemMinN">30</span> lượt làm mỗi câu mới đánh giá độ phân biệt.</p>
+        <div id="itemSummary" class="small" style="margin:10px 0"></div>
+        <div id="itemMsg"></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Câu hỏi</th><th>Lượt</th><th>% đúng</th><th>% trống</th><th>Phân biệt</th><th>Nhận xét</th><th></th></tr></thead><tbody id="itemList"></tbody></table></div>
+      </div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h1 style="margin:0">Danh sách đề thi</h1>
@@ -676,6 +686,7 @@ async function loadExams(){
     '<td style="white-space:nowrap">'+
       (e.id!==j.currentPeriod?'<button class="btn ghost sm" onclick="setDefaultExamUI(\''+esc(e.id)+'\')">Đặt mặc định</button> ':'')+
       '<button class="btn ghost sm" onclick="editExam(\''+esc(e.id)+'\')">Sửa</button> '+
+      (e.resultCount ? '<button class="btn ghost sm" onclick="openItemAnalysis(\''+esc(e.id)+'\')">Phân tích câu hỏi</button> ' : '')+
       (e.id!==j.currentPeriod?'<button class="btn danger sm" onclick="deleteExamUI(\''+esc(e.id)+'\')">Xoá</button>':'')+
     '</td></tr>'
   ).join('') || '<tr><td colspan="7" class="small">Chưa có đề thi nào, bấm "+ Tạo đề thi mới" để bắt đầu.</td></tr>';
@@ -868,6 +879,43 @@ function examStatusText(e, cur){
   return e.id === cur ? '<span class="badge y">Đang mở (mặc định)</span>' : '<span class="badge y">Đang mở</span>';
 }
 
+/* ---------- Phân tích chất lượng câu hỏi ---------- */
+let ITEMS = [];
+async function openItemAnalysis(examId){
+  $('itemCard').classList.remove('hide');
+  $('itemTitle').textContent = 'Phân tích câu hỏi: đề ' + examId;
+  $('itemSummary').textContent = 'Đang tính…'; $('itemList').innerHTML = ''; msg('itemMsg','');
+  $('itemCard').scrollIntoView({behavior:'smooth',block:'start'});
+  const { j } = await api('GET','/api/kt-admin?op=itemAnalysis&exam='+encodeURIComponent(examId));
+  if (!j.ok){ $('itemSummary').textContent=''; msg('itemMsg', j.error || 'Không phân tích được.'); return; }
+  ITEMS = j.items; $('itemMinN').textContent = j.summary.minN;
+  $('itemSummary').innerHTML = '<b>'+j.summary.attempts+'</b> bài làm · điểm trung bình <b>'+j.summary.meanPct+'%</b> · trung vị '+j.summary.medianPct+'% · độ lệch chuẩn '+j.summary.sdPct+'%'
+    + (j.capped ? ' · <span class="badge n">chỉ đọc 500 bài mới nhất</span>' : '')
+    + (j.items.filter(i => i.severity <= 1).length ? ' · <b style="color:var(--bad)">'+j.items.filter(i => i.severity <= 1).length+' câu cần xem lại</b>' : '');
+  renderItems();
+}
+function renderItems(){
+  const cls = { bad:'n', warn:'n', info:'', ok:'y' };
+  const chipStyle = { bad:'background:var(--bad-soft);color:var(--bad)', warn:'background:#FBEBC8;color:#8A5500', info:'background:#EEF5F6;color:var(--muted)', ok:'background:var(--ok-soft);color:var(--ok)' };
+  $('itemList').innerHTML = ITEMS.map((it, k) => {
+    const r = it.discrimination == null ? '–' : (Math.round(it.discrimination * 100) / 100).toFixed(2);
+    const opts = it.options ? '<details style="margin-top:4px"><summary class="small" style="cursor:pointer">Phương án</summary><ul style="margin:4px 0 0;padding-left:18px">'+it.options.map(o =>
+      '<li style="'+(o.isKey?'color:var(--ok);font-weight:700':'')+'">'+esc(o.text)+(o.isKey?' ✓':'')+' <span class="small">· '+o.count+' lượt chọn ('+Math.round(o.rate*100)+'%)</span></li>').join('')+'</ul></details>' : '';
+    return '<tr><td style="min-width:220px">'+esc(it.text.slice(0,110))+(it.text.length>110?'…':'')+'<div class="small">'+esc(TYPE_LABEL[it.type]||'')+(it.category?' · '+esc(it.category):'')+(it.bankId&&it.bankId!=='default'?' · '+esc(bankName(it.bankId)):'')+'</div>'+opts+'</td>'+
+      '<td>'+it.n+'</td><td>'+Math.round(it.pCorrect*100)+'%</td><td>'+Math.round(it.blankRate*100)+'%</td><td>'+r+'</td>'+
+      '<td>'+it.flags.map(f => '<span class="badge" style="'+chipStyle[f.level]+';margin:0 4px 4px 0;white-space:normal">'+esc(f.text)+'</span>').join('')+'</td>'+
+      '<td style="white-space:nowrap"><button class="btn ghost sm" onclick="editQuestionFromItem(\''+esc(it.id)+'\')">Sửa</button> '+
+      '<button class="btn ghost sm" onclick="hideQuestionFromItem(\''+esc(it.id)+'\')">Ẩn</button></td></tr>';
+  }).join('') || '<tr><td colspan="7" class="small">Chưa có đủ bài làm để phân tích.</td></tr>';
+}
+function editQuestionFromItem(id){ switchTab('questions'); editQuestion(id); }
+async function hideQuestionFromItem(id){
+  if (!confirm('Ẩn câu này khỏi các đề sắp ra? Bài đã làm vẫn giữ nguyên, bạn có thể hiện lại ở tab Câu hỏi.')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'setQuestionActive', id, active:false });
+  if (!j.ok){ msg('itemMsg', j.error || 'Không ẩn được.'); return; }
+  msg('itemMsg','Đã ẩn câu hỏi.','ok'); loadQuestions();
+}
+
 /* ---------- Ngân hàng đề ---------- */
 let QUESTIONS = [];
 function qUIType(){ return $('qType').value; }
@@ -973,7 +1021,7 @@ function renderQuestions(){
   $('qCount').textContent = L.length;
   $('qList').innerHTML = L.map(q =>
     '<tr><td>'+esc(q.text.slice(0,70))+(q.text.length>70?'…':'')+'</td><td class="small">'+esc(bankName(q.bankId))+'<div>'+esc(TYPE_LABEL[qTypeOf(q)]||'')+'</div></td><td>'+esc(q.category||'')+'</td><td class="small">'+esc(DIFF_LABEL[q.difficulty]||'')+'</td><td>'+(q.active!==false?'<span class="badge y">Đang dùng</span>':'<span class="badge n">Đã ẩn</span>')+'</td>'+
-    '<td><button class="btn ghost sm" onclick="editQuestion(\''+q.id+'\')">Sửa</button> <button class="btn danger sm" onclick="deleteQuestion(\''+q.id+'\')">Xoá</button></td></tr>'
+    '<td style="white-space:nowrap"><button class="btn ghost sm" onclick="editQuestion(\''+q.id+'\')">Sửa</button> <button class="btn ghost sm" onclick="toggleQuestion(\''+q.id+'\')">'+(q.active!==false?'Ẩn':'Hiện')+'</button> <button class="btn danger sm" onclick="deleteQuestion(\''+q.id+'\')">Xoá</button></td></tr>'
   ).join('') || '<tr><td colspan="6" class="small">Kỳ này chưa có câu hỏi. Thêm câu mới, nhập hàng loạt hoặc sao chép từ kỳ khác.</td></tr>';
   $('qPeriod').innerHTML = pers.map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + (p === cur ? ' (hiện tại)' : '') + '</option>').join('') + (un.length ? '<option value="">Chưa gắn kỳ</option>' : '');
   $('qPeriod').value = QP;
@@ -1043,6 +1091,12 @@ function editQuestion(id){
   if (t === 'fill') $('qAccepted').value = (q.accepted || []).join('\n');
   else (q.options || []).forEach((o,i) => addOptRow(t === 'multi' ? (q.correctIndexes || []).indexOf(i) >= 0 : i === q.correctIndex, o));
   window.scrollTo({top:0,behavior:'smooth'});
+}
+async function toggleQuestion(id){
+  const q = QUESTIONS.find(x => x.id === id); if (!q) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'setQuestionActive', id, active: q.active === false });
+  if (!j.ok){ msg('qDelMsg', j.error || 'Không đổi được trạng thái.'); return; }
+  q.active = j.active; renderQuestions(); loadBanks();
 }
 async function deleteQuestion(id){
   if (!confirm('Xoá câu hỏi này khỏi ngân hàng đề?')) return;
