@@ -44,6 +44,13 @@ module.exports = async function (context, req) {
     // 2) Chưa có -> tạo đề mới. Bắt buộc có ảnh xác nhận trước khi tạo đề (không áp dụng khi làm tiếp bài đang dở).
     if (!attempt) {
       if (!photo) return reply(context, 400, { ok: false, error: "Cần chụp ảnh xác nhận trước khi bắt đầu làm bài." });
+      // AI kiểm tra ảnh có đúng một khuôn mặt người; không đạt -> không cho vào làm bài
+      var faceCheck = null;
+      if (process.env.FACE_CHECK !== "off") {
+        const fc = await require("../_lib/facecheck").verify(photo, b.face);
+        faceCheck = fc.record;
+        if (!fc.allow) return reply(context, 422, { ok: false, faceRejected: true, error: fc.message });
+      }
       // Chỉ lấy câu hỏi thuộc ngân hàng đề của KỲ HIỆN TẠI (dự phòng: câu chưa gắn kỳ nếu kỳ này chưa có câu riêng)
       const bank = quiz.bankFor(allQuestions, settings.examPeriod);
       const activeQuestions = bank.list;
@@ -75,7 +82,7 @@ module.exports = async function (context, req) {
         period: settings.examPeriod,
         questionIds: picked.map((q) => q.id), orders,
         answers: {},
-        photo,
+        photo, faceCheck,
         startedAt: now,
         secondsPerQuestion: Math.max(10, settings.secondsPerQuestion || 60),
         cursor: 0, qStartedAt: now,

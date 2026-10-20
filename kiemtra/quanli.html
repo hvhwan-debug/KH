@@ -968,6 +968,7 @@ $('ovProf').addEventListener('click', function(ev){
 
 /* ---------- Ảnh xác nhận chụp lúc làm bài ---------- */
 var PHOTO = {};
+var FACE_L = { ok:'AI xác nhận có đúng 1 khuôn mặt', unclear:'AI thấy 1 khuôn mặt nhưng chưa rõ nét', client_ok:'Nhận diện được khuôn mặt trên máy thí sinh (AI máy chủ chưa xác minh)', unverified:'Chưa xác minh được khuôn mặt' };
 // sel: { id: mã bài làm } hoặc { period: 'YYYY-MM' }. Ảnh là minh chứng của ĐÚNG MỘT bài/kỳ, không lấy ảnh kỳ khác bù vào.
 function photoSel(e, sel){ return sel || (e.result && e.result.id ? { id: e.result.id } : { period: CURP }); }
 function loadPhoto(code, sel){
@@ -994,7 +995,7 @@ async function fillPhoto(id, e, sel){
     b.appendChild(im); el.appendChild(b); el.appendChild(tag);
     b.addEventListener('click', function(){
       $('iTitle').textContent = 'Ảnh xác nhận kỳ ' + perL(per) + ': ' + (e.name || e.code); $('iImg').src = d.photo; $('iImg').alt = im.alt;
-      $('iSub').textContent = 'Mã nhân viên ' + e.code + ' · Chụp ngay trước khi bắt đầu bài kiểm tra kỳ ' + perL(per) + (d.takenAt ? ', lúc ' + fmt(d.takenAt) : '') + '. Ảnh chỉ là minh chứng cho kỳ này.';
+      $('iSub').textContent = 'Mã nhân viên ' + e.code + ' · Chụp ngay trước khi bắt đầu bài kiểm tra kỳ ' + perL(per) + (d.takenAt ? ', lúc ' + fmt(d.takenAt) : '') + '. Ảnh chỉ là minh chứng cho kỳ này.' + (d.face && FACE_L[d.face] ? ' Kiểm tra khuôn mặt: ' + FACE_L[d.face] + '.' : '');
       $('ovImg').classList.remove('hide');
     });
   } else {

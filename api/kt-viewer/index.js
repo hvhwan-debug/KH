@@ -150,7 +150,7 @@ const handler = async function (context, req) {
         if (!attempt && !wantId) { const act = await quiz.getActive(c.code); if (act && (act.period || "") === wantP) attempt = act; }
         const photo = attempt && typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "";
         const devices = !viewer.isAdmin ? [] : attempt ? (Array.isArray(attempt.devices) ? attempt.devices : (attempt.device ? [attempt.device] : [])) : [];
-        return reply(context, 200, { ok: true, photo, takenAt: (attempt && attempt.startedAt) || null, period: attempt ? (attempt.period || "") : wantP, inProgress: !!(attempt && attempt.status === "in_progress"),
+        return reply(context, 200, { ok: true, photo, takenAt: (attempt && attempt.startedAt) || null, face: attempt && attempt.faceCheck ? attempt.faceCheck.status : null, period: attempt ? (attempt.period || "") : wantP, inProgress: !!(attempt && attempt.status === "in_progress"),
           devices: !viewer.isAdmin ? undefined : devices.map((d) => ({ type: d.type, os: d.os, browser: d.browser, model: d.model, ip: d.ip, screen: d.screen, tz: d.tz, lang: d.lang, stage: d.stage, at: d.at, ua: d.ua, loc: d.loc || null, locErr: d.locErr || "" })) });
       }
       if (op === "employee") {

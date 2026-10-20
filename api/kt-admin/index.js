@@ -97,7 +97,8 @@ const handler = async function (context, req) {
         const flags = {
           blur: rows.filter((r) => r.flags && r.flags.blur).length, shot: rows.filter((r) => r.flags && r.flags.shot).length,
           devChanged: rows.filter((r) => r.device && r.device.changed).length, locDenied: rows.filter((r) => r.device && !r.device.loc && r.device.locErr === "denied").length,
-          moved: rows.filter((r) => r.device && r.device.movedKm > 2).length, noDevice: rows.filter((r) => !r.device).length
+          moved: rows.filter((r) => r.device && r.device.movedKm > 2).length, noDevice: rows.filter((r) => !r.device).length,
+          faceUnverified: rows.filter((r) => r.face && r.face !== "ok").length
         };
         const prevP = periods.filter((p) => p < period).pop() || "";
         let prev = null;

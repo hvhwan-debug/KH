@@ -122,6 +122,7 @@ button,input{font:inherit;color:inherit}
 .msg.err{background:var(--bad-soft);color:var(--bad)}
 .msg.ok{background:var(--ok-soft);color:var(--ok)}
 .msg.warn{background:var(--warn-soft);color:var(--warn)}
+.msg.info{background:#E4F3F5;color:#055A68}
 .msg.info{background:var(--brand-soft);color:var(--brand-deep)}
 
 /* Xác nhận */
@@ -527,10 +528,59 @@ function renderLoc(){
 }
 document.addEventListener('click', function(ev){ if (ev.target && ev.target.id === 'locRetry'){ LOC.p = null; DEV.locErr = ''; askLocation(); } });
 
+/* ---------- AI kiểm tra khuôn mặt ngay trên máy (ảnh không gửi đi đâu ở bước này) ---------- */
+var FACE = { p:null };
+function loadFaceAI(){
+  if (FACE.p) return FACE.p;
+  FACE.p = new Promise(function(res, rej){
+    var sc = document.createElement('script'); sc.src = '/kiemtra/vendor/face-api/face-api.js';
+    sc.onload = async function(){
+      try {
+        var tf = window.faceapi.tf, ok = false;
+        try { ok = await tf.setBackend('webgl'); } catch(e){}
+        if (!ok) await tf.setBackend('cpu');
+        await tf.ready();
+        await window.faceapi.nets.tinyFaceDetector.loadFromUri('/kiemtra/vendor/face-api/model');
+        res(window.faceapi);
+      } catch(e){ rej(e); }
+    };
+    sc.onerror = function(){ rej(new Error('load')); };
+    document.head.appendChild(sc);
+  });
+  FACE.p.catch(function(){ FACE.p = null; });
+  return FACE.p;
+}
+// Trả về { status:'ok'|'noface'|'multi'|'small'|'dark'|'unavailable', faces, score, width }
+// Nhận diện khuôn mặt TRƯỚC; độ sáng chỉ dùng để giải thích khi không thấy mặt (ảnh hơi tối mà rõ mặt vẫn hợp lệ).
+function isDark(canvas){
+  try {
+    var sm = document.createElement('canvas'); sm.width = 32; sm.height = 24; var cx = sm.getContext('2d'); cx.drawImage(canvas, 0, 0, 32, 24);
+    var px = cx.getImageData(0, 0, 32, 24).data, sum = 0; for (var i = 0; i < px.length; i += 4) sum += 0.299*px[i] + 0.587*px[i+1] + 0.114*px[i+2];
+    return sum / (px.length / 4) < 35;
+  } catch(e){ return false; }
+}
+async function checkFace(canvas){
+  var fa; try { fa = await loadFaceAI(); } catch(e){ return { status:'unavailable', faces:null }; }
+  // Ngưỡng thấp để không bỏ sót người thứ hai; khuôn mặt chính vẫn phải rõ (điểm >= 0.5)
+  var all = await fa.detectAllFaces(canvas, new fa.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.35 }));
+  var det = all.filter(function(d){ return d.box.width / canvas.width >= 0.08; }).sort(function(a, b){ return b.score - a.score; });
+  if (!det.length || det[0].score < 0.5) return { status: isDark(canvas) ? 'dark' : 'noface', faces:0 };
+  if (det.length > 1) return { status:'multi', faces:det.length };
+  var w = det[0].box.width / canvas.width, sc2 = Math.round(det[0].score * 100) / 100;
+  if (w < 0.15) return { status:'small', faces:1, score:sc2, width:Math.round(w*100)/100 };
+  return { status:'ok', faces:1, score:sc2, width:Math.round(w*100)/100 };
+}
+var FACE_MSG = {
+  noface: 'Không thấy rõ khuôn mặt trong ảnh. Hãy nhìn thẳng vào camera, để cả khuôn mặt trong khung rồi chụp lại.',
+  multi: 'Ảnh có nhiều hơn một người. Chỉ người làm bài được có mặt trong ảnh, hãy chụp lại.',
+  small: 'Khuôn mặt quá nhỏ hoặc ở quá xa. Đưa camera lại gần hơn rồi chụp lại.',
+  dark: 'Ảnh quá tối (camera bị che hoặc thiếu sáng). Hãy ra chỗ đủ sáng rồi chụp lại.'
+};
+
 /* ---------- Bước 2b: chụp ảnh xác nhận ---------- */
 var PH = { stream:null, dataUrl:'' };
 async function photoInit(){
-  PH.dataUrl = ''; askLocation();
+  PH.dataUrl = ''; PH.face = null; askLocation(); loadFaceAI().catch(function(){}); // tải sẵn bộ nhận diện trong lúc mở camera
   $('pvVideo').classList.remove('hide'); $('pvImg').classList.add('hide');
   $('btnCapture').classList.remove('hide'); $('btnPhotoOk').classList.add('hide'); $('btnPhotoRetry').classList.add('hide');
   msg('photoMsg','');
@@ -544,7 +594,7 @@ async function photoInit(){
 function photoStop(){
   if (PH.stream){ PH.stream.getTracks().forEach(function(t){ t.stop(); }); PH.stream = null; }
 }
-$('btnCapture').addEventListener('click', function(){
+$('btnCapture').addEventListener('click', async function(){
   var v = $('pvVideo'), c = $('pvCanvas');
   if (!v.videoWidth){ msg('photoMsg','Camera chưa sẵn sàng, đợi một chút rồi bấm lại.'); return; }
   c.width = v.videoWidth; c.height = v.videoHeight;
@@ -552,22 +602,28 @@ $('btnCapture').addEventListener('click', function(){
   PH.dataUrl = c.toDataURL('image/jpeg', 0.7);
   $('pvImg').src = PH.dataUrl;
   $('pvImg').classList.remove('hide'); $('pvVideo').classList.add('hide');
-  $('btnCapture').classList.add('hide'); $('btnPhotoOk').classList.remove('hide'); $('btnPhotoRetry').classList.remove('hide');
+  $('btnCapture').classList.add('hide'); $('btnPhotoOk').classList.add('hide'); $('btnPhotoRetry').classList.add('hide');
   photoStop();
-  msg('photoMsg','');
+  msg('photoMsg', 'Đang kiểm tra khuôn mặt trong ảnh…', 'info');
+  var r; try { r = await checkFace(c); } catch(e){ r = { status:'unavailable', faces:null }; }
+  PH.face = r;
+  $('btnPhotoRetry').classList.remove('hide');
+  if (r.status === 'ok'){ msg('photoMsg', '✓ Đã nhận diện được khuôn mặt.', 'ok'); $('btnPhotoOk').classList.remove('hide'); }
+  else if (r.status === 'unavailable'){ msg('photoMsg', 'Không tải được bộ kiểm tra khuôn mặt trên máy này. Ảnh sẽ được kiểm tra khi bắt đầu làm bài.', 'warn'); $('btnPhotoOk').classList.remove('hide'); }
+  else { msg('photoMsg', '⚠ ' + FACE_MSG[r.status], 'err'); }  // không cho bắt đầu, chỉ cho chụp lại
 });
 $('btnPhotoRetry').addEventListener('click', function(){ photoInit(); });
 $('btnPhotoBack').addEventListener('click', function(){ photoStop(); show('confirm'); });
 
 $('btnPhotoOk').addEventListener('click', async function(){
   var btn = $('btnPhotoOk'), label = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Đang chuẩn bị đề…'; msg('photoMsg','');
+  btn.disabled = true; btn.textContent = 'Đang kiểm tra ảnh và chuẩn bị đề…'; msg('photoMsg','');
   var res;
   if (LOC.p) await Promise.race([LOC.p, new Promise(function(r){ setTimeout(r, 6000); })]);
-  try { res = await api('/api/kt-start', { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, device: DEV }); } catch(e){ res = null; }
+  try { res = await api('/api/kt-start', { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, face: PH.face, device: DEV }); } catch(e){ res = null; }
   btn.disabled = false; btn.textContent = label;
   if (!res){ msg('photoMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
-  if (!res.j.ok){ msg('photoMsg', res.j.error || 'Không thể bắt đầu bài kiểm tra.'); return; }
+  if (!res.j.ok){ msg('photoMsg', (res.j.faceRejected ? '⚠ ' : '') + (res.j.error || 'Không thể bắt đầu bài kiểm tra.')); if (res.j.faceRejected){ btn.classList.add('hide'); $('btnPhotoRetry').classList.remove('hide'); } return; }
   ST.attemptId = res.j.attemptId;
   if (res.j.examTitle) $('examTitle').textContent = res.j.examTitle;
   show('quiz');
