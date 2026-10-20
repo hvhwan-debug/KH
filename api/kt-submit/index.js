@@ -15,7 +15,7 @@ module.exports = async function (context, req) {
     const attempt = await quiz.getAttempt(attemptId);
     if (!attempt) return reply(context, 404, { ok: false, error: "Không tìm thấy bài làm." });
     if (attempt.status === "submitted") {
-      const st = await quiz.getSettings();
+      const st = await quiz.getExamSettings(attempt.period || "");
       return reply(context, 200, {
         ok: true, score: attempt.score, total: attempt.total, pct: attempt.pct, passed: quiz.passState(attempt.pct, st),
         compliancePoints: attempt.compliancePoints, already: true, mailOk: attempt.mailOk,
@@ -51,7 +51,7 @@ module.exports = async function (context, req) {
     });
 
     const total = attempt.questionIds.length;
-    const settings = await quiz.getSettings();
+    const settings = await quiz.getExamSettings(attempt.period || "");
     const pct = total ? Math.round((correct / total) * 100) : 0;
     const passed = quiz.passState(pct, settings); // null nếu bài không có ngưỡng đạt
     const scoreOutOf10 = total ? (correct / total) * 10 : 0;

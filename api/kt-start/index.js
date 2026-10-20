@@ -24,7 +24,9 @@ module.exports = async function (context, req) {
     const found = candidates.find((c) => quiz.normCode(c.code) === code && quiz.normEmail(c.email) === email);
     if (!found) { quiz.noteFail(req); return reply(context, 404, { ok: false, error: "Không tìm thấy thí sinh." }); }
 
-    const settings = await quiz.getSettings();
+    const defaultSettings = await quiz.getSettings();
+    const examId = String(b.examId || (req.query && req.query.exam) || defaultSettings.examPeriod);
+    const settings = await quiz.getExamSettings(examId);
     if (!settings.allowRetake) {
       const idx = await quiz.getIndex();
       const prior = idx.find((a) => quiz.normCode(a.code) === code && a.status === "submitted" && (a.period || "") === settings.examPeriod);

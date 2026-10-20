@@ -7,6 +7,7 @@ const Q_KEY = "kt/questions.json";
 const C_KEY = "kt/candidates.json";
 const S_KEY = "kt/settings.json";
 const IDX_KEY = "kt/attempts-index.json";
+const EX_KEY = "kt/exams.json"; // danh sách các đề thi (nhiều đề độc lập, mỗi đề 1 "period"/mã riêng, có cài đặt riêng)
 
 const DEFAULT_SETTINGS = {
   examTitle: "Bài kiểm tra",
@@ -69,7 +70,9 @@ const CATEGORY_BY_SEGMENT = { gia_dung: "Gia dụng", may_loc: "Máy lọc nư�
 // Ngân hàng đề THEO KỲ: mỗi câu hỏi có period ("YYYY-MM"); "" = chưa gắn kỳ.
 // Đề của kỳ P chỉ lấy câu thuộc kỳ P. Nếu kỳ P chưa có câu nào, tạm dùng các câu CHƯA GẮN KỲ (dự phòng),
 // để bài thi không bị gián đoạn khi mới chuyển sang cấu trúc theo kỳ.
-const validPeriod = (p) => p === "" || /^\d{4}-\d{2}$/.test(String(p));
+// Mã đề thi/kỳ: chấp nhận dạng tháng "YYYY-MM" (lặp lại định kỳ) HOẶC một mã tự chọn (vd "thu-nghiem")
+// để mở được NHIỀU đề thi độc lập, không chỉ một đề lặp lại theo tháng.
+const validPeriod = (p) => p === "" || /^\d{4}-\d{2}$/.test(String(p)) || /^[a-z0-9][a-z0-9-]{0,39}$/i.test(String(p));
 function usableQ(q) { return q && q.active !== false && q.text && Array.isArray(q.options) && q.options.length >= 2; }
 // Chuyển đổi một lần: ngân hàng đề cũ (chưa câu nào có kỳ) chính là đề của kỳ đang chạy -> gắn vào kỳ hiện tại.
 async function ensureBankPeriods() {
@@ -140,6 +143,72 @@ async function getSettings() {
   return Object.assign({}, DEFAULT_SETTINGS, (await store.get(S_KEY)) || {});
 }
 async function saveSettings(s) { await store.put(S_KEY, s); }
+
+// ---------- Nhiều đề thi độc lập ----------
+// Mỗi đề thi là MỘT BẢN GHI gắn với một mã "period" riêng (vd "2026-10" cho đề lặp lại theo tháng,
+// hoặc "thu-nghiem" cho một đề thử). Mỗi đề có cài đặt RIÊNG (số câu, thời gian/câu, ngưỡng đạt, điểm
+// tuân thủ...); đề nào không tự nêu cài đặt riêng thì dùng theo cài đặt chung (getSettings()) làm mặc định.
+const OVERRIDABLE_FIELDS = [
+  "examTitle", "shareTitle", "questionCount", "bothGiaDungCount", "secondsPerQuestion",
+  "passEnabled", "passScore", "allowRetake",
+  "complianceEnabled", "complianceHighMin", "complianceMidMin", "complianceLowMin"
+];
+
+async function getExams() { return (await store.get(EX_KEY)) || []; }
+async function saveExams(list) { await store.put(EX_KEY, list); }
+
+// Cài đặt THỰC TẾ áp dụng cho một đề thi cụ thể: lấy cài đặt chung làm nền, đè lên bằng phần đề thi đó tự nêu riêng.
+async function getExamSettings(examId) {
+  const base = await getSettings();
+  const exams = await getExams();
+  const ex = exams.find((e) => e.id === examId);
+  const effective = Object.assign({}, base, ex ? pick(ex, OVERRIDABLE_FIELDS) : {});
+  effective.examPeriod = examId != null ? examId : base.examPeriod;
+  return effective;
+}
+function pick(obj, keys) {
+  const out = {};
+  keys.forEach((k) => { if (obj[k] !== undefined && obj[k] !== null && obj[k] !== "") out[k] = obj[k]; });
+  return out;
+}
+
+// Tạo mới hoặc cập nhật một đề thi (theo id). Validate id và các trường ghi đè trước khi lưu.
+async function upsertExam(data) {
+  const id = String((data && data.id) || "").trim();
+  if (!validPeriod(id) || !id) return { ok: false, error: "Mã đề thi không hợp lệ (chỉ chữ/số/gạch ngang, tối đa 40 ký tự, hoặc dạng năm-tháng)." };
+  const exams = await getExams();
+  const i = exams.findIndex((e) => e.id === id);
+  const now = Date.now();
+  const entry = Object.assign(
+    { id, title: String((data && data.title) || id).trim().slice(0, 150), createdAt: i >= 0 ? exams[i].createdAt : now },
+    pick(data || {}, OVERRIDABLE_FIELDS)
+  );
+  if (i >= 0) exams[i] = Object.assign({}, exams[i], entry); else exams.push(entry);
+  await saveExams(exams);
+  return { ok: true, exam: entry };
+}
+async function deleteExam(id) {
+  const exams = await getExams();
+  const kept = exams.filter((e) => e.id !== id);
+  await saveExams(kept);
+  return exams.length - kept.length;
+}
+
+// Danh sách đề thi để hiển thị (gộp đề đã đăng kí RIÊNG trong kt/exams.json với mọi "period" đã có dữ liệu
+// thật trong ngân hàng đề/kết quả, để không "mất" các kỳ cũ tạo trước khi có màn quản lý đề thi này).
+async function listExamsSummary() {
+  const [exams, questions, idx, settings] = await Promise.all([getExams(), getQuestions(), getIndex(), getSettings()]);
+  const byId = {};
+  exams.forEach((e) => { byId[e.id] = Object.assign({ id: e.id, title: e.title || e.id, questionCount: 0, resultCount: 0 }, byId[e.id]); byId[e.id] = Object.assign({}, e, { questionCount: 0, resultCount: 0 }); });
+  const touch = (id) => {
+    if (!id && id !== "") return;
+    if (!byId[id]) byId[id] = { id, title: id || "(chưa gắn đề)", questionCount: 0, resultCount: 0 };
+  };
+  questions.forEach((q) => { touch(q.period || ""); if (byId[q.period || ""]) byId[q.period || ""].questionCount++; });
+  idx.forEach((r) => { touch(r.period || ""); if (byId[r.period || ""]) byId[r.period || ""].resultCount++; });
+  touch(settings.examPeriod);
+  return Object.values(byId).filter((e) => e.id !== "").sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0) || a.id.localeCompare(b.id));
+}
 
 async function getAttempt(id) {
   if (!id || /[^a-z0-9]/i.test(id)) return null;
@@ -301,6 +370,7 @@ module.exports = {
   getCandidates, saveCandidates,
   getSettings, saveSettings,
   getAttempt, putAttempt, saveIndex, activeForPeriod,
+  getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary,
   getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,
   buildPaper, getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail

@@ -395,6 +395,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 'use strict';
 var $ = function(id){ return document.getElementById(id); };
 var ST = { off:0, res:null, sysT:null, flags:{ blur:0, shot:0 }, cand:null, exam:null, inProgress:null, attemptId:'', q:null, index:0, total:0, secs:60, endsAt:0, timer:null, selected:-1, busy:false, quizOn:false };
+// Mỗi đề thi có thể có link riêng dạng ...?exam=<mã đề>; không truyền thì dùng đúng đề đang đặt mặc định phía máy chủ.
+var EXAM_ID = new URLSearchParams(location.search).get('exam') || '';
 var SCREENS = { check:'scrCheck', confirm:'scrConfirm', photo:'scrPhoto', quiz:'scrQuiz', result:'scrResult' };
 var STEP_OF = { check:1, confirm:2, photo:2, quiz:3, result:4 };
 
@@ -448,7 +450,7 @@ $('scrCheck').addEventListener('submit', async function(e){
   if (!/^\S+@\S+\.\S+$/.test(email)){ msg('checkMsg','Email chưa đúng định dạng.'); $('inEmail').setAttribute('aria-invalid','true'); $('inEmail').focus(); return; }
   var btn = $('btnCheck'); btn.disabled = true; btn.textContent = 'Đang kiểm tra…';
   var res;
-  try { res = await api('/api/kt-check', { code:code, email:email }); }
+  try { res = await api('/api/kt-check', { code:code, email:email, examId:EXAM_ID }); }
   catch(err){ res = null; }
   btn.disabled = false; btn.textContent = 'Tiếp tục';
   if (!res){ msg('checkMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
@@ -620,7 +622,7 @@ $('btnPhotoOk').addEventListener('click', async function(){
   btn.disabled = true; btn.textContent = 'Đang kiểm tra ảnh và chuẩn bị đề…'; msg('photoMsg','');
   var res;
   if (LOC.p) await Promise.race([LOC.p, new Promise(function(r){ setTimeout(r, 6000); })]);
-  try { res = await api('/api/kt-start', { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, face: PH.face, device: DEV }); } catch(e){ res = null; }
+  try { res = await api('/api/kt-start', { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, face: PH.face, device: DEV, examId:EXAM_ID }); } catch(e){ res = null; }
   btn.disabled = false; btn.textContent = label;
   if (!res){ msg('photoMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
   if (!res.j.ok){ msg('photoMsg', (res.j.faceRejected ? '⚠ ' : '') + (res.j.error || 'Không thể bắt đầu bài kiểm tra.')); if (res.j.faceRejected){ btn.classList.add('hide'); $('btnPhotoRetry').classList.remove('hide'); } return; }

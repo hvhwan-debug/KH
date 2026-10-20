@@ -178,6 +178,7 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
   <div class="wrap">
     <section class="khero hide" id="hero" aria-label="Tổng quan nhanh"></section>
     <div class="tabs">
+      <button data-tab="exams" onclick="switchTab('exams')">Đề thi</button>
       <button data-tab="questions" onclick="switchTab('questions')">Ngân hàng đề</button>
       <button data-tab="candidates" onclick="switchTab('candidates')">Thí sinh</button>
       <button data-tab="settings" onclick="switchTab('settings')">Cài đặt</button>
@@ -187,6 +188,48 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
     </div>
 
     <!-- Ngân hàng đề -->
+    <div id="tab-exams" class="tabpane hide">
+      <div class="card">
+        <p class="small">Mỗi đề thi là một bộ cài đặt + ngân hàng đề + kết quả <b>độc lập</b>, có thể mở nhiều đề cùng lúc (ví dụ một đề kiểm tra định kỳ hàng tháng, cùng lúc một đề thi thử riêng). Đề đang đặt <b>mặc định</b> là đề link công khai (không kèm <code>?exam=</code>) sẽ dẫn thí sinh tới.</p>
+      </div>
+      <div class="card hide" id="examFormCard">
+        <h1 id="examFormTitle">Tạo đề thi mới</h1>
+        <input type="hidden" id="exEditingId">
+        <div class="grid2">
+          <div><label>Mã đề thi (dùng trong link, vd thu-nghiem hoặc 2026-11)</label><input type="text" id="exId" placeholder="thu-nghiem"></div>
+          <div><label>Tên đề thi</label><input type="text" id="exTitle" placeholder="Bài thi thử PC"></div>
+          <div><label>Tên rút gọn khi chia sẻ Zalo</label><input type="text" id="exShareTitle"></div>
+          <div><label>Tổng số câu hỏi mỗi đề</label><input type="text" inputmode="numeric" id="exCount"></div>
+          <div><label>Thí sinh bán cả 2 ngành: số câu "Gia dụng" cố định</label><input type="text" inputmode="numeric" id="exBothGD"></div>
+          <div><label>Thời gian tối đa mỗi câu (giây)</label><input type="text" inputmode="numeric" id="exSeconds"></div>
+          <div><label>Điểm đạt (% số câu đúng)</label><input type="text" inputmode="numeric" id="exPass">
+            <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:600"><input type="checkbox" id="exPassOn" style="width:18px;height:18px"> Đề này có ngưỡng đạt</label>
+          </div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:14px"><input type="checkbox" id="exRetake" style="width:18px;height:18px"> Cho phép thí sinh làm lại nhiều lần (đề này)</label>
+        <div class="grid2" style="margin-top:14px">
+          <div><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="exComplianceOn" style="width:18px;height:18px"> Bật điểm tuân thủ học tập (đề này)</label></div>
+          <div></div>
+          <div><label>Điểm ≥ mốc này → 20 điểm</label><input type="text" inputmode="decimal" id="exCHigh"></div>
+          <div><label>Điểm ≥ mốc này → 15 điểm</label><input type="text" inputmode="decimal" id="exCMid"></div>
+          <div><label>Điểm ≥ mốc này → 10 điểm</label><input type="text" inputmode="decimal" id="exCLow"></div>
+        </div>
+        <p class="small">Để trống một ô là đề này dùng theo <b>cài đặt chung</b> (tab Cài đặt) cho mục đó.</p>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn" onclick="saveExam()">Lưu đề thi</button>
+          <button class="btn ghost" onclick="document.getElementById('examFormCard').classList.add('hide')">Huỷ</button>
+        </div>
+        <div id="exMsg"></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <h1 style="margin:0">Danh sách đề thi</h1>
+          <button class="btn" onclick="openNewExam()">+ Tạo đề thi mới</button>
+        </div>
+        <table style="margin-top:14px"><thead><tr><th>Mã đề</th><th>Tên đề thi</th><th>Số câu trong NH đề</th><th>Số bài đã nộp</th><th>Trạng thái</th><th></th></tr></thead><tbody id="exList"></tbody></table>
+      </div>
+    </div>
+
     <div id="tab-questions" class="tabpane hide">
       <div class="card">
         <div class="dash-h"><h1>Ngân hàng đề theo kỳ</h1><p class="small">Đề của mỗi kỳ chỉ lấy câu hỏi thuộc kỳ đó.</p></div>
@@ -519,7 +562,79 @@ function switchTab(t){
   if (t === 'audit') loadAudit();
 }
 
-function loadAll(){ loadQuestions(); loadCandidates(); loadSettings(); loadResults(); loadViewers(); }
+function loadAll(){ loadExams(); loadQuestions(); loadCandidates(); loadSettings(); loadResults(); loadViewers(); }
+
+/* ---------- Nhiều đề thi độc lập ---------- */
+let EXAMS = [];
+async function loadExams(){
+  const { j } = await api('GET','/api/kt-admin?op=exams');
+  if (!j.ok) return;
+  EXAMS = j.exams || [];
+  $('exList').innerHTML = EXAMS.map(e =>
+    '<tr><td><code>'+esc(e.id)+'</code>'+(e.id===j.currentPeriod?' <span class="badge y">Mặc định</span>':'')+'</td>'+
+    '<td>'+esc(e.title||e.id)+'</td><td>'+(e.questionCount||0)+'</td><td>'+(e.resultCount||0)+'</td>'+
+    '<td class="small">'+(e.id===j.currentPeriod?'Đang mở (mặc định)':'Có dữ liệu')+'</td>'+
+    '<td style="white-space:nowrap">'+
+      (e.id!==j.currentPeriod?'<button class="btn ghost sm" onclick="setDefaultExamUI(\''+esc(e.id)+'\')">Đặt mặc định</button> ':'')+
+      '<button class="btn ghost sm" onclick="editExam(\''+esc(e.id)+'\')">Sửa</button> '+
+      (e.id!==j.currentPeriod?'<button class="btn danger sm" onclick="deleteExamUI(\''+esc(e.id)+'\')">Xoá</button>':'')+
+    '</td></tr>'
+  ).join('') || '<tr><td colspan="6" class="small">Chưa có đề thi nào, bấm "+ Tạo đề thi mới" để bắt đầu.</td></tr>';
+}
+function clearExamForm(){
+  $('exEditingId').value=''; $('exId').value=''; $('exId').disabled=false; $('exTitle').value=''; $('exShareTitle').value='';
+  $('exCount').value=''; $('exBothGD').value=''; $('exSeconds').value=''; $('exPass').value=''; $('exPassOn').checked=false;
+  $('exRetake').checked=false; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
+  msg('exMsg','');
+}
+function openNewExam(){
+  clearExamForm();
+  $('examFormTitle').textContent = 'Tạo đề thi mới';
+  $('examFormCard').classList.remove('hide');
+  $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function editExam(id){
+  const e = EXAMS.find(x => x.id === id) || { id };
+  clearExamForm();
+  $('exEditingId').value = id; $('exId').value = id; $('exId').disabled = true;
+  $('exTitle').value = e.title || ''; $('exShareTitle').value = e.shareTitle || '';
+  $('exCount').value = e.questionCount || ''; $('exBothGD').value = e.bothGiaDungCount || '';
+  $('exSeconds').value = e.secondsPerQuestion || ''; $('exPass').value = e.passScore || ''; $('exPassOn').checked = !!e.passEnabled;
+  $('exRetake').checked = !!e.allowRetake; $('exComplianceOn').checked = !!e.complianceEnabled;
+  $('exCHigh').value = e.complianceHighMin || ''; $('exCMid').value = e.complianceMidMin || ''; $('exCLow').value = e.complianceLowMin || '';
+  $('examFormTitle').textContent = 'Sửa đề thi';
+  $('examFormCard').classList.remove('hide');
+  $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function saveExam(){
+  const exam = {
+    id: $('exEditingId').value || $('exId').value.trim(),
+    title: $('exTitle').value.trim(), shareTitle: $('exShareTitle').value.trim(),
+    questionCount: $('exCount').value, bothGiaDungCount: $('exBothGD').value, secondsPerQuestion: $('exSeconds').value,
+    passEnabled: $('exPassOn').checked, passScore: $('exPass').value, allowRetake: $('exRetake').checked,
+    complianceEnabled: $('exComplianceOn').checked, complianceHighMin: $('exCHigh').value, complianceMidMin: $('exCMid').value, complianceLowMin: $('exCLow').value
+  };
+  if (!exam.id){ msg('exMsg','Nhập mã đề thi.'); return; }
+  const { j } = await api('POST','/api/kt-admin', { op:'saveExam', exam });
+  if (!j.ok){ msg('exMsg', j.error, 'err'); return; }
+  msg('exMsg','Đã lưu đề thi.','ok');
+  EXAMS = j.exams;
+  $('examFormCard').classList.add('hide');
+  loadExams();
+}
+async function setDefaultExamUI(id){
+  if (!confirm('Đặt "'+id+'" làm đề thi mặc định (link công khai không kèm ?exam= sẽ dẫn tới đề này)?')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'setDefaultExam', id });
+  if (!j.ok){ alert(j.error); return; }
+  await loadExams(); await loadSettings();
+}
+async function deleteExamUI(id){
+  if (!confirm('Xoá đề thi "'+id+'"? Chỉ xoá bản ghi cài đặt riêng của đề, không xoá câu hỏi/kết quả đã có.')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'deleteExam', id });
+  if (!j.ok){ alert(j.error); return; }
+  EXAMS = j.exams;
+  loadExams();
+}
 
 /* ---------- Ngân hàng đề ---------- */
 let QUESTIONS = [];

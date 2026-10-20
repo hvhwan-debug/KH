@@ -40,6 +40,7 @@ const handler = async function (context, req) {
       }
       if (op === "candidates") return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; return o; }) });
       if (op === "settings") return reply(context, 200, { ok: true, settings: await quiz.getSettings() });
+      if (op === "exams") return reply(context, 200, { ok: true, exams: await quiz.listExamsSummary(), currentPeriod: (await quiz.getSettings()).examPeriod });
       if (op === "results") {
         const st = await quiz.getSettings();
         const all = await quiz.getIndex();
@@ -366,10 +367,33 @@ const handler = async function (context, req) {
         complianceHighMin: Math.min(10, Math.max(0, parseFloat(b.complianceHighMin) || 0)),
         complianceMidMin: Math.min(10, Math.max(0, parseFloat(b.complianceMidMin) || 0)),
         complianceLowMin: Math.min(10, Math.max(0, parseFloat(b.complianceLowMin) || 0)),
-        examPeriod: /^\d{4}-\d{2}$/.test(String(b.examPeriod || "").trim()) ? String(b.examPeriod).trim() : cur.examPeriod
+        examPeriod: quiz.validPeriod(String(b.examPeriod || "").trim()) && String(b.examPeriod || "").trim() ? String(b.examPeriod).trim() : cur.examPeriod
       });
       await quiz.saveSettings(next);
       return reply(context, 200, { ok: true, settings: next });
+    }
+
+    // ---------- Nhiều đề thi độc lập ----------
+    if (op === "saveExam") {
+      const r = await quiz.upsertExam(b.exam || b);
+      if (!r.ok) return reply(context, 400, r);
+      return reply(context, 200, { ok: true, exam: r.exam, exams: await quiz.listExamsSummary() });
+    }
+
+    if (op === "deleteExam") {
+      const id = String(b.id || "");
+      if (!id) return reply(context, 400, { ok: false, error: "Thiếu mã đề thi." });
+      if (id === (await quiz.getSettings()).examPeriod) return reply(context, 400, { ok: false, error: "Không thể xoá đề đang đặt làm mặc định. Hãy đặt đề khác làm mặc định trước." });
+      await quiz.deleteExam(id);
+      return reply(context, 200, { ok: true, exams: await quiz.listExamsSummary() });
+    }
+
+    if (op === "setDefaultExam") {
+      const id = String(b.id || "").trim();
+      if (!quiz.validPeriod(id) || !id) return reply(context, 400, { ok: false, error: "Mã đề thi không hợp lệ." });
+      const cur = await quiz.getSettings();
+      await quiz.saveSettings(Object.assign({}, cur, { examPeriod: id }));
+      return reply(context, 200, { ok: true, examPeriod: id });
     }
 
     return reply(context, 400, { ok: false, error: "Thao tác không hợp lệ." });

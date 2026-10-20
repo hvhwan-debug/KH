@@ -23,9 +23,12 @@ module.exports = async function (context, req) {
       return reply(context, 404, { ok: false, error: "Không tìm thấy thông tin khớp với mã nhân viên và email đã nhập. Kiểm tra lại hoặc liên hệ quản trị viên." });
     }
 
-    const settings = await quiz.getSettings();
+    const defaultSettings = await quiz.getSettings();
+    const examId = String(b.examId || (req.query && req.query.exam) || defaultSettings.examPeriod);
+    const settings = await quiz.getExamSettings(examId);
     const candidate = { code: found.code, name: found.name, email: found.email, manager: found.manager || "" };
     const exam = {
+      id: examId,
       title: settings.examTitle,
       shareTitle: String(settings.shareTitle || "").trim() || settings.examTitle,
       questionCount: settings.questionCount,
