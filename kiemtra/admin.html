@@ -95,7 +95,7 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
 .autab .t{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--muted)}
 .autab .who b{display:block;font-weight:600}.autab .who small{color:var(--muted);font-size:12px}
 .rb{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;margin-top:3px}
-.rb.admin{background:#E7E3FF;color:#4B3BB8}.rb.manager{background:#DDF1EF;color:#067A8C}
+.rb.admin{background:#E7E3FF;color:#4B3BB8}.rb.system{background:#EEF3F5;color:#5B7471}.rb.manager{background:#DDF1EF;color:#067A8C}
 .kd{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
 .kd.change{background:#E0A030}.kd.read{background:#9DB4B9}.kd.export{background:#6D5BF6}.kd.auth{background:#02A79E}.kd.denied{background:var(--bad)}
 .autab tr.denied td{background:#FFF6F5}
@@ -115,6 +115,18 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
 .khero-kpi span{font-size:12px;opacity:.9}
 .khero-kpi b,.khero-kpi span,.khero-t,.khero-s,.khero-eb{text-shadow:0 1px 8px rgba(0,25,22,.65)}
 @media (max-width:700px){.khero{padding:20px 18px}.khero-t{font-size:21px}.khero-in{padding-right:64px}.khero-kpi{position:absolute;right:16px;top:16px}.khero-kpi b{font-size:22px}.khero-kpi span{font-size:10.5px;display:block;max-width:64px;line-height:1.2}}
+.qper{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.qper button[data-p]{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;font:inherit;cursor:pointer;text-align:left;min-width:120px}
+.qper button[data-p] b{display:block;font-size:14px;color:var(--ink)}.qper button span{font-size:12px;color:var(--muted)}
+.qper button[data-p][aria-selected=true]{border-color:var(--brand-deep);background:#E9F6F6;box-shadow:0 0 0 2px rgba(6,122,140,.12)}
+.qper button.cur b::after{content:' • hiện tại';font-size:11px;font-weight:700;color:var(--brand-deep)}
+.qper button.un b{color:var(--warn)}
+.qper .add{display:flex;gap:6px;align-items:center}.qper .add input{width:150px;padding:7px 10px}
+.qready{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13px}
+.qready .row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid #EEF3F5}.qready .row:first-of-type{border-top:0}
+.qready .ok{color:var(--ok);font-weight:700}.qready .bad{color:var(--warn);font-weight:700}
+.qready .hd{font-weight:700;margin-bottom:4px}
+.qtools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.qtools select{width:auto;min-width:150px}
 .hide{display:none!important}
 </style>
 </head>
@@ -162,12 +174,25 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
     <!-- Ngân hàng đề -->
     <div id="tab-questions" class="tabpane hide">
       <div class="card">
+        <div class="dash-h"><h1>Ngân hàng đề theo kỳ</h1><p class="small">Đề của mỗi kỳ chỉ lấy câu hỏi thuộc kỳ đó.</p></div>
+        <div class="qper" id="qPerList" role="tablist" aria-label="Chọn kỳ"></div>
+        <div id="qUnassigned"></div>
+        <div class="qready" id="qReady"></div>
+        <div class="qtools">
+          <span class="small">Sao chép đề từ</span><select id="qCopyFrom" aria-label="Kỳ nguồn"></select><span class="small">vào kỳ đang chọn</span>
+          <button class="btn ghost sm" type="button" onclick="copyQuestions()">⧉ Sao chép</button>
+        </div>
+        <div id="qPerMsg"></div>
+      </div>
+      <div class="card">
         <h1 id="qFormTitle">Thêm câu hỏi mới</h1>
         <input type="hidden" id="qEditId">
         <label>Nội dung câu hỏi</label>
         <textarea id="qText" placeholder="Nhập nội dung câu hỏi…"></textarea>
         <label>Phân loại (tuỳ chọn)</label>
         <input type="text" id="qCategory" placeholder="VD: Nghiệp vụ, An toàn lao động...">
+        <label>Thuộc kỳ</label>
+        <select id="qPeriod" aria-label="Kỳ của câu hỏi"></select>
         <label>Các phương án trả lời (chọn nút tròn cho đáp án đúng)</label>
         <div id="qOptsEdit"></div>
         <button class="btn ghost sm" onclick="addOptRow()">+ Thêm phương án</button>
@@ -178,7 +203,7 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
         <div id="qMsg"></div>
       </div>
       <div class="card">
-        <h1>Nhập câu hỏi hàng loạt</h1>
+        <h1>Nhập câu hỏi hàng loạt <span class="small" id="qBulkPer" style="font-weight:600"></span></h1>
         <p class="small">Dán vào đây một mảng JSON các câu hỏi, dạng <code>[{"text":"...","options":["A","B","C","D"],"correctIndex":0,"category":"Gia dụng"}, ...]</code>. <code>correctIndex</code> đếm từ 0 (0=phương án đầu tiên).</p>
         <textarea id="qBulkText" style="min-height:120px" placeholder='[{"text":"Câu hỏi...","options":["A","B","C","D"],"correctIndex":0,"category":"Gia dụng"}]'></textarea>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
@@ -190,8 +215,8 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
       </div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <h1 style="margin:0">Danh sách câu hỏi (<span id="qCount">0</span>)</h1>
-          <button class="btn danger sm" id="btnDelAllQ" onclick="deleteAllQuestions()">🗑 Xoá tất cả câu hỏi</button>
+          <h1 style="margin:0"><span id="qListTitle">Danh sách câu hỏi</span> (<span id="qCount">0</span>)</h1>
+          <button class="btn danger sm" id="btnDelAllQ" onclick="deleteAllQuestions()">🗑 Xoá tất cả câu hỏi của kỳ này</button>
         </div>
         <div id="qBackupBar"></div>
         <div id="qDelMsg"></div>
@@ -451,7 +476,7 @@ function renderAudit(){
   $('auSum').innerHTML = '<span><b>' + AU.length + '</b> thao tác · <b>' + people + '</b> người</span>' + Object.keys(AUK).filter(k => cnt[k]).map(k => '<span><i class="kd ' + k + '"></i>' + AUK[k] + ' <b>' + cnt[k] + '</b></span>').join('') +
     (L.length !== AU.length ? '<span>Đang lọc: <b>' + L.length + '</b></span>' : '');
   $('auList').innerHTML = L.map(x => '<tr class="' + (x.kind === 'denied' ? 'denied' : '') + '"><td class="t">' + esc(new Date(x.ts).toLocaleTimeString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour12:false})) + '</td>' +
-    '<td class="who"><b>' + esc(x.name || x.by) + '</b>' + (x.name && x.name !== x.by ? '<small>' + esc(x.by) + '</small>' : '') + '<br><span class="rb ' + x.role + '">' + (x.role === 'admin' ? 'Quản trị viên' : 'Quản lí') + '</span></td>' +
+    '<td class="who"><b>' + esc(x.name || x.by) + '</b>' + (x.name && x.name !== x.by ? '<small>' + esc(x.by) + '</small>' : '') + '<br><span class="rb ' + x.role + '">' + (x.role === 'admin' ? 'Quản trị viên' : x.role === 'system' ? 'Hệ thống' : 'Quản lí') + '</span></td>' +
     '<td><span class="kd ' + esc(x.kind) + '" title="' + esc(AUK[x.kind]||'') + '"></span>' + esc(x.label) + (x.ok === false && x.kind !== 'denied' ? ' <span class="badge n">lỗi</span>' : '') + (x.kind === 'denied' ? ' <span class="badge n">bị từ chối</span>' : '') + '</td>' +
     '<td class="det">' + auDet(x) + '</td><td class="dv">' + esc(x.ip || '–') + '<br>' + esc(x.dev || '') + '</td></tr>').join('') ||
     '<tr><td colspan="5" class="small">' + (AU.length ? 'Không có thao tác nào khớp bộ lọc.' : 'Chưa có thao tác nào trong ngày này.') + '</td></tr>';
@@ -466,7 +491,7 @@ $('auXlsx').addEventListener('click', async function(){
   ws.columns = [{ header:'Thời gian', key:'t', width:20 }, { header:'Email', key:'by', width:28 }, { header:'Tên', key:'name', width:22 }, { header:'Vai trò', key:'role', width:14 },
     { header:'Loại', key:'kind', width:12 }, { header:'Thao tác', key:'label', width:34 }, { header:'Chi tiết', key:'det', width:70 }, { header:'Kết quả', key:'st', width:10 }, { header:'IP', key:'ip', width:16 }, { header:'Thiết bị', key:'dev', width:26 }];
   ws.getRow(1).font = { bold:true, color:{ argb:'FFFFFFFF' } }; ws.getRow(1).eachCell(c => { c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF067A8C' } }; });
-  auFiltered().forEach(x => { const r = ws.addRow({ t: new Date(x.ts).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour12:false}), by:x.by, name:x.name||'', role: x.role === 'admin' ? 'Quản trị viên' : 'Quản lí',
+  auFiltered().forEach(x => { const r = ws.addRow({ t: new Date(x.ts).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour12:false}), by:x.by, name:x.name||'', role: x.role === 'admin' ? 'Quản trị viên' : x.role === 'system' ? 'Hệ thống' : 'Quản lí',
     kind: AUK[x.kind] || x.kind, label: x.label, det: auDet(x).replace(/<[^>]+>/g,''), st: x.status, ip: x.ip||'', dev: x.dev||'' }); r.getCell('det').alignment = { wrapText:true, vertical:'top' }; });
   const buf = await wb.xlsx.writeBuffer(), a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })); a.download = 'nhat-ky-thao-tac-' + $('auDay').value + '.xlsx';
@@ -492,21 +517,79 @@ function addOptRow(checked){
 }
 function clearQForm(){
   $('qEditId').value=''; $('qText').value=''; $('qCategory').value='';
-  $('qOptsEdit').innerHTML=''; $('qFormTitle').textContent='Thêm câu hỏi mới';
+  $('qOptsEdit').innerHTML=''; $('qFormTitle').textContent='Thêm câu hỏi mới vào ' + qPerLabel(QP || '').toLowerCase();
+  if ($('qPeriod').options.length) $('qPeriod').value = QP || '';
   for (let i=0;i<4;i++) addOptRow(i===0);
   msg('qMsg','');
+}
+let QP = null, QMETA = {};
+const qPerLabel = (p) => p ? 'Tháng ' + p.slice(5) + '/' + p.slice(0,4) : 'Chưa gắn kỳ';
+function qPeriods(){
+  const set = new Set(QUESTIONS.map(q => q.period || '').filter(Boolean));
+  if (QMETA.currentPeriod) set.add(QMETA.currentPeriod); if (QP) set.add(QP);
+  return Array.from(set).sort().reverse();
 }
 async function loadQuestions(){
   const { j } = await api('GET','/api/kt-admin?op=questions');
   if (!j.ok) return;
-  QUESTIONS = j.questions;
-  $('qCount').textContent = QUESTIONS.length;
-  $('qList').innerHTML = QUESTIONS.map(q =>
-    '<tr><td>'+esc(q.text.slice(0,70))+(q.text.length>70?'…':'')+'</td><td>'+esc(q.category||'')+'</td><td>'+(q.active!==false?'<span class="badge y">Đang dùng</span>':'<span class="badge n">Đã ẩn</span>')+'</td>'+
-    '<td><button class="btn ghost sm" onclick="editQuestion(\''+q.id+'\')">Sửa</button> <button class="btn danger sm" onclick="deleteQuestion(\''+q.id+'\')">Xoá</button></td></tr>'
-  ).join('') || '<tr><td colspan="4" class="small">Chưa có câu hỏi nào.</td></tr>';
+  QUESTIONS = j.questions; QMETA = j;
+  if (QP === null) QP = j.currentPeriod || '';
+  renderQuestions();
   if (!$('qOptsEdit').children.length) clearQForm();
   loadQBackup();
+}
+function qReadiness(list, isCur){
+  const act = list.filter(q => q.active !== false), Q = +QMETA.questionCount || act.length, G = +QMETA.bothGiaDungCount || 0;
+  const gd = act.filter(q => q.category === 'Gia dụng').length, ml = act.filter(q => q.category === 'Máy lọc nước').length, other = act.length - gd;
+  const row = (name, have, need) => '<div class="row"><span>' + name + '</span><span class="' + (have >= need ? 'ok' : 'bad') + '">' + (have >= need ? '✓ đủ (' + have + ' câu)' : '⚠ thiếu ' + (need - have) + ' câu, đề chỉ có ' + have + '/' + need) + '</span></div>';
+  return '<div class="hd">Đủ câu để ra đề ' + Q + ' câu chưa?</div>' +
+    row('Nhân viên bán Gia dụng (cần ' + Q + ' câu "Gia dụng")', gd, Q) +
+    row('Nhân viên bán Máy lọc nước (cần ' + Q + ' câu "Máy lọc nước")', ml, Q) +
+    row('Nhân viên bán cả hai ngành (cần ' + G + ' câu Gia dụng + ' + Math.max(Q - G, 0) + ' câu khác)', Math.min(gd, G) + Math.min(other, Math.max(Q - G, 0)), Q);
+}
+function renderQuestions(){
+  const cur = QMETA.currentPeriod || '', pers = qPeriods(), un = QUESTIONS.filter(q => !q.period);
+  const cnt = (p) => QUESTIONS.filter(q => (q.period || '') === p);
+  $('qPerList').innerHTML = pers.map(p => { const L = cnt(p), a = L.filter(q => q.active !== false).length;
+      return '<button type="button" role="tab" aria-selected="' + (p === QP) + '" class="' + (p === cur ? 'cur' : '') + '" data-p="' + esc(p) + '"><b>' + qPerLabel(p) + '</b><span>' + L.length + ' câu' + (L.length !== a ? ', ' + a + ' đang dùng' : '') + '</span></button>'; }).join('') +
+    (un.length ? '<button type="button" role="tab" aria-selected="' + (QP === '') + '" class="un" data-p=""><b>Chưa gắn kỳ</b><span>' + un.length + ' câu (dự phòng)</span></button>' : '') +
+    '<span class="add"><input type="month" id="qNewPer" aria-label="Kỳ mới"><button class="btn ghost sm" type="button" id="qAddPer">+ Kỳ mới</button></span>';
+  document.querySelectorAll('#qPerList button[data-p]').forEach(b => b.onclick = () => { QP = b.dataset.p; renderQuestions(); clearQForm(); });
+  $('qAddPer').onclick = () => { const v = $('qNewPer').value; if (!/^\d{4}-\d{2}$/.test(v)){ alert('Chọn tháng của kỳ mới.'); return; } QP = v; renderQuestions(); clearQForm(); msg('qPerMsg','Đã mở kỳ ' + qPerLabel(v) + '. Thêm câu hỏi, nhập hàng loạt hoặc sao chép đề từ kỳ khác vào kỳ này.','ok'); };
+  // Câu chưa gắn kỳ
+  $('qUnassigned').innerHTML = (un.length && QP) ? '<div class="banner"><span class="sp"><b>' + un.length + ' câu hỏi chưa gắn kỳ</b> (tạo trước khi có ngân hàng đề theo kỳ).' + (!cnt(cur).length ? ' Kỳ hiện tại chưa có câu riêng nên đề đang tạm lấy từ nhóm câu này.' : ' Nhóm câu này không còn được dùng cho kỳ hiện tại.') + '</span><button class="btn sm" type="button" id="qMoveUn">Chuyển vào ' + qPerLabel(QP).toLowerCase() + '</button></div>' : '';
+  if (un.length && QP) $('qMoveUn').onclick = () => moveQuestions('', QP);
+  // Mức sẵn sàng của kỳ đang chọn
+  const L = cnt(QP), fallback = QP === cur && !L.filter(q => q.active !== false).length && un.length;
+  $('qReady').innerHTML = (QP === '' ? '<div class="hd">Câu chưa gắn kỳ chỉ dùng làm dự phòng khi kỳ hiện tại chưa có câu riêng.</div>' :
+    (fallback ? '<div class="hd" style="color:var(--warn)">⚠ Kỳ hiện tại chưa có câu riêng, đề đang tạm dùng ' + un.length + ' câu chưa gắn kỳ.</div>' : '') + qReadiness(fallback ? un : L, QP === cur)) +
+    (QP && QP !== cur ? '<p class="small" style="margin:8px 0 0">' + (QP > cur ? 'Kỳ sắp tới: chuẩn bị sẵn đề, rồi đổi "Kỳ hiện tại" trong tab Cài đặt khi bắt đầu kỳ.' : 'Kỳ đã qua: đề được giữ lại để đối chiếu.') + '</p>' : '');
+  $('qCopyFrom').innerHTML = pers.filter(p => p !== QP).concat(un.length && QP !== '' ? [''] : []).map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + ' (' + cnt(p).length + ' câu)</option>').join('') || '<option value="">Chưa có kỳ khác</option>';
+  // Danh sách
+  $('qListTitle').textContent = 'Câu hỏi ' + (QP ? 'kỳ ' + qPerLabel(QP).replace('Tháng ','') : 'chưa gắn kỳ');
+  $('qBulkPer').textContent = '→ vào ' + qPerLabel(QP).toLowerCase();
+  $('qCount').textContent = L.length;
+  $('qList').innerHTML = L.map(q =>
+    '<tr><td>'+esc(q.text.slice(0,70))+(q.text.length>70?'…':'')+'</td><td>'+esc(q.category||'')+'</td><td>'+(q.active!==false?'<span class="badge y">Đang dùng</span>':'<span class="badge n">Đã ẩn</span>')+'</td>'+
+    '<td><button class="btn ghost sm" onclick="editQuestion(\''+q.id+'\')">Sửa</button> <button class="btn danger sm" onclick="deleteQuestion(\''+q.id+'\')">Xoá</button></td></tr>'
+  ).join('') || '<tr><td colspan="4" class="small">Kỳ này chưa có câu hỏi. Thêm câu mới, nhập hàng loạt hoặc sao chép từ kỳ khác.</td></tr>';
+  $('qPeriod').innerHTML = pers.map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + (p === cur ? ' (hiện tại)' : '') + '</option>').join('') + (un.length ? '<option value="">Chưa gắn kỳ</option>' : '');
+  $('qPeriod').value = QP;
+}
+async function copyQuestions(){
+  const from = $('qCopyFrom').value; if (!QP){ alert('Chọn kỳ đích (không phải "Chưa gắn kỳ").'); return; }
+  const n = QUESTIONS.filter(q => (q.period || '') === from).length; if (!n){ alert('Kỳ nguồn chưa có câu hỏi.'); return; }
+  if (!confirm('Sao chép ' + n + ' câu từ ' + qPerLabel(from).toLowerCase() + ' vào ' + qPerLabel(QP).toLowerCase() + '?\nCâu trùng nội dung đã có ở kỳ đích sẽ được bỏ qua. Bản sao là câu riêng: sửa ở kỳ này không ảnh hưởng kỳ kia.')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'copyQuestions', from, to: QP });
+  if (!j.ok){ msg('qPerMsg', j.error || 'Không sao chép được.'); return; }
+  QUESTIONS = j.questions; renderQuestions(); msg('qPerMsg','Đã sao chép ' + j.added + ' câu' + (j.skipped ? ', bỏ qua ' + j.skipped + ' câu trùng' : '') + '.','ok');
+}
+async function moveQuestions(from, to){
+  const n = QUESTIONS.filter(q => (q.period || '') === from).length;
+  if (!confirm('Chuyển ' + n + ' câu ' + qPerLabel(from).toLowerCase() + ' vào ' + qPerLabel(to).toLowerCase() + '?')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'moveQuestions', from, to });
+  if (!j.ok){ msg('qPerMsg', j.error || 'Không chuyển được.'); return; }
+  QUESTIONS = j.questions; renderQuestions(); msg('qPerMsg','Đã chuyển ' + j.moved + ' câu vào ' + qPerLabel(to).toLowerCase() + '.','ok');
 }
 async function loadQBackup(){
   const { j } = await api('GET','/api/kt-admin?op=questionsBackup');
@@ -526,19 +609,19 @@ async function deleteAllQuestions(){
   const btn = $('btnDelAllQ'); msg('qDelMsg','');
   btn.disabled = true;
   try {
-    const { j: pv } = await api('GET','/api/kt-admin?op=deleteAllPreview');
+    const { j: pv } = await api('GET','/api/kt-admin?op=deleteAllPreview&period=' + encodeURIComponent(QP || ''));
     if (!pv.ok){ alert(pv.error || 'Không kiểm tra được ngân hàng đề.'); return; }
     if (!pv.count){ alert('Ngân hàng đề đang trống, không có gì để xoá.'); return; }
-    let m = 'XOÁ TẤT CẢ ' + pv.count + ' câu hỏi trong ngân hàng đề?\n\n';
-    if (pv.inProgress) m += '⚠ Đang có ' + pv.inProgress + ' thí sinh làm bài dở: bài của họ sẽ kết thúc ngay và bị tính điểm 0.\n\n';
+    let m = 'XOÁ TẤT CẢ ' + pv.count + ' câu hỏi của ' + qPerLabel(QP || '').toLowerCase() + '?\n(Câu hỏi các kỳ khác giữ nguyên.)\n\n';
+    if (pv.inProgress && QP === (QMETA.currentPeriod || '')) m += '⚠ Đang có ' + pv.inProgress + ' thí sinh làm bài dở: bài của họ sẽ kết thúc ngay và bị tính điểm 0.\n\n';
     m += 'Hệ thống tự sao lưu trước khi xoá nên bạn có thể khôi phục lại.\n\nGõ đúng cụm  XOA TAT CA  để xác nhận:';
     const typed = prompt(m);
     if (typed === null) return;
     const norm = typed.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').trim().toUpperCase();
     if (norm !== 'XOA TAT CA'){ alert('Chưa đúng cụm xác nhận, không xoá gì cả.'); return; }
-    const { j } = await api('POST','/api/kt-admin', { op:'deleteAllQuestions', confirm:'XOA TAT CA', expected: pv.count });
+    const { j } = await api('POST','/api/kt-admin', { op:'deleteAllQuestions', confirm:'XOA TAT CA', expected: pv.count, period: QP || '' });
     if (!j.ok){ msg('qDelMsg', j.error || 'Không xoá được.'); return; }
-    QUESTIONS = []; await loadQuestions();
+    await loadQuestions();
     msg('qDelMsg','Đã xoá ' + j.deleted + ' câu hỏi. Bạn có thể khôi phục bằng nút ở trên nếu xoá nhầm.','ok');
   } finally { btn.disabled = false; }
 }
@@ -546,7 +629,7 @@ function editQuestion(id){
   const q = QUESTIONS.find(x => x.id===id);
   if (!q) return;
   $('qEditId').value = q.id; $('qText').value = q.text; $('qCategory').value = q.category||'';
-  $('qFormTitle').textContent = 'Sửa câu hỏi';
+  $('qFormTitle').textContent = 'Sửa câu hỏi'; $('qPeriod').value = q.period || '';
   $('qOptsEdit').innerHTML='';
   q.options.forEach((o,i) => {
     const row = document.createElement('div');
@@ -579,7 +662,8 @@ async function addQuestionsBulk(){
   let questions;
   try { questions = JSON.parse(raw); if (!Array.isArray(questions)) throw new Error('not array'); }
   catch(e){ msg('qBulkMsg','JSON không hợp lệ — kiểm tra lại định dạng.'); return; }
-  const { j } = await api('POST','/api/kt-admin', { op:'addQuestions', questions });
+  if (!QP && !confirm('Đang chọn "Chưa gắn kỳ". Nhập các câu này mà không gắn kỳ nào?')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'addQuestions', questions, period: QP || '' });
   if (!j.ok){ msg('qBulkMsg', j.error, 'err'); return; }
   msg('qBulkMsg', 'Đã thêm '+j.added+' câu hỏi'+(j.skipped?', bỏ qua '+j.skipped+' câu thiếu dữ liệu':'')+'.', 'ok');
   $('qBulkText').value='';
@@ -590,7 +674,7 @@ async function saveQuestion(){
   const options = Array.from(document.querySelectorAll('#qOptsEdit .opt-row')).map(r => r.querySelector('input[type=text]').value.trim());
   const checkedEl = document.querySelector('#qOptsEdit input[type=radio]:checked');
   const correctIndex = checkedEl ? +checkedEl.value : -1;
-  const question = { id: $('qEditId').value||undefined, text: $('qText').value.trim(), category: $('qCategory').value.trim(), options, correctIndex };
+  const question = { id: $('qEditId').value||undefined, text: $('qText').value.trim(), category: $('qCategory').value.trim(), options, correctIndex, period: $('qPeriod').value || (QP || '') };
   const { j } = await api('POST','/api/kt-admin', { op:'saveQuestion', question });
   if (!j.ok){ msg('qMsg', j.error, 'err'); return; }
   msg('qMsg','Đã lưu.','ok');
@@ -667,7 +751,11 @@ async function loadSettings(){
 async function saveSettings(){
   const period = $('setPeriod').value.trim();
   if (period && !/^\d{4}-\d{2}$/.test(period)){ msg('setPeriodMsg','Kỳ phải theo định dạng năm-tháng, ví dụ 2026-10.'); return; }
-  if (period && period !== CUR_PERIOD && !confirm('Đổi kỳ kiểm tra sang "'+period+'"? Mọi thí sinh sẽ được làm lại bài từ đầu (kết quả kỳ cũ vẫn giữ nguyên).')) return;
+  if (period && period !== CUR_PERIOD){
+    const own = QUESTIONS.filter(q => q.period === period && q.active !== false).length, un = QUESTIONS.filter(q => !q.period && q.active !== false).length;
+    const w = own ? 'Ngân hàng đề kỳ này có ' + own + ' câu.' : '⚠ Kỳ ' + period + ' CHƯA có câu hỏi riêng: ' + (un ? 'đề sẽ tạm dùng ' + un + ' câu chưa gắn kỳ.' : 'thí sinh sẽ KHÔNG làm được bài.') + ' Bạn có thể sao chép đề từ kỳ khác ở tab Ngân hàng đề.';
+    if (!confirm('Đổi kỳ kiểm tra sang "'+period+'"? Mọi thí sinh sẽ được làm lại bài từ đầu (kết quả kỳ cũ vẫn giữ nguyên).\n\n' + w)) return;
+  }
   const { j } = await api('POST','/api/kt-admin', {
     op:'saveSettings', examPeriod: period, examTitle: $('setTitle').value, shareTitle: $('setShareTitle').value, questionCount: $('setCount').value, bothGiaDungCount: $('setBothGD').value,
     secondsPerQuestion: $('setSeconds').value, passEnabled: $('setPassOn').checked, passScore: $('setPass').value, allowRetake: $('setRetake').checked,

@@ -31,6 +31,7 @@ module.exports = async function (context, req) {
       if (prior) return reply(context, 409, { ok: false, error: "Bạn đã hoàn thành bài kiểm tra này rồi." });
     }
 
+    await quiz.ensureBankPeriods();
     const allQuestions = await quiz.getQuestions();
     const byId = {};
     allQuestions.forEach((q) => { byId[q.id] = q; });
@@ -43,7 +44,10 @@ module.exports = async function (context, req) {
     // 2) Chưa có -> tạo đề mới. Bắt buộc có ảnh xác nhận trước khi tạo đề (không áp dụng khi làm tiếp bài đang dở).
     if (!attempt) {
       if (!photo) return reply(context, 400, { ok: false, error: "Cần chụp ảnh xác nhận trước khi bắt đầu làm bài." });
-      const activeQuestions = allQuestions.filter((q) => q.active !== false && q.text && Array.isArray(q.options) && q.options.length >= 2);
+      // Chỉ lấy câu hỏi thuộc ngân hàng đề của KỲ HIỆN TẠI (dự phòng: câu chưa gắn kỳ nếu kỳ này chưa có câu riêng)
+      const bank = quiz.bankFor(allQuestions, settings.examPeriod);
+      const activeQuestions = bank.list;
+      if (!activeQuestions.length) return reply(context, 503, { ok: false, error: "Ngân hàng đề kỳ này chưa có câu hỏi, liên hệ quản trị viên." });
       // Nhóm ngành quyết định đề trộn từ nhóm câu hỏi nào:
       // - bán 1 ngành -> chỉ lấy câu thuộc danh mục ngành đó.
       // - bán cả 2 ngành -> số câu "Gia dụng" cố định, phần còn lại lấy từ mọi danh mục khác.

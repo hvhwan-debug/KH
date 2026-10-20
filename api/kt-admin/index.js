@@ -16,7 +16,11 @@ const handler = async function (context, req) {
 
     if (req.method === "GET") {
       const op = (req.query && req.query.op) || "";
-      if (op === "questions") return reply(context, 200, { ok: true, questions: await quiz.getQuestions() });
+      if (op === "questions") {
+        await quiz.ensureBankPeriods();
+        const st = await quiz.getSettings();
+        return reply(context, 200, { ok: true, questions: await quiz.getQuestions(), currentPeriod: st.examPeriod, questionCount: st.questionCount, bothGiaDungCount: st.bothGiaDungCount });
+      }
       if (op === "questionsBackup") {
         const bk = await quiz.getQuestionsBackup();
         return reply(context, 200, { ok: true, backup: bk && Array.isArray(bk.questions) ? { count: bk.questions.length, at: bk.at } : null });
@@ -24,7 +28,7 @@ const handler = async function (context, req) {
       if (op === "deleteAllPreview") {
         const bk = await quiz.getQuestionsBackup();
         return reply(context, 200, {
-          ok: true, count: (await quiz.getQuestions()).length, inProgress: await quiz.countInProgress(),
+          ok: true, count: (await quiz.getQuestions()).filter((q) => typeof req.query.period !== "string" || (q.period || "") === req.query.period).length, inProgress: await quiz.countInProgress(),
           backup: bk && Array.isArray(bk.questions) ? { count: bk.questions.length, at: bk.at } : null
         });
       }
@@ -143,12 +147,14 @@ const handler = async function (context, req) {
       if (!text || options.length < 2 || correctIndex < 0 || correctIndex >= options.length) {
         return reply(context, 400, { ok: false, error: "Câu hỏi cần có nội dung, ít nhất 2 phương án, và chọn đúng 1 đáp án đúng hợp lệ." });
       }
+      // Kỳ của câu hỏi: lấy theo yêu cầu; câu mới không nêu kỳ thì vào kỳ hiện tại
+      const per = quiz.validPeriod(q.period) && typeof q.period === "string" ? q.period : undefined;
       if (q.id) {
         const i = list.findIndex((x) => x.id === q.id);
         if (i < 0) return reply(context, 404, { ok: false, error: "Không tìm thấy câu hỏi." });
-        list[i] = Object.assign({}, list[i], { text, options, correctIndex, category: String(q.category || "").slice(0, 100), active: q.active !== false });
+        list[i] = Object.assign({}, list[i], { text, options, correctIndex, category: String(q.category || "").slice(0, 100), active: q.active !== false }, per !== undefined ? { period: per } : {});
       } else {
-        list.push({ id: quiz.genId(), text, options, correctIndex, category: String(q.category || "").slice(0, 100), active: true });
+        list.push({ id: quiz.genId(), text, options, correctIndex, category: String(q.category || "").slice(0, 100), active: true, period: per !== undefined ? per : (await quiz.getSettings()).examPeriod });
       }
       await quiz.saveQuestions(list);
       return reply(context, 200, { ok: true, questions: list });
@@ -157,13 +163,14 @@ const handler = async function (context, req) {
     if (op === "addQuestions") {
       const incoming = Array.isArray(b.questions) ? b.questions : [];
       const list = await quiz.getQuestions();
+      const per = typeof b.period === "string" && quiz.validPeriod(b.period) ? b.period : (await quiz.getSettings()).examPeriod;
       let added = 0, skipped = 0;
       incoming.forEach((q) => {
         const text = String(q.text || "").trim().slice(0, 2000);
         const options = Array.isArray(q.options) ? q.options.map((o) => String(o || "").trim().slice(0, 500)).filter(Boolean) : [];
         const correctIndex = Number.isInteger(q.correctIndex) ? q.correctIndex : -1;
         if (!text || options.length < 2 || correctIndex < 0 || correctIndex >= options.length) { skipped++; return; }
-        list.push({ id: quiz.genId(), text, options, correctIndex, category: String(q.category || "").trim().slice(0, 100), active: true });
+        list.push({ id: quiz.genId(), text, options, correctIndex, category: String(q.category || "").trim().slice(0, 100), active: true, period: per });
         added++;
       });
       await quiz.saveQuestions(list);
@@ -179,13 +186,43 @@ const handler = async function (context, req) {
 
     // Xoá TẤT CẢ câu hỏi: bắt buộc xác nhận bằng cụm chữ + số lượng đang thấy; tự sao lưu trước khi xoá.
     if (op === "deleteAllQuestions") {
-      const list = await quiz.getQuestions();
+      // Theo kỳ: chỉ xoá câu hỏi của kỳ được chọn (period); các kỳ khác giữ nguyên
+      const all = await quiz.getQuestions();
+      const byP = typeof b.period === "string" && quiz.validPeriod(b.period);
+      const list = byP ? all.filter((q) => (q.period || "") === b.period) : all;
       if (b.confirm !== "XOA TAT CA") return reply(context, 400, { ok: false, error: "Chưa xác nhận đúng cụm 'XOA TAT CA'." });
-      if (!list.length) return reply(context, 400, { ok: false, error: "Ngân hàng đề đang trống." });
+      if (!list.length) return reply(context, 400, { ok: false, error: "Ngân hàng đề " + (byP ? "của kỳ này " : "") + "đang trống." });
       if (b.expected !== list.length) return reply(context, 409, { ok: false, error: "Danh sách câu hỏi vừa thay đổi (" + list.length + " câu). Hãy tải lại trang rồi thử lại." });
       await quiz.backupQuestions(list);
-      await quiz.saveQuestions([]);
-      return reply(context, 200, { ok: true, deleted: list.length, questions: [], backup: { count: list.length, at: Date.now() } });
+      const kept = byP ? all.filter((q) => (q.period || "") !== b.period) : [];
+      await quiz.saveQuestions(kept);
+      return reply(context, 200, { ok: true, deleted: list.length, questions: kept, backup: { count: list.length, at: Date.now() } });
+    }
+
+    // Sao chép đề từ kỳ này sang kỳ khác (tạo câu mới, bỏ qua câu trùng nội dung đã có ở kỳ đích)
+    if (op === "copyQuestions") {
+      const from = String(b.from == null ? "" : b.from), to = String(b.to || "");
+      if (!quiz.validPeriod(from) || !/^\d{4}-\d{2}$/.test(to) || from === to) return reply(context, 400, { ok: false, error: "Chọn kỳ nguồn và kỳ đích hợp lệ (khác nhau)." });
+      const list = await quiz.getQuestions();
+      const norm = (t) => String(t || "").trim().toLowerCase().replace(/\s+/g, " ");
+      const have = new Set(list.filter((q) => (q.period || "") === to).map((q) => norm(q.text)));
+      let added = 0, skipped = 0;
+      list.filter((q) => (q.period || "") === from).forEach((q) => {
+        if (have.has(norm(q.text))) { skipped++; return; }
+        list.push({ id: quiz.genId(), text: q.text, options: (q.options || []).slice(), correctIndex: q.correctIndex, category: q.category || "", active: q.active !== false, period: to, copiedFrom: q.id });
+        have.add(norm(q.text)); added++;
+      });
+      await quiz.saveQuestions(list);
+      return reply(context, 200, { ok: true, added, skipped, questions: list });
+    }
+    // Chuyển toàn bộ câu hỏi của một kỳ (thường là "chưa gắn kỳ") sang kỳ khác
+    if (op === "moveQuestions") {
+      const from = String(b.from == null ? "" : b.from), to = String(b.to || "");
+      if (!quiz.validPeriod(from) || !/^\d{4}-\d{2}$/.test(to) || from === to) return reply(context, 400, { ok: false, error: "Chọn kỳ nguồn và kỳ đích hợp lệ (khác nhau)." });
+      const list = await quiz.getQuestions(); let moved = 0;
+      list.forEach((q) => { if ((q.period || "") === from) { q.period = to; moved++; } });
+      await quiz.saveQuestions(list);
+      return reply(context, 200, { ok: true, moved, questions: list });
     }
 
     // Khôi phục từ bản sao lưu gần nhất: chỉ thêm lại câu chưa có (không ghi đè câu hiện tại).

@@ -51,7 +51,7 @@ const A = {
     },
     POST: {
       saveQuestion: ["Lưu câu hỏi", "change"], addQuestions: ["Thêm câu hỏi hàng loạt", "change"], deleteQuestion: ["Xoá câu hỏi", "change"],
-      deleteAllQuestions: ["XOÁ TOÀN BỘ ngân hàng đề", "change"], restoreQuestions: ["Khôi phục ngân hàng đề", "change"],
+      deleteAllQuestions: ["XOÁ TOÀN BỘ ngân hàng đề của kỳ", "change"], copyQuestions: ["Sao chép đề sang kỳ khác", "change"], moveQuestions: ["Chuyển câu hỏi sang kỳ khác", "change"], restoreQuestions: ["Khôi phục ngân hàng đề", "change"],
       saveViewer: ["Cấp / sửa quyền quản lí", "change"], setViewerPassword: ["Đặt mật khẩu cho quản lí", "change"], deleteViewer: ["Thu hồi quyền quản lí", "change"],
       addCandidates: ["Thêm / cập nhật thí sinh", "change"], deleteCandidate: ["Xoá thí sinh", "change"], resetAttempt: ["Cho làm lại (xoá kết quả kỳ)", "change"],
       saveSettings: ["Đổi cài đặt", "change"], assignPeriod: ["Gắn kỳ cho bài chưa có kỳ", "change"]
@@ -106,10 +106,11 @@ function details(area, op, q, b, res, pre) {
     case "paper": case "photo": case "profile": case "employee": d.code = q.code; if (q.id) d.attempt = q.id; if (q.period != null && op === "photo") d.period = q.period; break;
     case "result": d.attempt = q.id; if (r.attempt) { d.code = r.attempt.code; d.name = r.attempt.name; d.period = r.attempt.period || ""; } break;
     case "audit": d.day = q.day; break;
-    case "saveQuestion": d.question = s(b.text, 100); if (b.id) d.id = b.id; break;
-    case "addQuestions": d.added = r.added; d.skipped = r.skipped; break;
+    case "saveQuestion": { const qq = b.question || {}; d.question = s(qq.text, 100); if (qq.id) d.id = qq.id; if (typeof qq.period === "string") d.period = qq.period || "chưa gắn kỳ"; break; }
+    case "addQuestions": d.period = b.period; d.added = r.added; d.skipped = r.skipped; break;
+    case "copyQuestions": case "moveQuestions": d.from = b.from || "chưa gắn kỳ"; d.to = b.to; d.added = r.added; d.skipped = r.skipped; d.moved = r.moved; break;
     case "deleteQuestion": d.id = b.id; d.question = pre.q; break;
-    case "deleteAllQuestions": d.count = r.deleted != null ? r.deleted : pre.n; break;
+    case "deleteAllQuestions": d.period = typeof b.period === "string" ? (b.period || "chưa gắn kỳ") : "mọi kỳ"; d.count = r.deleted != null ? r.deleted : pre.n; break;
     case "restoreQuestions": d.restored = r.restored; break;
     case "saveViewer": d.email = s(b.email, 80); d.scopes = s(Array.isArray(b.scopes) ? b.scopes.join("; ") : b.scopes, 200); if (pre.viewer) d.before = s((pre.viewer.scopes || []).join("; "), 200); d.created = !!r.created; break;
     case "setViewerPassword": d.email = s(b.email, 80); break; // KHÔNG ghi mật khẩu

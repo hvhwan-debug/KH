@@ -66,6 +66,28 @@ function normSegment(s) {
 }
 const CATEGORY_BY_SEGMENT = { gia_dung: "Gia dụng", may_loc: "Máy lọc nước" };
 
+// Ngân hàng đề THEO KỲ: mỗi câu hỏi có period ("YYYY-MM"); "" = chưa gắn kỳ.
+// Đề của kỳ P chỉ lấy câu thuộc kỳ P. Nếu kỳ P chưa có câu nào, tạm dùng các câu CHƯA GẮN KỲ (dự phòng),
+// để bài thi không bị gián đoạn khi mới chuyển sang cấu trúc theo kỳ.
+const validPeriod = (p) => p === "" || /^\d{4}-\d{2}$/.test(String(p));
+function usableQ(q) { return q && q.active !== false && q.text && Array.isArray(q.options) && q.options.length >= 2; }
+// Chuyển đổi một lần: ngân hàng đề cũ (chưa câu nào có kỳ) chính là đề của kỳ đang chạy -> gắn vào kỳ hiện tại.
+async function ensureBankPeriods() {
+  const list = await getQuestions();
+  if (!list.length || list.some((q) => q.period)) return null;
+  const st = await getSettings();
+  list.forEach((q) => { q.period = st.examPeriod; });
+  await saveQuestions(list);
+  try { await require("./auditlog").write({ area: "system", role: "system", by: "hệ thống", name: "Hệ thống", op: "migrateBank", label: "Tự gắn ngân hàng đề cũ vào kỳ hiện tại", kind: "change", status: 200, ok: true, details: { count: list.length, period: st.examPeriod } }); } catch (e) {}
+  return { migrated: list.length, period: st.examPeriod };
+}
+function bankFor(all, period) {
+  const own = all.filter((q) => usableQ(q) && (q.period || "") === period);
+  if (own.length || !period) return { list: own, source: own.length ? "period" : "none" };
+  const shared = all.filter((q) => usableQ(q) && !q.period);
+  return { list: shared, source: shared.length ? "unassigned" : "none" };
+}
+
 // Bản sao lưu ngân hàng đề trước khi xoá hàng loạt (giữ bản gần nhất để khôi phục).
 const QB_KEY = "kt/questions-backup.json";
 async function backupQuestions(list) { await store.put(QB_KEY, { at: Date.now(), questions: list }); }
@@ -269,7 +291,7 @@ function noteFail(req) {
 }
 
 module.exports = {
-  normCode, normEmail, normSegment, CATEGORY_BY_SEGMENT,
+  normCode, normEmail, normSegment, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
   getQuestions, saveQuestions,
   getCandidates, saveCandidates,
   getSettings, saveSettings,
