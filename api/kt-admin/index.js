@@ -49,6 +49,15 @@ const handler = async function (context, req) {
         const r = require("../_lib/itemstats").analyze(atts, byId);
         return reply(context, 200, { ok: true, exam: examId, capped: rows.length >= 500, summary: r.summary, items: r.items });
       }
+      // Chẩn đoán cả nhóm cho một đề: hành vi làm bài, mảng yếu, chất lượng câu hỏi, nhóm quản lí, rồi đề xuất khắc phục.
+      if (op === "cohortInsight") {
+        const st = await quiz.getSettings();
+        const reqP = String((req.query && req.query.period) || "");
+        const period = reqP && quiz.validPeriod(reqP) ? reqP : st.examPeriod;
+        const exSt = await quiz.getExamSettings(period);
+        const r = await require("../_lib/behavior").forCohort(period, (await quiz.getCandidates()).filter((c) => quiz.inAudience(exSt, c)), { ai: req.query.ai !== "0" });
+        return reply(context, 200, Object.assign({ ok: true }, r));
+      }
       // Xem trước cấu trúc đề: mỗi quy tắc có bao nhiêu câu khả dụng, có thiếu không.
       if (op === "previewBlueprint") {
         let bp; try { bp = quiz.cleanBlueprint(JSON.parse(String(req.query.blueprint || "null"))); } catch (e) { bp = { error: "Cấu trúc đề không hợp lệ." }; }

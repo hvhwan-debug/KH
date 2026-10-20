@@ -4,6 +4,7 @@
 const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const { validEmail, isAdmin } = require("../_lib/config");
 const quiz = require("../_lib/quiz");
+const behavior = require("../_lib/behavior");
 
 const SEGMENT_INPUTS = ["both", "ca_hai", "gia_dung", "may_loc"]; // giá trị được chấp nhận; lưu dạng chuẩn: both | gia_dung | may_loc
 const AUDIT_MAX = 30;
@@ -66,6 +67,24 @@ const handler = async function (context, req) {
           return Object.assign(empView(c), { status, result: r ? summaryOf(r, settings, !!viewer.isAdmin) : null });
         }));
         return reply(context, 200, { ok: true, employees: list, period, periods, currentPeriod: settings.examPeriod, serverNow: Date.now() });
+      }
+      // Chẩn đoán hành vi học tập của MỘT nhân viên trong phạm vi của quản lí (bằng chứng + nguyên nhân giả thuyết + việc nên làm).
+      // Thiết bị / vị trí chỉ đưa vào phân tích khi người xem là quản trị viên (giống các màn hình khác).
+      if (op === "insight") {
+        const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
+        if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
+        const r = await behavior.forEmployee(c.code, { admin: !!viewer.isAdmin, ai: req.query.ai !== "0" });
+        if (!r) return reply(context, 404, { ok: false, error: "Nhân viên chưa có bài đã nộp để phân tích." });
+        return reply(context, 200, Object.assign({ ok: true, employee: { code: c.code, name: c.name || "" } }, r));
+      }
+      // Chẩn đoán cả nhóm (những nhân viên thuộc phạm vi của quản lí) cho một đề / kỳ.
+      if (op === "teamInsight") {
+        const st = await quiz.getSettings();
+        const qp = req.query && typeof req.query.period === "string" ? req.query.period : "";
+        const period = qp && quiz.validPeriod(qp) ? qp : st.examPeriod;
+        const exSt = await quiz.getExamSettings(period);
+        const r = await behavior.forCohort(period, mine.filter((c) => quiz.inAudience(exSt, c)), { ai: req.query.ai !== "0" });
+        return reply(context, 200, Object.assign({ ok: true }, r));
       }
       if (op === "paper") {
         // Xem lại bản sao bài làm của nhân viên trong phạm vi của mình (chỉ đọc)

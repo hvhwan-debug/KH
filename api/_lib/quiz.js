@@ -473,6 +473,15 @@ function scoreAttempt(attempt, byId, settings) {
     compliance: settings.complianceEnabled ? compliancePoints(scoreOutOf10, settings) : null
   };
 }
+// Nạp nhiều bài làm (theo dòng bảng chỉ số) từng nhóm nhỏ, vì bài làm có kèm ảnh xác nhận nên khá nặng. Giữ nguyên thứ tự, bỏ bài lỗi.
+async function loadAttempts(rows) {
+  const out = [];
+  for (let i = 0; i < rows.length; i += 20) {
+    const chunk = await Promise.all(rows.slice(i, i + 20).map((r) => getAttempt(r.id).catch(() => null)));
+    chunk.forEach((a) => { if (a && a.status === "submitted") out.push(a); });
+  }
+  return out;
+}
 // Kết quả gần nhất của cùng một thí sinh ở kỳ KHÁC (không tính thi thử), để lời khuyên so sánh tiến bộ.
 function previousResult(idx, code, period, exceptId) {
   const norm = normCode(code);
@@ -618,7 +627,7 @@ module.exports = {
   getAttempt, putAttempt, saveIndex, activeForPeriod,
   getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary,
   getBanks, saveBanks, bankOf, validBankId, slugify, cleanQuestionMeta, DEFAULT_BANK, DIFFICULTIES,
-  cleanBlueprint, buildFromBlueprint, blueprintTotal, examAccessError, inAudience, examKnown, scoreAttempt, patchIndex, previousResult,
+  cleanBlueprint, buildFromBlueprint, blueprintTotal, examAccessError, inAudience, examKnown, scoreAttempt, patchIndex, previousResult, loadAttempts,
   TYPES, qType, normText, normalizeQuestionInput, gradeAnswer,
   getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,

@@ -156,6 +156,26 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 }
 
 /* hộp thoại */
+/* Chẩn đoán hành vi học tập: bằng chứng -> nguyên nhân giả thuyết -> việc nên làm */
+.ins-narr{border:1.5px solid #CDE6EA;border-radius:16px;background:linear-gradient(180deg,#F5FBFC,#EDF7F9);padding:14px 16px;margin:0 0 12px;text-align:left}
+.ins-narr .ins-hd{display:flex;align-items:center;gap:8px;margin-bottom:6px}.ins-narr .ins-hd b{font-size:14px}
+.ins-narr .tag{margin-left:auto;font-size:11px;font-weight:700;color:#055A68;background:#DDF0F3;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.ins-narr p{margin:0 0 8px;font-size:13.5px;line-height:1.65}
+.ins-narr h4{margin:12px 0 6px;font-size:12.5px;letter-spacing:.03em;text-transform:uppercase;color:#4B666D}
+.ins-narr ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.65}
+.ins-plan{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ins-plan li{display:flex;gap:8px;align-items:flex-start;background:#fff;border:1px solid #DDEBEE;border-radius:10px;padding:8px 10px;font-size:13.5px;line-height:1.55}
+.ins-plan .when{flex:0 0 auto;font-weight:700;font-size:11.5px;color:#055A68;background:#E4F3F5;border-radius:6px;padding:2px 7px;white-space:nowrap}
+.who{flex:0 0 auto;font-weight:700;font-size:11px;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#EEF5F6;color:#4B666D}
+.who.ql{background:#E6EFFD;color:#1F4FB4}.who.nv{background:#E3F5EC;color:#17794A}.who.dt{background:#F1E9FB;color:#5B3FA8}
+.ins-caut{font-size:12px!important;color:#6B4A00!important;background:#FFF6E0;border:1px solid #F0D58A;border-radius:10px;padding:8px 10px;margin:10px 0 0!important}
+.ins-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.insf{border:1.5px solid #DAE5E8;border-left-width:5px;border-radius:12px;background:#fff;margin:0 0 10px;padding:10px 14px;text-align:left}
+.insf.bad{border-left-color:#B3261E}.insf.warn{border-left-color:#E0A030}.insf.info{border-left-color:#067A8C}.insf.ok{border-left-color:#17794A}
+.insf .insf-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}.insf .insf-h b{font-size:14px}
+.insf .conf{margin-left:auto;font-size:11px;font-weight:700;color:#4B666D;background:#EEF5F6;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.insf h5{margin:8px 0 3px;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;color:#4B666D}
+.insf ul{margin:0;padding-left:18px;font-size:13px;line-height:1.6}.insf li .who{margin-right:6px}
 .ov{position:fixed;inset:0;z-index:50;background:rgba(13,42,49,.55);display:flex;align-items:flex-start;justify-content:center;padding:4vh 14px;overflow:auto}
 .dlg{width:100%;max-width:520px;background:#fff;border-radius:22px;padding:22px 22px 20px;box-shadow:0 40px 80px -30px rgba(0,0,0,.6)}
 .dlg h2{margin:0 0 4px;font-size:19px}.dlg .sub{margin:0 0 16px;font-size:13px;color:var(--muted)}
@@ -339,7 +359,7 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 
     <section class="card overview" aria-label="Tổng quan">
       <div>
-        <div class="ov-head"><h1 class="perh">Tiến độ làm bài <select id="fPer" aria-label="Chọn kỳ kiểm tra"></select></h1><span class="big" id="ovDone"></span></div>
+        <div class="ov-head"><h1 class="perh">Tiến độ làm bài <select id="fPer" aria-label="Chọn kỳ kiểm tra"></select> <button class="btn ghost sm" id="btnTeamIns" type="button" title="Phân tích hành vi làm bài của cả nhóm, chẩn đoán nguyên nhân và đề xuất khắc phục">Chẩn đoán cả nhóm</button></h1><span class="big" id="ovDone"></span></div>
         <p class="pernote hide" id="perNote"></p>
         <div class="track" id="track" aria-hidden="true"></div>
         <div class="legend" id="legend" role="group" aria-label="Lọc theo trạng thái"></div>
@@ -435,6 +455,12 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 </div></div>
 
 <!-- Hồ sơ kiểm tra của nhân viên -->
+<div class="ov hide" id="ovIns" role="dialog" aria-modal="true" aria-labelledby="insTitle"><div class="dlg prof">
+  <h2 id="insTitle">Chẩn đoán cả nhóm</h2><p class="sub" id="insSub"></p>
+  <div id="insBody"></div>
+  <div class="dact"><button class="btn" type="button" data-close="ovIns">Đóng</button></div>
+</div></div>
+
 <div class="ov hide" id="ovProf" role="dialog" aria-modal="true" aria-labelledby="fTitle"><div class="dlg prof">
   <div class="idrow"><div class="ph" id="fPhoto"></div><div><h2 id="fTitle"></h2><p class="meta" id="fMeta"></p></div></div>
   <div id="fBody"><div class="empty">Đang tải hồ sơ…</div></div>
@@ -917,6 +943,51 @@ async function openProfile(e){
   var HH = PROF.history; if (HH.length) fillPhoto('fPhoto', e, { id: HH[HH.length-1].id }); else { $('fPhoto').className = 'ph none'; $('fPhoto').innerHTML = '<span>Chưa có ảnh</span>'; }
   HH.forEach(function(x){ fillPhoto('th-' + x.id, e, { id: x.id }); });
 }
+
+/* ---------- Chẩn đoán hành vi học tập ---------- */
+var WHO_LBL = { nv:'Nhân viên', ql:'Quản lí', dt:'Đào tạo' };
+function insHTML(j, wantAI){
+  var n = j.narrative || {}, h = '';
+  var note = (wantAI && n.source === 'rules') ? '<p class="ins-caut" style="margin:0 0 8px!important">AI chưa phản hồi được, đang hiển thị bản tổng hợp theo luật (cùng dữ liệu và bằng chứng).</p>' : '';
+  h += '<div class="ins-narr">' + note + '<div class="ins-hd"><b>Tóm tắt và kế hoạch khắc phục</b><span class="tag">' + (n.source === 'ai' ? 'Tổng hợp bởi AI' : 'Tổng hợp theo luật') + '</span></div>';
+  h += '<p>' + esc(n.summary || '') + '</p>';
+  if (n.rootCauses && n.rootCauses.length) h += '<h4>Nguyên nhân gốc (giả thuyết)</h4><ul>' + n.rootCauses.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+  if (n.plan && n.plan.length) h += '<h4>Kế hoạch khắc phục</h4><ol class="ins-plan">' + n.plan.map(function(p){ return '<li>' + (p.when ? '<span class="when">' + esc(p.when) + '</span>' : '') + '<span class="who ' + esc(p.owner) + '">' + esc(WHO_LBL[p.owner] || '') + '</span><span>' + esc(p.action) + '</span></li>'; }).join('') + '</ol>';
+  h += '<p class="ins-caut">' + esc(n.caution || '') + '</p>';
+  h += '<div class="ins-act"><button class="btn sm" type="button" data-ins-ai>' + (n.source === 'ai' ? 'Nhờ AI tổng hợp lại' : 'Nhờ AI tổng hợp') + '</button><button class="btn ghost sm" type="button" data-ins-copy>Sao chép kế hoạch</button></div></div>';
+  h += '<div class="psec" style="margin-bottom:0"><h3>Chi tiết các phát hiện <small>' + (j.attemptsUsed ? 'từ ' + j.attemptsUsed + ' lần làm bài' : (j.stats && j.stats.attempts ? 'từ ' + j.stats.attempts + ' bài' : '')) + (j.capped ? ' · chỉ đọc 300 bài mới nhất' : '') + '</small></h3>';
+  h += (j.findings || []).map(function(f){
+    var sec = function(t, items){ return items && items.length ? '<h5>' + t + '</h5><ul>' + items.join('') + '</ul>' : ''; };
+    return '<div class="insf ' + esc(f.level) + '"><div class="insf-h"><b>' + esc(f.title) + '</b><span class="conf">Tin cậy: ' + esc(f.confidence) + '</span></div>' +
+      sec('Bằng chứng', (f.evidence || []).map(function(x){ return '<li>' + esc(x) + '</li>'; })) +
+      sec('Nguyên nhân có thể', (f.causes || []).map(function(x){ return '<li>' + esc(x) + '</li>'; })) +
+      sec('Nên làm', (f.actions || []).map(function(a){ return '<li><span class="who ' + esc(a.who) + '">' + esc(WHO_LBL[a.who] || '') + '</span>' + esc(a.t) + '</li>'; })) + '</div>';
+  }).join('') + '</div>';
+  return h;
+}
+function insCopyText(title, j){
+  var n = j.narrative || {}, t = title + '\n\nTóm tắt: ' + (n.summary || '');
+  if (n.rootCauses && n.rootCauses.length) t += '\n\nNguyên nhân gốc (giả thuyết):\n' + n.rootCauses.map(function(x){ return '- ' + x; }).join('\n');
+  if (n.plan && n.plan.length) t += '\n\nKế hoạch khắc phục:\n' + n.plan.map(function(p, i){ return (i + 1) + '. [' + (p.when || '') + ' - ' + (WHO_LBL[p.owner] || '') + '] ' + p.action; }).join('\n');
+  return t + '\n\nLưu ý: ' + (n.caution || '');
+}
+// Tải chẩn đoán vào một khung. Mặc định chạy theo luật (tức thì, không tốn AI); wantAI=true thì nhờ AI tổng hợp lại.
+async function loadIns(url, boxId, title, wantAI){
+  var box = $(boxId); if (!box) return;
+  box.innerHTML = '<p class="busy" style="margin:8px 0">' + (wantAI ? 'AI đang tổng hợp nguyên nhân và kế hoạch…' : 'Đang phân tích dữ liệu làm bài…') + '</p>';
+  var r; try { r = await api('GET', url + (wantAI ? '' : (url.indexOf('?') >= 0 ? '&' : '?') + 'ai=0')); } catch(e){ r = null; }
+  if (!r || !r.j.ok){ box.innerHTML = '<div class="msg err">' + esc(r ? (r.j.error || 'Không phân tích được.') : 'Không kết nối được máy chủ.') + '</div>'; return; }
+  box.innerHTML = insHTML(r.j, wantAI);
+  var ab = box.querySelector('[data-ins-ai]'); if (ab) ab.onclick = function(){ loadIns(url, boxId, title, true); };
+  var cb = box.querySelector('[data-ins-copy]'); if (cb) cb.onclick = async function(){ try { await navigator.clipboard.writeText(insCopyText(title, r.j)); this.textContent = 'Đã sao chép'; } catch(e){ this.textContent = 'Không sao chép được'; } };
+}
+function insSecHTML(){ return '<div class="psec"><h3>Chẩn đoán hành vi học tập <small>từ thời gian làm từng câu, hết giờ, xu hướng giữa các kỳ</small></h3><div id="insBox"></div></div>'; }
+$('btnTeamIns').addEventListener('click', function(){
+  var per = (typeof CURP !== 'undefined' && CURP != null) ? CURP : '';
+  $('insTitle').textContent = 'Chẩn đoán cả nhóm'; $('insSub').textContent = 'Kỳ ' + perL(per) + ' · nhân viên thuộc phạm vi của bạn · mỗi người tính bài mới nhất';
+  $('insBody').innerHTML = '<div id="insTeamBox"></div>'; $('ovIns').classList.remove('hide');
+  loadIns('/api/kt-viewer?op=teamInsight&period=' + encodeURIComponent(per), 'insTeamBox', 'Chẩn đoán cả nhóm - kỳ ' + perL(per), false);
+});
 function chartSvg(H, low){
   var W = window.innerWidth < 600 ? 380 : 640, h = window.innerWidth < 600 ? 220 : 190, pl = 34, pr = 10, pt = 14, pb = 30, n = H.length, cw = (W - pl - pr) / Math.max(n, 1), bw = Math.min(46, cw * 0.5);
   var y = function(v){ return pt + (h - pt - pb) * (1 - v / 100); };
@@ -965,10 +1036,12 @@ function renderProfile(){
     return '<li><span class="x">' + w.times + '×</span>' + esc(w.text) + '<small>' + esc(w.category) + ' · Đáp án đúng: <span class="ok">' + esc(w.answer) + '</span></small></li>'; }).join('') + '</ul></div>';
   if (P.lastWrong.length) html += '<div class="psec"><details><summary style="cursor:pointer;font-weight:700;font-size:14px">Câu sai ở kỳ gần nhất (' + P.lastWrong.length + ')</summary><ul class="wl" style="margin-top:6px">' + P.lastWrong.map(function(w){
     return '<li><span class="x">✗</span>' + esc(w.text) + '<small>Đã chọn: ' + esc(w.chosen == null ? 'bỏ trống' : w.chosen) + ' · Đáp án đúng: <span class="ok">' + esc(w.answer) + '</span></small></li>'; }).join('') + '</ul></details></div>';
+  html += insSecHTML();
   html += '<div class="aibox"><div class="hd"><b>✦ AI phân tích và khuyến nghị</b><span><button class="btn sm" type="button" id="aiProfBtn">' + (AIC[aiKey()] ? 'Phân tích lại' : 'Phân tích') + '</button> <button class="btn ghost sm' + (AIC[aiKey()] ? '' : ' hide') + '" type="button" id="aiProfCopy">Sao chép</button></span></div>' +
     '<div class="aiout" id="aiProfOut">' + (AIC[aiKey()] ? fmtAI(AIC[aiKey()]) : '<p class="fine" style="margin:8px 0 0">AI đọc lịch sử điểm, mảng kiến thức và câu sai ở trên để gợi ý cách kèm cặp nhân viên này. Kết quả chỉ để tham khảo, quản lí nên đối chiếu với thực tế.</p>') + '</div></div>';
   $('fBody').innerHTML = html;
   $('aiProfBtn').onclick = runProfileAI;
+  loadIns('/api/kt-viewer?op=insight&code=' + encodeURIComponent(PROF.emp.code), 'insBox', 'Chẩn đoán hành vi học tập - ' + (PROF.emp.name || PROF.emp.code), false);
   $('aiProfCopy').onclick = async function(){ try { await navigator.clipboard.writeText('Phân tích kết quả kiểm tra - ' + (PROF.emp.name||PROF.emp.code) + '\n\n' + AIC[aiKey()]); this.textContent = 'Đã sao chép ✓'; } catch(e){} };
 }
 function aiKey(){ var H = PROF.history; return PROF.emp.code + ':' + (H.length ? H[H.length-1].id : ''); }

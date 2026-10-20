@@ -17,6 +17,27 @@ body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(-
 .topbar .dot{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand-deep));display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px}
 .topbar b{font-size:15px;flex:1}
 .wrap{max-width:980px;margin:0 auto;padding:22px 18px 70px}
+
+/* Chẩn đoán hành vi học tập: bằng chứng -> nguyên nhân giả thuyết -> việc nên làm */
+.ins-narr{border:1.5px solid #CDE6EA;border-radius:16px;background:linear-gradient(180deg,#F5FBFC,#EDF7F9);padding:14px 16px;margin:0 0 12px;text-align:left}
+.ins-narr .ins-hd{display:flex;align-items:center;gap:8px;margin-bottom:6px}.ins-narr .ins-hd b{font-size:14px}
+.ins-narr .tag{margin-left:auto;font-size:11px;font-weight:700;color:#055A68;background:#DDF0F3;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.ins-narr p{margin:0 0 8px;font-size:13.5px;line-height:1.65}
+.ins-narr h4{margin:12px 0 6px;font-size:12.5px;letter-spacing:.03em;text-transform:uppercase;color:#4B666D}
+.ins-narr ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.65}
+.ins-plan{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ins-plan li{display:flex;gap:8px;align-items:flex-start;background:#fff;border:1px solid #DDEBEE;border-radius:10px;padding:8px 10px;font-size:13.5px;line-height:1.55}
+.ins-plan .when{flex:0 0 auto;font-weight:700;font-size:11.5px;color:#055A68;background:#E4F3F5;border-radius:6px;padding:2px 7px;white-space:nowrap}
+.who{flex:0 0 auto;font-weight:700;font-size:11px;border-radius:6px;padding:2px 7px;white-space:nowrap;background:#EEF5F6;color:#4B666D}
+.who.ql{background:#E6EFFD;color:#1F4FB4}.who.nv{background:#E3F5EC;color:#17794A}.who.dt{background:#F1E9FB;color:#5B3FA8}
+.ins-caut{font-size:12px!important;color:#6B4A00!important;background:#FFF6E0;border:1px solid #F0D58A;border-radius:10px;padding:8px 10px;margin:10px 0 0!important}
+.ins-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.insf{border:1.5px solid #DAE5E8;border-left-width:5px;border-radius:12px;background:#fff;margin:0 0 10px;padding:10px 14px;text-align:left}
+.insf.bad{border-left-color:#B3261E}.insf.warn{border-left-color:#E0A030}.insf.info{border-left-color:#067A8C}.insf.ok{border-left-color:#17794A}
+.insf .insf-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}.insf .insf-h b{font-size:14px}
+.insf .conf{margin-left:auto;font-size:11px;font-weight:700;color:#4B666D;background:#EEF5F6;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.insf h5{margin:8px 0 3px;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;color:#4B666D}
+.insf ul{margin:0;padding-left:18px;font-size:13px;line-height:1.6}.insf li .who{margin-right:6px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 8px 20px -14px rgba(0,60,56,.15)}
 h1{font-size:18px;margin:0 0 14px}
 label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:12px 0 6px}
@@ -541,7 +562,8 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
     <!-- Kết quả -->
     <div id="tab-results" class="tabpane hide">
       <div class="card" id="dashCard">
-        <div class="dash-h"><h1 id="dashTitle">Tổng quan kỳ</h1><p class="small" id="dashSub"></p></div>
+        <div class="dash-h"><h1 id="dashTitle">Tổng quan kỳ</h1><p class="small" id="dashSub"></p><button class="btn sm" type="button" id="btnCohortIns" onclick="openCohortInsight()" title="Phân tích hành vi làm bài của cả nhóm, chẩn đoán nguyên nhân và đề xuất khắc phục">Chẩn đoán cả nhóm</button></div>
+        <div id="insBoxWrap" class="hide" style="margin-bottom:14px"><div id="insBox"></div></div>
         <div id="dashBanner"></div>
         <div class="kpis" id="dashKpis"></div>
         <div class="dgrid">
@@ -578,6 +600,7 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
 
 <script>
 function $(id){ return document.getElementById(id); }
+var WHO_LBL = { nv:'Nhân viên', ql:'Quản lí', dt:'Đào tạo' };
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 async function api(method, path, body){
   const h = { 'Content-Type':'application/json', 'X-Requested-With':'livotec' };
@@ -1459,6 +1482,51 @@ function renderAdminHero(j){
   $('hero').innerHTML = '<div class="khero-in wide"><div class="khero-eb">Kỳ kiểm tra ' + perLabel(j.currentPeriod) + ' · ' + n + ' thí sinh</div><h1 class="khero-t">' + vnGreet() + ', quản trị viên</h1>' + meters + tag + '</div>';
   if (j.untagged) $('heroUntagged').onclick = () => { switchTab('results'); setTimeout(() => { const b = $('dashBanner'); if (b) b.scrollIntoView({ behavior:'smooth', block:'center' }); }, 50); };
   $('hero').classList.remove('hide');
+}
+
+
+/* ---------- Chẩn đoán hành vi học tập ---------- */
+function insHTML(j, wantAI){
+  var n = j.narrative || {}, h = '';
+  var note = (wantAI && n.source === 'rules') ? '<p class="ins-caut" style="margin:0 0 8px!important">AI chưa phản hồi được, đang hiển thị bản tổng hợp theo luật (cùng dữ liệu và bằng chứng).</p>' : '';
+  h += '<div class="ins-narr">' + note + '<div class="ins-hd"><b>Tóm tắt và kế hoạch khắc phục</b><span class="tag">' + (n.source === 'ai' ? 'Tổng hợp bởi AI' : 'Tổng hợp theo luật') + '</span></div>';
+  h += '<p>' + esc(n.summary || '') + '</p>';
+  if (n.rootCauses && n.rootCauses.length) h += '<h4>Nguyên nhân gốc (giả thuyết)</h4><ul>' + n.rootCauses.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+  if (n.plan && n.plan.length) h += '<h4>Kế hoạch khắc phục</h4><ol class="ins-plan">' + n.plan.map(function(p){ return '<li>' + (p.when ? '<span class="when">' + esc(p.when) + '</span>' : '') + '<span class="who ' + esc(p.owner) + '">' + esc(WHO_LBL[p.owner] || '') + '</span><span>' + esc(p.action) + '</span></li>'; }).join('') + '</ol>';
+  h += '<p class="ins-caut">' + esc(n.caution || '') + '</p>';
+  h += '<div class="ins-act"><button class="btn sm" type="button" data-ins-ai>' + (n.source === 'ai' ? 'Nhờ AI tổng hợp lại' : 'Nhờ AI tổng hợp') + '</button><button class="btn ghost sm" type="button" data-ins-copy>Sao chép kế hoạch</button></div></div>';
+  h += '<div class="psec" style="margin-bottom:0"><h3>Chi tiết các phát hiện <small>' + (j.attemptsUsed ? 'từ ' + j.attemptsUsed + ' lần làm bài' : (j.stats && j.stats.attempts ? 'từ ' + j.stats.attempts + ' bài' : '')) + (j.capped ? ' · chỉ đọc 300 bài mới nhất' : '') + '</small></h3>';
+  h += (j.findings || []).map(function(f){
+    var sec = function(t, items){ return items && items.length ? '<h5>' + t + '</h5><ul>' + items.join('') + '</ul>' : ''; };
+    return '<div class="insf ' + esc(f.level) + '"><div class="insf-h"><b>' + esc(f.title) + '</b><span class="conf">Tin cậy: ' + esc(f.confidence) + '</span></div>' +
+      sec('Bằng chứng', (f.evidence || []).map(function(x){ return '<li>' + esc(x) + '</li>'; })) +
+      sec('Nguyên nhân có thể', (f.causes || []).map(function(x){ return '<li>' + esc(x) + '</li>'; })) +
+      sec('Nên làm', (f.actions || []).map(function(a){ return '<li><span class="who ' + esc(a.who) + '">' + esc(WHO_LBL[a.who] || '') + '</span>' + esc(a.t) + '</li>'; })) + '</div>';
+  }).join('') + '</div>';
+  return h;
+}
+function insCopyText(title, j){
+  var n = j.narrative || {}, t = title + '\n\nTóm tắt: ' + (n.summary || '');
+  if (n.rootCauses && n.rootCauses.length) t += '\n\nNguyên nhân gốc (giả thuyết):\n' + n.rootCauses.map(function(x){ return '- ' + x; }).join('\n');
+  if (n.plan && n.plan.length) t += '\n\nKế hoạch khắc phục:\n' + n.plan.map(function(p, i){ return (i + 1) + '. [' + (p.when || '') + ' - ' + (WHO_LBL[p.owner] || '') + '] ' + p.action; }).join('\n');
+  return t + '\n\nLưu ý: ' + (n.caution || '');
+}
+// Tải chẩn đoán vào một khung. Mặc định chạy theo luật (tức thì, không tốn AI); wantAI=true thì nhờ AI tổng hợp lại.
+async function loadIns(url, boxId, title, wantAI){
+  var box = $(boxId); if (!box) return;
+  box.innerHTML = '<p class="busy" style="margin:8px 0">' + (wantAI ? 'AI đang tổng hợp nguyên nhân và kế hoạch…' : 'Đang phân tích dữ liệu làm bài…') + '</p>';
+  var r; try { r = await api('GET', url + (wantAI ? '' : (url.indexOf('?') >= 0 ? '&' : '?') + 'ai=0')); } catch(e){ r = null; }
+  if (!r || !r.j.ok){ box.innerHTML = '<div class="msg err">' + esc(r ? (r.j.error || 'Không phân tích được.') : 'Không kết nối được máy chủ.') + '</div>'; return; }
+  box.innerHTML = insHTML(r.j, wantAI);
+  var ab = box.querySelector('[data-ins-ai]'); if (ab) ab.onclick = function(){ loadIns(url, boxId, title, true); };
+  var cb = box.querySelector('[data-ins-copy]'); if (cb) cb.onclick = async function(){ try { await navigator.clipboard.writeText(insCopyText(title, r.j)); this.textContent = 'Đã sao chép'; } catch(e){ this.textContent = 'Không sao chép được'; } };
+}
+
+function openCohortInsight(){
+  var per = (DASH && DASH.period) || '';
+  $('insBoxWrap').classList.remove('hide');
+  loadIns('/api/kt-admin?op=cohortInsight&period=' + encodeURIComponent(per), 'insBox', 'Chẩn đoán cả nhóm - ' + (per || 'kỳ hiện tại'), false);
+  $('insBoxWrap').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 /* ---------- Dashboard đánh giá kỳ ---------- */

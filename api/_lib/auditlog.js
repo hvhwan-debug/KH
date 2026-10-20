@@ -48,7 +48,7 @@ const A = {
       viewers: ["Xem danh sách quản lí", "read"], candidates: ["Xem danh sách thí sinh", "read"], settings: ["Xem cài đặt", "read"],
       results: ["Xem bảng kết quả", "read"], result: ["Xem chi tiết bài làm (ảnh, thiết bị, vị trí)", "read"], dashboard: ["Xem dashboard đánh giá", "read"],
       audit: ["Xem nhật ký thao tác", "read"], banks: ["Xem ngân hàng câu hỏi", "read"], exams: ["Xem danh sách đề thi", "read"],
-      previewBlueprint: ["Kiểm tra cấu trúc đề", "read"], itemAnalysis: ["Xem phân tích chất lượng câu hỏi", "read"]
+      previewBlueprint: ["Kiểm tra cấu trúc đề", "read"], itemAnalysis: ["Xem phân tích chất lượng câu hỏi", "read"], cohortInsight: ["Xem chẩn đoán hành vi cả nhóm", "read"]
     },
     POST: {
       saveQuestion: ["Lưu câu hỏi", "change"], addQuestions: ["Thêm câu hỏi hàng loạt", "change"], deleteQuestion: ["Xoá câu hỏi", "change"],
@@ -63,7 +63,8 @@ const A = {
   viewer: {
     GET: {
       me: ["Mở trang quản lí", "read"], employees: ["Xem danh sách nhân viên", "read"], employee: ["Xem lịch sử sửa thông tin", "read"],
-      paper: ["Xem bài làm", "read"], photo: ["Xem ảnh xác nhận", "read"], profile: ["Xem hồ sơ kiểm tra", "read"]
+      paper: ["Xem bài làm", "read"], photo: ["Xem ảnh xác nhận", "read"], profile: ["Xem hồ sơ kiểm tra", "read"],
+      insight: ["Xem chẩn đoán hành vi học tập của nhân viên", "read"], teamInsight: ["Xem chẩn đoán hành vi cả nhóm", "read"]
     },
     POST: {
       addEmployee: ["Thêm nhân viên", "change"], updateEmployee: ["Sửa thông tin nhân viên", "change"],
@@ -106,7 +107,8 @@ function details(area, op, q, b, res, pre) {
   switch (op) {
     case "employees": d.period = r.period != null ? r.period : q.period; d.count = Array.isArray(r.employees) ? r.employees.length : undefined; break;
     case "results": case "dashboard": d.period = q.period || (r.period || "tất cả các kỳ"); if (Array.isArray(r.results)) d.count = r.results.length; break;
-    case "paper": case "photo": case "profile": case "employee": d.code = q.code; if (q.id) d.attempt = q.id; if (q.period != null && op === "photo") d.period = q.period; break;
+    case "teamInsight": case "cohortInsight": d.period = q.period || "kỳ hiện tại"; break;
+    case "insight": case "paper": case "photo": case "profile": case "employee": d.code = q.code; if (q.id) d.attempt = q.id; if (q.period != null && op === "photo") d.period = q.period; break;
     case "result": d.attempt = q.id; if (r.attempt) { d.code = r.attempt.code; d.name = r.attempt.name; d.period = r.attempt.period || ""; } break;
     case "audit": d.day = q.day; break;
     case "saveQuestion": { const qq = b.question || {}; d.question = s(qq.text, 100); if (qq.id) d.id = qq.id; if (typeof qq.period === "string") d.period = qq.period || "chưa gắn kỳ"; break; }

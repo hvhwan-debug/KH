@@ -46,7 +46,15 @@ function facts(attempt, settings, prev) {
   const cats = categoryStats(paper);
   const secs = Math.max(10, attempt.secondsPerQuestion || (settings && settings.secondsPerQuestion) || 60);
   const dur = attempt.submittedAt && attempt.startedAt ? Math.round((attempt.submittedAt - attempt.startedAt) / 1000) : null;
+  // Tín hiệu hành vi làm bài (thời gian từng câu, hết giờ) từ cùng bộ phân tích dùng cho quản lí; lỗi thì bỏ qua, không ảnh hưởng lời khuyên
+  let beh = null;
+  try {
+    const B = require("./behavior"), bf = B.featuresOf(attempt);
+    beh = { hasTiming: bf.hasTiming, rush: B.patterns.rush(bf), struggle: B.patterns.struggle(bf), fastWrong: bf.fastWrong, slowWrong: bf.slowWrong, wrongAnswered: bf.wrong,
+      timeouts: bf.timeouts, lateTimeouts: bf.timeouts >= 2 && bf.timeoutsLastThird / bf.timeouts >= 0.7, rightMedSec: bf.rightMedSec };
+  } catch (e) { beh = null; }
   return {
+    beh,
     total, correct, wrong: attempt.wrong != null ? attempt.wrong : Math.max(0, total - correct - (attempt.blank || 0)), blank: attempt.blank || 0,
     pct: attempt.pct != null ? attempt.pct : (total ? Math.round(correct / total * 100) : 0),
     timeouts, categories: cats,
@@ -80,9 +88,12 @@ function rulesAdvice(f) {
   f.weak.forEach((c) => actions.push("Ôn lại mảng \"" + c.name + "\" (đúng " + c.ok + "/" + c.n + " câu): đọc lại tài liệu hoặc quy trình của mảng này, ghi ra 3-5 ý chính rồi tự trả lời lại không nhìn tài liệu."));
   if (!f.weak.length && f.wrong === 1) actions.push("Bạn chỉ sai 1 câu, có thể chỉ do đọc đề chưa kỹ: lần sau hãy đọc đủ các phương án trước khi chọn.");
   else if (!f.weak.length && f.wrong > 1) actions.push("Các câu sai rải rác ở nhiều mảng, không có mảng nào yếu rõ rệt: hãy đọc kỹ đề và đủ các phương án trước khi chọn, tránh chọn vội theo cảm tính.");
-  if (f.timeouts > 0) actions.push("Có " + f.timeouts + " câu hết giờ chưa kịp trả lời: tập đọc đề nhanh hơn, và khi chưa chắc hãy chọn phương án hợp lý nhất thay vì để trống.");
+  if (f.timeouts > 0 && f.beh && f.beh.lateTimeouts) actions.push("Các câu hết giờ (" + f.timeouts + " câu) dồn ở cuối bài: hãy giữ nhịp, không dành quá " + Math.round(f.secsPerQ * 0.7) + " giây cho một câu; câu chưa chắc thì chọn phương án hợp lý nhất rồi làm tiếp.");
+  else if (f.timeouts > 0) actions.push("Có " + f.timeouts + " câu hết giờ chưa kịp trả lời: tập đọc đề nhanh hơn, và khi chưa chắc hãy chọn phương án hợp lý nhất thay vì để trống.");
   else if (f.blank > 0) actions.push("Có " + f.blank + " câu bỏ trống: khi chưa chắc, hãy loại trừ các phương án sai rồi chọn phương án hợp lý nhất, không để trống.");
-  if (f.avgSecPerQ != null && f.avgSecPerQ < f.secsPerQ * 0.2 && p < 80) actions.push("Bạn làm bài khá nhanh (khoảng " + f.avgSecPerQ + " giây mỗi câu) trong khi còn nhiều thời gian: hãy dành thêm vài giây đọc lại câu hỏi trước khi chọn.");
+  if (f.beh && f.beh.rush) actions.push("Có " + f.beh.fastWrong + "/" + f.beh.wrongAnswered + " câu sai bạn trả lời rất nhanh" + (f.beh.rightMedSec != null ? " (các câu đúng thường mất khoảng " + f.beh.rightMedSec + " giây)" : "") + ": hãy dành thêm thời gian đọc kỹ đề và đủ các phương án trước khi chọn.");
+  else if (f.beh && f.beh.struggle) actions.push("Có " + f.beh.slowWrong + " câu bạn mất gần hết thời gian mà vẫn sai: nhiều khả năng còn hiểu chưa chắc khái niệm, hãy ôn lại phần gốc và nhờ quản lí giải thích trực tiếp.");
+  else if (!f.beh && f.avgSecPerQ != null && f.avgSecPerQ < f.secsPerQ * 0.2 && p < 80) actions.push("Bạn làm bài khá nhanh (khoảng " + f.avgSecPerQ + " giây mỗi câu) trong khi còn nhiều thời gian: hãy dành thêm vài giây đọc lại câu hỏi trước khi chọn.");
   if (f.nextBand) actions.push("Để đạt " + f.nextBand.points + " điểm tuân thủ học tập, lần sau cần đúng ít nhất " + f.nextBand.needCorrect + "/" + f.total + " câu (bạn cần thêm " + f.nextBand.gap + " câu đúng).");
   if (p >= 90) actions.push("Bạn nắm kiến thức rất vững: hãy chia sẻ cách học của mình với đồng nghiệp trong nhóm.");
   else actions.push("Sau khi ôn, hãy hỏi quản lí trực tiếp để được giải đáp những phần còn mơ hồ.");
@@ -109,7 +120,8 @@ function buildPrompt(f) {
     cac_mang_kien_thuc: f.categories.map((c) => ({ mang: c.name, dung: c.ok, tong: c.n })),
     diem_tuan_thu: f.compliance, moc_diem_tuan_thu_ke_tiep: f.nextBand ? { diem: f.nextBand.points, can_dung_toi_thieu: f.nextBand.needCorrect, con_thieu: f.nextBand.gap } : null,
     la_bai_thi_thu: f.practice, ky_truoc: f.prev ? { ty_le_dung_phan_tram: f.prev.pct } : null,
-    giay_trung_binh_moi_cau: f.avgSecPerQ, thoi_gian_toi_da_moi_cau_giay: f.secsPerQ
+    giay_trung_binh_moi_cau: f.avgSecPerQ, thoi_gian_toi_da_moi_cau_giay: f.secsPerQ,
+    hanh_vi_lam_bai: f.beh ? { cau_sai_tra_loi_qua_nhanh: f.beh.fastWrong, cau_sai_mat_gan_het_gio: f.beh.slowWrong, het_gio_don_cuoi_bai: f.beh.lateTimeouts } : null
   };
   return [{ role: "system", content: sys }, { role: "user", content: "Số liệu bài làm:\n" + JSON.stringify(data) }];
 }
