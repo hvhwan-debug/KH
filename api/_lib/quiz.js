@@ -10,6 +10,8 @@ const IDX_KEY = "kt/attempts-index.json";
 
 const DEFAULT_SETTINGS = {
   examTitle: "Bài kiểm tra",
+  // Dòng đầu của nội dung chia sẻ qua Zalo (tên rút gọn của kỳ kiểm tra). Để trống thì dùng tên bài kiểm tra.
+  shareTitle: "PCs - KTTĐK 10/2026",
   questionCount: 30,
   // Thí sinh bán cả 2 ngành (segment "both"): lấy co dinh so cau "Gia dụng" nay, so con lai (questionCount - so nay)
   // lay tu moi cau hoi KHONG thuoc "Gia dụng" (Máy lọc nước, Kiến thức khác... — tu dong gom moi category khac).

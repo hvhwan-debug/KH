@@ -27,6 +27,7 @@ module.exports = async function (context, req) {
     const candidate = { code: found.code, name: found.name, email: found.email, manager: found.manager || "" };
     const exam = {
       title: settings.examTitle,
+      shareTitle: String(settings.shareTitle || "").trim() || settings.examTitle,
       questionCount: settings.questionCount,
       secondsPerQuestion: Math.max(10, settings.secondsPerQuestion || 60),
       passScore: quiz.passScoreOf(settings)

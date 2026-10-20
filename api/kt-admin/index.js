@@ -196,6 +196,7 @@ module.exports = async function (context, req) {
       const cur = await quiz.getSettings();
       const next = Object.assign({}, cur, {
         examTitle: String(b.examTitle || cur.examTitle || "").slice(0, 200),
+        shareTitle: String(b.shareTitle == null ? cur.shareTitle || "" : b.shareTitle).trim().slice(0, 80),
         questionCount: Math.max(1, parseInt(b.questionCount, 10) || cur.questionCount),
         bothGiaDungCount: Math.max(0, parseInt(b.bothGiaDungCount, 10) || 0),
         secondsPerQuestion: Math.max(10, parseInt(b.secondsPerQuestion, 10) || cur.secondsPerQuestion),

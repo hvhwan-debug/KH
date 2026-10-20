@@ -55,6 +55,8 @@ async function call(fn, method, query, body, email) {
   r = await call(admin, "POST", {}, { op: "saveSettings", passEnabled: true, passScore: 70 }); ok(r.j.settings.passEnabled === true && r.j.settings.passScore === 70, "quản trị bật ngưỡng 70%");
   r = await call(admin, "GET", { op: "results" }); ok(r.j.results[0].passed === false, "bật ngưỡng: bài 20% thành Chưa đạt");
   r = await call(admin, "POST", {}, { op: "saveSettings", passEnabled: false, passScore: 70 }); ok(r.j.settings.passEnabled === false, "quản trị tắt lại ngưỡng");
+  r = await call(admin, "POST", {}, { op: "saveSettings", shareTitle: "  PCs - KTTĐK 11/2026  ", passEnabled: false, passScore: 70 }); ok(r.j.settings.shareTitle === "PCs - KTTĐK 11/2026", "quản trị lưu tên rút gọn khi chia sẻ (tự cắt khoảng trắng thừa)");
+  r = await call(admin, "POST", {}, { op: "saveSettings", examTitle: "Đổi tên khác", passEnabled: false, passScore: 70 }); ok(r.j.settings.shareTitle === "PCs - KTTĐK 11/2026", "lưu cài đặt khác mà không gửi tên rút gọn: giữ nguyên giá trị cũ");
   // khôi phục
   r = await call(admin, "POST", {}, { op: "restoreQuestions" }); ok(r.j.ok && r.j.restored === 6 && (await quiz.getQuestions()).length === 6, "khôi phục: thêm lại đủ 6 câu");
   r = await call(admin, "POST", {}, { op: "restoreQuestions" }); ok(r.j.ok && r.j.restored === 0 && (await quiz.getQuestions()).length === 6, "khôi phục lần nữa: không tạo câu trùng");

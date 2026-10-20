@@ -95,6 +95,12 @@ async function getV(t) { const ctx = { log: Object.assign(() => {}, { error: con
   await quiz.saveSettings(st0);
   { const at = await quiz.getAttempt(att); at.mailLastAt = 0; at.mailSends = 0; await quiz.putAttempt(at); }
 
+  // Tên rút gọn khi chia sẻ Zalo
+  r = await call("check", { code: "NV1", email: "a@x.vn" }); ok(r.j.exam.shareTitle === "PCs - KTTĐK 10/2026", "mặc định: tên rút gọn chia sẻ là 'PCs - KTTĐK 10/2026'");
+  { const st1 = await quiz.getSettings(); await quiz.saveSettings(Object.assign({}, st1, { shareTitle: "" }));
+    r = await call("check", { code: "NV1", email: "a@x.vn" }); ok(r.j.exam.shareTitle === "Thi thử", "để trống: dùng tên bài kiểm tra");
+    await quiz.saveSettings(Object.assign({}, st1, { shareTitle: "KT THÁNG 11" })); r = await call("check", { code: "NV1", email: "a@x.vn" }); ok(r.j.exam.shareTitle === "KT THÁNG 11", "quản trị đặt tên rút gọn riêng: được dùng cho nội dung chia sẻ"); await quiz.saveSettings(st1); }
+
   // Gửi lại email xác nhận
   const mb0 = (global.__mailbox || []).length;
   r = await call("resend", { code: "NV1", email: "sai@x.vn" }); ok(r.s === 404 && (global.__mailbox || []).length === mb0, "gửi lại với thông tin sai: từ chối, không gửi mail");

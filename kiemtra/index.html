@@ -912,24 +912,39 @@ function saveBlob(blob){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
 }
-var SAVED_MSG = 'Đã lưu ảnh kết quả vào máy. Mở <a href="https://chat.zalo.me/" target="_blank" rel="noopener">Zalo</a> và gửi ảnh này cho người cần nhận.';
+// Nội dung tin nhắn khi chia sẻ qua Zalo - đúng 3 dòng:
+//   <tên rút gọn kỳ kiểm tra>
+//   <HỌ TÊN IN HOA>
+//   ĐIỂM: <số câu đúng>/<tổng số câu>
+function shareText(){
+  var r = ST.res.r, c = ST.cand || {};
+  var title = String((ST.exam && (ST.exam.shareTitle || ST.exam.title)) || $('examTitle').textContent || 'Bài kiểm tra').trim();
+  var name = String(c.name || c.code || '').trim().toLocaleUpperCase('vi-VN');
+  return title + '\n' + name + '\nĐIỂM: ' + (r.score != null ? r.score : '–') + '/' + (r.total != null ? r.total : '–');
+}
+async function copyText(t){
+  try { if (navigator.clipboard && navigator.clipboard.writeText){ await navigator.clipboard.writeText(t); return true; } } catch(e){}
+  return false;
+}
+function savedMsg(copied){
+  return 'Đã lưu ảnh kết quả vào máy' + (copied ? ' và sao chép nội dung chia sẻ' : '') + '. Mở <a href="https://chat.zalo.me/" target="_blank" rel="noopener">Zalo</a>, gửi ảnh này' + (copied ? ' rồi dán nội dung vào tin nhắn' : '') + ' cho người cần nhận.';
+}
 $('btnZalo').addEventListener('click', async function(){
   var btn = this; btn.disabled = true; shareMsg('Đang tạo ảnh kết quả…');
   try {
     var blob = await makePng(); if (!blob) throw new Error('png');
     var file = new File([blob], 'ket-qua-kiem-tra.png', { type:'image/png' });
-    var r = ST.res.r;
-    var text = 'Kết quả ' + shareData().title + ': ' + r.score + '/' + r.total + ' câu đúng (' + r.pct + '%)' + (r.passed === true ? ' - ĐẠT' : r.passed === false ? ' - CHƯA ĐẠT' : '');
+    var text = shareText();
     if (navigator.share && navigator.canShare && navigator.canShare({ files:[file] })){
-      try { await navigator.share({ files:[file], title:text, text:text }); shareMsg('Đã mở bảng chia sẻ. Hãy chọn <b>Zalo</b> để gửi ảnh kết quả.', 'ok'); }
-      catch(e){ if (e && e.name === 'AbortError') shareMsg(''); else { saveBlob(blob); shareMsg(SAVED_MSG, 'info'); } }
-    } else { saveBlob(blob); shareMsg(SAVED_MSG, 'info'); }
+      try { await navigator.share({ files:[file], text:text }); shareMsg('Đã mở bảng chia sẻ. Hãy chọn <b>Zalo</b> để gửi ảnh kết quả.', 'ok'); }
+      catch(e){ if (e && e.name === 'AbortError') shareMsg(''); else { saveBlob(blob); shareMsg(savedMsg(await copyText(text)), 'info'); } }
+    } else { saveBlob(blob); shareMsg(savedMsg(await copyText(text)), 'info'); }
   } catch(e){ shareMsg('Không tạo được ảnh kết quả, vui lòng thử lại.', 'err'); }
   btn.disabled = false;
 });
 $('btnSave').addEventListener('click', async function(){
   var btn = this; btn.disabled = true; shareMsg('Đang tạo ảnh kết quả…');
-  try { var blob = await makePng(); if (!blob) throw new Error('png'); saveBlob(blob); shareMsg(SAVED_MSG, 'info'); }
+  try { var blob = await makePng(); if (!blob) throw new Error('png'); saveBlob(blob); shareMsg(savedMsg(await copyText(shareText())), 'info'); }
   catch(e){ shareMsg('Không tạo được ảnh kết quả, vui lòng thử lại.', 'err'); }
   btn.disabled = false;
 });

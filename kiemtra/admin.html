@@ -154,6 +154,11 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
             <input type="text" id="setTitle">
           </div>
           <div>
+            <label>Tên rút gọn khi chia sẻ qua Zalo (dòng đầu của tin nhắn)</label>
+            <input type="text" id="setShareTitle" placeholder="PCs - KTTĐK 10/2026">
+            <div class="small">Tin nhắn chia sẻ gồm 3 dòng: tên rút gọn này, HỌ TÊN IN HOA, ĐIỂM: số câu đúng/tổng. Để trống sẽ dùng tên bài kiểm tra.</div>
+          </div>
+          <div>
             <label>Tổng số câu hỏi mỗi đề</label>
             <input type="text" inputmode="numeric" id="setCount">
           </div>
@@ -420,7 +425,7 @@ async function loadSettings(){
   const { j } = await api('GET','/api/kt-admin?op=settings');
   if (!j.ok) return;
   const s = j.settings;
-  $('setTitle').value = s.examTitle; $('setCount').value = s.questionCount;
+  $('setTitle').value = s.examTitle; $('setShareTitle').value = s.shareTitle || ''; $('setCount').value = s.questionCount;
   $('setBothGD').value = s.bothGiaDungCount;
   $('setSeconds').value = s.secondsPerQuestion; $('setPass').value = s.passScore; $('setPassOn').checked = !!s.passEnabled; $('setPass').disabled = !s.passEnabled;
   $('setRetake').checked = !!s.allowRetake;
@@ -429,7 +434,7 @@ async function loadSettings(){
 }
 async function saveSettings(){
   const { j } = await api('POST','/api/kt-admin', {
-    op:'saveSettings', examTitle: $('setTitle').value, questionCount: $('setCount').value, bothGiaDungCount: $('setBothGD').value,
+    op:'saveSettings', examTitle: $('setTitle').value, shareTitle: $('setShareTitle').value, questionCount: $('setCount').value, bothGiaDungCount: $('setBothGD').value,
     secondsPerQuestion: $('setSeconds').value, passEnabled: $('setPassOn').checked, passScore: $('setPass').value, allowRetake: $('setRetake').checked,
     complianceEnabled: $('setComplianceOn').checked, complianceHighMin: $('setCHigh').value,
     complianceMidMin: $('setCMid').value, complianceLowMin: $('setCLow').value
