@@ -109,7 +109,11 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
         <h1>Nhập câu hỏi hàng loạt</h1>
         <p class="small">Dán vào đây một mảng JSON các câu hỏi, dạng <code>[{"text":"...","options":["A","B","C","D"],"correctIndex":0,"category":"Gia dụng"}, ...]</code>. <code>correctIndex</code> đếm từ 0 (0=phương án đầu tiên).</p>
         <textarea id="qBulkText" style="min-height:120px" placeholder='[{"text":"Câu hỏi...","options":["A","B","C","D"],"correctIndex":0,"category":"Gia dụng"}]'></textarea>
-        <button class="btn" style="margin-top:10px" onclick="addQuestionsBulk()">Nhập vào ngân hàng đề</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn" onclick="addQuestionsBulk()">Nhập vào ngân hàng đề</button>
+          <button class="btn ghost" onclick="document.getElementById('qFileInput').click()">📁 Chọn file JSON…</button>
+          <input type="file" id="qFileInput" accept=".json,application/json" style="display:none" onchange="loadQuestionsFile(event)">
+        </div>
         <div id="qBulkMsg"></div>
       </div>
       <div class="card">
@@ -279,6 +283,18 @@ async function deleteQuestion(id){
   if (!confirm('Xoá câu hỏi này khỏi ngân hàng đề?')) return;
   const { j } = await api('POST','/api/kt-admin', { op:'deleteQuestion', id });
   if (j.ok){ QUESTIONS = j.questions; loadQuestions(); }
+}
+function loadQuestionsFile(ev){
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    $('qBulkText').value = String(reader.result || '');
+    ev.target.value = ''; // cho phep chon lai cung file lan sau neu can
+    addQuestionsBulk();
+  };
+  reader.onerror = () => { msg('qBulkMsg','Không đọc được file, thử lại.'); };
+  reader.readAsText(file, 'utf-8');
 }
 async function addQuestionsBulk(){
   const raw = $('qBulkText').value.trim();
