@@ -184,8 +184,11 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
     <!-- Kết quả -->
     <div id="tab-results" class="tabpane hide">
       <div class="card">
-        <h1>Kết quả (<span id="resCount">0</span>)</h1>
-        <table><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Quản lí</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <h1 style="margin:0">Kết quả (<span id="resCount">0</span>)</h1>
+          <button class="btn ghost sm" onclick="exportResultsXlsx()">⬇ Xuất Excel</button>
+        </div>
+        <table style="margin-top:14px"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Quản lí</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
       </div>
       <div class="card hide" id="resDetailCard">
         <h1>Chi tiết bài làm</h1>
@@ -368,6 +371,70 @@ async function saveSettings(){
   });
   if (!j.ok){ msg('setMsg', j.error, 'err'); return; }
   msg('setMsg','Đã lưu cài đặt.','ok');
+}
+
+/* ---------- Xuất Excel ---------- */
+let xjsP=null;
+function loadExcelJS(){
+  if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+  if (!xjsP) xjsP = new Promise((ok,no)=>{
+    const sc=document.createElement('script');
+    sc.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+    sc.onload=()=>ok(window.ExcelJS); sc.onerror=()=>{xjsP=null;no(new Error('load'));};
+    document.head.appendChild(sc);
+  });
+  return xjsP;
+}
+async function exportResultsXlsx(){
+  let E; try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel, kiểm tra kết nối mạng.'); return; }
+  const { j } = await api('GET','/api/kt-admin?op=results');
+  if (!j.ok){ alert(j.error||'Không lấy được dữ liệu kết quả.'); return; }
+  const results = (j.results||[]).slice().sort((a,b)=>(b.submittedAt||0)-(a.submittedAt||0));
+  const segLabel = { both:'Cả hai', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };
+
+  const wb = new E.Workbook();
+  wb.creator = 'Hệ thống kiểm tra'; wb.created = new Date();
+  const ws = wb.addWorksheet('Kết quả', { views:[{ state:'frozen', ySplit:1 }] });
+  ws.columns = [
+    { header:'Mã nhân viên', key:'code', width:16 },
+    { header:'Họ tên', key:'name', width:24 },
+    { header:'Quản lí', key:'manager', width:22 },
+    { header:'Nhóm ngành', key:'segment', width:14 },
+    { header:'Số câu đúng', key:'score', width:12 },
+    { header:'Tổng số câu', key:'total', width:12 },
+    { header:'Tỉ lệ đúng (%)', key:'pct', width:13 },
+    { header:'Điểm tuân thủ', key:'compliance', width:13 },
+    { header:'Kết quả', key:'result', width:12 },
+    { header:'Thời điểm nộp bài', key:'submitted', width:20 }
+  ];
+  const header = ws.getRow(1);
+  header.eachCell(c => {
+    c.font = { bold:true, color:{ argb:'FFFFFFFF' } };
+    c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF067A8C' } };
+    c.alignment = { vertical:'middle', horizontal:'center' };
+  });
+  header.height = 22;
+
+  results.forEach(r => {
+    const row = ws.addRow({
+      code: r.code, name: r.name||'', manager: r.manager||'', segment: segLabel[r.segment]||'Cả hai',
+      score: r.score, total: r.total, pct: r.pct, compliance: r.compliancePoints!=null?r.compliancePoints:'',
+      result: r.passed ? 'Đạt' : 'Chưa đạt',
+      submitted: r.submittedAt ? new Date(r.submittedAt).toLocaleString('vi-VN') : ''
+    });
+    const resultCell = row.getCell('result');
+    if (r.passed) { resultCell.font = { bold:true, color:{ argb:'FF1E7F4F' } }; }
+    else { resultCell.font = { bold:true, color:{ argb:'FFB3261E' } }; }
+    ['score','total','pct','compliance'].forEach(k => { row.getCell(k).alignment = { horizontal:'center' }; });
+  });
+  ws.autoFilter = { from:'A1', to:'J1' };
+
+  const buf = await wb.xlsx.writeBuffer();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  a.download = 'ket-qua-kiem-tra-' + new Date().toISOString().slice(0,10) + '.xlsx';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
 }
 
 /* ---------- Kết quả ---------- */
