@@ -19,7 +19,26 @@ const handler = async function (context, req) {
       if (op === "questions") {
         await quiz.ensureBankPeriods();
         const st = await quiz.getSettings();
-        return reply(context, 200, { ok: true, questions: await quiz.getQuestions(), currentPeriod: st.examPeriod, questionCount: st.questionCount, bothGiaDungCount: st.bothGiaDungCount });
+        return reply(context, 200, { ok: true, questions: await quiz.getQuestions(), banks: await quiz.getBanks(), currentPeriod: st.examPeriod, questionCount: st.questionCount, bothGiaDungCount: st.bothGiaDungCount });
+      }
+      // Danh sách ngân hàng kèm thống kê (số câu, theo độ khó, danh mục, thẻ) để dựng cấu trúc đề.
+      if (op === "banks") {
+        const [banks, qs] = await Promise.all([quiz.getBanks(), quiz.getQuestions()]);
+        const stat = (b) => {
+          const l = qs.filter((q) => quiz.bankOf(q) === b.id && quiz.usableQ(q));
+          const cnt = (f) => l.reduce((m, q) => { const k = f(q); if (k) m[k] = (m[k] || 0) + 1; return m; }, {});
+          const tags = {}; l.forEach((q) => (q.tags || []).forEach((t) => { tags[t] = (tags[t] || 0) + 1; }));
+          return Object.assign({}, b, { total: qs.filter((q) => quiz.bankOf(q) === b.id).length, usable: l.length, byDifficulty: cnt((q) => q.difficulty), byCategory: cnt((q) => q.category), byTag: tags });
+        };
+        return reply(context, 200, { ok: true, banks: banks.map(stat) });
+      }
+      // Xem trước cấu trúc đề: mỗi quy tắc có bao nhiêu câu khả dụng, có thiếu không.
+      if (op === "previewBlueprint") {
+        let bp; try { bp = quiz.cleanBlueprint(JSON.parse(String(req.query.blueprint || "null"))); } catch (e) { bp = { error: "Cấu trúc đề không hợp lệ." }; }
+        if (!bp) return reply(context, 200, { ok: true, report: [], total: 0 });
+        if (bp.error) return reply(context, 400, { ok: false, error: bp.error });
+        const r = quiz.buildFromBlueprint(await quiz.getQuestions(), bp);
+        return reply(context, 200, { ok: true, report: r.report, total: r.picked.length, wanted: quiz.blueprintTotal(bp) });
       }
       if (op === "questionsBackup") {
         const bk = await quiz.getQuestionsBackup();
@@ -154,9 +173,9 @@ const handler = async function (context, req) {
       if (q.id) {
         const i = list.findIndex((x) => x.id === q.id);
         if (i < 0) return reply(context, 404, { ok: false, error: "Không tìm thấy câu hỏi." });
-        list[i] = Object.assign({}, list[i], { text, options, correctIndex, category: String(q.category || "").slice(0, 100), active: q.active !== false }, per !== undefined ? { period: per } : {});
+        list[i] = Object.assign({}, list[i], { text, options, correctIndex, category: String(q.category || "").slice(0, 100), active: q.active !== false }, quiz.cleanQuestionMeta(q, list[i]), per !== undefined ? { period: per } : {});
       } else {
-        list.push({ id: quiz.genId(), text, options, correctIndex, category: String(q.category || "").slice(0, 100), active: true, period: per !== undefined ? per : (await quiz.getSettings()).examPeriod });
+        list.push(Object.assign({ id: quiz.genId(), text, options, correctIndex, category: String(q.category || "").slice(0, 100), active: true, period: per !== undefined ? per : (await quiz.getSettings()).examPeriod }, quiz.cleanQuestionMeta(q)));
       }
       await quiz.saveQuestions(list);
       return reply(context, 200, { ok: true, questions: list });
@@ -177,7 +196,8 @@ const handler = async function (context, req) {
         const options = Array.isArray(q.options) ? q.options.map((o) => String(o || "").trim().slice(0, 500)).filter(Boolean) : [];
         const correctIndex = Number.isInteger(q.correctIndex) ? q.correctIndex : -1;
         if (!text || options.length < 2 || correctIndex < 0 || correctIndex >= options.length) { skipped++; return; }
-        list.push({ id: quiz.genId(), text, options, correctIndex, category: String(q.category || "").trim().slice(0, 100), active: true, period: per });
+        list.push(Object.assign({ id: quiz.genId(), text, options, correctIndex, category: String(q.category || "").trim().slice(0, 100), active: true, period: per },
+          quiz.cleanQuestionMeta(Object.assign({}, q, b.bankId !== undefined && q.bankId === undefined ? { bankId: b.bankId } : {}))));
         added++;
       });
       await quiz.saveQuestions(list);
@@ -216,7 +236,7 @@ const handler = async function (context, req) {
       let added = 0, skipped = 0;
       list.filter((q) => (q.period || "") === from).forEach((q) => {
         if (have.has(norm(q.text))) { skipped++; return; }
-        list.push({ id: quiz.genId(), text: q.text, options: (q.options || []).slice(), correctIndex: q.correctIndex, category: q.category || "", active: q.active !== false, period: to, copiedFrom: q.id });
+        list.push({ id: quiz.genId(), text: q.text, options: (q.options || []).slice(), correctIndex: q.correctIndex, category: q.category || "", active: q.active !== false, period: to, copiedFrom: q.id, bankId: q.bankId, difficulty: q.difficulty || "", tags: (q.tags || []).slice(), explanation: q.explanation || "" });
         have.add(norm(q.text)); added++;
       });
       await quiz.saveQuestions(list);
@@ -242,6 +262,46 @@ const handler = async function (context, req) {
       bk.questions.forEach((q) => { if (!have.has(q.id)) { list.push(q); restored++; } });
       await quiz.saveQuestions(list);
       return reply(context, 200, { ok: true, restored, questions: list });
+    }
+
+    // ---------- Ngân hàng câu hỏi ----------
+    if (op === "saveBank") {
+      const name = String(b.name || "").trim().slice(0, 100);
+      if (!name) return reply(context, 400, { ok: false, error: "Nhập tên ngân hàng câu hỏi." });
+      const banks = (await quiz.getBanks()).filter((x) => x.id !== quiz.DEFAULT_BANK);
+      const description = String(b.description || "").trim().slice(0, 300);
+      if (b.id) {
+        const i = banks.findIndex((x) => x.id === b.id);
+        if (i < 0) return reply(context, 404, { ok: false, error: "Không tìm thấy ngân hàng." });
+        banks[i] = Object.assign({}, banks[i], { name, description });
+      } else {
+        let id = quiz.slugify(name), n = 2;
+        while (id === quiz.DEFAULT_BANK || banks.some((x) => x.id === id)) id = quiz.slugify(name) + "-" + n++;
+        banks.push({ id, name, description, createdAt: Date.now() });
+      }
+      await quiz.saveBanks(banks);
+      return reply(context, 200, { ok: true, banks: await quiz.getBanks() });
+    }
+    if (op === "deleteBank") {
+      const id = String(b.id || "");
+      if (!id || id === quiz.DEFAULT_BANK) return reply(context, 400, { ok: false, error: "Không thể xoá ngân hàng chung." });
+      const qs = await quiz.getQuestions();
+      const used = qs.filter((q) => quiz.bankOf(q) === id).length;
+      if (used && b.moveTo !== quiz.DEFAULT_BANK) return reply(context, 409, { ok: false, error: "Ngân hàng còn " + used + " câu hỏi. Chọn chuyển các câu về Ngân hàng chung rồi xoá.", used });
+      qs.forEach((q) => { if (quiz.bankOf(q) === id) q.bankId = quiz.DEFAULT_BANK; });
+      if (used) await quiz.saveQuestions(qs);
+      await quiz.saveBanks((await quiz.getBanks()).filter((x) => x.id !== id));
+      return reply(context, 200, { ok: true, moved: used, banks: await quiz.getBanks() });
+    }
+    // Chuyển nhiều câu hỏi sang một ngân hàng khác
+    if (op === "moveToBank") {
+      const to = String(b.to || ""), ids = new Set(Array.isArray(b.ids) ? b.ids : []);
+      const banks = await quiz.getBanks();
+      if (!banks.some((x) => x.id === to)) return reply(context, 400, { ok: false, error: "Ngân hàng đích không tồn tại." });
+      const qs = await quiz.getQuestions(); let moved = 0;
+      qs.forEach((q) => { if (ids.has(q.id)) { q.bankId = to; moved++; } });
+      await quiz.saveQuestions(qs);
+      return reply(context, 200, { ok: true, moved, questions: qs });
     }
 
     // Tài khoản quản lí (chỉ xem kết quả + chỉnh thông tin nhân viên của mình, không xoá được gì)

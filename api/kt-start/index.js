@@ -27,6 +27,12 @@ module.exports = async function (context, req) {
     const defaultSettings = await quiz.getSettings();
     const examId = String(b.examId || (req.query && req.query.exam) || defaultSettings.examPeriod);
     const settings = await quiz.getExamSettings(examId);
+    // Bài đang dở vẫn được làm tiếp kể cả khi đã quá giờ đóng đề; chỉ chặn khi bắt đầu bài mới.
+    const hasActive = !!(await quiz.activeForPeriod(found.code, settings.examPeriod));
+    if (!hasActive) {
+      const denied = quiz.examAccessError(settings, found, Date.now());
+      if (denied) return reply(context, 403, { ok: false, error: denied });
+    }
     if (!settings.allowRetake) {
       const idx = await quiz.getIndex();
       const prior = idx.find((a) => quiz.normCode(a.code) === code && a.status === "submitted" && (a.period || "") === settings.examPeriod);
@@ -53,30 +59,37 @@ module.exports = async function (context, req) {
         faceCheck = fc.record;
         if (!fc.allow) return reply(context, 422, { ok: false, faceRejected: true, error: fc.message });
       }
-      // Chỉ lấy câu hỏi thuộc ngân hàng đề của KỲ HIỆN TẠI (dự phòng: câu chưa gắn kỳ nếu kỳ này chưa có câu riêng)
-      const bank = quiz.bankFor(allQuestions, settings.examPeriod);
-      const activeQuestions = bank.list;
-      if (!activeQuestions.length) return reply(context, 503, { ok: false, error: "Ngân hàng đề kỳ này chưa có câu hỏi, liên hệ quản trị viên." });
-      // Nhóm ngành quyết định đề trộn từ nhóm câu hỏi nào:
-      // - bán 1 ngành -> chỉ lấy câu thuộc danh mục ngành đó.
-      // - bán cả 2 ngành -> số câu "Gia dụng" cố định, phần còn lại lấy từ mọi danh mục khác.
       const segment = quiz.normSegment(found.segment);
-      const wantCategory = quiz.CATEGORY_BY_SEGMENT[segment];
-      const total = settings.questionCount || activeQuestions.length;
+      const total = settings.questionCount;
       let picked;
-      if (wantCategory) {
-        const pool = activeQuestions.filter((q) => q.category === wantCategory);
-        if (!pool.length) return reply(context, 503, { ok: false, error: "Ngân hàng đề chưa có câu hỏi phù hợp với nhóm ngành của bạn, liên hệ quản trị viên." });
-        picked = quiz.shuffle(pool).slice(0, Math.min(total, pool.length));
+      if (settings.blueprint && settings.blueprint.rules && settings.blueprint.rules.length) {
+        // Đề có cấu trúc riêng: rút câu theo từng quy tắc (ngân hàng / danh mục / độ khó / thẻ / số câu).
+        picked = quiz.buildFromBlueprint(allQuestions, settings.blueprint).picked;
+        if (!picked.length) return reply(context, 503, { ok: false, error: "Cấu trúc đề chưa lấy được câu hỏi nào, liên hệ quản trị viên." });
       } else {
-        const giaDungPool = activeQuestions.filter((q) => q.category === "Gia dụng");
-        const otherPool = activeQuestions.filter((q) => q.category !== "Gia dụng");
-        if (!giaDungPool.length && !otherPool.length) return reply(context, 503, { ok: false, error: "Ngân hàng đề chưa có câu hỏi, liên hệ quản trị viên." });
-        const giaDungN = Math.min(settings.bothGiaDungCount || 0, giaDungPool.length);
-        const otherN = Math.min(Math.max(total - giaDungN, 0), otherPool.length);
-        picked = quiz.shuffle(quiz.shuffle(giaDungPool).slice(0, giaDungN).concat(quiz.shuffle(otherPool).slice(0, otherN)));
+        // Cách ra đề cũ (đề chưa có cấu trúc): theo kỳ + nhóm ngành.
+        // Chỉ lấy câu hỏi thuộc ngân hàng đề của KỲ HIỆN TẠI (dự phòng: câu chưa gắn kỳ nếu kỳ này chưa có câu riêng)
+        const bank = quiz.bankFor(allQuestions, settings.examPeriod);
+        const activeQuestions = bank.list;
+        if (!activeQuestions.length) return reply(context, 503, { ok: false, error: "Ngân hàng đề kỳ này chưa có câu hỏi, liên hệ quản trị viên." });
+        // - bán 1 ngành -> chỉ lấy câu thuộc danh mục ngành đó.
+        // - bán cả 2 ngành -> số câu "Gia dụng" cố định, phần còn lại lấy từ mọi danh mục khác.
+        const wantCategory = quiz.CATEGORY_BY_SEGMENT[segment];
+        const totalLegacy = total || activeQuestions.length;
+        if (wantCategory) {
+          const pool = activeQuestions.filter((q) => q.category === wantCategory);
+          if (!pool.length) return reply(context, 503, { ok: false, error: "Ngân hàng đề chưa có câu hỏi phù hợp với nhóm ngành của bạn, liên hệ quản trị viên." });
+          picked = quiz.shuffle(pool).slice(0, Math.min(totalLegacy, pool.length));
+        } else {
+          const giaDungPool = activeQuestions.filter((q) => q.category === "Gia dụng");
+          const otherPool = activeQuestions.filter((q) => q.category !== "Gia dụng");
+          if (!giaDungPool.length && !otherPool.length) return reply(context, 503, { ok: false, error: "Ngân hàng đề chưa có câu hỏi, liên hệ quản trị viên." });
+          const giaDungN = Math.min(settings.bothGiaDungCount || 0, giaDungPool.length);
+          const otherN = Math.min(Math.max(totalLegacy - giaDungN, 0), otherPool.length);
+          picked = quiz.shuffle(quiz.shuffle(giaDungPool).slice(0, giaDungN).concat(quiz.shuffle(otherPool).slice(0, otherN)));
+        }
+        if (!picked.length) return reply(context, 503, { ok: false, error: "Chưa có câu hỏi nào phù hợp để tạo đề (kiểm tra ngân hàng đề và cài đặt số câu), liên hệ quản trị viên." });
       }
-      if (!picked.length) return reply(context, 503, { ok: false, error: "Chưa có câu hỏi nào phù hợp để tạo đề (kiểm tra ngân hàng đề và cài đặt số câu), liên hệ quản trị viên." });
       const orders = {};
       picked.forEach((q) => { orders[q.id] = quiz.shuffle(q.options.map((_, i) => i)); }); // order[vị trí hiển thị] = chỉ số gốc
       attempt = {

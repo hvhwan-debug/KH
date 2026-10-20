@@ -27,11 +27,14 @@ module.exports = async function (context, req) {
     const examId = String(b.examId || (req.query && req.query.exam) || defaultSettings.examPeriod);
     const settings = await quiz.getExamSettings(examId);
     const candidate = { code: found.code, name: found.name, email: found.email, manager: found.manager || "" };
+    // Khung thời gian mở/đóng + đối tượng được thi (chỉ áp dụng cho đề thi có cấu hình các mục này)
+    const denied = quiz.examAccessError(settings, found, Date.now());
+    if (denied) return reply(context, 403, { ok: false, error: denied });
     const exam = {
       id: examId,
       title: settings.examTitle,
       shareTitle: String(settings.shareTitle || "").trim() || settings.examTitle,
-      questionCount: settings.questionCount,
+      questionCount: settings.blueprint && settings.blueprint.rules && settings.blueprint.rules.length ? quiz.blueprintTotal(settings.blueprint) : settings.questionCount,
       secondsPerQuestion: Math.max(10, settings.secondsPerQuestion || 60),
       passScore: quiz.passScoreOf(settings)
     };

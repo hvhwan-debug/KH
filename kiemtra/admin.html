@@ -179,7 +179,8 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
     <section class="khero hide" id="hero" aria-label="Tổng quan nhanh"></section>
     <div class="tabs">
       <button data-tab="exams" onclick="switchTab('exams')">Đề thi</button>
-      <button data-tab="questions" onclick="switchTab('questions')">Ngân hàng đề</button>
+      <button data-tab="banks" onclick="switchTab('banks')">Ngân hàng</button>
+      <button data-tab="questions" onclick="switchTab('questions')">Câu hỏi</button>
       <button data-tab="candidates" onclick="switchTab('candidates')">Thí sinh</button>
       <button data-tab="settings" onclick="switchTab('settings')">Cài đặt</button>
       <button data-tab="results" onclick="switchTab('results')">Kết quả</button>
@@ -215,7 +216,33 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
           <div><label>Điểm ≥ mốc này → 10 điểm</label><input type="text" inputmode="decimal" id="exCLow"></div>
         </div>
         <p class="small">Để trống một ô là đề này dùng theo <b>cài đặt chung</b> (tab Cài đặt) cho mục đó.</p>
-        <div style="margin-top:12px;display:flex;gap:8px">
+
+        <h1 style="margin-top:22px;font-size:16px">Khung thời gian &amp; đối tượng</h1>
+        <label>Mô tả / thể lệ ngắn (tuỳ chọn)</label>
+        <input type="text" id="exDesc" placeholder="Vd: Kiểm tra kiến thức sản phẩm quý 4">
+        <div class="grid2" style="margin-top:6px">
+          <div><label>Mở đề lúc (để trống = mở ngay)</label><input type="datetime-local" id="exOpen"></div>
+          <div><label>Đóng đề lúc (để trống = không đóng)</label><input type="datetime-local" id="exClose"></div>
+        </div>
+        <label>Nhóm thí sinh được thi (không tick = tất cả)</label>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:14px">
+          <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="checkbox" class="exSeg" value="gia_dung" style="width:18px;height:18px"> Gia dụng</label>
+          <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="checkbox" class="exSeg" value="may_loc" style="width:18px;height:18px"> Máy lọc nước</label>
+          <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="checkbox" class="exSeg" value="both" style="width:18px;height:18px"> Cả hai ngành</label>
+        </div>
+        <p class="small">Bài đang làm dở vẫn được làm tiếp kể cả khi đề đã đóng.</p>
+
+        <h1 style="margin-top:22px;font-size:16px">Cấu trúc đề</h1>
+        <p class="small">Mỗi quy tắc lấy ngẫu nhiên <b>N câu</b> từ một ngân hàng (có thể lọc theo danh mục, độ khó, thẻ). Đề của mỗi thí sinh được rút riêng, không trùng câu. <b>Không có quy tắc nào</b> thì đề dùng cách ra đề cũ (theo kỳ + nhóm ngành, ở các ô số câu phía trên).</p>
+        <div id="bpRules"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <button class="btn ghost sm" type="button" onclick="addBpRule()">+ Thêm quy tắc</button>
+          <button class="btn ghost sm" type="button" onclick="previewBp()">Kiểm tra đủ câu chưa</button>
+        </div>
+        <div id="bpTotal" class="small" style="margin-top:8px"></div>
+        <div id="bpPreview"></div>
+
+        <div style="margin-top:16px;display:flex;gap:8px">
           <button class="btn" onclick="saveExam()">Lưu đề thi</button>
           <button class="btn ghost" onclick="document.getElementById('examFormCard').classList.add('hide')">Huỷ</button>
         </div>
@@ -226,7 +253,42 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
           <h1 style="margin:0">Danh sách đề thi</h1>
           <button class="btn" onclick="openNewExam()">+ Tạo đề thi mới</button>
         </div>
-        <table style="margin-top:14px"><thead><tr><th>Mã đề</th><th>Tên đề thi</th><th>Số câu trong NH đề</th><th>Số bài đã nộp</th><th>Trạng thái</th><th></th></tr></thead><tbody id="exList"></tbody></table>
+        <table style="margin-top:14px"><thead><tr><th>Mã đề</th><th>Tên đề thi</th><th>Cấu trúc</th><th>Thời gian</th><th>Số bài đã nộp</th><th>Trạng thái</th><th></th></tr></thead><tbody id="exList"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Ngân hàng câu hỏi -->
+    <div id="tab-banks" class="tabpane hide">
+      <div class="card">
+        <p class="small">Mỗi <b>ngân hàng</b> là một bộ câu hỏi độc lập theo chủ đề (ví dụ: An toàn lao động, Sản phẩm bếp từ). Một ngân hàng dùng được cho <b>nhiều đề thi</b> mà không cần sao chép câu hỏi: khi tạo đề, bạn chọn lấy bao nhiêu câu từ ngân hàng nào, độ khó nào (tab Đề thi → Cấu trúc đề).</p>
+      </div>
+      <div class="card">
+        <h1 id="bkFormTitle">Tạo ngân hàng mới</h1>
+        <input type="hidden" id="bkEditId">
+        <div class="grid2">
+          <div><label>Tên ngân hàng</label><input type="text" id="bkName" placeholder="Vd: An toàn lao động"></div>
+          <div><label>Mô tả (tuỳ chọn)</label><input type="text" id="bkDesc"></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn" onclick="saveBank()">Lưu ngân hàng</button>
+          <button class="btn ghost" onclick="clearBankForm()">Làm mới</button>
+        </div>
+        <div id="bkMsg"></div>
+      </div>
+      <div class="card">
+        <h1>Danh sách ngân hàng</h1>
+        <table><thead><tr><th>Tên</th><th>Câu hỏi (dùng được / tổng)</th><th>Độ khó</th><th>Danh mục</th><th></th></tr></thead><tbody id="bkList"></tbody></table>
+        <div id="bkListMsg"></div>
+      </div>
+      <div class="card">
+        <h1>Chuyển câu hỏi giữa các ngân hàng</h1>
+        <div class="grid2">
+          <div><label>Xem câu hỏi của ngân hàng</label><select id="bkFilter" onchange="renderBankQuestions()"></select></div>
+          <div><label>Chuyển các câu đã tick sang</label><select id="bkMoveTo"></select></div>
+        </div>
+        <div style="margin-top:10px"><button class="btn" onclick="moveSelectedToBank()">Chuyển các câu đã chọn</button></div>
+        <div id="bkMoveMsg"></div>
+        <table style="margin-top:12px"><thead><tr><th style="width:34px"><input type="checkbox" id="bkAll" onchange="toggleAllBankQ(this.checked)" style="width:18px;height:18px"></th><th>Câu hỏi</th><th>Danh mục</th><th>Độ khó</th><th>Thẻ</th></tr></thead><tbody id="bkQList"></tbody></table>
       </div>
     </div>
 
@@ -249,8 +311,14 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
         <textarea id="qText" placeholder="Nhập nội dung câu hỏi…"></textarea>
         <label>Phân loại (tuỳ chọn)</label>
         <input type="text" id="qCategory" placeholder="VD: Nghiệp vụ, An toàn lao động...">
-        <label>Thuộc kỳ</label>
-        <select id="qPeriod" aria-label="Kỳ của câu hỏi"></select>
+        <div class="grid2">
+          <div><label>Ngân hàng</label><select id="qBank" aria-label="Ngân hàng của câu hỏi"></select></div>
+          <div><label>Độ khó</label><select id="qDifficulty"><option value="">Không phân loại</option><option value="easy">Dễ</option><option value="medium">Trung bình</option><option value="hard">Khó</option></select></div>
+          <div><label>Thẻ (cách nhau dấu phẩy, tuỳ chọn)</label><input type="text" id="qTags" placeholder="Vd: pccc, bếp từ"></div>
+          <div><label>Thuộc kỳ</label><select id="qPeriod" aria-label="Kỳ của câu hỏi"></select></div>
+        </div>
+        <label>Giải thích đáp án (tuỳ chọn)</label>
+        <textarea id="qExplain" style="min-height:56px" placeholder="Hiển thị cho quản trị viên khi xem lại câu hỏi"></textarea>
         <label>Các phương án trả lời (chọn nút tròn cho đáp án đúng)</label>
         <div id="qOptsEdit"></div>
         <button class="btn ghost sm" onclick="addOptRow()">+ Thêm phương án</button>
@@ -274,7 +342,7 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
       </div>
       <div class="card">
         <h1>Nhập câu hỏi hàng loạt <span class="small" id="qBulkPer" style="font-weight:600"></span></h1>
-        <p class="small">Dán vào đây một mảng JSON các câu hỏi, dạng <code>[{"text":"...","options":["A","B","C","D"],"correctIndex":0,"category":"Gia dụng"}, ...]</code>. <code>correctIndex</code> đếm từ 0 (0=phương án đầu tiên).</p>
+        <p class="small">Dán vào đây một mảng JSON các câu hỏi, dạng <code>[{"text":"...","options":["A","B","C","D"],"correctIndex":0,"category":"Gia dụng","difficulty":"easy","tags":["pccc"]}, ...]</code>. <code>correctIndex</code> đếm từ 0 (0=phương án đầu tiên). <code>difficulty</code> là easy/medium/hard, <code>tags</code> và <code>difficulty</code> không bắt buộc. Câu được nhập vào <b>ngân hàng đang chọn ở ô "Ngân hàng"</b> phía trên (trừ khi câu tự ghi <code>bankId</code>).</p>
         <textarea id="qBulkText" style="min-height:120px" placeholder='[{"text":"Câu hỏi...","options":["A","B","C","D"],"correctIndex":0,"category":"Gia dụng"}]'></textarea>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
           <button class="btn" onclick="addQuestionsBulk()">Nhập vào ngân hàng đề</button>
@@ -290,7 +358,7 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
         </div>
         <div id="qBackupBar"></div>
         <div id="qDelMsg"></div>
-        <table><thead><tr><th>Câu hỏi</th><th>Phân loại</th><th>Trạng thái</th><th></th></tr></thead><tbody id="qList"></tbody></table>
+        <table><thead><tr><th>Câu hỏi</th><th>Ngân hàng</th><th>Phân loại</th><th>Độ khó</th><th>Trạng thái</th><th></th></tr></thead><tbody id="qList"></tbody></table>
       </div>
     </div>
 
@@ -577,7 +645,7 @@ function switchTab(t){
   if (t === 'audit') loadAudit();
 }
 
-function loadAll(){ loadExams(); loadQuestions(); loadCandidates(); loadSettings(); loadResults(); loadViewers(); }
+function loadAll(){ loadBanks(); loadExams(); loadQuestions(); loadCandidates(); loadSettings(); loadResults(); loadViewers(); }
 
 /* ---------- Nhiều đề thi độc lập ---------- */
 let EXAMS = [];
@@ -587,19 +655,23 @@ async function loadExams(){
   EXAMS = j.exams || [];
   $('exList').innerHTML = EXAMS.map(e =>
     '<tr><td><code>'+esc(e.id)+'</code>'+(e.id===j.currentPeriod?' <span class="badge y">Mặc định</span>':'')+'</td>'+
-    '<td>'+esc(e.title||e.id)+'</td><td>'+(e.questionCount||0)+'</td><td>'+(e.resultCount||0)+'</td>'+
-    '<td class="small">'+(e.id===j.currentPeriod?'Đang mở (mặc định)':'Có dữ liệu')+'</td>'+
+    '<td>'+esc(e.title||e.id)+'<div class="small"><a href="/kiemtra/?exam='+encodeURIComponent(e.id)+'" target="_blank" rel="noopener">link thi</a></div></td>'+
+    '<td class="small">'+(bpTotalOf(e.blueprint) ? '<span class="badge y">Theo quy tắc</span> '+bpTotalOf(e.blueprint)+' câu / '+e.blueprint.rules.length+' quy tắc' : 'Cách cũ · '+(e.questionCount||0)+' câu trong kỳ')+'</td>'+
+    '<td class="small">'+esc(examWindowText(e))+'</td><td>'+(e.resultCount||0)+'</td>'+
+    '<td class="small">'+examStatusText(e, j.currentPeriod)+'</td>'+
     '<td style="white-space:nowrap">'+
       (e.id!==j.currentPeriod?'<button class="btn ghost sm" onclick="setDefaultExamUI(\''+esc(e.id)+'\')">Đặt mặc định</button> ':'')+
       '<button class="btn ghost sm" onclick="editExam(\''+esc(e.id)+'\')">Sửa</button> '+
       (e.id!==j.currentPeriod?'<button class="btn danger sm" onclick="deleteExamUI(\''+esc(e.id)+'\')">Xoá</button>':'')+
     '</td></tr>'
-  ).join('') || '<tr><td colspan="6" class="small">Chưa có đề thi nào, bấm "+ Tạo đề thi mới" để bắt đầu.</td></tr>';
+  ).join('') || '<tr><td colspan="7" class="small">Chưa có đề thi nào, bấm "+ Tạo đề thi mới" để bắt đầu.</td></tr>';
 }
 function clearExamForm(){
   $('exEditingId').value=''; $('exId').value=''; $('exId').disabled=false; $('exTitle').value=''; $('exShareTitle').value='';
   $('exCount').value=''; $('exBothGD').value=''; $('exSeconds').value=''; $('exPass').value=''; $('exPassOn').checked=false;
   $('exRetake').checked=false; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
+  $('exDesc').value=''; $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
+  BP_RULES = []; renderBpRules(); $('bpPreview').innerHTML=''; $('bpTotal').textContent='';
   msg('exMsg','');
 }
 function openNewExam(){
@@ -617,6 +689,9 @@ function editExam(id){
   $('exSeconds').value = e.secondsPerQuestion || ''; $('exPass').value = e.passScore || ''; $('exPassOn').checked = !!e.passEnabled;
   $('exRetake').checked = !!e.allowRetake; $('exComplianceOn').checked = !!e.complianceEnabled;
   $('exCHigh').value = e.complianceHighMin || ''; $('exCMid').value = e.complianceMidMin || ''; $('exCLow').value = e.complianceLowMin || '';
+  $('exDesc').value = e.description || ''; $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
+  document.querySelectorAll('.exSeg').forEach(c => c.checked = (e.segments || []).indexOf(c.value) >= 0);
+  BP_RULES = e.blueprint && e.blueprint.rules ? e.blueprint.rules.map(r => Object.assign({}, r)) : []; renderBpRules();
   $('examFormTitle').textContent = 'Sửa đề thi';
   $('examFormCard').classList.remove('hide');
   $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
@@ -627,7 +702,11 @@ async function saveExam(){
     title: $('exTitle').value.trim(), shareTitle: $('exShareTitle').value.trim(),
     questionCount: $('exCount').value, bothGiaDungCount: $('exBothGD').value, secondsPerQuestion: $('exSeconds').value,
     passEnabled: $('exPassOn').checked, passScore: $('exPass').value, allowRetake: $('exRetake').checked,
-    complianceEnabled: $('exComplianceOn').checked, complianceHighMin: $('exCHigh').value, complianceMidMin: $('exCMid').value, complianceLowMin: $('exCLow').value
+    complianceEnabled: $('exComplianceOn').checked, complianceHighMin: $('exCHigh').value, complianceMidMin: $('exCMid').value, complianceLowMin: $('exCLow').value,
+    description: $('exDesc').value.trim(),
+    openAt: localToMs($('exOpen').value), closeAt: localToMs($('exClose').value),
+    segments: Array.from(document.querySelectorAll('.exSeg:checked')).map(c => c.value),
+    blueprint: BP_RULES.length ? { rules: BP_RULES.map(r => ({ bankId:r.bankId, category:r.category||'', difficulty:r.difficulty||'', tag:r.tag||'', count:+r.count||0 })) } : null
   };
   if (!exam.id){ msg('exMsg','Nhập mã đề thi.'); return; }
   const { j } = await api('POST','/api/kt-admin', { op:'saveExam', exam });
@@ -651,6 +730,128 @@ async function deleteExamUI(id){
   loadExams();
 }
 
+/* ---------- Ngân hàng câu hỏi ---------- */
+let BANKS = [{ id:'default', name:'Ngân hàng chung' }];
+const DIFF_LABEL = { easy:'Dễ', medium:'Trung bình', hard:'Khó' };
+const bankName = (id) => (BANKS.find(b => b.id === (id || 'default')) || { name: id || 'Ngân hàng chung' }).name;
+function setBanks(list){
+  if (!Array.isArray(list) || !list.length) return;
+  BANKS = list;
+  const opts = BANKS.map(b => '<option value="'+esc(b.id)+'">'+esc(b.name)+'</option>').join('');
+  const keep = (id, html) => { const el = $(id); if (!el) return; const v = el.value; el.innerHTML = html; if (v && Array.from(el.options).some(o => o.value === v)) el.value = v; };
+  keep('qBank', opts); keep('bkMoveTo', opts); keep('bkFilter', opts);
+  renderBpRules();
+}
+async function loadBanks(){
+  const { j } = await api('GET','/api/kt-admin?op=banks');
+  if (!j.ok) return;
+  setBanks(j.banks);
+  const dl = (m) => ['easy','medium','hard'].filter(k => m && m[k]).map(k => DIFF_LABEL[k]+' '+m[k]).join(' · ') || '—';
+  const cl = (m) => Object.keys(m || {}).map(k => esc(k)+' ('+m[k]+')').join(', ') || '—';
+  $('bkList').innerHTML = j.banks.map(b =>
+    '<tr><td><b>'+esc(b.name)+'</b>'+(b.description?'<div class="small">'+esc(b.description)+'</div>':'')+'<div class="small"><code>'+esc(b.id)+'</code></div></td>'+
+    '<td>'+b.usable+' / '+b.total+'</td><td class="small">'+dl(b.byDifficulty)+'</td><td class="small">'+cl(b.byCategory)+'</td>'+
+    '<td style="white-space:nowrap">'+(b.id!=='default' ? '<button class="btn ghost sm" onclick="editBank(\''+esc(b.id)+'\')">Sửa</button> <button class="btn danger sm" onclick="deleteBankUI(\''+esc(b.id)+'\')">Xoá</button>' : '<span class="small">Mặc định</span>')+'</td></tr>'
+  ).join('');
+  window.BANK_STATS = j.banks;
+  renderBankQuestions();
+}
+function clearBankForm(){ $('bkEditId').value=''; $('bkName').value=''; $('bkDesc').value=''; $('bkFormTitle').textContent='Tạo ngân hàng mới'; msg('bkMsg',''); }
+function editBank(id){
+  const b = BANKS.find(x => x.id === id); if (!b) return;
+  $('bkEditId').value = id; $('bkName').value = b.name; $('bkDesc').value = b.description || '';
+  $('bkFormTitle').textContent = 'Sửa ngân hàng'; window.scrollTo({top:0,behavior:'smooth'});
+}
+async function saveBank(){
+  const name = $('bkName').value.trim();
+  if (!name){ msg('bkMsg','Nhập tên ngân hàng.'); return; }
+  const { j } = await api('POST','/api/kt-admin', { op:'saveBank', id: $('bkEditId').value || undefined, name, description: $('bkDesc').value.trim() });
+  if (!j.ok){ msg('bkMsg', j.error || 'Không lưu được.'); return; }
+  clearBankForm(); msg('bkMsg','Đã lưu ngân hàng.','ok'); await loadBanks();
+}
+async function deleteBankUI(id){
+  const b = BANKS.find(x => x.id === id), st = (window.BANK_STATS || []).find(x => x.id === id);
+  const n = st ? st.total : 0;
+  if (!confirm('Xoá ngân hàng "'+(b?b.name:id)+'"?'+(n ? '\n'+n+' câu hỏi trong ngân hàng sẽ được chuyển về "Ngân hàng chung" (không bị xoá).' : ''))) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'deleteBank', id, moveTo:'default' });
+  if (!j.ok){ msg('bkListMsg', j.error || 'Không xoá được.'); return; }
+  msg('bkListMsg','Đã xoá ngân hàng'+(j.moved?', chuyển '+j.moved+' câu về Ngân hàng chung':'')+'.','ok');
+  await loadBanks(); loadQuestions();
+}
+function renderBankQuestions(){
+  const f = $('bkFilter') ? $('bkFilter').value || 'default' : 'default';
+  const L = QUESTIONS.filter(q => (q.bankId || 'default') === f);
+  $('bkAll').checked = false;
+  $('bkQList').innerHTML = L.map(q =>
+    '<tr><td><input type="checkbox" class="bkSel" value="'+esc(q.id)+'" style="width:18px;height:18px"></td><td>'+esc(q.text.slice(0,90))+(q.text.length>90?'…':'')+'</td><td>'+esc(q.category||'')+'</td><td class="small">'+esc(DIFF_LABEL[q.difficulty]||'')+'</td><td class="small">'+esc((q.tags||[]).join(', '))+'</td></tr>'
+  ).join('') || '<tr><td colspan="5" class="small">Ngân hàng này chưa có câu hỏi.</td></tr>';
+}
+function toggleAllBankQ(on){ document.querySelectorAll('.bkSel').forEach(c => c.checked = on); }
+async function moveSelectedToBank(){
+  const ids = Array.from(document.querySelectorAll('.bkSel:checked')).map(c => c.value);
+  if (!ids.length){ msg('bkMoveMsg','Tick ít nhất một câu hỏi.'); return; }
+  const to = $('bkMoveTo').value;
+  const { j } = await api('POST','/api/kt-admin', { op:'moveToBank', ids, to });
+  if (!j.ok){ msg('bkMoveMsg', j.error || 'Không chuyển được.'); return; }
+  QUESTIONS = j.questions; msg('bkMoveMsg','Đã chuyển '+j.moved+' câu sang "'+bankName(to)+'".','ok');
+  loadBanks(); renderQuestions();
+}
+
+/* ---------- Cấu trúc đề (blueprint) + khung thời gian ---------- */
+let BP_RULES = [];
+const bpTotalOf = (bp) => bp && bp.rules ? bp.rules.reduce((n, r) => n + (+r.count || 0), 0) : 0;
+function renderBpRules(){
+  const box = $('bpRules'); if (!box) return;
+  const bankOpts = (sel) => '<option value="*"'+(sel==='*'?' selected':'')+'>Mọi ngân hàng</option>' + BANKS.map(b => '<option value="'+esc(b.id)+'"'+(b.id===sel?' selected':'')+'>'+esc(b.name)+'</option>').join('');
+  const diffOpts = (sel) => [['','Mọi độ khó'],['easy','Dễ'],['medium','Trung bình'],['hard','Khó']].map(o => '<option value="'+o[0]+'"'+(o[0]===(sel||'')?' selected':'')+'>'+o[1]+'</option>').join('');
+  box.innerHTML = BP_RULES.map((r, i) =>
+    '<div class="bp-row" style="display:grid;grid-template-columns:2fr 1.4fr 1.2fr 1.2fr 80px 36px;gap:8px;align-items:end;margin-bottom:8px">'+
+      '<div><label>Ngân hàng</label><select data-i="'+i+'" data-k="bankId">'+bankOpts(r.bankId)+'</select></div>'+
+      '<div><label>Danh mục</label><input type="text" data-i="'+i+'" data-k="category" value="'+esc(r.category||'').replace(/"/g,'&quot;')+'" placeholder="Tất cả"></div>'+
+      '<div><label>Độ khó</label><select data-i="'+i+'" data-k="difficulty">'+diffOpts(r.difficulty)+'</select></div>'+
+      '<div><label>Thẻ</label><input type="text" data-i="'+i+'" data-k="tag" value="'+esc(r.tag||'').replace(/"/g,'&quot;')+'" placeholder="Tất cả"></div>'+
+      '<div><label>Số câu</label><input type="text" inputmode="numeric" data-i="'+i+'" data-k="count" value="'+esc(r.count||'')+'"></div>'+
+      '<div><button class="btn danger sm" type="button" onclick="removeBpRule('+i+')" title="Xoá quy tắc">✕</button></div>'+
+    '</div>'
+  ).join('') || '<p class="small" style="margin:0">Chưa có quy tắc: đề dùng cách ra đề cũ.</p>';
+  box.querySelectorAll('[data-k]').forEach(el => {
+    const upd = () => { BP_RULES[+el.dataset.i][el.dataset.k] = el.value; updateBpTotal(); };
+    el.addEventListener('input', upd); el.addEventListener('change', upd);
+  });
+  updateBpTotal();
+}
+function updateBpTotal(){ const t = bpTotalOf({ rules: BP_RULES }); $('bpTotal').textContent = BP_RULES.length ? 'Tổng cộng mỗi đề: ' + t + ' câu từ ' + BP_RULES.length + ' quy tắc.' : ''; }
+function addBpRule(){ BP_RULES.push({ bankId: (BANKS[0] && BANKS.length > 1 ? BANKS[1].id : 'default'), category:'', difficulty:'', tag:'', count:5 }); renderBpRules(); }
+function removeBpRule(i){ BP_RULES.splice(i, 1); renderBpRules(); $('bpPreview').innerHTML=''; }
+async function previewBp(){
+  if (!BP_RULES.length){ $('bpPreview').innerHTML = '<div class="msg warn">Chưa có quy tắc nào để kiểm tra.</div>'; return; }
+  const bp = { rules: BP_RULES.map(r => ({ bankId:r.bankId, category:r.category||'', difficulty:r.difficulty||'', tag:r.tag||'', count:+r.count||0 })) };
+  const { j } = await api('GET','/api/kt-admin?op=previewBlueprint&blueprint=' + encodeURIComponent(JSON.stringify(bp)));
+  if (!j.ok){ $('bpPreview').innerHTML = '<div class="msg err">'+esc(j.error || 'Không kiểm tra được.')+'</div>'; return; }
+  const rows = j.report.map((x, i) => {
+    const r = x.rule, name = (r.bankId === '*' ? 'Mọi ngân hàng' : bankName(r.bankId)) + (r.category ? ' · ' + r.category : '') + (r.difficulty ? ' · ' + DIFF_LABEL[r.difficulty] : '') + (r.tag ? ' · #' + r.tag : '');
+    return '<div class="row" style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)"><span>Quy tắc '+(i+1)+': '+esc(name)+'</span><span style="color:var(--'+(x.short?'bad':'ok')+');font-weight:700">'+(x.short ? '⚠ thiếu '+x.short+' câu (có '+x.taken+'/'+r.count+')' : '✓ đủ ('+x.available+' câu khả dụng)')+'</span></div>';
+  }).join('');
+  $('bpPreview').innerHTML = '<div style="margin-top:10px">'+rows+'</div><div class="msg '+(j.total >= j.wanted ? 'ok' : 'warn')+'">Đề sẽ có '+j.total+'/'+j.wanted+' câu. '+(j.total >= j.wanted ? 'Đủ câu để ra đề.' : 'Hãy thêm câu hỏi vào ngân hàng hoặc giảm số câu.')+'</div>';
+}
+const pad2 = (n) => String(n).padStart(2, '0');
+function msToLocal(ms){ if (!ms) return ''; const d = new Date(+ms); return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())+'T'+pad2(d.getHours())+':'+pad2(d.getMinutes()); }
+function localToMs(v){ if (!v) return 0; const t = new Date(v).getTime(); return isNaN(t) ? 0 : t; }
+function examWindowText(e){
+  const f = (ms) => new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
+  const seg = (e.segments || []).length ? ' · ' + e.segments.map(s => ({gia_dung:'Gia dụng',may_loc:'Máy lọc',both:'Cả hai'}[s]||s)).join('/') : '';
+  if (e.openAt && e.closeAt) return f(e.openAt) + ' → ' + f(e.closeAt) + seg;
+  if (e.openAt) return 'Từ ' + f(e.openAt) + seg;
+  if (e.closeAt) return 'Đến ' + f(e.closeAt) + seg;
+  return 'Không giới hạn' + seg;
+}
+function examStatusText(e, cur){
+  const now = Date.now();
+  if (e.openAt && now < e.openAt) return '<span class="badge n">Chưa mở</span>';
+  if (e.closeAt && now > e.closeAt) return '<span class="badge n">Đã đóng</span>';
+  return e.id === cur ? '<span class="badge y">Đang mở (mặc định)</span>' : '<span class="badge y">Đang mở</span>';
+}
+
 /* ---------- Ngân hàng đề ---------- */
 let QUESTIONS = [];
 function addOptRow(checked){
@@ -662,6 +863,7 @@ function addOptRow(checked){
 }
 function clearQForm(){
   $('qEditId').value=''; $('qText').value=''; $('qCategory').value='';
+  $('qDifficulty').value=''; $('qTags').value=''; $('qExplain').value=''; if ($('qBank').options.length) $('qBank').value = $('qBank').dataset.last || 'default';
   $('qOptsEdit').innerHTML=''; $('qFormTitle').textContent='Thêm câu hỏi mới vào ' + qPerLabel(QP || '').toLowerCase();
   if ($('qPeriod').options.length) $('qPeriod').value = QP || '';
   for (let i=0;i<4;i++) addOptRow(i===0);
@@ -677,7 +879,7 @@ function qPeriods(){
 async function loadQuestions(){
   const { j } = await api('GET','/api/kt-admin?op=questions');
   if (!j.ok) return;
-  QUESTIONS = j.questions; QMETA = j;
+  QUESTIONS = j.questions; QMETA = j; setBanks(j.banks);
   if (QP === null) QP = j.currentPeriod || '';
   renderQuestions();
   if (!$('qOptsEdit').children.length) clearQForm();
@@ -723,9 +925,9 @@ function renderQuestions(){
   $('qBulkPer').textContent = '→ vào ' + qPerLabel(QP).toLowerCase();
   $('qCount').textContent = L.length;
   $('qList').innerHTML = L.map(q =>
-    '<tr><td>'+esc(q.text.slice(0,70))+(q.text.length>70?'…':'')+'</td><td>'+esc(q.category||'')+'</td><td>'+(q.active!==false?'<span class="badge y">Đang dùng</span>':'<span class="badge n">Đã ẩn</span>')+'</td>'+
+    '<tr><td>'+esc(q.text.slice(0,70))+(q.text.length>70?'…':'')+'</td><td class="small">'+esc(bankName(q.bankId))+'</td><td>'+esc(q.category||'')+'</td><td class="small">'+esc(DIFF_LABEL[q.difficulty]||'')+'</td><td>'+(q.active!==false?'<span class="badge y">Đang dùng</span>':'<span class="badge n">Đã ẩn</span>')+'</td>'+
     '<td><button class="btn ghost sm" onclick="editQuestion(\''+q.id+'\')">Sửa</button> <button class="btn danger sm" onclick="deleteQuestion(\''+q.id+'\')">Xoá</button></td></tr>'
-  ).join('') || '<tr><td colspan="4" class="small">Kỳ này chưa có câu hỏi. Thêm câu mới, nhập hàng loạt hoặc sao chép từ kỳ khác.</td></tr>';
+  ).join('') || '<tr><td colspan="6" class="small">Kỳ này chưa có câu hỏi. Thêm câu mới, nhập hàng loạt hoặc sao chép từ kỳ khác.</td></tr>';
   $('qPeriod').innerHTML = pers.map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + (p === cur ? ' (hiện tại)' : '') + '</option>').join('') + (un.length ? '<option value="">Chưa gắn kỳ</option>' : '');
   $('qPeriod').value = QP;
 }
@@ -783,6 +985,7 @@ function editQuestion(id){
   if (!q) return;
   $('qEditId').value = q.id; $('qText').value = q.text; $('qCategory').value = q.category||'';
   $('qFormTitle').textContent = 'Sửa câu hỏi'; $('qPeriod').value = q.period || '';
+  $('qBank').value = q.bankId || 'default'; $('qDifficulty').value = q.difficulty || ''; $('qTags').value = (q.tags || []).join(', '); $('qExplain').value = q.explanation || '';
   $('qOptsEdit').innerHTML='';
   q.options.forEach((o,i) => {
     const row = document.createElement('div');
@@ -831,7 +1034,7 @@ async function addQuestionsBulk(){
   try { questions = JSON.parse(raw); if (!Array.isArray(questions)) throw new Error('not array'); }
   catch(e){ msg('qBulkMsg','JSON không hợp lệ — kiểm tra lại định dạng.'); return; }
   if (!QP && !confirm('Đang chọn "Chưa gắn kỳ". Nhập các câu này mà không gắn kỳ nào?')) return;
-  const { j } = await api('POST','/api/kt-admin', { op:'addQuestions', questions, period: QP || '' });
+  const { j } = await api('POST','/api/kt-admin', { op:'addQuestions', questions, period: QP || '', bankId: $('qBank').value || 'default' });
   if (!j.ok){ msg('qBulkMsg', j.error, 'err'); return; }
   msg('qBulkMsg', 'Đã thêm '+j.added+' câu hỏi'+(j.skipped?', bỏ qua '+j.skipped+' câu thiếu dữ liệu':'')+'.', 'ok');
   $('qBulkText').value='';
@@ -842,7 +1045,9 @@ async function saveQuestion(){
   const options = Array.from(document.querySelectorAll('#qOptsEdit .opt-row')).map(r => r.querySelector('input[type=text]').value.trim());
   const checkedEl = document.querySelector('#qOptsEdit input[type=radio]:checked');
   const correctIndex = checkedEl ? +checkedEl.value : -1;
-  const question = { id: $('qEditId').value||undefined, text: $('qText').value.trim(), category: $('qCategory').value.trim(), options, correctIndex, period: $('qPeriod').value || (QP || '') };
+  const question = { id: $('qEditId').value||undefined, text: $('qText').value.trim(), category: $('qCategory').value.trim(), options, correctIndex, period: $('qPeriod').value || (QP || ''),
+    bankId: $('qBank').value || 'default', difficulty: $('qDifficulty').value, tags: $('qTags').value, explanation: $('qExplain').value };
+  $('qBank').dataset.last = question.bankId;
   const { j } = await api('POST','/api/kt-admin', { op:'saveQuestion', question });
   if (!j.ok){ msg('qMsg', j.error, 'err'); return; }
   msg('qMsg','Đã lưu.','ok');

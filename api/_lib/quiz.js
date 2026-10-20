@@ -164,6 +164,12 @@ async function getExamSettings(examId) {
   const ex = exams.find((e) => e.id === examId);
   const effective = Object.assign({}, base, ex ? pick(ex, OVERRIDABLE_FIELDS) : {});
   effective.examPeriod = examId != null ? examId : base.examPeriod;
+  // Cấu trúc đề + khung thời gian + đối tượng: chỉ có ở đề thi đã đăng ký (không kế thừa từ cài đặt chung).
+  effective.blueprint = ex && ex.blueprint ? ex.blueprint : null;
+  effective.openAt = ex && ex.openAt ? ex.openAt : 0;
+  effective.closeAt = ex && ex.closeAt ? ex.closeAt : 0;
+  effective.segments = ex && Array.isArray(ex.segments) ? ex.segments : [];
+  effective.description = ex && ex.description ? ex.description : "";
   return effective;
 }
 function pick(obj, keys) {
@@ -183,6 +189,16 @@ async function upsertExam(data) {
     { id, title: String((data && data.title) || id).trim().slice(0, 150), createdAt: i >= 0 ? exams[i].createdAt : now },
     pick(data || {}, OVERRIDABLE_FIELDS)
   );
+  if (data && data.description !== undefined) entry.description = String(data.description || "").trim().slice(0, 500);
+  if (data && data.blueprint !== undefined) {
+    const bp = cleanBlueprint(data.blueprint);
+    if (bp && bp.error) return { ok: false, error: bp.error };
+    entry.blueprint = bp; // null = dùng cách ra đề cũ
+  }
+  if (data && data.openAt !== undefined) entry.openAt = Math.max(0, Number(data.openAt) || 0);
+  if (data && data.closeAt !== undefined) entry.closeAt = Math.max(0, Number(data.closeAt) || 0);
+  if (entry.openAt && entry.closeAt && entry.closeAt <= entry.openAt) return { ok: false, error: "Thời gian đóng phải sau thời gian mở." };
+  if (data && data.segments !== undefined) entry.segments = (Array.isArray(data.segments) ? data.segments : []).map(normSegment).filter((v, k, a) => a.indexOf(v) === k);
   if (i >= 0) exams[i] = Object.assign({}, exams[i], entry); else exams.push(entry);
   await saveExams(exams);
   return { ok: true, exam: entry };
@@ -208,6 +224,97 @@ async function listExamsSummary() {
   idx.forEach((r) => { touch(r.period || ""); if (byId[r.period || ""]) byId[r.period || ""].resultCount++; });
   touch(settings.examPeriod);
   return Object.values(byId).filter((e) => e.id !== "").sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0) || a.id.localeCompare(b.id));
+}
+
+// ---------- Nhiều ngân hàng câu hỏi ----------
+// Câu hỏi chưa có bankId thuộc ngân hàng "default" (Ngân hàng chung) để dữ liệu cũ vẫn chạy bình thường.
+const BANKS_KEY = "kt/banks.json";
+const DEFAULT_BANK = "default";
+const DIFFICULTIES = ["easy", "medium", "hard"];
+async function getBanks() {
+  const list = (await store.get(BANKS_KEY)) || [];
+  if (!list.some((b) => b.id === DEFAULT_BANK)) list.unshift({ id: DEFAULT_BANK, name: "Ngân hàng chung", description: "Các câu hỏi chưa xếp vào ngân hàng riêng", createdAt: 0 });
+  return list;
+}
+async function saveBanks(list) { await store.put(BANKS_KEY, list.filter((b) => b.id !== DEFAULT_BANK)); } // "default" luôn là ngân hàng ảo, không lưu
+const bankOf = (q) => (q && q.bankId) || DEFAULT_BANK;
+function validBankId(id) { return /^[a-z0-9][a-z0-9-]{0,39}$/i.test(String(id || "")); }
+function slugify(s) {
+  return normPerson(s).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 30) || "bank";
+}
+// Làm sạch các trường mở rộng của câu hỏi (ngân hàng, độ khó, thẻ, giải thích).
+function cleanQuestionMeta(q, prev) {
+  const out = {};
+  const p = prev || {};
+  if (q.bankId !== undefined) out.bankId = validBankId(q.bankId) ? String(q.bankId) : DEFAULT_BANK;
+  else if (p.bankId) out.bankId = p.bankId;
+  const d = q.difficulty !== undefined ? q.difficulty : p.difficulty;
+  if (DIFFICULTIES.indexOf(d) >= 0) out.difficulty = d; else out.difficulty = "";
+  const t = q.tags !== undefined ? q.tags : p.tags;
+  const tags = Array.isArray(t) ? t : String(t || "").split(",");
+  out.tags = tags.map((x) => String(x || "").trim().slice(0, 40)).filter(Boolean).filter((v, k, a) => a.indexOf(v) === k).slice(0, 12);
+  const e = q.explanation !== undefined ? q.explanation : p.explanation;
+  out.explanation = String(e || "").trim().slice(0, 1000);
+  return out;
+}
+
+// ---------- Cấu trúc đề (blueprint) ----------
+// blueprint = { rules: [{ bankId: "*"|<id>, category: "", difficulty: ""|easy|medium|hard, tag: "", count: N }] }
+function cleanBlueprint(bp) {
+  if (bp === null || bp === "") return null;
+  const rules = bp && Array.isArray(bp.rules) ? bp.rules : null;
+  if (!rules) return { error: "Cấu trúc đề không hợp lệ." };
+  if (!rules.length) return null;
+  if (rules.length > 30) return { error: "Tối đa 30 quy tắc cho một đề." };
+  const out = [];
+  for (const r of rules) {
+    const count = parseInt(r && r.count, 10);
+    if (!(count >= 1 && count <= 500)) return { error: "Số câu của mỗi quy tắc phải từ 1 đến 500." };
+    const bankId = r.bankId === "*" ? "*" : (validBankId(r.bankId) ? String(r.bankId) : DEFAULT_BANK);
+    out.push({
+      bankId, count,
+      category: String(r.category || "").trim().slice(0, 100),
+      difficulty: DIFFICULTIES.indexOf(r.difficulty) >= 0 ? r.difficulty : "",
+      tag: String(r.tag || "").trim().slice(0, 40)
+    });
+  }
+  return { rules: out };
+}
+function ruleMatches(rule, q) {
+  if (rule.bankId !== "*" && bankOf(q) !== rule.bankId) return false;
+  if (rule.category && (q.category || "") !== rule.category) return false;
+  if (rule.difficulty && (q.difficulty || "") !== rule.difficulty) return false;
+  if (rule.tag && !(Array.isArray(q.tags) && q.tags.indexOf(rule.tag) >= 0)) return false;
+  return true;
+}
+function blueprintTotal(bp) { return bp && bp.rules ? bp.rules.reduce((n, r) => n + (r.count || 0), 0) : 0; }
+// Rút câu theo từng quy tắc theo thứ tự; một câu không xuất hiện hai lần trong cùng một đề.
+// Trả về { picked, report: [{ rule, available, taken, short }] } để quản trị viên biết quy tắc nào thiếu câu.
+function buildFromBlueprint(all, blueprint) {
+  const usable = all.filter(usableQ), used = new Set(), picked = [], report = [];
+  (blueprint.rules || []).forEach((rule) => {
+    const pool = usable.filter((q) => !used.has(q.id) && ruleMatches(rule, q));
+    const take = shuffle(pool).slice(0, rule.count);
+    take.forEach((q) => { used.add(q.id); picked.push(q); });
+    report.push({ rule, available: pool.length, taken: take.length, short: Math.max(0, rule.count - take.length) });
+  });
+  return { picked: shuffle(picked), report };
+}
+
+// ---------- Khung thời gian & đối tượng của đề thi ----------
+// Trả về chuỗi lỗi (tiếng Việt) nếu thí sinh không được vào đề này lúc này, ngược lại trả về "".
+function examAccessError(settings, candidate, now) {
+  const t = now || Date.now();
+  if (settings.openAt && t < settings.openAt) return "Bài kiểm tra chưa mở. Thời gian mở: " + fmtVN(settings.openAt) + ".";
+  if (settings.closeAt && t > settings.closeAt) return "Bài kiểm tra đã đóng từ " + fmtVN(settings.closeAt) + ".";
+  if (settings.segments && settings.segments.length && settings.segments.indexOf(normSegment(candidate && candidate.segment)) < 0) {
+    return "Bài kiểm tra này không dành cho nhóm của bạn.";
+  }
+  return "";
+}
+function fmtVN(ms) {
+  const d = new Date(ms + 7 * 3600 * 1000), p = (n) => String(n).padStart(2, "0");
+  return p(d.getUTCHours()) + ":" + p(d.getUTCMinutes()) + " " + p(d.getUTCDate()) + "/" + p(d.getUTCMonth() + 1) + "/" + d.getUTCFullYear();
 }
 
 async function getAttempt(id) {
@@ -371,6 +478,8 @@ module.exports = {
   getSettings, saveSettings,
   getAttempt, putAttempt, saveIndex, activeForPeriod,
   getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary,
+  getBanks, saveBanks, bankOf, validBankId, slugify, cleanQuestionMeta, DEFAULT_BANK, DIFFICULTIES,
+  cleanBlueprint, buildFromBlueprint, blueprintTotal, examAccessError,
   getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,
   buildPaper, getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
