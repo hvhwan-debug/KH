@@ -139,6 +139,19 @@ function checkVerifyToken(t) {
   return a.length === b.length && crypto.timingSafeEqual(a, b) ? id : null;
 }
 
+// Bản sao bài làm (từng câu theo ĐÚNG thứ tự đáp án thí sinh đã thấy): lưu lúc nộp bài để xem lại ổn định
+// kể cả khi ngân hàng đề sau đó bị sửa/xoá.
+function buildPaper(a, byId) {
+  return (a.questionIds || []).map((qid, i) => {
+    const q = byId[qid]; if (!q) return null;
+    const order = (a.orders && a.orders[qid]) || q.options.map((_, k) => k);
+    const ans = a.answers && a.answers[qid];
+    const chosen = ans && Number.isInteger(ans.answerIndex) && ans.answerIndex >= 0 && ans.answerIndex < order.length ? ans.answerIndex : -1;
+    const correct = order.indexOf(q.correctIndex);
+    return { n: i + 1, text: q.text, options: order.map((k) => q.options[k]), chosen, correct, ok: chosen >= 0 && chosen === correct, category: q.category || "" };
+  }).filter(Boolean);
+}
+
 function genId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 }
@@ -226,5 +239,5 @@ module.exports = {
   getAttempt, putAttempt,
   getIndex, upsertIndex,
   shuffle, genId, compliancePoints,
-  getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
+  buildPaper, getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
 };

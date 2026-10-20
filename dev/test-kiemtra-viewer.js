@@ -65,6 +65,29 @@ const V = (m, q, b, as) => call("viewer", m, q, b, as || "loan@x.vn"), A = (m, q
   r = await V("POST", {}, { op: "confirmEmployee", code: "NV1" }); ok(r.j.employee.confirmed && r.j.employee.confirmed.at > 0, "xác nhận lại sau khi sửa");
   r = await V("POST", {}, { op: "confirmEmployee", code: "NV3" }); ok(r.s === 404, "xác nhận nhân viên của người khác: bị chặn");
 
+  // --- Xem lại bản sao bài làm (chỉ đọc) ---
+  r = await V("GET", { op: "paper", code: "NV1" });
+  ok(r.j.ok && r.j.paper.length === 3 && r.j.source === "snapshot" && r.j.paper.every((q) => q.ok && q.chosen === q.correct && q.options[q.correct] === "Đúng") && r.j.summary.score === 3, "quản lí xem bài NV1: 3 câu, đáp án đã chọn = đáp án đúng, đúng thứ tự đáp án nhân viên đã thấy");
+  ok(!JSON.stringify(r.j).includes("a@x.vn") && !JSON.stringify(r.j).includes("moi@x.vn"), "bản sao bài làm không lộ email nhân viên");
+  r = await V("GET", { op: "paper", code: "NV3" }); ok(r.s === 404, "xem bài của nhân viên thuộc quản lí khác: 404");
+  r = await V("GET", { op: "paper", code: "NV2" }); ok(r.s === 404 && /chưa có bài/.test(r.j.error), "nhân viên chưa nộp bài: báo chưa có bài làm");
+  r = await V("GET", { op: "paper", code: "NV1" }, null, "pham@x.vn"); ok(r.s === 404, "quản lí khác không xem được bài của NV1");
+  // bài có câu sai và bỏ trống
+  await quiz.saveCandidates((await quiz.getCandidates()).concat([{ code: "NV4", name: "Đỗ D", email: "d@x.vn", manager: "Lê Thị Thanh Loan", segment: "gia_dung" }]));
+  { const s4 = await call("start", "POST", {}, { code: "NV4", email: "d@x.vn" }); let st = s4.j, k = 0;
+    while (!st.done) { const idx = k === 0 ? st.question.options.indexOf("B") : k === 1 ? -1 : st.question.options.indexOf("Đúng"); st = (await call("answer", "POST", {}, { attemptId: s4.j.attemptId, questionId: st.question.id, answerIndex: idx })).j; k++; }
+    await call("submit", "POST", {}, { attemptId: s4.j.attemptId }); }
+  r = await V("GET", { op: "paper", code: "NV4" }); const P = r.j.paper;
+  ok(P.length === 3 && P[0].ok === false && P[0].chosen >= 0 && P[0].options[P[0].chosen] === "B" && P[0].options[P[0].correct] === "Đúng" && P[1].chosen === -1 && P[1].ok === false && P[2].ok === true, "câu sai hiện đáp án đã chọn (B) và đáp án đúng; câu bỏ trống chosen=-1; câu đúng ok=true");
+  ok(r.j.summary.score === 1 && r.j.summary.wrong === 1 && r.j.summary.blank === 1, "tóm tắt khớp: 1 đúng, 1 sai, 1 bỏ trống");
+  // bản sao ổn định khi ngân hàng đề bị xoá; bài cũ không có bản sao thì dựng lại từ ngân hàng nếu còn
+  const bankBackup = await quiz.getQuestions(); await quiz.saveQuestions([]);
+  r = await V("GET", { op: "paper", code: "NV4" }); ok(r.j.ok && r.j.source === "snapshot" && r.j.paper[0].text.indexOf("Câu") === 0, "xoá hết ngân hàng đề: bản sao bài làm vẫn xem được (đã lưu lúc nộp)");
+  { const idx = await quiz.getIndex(); const e = idx.find((x) => x.code === "NV4"); const at = await quiz.getAttempt(e.id); delete at.paper; await quiz.putAttempt(at); }
+  r = await V("GET", { op: "paper", code: "NV4" }); ok(r.s === 404 && /Không còn bản sao/.test(r.j.error), "bài cũ không có bản sao và ngân hàng đã xoá: báo rõ không còn bản sao");
+  await quiz.saveQuestions(bankBackup);
+  r = await V("GET", { op: "paper", code: "NV4" }); ok(r.j.ok && r.j.source === "rebuilt" && r.j.paper.length === 3, "bài cũ không có bản sao: dựng lại từ ngân hàng đề khi còn câu hỏi");
+
   // --- Không được xoá ---
   const before = { c: (await quiz.getCandidates()).length, i: (await quiz.getIndex()).length };
   for (const op of ["deleteResult", "deleteEmployee", "deleteCandidate", "clearResults", "removeResult"]) { r = await V("POST", {}, { op, code: "NV1", id: "x" }); ok(r.s === 403, "quản lí thử '" + op + "': bị từ chối (403)"); }

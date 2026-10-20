@@ -84,6 +84,30 @@ button,input,select{font:inherit;color:inherit}
 .hist{margin:14px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--muted);line-height:1.6;max-height:150px;overflow:auto}
 .hist li{padding:7px 0;border-top:1px solid var(--line)}.hist li:first-child{border-top:0}
 .dact{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.dact .btn{flex:1 1 140px}
+.dlg.wide{max-width:780px}
+.pf{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+.pf button{border:1.5px solid var(--line);background:#fff;border-radius:999px;min-height:38px;padding:6px 14px;font-weight:700;font-size:13px;color:var(--muted);cursor:pointer}
+.pf button[aria-pressed=true]{background:var(--brand-soft);border-color:var(--brand);color:var(--brand-deep)}
+.pq{border:1.5px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:12px}
+.pq.good{border-color:#BEE3CD}.pq.bad{border-color:#F0B8B3;background:#FFF9F8}.pq.blank{border-color:#EAD9A6;background:#FFFBEF}
+.pq h3{margin:0 0 10px;font-size:14.5px;line-height:1.55;font-weight:700}
+.pq h3 .n{display:inline-block;min-width:26px;color:var(--brand-deep)}
+.po{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:10px;font-size:14px;line-height:1.5;border:1px solid transparent;margin-top:6px}
+.po .k{width:24px;height:24px;border-radius:7px;background:#EEF4F5;font-size:12px;font-weight:700;display:grid;place-items:center;flex:0 0 auto;color:var(--muted)}
+.po .t{flex:1;min-width:0;word-break:break-word}
+.po .tag{font-size:11.5px;font-weight:800;white-space:nowrap;padding-top:3px}
+.po.correct{background:var(--ok-soft);border-color:#BEE3CD}.po.correct .tag{color:var(--ok)}
+.po.wrong{background:var(--bad-soft);border-color:#F0B8B3}.po.wrong .tag{color:var(--bad)}
+.onlyprint{display:none}
+@media print{
+  body.pp .wrap,body.pp #ovRes,body.pp #ovEdit{display:none!important}
+  body.pp #ovPaper{position:static;background:#fff;padding:0;display:block;overflow:visible}
+  body.pp #ovPaper .dlg{box-shadow:none;max-width:none;padding:0;border-radius:0}
+  body.pp .noprint{display:none!important}
+  body.pp .onlyprint{display:block;font-size:12px;color:#555;margin:0 0 10px}
+  body.pp .pq{break-inside:avoid}
+  body::before{display:none}
+}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -122,7 +146,7 @@ button,input,select{font:inherit;color:inherit}
       <div class="me"><span>Xin chào, <b id="meName"></b></span><button class="btn ghost sm" id="logoutBtn" type="button">Đăng xuất</button></div>
     </header>
 
-    <div class="perm" role="note"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z"/><path d="m8.5 12.3 2.5 2.5 4.5-5"/></svg><div>Bạn được <b>xem nhân viên và kết quả</b> của mình, <b>sửa / xác nhận thông tin</b> nhân viên. Bạn <b>không thể xoá</b> kết quả hay nhân viên. Mọi chỉnh sửa đều được ghi lại.</div></div>
+    <div class="perm" role="note"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z"/><path d="m8.5 12.3 2.5 2.5 4.5-5"/></svg><div>Bạn được <b>xem nhân viên, kết quả và bài làm</b> của mình, <b>sửa / xác nhận thông tin</b> nhân viên. Bạn <b>không thể xoá</b> kết quả hay nhân viên. Mọi chỉnh sửa đều được ghi lại.</div></div>
 
     <div class="stats" id="stats"></div>
 
@@ -142,8 +166,20 @@ button,input,select{font:inherit;color:inherit}
   <h2 id="rTitle"></h2><p class="sub" id="rSub"></p>
   <div class="tiles" id="rTiles"></div><div class="bk" id="rBk"></div>
   <dl class="kv" id="rRows"></dl>
-  <div class="dact"><a class="btn ghost" id="rVerify" target="_blank" rel="noopener">Mở trang xác thực</a><button class="btn" type="button" data-close="ovRes">Đóng</button></div>
+  <div class="dact"><button class="btn ghost" id="rPaper" type="button">Xem bài làm</button><a class="btn ghost" id="rVerify" target="_blank" rel="noopener">Mở trang xác thực</a><button class="btn" type="button" data-close="ovRes">Đóng</button></div>
   <p class="fine">Quản lí chỉ xem kết quả, không xoá hay chỉnh sửa được kết quả.</p>
+</div></div>
+
+<!-- Hộp thoại xem lại bản sao bài làm -->
+<div class="ov hide" id="ovPaper" role="dialog" aria-modal="true" aria-labelledby="pTitle"><div class="dlg wide">
+  <h2 id="pTitle"></h2><p class="sub" id="pSub"></p>
+  <p class="onlyprint" id="pPrint"></p>
+  <div class="tiles" id="pTiles"></div>
+  <div class="pf noprint" id="pFilter" role="group" aria-label="Lọc câu hỏi"></div>
+  <div id="pMsg" role="status"></div>
+  <div id="pList"></div>
+  <div class="dact noprint"><button class="btn ghost" id="pPrintBtn" type="button">In / Lưu PDF</button><button class="btn" type="button" data-close="ovPaper">Đóng</button></div>
+  <p class="fine noprint">Đây là bản sao bài làm tại thời điểm nhân viên nộp bài. Quản lí chỉ xem, không chỉnh sửa hay xoá được.</p>
 </div></div>
 
 <!-- Hộp thoại sửa thông tin -->
@@ -259,19 +295,20 @@ function render(){
     return '<article class="card emp" data-code="'+esc(e.code)+'">'+
       '<div class="who"><span class="av" aria-hidden="true">'+esc(initials(e.name||e.code))+'</span><div><b>'+esc(e.name||e.code)+'</b><span>Mã '+esc(e.code)+' · '+esc(e.email)+'</span><span class="chip">'+esc(SEG[e.segment]||'')+'</span>'+cf+'</div></div>'+
       resHtml+
-      '<div class="acts"><button class="btn ghost sm" data-act="res" '+(e.status==='done'?'':'disabled')+'>Xem kết quả</button><button class="btn ghost sm" data-act="edit">Sửa thông tin</button><button class="btn sm" data-act="cf">'+(e.confirmed?'Xác nhận lại':'Xác nhận thông tin')+'</button></div></article>';
+      '<div class="acts"><button class="btn ghost sm" data-act="res" '+(e.status==='done'?'':'disabled')+'>Xem kết quả</button><button class="btn ghost sm" data-act="paper" '+(e.status==='done'?'':'disabled')+'>Xem bài làm</button><button class="btn ghost sm" data-act="edit">Sửa thông tin</button><button class="btn sm" data-act="cf">'+(e.confirmed?'Xác nhận lại':'Xác nhận thông tin')+'</button></div></article>';
   }).join('') || '<div class="card empty">'+(EMP.length ? 'Không có nhân viên nào khớp bộ lọc.' : 'Chưa có nhân viên nào trong phạm vi của bạn. Hãy liên hệ quản trị viên.')+'</div>';
 }
 ['q','fSt','fCf'].forEach(function(id){ $(id).addEventListener('input', render); $(id).addEventListener('change', render); });
 $('list').addEventListener('click', function(ev){
   var b = ev.target.closest('button[data-act]'); if (!b || b.disabled) return;
   var code = b.closest('.emp').getAttribute('data-code'), e = EMP.filter(function(x){ return x.code === code; })[0]; if (!e) return;
-  if (b.dataset.act === 'res') openRes(e); else if (b.dataset.act === 'edit') openEdit(e); else confirmEmp(e, b);
+  if (b.dataset.act === 'res') openRes(e); else if (b.dataset.act === 'paper') openPaper(e); else if (b.dataset.act === 'edit') openEdit(e); else confirmEmp(e, b);
 });
 
 /* ---------- Xem kết quả ---------- */
+var curRes = null;
 function openRes(e){
-  var r = e.result; if (!r) return;
+  var r = e.result; if (!r) return; curRes = e;
   $('rTitle').textContent = e.name || e.code; $('rSub').textContent = 'Mã nhân viên ' + e.code;
   var t = [{v:r.score+'/'+r.total,l:'Số câu đúng'}];
   if (r.compliancePoints != null) t.push({v:r.compliancePoints+' điểm',l:'Điểm tuân thủ'});
@@ -293,6 +330,44 @@ function openRes(e){
   $('rVerify').href = '/kiemtra/ketqua.html?t=' + encodeURIComponent(r.verify);
   $('ovRes').classList.remove('hide');
 }
+
+/* ---------- Xem lại bản sao bài làm ---------- */
+var PAPER = null, PEMP = null, pFilter = 'all';
+$('rPaper').addEventListener('click', function(){ if (curRes){ $('ovRes').classList.add('hide'); openPaper(curRes); } });
+async function openPaper(e){
+  PEMP = e; PAPER = null; pFilter = 'all';
+  $('pTitle').textContent = 'Bài làm của ' + (e.name || e.code); $('pSub').textContent = 'Mã nhân viên ' + e.code;
+  $('pTiles').innerHTML = ''; $('pFilter').innerHTML = ''; $('pList').innerHTML = ''; msg('pMsg','');
+  $('pList').innerHTML = '<div class="empty">Đang tải bài làm…</div>'; $('ovPaper').classList.remove('hide');
+  var r; try { r = await api('GET','/api/kt-viewer?op=paper&code=' + encodeURIComponent(e.code)); } catch(err){ r = null; }
+  if (!r || !r.j.ok){ $('pList').innerHTML = ''; msg('pMsg', r ? (r.j.error || 'Không tải được bài làm.') : 'Không kết nối được máy chủ.'); return; }
+  PAPER = r.j; renderPaper();
+  if (PAPER.partial) msg('pMsg','Một số câu hỏi đã bị xoá khỏi ngân hàng đề nên bản sao này không đầy đủ.','warn');
+}
+function renderPaper(){
+  var P = PAPER.paper, sm = PAPER.summary;
+  var n = { all:P.length, bad:P.filter(function(q){ return q.chosen >= 0 && !q.ok; }).length, blank:P.filter(function(q){ return q.chosen < 0; }).length, good:P.filter(function(q){ return q.ok; }).length };
+  var t = [{v:sm.score+'/'+sm.total,l:'Số câu đúng'},{v:n.bad,l:'Câu sai'},{v:n.blank,l:'Bỏ trống'}];
+  $('pTiles').innerHTML = t.map(function(x){ return '<div><b>'+esc(x.v)+'</b><span>'+x.l+'</span></div>'; }).join('');
+  $('pPrint').textContent = 'Bản sao bài làm - ' + (PEMP.name || PEMP.code) + ' (' + PEMP.code + ') - Nộp lúc ' + fmt(sm.submittedAt) + ' - Mã minh chứng ' + sm.proof + ' - In bởi ' + (VIEWER.name || VIEWER.email) + ' lúc ' + fmt(Date.now() + off);
+  var F = [['all','Tất cả ('+n.all+')'],['bad','Câu sai ('+n.bad+')'],['blank','Bỏ trống ('+n.blank+')'],['good','Câu đúng ('+n.good+')']];
+  $('pFilter').innerHTML = F.map(function(f){ return '<button type="button" data-f="'+f[0]+'" aria-pressed="'+(pFilter===f[0])+'">'+f[1]+'</button>'; }).join('');
+  var L = 'ABCDEFGH';
+  var list = P.filter(function(q){ return pFilter === 'all' || (pFilter === 'bad' && q.chosen >= 0 && !q.ok) || (pFilter === 'blank' && q.chosen < 0) || (pFilter === 'good' && q.ok); });
+  $('pList').innerHTML = list.map(function(q){
+    var cls = q.ok ? 'good' : (q.chosen < 0 ? 'blank' : 'bad');
+    var head = q.chosen < 0 ? ' <span class="chip warn">Không trả lời</span>' : (q.ok ? ' <span class="chip ok">Đúng</span>' : ' <span class="chip" style="background:var(--bad-soft);color:var(--bad)">Sai</span>');
+    return '<article class="pq '+cls+'"><h3><span class="n">Câu '+q.n+'.</span> '+esc(q.text)+head+'</h3>'+
+      q.options.map(function(o, i){
+        var isC = i === q.correct, isS = i === q.chosen, c = isC ? 'correct' : (isS ? 'wrong' : ''), tag = '';
+        if (isS && isC) tag = 'Đã chọn · Đúng'; else if (isS) tag = 'Đã chọn · Sai'; else if (isC) tag = 'Đáp án đúng';
+        return '<div class="po '+c+'"><span class="k">'+L.charAt(i)+'</span><span class="t">'+esc(o)+'</span>'+(tag?'<span class="tag">'+tag+'</span>':'')+'</div>';
+      }).join('')+'</article>';
+  }).join('') || '<div class="empty">Không có câu nào thuộc nhóm này.</div>';
+}
+$('pFilter').addEventListener('click', function(ev){ var b = ev.target.closest('button[data-f]'); if (b && PAPER){ pFilter = b.getAttribute('data-f'); renderPaper(); } });
+$('pPrintBtn').addEventListener('click', function(){ document.body.classList.add('pp'); window.print(); });
+window.addEventListener('afterprint', function(){ document.body.classList.remove('pp'); });
 
 /* ---------- Sửa / xác nhận thông tin ---------- */
 async function openEdit(e){
@@ -340,7 +415,7 @@ async function confirmEmp(e, btn){
 
 /* ---------- Đóng hộp thoại ---------- */
 document.addEventListener('click', function(ev){ var c = ev.target.closest('[data-close]'); if (c) $(c.getAttribute('data-close')).classList.add('hide'); if (ev.target.classList && ev.target.classList.contains('ov')) ev.target.classList.add('hide'); });
-document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') ['ovRes','ovEdit'].forEach(function(id){ $(id).classList.add('hide'); }); });
+document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') ['ovRes','ovEdit','ovPaper'].forEach(function(id){ $(id).classList.add('hide'); }); });
 
 /* ---------- Tải CSV (mở được bằng Excel) ---------- */
 function cell(v){ var s = String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g,'""') + '"'; }

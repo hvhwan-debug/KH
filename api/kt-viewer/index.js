@@ -49,6 +49,24 @@ module.exports = async function (context, req) {
         }));
         return reply(context, 200, { ok: true, employees: list, serverNow: Date.now() });
       }
+      if (op === "paper") {
+        // Xem lại bản sao bài làm của nhân viên trong phạm vi của mình (chỉ đọc)
+        const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
+        if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
+        const settings = await quiz.getSettings();
+        const entry = (await quiz.getIndex()).filter((a) => a.status === "submitted" && quiz.normCode(a.code) === quiz.normCode(c.code))
+          .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0))[0];
+        const attempt = entry && (await quiz.getAttempt(entry.id));
+        if (!attempt || attempt.status !== "submitted") return reply(context, 404, { ok: false, error: "Nhân viên này chưa có bài làm đã nộp." });
+        let paper = attempt.paper, source = "snapshot", partial = false;
+        if (!Array.isArray(paper)) { // bài nộp trước khi có bản sao: dựng lại từ ngân hàng đề nếu còn
+          const byId = {}; (await quiz.getQuestions()).forEach((q) => { byId[q.id] = q; });
+          paper = quiz.buildPaper(attempt, byId); source = "rebuilt";
+          partial = paper.length < (attempt.questionIds || []).length;
+        }
+        if (!paper.length) return reply(context, 404, { ok: false, error: "Không còn bản sao bài làm này (câu hỏi đã bị xoá khỏi ngân hàng đề trước khi bài được lưu bản sao)." });
+        return reply(context, 200, { ok: true, employee: { code: c.code, name: c.name || "" }, summary: summaryOf(entry, settings), paper, source, partial, serverNow: Date.now() });
+      }
       if (op === "employee") {
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
         if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });

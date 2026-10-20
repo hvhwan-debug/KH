@@ -65,6 +65,7 @@ module.exports = async function (context, req) {
     attempt.scoreOutOf10 = Math.round(scoreOutOf10 * 100) / 100;
     attempt.compliancePoints = compliance;
     attempt.detailLines = detailLines; // bản sao câu trả lời, dùng khi gửi lại email
+    attempt.paper = quiz.buildPaper(attempt, byId); // bản sao bài làm có cấu trúc, dùng để quản lí xem lại
     attempt.wrong = wrongN;
     attempt.blank = Math.max(0, total - correct - wrongN);
     await quiz.putAttempt(attempt);
