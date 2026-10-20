@@ -284,6 +284,19 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .perh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .perh select{font:inherit;font-size:14px;font-weight:600;border:1px solid var(--line);border-radius:9px;padding:5px 8px;background:#fff;color:var(--brand-deep)}
 .pernote{margin:-4px 0 10px;font-size:13px;color:var(--warn);background:var(--warn-soft);border-radius:10px;padding:8px 12px}
+/* banner hero (cùng phong cách trang ASM) */
+.khero{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:16px;border-radius:20px;padding:26px 24px;margin-bottom:14px;color:#fff;
+  background:linear-gradient(270deg,rgba(6,42,38,.62) 0%,rgba(6,42,38,0) 26%),linear-gradient(100deg,rgba(6,42,38,.82) 0%,rgba(6,42,38,.5) 45%,rgba(6,42,38,.08) 78%),url('/hero-bg.jpg'),#067A8C;background-size:cover;background-position:center;box-shadow:0 1px 2px rgba(0,0,0,.12),0 12px 28px -14px rgba(6,42,38,.55)}
+.khero-in{position:relative;max-width:36em}
+.khero-eb{font-size:12.5px;font-weight:600;opacity:.88;margin-bottom:6px}
+.khero-t{margin:0 0 6px;font-size:27px;font-weight:700;letter-spacing:-.01em;line-height:1.15;color:#fff}
+.khero-s{margin:0;font-size:14px;line-height:1.5;opacity:.95}
+.khero-s b{font-weight:700}
+.khero-kpi{flex:0 0 auto;text-align:right}
+.khero-kpi b{display:block;font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.khero-kpi span{font-size:12px;opacity:.9}
+.khero-kpi b,.khero-kpi span,.khero-t,.khero-s,.khero-eb{text-shadow:0 1px 8px rgba(0,25,22,.65)}
+@media (max-width:700px){.khero{padding:20px 18px}.khero-t{font-size:21px}.khero-in{padding-right:64px}.khero-kpi{position:absolute;right:16px;top:16px}.khero-kpi b{font-size:22px}.khero-kpi span{font-size:10.5px;display:block;max-width:64px;line-height:1.2}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -321,6 +334,8 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
       <div class="brand"><div class="logo" aria-hidden="true">KT</div><div><b>Quản lí nhân viên</b><span id="scopeTxt"></span></div></div>
       <div class="me"><span>Xin chào, <b id="meName"></b></span><button class="btn ghost sm" id="logoutBtn" type="button">Đăng xuất</button></div>
     </header>
+
+    <section class="khero" id="hero" aria-label="Tổng quan nhanh"></section>
 
     <section class="card overview" aria-label="Tổng quan">
       <div>
@@ -569,6 +584,23 @@ var IC = {
   del:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>',
   ok:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.7 2.7L16 10"/></svg>'
 };
+/* ---------- Banner hero ---------- */
+function vnGreet(){ var h = new Date(Date.now() + 7*3600e3).getUTCHours(); return h < 11 ? 'Chào buổi sáng' : h < 18 ? 'Chào buổi chiều' : 'Chào buổi tối'; }
+function heroHTML(o){
+  return '<div class="khero-in"><div class="khero-eb">' + o.eb + '</div><h1 class="khero-t">' + o.t + '</h1><p class="khero-s">' + o.s + '</p></div>' +
+    (o.kpi != null ? '<div class="khero-kpi"><b>' + o.kpi + '</b><span>' + o.kl + '</span></div>' : '');
+}
+function renderHero(n, c, avg){
+  var nm = String((VIEWER && VIEWER.name) || '').trim().split(/\s+/).pop() || ((VIEWER && VIEWER.isAdmin) ? 'quản trị viên' : 'bạn');
+  var cur = CURP === CURRENT, rate = n ? Math.round(c.done / n * 100) : 0, left = n - c.done;
+  var s;
+  if (!n) s = 'Chưa có nhân viên nào trong phạm vi của bạn. Bấm “Thêm nhân viên” để bắt đầu.';
+  else if (!cur) s = 'Đang xem lại kỳ ' + esc(perL(CURP)) + ': <b>' + c.done + '/' + n + '</b> người đã làm bài' + (avg != null ? ', tỉ lệ đúng trung bình <b>' + avg + '%</b>' : '') + '.';
+  else if (!left) s = 'Cả nhóm đã hoàn thành bài kiểm tra kỳ này' + (avg != null ? ', tỉ lệ đúng trung bình <b>' + avg + '%</b>' : '') + '. Bấm vào từng người để xem hồ sơ và khuyến nghị.';
+  else s = 'Đã có <b>' + c.done + '/' + n + '</b> người làm bài kỳ này' + (c.doing ? ', <b>' + c.doing + '</b> người đang làm' : '') + ' — còn <b>' + (left - (c.doing||0)) + '</b> người chưa bắt đầu.' + (avg != null ? ' Tỉ lệ đúng trung bình <b>' + avg + '%</b>.' : '');
+  $('hero').innerHTML = heroHTML({ eb: 'Kỳ kiểm tra tháng ' + esc(perL(CURP)) + (cur ? '' : ' (kỳ cũ)') + ' · ' + n + ' nhân viên' + (VIEWER && VIEWER.isAdmin ? '' : ' trong nhóm của bạn'),
+    t: vnGreet() + ', ' + esc(nm), s: s, kpi: n ? rate + '%' : null, kl: 'đã làm bài' });
+}
 function stat(){
   var n = EMP.length, c = { done:0, doing:0, none:0 };
   EMP.forEach(function(e){ c[e.status] = (c[e.status]||0) + 1; });
@@ -576,6 +608,7 @@ function stat(){
   var avg = done.length ? Math.round(done.reduce(function(a,e){ return a + (e.result.pct||0); }, 0) / done.length) : null;
   var cf = EMP.filter(function(e){ return !!e.confirmed; }).length;
   $('ovDone').innerHTML = '<b>'+c.done+'</b> / '+n+' đã làm bài';
+  renderHero(n, c, avg);
   var S = [['done','s-done','var(--brand)'],['doing','s-doing','#7FC4CE'],['none','s-none','#C9D6DA']];
   $('track').innerHTML = n ? S.map(function(s){ return c[s[0]] ? '<i class="'+s[1]+'" style="width:'+(c[s[0]]/n*100)+'%"></i>' : ''; }).join('') : '';
   $('legend').innerHTML = '<button type="button" class="lg-btn" data-st="" aria-pressed="'+(fSt==='')+'">Tất cả <b>'+n+'</b></button>' +

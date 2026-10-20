@@ -102,6 +102,19 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
 .autab .det{font-size:12.5px;line-height:1.5;max-width:380px;word-break:break-word}
 .autab .det i{font-style:normal;color:var(--muted)}
 .autab .dv{font-size:12px;color:var(--muted);white-space:nowrap}
+/* banner hero (cùng phong cách trang ASM) */
+.khero{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:16px;border-radius:20px;padding:26px 24px;margin-bottom:14px;color:#fff;
+  background:linear-gradient(270deg,rgba(6,42,38,.62) 0%,rgba(6,42,38,0) 26%),linear-gradient(100deg,rgba(6,42,38,.82) 0%,rgba(6,42,38,.5) 45%,rgba(6,42,38,.08) 78%),url('/hero-bg.jpg'),#067A8C;background-size:cover;background-position:center;box-shadow:0 1px 2px rgba(0,0,0,.12),0 12px 28px -14px rgba(6,42,38,.55)}
+.khero-in{position:relative;max-width:36em}
+.khero-eb{font-size:12.5px;font-weight:600;opacity:.88;margin-bottom:6px}
+.khero-t{margin:0 0 6px;font-size:27px;font-weight:700;letter-spacing:-.01em;line-height:1.15;color:#fff}
+.khero-s{margin:0;font-size:14px;line-height:1.5;opacity:.95}
+.khero-s b{font-weight:700}
+.khero-kpi{flex:0 0 auto;text-align:right}
+.khero-kpi b{display:block;font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.khero-kpi span{font-size:12px;opacity:.9}
+.khero-kpi b,.khero-kpi span,.khero-t,.khero-s,.khero-eb{text-shadow:0 1px 8px rgba(0,25,22,.65)}
+@media (max-width:700px){.khero{padding:20px 18px}.khero-t{font-size:21px}.khero-in{padding-right:64px}.khero-kpi{position:absolute;right:16px;top:16px}.khero-kpi b{font-size:22px}.khero-kpi span{font-size:10.5px;display:block;max-width:64px;line-height:1.2}}
 .hide{display:none!important}
 </style>
 </head>
@@ -136,6 +149,7 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
     <button class="btn ghost sm" onclick="doLogout()">Đăng xuất</button>
   </div>
   <div class="wrap">
+    <section class="khero hide" id="hero" aria-label="Tổng quan nhanh"></section>
     <div class="tabs">
       <button data-tab="questions" onclick="switchTab('questions')">Ngân hàng đề</button>
       <button data-tab="candidates" onclick="switchTab('candidates')">Thí sinh</button>
@@ -437,7 +451,7 @@ function renderAudit(){
   $('auSum').innerHTML = '<span><b>' + AU.length + '</b> thao tác · <b>' + people + '</b> người</span>' + Object.keys(AUK).filter(k => cnt[k]).map(k => '<span><i class="kd ' + k + '"></i>' + AUK[k] + ' <b>' + cnt[k] + '</b></span>').join('') +
     (L.length !== AU.length ? '<span>Đang lọc: <b>' + L.length + '</b></span>' : '');
   $('auList').innerHTML = L.map(x => '<tr class="' + (x.kind === 'denied' ? 'denied' : '') + '"><td class="t">' + esc(new Date(x.ts).toLocaleTimeString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour12:false})) + '</td>' +
-    '<td class="who"><b>' + esc(x.name || x.by) + '</b>' + (x.name && x.name !== x.by ? '<small>' + esc(x.by) + '</small>' : '')<br><span class="rb ' + x.role + '">' + (x.role === 'admin' ? 'Quản trị viên' : 'Quản lí') + '</span></td>' +
+    '<td class="who"><b>' + esc(x.name || x.by) + '</b>' + (x.name && x.name !== x.by ? '<small>' + esc(x.by) + '</small>' : '') + '<br><span class="rb ' + x.role + '">' + (x.role === 'admin' ? 'Quản trị viên' : 'Quản lí') + '</span></td>' +
     '<td><span class="kd ' + esc(x.kind) + '" title="' + esc(AUK[x.kind]||'') + '"></span>' + esc(x.label) + (x.ok === false && x.kind !== 'denied' ? ' <span class="badge n">lỗi</span>' : '') + (x.kind === 'denied' ? ' <span class="badge n">bị từ chối</span>' : '') + '</td>' +
     '<td class="det">' + auDet(x) + '</td><td class="dv">' + esc(x.ip || '–') + '<br>' + esc(x.dev || '') + '</td></tr>').join('') ||
     '<tr><td colspan="5" class="small">' + (AU.length ? 'Không có thao tác nào khớp bộ lọc.' : 'Chưa có thao tác nào trong ngày này.') + '</td></tr>';
@@ -806,6 +820,22 @@ function flagText(r){
   if (f.blur) a.push('Rời trang ' + f.blur + ' lần');
   return a.join(', ');
 }
+/* ---------- Banner hero ---------- */
+function vnGreet(){ var h = new Date(Date.now() + 7*3600e3).getUTCHours(); return h < 11 ? 'Chào buổi sáng' : h < 18 ? 'Chào buổi chiều' : 'Chào buổi tối'; }
+function heroHTML(o){
+  return '<div class="khero-in"><div class="khero-eb">' + o.eb + '</div><h1 class="khero-t">' + o.t + '</h1><p class="khero-s">' + o.s + '</p></div>' +
+    (o.kpi != null ? '<div class="khero-kpi"><b>' + o.kpi + '</b><span>' + o.kl + '</span></div>' : '');
+}
+// Banner luôn tóm tắt KỲ HIỆN TẠI (lấy từ dashboard khi đang xem kỳ hiện tại)
+function renderAdminHero(j){
+  const rate = j.candidates ? Math.round(j.submitted / j.candidates * 100) : 0, weak = j.bands && j.bands[0] ? j.bands[0].n : 0;
+  let s = j.candidates ? 'Đã có <b>' + j.submitted + '/' + j.candidates + '</b> thí sinh làm bài kỳ này' + (j.avgPct != null ? ', tỉ lệ đúng trung bình <b>' + pctTxt(j.avgPct) + '</b>' : '') + '.' : 'Thêm thí sinh và câu hỏi để bắt đầu kỳ kiểm tra.';
+  if (weak) s += ' <b>' + weak + '</b> người dưới chuẩn cần đào tạo lại.';
+  if (j.untagged) s += ' Có <b>' + j.untagged + '</b> bài chưa gắn kỳ.';
+  $('hero').innerHTML = heroHTML({ eb: 'Kỳ kiểm tra ' + perLabel(j.currentPeriod) + ' · ' + j.candidates + ' thí sinh', t: vnGreet() + ', quản trị viên', s, kpi: j.candidates ? rate + '%' : null, kl: 'đã làm bài' });
+  $('hero').classList.remove('hide');
+}
+
 /* ---------- Dashboard đánh giá kỳ ---------- */
 let DASH = null;
 const perLabel = (p) => /^\d{4}-\d{2}$/.test(p||'') ? 'tháng ' + p.slice(5) + '/' + p.slice(0,4) : (p||'');
@@ -816,6 +846,7 @@ async function loadDashboard(sel){
   const { j } = await api('GET','/api/kt-admin?op=dashboard'+(want?'&period='+encodeURIComponent(want):''));
   if (!j.ok){ $('dashCard').classList.add('hide'); return; }
   DASH = j; $('dashCard').classList.remove('hide');
+  if (j.period === j.currentPeriod) renderAdminHero(j);
   $('dashTitle').textContent = 'Tổng quan kỳ ' + perLabel(j.period);
   $('dashSub').textContent = (j.period === j.currentPeriod ? 'Kỳ hiện tại' : 'Kỳ hiện tại: ' + perLabel(j.currentPeriod)) + ' · tính theo bài nộp gần nhất của mỗi nhân viên, trên danh sách thí sinh hiện có.';
   // Bài chưa gắn kỳ
