@@ -968,6 +968,8 @@ async function exportResultsXlsx(){
     { header:'Tỉ lệ đúng (%)', key:'pct', width:13 },
     { header:'Điểm tuân thủ', key:'compliance', width:13 },
     { header:'Kết quả', key:'result', width:12 },
+    { header:'Có chụp màn hình', key:'shotYN', width:14 },
+    { header:'Số lần chụp màn hình', key:'shotCount', width:16 },
     { header:'Thời điểm nộp bài', key:'submitted', width:20 },
     { header:'Cảnh báo', key:'flags', width:26 },
     { header:'Mã minh chứng', key:'proof', width:16 }
@@ -985,6 +987,8 @@ async function exportResultsXlsx(){
       period: r.period || '', code: r.code, name: r.name||'', manager: r.manager||'', segment: segLabel[r.segment]||'Cả hai',
       score: r.score, total: r.total, pct: r.pct, compliance: r.compliancePoints!=null?r.compliancePoints:'',
       result: r.passed == null ? '' : (r.passed ? 'Đạt' : 'Chưa đạt'),
+      shotYN: (r.flags && r.flags.shot) ? 'Có' : 'Không',
+      shotCount: (r.flags && r.flags.shot) || 0,
       submitted: r.submittedAt ? new Date(r.submittedAt).toLocaleString('vi-VN') : '',
       flags: flagText(r),
       proof: r.proof || ('KT-' + String(r.id || '').slice(-8).toUpperCase())
@@ -993,9 +997,10 @@ async function exportResultsXlsx(){
     if (r.passed == null) { /* bài không có ngưỡng đạt */ }
     else if (r.passed) { resultCell.font = { bold:true, color:{ argb:'FF1E7F4F' } }; }
     else { resultCell.font = { bold:true, color:{ argb:'FFB3261E' } }; }
-    ['score','total','pct','compliance'].forEach(k => { row.getCell(k).alignment = { horizontal:'center' }; });
+    if (r.flags && r.flags.shot) { row.getCell('shotYN').font = { bold:true, color:{ argb:'FFB3261E' } }; }
+    ['score','total','pct','compliance','shotYN','shotCount'].forEach(k => { row.getCell(k).alignment = { horizontal:'center' }; });
   });
-  ws.autoFilter = { from:'A1', to:'M1' };
+  ws.autoFilter = { from:'A1', to:'O1' };
   if (DASH){ // trang Tổng quan (theo kỳ đang xem ở dashboard)
     const o = wb.addWorksheet('Tổng quan ' + DASH.period, { views:[{ showGridLines:false }] });
     o.columns = [{ width:34 }, { width:12 }, { width:12 }, { width:14 }, { width:14 }];
