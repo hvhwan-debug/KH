@@ -113,6 +113,8 @@ button,input{font:inherit;color:inherit}
 .btn.ghost{background:#fff;color:var(--brand-deep);border:1.5px solid var(--line);margin-top:10px;box-shadow:none;min-height:50px}
 .btn.ghost:hover{background:var(--brand-soft);box-shadow:none;filter:none}
 .msg{font-size:13.5px;line-height:1.55;border-radius:14px;padding:12px 15px;margin:14px 0 0}
+.photo-box{position:relative;width:100%;max-width:360px;margin:0 auto;aspect-ratio:4/3;background:#0b1f1d;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.photo-box video,.photo-box img{width:100%;height:100%;object-fit:cover;display:block}
 .msg.err{background:var(--bad-soft);color:var(--bad)}
 .msg.ok{background:var(--ok-soft);color:var(--ok)}
 .msg.warn{background:var(--warn-soft);color:var(--warn)}
@@ -305,6 +307,22 @@ body.exam #wm{display:block}
       <div id="startMsg" role="alert"></div>
     </section>
 
+    <!-- 2b. Chụp ảnh xác nhận -->
+    <section class="card hide" id="scrPhoto">
+      <h1 tabindex="-1">Chụp ảnh xác nhận</h1>
+      <p class="lead">Chụp một ảnh khuôn mặt để xác nhận chính bạn là người làm bài. Ảnh được lưu cùng bài làm, chỉ quản trị viên/quản lí xem được.</p>
+      <div class="photo-box">
+        <video id="pvVideo" autoplay playsinline muted></video>
+        <canvas id="pvCanvas" class="hide"></canvas>
+        <img id="pvImg" class="hide" alt="Ảnh đã chụp">
+      </div>
+      <div id="photoMsg" role="alert"></div>
+      <button class="btn go" id="btnCapture" type="button" style="margin-top:16px">📷 Chụp ảnh</button>
+      <button class="btn go hide" id="btnPhotoOk" type="button" style="margin-top:16px">✓ Dùng ảnh này, bắt đầu làm bài</button>
+      <button class="btn ghost hide" id="btnPhotoRetry" type="button">Chụp lại</button>
+      <button class="btn ghost" id="btnPhotoBack" type="button">Quay lại</button>
+    </section>
+
     <!-- 3. Làm bài -->
     <section class="card hide" id="scrQuiz">
       <div class="qhead">
@@ -371,8 +389,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 'use strict';
 var $ = function(id){ return document.getElementById(id); };
 var ST = { off:0, res:null, sysT:null, flags:{ blur:0, shot:0 }, cand:null, exam:null, inProgress:null, attemptId:'', q:null, index:0, total:0, secs:60, endsAt:0, timer:null, selected:-1, busy:false, quizOn:false };
-var SCREENS = { check:'scrCheck', confirm:'scrConfirm', quiz:'scrQuiz', result:'scrResult' };
-var STEP_OF = { check:1, confirm:2, quiz:3, result:4 };
+var SCREENS = { check:'scrCheck', confirm:'scrConfirm', photo:'scrPhoto', quiz:'scrQuiz', result:'scrResult' };
+var STEP_OF = { check:1, confirm:2, photo:2, quiz:3, result:4 };
 
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
@@ -458,14 +476,51 @@ function renderConfirm(){
 }
 $('btnBack').addEventListener('click', function(){ show('check'); $('inCode').focus(); });
 
-$('btnStart').addEventListener('click', async function(){
-  var btn = $('btnStart'), label = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Đang chuẩn bị đề…'; msg('startMsg','');
+$('btnStart').addEventListener('click', function(){
+  show('photo');
+  photoInit();
+});
+
+/* ---------- Bước 2b: chụp ảnh xác nhận ---------- */
+var PH = { stream:null, dataUrl:'' };
+async function photoInit(){
+  PH.dataUrl = '';
+  $('pvVideo').classList.remove('hide'); $('pvImg').classList.add('hide');
+  $('btnCapture').classList.remove('hide'); $('btnPhotoOk').classList.add('hide'); $('btnPhotoRetry').classList.add('hide');
+  msg('photoMsg','');
+  try {
+    PH.stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:480}, height:{ideal:360} }, audio:false });
+    $('pvVideo').srcObject = PH.stream;
+  } catch(e){
+    msg('photoMsg','Không mở được camera (có thể bạn chưa cho phép quyền camera, hoặc thiết bị không có camera). Hãy cho phép quyền camera trên trình duyệt rồi thử lại.', 'err');
+  }
+}
+function photoStop(){
+  if (PH.stream){ PH.stream.getTracks().forEach(function(t){ t.stop(); }); PH.stream = null; }
+}
+$('btnCapture').addEventListener('click', function(){
+  var v = $('pvVideo'), c = $('pvCanvas');
+  if (!v.videoWidth){ msg('photoMsg','Camera chưa sẵn sàng, đợi một chút rồi bấm lại.'); return; }
+  c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+  PH.dataUrl = c.toDataURL('image/jpeg', 0.7);
+  $('pvImg').src = PH.dataUrl;
+  $('pvImg').classList.remove('hide'); $('pvVideo').classList.add('hide');
+  $('btnCapture').classList.add('hide'); $('btnPhotoOk').classList.remove('hide'); $('btnPhotoRetry').classList.remove('hide');
+  photoStop();
+  msg('photoMsg','');
+});
+$('btnPhotoRetry').addEventListener('click', function(){ photoInit(); });
+$('btnPhotoBack').addEventListener('click', function(){ photoStop(); show('confirm'); });
+
+$('btnPhotoOk').addEventListener('click', async function(){
+  var btn = $('btnPhotoOk'), label = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Đang chuẩn bị đề…'; msg('photoMsg','');
   var res;
-  try { res = await api('/api/kt-start', { code:ST.cand.inCode, email:ST.cand.inEmail }); } catch(e){ res = null; }
+  try { res = await api('/api/kt-start', { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl }); } catch(e){ res = null; }
   btn.disabled = false; btn.textContent = label;
-  if (!res){ msg('startMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
-  if (!res.j.ok){ msg('startMsg', res.j.error || 'Không thể bắt đầu bài kiểm tra.'); return; }
+  if (!res){ msg('photoMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
+  if (!res.j.ok){ msg('photoMsg', res.j.error || 'Không thể bắt đầu bài kiểm tra.'); return; }
   ST.attemptId = res.j.attemptId;
   if (res.j.examTitle) $('examTitle').textContent = res.j.examTitle;
   show('quiz');

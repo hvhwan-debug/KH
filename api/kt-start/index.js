@@ -15,6 +15,9 @@ module.exports = async function (context, req) {
     const code = quiz.normCode(b.code);
     const email = quiz.normEmail(b.email);
     if (!code || !email) return reply(context, 400, { ok: false, error: "Thiếu thông tin thí sinh." });
+    // Ảnh xác nhận (chụp trước khi làm bài): giới hạn kích thước để tránh bài làm phình quá to.
+    let photo = typeof b.photo === "string" ? b.photo : "";
+    if (photo && (!photo.startsWith("data:image/") || photo.length > 350000)) photo = "";
 
     const candidates = await quiz.getCandidates();
     const found = candidates.find((c) => quiz.normCode(c.code) === code && quiz.normEmail(c.email) === email);
@@ -36,8 +39,9 @@ module.exports = async function (context, req) {
     let attempt = await quiz.getActive(found.code);
     let resumed = !!attempt;
 
-    // 2) Chưa có -> tạo đề mới.
+    // 2) Chưa có -> tạo đề mới. Bắt buộc có ảnh xác nhận trước khi tạo đề (không áp dụng khi làm tiếp bài đang dở).
     if (!attempt) {
+      if (!photo) return reply(context, 400, { ok: false, error: "Cần chụp ảnh xác nhận trước khi bắt đầu làm bài." });
       const activeQuestions = allQuestions.filter((q) => q.active !== false && q.text && Array.isArray(q.options) && q.options.length >= 2);
       // Nhóm ngành quyết định đề trộn từ nhóm câu hỏi nào:
       // - bán 1 ngành -> chỉ lấy câu thuộc danh mục ngành đó.
@@ -65,6 +69,7 @@ module.exports = async function (context, req) {
         id: quiz.genId(), code: found.code, name: found.name, email: found.email, manager: found.manager || "", segment,
         questionIds: picked.map((q) => q.id), orders,
         answers: {},
+        photo,
         startedAt: now,
         secondsPerQuestion: Math.max(10, settings.secondsPerQuestion || 60),
         cursor: 0, qStartedAt: now,

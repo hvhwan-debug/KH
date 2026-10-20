@@ -643,6 +643,7 @@ async function viewResult(id){
   if (!j.ok){ alert(j.error); return; }
   $('resDetailCard').classList.remove('hide');
   $('resDetail').innerHTML = '<p><b>'+esc(j.attempt.name||'')+'</b> ('+esc(j.attempt.code)+') — '+j.attempt.score+'/'+j.attempt.total+' câu đúng, '+j.attempt.pct+'%</p>' +
+    (j.attempt.photo ? '<img src="'+j.attempt.photo+'" alt="Ảnh xác nhận của thí sinh" style="max-width:220px;border-radius:12px;border:1px solid var(--line);margin-bottom:14px;display:block">' : '<p class="small">Không có ảnh xác nhận (bài làm trước khi có tính năng này).</p>') +
     j.detail.map((d,i) =>
       '<div style="border-top:1px solid var(--line);padding:10px 0"><b>Câu '+(i+1)+'.</b> '+esc(d.text)+'<ul style="margin:6px 0 0;padding-left:20px">' +
       d.options.map((o,oi) => {
