@@ -2,6 +2,10 @@
 const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const { isAdmin, validEmail, emailAllowed } = require("../_lib/config");
 const quiz = require("../_lib/quiz");
+const store = require("../_lib/store");
+const pwdlib = require("../_lib/pwd");
+const crypto = require("crypto");
+const { uidOf } = require("../_lib/session");
 
 module.exports = async function (context, req) {
   try {
@@ -142,6 +146,32 @@ module.exports = async function (context, req) {
       await quiz.saveViewers(list);
       const cands = await quiz.getCandidates();
       return reply(context, 200, { ok: true, viewer: Object.assign({}, entry, { employees: cands.filter((c) => quiz.inScope(entry, c)).length }), created: k < 0 });
+    }
+
+    // Tạo/đặt lại mật khẩu đăng nhập cho quản lí: quản lí không cần tự đăng ký (qua OTP) nữa,
+    // quản trị viên đưa thẳng mật khẩu (hoặc để trống cho hệ thống tự sinh 1 lần, hiện ra để gửi cho họ).
+    if (op === "setViewerPassword") {
+      const email = quiz.normEmail(b.email);
+      if (!validEmail(email)) return reply(context, 400, { ok: false, error: "Email không hợp lệ." });
+      if (!emailAllowed(email)) return reply(context, 400, { ok: false, error: "Email này chưa được phép dùng ứng dụng (kiểm tra ALLOWED_EMAILS / tên miền cho phép)." });
+      let pw = String(b.password || "");
+      if (pw && (pw.length < 8 || pw.length > 200)) return reply(context, 400, { ok: false, error: "Mật khẩu cần từ 8 đến 200 ký tự (hoặc để trống để hệ thống tự tạo)." });
+      const uid = uidOf(email), ukey = "user/" + uid + ".json";
+      let ud = await store.get(ukey), created = false, tempPassword = "";
+      if (!pw) {
+        const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+        pw = Array.from(crypto.randomBytes(10)).map((x) => chars[x % chars.length]).join("");
+        tempPassword = pw;
+      }
+      if (!ud) {
+        ud = { v: 1, uid, email, name: String(b.name || "").trim().slice(0, 80), rev: 0, state: null, digest: null, prefs: {}, sent: {}, pwd: pwdlib.hash(pw), verified: true };
+        await store.put(ukey, ud); created = true;
+      } else {
+        ud.pwd = pwdlib.hash(pw); ud.verified = true; ud.failTimes = []; ud.otp = ""; ud.otpExp = 0; ud.sessAfter = Date.now();
+        if (b.name) ud.name = String(b.name).trim().slice(0, 80);
+        await store.put(ukey, ud);
+      }
+      return reply(context, 200, { ok: true, created, tempPassword });
     }
 
     if (op === "deleteViewer") {
