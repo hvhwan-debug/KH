@@ -73,6 +73,24 @@ async function countInProgress() {
   return n;
 }
 
+// ---------- Tài khoản quản lí (chỉ xem kết quả + chỉnh thông tin nhân viên của mình) ----------
+const V_KEY = "kt/viewers.json";
+async function getViewers() { return (await store.get(V_KEY)) || []; }
+async function saveViewers(list) { await store.put(V_KEY, list); }
+// So khớp tên người (không phân biệt hoa thường, dấu, khoảng trắng thừa).
+function normPerson(s) {
+  return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase().replace(/\s+/g, " ").trim();
+}
+async function findViewer(email) {
+  const e = normEmail(email);
+  return (await getViewers()).find((v) => normEmail(v.email) === e) || null;
+}
+// Nhân viên có thuộc phạm vi của quản lí này không (theo tên quản lí ghi trong danh sách thí sinh).
+function inScope(viewer, candidate) {
+  const mine = new Set(((viewer && viewer.scopes) || []).map(normPerson).filter(Boolean));
+  return mine.size > 0 && mine.has(normPerson(candidate && candidate.manager));
+}
+
 async function getQuestions() { return (await store.get(Q_KEY)) || []; }
 async function saveQuestions(list) { await store.put(Q_KEY, list); }
 
@@ -208,5 +226,5 @@ module.exports = {
   getAttempt, putAttempt,
   getIndex, upsertIndex,
   shuffle, genId, compliancePoints,
-  passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
+  getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
 };

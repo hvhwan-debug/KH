@@ -37,6 +37,7 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
 .msg{font-size:13px;border-radius:10px;padding:9px 12px;margin-top:10px}
 .msg.err{background:var(--bad-soft);color:var(--bad)}
 .msg.ok{background:var(--ok-soft);color:var(--ok)}
+.msg.warn{background:#FBEBC8;color:#8A5500}
 .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700}
 .badge.y{background:var(--ok-soft);color:var(--ok)}
 .badge.n{background:var(--bad-soft);color:var(--bad)}
@@ -85,6 +86,7 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
       <button data-tab="candidates" onclick="switchTab('candidates')">Thí sinh</button>
       <button data-tab="settings" onclick="switchTab('settings')">Cài đặt</button>
       <button data-tab="results" onclick="switchTab('results')">Kết quả</button>
+      <button data-tab="viewers" onclick="switchTab('viewers')">Quản lí xem</button>
     </div>
 
     <!-- Ngân hàng đề -->
@@ -138,7 +140,7 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
       </div>
       <div class="card">
         <h1>Danh sách thí sinh (<span id="candCount">0</span>)</h1>
-        <table><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Email</th><th>Quản lí</th><th>Nhóm ngành</th><th></th></tr></thead><tbody id="candList"></tbody></table>
+        <table><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Email</th><th>Quản lí</th><th>Nhóm ngành</th><th>Xác nhận thông tin</th><th></th></tr></thead><tbody id="candList"></tbody></table>
       </div>
     </div>
 
@@ -185,6 +187,27 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
           <div><label>Dưới mốc thấp nhất</label><input type="text" value="0 điểm" disabled style="background:#f3f6f6;color:var(--muted)"></div>
         </div>
         <button class="btn" style="margin-top:14px" onclick="saveSettings()">Lưu cài đặt</button>
+      </div>
+    </div>
+
+    <!-- Tài khoản quản lí -->
+    <div id="tab-viewers" class="tabpane hide">
+      <div class="card">
+        <h1>Tài khoản quản lí (chỉ xem)</h1>
+        <p class="small">Quản lí đăng nhập tại <b>/kiemtra/quanli.html</b> bằng email + mật khẩu (đăng ký lần đầu nếu chưa có tài khoản). Họ chỉ thấy nhân viên có cột "Quản lí" trùng tên ở phạm vi bên dưới, xem được kết quả, sửa / xác nhận thông tin nhân viên của mình. <b>Không xoá được</b> kết quả hay nhân viên, không xem được câu hỏi và đáp án.</p>
+        <label>Email quản lí</label>
+        <input type="text" id="vwEmail" placeholder="quanli@congty.vn">
+        <label>Họ tên hiển thị</label>
+        <input type="text" id="vwName" placeholder="Lê Thị Thanh Loan">
+        <label>Phạm vi: tên quản lí đúng như cột "Quản lí" trong danh sách thí sinh (nhiều tên, cách nhau dấu ;)</label>
+        <input type="text" id="vwScopes" list="vwManagers" placeholder="Lê Thị Thanh Loan">
+        <datalist id="vwManagers"></datalist>
+        <button class="btn" style="margin-top:12px" onclick="saveViewer()">Lưu tài khoản quản lí</button>
+        <div id="vwMsg"></div>
+      </div>
+      <div class="card">
+        <h1>Danh sách tài khoản quản lí (<span id="vwCount">0</span>)</h1>
+        <table><thead><tr><th>Email</th><th>Họ tên</th><th>Phạm vi</th><th>Số NV</th><th></th></tr></thead><tbody id="vwList"></tbody></table>
       </div>
     </div>
 
@@ -247,7 +270,7 @@ function switchTab(t){
   document.querySelectorAll('.tabpane').forEach(p => p.classList.toggle('hide', p.id !== 'tab-'+t));
 }
 
-function loadAll(){ loadQuestions(); loadCandidates(); loadSettings(); loadResults(); }
+function loadAll(){ loadQuestions(); loadCandidates(); loadSettings(); loadResults(); loadViewers(); }
 
 /* ---------- Ngân hàng đề ---------- */
 let QUESTIONS = [];
@@ -374,8 +397,8 @@ async function loadCandidates(){
   $('candCount').textContent = j.candidates.length;
   const segLabel = { both:'Cả hai', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };
   $('candList').innerHTML = j.candidates.map(c =>
-    '<tr><td>'+esc(c.code)+'</td><td>'+esc(c.name||'')+'</td><td>'+esc(c.email)+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td><button class="btn danger sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
-  ).join('') || '<tr><td colspan="6" class="small">Chưa có thí sinh nào.</td></tr>';
+    '<tr><td>'+esc(c.code)+'</td><td>'+esc(c.name||'')+'</td><td>'+esc(c.email)+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.confirmed?'<span class="badge y">Đã xác nhận</span><br>'+esc(c.confirmed.byName||c.confirmed.by||'')+' · '+new Date(c.confirmed.at).toLocaleDateString('vi-VN'):'<span class="small">Chưa xác nhận</span>')+'</td><td><button class="btn danger sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
+  ).join('') || '<tr><td colspan="7" class="small">Chưa có thí sinh nào.</td></tr>';
 }
 async function addCandidates(){
   const text = $('candText').value;
@@ -482,6 +505,38 @@ async function exportResultsXlsx(){
   a.download = 'ket-qua-kiem-tra-' + new Date().toISOString().slice(0,10) + '.xlsx';
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+
+/* ---------- Tài khoản quản lí ---------- */
+let VIEWERS = [];
+async function loadViewers(){
+  const { j } = await api('GET','/api/kt-admin?op=viewers');
+  if (!j.ok) return;
+  VIEWERS = j.viewers;
+  $('vwManagers').innerHTML = (j.managers||[]).map(m => '<option value="'+esc(m).replace(/"/g,'&quot;')+'">').join('');
+  $('vwCount').textContent = VIEWERS.length;
+  $('vwList').innerHTML = VIEWERS.map(v =>
+    '<tr><td>'+esc(v.email)+'</td><td>'+esc(v.name||'')+'</td><td>'+esc((v.scopes||[]).join('; '))+'</td><td>'+v.employees+'</td>'+
+    '<td><button class="btn ghost sm" onclick="editViewer(\''+esc(v.email)+'\')">Sửa</button> <button class="btn danger sm" onclick="deleteViewerAcc(\''+esc(v.email)+'\')">Thu hồi</button></td></tr>'
+  ).join('') || '<tr><td colspan="5" class="small">Chưa có tài khoản quản lí nào.</td></tr>';
+}
+function editViewer(email){
+  const v = VIEWERS.find(x => x.email === email); if (!v) return;
+  $('vwEmail').value = v.email; $('vwName').value = v.name||''; $('vwScopes').value = (v.scopes||[]).join('; ');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+async function saveViewer(){
+  msg('vwMsg','');
+  const { j } = await api('POST','/api/kt-admin', { op:'saveViewer', email:$('vwEmail').value, name:$('vwName').value, scopes:$('vwScopes').value });
+  if (!j.ok){ msg('vwMsg', j.error || 'Không lưu được.'); return; }
+  msg('vwMsg', (j.created?'Đã cấp quyền quản lí':'Đã cập nhật') + ' cho ' + j.viewer.email + ' (' + j.viewer.employees + ' nhân viên trong phạm vi).' + (j.viewer.employees ? '' : ' Lưu ý: chưa có thí sinh nào có cột "Quản lí" trùng tên này.'), j.viewer.employees ? 'ok' : 'warn');
+  $('vwEmail').value=''; $('vwName').value=''; $('vwScopes').value='';
+  loadViewers();
+}
+async function deleteViewerAcc(email){
+  if (!confirm('Thu hồi quyền quản lí của ' + email + '? Họ sẽ không xem được nhân viên và kết quả nữa (dữ liệu không bị xoá).')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'deleteViewer', email });
+  if (j.ok) loadViewers();
 }
 
 /* ---------- Kết quả ---------- */

@@ -49,6 +49,7 @@ module.exports = async function (context, req) {
       lines = resultmail.rebuildDetail(attempt, byId);
     }
 
+    attempt.email = found.email; // gửi tới email hiện tại (có thể đã được quản lí chỉnh sửa)
     let mailOk = false;
     try { await resultmail.send(attempt, settings, lines); mailOk = true; }
     catch (e) { context.log.error("kt-resend mail", e && e.message); }

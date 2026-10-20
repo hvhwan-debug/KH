@@ -1,6 +1,6 @@
 // Chỉ ADMIN_EMAILS: quản lý ngân hàng đề, danh sách thí sinh, cài đặt bài kiểm tra, xem kết quả.
 const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
-const { isAdmin } = require("../_lib/config");
+const { isAdmin, validEmail, emailAllowed } = require("../_lib/config");
 const quiz = require("../_lib/quiz");
 
 module.exports = async function (context, req) {
@@ -24,7 +24,13 @@ module.exports = async function (context, req) {
           backup: bk && Array.isArray(bk.questions) ? { count: bk.questions.length, at: bk.at } : null
         });
       }
-      if (op === "candidates") return reply(context, 200, { ok: true, candidates: await quiz.getCandidates() });
+      if (op === "viewers") {
+        const cands = await quiz.getCandidates();
+        const viewers = (await quiz.getViewers()).map((v) => Object.assign({}, v, { employees: cands.filter((c) => quiz.inScope(v, c)).length }));
+        const managers = Array.from(new Set(cands.map((c) => String(c.manager || "").trim()).filter(Boolean))).sort();
+        return reply(context, 200, { ok: true, viewers, managers });
+      }
+      if (op === "candidates") return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; return o; }) });
       if (op === "settings") return reply(context, 200, { ok: true, settings: await quiz.getSettings() });
       if (op === "results") {
         const st = await quiz.getSettings();
@@ -119,6 +125,32 @@ module.exports = async function (context, req) {
       return reply(context, 200, { ok: true, restored, questions: list });
     }
 
+    // Tài khoản quản lí (chỉ xem kết quả + chỉnh thông tin nhân viên của mình, không xoá được gì)
+    if (op === "saveViewer") {
+      const email = quiz.normEmail(b.email);
+      if (!validEmail(email)) return reply(context, 400, { ok: false, error: "Email quản lí không hợp lệ." });
+      if (!emailAllowed(email)) return reply(context, 400, { ok: false, error: "Email này chưa được phép dùng ứng dụng (kiểm tra ALLOWED_EMAILS / tên miền cho phép), quản lí sẽ không đăng nhập được." });
+      const raw = Array.isArray(b.scopes) ? b.scopes : String(b.scopes || "").split(/[;\n]/);
+      const seen = new Set(); const scopes = [];
+      raw.forEach((x) => { const t = String(x || "").trim().slice(0, 100); const k = quiz.normPerson(t); if (t && !seen.has(k)) { seen.add(k); scopes.push(t); } });
+      if (!scopes.length) return reply(context, 400, { ok: false, error: "Nhập ít nhất một tên quản lí (đúng như cột 'Quản lí' trong danh sách thí sinh)." });
+      const list = await quiz.getViewers();
+      const name = String(b.name || "").trim().slice(0, 100);
+      const k = list.findIndex((v) => quiz.normEmail(v.email) === email);
+      const entry = { email, name, scopes, addedAt: k >= 0 ? list[k].addedAt : Date.now(), addedBy: k >= 0 ? list[k].addedBy : u.email };
+      if (k >= 0) list[k] = entry; else list.push(entry);
+      await quiz.saveViewers(list);
+      const cands = await quiz.getCandidates();
+      return reply(context, 200, { ok: true, viewer: Object.assign({}, entry, { employees: cands.filter((c) => quiz.inScope(entry, c)).length }), created: k < 0 });
+    }
+
+    if (op === "deleteViewer") {
+      const email = quiz.normEmail(b.email);
+      const list = (await quiz.getViewers()).filter((v) => quiz.normEmail(v.email) !== email);
+      await quiz.saveViewers(list);
+      return reply(context, 200, { ok: true });
+    }
+
     if (op === "addCandidates") {
       let rows = Array.isArray(b.rows) ? b.rows : [];
       if (!rows.length && b.text) {
@@ -137,7 +169,16 @@ module.exports = async function (context, req) {
         if (!code || !email) return;
         const seg = quiz.normSegment(r.segment);
         const entry = { code: String(r.code).trim().slice(0, 50), name: String(r.name || "").trim().slice(0, 100), email, manager: String(r.manager || "").trim().slice(0, 100), segment: seg };
-        if (byCode[code] != null) { list[byCode[code]] = entry; updated++; }
+        if (byCode[code] != null) {
+          const old = list[byCode[code]];
+          const merged = Object.assign({}, old, entry);
+          const same = quiz.normEmail(old.email) === entry.email && String(old.name || "") === entry.name && quiz.normSegment(old.segment) === entry.segment && quiz.normPerson(old.manager) === quiz.normPerson(entry.manager);
+          if (!same) {
+            delete merged.confirmed; // thông tin đổi => cần xác nhận lại
+            merged.audit = (old.audit || []).concat([{ at: Date.now(), kind: "edit", by: u.email, byName: "Quản trị viên", changes: { admin: { from: "", to: "cập nhật qua danh sách" } } }]).slice(-30);
+          }
+          list[byCode[code]] = merged; updated++;
+        }
         else { list.push(entry); byCode[code] = list.length - 1; added++; }
       });
       await quiz.saveCandidates(list);
