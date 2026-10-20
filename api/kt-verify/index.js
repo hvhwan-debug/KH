@@ -15,11 +15,14 @@ module.exports = async function (context, req) {
       quiz.noteFail(req);
       return reply(context, 404, { ok: false, error: "Không tìm thấy kết quả. Mã QR không hợp lệ hoặc đã bị chỉnh sửa." });
     }
-    const settings = await quiz.getSettings();
+    // Cài đặt của ĐÚNG đề thí sinh đã làm (tiêu đề, ngưỡng đạt, thi thử...), không phải cài đặt chung.
+    const settings = await quiz.getExamSettings(attempt.period || "");
+    // Cờ thi thử lưu cùng bài làm lúc nộp; bài cũ chưa có cờ thì theo cấu hình hiện tại của đề.
+    const practice = attempt.practice != null ? !!attempt.practice : !!settings.practice;
     return reply(context, 200, {
       ok: true, serverNow: Date.now(),
       result: {
-        title: settings.examTitle || "Bài kiểm tra",
+        title: settings.examTitle || "Bài kiểm tra", practice,
         name: attempt.name || "", code: attempt.code || "",
         score: attempt.score, total: attempt.total, pct: attempt.pct, passed: quiz.passState(attempt.pct, settings),
         compliancePoints: attempt.compliancePoints, passScore: quiz.passScoreOf(settings),
