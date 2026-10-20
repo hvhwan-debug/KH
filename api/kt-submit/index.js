@@ -1,6 +1,7 @@
 // Công khai: chấm điểm bài làm và gửi email kết quả tự động cho thí sinh.
 const { reply, guardConfigured, requireAjax } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
+const device = require("../_lib/device");
 const resultmail = require("../_lib/resultmail");
 
 module.exports = async function (context, req) {
@@ -56,6 +57,8 @@ module.exports = async function (context, req) {
     const scoreOutOf10 = total ? (correct / total) * 10 : 0;
     const compliance = settings.complianceEnabled ? quiz.compliancePoints(scoreOutOf10, settings) : null;
 
+    try { device.record(attempt, device.capture(req, b.device, "submit")); } catch (e) { (context.log.warn || context.log)("kt-submit device", e && e.message); }
+    const devBrief = device.brief(attempt);
     attempt.status = "submitted";
     attempt.submittedAt = Date.now();
     attempt.score = correct;
@@ -73,7 +76,7 @@ module.exports = async function (context, req) {
     await quiz.upsertIndex({
       id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "", period: attempt.period || "",
       score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
-      submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000)
+      submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief
     });
 
     let mailOk = false;
@@ -90,7 +93,7 @@ module.exports = async function (context, req) {
       await quiz.upsertIndex({
         id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "", period: attempt.period || "",
         score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
-        submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), mailOk
+        submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief, mailOk
       });
     } catch (e) {
       context.log.error("kt-submit mailOk", e && e.message);
@@ -100,7 +103,7 @@ module.exports = async function (context, req) {
       ok: true, score: correct, total, pct, passed, compliancePoints: compliance, mailOk,
       passScore: quiz.passScoreOf(settings), submittedAt: attempt.submittedAt, serverNow: Date.now(),
       startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), verify: quiz.verifyToken(attempt.id),
-      durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000)
+      durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief
     });
   } catch (e) {
     context.log.error("kt-submit", e && e.message);

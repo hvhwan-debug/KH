@@ -2,6 +2,7 @@
 // Đề được trộn riêng cho từng thí sinh; máy chủ chỉ gửi MỘT câu hỏi mỗi lần và tự tính giờ từng câu.
 const { reply, guardConfigured, requireAjax } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
+const device = require("../_lib/device");
 
 module.exports = async function (context, req) {
   try {
@@ -79,6 +80,8 @@ module.exports = async function (context, req) {
     } else {
       quiz.syncAttempt(attempt, now);
     }
+    // Ghi thiết bị đang dùng (bắt đầu / làm tiếp) để quản lí đối chiếu; đổi máy giữa chừng sẽ được đánh dấu.
+    try { device.record(attempt, device.capture(req, b.device, resumed ? "resume" : "start")); } catch (e) { (context.log.warn || context.log)("kt-start device", e && e.message); }
 
     const cs = quiz.clientState(attempt, byId, now);
     await quiz.putAttempt(attempt);

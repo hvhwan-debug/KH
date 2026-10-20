@@ -398,6 +398,16 @@ function msg(id, text, cls){ $(id).innerHTML = text ? '<div class="msg '+(cls||'
 function fmtDur(sec){ sec = Math.max(0, Math.round(sec||0)); var m = Math.floor(sec/60), s = sec%60; return m+' phút '+(s<10?'0':'')+s+' giây'; }
 function fmtTime(ms){ try { return new Date(ms).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'}); } catch(e){ return ''; } }
 
+/* Thông tin thiết bị gửi kèm khi bắt đầu / nộp bài (để quản lí đối chiếu, không dùng để theo dõi) */
+var DEV = (function(){
+  var d = { tz:'', lang:'', screen:'', touch:false, model:'', platformVersion:'' };
+  try { d.tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch(e){}
+  try { d.lang = navigator.language || ''; d.touch = (navigator.maxTouchPoints || 0) > 1;
+        d.screen = Math.round(screen.width) + 'x' + Math.round(screen.height); } catch(e){}
+  try { if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues)
+          navigator.userAgentData.getHighEntropyValues(['model','platformVersion']).then(function(v){ d.model = v.model || ''; d.platformVersion = v.platformVersion || ''; }).catch(function(){}); } catch(e){}
+  return d;
+})();
 async function api(path, body){
   var r = await fetch(path, { method:'POST', headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: JSON.stringify(body||{}) });
   var j = null; try { j = await r.json(); } catch(e){}
@@ -517,7 +527,7 @@ $('btnPhotoOk').addEventListener('click', async function(){
   var btn = $('btnPhotoOk'), label = btn.textContent;
   btn.disabled = true; btn.textContent = 'Đang chuẩn bị đề…'; msg('photoMsg','');
   var res;
-  try { res = await api('/api/kt-start', { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl }); } catch(e){ res = null; }
+  try { res = await api('/api/kt-start', { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, device: DEV }); } catch(e){ res = null; }
   btn.disabled = false; btn.textContent = label;
   if (!res){ msg('photoMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
   if (!res.j.ok){ msg('photoMsg', res.j.error || 'Không thể bắt đầu bài kiểm tra.'); return; }
@@ -641,7 +651,7 @@ async function finish(){
   var out = null, tries = 0;
   while (!out){
     try {
-      var r = await api('/api/kt-submit', { attemptId:ST.attemptId });
+      var r = await api('/api/kt-submit', { attemptId:ST.attemptId, device: DEV });
       if (r.j && r.j.ok){ out = r.j; break; }
       if (r.s >= 400 && r.s < 500 && r.s !== 408 && r.s !== 429){ return fatal(r.j && r.j.error); }
       throw new Error('retry');

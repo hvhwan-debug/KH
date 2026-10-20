@@ -17,7 +17,7 @@ function summaryOf(r, settings) {
   return {
     score: r.score, total: r.total, pct: r.pct, compliancePoints: r.compliancePoints, passed: quiz.passState(r.pct, settings),
     submittedAt: r.submittedAt, startedAt: r.startedAt, durationSec: r.durationSec, wrong: r.wrong, blank: r.blank,
-    proof: quiz.proofCode(r.id), verify: quiz.verifyToken(r.id), flags: r.flags || null, mailOk: r.mailOk
+    proof: quiz.proofCode(r.id), verify: quiz.verifyToken(r.id), flags: r.flags || null, mailOk: r.mailOk, device: r.device || null
   };
 }
 
@@ -86,7 +86,9 @@ module.exports = async function (context, req) {
         let attempt = entry && (await quiz.getAttempt(entry.id));
         if (!attempt) attempt = await quiz.getActive(c.code);
         const photo = attempt && typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "";
-        return reply(context, 200, { ok: true, photo, takenAt: (attempt && attempt.startedAt) || null });
+        const devices = attempt ? (Array.isArray(attempt.devices) ? attempt.devices : (attempt.device ? [attempt.device] : [])) : [];
+        return reply(context, 200, { ok: true, photo, takenAt: (attempt && attempt.startedAt) || null,
+          devices: devices.map((d) => ({ type: d.type, os: d.os, browser: d.browser, model: d.model, ip: d.ip, screen: d.screen, tz: d.tz, lang: d.lang, stage: d.stage, at: d.at, ua: d.ua })) });
       }
       if (op === "employee") {
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
