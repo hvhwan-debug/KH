@@ -3,7 +3,7 @@ process.env.STORAGE_MODE = "memory"; process.env.MAIL_MODE = "memory";
 process.env.SESSION_SECRET = "dev-session-secret-dev-session-secret-1234"; process.env.ALLOWED_EMAIL_DOMAINS = "x.vn";
 const quiz = require("../api/_lib/quiz");
 const H = { "x-requested-with": "livotec" };
-const fn = { check: require("../api/kt-check"), start: require("../api/kt-start"), answer: require("../api/kt-answer"), submit: require("../api/kt-submit"), resend: require("../api/kt-resend") };
+const fn = { check: require("../api/kt-check"), start: require("../api/kt-start"), answer: require("../api/kt-answer"), submit: require("../api/kt-submit"), resend: require("../api/kt-resend"), verify: require("../api/kt-verify") };
 let pass = 0, fail = 0;
 const ok = (c, m) => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + m); };
 async function call(name, body, headers) {
@@ -11,6 +11,7 @@ async function call(name, body, headers) {
   await fn[name](ctx, { method: "POST", headers: headers || H, body });
   return { s: ctx.res.status, j: ctx.res.body };
 }
+async function getV(t) { const ctx = { log: Object.assign(() => {}, { error: console.error }), res: null }; await fn.verify(ctx, { method: "GET", headers: {}, query: t == null ? {} : { t } }); return { s: ctx.res.status, j: ctx.res.body }; }
 (async () => {
   const qs = [];
   for (let i = 0; i < 12; i++) qs.push({ id: "q" + i, text: "Câu hỏi " + i, category: i < 5 ? "Gia dụng" : "Máy lọc nước", options: ["Đúng", "Sai 1", "Sai 2", "Sai 3"], correctIndex: 0, active: true });
@@ -68,6 +69,18 @@ async function call(name, body, headers) {
   r = await call("check", { code: "NV1", email: "a@x.vn" });
   ok(r.j.alreadyDone && r.j.result.score === 4 && r.j.result.mailOk === true && r.j.result.submittedAt > 0, "check sau khi nộp: trả kết quả cũ + trạng thái email");
   ok(r.j.result.proof === proofCode1 && r.j.result.blank === 1 && r.j.result.startedAt > 0 && r.j.serverNow > 0, "check sau khi nộp: mã minh chứng khớp lúc nộp + đủ số liệu");
+
+  // Mã QR xác thực (xem kết quả công khai bằng mã có chữ ký)
+  const att0 = await quiz.getAttempt(att);
+  r = await call("check", { code: "NV1", email: "a@x.vn" }); const vtok = r.j.result.verify;
+  ok(typeof vtok === "string" && vtok.indexOf(att0.id + ".") === 0, "kết quả trả về mã xác thực <mã bài>.<chữ ký>");
+  let v = await getV(vtok);
+  ok(v.s === 200 && v.j.result.name === "Nguyễn A" && v.j.result.code === "NV1" && v.j.result.score === 4 && v.j.result.passed === true && v.j.result.proof === proofCode1, "quét QR: ra đúng kết quả (tên, mã NV, điểm, mã minh chứng)");
+  ok(!JSON.stringify(v.j).includes("a@x.vn") && !JSON.stringify(v.j).includes("Câu 1 ["), "trang xác thực KHÔNG lộ email và đáp án từng câu");
+  v = await getV(vtok.slice(0, -1) + (vtok.slice(-1) === "a" ? "b" : "a")); ok(v.s === 404, "sửa chữ ký: không xác thực được");
+  v = await getV("x" + vtok); ok(v.s === 404, "sửa mã bài làm: không xác thực được");
+  v = await getV(att0.id); ok(v.s === 404, "chỉ có mã bài làm, thiếu chữ ký: bị từ chối (không đoán được từ mã minh chứng)");
+  v = await getV(null); ok(v.s === 404, "thiếu mã: bị từ chối");
 
   // Gửi lại email xác nhận
   const mb0 = (global.__mailbox || []).length;

@@ -1,5 +1,7 @@
 // Thư viện dùng chung cho nền tảng kiểm tra: ngân hàng đề, danh sách thí sinh, cài đặt, bài làm.
 const store = require("./store");
+const crypto = require("crypto");
+const { cfg } = require("./config");
 
 const Q_KEY = "kt/questions.json";
 const C_KEY = "kt/candidates.json";
@@ -99,6 +101,17 @@ function shuffle(arr) {
 // Mã minh chứng in trên thẻ kết quả để quản trị viên đối chiếu với hệ thống (suy ra từ mã bài làm, không cần lưu thêm).
 function proofCode(id) { return "KT-" + String(id || "").slice(-8).toUpperCase(); }
 
+// Mã trong QR trên thẻ kết quả: <mã bài làm>.<chữ ký>. Chữ ký do máy chủ ký nên không thể đoán hoặc tự chế mã cho bài khác.
+function verifySig(id) { return crypto.createHmac("sha256", cfg().secret || "x").update("verify:" + id).digest("base64url").slice(0, 16); }
+function verifyToken(id) { return id + "." + verifySig(id); }
+function checkVerifyToken(t) {
+  const s = String(t || ""), i = s.lastIndexOf(".");
+  if (i < 1 || /[^a-z0-9]/i.test(s.slice(0, i))) return null;
+  const id = s.slice(0, i), sig = s.slice(i + 1), want = verifySig(id);
+  const a = Buffer.from(sig), b = Buffer.from(want);
+  return a.length === b.length && crypto.timingSafeEqual(a, b) ? id : null;
+}
+
 function genId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 }
@@ -186,5 +199,5 @@ module.exports = {
   getAttempt, putAttempt,
   getIndex, upsertIndex,
   shuffle, genId, compliancePoints,
-  backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
+  verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
 };

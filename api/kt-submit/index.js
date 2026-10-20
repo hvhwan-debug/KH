@@ -19,7 +19,7 @@ module.exports = async function (context, req) {
         ok: true, score: attempt.score, total: attempt.total, pct: attempt.pct, passed: attempt.passed,
         compliancePoints: attempt.compliancePoints, already: true, mailOk: attempt.mailOk,
         passScore: st.passScore || 0, submittedAt: attempt.submittedAt, serverNow: Date.now(),
-        startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id),
+        startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), verify: quiz.verifyToken(attempt.id),
         durationSec: Math.round(((attempt.submittedAt || 0) - (attempt.startedAt || 0)) / 1000)
       });
     }
@@ -98,7 +98,7 @@ module.exports = async function (context, req) {
     return reply(context, 200, {
       ok: true, score: correct, total, pct, passed, compliancePoints: compliance, mailOk,
       passScore: settings.passScore || 0, submittedAt: attempt.submittedAt, serverNow: Date.now(),
-      startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id),
+      startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), verify: quiz.verifyToken(attempt.id),
       durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000)
     });
   } catch (e) {
