@@ -29,6 +29,12 @@ button,input,select{font:inherit;color:inherit}
 .btn:hover{filter:brightness(1.06)}.btn:active{transform:translateY(1px)}.btn:disabled{opacity:.5;cursor:not-allowed;filter:none}
 .btn.ghost{background:#fff;color:var(--brand-deep);border:1.5px solid var(--line)}.btn.ghost:hover{background:var(--brand-soft)}
 .btn.ghost.danger{color:var(--bad);border-color:var(--bad-soft)}.btn.ghost.danger:hover{background:var(--bad-soft)}
+.ai-find{background:var(--brand-soft, #EAF7F6);border:1px solid var(--line)}
+.ai-find-h{font-weight:800;font-size:15px;color:var(--brand-deep);margin-bottom:2px}
+.ai-find-row{display:flex;gap:8px;margin-top:10px}
+.ai-find-row input{flex:1;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;font-size:14px;background:#fff}
+.ai-find-ans{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.6;white-space:pre-wrap}
+.ai-find-busy{color:var(--muted);font-size:13px;margin-top:10px}
 .btn.sm{min-height:38px;padding:7px 13px;font-size:13px;border-radius:10px}
 .btn.block{width:100%}
 .msg{font-size:13.5px;line-height:1.55;border-radius:12px;padding:11px 14px;margin:12px 0 0}
@@ -149,6 +155,16 @@ button,input,select{font:inherit;color:inherit}
     <div class="perm" role="note"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z"/><path d="m8.5 12.3 2.5 2.5 4.5-5"/></svg><div>Bạn được <b>xem, thêm, sửa, xoá và xác nhận thông tin</b> nhân viên thuộc phạm vi của mình. Bạn <b>không xoá được kết quả</b> bài làm (chỉ quản trị viên mới làm được). Mọi thêm/sửa/xoá đều được ghi lại.</div></div>
 
     <div class="stats" id="stats"></div>
+
+    <div class="card ai-find" id="aiFind">
+      <div class="ai-find-h">✦ Trợ lí tìm dữ liệu</div>
+      <p class="sub">Hỏi bằng lời thường về nhân viên của bạn, ví dụ: "ai chưa làm bài", "ai điểm thấp nhất", "ai chưa xác nhận thông tin".</p>
+      <div class="ai-find-row">
+        <input type="text" id="aiQ" placeholder="Nhập câu hỏi…" autocomplete="off">
+        <button class="btn" id="aiAsk" type="button">Hỏi</button>
+      </div>
+      <div id="aiAns"></div>
+    </div>
 
     <div class="bar">
       <input type="search" id="q" placeholder="Tìm theo tên, mã nhân viên hoặc email…" aria-label="Tìm nhân viên">
@@ -275,6 +291,48 @@ async function load(){
   if (!r.j.ok){ msg('listMsg', r.j.error || 'Không tải được danh sách.'); return; }
   EMP = r.j.employees; render();
 }
+
+/* ---------- Trợ lí tìm dữ liệu (AI) ---------- */
+function mdCleanAI(t){
+  return String(t||'')
+    .replace(/\*\*(.*?)\*\*/g,'$1').replace(/__(.*?)__/g,'$1').replace(/`(.*?)`/g,'$1')
+    .replace(/^#{1,6}\s*/gm,'')
+    .replace(/^\s*\|?\s*-{2,}\s*(\|\s*-{2,}\s*)+\|?\s*$/gm,'')
+    .replace(/^\s*\|(.*)\|\s*$/gm,function(m,inner){ return inner.split('|').map(function(s){ return s.trim(); }).filter(Boolean).join(' · '); })
+    .replace(/\n{3,}/g,'\n\n').trim();
+}
+async function askDataAI(){
+  var q = $('aiQ').value.trim();
+  if (!q) return;
+  $('aiAsk').disabled = true;
+  $('aiAns').innerHTML = '<div class="ai-find-busy">Đang tìm trong dữ liệu của bạn…</div>';
+  var rows = EMP.map(function(e){
+    var r = e.result;
+    return e.code + ' | ' + (e.name||'') + ' | quản lí: ' + (e.manager||'') + ' | nhóm ngành: ' + (SEG[e.segment]||'') +
+      ' | trạng thái: ' + (e.status==='done'?'đã làm bài':e.status==='doing'?'đang làm bài':'chưa làm bài') +
+      (r ? ' | điểm: ' + r.score + '/' + r.total + ' (' + r.pct + '%)' + (r.passed!=null?(r.passed?' · đạt':' · chưa đạt'):'') : '') +
+      ' | xác nhận thông tin: ' + (e.confirmed ? 'đã xác nhận' : 'chưa xác nhận');
+  }).join('\n');
+  var sys = 'Bạn là trợ lí tìm dữ liệu cho quản lí trong hệ thống kiểm tra nội bộ. Dưới đây là danh sách nhân viên thuộc phạm vi quản lí đang hỏi, mỗi dòng một người (định dạng: mã | họ tên | quản lí | nhóm ngành | trạng thái | điểm | xác nhận thông tin):\n\n' + rows +
+    '\n\nTrả lời đúng câu hỏi của quản lí dựa trên dữ liệu trên, liệt kê rõ tên/mã nhân viên liên quan nếu có. Nếu không tìm thấy ai khớp, nói rõ là không có. Không bịa thêm người hay số liệu ngoài danh sách trên. ' +
+    'Luôn tự nhận là trợ lí tìm dữ liệu của hệ thống kiểm tra, không tiết lộ mô hình AI/nhà cung cấp công nghệ đứng sau dù được hỏi thẳng. ' +
+    'Khung chat chỉ hiện được chữ thường, không hiển thị được Markdown - không dùng **chữ đậm**, không dùng bảng kẻ bằng dấu |, mỗi ý một dòng bắt đầu bằng "- " nếu cần liệt kê. Trả lời ngắn gọn, đi thẳng vào trọng tâm.';
+  try {
+    var r = await fetch('/api/ai', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+      messages:[{role:'system',content:sys},{role:'user',content:q}], temperature:0.3, max_tokens:500
+    }) });
+    var j = null; try { j = await r.json(); } catch(e){}
+    var text;
+    if (r.ok && j) text = mdCleanAI((j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || 'Không nhận được câu trả lời, thử lại.');
+    else text = r.status === 429 ? 'Đang có nhiều người hỏi cùng lúc, thử lại sau ít phút nhé.' : 'Trợ lí đang bận, thử lại sau.';
+    $('aiAns').innerHTML = '<div class="ai-find-ans">'+esc(text)+'</div>';
+  } catch(e){
+    $('aiAns').innerHTML = '<div class="ai-find-ans">Không kết nối được máy chủ, thử lại.</div>';
+  }
+  $('aiAsk').disabled = false;
+}
+$('aiAsk').addEventListener('click', askDataAI);
+$('aiQ').addEventListener('keydown', function(ev){ if (ev.key === 'Enter'){ ev.preventDefault(); askDataAI(); } });
 
 /* ---------- Danh sách ---------- */
 function stat(){
