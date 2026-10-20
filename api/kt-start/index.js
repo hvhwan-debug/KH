@@ -24,15 +24,27 @@ module.exports = async function (context, req) {
     }
 
     const activeQuestions = (await quiz.getQuestions()).filter((q) => q.active !== false && q.text && Array.isArray(q.options) && q.options.length >= 2);
-    // Nhóm ngành của thí sinh quyết định trộn đề từ nhóm câu hỏi nào: bán cả 2 ngành -> toàn bộ ngân hàng;
-    // chỉ bán 1 ngành -> chỉ lấy câu hỏi được gắn đúng danh mục ngành đó.
+    // Nhóm ngành của thí sinh quyết định trộn đề từ nhóm câu hỏi nào:
+    // - chỉ bán 1 ngành -> chỉ lấy câu hỏi đúng danh mục ngành đó.
+    // - bán cả 2 ngành -> co cau: mot so luong co dinh cau "Gia dụng", phan con lai lay tu MOI danh muc khac
+    //   (Máy lọc nước, Kiến thức khác... - tu dong gom het, khong can liet ke tung ten).
     const segment = quiz.normSegment(found.segment);
     const wantCategory = quiz.CATEGORY_BY_SEGMENT[segment];
-    const all = wantCategory ? activeQuestions.filter((q) => q.category === wantCategory) : activeQuestions;
-    if (!all.length) return reply(context, 503, { ok: false, error: "Ngân hàng đề chưa có câu hỏi phù hợp với nhóm ngành của bạn, liên hệ quản trị viên." });
-
-    const n = Math.min(settings.questionCount || all.length, all.length);
-    const picked = quiz.shuffle(all).slice(0, n);
+    const total = settings.questionCount || activeQuestions.length;
+    let picked;
+    if (wantCategory) {
+      const pool = activeQuestions.filter((q) => q.category === wantCategory);
+      if (!pool.length) return reply(context, 503, { ok: false, error: "Ngân hàng đề chưa có câu hỏi phù hợp với nhóm ngành của bạn, liên hệ quản trị viên." });
+      picked = quiz.shuffle(pool).slice(0, Math.min(total, pool.length));
+    } else {
+      const giaDungPool = activeQuestions.filter((q) => q.category === "Gia dụng");
+      const otherPool = activeQuestions.filter((q) => q.category !== "Gia dụng");
+      if (!giaDungPool.length && !otherPool.length) return reply(context, 503, { ok: false, error: "Ngân hàng đề chưa có câu hỏi, liên hệ quản trị viên." });
+      const giaDungN = Math.min(settings.bothGiaDungCount || 0, giaDungPool.length);
+      const otherN = Math.min(Math.max(total - giaDungN, 0), otherPool.length);
+      picked = quiz.shuffle(quiz.shuffle(giaDungPool).slice(0, giaDungN).concat(quiz.shuffle(otherPool).slice(0, otherN)));
+    }
+    const n = picked.length;
     const id = quiz.genId();
     const now = Date.now();
 

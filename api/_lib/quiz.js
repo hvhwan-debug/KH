@@ -8,7 +8,10 @@ const IDX_KEY = "kt/attempts-index.json";
 
 const DEFAULT_SETTINGS = {
   examTitle: "Bài kiểm tra",
-  questionCount: 20,
+  questionCount: 30,
+  // Thí sinh bán cả 2 ngành (segment "both"): lấy co dinh so cau "Gia dụng" nay, so con lai (questionCount - so nay)
+  // lay tu moi cau hoi KHONG thuoc "Gia dụng" (Máy lọc nước, Kiến thức khác... — tu dong gom moi category khac).
+  bothGiaDungCount: 10,
   secondsPerQuestion: 60,
   passScore: 70,
   allowRetake: false,

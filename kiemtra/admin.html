@@ -143,8 +143,12 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
             <input type="text" id="setTitle">
           </div>
           <div>
-            <label>Số câu hỏi mỗi đề (trộn ngẫu nhiên từ ngân hàng)</label>
+            <label>Tổng số câu hỏi mỗi đề</label>
             <input type="text" inputmode="numeric" id="setCount">
+          </div>
+          <div>
+            <label>Thí sinh bán cả 2 ngành: số câu "Gia dụng" cố định (còn lại lấy từ Máy lọc nước/Kiến thức khác)</label>
+            <input type="text" inputmode="numeric" id="setBothGD">
           </div>
           <div>
             <label>Thời gian tối đa mỗi câu (giây)</label>
@@ -333,6 +337,7 @@ async function loadSettings(){
   if (!j.ok) return;
   const s = j.settings;
   $('setTitle').value = s.examTitle; $('setCount').value = s.questionCount;
+  $('setBothGD').value = s.bothGiaDungCount;
   $('setSeconds').value = s.secondsPerQuestion; $('setPass').value = s.passScore;
   $('setRetake').checked = !!s.allowRetake;
   $('setComplianceOn').checked = !!s.complianceEnabled;
@@ -340,7 +345,7 @@ async function loadSettings(){
 }
 async function saveSettings(){
   const { j } = await api('POST','/api/kt-admin', {
-    op:'saveSettings', examTitle: $('setTitle').value, questionCount: $('setCount').value,
+    op:'saveSettings', examTitle: $('setTitle').value, questionCount: $('setCount').value, bothGiaDungCount: $('setBothGD').value,
     secondsPerQuestion: $('setSeconds').value, passScore: $('setPass').value, allowRetake: $('setRetake').checked,
     complianceEnabled: $('setComplianceOn').checked, complianceHighMin: $('setCHigh').value,
     complianceMidMin: $('setCMid').value, complianceLowMin: $('setCLow').value
