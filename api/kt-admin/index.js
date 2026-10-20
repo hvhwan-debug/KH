@@ -294,7 +294,8 @@ module.exports = async function (context, req) {
     }
 
     if (op === "resetAttempt") {
-      const removed = await quiz.resetByCode(b.code);
+      // Làm lại theo kỳ: chỉ xoá kết quả của kỳ được chọn (period = "" là bài chưa gắn kỳ).
+      const removed = await quiz.resetByCode(b.code, typeof b.period === "string" ? b.period : undefined);
       return reply(context, 200, { ok: true, removed });
     }
 

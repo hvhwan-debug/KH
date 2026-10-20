@@ -786,12 +786,14 @@ async function loadResults(){
     '<td class="small"><b>'+esc(r.proof||('KT-'+String(r.id||'').slice(-8).toUpperCase()))+'</b></td>'+
     '<td class="small">'+esc(flagText(r)||'–')+'</td>'+
     '<td class="small">'+new Date(r.submittedAt).toLocaleString('vi-VN')+'</td>'+
-    '<td style="white-space:nowrap"><button class="btn ghost sm" onclick="viewResult(\''+r.id+'\')">Xem</button> <button class="btn danger sm" onclick="resetAttempt(\''+esc(r.code)+'\')">↺ Làm lại</button></td></tr>'
+    '<td style="white-space:nowrap"><button class="btn ghost sm" onclick="viewResult(\''+r.id+'\')">Xem</button> <button class="btn danger sm" onclick="resetAttempt(\''+esc(r.code)+'\',\''+esc(r.period||'')+'\')">↺ Làm lại</button></td></tr>'
   ).join('') || '<tr><td colspan="12" class="small">Chưa có bài làm nào được nộp.</td></tr>';
 }
-async function resetAttempt(code){
-  if (!confirm('Xoá kết quả hiện tại của mã '+code+' và cho phép làm lại bài kiểm tra từ đầu?')) return;
-  const { j } = await api('POST','/api/kt-admin', { op:'resetAttempt', code });
+async function resetAttempt(code, period){
+  period = period || '';
+  const lbl = period ? 'kỳ ' + perLabel(period) : 'bài chưa gắn kỳ';
+  if (!confirm('Xoá kết quả ' + lbl + ' của mã ' + code + ' và cho phép làm lại?\nKết quả các kỳ khác vẫn giữ nguyên. Lần làm lại cần chụp ảnh xác nhận mới.')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'resetAttempt', code, period });
   if (!j.ok){ alert(j.error||'Có lỗi xảy ra.'); return; }
   loadResults();
 }
@@ -816,7 +818,7 @@ async function viewResult(id){
   if (!j.ok){ alert(j.error); return; }
   $('resDetailCard').classList.remove('hide');
   $('resDetail').innerHTML = '<p><b>'+esc(j.attempt.name||'')+'</b> ('+esc(j.attempt.code)+') — '+j.attempt.score+'/'+j.attempt.total+' câu đúng, '+j.attempt.pct+'%</p>' +
-    (j.attempt.photo ? '<img src="'+j.attempt.photo+'" alt="Ảnh xác nhận của thí sinh" style="max-width:220px;border-radius:12px;border:1px solid var(--line);margin-bottom:14px;display:block">' : '<p class="small">Không có ảnh xác nhận (bài làm trước khi có tính năng này).</p>') +
+    (j.attempt.photo ? '<figure style="margin:0 0 14px"><img src="'+j.attempt.photo+'" alt="Ảnh xác nhận của thí sinh" style="max-width:220px;border-radius:12px;border:1px solid var(--line);display:block"><figcaption class="small" style="margin-top:6px">Ảnh chụp ngay trước khi bắt đầu bài kiểm tra <b>'+esc(j.attempt.period ? 'kỳ ' + perLabel(j.attempt.period) : '(chưa gắn kỳ)')+'</b>'+(j.attempt.startedAt ? ', lúc ' + esc(new Date(j.attempt.startedAt).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour12:false})) : '')+'. Chỉ là minh chứng cho kỳ này.</figcaption></figure>' : '<p class="small">Không có ảnh xác nhận (bài làm trước khi có tính năng này).</p>') +
     devHtml(j.attempt) +
     j.detail.map((d,i) =>
       '<div style="border-top:1px solid var(--line);padding:10px 0"><b>Câu '+(i+1)+'.</b> '+esc(d.text)+'<ul style="margin:6px 0 0;padding-left:20px">' +

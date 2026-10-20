@@ -37,7 +37,7 @@ module.exports = async function (context, req) {
     const now = Date.now();
 
     // 1) Có bài đang dở -> làm tiếp, KHÔNG tạo đề mới.
-    let attempt = await quiz.getActive(found.code);
+    let attempt = await quiz.activeForPeriod(found.code, settings.examPeriod); // bài dở của kỳ cũ không được làm tiếp
     let resumed = !!attempt;
 
     // 2) Chưa có -> tạo đề mới. Bắt buộc có ảnh xác nhận trước khi tạo đề (không áp dụng khi làm tiếp bài đang dở).

@@ -278,6 +278,12 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .aiout ul,.aiout ol{margin:0;padding-left:20px}.aiout li{margin:2px 0}
 .aiout p{margin:0 0 6px}
 .aiout .busy{color:var(--muted)}
+.ph{position:relative}
+.ph-tag{position:absolute;left:4px;bottom:4px;background:rgba(13,42,49,.78);color:#fff;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:6px;pointer-events:none;font-variant-numeric:tabular-nums}
+.ph.xs{width:52px;border-radius:8px}.ph.xs .ph-tag{display:none}.ph.xs.none span{font-size:9.5px}
+.perh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.perh select{font:inherit;font-size:14px;font-weight:600;border:1px solid var(--line);border-radius:9px;padding:5px 8px;background:#fff;color:var(--brand-deep)}
+.pernote{margin:-4px 0 10px;font-size:13px;color:var(--warn);background:var(--warn-soft);border-radius:10px;padding:8px 12px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -318,7 +324,8 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 
     <section class="card overview" aria-label="Tổng quan">
       <div>
-        <div class="ov-head"><h1>Tiến độ làm bài của đội</h1><span class="big" id="ovDone"></span></div>
+        <div class="ov-head"><h1 class="perh">Tiến độ làm bài <select id="fPer" aria-label="Chọn kỳ kiểm tra"></select></h1><span class="big" id="ovDone"></span></div>
+        <p class="pernote hide" id="perNote"></p>
         <div class="track" id="track" aria-hidden="true"></div>
         <div class="legend" id="legend" role="group" aria-label="Lọc theo trạng thái"></div>
       </div>
@@ -496,10 +503,16 @@ async function boot(){
   $('scopeTxt').textContent = 'Nhân viên của: ' + (VIEWER.scopes || []).join('; ');
   show('app'); await load();
 }
+var CURP = '', PERIODS = [], CURRENT = '', PSEL = null;
 async function load(){
-  var r = await api('GET','/api/kt-viewer?op=employees');
+  var r = await api('GET','/api/kt-viewer?op=employees' + (PSEL != null ? '&period=' + encodeURIComponent(PSEL) : ''));
   if (!r.j.ok){ msg('listMsg', r.j.error || 'Không tải được danh sách.'); return; }
-  EMP = r.j.employees; PHOTO = {}; render();
+  EMP = r.j.employees; PHOTO = {};
+  CURP = r.j.period != null ? r.j.period : ''; PERIODS = r.j.periods || [CURP]; CURRENT = r.j.currentPeriod || CURP;
+  $('fPer').innerHTML = PERIODS.map(function(p){ return '<option value="' + esc(p) + '"' + (p === CURP ? ' selected' : '') + '>Kỳ ' + esc(perL(p)) + (p === CURRENT ? ' (hiện tại)' : '') + '</option>'; }).join('');
+  $('perNote').innerHTML = CURP !== CURRENT ? 'Đang xem kỳ cũ. Trạng thái, điểm và ảnh xác nhận bên dưới là của kỳ ' + esc(perL(CURP)) + '. <button type="button" class="linkbtn" id="perBack">Về kỳ hiện tại</button>' : '';
+  $('perNote').classList.toggle('hide', CURP === CURRENT);
+  render();
 }
 
 /* ---------- Trợ lí tìm dữ liệu (AI) ---------- */
@@ -525,7 +538,7 @@ async function askDataAI(){
         ' | vị trí: ' + (r.device.loc ? r.device.loc.lat + ',' + r.device.loc.lng + (r.device.movedKm > 2 ? ' (di chuyển ' + r.device.movedKm + ' km trong lúc làm)' : '') : (LOCERR[r.device.locErr] || 'không có')) : '') +
       ' | xác nhận thông tin: ' + (e.confirmed ? 'đã xác nhận' : 'chưa xác nhận');
   }).join('\n');
-  var sys = 'Bạn là trợ lí tìm dữ liệu cho quản lí trong hệ thống kiểm tra nội bộ. Dưới đây là danh sách nhân viên thuộc phạm vi quản lí đang hỏi, mỗi dòng một người (định dạng: mã | họ tên | quản lí | nhóm ngành | trạng thái | điểm | xác nhận thông tin):\n\n' + rows +
+  var sys = 'Bạn là trợ lí tìm dữ liệu cho quản lí trong hệ thống kiểm tra nội bộ. Dữ liệu dưới đây là của KỲ KIỂM TRA ' + perL(CURP) + ' (trạng thái, điểm đều thuộc kỳ này). Danh sách nhân viên thuộc phạm vi quản lí đang hỏi, mỗi dòng một người (định dạng: mã | họ tên | quản lí | nhóm ngành | trạng thái | điểm | xác nhận thông tin):\n\n' + rows +
     '\n\nTrả lời đúng câu hỏi của quản lí dựa trên dữ liệu trên, liệt kê rõ tên/mã nhân viên liên quan nếu có. Nếu không tìm thấy ai khớp, nói rõ là không có. Không bịa thêm người hay số liệu ngoài danh sách trên. ' +
     'Luôn tự nhận là trợ lí tìm dữ liệu của hệ thống kiểm tra, không tiết lộ mô hình AI/nhà cung cấp công nghệ đứng sau dù được hỏi thẳng. ' +
     'Khung chat chỉ hiện được chữ thường, không hiển thị được Markdown - không dùng **chữ đậm**, không dùng bảng kẻ bằng dấu |, mỗi ý một dòng bắt đầu bằng "- " nếu cần liệt kê. Trả lời ngắn gọn, đi thẳng vào trọng tâm.';
@@ -635,6 +648,8 @@ function render(){
       '</div></td></tr>';
   }).join('') || '<tr><td colspan="6"><div class="empty">'+(EMP.length ? 'Không có nhân viên nào khớp bộ lọc. <button type="button" class="linkbtn" id="clearF2">Xoá bộ lọc</button>' : 'Chưa có nhân viên nào trong phạm vi của bạn. Bấm “Thêm nhân viên” hoặc liên hệ quản trị viên.')+'</div></td></tr>';
 }
+$('fPer').addEventListener('change', function(){ PSEL = this.value; load(); });
+document.addEventListener('click', function(ev){ if (ev.target && ev.target.id === 'perBack'){ PSEL = CURRENT; load(); } });
 function clearFilters(){ fSt = ''; $('q').value = ''; $('fCf').value = ''; render(); }
 ['q','fCf'].forEach(function(id){ $(id).addEventListener('input', render); $(id).addEventListener('change', render); });
 $('clearF').addEventListener('click', clearFilters);
@@ -689,17 +704,18 @@ function openRes(e){
   if (fl) rows += '<div><dt>Cảnh báo khi làm bài</dt><dd>'+esc(fl)+'</dd></div>';
   $('rRows').innerHTML = rows;
   $('rVerify').href = '/kiemtra/ketqua.html?t=' + encodeURIComponent(r.verify);
-  $('ovRes').classList.remove('hide'); fillPhoto('rPhoto', e); fillDev('rDev', e);
+  $('ovRes').classList.remove('hide'); fillPhoto('rPhoto', e, { id: r.id }); fillDev('rDev', e, { id: r.id });
 }
 
 /* ---------- Xem lại bản sao bài làm ---------- */
 var PAPER = null, PEMP = null, pFilter = 'all';
 $('rPaper').addEventListener('click', function(){ if (curRes){ $('ovRes').classList.add('hide'); openPaper(curRes); } });
 async function openPaper(e, attemptId){
+  attemptId = attemptId || (e.result && e.result.id) || ''; // luôn mở đúng bài của kỳ đang xem
   PEMP = e; PAPER = null; pFilter = 'all';
   $('pTitle').textContent = 'Bài làm của ' + (e.name || e.code); $('pSub').textContent = 'Mã nhân viên ' + e.code;
   $('pTiles').innerHTML = ''; $('pFilter').innerHTML = ''; $('pList').innerHTML = ''; msg('pMsg','');
-  $('pList').innerHTML = '<div class="empty">Đang tải bài làm…</div>'; $('ovPaper').classList.remove('hide'); fillPhoto('pPhoto', e);
+  $('pList').innerHTML = '<div class="empty">Đang tải bài làm…</div>'; $('ovPaper').classList.remove('hide'); fillPhoto('pPhoto', e, attemptId ? { id: attemptId } : null);
   var r; try { r = await api('GET','/api/kt-viewer?op=paper&code=' + encodeURIComponent(e.code) + (attemptId ? '&id=' + encodeURIComponent(attemptId) : '')); } catch(err){ r = null; }
   if (!r || !r.j.ok){ $('pList').innerHTML = ''; msg('pMsg', r ? (r.j.error || 'Không tải được bài làm.') : 'Không kết nối được máy chủ.'); return; }
   PAPER = r.j; renderPaper();
@@ -735,7 +751,7 @@ async function openEdit(e){
   editing = e; msg('eMsg','');
   $('eSub').textContent = e.name || e.code;
   $('eCode').value = e.code; $('eName').value = e.name; $('eEmail').value = e.email; $('eSeg').value = e.segment; $('eMgr').value = e.manager;
-  $('eHist').innerHTML = ''; $('ovEdit').classList.remove('hide'); $('eName').focus(); fillPhoto('ePhoto', e);
+  $('eHist').innerHTML = ''; $('ovEdit').classList.remove('hide'); $('eName').focus(); fillPhoto('ePhoto', e, { period: CURP });
   var h = await api('GET','/api/kt-viewer?op=employee&code=' + encodeURIComponent(e.code));
   if (h.j.ok) $('eHist').innerHTML = (h.j.history||[]).map(function(x){
     var d = esc(fmt(x.at)) + ' · ' + esc(x.byName||x.by||'');
@@ -804,10 +820,12 @@ async function openProfile(e){
   $('fTitle').textContent = e.name || e.code;
   $('fMeta').textContent = 'Mã ' + e.code + ' · ' + (e.email||'') + ' · ' + (SEG[e.segment]||'') + (e.manager ? ' · Quản lí: ' + e.manager : '');
   $('fBody').innerHTML = '<div class="empty">Đang tải hồ sơ…</div>';
-  $('ovProf').classList.remove('hide'); fillPhoto('fPhoto', e);
+  $('ovProf').classList.remove('hide'); $('fPhoto').innerHTML = ''; $('fPhoto').className = 'ph';
   var r; try { r = await api('GET','/api/kt-viewer?op=profile&code=' + encodeURIComponent(e.code)); } catch(err){ r = null; }
   if (!r || !r.j.ok){ $('fBody').innerHTML = '<div class="msg err">' + esc(r ? (r.j.error || 'Không tải được hồ sơ.') : 'Không kết nối được máy chủ.') + '</div>'; return; }
   PROF = r.j; PROF.emp = e; renderProfile();
+  var HH = PROF.history; if (HH.length) fillPhoto('fPhoto', e, { id: HH[HH.length-1].id }); else { $('fPhoto').className = 'ph none'; $('fPhoto').innerHTML = '<span>Chưa có ảnh</span>'; }
+  HH.forEach(function(x){ fillPhoto('th-' + x.id, e, { id: x.id }); });
 }
 function chartSvg(H, low){
   var W = window.innerWidth < 600 ? 380 : 640, h = window.innerWidth < 600 ? 220 : 190, pl = 34, pr = 10, pt = 14, pb = 30, n = H.length, cw = (W - pl - pr) / Math.max(n, 1), bw = Math.min(46, cw * 0.5);
@@ -842,10 +860,10 @@ function renderProfile(){
     '<div><b>' + pc(avgAll) + '</b><span>Trung bình các lần</span></div>' +
     '<div><b class="' + (d == null ? '' : d > 0 ? 'up' : d < 0 ? 'down' : '') + '">' + (d == null ? '–' : (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + String(Math.abs(d)).replace('.', ',')) + '</b><span>' + (d == null ? 'Cần ít nhất 2 kỳ để so sánh' : 'Điểm % so với lần trước') + '</span></div></div>';
   html += '<div class="psec chart"><h3>Tỉ lệ đúng theo kỳ</h3>' + chartSvg(H, low) + '<div class="lg"><span><i style="background:#067A8C"></i>Nhân viên</span><span><i style="background:#E0A030;border-radius:50%"></i>Trung bình đội cùng kỳ</span>' + (H.some(function(x){ return !x.latest; }) ? '<span>* lần làm trước khi làm lại trong cùng kỳ</span>' : '') + '</div></div>';
-  html += '<div class="psec"><h3>Lịch sử từng kỳ</h3><div style="overflow-x:auto"><table class="ht"><thead><tr><th>Kỳ</th><th class="r">Điểm</th><th class="r">Tỉ lệ</th><th class="r">TB đội</th><th class="r">Hạng</th><th class="r">Tuân thủ</th><th>Cảnh báo</th><th>Nộp lúc</th><th></th></tr></thead><tbody>' +
+  html += '<div class="psec"><h3>Lịch sử từng kỳ</h3><div style="overflow-x:auto"><table class="ht"><thead><tr><th>Ảnh</th><th>Kỳ</th><th class="r">Điểm</th><th class="r">Tỉ lệ</th><th class="r">TB đội</th><th class="r">Hạng</th><th class="r">Tuân thủ</th><th>Cảnh báo</th><th>Nộp lúc</th><th></th></tr></thead><tbody>' +
     H.slice().reverse().map(function(x){
       var fl = x.flags ? [x.flags.blur ? 'Rời trang ' + x.flags.blur : '', x.flags.shot ? 'Chụp MH ' + x.flags.shot : ''].filter(Boolean).join(', ') : '';
-      return '<tr><td>' + perL(x.period) + (x.latest ? '' : '*') + '</td><td class="r">' + x.score + '/' + x.total + '</td><td class="r' + (x.pct < low ? ' lt' : '') + '">' + x.pct + '%</td><td class="r">' + pc(x.teamAvg) + '</td><td class="r">' + (x.rank ? x.rank + '/' + x.teamSize : '–') + '</td><td class="r">' + (x.compliancePoints != null ? x.compliancePoints : '–') + '</td><td>' + esc(fl || '–') + '</td><td>' + esc(fmt(x.submittedAt)) + '</td><td><button type="button" class="btn ghost sm" data-paper="' + esc(x.id) + '">Bài làm</button></td></tr>';
+      return '<tr><td><div class="ph xs" id="th-' + esc(x.id) + '"></div></td><td>' + perL(x.period) + (x.latest ? '' : '*') + '</td><td class="r">' + x.score + '/' + x.total + '</td><td class="r' + (x.pct < low ? ' lt' : '') + '">' + x.pct + '%</td><td class="r">' + pc(x.teamAvg) + '</td><td class="r">' + (x.rank ? x.rank + '/' + x.teamSize : '–') + '</td><td class="r">' + (x.compliancePoints != null ? x.compliancePoints : '–') + '</td><td>' + esc(fl || '–') + '</td><td>' + esc(fmt(x.submittedAt)) + '</td><td><button type="button" class="btn ghost sm" data-paper="' + esc(x.id) + '">Bài làm</button></td></tr>';
     }).join('') + '</tbody></table></div></div>';
   if (P.categories.length){
     html += '<div class="psec"><h3>Theo mảng kiến thức <small>từ ' + P.papersRead + ' bài gần nhất · cột phải: kỳ gần nhất</small></h3>' + P.categories.map(function(c){
@@ -914,31 +932,38 @@ $('ovProf').addEventListener('click', function(ev){
 
 /* ---------- Ảnh xác nhận chụp lúc làm bài ---------- */
 var PHOTO = {};
-function loadPhoto(code){
-  if (!PHOTO[code]) PHOTO[code] = api('GET','/api/kt-viewer?op=photo&code=' + encodeURIComponent(code))
-    .then(function(r){ if (!r.j.ok){ delete PHOTO[code]; return null; } return r.j; })
-    .catch(function(){ delete PHOTO[code]; return null; });
-  return PHOTO[code];
+// sel: { id: mã bài làm } hoặc { period: 'YYYY-MM' }. Ảnh là minh chứng của ĐÚNG MỘT bài/kỳ, không lấy ảnh kỳ khác bù vào.
+function photoSel(e, sel){ return sel || (e.result && e.result.id ? { id: e.result.id } : { period: CURP }); }
+function loadPhoto(code, sel){
+  var k = code + '|' + (sel.id ? 'id:' + sel.id : 'p:' + sel.period);
+  if (!PHOTO[k]) PHOTO[k] = api('GET','/api/kt-viewer?op=photo&code=' + encodeURIComponent(code) + (sel.id ? '&id=' + encodeURIComponent(sel.id) : '&period=' + encodeURIComponent(sel.period || '')))
+    .then(function(r){ if (!r.j.ok){ delete PHOTO[k]; return null; } return r.j; })
+    .catch(function(){ delete PHOTO[k]; return null; });
+  return PHOTO[k];
 }
-async function fillPhoto(id, e){
+async function fillPhoto(id, e, sel){
   var el = $(id); if (!el) return;
-  el.className = el.className.replace(/\b(load|none)\b/g,'').trim() + ' load'; el.innerHTML = ''; el.dataset.code = e.code;
-  var d = await loadPhoto(e.code);
-  if (el.dataset.code !== e.code) return;
+  sel = photoSel(e, sel);
+  var tok = e.code + '|' + (sel.id || sel.period);
+  el.className = el.className.replace(/\b(load|none)\b/g,'').trim() + ' load'; el.innerHTML = ''; el.dataset.code = tok;
+  var d = await loadPhoto(e.code, sel);
+  if (el.dataset.code !== tok) return;
   el.classList.remove('load');
+  var per = d ? d.period : (sel.period || '');
   if (d && d.photo){
-    var b = document.createElement('button'); b.type = 'button'; b.className = 'ph-btn'; b.title = 'Bấm để phóng to';
-    b.setAttribute('aria-label', 'Phóng to ảnh xác nhận của ' + (e.name || e.code));
-    var im = document.createElement('img'); im.src = d.photo; im.alt = 'Ảnh xác nhận của ' + (e.name || e.code);
-    b.appendChild(im); el.appendChild(b);
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'ph-btn'; b.title = 'Ảnh chụp trước khi bắt đầu kỳ ' + perL(per) + '. Bấm để phóng to';
+    b.setAttribute('aria-label', 'Phóng to ảnh xác nhận kỳ ' + perL(per) + ' của ' + (e.name || e.code));
+    var im = document.createElement('img'); im.src = d.photo; im.alt = 'Ảnh xác nhận kỳ ' + perL(per) + ' của ' + (e.name || e.code);
+    var tag = document.createElement('span'); tag.className = 'ph-tag'; tag.textContent = perL(per);
+    b.appendChild(im); el.appendChild(b); el.appendChild(tag);
     b.addEventListener('click', function(){
-      $('iTitle').textContent = 'Ảnh xác nhận: ' + (e.name || e.code); $('iImg').src = d.photo; $('iImg').alt = im.alt;
-      $('iSub').textContent = 'Mã nhân viên ' + e.code + (d.takenAt ? ' · Chụp lúc bắt đầu làm bài, ' + fmt(d.takenAt) : '');
+      $('iTitle').textContent = 'Ảnh xác nhận kỳ ' + perL(per) + ': ' + (e.name || e.code); $('iImg').src = d.photo; $('iImg').alt = im.alt;
+      $('iSub').textContent = 'Mã nhân viên ' + e.code + ' · Chụp ngay trước khi bắt đầu bài kiểm tra kỳ ' + perL(per) + (d.takenAt ? ', lúc ' + fmt(d.takenAt) : '') + '. Ảnh chỉ là minh chứng cho kỳ này.';
       $('ovImg').classList.remove('hide');
     });
   } else {
     el.classList.add('none');
-    el.innerHTML = '<span>' + (e.status === 'none' ? 'Chưa làm bài nên chưa có ảnh' : 'Không có ảnh') + '</span>';
+    el.innerHTML = '<span>Chưa có ảnh kỳ ' + esc(perL(per)) + '</span>';
   }
 }
 var DEV_IC = {
@@ -956,11 +981,11 @@ function locHtml(x){
   if (x.loc) return '<span class="loc">' + PIN + '<a href="' + mapUrl(x.loc) + '" target="_blank" rel="noopener">' + x.loc.lat + ', ' + x.loc.lng + '</a>' + (x.loc.acc != null ? ' <span style="font-weight:400;color:var(--muted)">±' + x.loc.acc + ' m</span>' : '') + '</span>';
   return '<span class="loc bad">' + PIN + esc(LOCERR[x.locErr] || LOCERR.none) + '</span>';
 }
-async function fillDev(id, e){
+async function fillDev(id, e, sel){
   var el = $(id); if (!el) return;
   el.dataset.code = e.code; el.innerHTML = '';
   if (!VIEWER || !VIEWER.isAdmin || e.status === 'none') return; // thiết bị & vị trí: chỉ quản trị viên
-  var d = await loadPhoto(e.code);
+  var d = await loadPhoto(e.code, photoSel(e, sel));
   if (el.dataset.code !== e.code) return;
   var L = (d && d.devices) || [];
   if (!L.length){ el.innerHTML = '<h3>Thiết bị khi làm bài</h3><p class="none">Chưa ghi nhận thiết bị (bài làm trước khi có tính năng này).</p>'; return; }
@@ -988,7 +1013,7 @@ function confirmEmp(e){
     .map(function(x){ return '<div><dt>' + x[0] + '</dt><dd>' + esc(x[1] || '–') + '</dd></div>'; }).join('') +
     (e.confirmed ? '<div><dt>Lần xác nhận trước</dt><dd>' + esc(e.confirmed.byName || '') + ', ' + esc(new Date(e.confirmed.at).toLocaleDateString('vi-VN')) + '</dd></div>' : '');
   $('cOk').textContent = e.confirmed ? 'Xác nhận lại' : 'Xác nhận thông tin';
-  $('ovCf').classList.remove('hide'); fillPhoto('cPhoto', e); fillDev('cDev', e); $('cOk').focus();
+  $('ovCf').classList.remove('hide'); fillPhoto('cPhoto', e, { period: CURP }); fillDev('cDev', e, { period: CURP }); $('cOk').focus();
 }
 $('cOk').addEventListener('click', async function(){
   var e = cfEmp, b = this; if (!e) return;
@@ -1046,7 +1071,7 @@ async function exportXLSX(rows){
   ws.columns = COLS.map(function(c){ return { key:c[1], width:c[2] }; });
   var N = COLS.length, BRAND = 'FF067A8C', LINE = 'FFDAE5E8', MUTED = 'FF4B666D', F = 'Arial';
   // Tiêu đề + thông tin xuất
-  ws.mergeCells(1,1,1,N); ws.getCell(1,1).value = 'Kết quả kiểm tra nhân viên';
+  ws.mergeCells(1,1,1,N); ws.getCell(1,1).value = 'Kết quả kiểm tra nhân viên, kỳ ' + perL(CURP);
   ws.getCell(1,1).font = { name:F, size:15, bold:true, color:{ argb:'FF0D2A31' } }; ws.getRow(1).height = 26;
   var all = EMP.length, nd = EMP.filter(function(e){ return e.status === 'done'; }).length;
   var info = 'Phạm vi: ' + ((VIEWER.scopes||[]).join('; ') || 'tất cả') + '   |   Xuất bởi: ' + (VIEWER.name || VIEWER.email) + ' lúc ' + fmt(Date.now() + off) +
@@ -1083,7 +1108,7 @@ async function exportXLSX(rows){
   ws.pageSetup.printTitlesRow = '4:4';
   var buf = await wb.xlsx.writeBuffer();
   var d = new Date(Date.now() + off), p = function(n){ return (n<10?'0':'')+n; };
-  saveBlob(new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'ket-qua-nhan-vien-' + d.getFullYear() + p(d.getMonth()+1) + p(d.getDate()) + '.xlsx');
+  saveBlob(new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'ket-qua-nhan-vien-ky-' + (CURP || 'chua-gan-ky') + '-xuat-' + d.getFullYear() + p(d.getMonth()+1) + p(d.getDate()) + '.xlsx');
 }
 $('csvBtn').addEventListener('click', async function(){
   var btn = this, label = btn.textContent, rows = exportRows();

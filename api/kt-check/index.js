@@ -52,7 +52,7 @@ module.exports = async function (context, req) {
 
     // Bài làm đang dở: cho phép làm tiếp (thời gian vẫn tính theo máy chủ).
     let inProgress = null;
-    const active = await quiz.getActive(found.code);
+    const active = await quiz.activeForPeriod(found.code, settings.examPeriod);
     if (active) {
       quiz.syncAttempt(active, Date.now());
       inProgress = { answered: Math.min(active.cursor, active.questionIds.length), total: active.questionIds.length };

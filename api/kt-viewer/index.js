@@ -16,6 +16,7 @@ const empView = (c) => ({
 // admin = true: kèm thiết bị và vị trí (chỉ quản trị viên được xem, quản lí thường không nhận dữ liệu này)
 function summaryOf(r, settings, admin) {
   return {
+    id: r.id, period: r.period || "",
     score: r.score, total: r.total, pct: r.pct, compliancePoints: r.compliancePoints, passed: quiz.passState(r.pct, settings),
     submittedAt: r.submittedAt, startedAt: r.startedAt, durationSec: r.durationSec, wrong: r.wrong, blank: r.blank,
     proof: quiz.proofCode(r.id), verify: quiz.verifyToken(r.id), flags: r.flags || null, mailOk: r.mailOk, device: admin ? (r.device || null) : undefined
@@ -46,8 +47,14 @@ module.exports = async function (context, req) {
       if (op === "employees") {
         const settings = await quiz.getSettings();
         const idx = await quiz.getIndex();
+        // Theo kỳ: mặc định kỳ hiện tại; "" = bài nộp trước khi có kỳ (chưa gắn kỳ)
+        const qp = req.query && typeof req.query.period === "string" ? req.query.period : null;
+        const period = qp === "" || (qp && /^\d{4}-\d{2}$/.test(qp)) ? qp : settings.examPeriod;
+        const inMine = {}; mine.forEach((x) => { inMine[quiz.normCode(x.code)] = 1; });
+        const subs = idx.filter((a) => a.status === "submitted" && inMine[quiz.normCode(a.code)]);
+        const periods = Array.from(new Set(subs.map((a) => a.period || "").concat([settings.examPeriod]))).sort().reverse();
         const latest = {};
-        idx.filter((a) => a.status === "submitted").forEach((a) => {
+        subs.filter((a) => (a.period || "") === period).forEach((a) => {
           const k = quiz.normCode(a.code);
           if (!latest[k] || (a.submittedAt || 0) > (latest[k].submittedAt || 0)) latest[k] = a;
         });
@@ -55,10 +62,10 @@ module.exports = async function (context, req) {
           const r = latest[quiz.normCode(c.code)];
           let status = "none", active = null;
           if (r) status = "done";
-          else { active = await quiz.getActive(c.code); if (active) { const t = Object.assign({}, active); quiz.syncAttempt(t, Date.now()); if (t.cursor < t.questionIds.length) status = "doing"; } }
+          else if (period === settings.examPeriod) { active = await quiz.getActive(c.code); if (active && (active.period || "") === period) { const t = Object.assign({}, active); quiz.syncAttempt(t, Date.now()); if (t.cursor < t.questionIds.length) status = "doing"; } }
           return Object.assign(empView(c), { status, result: r ? summaryOf(r, settings, !!viewer.isAdmin) : null });
         }));
-        return reply(context, 200, { ok: true, employees: list, serverNow: Date.now() });
+        return reply(context, 200, { ok: true, employees: list, period, periods, currentPeriod: settings.examPeriod, serverNow: Date.now() });
       }
       if (op === "paper") {
         // Xem lại bản sao bài làm của nhân viên trong phạm vi của mình (chỉ đọc)
@@ -128,16 +135,22 @@ module.exports = async function (context, req) {
           complianceLowMin: settings.complianceLowMin, history, categories, repeatWrong, lastWrong: lastWrong.slice(0, 15), papersRead: atts.filter(Boolean).length });
       }
       if (op === "photo") {
-        // Ảnh xác nhận khuôn mặt chụp lúc bắt đầu làm bài (bài đã nộp gần nhất, hoặc bài đang làm) - chỉ nhân viên trong phạm vi
+        // Ảnh xác nhận khuôn mặt chụp ngay trước khi bắt đầu làm bài - minh chứng cho ĐÚNG MỘT kỳ, không dùng chéo sang kỳ khác.
+        // Chọn theo: id (một bài cụ thể) > period (bài nộp gần nhất của kỳ, nếu chưa nộp thì bài đang làm của kỳ đó).
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
         if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
-        const entry = (await quiz.getIndex()).filter((a) => a.status === "submitted" && quiz.normCode(a.code) === quiz.normCode(c.code))
-          .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0))[0];
+        const st0 = await quiz.getSettings();
+        const wantId = String((req.query && req.query.id) || "");
+        const wantP = req.query && typeof req.query.period === "string" ? req.query.period : st0.examPeriod;
+        const subsC = (await quiz.getIndex()).filter((a) => a.status === "submitted" && quiz.normCode(a.code) === quiz.normCode(c.code))
+          .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
+        const entry = wantId ? subsC.find((a) => a.id === wantId) : subsC.find((a) => (a.period || "") === wantP);
+        if (wantId && !entry) return reply(context, 404, { ok: false, error: "Không tìm thấy bài làm này." });
         let attempt = entry && (await quiz.getAttempt(entry.id));
-        if (!attempt) attempt = await quiz.getActive(c.code);
+        if (!attempt && !wantId) { const act = await quiz.getActive(c.code); if (act && (act.period || "") === wantP) attempt = act; }
         const photo = attempt && typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "";
         const devices = !viewer.isAdmin ? [] : attempt ? (Array.isArray(attempt.devices) ? attempt.devices : (attempt.device ? [attempt.device] : [])) : [];
-        return reply(context, 200, { ok: true, photo, takenAt: (attempt && attempt.startedAt) || null,
+        return reply(context, 200, { ok: true, photo, takenAt: (attempt && attempt.startedAt) || null, period: attempt ? (attempt.period || "") : wantP, inProgress: !!(attempt && attempt.status === "in_progress"),
           devices: !viewer.isAdmin ? undefined : devices.map((d) => ({ type: d.type, os: d.os, browser: d.browser, model: d.model, ip: d.ip, screen: d.screen, tz: d.tz, lang: d.lang, stage: d.stage, at: d.at, ua: d.ua, loc: d.loc || null, locErr: d.locErr || "" })) });
       }
       if (op === "employee") {

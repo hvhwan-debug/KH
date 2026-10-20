@@ -188,13 +188,26 @@ async function setActive(code, attemptId) { await store.put(actKey(code), { atte
 
 // Xoá (các) bản ghi kết quả "đã nộp" của một mã nhân viên khỏi bảng chỉ số, để họ được làm bài lại từ đầu
 // (không đụng tới bài làm cũ đã lưu riêng trong kt/attempt/<id>.json, chỉ bỏ dấu "đã nộp" đang chặn check/start).
-async function resetByCode(code) {
+// Cho làm lại: chỉ xoá kết quả của MỘT kỳ (period). Không truyền period = hành vi cũ (xoá mọi kỳ) - chỉ dùng khi thật sự cần.
+// Bài đang làm dở chỉ bị huỷ khi nó thuộc đúng kỳ được làm lại (không đụng tới bài đang làm của kỳ khác).
+async function resetByCode(code, period) {
   const norm = normCode(code);
   const list = await getIndex();
-  const kept = list.filter((x) => normCode(x.code) !== norm);
+  const byPeriod = typeof period === "string";
+  const kept = list.filter((x) => normCode(x.code) !== norm || (byPeriod && (x.period || "") !== period));
   await store.put(IDX_KEY, kept);
-  await setActive(code, null);
+  const act = await getActive(code);
+  if (!byPeriod || (act && (act.period || "") === period) || !act) await setActive(code, null);
   return list.length - kept.length;
+}
+// Bài làm dở được bắt đầu ở kỳ khác kỳ hiện tại: không cho làm tiếp sang kỳ mới (ảnh chụp chỉ là minh chứng cho kỳ đã chụp).
+async function activeForPeriod(code, period) {
+  const a = await getActive(code);
+  if (!a) return null;
+  if ((a.period || "") === period) return a;
+  a.status = "expired"; a.expiredAt = Date.now(); a.expiredReason = "Sang kỳ mới " + period;
+  await putAttempt(a); await setActive(code, null);
+  return null;
 }
 
 // Đưa con trỏ câu hỏi về đúng hiện tại: câu nào đã quá hạn mà chưa trả lời thì tính là bỏ trống.
@@ -260,7 +273,7 @@ module.exports = {
   getQuestions, saveQuestions,
   getCandidates, saveCandidates,
   getSettings, saveSettings,
-  getAttempt, putAttempt, saveIndex,
+  getAttempt, putAttempt, saveIndex, activeForPeriod,
   getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,
   buildPaper, getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
