@@ -231,7 +231,9 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
           <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="checkbox" class="exSeg" value="may_loc" style="width:18px;height:18px"> Máy lọc nước</label>
           <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="checkbox" class="exSeg" value="both" style="width:18px;height:18px"> Cả hai ngành</label>
         </div>
-        <p class="small">Bài đang làm dở vẫn được làm tiếp kể cả khi đề đã đóng.</p>
+        <label>Chỉ cho các mã nhân viên này thi (mỗi mã một dòng hoặc cách nhau dấu phẩy; để trống = không giới hạn theo mã)</label>
+        <textarea id="exCodes" style="min-height:64px" placeholder="T100300025&#10;T100300026"></textarea>
+        <p class="small">Kết hợp được với "nhóm thí sinh" ở trên (phải thoả cả hai). Người không thuộc đối tượng không vào thi được và không bị tính là "chưa làm" ở bảng tổng quan. Bài đang làm dở vẫn được làm tiếp kể cả khi đề đã đóng.</p>
 
         <h1 style="margin-top:22px;font-size:16px">Cấu trúc đề</h1>
         <p class="small">Mỗi quy tắc lấy ngẫu nhiên <b>N câu</b> từ một ngân hàng (có thể lọc theo danh mục, độ khó, thẻ). Đề của mỗi thí sinh được rút riêng, không trùng câu. <b>Không có quy tắc nào</b> thì đề dùng cách ra đề cũ (theo kỳ + nhóm ngành, ở các ô số câu phía trên).</p>
@@ -252,11 +254,15 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
       <div class="card hide" id="itemCard">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h1 style="margin:0" id="itemTitle">Phân tích câu hỏi</h1>
-          <button class="btn ghost sm" onclick="document.getElementById('itemCard').classList.add('hide')">Đóng</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn ghost sm" onclick="regradeUI()" title="Chấm lại tất cả bài đã nộp của đề này theo đáp án đúng hiện tại">Chấm lại đề này</button>
+            <button class="btn ghost sm" onclick="document.getElementById('itemCard').classList.add('hide')">Đóng</button>
+          </div>
         </div>
         <p class="small" style="margin-top:6px">Đọc từ bài làm đã nộp (mỗi người tính bài mới nhất). <b>% đúng</b> là độ khó thực tế. <b>Độ phân biệt</b> (−1 đến 1) cho biết câu đó có tách được người giỏi khỏi người yếu không: từ 0,3 là tốt, dưới 0,15 là kém, âm rõ rệt thường do đáp án bị gắn sai hoặc câu mơ hồ. Cần ít nhất <span id="itemMinN">30</span> lượt làm mỗi câu mới đánh giá độ phân biệt.</p>
         <div id="itemSummary" class="small" style="margin:10px 0"></div>
         <div id="itemMsg"></div>
+        <div id="regradeBox"></div>
         <div style="overflow-x:auto"><table><thead><tr><th>Câu hỏi</th><th>Lượt</th><th>% đúng</th><th>% trống</th><th>Phân biệt</th><th>Nhận xét</th><th></th></tr></thead><tbody id="itemList"></tbody></table></div>
       </div>
       <div class="card">
@@ -696,7 +702,7 @@ function clearExamForm(){
   $('exEditingId').value=''; $('exId').value=''; $('exId').disabled=false; $('exTitle').value=''; $('exShareTitle').value='';
   $('exCount').value=''; $('exBothGD').value=''; $('exSeconds').value=''; $('exPass').value=''; $('exPassOn').checked=false;
   $('exRetake').checked=false; $('exPractice').checked=false; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
-  $('exDesc').value=''; $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
+  $('exDesc').value=''; $('exCodes').value=''; $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
   BP_RULES = []; renderBpRules(); $('bpPreview').innerHTML=''; $('bpTotal').textContent='';
   msg('exMsg','');
 }
@@ -715,7 +721,7 @@ function editExam(id){
   $('exSeconds').value = e.secondsPerQuestion || ''; $('exPass').value = e.passScore || ''; $('exPassOn').checked = !!e.passEnabled;
   $('exRetake').checked = !!e.allowRetake; $('exPractice').checked = !!e.practice; $('exComplianceOn').checked = !!e.complianceEnabled;
   $('exCHigh').value = e.complianceHighMin || ''; $('exCMid').value = e.complianceMidMin || ''; $('exCLow').value = e.complianceLowMin || '';
-  $('exDesc').value = e.description || ''; $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
+  $('exDesc').value = e.description || ''; $('exCodes').value = (e.codes || []).join('\n'); $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
   document.querySelectorAll('.exSeg').forEach(c => c.checked = (e.segments || []).indexOf(c.value) >= 0);
   BP_RULES = e.blueprint && e.blueprint.rules ? e.blueprint.rules.map(r => Object.assign({}, r)) : []; renderBpRules();
   $('examFormTitle').textContent = 'Sửa đề thi';
@@ -729,7 +735,7 @@ async function saveExam(){
     questionCount: $('exCount').value, bothGiaDungCount: $('exBothGD').value, secondsPerQuestion: $('exSeconds').value,
     passEnabled: $('exPassOn').checked, passScore: $('exPass').value, allowRetake: $('exRetake').checked, practice: $('exPractice').checked,
     complianceEnabled: $('exComplianceOn').checked, complianceHighMin: $('exCHigh').value, complianceMidMin: $('exCMid').value, complianceLowMin: $('exCLow').value,
-    description: $('exDesc').value.trim(),
+    description: $('exDesc').value.trim(), codes: $('exCodes').value,
     openAt: localToMs($('exOpen').value), closeAt: localToMs($('exClose').value),
     segments: Array.from(document.querySelectorAll('.exSeg:checked')).map(c => c.value),
     blueprint: BP_RULES.length ? { rules: BP_RULES.map(r => ({ bankId:r.bankId, category:r.category||'', difficulty:r.difficulty||'', tag:r.tag||'', count:+r.count||0 })) } : null
@@ -867,7 +873,7 @@ function msToLocal(ms){ if (!ms) return ''; const d = new Date(+ms); return d.ge
 function localToMs(v){ if (!v) return 0; const t = new Date(v).getTime(); return isNaN(t) ? 0 : t; }
 function examWindowText(e){
   const f = (ms) => new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
-  const seg = (e.segments || []).length ? ' · ' + e.segments.map(s => ({gia_dung:'Gia dụng',may_loc:'Máy lọc',both:'Cả hai'}[s]||s)).join('/') : '';
+  const seg = ((e.segments || []).length ? ' · ' + e.segments.map(s => ({gia_dung:'Gia dụng',may_loc:'Máy lọc',both:'Cả hai'}[s]||s)).join('/') : '') + ((e.codes || []).length ? ' · ' + e.codes.length + ' mã NV' : '');
   if (e.openAt && e.closeAt) return f(e.openAt) + ' → ' + f(e.closeAt) + seg;
   if (e.openAt) return 'Từ ' + f(e.openAt) + seg;
   if (e.closeAt) return 'Đến ' + f(e.closeAt) + seg;
@@ -880,9 +886,15 @@ function examStatusText(e, cur){
   return e.id === cur ? '<span class="badge y">Đang mở (mặc định)</span>' : '<span class="badge y">Đang mở</span>';
 }
 
+// Đề thi thử thường để thí sinh luyện nhiều lần: tick "thi thử" thì gợi ý luôn cho làm lại (quản trị viên vẫn bỏ tick được).
+$('exPractice').addEventListener('change', function(){
+  if (this.checked && !$('exRetake').checked){ $('exRetake').checked = true; msg('exMsg','Đã tự bật "Cho phép làm lại nhiều lần" cho đề thi thử. Bỏ tick nếu muốn thí sinh chỉ thi thử một lần.','ok'); }
+});
+
 /* ---------- Phân tích chất lượng câu hỏi ---------- */
-let ITEMS = [];
+let ITEMS = [], ITEM_EXAM = '';
 async function openItemAnalysis(examId){
+  ITEM_EXAM = examId; $('regradeBox').innerHTML = '';
   $('itemCard').classList.remove('hide');
   $('itemTitle').textContent = 'Phân tích câu hỏi: đề ' + examId;
   $('itemSummary').textContent = 'Đang tính…'; $('itemList').innerHTML = ''; msg('itemMsg','');
@@ -908,6 +920,30 @@ function renderItems(){
       '<td style="white-space:nowrap"><button class="btn ghost sm" onclick="editQuestionFromItem(\''+esc(it.id)+'\')">Sửa</button> '+
       '<button class="btn ghost sm" onclick="hideQuestionFromItem(\''+esc(it.id)+'\')">Ẩn</button></td></tr>';
   }).join('') || '<tr><td colspan="7" class="small">Chưa có đủ bài làm để phân tích.</td></tr>';
+}
+// Chấm lại: bước 1 xem trước (không ghi gì), bước 2 mới áp dụng sau khi quản trị viên xác nhận.
+async function regradeUI(){
+  if (!ITEM_EXAM && ITEM_EXAM !== ''){ return; }
+  msg('itemMsg',''); $('regradeBox').innerHTML = '<p class="small">Đang tính thử…</p>';
+  const { j: pv } = await api('POST','/api/kt-admin', { op:'regrade', exam: ITEM_EXAM, apply:false });
+  if (!pv.ok){ $('regradeBox').innerHTML = ''; msg('itemMsg', pv.error || 'Không chấm lại được.'); return; }
+  const skip = pv.skipped ? ' · <b>'+pv.skipped+' bài bị bỏ qua</b> (có câu đã bị xoá khỏi ngân hàng nên không chấm lại được)' : '';
+  if (!pv.changed){ $('regradeBox').innerHTML = '<div class="msg ok">Đã kiểm tra '+pv.examined+' bài: không bài nào đổi điểm, không cần chấm lại.'+skip+'</div>'; return; }
+  const fmtC = (c) => c == null ? '–' : c;
+  const rows = pv.changes.slice(0, 15).map(c => '<tr><td>'+esc(c.code)+'</td><td>'+esc(c.name)+'</td><td>'+c.scoreBefore+'/'+c.total+' ('+c.pctBefore+'%) → <b style="color:var('+(c.pctAfter>c.pctBefore?'--ok':'--bad')+')">'+c.scoreAfter+'/'+c.total+' ('+c.pctAfter+'%)</b></td><td>'+fmtC(c.complianceBefore)+' → <b>'+fmtC(c.complianceAfter)+'</b></td></tr>').join('');
+  $('regradeBox').innerHTML = '<div class="msg warn" style="margin-top:12px"><b>Xem trước:</b> chấm lại '+pv.examined+' bài sẽ làm <b>'+pv.changed+' bài đổi điểm</b> ('+pv.up+' tăng, '+pv.down+' giảm)'+skip+'. Chưa có gì bị thay đổi.</div>'+
+    '<div style="overflow-x:auto"><table style="margin-top:8px"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Điểm</th><th>Tuân thủ</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    (pv.changed > 15 ? '<p class="small">…và '+(pv.changed-15)+' bài khác.</p>' : '')+
+    '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn danger" onclick="regradeApply()">Áp dụng chấm lại '+pv.changed+' bài</button><button class="btn ghost" onclick="document.getElementById(\'regradeBox\').innerHTML=\'\'">Huỷ</button></div>'+
+    '<p class="small">Điểm cũ được lưu lại trong bài làm. Hệ thống không tự gửi lại email; nếu cần, dùng "Gửi lại email" ở từng thí sinh.</p>';
+}
+async function regradeApply(){
+  if (!confirm('ÁP DỤNG chấm lại? Điểm chính thức của các bài này sẽ thay đổi (điểm cũ được lưu lại trong lịch sử).')) return;
+  $('regradeBox').innerHTML = '<p class="small">Đang chấm lại…</p>';
+  const { j } = await api('POST','/api/kt-admin', { op:'regrade', exam: ITEM_EXAM, apply:true });
+  if (!j.ok){ $('regradeBox').innerHTML = ''; msg('itemMsg', j.error || 'Không chấm lại được.'); return; }
+  $('regradeBox').innerHTML = '<div class="msg ok">Đã chấm lại '+j.changed+' bài ('+j.up+' tăng, '+j.down+' giảm).</div>';
+  loadExams(); openItemAnalysis(ITEM_EXAM);
 }
 function editQuestionFromItem(id){ switchTab('questions'); editQuestion(id); }
 async function hideQuestionFromItem(id){
@@ -966,7 +1002,7 @@ function clearQForm(){
   msg('qMsg','');
 }
 let QP = null, QMETA = {};
-const qPerLabel = (p) => p ? 'Tháng ' + p.slice(5) + '/' + p.slice(0,4) : 'Chưa gắn kỳ';
+const qPerLabel = (p) => p ? (/^\d{4}-\d{2}$/.test(p) ? 'Tháng ' + p.slice(5) + '/' + p.slice(0,4) : p) : 'Chưa gắn kỳ';
 function qPeriods(){
   const set = new Set(QUESTIONS.map(q => q.period || '').filter(Boolean));
   if (QMETA.currentPeriod) set.add(QMETA.currentPeriod); if (QP) set.add(QP);
@@ -1430,7 +1466,7 @@ const perLabel = (p) => /^\d{4}-\d{2}$/.test(p||'') ? 'tháng ' + p.slice(5) + '
 const pctTxt = (v) => v == null ? '–' : (Math.round(v*10)/10).toString().replace('.', ',') + '%';
 const durTxt = (s) => { if (s == null) return '–'; const m = Math.floor(s/60), x = s%60; return m + ' phút ' + (x<10?'0':'') + x + ' giây'; };
 async function loadDashboard(sel){
-  const want = /^\d{4}-\d{2}$/.test(sel||'') ? sel : '';
+  const want = /^[a-z0-9][a-z0-9-]{0,39}$/i.test(sel||'') ? sel : ''; // cả mã tháng (2026-10) lẫn mã đề tự đặt (thi-thu)
   const { j } = await api('GET','/api/kt-admin?op=dashboard'+(want?'&period='+encodeURIComponent(want):''));
   if (!j.ok){ $('dashCard').classList.add('hide'); return; }
   DASH = j; $('dashCard').classList.remove('hide');

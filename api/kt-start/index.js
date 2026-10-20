@@ -26,6 +26,10 @@ module.exports = async function (context, req) {
 
     const defaultSettings = await quiz.getSettings();
     const examId = String(b.examId || (req.query && req.query.exam) || defaultSettings.examPeriod);
+    if (!(await quiz.examKnown(examId, defaultSettings))) {
+      quiz.noteFail(req);
+      return reply(context, 404, { ok: false, error: "Không tìm thấy đề thi này. Hãy kiểm tra lại đường link hoặc liên hệ quản trị viên." });
+    }
     const settings = await quiz.getExamSettings(examId);
     // Bài đang dở vẫn được làm tiếp kể cả khi đã quá giờ đóng đề; chỉ chặn khi bắt đầu bài mới.
     const hasActive = !!(await quiz.activeForPeriod(found.code, settings.examPeriod));

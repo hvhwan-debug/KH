@@ -99,14 +99,17 @@ const handler = async function (context, req) {
         // ai chưa làm, cảnh báo gian lận, câu hỏi sai nhiều nhất, so sánh với kỳ trước.
         const st = await quiz.getSettings();
         const all = (await quiz.getIndex()).filter((r) => r.status === "submitted");
-        const cands = await quiz.getCandidates();
+        let cands = await quiz.getCandidates();
         const reqP = String((req.query && req.query.period) || "");
-        const period = /^\d{4}-\d{2}$/.test(reqP) ? reqP : st.examPeriod;
+        const period = reqP && quiz.validPeriod(reqP) ? reqP : st.examPeriod; // nhận cả mã đề tự đặt (vd thi-thu), không chỉ YYYY-MM
+        const exSt = await quiz.getExamSettings(period);
+        const allCands = cands;
+        cands = cands.filter((c) => quiz.inAudience(exSt, c)); // "chưa làm" chỉ tính trên đúng đối tượng của đề
         const periods = Array.from(new Set(all.map((r) => r.period).filter(Boolean).concat([st.examPeriod]))).sort();
         const untagged = all.filter((r) => !r.period).length;
         const latestOf = (p) => { const m = {}; all.filter((r) => (r.period || "") === p).forEach((r) => { const k = quiz.normCode(r.code); if (!m[k] || (r.submittedAt || 0) > (m[k].submittedAt || 0)) m[k] = r; }); return m; };
         const cur = latestOf(period), rows = Object.values(cur);
-        const candBy = {}; cands.forEach((c) => { candBy[quiz.normCode(c.code)] = c; });
+        const candBy = {}; allCands.forEach((c) => { candBy[quiz.normCode(c.code)] = c; });
         const segOf = (code) => { const c = candBy[quiz.normCode(code)]; return c ? quiz.normSegment(c.segment) : ""; };
         const pcts = rows.map((r) => r.pct || 0).sort((a, b) => a - b);
         const avg = (a) => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length * 10) / 10 : null;
@@ -137,7 +140,8 @@ const handler = async function (context, req) {
           moved: rows.filter((r) => r.device && r.device.movedKm > 2).length, noDevice: rows.filter((r) => !r.device).length,
           faceUnverified: rows.filter((r) => r.face && r.face !== "ok").length
         };
-        const prevP = periods.filter((p) => p < period).pop() || "";
+        const MONTH = /^\d{4}-\d{2}$/; // so sánh "kỳ trước" chỉ có nghĩa giữa các kỳ theo tháng, không so đề mã tự đặt với kỳ tháng
+        const prevP = MONTH.test(period) ? periods.filter((p) => MONTH.test(p) && p < period).pop() || "" : "";
         let prev = null;
         if (prevP) { const pr = Object.values(latestOf(prevP)); prev = { period: prevP, submitted: pr.length, avgPct: avg(pr.map((r) => r.pct || 0)), weak: pr.filter((r) => (r.pct || 0) < lo).length }; }
         // Câu hỏi sai nhiều nhất: đọc bản sao bài làm (tối đa 400 bài gần nhất của kỳ)
@@ -280,6 +284,42 @@ const handler = async function (context, req) {
       bk.questions.forEach((q) => { if (!have.has(q.id)) { list.push(q); restored++; } });
       await quiz.saveQuestions(list);
       return reply(context, 200, { ok: true, restored, questions: list });
+    }
+
+    // Chấm lại toàn bộ bài đã nộp của một đề theo ngân hàng câu hỏi HIỆN TẠI (dùng sau khi sửa đáp án đúng bị gắn sai).
+    // apply=false: chỉ xem trước (không ghi gì). Bài có câu đã bị xoá khỏi ngân hàng sẽ được bỏ qua để không bị hạ điểm oan.
+    if (op === "regrade") {
+      const examId = String(b.exam == null ? "" : b.exam);
+      const apply = b.apply === true;
+      const rows = (await quiz.getIndex()).filter((r) => r.status === "submitted" && (r.period || "") === examId).slice(0, 1000);
+      if (!rows.length) return reply(context, 400, { ok: false, error: "Đề này chưa có bài nộp nào để chấm lại." });
+      const settings = await quiz.getExamSettings(examId);
+      const byId = {}; (await quiz.getQuestions()).forEach((q) => { byId[q.id] = q; });
+      const changes = [], patches = {}; let examined = 0, skipped = 0, unchanged = 0;
+      for (let i = 0; i < rows.length; i += 20) {
+        const atts = await Promise.all(rows.slice(i, i + 20).map((r) => quiz.getAttempt(r.id).catch(() => null)));
+        for (const a of atts) {
+          if (!a || a.status !== "submitted") { skipped++; continue; }
+          if ((a.questionIds || []).some((qid) => !byId[qid])) { skipped++; continue; } // có câu đã xoá: không chấm lại bài này
+          examined++;
+          const sc = quiz.scoreAttempt(a, byId, settings);
+          const same = a.score === sc.correct && a.pct === sc.pct && a.wrong === sc.wrongN && (a.compliancePoints == null ? null : a.compliancePoints) === (sc.compliance == null ? null : sc.compliance);
+          if (same) { unchanged++; continue; }
+          changes.push({ id: a.id, code: a.code, name: a.name || "", scoreBefore: a.score, scoreAfter: sc.correct, total: sc.total, pctBefore: a.pct, pctAfter: sc.pct,
+            complianceBefore: a.compliancePoints == null ? null : a.compliancePoints, complianceAfter: sc.compliance, passedBefore: a.passed == null ? null : a.passed, passedAfter: sc.passed });
+          if (apply) {
+            (a.regrade = a.regrade || []).push({ at: Date.now(), by: u.email, scoreBefore: a.score, pctBefore: a.pct, complianceBefore: a.compliancePoints == null ? null : a.compliancePoints, passedBefore: a.passed == null ? null : a.passed });
+            Object.assign(a, { score: sc.correct, total: sc.total, pct: sc.pct, passed: sc.passed, scoreOutOf10: sc.scoreOutOf10, compliancePoints: sc.compliance, wrong: sc.wrongN, blank: sc.blank, detailLines: sc.detailLines, regradedAt: Date.now() });
+            a.paper = quiz.buildPaper(a, byId);
+            await quiz.putAttempt(a);
+            patches[a.id] = { score: sc.correct, total: sc.total, pct: sc.pct, passed: sc.passed, scoreOutOf10: sc.scoreOutOf10, compliancePoints: sc.compliance, wrong: sc.wrongN, blank: sc.blank, regradedAt: a.regradedAt };
+          }
+        }
+      }
+      if (apply && changes.length) await quiz.patchIndex(patches);
+      return reply(context, 200, { ok: true, apply, exam: examId, examined, skipped, unchanged, changed: changes.length,
+        up: changes.filter((c) => c.pctAfter > c.pctBefore).length, down: changes.filter((c) => c.pctAfter < c.pctBefore).length,
+        changes: changes.slice(0, 100), truncated: changes.length > 100 });
     }
 
     // Ẩn / hiện nhanh một câu hỏi (câu ẩn không được rút vào đề mới; bài đã làm vẫn giữ nguyên)

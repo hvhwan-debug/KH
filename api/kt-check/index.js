@@ -25,6 +25,10 @@ module.exports = async function (context, req) {
 
     const defaultSettings = await quiz.getSettings();
     const examId = String(b.examId || (req.query && req.query.exam) || defaultSettings.examPeriod);
+    if (!(await quiz.examKnown(examId, defaultSettings))) {
+      quiz.noteFail(req);
+      return reply(context, 404, { ok: false, error: "Không tìm thấy đề thi này. Hãy kiểm tra lại đường link hoặc liên hệ quản trị viên." });
+    }
     const settings = await quiz.getExamSettings(examId);
     const candidate = { code: found.code, name: found.name, email: found.email, manager: found.manager || "" };
     // Khung thời gian mở/đóng + đối tượng được thi (chỉ áp dụng cho đề thi có cấu hình các mục này)

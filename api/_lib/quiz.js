@@ -233,6 +233,7 @@ async function getExamSettings(examId) {
   effective.openAt = ex && ex.openAt ? ex.openAt : 0;
   effective.closeAt = ex && ex.closeAt ? ex.closeAt : 0;
   effective.segments = ex && Array.isArray(ex.segments) ? ex.segments : [];
+  effective.codes = ex && Array.isArray(ex.codes) ? ex.codes : []; // danh sách mã nhân viên được thi (rỗng = không giới hạn theo mã)
   effective.description = ex && ex.description ? ex.description : "";
   // Đề thi thử: chấm và quy đổi điểm tuân thủ NHƯ BÌNH THƯỜNG (để thí sinh hình dung điểm nếu thi thật),
   // nhưng mọi màn hình, ảnh kết quả và email đều ghi rõ "THI THỬ - không phải thi chính thức".
@@ -266,6 +267,10 @@ async function upsertExam(data) {
   if (data && data.openAt !== undefined) entry.openAt = Math.max(0, Number(data.openAt) || 0);
   if (data && data.closeAt !== undefined) entry.closeAt = Math.max(0, Number(data.closeAt) || 0);
   if (entry.openAt && entry.closeAt && entry.closeAt <= entry.openAt) return { ok: false, error: "Thời gian đóng phải sau thời gian mở." };
+  if (data && data.codes !== undefined) {
+    const raw = Array.isArray(data.codes) ? data.codes : String(data.codes || "").split(/[\s,;]+/);
+    entry.codes = raw.map(normCode).filter(Boolean).filter((v, k, a) => a.indexOf(v) === k).slice(0, 5000);
+  }
   if (data && data.segments !== undefined) entry.segments = (Array.isArray(data.segments) ? data.segments : []).map(normSegment).filter((v, k, a) => a.indexOf(v) === k);
   if (i >= 0) exams[i] = Object.assign({}, exams[i], entry); else exams.push(entry);
   await saveExams(exams);
@@ -371,18 +376,39 @@ function buildFromBlueprint(all, blueprint) {
 
 // ---------- Khung thời gian & đối tượng của đề thi ----------
 // Trả về chuỗi lỗi (tiếng Việt) nếu thí sinh không được vào đề này lúc này, ngược lại trả về "".
+// Thí sinh có thuộc đối tượng của đề không (theo nhóm ngành và/hoặc danh sách mã nhân viên)? Dùng cả khi cho vào thi lẫn khi
+// tính "ai chưa làm" ở bảng tổng quan, để người không thuộc đối tượng không bị tính là "chưa làm".
+function inAudience(settings, candidate) {
+  const segs = settings && settings.segments || [], codes = settings && settings.codes || [];
+  if (segs.length && segs.indexOf(normSegment(candidate && candidate.segment)) < 0) return false;
+  if (codes.length && codes.indexOf(normCode(candidate && candidate.code)) < 0) return false;
+  return true;
+}
 function examAccessError(settings, candidate, now) {
   const t = now || Date.now();
   if (settings.openAt && t < settings.openAt) return "Bài kiểm tra chưa mở. Thời gian mở: " + fmtVN(settings.openAt) + ".";
   if (settings.closeAt && t > settings.closeAt) return "Bài kiểm tra đã đóng từ " + fmtVN(settings.closeAt) + ".";
-  if (settings.segments && settings.segments.length && settings.segments.indexOf(normSegment(candidate && candidate.segment)) < 0) {
-    return "Bài kiểm tra này không dành cho nhóm của bạn.";
+  if (settings.codes && settings.codes.length && settings.codes.indexOf(normCode(candidate && candidate.code)) < 0) {
+    return "Bạn không nằm trong danh sách được thi bài kiểm tra này.";
   }
+  if (!inAudience(settings, candidate)) return "Bài kiểm tra này không dành cho nhóm của bạn.";
   return "";
 }
 function fmtVN(ms) {
   const d = new Date(ms + 7 * 3600 * 1000), p = (n) => String(n).padStart(2, "0");
   return p(d.getUTCHours()) + ":" + p(d.getUTCMinutes()) + " " + p(d.getUTCDate()) + "/" + p(d.getUTCMonth() + 1) + "/" + d.getUTCFullYear();
+}
+
+// Mã đề thi mà thí sinh gửi lên có hợp lệ không. Chỉ nhận: đề đang đặt mặc định, đề đã đăng ký, hoặc kỳ đã có câu hỏi trong
+// ngân hàng. Mã bịa (không thuộc loại nào) bị từ chối: nếu không, thí sinh gõ ?exam=<mã bất kỳ> là có đề mới và thi lại vô hạn
+// lần (giới hạn "làm lại" và khung giờ mở/đóng đều tính theo từng mã đề).
+async function examKnown(examId, defaultSettings) {
+  const id = String(examId == null ? "" : examId);
+  if (!id || !validPeriod(id)) return false;
+  const base = defaultSettings || (await getSettings());
+  if (id === base.examPeriod) return true;
+  if ((await getExams()).some((e) => e.id === id)) return true;
+  return (await getQuestions()).some((q) => usableQ(q) && (q.period || "") === id);
 }
 
 async function getAttempt(id) {
@@ -394,10 +420,13 @@ async function putAttempt(a) { await store.put("kt/attempt/" + a.id + ".json", a
 async function getIndex() { return (await store.get(IDX_KEY)) || []; }
 async function saveIndex(list) { await store.put(IDX_KEY, list); }
 async function upsertIndex(entry) {
-  const list = await getIndex();
-  const i = list.findIndex((x) => x.id === entry.id);
-  if (i >= 0) list[i] = entry; else list.push(entry);
-  await store.put(IDX_KEY, list);
+  // Nhiều thí sinh nộp bài cùng lúc: phải đọc-sửa-ghi nguyên tử, nếu không bài nộp của người này sẽ ghi đè mất bài của người kia.
+  await store.update(IDX_KEY, (cur) => {
+    const list = Array.isArray(cur) ? cur : [];
+    const i = list.findIndex((x) => x.id === entry.id);
+    if (i >= 0) list[i] = entry; else list.push(entry);
+    return list;
+  });
 }
 
 function shuffle(arr) {
@@ -421,6 +450,34 @@ function checkVerifyToken(t) {
   const id = s.slice(0, i), sig = s.slice(i + 1), want = verifySig(id);
   const a = Buffer.from(sig), b = Buffer.from(want);
   return a.length === b.length && crypto.timingSafeEqual(a, b) ? id : null;
+}
+
+// Chấm cả bài: dùng chung cho lúc nộp bài và khi "chấm lại" (đổi đáp án đúng sau khi đã có bài nộp).
+// Câu đã bị xoá khỏi ngân hàng được tính là bỏ trống (tổng số câu vẫn là số câu đã ra cho thí sinh).
+function scoreAttempt(attempt, byId, settings) {
+  let correct = 0, wrongN = 0;
+  const detailLines = [];
+  (attempt.questionIds || []).forEach((qid, idx) => {
+    const q = byId[qid];
+    if (!q) return;
+    const g = gradeAnswer(q, attempt.answers && attempt.answers[qid], attempt.orders && attempt.orders[qid]);
+    if (g.state === "correct") correct++; else if (g.state === "wrong") wrongN++;
+    detailLines.push("Câu " + (idx + 1) + " [" + (g.ok ? "Đúng" : "Sai") + "]: " + q.text + " — Bạn chọn: " + g.chosenText + (g.ok ? "" : " (Đáp án đúng: " + g.correctText + ")"));
+  });
+  const total = (attempt.questionIds || []).length;
+  const pct = total ? Math.round((correct / total) * 100) : 0;
+  const scoreOutOf10 = total ? (correct / total) * 10 : 0;
+  return {
+    correct, wrongN, total, pct, detailLines,
+    blank: Math.max(0, total - correct - wrongN),
+    passed: passState(pct, settings), // null nếu bài không có ngưỡng đạt
+    scoreOutOf10: Math.round(scoreOutOf10 * 100) / 100,
+    compliance: settings.complianceEnabled ? compliancePoints(scoreOutOf10, settings) : null
+  };
+}
+// Sửa nhiều dòng của bảng chỉ số trong MỘT lần ghi nguyên tử: patches = { <id bài làm>: { trường: giá trị, ... } }
+async function patchIndex(patches) {
+  await store.update(IDX_KEY, (cur) => (Array.isArray(cur) ? cur : []).map((r) => (patches[r.id] ? Object.assign({}, r, patches[r.id]) : r)));
 }
 
 // Bản sao bài làm (từng câu theo ĐÚNG thứ tự đáp án thí sinh đã thấy): lưu lúc nộp bài để xem lại ổn định
@@ -468,13 +525,17 @@ async function setActive(code, attemptId) { await store.put(actKey(code), { atte
 // Bài đang làm dở chỉ bị huỷ khi nó thuộc đúng kỳ được làm lại (không đụng tới bài đang làm của kỳ khác).
 async function resetByCode(code, period) {
   const norm = normCode(code);
-  const list = await getIndex();
   const byPeriod = typeof period === "string";
-  const kept = list.filter((x) => normCode(x.code) !== norm || (byPeriod && (x.period || "") !== period));
-  await store.put(IDX_KEY, kept);
+  let removedN = 0;
+  await store.update(IDX_KEY, (cur) => {
+    const list = Array.isArray(cur) ? cur : [];
+    const kept = list.filter((x) => normCode(x.code) !== norm || (byPeriod && (x.period || "") !== period));
+    removedN = list.length - kept.length; // gán lại mỗi lần chạy (hàm có thể được gọi lại khi có xung đột)
+    return kept;
+  });
   const act = await getActive(code);
   if (!byPeriod || (act && (act.period || "") === period) || !act) await setActive(code, null);
-  return list.length - kept.length;
+  return removedN;
 }
 // Bài làm dở được bắt đầu ở kỳ khác kỳ hiện tại: không cho làm tiếp sang kỳ mới (ảnh chụp chỉ là minh chứng cho kỳ đã chụp).
 async function activeForPeriod(code, period) {
@@ -552,7 +613,7 @@ module.exports = {
   getAttempt, putAttempt, saveIndex, activeForPeriod,
   getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary,
   getBanks, saveBanks, bankOf, validBankId, slugify, cleanQuestionMeta, DEFAULT_BANK, DIFFICULTIES,
-  cleanBlueprint, buildFromBlueprint, blueprintTotal, examAccessError,
+  cleanBlueprint, buildFromBlueprint, blueprintTotal, examAccessError, inAudience, examKnown, scoreAttempt, patchIndex,
   TYPES, qType, normText, normalizeQuestionInput, gradeAnswer,
   getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,

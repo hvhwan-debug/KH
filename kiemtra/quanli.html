@@ -903,7 +903,7 @@ function logEv(event, extra){ try { api('POST','/api/kt-viewer', Object.assign({
 
 /* ---------- Hồ sơ kiểm tra + AI phân tích ---------- */
 var PROF = null, AIC = {};
-function perL(p){ return /^\d{4}-\d{2}$/.test(p||'') ? p.slice(5) + '/' + p.slice(0,4) : 'Chưa gắn kỳ'; }
+function perL(p){ return /^\d{4}-\d{2}$/.test(p||'') ? p.slice(5) + '/' + p.slice(0,4) : (p ? p : 'Chưa gắn kỳ'); } // mã đề tự đặt (vd thi-thu) hiện nguyên mã
 function pc(v){ return v == null ? '–' : String(Math.round(v*10)/10).replace('.', ',') + '%'; }
 async function openProfile(e){
   PROF = null;

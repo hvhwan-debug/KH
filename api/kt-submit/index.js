@@ -31,26 +31,10 @@ module.exports = async function (context, req) {
     const byId = {};
     allQuestions.forEach((q) => { byId[q.id] = q; });
 
-    let correct = 0, wrongN = 0;
-    const detailLines = [];
-    attempt.questionIds.forEach((qid, idx) => {
-      const q = byId[qid];
-      if (!q) return;
-      // Chấm theo loại câu (một đáp án / nhiều đáp án / điền khuyết); câu trả lời lưu theo vị trí hiển thị đã xáo trộn.
-      const g = quiz.gradeAnswer(q, attempt.answers[qid], attempt.orders[qid]);
-      if (g.state === "correct") correct++; else if (g.state === "wrong") wrongN++;
-      detailLines.push(
-        "Câu " + (idx + 1) + " [" + (g.ok ? "Đúng" : "Sai") + "]: " + q.text +
-        " — Bạn chọn: " + g.chosenText + (g.ok ? "" : " (Đáp án đúng: " + g.correctText + ")")
-      );
-    });
-
-    const total = attempt.questionIds.length;
     const settings = await quiz.getExamSettings(attempt.period || "");
-    const pct = total ? Math.round((correct / total) * 100) : 0;
-    const passed = quiz.passState(pct, settings); // null nếu bài không có ngưỡng đạt
-    const scoreOutOf10 = total ? (correct / total) * 10 : 0;
-    const compliance = settings.complianceEnabled ? quiz.compliancePoints(scoreOutOf10, settings) : null; // thi thử vẫn quy đổi bình thường
+    const sc = quiz.scoreAttempt(attempt, byId, settings);
+    const correct = sc.correct, wrongN = sc.wrongN, total = sc.total, pct = sc.pct, passed = sc.passed, compliance = sc.compliance, detailLines = sc.detailLines;
+    const scoreOutOf10 = sc.scoreOutOf10;
 
     try { device.record(attempt, device.capture(req, b.device, "submit")); } catch (e) { (context.log.warn || context.log)("kt-submit device", e && e.message); }
     const devBrief = device.brief(attempt);
@@ -61,12 +45,12 @@ module.exports = async function (context, req) {
     attempt.pct = pct;
     attempt.passed = passed;
     attempt.practice = !!settings.practice;
-    attempt.scoreOutOf10 = Math.round(scoreOutOf10 * 100) / 100;
+    attempt.scoreOutOf10 = scoreOutOf10;
     attempt.compliancePoints = compliance;
     attempt.detailLines = detailLines; // bản sao câu trả lời, dùng khi gửi lại email
     attempt.paper = quiz.buildPaper(attempt, byId); // bản sao bài làm có cấu trúc, dùng để quản lí xem lại
     attempt.wrong = wrongN;
-    attempt.blank = Math.max(0, total - correct - wrongN);
+    attempt.blank = sc.blank;
     await quiz.putAttempt(attempt);
 
     await quiz.upsertIndex({

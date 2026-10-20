@@ -49,7 +49,7 @@ const handler = async function (context, req) {
         const idx = await quiz.getIndex();
         // Theo kỳ: mặc định kỳ hiện tại; "" = bài nộp trước khi có kỳ (chưa gắn kỳ)
         const qp = req.query && typeof req.query.period === "string" ? req.query.period : null;
-        const period = qp === "" || (qp && /^\d{4}-\d{2}$/.test(qp)) ? qp : settings.examPeriod;
+        const period = qp !== null && quiz.validPeriod(qp) ? qp : settings.examPeriod; // nhận cả mã đề tự đặt
         const inMine = {}; mine.forEach((x) => { inMine[quiz.normCode(x.code)] = 1; });
         const subs = idx.filter((a) => a.status === "submitted" && inMine[quiz.normCode(a.code)]);
         const periods = Array.from(new Set(subs.map((a) => a.period || "").concat([settings.examPeriod]))).sort().reverse();
