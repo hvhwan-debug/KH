@@ -1015,8 +1015,28 @@ var LOCERR = { denied:'Nhân viên đã chặn quyền vị trí', unsupported:'
 function mapUrl(l){ return 'https://www.google.com/maps?q=' + l.lat + ',' + l.lng; }
 var PIN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
 function locHtml(x){
-  if (x.loc) return '<span class="loc">' + PIN + '<a href="' + mapUrl(x.loc) + '" target="_blank" rel="noopener">' + x.loc.lat + ', ' + x.loc.lng + '</a>' + (x.loc.acc != null ? ' <span style="font-weight:400;color:var(--muted)">±' + x.loc.acc + ' m</span>' : '') + '</span>';
+  if (x.loc) return '<span class="loc">' + PIN + '<a href="' + mapUrl(x.loc) + '" target="_blank" rel="noopener"><span class="geoname" data-lat="' + x.loc.lat + '" data-lng="' + x.loc.lng + '">' + x.loc.lat + ', ' + x.loc.lng + '</span></a>' + (x.loc.acc != null ? ' <span style="font-weight:400;color:var(--muted)">±' + x.loc.acc + ' m</span>' : '') + '</span>';
   return '<span class="loc bad">' + PIN + esc(LOCERR[x.locErr] || LOCERR.none) + '</span>';
+}
+var GEO_CACHE = {};
+async function resolveGeoNames(scopeEl){
+  var els = (scopeEl || document).querySelectorAll('.geoname');
+  for (var i = 0; i < els.length; i++){
+    (function(el){
+      var lat = el.dataset.lat, lng = el.dataset.lng;
+      var key = Number(lat).toFixed(4) + ',' + Number(lng).toFixed(4);
+      if (GEO_CACHE[key]){
+        if (GEO_CACHE[key] !== '__pending__') el.textContent = GEO_CACHE[key];
+        return;
+      }
+      GEO_CACHE[key] = '__pending__';
+      api('GET', '/api/kt-geocode?lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lng)).then(function(res){
+        var label = res.j && res.j.ok ? (res.j.label || '') : '';
+        GEO_CACHE[key] = label || null;
+        if (label) document.querySelectorAll('.geoname[data-lat="'+lat+'"][data-lng="'+lng+'"]').forEach(function(e2){ e2.textContent = label; });
+      }).catch(function(){ GEO_CACHE[key] = null; });
+    })(els[i]);
+  }
 }
 async function fillDev(id, e, sel){
   var el = $(id); if (!el) return;
@@ -1040,6 +1060,7 @@ async function fillDev(id, e, sel){
     return '<li title="' + esc(x.ua || '') + '"><span class="ico" aria-hidden="true">' + devIcon(x.type) + '</span><div><b>' + esc(name) + '</b><small>' + esc(meta) + '</small>' + locHtml(x) + '</div>' +
       '<span class="stg">' + esc(STAGE[x.stage] || '') + '<br>' + esc(x.at ? fmt(x.at) : '') + '</span></li>';
   }).join('') + '</ol>';
+  resolveGeoNames(el);
 }
 var cfEmp = null;
 function confirmEmp(e){

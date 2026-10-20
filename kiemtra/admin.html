@@ -1056,7 +1056,7 @@ function devHtml(a){
     (Object.keys(sig).length > 1 ? '<p class="small" style="color:#B3261E;font-weight:700;margin:4px 0">⚠ Đã dùng ' + Object.keys(sig).length + ' thiết bị khác nhau</p>' : '') +
     '<ul style="margin:6px 0 0;padding-left:18px;line-height:1.6">' + L.map(function(d){
       var name = [d.type, d.model, d.os, d.browser].filter(Boolean).join(' · ') || 'Không rõ';
-      var loc = d.loc ? '<a href="https://www.google.com/maps?q=' + d.loc.lat + ',' + d.loc.lng + '" target="_blank" rel="noopener">📍 ' + d.loc.lat + ', ' + d.loc.lng + '</a>' + (d.loc.acc != null ? ' (±' + d.loc.acc + ' m)' : '') : esc(ER[d.locErr] || ER.none);
+      var loc = d.loc ? '<a href="https://www.google.com/maps?q=' + d.loc.lat + ',' + d.loc.lng + '" target="_blank" rel="noopener">📍 <span class="geoname" data-lat="' + d.loc.lat + '" data-lng="' + d.loc.lng + '">' + d.loc.lat + ', ' + d.loc.lng + '</span></a>' + (d.loc.acc != null ? ' (±' + d.loc.acc + ' m)' : '') : esc(ER[d.locErr] || ER.none);
       return '<li title="' + esc(d.ua || '').replace(/"/g,'&quot;') + '"><b>' + esc(ST[d.stage] || '') + '</b> ' + esc(fmtT(d.at)) + ': ' + esc(name) + (d.ip ? ' · IP ' + esc(d.ip) : '') + (d.screen ? ' · ' + esc(d.screen) : '') + '<br>' + loc + '</li>';
     }).join('') + '</ul></div>';
 }
@@ -1077,7 +1077,33 @@ async function viewResult(id){
         return '<li style="'+(oi===d.correctIndex?'color:var(--ok);font-weight:700':oi===d.chosenIndex?'color:var(--bad);font-weight:700':'')+'">'+esc(o)+tag+'</li>';
       }).join('') + (d.answered?'':'<li class="small">(Không trả lời)</li>') + '</ul></div>'
     ).join('');
+  resolveGeoNames($('resDetail'));
   window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+}
+
+/* Doi toa do GPS thanh ten dia diem de doc (vd "Phuong X, Quan Y, Ha Noi") thay vi day so. */
+var GEO_CACHE = {};
+async function resolveGeoNames(scopeEl){
+  var els = (scopeEl || document).querySelectorAll('.geoname');
+  var seen = {};
+  for (var i = 0; i < els.length; i++){
+    (function(el){
+      var lat = el.dataset.lat, lng = el.dataset.lng;
+      var key = Number(lat).toFixed(4) + ',' + Number(lng).toFixed(4);
+      if (GEO_CACHE[key]){
+        if (GEO_CACHE[key] !== '__pending__' && GEO_CACHE[key]) el.textContent = GEO_CACHE[key];
+        return;
+      }
+      GEO_CACHE[key] = '__pending__';
+      api('GET', '/api/kt-geocode?lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lng)).then(function(res){
+        var label = res.j && res.j.ok ? (res.j.label || '') : '';
+        GEO_CACHE[key] = label || null;
+        if (label){
+          document.querySelectorAll('.geoname[data-lat="'+lat+'"][data-lng="'+lng+'"]').forEach(function(e2){ e2.textContent = label; });
+        }
+      }).catch(function(){ GEO_CACHE[key] = null; });
+    })(els[i]);
+  }
 }
 
 boot();
