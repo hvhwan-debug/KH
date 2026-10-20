@@ -510,6 +510,12 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
         </div>
         <button class="btn" style="margin-top:14px" onclick="saveSettings()">Lưu cài đặt</button>
       </div>
+          <div class="card" id="aiCheckCard">
+        <h1>Kiểm tra AI của lời khuyên</h1>
+        <p class="small">Lời khuyên sau khi nộp bài và chẩn đoán hành vi dùng AI nếu có; nếu AI chưa cấu hình, trả lời chậm hoặc sai định dạng thì tự dùng bản dự phòng theo luật. Bấm để chạy thử đúng đường AI đó và biết lý do.</p>
+        <button class="btn" type="button" id="btnAiCheck" onclick="runAiCheck()">Kiểm tra ngay</button>
+        <div id="aiCheckOut"></div>
+      </div>
     </div>
 
     <!-- Tài khoản quản lí -->
@@ -914,6 +920,26 @@ function examStatusText(e, cur){
 $('exPractice').addEventListener('change', function(){
   if (this.checked && !$('exRetake').checked){ $('exRetake').checked = true; msg('exMsg','Đã tự bật "Cho phép làm lại nhiều lần" cho đề thi thử. Bỏ tick nếu muốn thí sinh chỉ thi thử một lần.','ok'); }
 });
+
+/* ---------- Kiểm tra AI ---------- */
+async function runAiCheck(){
+  const b = $('btnAiCheck'); b.disabled = true; b.textContent = 'Đang kiểm tra…'; $('aiCheckOut').innerHTML = '';
+  const { j } = await api('GET','/api/kt-admin?op=aiCheck');
+  b.disabled = false; b.textContent = 'Kiểm tra ngay';
+  if (!j.ok){ msg('aiCheckOut', j.error || 'Không kiểm tra được.'); return; }
+  const c = j.configured || {}, sec = (j.ms / 1000).toFixed(1), lim = Math.round(j.timeoutMs / 1000);
+  const keys = (c.azure ? 'Azure OpenAI ✓' : 'Azure OpenAI ✗') + ' · ' + (c.groq ? 'Groq ✓' : 'Groq ✗');
+  const T = {
+    ok: ['ok', 'AI hoạt động bình thường (phản hồi trong ' + sec + ' giây, hạn chờ ' + lim + ' giây). Lời khuyên sẽ do AI viết.'],
+    not_configured: ['err', 'Máy chủ chưa có khóa AI nên lời khuyên đang dùng bản dự phòng theo luật. Cần đặt AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_KEY, AZURE_OPENAI_DEPLOYMENT hoặc GROQ_API_KEY trong Azure Static Web Apps → Configuration.'],
+    off: ['warn', 'AI đang bị tắt bằng ADVICE_AI=off nên lời khuyên dùng bản dự phòng theo luật. Xoá biến này để bật lại.'],
+    timeout: ['warn', 'AI phản hồi quá chậm (hơn ' + sec + ' giây, hạn chờ chỉ ' + lim + ' giây) nên lời khuyên rơi về bản dự phòng. Có thể tăng ADVICE_TIMEOUT_MS hoặc dùng mô hình nhanh hơn.'],
+    invalid: ['warn', 'AI có trả lời nhưng sai định dạng yêu cầu (JSON gồm tiêu đề, nhận xét, các việc nên làm) nên bị bỏ và dùng bản dự phòng. Thử mô hình khác hoặc báo để chỉnh lại câu lệnh.'],
+    error: ['err', 'Gọi AI bị lỗi' + (c.azure && !c.groq ? ' (đã cấu hình Azure OpenAI nhưng không gọi được: kiểm tra endpoint, khóa và tên triển khai)' : ' (kiểm tra khóa còn hạn mức và đúng)') + '. Lời khuyên đang dùng bản dự phòng.']
+  };
+  const t = T[j.status] || ['warn', 'Trạng thái: ' + j.status];
+  $('aiCheckOut').innerHTML = '<div class="msg ' + t[0] + '">' + esc(t[1]) + '</div><p class="small" style="margin:8px 0 0">Cấu hình: ' + esc(keys) + (c.mock ? ' · chế độ giả lập' : '') + '</p>';
+}
 
 /* ---------- Phân tích chất lượng câu hỏi ---------- */
 let ITEMS = [], ITEM_EXAM = '';

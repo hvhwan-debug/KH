@@ -48,7 +48,7 @@ const A = {
       viewers: ["Xem danh sách quản lí", "read"], candidates: ["Xem danh sách thí sinh", "read"], settings: ["Xem cài đặt", "read"],
       results: ["Xem bảng kết quả", "read"], result: ["Xem chi tiết bài làm (ảnh, thiết bị, vị trí)", "read"], dashboard: ["Xem dashboard đánh giá", "read"],
       audit: ["Xem nhật ký thao tác", "read"], banks: ["Xem ngân hàng câu hỏi", "read"], exams: ["Xem danh sách đề thi", "read"],
-      previewBlueprint: ["Kiểm tra cấu trúc đề", "read"], itemAnalysis: ["Xem phân tích chất lượng câu hỏi", "read"], cohortInsight: ["Xem chẩn đoán hành vi cả nhóm", "read"]
+      previewBlueprint: ["Kiểm tra cấu trúc đề", "read"], itemAnalysis: ["Xem phân tích chất lượng câu hỏi", "read"], cohortInsight: ["Xem chẩn đoán hành vi cả nhóm", "read"], aiCheck: ["Kiểm tra kết nối AI", "read"]
     },
     POST: {
       saveQuestion: ["Lưu câu hỏi", "change"], addQuestions: ["Thêm câu hỏi hàng loạt", "change"], deleteQuestion: ["Xoá câu hỏi", "change"],

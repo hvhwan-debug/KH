@@ -73,6 +73,7 @@ function featuresOf(a) {
     n, S, hasTiming, pct: a.pct, total: a.total, practice: !!a.practice,
     answered: answered.length, wrong: wrong.length, timeouts: timeouts.length, skipped: skipped.length,
     fastWrong: fastWrong.length, slowWrong: slowWrong.length,
+    fastWrongSec: fastWrong.length ? r1(median(fastWrong.map((r) => r.ms / 1000))) : null,
     medFrac: hasTiming ? median(timed.map((r) => r.frac)) : null,
     meanSec: hasTiming ? r1(mean(timed.map((r) => r.frac * S / 1000))) : null,
     rightMedSec: rightT.length >= 3 ? r1(median(rightT)) : null,
@@ -93,6 +94,27 @@ const patterns = {
   fatigue: (f) => f.accFirst != null && f.accSecond != null && f.accFirst - f.accSecond >= 0.25,
   distract: (f) => f.blur >= 3
 };
+
+// Xác suất đúng nếu CHỌN BỪA: một đáp án = 1/số phương án; nhiều đáp án = 1/(2^k - 1) (phải đúng cả tập); điền khuyết ~ 2%.
+function chanceOf(paper) {
+  if (!paper || !paper.length) return null;
+  let sum = 0;
+  paper.forEach((p) => {
+    const k = (p.options || []).length;
+    sum += p.type === "fill" ? 0.02 : p.type === "multi" ? (k >= 2 ? 1 / (Math.pow(2, k) - 1) : 0.1) : (k >= 2 ? 1 / k : 0.25);
+  });
+  return sum / paper.length;
+}
+// Kết quả gần mức đoán bừa VÀ làm rất nhanh: dữ liệu khi đó không phản ánh kiến thức, nên không được kết luận "mảng nào yếu".
+function randomSignal(f, paper) {
+  const ch = chanceOf(paper);
+  if (ch == null || f.n < 10) return null;
+  const chancePct = Math.round(ch * 100);
+  const near = (f.pct || 0) <= chancePct + 12;
+  const uniformFast = f.hasTiming && f.medFrac != null && f.medFrac < 0.12;
+  const rushAll = patterns.rush(f) && f.wrong > 0 && f.fastWrong / f.wrong >= 0.7;
+  return near && (uniformFast || rushAll) ? { chancePct, meanSec: f.meanSec } : null;
+}
 
 const F = (code, level, title, evidence, causes, actions, confidence, extra) => Object.assign({ code, level, title, evidence, causes, actions, confidence }, extra || {});
 const A = (t, who) => ({ t, who }); // who: nv = nhân viên, ql = quản lí trực tiếp, dt = đào tạo / quản trị
@@ -115,6 +137,15 @@ function individual(items, ctx) {
   const findings = [];
   const times = (fn) => priors.filter(fn).length;
   const rep = (fn) => { const k = times(fn); return k ? " (lặp lại ở " + k + "/" + priors.length + " lần làm trước)" : ""; };
+  const rnd = randomSignal(cur, (items[items.length - 1].attempt || {}).paper);
+  if (rnd) {
+    findings.push(F("random", "bad", "Kết quả gần bằng mức đoán ngẫu nhiên và làm rất nhanh", [
+      "Đúng " + cur.pct + "%, trong khi chọn bừa cũng đúng khoảng " + rnd.chancePct + "%.",
+      cur.meanSec != null ? "Mỗi câu chỉ mất khoảng " + cur.meanSec + " giây trên giới hạn " + Math.round(cur.S / 1000) + " giây." : ""].filter(Boolean),
+      ["Bấm nhanh cho xong hoặc đang thử hệ thống, chưa đọc kỹ đề.", "Gặp sự cố khi làm bài (nhầm thao tác, mạng chậm) hoặc chưa hiểu cách làm bài.", "Nếu là bài thi thử, có thể chỉ để làm quen giao diện."],
+      [A("Trao đổi để biết hoàn cảnh làm bài; nếu có sự cố thì cho làm lại, vì kết quả này chưa phản ánh kiến thức thật.", "ql"),
+       A("Làm lại và đọc kỹ từng câu; không nên kết luận mảng nào yếu từ lần làm này.", "nv")], "cao"));
+  }
   const spendTxt = cur.meanSec != null ? "trung bình " + cur.meanSec + " giây/câu trên giới hạn " + Math.round(cur.S / 1000) + " giây" : "";
 
   if (!cur.hasTiming) {
@@ -122,7 +153,7 @@ function individual(items, ctx) {
   }
 
   // --- Làm vội / đoán ---
-  if (patterns.rush(cur)) {
+  if (patterns.rush(cur) && !rnd) {
     const top = cur.byCat.filter((c) => c.fastWrong > 0).sort((a, b) => b.fastWrong - a.fastWrong)[0];
     const concentrated = top && top.fastWrong / cur.fastWrong >= 0.6;
     const causes = concentrated
@@ -138,7 +169,7 @@ function individual(items, ctx) {
   }
 
   // --- Chậm mà vẫn sai ---
-  if (patterns.struggle(cur)) {
+  if (patterns.struggle(cur) && !rnd) {
     const top = cur.byCat.filter((c) => c.slowWrong > 0).sort((a, b) => b.slowWrong - a.slowWrong)[0];
     findings.push(F("struggle", "warn", "Mất nhiều thời gian nhưng vẫn trả lời sai", [
       cur.slowWrong + "/" + cur.wrong + " câu sai dùng hơn " + pc(SLOW) + "% thời gian cho phép" + rep(patterns.struggle) + ".",
@@ -184,7 +215,7 @@ function individual(items, ctx) {
 
   // --- Lỗ hổng theo mảng (kèm tính dai dẳng qua các lần làm) ---
   const priorWeak = (name) => priors.filter((f) => { const c = f.byCat.find((x) => x.name === name); return c && c.n >= 2 && c.acc < 0.7; }).length;
-  const gaps = cur.byCat.filter((c) => c.n >= 3 && c.acc < 0.6).slice(0, 3);
+  const gaps = rnd ? [] : cur.byCat.filter((c) => c.n >= 3 && c.acc < 0.6).slice(0, 3); // làm bừa thì số liệu theo mảng chỉ là nhiễu
   gaps.forEach((c) => {
     const persisted = priorWeak(c.name);
     const rushHere = c.fastWrong >= 2, slowHere = c.slowWrong >= 2;
@@ -216,7 +247,7 @@ function individual(items, ctx) {
   }
 
   // --- Thế mạnh ---
-  const strong = cur.byCat.filter((c) => c.n >= 3 && c.acc >= 0.9).slice(0, 2);
+  const strong = rnd ? [] : cur.byCat.filter((c) => c.n >= 3 && c.acc >= 0.9).slice(0, 2);
   if (strong.length) findings.push(F("strength", "ok", "Thế mạnh: " + strong.map((c) => c.name).join(", "), strong.map((c) => "Mảng \"" + c.name + "\": đúng " + c.ok + "/" + c.n + " câu."), ["Nắm vững nội dung mảng này."], [A("Có thể nhờ nhân viên chia sẻ cách làm với đồng nghiệp ở mảng này.", "ql")], "vừa"));
 
   // --- Tín hiệu về tuân thủ cách làm bài: chỉ là tín hiệu, KHÔNG kết luận gian lận ---
@@ -258,6 +289,7 @@ function cohort(items, ctx) {
   const fs = items.map((it) => featuresOf(it.attempt));
   const N = items.length;
   const out = [];
+  const randFlags = fs.map((f, k) => !!randomSignal(f, items[k].attempt.paper)); // bài bấm bừa: loại khỏi tỉ lệ làm vội và thống kê mảng để không đếm trùng
   if (N < MIN_COHORT) {
     return { kind: "cohort", stats: { attempts: N, enough: false, minN: MIN_COHORT }, findings: [F("small", "info", "Chưa đủ dữ liệu để chẩn đoán cả nhóm", ["Mới có " + N + " bài, cần ít nhất " + MIN_COHORT + " bài để các tỉ lệ có ý nghĩa."], [], [A("Chờ thêm nhân viên hoàn thành bài rồi phân tích lại.", "dt")], "thấp")] };
   }
@@ -282,16 +314,23 @@ function cohort(items, ctx) {
   }
 
   // Làm vội
-  const rushS = share(patterns.rush, timed);
-  if (timed.length >= MIN_COHORT && rushS >= 0.25) {
-    out.push(F("rush", "warn", "Nhiều nhân viên có dấu hiệu trả lời vội", [pc(rushS) + "% nhân viên (" + timed.filter(patterns.rush).length + "/" + timed.length + ") có nhiều câu sai được trả lời rất nhanh."],
+  const timedNR = fs.filter((f, k) => f.hasTiming && !randFlags[k]);
+  const rushS = share(patterns.rush, timedNR);
+  if (timedNR.length >= MIN_COHORT && rushS >= 0.25) {
+    out.push(F("rush", "warn", "Nhiều nhân viên có dấu hiệu trả lời vội", [pc(rushS) + "% nhân viên (" + timedNR.filter(patterns.rush).length + "/" + timedNR.length + ") có nhiều câu sai được trả lời rất nhanh."],
       ["Tâm lý làm cho xong, hoặc nhận thức kỳ kiểm tra chưa quan trọng.", "Các câu hỏi có thể có phương án sai lộ liễu nên dễ chọn nhanh mà vẫn nghĩ là đúng."],
       [A("Truyền thông trước kỳ sau: kết quả gắn với điểm tuân thủ, nên đọc kỹ đề.", "ql"), A("Rà các câu sai nhanh nhiều nhất để xem đề có gợi ý nhầm không.", "dt")], N >= 20 ? "cao" : "vừa"));
   }
 
   // Mảng kiến thức yếu của cả nhóm (và liệu nguyên nhân nằm ở đề hay ở người học)
+  const nRand = randFlags.filter(Boolean).length;
+  if (nRand >= 2 || nRand / N >= 0.1) {
+    out.push(F("randomcases", "info", nRand + " bài có dấu hiệu bấm nhanh gần mức đoán ngẫu nhiên", [nRand + "/" + N + " bài đúng ngang mức chọn bừa và làm rất nhanh."],
+      ["Một số nhân viên làm cho xong hoặc thử hệ thống, chưa đọc kỹ đề.", "Các bài này làm lệch điểm trung bình và thống kê theo mảng nên đã được loại khỏi phần mảng yếu bên dưới."],
+      [A("Trao đổi với những nhân viên này, cho làm lại nếu có sự cố; có thể xem trong chẩn đoán từng người.", "ql")], N >= 20 ? "vừa" : "thấp"));
+  }
   const cat = {};
-  fs.forEach((f) => f.byCat.forEach((c) => { const x = (cat[c.name] = cat[c.name] || { name: c.name, n: 0, ok: 0, staff: 0, weakStaff: 0 }); x.n += c.n; x.ok += c.ok; x.staff++; if (c.n >= 3 && c.acc < 0.6) x.weakStaff++; }));
+  fs.forEach((f, k) => { if (randFlags[k]) return; f.byCat.forEach((c) => { const x = (cat[c.name] = cat[c.name] || { name: c.name, n: 0, ok: 0, staff: 0, weakStaff: 0 }); x.n += c.n; x.ok += c.ok; x.staff++; if (c.n >= 3 && c.acc < 0.6) x.weakStaff++; }); });
   let itemRep = null;
   if (ctx.byId) { try { itemRep = itemstats.analyze(items.map((it) => ({ questionIds: it.attempt.questionIds, answers: it.attempt.answers, orders: it.attempt.orders })), ctx.byId); } catch (e) { itemRep = null; } }
   const flaggedByCat = {};
@@ -454,4 +493,4 @@ async function forCohort(period, cands, ctx) {
   return { period, capped: all.length > COHORT_CAP, stats: res.stats, findings: res.findings.map(view), narrative };
 }
 
-module.exports = { forEmployee, forCohort, featuresOf, rowsOf, individual, cohort, narrate, rulesNarrative, parseAi, patterns, MIN_COHORT };
+module.exports = { chanceOf, randomSignal, forEmployee, forCohort, featuresOf, rowsOf, individual, cohort, narrate, rulesNarrative, parseAi, patterns, MIN_COHORT };

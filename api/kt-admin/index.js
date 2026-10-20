@@ -49,6 +49,14 @@ const handler = async function (context, req) {
         const r = require("../_lib/itemstats").analyze(atts, byId);
         return reply(context, 200, { ok: true, exam: examId, capped: rows.length >= 500, summary: r.summary, items: r.items });
       }
+      // Kiểm tra AI của lời khuyên: chạy THẬT đường AI trên số liệu mẫu để biết vì sao lời khuyên có thể đang dùng bản dự phòng.
+      // Chỉ trả về trạng thái (không lộ khóa hay tên nhà cung cấp).
+      if (op === "aiCheck") {
+        const adv = require("../_lib/advice"), env = process.env;
+        const r = await adv.selfTest(15000);
+        return reply(context, 200, { ok: true, status: r.status, ms: r.ms, timeoutMs: Math.max(1000, parseInt(env.ADVICE_TIMEOUT_MS, 10) || 7000),
+          configured: { azure: !!(env.AZURE_OPENAI_ENDPOINT && env.AZURE_OPENAI_KEY && env.AZURE_OPENAI_DEPLOYMENT), groq: !!env.GROQ_API_KEY, mock: env.AI_MODE === "mock", off: env.ADVICE_AI === "off" } });
+      }
       // Chẩn đoán cả nhóm cho một đề: hành vi làm bài, mảng yếu, chất lượng câu hỏi, nhóm quản lí, rồi đề xuất khắc phục.
       if (op === "cohortInsight") {
         const st = await quiz.getSettings();

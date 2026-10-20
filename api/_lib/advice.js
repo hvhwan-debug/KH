@@ -51,7 +51,8 @@ function facts(attempt, settings, prev) {
   try {
     const B = require("./behavior"), bf = B.featuresOf(attempt);
     beh = { hasTiming: bf.hasTiming, rush: B.patterns.rush(bf), struggle: B.patterns.struggle(bf), fastWrong: bf.fastWrong, slowWrong: bf.slowWrong, wrongAnswered: bf.wrong,
-      timeouts: bf.timeouts, lateTimeouts: bf.timeouts >= 2 && bf.timeoutsLastThird / bf.timeouts >= 0.7, rightMedSec: bf.rightMedSec };
+      fastWrongSec: bf.fastWrongSec, timeouts: bf.timeouts, lateTimeouts: bf.timeouts >= 2 && bf.timeoutsLastThird / bf.timeouts >= 0.7, rightMedSec: bf.rightMedSec,
+      random: B.randomSignal(bf, attempt.paper) }; // kết quả gần mức đoán bừa + làm rất nhanh
   } catch (e) { beh = null; }
   return {
     beh,
@@ -78,26 +79,54 @@ function trendSentence(f) {
 }
 
 // ---- Bản dựa trên luật ----
+// Thứ tự ưu tiên: (1) điều quan trọng nhất của bài này, (2) mảng cần ôn (gộp, không lặp mẫu câu), (3) cách làm bài, (4) mốc điểm, (5) bước tiếp theo.
 function rulesAdvice(f) {
-  const p = f.pct;
-  const headline = p >= 90 ? "Kết quả xuất sắc" : p >= 80 ? "Kết quả tốt" : p >= 70 ? "Kết quả khá, còn có thể tốt hơn" : p >= 50 ? "Cần ôn tập thêm" : "Cần củng cố lại kiến thức nền";
-  const parts = ["Bạn trả lời đúng " + f.correct + "/" + f.total + " câu (" + p + "%)."];
-  const tr = trendSentence(f); if (tr) parts.push(tr);
+  const p = f.pct, b = f.beh || {}, rnd = b.random || null;
+  const headline = rnd ? "Kết quả gần bằng mức đoán ngẫu nhiên"
+    : p >= 90 ? "Kết quả xuất sắc" : p >= 80 ? "Kết quả tốt" : p >= 70 ? "Kết quả khá, còn có thể tốt hơn" : p >= 50 ? "Cần ôn tập thêm" : "Cần củng cố lại kiến thức nền";
+  const parts = [rnd
+    ? "Bạn đúng " + f.correct + "/" + f.total + " câu (" + p + "%), gần bằng mức nếu chọn bừa (khoảng " + rnd.chancePct + "%)" + (f.avgSecPerQ != null ? ", và mỗi câu chỉ mất khoảng " + f.avgSecPerQ + " giây" : "") + "."
+    : "Bạn trả lời đúng " + f.correct + "/" + f.total + " câu (" + p + "%)."];
+  if (rnd) parts.push("Kết quả này nhiều khả năng chưa phản ánh đúng kiến thức của bạn.");
+  else { const tr = trendSentence(f); if (tr) parts.push(tr); }
   if (f.practice) parts.push("Đây là bài thi thử, không phải thi chính thức.");
+
   const actions = [];
-  f.weak.forEach((c) => actions.push("Ôn lại mảng \"" + c.name + "\" (đúng " + c.ok + "/" + c.n + " câu): đọc lại tài liệu hoặc quy trình của mảng này, ghi ra 3-5 ý chính rồi tự trả lời lại không nhìn tài liệu."));
-  if (!f.weak.length && f.wrong === 1) actions.push("Bạn chỉ sai 1 câu, có thể chỉ do đọc đề chưa kỹ: lần sau hãy đọc đủ các phương án trước khi chọn.");
-  else if (!f.weak.length && f.wrong > 1) actions.push("Các câu sai rải rác ở nhiều mảng, không có mảng nào yếu rõ rệt: hãy đọc kỹ đề và đủ các phương án trước khi chọn, tránh chọn vội theo cảm tính.");
-  if (f.timeouts > 0 && f.beh && f.beh.lateTimeouts) actions.push("Các câu hết giờ (" + f.timeouts + " câu) dồn ở cuối bài: hãy giữ nhịp, không dành quá " + Math.round(f.secsPerQ * 0.7) + " giây cho một câu; câu chưa chắc thì chọn phương án hợp lý nhất rồi làm tiếp.");
-  else if (f.timeouts > 0) actions.push("Có " + f.timeouts + " câu hết giờ chưa kịp trả lời: tập đọc đề nhanh hơn, và khi chưa chắc hãy chọn phương án hợp lý nhất thay vì để trống.");
-  else if (f.blank > 0) actions.push("Có " + f.blank + " câu bỏ trống: khi chưa chắc, hãy loại trừ các phương án sai rồi chọn phương án hợp lý nhất, không để trống.");
-  if (f.beh && f.beh.rush) actions.push("Có " + f.beh.fastWrong + "/" + f.beh.wrongAnswered + " câu sai bạn trả lời rất nhanh" + (f.beh.rightMedSec != null ? " (các câu đúng thường mất khoảng " + f.beh.rightMedSec + " giây)" : "") + ": hãy dành thêm thời gian đọc kỹ đề và đủ các phương án trước khi chọn.");
-  else if (f.beh && f.beh.struggle) actions.push("Có " + f.beh.slowWrong + " câu bạn mất gần hết thời gian mà vẫn sai: nhiều khả năng còn hiểu chưa chắc khái niệm, hãy ôn lại phần gốc và nhờ quản lí giải thích trực tiếp.");
-  else if (!f.beh && f.avgSecPerQ != null && f.avgSecPerQ < f.secsPerQ * 0.2 && p < 80) actions.push("Bạn làm bài khá nhanh (khoảng " + f.avgSecPerQ + " giây mỗi câu) trong khi còn nhiều thời gian: hãy dành thêm vài giây đọc lại câu hỏi trước khi chọn.");
-  if (f.nextBand) actions.push("Để đạt " + f.nextBand.points + " điểm tuân thủ học tập, lần sau cần đúng ít nhất " + f.nextBand.needCorrect + "/" + f.total + " câu (bạn cần thêm " + f.nextBand.gap + " câu đúng).");
-  if (p >= 90) actions.push("Bạn nắm kiến thức rất vững: hãy chia sẻ cách học của mình với đồng nghiệp trong nhóm.");
-  else actions.push("Sau khi ôn, hãy hỏi quản lí trực tiếp để được giải đáp những phần còn mơ hồ.");
-  return { source: "rules", headline, summary: parts.join(" "), actions: actions.slice(0, MAX_ACTIONS) };
+  const timeoutAction = () => (f.beh && f.beh.lateTimeouts
+    ? "Các câu hết giờ (" + f.timeouts + " câu) dồn ở cuối bài: hãy giữ nhịp, không dành quá " + Math.round(f.secsPerQ * 0.7) + " giây cho một câu; câu chưa chắc thì chọn phương án hợp lý nhất rồi làm tiếp."
+    : "Có " + f.timeouts + " câu hết giờ chưa kịp trả lời: tập đọc đề nhanh hơn, và khi chưa chắc hãy chọn phương án hợp lý nhất thay vì để trống.");
+  if (rnd) {
+    // Làm bừa: thống kê theo mảng chỉ là nhiễu, nên KHÔNG khuyên ôn mảng nào, mà khuyên làm lại cho đúng
+    actions.push("Hãy làm lại và đọc kỹ từng câu: mỗi câu cần ít nhất khoảng " + Math.max(10, Math.round(f.secsPerQ * 0.25)) + " giây để đọc đề và đủ các phương án trước khi chọn.");
+    actions.push(f.practice
+      ? "Nếu được làm lại bài thi thử, hãy thử lại nghiêm túc để nhận lời khuyên sát với kiến thức thật của bạn."
+      : "Nếu bạn gặp sự cố khi làm bài (nhầm thao tác, mạng chậm...), hãy báo ngay cho quản lí để được hỗ trợ xem xét lại.");
+    if (f.timeouts > 0) actions.push(timeoutAction());
+  } else {
+    if (f.weak.length >= 2) {
+      const list = f.weak.map((c) => "\"" + c.name + "\" (đúng " + c.ok + "/" + c.n + ")").join(", ");
+      const allWeak = f.categories.length >= 3 && f.categories.every((c) => c.pct < 60);
+      actions.push((allWeak ? "Hầu hết các mảng đều yếu, nên cần ôn lại nội dung nền một cách có hệ thống, bắt đầu từ " : "Ưu tiên ôn các mảng sau, theo thứ tự yếu nhất: ") + list +
+        ". Với mỗi mảng: đọc lại tài liệu hoặc quy trình, ghi 3-5 ý chính rồi tự trả lời lại không nhìn tài liệu.");
+    } else if (f.weak.length === 1) {
+      const c = f.weak[0];
+      actions.push("Ôn lại mảng \"" + c.name + "\" (đúng " + c.ok + "/" + c.n + " câu): đọc lại tài liệu hoặc quy trình của mảng này, ghi ra 3-5 ý chính rồi tự trả lời lại không nhìn tài liệu.");
+    } else if (f.wrong === 1) actions.push("Bạn chỉ sai 1 câu, có thể chỉ do đọc đề chưa kỹ: lần sau hãy đọc đủ các phương án trước khi chọn.");
+    else if (f.wrong > 1) actions.push("Các câu sai rải rác ở nhiều mảng, không có mảng nào yếu rõ rệt: hãy đọc kỹ đề và đủ các phương án trước khi chọn, tránh chọn vội theo cảm tính.");
+    if (b.rush) {
+      // Chỉ so sánh với câu đúng khi tốc độ thật sự khác nhau (nếu câu đúng cũng nhanh như vậy thì so sánh chẳng có nghĩa)
+      const cmp = b.rightMedSec != null && b.fastWrongSec != null && b.rightMedSec >= b.fastWrongSec * 1.5;
+      actions.push("Có " + b.fastWrong + "/" + b.wrongAnswered + " câu sai bạn trả lời rất nhanh" + (b.fastWrongSec != null ? " (chỉ khoảng " + b.fastWrongSec + " giây/câu" + (cmp ? ", trong khi các câu đúng thường mất khoảng " + b.rightMedSec + " giây" : "") + ")" : "") + ": hãy dành thêm thời gian đọc kỹ đề và đủ các phương án trước khi chọn.");
+    } else if (b.struggle) actions.push("Có " + b.slowWrong + " câu bạn mất gần hết thời gian mà vẫn sai: nhiều khả năng còn hiểu chưa chắc khái niệm, hãy ôn lại phần gốc và nhờ quản lí giải thích trực tiếp.");
+    else if (!f.beh && f.avgSecPerQ != null && f.avgSecPerQ < f.secsPerQ * 0.2 && p < 80) actions.push("Bạn làm bài khá nhanh (khoảng " + f.avgSecPerQ + " giây mỗi câu) trong khi còn nhiều thời gian: hãy dành thêm vài giây đọc lại câu hỏi trước khi chọn.");
+    if (f.timeouts > 0) actions.push(timeoutAction());
+    else if (f.blank > 0) actions.push("Có " + f.blank + " câu bỏ trống: khi chưa chắc, hãy loại trừ các phương án sai rồi chọn phương án hợp lý nhất, không để trống.");
+    if (f.nextBand) actions.push("Để đạt " + f.nextBand.points + " điểm tuân thủ học tập, lần sau cần đúng ít nhất " + f.nextBand.needCorrect + "/" + f.total + " câu (bạn cần thêm " + f.nextBand.gap + " câu đúng).");
+  }
+  // Câu kết luôn có, dù danh sách phía trên dài đến đâu
+  const closing = rnd ? "Nếu sau khi làm lại nghiêm túc vẫn còn phần chưa chắc, hãy hỏi quản lí trực tiếp để được giải đáp."
+    : p >= 90 ? "Bạn nắm kiến thức rất vững: hãy chia sẻ cách học của mình với đồng nghiệp trong nhóm." : "Sau khi ôn, hãy hỏi quản lí trực tiếp để được giải đáp những phần còn mơ hồ.";
+  return { source: "rules", headline, summary: parts.join(" "), actions: actions.slice(0, MAX_ACTIONS - 1).concat([closing]) };
 }
 
 // ---- Bản AI ----
@@ -112,6 +141,8 @@ function buildPrompt(f) {
     "TUYỆT ĐỐI KHÔNG tiết lộ hoặc đoán đáp án của bất kỳ câu hỏi nào, KHÔNG nêu nội dung câu hỏi, KHÔNG bịa thông số sản phẩm, chính sách hay quy trình cụ thể của công ty. " +
     "Chỉ khuyên về: mảng kiến thức cần ôn và cách ôn hiệu quả, cách quản lý thời gian khi làm bài, việc nên làm tiếp theo (tự luyện lại, hỏi quản lí, trao đổi với đồng nghiệp). " +
     "Nếu là bài thi thử, nhắc rõ đây không phải thi chính thức. Giọng khích lệ, không phán xét. " +
+    "Nếu ket_qua_gan_muc_doan_bua là true: kết quả không phản ánh kiến thức thật, hãy nói rõ điều đó và khuyên làm lại nghiêm túc, KHÔNG liệt kê mảng nào cần ôn. " +
+    "Mỗi lời khuyên phải khác nhau về nội dung, nêu đúng số liệu liên quan (số câu, mảng, giây mỗi câu), không lặp lại cùng một mẫu câu cho nhiều mảng. Ưu tiên điều quan trọng nhất lên đầu. " +
     "Chỉ trả về DUY NHẤT một đối tượng JSON hợp lệ, không kèm lời dẫn hay dấu ```, đúng dạng: " +
     '{"headline":"tiêu đề tối đa 80 ký tự","summary":"1-3 câu nhận xét tổng quan","actions":["việc nên làm 1","việc nên làm 2","..."]} ' +
     "với 3 đến 5 mục trong actions, mỗi mục tối đa 160 ký tự, bắt đầu bằng động từ.";
@@ -119,7 +150,7 @@ function buildPrompt(f) {
     so_cau_dung: f.correct, tong_so_cau: f.total, ty_le_dung_phan_tram: f.pct, so_cau_sai: f.wrong, so_cau_bo_trong: f.blank, so_cau_het_gio: f.timeouts,
     cac_mang_kien_thuc: f.categories.map((c) => ({ mang: c.name, dung: c.ok, tong: c.n })),
     diem_tuan_thu: f.compliance, moc_diem_tuan_thu_ke_tiep: f.nextBand ? { diem: f.nextBand.points, can_dung_toi_thieu: f.nextBand.needCorrect, con_thieu: f.nextBand.gap } : null,
-    la_bai_thi_thu: f.practice, ky_truoc: f.prev ? { ty_le_dung_phan_tram: f.prev.pct } : null,
+    la_bai_thi_thu: f.practice, ket_qua_gan_muc_doan_bua: !!(f.beh && f.beh.random), ty_le_dung_neu_chon_bua_phan_tram: f.beh && f.beh.random ? f.beh.random.chancePct : null, ky_truoc: f.prev ? { ty_le_dung_phan_tram: f.prev.pct } : null,
     giay_trung_binh_moi_cau: f.avgSecPerQ, thoi_gian_toi_da_moi_cau_giay: f.secsPerQ,
     hanh_vi_lam_bai: f.beh ? { cau_sai_tra_loi_qua_nhanh: f.beh.fastWrong, cau_sai_mat_gan_het_gio: f.beh.slowWrong, het_gio_don_cuoi_bai: f.beh.lateTimeouts } : null
   };
@@ -139,12 +170,15 @@ function withTimeout(promise, ms) {
   let t; const to = new Promise((_, rej) => { t = setTimeout(() => rej(new Error("timeout")), ms); });
   return Promise.race([promise, to]).finally(() => clearTimeout(t));
 }
+// Trả về { advice, status }. status: ok | not_configured | timeout | invalid | error (để chẩn đoán vì sao rơi về bản luật)
 async function aiAdvice(f, timeoutMs) {
-  if (!aiConfigured()) return null;
+  if (process.env.ADVICE_AI === "off") return { advice: null, status: "off" };
+  if (!aiConfigured()) return { advice: null, status: "not_configured" };
   try {
     const raw = await withTimeout(llm.chat(buildPrompt(f), { temperature: 0.4, max_tokens: 600, task: "advice" }), timeoutMs || DEFAULT_TIMEOUT_MS);
-    return parseAi(raw);
-  } catch (e) { return null; }
+    const ad = parseAi(raw);
+    return ad ? { advice: ad, status: "ok" } : { advice: null, status: "invalid" };
+  } catch (e) { return { advice: null, status: e && e.message === "timeout" ? "timeout" : "error" }; }
 }
 
 // Lời khuyên tốt nhất có thể: AI nếu được, không thì luật. Luôn trả về một kết quả hợp lệ.
@@ -152,10 +186,20 @@ async function build(attempt, settings, prev, opt) {
   const f = facts(attempt, settings, prev);
   const rules = rulesAdvice(f);
   const useAI = !(opt && opt.ai === false);
-  const ai = useAI ? await aiAdvice(f, opt && opt.timeoutMs) : null;
-  const out = ai || rules;
+  const r = useAI ? await aiAdvice(f, opt && opt.timeoutMs) : { advice: null, status: "skipped" };
+  const out = r.advice || rules;
+  out.aiStatus = r.status; // lưu để quản trị viên biết vì sao một lời khuyên là bản luật
   out.at = Date.now();
   return out;
 }
 
-module.exports = { build, facts, rulesAdvice, parseAi, categoryStats, nextBand, aiConfigured };
+// Chạy THẬT đường AI của lời khuyên trên một bộ số liệu mẫu, để quản trị viên kiểm tra AI có hoạt động và trả đúng định dạng không.
+async function selfTest(timeoutMs) {
+  const f = { total: 30, correct: 18, wrong: 10, blank: 2, pct: 60, timeouts: 2, categories: [{ name: "Gia dụng", n: 15, ok: 12, pct: 80 }, { name: "Máy lọc nước", n: 15, ok: 6, pct: 40 }],
+    weak: [{ name: "Máy lọc nước", n: 15, ok: 6, pct: 40 }], strong: [], compliance: 10, nextBand: { points: 15, needCorrect: 21, gap: 3 }, practice: false, avgSecPerQ: 25, secsPerQ: 60, prev: null, beh: null };
+  const t0 = Date.now();
+  const r = await aiAdvice(f, timeoutMs || 15000);
+  return { status: r.status, ms: Date.now() - t0, headline: r.advice ? r.advice.headline : null };
+}
+
+module.exports = { build, facts, rulesAdvice, parseAi, categoryStats, nextBand, aiConfigured, selfTest, aiAdvice };
