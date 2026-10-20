@@ -81,11 +81,16 @@ async function ensureBankPeriods() {
   try { await require("./auditlog").write({ area: "system", role: "system", by: "hệ thống", name: "Hệ thống", op: "migrateBank", label: "Tự gắn ngân hàng đề cũ vào kỳ hiện tại", kind: "change", status: 200, ok: true, details: { count: list.length, period: st.examPeriod } }); } catch (e) {}
   return { migrated: list.length, period: st.examPeriod };
 }
+// Thứ tự lấy đề cho kỳ P: câu của kỳ P -> câu chưa gắn kỳ -> đề của kỳ gần nhất TRƯỚC P (dự phòng tạm thời,
+// để đổi sang kỳ mới mà chưa kịp soạn đề thì thí sinh vẫn làm được bài; trang quản trị báo rõ đang dùng tạm).
 function bankFor(all, period) {
   const own = all.filter((q) => usableQ(q) && (q.period || "") === period);
   if (own.length || !period) return { list: own, source: own.length ? "period" : "none" };
   const shared = all.filter((q) => usableQ(q) && !q.period);
-  return { list: shared, source: shared.length ? "unassigned" : "none" };
+  if (shared.length) return { list: shared, source: "unassigned" };
+  const prev = Array.from(new Set(all.filter((q) => usableQ(q) && q.period && q.period < period).map((q) => q.period))).sort().pop();
+  if (prev) return { list: all.filter((q) => usableQ(q) && q.period === prev), source: "previous", from: prev };
+  return { list: [], source: "none" };
 }
 
 // Bản sao lưu ngân hàng đề trước khi xoá hàng loạt (giữ bản gần nhất để khôi phục).

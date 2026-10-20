@@ -560,9 +560,17 @@ function renderQuestions(){
   $('qUnassigned').innerHTML = (un.length && QP) ? '<div class="banner"><span class="sp"><b>' + un.length + ' câu hỏi chưa gắn kỳ</b> (tạo trước khi có ngân hàng đề theo kỳ).' + (!cnt(cur).length ? ' Kỳ hiện tại chưa có câu riêng nên đề đang tạm lấy từ nhóm câu này.' : ' Nhóm câu này không còn được dùng cho kỳ hiện tại.') + '</span><button class="btn sm" type="button" id="qMoveUn">Chuyển vào ' + qPerLabel(QP).toLowerCase() + '</button></div>' : '';
   if (un.length && QP) $('qMoveUn').onclick = () => moveQuestions('', QP);
   // Mức sẵn sàng của kỳ đang chọn
-  const L = cnt(QP), fallback = QP === cur && !L.filter(q => q.active !== false).length && un.length;
+  // Cùng thứ tự dự phòng với máy chủ: câu của kỳ -> câu chưa gắn kỳ -> đề kỳ gần nhất trước đó
+  const L = cnt(QP), hasOwn = L.filter(q => q.active !== false).length;
+  let fbList = null, fbNote = '';
+  if (QP && !hasOwn){
+    const ua = un.filter(q => q.active !== false), prevP = pers.filter(p => p < QP && cnt(p).some(q => q.active !== false)).sort().pop();
+    if (ua.length){ fbList = un; fbNote = ua.length + ' câu chưa gắn kỳ'; }
+    else if (prevP){ fbList = cnt(prevP); fbNote = 'đề của ' + qPerLabel(prevP).toLowerCase() + ' (' + fbList.length + ' câu)'; }
+  }
   $('qReady').innerHTML = (QP === '' ? '<div class="hd">Câu chưa gắn kỳ chỉ dùng làm dự phòng khi kỳ hiện tại chưa có câu riêng.</div>' :
-    (fallback ? '<div class="hd" style="color:var(--warn)">⚠ Kỳ hiện tại chưa có câu riêng, đề đang tạm dùng ' + un.length + ' câu chưa gắn kỳ.</div>' : '') + qReadiness(fallback ? un : L, QP === cur)) +
+    (QP && !hasOwn ? '<div class="hd" style="color:var(--warn)">⚠ Kỳ này chưa có câu hỏi riêng. ' + (fbList ? 'Nếu bắt đầu kỳ bây giờ, đề sẽ TẠM dùng ' + fbNote + '. Hãy thêm câu hoặc sao chép đề vào kỳ này.' : 'Nếu bắt đầu kỳ bây giờ, thí sinh sẽ KHÔNG làm được bài.') + '</div>' : '') +
+    qReadiness(fbList || L, QP === cur)) +
     (QP && QP !== cur ? '<p class="small" style="margin:8px 0 0">' + (QP > cur ? 'Kỳ sắp tới: chuẩn bị sẵn đề, rồi đổi "Kỳ hiện tại" trong tab Cài đặt khi bắt đầu kỳ.' : 'Kỳ đã qua: đề được giữ lại để đối chiếu.') + '</p>' : '');
   $('qCopyFrom').innerHTML = pers.filter(p => p !== QP).concat(un.length && QP !== '' ? [''] : []).map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + ' (' + cnt(p).length + ' câu)</option>').join('') || '<option value="">Chưa có kỳ khác</option>';
   // Danh sách
@@ -752,8 +760,9 @@ async function saveSettings(){
   const period = $('setPeriod').value.trim();
   if (period && !/^\d{4}-\d{2}$/.test(period)){ msg('setPeriodMsg','Kỳ phải theo định dạng năm-tháng, ví dụ 2026-10.'); return; }
   if (period && period !== CUR_PERIOD){
-    const own = QUESTIONS.filter(q => q.period === period && q.active !== false).length, un = QUESTIONS.filter(q => !q.period && q.active !== false).length;
-    const w = own ? 'Ngân hàng đề kỳ này có ' + own + ' câu.' : '⚠ Kỳ ' + period + ' CHƯA có câu hỏi riêng: ' + (un ? 'đề sẽ tạm dùng ' + un + ' câu chưa gắn kỳ.' : 'thí sinh sẽ KHÔNG làm được bài.') + ' Bạn có thể sao chép đề từ kỳ khác ở tab Ngân hàng đề.';
+    const act = QUESTIONS.filter(q => q.active !== false), own = act.filter(q => q.period === period).length, un = act.filter(q => !q.period).length;
+    const prevP = Array.from(new Set(act.filter(q => q.period && q.period < period).map(q => q.period))).sort().pop();
+    const w = own ? 'Ngân hàng đề kỳ này có ' + own + ' câu.' : '⚠ Kỳ ' + period + ' CHƯA có câu hỏi riêng: ' + (un ? 'đề sẽ tạm dùng ' + un + ' câu chưa gắn kỳ.' : prevP ? 'đề sẽ tạm dùng lại đề kỳ ' + prevP + '.' : 'thí sinh sẽ KHÔNG làm được bài.') + ' Bạn có thể sao chép đề từ kỳ khác ở tab Ngân hàng đề.';
     if (!confirm('Đổi kỳ kiểm tra sang "'+period+'"? Mọi thí sinh sẽ được làm lại bài từ đầu (kết quả kỳ cũ vẫn giữ nguyên).\n\n' + w)) return;
   }
   const { j } = await api('POST','/api/kt-admin', {
