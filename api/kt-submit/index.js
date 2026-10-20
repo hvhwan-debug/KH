@@ -15,8 +15,16 @@ module.exports = async function (context, req) {
     const attempt = await quiz.getAttempt(attemptId);
     if (!attempt) return reply(context, 404, { ok: false, error: "Không tìm thấy bài làm." });
     if (attempt.status === "submitted") {
-      return reply(context, 200, { ok: true, score: attempt.score, total: attempt.total, pct: attempt.pct, passed: attempt.passed, compliancePoints: attempt.compliancePoints, already: true });
+      const st = await quiz.getSettings();
+      return reply(context, 200, {
+        ok: true, score: attempt.score, total: attempt.total, pct: attempt.pct, passed: attempt.passed,
+        compliancePoints: attempt.compliancePoints, already: true, mailOk: attempt.mailOk,
+        passScore: st.passScore || 0, submittedAt: attempt.submittedAt,
+        durationSec: Math.round(((attempt.submittedAt || 0) - (attempt.startedAt || 0)) / 1000)
+      });
     }
+
+    quiz.syncAttempt(attempt, Date.now()); // câu quá hạn chưa trả lời tính là bỏ trống
 
     const allQuestions = await quiz.getQuestions();
     const byId = {};
@@ -64,6 +72,7 @@ module.exports = async function (context, req) {
       submittedAt: attempt.submittedAt, status: "submitted"
     });
 
+    let mailOk = false;
     try {
       const { html, text } = layout({
         brand: "Hệ thống kiểm tra", brandSub: "Bài kiểm tra nội bộ", brandLetter: "KT",
@@ -89,11 +98,28 @@ module.exports = async function (context, req) {
         footer: "Đây là email tự động từ hệ thống kiểm tra. Nếu có thắc mắc về kết quả, vui lòng liên hệ quản trị viên phụ trách."
       });
       await mail.send({ to: attempt.email, subject: "Kết quả bài kiểm tra: " + (settings.examTitle || "Bài kiểm tra"), html, text });
+      mailOk = true;
     } catch (e) {
       context.log.error("kt-submit mail", e && e.message);
     }
+    // Ghi lại việc gửi email có thành công không, để giao diện báo đúng sự thật (không luôn nói "đã gửi").
+    try {
+      attempt.mailOk = mailOk;
+      await quiz.putAttempt(attempt);
+      await quiz.upsertIndex({
+        id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "",
+        score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
+        submittedAt: attempt.submittedAt, status: "submitted", mailOk
+      });
+    } catch (e) {
+      context.log.error("kt-submit mailOk", e && e.message);
+    }
 
-    return reply(context, 200, { ok: true, score: correct, total, pct, passed, compliancePoints: compliance });
+    return reply(context, 200, {
+      ok: true, score: correct, total, pct, passed, compliancePoints: compliance, mailOk,
+      passScore: settings.passScore || 0, submittedAt: attempt.submittedAt,
+      durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000)
+    });
   } catch (e) {
     context.log.error("kt-submit", e && e.message);
     return reply(context, 500, { ok: false, error: "Có lỗi xảy ra." });

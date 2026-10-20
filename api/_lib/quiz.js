@@ -82,6 +82,81 @@ function genId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 }
 
+// ---------------------------------------------------------------------------------------------
+// Tính giờ & tiến trình do MÁY CHỦ quyết định (thí sinh tải lại trang / đổi máy vẫn làm tiếp đúng chỗ,
+// không thể "xem đề rồi làm lại từ đầu" và không thể kéo dài thời gian bằng cách thoát ra vào lại).
+// ---------------------------------------------------------------------------------------------
+const GRACE_MS = 3000; // dung sai độ trễ mạng cho mỗi câu
+
+function actKey(code) { return "kt/active/" + String(code || "").toLowerCase().replace(/[^a-z0-9_-]/g, "_") + ".json"; }
+
+// Bài làm đang dở (chưa nộp) của một mã nhân viên, hoặc null.
+async function getActive(code) {
+  const p = await store.get(actKey(code));
+  if (!p || !p.attemptId) return null;
+  const a = await getAttempt(p.attemptId);
+  return a && a.status === "in_progress" ? a : null;
+}
+async function setActive(code, attemptId) { await store.put(actKey(code), { attemptId, at: Date.now() }); }
+
+// Đưa con trỏ câu hỏi về đúng hiện tại: câu nào đã quá hạn mà chưa trả lời thì tính là bỏ trống.
+// Trả về true nếu bài làm bị thay đổi (cần lưu lại).
+function syncAttempt(a, now) {
+  const n = a.questionIds.length, S = a.secondsPerQuestion * 1000;
+  let changed = false;
+  if (typeof a.cursor !== "number") { // bài làm tạo trước khi có cơ chế này
+    let c = 0;
+    while (c < n && a.answers[a.questionIds[c]]) c++;
+    a.cursor = c; a.qStartedAt = now; changed = true;
+  }
+  while (a.cursor < n && now > a.qStartedAt + S + GRACE_MS) {
+    const qid = a.questionIds[a.cursor];
+    if (!a.answers[qid]) a.answers[qid] = { answerIndex: -1, auto: true, answeredAt: a.qStartedAt + S };
+    a.cursor++; a.qStartedAt += S; changed = true;
+  }
+  return changed;
+}
+
+// Trạng thái gửi cho thí sinh: câu hiện tại (chỉ MỘT câu mỗi lần) + thời gian còn lại, hoặc done=true.
+function clientState(a, byId, now) {
+  const n = a.questionIds.length, S = a.secondsPerQuestion * 1000;
+  let changed = false;
+  while (a.cursor < n && !byId[a.questionIds[a.cursor]]) { // câu đã bị xoá khỏi ngân hàng giữa chừng: bỏ qua
+    a.answers[a.questionIds[a.cursor]] = { answerIndex: -1, auto: true, answeredAt: now };
+    a.cursor++; a.qStartedAt = now; changed = true;
+  }
+  if (a.cursor >= n) return { state: { done: true, total: n }, changed };
+  const qid = a.questionIds[a.cursor], q = byId[qid];
+  const order = a.orders[qid] || q.options.map((_, i) => i);
+  return {
+    state: {
+      done: false, index: a.cursor, total: n,
+      remainingMs: Math.max(0, a.qStartedAt + S - now),
+      secondsPerQuestion: a.secondsPerQuestion,
+      question: { id: qid, text: q.text, options: order.map((i) => q.options[i]) }
+    },
+    changed
+  };
+}
+
+// Giới hạn số lần thử sai theo IP (best-effort, trong bộ nhớ của tiến trình) để chống dò mã nhân viên + email.
+const _fails = new Map();
+function ipOf(req) {
+  const h = (req && req.headers) || {};
+  return String(h["x-forwarded-for"] || h["x-azure-clientip"] || "").split(",")[0].trim().split(":")[0] || "unknown";
+}
+function tooManyFails(req, max, windowMs) {
+  const k = ipOf(req), now = Date.now();
+  const list = (_fails.get(k) || []).filter((t) => now - t < windowMs);
+  _fails.set(k, list);
+  if (_fails.size > 5000) { for (const [key, v] of _fails) if (!v.length || now - v[v.length - 1] > windowMs) _fails.delete(key); }
+  return list.length >= max;
+}
+function noteFail(req) {
+  const k = ipOf(req), list = _fails.get(k) || [];
+  list.push(Date.now()); _fails.set(k, list);
+}
+
 module.exports = {
   normCode, normEmail, normSegment, CATEGORY_BY_SEGMENT,
   getQuestions, saveQuestions,
@@ -89,5 +164,6 @@ module.exports = {
   getSettings, saveSettings,
   getAttempt, putAttempt,
   getIndex, upsertIndex,
-  shuffle, genId, compliancePoints
+  shuffle, genId, compliancePoints,
+  GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
 };
