@@ -813,12 +813,20 @@ function renderPaper(){
   $('pList').innerHTML = list.map(function(q){
     var cls = q.ok ? 'good' : (q.chosen < 0 ? 'blank' : 'bad');
     var head = q.chosen < 0 ? ' <span class="chip warn">Không trả lời</span>' : (q.ok ? ' <span class="chip ok">Đúng</span>' : ' <span class="chip" style="background:var(--bad-soft);color:var(--bad)">Sai</span>');
-    return '<article class="pq '+cls+'"><h3><span class="n">Câu '+q.n+'.</span> '+esc(q.text)+head+'</h3>'+
-      q.options.map(function(o, i){
-        var isC = i === q.correct, isS = i === q.chosen, c = isC ? 'correct' : (isS ? 'wrong' : ''), tag = '';
-        if (isS && isC) tag = 'Đã chọn · Đúng'; else if (isS) tag = 'Đã chọn · Sai'; else if (isC) tag = 'Đáp án đúng';
+    var tl = q.type === 'multi' ? ' <span class="chip">Nhiều đáp án</span>' : (q.type === 'fill' ? ' <span class="chip">Điền khuyết</span>' : '');
+    var body;
+    if (q.type === 'fill'){
+      body = '<div class="po '+(q.chosen < 0 ? '' : (q.ok ? 'correct' : 'wrong'))+'"><span class="k">✎</span><span class="t">'+(q.chosen < 0 ? '(Không trả lời)' : esc(q.chosenText))+'</span><span class="tag">'+(q.chosen < 0 ? '' : (q.ok ? 'Đúng' : 'Sai'))+'</span></div>'+
+        (q.ok ? '' : '<div class="po correct"><span class="k">✓</span><span class="t">'+esc(q.answerText || (q.accepted || []).join(' / '))+'</span><span class="tag">Đáp án chấp nhận</span></div>');
+    } else {
+      var CL = q.correctList || [q.correct], SL = q.chosenList || (q.chosen >= 0 ? [q.chosen] : []);
+      body = q.options.map(function(o, i){
+        var isC = CL.indexOf(i) >= 0, isS = SL.indexOf(i) >= 0, c = isC ? 'correct' : (isS ? 'wrong' : ''), tag = '';
+        if (isS && isC) tag = 'Đã chọn · Đúng'; else if (isS) tag = 'Đã chọn · Sai'; else if (isC) tag = (q.type === 'multi' ? 'Đáp án đúng (cần chọn)' : 'Đáp án đúng');
         return '<div class="po '+c+'"><span class="k">'+L.charAt(i)+'</span><span class="t">'+esc(o)+'</span>'+(tag?'<span class="tag">'+tag+'</span>':'')+'</div>';
-      }).join('')+'</article>';
+      }).join('');
+    }
+    return '<article class="pq '+cls+'"><h3><span class="n">Câu '+q.n+'.</span> '+esc(q.text)+tl+head+'</h3>'+body+'</article>';
   }).join('') || '<div class="empty">Không có câu nào thuộc nhóm này.</div>';
 }
 $('pFilter').addEventListener('click', function(ev){ var b = ev.target.closest('button[data-f]'); if (b && PAPER){ pFilter = b.getAttribute('data-f'); renderPaper(); } });

@@ -121,9 +121,9 @@ const handler = async function (context, req) {
           at.paper.forEach((q) => {
             const cat = q.category || "Khác"; const x = (cats[cat] = cats[cat] || { category: cat, n: 0, ok: 0, last: { n: 0, ok: 0 } });
             x.n++; if (q.ok) x.ok++; if (recent[i].id === lastId) { x.last.n++; if (q.ok) x.last.ok++; }
-            if (!q.ok) { const w = (wq[q.text] = wq[q.text] || { text: q.text, category: cat, answer: (q.options || [])[q.correct] || "", times: 0, periods: [] });
+            if (!q.ok) { const w = (wq[q.text] = wq[q.text] || { text: q.text, category: cat, answer: q.answerText || (q.options || [])[q.correct] || "", times: 0, periods: [] });
               w.times++; if (w.periods.indexOf(p) < 0) w.periods.push(p);
-              if (recent[i].id === lastId) lastWrong.push({ text: q.text, category: cat, answer: (q.options || [])[q.correct] || "", chosen: q.chosen >= 0 ? (q.options || [])[q.chosen] || "" : null }); }
+              if (recent[i].id === lastId) lastWrong.push({ text: q.text, category: cat, answer: q.answerText || (q.options || [])[q.correct] || "", chosen: q.chosen >= 0 ? (q.chosenText != null ? q.chosenText : (q.options || [])[q.chosen] || "") : null }); }
           });
         });
         const categories = Object.values(cats).map((x) => ({ category: x.category, n: x.n, pct: x.n ? Math.round(x.ok / x.n * 100) : null, lastN: x.last.n, lastPct: x.last.n ? Math.round(x.last.ok / x.last.n * 100) : null })).sort((a, b) => (a.pct || 0) - (b.pct || 0));

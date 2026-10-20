@@ -128,7 +128,7 @@ const handler = async function (context, req) {
         const sample = rows.slice().sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0)).slice(0, 400);
         const atts = await Promise.all(sample.map((r) => quiz.getAttempt(r.id).catch(() => null)));
         atts.forEach((a) => { if (!a || !Array.isArray(a.paper)) return; a.paper.forEach((q) => {
-          const k = q.text; const x = (qs[k] = qs[k] || { text: q.text, answer: (q.options || [])[q.correct] || "", n: 0, wrong: 0, blank: 0 });
+          const k = q.text; const x = (qs[k] = qs[k] || { text: q.text, answer: q.answerText || (q.options || [])[q.correct] || "", n: 0, wrong: 0, blank: 0 });
           x.n++; if (q.chosen < 0) x.blank++; else if (!q.ok) x.wrong++; }); });
         const topWrong = Object.values(qs).filter((x) => x.n >= Math.min(3, rows.length)).map((x) => Object.assign(x, { rate: Math.round((x.wrong + x.blank) / x.n * 100) }))
           .filter((x) => x.rate > 0).sort((a, b) => b.rate - a.rate || b.n - a.n).slice(0, 8);
@@ -147,8 +147,11 @@ const handler = async function (context, req) {
           const q = byId[qid] || { text: "(câu hỏi đã bị xoá)", options: [] };
           const ans = a.answers[qid];
           const order = a.orders[qid] || (q.options || []).map((_, i) => i);
-          const chosenIndex = ans && ans.answerIndex >= 0 ? order[ans.answerIndex] : -1;
-          return { text: q.text, options: q.options || [], correctIndex: q.correctIndex, chosenIndex, answered: !!ans };
+          const type = quiz.qType(q), g = byId[qid] ? quiz.gradeAnswer(q, ans, a.orders[qid]) : null;
+          const chosenIndex = type === "single" && ans && ans.answerIndex >= 0 ? order[ans.answerIndex] : -1;
+          return { text: q.text, type, options: q.options || [], correctIndex: q.correctIndex, correctIndexes: q.correctIndexes || [], accepted: q.accepted || [],
+            chosenIndex, chosenIndexes: g ? g.chosenOrig : [], chosenText: g ? g.chosenText : "", answerText: g ? g.correctText : "", ok: g ? g.ok : false,
+            answered: g ? g.state !== "blank" : !!ans };
         });
         return reply(context, 200, { ok: true, attempt: a, detail });
       }
@@ -162,20 +165,20 @@ const handler = async function (context, req) {
     if (op === "saveQuestion") {
       const list = await quiz.getQuestions();
       const q = b.question || {};
-      const text = String(q.text || "").trim().slice(0, 2000);
-      const options = Array.isArray(q.options) ? q.options.map((o) => String(o || "").trim().slice(0, 500)).filter(Boolean) : [];
-      const correctIndex = Number.isInteger(q.correctIndex) ? q.correctIndex : -1;
-      if (!text || options.length < 2 || correctIndex < 0 || correctIndex >= options.length) {
-        return reply(context, 400, { ok: false, error: "Câu hỏi cần có nội dung, ít nhất 2 phương án, và chọn đúng 1 đáp án đúng hợp lệ." });
-      }
+      const nq = quiz.normalizeQuestionInput(q);
+      if (nq.error) return reply(context, 400, { ok: false, error: nq.error });
+      const base = Object.assign({ category: String(q.category || "").slice(0, 100) }, nq.fields);
       // Kỳ của câu hỏi: lấy theo yêu cầu; câu mới không nêu kỳ thì vào kỳ hiện tại
       const per = quiz.validPeriod(q.period) && typeof q.period === "string" ? q.period : undefined;
       if (q.id) {
         const i = list.findIndex((x) => x.id === q.id);
         if (i < 0) return reply(context, 404, { ok: false, error: "Không tìm thấy câu hỏi." });
-        list[i] = Object.assign({}, list[i], { text, options, correctIndex, category: String(q.category || "").slice(0, 100), active: q.active !== false }, quiz.cleanQuestionMeta(q, list[i]), per !== undefined ? { period: per } : {});
+        const prev = Object.assign({}, list[i]);
+        if (nq.fields.type !== "multi") delete prev.correctIndexes;   // đổi loại: bỏ dữ liệu của loại cũ
+        if (nq.fields.type !== "fill") delete prev.accepted;
+        list[i] = Object.assign({}, prev, base, { active: q.active !== false }, quiz.cleanQuestionMeta(q, list[i]), per !== undefined ? { period: per } : {});
       } else {
-        list.push(Object.assign({ id: quiz.genId(), text, options, correctIndex, category: String(q.category || "").slice(0, 100), active: true, period: per !== undefined ? per : (await quiz.getSettings()).examPeriod }, quiz.cleanQuestionMeta(q)));
+        list.push(Object.assign({ id: quiz.genId(), active: true, period: per !== undefined ? per : (await quiz.getSettings()).examPeriod }, base, quiz.cleanQuestionMeta(q)));
       }
       await quiz.saveQuestions(list);
       return reply(context, 200, { ok: true, questions: list });
@@ -192,11 +195,9 @@ const handler = async function (context, req) {
       const per = typeof b.period === "string" && quiz.validPeriod(b.period) ? b.period : (await quiz.getSettings()).examPeriod;
       let added = 0, skipped = 0;
       incoming.forEach((q) => {
-        const text = String(q.text || "").trim().slice(0, 2000);
-        const options = Array.isArray(q.options) ? q.options.map((o) => String(o || "").trim().slice(0, 500)).filter(Boolean) : [];
-        const correctIndex = Number.isInteger(q.correctIndex) ? q.correctIndex : -1;
-        if (!text || options.length < 2 || correctIndex < 0 || correctIndex >= options.length) { skipped++; return; }
-        list.push(Object.assign({ id: quiz.genId(), text, options, correctIndex, category: String(q.category || "").trim().slice(0, 100), active: true, period: per },
+        const nq = quiz.normalizeQuestionInput(q);
+        if (nq.error) { skipped++; return; }
+        list.push(Object.assign({ id: quiz.genId(), category: String(q.category || "").trim().slice(0, 100), active: true, period: per }, nq.fields,
           quiz.cleanQuestionMeta(Object.assign({}, q, b.bankId !== undefined && q.bankId === undefined ? { bankId: b.bankId } : {}))));
         added++;
       });
@@ -236,7 +237,7 @@ const handler = async function (context, req) {
       let added = 0, skipped = 0;
       list.filter((q) => (q.period || "") === from).forEach((q) => {
         if (have.has(norm(q.text))) { skipped++; return; }
-        list.push({ id: quiz.genId(), text: q.text, options: (q.options || []).slice(), correctIndex: q.correctIndex, category: q.category || "", active: q.active !== false, period: to, copiedFrom: q.id, bankId: q.bankId, difficulty: q.difficulty || "", tags: (q.tags || []).slice(), explanation: q.explanation || "" });
+        list.push({ id: quiz.genId(), text: q.text, options: (q.options || []).slice(), correctIndex: q.correctIndex, category: q.category || "", active: q.active !== false, period: to, copiedFrom: q.id, type: q.type, correctIndexes: q.correctIndexes, accepted: q.accepted, bankId: q.bankId, difficulty: q.difficulty || "", tags: (q.tags || []).slice(), explanation: q.explanation || "" });
         have.add(norm(q.text)); added++;
       });
       await quiz.saveQuestions(list);

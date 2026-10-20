@@ -43,7 +43,7 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
 .badge.n{background:var(--bad-soft);color:var(--bad)}
 .opt-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
 .opt-row input[type=text]{flex:1}
-.opt-row input[type=radio]{width:18px;height:18px;flex:0 0 auto}
+.opt-row input[type=radio],.opt-row input[type=checkbox]{width:18px;height:18px;flex:0 0 auto}
 .small{font-size:12.5px;color:var(--muted)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:640px){.grid2{grid-template-columns:1fr}}
@@ -309,6 +309,13 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
         <input type="hidden" id="qEditId">
         <label>Nội dung câu hỏi</label>
         <textarea id="qText" placeholder="Nhập nội dung câu hỏi…"></textarea>
+        <label>Loại câu hỏi</label>
+        <select id="qType" onchange="onQTypeChange()" aria-label="Loại câu hỏi">
+          <option value="single">Một đáp án đúng</option>
+          <option value="multi">Nhiều đáp án đúng (phải chọn đúng và đủ)</option>
+          <option value="tf">Đúng / Sai</option>
+          <option value="fill">Điền vào chỗ trống</option>
+        </select>
         <label>Phân loại (tuỳ chọn)</label>
         <input type="text" id="qCategory" placeholder="VD: Nghiệp vụ, An toàn lao động...">
         <div class="grid2">
@@ -319,9 +326,16 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
         </div>
         <label>Giải thích đáp án (tuỳ chọn)</label>
         <textarea id="qExplain" style="min-height:56px" placeholder="Hiển thị cho quản trị viên khi xem lại câu hỏi"></textarea>
-        <label>Các phương án trả lời (chọn nút tròn cho đáp án đúng)</label>
-        <div id="qOptsEdit"></div>
-        <button class="btn ghost sm" onclick="addOptRow()">+ Thêm phương án</button>
+        <div id="qOptsWrap">
+          <label id="qOptsLabel">Các phương án trả lời (chọn nút tròn cho đáp án đúng)</label>
+          <div id="qOptsEdit"></div>
+          <button class="btn ghost sm" id="qAddOptBtn" onclick="addOptRow()">+ Thêm phương án</button>
+        </div>
+        <div id="qFillWrap" class="hide">
+          <label>Các đáp án được chấp nhận (mỗi dòng một đáp án)</label>
+          <textarea id="qAccepted" style="min-height:70px" placeholder="220&#10;220 V"></textarea>
+          <p class="small">Hệ thống bỏ qua chữ hoa/thường, khoảng trắng thừa và dấu câu ở hai đầu; 1,5 và 1.5 coi là như nhau. Chữ có dấu tiếng Việt vẫn phải đúng dấu, nên hãy thêm cả cách viết không dấu nếu muốn chấp nhận.</p>
+        </div>
         <div style="margin-top:14px;display:flex;gap:8px">
           <button class="btn" onclick="saveQuestion()">Lưu câu hỏi</button>
           <button class="btn ghost" onclick="clearQForm()">Làm mới</button>
@@ -733,6 +747,8 @@ async function deleteExamUI(id){
 /* ---------- Ngân hàng câu hỏi ---------- */
 let BANKS = [{ id:'default', name:'Ngân hàng chung' }];
 const DIFF_LABEL = { easy:'Dễ', medium:'Trung bình', hard:'Khó' };
+const TYPE_LABEL = { single:'Một đáp án', multi:'Nhiều đáp án', tf:'Đúng/Sai', fill:'Điền khuyết' };
+const qTypeOf = (q) => { const t = q.type || 'single'; return (t === 'single' && (q.options||[]).length === 2 && q.options[0] === 'Đúng' && q.options[1] === 'Sai') ? 'tf' : t; };
 const bankName = (id) => (BANKS.find(b => b.id === (id || 'default')) || { name: id || 'Ngân hàng chung' }).name;
 function setBanks(list){
   if (!Array.isArray(list) || !list.length) return;
@@ -854,16 +870,47 @@ function examStatusText(e, cur){
 
 /* ---------- Ngân hàng đề ---------- */
 let QUESTIONS = [];
-function addOptRow(checked){
+function qUIType(){ return $('qType').value; }
+function addOptRow(checked, value){
   const n = document.querySelectorAll('#qOptsEdit .opt-row').length;
+  if (n >= 8){ alert('Tối đa 8 phương án.'); return; }
+  const multi = qUIType() === 'multi', locked = qUIType() === 'tf';
   const row = document.createElement('div');
   row.className = 'opt-row';
-  row.innerHTML = '<input type="radio" name="qCorrect" value="'+n+'" '+(checked?'checked':'')+'><input type="text" placeholder="Phương án '+(n+1)+'">';
+  row.innerHTML = '<input type="'+(multi?'checkbox':'radio')+'" class="qc" name="qCorrect" value="'+n+'" '+(checked?'checked':'')+'><input type="text" placeholder="Phương án '+(n+1)+'"'+(locked?' readonly':'')+'>';
+  if (value != null) row.querySelector('input[type=text]').value = value;
   $('qOptsEdit').appendChild(row);
+}
+// Đổi loại câu hỏi: dựng lại vùng đáp án, giữ lại nội dung các phương án đã gõ.
+function onQTypeChange(){
+  const t = qUIType();
+  const rows = Array.from(document.querySelectorAll('#qOptsEdit .opt-row'));
+  const texts = rows.map(r => r.querySelector('input[type=text]').value);
+  const checked = rows.map(r => r.querySelector('.qc').checked);
+  $('qOptsWrap').classList.toggle('hide', t === 'fill');
+  $('qFillWrap').classList.toggle('hide', t !== 'fill');
+  $('qAddOptBtn').classList.toggle('hide', t === 'tf');
+  $('qOptsLabel').textContent = t === 'multi' ? 'Các phương án trả lời (tick các ô vuông của TẤT CẢ đáp án đúng)' : 'Các phương án trả lời (chọn nút tròn cho đáp án đúng)';
+  if (t === 'fill') return;
+  $('qOptsEdit').innerHTML = '';
+  if (t === 'tf'){
+    const keep = checked.indexOf(true);
+    addOptRow(keep !== 1, 'Đúng'); addOptRow(keep === 1, 'Sai');
+    return;
+  }
+  const n = Math.max(texts.length, 4);
+  let firstOnly = false;
+  for (let i = 0; i < n; i++){
+    let c = !!checked[i];
+    if (t === 'single'){ if (c && firstOnly) c = false; if (c) firstOnly = true; }
+    addOptRow(c || (t === 'single' && i === 0 && !checked.some(Boolean)), texts[i]);
+  }
 }
 function clearQForm(){
   $('qEditId').value=''; $('qText').value=''; $('qCategory').value='';
   $('qDifficulty').value=''; $('qTags').value=''; $('qExplain').value=''; if ($('qBank').options.length) $('qBank').value = $('qBank').dataset.last || 'default';
+  $('qType').value='single'; $('qAccepted').value=''; $('qOptsWrap').classList.remove('hide'); $('qFillWrap').classList.add('hide'); $('qAddOptBtn').classList.remove('hide');
+  $('qOptsLabel').textContent='Các phương án trả lời (chọn nút tròn cho đáp án đúng)';
   $('qOptsEdit').innerHTML=''; $('qFormTitle').textContent='Thêm câu hỏi mới vào ' + qPerLabel(QP || '').toLowerCase();
   if ($('qPeriod').options.length) $('qPeriod').value = QP || '';
   for (let i=0;i<4;i++) addOptRow(i===0);
@@ -925,7 +972,7 @@ function renderQuestions(){
   $('qBulkPer').textContent = '→ vào ' + qPerLabel(QP).toLowerCase();
   $('qCount').textContent = L.length;
   $('qList').innerHTML = L.map(q =>
-    '<tr><td>'+esc(q.text.slice(0,70))+(q.text.length>70?'…':'')+'</td><td class="small">'+esc(bankName(q.bankId))+'</td><td>'+esc(q.category||'')+'</td><td class="small">'+esc(DIFF_LABEL[q.difficulty]||'')+'</td><td>'+(q.active!==false?'<span class="badge y">Đang dùng</span>':'<span class="badge n">Đã ẩn</span>')+'</td>'+
+    '<tr><td>'+esc(q.text.slice(0,70))+(q.text.length>70?'…':'')+'</td><td class="small">'+esc(bankName(q.bankId))+'<div>'+esc(TYPE_LABEL[qTypeOf(q)]||'')+'</div></td><td>'+esc(q.category||'')+'</td><td class="small">'+esc(DIFF_LABEL[q.difficulty]||'')+'</td><td>'+(q.active!==false?'<span class="badge y">Đang dùng</span>':'<span class="badge n">Đã ẩn</span>')+'</td>'+
     '<td><button class="btn ghost sm" onclick="editQuestion(\''+q.id+'\')">Sửa</button> <button class="btn danger sm" onclick="deleteQuestion(\''+q.id+'\')">Xoá</button></td></tr>'
   ).join('') || '<tr><td colspan="6" class="small">Kỳ này chưa có câu hỏi. Thêm câu mới, nhập hàng loạt hoặc sao chép từ kỳ khác.</td></tr>';
   $('qPeriod').innerHTML = pers.map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + (p === cur ? ' (hiện tại)' : '') + '</option>').join('') + (un.length ? '<option value="">Chưa gắn kỳ</option>' : '');
@@ -986,13 +1033,15 @@ function editQuestion(id){
   $('qEditId').value = q.id; $('qText').value = q.text; $('qCategory').value = q.category||'';
   $('qFormTitle').textContent = 'Sửa câu hỏi'; $('qPeriod').value = q.period || '';
   $('qBank').value = q.bankId || 'default'; $('qDifficulty').value = q.difficulty || ''; $('qTags').value = (q.tags || []).join(', '); $('qExplain').value = q.explanation || '';
+  const isTF = (q.type || 'single') === 'single' && (q.options || []).length === 2 && q.options[0] === 'Đúng' && q.options[1] === 'Sai';
+  $('qType').value = isTF ? 'tf' : (q.type || 'single');
   $('qOptsEdit').innerHTML='';
-  q.options.forEach((o,i) => {
-    const row = document.createElement('div');
-    row.className='opt-row';
-    row.innerHTML = '<input type="radio" name="qCorrect" value="'+i+'" '+(i===q.correctIndex?'checked':'')+'><input type="text" value="'+esc(o).replace(/"/g,'&quot;')+'">';
-    $('qOptsEdit').appendChild(row);
-  });
+  const t = qUIType();
+  $('qOptsWrap').classList.toggle('hide', t === 'fill'); $('qFillWrap').classList.toggle('hide', t !== 'fill');
+  $('qAddOptBtn').classList.toggle('hide', t === 'tf');
+  $('qOptsLabel').textContent = t === 'multi' ? 'Các phương án trả lời (tick các ô vuông của TẤT CẢ đáp án đúng)' : 'Các phương án trả lời (chọn nút tròn cho đáp án đúng)';
+  if (t === 'fill') $('qAccepted').value = (q.accepted || []).join('\n');
+  else (q.options || []).forEach((o,i) => addOptRow(t === 'multi' ? (q.correctIndexes || []).indexOf(i) >= 0 : i === q.correctIndex, o));
   window.scrollTo({top:0,behavior:'smooth'});
 }
 async function deleteQuestion(id){
@@ -1042,11 +1091,19 @@ async function addQuestionsBulk(){
   loadQuestions();
 }
 async function saveQuestion(){
+  const ui = qUIType();
   const options = Array.from(document.querySelectorAll('#qOptsEdit .opt-row')).map(r => r.querySelector('input[type=text]').value.trim());
-  const checkedEl = document.querySelector('#qOptsEdit input[type=radio]:checked');
-  const correctIndex = checkedEl ? +checkedEl.value : -1;
-  const question = { id: $('qEditId').value||undefined, text: $('qText').value.trim(), category: $('qCategory').value.trim(), options, correctIndex, period: $('qPeriod').value || (QP || ''),
+  const marks = Array.from(document.querySelectorAll('#qOptsEdit .opt-row')).map(r => r.querySelector('.qc').checked);
+  const question = { id: $('qEditId').value||undefined, text: $('qText').value.trim(), category: $('qCategory').value.trim(), period: $('qPeriod').value || (QP || ''),
     bankId: $('qBank').value || 'default', difficulty: $('qDifficulty').value, tags: $('qTags').value, explanation: $('qExplain').value };
+  if (ui === 'fill'){ question.type = 'fill'; question.accepted = $('qAccepted').value; }
+  else {
+    // Bỏ phương án trống nhưng giữ đúng vị trí của đáp án được đánh dấu
+    const keepIdx = options.map((o, i) => o ? i : -1).filter(i => i >= 0);
+    question.options = keepIdx.map(i => options[i]);
+    if (ui === 'multi'){ question.type = 'multi'; question.correctIndexes = keepIdx.map((orig, k) => marks[orig] ? k : -1).filter(k => k >= 0); }
+    else { question.type = 'single'; const k = keepIdx.findIndex(orig => marks[orig]); question.correctIndex = k; }
+  }
   $('qBank').dataset.last = question.bankId;
   const { j } = await api('POST','/api/kt-admin', { op:'saveQuestion', question });
   if (!j.ok){ msg('qMsg', j.error, 'err'); return; }
@@ -1422,16 +1479,22 @@ async function viewResult(id){
   $('resDetail').innerHTML = '<p><b>'+esc(j.attempt.name||'')+'</b> ('+esc(j.attempt.code)+') — '+j.attempt.score+'/'+j.attempt.total+' câu đúng, '+j.attempt.pct+'%</p>' +
     (j.attempt.photo ? '<figure style="margin:0 0 14px"><img src="'+j.attempt.photo+'" alt="Ảnh xác nhận của thí sinh" style="max-width:220px;border-radius:12px;border:1px solid var(--line);display:block"><figcaption class="small" style="margin-top:6px">Ảnh chụp ngay trước khi bắt đầu bài kiểm tra <b>'+esc(j.attempt.period ? 'kỳ ' + perLabel(j.attempt.period) : '(chưa gắn kỳ)')+'</b>'+(j.attempt.startedAt ? ', lúc ' + esc(new Date(j.attempt.startedAt).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour12:false})) : '')+'. Chỉ là minh chứng cho kỳ này.'+(j.attempt.faceCheck ? '<br>Kiểm tra khuôn mặt: <b>'+esc(({ ok:'AI xác nhận có đúng 1 khuôn mặt', unclear:'AI thấy 1 khuôn mặt nhưng chưa rõ nét', client_ok:'nhận diện trên máy thí sinh, AI máy chủ chưa xác minh', unverified:'chưa xác minh được' })[j.attempt.faceCheck.status] || j.attempt.faceCheck.status)+'</b>'+(j.attempt.faceCheck.server && j.attempt.faceCheck.server.reason ? ' ('+esc(j.attempt.faceCheck.server.reason)+')' : '') : '')+'</figcaption></figure>' : '<p class="small">Không có ảnh xác nhận (bài làm trước khi có tính năng này).</p>') +
     devHtml(j.attempt) +
-    j.detail.map((d,i) =>
-      '<div style="border-top:1px solid var(--line);padding:10px 0"><b>Câu '+(i+1)+'.</b> '+esc(d.text)+'<ul style="margin:6px 0 0;padding-left:20px">' +
-      d.options.map((o,oi) => {
+    j.detail.map((d,i) => {
+      const head = '<div style="border-top:1px solid var(--line);padding:10px 0"><b>Câu '+(i+1)+'.</b> '+esc(d.text)+' <span class="small">('+esc(TYPE_LABEL[d.type]||'')+')</span>';
+      if (d.type === 'fill'){
+        return head+'<ul style="margin:6px 0 0;padding-left:20px"><li style="color:'+(d.ok?'var(--ok)':'var(--bad)')+';font-weight:700">Thí sinh trả lời: '+(d.answered?esc(d.chosenText):'(Không trả lời)')+(d.answered?(d.ok?' ✓':' ✗'):'')+'</li><li class="small">Đáp án chấp nhận: '+esc(d.answerText)+'</li></ul></div>';
+      }
+      const multi = d.type === 'multi';
+      const isC = (oi) => multi ? (d.correctIndexes||[]).indexOf(oi) >= 0 : oi === d.correctIndex;
+      const isS = (oi) => multi ? (d.chosenIndexes||[]).indexOf(oi) >= 0 : oi === d.chosenIndex;
+      return head+'<ul style="margin:6px 0 0;padding-left:20px">' + d.options.map((o,oi) => {
         let tag = '';
-        if (oi === d.correctIndex) tag = ' ✓ (đáp án đúng)';
-        if (oi === d.chosenIndex && oi !== d.correctIndex) tag = ' ✗ (thí sinh chọn)';
-        if (oi === d.chosenIndex && oi === d.correctIndex) tag = ' ✓ (thí sinh chọn — đúng)';
-        return '<li style="'+(oi===d.correctIndex?'color:var(--ok);font-weight:700':oi===d.chosenIndex?'color:var(--bad);font-weight:700':'')+'">'+esc(o)+tag+'</li>';
-      }).join('') + (d.answered?'':'<li class="small">(Không trả lời)</li>') + '</ul></div>'
-    ).join('');
+        if (isC(oi)) tag = ' ✓ (đáp án đúng)';
+        if (isS(oi) && !isC(oi)) tag = ' ✗ (thí sinh chọn)';
+        if (isS(oi) && isC(oi)) tag = ' ✓ (thí sinh chọn — đúng)';
+        return '<li style="'+(isC(oi)?'color:var(--ok);font-weight:700':isS(oi)?'color:var(--bad);font-weight:700':'')+'">'+esc(o)+tag+'</li>';
+      }).join('') + (d.answered?'':'<li class="small">(Không trả lời)</li>') + (multi && d.answered && !d.ok ? '<li class="small">Câu nhiều đáp án chỉ tính đúng khi chọn đúng và đủ.</li>' : '') + '</ul></div>';
+    }).join('');
   resolveGeoNames($('resDetail'));
   window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
 }

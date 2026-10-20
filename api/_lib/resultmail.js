@@ -11,13 +11,10 @@ function rebuildDetail(attempt, byId) {
   attempt.questionIds.forEach((qid, idx) => {
     const q = byId[qid];
     if (!q) return;
-    const ans = attempt.answers[qid];
-    const order = attempt.orders[qid] || q.options.map((_, i) => i);
-    const oi = ans && ans.answerIndex >= 0 ? order[ans.answerIndex] : -1;
-    const ok = oi === q.correctIndex;
+    const g = quiz.gradeAnswer(q, attempt.answers[qid], attempt.orders[qid]);
     lines.push(
-      "Câu " + (idx + 1) + " [" + (ok ? "Đúng" : "Sai") + "]: " + q.text + " — Bạn chọn: " + (oi >= 0 ? q.options[oi] : "(không trả lời)") +
-      (ok ? "" : " (Đáp án đúng: " + q.options[q.correctIndex] + ")")
+      "Câu " + (idx + 1) + " [" + (g.ok ? "Đúng" : "Sai") + "]: " + q.text + " — Bạn chọn: " + g.chosenText +
+      (g.ok ? "" : " (Đáp án đúng: " + g.correctText + ")")
     );
   });
   return lines;

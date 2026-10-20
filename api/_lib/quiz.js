@@ -73,7 +73,71 @@ const CATEGORY_BY_SEGMENT = { gia_dung: "Gia dụng", may_loc: "Máy lọc nư�
 // Mã đề thi/kỳ: chấp nhận dạng tháng "YYYY-MM" (lặp lại định kỳ) HOẶC một mã tự chọn (vd "thu-nghiem")
 // để mở được NHIỀU đề thi độc lập, không chỉ một đề lặp lại theo tháng.
 const validPeriod = (p) => p === "" || /^\d{4}-\d{2}$/.test(String(p)) || /^[a-z0-9][a-z0-9-]{0,39}$/i.test(String(p));
-function usableQ(q) { return q && q.active !== false && q.text && Array.isArray(q.options) && q.options.length >= 2; }
+
+// ---------- Loại câu hỏi ----------
+// single: 1 đáp án đúng (đúng/sai cũng là single với 2 phương án) · multi: nhiều đáp án đúng, đúng khi chọn ĐÚNG và ĐỦ tập đáp án ·
+// fill: điền vào chỗ trống, đúng khi khớp một trong các đáp án chấp nhận (không phân biệt hoa/thường, khoảng trắng thừa, dấu câu cuối).
+const TYPES = ["single", "multi", "fill"];
+function qType(q) { return q && TYPES.indexOf(q.type) >= 0 ? q.type : "single"; }
+function normText(s) {
+  let t = String(s == null ? "" : s).normalize("NFC").toLowerCase().replace(/\s+/g, " ").trim();
+  t = t.replace(/(\d),(\d)/g, "$1.$2");            // 1,5 == 1.5
+  return t.replace(/^[\s"'“”‘’.,;:!?()\[\]-]+|[\s"'“”‘’.,;:!?()\[\]-]+$/g, "");
+}
+// Làm sạch dữ liệu câu hỏi nhập từ quản trị viên theo từng loại. Trả về { error } hoặc { fields }.
+function normalizeQuestionInput(q) {
+  q = q || {};
+  const type = TYPES.indexOf(q.type) >= 0 ? q.type : "single";
+  const text = String(q.text || "").trim().slice(0, 2000);
+  if (!text) return { error: "Câu hỏi cần có nội dung." };
+  if (type === "fill") {
+    const raw = Array.isArray(q.accepted) ? q.accepted : String(q.accepted || "").split(/\r?\n/);
+    const accepted = raw.map((a) => String(a || "").trim().slice(0, 200)).filter(Boolean).filter((v, i, a) => a.findIndex((x) => normText(x) === normText(v)) === i).slice(0, 20);
+    if (!accepted.length) return { error: "Câu điền khuyết cần ít nhất một đáp án chấp nhận." };
+    return { fields: { type, text, options: [], correctIndex: -1, accepted } };
+  }
+  const options = Array.isArray(q.options) ? q.options.map((o) => String(o || "").trim().slice(0, 500)).filter(Boolean) : [];
+  if (options.length < 2) return { error: "Câu hỏi cần ít nhất 2 phương án." };
+  if (options.length > 8) return { error: "Tối đa 8 phương án." };
+  if (type === "multi") {
+    const idx = (Array.isArray(q.correctIndexes) ? q.correctIndexes : []).filter((i) => Number.isInteger(i) && i >= 0 && i < options.length).filter((v, i, a) => a.indexOf(v) === i).sort((a, b) => a - b);
+    if (idx.length < 2) return { error: "Câu nhiều đáp án cần chọn ít nhất 2 đáp án đúng (chỉ 1 đáp án thì dùng loại \"Một đáp án\")." };
+    return { fields: { type, text, options, correctIndex: idx[0], correctIndexes: idx } };
+  }
+  const correctIndex = Number.isInteger(q.correctIndex) ? q.correctIndex : -1;
+  if (correctIndex < 0 || correctIndex >= options.length) return { error: "Hãy chọn 1 đáp án đúng hợp lệ." };
+  return { fields: { type: "single", text, options, correctIndex } };
+}
+// Chấm MỘT câu. ans = câu trả lời đã lưu (vị trí hiển thị), order = thứ tự đáp án đã xáo của thí sinh.
+// Trả về { state: "correct"|"wrong"|"blank", ok, chosenText, correctText, chosenOrig: [chỉ số gốc đã chọn] }.
+function gradeAnswer(q, ans, order) {
+  const t = qType(q);
+  if (t === "fill") {
+    const given = ans && typeof ans.text === "string" ? ans.text.trim() : "";
+    const accepted = q.accepted || [];
+    if (!given) return { state: "blank", ok: false, chosenText: "(không trả lời)", correctText: accepted.join(" / "), chosenOrig: [] };
+    const n = normText(given), ok = accepted.some((a) => normText(a) === n);
+    return { state: ok ? "correct" : "wrong", ok, chosenText: given, correctText: accepted.join(" / "), chosenOrig: [] };
+  }
+  const ord = order || (q.options || []).map((_, i) => i);
+  if (t === "multi") {
+    const pos = ans && Array.isArray(ans.answerIndexes) ? ans.answerIndexes : [];
+    const orig = pos.filter((p, i) => Number.isInteger(p) && p >= 0 && p < ord.length && pos.indexOf(p) === i).map((p) => ord[p]).sort((a, b) => a - b);
+    const want = (q.correctIndexes || []).slice().sort((a, b) => a - b);
+    const correctText = want.map((i) => q.options[i]).join("; ");
+    if (!orig.length) return { state: "blank", ok: false, chosenText: "(không trả lời)", correctText, chosenOrig: [] };
+    const ok = orig.length === want.length && orig.every((v, i) => v === want[i]);
+    return { state: ok ? "correct" : "wrong", ok, chosenText: orig.map((i) => q.options[i]).join("; "), correctText, chosenOrig: orig };
+  }
+  const oi = ans && Number.isInteger(ans.answerIndex) && ans.answerIndex >= 0 && ans.answerIndex < ord.length ? ord[ans.answerIndex] : -1;
+  const ok = oi === q.correctIndex;
+  return { state: oi < 0 ? "blank" : (ok ? "correct" : "wrong"), ok: oi >= 0 && ok, chosenText: oi >= 0 ? q.options[oi] : "(không trả lời)", correctText: q.options[q.correctIndex], chosenOrig: oi >= 0 ? [oi] : [] };
+}
+function usableQ(q) {
+  if (!q || q.active === false || !q.text) return false;
+  if (qType(q) === "fill") return Array.isArray(q.accepted) && q.accepted.length >= 1;
+  return Array.isArray(q.options) && q.options.length >= 2;
+}
 // Chuyển đổi một lần: ngân hàng đề cũ (chưa câu nào có kỳ) chính là đề của kỳ đang chạy -> gắn vào kỳ hiện tại.
 async function ensureBankPeriods() {
   const list = await getQuestions();
@@ -360,11 +424,16 @@ function checkVerifyToken(t) {
 function buildPaper(a, byId) {
   return (a.questionIds || []).map((qid, i) => {
     const q = byId[qid]; if (!q) return null;
-    const order = (a.orders && a.orders[qid]) || q.options.map((_, k) => k);
+    const type = qType(q);
     const ans = a.answers && a.answers[qid];
-    const chosen = ans && Number.isInteger(ans.answerIndex) && ans.answerIndex >= 0 && ans.answerIndex < order.length ? ans.answerIndex : -1;
-    const correct = order.indexOf(q.correctIndex);
-    return { n: i + 1, text: q.text, options: order.map((k) => q.options[k]), chosen, correct, ok: chosen >= 0 && chosen === correct, category: q.category || "" };
+    const order = (a.orders && a.orders[qid]) || (q.options || []).map((_, k) => k);
+    const g = gradeAnswer(q, ans, order);
+    const base = { n: i + 1, type, text: q.text, category: q.category || "", ok: g.ok, answerText: g.correctText, chosenText: g.state === "blank" ? null : g.chosenText };
+    if (type === "fill") return Object.assign(base, { options: [], chosen: g.state === "blank" ? -1 : 0, correct: 0, accepted: (q.accepted || []).slice() });
+    const chosenList = order.map((k, pos) => (g.chosenOrig.indexOf(k) >= 0 ? pos : -1)).filter((x) => x >= 0);
+    const wantOrig = type === "multi" ? q.correctIndexes : [q.correctIndex];
+    const correctList = order.map((k, pos) => (wantOrig.indexOf(k) >= 0 ? pos : -1)).filter((x) => x >= 0);
+    return Object.assign(base, { options: order.map((k) => q.options[k]), chosen: chosenList.length ? chosenList[0] : -1, correct: correctList[0], chosenList, correctList });
   }).filter(Boolean);
 }
 
@@ -441,13 +510,13 @@ function clientState(a, byId, now) {
   }
   if (a.cursor >= n) return { state: { done: true, total: n }, changed };
   const qid = a.questionIds[a.cursor], q = byId[qid];
-  const order = a.orders[qid] || q.options.map((_, i) => i);
+  const order = a.orders[qid] || (q.options || []).map((_, i) => i);
   return {
     state: {
       done: false, index: a.cursor, total: n,
       remainingMs: Math.max(0, a.qStartedAt + S - now),
       secondsPerQuestion: a.secondsPerQuestion,
-      question: { id: qid, text: q.text, options: order.map((i) => q.options[i]) }
+      question: { id: qid, type: qType(q), text: q.text, options: order.map((i) => q.options[i]) }
     },
     changed
   };
@@ -480,6 +549,7 @@ module.exports = {
   getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary,
   getBanks, saveBanks, bankOf, validBankId, slugify, cleanQuestionMeta, DEFAULT_BANK, DIFFICULTIES,
   cleanBlueprint, buildFromBlueprint, blueprintTotal, examAccessError,
+  TYPES, qType, normText, normalizeQuestionInput, gradeAnswer,
   getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,
   buildPaper, getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail

@@ -36,17 +36,12 @@ module.exports = async function (context, req) {
     attempt.questionIds.forEach((qid, idx) => {
       const q = byId[qid];
       if (!q) return;
-      const ans = attempt.answers[qid];
-      const order = attempt.orders[qid] || q.options.map((_, i) => i);
-      // ans.answerIndex là vị trí hiển thị (đã xáo trộn) phía thí sinh; đưa về chỉ số gốc để so với đáp án đúng.
-      const originalIndex = ans && ans.answerIndex >= 0 ? order[ans.answerIndex] : -1;
-      const isCorrect = originalIndex === q.correctIndex;
-      if (isCorrect) correct++; else if (originalIndex >= 0) wrongN++;
-      const chosenText = originalIndex >= 0 ? q.options[originalIndex] : "(không trả lời)";
-      const correctText = q.options[q.correctIndex];
+      // Chấm theo loại câu (một đáp án / nhiều đáp án / điền khuyết); câu trả lời lưu theo vị trí hiển thị đã xáo trộn.
+      const g = quiz.gradeAnswer(q, attempt.answers[qid], attempt.orders[qid]);
+      if (g.state === "correct") correct++; else if (g.state === "wrong") wrongN++;
       detailLines.push(
-        "Câu " + (idx + 1) + " [" + (isCorrect ? "Đúng" : "Sai") + "]: " + q.text +
-        " — Bạn chọn: " + chosenText + (isCorrect ? "" : " (Đáp án đúng: " + correctText + ")")
+        "Câu " + (idx + 1) + " [" + (g.ok ? "Đúng" : "Sai") + "]: " + q.text +
+        " — Bạn chọn: " + g.chosenText + (g.ok ? "" : " (Đáp án đúng: " + g.correctText + ")")
       );
     });
 

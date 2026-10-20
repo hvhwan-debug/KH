@@ -26,18 +26,29 @@ module.exports = async function (context, req) {
     }
     quiz.syncAttempt(attempt, now); // câu quá hạn tự tính là bỏ trống, con trỏ nhảy tới câu hiện tại
 
+    const byId = {};
+    (await quiz.getQuestions()).forEach((q) => { byId[q.id] = q; });
+
     let accepted = false;
     if (attempt.cursor < attempt.questionIds.length && attempt.questionIds[attempt.cursor] === questionId) {
       const order = attempt.orders[questionId] || [];
-      const ai = Number.isInteger(b.answerIndex) && b.answerIndex >= 0 && b.answerIndex < order.length ? b.answerIndex : -1;
-      attempt.answers[questionId] = { answerIndex: ai, answeredAt: now };
+      const type = quiz.qType(byId[questionId]);
+      const rec = { answeredAt: now };
+      if (type === "fill") {
+        rec.text = typeof b.text === "string" ? b.text.slice(0, 200) : "";
+        rec.answerIndex = -1;
+      } else if (type === "multi") {
+        const arr = Array.isArray(b.answerIndexes) ? b.answerIndexes : [];
+        rec.answerIndexes = arr.filter((v, i) => Number.isInteger(v) && v >= 0 && v < order.length && arr.indexOf(v) === i).slice(0, 8);
+        rec.answerIndex = rec.answerIndexes.length ? rec.answerIndexes[0] : -1;
+      } else {
+        rec.answerIndex = Number.isInteger(b.answerIndex) && b.answerIndex >= 0 && b.answerIndex < order.length ? b.answerIndex : -1;
+      }
+      attempt.answers[questionId] = rec;
       attempt.cursor++;
       attempt.qStartedAt = now;
       accepted = true;
     }
-
-    const byId = {};
-    (await quiz.getQuestions()).forEach((q) => { byId[q.id] = q; });
     const cs = quiz.clientState(attempt, byId, now);
     await quiz.putAttempt(attempt);
     return reply(context, 200, Object.assign({ ok: true, accepted }, cs.state));
