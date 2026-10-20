@@ -78,6 +78,9 @@ function shuffle(arr) {
   return a;
 }
 
+// Mã minh chứng in trên thẻ kết quả để quản trị viên đối chiếu với hệ thống (suy ra từ mã bài làm, không cần lưu thêm).
+function proofCode(id) { return "KT-" + String(id || "").slice(-8).toUpperCase(); }
+
 function genId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 }
@@ -165,5 +168,5 @@ module.exports = {
   getAttempt, putAttempt,
   getIndex, upsertIndex,
   shuffle, genId, compliancePoints,
-  GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
+  proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
 };

@@ -20,6 +20,7 @@ module.exports = async function (context, req) {
         ok: true, score: attempt.score, total: attempt.total, pct: attempt.pct, passed: attempt.passed,
         compliancePoints: attempt.compliancePoints, already: true, mailOk: attempt.mailOk,
         passScore: st.passScore || 0, submittedAt: attempt.submittedAt, serverNow: Date.now(),
+        startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id),
         durationSec: Math.round(((attempt.submittedAt || 0) - (attempt.startedAt || 0)) / 1000)
       });
     }
@@ -30,7 +31,7 @@ module.exports = async function (context, req) {
     const byId = {};
     allQuestions.forEach((q) => { byId[q.id] = q; });
 
-    let correct = 0;
+    let correct = 0, wrongN = 0;
     const detailLines = [];
     attempt.questionIds.forEach((qid, idx) => {
       const q = byId[qid];
@@ -40,7 +41,7 @@ module.exports = async function (context, req) {
       // ans.answerIndex là vị trí hiển thị (đã xáo trộn) phía thí sinh; đưa về chỉ số gốc để so với đáp án đúng.
       const originalIndex = ans && ans.answerIndex >= 0 ? order[ans.answerIndex] : -1;
       const isCorrect = originalIndex === q.correctIndex;
-      if (isCorrect) correct++;
+      if (isCorrect) correct++; else if (originalIndex >= 0) wrongN++;
       const chosenText = originalIndex >= 0 ? q.options[originalIndex] : "(không trả lời)";
       const correctText = q.options[q.correctIndex];
       detailLines.push(
@@ -64,12 +65,14 @@ module.exports = async function (context, req) {
     attempt.passed = passed;
     attempt.scoreOutOf10 = Math.round(scoreOutOf10 * 100) / 100;
     attempt.compliancePoints = compliance;
+    attempt.wrong = wrongN;
+    attempt.blank = Math.max(0, total - correct - wrongN);
     await quiz.putAttempt(attempt);
 
     await quiz.upsertIndex({
       id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "",
       score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
-      submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null, durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000)
+      submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000)
     });
 
     let mailOk = false;
@@ -109,7 +112,7 @@ module.exports = async function (context, req) {
       await quiz.upsertIndex({
         id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "",
         score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
-        submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null, durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), mailOk
+        submittedAt: attempt.submittedAt, status: "submitted", flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), mailOk
       });
     } catch (e) {
       context.log.error("kt-submit mailOk", e && e.message);
@@ -118,6 +121,7 @@ module.exports = async function (context, req) {
     return reply(context, 200, {
       ok: true, score: correct, total, pct, passed, compliancePoints: compliance, mailOk,
       passScore: settings.passScore || 0, submittedAt: attempt.submittedAt, serverNow: Date.now(),
+      startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id),
       durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000)
     });
   } catch (e) {

@@ -58,12 +58,16 @@ async function call(name, body, headers) {
   r = await call("submit", { attemptId: att });
   ok(r.j.ok && r.j.total === 5 && r.j.score === 4 && r.j.pct === 80 && r.j.passed === true && r.j.mailOk === true && r.j.passScore === 60, "submit: chấm đúng 4/5 (1 câu bỏ lỡ), ĐẠT, đã gửi mail");
   ok(typeof r.j.durationSec === "number", "submit: có thời gian làm bài");
+  ok(r.j.wrong === 0 && r.j.blank === 1 && r.j.score + r.j.wrong + r.j.blank === r.j.total, "submit: đếm đúng/sai/bỏ trống khớp tổng số câu");
+  ok(/^KT-[A-Z0-9]{8}$/.test(r.j.proof) && r.j.startedAt > 0 && r.j.serverNow > 0, "submit: có mã minh chứng, giờ bắt đầu và giờ máy chủ");
+  const proofCode1 = r.j.proof;
   const mb = global.__mailbox || []; ok(mb.length === 1 && mb[0].to === "a@x.vn", "chỉ gửi đúng 1 email kết quả");
   r = await call("submit", { attemptId: att }); ok(r.j.already === true && (global.__mailbox || []).length === 1, "nộp lần 2: idempotent, không gửi mail lần nữa");
   r = await call("answer", { attemptId: att, questionId: cur.id, answerIndex: 0 }); ok(r.j.done === true, "answer sau khi nộp: báo đã xong");
   r = await call("start", { code: "NV1", email: "a@x.vn" }); ok(r.s === 409, "đã nộp: không cho làm lại");
   r = await call("check", { code: "NV1", email: "a@x.vn" });
   ok(r.j.alreadyDone && r.j.result.score === 4 && r.j.result.mailOk === true && r.j.result.submittedAt > 0, "check sau khi nộp: trả kết quả cũ + trạng thái email");
+  ok(r.j.result.proof === proofCode1 && r.j.result.blank === 1 && r.j.result.startedAt > 0 && r.j.serverNow > 0, "check sau khi nộp: mã minh chứng khớp lúc nộp + đủ số liệu");
 
   // Giới hạn dò mã
   let last; for (let i = 0; i < 9; i++) last = await call("check", { code: "X" + i, email: "z@x.vn" });
