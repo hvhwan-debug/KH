@@ -231,6 +231,7 @@ button,input,select{font:inherit;color:inherit}
 (function(){
 'use strict';
 var $ = function(id){ return document.getElementById(id); };
+var $add = function(id){ return document.querySelector('#ovAdd #' + id); };
 var ZONE = 'Asia/Ho_Chi_Minh', off = 0, EMP = [], VIEWER = null, editing = null, mode = 'login';
 var SEG = { both:'Cả hai ngành', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };
 
@@ -247,7 +248,7 @@ async function api(method, path, body){
 function show(which){ ['loginScreen','deniedScreen','app'].forEach(function(id){ $(id).classList.toggle('hide', id !== which); }); }
 
 function validateAddName(){
-  var input = $('aName');
+  var input = $add('aName');
   var msgNode = $('aMsg');
   if (!input) return true;
   var name = String(input.value || '').trim();
@@ -263,7 +264,7 @@ function validateAddName(){
   return true;
 }
 
-$('aName').addEventListener('input', function(){
+$add('aName').addEventListener('input', function(){
   if (this.value.trim().length > 0) {
     this.classList.remove('is-invalid');
     msg('aMsg', '');
@@ -512,7 +513,7 @@ $('eSaveConf').addEventListener('click', function(){ saveEdit(true); });
 /* ---------- Thêm nhân viên ---------- */
 function openAdd(){
   msg('aMsg','');
-  $('aCode').value=''; $('aName').value=''; $('aEmail').value=''; $('aSeg').value='both'; $('aName').classList.remove('is-invalid');
+  $add('aCode').value=''; $add('aName').value=''; $add('aEmail').value=''; $add('aSeg').value='both'; $add('aName').classList.remove('is-invalid');
   var scopes = VIEWER.scopes || [];
   $('aScopeField').classList.add('hide'); $('aScopeFreeField').classList.add('hide');
   if (VIEWER.isAdmin){
@@ -523,7 +524,7 @@ function openAdd(){
     $('aScopeField').classList.remove('hide');
     $('aScope').innerHTML = scopes.map(function(s){ return '<option value="'+esc(s).replace(/"/g,'&quot;')+'">'+esc(s)+'</option>'; }).join('');
   }
-  $('ovAdd').classList.remove('hide'); $('aCode').focus();
+  $('ovAdd').classList.remove('hide'); $add('aCode').focus();
 }
 $('addBtn').addEventListener('click', openAdd);
 $('aSave').addEventListener('click', async function(){
@@ -532,7 +533,7 @@ $('aSave').addEventListener('click', async function(){
   var btn = $('aSave'); btn.disabled = true;
   var scopes = VIEWER.scopes || [];
   var scope = VIEWER.isAdmin ? $('aScopeFree').value.trim() : (scopes.length > 1 ? $('aScope').value : (scopes[0] || ''));
-  var r = await api('POST','/api/kt-viewer', { op:'addEmployee', code:$('aCode').value, name:$('aName').value, email:$('aEmail').value, segment:$('aSeg').value, scope:scope });
+  var r = await api('POST','/api/kt-viewer', { op:'addEmployee', code:$add('aCode').value, name:$add('aName').value, email:$add('aEmail').value, segment:$add('aSeg').value, scope:scope });
   btn.disabled = false;
   if (!r.j.ok){ msg('aMsg', r.j.error || 'Không thêm được.'); return; }
   $('ovAdd').classList.add('hide'); await load();
