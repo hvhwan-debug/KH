@@ -76,16 +76,16 @@ function layout(o) {
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border:1px solid #DCE5E9;border-radius:18px;border-collapse:separate;overflow:hidden;font-family:' + FONT + '">' +
     '<tr><td class="hpad" bgcolor="#067A8C" style="background:#067A8C;background:linear-gradient(135deg,#02A79E 0%,#067A8C 100%);padding:22px 28px">' +
     '<table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
-    '<td valign="middle" style="padding-right:12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td width="40" height="40" align="center" valign="middle" bgcolor="#ffffff" style="width:40px;height:40px;background:#ffffff;border-radius:11px;font-family:' + FONT + ';font-size:22px;font-weight:800;color:#067A8C;line-height:40px">L</td></tr></table></td>' +
-    '<td valign="middle"><div style="font-size:17px;font-weight:700;color:#ffffff;letter-spacing:.01em;line-height:1.2">Livotec</div>' +
-    '<div style="font-size:12.5px;color:#D3F1EE;line-height:1.35;margin-top:2px">Trợ lí thiết lập kế hoạch bán hàng · Kênh GT</div></td></tr></table></td></tr>' +
+    '<td valign="middle" style="padding-right:12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td width="40" height="40" align="center" valign="middle" bgcolor="#ffffff" style="width:40px;height:40px;background:#ffffff;border-radius:11px;font-family:' + FONT + ';font-size:22px;font-weight:800;color:#067A8C;line-height:40px">' + esc(o.brandLetter || "L") + '</td></tr></table></td>' +
+    '<td valign="middle"><div style="font-size:17px;font-weight:700;color:#ffffff;letter-spacing:.01em;line-height:1.2">' + esc(o.brand || "Livotec") + '</div>' +
+    '<div style="font-size:12.5px;color:#D3F1EE;line-height:1.35;margin-top:2px">' + esc(o.brandSub || "Trợ lí thiết lập kế hoạch bán hàng · Kênh GT") + '</div></td></tr></table></td></tr>' +
     '<tr><td class="pad" style="padding:28px 30px 26px;color:#06302D">' +
     '<span style="display:inline-block;background:' + t.bg + ";color:" + t.fg + ';font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;letter-spacing:.07em">' + t.label + "</span>" +
     '<h1 class="h1" style="font-size:23px;line-height:1.3;margin:12px 0 16px;color:#06302D;font-weight:700;letter-spacing:-.01em">' + esc(o.title) + "</h1>" +
     tiles + code + secs + cta +
     "</td></tr>" +
     '<tr><td class="fpad" style="background:#F6F9FA;border-top:1px solid #E3EBEE;padding:16px 30px 20px;font-size:12px;line-height:1.6;color:#6A7C80">' + foot +
-    '<div style="margin-top:10px;font-size:11.5px;color:#9AABAF">© Livotec · Trợ lí thiết lập kế hoạch bán hàng kênh GT</div></td></tr>' +
+    '<div style="margin-top:10px;font-size:11.5px;color:#9AABAF">© ' + esc(o.brand || "Livotec") + (o.brandSub ? " · " + esc(o.brandSub) : " · Trợ lí thiết lập kế hoạch bán hàng kênh GT") + '</div></td></tr>' +
     "</table></td></tr></table></body></html>";
   const text = [
     "[" + t.label + "] " + o.title, "",

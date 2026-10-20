@@ -66,6 +66,7 @@ module.exports = async function (context, req) {
 
     try {
       const { html, text } = layout({
+        brand: "Hệ thống kiểm tra", brandSub: "Bài kiểm tra nội bộ", brandLetter: "KT",
         tone: passed ? "info" : "warn",
         title: "Kết quả bài kiểm tra: " + (settings.examTitle || "Bài kiểm tra"),
         tiles: [
