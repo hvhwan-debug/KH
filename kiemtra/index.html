@@ -107,6 +107,9 @@ input:focus{outline:2px solid var(--brand);outline-offset:1px}
       <div class="rescell"><b id="resScore">0/0</b><span>Số câu đúng</span></div>
       <div class="rescell"><b id="resPct">0%</b><span>Tỉ lệ đúng</span></div>
     </div>
+    <div class="resrow hide" id="resComplianceRow">
+      <div class="rescell"><b id="resCompliance">0</b><span>Điểm tuân thủ học tập</span></div>
+    </div>
     <div class="msg ok" id="resMailMsg">Kết quả đã được gửi tự động về email bạn đã nhập.</div>
   </div>
 
@@ -253,6 +256,10 @@ function showFinalResult(r, already){
   $('resSub').textContent = already ? 'Bạn đã hoàn thành bài kiểm tra này trước đó.' : 'Cảm ơn bạn đã hoàn thành bài kiểm tra.';
   $('resScore').textContent = (r.score!=null?r.score:'–') + '/' + (r.total!=null?r.total:'–');
   $('resPct').textContent = (r.pct!=null?r.pct:'–') + '%';
+  if (r.compliancePoints != null){
+    $('resCompliance').textContent = r.compliancePoints;
+    $('resComplianceRow').classList.remove('hide');
+  }
 }
 </script>
 </body>

@@ -11,8 +11,23 @@ const DEFAULT_SETTINGS = {
   questionCount: 20,
   secondsPerQuestion: 60,
   passScore: 70,
-  allowRetake: false
+  allowRetake: false,
+  // Điểm tuân thủ học tập: quy đổi từ tỉ lệ đúng (thang điểm 10) sang một mốc điểm cố định
+  // (mặc định theo quy tắc kiểm tra định kỳ PC: <6 → 0, 6-6.99 → 10, 7-8.99 → 15, >=9 → 20).
+  complianceEnabled: true,
+  complianceHighMin: 9,   // >= mốc này: 20 điểm
+  complianceMidMin: 7,    // >= mốc này (và < mốc trên): 15 điểm
+  complianceLowMin: 6     // >= mốc này (và < mốc trên): 10 điểm; dưới mốc này: 0 điểm
 };
+
+// Quy đổi điểm thang 10 (tỉ lệ đúng * 10) sang điểm tuân thủ học tập theo mốc đã cấu hình.
+function compliancePoints(scoreOutOf10, settings) {
+  const s = settings || DEFAULT_SETTINGS;
+  if (scoreOutOf10 >= s.complianceHighMin) return 20;
+  if (scoreOutOf10 >= s.complianceMidMin) return 15;
+  if (scoreOutOf10 >= s.complianceLowMin) return 10;
+  return 0;
+}
 
 function normCode(s) { return String(s || "").trim().toLowerCase(); }
 function normEmail(s) { return String(s || "").trim().toLowerCase(); }
@@ -62,5 +77,5 @@ module.exports = {
   getSettings, saveSettings,
   getAttempt, putAttempt,
   getIndex, upsertIndex,
-  shuffle, genId
+  shuffle, genId, compliancePoints
 };

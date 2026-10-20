@@ -15,7 +15,7 @@ module.exports = async function (context, req) {
     const attempt = await quiz.getAttempt(attemptId);
     if (!attempt) return reply(context, 404, { ok: false, error: "Không tìm thấy bài làm." });
     if (attempt.status === "submitted") {
-      return reply(context, 200, { ok: true, score: attempt.score, total: attempt.total, pct: attempt.pct, passed: attempt.passed, already: true });
+      return reply(context, 200, { ok: true, score: attempt.score, total: attempt.total, pct: attempt.pct, passed: attempt.passed, compliancePoints: attempt.compliancePoints, already: true });
     }
 
     const allQuestions = await quiz.getQuestions();
@@ -37,6 +37,8 @@ module.exports = async function (context, req) {
     const settings = await quiz.getSettings();
     const pct = total ? Math.round((correct / total) * 100) : 0;
     const passed = pct >= (settings.passScore || 0);
+    const scoreOutOf10 = total ? (correct / total) * 10 : 0;
+    const compliance = settings.complianceEnabled ? quiz.compliancePoints(scoreOutOf10, settings) : null;
 
     attempt.status = "submitted";
     attempt.submittedAt = Date.now();
@@ -44,11 +46,14 @@ module.exports = async function (context, req) {
     attempt.total = total;
     attempt.pct = pct;
     attempt.passed = passed;
+    attempt.scoreOutOf10 = Math.round(scoreOutOf10 * 100) / 100;
+    attempt.compliancePoints = compliance;
     await quiz.putAttempt(attempt);
 
     await quiz.upsertIndex({
       id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email,
-      score: correct, total, pct, passed, submittedAt: attempt.submittedAt, status: "submitted"
+      score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
+      submittedAt: attempt.submittedAt, status: "submitted"
     });
 
     try {
@@ -59,7 +64,7 @@ module.exports = async function (context, req) {
           { n: correct + "/" + total, l: "Số câu đúng" },
           { n: pct + "%", l: "Tỉ lệ đúng" },
           { n: passed ? "ĐẠT" : "CHƯA ĐẠT", l: "Kết quả" }
-        ],
+        ].concat(compliance != null ? [{ n: compliance + " điểm", l: "Điểm tuân thủ học tập" }] : []),
         sections: [{
           h: "Thông tin thí sinh",
           lines: [
@@ -75,7 +80,7 @@ module.exports = async function (context, req) {
       context.log.error("kt-submit mail", e && e.message);
     }
 
-    return reply(context, 200, { ok: true, score: correct, total, pct, passed });
+    return reply(context, 200, { ok: true, score: correct, total, pct, passed, compliancePoints: compliance });
   } catch (e) {
     context.log.error("kt-submit", e && e.message);
     return reply(context, 500, { ok: false, error: "Có lỗi xảy ra." });

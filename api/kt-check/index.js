@@ -27,7 +27,7 @@ module.exports = async function (context, req) {
           ok: true,
           candidate: { code: found.code, name: found.name, email: found.email },
           alreadyDone: true,
-          result: { score: prior.score, total: prior.total, pct: prior.pct, passed: prior.passed }
+          result: { score: prior.score, total: prior.total, pct: prior.pct, passed: prior.passed, compliancePoints: prior.compliancePoints }
         });
       }
     }

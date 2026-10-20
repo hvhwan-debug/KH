@@ -105,7 +105,11 @@ module.exports = async function (context, req) {
         questionCount: Math.max(1, parseInt(b.questionCount, 10) || cur.questionCount),
         secondsPerQuestion: Math.max(10, parseInt(b.secondsPerQuestion, 10) || cur.secondsPerQuestion),
         passScore: Math.min(100, Math.max(0, parseInt(b.passScore, 10) || 0)),
-        allowRetake: !!b.allowRetake
+        allowRetake: !!b.allowRetake,
+        complianceEnabled: !!b.complianceEnabled,
+        complianceHighMin: Math.min(10, Math.max(0, parseFloat(b.complianceHighMin) || 0)),
+        complianceMidMin: Math.min(10, Math.max(0, parseFloat(b.complianceMidMin) || 0)),
+        complianceLowMin: Math.min(10, Math.max(0, parseFloat(b.complianceLowMin) || 0))
       });
       await quiz.saveSettings(next);
       return reply(context, 200, { ok: true, settings: next });

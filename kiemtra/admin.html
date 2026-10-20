@@ -152,13 +152,25 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
         <button class="btn" style="margin-top:14px" onclick="saveSettings()">Lưu cài đặt</button>
         <div id="setMsg"></div>
       </div>
+      <div class="card">
+        <h1>Điểm tuân thủ học tập</h1>
+        <p class="small">Quy đổi tỉ lệ đúng (thang điểm 10) sang một mốc điểm cố định, hiện kèm theo kết quả bài kiểm tra và trong email gửi thí sinh.</p>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:0"><input type="checkbox" id="setComplianceOn" style="width:18px;height:18px"> Bật tính điểm tuân thủ học tập</label>
+        <div class="grid2" style="margin-top:12px">
+          <div><label>Điểm ≥ mốc này → <b>20 điểm</b></label><input type="text" inputmode="decimal" id="setCHigh"></div>
+          <div><label>Điểm ≥ mốc này (và dưới mốc trên) → <b>15 điểm</b></label><input type="text" inputmode="decimal" id="setCMid"></div>
+          <div><label>Điểm ≥ mốc này (và dưới mốc trên) → <b>10 điểm</b></label><input type="text" inputmode="decimal" id="setCLow"></div>
+          <div><label>Dưới mốc thấp nhất</label><input type="text" value="0 điểm" disabled style="background:#f3f6f6;color:var(--muted)"></div>
+        </div>
+        <button class="btn" style="margin-top:14px" onclick="saveSettings()">Lưu cài đặt</button>
+      </div>
     </div>
 
     <!-- Kết quả -->
     <div id="tab-results" class="tabpane hide">
       <div class="card">
         <h1>Kết quả (<span id="resCount">0</span>)</h1>
-        <table><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Điểm</th><th>Tỉ lệ</th><th>Kết quả</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
+        <table><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
       </div>
       <div class="card hide" id="resDetailCard">
         <h1>Chi tiết bài làm</h1>
@@ -302,11 +314,15 @@ async function loadSettings(){
   $('setTitle').value = s.examTitle; $('setCount').value = s.questionCount;
   $('setSeconds').value = s.secondsPerQuestion; $('setPass').value = s.passScore;
   $('setRetake').checked = !!s.allowRetake;
+  $('setComplianceOn').checked = !!s.complianceEnabled;
+  $('setCHigh').value = s.complianceHighMin; $('setCMid').value = s.complianceMidMin; $('setCLow').value = s.complianceLowMin;
 }
 async function saveSettings(){
   const { j } = await api('POST','/api/kt-admin', {
     op:'saveSettings', examTitle: $('setTitle').value, questionCount: $('setCount').value,
-    secondsPerQuestion: $('setSeconds').value, passScore: $('setPass').value, allowRetake: $('setRetake').checked
+    secondsPerQuestion: $('setSeconds').value, passScore: $('setPass').value, allowRetake: $('setRetake').checked,
+    complianceEnabled: $('setComplianceOn').checked, complianceHighMin: $('setCHigh').value,
+    complianceMidMin: $('setCMid').value, complianceLowMin: $('setCLow').value
   });
   if (!j.ok){ msg('setMsg', j.error, 'err'); return; }
   msg('setMsg','Đã lưu cài đặt.','ok');
@@ -319,10 +335,11 @@ async function loadResults(){
   $('resCount').textContent = j.results.length;
   $('resList').innerHTML = j.results.map(r =>
     '<tr><td>'+esc(r.code)+'</td><td>'+esc(r.name||'')+'</td><td>'+r.score+'/'+r.total+'</td><td>'+r.pct+'%</td>'+
+    '<td>'+(r.compliancePoints!=null?r.compliancePoints:'–')+'</td>'+
     '<td>'+(r.passed?'<span class="badge y">Đạt</span>':'<span class="badge n">Chưa đạt</span>')+'</td>'+
     '<td class="small">'+new Date(r.submittedAt).toLocaleString('vi-VN')+'</td>'+
     '<td><button class="btn ghost sm" onclick="viewResult(\''+r.id+'\')">Xem</button></td></tr>'
-  ).join('') || '<tr><td colspan="7" class="small">Chưa có bài làm nào được nộp.</td></tr>';
+  ).join('') || '<tr><td colspan="8" class="small">Chưa có bài làm nào được nộp.</td></tr>';
 }
 async function viewResult(id){
   const { j } = await api('GET','/api/kt-admin?op=result&id='+encodeURIComponent(id));
