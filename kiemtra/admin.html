@@ -47,6 +47,46 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
 .small{font-size:12.5px;color:var(--muted)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:640px){.grid2{grid-template-columns:1fr}}
+/* dashboard đánh giá */
+.dash-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.dash-h h1{margin:0}.dash-h .small{margin:0}
+.banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-size:13.5px;line-height:1.5;margin-bottom:14px}
+.banner b{color:#6B4400}.banner .sp{flex:1 1 200px}
+.banner input{width:110px;padding:6px 10px;background:#fff}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+@media(max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi .v{font-size:24px;font-weight:800;line-height:1.15;font-variant-numeric:tabular-nums}
+.kpi .v small{font-size:13px;font-weight:600;color:var(--muted)}
+.kpi .l{font-size:12.5px;color:var(--muted);margin-top:2px}
+.kpi .d{font-size:12px;font-weight:700;margin-top:6px}
+.kpi .d.up{color:var(--ok)}.kpi .d.down{color:var(--bad)}.kpi .d.flat{color:var(--muted)}
+.kpi .bar{height:6px;border-radius:4px;background:#E6EEF0;overflow:hidden;margin-top:8px}.kpi .bar i{display:block;height:100%;background:var(--brand-deep)}
+.kpi.alert .v{color:var(--bad)}
+.dgrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;margin-bottom:14px}
+@media(max-width:760px){.dgrid{grid-template-columns:1fr}}
+.panel{border:1px solid var(--line);border-radius:12px;padding:14px}
+.panel h2{font-size:14px;margin:0 0 10px}
+.band{display:grid;grid-template-columns:150px 1fr 74px;gap:10px;align-items:center;font-size:13px;margin:7px 0}
+.band .t{height:12px;border-radius:6px;background:#EEF3F4;overflow:hidden}.band .t i{display:block;height:100%;border-radius:6px}
+.band .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}.band .n b{color:var(--ink)}
+.flags{list-style:none;margin:0;padding:0}
+.flags li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.flags li:first-child{border-top:0}.flags li b{font-variant-numeric:tabular-nums}.flags li b.hot{color:var(--bad)}
+table.dt{font-size:13px}
+table.dt td,table.dt th{padding:8px 10px}
+table.dt td.num,table.dt th.num{text-align:right;font-variant-numeric:tabular-nums}
+.cbar{display:flex;align-items:center;gap:8px}.cbar .t{flex:1;min-width:60px;height:7px;border-radius:4px;background:#EEF3F4;overflow:hidden}.cbar .t i{display:block;height:100%;background:var(--brand-deep)}
+.cbar span{font-variant-numeric:tabular-nums;min-width:36px;text-align:right}
+.wq{list-style:none;margin:0;padding:0}
+.wq li{display:grid;grid-template-columns:52px 1fr;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:13px;line-height:1.45}
+.wq li:first-child{border-top:0}
+.wq .r{font-weight:800;color:var(--bad);font-variant-numeric:tabular-nums}
+.wq .a{display:block;font-size:12px;color:var(--ok);margin-top:2px}
+.wq .m{display:block;font-size:12px;color:var(--muted)}
+details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
+.ndg{margin-top:10px;font-size:13px;line-height:1.6}
+.ndg b{display:block;margin-top:8px}
 .hide{display:none!important}
 </style>
 </head>
@@ -255,6 +295,21 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
 
     <!-- Kết quả -->
     <div id="tab-results" class="tabpane hide">
+      <div class="card" id="dashCard">
+        <div class="dash-h"><h1 id="dashTitle">Tổng quan kỳ</h1><p class="small" id="dashSub"></p></div>
+        <div id="dashBanner"></div>
+        <div class="kpis" id="dashKpis"></div>
+        <div class="dgrid">
+          <div class="panel"><h2>Phân bố điểm tuân thủ</h2><div id="dashBands"></div></div>
+          <div class="panel"><h2>Cảnh báo khi làm bài</h2><ul class="flags" id="dashFlags"></ul></div>
+        </div>
+        <div class="dgrid">
+          <div class="panel"><h2>Theo quản lí</h2><div style="overflow-x:auto"><table class="dt"><thead><tr><th>Quản lí</th><th class="num">NV</th><th>Hoàn thành</th><th class="num">Đúng TB</th><th class="num">Dưới chuẩn</th></tr></thead><tbody id="dashMgr"></tbody></table></div></div>
+          <div class="panel"><h2>Theo nhóm ngành</h2><table class="dt"><thead><tr><th>Nhóm ngành</th><th>Hoàn thành</th><th class="num">Đúng TB</th></tr></thead><tbody id="dashSeg"></tbody></table></div>
+        </div>
+        <div class="panel" style="margin-bottom:14px"><h2>Câu hỏi sai nhiều nhất <span class="small" id="dashWqNote" style="font-weight:400"></span></h2><ul class="wq" id="dashWq"></ul></div>
+        <div class="panel"><details class="nd" id="dashNd"><summary id="dashNdSum">Chưa làm bài</summary><div class="ndg" id="dashNdList"></div></details></div>
+      </div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h1 style="margin:0">Kết quả (<span id="resCount">0</span>)</h1>
@@ -579,6 +634,24 @@ async function exportResultsXlsx(){
     ['score','total','pct','compliance'].forEach(k => { row.getCell(k).alignment = { horizontal:'center' }; });
   });
   ws.autoFilter = { from:'A1', to:'M1' };
+  if (DASH){ // trang Tổng quan (theo kỳ đang xem ở dashboard)
+    const o = wb.addWorksheet('Tổng quan ' + DASH.period, { views:[{ showGridLines:false }] });
+    o.columns = [{ width:34 }, { width:12 }, { width:12 }, { width:14 }, { width:14 }];
+    const H = (r) => { r.font = { bold:true, color:{ argb:'FFFFFFFF' } }; r.eachCell(c => { c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF067A8C' } }; }); };
+    o.addRow(['Tổng quan kỳ ' + perLabel(DASH.period)]).font = { bold:true, size:14 };
+    o.addRow([]);
+    [['Đã làm bài', DASH.submitted + '/' + DASH.candidates], ['Tỉ lệ đúng trung bình', pctTxt(DASH.avgPct)], ['Trung vị', pctTxt(DASH.medianPct)],
+     ['Dưới chuẩn (0 điểm tuân thủ)', DASH.bands[0].n], ['Thời gian làm trung bình', durTxt(DASH.avgDurationSec)]].concat(DASH.prev ? [['Tỉ lệ đúng TB kỳ trước (' + perLabel(DASH.prev.period) + ')', pctTxt(DASH.prev.avgPct)]] : [])
+      .forEach(x => { const r = o.addRow(x); r.getCell(1).font = { color:{ argb:'FF5B7471' } }; r.getCell(2).font = { bold:true }; });
+    o.addRow([]); H(o.addRow(['Điểm tuân thủ', 'Số người', 'Tỉ lệ']));
+    DASH.bands.forEach(b => o.addRow([b.label + ' (' + b.pts + 'đ)', b.n, DASH.submitted ? Math.round(b.n/DASH.submitted*100) + '%' : '']));
+    o.addRow([]); H(o.addRow(['Quản lí', 'Số NV', 'Đã làm', 'Đúng TB', 'Dưới chuẩn']));
+    DASH.byManager.forEach(m => o.addRow([m.name, m.total, m.done, pctTxt(m.avgPct), m.weak]));
+    o.addRow([]); H(o.addRow(['Câu hỏi sai nhiều nhất', 'Sai+trống', 'Lượt']));
+    DASH.topWrong.forEach(q => { const r = o.addRow([q.text, q.rate + '%', q.n]); r.getCell(1).alignment = { wrapText:true, vertical:'top' }; });
+    o.addRow([]); H(o.addRow(['Chưa làm bài (' + DASH.notDoneCount + ')', 'Mã NV', 'Quản lí']));
+    DASH.notDone.forEach(c => o.addRow([c.name, c.code, c.manager]));
+  }
 
   const buf = await wb.xlsx.writeBuffer();
   const a = document.createElement('a');
@@ -638,15 +711,76 @@ function flagText(r){
   if (f.blur) a.push('Rời trang ' + f.blur + ' lần');
   return a.join(', ');
 }
+/* ---------- Dashboard đánh giá kỳ ---------- */
+let DASH = null;
+const perLabel = (p) => /^\d{4}-\d{2}$/.test(p||'') ? 'tháng ' + p.slice(5) + '/' + p.slice(0,4) : (p||'');
+const pctTxt = (v) => v == null ? '–' : (Math.round(v*10)/10).toString().replace('.', ',') + '%';
+const durTxt = (s) => { if (s == null) return '–'; const m = Math.floor(s/60), x = s%60; return m + ' phút ' + (x<10?'0':'') + x + ' giây'; };
+async function loadDashboard(sel){
+  const want = /^\d{4}-\d{2}$/.test(sel||'') ? sel : '';
+  const { j } = await api('GET','/api/kt-admin?op=dashboard'+(want?'&period='+encodeURIComponent(want):''));
+  if (!j.ok){ $('dashCard').classList.add('hide'); return; }
+  DASH = j; $('dashCard').classList.remove('hide');
+  $('dashTitle').textContent = 'Tổng quan kỳ ' + perLabel(j.period);
+  $('dashSub').textContent = (j.period === j.currentPeriod ? 'Kỳ hiện tại' : 'Kỳ hiện tại: ' + perLabel(j.currentPeriod)) + ' · tính theo bài nộp gần nhất của mỗi nhân viên, trên danh sách thí sinh hiện có.';
+  // Bài chưa gắn kỳ
+  $('dashBanner').innerHTML = j.untagged ? '<div class="banner"><span class="sp"><b>' + j.untagged + ' bài làm chưa gắn kỳ</b> (nộp trước khi có tính năng kỳ). Những nhân viên này hiện vẫn bắt đầu làm lại được. Gắn vào kỳ để khoá lại và đưa vào thống kê.</span>' +
+    '<input id="asgPeriod" value="' + esc(j.currentPeriod) + '" aria-label="Kỳ cần gắn (năm-tháng)"><button class="btn sm" id="asgBtn" type="button">Gắn kỳ</button></div>' : '';
+  if (j.untagged) $('asgBtn').onclick = assignPeriod;
+  // KPI
+  const rate = j.candidates ? Math.round(j.submitted / j.candidates * 100) : 0;
+  const lt = j.bands[0] ? j.bands[0].n : 0;
+  let delta = '';
+  if (j.prev && j.prev.avgPct != null && j.avgPct != null){
+    const d = Math.round((j.avgPct - j.prev.avgPct)*10)/10;
+    delta = '<div class="d ' + (d > 0 ? 'up' : d < 0 ? 'down' : 'flat') + '">' + (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + Math.abs(d).toString().replace('.', ',') + ' điểm % so với ' + perLabel(j.prev.period) + '</div>';
+  }
+  $('dashKpis').innerHTML =
+    '<div class="kpi"><div class="v">' + j.submitted + '<small> / ' + j.candidates + '</small></div><div class="l">Đã làm bài (' + rate + '%)</div><div class="bar"><i style="width:' + rate + '%"></i></div></div>' +
+    '<div class="kpi"><div class="v">' + pctTxt(j.avgPct) + '</div><div class="l">Tỉ lệ đúng trung bình · trung vị ' + pctTxt(j.medianPct) + '</div>' + delta + '</div>' +
+    '<div class="kpi' + (lt ? ' alert' : '') + '"><div class="v">' + lt + '</div><div class="l">Dưới chuẩn (0 điểm tuân thủ), cần đào tạo lại</div>' + (j.prev ? '<div class="d flat">Kỳ trước: ' + j.prev.weak + ' người</div>' : '') + '</div>' +
+    '<div class="kpi"><div class="v" style="font-size:19px;padding:3px 0">' + durTxt(j.avgDurationSec) + '</div><div class="l">Thời gian làm bài trung bình</div>' + (j.minPct != null ? '<div class="d flat">Thấp nhất ' + pctTxt(j.minPct) + ' · cao nhất ' + pctTxt(j.maxPct) + '</div>' : '') + '</div>';
+  // Phân bố điểm tuân thủ
+  const BC = ['var(--bad)','#E0A030','#5FB3B9','var(--ok)'], tot = Math.max(1, j.submitted);
+  $('dashBands').innerHTML = j.bands.map((b,i) => '<div class="band"><span>' + esc(b.label) + ' <span class="small">(' + b.pts + 'đ)</span></span><span class="t"><i style="width:' + (b.n/tot*100) + '%;background:' + BC[i] + '"></i></span><span class="n"><b>' + b.n + '</b> · ' + Math.round(b.n/tot*100) + '%</span></div>').join('') +
+    (j.passEnabled ? '<p class="small" style="margin:10px 0 0">Đạt ngưỡng: <b>' + j.passed + '/' + j.submitted + '</b></p>' : '');
+  // Cảnh báo
+  const F = j.flags, fl = [['Rời trang khi đang làm', F.blur], ['Chụp màn hình', F.shot], ['Đổi thiết bị giữa chừng', F.devChanged], ['Chặn quyền vị trí', F.locDenied], ['Di chuyển > 2 km khi làm', F.moved]];
+  $('dashFlags').innerHTML = fl.map(x => '<li><span>' + x[0] + '</span><b class="' + (x[1] ? 'hot' : '') + '">' + x[1] + '</b></li>').join('') + (F.noDevice ? '<li><span class="small">Bài chưa có dữ liệu thiết bị (nộp trước khi có tính năng)</span><b>' + F.noDevice + '</b></li>' : '');
+  // Theo quản lí / nhóm ngành
+  const cbar = (d,t) => { const r = t ? Math.round(d/t*100) : 0; return '<div class="cbar"><span style="min-width:44px;text-align:left">' + d + '/' + t + '</span><span class="t"><i style="width:' + r + '%"></i></span><span>' + r + '%</span></div>'; };
+  $('dashMgr').innerHTML = j.byManager.map(m => '<tr><td>' + esc(m.name) + '</td><td class="num">' + m.total + '</td><td style="min-width:150px">' + cbar(m.done, m.total) + '</td><td class="num">' + pctTxt(m.avgPct) + '</td><td class="num">' + (m.weak ? '<b style="color:var(--bad)">' + m.weak + '</b>' : '0') + '</td></tr>').join('') || '<tr><td colspan="5" class="small">Chưa có dữ liệu.</td></tr>';
+  $('dashSeg').innerHTML = j.bySegment.map(m => '<tr><td>' + esc(m.name) + '</td><td style="min-width:130px">' + cbar(m.done, m.total) + '</td><td class="num">' + pctTxt(m.avgPct) + '</td></tr>').join('') || '<tr><td colspan="3" class="small">Chưa có dữ liệu.</td></tr>';
+  // Câu hỏi sai nhiều nhất
+  $('dashWqNote').textContent = j.papersRead ? '· từ ' + j.papersRead + ' bài làm, tính cả bỏ trống' : '';
+  $('dashWq').innerHTML = j.topWrong.map(q => '<li><span class="r">' + q.rate + '%</span><div>' + esc(q.text) + '<span class="a">Đáp án đúng: ' + esc(q.answer) + '</span><span class="m">' + q.wrong + ' sai, ' + q.blank + ' bỏ trống / ' + q.n + ' lượt</span></div></li>').join('') || '<li class="small" style="display:block">Chưa đủ dữ liệu.</li>';
+  // Chưa làm
+  $('dashNdSum').textContent = 'Chưa làm bài (' + j.notDoneCount + ')';
+  const g = {}; j.notDone.forEach(c => { (g[c.manager || '(chưa có quản lí)'] = g[c.manager || '(chưa có quản lí)'] || []).push(c); });
+  $('dashNdList').innerHTML = j.notDoneCount ? '<button class="btn ghost sm" type="button" id="ndCopy">Sao chép danh sách</button>' + Object.keys(g).sort().map(k => '<b>' + esc(k) + ' (' + g[k].length + ')</b>' + g[k].map(c => esc(c.name) + ' <span class="small">(' + esc(c.code) + ')</span>').join(', ')).join('') : '<p class="small">Tất cả thí sinh đã làm bài.</p>';
+  if (j.notDoneCount) $('ndCopy').onclick = async function(){
+    const t = 'Danh sách chưa làm bài kiểm tra ' + perLabel(j.period) + ':\n' + Object.keys(g).sort().map(k => '\n' + k + ':\n' + g[k].map(c => '- ' + c.name + ' (' + c.code + ')').join('\n')).join('\n');
+    try { await navigator.clipboard.writeText(t); this.textContent = 'Đã sao chép ✓'; } catch(e){ prompt('Sao chép danh sách:', t); }
+  };
+}
+async function assignPeriod(){
+  const p = $('asgPeriod').value.trim();
+  if (!/^\d{4}-\d{2}$/.test(p)){ alert('Kỳ phải theo định dạng năm-tháng, ví dụ 2026-10.'); return; }
+  if (!confirm('Gắn ' + DASH.untagged + ' bài làm chưa có kỳ vào kỳ ' + perLabel(p) + '?\nSau khi gắn, các nhân viên này sẽ không làm lại được trong kỳ đó (trừ khi bấm "Làm lại").')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'assignPeriod', period:p });
+  if (!j.ok){ alert(j.error || 'Không gắn được kỳ.'); return; }
+  loadResults();
+}
 async function loadResults(){
   const selBefore = $('resPeriod').value;
   const { j } = await api('GET','/api/kt-admin?op=results'+(selBefore?'&period='+encodeURIComponent(selBefore):''));
   if (!j.ok) return;
-  const opts = (j.periods||[]).map(p => p === j.currentPeriod ? p+' (hiện tại)' : p);
+  const opts = (j.periods||[]).map(p => { const l = /^\d{4}-\d{2}$/.test(p) ? 'Tháng ' + p.slice(5) + '/' + p.slice(0,4) : p; return p === j.currentPeriod ? l + ' (hiện tại)' : l; });
+  loadDashboard(selBefore);
   $('resPeriod').innerHTML = '<option value="">Tất cả các kỳ</option>' + (j.periods||[]).map((p,i) => '<option value="'+esc(p)+'" '+(p===selBefore?'selected':'')+'>'+esc(opts[i])+'</option>').join('');
   $('resCount').textContent = j.results.length;
   $('resList').innerHTML = j.results.map(r =>
-    '<tr><td class="small">'+esc(r.period||'–')+'</td><td>'+esc(r.code)+'</td><td>'+esc(r.name||'')+'</td><td>'+esc(r.manager||'')+'</td><td>'+r.score+'/'+r.total+'</td><td>'+r.pct+'%</td>'+
+    '<tr><td class="small">'+esc(r.period ? r.period.slice(5)+'/'+r.period.slice(0,4) : '–')+'</td><td>'+esc(r.code)+'</td><td>'+esc(r.name||'')+'</td><td>'+esc(r.manager||'')+'</td><td>'+r.score+'/'+r.total+'</td><td>'+r.pct+'%</td>'+
     '<td>'+(r.compliancePoints!=null?r.compliancePoints:'–')+'</td>'+
     '<td>'+(r.passed==null?'<span class="small">–</span>':(r.passed?'<span class="badge y">Đạt</span>':'<span class="badge n">Chưa đạt</span>'))+'</td>'+
     '<td class="small"><b>'+esc(r.proof||('KT-'+String(r.id||'').slice(-8).toUpperCase()))+'</b></td>'+

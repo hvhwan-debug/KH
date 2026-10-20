@@ -121,6 +121,7 @@ async function getAttempt(id) {
 async function putAttempt(a) { await store.put("kt/attempt/" + a.id + ".json", a); }
 
 async function getIndex() { return (await store.get(IDX_KEY)) || []; }
+async function saveIndex(list) { await store.put(IDX_KEY, list); }
 async function upsertIndex(entry) {
   const list = await getIndex();
   const i = list.findIndex((x) => x.id === entry.id);
@@ -259,7 +260,7 @@ module.exports = {
   getQuestions, saveQuestions,
   getCandidates, saveCandidates,
   getSettings, saveSettings,
-  getAttempt, putAttempt,
+  getAttempt, putAttempt, saveIndex,
   getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,
   buildPaper, getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail

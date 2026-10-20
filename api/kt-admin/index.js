@@ -46,6 +46,66 @@ module.exports = async function (context, req) {
           .map((r) => Object.assign({}, r, { passed: quiz.passState(r.pct, st) })); // luôn theo cài đặt hiện tại; null = bài không có ngưỡng
         return reply(context, 200, { ok: true, results: list, periods, currentPeriod: st.examPeriod });
       }
+      if (op === "dashboard") {
+        // Tổng quan để đánh giá một kỳ: hoàn thành, phân bố điểm, điểm tuân thủ, theo quản lí / nhóm ngành,
+        // ai chưa làm, cảnh báo gian lận, câu hỏi sai nhiều nhất, so sánh với kỳ trước.
+        const st = await quiz.getSettings();
+        const all = (await quiz.getIndex()).filter((r) => r.status === "submitted");
+        const cands = await quiz.getCandidates();
+        const reqP = String((req.query && req.query.period) || "");
+        const period = /^\d{4}-\d{2}$/.test(reqP) ? reqP : st.examPeriod;
+        const periods = Array.from(new Set(all.map((r) => r.period).filter(Boolean).concat([st.examPeriod]))).sort();
+        const untagged = all.filter((r) => !r.period).length;
+        const latestOf = (p) => { const m = {}; all.filter((r) => (r.period || "") === p).forEach((r) => { const k = quiz.normCode(r.code); if (!m[k] || (r.submittedAt || 0) > (m[k].submittedAt || 0)) m[k] = r; }); return m; };
+        const cur = latestOf(period), rows = Object.values(cur);
+        const candBy = {}; cands.forEach((c) => { candBy[quiz.normCode(c.code)] = c; });
+        const segOf = (code) => { const c = candBy[quiz.normCode(code)]; return c ? quiz.normSegment(c.segment) : ""; };
+        const pcts = rows.map((r) => r.pct || 0).sort((a, b) => a - b);
+        const avg = (a) => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length * 10) / 10 : null;
+        const median = pcts.length ? (pcts.length % 2 ? pcts[(pcts.length - 1) / 2] : (pcts[pcts.length / 2 - 1] + pcts[pcts.length / 2]) / 2) : null;
+        const lo = st.complianceLowMin * 10, mid = st.complianceMidMin * 10, hi = st.complianceHighMin * 10;
+        const bands = [
+          { key: "lt", label: "Dưới " + st.complianceLowMin + " điểm", pts: 0, n: 0 },
+          { key: "low", label: st.complianceLowMin + " – dưới " + st.complianceMidMin, pts: 10, n: 0 },
+          { key: "mid", label: st.complianceMidMin + " – dưới " + st.complianceHighMin, pts: 15, n: 0 },
+          { key: "hi", label: "Từ " + st.complianceHighMin + " điểm", pts: 20, n: 0 }
+        ];
+        rows.forEach((r) => { const p = r.pct || 0; bands[p >= hi ? 3 : p >= mid ? 2 : p >= lo ? 1 : 0].n++; });
+        const group = (keyOf, nameOf) => {
+          const g = {};
+          const get = (k) => (g[k] = g[k] || { name: nameOf(k), total: 0, done: 0, pcts: [], weak: 0 });
+          cands.forEach((c) => { get(keyOf(c)).total++; });
+          rows.forEach((r) => { const c = candBy[quiz.normCode(r.code)] || { manager: r.manager, segment: "" }; const x = get(keyOf(c)); x.done++; x.pcts.push(r.pct || 0); if ((r.pct || 0) < lo) x.weak++; if (!candBy[quiz.normCode(r.code)]) x.total++; });
+          return Object.values(g).map((x) => ({ name: x.name, total: x.total, done: x.done, avgPct: avg(x.pcts), weak: x.weak })).sort((a, b) => b.total - a.total);
+        };
+        const SEGN = { both: "Cả hai ngành", gia_dung: "Gia dụng", may_loc: "Máy lọc nước" };
+        const byManager = group((c) => (c.manager || "").trim() || "(chưa có quản lí)", (k) => k);
+        const bySegment = group((c) => quiz.normSegment(c.segment) || "both", (k) => SEGN[k] || k);
+        const notDone = cands.filter((c) => !cur[quiz.normCode(c.code)]).map((c) => ({ code: c.code, name: c.name || "", manager: c.manager || "" }));
+        const durs = rows.map((r) => r.durationSec).filter((d) => d > 0);
+        const flags = {
+          blur: rows.filter((r) => r.flags && r.flags.blur).length, shot: rows.filter((r) => r.flags && r.flags.shot).length,
+          devChanged: rows.filter((r) => r.device && r.device.changed).length, locDenied: rows.filter((r) => r.device && !r.device.loc && r.device.locErr === "denied").length,
+          moved: rows.filter((r) => r.device && r.device.movedKm > 2).length, noDevice: rows.filter((r) => !r.device).length
+        };
+        const prevP = periods.filter((p) => p < period).pop() || "";
+        let prev = null;
+        if (prevP) { const pr = Object.values(latestOf(prevP)); prev = { period: prevP, submitted: pr.length, avgPct: avg(pr.map((r) => r.pct || 0)), weak: pr.filter((r) => (r.pct || 0) < lo).length }; }
+        // Câu hỏi sai nhiều nhất: đọc bản sao bài làm (tối đa 400 bài gần nhất của kỳ)
+        const qs = {};
+        const sample = rows.slice().sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0)).slice(0, 400);
+        const atts = await Promise.all(sample.map((r) => quiz.getAttempt(r.id).catch(() => null)));
+        atts.forEach((a) => { if (!a || !Array.isArray(a.paper)) return; a.paper.forEach((q) => {
+          const k = q.text; const x = (qs[k] = qs[k] || { text: q.text, answer: (q.options || [])[q.correct] || "", n: 0, wrong: 0, blank: 0 });
+          x.n++; if (q.chosen < 0) x.blank++; else if (!q.ok) x.wrong++; }); });
+        const topWrong = Object.values(qs).filter((x) => x.n >= Math.min(3, rows.length)).map((x) => Object.assign(x, { rate: Math.round((x.wrong + x.blank) / x.n * 100) }))
+          .filter((x) => x.rate > 0).sort((a, b) => b.rate - a.rate || b.n - a.n).slice(0, 8);
+        return reply(context, 200, { ok: true, period, currentPeriod: st.examPeriod, periods, untagged,
+          candidates: cands.length, submitted: rows.length, avgPct: avg(pcts), medianPct: median, minPct: pcts[0] == null ? null : pcts[0], maxPct: pcts.length ? pcts[pcts.length - 1] : null,
+          avgDurationSec: durs.length ? Math.round(durs.reduce((a, b) => a + b, 0) / durs.length) : null,
+          passEnabled: !!st.passEnabled, passed: st.passEnabled ? rows.filter((r) => quiz.passState(r.pct, st) === true).length : null,
+          complianceEnabled: !!st.complianceEnabled, bands, byManager, bySegment, notDone: notDone.slice(0, 1000), notDoneCount: notDone.length, flags, prev, topWrong, papersRead: atts.filter(Boolean).length });
+      }
       if (op === "result") {
         const a = await quiz.getAttempt(String(req.query.id || ""));
         if (!a) return reply(context, 404, { ok: false, error: "Không tìm thấy." });
@@ -217,6 +277,20 @@ module.exports = async function (context, req) {
       });
       await quiz.saveCandidates(list);
       return reply(context, 200, { ok: true, candidates: list, added, updated });
+    }
+
+    if (op === "assignPeriod") {
+      // Gắn kỳ cho các bài đã nộp nhưng chưa có kỳ (nộp trước khi có tính năng kỳ). Sau khi gắn,
+      // thí sinh không làm lại được trong kỳ đó (trừ khi quản trị viên bấm "Làm lại").
+      const period = String(b.period || "").trim();
+      if (!/^\d{4}-\d{2}$/.test(period)) return reply(context, 400, { ok: false, error: "Kỳ phải theo định dạng năm-tháng, ví dụ 2026-10." });
+      const idx = await quiz.getIndex();
+      const ids = idx.filter((r) => r.status === "submitted" && !r.period).map((r) => r.id);
+      for (const id of ids) { const a = await quiz.getAttempt(id); if (a && !a.period) { a.period = period; await quiz.putAttempt(a); } }
+      const fresh = await quiz.getIndex(); let n = 0;
+      fresh.forEach((r) => { if (ids.indexOf(r.id) >= 0 && !r.period) { r.period = period; n++; } });
+      await quiz.saveIndex(fresh);
+      return reply(context, 200, { ok: true, assigned: n, period });
     }
 
     if (op === "resetAttempt") {
