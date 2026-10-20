@@ -45,8 +45,22 @@ function capture(req, hintsIn, stage) {
   const ua = clip((req.headers || {})["user-agent"], 400);
   return Object.assign(parseUA(ua, hints), {
     ip: ipOf(req), screen: /^\d{2,5}x\d{2,5}$/.test(String(h.screen || "")) ? String(h.screen) : "",
-    tz: clip(h.tz, 40), lang: clip(h.lang, 20), ua, stage: stage || "", at: Date.now()
+    tz: clip(h.tz, 40), lang: clip(h.lang, 20), ua, stage: stage || "", at: Date.now(),
+    loc: cleanLoc(h.loc), locErr: LOC_ERR.indexOf(h.locErr) >= 0 ? h.locErr : (cleanLoc(h.loc) ? "" : "none")
   });
+}
+// Vị trí do trình duyệt gửi (khi nhân viên cho phép). Chỉ nhận số hợp lệ, làm tròn ~1 m.
+const LOC_ERR = ["denied", "unavailable", "timeout", "unsupported", "pending"];
+function cleanLoc(l) {
+  if (!l || typeof l !== "object") return null;
+  const lat = Number(l.lat), lng = Number(l.lng), acc = Number(l.acc);
+  if (!isFinite(lat) || !isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 || (lat === 0 && lng === 0)) return null;
+  return { lat: Math.round(lat * 1e5) / 1e5, lng: Math.round(lng * 1e5) / 1e5, acc: isFinite(acc) ? Math.max(0, Math.min(100000, Math.round(acc))) : null };
+}
+function km(a, b) { // khoảng cách 2 điểm (km)
+  const r = Math.PI / 180, dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r;
+  const x = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLng / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(x));
 }
 const sig = (d) => d ? [d.type, d.os, d.browser, d.model].join("|") : "";
 const label = (d) => d ? [d.type, d.model, d.os, d.browser].filter(Boolean).join(" · ") : "";
@@ -55,7 +69,8 @@ const label = (d) => d ? [d.type, d.model, d.os, d.browser].filter(Boolean).join
 function record(attempt, dev) {
   const log = Array.isArray(attempt.devices) ? attempt.devices : (attempt.device ? [attempt.device] : []);
   const last = log[log.length - 1];
-  if (!last || sig(last) !== sig(dev) || last.ip !== dev.ip) log.push(dev);
+  const locNew = dev.loc && (!last || !last.loc || km(last.loc, dev.loc) > 1); // có vị trí mới, hoặc đã di chuyển > 1 km
+  if (!last || sig(last) !== sig(dev) || last.ip !== dev.ip || locNew) log.push(dev);
   attempt.devices = log.slice(-10);
   if (!attempt.device) attempt.device = dev;
 }
@@ -64,6 +79,9 @@ function brief(attempt) {
   const log = Array.isArray(attempt.devices) ? attempt.devices : (attempt.device ? [attempt.device] : []);
   if (!log.length) return null;
   const first = log[0];
-  return { label: label(first), type: first.type, ip: first.ip, changed: new Set(log.map(sig)).size > 1, ipCount: new Set(log.map((d) => d.ip).filter(Boolean)).size };
+  const locs = log.filter((d) => d.loc), l0 = locs[0];
+  const moved = l0 ? Math.round(Math.max(0, ...locs.map((d) => km(l0.loc, d.loc))) * 10) / 10 : 0;
+  return { label: label(first), type: first.type, ip: first.ip, changed: new Set(log.map(sig)).size > 1, ipCount: new Set(log.map((d) => d.ip).filter(Boolean)).size,
+    loc: l0 ? l0.loc : null, locErr: l0 ? "" : (first.locErr || "none"), movedKm: moved };
 }
-module.exports = { capture, record, brief, label, ipOf };
+module.exports = { capture, record, brief, label, ipOf, km };

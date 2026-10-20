@@ -88,7 +88,7 @@ module.exports = async function (context, req) {
         const photo = attempt && typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "";
         const devices = attempt ? (Array.isArray(attempt.devices) ? attempt.devices : (attempt.device ? [attempt.device] : [])) : [];
         return reply(context, 200, { ok: true, photo, takenAt: (attempt && attempt.startedAt) || null,
-          devices: devices.map((d) => ({ type: d.type, os: d.os, browser: d.browser, model: d.model, ip: d.ip, screen: d.screen, tz: d.tz, lang: d.lang, stage: d.stage, at: d.at, ua: d.ua })) });
+          devices: devices.map((d) => ({ type: d.type, os: d.os, browser: d.browser, model: d.model, ip: d.ip, screen: d.screen, tz: d.tz, lang: d.lang, stage: d.stage, at: d.at, ua: d.ua, loc: d.loc || null, locErr: d.locErr || "" })) });
       }
       if (op === "employee") {
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));

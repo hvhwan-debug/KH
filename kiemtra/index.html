@@ -115,6 +115,10 @@ button,input{font:inherit;color:inherit}
 .msg{font-size:13.5px;line-height:1.55;border-radius:14px;padding:12px 15px;margin:14px 0 0}
 .photo-box{position:relative;width:100%;max-width:360px;margin:0 auto;aspect-ratio:4/3;background:#0b1f1d;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .photo-box video,.photo-box img{width:100%;height:100%;object-fit:cover;display:block}
+.locline{display:flex;align-items:flex-start;gap:10px;max-width:360px;margin:12px auto 0;padding:10px 12px;border-radius:12px;font-size:13.5px;line-height:1.5;background:#EEF4F5;color:#4B666D}
+.locline.ok{background:#DDF1E6;color:#17794A}.locline.bad{background:#FBEBC8;color:#8A5500}
+.locline .i{flex:0 0 auto;font-size:16px;line-height:1.3}
+.locline button{display:block;margin-top:6px;border:0;background:none;padding:0;font:inherit;font-weight:700;color:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .msg.err{background:var(--bad-soft);color:var(--bad)}
 .msg.ok{background:var(--ok-soft);color:var(--ok)}
 .msg.warn{background:var(--warn-soft);color:var(--warn)}
@@ -310,12 +314,13 @@ body.exam #wm{display:block}
     <!-- 2b. Chụp ảnh xác nhận -->
     <section class="card hide" id="scrPhoto">
       <h1 tabindex="-1">Chụp ảnh xác nhận</h1>
-      <p class="lead">Chụp một ảnh khuôn mặt để xác nhận chính bạn là người làm bài. Ảnh được lưu cùng bài làm, chỉ quản trị viên/quản lí xem được.</p>
+      <p class="lead">Chụp một ảnh khuôn mặt và cho phép truy cập vị trí để xác nhận chính bạn là người làm bài. Ảnh, vị trí và thông tin thiết bị (loại máy, trình duyệt, địa chỉ IP) được lưu cùng bài làm, chỉ quản trị viên/quản lí xem được.</p>
       <div class="photo-box">
         <video id="pvVideo" autoplay playsinline muted></video>
         <canvas id="pvCanvas" class="hide"></canvas>
         <img id="pvImg" class="hide" alt="Ảnh đã chụp">
       </div>
+      <div class="locline" id="locLine" role="status"></div>
       <div id="photoMsg" role="alert"></div>
       <button class="btn go" id="btnCapture" type="button" style="margin-top:16px">📷 Chụp ảnh</button>
       <button class="btn go hide" id="btnPhotoOk" type="button" style="margin-top:16px">✓ Dùng ảnh này, bắt đầu làm bài</button>
@@ -491,10 +496,41 @@ $('btnStart').addEventListener('click', function(){
   photoInit();
 });
 
+/* ---------- Vị trí (xin quyền ở bước chụp ảnh; không bắt buộc, nhưng quản lí sẽ thấy nếu bị chặn) ---------- */
+var LOC = { p:null };
+function getPos(opts){
+  return new Promise(function(done){
+    try {
+      navigator.geolocation.getCurrentPosition(function(pos){
+        DEV.loc = { lat:pos.coords.latitude, lng:pos.coords.longitude, acc:Math.round(pos.coords.accuracy||0) }; DEV.locErr = ''; done(true);
+      }, function(err){ if (!DEV.loc) DEV.locErr = err && err.code === 1 ? 'denied' : (err && err.code === 3 ? 'timeout' : 'unavailable'); done(false); }, opts);
+    } catch(e){ if (!DEV.loc) DEV.locErr = 'unavailable'; done(false); }
+  });
+}
+function askLocation(){
+  if (!('geolocation' in navigator)){ DEV.locErr = 'unsupported'; renderLoc(); return Promise.resolve(false); }
+  if (DEV.loc){ renderLoc(); return Promise.resolve(true); }
+  if (LOC.p) return LOC.p;
+  DEV.locErr = 'pending'; renderLoc();
+  LOC.p = getPos({ enableHighAccuracy:true, timeout:15000, maximumAge:60000 }).then(function(ok){ LOC.p = null; renderLoc(); return ok; });
+  return LOC.p;
+}
+function renderLoc(){
+  var el = $('locLine'); if (!el) return;
+  var e = DEV.locErr, h;
+  if (DEV.loc){ el.className = 'locline ok'; h = '<span class="i" aria-hidden="true">📍</span><div>Đã lấy vị trí (sai số khoảng ' + (DEV.loc.acc||0) + ' m).</div>'; }
+  else if (e === 'pending'){ el.className = 'locline'; h = '<span class="i" aria-hidden="true">📍</span><div>Đang lấy vị trí… Nếu trình duyệt hỏi, hãy bấm <b>Cho phép</b>.</div>'; }
+  else if (e === 'denied'){ el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Bạn đã chặn quyền vị trí. Bạn vẫn làm bài được, nhưng quản lí sẽ thấy bài làm <b>không có vị trí</b>. Để bật lại: bấm biểu tượng ổ khoá cạnh địa chỉ trang → Vị trí → Cho phép, rồi bấm thử lại.<button type="button" id="locRetry">Thử lại</button></div>'; }
+  else if (e === 'unsupported'){ el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Trình duyệt này không hỗ trợ lấy vị trí. Nếu đang mở trong Zalo/Facebook, hãy chọn “Mở bằng trình duyệt” (Chrome/Safari).</div>'; }
+  else { el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Chưa lấy được vị trí (hãy bật GPS/Dịch vụ định vị của máy). Bạn vẫn làm bài được.<button type="button" id="locRetry">Thử lại</button></div>'; }
+  el.innerHTML = h;
+}
+document.addEventListener('click', function(ev){ if (ev.target && ev.target.id === 'locRetry'){ LOC.p = null; DEV.locErr = ''; askLocation(); } });
+
 /* ---------- Bước 2b: chụp ảnh xác nhận ---------- */
 var PH = { stream:null, dataUrl:'' };
 async function photoInit(){
-  PH.dataUrl = '';
+  PH.dataUrl = ''; askLocation();
   $('pvVideo').classList.remove('hide'); $('pvImg').classList.add('hide');
   $('btnCapture').classList.remove('hide'); $('btnPhotoOk').classList.add('hide'); $('btnPhotoRetry').classList.add('hide');
   msg('photoMsg','');
@@ -527,6 +563,7 @@ $('btnPhotoOk').addEventListener('click', async function(){
   var btn = $('btnPhotoOk'), label = btn.textContent;
   btn.disabled = true; btn.textContent = 'Đang chuẩn bị đề…'; msg('photoMsg','');
   var res;
+  if (LOC.p) await Promise.race([LOC.p, new Promise(function(r){ setTimeout(r, 6000); })]);
   try { res = await api('/api/kt-start', { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, device: DEV }); } catch(e){ res = null; }
   btn.disabled = false; btn.textContent = label;
   if (!res){ msg('photoMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
@@ -648,6 +685,7 @@ async function finish(){
   ST.quizOn = true; ST.busy = true; clearInterval(ST.timer);
   $('qText').textContent = 'Đang chấm điểm…';
   $('qOpts').innerHTML = ''; $('btnNext').classList.add('hide'); $('qTimer').classList.add('hide');
+  if (DEV.loc && 'geolocation' in navigator) await Promise.race([getPos({ enableHighAccuracy:true, timeout:3000, maximumAge:30000 }), new Promise(function(r){ setTimeout(r, 3500); })]);
   var out = null, tries = 0;
   while (!out){
     try {
