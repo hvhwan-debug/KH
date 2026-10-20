@@ -220,6 +220,10 @@ button,input{font:inherit;color:inherit}
 .proof .qr{margin-left:auto;display:flex;flex-direction:column;align-items:center;gap:5px;flex:0 0 auto;text-decoration:none;color:var(--muted);font-size:11px;font-weight:700;text-align:center}
 .proof .qr canvas{box-sizing:content-box;padding:7px;background:#fff;border:1px solid #D5E9EC;border-radius:12px;display:block;transition:box-shadow .15s,border-color .15s}
 .proof .qr:hover canvas{border-color:var(--brand);box-shadow:0 8px 18px -10px rgba(6,122,140,.7)}
+.agree{display:flex;align-items:flex-start;gap:12px;padding:13px 15px;border-radius:14px;background:#FFF6E0;border:1.5px solid #F0D58A;color:#6B4A00;text-align:left}
+.agree svg{flex:0 0 auto;margin-top:1px}
+.agree p{margin:0;font-size:13.5px;line-height:1.6}
+.agree b{color:#4F3600}
 .share{padding:14px 24px 26px;display:flex;flex-direction:column;gap:10px}
 .btn.zalo{background:#0068FF;box-shadow:0 16px 28px -14px rgba(0,104,255,.85)}
 .btn.zalo:hover{filter:brightness(1.07)}
@@ -339,6 +343,7 @@ body.exam #wm{display:block}
         <div id="resMail"></div>
       </div>
       <div class="share">
+        <div class="agree" id="agreeNote" role="note"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12.3 2.8 2.8 5.2-5.8"/></svg><p>Bằng việc <b>gửi minh chứng kết quả</b>, bạn xác nhận đã xem và <b>đồng ý với kết quả</b> bài kiểm tra này.</p></div>
         <button class="btn zalo" id="btnZalo" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.6L3 21l1.5-5A8.5 8.5 0 1 1 21 12z"/><path d="M8.5 10h7M8.5 13.5h4"/></svg><span>Chia sẻ kết quả qua Zalo</span></button>
         <button class="btn ghost" id="btnSave" type="button" style="margin-top:0">Lưu ảnh kết quả</button>
         <div id="shareMsg" role="status"></div>
@@ -730,7 +735,7 @@ function shareCardHeight(d){
   if (d.wrong != null && d.blank != null && d.total) y += 108;
   y += ((d.manager ? 1 : 0) + (d.startedText ? 1 : 0) + (d.submittedText ? 1 : 0)) * 62 + 22;
   if (d.proof) y += d.qr ? 204 : 96;
-  return y + 192;
+  return y + 262;
 }
 // Vẽ ảnh kết quả (PNG) để chia sẻ. Hàm thuần: nhận ctx + dữ liệu, không đụng tới DOM.
 function drawShareCard(ctx, W, H, d){
@@ -860,9 +865,11 @@ function drawShareCard(ctx, W, H, d){
     }
     y += bh;
   }
-  // dấu xác nhận của hệ thống
+  // xác nhận đồng ý + dấu xác nhận của hệ thống
   var sy = cy + ch - 74;
-  ctx.strokeStyle = '#E3EBED'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx + 52, sy - 34); ctx.lineTo(cx + cw - 52, sy - 34); ctx.stroke();
+  ctx.strokeStyle = '#E3EBED'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx + 52, sy - 104); ctx.lineTo(cx + cw - 52, sy - 104); ctx.stroke();
+  ctx.font = '600 22px ' + F;
+  wrap('Bằng việc gửi minh chứng này, người gửi xác nhận đã xem và đồng ý với kết quả bài kiểm tra.', cw - 104, 2).forEach(function(l, i){ txt(l, W / 2, sy - 66 + i * 30, 22, 600, '#7A5600', 'center'); });
   txt('Xác nhận bởi hệ thống lúc ' + d.stampText, W / 2, sy, 24, 700, DEEP, 'center');
   txt(d.host, W / 2, sy + 36, 22, 500, MUTED, 'center');
   ctx.restore();
