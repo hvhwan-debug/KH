@@ -162,6 +162,11 @@ const handler = async function (context, req) {
       return reply(context, 200, { ok: true, questions: list });
     }
 
+    if (op === "genQuestions") {
+      const r = await require("../_lib/examai").generateDraft(b.topic, b.count, b.category);
+      return reply(context, 200, r);
+    }
+
     if (op === "addQuestions") {
       const incoming = Array.isArray(b.questions) ? b.questions : [];
       const list = await quiz.getQuestions();

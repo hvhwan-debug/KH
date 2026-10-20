@@ -260,6 +260,18 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
         </div>
         <div id="qMsg"></div>
       </div>
+      <div class="card ai-find">
+        <div class="ai-find-h">✦ Soạn câu hỏi bằng AI</div>
+        <p class="small">Mô tả chủ đề, AI soạn sẵn câu hỏi trắc nghiệm để bạn xem lại rồi mới đưa vào ngân hàng đề (không tự động lưu).</p>
+        <div class="grid2" style="margin-top:8px">
+          <div><label>Chủ đề</label><input type="text" id="aiQTopic" placeholder="Vd: An toàn điện khi lắp đặt bếp từ"></div>
+          <div><label>Danh mục (tuỳ chọn)</label><input type="text" id="aiQCategory" placeholder="Vd: Gia dụng"></div>
+          <div><label>Số câu</label><input type="text" inputmode="numeric" id="aiQCount" value="10" style="max-width:100px"></div>
+        </div>
+        <button class="btn" style="margin-top:12px" onclick="genQuestionsAI()" id="aiQBtn">Soạn bằng AI</button>
+        <div id="aiQMsg"></div>
+        <div id="aiQPreview"></div>
+      </div>
       <div class="card">
         <h1>Nhập câu hỏi hàng loạt <span class="small" id="qBulkPer" style="font-weight:600"></span></h1>
         <p class="small">Dán vào đây một mảng JSON các câu hỏi, dạng <code>[{"text":"...","options":["A","B","C","D"],"correctIndex":0,"category":"Gia dụng"}, ...]</code>. <code>correctIndex</code> đếm từ 0 (0=phương án đầu tiên).</p>
@@ -793,6 +805,21 @@ function loadQuestionsFile(ev){
   };
   reader.onerror = () => { msg('qBulkMsg','Không đọc được file, thử lại.'); };
   reader.readAsText(file, 'utf-8');
+}
+async function genQuestionsAI(){
+  const topic = $('aiQTopic').value.trim();
+  if (!topic){ msg('aiQMsg','Nhập chủ đề cần soạn.'); return; }
+  $('aiQBtn').disabled = true; $('aiQBtn').textContent = 'Đang soạn…';
+  msg('aiQMsg',''); $('aiQPreview').innerHTML = '';
+  const { j } = await api('POST','/api/kt-admin', { op:'genQuestions', topic, count:$('aiQCount').value, category:$('aiQCategory').value.trim() });
+  $('aiQBtn').disabled = false; $('aiQBtn').textContent = 'Soạn bằng AI';
+  if (!j.ok){ msg('aiQMsg', j.error || 'Không soạn được, thử lại.', 'err'); return; }
+  msg('aiQMsg', 'Đã soạn '+j.questions.length+' câu — xem lại bên dưới, sửa trực tiếp trong ô JSON nếu cần, rồi bấm "Nhập vào ngân hàng đề".', 'ok');
+  $('qBulkText').value = JSON.stringify(j.questions, null, 2);
+  $('aiQPreview').innerHTML = '<ol style="margin:12px 0 0;padding-left:20px;line-height:1.7">' + j.questions.map(q =>
+    '<li><b>'+esc(q.text)+'</b><br>'+q.options.map((o,i) => '<span style="'+(i===q.correctIndex?'color:var(--ok);font-weight:700':'')+'">'+(i===q.correctIndex?'✓ ':'· ')+esc(o)+'</span>').join('<br>')+'</li>'
+  ).join('') + '</ol>';
+  $('qBulkText').scrollIntoView({behavior:'smooth',block:'center'});
 }
 async function addQuestionsBulk(){
   const raw = $('qBulkText').value.trim();

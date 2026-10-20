@@ -352,6 +352,7 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
       <select id="fCf" aria-label="Lọc theo xác nhận"><option value="">Mọi xác nhận</option><option value="yes">Đã xác nhận thông tin</option><option value="no">Chưa xác nhận thông tin</option></select>
       <span class="sp"></span>
       <button class="btn ghost" id="aiToggle" type="button" aria-expanded="false" aria-controls="aiFind">✦ Hỏi trợ lí</button>
+      <button class="btn ghost" id="aiQToggle" type="button" aria-expanded="false" aria-controls="aiQGen">✦ Soạn đề bằng AI</button>
       <button class="btn ghost" id="csvBtn" type="button">Tải Excel</button>
       <button class="btn" id="addBtn" type="button">+ Thêm nhân viên</button>
     </div>
@@ -364,6 +365,19 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
         <button class="btn" id="aiAsk" type="button">Hỏi</button>
       </div>
       <div id="aiAns"></div>
+    </div>
+
+    <div class="card ai-find hide" id="aiQGen">
+      <div class="ai-find-h">✦ Soạn câu hỏi bằng AI</div>
+      <p class="sub">Mô tả chủ đề, AI soạn sẵn câu hỏi trắc nghiệm để bạn xem lại rồi mới đưa vào ngân hàng đề (không tự động lưu). Câu hỏi sẽ được thêm vào đề thi đang mở hiện tại.</p>
+      <div class="field"><label for="aiQTopic">Chủ đề</label><input type="text" id="aiQTopic" placeholder="Vd: An toàn điện khi lắp đặt bếp từ"></div>
+      <div class="field"><label for="aiQCategory">Danh mục (tuỳ chọn)</label><input type="text" id="aiQCategory" placeholder="Vd: Gia dụng"></div>
+      <div class="field"><label for="aiQCount">Số câu</label><input type="text" inputmode="numeric" id="aiQCount" value="10" style="max-width:100px"></div>
+      <button class="btn" id="aiQBtn" type="button">Soạn bằng AI</button>
+      <div id="aiQMsg"></div>
+      <div id="aiQPreview"></div>
+      <textarea id="aiQJson" class="hide" style="min-height:120px;margin-top:10px;width:100%;font-family:monospace;font-size:12.5px"></textarea>
+      <button class="btn hide" id="aiQCommit" type="button" style="margin-top:10px">Thêm vào ngân hàng đề</button>
     </div>
 
     <div id="listMsg" role="status"></div>
@@ -697,6 +711,38 @@ document.querySelector('.emp-t thead').addEventListener('click', function(ev){
 $('aiToggle').addEventListener('click', function(){
   var open = $('aiFind').classList.toggle('hide') === false;
   this.setAttribute('aria-expanded', open); if (open) $('aiQ').focus();
+});
+$('aiQToggle').addEventListener('click', function(){
+  var open = $('aiQGen').classList.toggle('hide') === false;
+  this.setAttribute('aria-expanded', open); if (open) $('aiQTopic').focus();
+});
+var AI_GEN_QUESTIONS = [];
+$('aiQBtn').addEventListener('click', async function(){
+  var topic = $('aiQTopic').value.trim();
+  if (!topic){ msg('aiQMsg','Nhập chủ đề cần soạn.'); return; }
+  $('aiQBtn').disabled = true; $('aiQBtn').textContent = 'Đang soạn…';
+  msg('aiQMsg',''); $('aiQPreview').innerHTML = ''; $('aiQJson').classList.add('hide'); $('aiQCommit').classList.add('hide');
+  var r = await api('POST','/api/kt-viewer', { op:'genQuestions', topic:topic, count:$('aiQCount').value, category:$('aiQCategory').value.trim() });
+  $('aiQBtn').disabled = false; $('aiQBtn').textContent = 'Soạn bằng AI';
+  if (!r.j.ok){ msg('aiQMsg', r.j.error || 'Không soạn được, thử lại.'); return; }
+  AI_GEN_QUESTIONS = r.j.questions;
+  msg('aiQMsg', 'Đã soạn '+AI_GEN_QUESTIONS.length+' câu — xem lại bên dưới rồi bấm "Thêm vào ngân hàng đề".', 'ok');
+  $('aiQPreview').innerHTML = '<ol style="margin:12px 0 0;padding-left:20px;line-height:1.7">' + AI_GEN_QUESTIONS.map(function(q){
+    return '<li><b>'+esc(q.text)+'</b><br>'+q.options.map(function(o,i){ return '<span style="'+(i===q.correctIndex?'color:var(--ok);font-weight:700':'')+'">'+(i===q.correctIndex?'✓ ':'· ')+esc(o)+'</span>'; }).join('<br>')+'</li>';
+  }).join('') + '</ol>';
+  $('aiQJson').value = JSON.stringify(AI_GEN_QUESTIONS, null, 2);
+  $('aiQJson').classList.remove('hide'); $('aiQCommit').classList.remove('hide');
+});
+$('aiQCommit').addEventListener('click', async function(){
+  var questions;
+  try { questions = JSON.parse($('aiQJson').value); if (!Array.isArray(questions)) throw new Error(); }
+  catch(e){ msg('aiQMsg','JSON không hợp lệ, kiểm tra lại.'); return; }
+  $('aiQCommit').disabled = true;
+  var r = await api('POST','/api/kt-viewer', { op:'addQuestions', questions:questions });
+  $('aiQCommit').disabled = false;
+  if (!r.j.ok){ msg('aiQMsg', r.j.error || 'Không thêm được.'); return; }
+  msg('aiQMsg', 'Đã thêm '+r.j.added+' câu vào ngân hàng đề'+(r.j.skipped?', bỏ qua '+r.j.skipped+' câu thiếu dữ liệu':'')+'.', 'ok');
+  $('aiQJson').classList.add('hide'); $('aiQCommit').classList.add('hide'); $('aiQPreview').innerHTML=''; $('aiQTopic').value='';
 });
 $('list').addEventListener('click', function(ev){
   if (ev.target.id === 'clearF2'){ clearFilters(); return; }

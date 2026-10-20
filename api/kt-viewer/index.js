@@ -237,6 +237,30 @@ const handler = async function (context, req) {
       return reply(context, 200, { ok: true, employee: empView(next) });
     }
 
+    // Soạn câu hỏi bằng AI (nháp, chưa lưu) và đưa vào ngân hàng đề - quản lí dùng được, không cần xem/duyệt
+    // toàn bộ ngân hàng đề sẵn có (chỉ thấy đúng những câu mình vừa soạn, để xét duyệt trước khi lưu).
+    if (op === "genQuestions") {
+      const r = await require("../_lib/examai").generateDraft(b.topic, b.count, b.category);
+      return reply(context, 200, r);
+    }
+
+    if (op === "addQuestions") {
+      const incoming = Array.isArray(b.questions) ? b.questions : [];
+      const list = await quiz.getQuestions();
+      const per = typeof b.period === "string" && quiz.validPeriod(b.period) ? b.period : (await quiz.getSettings()).examPeriod;
+      let added = 0, skipped = 0;
+      incoming.forEach((q) => {
+        const text = String(q.text || "").trim().slice(0, 2000);
+        const options = Array.isArray(q.options) ? q.options.map((o) => String(o || "").trim().slice(0, 500)).filter(Boolean) : [];
+        const correctIndex = Number.isInteger(q.correctIndex) ? q.correctIndex : -1;
+        if (!text || options.length < 2 || correctIndex < 0 || correctIndex >= options.length) { skipped++; return; }
+        list.push({ id: quiz.genId(), text, options, correctIndex, category: String(q.category || "").trim().slice(0, 100), active: true, period: per, addedBy: who });
+        added++;
+      });
+      await quiz.saveQuestions(list);
+      return reply(context, 200, { ok: true, added, skipped, period: per });
+    }
+
     if (/^delete|^remove|^clear/i.test(op)) return reply(context, 403, { ok: false, error: "Tài khoản quản lí không có quyền xoá. Hãy liên hệ quản trị viên." });
     return reply(context, 400, { ok: false, error: "Thao tác không hợp lệ." });
   } catch (e) {
