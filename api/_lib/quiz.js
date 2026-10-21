@@ -288,12 +288,14 @@ async function deleteExam(id) {
 async function listExamsSummary() {
   const [exams, questions, idx, settings] = await Promise.all([getExams(), getQuestions(), getIndex(), getSettings()]);
   const byId = {};
-  exams.forEach((e) => { byId[e.id] = Object.assign({ id: e.id, title: e.title || e.id, questionCount: 0, resultCount: 0 }, byId[e.id]); byId[e.id] = Object.assign({}, e, { questionCount: 0, resultCount: 0 }); });
+  // LƯU Ý: số câu đang có trong ngân hàng của kỳ được đếm vào "bankCount", KHÔNG dùng tên "questionCount"
+  // (questionCount là cài đặt "số câu mỗi đề"; trùng tên trước đây khiến form Sửa đề hiện và lưu nhầm số câu ngân hàng).
+  exams.forEach((e) => { byId[e.id] = Object.assign({}, e, { bankCount: 0, resultCount: 0 }); });
   const touch = (id) => {
     if (!id && id !== "") return;
-    if (!byId[id]) byId[id] = { id, title: id || "(chưa gắn đề)", questionCount: 0, resultCount: 0 };
+    if (!byId[id]) byId[id] = { id, title: id || "(chưa gắn đề)", bankCount: 0, resultCount: 0 };
   };
-  questions.forEach((q) => { touch(q.period || ""); if (byId[q.period || ""]) byId[q.period || ""].questionCount++; });
+  questions.forEach((q) => { touch(q.period || ""); if (byId[q.period || ""]) byId[q.period || ""].bankCount++; });
   idx.forEach((r) => { touch(r.period || ""); if (byId[r.period || ""]) byId[r.period || ""].resultCount++; });
   touch(settings.examPeriod);
   return Object.values(byId).filter((e) => e.id !== "").sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0) || a.id.localeCompare(b.id));

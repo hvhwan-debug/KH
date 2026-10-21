@@ -717,7 +717,7 @@ async function loadExams(){
   $('exList').innerHTML = EXAMS.map(e =>
     '<tr><td><code>'+esc(e.id)+'</code>'+(e.id===j.currentPeriod?' <span class="badge y">Mặc định</span>':'')+'</td>'+
     '<td>'+esc(e.title||e.id)+(e.practice?' <span class="badge" style="background:#FDEBC8;color:#8A5200">Thi thử</span>':'')+'<div class="small"><a href="/kiemtra/?exam='+encodeURIComponent(e.id)+'" target="_blank" rel="noopener">link thi</a></div></td>'+
-    '<td class="small">'+(bpTotalOf(e.blueprint) ? '<span class="badge y">Theo quy tắc</span> '+bpTotalOf(e.blueprint)+' câu / '+e.blueprint.rules.length+' quy tắc' : 'Cách cũ · '+(e.questionCount||0)+' câu trong kỳ')+'</td>'+
+    '<td class="small">'+(bpTotalOf(e.blueprint) ? '<span class="badge y">Theo quy tắc</span> '+bpTotalOf(e.blueprint)+' câu / '+e.blueprint.rules.length+' quy tắc' : 'Cách cũ · '+(e.questionCount ? e.questionCount+' câu/đề' : 'theo cài đặt chung')+' · ngân hàng kỳ có '+(e.bankCount||0)+' câu')+'</td>'+
     '<td class="small">'+esc(examWindowText(e))+'</td><td>'+(e.resultCount||0)+'</td>'+
     '<td class="small">'+examStatusText(e, j.currentPeriod)+'</td>'+
     '<td style="white-space:nowrap">'+
