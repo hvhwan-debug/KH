@@ -164,6 +164,29 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
 .hm-link{display:inline-block;margin-top:10px;border:0;background:rgba(255,214,120,.95);color:#4F3600;font:inherit;font-size:12.5px;font-weight:700;border-radius:999px;padding:5px 12px;cursor:pointer}
 .hm-link:hover{background:#FFD678}
 .hide{display:none!important}
+
+/* Thống kê thời gian trả lời */
+.tm-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0 4px}
+.tm-tiles>div{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
+.tm-tiles b{display:block;font-size:20px;line-height:1.2;color:var(--ink)}
+.tm-tiles span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.tm-tiles small{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+.tm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:12px}
+.tm-box{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff}
+.tm-box h3{margin:0 0 8px;font-size:13.5px}
+.tm-bar{display:grid;grid-template-columns:120px 1fr 104px;align-items:center;gap:8px;font-size:12.5px;margin:5px 0}
+.tm-bar .tr{height:10px;border-radius:99px;background:#EDF3F4;overflow:hidden}
+.tm-bar .tr i{display:block;height:100%;border-radius:99px;background:var(--c,#067A8C)}
+.tm-bar .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600}
+.tm-mini{position:relative;height:8px;border-radius:99px;background:#EDF3F4;margin:5px 0 3px}
+.tm-mini .iq{position:absolute;top:0;bottom:0;border-radius:99px;background:#9FD2CB}
+.tm-mini .md{position:absolute;top:-3px;bottom:-3px;width:3px;border-radius:2px;background:#055A68}
+.tm-pos{display:flex;align-items:flex-end;gap:2px;height:110px;padding-top:6px;border-bottom:1px solid var(--line)}
+.tm-pos i{flex:1;min-width:3px;background:var(--c,#067A8C);border-radius:3px 3px 0 0;opacity:.85}
+.tm-pos i:hover{opacity:1}
+table.tm-t{width:100%;font-size:12.5px}
+table.tm-t th,table.tm-t td{padding:6px 6px;text-align:right;white-space:nowrap}
+table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:normal}
 </style>
 </head>
 <body>
@@ -289,7 +312,16 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
         <div id="itemSummary" class="small" style="margin:10px 0"></div>
         <div id="itemMsg"></div>
         <div id="regradeBox"></div>
-        <div style="overflow-x:auto"><table><thead><tr><th>Câu hỏi</th><th>Lượt</th><th>% đúng</th><th>% trống</th><th>Phân biệt</th><th>Nhận xét</th><th></th></tr></thead><tbody id="itemList"></tbody></table></div>
+        <div id="itemTiming"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:18px 0 8px">
+          <h2 style="margin:0;font-size:15px">Từng câu hỏi</h2>
+          <label class="small" style="display:flex;align-items:center;gap:6px;margin:0">Sắp xếp
+            <select id="itemSort" onchange="renderItems()" style="width:auto;min-height:34px;padding:4px 8px">
+              <option value="review">Cần xem lại trước</option><option value="slow">Trả lời lâu nhất</option><option value="fast">Trả lời nhanh nhất</option>
+              <option value="timeout">Hết giờ nhiều nhất</option><option value="hard">% đúng thấp nhất</option>
+            </select></label>
+        </div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Câu hỏi</th><th>Lượt</th><th>% đúng</th><th>% trống</th><th>Phân biệt</th><th style="min-width:190px">Thời gian trả lời</th><th>Nhận xét</th><th></th></tr></thead><tbody id="itemList"></tbody></table></div>
       </div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
@@ -991,7 +1023,7 @@ async function openItemAnalysis(examId){
   ITEM_EXAM = examId; $('regradeBox').innerHTML = '';
   $('itemCard').classList.remove('hide');
   $('itemTitle').textContent = 'Phân tích câu hỏi: đề ' + examId;
-  $('itemSummary').textContent = 'Đang tính…'; $('itemList').innerHTML = ''; msg('itemMsg','');
+  $('itemSummary').textContent = 'Đang tính…'; $('itemList').innerHTML = ''; $('itemTiming').innerHTML = ''; msg('itemMsg','');
   $('itemCard').scrollIntoView({behavior:'smooth',block:'start'});
   const { j } = await api('GET','/api/kt-admin?op=itemAnalysis&exam='+encodeURIComponent(examId));
   if (!j.ok){ $('itemSummary').textContent=''; msg('itemMsg', j.error || 'Không phân tích được.'); return; }
@@ -999,21 +1031,100 @@ async function openItemAnalysis(examId){
   $('itemSummary').innerHTML = '<b>'+j.summary.attempts+'</b> bài làm · điểm trung bình <b>'+j.summary.meanPct+'%</b> · trung vị '+j.summary.medianPct+'% · độ lệch chuẩn '+j.summary.sdPct+'%'
     + (j.capped ? ' · <span class="badge n">chỉ đọc 500 bài mới nhất</span>' : '')
     + (j.items.filter(i => i.severity <= 1).length ? ' · <b style="color:var(--bad)">'+j.items.filter(i => i.severity <= 1).length+' câu cần xem lại</b>' : '');
+  ITEM_TIME = {}; (j.timing && j.timing.items || []).forEach(t => { ITEM_TIME[t.id] = t; });
+  renderTiming(j.timing);
   renderItems();
+}
+let ITEM_TIME = {};
+const fS = (x) => x == null ? '–' : String(x).replace('.', ',') + ' giây';
+const fN = (x) => x == null ? '–' : String(x).replace('.', ',');
+const fP = (x) => x == null ? '–' : Math.round(x * 100) + '%';
+function tmBar(label, val, max, text, color, title){
+  const w = max ? Math.max(1.5, Math.min(100, val / max * 100)) : 0;
+  return '<div class="tm-bar"'+(title?' title="'+esc(title)+'"':'')+'><span>'+esc(label)+'</span><span class="tr"><i style="width:'+w+'%;--c:'+(color||'#067A8C')+'"></i></span><span class="v">'+text+'</span></div>';
+}
+function histHTML(h, limit){
+  const max = Math.max.apply(null, h.map(b => b.count).concat([1])), tot = h.reduce((n, b) => n + b.count, 0) || 1;
+  return h.map(b => tmBar(b.timeout ? 'Hết giờ' : fN(b.from)+'–'+fN(b.to)+' giây', b.count, max, b.count+' ('+Math.round(b.count/tot*100)+'%)', b.timeout ? '#B3261E' : '#067A8C')).join('');
+}
+function renderTiming(t){
+  const box = $('itemTiming');
+  if (!t || !t.summary || !t.summary.n){ box.innerHTML = '<div class="msg info">Chưa có dữ liệu thời gian trả lời cho đề này.</div>'; return; }
+  const S = t.summary, L = S.limit;
+  const tiles = [
+    [fS(S.mean), 'Trung bình mỗi câu', 'trên '+S.n+' lượt trả lời'],
+    [fS(S.median), 'Trung vị mỗi câu', 'một nửa số lượt nhanh hơn mức này'],
+    ['≤ '+fS(S.p10), '10% nhanh nhất', 'P25: '+fS(S.p25)],
+    ['≥ '+fS(S.p90), '10% chậm nhất', 'P75: '+fS(S.p75)],
+    [fS(S.correctMean), 'TB khi trả lời ĐÚNG', 'trung vị '+fS(S.correctMedian)],
+    [fS(S.wrongMean), 'TB khi trả lời SAI', 'trung vị '+fS(S.wrongMedian)],
+    [fP(S.timeoutRate), 'Tỉ lệ hết giờ', S.timeouts+'/'+S.questionsSeen+' lượt gặp câu'],
+    [fN(Math.round(S.median / L * 100))+'%', 'Trung vị so với giờ cho phép', 'cho phép '+L+' giây/câu'],
+    [fS(S.perAttemptMean.median), 'TB mỗi câu của một người (trung vị)', 'người nhanh nhất '+fS(S.perAttemptMean.min)+' · chậm nhất '+fS(S.perAttemptMean.max)],
+    [fS(S.sd), 'Độ lệch chuẩn', 'nhỏ nhất '+fS(S.min)+' · lớn nhất '+fS(S.max)]
+  ];
+  const sbMax = 1;
+  const cats = t.byCategory.map(c => '<tr><td>'+esc(c.name)+'</td><td>'+c.seen+'</td><td>'+fN(c.mean)+'</td><td><b>'+fN(c.median)+'</b></td><td>'+fN(c.p90)+'</td><td>'+fP(c.timeoutRate)+'</td><td>'+fP(c.pCorrect)+'</td></tr>').join('');
+  const pm = Math.max.apply(null, t.byPosition.map(p => p.median || 0).concat([1]));
+  const pos = t.byPosition.map(p => '<i style="height:'+Math.max(2, (p.median||0)/pm*100)+'%;--c:'+((p.pCorrect||0) >= .8 ? '#17794A' : (p.pCorrect||0) >= .6 ? '#D68F1E' : '#B3261E')+'" title="Câu thứ '+p.pos+': trung vị '+fS(p.median)+' · TB '+fS(p.mean)+' · đúng '+fP(p.pCorrect)+' · hết giờ '+fP(p.timeoutRate)+' ('+p.seen+' lượt)"></i>').join('');
+  const half = Math.floor(t.byPosition.length / 2), avgOf = (a) => { const v = a.filter(p => p.median != null); return v.length ? v.reduce((n, p) => n + p.median, 0) / v.length : null; };
+  const firstH = avgOf(t.byPosition.slice(0, half)), lastH = avgOf(t.byPosition.slice(half));
+  box.innerHTML =
+    '<h2 style="margin:16px 0 4px;font-size:15px">Thời gian trả lời</h2>'+
+    '<p class="small" style="margin:0">Thời gian một câu = lúc trả lời trừ lúc câu đó hiện ra. Lượt <b>hết giờ</b> được tính riêng, không đưa vào trung bình. Mọi số liệu tính trên bài mới nhất của mỗi người.</p>'+
+    '<div class="tm-tiles">'+tiles.map(x => '<div><b>'+x[0]+'</b><span>'+esc(x[1])+'</span><small>'+esc(x[2])+'</small></div>').join('')+'</div>'+
+    '<div class="tm-grid">'+
+      '<div class="tm-box"><h3>Phân bố thời gian trả lời</h3>'+histHTML(S.hist, L)+'</div>'+
+      '<div class="tm-box"><h3>Tỉ lệ đúng theo tốc độ trả lời</h3>'+t.speedBands.map(b => tmBar(b.label+' ('+fN(b.from)+'–'+fN(b.to)+'s)', b.accuracy || 0, sbMax, b.accuracy == null ? '–' : fP(b.accuracy)+' · '+b.n, (b.accuracy||0) >= .8 ? '#17794A' : (b.accuracy||0) >= .6 ? '#D68F1E' : '#B3261E')).join('')+
+        '<p class="small" style="margin:8px 0 0">Trả lời quá nhanh mà tỉ lệ đúng thấp thường là dấu hiệu chọn đại.</p></div>'+
+    '</div>'+
+    '<div class="tm-box" style="margin-top:12px"><h3>Theo thứ tự câu trong đề <span class="small" style="font-weight:400">(cột = trung vị thời gian; màu = tỉ lệ đúng; rê chuột để xem chi tiết)</span></h3>'+
+      '<div class="tm-pos">'+pos+'</div><div class="small" style="display:flex;justify-content:space-between;margin-top:4px"><span>Câu 1</span><span>Câu '+t.byPosition.length+'</span></div>'+
+      (firstH != null && lastH != null ? '<p class="small" style="margin:6px 0 0">Nửa đầu đề: trung vị '+fS(Math.round(firstH*10)/10)+' · nửa sau: '+fS(Math.round(lastH*10)/10)+(lastH < firstH * 0.7 ? ' · <b style="color:var(--bad)">nửa sau nhanh hẳn: có thể thí sinh vội / xuống sức</b>' : '')+'</p>' : '')+
+    '</div>'+
+    '<div class="tm-box" style="margin-top:12px;overflow-x:auto"><h3>Theo mảng kiến thức <span class="small" style="font-weight:400">(lâu nhất ở trên, đơn vị: giây)</span></h3>'+
+      '<table class="tm-t"><thead><tr><th>Mảng</th><th>Lượt</th><th>TB</th><th>Trung vị</th><th>P90</th><th>% hết giờ</th><th>% đúng</th></tr></thead><tbody>'+cats+'</tbody></table></div>';
+}
+function itemTimeCell(it){
+  const t = ITEM_TIME[it.id]; if (!t || !t.timed) return '<span class="small">–</span>';
+  const L = t.limit, x = t.time, pc = (v) => Math.max(0, Math.min(100, (v || 0) / L * 100));
+  return '<div style="font-variant-numeric:tabular-nums"><b>'+fN(x.mean)+'s</b> <span class="small">TB · trung vị '+fN(x.median)+'s</span></div>'+
+    '<div class="tm-mini" title="Khoảng giữa 50% số lượt: '+fS(x.p25)+' – '+fS(x.p75)+' · vạch đậm: trung vị · cả thanh: '+L+' giây"><span class="iq" style="left:'+pc(x.p25)+'%;width:'+Math.max(1, pc(x.p75)-pc(x.p25))+'%"></span><span class="md" style="left:calc('+pc(x.median)+'% - 1px)"></span></div>'+
+    '<div class="small">'+(t.timeouts ? '<span style="color:var(--bad)">hết giờ '+t.timeouts+' ('+fP(t.timeoutRate)+')</span> · ' : '')+'đúng '+fN(t.correctMean)+'s / sai '+fN(t.wrongMean)+'s</div>'+
+    '<details style="margin-top:4px"><summary class="small" style="cursor:pointer">Chi tiết thời gian</summary>'+
+      '<table class="tm-t" style="margin-top:6px"><tbody>'+
+        [['Số lượt có thời gian', t.timed+' / '+t.seen], ['Trung bình', fS(x.mean)], ['Trung vị', fS(x.median)], ['Độ lệch chuẩn', fS(x.sd)],
+         ['Nhanh nhất · chậm nhất', fN(x.min)+' · '+fN(x.max)+' giây'], ['P10 · P25', fN(x.p10)+' · '+fN(x.p25)+' giây'], ['P75 · P90', fN(x.p75)+' · '+fN(x.p90)+' giây'],
+         ['TB khi đúng ('+t.correctN+' lượt)', fS(t.correctMean)+' (trung vị '+fN(t.correctMedian)+')'], ['TB khi sai ('+t.wrongN+' lượt)', fS(t.wrongMean)+' (trung vị '+fN(t.wrongMedian)+')'],
+         ['Hết giờ', t.timeouts+' lượt ('+fP(t.timeoutRate)+')'], ['Thời gian cho phép', L+' giây'], ['Vị trí TB trong đề', 'câu thứ '+fN(t.avgPos)]]
+        .map(r => '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>').join('')+'</tbody></table>'+
+      '<div style="margin-top:8px">'+histHTML(t.hist, L)+'</div>'+
+    '</details>';
+}
+function sortedItems(){
+  const k = ($('itemSort') && $('itemSort').value) || 'review', T = (it) => ITEM_TIME[it.id] || { time:{}, timeoutRate:0 };
+  const a = ITEMS.slice();
+  if (k === 'slow') a.sort((x, y) => (T(y).time.median || -1) - (T(x).time.median || -1));
+  else if (k === 'fast') a.sort((x, y) => (T(x).time.median == null ? 1e9 : T(x).time.median) - (T(y).time.median == null ? 1e9 : T(y).time.median));
+  else if (k === 'timeout') a.sort((x, y) => (T(y).timeoutRate || 0) - (T(x).timeoutRate || 0));
+  else if (k === 'hard') a.sort((x, y) => (x.pCorrect || 0) - (y.pCorrect || 0));
+  return a;
 }
 function renderItems(){
   const cls = { bad:'n', warn:'n', info:'', ok:'y' };
   const chipStyle = { bad:'background:var(--bad-soft);color:var(--bad)', warn:'background:#FBEBC8;color:#8A5500', info:'background:#EEF5F6;color:var(--muted)', ok:'background:var(--ok-soft);color:var(--ok)' };
-  $('itemList').innerHTML = ITEMS.map((it, k) => {
+  $('itemList').innerHTML = sortedItems().map((it, k) => {
+    const tNotes = (ITEM_TIME[it.id] && ITEM_TIME[it.id].notes) || [];
     const r = it.discrimination == null ? '–' : (Math.round(it.discrimination * 100) / 100).toFixed(2);
     const opts = it.options ? '<details style="margin-top:4px"><summary class="small" style="cursor:pointer">Phương án</summary><ul style="margin:4px 0 0;padding-left:18px">'+it.options.map(o =>
       '<li style="'+(o.isKey?'color:var(--ok);font-weight:700':'')+'">'+esc(o.text)+(o.isKey?' ✓':'')+' <span class="small">· '+o.count+' lượt chọn ('+Math.round(o.rate*100)+'%)</span></li>').join('')+'</ul></details>' : '';
     return '<tr><td style="min-width:220px">'+esc(it.text.slice(0,110))+(it.text.length>110?'…':'')+'<div class="small">'+esc(TYPE_LABEL[it.type]||'')+(it.category?' · '+esc(it.category):'')+(it.bankId&&it.bankId!=='default'?' · '+esc(bankName(it.bankId)):'')+'</div>'+opts+'</td>'+
       '<td>'+it.n+'</td><td>'+Math.round(it.pCorrect*100)+'%</td><td>'+Math.round(it.blankRate*100)+'%</td><td>'+r+'</td>'+
-      '<td>'+it.flags.map(f => '<span class="badge" style="'+chipStyle[f.level]+';margin:0 4px 4px 0;white-space:normal">'+esc(f.text)+'</span>').join('')+'</td>'+
+      '<td style="min-width:190px">'+itemTimeCell(it)+'</td>'+
+      '<td>'+it.flags.concat(tNotes).map(f => '<span class="badge" style="'+chipStyle[f.level]+';margin:0 4px 4px 0;white-space:normal">'+esc(f.text)+'</span>').join('')+'</td>'+
       '<td style="white-space:nowrap"><button class="btn ghost sm" onclick="editQuestionFromItem(\''+esc(it.id)+'\')">Sửa</button> '+
       '<button class="btn ghost sm" onclick="hideQuestionFromItem(\''+esc(it.id)+'\')">Ẩn</button></td></tr>';
-  }).join('') || '<tr><td colspan="7" class="small">Chưa có đủ bài làm để phân tích.</td></tr>';
+  }).join('') || '<tr><td colspan="8" class="small">Chưa có đủ bài làm để phân tích.</td></tr>';
 }
 // Chấm lại: bước 1 xem trước (không ghi gì), bước 2 mới áp dụng sau khi quản trị viên xác nhận.
 async function regradeUI(){

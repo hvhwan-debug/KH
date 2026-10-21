@@ -104,7 +104,8 @@ const handler = async function (context, req) {
           partial = paper.length < (attempt.questionIds || []).length;
         }
         if (!paper.length) return reply(context, 404, { ok: false, error: "Không còn bản sao bài làm này (câu hỏi đã bị xoá khỏi ngân hàng đề trước khi bài được lưu bản sao)." });
-        return reply(context, 200, { ok: true, employee: { code: c.code, name: c.name || "" }, summary: summaryOf(entry, settings, !!viewer.isAdmin), paper, source, partial, photo: typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "", serverNow: Date.now() });
+        let timing = null; try { timing = require("../_lib/timestats").attemptSummary(attempt); } catch (e) { timing = null; }
+        return reply(context, 200, { ok: true, employee: { code: c.code, name: c.name || "" }, summary: summaryOf(entry, settings, !!viewer.isAdmin), paper, source, partial, timing, photo: typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "", serverNow: Date.now() });
       }
       if (op === "profile") {
         // Hồ sơ kiểm tra của MỘT nhân viên trong phạm vi: điểm từng kỳ (so với trung bình đội & thứ hạng),

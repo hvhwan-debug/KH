@@ -323,6 +323,23 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .khero-kpi b,.khero-kpi span,.khero-t,.khero-s,.khero-eb{text-shadow:0 1px 8px rgba(0,25,22,.65)}
 @media (max-width:700px){.khero{padding:20px 18px}.khero-t{font-size:21px}.khero-in{padding-right:64px}.khero-kpi{position:absolute;right:16px;top:16px}.khero-kpi b{font-size:22px}.khero-kpi span{font-size:10.5px;display:block;max-width:64px;line-height:1.2}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* Thời gian từng câu trong bản sao bài làm */
+.ptm{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 12px;background:#fff}
+.ptm:empty{display:none}
+.ptm h4{margin:0 0 4px;font-size:13.5px}
+.ptm .sum{font-size:12.5px;color:var(--muted);line-height:1.6}
+.ptm .sum b{color:var(--ink)}
+.ptm .strip{display:flex;align-items:flex-end;gap:2px;height:76px;margin-top:10px;border-bottom:1px solid var(--line);position:relative}
+.ptm .strip i{flex:1;min-width:3px;border-radius:3px 3px 0 0;background:var(--c);cursor:pointer}
+.ptm .strip i:hover{outline:2px solid var(--ink)}
+.ptm .strip .lim{position:absolute;left:0;right:0;border-top:1px dashed #B9C9CD}
+.ptm .lg{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:var(--muted);margin-top:6px}
+.ptm .lg span::before{content:'';display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--c);margin-right:5px;vertical-align:-1px}
+.qt{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;background:#EEF5F6;color:var(--brand-deep);margin-left:4px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.qt.slow{background:#FBEBC8;color:#8A5500}.qt.fast{background:#E8EEF8;color:#2F4C8A}.qt.to{background:var(--bad-soft);color:var(--bad)}
+.tiles.t5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:560px){.tiles.t5{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -438,6 +455,7 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
   <div class="idrow"><div class="ph" id="pPhoto"></div><div><h2 id="pTitle"></h2><p class="sub" id="pSub"></p></div></div>
   <p class="onlyprint" id="pPrint"></p>
   <div class="tiles" id="pTiles"></div>
+  <div class="ptm" id="pTime"></div>
   <div class="pf noprint" id="pFilter" role="group" aria-label="Lọc câu hỏi"></div>
   <div id="pMsg" role="status"></div>
   <div id="pList"></div>
@@ -826,7 +844,7 @@ async function openPaper(e, attemptId){
   attemptId = attemptId || (e.result && e.result.id) || ''; // luôn mở đúng bài của kỳ đang xem
   PEMP = e; PAPER = null; pFilter = 'all';
   $('pTitle').textContent = 'Bài làm của ' + (e.name || e.code); $('pSub').textContent = 'Mã nhân viên ' + e.code;
-  $('pTiles').innerHTML = ''; $('pFilter').innerHTML = ''; $('pList').innerHTML = ''; msg('pMsg','');
+  $('pTiles').innerHTML = ''; $('pTime').innerHTML = ''; $('pFilter').innerHTML = ''; $('pList').innerHTML = ''; msg('pMsg','');
   $('pList').innerHTML = '<div class="empty">Đang tải bài làm…</div>'; $('ovPaper').classList.remove('hide'); fillPhoto('pPhoto', e, attemptId ? { id: attemptId } : null);
   var r; try { r = await api('GET','/api/kt-viewer?op=paper&code=' + encodeURIComponent(e.code) + (attemptId ? '&id=' + encodeURIComponent(attemptId) : '')); } catch(err){ r = null; }
   if (!r || !r.j.ok){ $('pList').innerHTML = ''; msg('pMsg', r ? (r.j.error || 'Không tải được bài làm.') : 'Không kết nối được máy chủ.'); return; }
@@ -837,12 +855,33 @@ function renderPaper(){
   var P = PAPER.paper, sm = PAPER.summary;
   var n = { all:P.length, bad:P.filter(function(q){ return q.chosen >= 0 && !q.ok; }).length, blank:P.filter(function(q){ return q.chosen < 0; }).length, good:P.filter(function(q){ return q.ok; }).length };
   var t = [{v:sm.score+'/'+sm.total,l:'Số câu đúng'},{v:n.bad,l:'Câu sai'},{v:n.blank,l:'Bỏ trống'}];
+  var TM = PAPER.timing, TQ = {}; // thời gian từng câu, theo số thứ tự câu
+  if (TM && TM.rows) TM.rows.forEach(function(r){ TQ[r.pos] = r; });
+  var fS = function(x){ return x == null ? '–' : String(x).replace('.', ',') + ' giây'; };
+  if (TM && TM.timed){ t.push({v:fS(TM.mean).replace(' giây','s'),l:'TB mỗi câu'}); t.push({v:fS(TM.median).replace(' giây','s'),l:'Trung vị mỗi câu'}); }
+  $('pTiles').className = 'tiles' + (t.length > 3 ? ' t5' : '');
   $('pTiles').innerHTML = t.map(function(x){ return '<div><b>'+esc(x.v)+'</b><span>'+x.l+'</span></div>'; }).join('');
+  if (TM && TM.rows && TM.rows.length){
+    var L = TM.limit, obs = Math.max.apply(null, TM.rows.map(function(r){ return r.timeout ? L : (r.sec || 0); }).concat([1])), mx = Math.max(obs * 1.12, 5), showLim = L <= mx, okOf = {}; P.forEach(function(q){ okOf[q.n] = q.ok ? 'ok' : (q.chosen < 0 ? 'blank' : 'bad'); });
+    var col = { ok:'#2E9D68', bad:'#D2554B', blank:'#D9B45A' };
+    $('pTime').innerHTML = '<h4>Thời gian trả lời từng câu</h4><div class="sum">'+
+      'Trung bình <b>'+fS(TM.mean)+'</b> · trung vị <b>'+fS(TM.median)+'</b>'+(TM.sd != null ? ' · độ lệch chuẩn '+fS(TM.sd) : '')+'<br>'+
+      (TM.fastest ? 'Nhanh nhất: <b>câu '+TM.fastest.pos+'</b> ('+fS(TM.fastest.sec)+')' : '')+(TM.slowest ? ' · chậm nhất: <b>câu '+TM.slowest.pos+'</b> ('+fS(TM.slowest.sec)+')' : '')+
+      ' · hết giờ: <b>'+TM.timeouts+'</b> câu · cho phép '+L+' giây/câu · tổng thời gian trả lời <b>'+fS(TM.totalSec)+'</b></div>'+
+      '<div class="strip">'+(showLim ? '<span class="lim" style="bottom:'+(L/mx*100)+'%" title="Thời gian cho phép: '+L+' giây"></span>' : '')+TM.rows.map(function(r){
+        var v = r.timeout ? L : (r.sec || 0), st = r.timeout ? 'blank' : (okOf[r.pos] || 'blank');
+        return '<i data-q="'+r.pos+'" style="height:'+Math.max(3, v/mx*100)+'%;--c:'+(r.timeout ? '#B3261E' : col[st])+'" title="Câu '+r.pos+': '+(r.timeout ? 'hết giờ' : fS(r.sec))+' · '+(st==='ok'?'đúng':st==='bad'?'sai':'không trả lời')+'"></i>';
+      }).join('')+'</div>'+
+      '<div class="lg"><span style="--c:#2E9D68">Đúng</span><span style="--c:#D2554B">Sai</span><span style="--c:#D9B45A">Bỏ trống</span><span style="--c:#B3261E">Hết giờ</span>'+(showLim ? '<span style="--c:transparent">Vạch đứt: thời gian cho phép ('+L+'s)</span>' : '<span style="--c:transparent">Cột cao nhất ≈ '+String(Math.round(obs*10)/10).replace('.', ',')+' giây</span>')+'</div>';
+  } else $('pTime').innerHTML = '';
   $('pPrint').textContent = 'Bản sao bài làm - ' + (PEMP.name || PEMP.code) + ' (' + PEMP.code + ') - Nộp lúc ' + fmt(sm.submittedAt) + ' - Mã minh chứng ' + sm.proof + ' - In bởi ' + (VIEWER.name || VIEWER.email) + ' lúc ' + fmt(Date.now() + off);
   var F = [['all','Tất cả ('+n.all+')'],['bad','Câu sai ('+n.bad+')'],['blank','Bỏ trống ('+n.blank+')'],['good','Câu đúng ('+n.good+')']];
+  if (TM && TM.timed) F.push(['slow','Lâu nhất trước']);
   $('pFilter').innerHTML = F.map(function(f){ return '<button type="button" data-f="'+f[0]+'" aria-pressed="'+(pFilter===f[0])+'">'+f[1]+'</button>'; }).join('');
   var L = 'ABCDEFGH';
-  var list = P.filter(function(q){ return pFilter === 'all' || (pFilter === 'bad' && q.chosen >= 0 && !q.ok) || (pFilter === 'blank' && q.chosen < 0) || (pFilter === 'good' && q.ok); });
+  var list = P.filter(function(q){ return pFilter === 'all' || pFilter === 'slow' || (pFilter === 'bad' && q.chosen >= 0 && !q.ok) || (pFilter === 'blank' && q.chosen < 0) || (pFilter === 'good' && q.ok); });
+  var secOf = function(q){ var r = TQ[q.n]; return !r ? -1 : (r.timeout ? 1e6 : (r.sec == null ? -1 : r.sec)); };
+  if (pFilter === 'slow') list = P.slice().sort(function(a, b){ return secOf(b) - secOf(a); });
   $('pList').innerHTML = list.map(function(q){
     var cls = q.ok ? 'good' : (q.chosen < 0 ? 'blank' : 'bad');
     var head = q.chosen < 0 ? ' <span class="chip warn">Không trả lời</span>' : (q.ok ? ' <span class="chip ok">Đúng</span>' : ' <span class="chip" style="background:var(--bad-soft);color:var(--bad)">Sai</span>');
@@ -859,9 +898,15 @@ function renderPaper(){
         return '<div class="po '+c+'"><span class="k">'+L.charAt(i)+'</span><span class="t">'+esc(o)+'</span>'+(tag?'<span class="tag">'+tag+'</span>':'')+'</div>';
       }).join('');
     }
-    return '<article class="pq '+cls+'"><h3><span class="n">Câu '+q.n+'.</span> '+esc(q.text)+tl+head+'</h3>'+body+'</article>';
+    var tr = TQ[q.n], tq = '';
+    if (tr){
+      if (tr.timeout) tq = ' <span class="qt to" title="Máy chủ tự ghi hết giờ">⏱ Hết giờ ('+TM.limit+'s)</span>';
+      else if (tr.sec != null){ var fr = tr.sec / TM.limit; tq = ' <span class="qt'+(fr >= .6 ? ' slow' : fr < .15 ? ' fast' : '')+'" title="'+Math.round(fr*100)+'% thời gian cho phép'+(TM.median ? ' · trung vị của bài: '+fS(TM.median) : '')+'">⏱ '+fS(tr.sec)+'</span>'; }
+    }
+    return '<article class="pq '+cls+'" id="pq-'+q.n+'"><h3><span class="n">Câu '+q.n+'.</span> '+esc(q.text)+tl+head+tq+'</h3>'+body+'</article>';
   }).join('') || '<div class="empty">Không có câu nào thuộc nhóm này.</div>';
 }
+$('pTime').addEventListener('click', function(ev){ var b = ev.target.closest('i[data-q]'); if (!b) return; if (pFilter !== 'all' && pFilter !== 'slow'){ pFilter = 'all'; renderPaper(); } var el = document.getElementById('pq-' + b.getAttribute('data-q')); if (el) el.scrollIntoView({ behavior:'smooth', block:'center' }); });
 $('pFilter').addEventListener('click', function(ev){ var b = ev.target.closest('button[data-f]'); if (b && PAPER){ pFilter = b.getAttribute('data-f'); renderPaper(); } });
 $('pPrintBtn').addEventListener('click', function(){ if (PEMP) logEv('printPaper', { code: PEMP.code }); document.body.classList.add('pp'); window.print(); });
 window.addEventListener('afterprint', function(){ document.body.classList.remove('pp'); });

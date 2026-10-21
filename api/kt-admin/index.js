@@ -43,11 +43,14 @@ const handler = async function (context, req) {
         const atts = [];
         for (let i = 0; i < rows.length; i += 25) { // đọc từng nhóm nhỏ: bài làm có kèm ảnh nên khá nặng
           const chunk = await Promise.all(rows.slice(i, i + 25).map((r) => quiz.getAttempt(r.id).catch(() => null)));
-          chunk.forEach((a) => { if (a && a.status === "submitted") atts.push({ questionIds: a.questionIds, answers: a.answers, orders: a.orders }); });
+          chunk.forEach((a) => { if (a && a.status === "submitted") atts.push({ questionIds: a.questionIds, answers: a.answers, orders: a.orders, startedAt: a.startedAt, secondsPerQuestion: a.secondsPerQuestion }); });
         }
         const byId = {}; (await quiz.getQuestions()).forEach((q) => { byId[q.id] = q; });
         const r = require("../_lib/itemstats").analyze(atts, byId);
-        return reply(context, 200, { ok: true, exam: examId, capped: rows.length >= 500, summary: r.summary, items: r.items });
+        // Thời gian trả lời: tổng quan đề, theo mảng, theo vị trí câu, theo tốc độ, và từng câu hỏi
+        let timing = null;
+        try { timing = require("../_lib/timestats").analyze(atts, byId, (q, ans, order) => quiz.gradeAnswer(q, ans, order)); } catch (e) { timing = null; }
+        return reply(context, 200, { ok: true, exam: examId, capped: rows.length >= 500, summary: r.summary, items: r.items, timing });
       }
       // Kiểm tra AI của lời khuyên: chạy THẬT đường AI trên số liệu mẫu để biết vì sao lời khuyên có thể đang dùng bản dự phòng.
       // Chỉ trả về trạng thái (không lộ khóa hay tên nhà cung cấp).
