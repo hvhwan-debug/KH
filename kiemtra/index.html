@@ -1129,175 +1129,158 @@ function renderResult(r, already){
 }
 
 /*<share-card>*/
-// Chiều cao ảnh tự co giãn theo nội dung (không còn khoảng trống thừa khi bài cũ ít thông tin).
-function shareCardHeight(d){
-  var y = 874 + 38 + 150 + 30;
-  if (d.wrong != null && d.blank != null && d.total) y += 108;
-  y += ((d.manager ? 1 : 0) + (d.startedText ? 1 : 0) + (d.submittedText ? 1 : 0)) * 62 + 22;
-  if (d.qr) y += 12 + 168 + 38; // chỉ còn mã QR nhỏ ở giữa (bỏ khung mã minh chứng)
-  return y + 262;
+// ẢNH KẾT QUẢ DẠNG VÉ (phương án B): nửa trên nền tối = kết quả (vòng điểm + tên + số câu đúng),
+// đường xé ngang, nửa dưới nền trắng = chỉ số phụ, mã QR, kết quả theo mảng kiến thức, thông tin xác thực.
+// Chiều cao tự tính theo nội dung (tên đề / tên người dài, có hay không có mảng kiến thức, điểm tuân thủ, mã QR).
+var SC = { W:1080, M:56, PAD:60, F:'"Be Vietnam Pro","Segoe UI",Roboto,Arial,sans-serif', BG:'#0B3540', INK:'#0D2A31', MUTED:'#5B7279', BRAND:'#067A8C', DEEP:'#055A68', LINE:'#E3EBED' };
+function scWrap(ctx, text, font, maxW, maxLines){
+  ctx.font = font; var words = String(text||'').split(/\s+/), lines = [], cur = '';
+  words.forEach(function(w){ var t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width > maxW && cur){ lines.push(cur); cur = w; } else cur = t; });
+  if (cur) lines.push(cur);
+  if (lines.length > maxLines){ lines = lines.slice(0, maxLines); var l = lines[maxLines-1]; while (l && ctx.measureText(l + '…').width > maxW) l = l.replace(/\s*\S*$/, ''); lines[maxLines-1] = l + '…'; }
+  return lines;
 }
-// Vẽ ảnh kết quả (PNG) để chia sẻ. Hàm thuần: nhận ctx + dữ liệu, không đụng tới DOM.
+// Bố cục: tính trước mọi vị trí để chiều cao ảnh khớp nội dung
+function scLayout(d){
+  var c = document.createElement('canvas').getContext('2d'), W = SC.W, cx = SC.M, cw = W - 2*SC.M, P = cx + SC.PAD, R = cx + cw - SC.PAD;
+  var L = { cx:cx, cy:SC.M, cw:cw, P:P, R:R };
+  L.titleLines = scWrap(c, d.title, '700 30px ' + SC.F, R - P, 2);
+  L.pillY = L.cy + 112 + L.titleLines.length * 40;
+  var ringR = 128, nx = P + 2*ringR + 58;
+  L.nx = nx; L.ringR = ringR;
+  var nameFont = 40; L.nameLines = scWrap(c, d.name, '800 40px ' + SC.F, R - nx, 1);
+  if (L.nameLines[0] && /…$/.test(L.nameLines[0])){ nameFont = 34; L.nameLines = scWrap(c, d.name, '800 34px ' + SC.F, R - nx, 2); }
+  L.nameFont = nameFont;
+  L.heroY = L.pillY + 44 + 56;            // đỉnh khối kết quả
+  // khối chữ bên phải: tên (1-2 dòng) + mã NV + quản lí + số câu đúng + thanh + dòng sai/bỏ trống
+  var t = nameFont; t += (L.nameLines.length - 1) * (nameFont + 6);
+  if (d.code) t += 38; if (d.manager) t += 32;
+  L.scoreDY = t + 76;                     // đường chân chữ của "22/30" tính từ đỉnh khối
+  var textH = L.scoreDY + (d.wrong != null && d.blank != null && d.total ? 30 + 16 + 44 : 10);
+  var heroH = Math.max(2*ringR + 28, textH);
+  L.ringCY = L.heroY + heroH / 2;
+  L.textTop = L.heroY + (heroH - textH) / 2;
+  L.cut = L.heroY + heroH + 46;           // đường xé
+  L.qrS = d.qr ? 176 : 0;
+  L.statsY = L.cut + 70;
+  var afterStats = L.cut + Math.max(150, d.qr ? L.qrS + 80 : 0);
+  L.catsY = afterStats + 22;
+  L.cats = (d.cats || []).slice(0, 4);
+  var afterCats = L.cats.length ? L.catsY + 22 + L.cats.length * 76 + 8 : afterStats;
+  L.footY = afterCats + 24;
+  L.H = L.footY + 200 + SC.M;
+  return L;
+}
+function shareCardHeight(d){ return scLayout(d).H; }
 function drawShareCard(ctx, W, H, d){
-  var F = '"Be Vietnam Pro","Segoe UI",Roboto,Arial,sans-serif';
-  var BRAND = '#067A8C', DEEP = '#055A68', MUTED = '#4B666D', INK = '#0D2A31';
+  var F = SC.F, INK = SC.INK, MUTED = SC.MUTED, L = scLayout(d), cx = L.cx, cy = L.cy, cw = L.cw, P = L.P, R = L.R, cut = L.cut;
   function rr(x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
-  function txt(t, x, y, size, weight, color, align){ ctx.font = weight + ' ' + size + 'px ' + F; ctx.fillStyle = color; ctx.textAlign = align || 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText(t, x, y); }
-  function wrap(t, maxW, maxLines){
-    var words = String(t||'').split(/\s+/), lines = [], cur = '';
-    words.forEach(function(w){ var tryL = cur ? cur + ' ' + w : w; if (ctx.measureText(tryL).width > maxW && cur){ lines.push(cur); cur = w; } else cur = tryL; });
-    if (cur) lines.push(cur);
-    if (lines.length > maxLines){ lines = lines.slice(0, maxLines); lines[maxLines-1] = lines[maxLines-1].replace(/\s*\S*$/, '') + '…'; }
-    return lines;
-  }
+  function txt(t, x, y, size, weight, color, align, ls){ ctx.font = weight + ' ' + size + 'px ' + F; ctx.fillStyle = color; ctx.textAlign = align || 'left'; ctx.textBaseline = 'alphabetic'; if (ls && 'letterSpacing' in ctx) ctx.letterSpacing = ls + 'px'; ctx.fillText(t, x, y); if ('letterSpacing' in ctx) ctx.letterSpacing = '0px'; }
+  function width(t, font, ls){ ctx.font = font; if (ls && 'letterSpacing' in ctx) ctx.letterSpacing = ls + 'px'; var w = ctx.measureText(t).width; if ('letterSpacing' in ctx) ctx.letterSpacing = '0px'; return w; }
+  var neutral = d.passed !== true && d.passed !== false;
   // nền
-  var bg = ctx.createLinearGradient(0, 0, W, H); bg.addColorStop(0, '#E4F1F4'); bg.addColorStop(1, '#F7FAFB');
-  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-  var glow = ctx.createRadialGradient(W*0.9, 0, 0, W*0.9, 0, 520); glow.addColorStop(0, 'rgba(14,181,166,.28)'); glow.addColorStop(1, 'rgba(14,181,166,0)');
-  ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
-  var glow2 = ctx.createRadialGradient(0, H, 0, 0, H, 560); glow2.addColorStop(0, 'rgba(109,91,246,.2)'); glow2.addColorStop(1, 'rgba(109,91,246,0)');
-  ctx.fillStyle = glow2; ctx.fillRect(0, 0, W, H);
-  var qrBox = null; // khung mã QR: hoa văn thi thử KHÔNG được phủ lên vùng này để không làm giảm khả năng quét
-  // thẻ trắng
-  var cx = 56, cy = 56, cw = W - 112, ch = H - 112;
-  ctx.save(); ctx.shadowColor = 'rgba(13,42,49,.25)'; ctx.shadowBlur = 50; ctx.shadowOffsetY = 20; rr(cx, cy, cw, ch, 44); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
-  ctx.save(); rr(cx, cy, cw, ch, 44); ctx.clip();
-  // đầu thẻ
-  var hh = 312, hg = ctx.createLinearGradient(cx, cy, cx + cw, cy + hh); hg.addColorStop(0, '#043B46'); hg.addColorStop(0.62, '#067A8C'); hg.addColorStop(1, '#0C9C8C');
-  ctx.fillStyle = hg; ctx.fillRect(cx, cy, cw, hh);
-  var hgl = ctx.createRadialGradient(cx + cw - 40, cy - 30, 0, cx + cw - 40, cy - 30, 300); hgl.addColorStop(0, 'rgba(255,255,255,.28)'); hgl.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = hgl; ctx.fillRect(cx, cy, cw, hh);
-  rr(cx + 52, cy + 48, 84, 84, 24); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 2; ctx.stroke();
-  txt('KT', cx + 94, cy + 105, 34, 800, '#fff', 'center');
-  ctx.font = '700 38px ' + F; var tl = wrap(d.title, cw - 52 - 84 - 28 - 52, 2);
-  tl.forEach(function(l, i){ txt(l, cx + 166, cy + 80 + i * 46, 38, 700, '#fff'); });
-  txt('Nền tảng kiểm tra trực tuyến', cx + 166, cy + 80 + tl.length * 46 + 4, 25, 500, 'rgba(255,255,255,.85)');
-  // huy hiệu
-  var neutral = d.practice || (d.passed !== true && d.passed !== false); // bài không có ngưỡng đạt (hoặc thi thử: huy hiệu luôn là THI THỬ)
-  var label = d.practice ? 'THI THỬ · KHÔNG PHẢI THI CHÍNH THỨC' : neutral ? 'ĐÃ HOÀN THÀNH' : d.passed ? 'ĐẠT' : 'CHƯA ĐẠT';
-  ctx.font = '800 30px ' + F; var bw = ctx.measureText(label).width + (d.practice ? 96 : 84);
-  if (d.practice){
-    // nhãn kính mờ trên nền xanh (đồng bộ với .pill trên trang): chấm hổ phách + "THI THỬ" đậm màu vàng nhạt + phần giải thích chữ thường
-    var bx0 = cx + 52, by0 = cy + 218, bh0 = 60;
-    ctx.font = '800 26px ' + F; var w1 = ctx.measureText('THI THỬ').width;
-    ctx.font = '500 25px ' + F; var w2 = ctx.measureText('Không phải thi chính thức').width;
-    bw = 58 + w1 + 40 + w2 + 30;
-    rr(bx0, by0, bw, bh0, bh0 / 2); ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,.30)'; ctx.lineWidth = 2; ctx.stroke();
-    var my = by0 + bh0 / 2;
-    ctx.beginPath(); ctx.arc(bx0 + 32, my, 12, 0, Math.PI*2); ctx.fillStyle = 'rgba(246,200,95,.28)'; ctx.fill();
-    ctx.beginPath(); ctx.arc(bx0 + 32, my, 6.5, 0, Math.PI*2); ctx.fillStyle = '#F6C85F'; ctx.fill();
-    txt('THI THỬ', bx0 + 58, my + 9, 26, 800, '#FFD98A');
-    ctx.beginPath(); ctx.arc(bx0 + 58 + w1 + 20, my, 3, 0, Math.PI*2); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fill();
-    txt('Không phải thi chính thức', bx0 + 58 + w1 + 40, my + 9, 25, 500, 'rgba(255,255,255,.92)');
-  } else {
-    rr(cx + 52, cy + 218, bw, 64, 32); ctx.fillStyle = neutral ? '#E4F3F5' : d.passed ? '#DDF1E6' : '#FBE3E0'; ctx.fill();
-    var bc = neutral ? '#055A68' : d.passed ? '#17794A' : '#B3261E';
-    ctx.beginPath(); ctx.arc(cx + 52 + 38, cy + 250, 14, 0, Math.PI*2); ctx.lineWidth = 3.5; ctx.strokeStyle = bc; ctx.stroke();
-    ctx.beginPath(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    if (neutral || d.passed){ ctx.moveTo(cx+52+31, cy+250); ctx.lineTo(cx+52+36, cy+255); ctx.lineTo(cx+52+46, cy+244); }
-    else { ctx.moveTo(cx+52+33, cy+245); ctx.lineTo(cx+52+43, cy+255); ctx.moveTo(cx+52+43, cy+245); ctx.lineTo(cx+52+33, cy+255); }
-    ctx.stroke();
-    txt(label, cx + 52 + 62, cy + 260, 30, 800, bc);
-  }
-  // người làm bài
-  var py = cy + hh + 70;
-  var ag = ctx.createLinearGradient(cx+52, py-44, cx+52+88, py+44); ag.addColorStop(0, '#067A8C'); ag.addColorStop(1, '#068073');
-  ctx.beginPath(); ctx.arc(cx + 52 + 44, py, 44, 0, Math.PI*2); ctx.fillStyle = ag; ctx.fill();
-  txt(d.initials || '?', cx + 52 + 44, py + 11, 32, 800, '#fff', 'center');
-  ctx.font = '800 46px ' + F; var nm = wrap(d.name, cw - 52 - 88 - 28 - 52, 1)[0] || '';
-  txt(nm, cx + 52 + 112, py - 2, 46, 800, INK);
-  if (d.code) txt('Mã nhân viên: ' + d.code, cx + 52 + 112, py + 38, 27, 500, MUTED);
-  // vòng phần trăm
-  var rx = W / 2, ry = py + 44 + 34 + 160, R = 142, pct = Math.max(0, Math.min(100, d.pct || 0));
-  ctx.lineWidth = 32; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.arc(rx, ry, R, 0, Math.PI*2); ctx.strokeStyle = '#E6EEF0'; ctx.stroke();
-  var rg = ctx.createLinearGradient(rx - R, ry - R, rx + R, ry + R);
-  if (d.practice){ rg.addColorStop(0, '#F5C25E'); rg.addColorStop(1, '#D68F1E'); } else if (neutral){ rg.addColorStop(0, '#0EB5A6'); rg.addColorStop(1, '#067A8C'); } else if (d.passed){ rg.addColorStop(0, '#0EB5A6'); rg.addColorStop(1, '#17794A'); } else { rg.addColorStop(0, '#F08A4B'); rg.addColorStop(1, '#B3261E'); }
-  if (pct > 0){ ctx.beginPath(); ctx.arc(rx, ry, R, -Math.PI/2, -Math.PI/2 + Math.PI*2*pct/100); ctx.strokeStyle = rg; ctx.stroke(); }
-  txt(pct + '%', rx, ry + 26, 96, 800, INK, 'center');
-  txt('Tỉ lệ đúng', rx, ry + 76, 26, 500, MUTED, 'center');
-  var y = ry + R + 56;
-  if (d.passScore && !neutral) { txt('Ngưỡng đạt: ' + d.passScore + '%', rx, y, 26, 500, MUTED, 'center'); }
-  // ô số liệu
-  y += 38;
-  var tiles = [{ v: (d.score != null ? d.score : '–') + '/' + (d.total != null ? d.total : '–'), l: 'Số câu đúng' }];
-  if (d.compliance != null) tiles.push({ v: d.compliance + ' điểm', l: d.practice ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ học tập', ref: !!d.practice });
-  if (d.clock) tiles.push({ v: d.clock, l: 'Thời gian hoàn thành' });
-  var gap = 20, tw = (cw - 104 - gap * (tiles.length - 1)) / tiles.length, th = 150;
-  tiles.forEach(function(t, i){
-    var tx = cx + 52 + i * (tw + gap);
-    rr(tx, y, tw, th, 26); var tg = ctx.createLinearGradient(tx, y, tx, y + th); tg.addColorStop(0, t.ref ? '#FFFDF7' : '#F4FAFA'); tg.addColorStop(1, t.ref ? '#FFF7E8' : '#EAF5F6'); ctx.fillStyle = tg; ctx.fill();
-    ctx.strokeStyle = t.ref ? '#E8CF99' : '#D5E9EC'; ctx.lineWidth = 2; if (t.ref && ctx.setLineDash) ctx.setLineDash([10, 8]); ctx.stroke(); if (ctx.setLineDash) ctx.setLineDash([]);
-    txt(t.v, tx + tw/2, y + 74, tiles.length >= 3 ? 40 : 48, 800, t.ref ? '#8A5200' : DEEP, 'center');
-    txt(t.l, tx + tw/2, y + 116, 22, 500, MUTED, 'center');
-  });
-  y += th + 30;
-  // đúng / sai / bỏ trống
+  ctx.fillStyle = SC.BG; ctx.fillRect(0, 0, W, H);
+  var gl = ctx.createRadialGradient(W*0.85, 80, 0, W*0.85, 80, 700); gl.addColorStop(0, 'rgba(14,181,166,.35)'); gl.addColorStop(1, 'rgba(14,181,166,0)'); ctx.fillStyle = gl; ctx.fillRect(0, 0, W, H);
+  var gl2 = ctx.createRadialGradient(0, H, 0, 0, H, 600); gl2.addColorStop(0, 'rgba(109,91,246,.18)'); gl2.addColorStop(1, 'rgba(109,91,246,0)'); ctx.fillStyle = gl2; ctx.fillRect(0, 0, W, H);
+  var ch = H - 2*cy;
+  ctx.save(); rr(cx, cy, cw, ch, 36); ctx.clip();
+  var tg = ctx.createLinearGradient(cx, cy, cx + cw, cut); tg.addColorStop(0, '#064B57'); tg.addColorStop(1, '#0A8A86'); ctx.fillStyle = tg; ctx.fillRect(cx, cy, cw, cut - cy);
+  var hl = ctx.createRadialGradient(cx + cw - 60, cy - 40, 0, cx + cw - 60, cy - 40, 420); hl.addColorStop(0, 'rgba(255,255,255,.16)'); hl.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = hl; ctx.fillRect(cx, cy, cw, cut - cy);
+  ctx.fillStyle = '#fff'; ctx.fillRect(cx, cut, cw, cy + ch - cut);
+  // ---- nửa trên: tiêu đề + nhãn trạng thái
+  txt('KẾT QUẢ BÀI KIỂM TRA', P, cy + 72, 18, 800, 'rgba(255,255,255,.7)', 'left', 2.5);
+  L.titleLines.forEach(function(l, i){ txt(l, P, cy + 112 + i*40, 30, 700, '#fff'); });
+  var pill;
+  if (d.practice) pill = { a:'THI THỬ', b:'Không chính thức', dot:'#F6C85F', col:'#FFD98A' };
+  else if (neutral) pill = { a:'ĐÃ HOÀN THÀNH', b:'', dot:'#7CF2D4', col:'#BFF3EE' };
+  else if (d.passed) pill = { a:'ĐẠT', b: d.passScore ? 'Ngưỡng đạt ' + d.passScore + '%' : '', dot:'#7CF2D4', col:'#A8F5D6' };
+  else pill = { a:'CHƯA ĐẠT', b: d.passScore ? 'Ngưỡng đạt ' + d.passScore + '%' : '', dot:'#FF9E8A', col:'#FFC2B5' };
+  var wa = width(pill.a, '800 19px ' + F, 1.5), wb = pill.b ? width(pill.b, '600 16px ' + F) : 0, pw = 40 + wa + (pill.b ? 22 + wb : 0) + 20, py = L.pillY;
+  rr(P, py, pw, 44, 22); ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.beginPath(); ctx.arc(P + 22, py + 22, 6, 0, Math.PI*2); ctx.fillStyle = pill.dot; ctx.fill();
+  txt(pill.a, P + 38, py + 29, 19, 800, pill.col, 'left', 1.5);
+  if (pill.b){ txt('·', P + 38 + wa + 8, py + 29, 18, 800, 'rgba(255,255,255,.6)'); txt(pill.b, P + 38 + wa + 22, py + 29, 16, 600, 'rgba(255,255,255,.88)'); }
+  // ---- vòng điểm (bên trái)
+  var rx = P + L.ringR, ry = L.ringCY, Rr = L.ringR, pct = Math.max(0, Math.min(100, d.pct || 0));
+  ctx.lineWidth = 26; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(rx, ry, Rr, 0, Math.PI*2); ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.stroke();
+  var rg = ctx.createLinearGradient(rx - Rr, ry - Rr, rx + Rr, ry + Rr);
+  if (d.practice){ rg.addColorStop(0, '#FFD98A'); rg.addColorStop(1, '#F0A93A'); }
+  else if (neutral){ rg.addColorStop(0, '#BFF3EE'); rg.addColorStop(1, '#33C3B5'); }
+  else if (d.passed){ rg.addColorStop(0, '#A8F5D6'); rg.addColorStop(1, '#2FC48A'); }
+  else { rg.addColorStop(0, '#FFC2B5'); rg.addColorStop(1, '#F0603F'); }
+  if (pct > 0){ ctx.beginPath(); ctx.arc(rx, ry, Rr, -Math.PI/2, -Math.PI/2 + Math.PI*2*pct/100); ctx.strokeStyle = rg; ctx.stroke(); }
+  txt(pct + '%', rx, ry + 24, 76, 800, '#fff', 'center');
+  txt('tỉ lệ đúng', rx, ry + 62, 20, 500, 'rgba(255,255,255,.75)', 'center');
+  // ---- người làm bài + số câu đúng (bên phải)
+  var nx = L.nx, ny = L.textTop + L.nameFont;
+  L.nameLines.forEach(function(l, i){ txt(l, nx, ny + i*(L.nameFont + 6), L.nameFont, 800, '#fff'); });
+  ny += (L.nameLines.length - 1) * (L.nameFont + 6);
+  if (d.code){ ny += 38; txt('Mã NV ' + d.code, nx, ny, 22, 500, 'rgba(255,255,255,.75)'); }
+  if (d.manager){ ny += 32; ctx.font = '500 22px ' + F; var full = 'Quản lí: ' + d.manager, mg = full; if (ctx.measureText(mg).width > R - nx){ while (ctx.measureText(mg + '…').width > R - nx && mg.length > 12) mg = mg.slice(0, -1); mg = mg.replace(/\s+$/, '') + '…'; } txt(mg, nx, ny, 22, 500, 'rgba(255,255,255,.75)'); }
+  var sb = L.textTop + L.scoreDY, st = (d.score != null ? d.score : '–') + '/' + (d.total != null ? d.total : '–');
+  txt(st, nx, sb, 54, 800, '#fff'); var w1 = width(st, '800 54px ' + F); txt('câu đúng', nx + w1 + 12, sb, 24, 600, 'rgba(255,255,255,.8)');
   if (d.wrong != null && d.blank != null && d.total){
-    var segs = [{ n: d.score || 0, c: '#17794A', l: 'Đúng' }, { n: d.wrong, c: '#B3261E', l: 'Sai' }, { n: d.blank, c: '#AEBDC1', l: 'Bỏ trống' }];
-    var bx = cx + 52, bwid = cw - 104, bxp = bx;
-    rr(bx, y, bwid, 26, 13); ctx.fillStyle = '#E6EEF0'; ctx.fill();
-    ctx.save(); rr(bx, y, bwid, 26, 13); ctx.clip();
-    segs.forEach(function(sg){ var w2 = bwid * sg.n / d.total; if (w2 > 0){ ctx.fillStyle = sg.c; ctx.fillRect(bxp, y, w2, 26); bxp += w2; } });
-    ctx.restore();
-    var lx = bx, ly = y + 66;
-    segs.forEach(function(sg){
-      ctx.beginPath(); ctx.arc(lx + 10, ly - 9, 10, 0, Math.PI * 2); ctx.fillStyle = sg.c; ctx.fill();
-      var t = sg.l + ' ' + sg.n; txt(t, lx + 30, ly, 25, 600, INK, 'left');
-      ctx.font = '600 25px ' + F; lx += 30 + ctx.measureText(t).width + 36;
-    });
-    y += 108;
+    var sy0 = sb + 52, bw = R - nx, bx = nx, by = sb + 30, segs = [[d.score || 0, '#2FB879'], [d.wrong, '#E25B50'], [d.blank, '#C7D3D6']];
+    ctx.save(); rr(bx, by, bw, 16, 8); ctx.clip(); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(bx, by, bw, 16);
+    segs.forEach(function(sg){ var w2 = bw * sg[0] / d.total; if (w2 > 0){ ctx.fillStyle = sg[1]; ctx.fillRect(bx, by, w2, 16); bx += w2; } }); ctx.restore();
+    txt('Sai ' + d.wrong + '  ·  Bỏ trống ' + d.blank, nx, sb + 82, 21, 600, 'rgba(255,255,255,.78)');
   }
-  // dòng thông tin
-  var rows = [];
-  if (d.manager) rows.push(['Quản lí', d.manager]);
-  if (d.startedText) rows.push(['Bắt đầu lúc', d.startedText]);
-  if (d.submittedText) rows.push(['Nộp bài lúc', d.submittedText]);
-  rows.forEach(function(r, i){
-    var ry2 = y + i * 62;
-    ctx.strokeStyle = '#E3EBED'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx + 52, ry2); ctx.lineTo(cx + cw - 52, ry2); ctx.stroke();
-    txt(r[0], cx + 52, ry2 + 40, 26, 500, MUTED);
-    txt(r[1], cx + cw - 52, ry2 + 40, 26, 700, INK, 'right');
+  // ---- đường xé
+  ctx.setLineDash([14, 12]); ctx.strokeStyle = 'rgba(13,42,49,.22)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx + 44, cut); ctx.lineTo(cx + cw - 44, cut); ctx.stroke(); ctx.setLineDash([]);
+  // ---- nửa dưới: chỉ số phụ (+ QR bên phải)
+  var qrBox = null;
+  var cols = [];
+  if (d.compliance != null) cols.push([d.compliance + ' điểm', d.practice ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ', '#8A5200']);
+  if (d.clock) cols.push([d.clock, 'Thời gian làm bài', INK]);
+  if (d.compliance == null && d.avgSec != null) cols.push([d.avgSec + ' giây', 'Trung bình mỗi câu', INK]);
+  if (d.submittedText){ var sp = d.submittedText.split(' '); cols.push([sp[0], 'Nộp bài · ' + (sp[1] || ''), INK]); }
+  cols = cols.slice(0, 3);
+  var areaW = (R - P) - (d.qr ? L.qrS + 34 : 0), cwid = areaW / Math.max(1, cols.length), sy = L.statsY + (d.qr ? 22 : 0);
+  cols.forEach(function(c, i){
+    var X = P + cwid*i + (i ? 16 : 0);
+    if (i){ ctx.strokeStyle = SC.LINE; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(P + cwid*i, sy - 8); ctx.lineTo(P + cwid*i, sy + 74); ctx.stroke(); }
+    var size = 34; while (size > 24 && width(c[0], '800 ' + size + 'px ' + F) > cwid - 22) size -= 2;
+    txt(c[0], X, sy + 36, size, 800, c[2]); txt(c[1], X, sy + 70, 19, 500, MUTED);
   });
-  y += rows.length * 62 + 22;
-  // Mã QR nhỏ ở giữa (quét là ra kết quả đã xác thực). Không còn khung "Mã minh chứng" cho ảnh gọn hơn.
   if (d.qr){
-    var qbox = 168, qx = W / 2 - qbox / 2, qy = y + 12;
-    qrBox = { x: qx, y: qy, w: qbox, h: qbox };
-    rr(qx, qy, qbox, qbox, 20); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#D5E9EC'; ctx.stroke();
-    var n = d.qr.length, cell = Math.max(2, Math.floor(140 / n)), qs = n * cell, ox = qx + (qbox - qs) / 2, oy = qy + (qbox - qs) / 2;
-    ctx.fillStyle = '#0D2A31';
-    for (var qr = 0; qr < n; qr++) for (var qc = 0; qc < n; qc++) if (d.qr[qr][qc]) ctx.fillRect(ox + qc * cell, oy + qr * cell, cell, cell);
-    txt('Quét mã để xem kết quả đã xác thực', W / 2, qy + qbox + 30, 20, 500, MUTED, 'center');
-    y = qy + qbox + 38;
+    var qs = L.qrS, qx = R - qs, qy = cut + 40; qrBox = { x: qx, y: qy, w: qs, h: qs };
+    rr(qx, qy, qs, qs, 20); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#D5E9EC'; ctx.stroke();
+    var n = d.qr.length, cell = Math.max(2, Math.floor((qs - 28) / n)), o = (qs - cell*n) / 2;
+    ctx.fillStyle = INK; for (var qr = 0; qr < n; qr++) for (var qc = 0; qc < n; qc++) if (d.qr[qr][qc]) ctx.fillRect(qx + o + qc*cell, qy + o + qr*cell, cell, cell);
   }
-  // xác nhận đồng ý + dấu xác nhận của hệ thống
-  var sy = cy + ch - 74;
-  ctx.strokeStyle = '#E3EBED'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx + 52, sy - 104); ctx.lineTo(cx + cw - 52, sy - 104); ctx.stroke();
-  ctx.font = '600 22px ' + F;
-  wrap('Bằng việc gửi minh chứng này, người gửi xác nhận đã xem và đồng ý với kết quả bài kiểm tra.', cw - 104, 2).forEach(function(l, i){ txt(l, W / 2, sy - 66 + i * 30, 22, 600, '#7A5600', 'center'); });
-  txt('Xác nhận bởi hệ thống lúc ' + d.stampText, W / 2, sy, 24, 700, DEEP, 'center');
-  txt(d.host, W / 2, sy + 36, 22, 500, MUTED, 'center');
+  // ---- kết quả theo mảng kiến thức
+  if (L.cats.length){
+    var y = L.catsY;
+    txt('THEO MẢNG KIẾN THỨC', P, y, 16, 800, MUTED, 'left', 2); y += 22;
+    L.cats.forEach(function(c){
+      var p = c.n ? Math.round(c.ok / c.n * 100) : 0, col = p >= 80 ? '#1E8A57' : p >= 60 ? '#D68F1E' : '#C8423A', val = c.ok + '/' + c.n + '  ·  ' + p + '%';
+      var vw = width(val, '700 22px ' + F); ctx.font = '700 22px ' + F; var nm = c.name; if (ctx.measureText(nm).width > R - P - vw - 24){ while (ctx.measureText(nm + '…').width > R - P - vw - 24 && nm.length > 4) nm = nm.slice(0, -1); nm = nm.replace(/\s+$/, '') + '…'; }
+      txt(nm, P, y + 28, 22, 700, INK); txt(val, R, y + 28, 22, 700, col, 'right');
+      rr(P, y + 42, R - P, 12, 6); ctx.fillStyle = '#E8EFF1'; ctx.fill(); rr(P, y + 42, Math.max(12, (R - P) * p / 100), 12, 6); ctx.fillStyle = col; ctx.fill();
+      y += 76;
+    });
+  }
+  // ---- xác thực
+  var fy = L.footY;
+  ctx.strokeStyle = SC.LINE; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(P, fy); ctx.lineTo(R, fy); ctx.stroke();
+  ctx.beginPath(); ctx.arc(P + 16, fy + 52, 16, 0, Math.PI*2); ctx.fillStyle = '#1E8A57'; ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(P + 9, fy + 53); ctx.lineTo(P + 14, fy + 58); ctx.lineTo(P + 23, fy + 47); ctx.stroke();
+  txt('Đã xác thực bởi hệ thống lúc ' + d.stampText, P + 44, fy + 60, 22, 700, SC.DEEP);
+  txt('Người gửi xác nhận đã xem và đồng ý với kết quả bài kiểm tra.', P, fy + 106, 20, 600, '#7A5600');
+  txt(d.qr ? 'Quét QR để xem bản gốc  ·  ' + d.host : 'Mã minh chứng ' + (d.proof || '') + '  ·  ' + d.host, P, fy + 142, 20, 600, SC.BRAND);
+  // ---- thi thử: hoa văn chìm chỉ ở nửa dưới, không phủ lên mã QR
   if (d.practice){
-    // đề thi thử: hoa văn chữ "THI THỬ" nhỏ, rất mờ, lặp chéo phủ cả thẻ (ảnh bị cắt ở đâu vẫn còn dấu), không đè lên số liệu
-    ctx.save();
-    // chỉ phủ phần thân trắng của thẻ, không phủ lên đầu thẻ màu xanh (tránh rối mắt quanh tên bài và nhãn)
-    ctx.beginPath(); ctx.rect(cx, cy + hh, cw, ch - hh); ctx.clip();
-    if (qrBox && ctx.clip){ ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.rect(qrBox.x - 6, qrBox.y - 6, qrBox.w + 12, qrBox.h + 12); try { ctx.clip('evenodd'); } catch (e) {} }
-    ctx.fillStyle = 'rgba(201,138,27,.10)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '800 30px ' + F;
-    for (var ty = cy - 40, row = 0; ty < cy + ch + 120; ty += 168, row++){
-      for (var tx2 = cx - 60 + (row % 2 ? 150 : 0); tx2 < cx + cw + 120; tx2 += 300){
-        ctx.save(); ctx.translate(tx2, ty); ctx.rotate(-0.42);
-        var sp = 'T H I   T H Ử'; ctx.fillText(sp, 0, 0); ctx.restore();
-      }
-    }
+    ctx.save(); ctx.beginPath(); ctx.rect(cx, cut + 6, cw, cy + ch - cut);
+    if (qrBox) ctx.rect(qrBox.x - 6, qrBox.y - 6, qrBox.w + 12, qrBox.h + 12);
+    try { ctx.clip('evenodd'); } catch (e) { ctx.clip(); }
+    ctx.fillStyle = 'rgba(201,138,27,.07)'; ctx.font = '800 26px ' + F; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (var ty = cut - 20, row = 0; ty < cy + ch + 80; ty += 150, row++) for (var tx = cx - 40 + (row % 2 ? 140 : 0); tx < cx + cw + 80; tx += 280){ ctx.save(); ctx.translate(tx, ty); ctx.rotate(-0.42); ctx.fillText('T H I   T H Ử', 0, 0); ctx.restore(); }
     ctx.restore();
-    // đường viền vàng mảnh trên cùng của thẻ, đồng bộ với trang xác thực
-    var tg2 = ctx.createLinearGradient(cx, cy, cx + cw, cy); tg2.addColorStop(0, '#E4AE45'); tg2.addColorStop(0.5, '#F6D07C'); tg2.addColorStop(1, '#E4AE45');
-    ctx.fillStyle = tg2; ctx.fillRect(cx, cy, cw, 8);
   }
   ctx.restore();
+  // lỗ bấm vé hai bên đường xé
+  ctx.fillStyle = SC.BG; ctx.beginPath(); ctx.arc(cx, cut, 30, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(cx + cw, cut, 30, 0, Math.PI*2); ctx.fill();
 }
 /*</share-card>*/
 
@@ -1316,7 +1299,11 @@ function shareData(){
     submittedText: r.submittedAt ? fmtFull(r.submittedAt) : '',
     stampText: fmtFull(sysNow()),
     host: location.host + '/kiemtra',
-    qr: r.verify ? qrMatrix(verifyUrl(r)) : null
+    qr: r.verify ? qrMatrix(verifyUrl(r)) : null,
+    avgSec: r.durationSec != null && r.total ? Math.round(r.durationSec / r.total) : null,
+    cats: (r.advice && r.advice.analysis && Array.isArray(r.advice.analysis.categories) ? r.advice.analysis.categories : [])
+      .filter(function(c){ return c && c.n; }).map(function(c){ return { name: c.name, ok: c.ok, n: c.n }; })
+      .sort(function(a, b){ return b.n - a.n; }).slice(0, 4)
   };
 }
 async function makePng(){
