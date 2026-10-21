@@ -127,10 +127,15 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .pill.info{background:var(--brand-soft);color:var(--brand-deep)}
 .pill.info::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulse 1.6s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.3}}
-.cf-ok{display:inline-flex;align-items:center;gap:6px;color:var(--ok);font-size:13px;font-weight:600;white-space:nowrap}
-.cf-ok small{display:block;color:var(--muted);font-weight:400;font-size:12px}
-.cf-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid #EBCB7E;background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:5px 10px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}
-.cf-btn:hover{background:#F8E0A8}
+.cf-ok{display:inline-flex;align-items:center;gap:9px;white-space:nowrap;line-height:1.25}
+.cf-ok .cf-i{flex:0 0 auto;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--ok-soft);color:var(--ok)}
+.cf-ok .cf-t{display:flex;flex-direction:column;font-size:13px;font-weight:600;color:var(--ink)}
+.cf-ok small{display:block;color:var(--muted);font-weight:400;font-size:12px;margin-top:1px}
+.cf-btn{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 13px 0 10px;border:1px solid var(--line);background:#fff;color:var(--brand-deep);border-radius:999px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 1px 2px rgba(13,42,49,.05);transition:background .15s,border-color .15s,color .15s}
+.cf-btn svg{color:#9AB0B5;transition:color .15s}
+.cf-btn:hover{background:var(--brand-soft);border-color:#A9D3D9}
+.cf-btn:hover svg{color:var(--brand)}
+.cf-btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 .acts{display:flex;gap:2px;justify-content:flex-end}
 .ib{width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer}
 .ib:hover:not(:disabled){background:var(--brand-soft);color:var(--brand-deep)}
@@ -622,7 +627,9 @@ var IC = {
   paper:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>',
   edit:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
   del:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>',
-  ok:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.7 2.7L16 10"/></svg>'
+  ok:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.7 2.7L16 10"/></svg>',
+  chk:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5.5 12.5 4.2 4.2L18.5 8"/></svg>',
+  pend:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke-dasharray="3.2 2.6"/></svg>'
 };
 /* ---------- Banner hero ---------- */
 function vnGreet(){ var h = new Date(Date.now() + 7*3600e3).getUTCHours(); return h < 11 ? 'Chào buổi sáng' : h < 18 ? 'Chào buổi chiều' : 'Chào buổi tối'; }
@@ -703,8 +710,8 @@ function render(){
       when = '–';
     }
     var cfd = e.confirmed
-      ? '<span class="cf-ok" title="Xác nhận bởi '+esc(e.confirmed.byName||'')+' ngày '+esc(new Date(e.confirmed.at).toLocaleDateString('vi-VN'))+'">'+IC.ok+'<span>Đã xác nhận<small>'+esc(new Date(e.confirmed.at).toLocaleDateString('vi-VN'))+'</small></span></span>'
-      : '<button type="button" class="cf-btn" data-act="cf">Xác nhận</button>';
+      ? '<span class="cf-ok" title="Xác nhận bởi '+esc(e.confirmed.byName||'')+' ngày '+esc(new Date(e.confirmed.at).toLocaleDateString('vi-VN'))+'"><span class="cf-i" aria-hidden="true">'+IC.chk+'</span><span class="cf-t">Đã xác nhận<small>'+esc(new Date(e.confirmed.at).toLocaleDateString('vi-VN'))+'</small></span></span>'
+      : '<button type="button" class="cf-btn" data-act="cf" title="Xác nhận thông tin của '+esc(e.name||e.code)+'">'+IC.pend+'<span>Xác nhận</span></button>';
     var dis = done ? '' : ' disabled';
     var nm = esc(e.name||e.code);
     return '<tr data-code="'+esc(e.code)+'">'+

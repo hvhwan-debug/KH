@@ -1148,13 +1148,19 @@ function drawShareCard(ctx, W, H, d){
   var label = d.practice ? 'THI THỬ · KHÔNG PHẢI THI CHÍNH THỨC' : neutral ? 'ĐÃ HOÀN THÀNH' : d.passed ? 'ĐẠT' : 'CHƯA ĐẠT';
   ctx.font = '800 30px ' + F; var bw = ctx.measureText(label).width + (d.practice ? 96 : 84);
   if (d.practice){
-    // khung kem viền mảnh + chấm vàng, chữ cách chữ: nhẹ nhàng nhưng không thể nhầm là kết quả chính thức
-    var lw = 0, pad = 3, chars = label.split('');
-    ctx.font = '800 26px ' + F; chars.forEach(function(c){ lw += ctx.measureText(c).width + pad; }); bw = lw + 86;
-    rr(cx + 52, cy + 218, bw, 64, 32); ctx.fillStyle = '#FFF6E2'; ctx.fill(); ctx.strokeStyle = '#E9C97F'; ctx.lineWidth = 2.5; ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx + 52 + 36, cy + 250, 8, 0, Math.PI*2); ctx.fillStyle = '#E0A030'; ctx.fill();
-    var lx = cx + 52 + 62; ctx.fillStyle = '#8A5200'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.font = '800 26px ' + F;
-    chars.forEach(function(c){ ctx.fillText(c, lx, cy + 259); lx += ctx.measureText(c).width + pad; });
+    // nhãn kính mờ trên nền xanh (đồng bộ với .pill trên trang): chấm hổ phách + "THI THỬ" đậm màu vàng nhạt + phần giải thích chữ thường
+    var bx0 = cx + 52, by0 = cy + 218, bh0 = 60;
+    ctx.font = '800 26px ' + F; var w1 = ctx.measureText('THI THỬ').width;
+    ctx.font = '500 25px ' + F; var w2 = ctx.measureText('Không phải thi chính thức').width;
+    bw = 58 + w1 + 40 + w2 + 30;
+    rr(bx0, by0, bw, bh0, bh0 / 2); ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.30)'; ctx.lineWidth = 2; ctx.stroke();
+    var my = by0 + bh0 / 2;
+    ctx.beginPath(); ctx.arc(bx0 + 32, my, 12, 0, Math.PI*2); ctx.fillStyle = 'rgba(246,200,95,.28)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(bx0 + 32, my, 6.5, 0, Math.PI*2); ctx.fillStyle = '#F6C85F'; ctx.fill();
+    txt('THI THỬ', bx0 + 58, my + 9, 26, 800, '#FFD98A');
+    ctx.beginPath(); ctx.arc(bx0 + 58 + w1 + 20, my, 3, 0, Math.PI*2); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fill();
+    txt('Không phải thi chính thức', bx0 + 58 + w1 + 40, my + 9, 25, 500, 'rgba(255,255,255,.92)');
   } else {
     rr(cx + 52, cy + 218, bw, 64, 32); ctx.fillStyle = neutral ? '#E4F3F5' : d.passed ? '#DDF1E6' : '#FBE3E0'; ctx.fill();
     var bc = neutral ? '#055A68' : d.passed ? '#17794A' : '#B3261E';
@@ -1259,6 +1265,8 @@ function drawShareCard(ctx, W, H, d){
   if (d.practice){
     // đề thi thử: hoa văn chữ "THI THỬ" nhỏ, rất mờ, lặp chéo phủ cả thẻ (ảnh bị cắt ở đâu vẫn còn dấu), không đè lên số liệu
     ctx.save();
+    // chỉ phủ phần thân trắng của thẻ, không phủ lên đầu thẻ màu xanh (tránh rối mắt quanh tên bài và nhãn)
+    ctx.beginPath(); ctx.rect(cx, cy + hh, cw, ch - hh); ctx.clip();
     if (qrBox && ctx.clip){ ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.rect(qrBox.x - 6, qrBox.y - 6, qrBox.w + 12, qrBox.h + 12); try { ctx.clip('evenodd'); } catch (e) {} }
     ctx.fillStyle = 'rgba(201,138,27,.10)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '800 30px ' + F;
     for (var ty = cy - 40, row = 0; ty < cy + ch + 120; ty += 168, row++){
