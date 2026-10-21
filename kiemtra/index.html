@@ -298,6 +298,15 @@ body.rs .stage{margin-top:6px}
 /* Nhắc chia sẻ kết quả thay vì chụp màn hình */
 /* Lời khuyên cải thiện sau khi nộp bài */
 .advice{margin:18px 0 0;text-align:left;border:1.5px solid #CDE6EA;border-radius:18px;background:linear-gradient(180deg,#F5FBFC,#EDF7F9);padding:16px 16px 14px}
+.advice .portrait{position:relative;margin:2px 0 12px;padding:13px 14px 13px 16px;background:#fff;border:1px solid #D3E9ED;border-radius:14px;font-size:14.5px;line-height:1.7;color:var(--ink)}
+.advice .portrait::before{content:'';position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:0 3px 3px 0;background:var(--grad)}
+.advice .pl{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-deep);margin-bottom:4px}
+.advice .traits{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.advice .traits span{font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:#fff;border:1px solid #CFE5E9;color:var(--brand-deep)}
+.advice .sub{display:block;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
+.advice ul.str li::before{background-color:#DDF1E6;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2317794A'%3E%3Cpath d='m12 3 2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z'/%3E%3C/svg%3E")}
+.advice .goal{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:12px 14px;border-radius:14px;background:#FFF8E8;border:1px solid #F1DFB6;font-size:14px;line-height:1.6;color:#5E3D00}
+.advice .goal b{color:#8A5500}
 .advice.hide{display:none}
 .advice .adh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .advice .adh .ic{flex:0 0 auto;width:34px;height:34px;border-radius:11px;background:var(--grad);display:grid;place-items:center}
@@ -1034,10 +1043,15 @@ function renderAnalysis(a){
 function renderAdvice(a){
   var box = $('resAdvice');
   if (!a || !a.headline || !a.actions || !a.actions.length){ box.classList.add('hide'); box.innerHTML = ''; return; }
+  var portrait = a.portrait || a.summary || '';
   box.innerHTML = '<div class="adh"><span class="ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3Z"/></svg></span>' +
-    '<b id="advTitle">Lời khuyên để cải thiện</b><span class="tag">' + (a.source === 'ai' ? 'Gợi ý bởi AI' : 'Gợi ý tự động') + '</span></div>' +
-    '<h3>' + esc(a.headline) + '</h3>' + (a.summary ? '<p>' + esc(a.summary) + '</p>' : '') +
-    '<ul>' + a.actions.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+    '<b id="advTitle">Nhận xét dành riêng cho bạn</b><span class="tag">' + (a.source === 'ai' ? 'Gợi ý bởi AI' : 'Phân tích tự động') + '</span></div>' +
+    '<h3>' + esc(a.headline) + '</h3>' +
+    (a.traits && a.traits.length ? '<div class="traits">' + a.traits.slice(0, 4).map(function(t){ return '<span>' + esc(t) + '</span>'; }).join('') + '</div>' : '') +
+    (portrait ? '<div class="portrait"><span class="pl">Cách bạn đã làm bài</span>' + esc(portrait) + '</div>' : '') +
+    (a.strengths && a.strengths.length ? '<span class="sub">Điểm mạnh</span><ul class="str">' + a.strengths.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') +
+    '<span class="sub">Việc nên làm</span><ul>' + a.actions.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' +
+    (a.goal ? '<div class="goal"><span aria-hidden="true">🎯</span><div><b>Mục tiêu lần tới.</b> ' + esc(String(a.goal).replace(/^Lần tới:\s*/i, '')) + '</div></div>' : '');
   box.classList.remove('hide');
 }
 function renderResult(r, already){

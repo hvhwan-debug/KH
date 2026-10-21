@@ -62,7 +62,13 @@ module.exports = async function (context, req) {
     // Lời khuyên cải thiện (AI nếu kịp, không thì theo luật). Điểm đã được lưu ở trên nên lỗi ở bước này không ảnh hưởng kết quả.
     let advice;
     try {
-      advice = await advicelib.build(attempt, settings, quiz.previousResult(await quiz.getIndex(), attempt.code, attempt.period, attempt.id));
+      // Bối cảnh để cá nhân hoá: bảng chỉ số (so với đồng nghiệp cùng đề, lịch sử của chính người này) + bài kỳ trước (so từng mảng)
+      const idxAll = await quiz.getIndex();
+      const prevRow = idxAll.filter((x) => x.status === "submitted" && !x.practice && x.id !== attempt.id && quiz.normCode(x.code) === quiz.normCode(attempt.code) && (x.period || "") !== (attempt.period || ""))
+        .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0))[0];
+      let prevAttempt = null;
+      if (prevRow) { try { prevAttempt = await quiz.getAttempt(prevRow.id); } catch (e) { prevAttempt = null; } }
+      advice = await advicelib.build(attempt, settings, quiz.previousResult(idxAll, attempt.code, attempt.period, attempt.id), { ctx: { index: idxAll, prevAttempt } });
     } catch (e) {
       (context.log.warn || context.log)("kt-submit advice", e && e.message);
       advice = advicelib.rulesAdvice(advicelib.facts(attempt, settings, null));
@@ -83,7 +89,7 @@ module.exports = async function (context, req) {
       await quiz.upsertIndex({
         id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "", period: attempt.period || "",
         score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
-        submittedAt: attempt.submittedAt, status: "submitted", practice: !!settings.practice, flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief, face: attempt.faceCheck ? attempt.faceCheck.status : null, mailOk
+        submittedAt: attempt.submittedAt, status: "submitted", practice: !!settings.practice, flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief, face: attempt.faceCheck ? attempt.faceCheck.status : null, mailOk, aiStatus: (advice && advice.aiStatus) || null
       });
     } catch (e) {
       context.log.error("kt-submit mailOk", e && e.message);

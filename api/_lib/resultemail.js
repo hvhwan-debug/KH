@@ -145,14 +145,24 @@ function build(attempt, settings, advice) {
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 10px"><tr>' +
     '<td width="28" valign="top"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td width="26" height="26" align="center" valign="middle" bgcolor="#ffffff" style="width:26px;height:26px;border-radius:13px;background:#ffffff;border:1px solid #CFE5E9;font-family:' + FONT + ';font-size:12px;font-weight:800;color:' + C.deep + '">' + (i + 1) + "</td></tr></table></td>" +
     '<td valign="top" style="padding-left:10px;font-family:' + FONT + ';font-size:14px;line-height:1.7;color:' + C.body + '">' + esc(x) + "</td></tr></table>").join("");
+  const portrait = a.portrait || a.summary || "";
+  const strengths = (a.strengths || []).map((x) =>
+    '<tr><td width="22" valign="top" style="padding:2px 0 8px;font-family:' + FONT + ';font-size:14px;color:' + C.ok + '">&#9733;</td><td valign="top" style="padding:0 0 8px 6px;font-family:' + FONT + ';font-size:14px;line-height:1.65;color:' + C.body + '">' + esc(x) + "</td></tr>").join("");
+  const sub = (t) => '<div style="font-family:' + FONT + ';font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + C.muted + ';margin:16px 0 8px">' + esc(t) + "</div>";
   const adv = (a.headline || acts)
-    ? sectionGap + "<tr><td>" + eyebrow("Lời khuyên để cải thiện") +
+    ? sectionGap + "<tr><td>" + eyebrow("Nhận xét dành riêng cho bạn") +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#F3FAFB" style="border-collapse:separate;background:#F3FAFB;border:1px solid #D3E9ED;border-radius:16px"><tr>' +
-      '<td style="padding:20px 20px 10px;font-family:' + FONT + '">' +
+      '<td style="padding:20px 20px 12px;font-family:' + FONT + '">' +
       (a.source === "ai" ? '<div style="margin:0 0 8px"><span style="display:inline-block;background:#DDF0F3;color:' + C.deep + ';font-size:10.5px;font-weight:800;letter-spacing:.08em;padding:3px 10px;border-radius:99px">GỢI Ý BỞI AI</span></div>' : "") +
-      (a.headline ? '<div style="font-size:17px;font-weight:800;line-height:1.4;color:' + C.ink + ';margin:0 0 6px">' + esc(a.headline) + "</div>" : "") +
-      (a.summary ? '<div style="font-size:14px;line-height:1.7;color:' + C.body + ';margin:0 0 16px">' + esc(a.summary) + "</div>" : "") +
-      (acts ? '<div style="border-top:1px solid #DCEDF0;height:14px;line-height:14px;font-size:0">&nbsp;</div>' + acts : "") +
+      (a.headline ? '<div style="font-size:17px;font-weight:800;line-height:1.4;color:' + C.ink + ';margin:0 0 10px">' + esc(a.headline) + "</div>" : "") +
+      (a.traits && a.traits.length ? '<div style="margin:0 0 12px;line-height:2.1">' + a.traits.slice(0, 4).map((t) => '<span style="display:inline-block;margin:0 4px 0 0;padding:3px 10px;border-radius:99px;background:#ffffff;border:1px solid #CFE5E9;font-size:12px;font-weight:700;color:' + C.deep + '">' + esc(t) + "</span>").join("") + "</div>" : "") +
+      (portrait ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="border-collapse:separate;background:#ffffff;border:1px solid #D3E9ED;border-radius:12px"><tr><td style="padding:12px 14px;font-family:' + FONT + '">' +
+        '<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + C.deep + ';margin:0 0 4px">Cách bạn đã làm bài</div>' +
+        '<div style="font-size:14.5px;line-height:1.7;color:' + C.ink + '">' + esc(portrait) + "</div></td></tr></table>" : "") +
+      (strengths ? sub("Điểm mạnh") + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + strengths + "</table>" : "") +
+      (acts ? sub("Việc nên làm") + acts : "") +
+      (a.goal ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#FFF8E8" style="border-collapse:separate;background:#FFF8E8;border:1px solid #F1DFB6;border-radius:12px;margin:6px 0 8px"><tr><td style="padding:12px 14px;font-family:' + FONT + ';font-size:14px;line-height:1.6;color:#5E3D00">' +
+        '<b style="color:#8A5500">&#127919; Mục tiêu lần tới.</b> ' + esc(String(a.goal).replace(/^Lần tới:\s*/i, "")) + "</td></tr></table>" : "") +
       "</td></tr></table></td></tr>"
     : "";
 
@@ -231,9 +241,12 @@ function textOf(attempt, settings, m) {
     if (x.length) L.push("", "CHỈ SỐ KHÁC", ...x);
   }
   if (a.headline || (a.actions || []).length) {
-    L.push("", "LỜI KHUYÊN ĐỂ CẢI THIỆN" + (a.source === "ai" ? " (gợi ý bởi AI)" : ""));
-    if (a.headline) L.push(a.headline + (a.summary ? ". " + a.summary : ""));
+    L.push("", "NHẬN XÉT DÀNH RIÊNG CHO BẠN" + (a.source === "ai" ? " (gợi ý bởi AI)" : ""));
+    if (a.headline) L.push(a.headline);
+    if (a.portrait || a.summary) L.push("Cách bạn đã làm bài: " + (a.portrait || a.summary));
+    (a.strengths || []).forEach((x) => L.push("* Điểm mạnh: " + x));
     (a.actions || []).forEach((x, i) => L.push((i + 1) + ". " + x));
+    if (a.goal) L.push("Mục tiêu " + String(a.goal).charAt(0).toLowerCase() + String(a.goal).slice(1));
   }
   L.push("", "XÁC THỰC KẾT QUẢ", m.url, "Mã minh chứng: " + m.proof, "", "BIÊN NHẬN NỘP BÀI", "Họ và tên: " + oneLine(attempt.name, 80), "Mã nhân viên: " + oneLine(attempt.code, 40), "Quản lí: " + (oneLine(attempt.manager, 80) || "(chưa rõ)"),
     "Nộp bài lúc: " + vn(attempt.submittedAt), "", "Chúc bạn học tập và làm việc hiệu quả.", "", "Trân trọng,", "Hệ thống kiểm tra trực tuyến", "", "--",

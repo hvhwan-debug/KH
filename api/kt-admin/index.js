@@ -50,7 +50,9 @@ const handler = async function (context, req) {
         // Thời gian trả lời: tổng quan đề, theo mảng, theo vị trí câu, theo tốc độ, và từng câu hỏi
         let timing = null;
         try { timing = require("../_lib/timestats").analyze(atts, byId, (q, ans, order) => quiz.gradeAnswer(q, ans, order)); } catch (e) { timing = null; }
-        return reply(context, 200, { ok: true, exam: examId, capped: rows.length >= 500, summary: r.summary, items: r.items, timing });
+        // Theo dõi AI: bao nhiêu bài nhận lời khuyên do AI viết, bao nhiêu rơi về bản luật và vì sao
+        const ai = {}; rows.forEach((x) => { const k = x.aiStatus || "unknown"; ai[k] = (ai[k] || 0) + 1; });
+        return reply(context, 200, { ok: true, exam: examId, capped: rows.length >= 500, summary: r.summary, items: r.items, timing, ai });
       }
       // Kiểm tra AI của lời khuyên: chạy THẬT đường AI trên số liệu mẫu để biết vì sao lời khuyên có thể đang dùng bản dự phòng.
       // Chỉ trả về trạng thái (không lộ khóa hay tên nhà cung cấp).
@@ -244,7 +246,7 @@ const handler = async function (context, req) {
     }
 
     if (op === "genQuestions") {
-      const r = await require("../_lib/examai").generateDraft(b.topic, b.count, b.category);
+      const r = await require("../_lib/examai").generateDraft(b.topic, b.count, b.category, (await quiz.getQuestions()).map((q) => q.text));
       return reply(context, 200, r);
     }
 

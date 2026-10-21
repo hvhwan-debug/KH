@@ -1,22 +1,68 @@
 // Gọi mô hình ngôn ngữ (Azure OpenAI trước, Groq dự phòng) từ phía máy chủ. Không trả tên mô hình / lỗi gốc ra ngoài.
+// Độ ổn định:
+//  - CÓ HẠN CHÓT TỔNG (opt.timeoutMs, mặc định 25 giây) và HẠN CHÓT RIÊNG cho từng nhà cung cấp: Azure chậm (không lỗi)
+//    không còn chiếm hết thời gian; Groq luôn còn phần thời gian của mình. Yêu cầu quá hạn bị HUỶ thật (AbortController).
+//  - 429 / 5xx / mất kết nối: chuyển nguồn dự phòng; nguồn cuối thì thử lại 1 lần (chờ ngắn có ngẫu nhiên) nếu còn thời gian.
+//  - opt.json: bật chế độ bắt buộc trả JSON (response_format). Nhà cung cấp không hỗ trợ (lỗi 400) -> tự gửi lại không kèm tuỳ chọn.
+//  - Mô hình suy luận trên Groq (gpt-oss): đặt mức suy luận thấp và không trả phần suy luận, để không tốn hết lượt chữ.
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function contentOf(j) { const t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content; return t ? String(t).trim() : ""; }
+async function post(url, headers, body, ms) {
+  const ac = new AbortController(); const t = setTimeout(() => ac.abort(), Math.max(200, ms));
+  try {
+    const r = await fetch(url, { method: "POST", signal: ac.signal, headers: Object.assign({ "Content-Type": "application/json" }, headers), body: JSON.stringify(body) });
+    if (!r.ok) { const e = new Error("upstream " + r.status); e.status = r.status; throw e; }
+    const txt = contentOf(await r.json());
+    if (!txt) { const e = new Error("empty"); e.status = 502; throw e; }
+    return txt;
+  } catch (e) {
+    if (e && e.name === "AbortError") { const x = new Error("timeout"); x.status = 504; throw x; }
+    throw e;
+  } finally { clearTimeout(t); }
+}
+function providers(opt) {
+  const list = [];
+  const ep = (process.env.AZURE_OPENAI_ENDPOINT || "").replace(/\/+$/, ""), key = process.env.AZURE_OPENAI_KEY, dep = process.env.AZURE_OPENAI_DEPLOYMENT;
+  if (ep && key && dep) list.push({ name: "azure", url: ep + "/chat/completions", headers: { "api-key": key, Authorization: "Bearer " + key }, base: { model: dep }, extra: opt.json ? { response_format: { type: "json_object" } } : {} });
+  const gk = process.env.GROQ_API_KEY;
+  if (gk) {
+    const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b", reasoning = /gpt-oss|qwen|deepseek|r1/i.test(model);
+    list.push({ name: "groq", url: "https://api.groq.com/openai/v1/chat/completions", headers: { Authorization: "Bearer " + gk }, base: Object.assign({ model }, reasoning ? { reasoning_effort: "low" } : {}),
+      extra: Object.assign(opt.json ? { response_format: { type: "json_object" } } : {}, reasoning ? { include_reasoning: false } : {}) });
+  }
+  return list;
+}
 async function chat(messages, opt) {
   opt = opt || {};
   if (process.env.AI_MODE === "mock") return mock(opt);   // chỉ dùng khi chạy thử trên máy
-  const temperature = typeof opt.temperature === "number" ? opt.temperature : 0.35, max_tokens = Math.min(opt.max_tokens || 900, 1500);
-  const ep = (process.env.AZURE_OPENAI_ENDPOINT || "").replace(/\/+$/, ""), key = process.env.AZURE_OPENAI_KEY, dep = process.env.AZURE_OPENAI_DEPLOYMENT;
-  if (ep && key && dep) {
-    try {
-      const r = await fetch(ep + "/chat/completions", { method: "POST", headers: { "Content-Type": "application/json", "api-key": key, Authorization: "Bearer " + key }, body: JSON.stringify({ model: dep, messages, temperature, max_tokens }) });
-      if (r.ok) { const j = await r.json(); const t = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content; if (t) return String(t).trim(); }
-    } catch (e) { /* thử nguồn dự phòng */ }
+  const temperature = typeof opt.temperature === "number" ? opt.temperature : 0.35, max_tokens = Math.min(opt.max_tokens || 900, 4000);
+  const list = providers(opt);
+  if (!list.length) { const e = new Error("not configured"); e.status = 503; throw e; }
+  const deadline = Date.now() + Math.max(1500, opt.timeoutMs || 25000);
+  let lastErr = null;
+  for (let i = 0; i < list.length; i++) {
+    const P = list[i], isLast = i === list.length - 1;
+    for (let attempt = 0; attempt < (isLast ? 2 : 1); attempt++) {
+      const left = deadline - Date.now();
+      if (left < 600) break;
+      // Nguồn đầu (khi còn nguồn sau) chỉ dùng tối đa 60% thời gian còn lại, phần còn lại để dành cho nguồn dự phòng
+      const budget = isLast ? left : Math.max(800, Math.floor(left * 0.6));
+      const body = Object.assign({ messages, temperature, max_tokens }, P.base, P.extra);
+      try {
+        return await post(P.url, P.headers, body, budget);
+      } catch (e) {
+        lastErr = e;
+        if (e.status === 400 && Object.keys(P.extra).length) { // tuỳ chọn không được hỗ trợ: gửi lại ngay, bỏ tuỳ chọn
+          P.extra = {};
+          try { return await post(P.url, P.headers, Object.assign({ messages, temperature, max_tokens }, P.base), Math.max(600, deadline - Date.now() - (isLast ? 0 : 1500))); } catch (e2) { lastErr = e2; }
+        }
+        const retryable = !e.status || e.status === 429 || e.status >= 500;
+        if (!(isLast && retryable && attempt === 0)) break;
+        await sleep(Math.min(1200, 300 + Math.floor(Math.random() * 500), Math.max(0, deadline - Date.now() - 1000)));
+      }
+    }
   }
-  const gk = process.env.GROQ_API_KEY;
-  if (!gk) { const e = new Error("not configured"); e.status = 503; throw e; }
-  const r2 = await fetch("https://api.groq.com/openai/v1/chat/completions", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + gk }, body: JSON.stringify({ model: process.env.GROQ_MODEL || "openai/gpt-oss-120b", messages, temperature, max_tokens, reasoning_effort: "low" }) });
-  if (!r2.ok) { const e = new Error("upstream " + r2.status); e.status = r2.status; throw e; }
-  const j2 = await r2.json(); const t2 = j2 && j2.choices && j2.choices[0] && j2.choices[0].message && j2.choices[0].message.content;
-  if (!t2) { const e = new Error("empty"); e.status = 502; throw e; }
-  return String(t2).trim();
+  throw lastErr || Object.assign(new Error("failed"), { status: 502 });
 }
 function mock(o) {
   if (o.task === "brief") return "- Võ Đăng Khoa: gọi ngay để gỡ vướng đại lý nợ.\n- Huỳnh Quốc Nam: nhắc gửi bù 3 ngày báo cáo.\n- Lê Anh Tuấn: tụt tiến độ, cùng rà 5 đại lý lớn.\nNhận định chung: nhóm đang chậm so với mốc, cần tập trung vào người tụt tiến độ.";

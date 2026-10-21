@@ -260,7 +260,7 @@ const handler = async function (context, req) {
     // Soạn câu hỏi bằng AI (nháp, chưa lưu) và đưa vào ngân hàng đề - quản lí dùng được, không cần xem/duyệt
     // toàn bộ ngân hàng đề sẵn có (chỉ thấy đúng những câu mình vừa soạn, để xét duyệt trước khi lưu).
     if (op === "genQuestions") {
-      const r = await require("../_lib/examai").generateDraft(b.topic, b.count, b.category);
+      const r = await require("../_lib/examai").generateDraft(b.topic, b.count, b.category, (await quiz.getQuestions()).map((q) => q.text));
       return reply(context, 200, r);
     }
 

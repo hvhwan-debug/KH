@@ -1032,6 +1032,12 @@ async function openItemAnalysis(examId){
     + (j.capped ? ' · <span class="badge n">chỉ đọc 500 bài mới nhất</span>' : '')
     + (j.items.filter(i => i.severity <= 1).length ? ' · <b style="color:var(--bad)">'+j.items.filter(i => i.severity <= 1).length+' câu cần xem lại</b>' : '');
   ITEM_TIME = {}; (j.timing && j.timing.items || []).forEach(t => { ITEM_TIME[t.id] = t; });
+  if (j.ai){
+    const A = j.ai, known = Object.keys(A).filter(k => k !== 'unknown').reduce((n, k) => n + A[k], 0), okN = (A.ok || 0) + (A.ok_retry || 0);
+    const why = { timeout:'quá giờ', error:'lỗi kết nối', invalid:'sai định dạng', numbers:'bịa số liệu (đã chặn)', not_configured:'chưa cấu hình', off:'đang tắt', skipped:'bỏ qua' };
+    const fails = Object.keys(A).filter(k => why[k]).map(k => why[k] + ' ' + A[k]).join(' · ');
+    if (known) $('itemSummary').innerHTML += '<br>Lời khuyên AI: <b style="color:var(--'+(okN/known >= .8 ? 'ok' : 'bad')+')">'+Math.round(okN/known*100)+'%</b> bài nhận bản AI ('+okN+'/'+known+(A.ok_retry ? ', trong đó '+A.ok_retry+' bài AI phải viết lại vì sai số liệu' : '')+')'+(fails ? ' · dùng bản tự động: '+fails : '')+(A.unknown ? ' · '+A.unknown+' bài cũ chưa ghi nhận' : '');
+  }
   renderTiming(j.timing);
   renderItems();
 }
