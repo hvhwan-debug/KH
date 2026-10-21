@@ -1134,7 +1134,7 @@ function shareCardHeight(d){
   var y = 874 + 38 + 150 + 30;
   if (d.wrong != null && d.blank != null && d.total) y += 108;
   y += ((d.manager ? 1 : 0) + (d.startedText ? 1 : 0) + (d.submittedText ? 1 : 0)) * 62 + 22;
-  if (d.proof) y += d.qr ? 204 : 96;
+  if (d.qr) y += 12 + 168 + 38; // chỉ còn mã QR nhỏ ở giữa (bỏ khung mã minh chứng)
   return y + 262;
 }
 // Vẽ ảnh kết quả (PNG) để chia sẻ. Hàm thuần: nhận ctx + dữ liệu, không đụng tới DOM.
@@ -1261,28 +1261,16 @@ function drawShareCard(ctx, W, H, d){
     txt(r[1], cx + cw - 52, ry2 + 40, 26, 700, INK, 'right');
   });
   y += rows.length * 62 + 22;
-  // mã minh chứng + mã QR (quét là ra kết quả đã xác thực)
-  if (d.proof){
-    var pxl = cx + 52, pw = cw - 104, qbox = d.qr ? 204 : 0, bh = d.qr ? 204 : 96, lw = pw - (d.qr ? qbox + 20 : 0);
-    ctx.save(); rr(pxl, y, lw, bh, 22); ctx.fillStyle = '#F2FAF8'; ctx.fill(); ctx.setLineDash([10, 8]); ctx.lineWidth = 2.5; ctx.strokeStyle = '#9FD2CB'; ctx.stroke(); ctx.restore();
-    var sx = pxl + 40, sy2 = y + (d.qr ? 52 : 48);
-    ctx.beginPath(); ctx.moveTo(sx, sy2 - 24); ctx.lineTo(sx + 22, sy2 - 15); ctx.lineTo(sx + 22, sy2 + 3); ctx.quadraticCurveTo(sx + 22, sy2 + 17, sx, sy2 + 25); ctx.quadraticCurveTo(sx - 22, sy2 + 17, sx - 22, sy2 + 3); ctx.lineTo(sx - 22, sy2 - 15); ctx.closePath();
-    ctx.fillStyle = '#17794A'; ctx.fill();
-    ctx.beginPath(); ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.moveTo(sx - 9, sy2 + 1); ctx.lineTo(sx - 2, sy2 + 8); ctx.lineTo(sx + 10, sy2 - 7); ctx.stroke();
-    txt('MÃ MINH CHỨNG', pxl + 86, y + (d.qr ? 44 : 36), 20, 700, MUTED);
-    txt(d.proof, pxl + 86, y + (d.qr ? 86 : 76), 38, 800, DEEP);
-    if (d.qr){
-      ctx.font = '500 22px ' + F;
-      wrap('Quét mã QR bên phải để xem ngay kết quả đã được hệ thống xác thực.', lw - 60, 3).forEach(function(l, i){ txt(l, pxl + 30, y + 132 + i * 30, 22, 500, MUTED); });
-      var qx = pxl + lw + 20; qrBox = { x: qx, y: y, w: qbox, h: qbox };
-      var n = d.qr.length, cell = Math.max(3, Math.floor(176 / n)), qs = n * cell, ox = qx + (qbox - qs) / 2, oy = y + (qbox - qs) / 2;
-      rr(qx, y, qbox, qbox, 22); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#D5E9EC'; ctx.stroke();
-      ctx.fillStyle = '#0D2A31';
-      for (var qr = 0; qr < n; qr++) for (var qc = 0; qc < n; qc++) if (d.qr[qr][qc]) ctx.fillRect(ox + qc * cell, oy + qr * cell, cell, cell);
-    } else {
-      txt('Quản trị viên đối chiếu mã này', pxl + lw - 28, y + 58, 21, 500, MUTED, 'right');
-    }
-    y += bh;
+  // Mã QR nhỏ ở giữa (quét là ra kết quả đã xác thực). Không còn khung "Mã minh chứng" cho ảnh gọn hơn.
+  if (d.qr){
+    var qbox = 168, qx = W / 2 - qbox / 2, qy = y + 12;
+    qrBox = { x: qx, y: qy, w: qbox, h: qbox };
+    rr(qx, qy, qbox, qbox, 20); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#D5E9EC'; ctx.stroke();
+    var n = d.qr.length, cell = Math.max(2, Math.floor(140 / n)), qs = n * cell, ox = qx + (qbox - qs) / 2, oy = qy + (qbox - qs) / 2;
+    ctx.fillStyle = '#0D2A31';
+    for (var qr = 0; qr < n; qr++) for (var qc = 0; qc < n; qc++) if (d.qr[qr][qc]) ctx.fillRect(ox + qc * cell, oy + qr * cell, cell, cell);
+    txt('Quét mã để xem kết quả đã xác thực', W / 2, qy + qbox + 30, 20, 500, MUTED, 'center');
+    y = qy + qbox + 38;
   }
   // xác nhận đồng ý + dấu xác nhận của hệ thống
   var sy = cy + ch - 74;
