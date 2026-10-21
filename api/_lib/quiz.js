@@ -257,6 +257,19 @@ async function upsertExam(data) {
     { id, title: String((data && data.title) || id).trim().slice(0, 150), createdAt: i >= 0 ? exams[i].createdAt : now },
     pick(data || {}, OVERRIDABLE_FIELDS)
   );
+  // Khống chế số câu: kiểm tra chặt, lưu dạng SỐ (không lưu chuỗi thô như trước)
+  const base = await getSettings();
+  const bpIn = data && data.blueprint !== undefined ? cleanBlueprint(data.blueprint) : (i >= 0 ? exams[i].blueprint : null);
+  if (bpIn && bpIn.error) return { ok: false, error: bpIn.error };
+  const qcIn = entry.questionCount !== undefined ? entry.questionCount : (i >= 0 && exams[i].questionCount != null ? exams[i].questionCount : undefined);
+  const verr = validateCounts({ questionCount: qcIn, bothGiaDungCount: entry.bothGiaDungCount, blueprint: bpIn }, targetCount(base));
+  if (verr) return { ok: false, error: verr };
+  if (entry.questionCount !== undefined) entry.questionCount = toInt(entry.questionCount);
+  if (entry.bothGiaDungCount !== undefined) entry.bothGiaDungCount = toInt(entry.bothGiaDungCount);
+  if (entry.secondsPerQuestion !== undefined) { const sp = toInt(entry.secondsPerQuestion); if (!(sp >= 10 && sp <= 600)) return { ok: false, error: "Thời gian mỗi câu phải từ 10 đến 600 giây." }; entry.secondsPerQuestion = sp; }
+  if (entry.passScore !== undefined) { const ps = toInt(entry.passScore); if (!(ps >= 0 && ps <= 100)) return { ok: false, error: "Điểm đạt phải từ 0 đến 100%." }; entry.passScore = ps; }
+  // Ô để trống = kế thừa cài đặt chung: xoá giá trị cũ đã lưu (trước đây để trống KHÔNG xoá được giá trị cũ)
+  if (data) ["questionCount", "bothGiaDungCount", "secondsPerQuestion", "passScore"].forEach((k) => { if (data[k] === "" && i >= 0) delete exams[i][k]; });
   if (data && data.practice !== undefined) entry.practice = !!data.practice;
   if (data && data.description !== undefined) entry.description = String(data.description || "").trim().slice(0, 500);
   if (data && data.blueprint !== undefined) {
@@ -429,6 +442,90 @@ async function upsertIndex(entry) {
     if (i >= 0) list[i] = entry; else list.push(entry);
     return list;
   });
+}
+
+// ======================================================================================
+// PHÂN BỔ ĐỀ: MỘT NƠI DUY NHẤT quyết định mỗi thí sinh nhận bao nhiêu câu và câu nào.
+// Dùng chung cho: tạo đề (kt-start), thể lệ hiển thị (kt-check), xem trước của quản trị (kt-admin).
+// Nguyên tắc khống chế:
+//  1. Số câu mỗi đề = "Tổng số câu hỏi mỗi đề" (questionCount), là con số DUY NHẤT. Không có trường hợp nào
+//     "lấy cả ngân hàng": thiếu / sai giá trị -> dùng mặc định DEFAULT_QUESTION_COUNT.
+//  2. Trần cứng MAX_QUESTION_COUNT áp cho mọi đường (cài đặt chung, đề riêng, cấu trúc đề, dữ liệu cũ đã lưu).
+//  3. Cấu trúc đề (nếu có) chỉ là CÁCH CHIA số câu đó theo ngân hàng/danh mục/độ khó; tổng quy tắc phải bằng đúng
+//     questionCount (kiểm tra khi lưu). Khi rút câu vẫn cắt đúng questionCount để chặn dữ liệu cũ sai.
+//  4. Không bao giờ phát nhiều hơn questionCount. Ngân hàng không đủ câu -> báo thiếu cho quản trị (preview).
+// ======================================================================================
+const MAX_QUESTION_COUNT = Math.max(1, Math.min(200, parseInt(process.env.KT_MAX_QUESTIONS, 10) || 60));
+const DEFAULT_QUESTION_COUNT = 30;
+function toInt(v) { const n = typeof v === "number" ? v : parseInt(String(v == null ? "" : v).trim(), 10); return Number.isFinite(n) ? Math.trunc(n) : NaN; }
+// Số câu THỰC TẾ mỗi đề sau khi khống chế (dùng cho dữ liệu đã lưu, kể cả dữ liệu cũ sai).
+function targetCount(settings) {
+  const n = toInt(settings && settings.questionCount);
+  return Math.min(MAX_QUESTION_COUNT, n >= 1 ? n : DEFAULT_QUESTION_COUNT);
+}
+// Kiểm tra chặt khi LƯU (cài đặt chung hoặc đề riêng). Trả về "" nếu hợp lệ, ngược lại là thông báo lỗi.
+// fields: { questionCount, bothGiaDungCount, blueprint } — trường nào undefined/"" thì bỏ qua (kế thừa).
+function validateCounts(fields, inheritedCount) {
+  const f = fields || {};
+  let qc = inheritedCount;
+  if (f.questionCount !== undefined && f.questionCount !== null && f.questionCount !== "") {
+    qc = toInt(f.questionCount);
+    if (!(qc >= 1 && qc <= MAX_QUESTION_COUNT)) return "Tổng số câu hỏi mỗi đề phải là số nguyên từ 1 đến " + MAX_QUESTION_COUNT + ".";
+  }
+  if (f.bothGiaDungCount !== undefined && f.bothGiaDungCount !== null && f.bothGiaDungCount !== "") {
+    const g = toInt(f.bothGiaDungCount);
+    if (!(g >= 0)) return "Số câu \"Gia dụng\" cố định phải là số nguyên không âm.";
+    if (qc >= 1 && g > qc) return "Số câu \"Gia dụng\" cố định (" + g + ") không được lớn hơn tổng số câu mỗi đề (" + qc + ").";
+  }
+  if (f.blueprint && f.blueprint.rules && f.blueprint.rules.length) {
+    const t = blueprintTotal(f.blueprint);
+    if (t > MAX_QUESTION_COUNT) return "Cấu trúc đề đang cộng ra " + t + " câu, vượt giới hạn " + MAX_QUESTION_COUNT + " câu mỗi đề.";
+    if (qc >= 1 && t !== qc) return "Tổng các quy tắc trong Cấu trúc đề là " + t + " câu, phải bằng đúng Tổng số câu hỏi mỗi đề (" + qc + "). Hãy chỉnh lại số câu của các quy tắc hoặc ô Tổng số câu.";
+  }
+  return "";
+}
+// Lên đề cho MỘT thí sinh (theo nhóm ngành). Trả về:
+//   { picked, target, mode: "blueprint"|"segment", short, pool, source, parts: [{label, want, got}] , error }
+function planExam(all, settings, segment) {
+  const target = targetCount(settings);
+  const parts = [];
+  let picked = [], pool = 0, source = "", error = "";
+  if (settings.blueprint && settings.blueprint.rules && settings.blueprint.rules.length) {
+    const r = buildFromBlueprint(all, settings.blueprint);
+    picked = r.picked.slice(0, target);
+    r.report.forEach((x) => parts.push({ label: ruleLabel(x.rule), want: x.rule.count, got: x.taken }));
+    pool = r.report.reduce((n, x) => n + x.available, 0);
+    source = "blueprint";
+    return { picked, target, mode: "blueprint", short: Math.max(0, target - picked.length), pool, source, parts, error };
+  }
+  const bank = bankFor(all, settings.examPeriod);
+  const active = bank.list;
+  source = bank.source + (bank.from ? ":" + bank.from : "");
+  const seg = normSegment(segment);
+  const wantCategory = CATEGORY_BY_SEGMENT[seg];
+  if (!active.length) error = "Ngân hàng đề kỳ này chưa có câu hỏi.";
+  else if (wantCategory) {
+    const p = active.filter((q) => q.category === wantCategory);
+    pool = p.length;
+    picked = shuffle(p).slice(0, Math.min(target, p.length));
+    parts.push({ label: wantCategory, want: target, got: picked.length });
+    if (!p.length) error = "Ngân hàng đề chưa có câu hỏi danh mục \"" + wantCategory + "\".";
+  } else {
+    const gd = active.filter((q) => q.category === "Gia dụng"), other = active.filter((q) => q.category !== "Gia dụng");
+    pool = active.length;
+    const wantGD = Math.min(Math.max(0, toInt(settings.bothGiaDungCount) || 0), target);
+    const gdN = Math.min(wantGD, gd.length);
+    const otN = Math.min(target - gdN, other.length); // phần Gia dụng thiếu KHÔNG bù bằng câu khác để giữ đúng tỉ lệ
+    picked = shuffle(shuffle(gd).slice(0, gdN).concat(shuffle(other).slice(0, otN)));
+    parts.push({ label: "Gia dụng (cố định)", want: wantGD, got: gdN }, { label: "Các danh mục khác", want: target - wantGD, got: otN });
+    if (!picked.length) error = "Chưa có câu hỏi phù hợp để tạo đề.";
+  }
+  picked = picked.slice(0, target); // chốt chặn cuối cùng
+  return { picked, target, mode: "segment", short: Math.max(0, target - picked.length), pool, source, parts, error };
+}
+function ruleLabel(r) {
+  return (r.bankId === "*" ? "Mọi ngân hàng" : "Ngân hàng " + r.bankId) + (r.category ? " · " + r.category : "") +
+    (r.difficulty ? " · " + ({ easy: "Dễ", medium: "Trung bình", hard: "Khó" }[r.difficulty] || r.difficulty) : "") + (r.tag ? " · #" + r.tag : "");
 }
 
 function shuffle(arr) {
@@ -629,7 +726,7 @@ module.exports = {
   getAttempt, putAttempt, saveIndex, activeForPeriod,
   getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary,
   getBanks, saveBanks, bankOf, validBankId, slugify, cleanQuestionMeta, DEFAULT_BANK, DIFFICULTIES,
-  cleanBlueprint, buildFromBlueprint, blueprintTotal, examAccessError, inAudience, examKnown, scoreAttempt, patchIndex, previousResult, loadAttempts,
+  cleanBlueprint, buildFromBlueprint, blueprintTotal, planExam, targetCount, validateCounts, MAX_QUESTION_COUNT, examAccessError, inAudience, examKnown, scoreAttempt, patchIndex, previousResult, loadAttempts,
   TYPES, qType, normText, normalizeQuestionInput, gradeAnswer,
   getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,

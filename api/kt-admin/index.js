@@ -67,6 +67,20 @@ const handler = async function (context, req) {
         return reply(context, 200, Object.assign({ ok: true }, r));
       }
       // Xem trước cấu trúc đề: mỗi quy tắc có bao nhiêu câu khả dụng, có thiếu không.
+      // Xem trước đề SẼ PHÁT cho từng nhóm ngành, theo đúng logic tạo đề thật (quiz.planExam).
+      // Nhận cài đặt đang nhập trên form (chưa lưu) để quản trị viên kiểm tra trước khi bấm Lưu.
+      if (op === "previewPlan") {
+        let draft = {}; try { draft = JSON.parse(String(req.query.exam || "{}")) || {}; } catch (e) { draft = {}; }
+        const id = String(draft.id || "");
+        const eff = Object.assign({}, await quiz.getExamSettings(id || (await quiz.getSettings()).examPeriod));
+        ["questionCount", "bothGiaDungCount"].forEach((k) => { if (draft[k] !== undefined && draft[k] !== "") eff[k] = draft[k]; });
+        if (draft.blueprint !== undefined) { const bp = quiz.cleanBlueprint(draft.blueprint); if (bp && bp.error) return reply(context, 400, { ok: false, error: bp.error }); eff.blueprint = bp; }
+        const err = quiz.validateCounts({ questionCount: eff.questionCount, bothGiaDungCount: eff.bothGiaDungCount, blueprint: eff.blueprint }, 0);
+        const all = await quiz.getQuestions();
+        const segs = eff.blueprint && eff.blueprint.rules && eff.blueprint.rules.length ? [["*", "Mọi thí sinh"]] : [["gia_dung", "Bán Gia dụng"], ["may_loc", "Bán Máy lọc nước"], ["both", "Bán cả 2 ngành"]];
+        const plans = segs.map(([seg, label]) => { const p = quiz.planExam(all, eff, seg); return { segment: seg, label, target: p.target, got: p.picked.length, short: p.short, pool: p.pool, mode: p.mode, source: p.source, parts: p.parts, error: p.error }; });
+        return reply(context, 200, { ok: true, max: quiz.MAX_QUESTION_COUNT, invalid: err || "", plans });
+      }
       if (op === "previewBlueprint") {
         let bp; try { bp = quiz.cleanBlueprint(JSON.parse(String(req.query.blueprint || "null"))); } catch (e) { bp = { error: "Cấu trúc đề không hợp lệ." }; }
         if (!bp) return reply(context, 200, { ok: true, report: [], total: 0 });
@@ -93,7 +107,7 @@ const handler = async function (context, req) {
       }
       if (op === "candidates") return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; return o; }) });
       if (op === "settings") return reply(context, 200, { ok: true, settings: await quiz.getSettings() });
-      if (op === "exams") return reply(context, 200, { ok: true, exams: await quiz.listExamsSummary(), currentPeriod: (await quiz.getSettings()).examPeriod });
+      if (op === "exams") return reply(context, 200, { ok: true, exams: await quiz.listExamsSummary(), currentPeriod: (await quiz.getSettings()).examPeriod, maxQuestions: quiz.MAX_QUESTION_COUNT });
       if (op === "results") {
         const st = await quiz.getSettings();
         const all = await quiz.getIndex();
@@ -509,10 +523,12 @@ const handler = async function (context, req) {
 
     if (op === "saveSettings") {
       const cur = await quiz.getSettings();
+      const verr = quiz.validateCounts({ questionCount: b.questionCount, bothGiaDungCount: b.bothGiaDungCount }, quiz.targetCount(cur));
+      if (verr) return reply(context, 400, { ok: false, error: verr });
       const next = Object.assign({}, cur, {
         examTitle: String(b.examTitle || cur.examTitle || "").slice(0, 200),
         shareTitle: String(b.shareTitle == null ? cur.shareTitle || "" : b.shareTitle).trim().slice(0, 80),
-        questionCount: Math.max(1, parseInt(b.questionCount, 10) || cur.questionCount),
+        questionCount: Math.min(quiz.MAX_QUESTION_COUNT, Math.max(1, parseInt(b.questionCount, 10) || quiz.targetCount(cur))),
         bothGiaDungCount: Math.max(0, parseInt(b.bothGiaDungCount, 10) || 0),
         secondsPerQuestion: Math.max(10, parseInt(b.secondsPerQuestion, 10) || cur.secondsPerQuestion),
         passEnabled: !!b.passEnabled,

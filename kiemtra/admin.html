@@ -266,6 +266,11 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
         <div id="bpTotal" class="small" style="margin-top:8px"></div>
         <div id="bpPreview"></div>
 
+        <h1 style="margin-top:22px;font-size:16px">Phân bổ đề sẽ phát</h1>
+        <p class="small">Mỗi thí sinh nhận <b>đúng</b> số câu ở ô "Tổng số câu hỏi mỗi đề" (tối đa <b id="maxQ">60</b> câu), không bao giờ nhiều hơn. Bấm xem trước để biết từng nhóm thí sinh sẽ nhận bao nhiêu câu, lấy từ đâu, có thiếu câu không. Khi bấm Lưu, hệ thống cũng tự kiểm tra.</p>
+        <button class="btn ghost sm" type="button" onclick="previewPlan()">Xem trước đề sẽ phát</button>
+        <div id="planPreview"></div>
+
         <div style="margin-top:16px;display:flex;gap:8px">
           <button class="btn" onclick="saveExam()">Lưu đề thi</button>
           <button class="btn ghost" onclick="document.getElementById('examFormCard').classList.add('hide')">Huỷ</button>
@@ -713,11 +718,11 @@ let EXAMS = [];
 async function loadExams(){
   const { j } = await api('GET','/api/kt-admin?op=exams');
   if (!j.ok) return;
-  EXAMS = j.exams || [];
+  EXAMS = j.exams || []; if (j.maxQuestions){ MAXQ = j.maxQuestions; $('maxQ').textContent = MAXQ; $('exCount').max = MAXQ; }
   $('exList').innerHTML = EXAMS.map(e =>
     '<tr><td><code>'+esc(e.id)+'</code>'+(e.id===j.currentPeriod?' <span class="badge y">Mặc định</span>':'')+'</td>'+
     '<td>'+esc(e.title||e.id)+(e.practice?' <span class="badge" style="background:#FDEBC8;color:#8A5200">Thi thử</span>':'')+'<div class="small"><a href="/kiemtra/?exam='+encodeURIComponent(e.id)+'" target="_blank" rel="noopener">link thi</a></div></td>'+
-    '<td class="small">'+(bpTotalOf(e.blueprint) ? '<span class="badge y">Theo quy tắc</span> '+bpTotalOf(e.blueprint)+' câu / '+e.blueprint.rules.length+' quy tắc' : 'Cách cũ · '+(e.questionCount ? e.questionCount+' câu/đề' : 'theo cài đặt chung')+' · ngân hàng kỳ có '+(e.bankCount||0)+' câu')+'</td>'+
+    '<td class="small">'+((+e.questionCount > MAXQ || bpTotalOf(e.blueprint) > MAXQ || (bpTotalOf(e.blueprint) && e.questionCount && bpTotalOf(e.blueprint) !== +e.questionCount)) ? '<span class="badge n">⚠ Cần sửa số câu</span> ' : '')+(bpTotalOf(e.blueprint) ? '<span class="badge y">Theo quy tắc</span> '+bpTotalOf(e.blueprint)+' câu / '+e.blueprint.rules.length+' quy tắc' : 'Theo nhóm ngành · '+(e.questionCount ? e.questionCount+' câu/đề' : 'theo cài đặt chung')+' · ngân hàng kỳ có '+(e.bankCount||0)+' câu')+'</td>'+
     '<td class="small">'+esc(examWindowText(e))+'</td><td>'+(e.resultCount||0)+'</td>'+
     '<td class="small">'+examStatusText(e, j.currentPeriod)+'</td>'+
     '<td style="white-space:nowrap">'+
@@ -729,6 +734,7 @@ async function loadExams(){
   ).join('') || '<tr><td colspan="7" class="small">Chưa có đề thi nào, bấm "+ Tạo đề thi mới" để bắt đầu.</td></tr>';
 }
 function clearExamForm(){
+  $('planPreview').innerHTML = ''; $('exCount').oninput = () => { updateBpTotal(); $('planPreview').innerHTML = ''; };
   $('exEditingId').value=''; $('exId').value=''; $('exId').disabled=false; $('exTitle').value=''; $('exShareTitle').value='';
   $('exCount').value=''; $('exBothGD').value=''; $('exSeconds').value=''; $('exPass').value=''; $('exPassOn').checked=false;
   $('exRetake').checked=false; $('exPractice').checked=false; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
@@ -758,7 +764,38 @@ function editExam(id){
   $('examFormCard').classList.remove('hide');
   $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
 }
+function examDraft(){
+  return { id: $('exEditingId').value || $('exId').value.trim(), questionCount: $('exCount').value.trim(), bothGiaDungCount: $('exBothGD').value.trim(),
+    blueprint: BP_RULES.length ? { rules: BP_RULES.map(r => ({ bankId:r.bankId, category:r.category||'', difficulty:r.difficulty||'', tag:r.tag||'', count:+r.count||0 })) } : null };
+}
+async function fetchPlan(){
+  const { j } = await api('GET','/api/kt-admin?op=previewPlan&exam=' + encodeURIComponent(JSON.stringify(examDraft())));
+  return j;
+}
+function renderPlan(j){
+  const box = $('planPreview');
+  if (!j || !j.ok){ box.innerHTML = '<div class="msg err">'+esc((j && j.error) || 'Không xem trước được.')+'</div>'; return; }
+  const srcL = (s) => s === 'blueprint' ? 'theo Cấu trúc đề' : s.indexOf('period') === 0 ? 'ngân hàng của kỳ này' : s.indexOf('unassigned') === 0 ? '⚠ câu chưa gắn kỳ (kỳ này chưa có câu riêng)' : s.indexOf('previous') === 0 ? '⚠ mượn ngân hàng kỳ trước (' + esc(s.split(':')[1]||'') + ')' : '⚠ không có câu';
+  box.innerHTML = (j.invalid ? '<div class="msg err">'+esc(j.invalid)+'</div>' : '') +
+    '<div style="margin-top:10px;display:grid;gap:8px">' + j.plans.map(p =>
+      '<div style="border:1px solid var(--line);border-radius:12px;padding:10px 12px">' +
+        '<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><b>'+esc(p.label)+'</b>' +
+        '<span style="font-weight:800;color:var(--'+(p.error||p.short?'bad':'ok')+')">'+(p.error ? '✕ không tạo được đề' : (p.short ? '⚠ chỉ có '+p.got+'/'+p.target+' câu' : '✓ '+p.got+' câu'))+'</span></div>' +
+        '<div class="small" style="margin-top:4px">Nguồn: '+srcL(p.source)+' · '+p.pool+' câu khả dụng</div>' +
+        (p.parts.length ? '<div class="small">'+p.parts.map(x => esc(x.label)+': '+x.got+'/'+x.want).join(' · ')+'</div>' : '') +
+        (p.error ? '<div class="small" style="color:var(--bad)">'+esc(p.error)+'</div>' : '') +
+      '</div>').join('') + '</div>';
+}
+async function previewPlan(){ $('planPreview').innerHTML = '<div class="small" style="margin-top:8px">Đang kiểm tra…</div>'; renderPlan(await fetchPlan()); }
 async function saveExam(){
+  // Kiểm tra phân bổ đề trước khi lưu: sai cấu hình -> chặn; thiếu câu -> hỏi lại
+  const pj = await fetchPlan();
+  if (pj && pj.ok){
+    renderPlan(pj);
+    if (pj.invalid){ msg('exMsg', pj.invalid, 'err'); return; }
+    const bad = pj.plans.filter(p => p.error || p.short);
+    if (bad.length && !confirm('Ngân hàng chưa đủ câu cho: ' + bad.map(p => p.label + ' (' + p.got + '/' + p.target + ')').join(', ') + '.\nThí sinh nhóm này sẽ nhận ÍT câu hơn quy định. Vẫn lưu?')) return;
+  }
   const exam = {
     id: $('exEditingId').value || $('exId').value.trim(),
     title: $('exTitle').value.trim(), shareTitle: $('exShareTitle').value.trim(),
@@ -862,7 +899,8 @@ async function moveSelectedToBank(){
 }
 
 /* ---------- Cấu trúc đề (blueprint) + khung thời gian ---------- */
-let BP_RULES = [];
+let BP_RULES = [], MAXQ = 60;
+
 const bpTotalOf = (bp) => bp && bp.rules ? bp.rules.reduce((n, r) => n + (+r.count || 0), 0) : 0;
 function renderBpRules(){
   const box = $('bpRules'); if (!box) return;
@@ -884,7 +922,13 @@ function renderBpRules(){
   });
   updateBpTotal();
 }
-function updateBpTotal(){ const t = bpTotalOf({ rules: BP_RULES }); $('bpTotal').textContent = BP_RULES.length ? 'Tổng cộng mỗi đề: ' + t + ' câu từ ' + BP_RULES.length + ' quy tắc.' : ''; }
+function updateBpTotal(){
+  const t = bpTotalOf({ rules: BP_RULES }), want = parseInt($('exCount').value, 10) || 0, el = $('bpTotal');
+  if (!BP_RULES.length){ el.innerHTML = ''; return; }
+  const ok = want > 0 && t === want;
+  el.innerHTML = '<span style="font-weight:700;color:var(--'+(ok?'ok':'bad')+')">'+(ok?'✓ ':'⚠ ')+'Tổng các quy tắc: '+t+' câu'+(want ? ' / cần đúng '+want+' câu' : '')+'</span>'+
+    (ok ? '' : '<br>Tổng các quy tắc phải bằng đúng ô "Tổng số câu hỏi mỗi đề". Đề sẽ không lưu được cho tới khi khớp.');
+}
 function addBpRule(){ BP_RULES.push({ bankId: (BANKS[0] && BANKS.length > 1 ? BANKS[1].id : 'default'), category:'', difficulty:'', tag:'', count:5 }); renderBpRules(); }
 function removeBpRule(i){ BP_RULES.splice(i, 1); renderBpRules(); $('bpPreview').innerHTML=''; }
 async function previewBp(){
