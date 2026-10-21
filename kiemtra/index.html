@@ -112,6 +112,19 @@ button,input{font:inherit;color:inherit}
 .btn.go:disabled::after{content:''}
 .btn.ghost{background:#fff;color:var(--brand-deep);border:1.5px solid var(--line);margin-top:10px;box-shadow:none;min-height:50px}
 .btn.ghost:hover{background:var(--brand-soft);box-shadow:none;filter:none}
+/* Khung giờ mở/đóng đề: hiện ngay khi mở link, trước khi nhập mã */
+.sched{display:flex;gap:12px;align-items:flex-start;border-radius:14px;padding:13px 15px;margin:0 0 18px;border:1px solid var(--line);background:#F7FAFB}
+.sched.hide{display:none}
+.sched .si{flex:0 0 auto;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#fff;border:1px solid var(--line);color:var(--brand-deep)}
+.sched .sx{min-width:0;flex:1}
+.sched .sl{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.sched .sl i{width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 auto}
+.sched .st{display:block;font-size:16px;font-weight:800;color:var(--ink);margin-top:3px;line-height:1.35}
+.sched .sd{display:block;font-size:13px;color:var(--muted);margin-top:2px;line-height:1.5}
+.sched .cd{display:inline-block;margin-top:8px;font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:99px;background:#fff;border:1px solid var(--line);font-variant-numeric:tabular-nums}
+.sched.up{background:#FFF9EC;border-color:#F1DFB6}.sched.up .sl{color:var(--warn)}.sched.up .si{color:var(--warn);border-color:#F1DFB6}.sched.up .cd{color:var(--warn);border-color:#F1DFB6}
+.sched.on{background:#F1F9F5;border-color:#CDE8D9}.sched.on .sl{color:var(--ok)}.sched.on .si{color:var(--ok);border-color:#CDE8D9}.sched.on .cd{color:var(--ok);border-color:#CDE8D9}
+.sched.off{background:#FDF3F2;border-color:#F3D3CF}.sched.off .sl{color:var(--bad)}.sched.off .si{color:var(--bad);border-color:#F3D3CF}
 .msg{font-size:13.5px;line-height:1.55;border-radius:14px;padding:12px 15px;margin:14px 0 0}
 .photo-box{position:relative;width:100%;max-width:360px;margin:0 auto;aspect-ratio:4/3;background:#0b1f1d;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .photo-box video,.photo-box img{width:100%;height:100%;object-fit:cover;display:block}
@@ -379,6 +392,7 @@ body.exam #wm{display:block}
     <form class="card" id="scrCheck" novalidate>
       <h1 tabindex="-1">Bắt đầu bài kiểm tra</h1>
       <p class="lead">Nhập mã nhân viên và email công ty của bạn để vào bài.</p>
+      <div class="sched hide" id="sched" role="status" aria-live="polite"></div>
       <div class="field">
         <label for="inCode">Mã nhân viên</label>
         <div class="inwrap"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="2"/><path d="M6 16c.6-1.8 2-2.6 3-2.6s2.4.8 3 2.6M14 9h4M14 13h4"/></svg><input id="inCode" name="code" type="text" inputmode="text" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="Ví dụ: NV0012" required></div>
@@ -569,6 +583,7 @@ $('scrCheck').addEventListener('submit', async function(e){
   msg('checkMsg','');
   $('inCode').setAttribute('aria-invalid', code ? 'false':'true');
   $('inEmail').setAttribute('aria-invalid', email ? 'false':'true');
+  if ($('btnCheck').dataset.sched === 'up'){ msg('checkMsg', 'Bài kiểm tra chưa mở. Vui lòng quay lại đúng giờ mở đề.', 'warn'); return; }
   if (!code || !email){ msg('checkMsg','Nhập đầy đủ mã nhân viên và email.'); (code ? $('inEmail') : $('inCode')).focus(); return; }
   if (!/^\S+@\S+\.\S+$/.test(email)){ msg('checkMsg','Email chưa đúng định dạng.'); $('inEmail').setAttribute('aria-invalid','true'); $('inEmail').focus(); return; }
   var btn = $('btnCheck'); btn.disabled = true; btn.textContent = 'Đang kiểm tra…';
@@ -1495,6 +1510,70 @@ $('btnInAppRetry').addEventListener('click', function(){
 });
 
 if (!checkInApp()) $('inCode').focus();
+
+/* ---------- Giờ mở / đóng đề: hiện ngay khi mở link ---------- */
+var INFO = null, schedT = null, BTN_CHECK_LABEL = '';
+var WD = ['Chủ nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+function fmtWhen(ms){
+  var d = new Date(ms + 7 * 3600e3), p = function(n){ return (n < 10 ? '0' : '') + n; }; // luôn theo giờ Việt Nam
+  return p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ' · ' + WD[d.getUTCDay()] + ', ' + p(d.getUTCDate()) + '/' + p(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear();
+}
+function fmtLeft(ms){
+  var s = Math.max(0, Math.floor(ms / 1000)), dd = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60;
+  if (dd) return dd + ' ngày ' + h + ' giờ';
+  if (h) return h + ' giờ ' + m + ' phút';
+  return m + ' phút ' + (ss < 10 ? '0' : '') + ss + ' giây';
+}
+var IC_CAL = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>';
+var IC_CLK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+var IC_LCK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>';
+function renderSched(){
+  var box = $('sched'), x = INFO, btn = $('btnCheck');
+  if (!x || (!x.openAt && !x.closeAt)){ box.classList.add('hide'); return; }
+  if (!BTN_CHECK_LABEL) BTN_CHECK_LABEL = btn.textContent;
+  var now = sysNow(), st, html;
+  if (x.openAt && now < x.openAt){
+    st = 'up';
+    html = '<span class="si">' + IC_CAL + '</span><div class="sx"><span class="sl"><i></i>Chưa đến giờ mở đề</span>' +
+      '<span class="st">Mở lúc ' + fmtWhen(x.openAt) + '</span>' +
+      (x.closeAt ? '<span class="sd">Đóng lúc ' + fmtWhen(x.closeAt) + '</span>' : '') +
+      '<span class="cd">Còn ' + fmtLeft(x.openAt - now) + '</span></div>';
+  } else if (x.closeAt && now > x.closeAt){
+    st = 'off';
+    html = '<span class="si">' + IC_LCK + '</span><div class="sx"><span class="sl"><i></i>Đề đã đóng</span>' +
+      '<span class="st">Đã đóng lúc ' + fmtWhen(x.closeAt) + '</span>' +
+      (x.openAt ? '<span class="sd">Mở từ ' + fmtWhen(x.openAt) + '</span>' : '') +
+      '<span class="sd">Nếu cần làm bài, hãy liên hệ quản trị viên phụ trách.</span></div>';
+  } else {
+    st = 'on';
+    html = '<span class="si">' + IC_CLK + '</span><div class="sx"><span class="sl"><i></i>Đang mở</span>' +
+      (x.closeAt ? '<span class="st">Đóng lúc ' + fmtWhen(x.closeAt) + '</span>' : '<span class="st">Bạn có thể vào làm bài ngay</span>') +
+      (x.openAt ? '<span class="sd">Mở từ ' + fmtWhen(x.openAt) + '</span>' : '') +
+      (x.closeAt ? '<span class="cd">Còn ' + fmtLeft(x.closeAt - now) + ' để làm bài</span>' : '') + '</div>';
+  }
+  box.className = 'sched ' + st; box.innerHTML = html;
+  // Chưa mở: khoá nút Tiếp tục, tự mở khoá đúng giờ (theo giờ máy chủ). Đã đóng: máy chủ vẫn là nơi quyết định cuối cùng.
+  var lock = st === 'up';
+  if (btn.dataset.sched !== st){
+    btn.dataset.sched = st;
+    btn.disabled = lock;
+    btn.textContent = lock ? 'Chưa đến giờ mở đề' : BTN_CHECK_LABEL;
+  }
+}
+async function loadInfo(){
+  var r = null;
+  try { r = await fetch('/api/kt-info' + (EXAM_ID ? '?exam=' + encodeURIComponent(EXAM_ID) : ''), { headers:{ 'X-Requested-With':'livotec' }, credentials:'same-origin' }); r = await r.json(); } catch(e){ r = null; }
+  if (!r) return;
+  noteServerTime(r);
+  if (!r.ok || !r.exam) return;
+  INFO = r.exam;
+  if (INFO.title) $('examTitle').textContent = INFO.title;
+  if (!ST.exam){ ST.exam = { title: INFO.title, practice: INFO.practice }; applyPractice(); }
+  renderSched();
+  clearInterval(schedT);
+  if (INFO.openAt || INFO.closeAt) schedT = setInterval(renderSched, 1000);
+}
+loadInfo();
 })();
 </script>
 </body>
