@@ -591,6 +591,36 @@ table.stt select.provsel{max-width:190px}
   .asmhero.compact .asmhero-kpi b{font-size:22px}
   .asmhero.compact .asmhero-kpi span{font-size:10.5px;display:block;max-width:60px;line-height:1.2}
 }
+
+/* ===== Đơn giản hoá Tổng quan / Hôm nay ===== */
+.abar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px}
+.abtn{display:flex;gap:8px;flex-wrap:nowrap}
+.pillbtn.g{background:var(--surface);box-shadow:none}
+.ov3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.s3{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);min-width:0}
+.s3l{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.s3v{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.2;margin-top:4px;white-space:nowrap}
+.s3v small{font-size:13px;color:var(--muted);font-weight:600}
+.s3b{height:6px;border-radius:99px;background:var(--surface2);overflow:hidden;margin:8px 0 6px}
+.s3b i{display:block;height:100%;border-radius:99px;background:#6B8FA3}
+.s3.ok .s3b i{background:#2E9D68}.s3.warn .s3b i{background:#E3A63B}.s3.bad .s3b i{background:#D8473E}
+.s3.ok .s3v{color:#1F7A4E}.s3.bad .s3v{color:#C0392B}
+.s3s{font-size:12.5px;color:var(--muted);line-height:1.45}
+details.fold>summary{list-style:none;cursor:pointer}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary h2{margin:0;display:flex;align-items:center;gap:8px}
+details.fold>summary h2::after{content:'▾';margin-left:auto;color:var(--muted);transition:transform .2s}
+details.fold[open]>summary h2::after{transform:rotate(180deg)}
+details.fold[open]>summary{margin-bottom:8px}
+.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:700px){
+  .ov3{grid-template-columns:1fr 1fr}.ov3 .s3:first-child{grid-column:1/-1}
+  .s3v{font-size:22px}
+  .abar{flex-direction:column;align-items:stretch}.abar>.tiny{order:2;text-align:center}
+  .abtn{width:100%}.abtn .pillbtn{flex:1;justify-content:center;padding-left:8px;padding-right:8px}
+  .abtn .pillbtn .hm{display:none}
+  .kpis{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
@@ -1201,7 +1231,7 @@ function tabsHTML(nFeed,sm){
   const me=ST.data.me,T=[['overview','Tổng quan','Tổng quan','chart','t-ov'],['today','Hôm nay','Hôm nay','home','t-home'],['staff','Nhân sự','Nhân sự','users','t-staff'],['plan','Kế hoạch ngày mai','Kế hoạch','cal','t-plan'],['heat','Bản đồ tháng','Bản đồ','grid','t-heat']];
   if(me.admin)T.push(['org','Quản trị','Quản trị','shield','t-org']);
   const bar=(p,c)=>'<div class="tf-b'+(c?' '+c:'')+'"><i style="width:'+Math.max(0,Math.min(100,(p||0)*100)).toFixed(0)+'%"></i></div>';
-  const foot=sm&&sm.n?'<div class="tfoot" aria-label="Tóm tắt hôm nay"><div class="tf-t">Hôm nay</div><div class="tf-r"><span>Đã báo cáo</span><b>'+sm.done+'/'+sm.work+'</b></div>'+bar(sm.work?sm.done/sm.work:0)+
+  const foot=false&&sm&&sm.n?'<div class="tfoot" aria-label="Tóm tắt hôm nay"><div class="tf-t">Hôm nay</div><div class="tf-r"><span>Đã báo cáo</span><b>'+sm.done+'/'+sm.work+'</b></div>'+bar(sm.work?sm.done/sm.work:0)+
     '<div class="tf-r"><span>Thực đạt tháng</span><b>'+(sm.pct==null?'–':pc(sm.pct))+'</b></div>'+bar(sm.pct,'amb')+(sm.help?'<div class="tf-h">⚠ '+sm.help+' người cần hỗ trợ</div>':'')+'</div>':'';
   return '<nav class="tabs" role="tablist" aria-label="Chức năng">'+T.map(t=>'<button role="tab" data-act="tab" data-v="'+t[0]+'" aria-selected="'+(ST.tab===t[0])+'"><span class="tic '+t[4]+'">'+ic(t[3],20)+'</span><span class="tl">'+t[1]+'</span><span class="ts">'+t[2]+'</span>'+(t[0]==='today'&&nFeed?'<span class="cnt" aria-label="'+nFeed+' việc cần xử lý">'+nFeed+'</span>':'')+'</button>').join('')+foot+'</nav>';
 }
@@ -1222,11 +1252,10 @@ function heroHTML(list,t,date){
   const tile=(cls,lbl,val,p,sub,mk,icn,accent)=>'<div class="kt'+(cls?' '+cls:'')+'">'+(icn?'<div class="klrow"><div class="kico '+(accent||'')+'">'+ic(icn,14)+'</div><div class="kl">'+lbl+'</div></div>':'<div class="kl">'+lbl+'</div>')+'<div class="kv">'+val+'</div>'+bar(p,mk)+'<div class="ks">'+sub+'</div></div>';
   const who=(ST.data.me.name||'').split(' ').slice(-1)[0]||'ASM',nMiss=missingList(list).length;
   return '<section class="phead fadein"><div><h1>'+(isT?'Báo cáo hôm nay':'Báo cáo ngày '+dmy(date))+'</h1><div class="sub">'+lead+' '+t.n+(ST.data.me.admin?' nhân sự':' nhân sự trong nhóm của bạn')+(ST.ng?' · '+NG[ST.ng].n:'')+' · cập nhật '+hhmm(ST.loadedAt)+'</div></div>'+
-    '<div class="pactions">'+(nMiss?'<button class="pillbtn warnb" data-act="remind">'+ic('send',16)+' Nhắc '+nMiss+' người chưa gửi báo cáo</button>':'')+'<button class="pillbtn pri" data-act="copySum">'+ic('copy',16)+' Sao chép bản tin</button><button class="pillbtn" data-act="expTeam">'+ic('down',16)+' Xuất Excel</button><button class="pillbtn" data-act="composeAll">'+ic('send',16)+' Giao việc cả nhóm</button></div></section>'+
+    '<div class="pactions abtn">'+(nMiss?'<button class="pillbtn warnb" data-act="remind">'+ic('send',16)+' Nhắc '+nMiss+' người<span class="hm"> chưa gửi</span></button>':'<button class="pillbtn pri" data-act="composeAll">'+ic('send',16)+' Giao việc<span class="hm"> cả nhóm</span></button>')+'<button class="pillbtn g" data-act="copySum">'+ic('copy',16)+' Bản tin</button><button class="pillbtn g" data-act="expTeam">'+ic('down',16)+' Excel</button></div></section>'+
     '<div class="kpis">'+
     tile(late&&done!=null&&done<1?'bad':done===1?'ok':'','Báo cáo cuối ngày',t.work?t.done+'<small>/ '+t.work+' người</small>':'–',done,done==null?'chưa có ai cần gửi':'đã gửi '+pc(done)+(late&&done<1?' · quá giờ chốt':''),null,'send','a-brand')+
     tile(isT&&!late?'':tone(dayR),'Doanh số ngày',fmt(t.dayAch,1)+'<small>tr</small>',dayR,'kế hoạch '+fmt(t.dayPlan,1)+' tr'+(dayR!=null?' · '+pc(dayR):''),null,'chart','a-ok')+
-    tile(tone(t.ratio),'Thực đạt / chỉ tiêu',fmt(t.ach)+'<small>/ '+fmt(t.total)+' tr</small>',t.pct,(t.pct==null?'chưa có chỉ tiêu':'đạt '+pc(t.pct)+' chỉ tiêu')+' · mốc hôm nay '+pc(t.expPct)+(t.ratio==null?'':' ('+pc(t.ratio)+' mốc)'),t.expPct,'target','a-n1')+
     tile('','Độ phủ tháng',t.cov==null?'–':pc(t.cov),t.cov,fmt(t.covN)+' / '+fmt(t.pts)+' điểm bán · hôm nay +'+fmt(t.dp),null,'pin','a-purp')+
     tile('','HTPP · Số bán SO',fmt(t.htpp)+'<small>HTPP</small>',null,'<b>'+fmt(t.so)+'</b> sản phẩm SO hôm nay',null,'cards','a-n2')+
     '</div><div class="ngsum">'+hi+'</div>';
@@ -1325,9 +1354,9 @@ function todayHTML(){
   const shown=filterList(all),cs=cumSeries(all),mode=viewMode(all.length);
   const chart=all.length?'<div class="card" style="margin-top:14px"><h2>Tiến độ cả nhóm trong tháng</h2><div class="hsub">Đường liền: thực tế lũy kế · đường đứt: kế hoạch lũy kế · vạch dọc: hôm nay</div>'+chartOrEmpty(cs,760,170)+'</div>':'';
   const list=shown.length?(mode==='table'?tableViewHTML(shown,date):'<div class="cards">'+shown.map(c=>srCard(c,date)).join('')+'</div>'):'<div class="card empty"><div class="big">🔍</div>'+(all.length?'Không có nhân sự nào khớp bộ lọc.':'Chưa có nhân sự nào được gán cho bạn.<br><span class="small">Nhân sự cần đăng nhập app, chọn ngành và chọn ASM là bạn.</span>')+'</div>';
-  return heroHTML(all,t,date)+attainHTML(all,t)+
+  return heroHTML(all,t,date)+
     '<div class="tgrid'+(mode==='table'?' tbl':'')+'"><aside class="tside">'+(ST.ai.off?'':aiPanelHTML())+feedHTML(feed)+'</aside>'+
-    '<section class="tmain">'+toolsHTML(counts,all.length)+list+'</section></div>'+selBarHTML(all)+chart;
+    '<section class="tmain">'+toolsHTML(counts,all.length)+list+'</section></div>'+selBarHTML(all)+'<div style="margin-top:12px;text-align:center"><button class="linkbtn" data-act="tab" data-v="overview">Xem tiến độ cả tháng ở tab Tổng quan →</button></div>';
 }
 
 /* ====== Tab: Kế hoạch ngày mai ====== */
@@ -1737,8 +1766,7 @@ function asmBanner(tab,all){
     org:'Quản lý thành viên, ASM và nhật ký thao tác.'
   };
   return '<div class="asmhero compact"><div class="asmhero-in"><div class="asmhero-eb">Tháng '+mm+' · '+fmt(n)+' nhân sự'+(me.admin?'':'<span class="hm"> trong nhóm của bạn</span>')+'</div>'+
-    '<div class="asmhero-t">'+greet+', '+esc(greetName(me))+'</div><p class="asmhero-s">'+(SUB[tab]||'')+'</p></div>'+
-    (T.total>0?'<div class="asmhero-kpi"><b>'+pc(T.pct)+'</b><span>thực đạt / chỉ tiêu</span></div>':'')+'</div>';
+    '<div class="asmhero-t">'+greet+', '+esc(greetName(me))+'</div><p class="asmhero-s">'+(SUB[tab]||'')+'</p></div></div>';
 }
 function dashHTML(){
   const me=ST.data.me,date=ST.date,all=members().map(m=>calc(m,date)),t=team(all),T=attainSum(all),big=!!ST.data.truncated;
@@ -1746,11 +1774,15 @@ function dashHTML(){
   const mm=ST.month.slice(5)+'/'+ST.month.slice(0,4);
   const greet=vnHour()<11?'Chào buổi sáng':vnHour()<18?'Chào buổi chiều':'Chào buổi tối';
   const heroWho=greetName(me);
+  // Khung chào = khung kết luận: một câu cho biết nhóm đang thế nào và cần gì (gộp khung cảnh báo cũ, không lặp số)
+  const rT0=tone(T.ratio);
+  const verdict=T.total>0?(T.ratio==null?'Chưa có mốc kế hoạch để so sánh.':rT0==='ok'?'Nhóm đang <b>đúng tiến độ</b>.':rT0==='warn'?'Nhóm <b>hơi chậm</b> so với kế hoạch.':'Nhóm đang <b>tụt tiến độ</b>, cần can thiệp.')+
+    (T.left>0&&T.need>0?' Cần <b>'+fmt(T.need,0)+' tr/ngày</b> trong '+T.left+' ngày còn lại (đang '+fmt(T.avg,0)+').':''):'Thêm nhân sự và chỉ tiêu tháng để bắt đầu theo dõi cả nhóm.';
   const hero='<div class="asmhero"><div class="asmhero-in"><div class="asmhero-eb">Tháng '+mm+' · '+fmt(big?ST.data.total:all.length)+' nhân sự'+(me.admin?'':'<span class="hm"> trong nhóm của bạn</span>')+'</div>'+
     '<h1 class="asmhero-t">'+greet+', '+esc(heroWho)+'</h1>'+
-    '<p class="asmhero-s">'+(T.total>0?'Cả nhóm đang đạt <b>'+pc(T.pct)+'</b> chỉ tiêu tháng — còn '+T.left+' ngày làm việc để về đích.':'Thêm nhân sự và chỉ tiêu tháng để bắt đầu theo dõi cả nhóm.')+'</p></div>'+
-    (T.total>0?'<div class="asmhero-kpi"><b>'+pc(T.pct)+'</b><span>thực đạt / chỉ tiêu</span></div>':'')+'</div>';
-  const head=hero+'<div class="phead"><div><h1>Tổng quan</h1><div class="sub">Tháng '+mm+' · '+fmt(big?ST.data.total:all.length)+' nhân sự'+(me.admin?'':' trong nhóm của bạn')+' · cập nhật '+hhmm(ST.loadedAt)+'</div></div><div class="pactions"><button class="pillbtn pri" data-act="copySum">'+ic('copy',16)+' Sao chép bản tin</button><button class="pillbtn" data-act="expTeam">'+ic('down',16)+' Xuất Excel</button><button class="pillbtn" data-act="composeAll">'+ic('send',16)+' Giao việc cả nhóm</button></div></div>';
+    '<p class="asmhero-s">'+verdict+'</p></div></div>';
+  // Thanh thao tác gọn: 1 nút chính + 2 nút phụ, không lặp tiêu đề "Tổng quan" và dòng mô tả đã có trong khung chào
+  const head=hero+'<div class="abar"><span class="tiny muted">Cập nhật '+hhmm(ST.loadedAt)+'</span><div class="abtn"><button class="pillbtn pri" data-act="composeAll">'+ic('send',16)+' Giao việc<span class="hm"> cả nhóm</span></button><button class="pillbtn g" data-act="copySum">'+ic('copy',16)+' Bản tin</button><button class="pillbtn g" data-act="expTeam">'+ic('down',16)+' Excel</button></div></div>';
   // Chưa có nhân sự: hướng dẫn bắt đầu
   if(!all.length&&!big){
     return head+onbHTML();
@@ -1759,16 +1791,14 @@ function dashHTML(){
   if(big){
     return head+'<div class="note bignote"><b>'+fmt(ST.data.total)+' nhân sự</b> trong phạm vi này, quá nhiều để tổng hợp trong một trang. Hãy chọn một ASM để xem tổng quan đầy đủ.</div><div style="height:12px"></div>'+(me.admin?overviewHTML():'');
   }
-  const ratioTone=tone(T.ratio),headMsg=T.total>0?(T.ratio==null?'Chưa có mốc kế hoạch.':ratioTone==='ok'?'Nhóm đang đúng tiến độ.':ratioTone==='warn'?'Nhóm hơi chậm so với kế hoạch.':'Nhóm đang tụt tiến độ, cần can thiệp.'):'Chưa có chỉ tiêu tháng.';
-  const sub=T.total>0?'Đã đạt <b>'+fmt(T.ach,1)+' / '+fmt(T.total)+' tr ('+pc(T.pct)+')</b>, mốc hôm nay '+pc(T.expPct)+'. Còn '+T.left+' ngày làm việc: cần <b>'+fmt(T.need,1)+' tr/ngày</b> (đang '+fmt(T.avg,1)+'). Dự báo cuối tháng ≈ <b>'+pc(T.projPct)+'</b> chỉ tiêu.':'Nhân sự cần nhập chỉ tiêu tháng trong app để có tiến độ.';
-  const banner='<div class="dbanner '+(ratioTone||'na')+'"><div class="dbi">'+(ratioTone==='ok'?'✓':ratioTone==='bad'?'!':ratioTone==='warn'?'↘':'i')+'</div><div><div class="dbt">'+headMsg+'</div><div class="dbs">'+sub+'</div></div></div>';
-  const done=t.work?t.done/t.work:null,late=ST.date===ST.today&&vnHour()>=DEADLINE,covT=tone(t.cov!=null&&t.expPct?t.cov/Math.max(t.expPct,0.01):null);
-  const gk=(g,lbl,big2,sub2)=>'<div class="gk"><div class="gk-g">'+g+'</div><div class="gk-t"><div class="kl">'+lbl+'</div><div class="gk-v">'+big2+'</div><div class="ks">'+sub2+'</div></div></div>';
-  const gauges='<div class="dg4">'+
-    gk(gauge(T.pct,76,COL[ratioTone],T.pct==null?'–':pc(T.pct)),'Thực đạt / chỉ tiêu',fmt(T.ach)+'<small> / '+fmt(T.total)+' tr</small>','còn thiếu '+fmt(Math.max(0,T.total-T.ach),1)+' tr')+
-    gk(gauge(T.ratio==null?null:Math.min(1,T.ratio),76,COL[ratioTone],T.ratio==null?'–':pc(T.ratio)),'So với mốc hôm nay',pc(T.expPct)+'<small> mốc</small>',T.ratio==null?'chưa có mốc':(ratioTone==='ok'?'đúng tiến độ':ratioTone==='warn'?'hơi chậm':'tụt tiến độ'))+
-    gk(gauge(T.projPct==null?null:Math.min(1,T.projPct),76,COL[tone(T.projPct)],T.projPct==null?'–':pc(T.projPct)),'Dự báo cuối tháng',(T.projPct==null?'–':fmt(T.proj)+'<small> tr</small>'),'theo tốc độ hiện tại')+
-    gk(gauge(done,76,done==null?COL['']:done>=1?COL.ok:(late?COL.bad:COL.warn),t.work?t.done+'/'+t.work:'–'),'Báo cáo hôm nay',t.work?pc(done):'–','đã gửi / cần gửi'+(late&&done<1?' · quá giờ chốt':''))+'</div>';
+  const ratioTone=tone(T.ratio);
+  const done=t.work?t.done/t.work:null,late=ST.date===ST.today&&vnHour()>=DEADLINE,nMiss=t.work-t.done;
+  // 3 con số quan trọng, mỗi ô MỘT con số chính + một dòng giải thích (bỏ vòng tròn và các số phụ dễ gây nhầm)
+  const st3=(cls,lbl,val,sub,p)=>'<div class="s3 '+(cls||'')+'"><div class="s3l">'+lbl+'</div><div class="s3v">'+val+'</div><div class="s3b"><i style="width:'+Math.max(0,Math.min(100,(p||0)*100)).toFixed(0)+'%"></i></div><div class="s3s">'+sub+'</div></div>';
+  const gauges='<div class="ov3">'+
+    st3(ratioTone,'Đã đạt chỉ tiêu tháng',T.pct==null?'–':pc(T.pct),T.total>0?fmt(T.ach)+' / '+fmt(T.total)+' tr'+(T.expPct!=null?' · mốc hôm nay '+pc(T.expPct):''):'chưa có chỉ tiêu',T.pct)+
+    st3(tone(T.projPct),'Dự báo cuối tháng',T.projPct==null?'–':pc(T.projPct),T.projPct==null?'chưa đủ dữ liệu':'≈ '+fmt(T.proj)+' tr nếu giữ tốc độ hiện tại',T.projPct)+
+    st3(done==null?'':done>=1?'ok':late?'bad':'warn','Báo cáo hôm nay',t.work?t.done+'<small> / '+t.work+' người</small>':'–',!t.work?'chưa có ai cần gửi':nMiss>0?(nMiss+' người chưa gửi'+(late?' · quá giờ chốt':'')):'đã đủ cả nhóm',done)+'</div>';
   // biểu đồ lũy kế + dự báo
   const cs=cumSeries(all),paceF=T.ratio==null?1:T.ratio,fc=cs.plan.map((v,i)=>{if(cs.todayIdx<0||i<cs.todayIdx)return null;const a=cs.act[cs.todayIdx];return a==null?null:a+(v-cs.plan[cs.todayIdx])*paceF;});
   const hasChart=cs.plan.some(v=>v>0)||cs.act.some(v=>v>0);
@@ -1776,8 +1806,7 @@ function dashHTML(){
   // phân bố mức đạt
   const lv={ok:0,warn:0,bad:0,na:0};all.forEach(c=>{lv[c.level]=(lv[c.level]||0)+1;});
   const seg=(k,lbl,go)=>lv[k]?'<button class="ds '+k+'" style="flex:'+lv[k]+'" data-act="ovgo" data-v="'+go+'" title="'+lbl+': '+lv[k]+' người"><b>'+lv[k]+'</b><span>'+lbl+'</span></button>':'';
-  const dist='<div class="card"><h2>Mức đạt của nhân sự</h2><div class="hsub">So với mốc kế hoạch hôm nay của từng người. Chạm vào một nhóm để xem danh sách.</div><div class="dist">'+seg('ok','Đạt ≥ 90%','all')+seg('warn','70–90%','behind')+seg('bad','Dưới 70%','behind')+seg('na','Chưa có mốc','noplan')+'</div>'+
-    '<div class="dstat"><div><b>'+t.done+'/'+t.work+'</b><span>đã báo cáo hôm nay</span></div><div><b class="'+(all.filter(c=>c.streak>=1).length?'bad':'')+'">'+all.filter(c=>c.streak>=1).length+'</b><span>đang nợ báo cáo</span></div><div><b class="'+(t.help?'bad':'')+'">'+t.help+'</b><span>cần hỗ trợ</span></div></div></div>';
+  const dist='<div class="dist">'+seg('ok','Đạt ≥ 90% mốc','all')+seg('warn','70–90%','behind')+seg('bad','Dưới 70%','behind')+seg('na','Chưa có mốc','noplan')+'</div>';
   // theo ngành & nhóm hàng
   const rowBar=(label,s,o)=>{const lvl=o.mk&&s.ratio!=null?tone(s.ratio):'',w=Math.max(0,Math.min(100,(s.pct||0)*100)).toFixed(1);return '<div class="br'+(o.sub?' sub':'')+'"><div class="brh"><span class="brn">'+label+'</span><span class="brv"><b>'+(s.pct==null?'–':pc(s.pct))+'</b>'+(o.mk&&s.ratio!=null?' <span class="pill2 '+lvl+'">'+pc(s.ratio)+' mốc</span>':'')+'</span></div><div class="prog '+(lvl==='bad'?'bad':lvl==='warn'?'warn':'')+'"><i style="width:'+w+'%"></i>'+(o.mk&&s.expPct!=null?'<span class="mk" style="left:'+Math.min(100,s.expPct*100).toFixed(1)+'%"></span>':'')+'</div><div class="tiny muted">'+fmt(s.ach,1)+' / '+fmt(s.total)+' tr · còn thiếu '+fmt(Math.max(0,s.total-s.ach),1)+' tr</div></div>';};
   const ngs=[1,2].filter(k=>all.some(c=>c.m.nganh===k));let bars='';
@@ -1788,15 +1817,17 @@ function dashHTML(){
   const pm={};all.forEach(c=>{const p=canonProv(c.m.province)||String(c.m.province||'').trim(),k=p||'\u0000',g=pm[k]||(pm[k]={p:p,n:0,ach:0,exp:0,total:0});g.n++;g.ach+=c.ach;g.exp+=c.expected;g.total+=c.total;});
   const pr=Object.keys(pm).map(k=>pm[k]).sort((a,b)=>(!a.p)-(!b.p)||b.n-a.n);
   const prow=pr.slice(0,8).map(g=>{const pct=g.total>0?g.ach/g.total:null,ra=g.exp>0?g.ach/g.exp:null;return '<tr><td>'+(g.p?esc(g.p):'<span class="stale">Chưa gán tỉnh</span>')+'</td><td class="r">'+g.n+'</td><td><div class="prog"><i style="width:'+Math.min(100,(pct||0)*100).toFixed(0)+'%"></i></div></td><td class="r">'+(pct==null?'–':pc(pct))+'</td><td class="r">'+(ra==null?'<span class="muted">–</span>':'<span class="pill2 '+tone(ra)+'">'+pc(ra)+'</span>')+'</td></tr>';}).join('');
-  const byProv='<div class="card"><h2>Theo tỉnh / thành phố</h2><div class="hsub">'+(pm['\u0000']?'<b>'+pm['\u0000'].n+' người</b> chưa gán tỉnh. Gán ở tab Nhân sự (ô chọn tỉnh).':'Tổng hợp theo khu vực phụ trách của nhân sự.')+'</div><div class="tblwrap"><table class="t"><thead><tr><th>Tỉnh / thành</th><th class="r">Người</th><th>Tiến độ</th><th class="r">% CT</th><th class="r">So mốc</th></tr></thead><tbody>'+prow+'</tbody></table></div>'+(pr.length>8?'<div class="tiny muted" style="margin-top:6px">Còn '+(pr.length-8)+' khu vực khác, xem ở tab Nhân sự.</div>':'')+'</div>';
+  const provUseful=pr.some(g=>g.n>=2)||!!pm['\u0000'];
+  const byProv=!provUseful?'':'<details class="card fold"><summary><h2>Theo tỉnh / thành phố <span class="tiny muted">· '+pr.length+' khu vực</span></h2></summary><div class="hsub">'+(pm['\u0000']?'<b>'+pm['\u0000'].n+' người</b> chưa gán tỉnh. Gán ở tab Nhân sự (ô chọn tỉnh).':'Tổng hợp theo khu vực phụ trách của nhân sự.')+'</div><div class="tblwrap"><table class="t"><thead><tr><th>Tỉnh / thành</th><th class="r">Người</th><th>Tiến độ</th><th class="r">% CT</th><th class="r">So mốc</th></tr></thead><tbody>'+prow+'</tbody></table></div>'+(pr.length>8?'<div class="tiny muted" style="margin-top:6px">Còn '+(pr.length-8)+' khu vực khác, xem ở tab Nhân sự.</div>':'')+'</details>';
   // nổi bật & cần chú ý
   const withR=all.filter(c=>c.ratio!=null&&c.workDone>=1),top=withR.slice().sort((a,b)=>b.ratio-a.ratio).slice(0,3),low=withR.filter(c=>c.ratio<0.9).sort((a,b)=>a.ratio-b.ratio).slice(0,3);
   const prow2=c=>'<div class="pr2" data-act="detail" data-uid="'+c.m.uid+'"><span class="av" style="background:'+avCol(c.m.email)+'">'+esc(ini(c.name))+'</span><div class="drt"><b>'+esc(c.name)+'</b><div class="tiny muted">'+(showNg()?(NG[c.m.nganh]||NG[2]).n+(c.m.province?' · ':''):'')+(c.m.province?esc(c.m.province):'')+'</div></div><span class="pill2 '+tone(c.ratio)+'">'+pc(c.ratio)+'</span></div>';
-  const people='<div class="card"><h2>Nổi bật & cần chú ý</h2><div class="pcols"><div><div class="ph ok">Nổi bật</div>'+(top.length?top.map(prow2).join(''):'<div class="muted small">Chưa có dữ liệu.</div>')+'</div><div><div class="ph bad">Cần chú ý</div>'+(low.length?low.map(prow2).join(''):'<div class="muted small">Không ai dưới 90% mốc.</div>')+'</div></div></div>';
+  const people='<div class="card"><h2>Nhân sự</h2><div class="hsub">Mức đạt so với mốc kế hoạch hôm nay. Chạm vào một nhóm hoặc một người để xem chi tiết.</div>'+dist+'<div class="pcols"><div><div class="ph ok">Nổi bật</div>'+(top.length?top.map(prow2).join(''):'<div class="muted small">Chưa có dữ liệu.</div>')+'</div><div><div class="ph bad">Cần kèm thêm</div>'+(low.length?low.map(prow2).join(''):'<div class="muted small">Không ai dưới 90% mốc.</div>')+'</div></div></div>';
   // việc cần xử lý
   const feed=buildFeed(all,date).filter(i=>i.lv!=='info').slice(0,4);
-  const fcard='<div class="card"><h2>Việc cần xử lý <span class="badge '+(feed.some(i=>i.lv==='bad')?'bad':'warn')+'">'+feed.length+(buildFeed(all,date).filter(i=>i.lv!=='info').length>4?'+':'')+'</span></h2>'+(feed.length?'<div class="tblwrap"><table class="t ftb"><tbody>'+feed.map(i=>'<tr class="fr '+i.lv+'"><td class="fl"><span class="fdot '+i.lv+'">'+esc(i.ic)+'</span></td><td><div class="ft">'+esc(i.t)+'</div></td><td class="r nowrap"><button class="mini" data-act="compose" data-uid="'+i.uid+'" data-sug="'+esc(i.sug)+'">Giao việc</button></td></tr>').join('')+'</tbody></table></div><div style="margin-top:8px"><button class="linkbtn" data-act="tab" data-v="today">Xem tất cả ở tab Hôm nay →</button></div>':'<div class="allgood"><div style="font-size:26px">🎉</div><b>Không có việc nào cần can thiệp</b></div>')+'</div>';
-  return head+banner+gauges+'<div class="dgrid"><div class="dcol">'+chart+byNg+byProv+'</div><div class="dcol">'+dist+fcard+people+'</div></div>';
+  const fcard='<div class="card"><h2>Cần bạn xử lý <span class="badge '+(feed.some(i=>i.lv==='bad')?'bad':'warn')+'">'+feed.length+(buildFeed(all,date).filter(i=>i.lv!=='info').length>4?'+':'')+'</span></h2>'+(feed.length?'<div class="tblwrap"><table class="t ftb"><tbody>'+feed.map(i=>'<tr class="fr '+i.lv+'"><td class="fl"><span class="fdot '+i.lv+'">'+esc(i.ic)+'</span></td><td><div class="ft">'+esc(i.t)+'</div></td><td class="r nowrap"><button class="mini" data-act="compose" data-uid="'+i.uid+'" data-sug="'+esc(i.sug)+'">Giao việc</button></td></tr>').join('')+'</tbody></table></div><div style="margin-top:8px"><button class="linkbtn" data-act="tab" data-v="today">Xem tất cả ở tab Hôm nay →</button></div>':'<div class="allgood"><div style="font-size:26px">🎉</div><b>Không có việc nào cần can thiệp</b></div>')+'</div>';
+  // Thứ tự theo mức cần hành động: việc cần xử lý -> nhân sự -> biểu đồ tiến độ -> theo ngành -> theo tỉnh
+  return head+gauges+'<div class="dgrid"><div class="dcol">'+fcard+people+'</div><div class="dcol">'+chart+byNg+byProv+'</div></div>';
 }
 function mmFind(uid){const O=ST.org;return O&&O.profiles.concat(O.orphans).find(x=>x.uid===uid);}
 function mgmtHTML(){
