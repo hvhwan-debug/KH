@@ -71,7 +71,8 @@ function build(attempt, settings, advice) {
     '<div style="font-family:' + FONT + ';font-size:11.5px;font-weight:700;letter-spacing:.16em;color:#9FD6DE;margin:24px 0 8px">KẾT QUẢ BÀI KIỂM TRA</div>' +
     '<div class="ttl" style="font-family:' + FONT + ';font-size:23px;line-height:1.35;font-weight:800;color:#ffffff;letter-spacing:-.01em">' + esc(t.title) + "</div>" +
     (t.practice
-      ? '<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr><td bgcolor="#FFF6E2" style="background:#FFF6E2;border:1.5px solid ' + C.amberLine + ';border-radius:99px;padding:7px 16px;font-family:' + FONT + ';font-size:11.5px;font-weight:800;letter-spacing:.12em;color:' + C.amber + '">THI THỬ &nbsp;·&nbsp; KHÔNG PHẢI THI CHÍNH THỨC</td></tr></table>'
+      ? '<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr><td bgcolor="#1F6E7A" style="background:#1F6E7A;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:6px 15px 6px 12px;font-family:' + FONT + ';font-size:12.5px;line-height:1.4;color:#E6F4F6;white-space:nowrap">' +
+        '<span style="color:#F6C85F;font-size:11px">&#9679;</span>&nbsp; <b style="color:#FFD98A;letter-spacing:.06em">THI THỬ</b> <span style="color:#9FD6DE">&nbsp;·&nbsp;</span> Không phải thi chính thức</td></tr></table>'
       : "") + "</td></tr>";
 
   // ---- Lời chào + giới thiệu
@@ -79,36 +80,35 @@ function build(attempt, settings, advice) {
     '<div style="font-family:' + FONT + ';font-size:17px;font-weight:700;color:' + C.ink + ';margin:0 0 8px">Kính gửi ' + esc(m.name) + ",</div>" +
     '<div style="font-family:' + FONT + ';font-size:14.5px;line-height:1.75;color:' + C.body + '">' + esc(m.intro) + "</div>";
 
-  // ---- Khối điểm chính
-  const passLine = m.ps === null ? "" : (m.ps ? "Đạt yêu cầu" : "Chưa đạt yêu cầu") + (settings.passScore ? " (ngưỡng " + settings.passScore + "%)" : "");
-  const hero =
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:' + C.soft + ';border:1px solid ' + C.line + ';border-radius:18px"><tr><td style="padding:22px 22px 20px">' +
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' +
-    '<td valign="middle" width="62%" style="font-family:' + FONT + '"><div class="big" style="font-size:56px;line-height:1;font-weight:800;letter-spacing:-.03em;color:' + m.color + '">' + esc(attempt.pct) + '<span style="font-size:28px;font-weight:700">%</span></div>' +
-    '<div style="font-size:13px;color:' + C.muted + ';margin-top:6px">Tỉ lệ trả lời đúng · ' + esc(attempt.score) + "/" + esc(m.total) + " câu</div></td>" +
-    '<td valign="middle" align="right" width="38%" style="font-family:' + FONT + '"><span style="display:inline-block;padding:7px 14px;border-radius:99px;font-size:12px;font-weight:800;letter-spacing:.08em;white-space:nowrap;' +
-    (t.practice ? "background:#FFF6E2;border:1.5px solid " + C.amberLine + ";color:" + C.amber : "background:#E3F3F5;color:" + C.deep) + '">' + esc(m.status) + "</span>" +
-    (passLine ? '<div style="font-size:12px;color:' + C.muted + ';margin-top:8px">' + esc(passLine) + "</div>" : "") + "</td></tr></table>" +
-    '<div style="height:16px;line-height:16px;font-size:0">&nbsp;</div>' +
-    segBar([{ v: attempt.score || 0, c: C.ok }, { v: m.wrong, c: C.bad }, { v: m.blank, c: "#AEBDC1" }], 10) +
-    '<div style="font-family:' + FONT + ';font-size:12.5px;color:' + C.muted + ';margin-top:10px"><span style="color:' + C.ok + '">&#9679;</span> Đúng <b style="color:' + C.ink + '">' + (attempt.score || 0) + '</b> &nbsp; <span style="color:' + C.bad + '">&#9679;</span> Sai <b style="color:' + C.ink + '">' + m.wrong + '</b> &nbsp; <span style="color:#AEBDC1">&#9679;</span> Bỏ trống <b style="color:' + C.ink + '">' + m.blank + "</b></div>" +
-    "</td></tr></table>";
-
-  // ---- Ba chỉ số
+  // ---- Khối điểm chính: điểm lớn + nhãn trạng thái + thanh đúng/sai/bỏ trống + dải chỉ số + (thi thử) dòng lưu ý, gộp trong MỘT thẻ
+  const passLine = m.ps === null ? "" : (m.ps ? "Đạt yêu cầu" : "Chưa đạt yêu cầu") + (settings.passScore ? " · ngưỡng " + settings.passScore + "%" : "") + (t.practice ? " (nếu thi thật)" : "");
+  const pill = m.ps === true ? { bg: "#DDF1E6", c: C.ok, t: "ĐẠT" } : m.ps === false ? { bg: "#FBE3E0", c: C.bad, t: "CHƯA ĐẠT" } : t.practice ? { bg: C.amberBg, c: C.amber, t: "THI THỬ" } : { bg: "#E3F3F5", c: C.deep, t: "ĐÃ HOÀN THÀNH" };
+  const numColor = m.ps === true ? C.ok : m.ps === false ? C.bad : C.deep;
   const tiles = [{ n: (attempt.score || 0) + "/" + m.total, l: "Số câu đúng" }];
   if (compliance != null) tiles.push({ n: compliance + " điểm", l: t.practice ? "Tuân thủ nếu thi thật" : "Điểm tuân thủ học tập", ref: t.practice });
-  if (m.dur != null) tiles.push({ n: clock(m.dur), l: "Thời gian hoàn thành" });
-  const kpi =
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate"><tr>' +
-    tiles.map((x, i) => '<td class="kp" valign="top" width="' + Math.floor(100 / tiles.length) + '%" style="padding:0 ' + (i < tiles.length - 1 ? "6px 0 0" : "0 0 0 6px") + '">' +
-      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:' + (x.ref ? "#FFFBF1" : C.soft) + ";border:1.5px " + (x.ref ? "dashed #E8CF99" : "solid " + C.line) + ';border-radius:14px"><tr><td align="center" style="padding:14px 8px;font-family:' + FONT + '">' +
-      '<div style="font-size:21px;font-weight:800;line-height:1.2;color:' + (x.ref ? C.amber : C.deep) + '">' + esc(x.n) + '</div><div style="font-size:11.5px;color:' + C.muted + ';line-height:1.4;margin-top:4px">' + esc(x.l) + "</div></td></tr></table></td>").join("") + "</tr></table>";
-
-  // ---- Lưu ý thi thử
-  const practiceNote = t.practice
-    ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:' + C.amberBg + ';border:1px solid #F0DDB0;border-radius:14px"><tr><td style="padding:13px 16px;font-family:' + FONT + ';font-size:13.5px;line-height:1.7;color:#6B4A00"><b>Đây là bài thi thử, không phải kỳ kiểm tra chính thức.</b>' +
-      (compliance != null ? " Điểm tuân thủ nêu trên chỉ nhằm giúp bạn hình dung kết quả nếu thi thật và không được ghi nhận chính thức." : " Kết quả không được ghi nhận chính thức.") + "</td></tr></table>"
-    : "";
+  if (m.dur != null) tiles.push({ n: clock(m.dur), l: "Thời gian làm bài" });
+  const stats =
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>' +
+    tiles.map((x, i) => '<td align="center" valign="top" width="' + Math.floor(100 / tiles.length) + '%" style="padding:14px 6px 2px;' + (i ? "border-left:1px solid " + C.line + ";" : "") + 'font-family:' + FONT + '">' +
+      '<div style="font-size:19px;font-weight:800;line-height:1.2;color:' + (x.ref ? C.amber : C.ink) + '">' + esc(x.n) + (x.ref ? '<sup style="font-size:11px;color:' + C.amber + '">*</sup>' : "") + "</div>" +
+      '<div style="font-size:11.5px;color:' + C.muted + ';line-height:1.4;margin-top:3px">' + esc(x.l) + "</div></td>").join("") + "</tr></table>";
+  const hero =
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:#ffffff;border:1px solid ' + C.line + ';border-radius:18px;overflow:hidden"><tr><td style="padding:22px 22px 16px">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' +
+    '<td class="hs" valign="bottom" style="font-family:' + FONT + '"><div class="big" style="font-size:54px;line-height:1;font-weight:800;letter-spacing:-.03em;color:' + numColor + '">' + esc(attempt.pct) + '<span style="font-size:26px;font-weight:700">%</span></div>' +
+    '<div style="font-size:13px;color:' + C.muted + ';margin-top:7px">Tỉ lệ trả lời đúng</div></td>' +
+    '<td class="hb" valign="bottom" align="right" style="font-family:' + FONT + ';padding-bottom:2px"><span style="display:inline-block;padding:6px 13px;border-radius:99px;background:' + pill.bg + ';color:' + pill.c + ';font-size:12px;font-weight:800;letter-spacing:.06em;white-space:nowrap">' + pill.t + "</span>" +
+    (passLine ? '<div style="font-size:12px;color:' + C.muted + ';margin-top:7px;white-space:nowrap">' + esc(passLine) + "</div>" : "") + "</td></tr></table>" +
+    '<div style="height:16px;line-height:16px;font-size:0">&nbsp;</div>' +
+    segBar([{ v: attempt.score || 0, c: C.ok }, { v: m.wrong, c: C.bad }, { v: m.blank, c: "#AEBDC1" }], 8) +
+    '<div style="font-family:' + FONT + ';font-size:12.5px;color:' + C.muted + ';margin-top:9px"><span style="color:' + C.ok + '">&#9679;</span> Đúng <b style="color:' + C.ink + '">' + (attempt.score || 0) + '</b> &nbsp;&nbsp; <span style="color:' + C.bad + '">&#9679;</span> Sai <b style="color:' + C.ink + '">' + m.wrong + '</b> &nbsp;&nbsp; <span style="color:#AEBDC1">&#9679;</span> Bỏ trống <b style="color:' + C.ink + '">' + m.blank + "</b></div>" +
+    '<div style="height:16px;line-height:16px;font-size:0;border-bottom:1px solid ' + C.line + '">&nbsp;</div>' + stats +
+    "</td></tr>" +
+    (t.practice
+      ? '<tr><td bgcolor="' + C.amberBg + '" style="background:' + C.amberBg + ';border-top:1px solid #F3E2BC;padding:12px 22px;font-family:' + FONT + ';font-size:12.5px;line-height:1.6;color:#6B4A00">' +
+        (compliance != null ? '<b>*</b> ' : "") + "<b>Bài thi thử, không phải kỳ kiểm tra chính thức.</b> " + (compliance != null ? "Điểm tuân thủ chỉ để bạn hình dung nếu thi thật, không được ghi nhận." : "Kết quả không được ghi nhận chính thức.") + "</td></tr>"
+      : "") +
+    "</table>";
 
   // ---- Phân tích theo mảng + chỉ số phụ
   let analysis = "";
@@ -129,33 +129,30 @@ function build(attempt, settings, advice) {
     if (an.timeouts > 0) facts.push({ k: "Câu hết giờ", v: an.timeouts + " câu", s: "chưa kịp trả lời" });
     if (an.prev && an.prev.pct != null) { const d = (an.pct || 0) - an.prev.pct; facts.push({ k: "So với kỳ trước", v: (d > 0 ? "▲ +" : d < 0 ? "▼ " : "≈ ") + d + " điểm %", c: d >= 5 ? C.ok : d <= -5 ? C.bad : C.ink, s: (an.prev.period ? "Kỳ " + an.prev.period + ": " : "Trước đó: ") + an.prev.pct + "%" }); }
     if (an.nextBand && an.total) facts.push({ k: "Mốc tuân thủ kế tiếp", v: an.nextBand.points + " điểm", s: "Cần đúng " + an.nextBand.needCorrect + "/" + an.total + " câu (thiếu " + an.nextBand.gap + ")" });
-    let grid = "";
-    for (let i = 0; i < facts.length; i += 2) {
-      const row = facts.slice(i, i + 2);
-      grid += '<tr>' + row.map((f, j) => '<td class="kp" valign="top" width="50%" style="padding:' + (i ? "10px" : "0") + " " + (j === 0 && row.length > 1 ? "6px" : "0") + ' 0 ' + (j === 1 ? "6px" : "0") + '">' +
-        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:#FAFCFC;border:1px solid #E3EDF0;border-radius:12px"><tr><td style="padding:11px 13px;font-family:' + FONT + '">' +
-        '<div style="font-size:11.5px;color:' + C.muted + '">' + esc(f.k) + '</div><div style="font-size:16px;font-weight:800;color:' + (f.c || C.ink) + ';margin:2px 0">' + esc(f.v) + '</div><div style="font-size:11.5px;color:' + C.muted + '">' + esc(f.s) + "</div></td></tr></table></td>").join("") + (row.length < 2 ? '<td width="50%">&nbsp;</td>' : "") + "</tr>";
-    }
+    // chỉ số phụ: các dòng có đường kẻ mảnh (nhãn + chú thích bên trái, số bên phải), không lồng thêm hộp
+    let grid = facts.map((f, i) =>
+      '<tr><td valign="middle" style="padding:11px 0;' + (i ? "border-top:1px solid #EAF1F3;" : "") + 'font-family:' + FONT + '"><div style="font-size:13px;font-weight:600;color:' + C.ink + '">' + esc(f.k) + '</div><div style="font-size:12px;color:' + C.muted + ';margin-top:2px">' + esc(f.s) + "</div></td>" +
+      '<td align="right" valign="middle" style="padding:11px 0 11px 12px;' + (i ? "border-top:1px solid #EAF1F3;" : "") + 'font-family:' + FONT + ';font-size:16px;font-weight:800;color:' + (f.c || C.ink) + ';white-space:nowrap">' + esc(f.v) + "</td></tr>").join("");
     if (cats || grid) {
       analysis = sectionGap + "<tr><td>" + eyebrow("Phân tích kết quả") +
-        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:#ffffff;border:1px solid ' + C.line + ';border-radius:16px"><tr><td style="padding:18px 18px 16px">' + cats +
-        (grid ? (cats ? '<div style="height:14px;line-height:14px;font-size:0">&nbsp;</div>' : "") + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + grid + "</table>" : "") + "</td></tr></table></td></tr>";
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:#ffffff;border:1px solid ' + C.line + ';border-radius:16px"><tr><td style="padding:18px 20px 8px">' + cats +
+        (grid ? (cats ? '<div style="height:16px;line-height:16px;font-size:0;border-bottom:1px solid ' + C.line + '">&nbsp;</div><div style="height:4px;line-height:4px;font-size:0">&nbsp;</div>' : "") + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + grid + "</table>" : "") + "</td></tr></table></td></tr>";
     }
   }
 
   // ---- Lời khuyên
   const acts = (a.actions || []).map((x, i) =>
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 10px"><tr>' +
-    '<td width="28" valign="top"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td width="26" height="26" align="center" valign="middle" bgcolor="#E3F3F5" style="width:26px;height:26px;border-radius:13px;background:#E3F3F5;font-family:' + FONT + ';font-size:12px;font-weight:800;color:' + C.deep + '">' + (i + 1) + "</td></tr></table></td>" +
+    '<td width="28" valign="top"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td width="26" height="26" align="center" valign="middle" bgcolor="#ffffff" style="width:26px;height:26px;border-radius:13px;background:#ffffff;border:1px solid #CFE5E9;font-family:' + FONT + ';font-size:12px;font-weight:800;color:' + C.deep + '">' + (i + 1) + "</td></tr></table></td>" +
     '<td valign="top" style="padding-left:10px;font-family:' + FONT + ';font-size:14px;line-height:1.7;color:' + C.body + '">' + esc(x) + "</td></tr></table>").join("");
   const adv = (a.headline || acts)
     ? sectionGap + "<tr><td>" + eyebrow("Lời khuyên để cải thiện") +
-      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:linear-gradient(180deg,#F5FBFC,#EDF7F9);background-color:#F1F9FA;border:1px solid #CDE6EA;border-radius:16px"><tr>' +
-      '<td width="5" bgcolor="' + C.brand + '" style="width:5px;background:' + C.brand + ';border-radius:16px 0 0 16px;font-size:0;line-height:0">&nbsp;</td>' +
-      '<td style="padding:18px 20px 10px;font-family:' + FONT + '">' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#F3FAFB" style="border-collapse:separate;background:#F3FAFB;border:1px solid #D3E9ED;border-radius:16px"><tr>' +
+      '<td style="padding:20px 20px 10px;font-family:' + FONT + '">' +
       (a.source === "ai" ? '<div style="margin:0 0 8px"><span style="display:inline-block;background:#DDF0F3;color:' + C.deep + ';font-size:10.5px;font-weight:800;letter-spacing:.08em;padding:3px 10px;border-radius:99px">GỢI Ý BỞI AI</span></div>' : "") +
       (a.headline ? '<div style="font-size:17px;font-weight:800;line-height:1.4;color:' + C.ink + ';margin:0 0 6px">' + esc(a.headline) + "</div>" : "") +
-      (a.summary ? '<div style="font-size:14px;line-height:1.7;color:' + C.body + ';margin:0 0 14px">' + esc(a.summary) + "</div>" : "") + acts +
+      (a.summary ? '<div style="font-size:14px;line-height:1.7;color:' + C.body + ';margin:0 0 16px">' + esc(a.summary) + "</div>" : "") +
+      (acts ? '<div style="border-top:1px solid #DCEDF0;height:14px;line-height:14px;font-size:0">&nbsp;</div>' + acts : "") +
       "</td></tr></table></td></tr>"
     : "";
 
@@ -180,7 +177,7 @@ function build(attempt, settings, advice) {
   const html =
     '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="x-apple-disable-message-reformatting">' +
     '<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>' + esc(m.subject) + "</title>" +
-    "<style>@media only screen and (max-width:540px){.wrap{padding:12px 8px!important}.hd{padding:22px 20px 24px!important}.bd{padding:26px 18px 24px!important}.ft{padding:18px!important}.ttl{font-size:20px!important}.big{font-size:46px!important}.kp{display:block!important;width:100%!important;padding:0 0 8px!important}}</style></head>" +
+    "<style>@media only screen and (max-width:540px){.wrap{padding:12px 8px!important}.hd{padding:22px 20px 24px!important}.bd{padding:26px 18px 24px!important}.ft{padding:18px!important}.ttl{font-size:20px!important}.big{font-size:46px!important}.hs,.hb{display:block!important;width:100%!important;text-align:left!important}.hb{padding-top:12px!important}}</style></head>" +
     '<body style="margin:0;padding:0;background:' + C.page + ';-webkit-text-size-adjust:100%">' +
     '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:' + C.page + '">' + esc(pre) + "&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>" +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' + C.page + '"><tr><td class="wrap" align="center" style="padding:28px 16px">' +
@@ -190,9 +187,6 @@ function build(attempt, settings, advice) {
     "<tr><td>" + hello + "</td></tr>" +
     '<tr><td style="height:20px;line-height:20px;font-size:0">&nbsp;</td></tr>' +
     "<tr><td>" + hero + "</td></tr>" +
-    '<tr><td style="height:14px;line-height:14px;font-size:0">&nbsp;</td></tr>' +
-    "<tr><td>" + kpi + "</td></tr>" +
-    (practiceNote ? '<tr><td style="height:14px;line-height:14px;font-size:0">&nbsp;</td></tr><tr><td>' + practiceNote + "</td></tr>" : "") +
     analysis + adv + cta + receipt + sign +
     "</table></td></tr>" +
     '<tr><td class="ft" align="left" style="background:#F6F9FA;border-top:1px solid #E3EBEE;padding:20px 32px 24px;font-family:' + FONT + ';font-size:12px;line-height:1.7;color:#6A7C80">' +
