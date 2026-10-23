@@ -247,6 +247,10 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
 #profOv{position:fixed;inset:0;z-index:70}
 #profOv iframe{width:100%;height:100%;border:0;background:transparent;display:block}
 
+.lnkrow{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin:10px 0 4px;font-size:13.5px}
+.lnkrow>span{color:var(--muted);min-width:170px}
+.lnkrow a{color:var(--brand-deep);font-weight:600;overflow-wrap:anywhere}
+
 /* === Tối ưu di động (chỉ áp dụng màn hình nhỏ, không đổi giao diện máy tính) === */
 html{-webkit-text-size-adjust:100%}
 .mvframe{width:100%;height:82vh;border:0;display:block}
@@ -660,6 +664,10 @@ html{-webkit-text-size-adjust:100%}
           <button class="btn" type="button" onclick="saveSettings()">Lưu</button>
         </div>
         <div id="setPeriodMsg"></div>
+        <div class="lnkrow"><span>Link thi chung:</span> <a id="lnkExam" target="_blank" rel="noopener"></a> <button class="btn ghost sm" type="button" onclick="copyText(this.getAttribute('data-copy'), this)">Sao chép</button></div>
+        <div class="lnkrow"><span>Trang xác thực kết quả:</span> <a id="lnkVerify" target="_blank" rel="noopener"></a> <button class="btn ghost sm" type="button" onclick="copyText(this.getAttribute('data-copy'), this)">Sao chép</button></div>
+        <p class="small" style="margin:2px 0 0">Mỗi thẻ kết quả có liên kết xác thực riêng (qua mã QR). Mở trang này rồi dán liên kết đó vào để kiểm tra một thẻ bất kỳ.</p>
+        <script>(function(){var o=location.origin;[['lnkExam','/kiemtra/'],['lnkVerify','/kiemtra/ketqua.html']].forEach(function(x){var a=document.getElementById(x[0]);a.href=o+x[1];a.textContent=o.replace(/^https?:\/\//,'')+x[1];a.nextElementSibling.setAttribute('data-copy',o+x[1]);});})();</script>
       </div>
       <div class="card">
         <h1>Giá trị mặc định cho mọi đề</h1>
