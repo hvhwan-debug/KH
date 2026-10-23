@@ -17,6 +17,7 @@ function cfg() {
     allowEmails: list(env.ALLOWED_EMAILS),
     adminEmails: list(env.ADMIN_EMAILS),
     cookieInsecure: env.COOKIE_INSECURE === "1",
+    signupClosed: env.SIGNUP_CLOSED === "1", // 1 = chỉ quản trị viên tạo được tài khoản mới
     smtp: {
       host: env.SMTP_HOST || "",
       port: Number(env.SMTP_PORT || 587),

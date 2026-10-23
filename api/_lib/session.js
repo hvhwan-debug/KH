@@ -74,7 +74,7 @@ function unsubVerify(t) { const p = verify(t); return p && p.k === "unsub" ? p.u
 
 // Đặt lại mật khẩu: liên kết trong email chỉ có hiệu lực 1 giờ.
 const RESET_MAX_AGE = 3600 * 1000;
-function resetToken(uid) { return sign({ u: uid, k: "reset", exp: Date.now() + RESET_MAX_AGE }); }
+function resetToken(uid, maxAgeMs) { return sign({ u: uid, k: "reset", exp: Date.now() + (maxAgeMs > 0 ? maxAgeMs : RESET_MAX_AGE) }); }
 function resetVerify(t) { const p = verify(t); return p && p.k === "reset" ? p.u : null; }
 
 module.exports = { sign, verify, safeEq, sessionValue, sessionCookie, clearCookie, uidOf, userFromReq, unsubToken, unsubVerify, resetToken, resetVerify };

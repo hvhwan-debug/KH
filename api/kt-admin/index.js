@@ -7,6 +7,7 @@ const store = require("../_lib/store");
 const pwdlib = require("../_lib/pwd");
 const crypto = require("crypto");
 const { uidOf } = require("../_lib/session");
+const { inviteManager } = require("../_lib/invite");
 
 const handler = async function (context, req) {
   try {
@@ -455,7 +456,19 @@ const handler = async function (context, req) {
       if (k >= 0) list[k] = entry; else list.push(entry);
       await quiz.saveViewers(list);
       const cands = await quiz.getCandidates();
-      return reply(context, 200, { ok: true, viewer: Object.assign({}, entry, { employees: cands.filter((c) => quiz.inScope(entry, c)).length }), created: k < 0 });
+      // Cấp quyền lần đầu: tạo tài khoản (nếu chưa có) và gửi email kèm liên kết cho quản lí
+      let invite = null;
+      if (k < 0) { try { invite = await inviteManager(email, name); } catch (e) { invite = { mailed: false, reason: "Không tạo/gửi được lời mời: " + String((e && e.message) || e).slice(0, 120) }; } }
+      return reply(context, 200, { ok: true, viewer: Object.assign({}, entry, { employees: cands.filter((c) => quiz.inScope(entry, c)).length }), created: k < 0, invite });
+    }
+
+    // Gửi lại email kèm liên kết đặt mật khẩu cho một quản lí đã được cấp quyền
+    if (op === "sendViewerInvite") {
+      const email = quiz.normEmail(b.email);
+      const v = (await quiz.getViewers()).find((x) => quiz.normEmail(x.email) === email);
+      if (!v) return reply(context, 404, { ok: false, error: "Email này chưa được cấp quyền quản lí." });
+      const invite = await inviteManager(email, v.name, { forceLink: true });
+      return reply(context, 200, { ok: !!invite.mailed, error: invite.mailed ? undefined : invite.reason, invite });
     }
 
     // Tạo/đặt lại mật khẩu đăng nhập cho quản lí: quản lí không cần tự đăng ký (qua OTP) nữa,

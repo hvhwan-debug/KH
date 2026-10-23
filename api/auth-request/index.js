@@ -1,7 +1,7 @@
 // Đăng nhập / đăng ký bằng email + mật khẩu. Tài khoản MỚI cần xác minh bằng mã OTP gửi qua email
 // trước khi được kích hoạt (nếu server đã cấu hình SMTP) — chống việc đăng ký bằng email không phải của mình.
 const { reply, guardConfigured, requireAjax } = require("../_lib/http");
-const { emailAllowed, validEmail, mailConfigured } = require("../_lib/config");
+const { emailAllowed, validEmail, mailConfigured, cfg } = require("../_lib/config");
 const { uidOf, sessionCookie, sessionValue } = require("../_lib/session");
 const { layout } = require("../_lib/emails");
 const store = require("../_lib/store");
@@ -61,6 +61,9 @@ const handler = async function (context, req) {
       await store.put(ukey, ud);
       return reply(context, 200, { ok: true, created: true, email, name: ud.name || "", token: sessionValue(email) }, { "Set-Cookie": sessionCookie(email) });
     }
+
+    // Chỉ quản trị viên được tạo tài khoản (SIGNUP_CLOSED=1): người chưa có tài khoản không tự đăng ký được
+    if (cfg().signupClosed && (!ud || !ud.pwd)) return reply(context, 403, { ok: false, error: "Tài khoản do quản trị viên tạo. Hãy liên hệ quản trị viên để được cấp tài khoản." });
 
     // Chưa có tài khoản: tạo mới, cần xác minh OTP trước khi kích hoạt (nếu server đã bật gửi email)
     if (!ud) {
