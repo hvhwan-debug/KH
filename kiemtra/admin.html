@@ -278,6 +278,7 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
     <nav class="tabs" aria-label="Mục chính">
       <button data-nav="exams" onclick="switchTab('exams')">📋 Đề thi</button>
       <button data-nav="candidates" onclick="switchTab('candidates')">👥 Thí sinh</button>
+      <button data-nav="managerview" onclick="switchTab('managerview')">👤 Quản lí</button>
       <button data-nav="sys" onclick="switchTab('settings')">⚙️ Cài đặt</button>
     </nav>
 
@@ -558,6 +559,15 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
     </div>
 
     <!-- Thí sinh -->
+    <!-- Nhung thang trang quan li (quanli.html) de dung duoc moi chuc nang cua quan li (them/sua/xoa nhan vien,
+         ho so + lo trinh hoc tap, tro li AI tim du lieu, soan de bang AI) ngay trong trang admin, khong can nhay
+         sang trang/tab khac. Admin da tu dong co toan quyen o do (viewer ao), khong can dang nhap rieng. -->
+    <div id="tab-managerview" class="tabpane hide">
+      <div class="card" style="padding:0;overflow:hidden">
+        <iframe id="mvFrame" src="about:blank" title="Trang quản lí" style="width:100%;height:82vh;border:0;display:block"></iframe>
+      </div>
+    </div>
+
     <div id="tab-candidates" class="tabpane hide">
       <div class="card hide" id="candEditCard">
         <h1>Sửa thông tin thí sinh</h1>
@@ -909,7 +919,7 @@ $('auXlsx').addEventListener('click', async function(){
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   logEv('exportExcel', { period: 'nhật ký ' + $('auDay').value });
 });
-const TABS = ['exams','candidates','results','analysis','questions','examset','settings','viewers','banks','audit'];
+const TABS = ['exams','candidates','managerview','results','analysis','questions','examset','settings','viewers','banks','audit'];
 const WS = ['results','analysis','questions','examset'], SYS = ['settings','viewers','banks','audit'];
 let CUR_EXAM = null, EX_NEW = false, EX_DEFAULT = '';
 // Địa chỉ dạng #exams, #candidates, #settings… hoặc #results/<mã đề>, #questions/<mã đề>, #examset/<mã đề>
@@ -934,6 +944,7 @@ function switchTab(t){
   const h = '#' + t + (inWs && CUR_EXAM ? '/' + encodeURIComponent(CUR_EXAM) : '');
   if (location.hash !== h) history.replaceState(null, '', h);
   if (t === 'audit') { loadAudit(); loadFaceRejections(); }
+  if (t === 'managerview' && $('mvFrame').src === 'about:blank') $('mvFrame').src = '/kiemtra/quanli.html';
   if (inWs) renderExHead();
   if ((t === 'results' || t === 'analysis') && CUR_EXAM){ $('resPeriod').innerHTML = '<option value="'+esc(CUR_EXAM)+'"></option>'; $('resPeriod').value = CUR_EXAM; $('resDetailCard').classList.add('hide'); loadResults(); }
   if (t === 'questions' && CUR_EXAM && QP !== CUR_EXAM){ QP = CUR_EXAM; QLIM = 50; if ($('qSearch')) $('qSearch').value = ''; if (QUESTIONS.length || QMETA.questions) renderQuestions(); clearQForm(); qPanel(null); }
