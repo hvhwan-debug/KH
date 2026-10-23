@@ -394,9 +394,16 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         <h1>Chuyển câu hỏi giữa các ngân hàng</h1>
         <div class="grid2">
           <div><label>Xem câu hỏi của ngân hàng</label><select id="bkFilter" onchange="renderBankQuestions()"></select></div>
-          <div><label>Chuyển các câu đã tick sang</label><select id="bkMoveTo"></select></div>
+          <div><label>Lọc theo danh mục</label><select id="bkCat" onchange="renderBankQuestions(true)"></select></div>
+          <div><label>Lọc theo đề / kỳ</label><select id="bkPer" onchange="renderBankQuestions(true)"></select></div>
+          <div><label>Chuyển các câu đã chọn sang</label><select id="bkMoveTo"></select></div>
         </div>
-        <div style="margin-top:10px"><button class="btn" onclick="moveSelectedToBank()">Chuyển các câu đã chọn</button></div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn ghost" type="button" id="bkPickAll" onclick="toggleAllBankQ(true)">Chọn tất cả</button>
+          <button class="btn ghost" type="button" onclick="toggleAllBankQ(false)">Bỏ chọn</button>
+          <button class="btn" onclick="moveSelectedToBank()">Chuyển các câu đã chọn</button>
+          <span class="small" id="bkSelCount"></span>
+        </div>
         <div id="bkMoveMsg"></div>
         <table style="margin-top:12px"><thead><tr><th style="width:34px"><input type="checkbox" id="bkAll" onchange="toggleAllBankQ(this.checked)" style="width:18px;height:18px"></th><th>Câu hỏi</th><th>Danh mục</th><th>Độ khó</th><th>Thẻ</th></tr></thead><tbody id="bkQList"></tbody></table>
       </div>
@@ -1009,15 +1016,26 @@ async function deleteBankUI(id){
   msg('bkListMsg','Đã xoá ngân hàng'+(j.moved?', chuyển '+j.moved+' câu về Ngân hàng chung':'')+'.','ok');
   await loadBanks(); loadQuestions();
 }
-function renderBankQuestions(){
+function renderBankQuestions(keepFilters){
   const f = $('bkFilter') ? $('bkFilter').value || 'default' : 'default';
-  const L = QUESTIONS.filter(q => (q.bankId || 'default') === f);
+  const inBank = QUESTIONS.filter(q => (q.bankId || 'default') === f);
+  // Bộ lọc danh mục + đề/kỳ: dựng lại theo ngân hàng đang xem, giữ lựa chọn cũ nếu còn hợp lệ
+  const cats = Array.from(new Set(inBank.map(q => q.category || ''))).sort(), pers = Array.from(new Set(inBank.map(q => q.period || ''))).sort().reverse();
+  const oldC = keepFilters ? $('bkCat').value : '*', oldP = keepFilters ? $('bkPer').value : '*';
+  $('bkCat').innerHTML = '<option value="*">Mọi danh mục</option>' + cats.map(c => '<option value="'+esc(c)+'">'+esc(c || '(chưa có danh mục)')+' ('+inBank.filter(q => (q.category||'') === c).length+')</option>').join('');
+  $('bkPer').innerHTML = '<option value="*">Mọi đề / kỳ</option>' + pers.map(p => '<option value="'+esc(p)+'">'+esc(qPerLabel(p))+' ('+inBank.filter(q => (q.period||'') === p).length+')</option>').join('');
+  $('bkCat').value = cats.indexOf(oldC) >= 0 ? oldC : '*'; $('bkPer').value = pers.indexOf(oldP) >= 0 ? oldP : '*';
+  const cf = $('bkCat').value, pf = $('bkPer').value;
+  const L = inBank.filter(q => (cf === '*' || (q.category||'') === cf) && (pf === '*' || (q.period||'') === pf));
   $('bkAll').checked = false;
+  $('bkPickAll').textContent = 'Chọn tất cả ' + L.length + ' câu đang lọc';
   $('bkQList').innerHTML = L.map(q =>
     '<tr><td><input type="checkbox" class="bkSel" value="'+esc(q.id)+'" style="width:18px;height:18px"></td><td>'+esc(q.text.slice(0,90))+(q.text.length>90?'…':'')+'</td><td>'+esc(q.category||'')+'</td><td class="small">'+esc(DIFF_LABEL[q.difficulty]||'')+'</td><td class="small">'+esc((q.tags||[]).join(', '))+'</td></tr>'
-  ).join('') || '<tr><td colspan="5" class="small">Ngân hàng này chưa có câu hỏi.</td></tr>';
+  ).join('') || '<tr><td colspan="5" class="small">Không có câu hỏi nào khớp bộ lọc.</td></tr>';
+  $('bkQList').onchange = bkCount; bkCount();
 }
-function toggleAllBankQ(on){ document.querySelectorAll('.bkSel').forEach(c => c.checked = on); }
+function toggleAllBankQ(on){ document.querySelectorAll('.bkSel').forEach(c => c.checked = on); $('bkAll').checked = on; bkCount(); }
+function bkCount(){ const n = document.querySelectorAll('.bkSel:checked').length; $('bkSelCount').textContent = n ? 'Đã chọn ' + n + ' câu' : ''; }
 async function moveSelectedToBank(){
   const ids = Array.from(document.querySelectorAll('.bkSel:checked')).map(c => c.value);
   if (!ids.length){ msg('bkMoveMsg','Tick ít nhất một câu hỏi.'); return; }
