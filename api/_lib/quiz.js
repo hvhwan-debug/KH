@@ -230,6 +230,8 @@ async function getExamSettings(examId) {
   effective.examPeriod = examId != null ? examId : base.examPeriod;
   // Cấu trúc đề + khung thời gian + đối tượng: chỉ có ở đề thi đã đăng ký (không kế thừa từ cài đặt chung).
   effective.blueprint = ex && ex.blueprint ? ex.blueprint : null;
+  // Phân bổ câu theo nhóm ngành: đề có phân bổ riêng thì dùng của đề, không thì theo cài đặt chung
+  if (ex && ex.segmentPlans && Object.keys(ex.segmentPlans).length) effective.segmentPlans = ex.segmentPlans;
   effective.openAt = ex && ex.openAt ? ex.openAt : 0;
   effective.closeAt = ex && ex.closeAt ? ex.closeAt : 0;
   effective.segments = ex && Array.isArray(ex.segments) ? ex.segments : [];
@@ -276,6 +278,11 @@ async function upsertExam(data) {
     const bp = cleanBlueprint(data.blueprint);
     if (bp && bp.error) return { ok: false, error: bp.error };
     entry.blueprint = bp; // null = dùng cách ra đề cũ
+  }
+  if (data && data.segmentPlans !== undefined) {
+    const sp = data.segmentPlans ? cleanSegmentPlans(data.segmentPlans) : {};
+    if (sp.error) return { ok: false, error: sp.error };
+    entry.segmentPlans = Object.keys(sp).length ? sp : null; // null = theo cài đặt chung
   }
   if (data && data.openAt !== undefined) entry.openAt = Math.max(0, Number(data.openAt) || 0);
   if (data && data.closeAt !== undefined) entry.closeAt = Math.max(0, Number(data.closeAt) || 0);

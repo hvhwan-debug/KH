@@ -80,6 +80,11 @@ const handler = async function (context, req) {
         const id = String(draft.id || "");
         const eff = Object.assign({}, await quiz.getExamSettings(id || (await quiz.getSettings()).examPeriod));
         ["questionCount", "bothGiaDungCount"].forEach((k) => { if (draft[k] !== undefined && draft[k] !== "") eff[k] = draft[k]; });
+        if (draft.segmentPlans !== undefined) {
+          const sp = draft.segmentPlans ? quiz.cleanSegmentPlans(draft.segmentPlans) : {};
+          if (sp.error) return reply(context, 400, { ok: false, error: sp.error });
+          eff.segmentPlans = Object.keys(sp).length ? sp : ((await quiz.getSettings()).segmentPlans || {});
+        }
         if (draft.blueprint !== undefined) { const bp = quiz.cleanBlueprint(draft.blueprint); if (bp && bp.error) return reply(context, 400, { ok: false, error: bp.error }); eff.blueprint = bp; }
         const err = quiz.validateCounts({ questionCount: eff.questionCount, bothGiaDungCount: eff.bothGiaDungCount, blueprint: eff.blueprint }, 0);
         const all = await quiz.getQuestions();

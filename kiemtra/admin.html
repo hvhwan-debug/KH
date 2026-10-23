@@ -284,7 +284,12 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
             <b>Số câu mỗi thí sinh nhận</b>
             <button class="btn ghost sm" type="button" onclick="previewPlan()">Kiểm tra đủ câu chưa</button>
           </div>
-          <div id="exQSrc" class="small" style="margin-top:4px"></div>
+          <div id="exSpMode" style="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;font-size:14px">
+            <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="radio" name="exSpMode" value="global" checked onchange="exSpModeChanged()"> Theo phân bổ chung (tab Cài đặt)</label>
+            <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="radio" name="exSpMode" value="own" onchange="exSpModeChanged()"> Phân bổ riêng cho đề này</label>
+          </div>
+          <div id="exSpOwn" class="hide"><div class="spg" id="exSp" oninput="exQSummary();$('planPreview').innerHTML=''" onclick="setTimeout(exQSummary,0)"></div></div>
+          <div id="exQSrc" class="small" style="margin-top:8px"></div>
           <div id="planPreview"></div>
         </div>
 
@@ -399,7 +404,7 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
 
     <div id="tab-questions" class="tabpane hide">
       <div class="card">
-        <div class="dash-h"><h1>Ngân hàng đề theo kỳ</h1><p class="small">Đề của mỗi kỳ chỉ lấy câu hỏi thuộc kỳ đó.</p></div>
+        <div class="dash-h"><h1>Ngân hàng câu hỏi theo đề</h1><p class="small">Mỗi đề thi (hoặc kỳ) chỉ lấy câu hỏi của chính nó. Chọn đề bên dưới rồi thêm, nhập hoặc sao chép câu hỏi vào.</p></div>
         <div class="qper" id="qPerList" role="tablist" aria-label="Chọn kỳ"></div>
         <div id="qUnassigned"></div>
         <div class="qready" id="qReady"></div>
@@ -805,29 +810,50 @@ let EXAMS = [];
 async function loadExams(){
   const { j } = await api('GET','/api/kt-admin?op=exams');
   if (!j.ok) return;
-  EXAMS = j.exams || []; if (j.maxQuestions){ MAXQ = j.maxQuestions; if ($('maxQ')) $('maxQ').textContent = MAXQ; $('exCount').max = MAXQ; }
+  EXAMS = j.exams || []; if (QP !== null && QUESTIONS.length) renderQuestions(); if (j.maxQuestions){ MAXQ = j.maxQuestions; if ($('maxQ')) $('maxQ').textContent = MAXQ; $('exCount').max = MAXQ; }
   $('exList').innerHTML = EXAMS.map(e =>
     '<tr><td><code>'+esc(e.id)+'</code>'+(e.id===j.currentPeriod?' <span class="badge y">Mặc định</span>':'')+'</td>'+
-    '<td>'+esc(e.title||e.id)+(e.practice?' <span class="badge" style="background:#FDEBC8;color:#8A5200">Thi thử</span>':'')+'<div class="small"><a href="/kiemtra/?exam='+encodeURIComponent(e.id)+'" target="_blank" rel="noopener">link thi</a></div></td>'+
-    '<td class="small">'+((+e.questionCount > MAXQ || bpTotalOf(e.blueprint) > MAXQ || (bpTotalOf(e.blueprint) && e.questionCount && bpTotalOf(e.blueprint) !== +e.questionCount)) ? '<span class="badge n">⚠ Cần sửa số câu</span> ' : '')+(bpTotalOf(e.blueprint) ? '<span class="badge y">Theo quy tắc</span> '+bpTotalOf(e.blueprint)+' câu / '+e.blueprint.rules.length+' quy tắc' : 'Theo nhóm ngành · '+(e.questionCount ? e.questionCount+' câu/đề' : 'theo cài đặt chung')+' · ngân hàng kỳ có '+(e.bankCount||0)+' câu')+'</td>'+
+    '<td>'+esc(e.title||e.id)+(e.practice?' <span class="badge" style="background:#FDEBC8;color:#8A5200">Thi thử</span>':'')+'<div class="small"><a href="/kiemtra/?exam='+encodeURIComponent(e.id)+'" target="_blank" rel="noopener">link thi</a> · '+(e.bankCount ? e.bankCount+' câu hỏi riêng' : '<span style="color:var(--warn)">chưa có câu hỏi riêng</span>')+'</div></td>'+
+    '<td class="small">'+((+e.questionCount > MAXQ || bpTotalOf(e.blueprint) > MAXQ || (bpTotalOf(e.blueprint) && e.questionCount && bpTotalOf(e.blueprint) !== +e.questionCount)) ? '<span class="badge n">⚠ Cần sửa số câu</span> ' : '')+(bpTotalOf(e.blueprint) ? '<span class="badge y">Theo quy tắc</span> '+bpTotalOf(e.blueprint)+' câu / '+e.blueprint.rules.length+' quy tắc' : (spHas(e.segmentPlans) ? 'Phân bổ riêng: '+SP_SEGS.filter(([k]) => e.segmentPlans[k] && e.segmentPlans[k].length).map(([k,l]) => l.replace('Chỉ bán ','').replace('Bán ','')+' '+e.segmentPlans[k].reduce((n,r) => n + r.count, 0)+' câu').join(' · ') : spHas(SEGPLANS) ? 'Theo phân bổ chung (Cài đặt)' : 'Theo nhóm ngành · '+(e.questionCount ? e.questionCount+' câu/đề' : 'theo cài đặt chung')))+'</td>'+
     '<td class="small">'+esc(examWindowText(e))+'</td><td>'+(e.resultCount||0)+'</td>'+
     '<td class="small">'+examStatusText(e, j.currentPeriod)+'</td>'+
     '<td style="white-space:nowrap">'+
       (e.id!==j.currentPeriod?'<button class="btn ghost sm" onclick="setDefaultExamUI(\''+esc(e.id)+'\')">Đặt mặc định</button> ':'')+
       '<button class="btn ghost sm" onclick="editExam(\''+esc(e.id)+'\')">Sửa</button> '+
+      '<button class="btn ghost sm" onclick="openExamQuestions(\''+esc(e.id)+'\')">Câu hỏi</button> '+
       (e.resultCount ? '<button class="btn ghost sm" onclick="openItemAnalysis(\''+esc(e.id)+'\')">Phân tích câu hỏi</button> ' : '')+
       (e.id!==j.currentPeriod?'<button class="btn dghost sm" onclick="deleteExamUI(\''+esc(e.id)+'\')">Xoá</button>':'')+
     '</td></tr>'
   ).join('') || '<tr><td colspan="7" class="small">Chưa có đề thi nào, bấm "+ Tạo đề thi mới" để bắt đầu.</td></tr>';
 }
+function openExamQuestions(id){ QP = id; switchTab('questions'); renderQuestions(); clearQForm(); }
 // Dòng tóm tắt "số câu mỗi thí sinh nhận" của đề đang soạn
 function exQSummary(){
   const box = $('exQSrc'); if (!box) return;
+  const own = exSpOwn();
+  $('exSpMode').classList.toggle('hide', !!BP_RULES.length);
   if (BP_RULES.length){ const t = BP_RULES.reduce((n,r) => n + (+r.count||0), 0); box.innerHTML = 'Theo <b>cấu trúc đề riêng</b> (Tuỳ chọn nâng cao): ' + t + ' câu cho mọi thí sinh.'; return; }
+  const bk = bankOfPeriod($('exEditingId').value || $('exId').value.trim());
+  const note = bk.note ? '<div style="color:var(--warn);margin-top:4px">⚠ Ngân hàng: ' + esc(bk.note) + '. Thêm câu cho đề này ở tab Câu hỏi (nút "Câu hỏi" trong danh sách đề).</div>' : '';
+  if (own){ const P = spRead($('exSp')); box.innerHTML = 'Theo <b>phân bổ riêng của đề này</b>: ' + (SP_SEGS.filter(([k]) => P[k] && P[k].length).map(([k,l]) => l + ' <b>' + P[k].reduce((n,r) => n + r.count, 0) + ' câu</b>').join(' · ') || 'chưa nhập dòng nào') + note; return; }
   const segs = SP_SEGS.filter(([k]) => SEGPLANS[k] && SEGPLANS[k].length);
   const old = ($('exCount').value.trim() ? 'tổng ' + $('exCount').value.trim() + ' câu' : 'tổng số câu theo Cài đặt') + ' (cách chia cũ)';
   box.innerHTML = segs.length ? 'Theo <b>Phân bổ nhóm ngành</b> ở tab Cài đặt: ' + segs.map(([k,l]) => l + ' <b>' + SEGPLANS[k].reduce((n,r) => n + r.count, 0) + ' câu</b>').join(' · ') +
-    (segs.length < 3 ? ' · nhóm còn lại: ' + old : '') : old + '. Muốn chia theo danh mục cho từng nhóm ngành, chỉnh ở tab Cài đặt → Phân bổ câu hỏi theo nhóm ngành.';
+    (segs.length < 3 ? ' · nhóm còn lại: ' + old : '') + note : old + '. Muốn chia theo danh mục cho từng nhóm ngành, chọn "Phân bổ riêng cho đề này" hoặc chỉnh ở tab Cài đặt.' + note;
+}
+const exSpOwn = () => { const r = document.querySelector('input[name=exSpMode]:checked'); return !!r && r.value === 'own'; };
+function exSpSet(own, plans){
+  document.querySelector('input[name=exSpMode][value=' + (own ? 'own' : 'global') + ']').checked = true;
+  $('exSpOwn').classList.toggle('hide', !own);
+  $('exSp').dataset.bank = $('exEditingId').value || $('exId').value.trim();
+  if (own) spRender($('exSp'), plans || {});
+  exQSummary();
+}
+function exSpModeChanged(){
+  const own = exSpOwn();
+  // Chuyển sang phân bổ riêng: chép sẵn phân bổ chung để sửa cho nhanh
+  exSpSet(own, own ? (spHas(spRead($('exSp'))) ? spRead($('exSp')) : JSON.parse(JSON.stringify(spHas(SEGPLANS) ? SEGPLANS : {}))) : null);
+  $('planPreview').innerHTML = '';
 }
 function clearExamForm(){
   $('planPreview').innerHTML = ''; $('exCount').oninput = () => { updateBpTotal(); $('planPreview').innerHTML = ''; };
@@ -836,7 +862,8 @@ function clearExamForm(){
   $('exRetake').checked=false; $('exPractice').checked=false; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
   $('exDesc').value=''; $('exCodes').value=''; $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
   BP_RULES = []; renderBpRules(); $('bpPreview').innerHTML=''; $('bpTotal').textContent='';
-  msg('exMsg',''); $('exAdv').open = false; exQSummary();
+  msg('exMsg',''); $('exAdv').open = false; exSpSet(false);
+  $('exId').oninput = () => { $('exSp').dataset.bank = $('exId').value.trim(); spRefresh($('exSp')); exQSummary(); };
 }
 function openNewExam(){
   clearExamForm();
@@ -859,12 +886,13 @@ function editExam(id){
   BP_RULES = e.blueprint && e.blueprint.rules ? e.blueprint.rules.map(r => Object.assign({}, r)) : []; renderBpRules();
   $('examFormTitle').textContent = 'Sửa đề thi';
   $('exAdv').open = !!(BP_RULES.length || e.questionCount || e.bothGiaDungCount || (e.segments||[]).length || (e.codes||[]).length || e.complianceEnabled || e.shareTitle || e.description);
-  exQSummary(); previewPlan();
+  exSpSet(spHas(e.segmentPlans), e.segmentPlans); previewPlan();
   $('examFormCard').classList.remove('hide');
   $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function examDraft(){
   return { id: $('exEditingId').value || $('exId').value.trim(), questionCount: $('exCount').value.trim(), bothGiaDungCount: $('exBothGD').value.trim(),
+    segmentPlans: exSpOwn() ? spRead($('exSp')) : null,
     blueprint: BP_RULES.length ? { rules: BP_RULES.map(r => ({ bankId:r.bankId, category:r.category||'', difficulty:r.difficulty||'', tag:r.tag||'', count:+r.count||0 })) } : null };
 }
 async function fetchPlan(){
@@ -904,6 +932,7 @@ async function saveExam(){
     description: $('exDesc').value.trim(), codes: $('exCodes').value,
     openAt: localToMs($('exOpen').value), closeAt: localToMs($('exClose').value),
     segments: Array.from(document.querySelectorAll('.exSeg:checked')).map(c => c.value),
+    segmentPlans: exSpOwn() ? spRead($('exSp')) : null,
     blueprint: BP_RULES.length ? { rules: BP_RULES.map(r => ({ bankId:r.bankId, category:r.category||'', difficulty:r.difficulty||'', tag:r.tag||'', count:+r.count||0 })) } : null
   };
   if (!exam.id){ msg('exMsg','Nhập mã đề thi.'); return; }
@@ -1283,30 +1312,32 @@ function clearQForm(){
   msg('qMsg','');
 }
 let QP = null, QMETA = {};
-const qPerLabel = (p) => p ? (/^\d{4}-\d{2}$/.test(p) ? 'Tháng ' + p.slice(5) + '/' + p.slice(0,4) : p) : 'Chưa gắn kỳ';
+const qPerLabel = (p) => { if (!p) return 'Chưa gắn kỳ'; const e = (typeof EXAMS !== 'undefined' ? EXAMS : []).find(x => x.id === p), m = /^\d{4}-\d{2}$/.test(p) ? 'Tháng ' + p.slice(5) + '/' + p.slice(0,4) : ''; return e && e.title && e.title !== p ? (m ? m + ' · ' : '') + e.title : (m || 'Đề ' + p); };
 function qPeriods(){
   const set = new Set(QUESTIONS.map(q => q.period || '').filter(Boolean));
   if (QMETA.currentPeriod) set.add(QMETA.currentPeriod); if (QP) set.add(QP);
+  (EXAMS || []).forEach(e => e.id && set.add(e.id)); // mỗi đề thi có ngân hàng câu hỏi riêng
   return Array.from(set).sort().reverse();
 }
 async function loadQuestions(){
   const { j } = await api('GET','/api/kt-admin?op=questions');
   if (!j.ok) return;
-  QUESTIONS = j.questions; QMETA = j; setBanks(j.banks); if ($('spWrap') && $('spWrap').children.length) spRefresh();
+  QUESTIONS = j.questions; QMETA = j; setBanks(j.banks); document.querySelectorAll('.spg').forEach(g => { if (g.children.length) spRefresh(g); });
   if (QP === null) QP = j.currentPeriod || '';
   renderQuestions();
   if (!$('qOptsEdit').children.length) clearQForm();
   loadQBackup();
 }
 function qReadiness(list, isCur){
-  if (SP_SEGS.some(([k]) => SEGPLANS[k] && SEGPLANS[k].length)){
+  const exQ = EXAMS.find(e => e.id === QP), P = exQ && spHas(exQ.segmentPlans) ? exQ.segmentPlans : SEGPLANS;
+  if (SP_SEGS.some(([k]) => P[k] && P[k].length)){
     const act = list.filter(q => q.active !== false), cats = {};
     act.forEach(q => { const k = spNorm(q.category); cats[k] = (cats[k] || 0) + 1; });
-    return SP_SEGS.filter(([k]) => SEGPLANS[k] && SEGPLANS[k].length).map(([k,l]) => {
-      const rows = SEGPLANS[k], need = rows.reduce((n,r) => n + r.count, 0), short = rows.filter(r => (cats[spNorm(r.category)] || 0) < r.count);
+    return SP_SEGS.filter(([k]) => P[k] && P[k].length).map(([k,l]) => {
+      const rows = P[k], need = rows.reduce((n,r) => n + r.count, 0), short = rows.filter(r => (cats[spNorm(r.category)] || 0) < r.count);
       return '<div class="row"><span><b>' + l + '</b> (' + need + ' câu): ' + rows.map(r => esc(r.category) + ' ' + r.count).join(' · ') + '</span><span class="' + (short.length ? 'bad' : 'ok') + '">' +
         (short.length ? '⚠ thiếu: ' + short.map(r => esc(r.category) + ' ' + (cats[spNorm(r.category)] || 0) + '/' + r.count).join(', ') : '✓ đủ') + '</span></div>';
-    }).join('').replace(/^/, '<div class="hd">Đủ câu theo phân bổ nhóm ngành chưa?</div>');
+    }).join('').replace(/^/, '<div class="hd">Đủ câu theo phân bổ ' + (P === SEGPLANS ? 'chung' : 'riêng của đề này') + ' chưa?</div>');
   }
   const act = list.filter(q => q.active !== false), Q = +QMETA.questionCount || act.length, G = +QMETA.bothGiaDungCount || 0;
   const gd = act.filter(q => q.category === 'Gia dụng').length, ml = act.filter(q => q.category === 'Máy lọc nước').length, other = act.length - gd;
@@ -1340,7 +1371,8 @@ function renderQuestions(){
   $('qReady').innerHTML = (QP === '' ? '<div class="hd">Câu chưa gắn kỳ chỉ dùng làm dự phòng khi kỳ hiện tại chưa có câu riêng.</div>' :
     (QP && !hasOwn ? '<div class="hd" style="color:var(--warn)">⚠ Kỳ này chưa có câu hỏi riêng. ' + (fbList ? 'Nếu bắt đầu kỳ bây giờ, đề sẽ TẠM dùng ' + fbNote + '. Hãy thêm câu hoặc sao chép đề vào kỳ này.' : 'Nếu bắt đầu kỳ bây giờ, thí sinh sẽ KHÔNG làm được bài.') + '</div>' : '') +
     qReadiness(fbList || L, QP === cur)) +
-    (QP && QP !== cur ? '<p class="small" style="margin:8px 0 0">' + (QP > cur ? 'Kỳ sắp tới: chuẩn bị sẵn đề, rồi đổi "Kỳ hiện tại" trong tab Cài đặt khi bắt đầu kỳ.' : 'Kỳ đã qua: đề được giữ lại để đối chiếu.') + '</p>' : '');
+    (QP && QP !== cur && EXAMS.some(e => e.id === QP) ? '<p class="small" style="margin:8px 0 0">Đây là ngân hàng riêng của đề <b>' + esc(qPerLabel(QP)) + '</b> (link thi: <code>/kiemtra/?exam=' + esc(QP) + '</code>).</p>' :
+     QP && QP !== cur ? '<p class="small" style="margin:8px 0 0">' + (QP > cur ? 'Kỳ sắp tới: chuẩn bị sẵn đề, rồi đổi "Kỳ hiện tại" trong tab Cài đặt khi bắt đầu kỳ.' : 'Kỳ đã qua: đề được giữ lại để đối chiếu.') + '</p>' : '');
   $('qCopyFrom').innerHTML = pers.filter(p => p !== QP).concat(un.length && QP !== '' ? [''] : []).map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + ' (' + cnt(p).length + ' câu)</option>').join('') || '<option value="">Chưa có kỳ khác</option>';
   // Danh sách
   $('qListTitle').textContent = 'Câu hỏi ' + (QP ? 'kỳ ' + qPerLabel(QP).replace('Tháng ','') : 'chưa gắn kỳ');
@@ -1595,6 +1627,7 @@ async function saveSettings(){
 let CUR_PERIOD = '';
 
 /* ---------- Phân bổ câu hỏi theo nhóm ngành ---------- */
+// Dùng chung cho tab Cài đặt (phân bổ chung) và form đề thi (phân bổ riêng của từng đề). Mỗi khung là một .spg có data-bank = mã kỳ/đề để đếm câu.
 let SEGPLANS = {};
 const SP_SEGS = [['both','Bán cả 2 ngành'],['may_loc','Chỉ bán máy lọc nước'],['gia_dung','Chỉ bán gia dụng']];
 const SP_TEMPLATE = {
@@ -1603,47 +1636,56 @@ const SP_TEMPLATE = {
   gia_dung: []
 };
 const spNorm = c => String(c || '').normalize('NFC').trim().replace(/\s+/g,' ').toLowerCase();
-// Câu đang dùng của kỳ hiện tại (cùng thứ tự dự phòng với máy chủ: câu của kỳ, nếu chưa có thì câu chưa gắn kỳ)
-function spBank(){
-  const act = (QUESTIONS || []).filter(q => q.active !== false), own = act.filter(q => (q.period || '') === CUR_PERIOD);
-  return own.length || !CUR_PERIOD ? own : act.filter(q => !q.period);
+const spHas = plans => SP_SEGS.some(([k]) => plans && plans[k] && plans[k].length);
+// Câu đang dùng của một kỳ/đề (cùng thứ tự dự phòng với máy chủ: câu của kỳ/đề → câu chưa gắn kỳ → kỳ gần nhất trước đó)
+function bankOfPeriod(p){
+  const act = (QUESTIONS || []).filter(q => q.active !== false), own = act.filter(q => (q.period || '') === p);
+  if (own.length || !p) return { list: own, note: '' };
+  const un = act.filter(q => !q.period); if (un.length) return { list: un, note: 'đề này chưa có câu riêng, đang tạm dùng câu chưa gắn kỳ' };
+  const prev = Array.from(new Set(act.filter(q => q.period && q.period < p).map(q => q.period))).sort().pop();
+  return prev ? { list: act.filter(q => q.period === prev), note: 'đề này chưa có câu riêng, đang tạm dùng câu của ' + qPerLabel(prev) } : { list: [], note: 'đề này chưa có câu hỏi nào' };
 }
+function spBank(){ return bankOfPeriod(CUR_PERIOD).list; }
 function spRowHTML(seg, r){
-  return '<div class="sprow" data-seg="'+seg+'"><input type="text" list="catList" placeholder="Danh mục" value="'+esc(r.category||'')+'" oninput="spRefresh()"><input type="text" inputmode="numeric" placeholder="Số câu" value="'+(r.count||'')+'" oninput="spRefresh()"><button class="x" type="button" title="Bỏ dòng" onclick="this.parentNode.remove();spRefresh()">×</button><div class="have"></div></div>';
+  return '<div class="sprow" data-seg="'+seg+'"><input type="text" list="catList" placeholder="Danh mục" value="'+esc(r.category||'')+'" oninput="spRefresh(this)"><input type="text" inputmode="numeric" placeholder="Số câu" value="'+(r.count||'')+'" oninput="spRefresh(this)"><button class="x" type="button" title="Bỏ dòng" onclick="const g=this.closest(\'.spg\');this.parentNode.remove();spRefresh(g)">×</button><div class="have"></div></div>';
 }
-function renderSegPlans(){
-  $('spWrap').innerHTML = SP_SEGS.map(([k,l]) => '<div class="spbox" data-box="'+k+'"><h3>'+l+'</h3><div class="tot"></div><div class="rows">'+
-    (SEGPLANS[k] || []).map(r => spRowHTML(k, r)).join('') + '</div><button class="btn ghost sm" type="button" style="margin-top:8px" onclick="spAdd(\''+k+'\')">＋ Thêm danh mục</button></div>').join('');
-  spRefresh();
+function spRender(root, plans){
+  root.innerHTML = SP_SEGS.map(([k,l]) => '<div class="spbox" data-box="'+k+'"><h3>'+l+'</h3><div class="tot"></div><div class="rows">'+
+    ((plans || {})[k] || []).map(r => spRowHTML(k, r)).join('') + '</div><button class="btn ghost sm" type="button" style="margin-top:8px" onclick="spAdd(this,\''+k+'\')">＋ Thêm danh mục</button></div>').join('');
+  spRefresh(root);
 }
-function spAdd(seg){ const box = document.querySelector('[data-box="'+seg+'"] .rows'); box.insertAdjacentHTML('beforeend', spRowHTML(seg, {})); box.lastElementChild.querySelector('input').focus(); spRefresh(); }
-function readSegPlans(){
+function renderSegPlans(){ $('spWrap').dataset.bank = CUR_PERIOD; spRender($('spWrap'), SEGPLANS); }
+function spAdd(btn, seg){ const box = btn.closest('.spbox').querySelector('.rows'); box.insertAdjacentHTML('beforeend', spRowHTML(seg, {})); box.lastElementChild.querySelector('input').focus(); spRefresh(box); }
+function spRead(root){
   const out = {};
-  SP_SEGS.forEach(([k]) => { out[k] = Array.from(document.querySelectorAll('.sprow[data-seg="'+k+'"]')).map(r => { const i = r.querySelectorAll('input'); return { category: i[0].value.trim(), count: parseInt(i[1].value, 10) || 0 }; }).filter(r => r.category || r.count); });
+  SP_SEGS.forEach(([k]) => { out[k] = Array.from(root.querySelectorAll('.sprow[data-seg="'+k+'"]')).map(r => { const i = r.querySelectorAll('input'); return { category: i[0].value.trim(), count: parseInt(i[1].value, 10) || 0 }; }).filter(r => r.category || r.count); });
   return out;
 }
-function spRefresh(){
-  const bank = spBank(), cats = {};
+function readSegPlans(){ return spRead($('spWrap')); }
+function spRefresh(el){
+  const root = el && el.closest ? (el.classList && el.classList.contains('spg') ? el : el.closest('.spg')) : $('spWrap');
+  if (!root) return;
+  const bank = bankOfPeriod(root.dataset.bank || CUR_PERIOD).list, cats = {};
   bank.forEach(q => { const k = spNorm(q.category); if (k) cats[k] = (cats[k] || 0) + 1; });
   SP_SEGS.forEach(([k]) => {
     let tot = 0;
-    document.querySelectorAll('.sprow[data-seg="'+k+'"]').forEach(r => {
+    root.querySelectorAll('.sprow[data-seg="'+k+'"]').forEach(r => {
       const i = r.querySelectorAll('input'), n = parseInt(i[1].value, 10) || 0, have = cats[spNorm(i[0].value)] || 0, h = r.querySelector('.have');
       tot += n;
       if (!i[0].value.trim()){ h.className = 'have'; h.textContent = ''; return; }
       h.className = 'have ' + (have >= n ? 'ok' : 'bad');
-      h.textContent = have >= n ? '✓ ngân hàng kỳ hiện tại có ' + have + ' câu' : '⚠ ngân hàng kỳ hiện tại chỉ có ' + have + ' câu, thiếu ' + (n - have);
+      h.textContent = have >= n ? '✓ ngân hàng có ' + have + ' câu' : '⚠ ngân hàng chỉ có ' + have + ' câu, thiếu ' + (n - have);
     });
-    const t = document.querySelector('[data-box="'+k+'"] .tot');
+    const t = root.querySelector('[data-box="'+k+'"] .tot');
     if (t) t.textContent = tot ? 'Tổng ' + tot + ' câu mỗi đề' : 'Chưa phân bổ: dùng cách chia cũ';
   });
-  const names = Array.from(new Set(bank.map(q => (q.category || '').trim()).filter(Boolean).concat(...Object.values(SP_TEMPLATE).map(a => a.map(x => x[0])))));
+  const names = Array.from(new Set((QUESTIONS || []).map(q => (q.category || '').trim()).filter(Boolean).concat(...Object.values(SP_TEMPLATE).map(a => a.map(x => x[0])))));
   $('catList').innerHTML = names.map(n => '<option value="'+esc(n)+'">').join('');
 }
 function spTemplate(){
-  if (document.querySelector('.sprow') && !confirm('Thay phân bổ đang nhập bằng mẫu chuẩn?')) return;
-  SEGPLANS = {}; Object.keys(SP_TEMPLATE).forEach(k => { SEGPLANS[k] = SP_TEMPLATE[k].map(([category, count]) => ({ category, count })); });
-  renderSegPlans(); msg('spMsg', 'Đã điền mẫu. Kiểm tra lại rồi bấm "Lưu phân bổ".', 'ok');
+  if (document.querySelector('#spWrap .sprow') && !confirm('Thay phân bổ đang nhập bằng mẫu chuẩn?')) return;
+  const t = {}; Object.keys(SP_TEMPLATE).forEach(k => { t[k] = SP_TEMPLATE[k].map(([category, count]) => ({ category, count })); });
+  spRender($('spWrap'), t); msg('spMsg', 'Đã điền mẫu. Kiểm tra lại rồi bấm "Lưu phân bổ".', 'ok');
 }
 
 /* ---------- Xuất Excel ---------- */
