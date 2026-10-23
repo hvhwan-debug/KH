@@ -61,6 +61,7 @@ const handler = async function (context, req) {
         const exams = await quiz.listExamsSummary();
         const examFor = (e) => !Array.isArray(e.codes) || !e.codes.length || e.codes.some((c) => inMine[quiz.normCode(c)]);
         const examTitles = {}; exams.forEach((e) => { if (e.title && String(e.title).trim() !== e.id) examTitles[e.id] = String(e.title).trim(); });
+        if (!examTitles[settings.examPeriod] && settings.examTitle) examTitles[settings.examPeriod] = String(settings.examTitle).trim(); // đề mặc định lấy tên bài kiểm tra trong cài đặt
         const periods = Array.from(new Set(subs.map((a) => a.period || "").concat([settings.examPeriod], exams.filter(examFor).map((e) => e.id)))).sort().reverse();
         const latest = {};
         subs.filter((a) => (a.period || "") === period).forEach((a) => {

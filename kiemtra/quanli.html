@@ -630,14 +630,15 @@ async function boot(){
   show('app'); await load();
 }
 var CURP = '', PERIODS = [], CURRENT = '', PSEL = null, PTITLES = {};
+function pName(p){ return PTITLES[p] || ('Bài kiểm tra ' + perL(p)); } // chọn theo tên bài kiểm tra, không phân biệt cũ / hiện tại
 async function load(){
   var r = await api('GET','/api/kt-viewer?op=employees' + (PSEL != null ? '&period=' + encodeURIComponent(PSEL) : ''));
   if (!r.j.ok){ msg('listMsg', r.j.error || 'Không tải được danh sách.'); return; }
   EMP = r.j.employees; PHOTO = {};
   CURP = r.j.period != null ? r.j.period : ''; PERIODS = r.j.periods || [CURP]; PTITLES = r.j.examTitles || {}; CURRENT = r.j.currentPeriod || CURP;
-  $('fPer').innerHTML = PERIODS.map(function(p){ return '<option value="' + esc(p) + '"' + (p === CURP ? ' selected' : '') + '>Đề ' + esc(perL(p)) + (PTITLES[p] ? ' – ' + esc(PTITLES[p]) : '') + (p === CURRENT ? ' (hiện tại)' : '') + '</option>'; }).join('');
-  $('perNote').innerHTML = CURP !== CURRENT ? 'Đang xem đề cũ. Trạng thái, điểm và ảnh xác nhận bên dưới là của đề ' + esc(perL(CURP)) + '. <button type="button" class="linkbtn" id="perBack">Về đề hiện tại</button>' : '';
-  $('perNote').classList.toggle('hide', CURP === CURRENT);
+  $('fPer').innerHTML = PERIODS.map(function(p){ return '<option value="' + esc(p) + '"' + (p === CURP ? ' selected' : '') + '>' + esc(pName(p)) + '</option>'; }).join('');
+  $('perNote').innerHTML = '';
+  $('perNote').classList.add('hide');
   render();
 }
 
@@ -705,13 +706,12 @@ function heroHTML(o){
 }
 function renderHero(n, c, avg){
   var nm = String((VIEWER && VIEWER.name) || '').trim().split(/\s+/).pop() || ((VIEWER && VIEWER.isAdmin) ? 'quản trị viên' : 'bạn');
-  var cur = CURP === CURRENT, rate = n ? Math.round(c.done / n * 100) : 0, left = n - c.done;
+  var rate = n ? Math.round(c.done / n * 100) : 0, left = n - c.done;
   var s;
   if (!n) s = 'Chưa có nhân viên nào trong phạm vi của bạn. Bấm “Thêm nhân viên” để bắt đầu.';
-  else if (!cur) s = 'Đang xem lại kỳ ' + esc(perL(CURP)) + ': <b>' + c.done + '/' + n + '</b> người đã làm bài' + (avg != null ? ', tỉ lệ đúng trung bình <b>' + avg + '%</b>' : '') + '.';
-  else if (!left) s = 'Cả nhóm đã hoàn thành bài kiểm tra kỳ này' + (avg != null ? ', tỉ lệ đúng trung bình <b>' + avg + '%</b>' : '') + '. Bấm vào từng người để xem hồ sơ và khuyến nghị.';
-  else s = 'Đã có <b>' + c.done + '/' + n + '</b> người làm bài kỳ này' + (c.doing ? ', <b>' + c.doing + '</b> người đang làm' : '') + ' — còn <b>' + (left - (c.doing||0)) + '</b> người chưa bắt đầu.' + (avg != null ? ' Tỉ lệ đúng trung bình <b>' + avg + '%</b>.' : '');
-  $('hero').innerHTML = heroHTML({ eb: 'Đề kiểm tra ' + esc(perL(CURP)) + (cur ? '' : ' (đề cũ)') + ' · ' + n + ' nhân viên' + (VIEWER && VIEWER.isAdmin ? '' : ' trong nhóm của bạn'),
+  else if (!left) s = 'Cả nhóm đã hoàn thành bài kiểm tra này' + (avg != null ? ', tỉ lệ đúng trung bình <b>' + avg + '%</b>' : '') + '. Bấm vào từng người để xem hồ sơ và khuyến nghị.';
+  else s = 'Đã có <b>' + c.done + '/' + n + '</b> người làm bài này' + (c.doing ? ', <b>' + c.doing + '</b> người đang làm' : '') + ' — còn <b>' + (left - (c.doing||0)) + '</b> người chưa bắt đầu.' + (avg != null ? ' Tỉ lệ đúng trung bình <b>' + avg + '%</b>.' : '');
+  $('hero').innerHTML = heroHTML({ eb: esc(pName(CURP)) + ' · ' + n + ' nhân viên' + (VIEWER && VIEWER.isAdmin ? '' : ' trong nhóm của bạn'),
     t: vnGreet() + ', ' + esc(nm), s: s, kpi: n ? rate + '%' : null, kl: 'đã làm bài' });
 }
 function stat(){
