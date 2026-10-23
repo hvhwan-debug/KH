@@ -281,6 +281,13 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .ht td{padding:8px;border-bottom:1px solid #EEF3F4;font-variant-numeric:tabular-nums;vertical-align:middle}
 .ht td.r,.ht th.r{text-align:right}
 .ht .lt{color:var(--bad);font-weight:700}
+.lpath{display:flex;flex-direction:column;gap:10px}
+.lpstep{display:flex;gap:12px;background:#F6FAFA;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.lpstep.urgent{background:var(--bad-soft);border-color:#F2C6C1}
+.lpstep .n{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+.lpstep.urgent .n{background:var(--bad)}
+.lpstep .b{font-size:13.5px;line-height:1.5}
+.lpstep .b p{margin:4px 0 0;color:var(--ink)}
 .catr{display:grid;grid-template-columns:minmax(110px,170px) 1fr 52px 70px;gap:10px;align-items:center;font-size:13px;margin:7px 0}
 .catr .t{height:9px;border-radius:5px;background:#EEF3F4;overflow:hidden;position:relative}
 .catr .t i{display:block;height:100%;border-radius:5px}
@@ -1058,6 +1065,30 @@ function chartSvg(H, low){
   pts.forEach(function(p){ g += '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="#fff" stroke="#E0A030" stroke-width="2"><title>Trung bình đội: '+p[2]+'%</title></circle>'; });
   return '<svg viewBox="0 0 '+W+' '+h+'" role="img" aria-label="Biểu đồ tỉ lệ đúng theo từng kỳ so với trung bình đội">'+g+'</svg>';
 }
+// Lộ trình học tập: từ đúng dữ liệu "theo mảng kiến thức" (đã sắp xếp yếu nhất trước) và câu sai lặp lại,
+// đóng gói lại thành các BƯỚC cụ thể, có mục tiêu rõ ràng, thay vì chỉ hiện % rời rạc.
+function learningPathHTML(P, low){
+  var weak = (P.categories || []).filter(function(c){ return c.pct != null && c.pct < 80; }).slice(0, 3);
+  if (!weak.length){
+    if (!(P.categories || []).length) return '';
+    return '<div class="psec"><h3>🎯 Lộ trình học tập đề xuất</h3><p class="fine" style="margin:6px 0 0">Tất cả các mảng kiến thức đều đang đạt từ 80% trở lên — chưa có mảng nào cần ưu tiên riêng. Tiếp tục duy trì nhé!</p></div>';
+  }
+  var repeatByCat = {};
+  (P.repeatWrong || []).forEach(function(w){ repeatByCat[w.category] = (repeatByCat[w.category] || 0) + 1; });
+  var steps = weak.map(function(c, i){
+    var target = c.pct < low ? low : Math.min(100, c.pct + 20);
+    var urgent = c.pct < low;
+    var rep = repeatByCat[c.category] || 0;
+    return '<div class="lpstep' + (urgent ? ' urgent' : '') + '">' +
+      '<div class="n">' + (i+1) + '</div>' +
+      '<div class="b"><b>' + esc(c.category) + '</b>' + (urgent ? ' <span class="chip warn">Dưới chuẩn</span>' : '') +
+      '<p>Hiện đang đúng <b>' + c.pct + '%</b> trên ' + c.n + ' câu' + (c.lastPct != null ? ' (gần nhất ' + c.lastPct + '%)' : '') + '.' +
+      ' Mục tiêu lần tới: đạt ít nhất <b>' + target + '%</b>.' +
+      (rep ? ' Có <b>' + rep + '</b> câu ở mảng này đã sai lặp lại từ 2 lần trở lên — nên xem lại đúng những câu đó trước.' : '') +
+      '</p></div></div>';
+  }).join('');
+  return '<div class="psec"><h3>🎯 Lộ trình học tập đề xuất <small>ưu tiên mảng yếu nhất trước</small></h3><div class="lpath">' + steps + '</div></div>';
+}
 function renderProfile(){
   var P = PROF, H = P.history, low = (P.complianceLowMin || 6) * 10;
   if (!H.length){
@@ -1084,6 +1115,7 @@ function renderProfile(){
       return '<div class="catr"><span>' + esc(c.category) + '</span><span class="t"><i style="width:' + (c.pct||0) + '%;background:' + col + '"></i></span><span class="v">' + c.pct + '%</span><span class="l">' + (c.lastPct != null ? 'gần nhất ' + c.lastPct + '%' : '') + '</span></div>';
     }).join('') + '</div>';
   }
+  html += learningPathHTML(P, low);
   if (P.repeatWrong.length) html += '<div class="psec"><h3>Câu sai lặp lại <small>sai từ 2 lần trở lên</small></h3><ul class="wl">' + P.repeatWrong.map(function(w){
     return '<li><span class="x">' + w.times + '×</span>' + esc(w.text) + '<small>' + esc(w.category) + ' · Đáp án đúng: <span class="ok">' + esc(w.answer) + '</span></small></li>'; }).join('') + '</ul></div>';
   if (P.lastWrong.length) html += '<div class="psec"><details><summary style="cursor:pointer;font-weight:700;font-size:14px">Câu sai ở kỳ gần nhất (' + P.lastWrong.length + ')</summary><ul class="wl" style="margin-top:6px">' + P.lastWrong.map(function(w){
