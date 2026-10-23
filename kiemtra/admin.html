@@ -255,13 +255,6 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
 html{-webkit-text-size-adjust:100%}
 .mvframe{width:100%;height:82vh;border:0;display:block}
 @media(max-width:760px){
-  body{overflow-x:hidden}
-  .topbar{padding:10px 12px;gap:8px;padding-top:max(10px,env(safe-area-inset-top))}
-  .topbar b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
-  .topbar #meEmail{display:none}
-  .wrap{padding:12px 10px calc(40px + env(safe-area-inset-bottom))}
-  .tabs{gap:4px}
-  .tabs button{min-height:42px;flex:1 0 auto;padding:8px 6px;font-size:13px;white-space:nowrap}
   /* chống iOS tự phóng to khi chạm vào ô nhập (cần cỡ chữ >= 16px) */
   input:not([type=checkbox]):not([type=radio]),select,textarea{font-size:16px}
   .btn{min-height:42px}
@@ -271,7 +264,6 @@ html{-webkit-text-size-adjust:100%}
   .card table td .small,.card table td small{white-space:normal}
   /* tab Quản lí: iframe chiếm gọn màn hình, dùng dvh để không bị thanh địa chỉ che */
   #tab-managerview .card{border-radius:12px}
-  .mvframe{height:calc(100vh - 130px);height:calc(100dvh - 130px);min-height:480px}
 }
 /* Bảng danh sách có nút thao tác: trên điện thoại mỗi dòng thành một thẻ xếp dọc (không phải vuốt ngang mới thấy nút) */
 @media(max-width:760px){
@@ -286,6 +278,116 @@ html{-webkit-text-size-adjust:100%}
   .card table.stk td[colspan]{display:block}
 }
 
+/* ===================== MENU MỚI: thanh bên (máy tính) · cột biểu tượng (máy tính bảng) · thanh dưới (điện thoại) ===================== */
+:root{--side-w:252px;--rail-w:78px;--bar-h:62px}
+.ic{width:20px;height:20px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.main{margin-left:var(--side-w);min-width:0}
+.topbar,.bottombar{display:none}
+.side{position:fixed;inset:0 auto 0 0;width:var(--side-w);z-index:40;display:flex;flex-direction:column;padding:20px 14px 14px;color:#fff;
+  background:radial-gradient(120% 55% at 0% 0%,rgba(45,212,191,.24),transparent 62%),radial-gradient(90% 40% at 100% 100%,rgba(56,189,248,.14),transparent 60%),linear-gradient(180deg,#0B4650 0%,#072F36 100%);
+  box-shadow:10px 0 34px -20px rgba(4,38,44,.7)}
+.side-brand{display:flex;align-items:center;gap:12px;padding:2px 8px 12px}
+.side-brand .dot{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-weight:800;font-size:15px;color:#05343A;flex:0 0 auto;
+  background:linear-gradient(135deg,#5EEAD4,#22B8CF);box-shadow:0 10px 24px -8px rgba(45,212,191,.75),inset 0 1px 0 rgba(255,255,255,.5)}
+.side-brand b{display:block;font-size:16px;letter-spacing:.01em;line-height:1.2}
+.side-brand small{display:block;font-size:12px;color:rgba(255,255,255,.58);margin-top:2px}
+.side-nav{flex:1;min-height:0;overflow-y:auto;margin:0 -14px;padding:0 14px 8px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
+.nv-grp{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.4);margin:18px 12px 8px}
+.nv{position:relative;display:flex;align-items:center;gap:12px;width:100%;height:44px;padding:0 12px;border:0;border-radius:12px;background:transparent;color:rgba(255,255,255,.78);
+  font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;text-align:left;text-decoration:none;transition:background .15s,color .15s,transform .1s}
+.nv+.nv{margin-top:3px}
+.nv .nv-l{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nv .nv-cnt{font-size:11.5px;font-weight:700;min-width:24px;padding:2px 8px;text-align:center;border-radius:999px;background:rgba(255,255,255,.14);color:#fff}
+.nv:hover{background:rgba(255,255,255,.09);color:#fff}
+.nv:active{transform:scale(.99)}
+.nv.on{color:#fff;background:linear-gradient(90deg,rgba(45,212,191,.28),rgba(255,255,255,.07))}
+.nv.on .ic{color:#5EEAD4}
+.nv.on::before{content:'';position:absolute;left:-14px;top:9px;bottom:9px;width:5px;border-radius:0 5px 5px 0;background:#5EEAD4;box-shadow:0 0 14px rgba(94,234,212,.9)}
+.nv:focus-visible,.side button:focus-visible,.bb:focus-visible,.ibtn:focus-visible{outline:2px solid #5EEAD4;outline-offset:2px}
+.sysnav-side{display:flex;flex-direction:column;gap:2px;margin:4px 0 4px 17px;padding:2px 0 2px 10px;border-left:1.5px solid rgba(255,255,255,.14);background:none;border-top:0;border-right:0;border-bottom:0;box-shadow:none}
+.sysnav-side.hide{display:none}
+.sysnav-side button{display:flex;align-items:center;gap:8px;width:100%;min-height:38px;padding:6px 8px;border:0;border-radius:10px;background:transparent;color:rgba(255,255,255,.68);font:inherit;font-size:13px;line-height:1.25;font-weight:600;text-align:left;cursor:pointer;transition:background .15s,color .15s}
+.sysnav-side button .ic{width:17px;height:17px}
+.sysnav-side button:hover{background:rgba(255,255,255,.08);color:#fff}
+.sysnav-side button.on{background:rgba(255,255,255,.14);color:#fff}
+.sysnav-side button.on .ic{color:#5EEAD4}
+.side-user{display:flex;align-items:center;gap:10px;margin-top:8px;padding:12px 8px 2px;border-top:1px solid rgba(255,255,255,.12)}
+.side-user .av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;font-weight:800;font-size:15px;color:#06343A;background:linear-gradient(135deg,#99F6E4,#7DD3FC)}
+.side-user .who{flex:1;min-width:0}
+.side-user .who b{display:block;font-size:13px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.side-user .who span{display:block;font-size:11.5px;color:rgba(255,255,255,.55);margin-top:1px}
+.side-user .out{width:38px;height:38px;flex:0 0 auto;display:grid;place-items:center;border-radius:11px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;transition:background .15s}
+.side-user .out:hover{background:rgba(255,255,255,.16)}
+/* Thanh phụ của MỘT đề: tab gạch chân có biểu tượng */
+.exhead .back{display:inline-flex;align-items:center;gap:2px;padding:4px 10px 4px 4px;margin:-2px 0 10px;border-radius:999px;color:var(--brand-deep);transition:background .15s}
+.exhead .back:hover{background:#E8F5F4}
+.exhead .back .ic{width:18px;height:18px;stroke-width:2.2}
+#exNav{display:flex;gap:2px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:14px -20px -12px;padding:0 14px!important;border-top:1px solid var(--line);border-radius:0}
+#exNav::-webkit-scrollbar{display:none}
+#exNav button{position:relative;display:flex;align-items:center;gap:8px;flex:0 0 auto;padding:13px 14px;border-radius:0;background:none;color:var(--muted);font-weight:700;white-space:nowrap}
+#exNav button .ic{width:18px;height:18px}
+#exNav button:hover{background:none;color:var(--ink)}
+#exNav button.on{background:none;color:var(--brand-deep)}
+#exNav button.on::after{content:'';position:absolute;left:10px;right:10px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:linear-gradient(90deg,var(--brand),#22B8CF)}
+/* Menu con trong nội dung (màn hình hẹp): các nút tròn cuộn ngang */
+#sysNav{display:none}
+@media(max-width:1099px){
+  #sysNav{display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;scrollbar-width:none;padding:0!important;margin:0 0 14px;background:none;border:0;box-shadow:none}
+  #sysNav.hide{display:none}
+  #sysNav::-webkit-scrollbar{display:none}
+  #sysNav button{display:flex;align-items:center;gap:8px;flex:0 0 auto;min-height:40px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--muted);font-weight:700;font-size:13.5px;white-space:nowrap}
+  #sysNav button .ic{width:17px;height:17px}
+  #sysNav button.on{background:var(--brand-deep);border-color:var(--brand-deep);color:#fff}
+  .sysnav-side{display:none!important}
+}
+/* Máy tính bảng / laptop nhỏ: cột biểu tượng */
+@media(min-width:761px) and (max-width:1099px){
+  .side{width:var(--rail-w);padding:16px 10px 12px}
+  .main{margin-left:var(--rail-w)}
+  .side-brand{justify-content:center;padding:2px 0 8px}
+  .side-brand>div:last-child{display:none}
+  .nv-grp{font-size:0;height:1px;margin:14px 10px;background:rgba(255,255,255,.14)}
+  .nv{justify-content:center;padding:0}
+  .nv .nv-l,.nv .nv-cnt{display:none}
+  .side-nav{margin:0 -10px;padding:0 10px 8px}
+  .nv.on::before{left:-10px}
+  .side-user{flex-direction:column;padding:12px 0 0}
+  .side-user .who{display:none}
+}
+/* Điện thoại: thanh trên gọn + thanh menu cố định phía dưới (dễ chạm bằng ngón cái) */
+@media(max-width:760px){
+  .side{display:none}
+  .main{margin-left:0}
+  .topbar{display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));background:rgba(255,255,255,.92);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--line)}
+  .topbar .dot{width:34px;height:34px;border-radius:10px;font-size:13px;background:linear-gradient(135deg,#2DD4BF,#0A7C8C)}
+  .topbar b{flex:1;min-width:0;font-size:16px}
+  .ibtn{width:40px;height:40px;flex:0 0 auto;display:grid;place-items:center;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--brand-deep);cursor:pointer}
+  .bottombar{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:50;padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+    background:rgba(255,255,255,.94);backdrop-filter:saturate(1.5) blur(16px);border-top:1px solid var(--line);box-shadow:0 -12px 32px -20px rgba(6,48,45,.45)}
+  .bb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:54px;border:0;background:none;color:var(--muted);font:inherit;font-size:11.5px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .bb .icw{display:grid;place-items:center;width:58px;height:30px;border-radius:15px;transition:background .2s,transform .15s}
+  .bb .ic{width:22px;height:22px}
+  .bb:active .icw{transform:scale(.94)}
+  .bb.on{color:var(--brand-deep)}
+  .bb.on .icw{background:#D6F1EE}
+  .wrap{padding:12px 10px calc(var(--bar-h) + 30px + env(safe-area-inset-bottom))}
+  .mvframe{height:calc(100vh - 190px - env(safe-area-inset-bottom));height:calc(100dvh - 190px - env(safe-area-inset-bottom));min-height:440px}
+  #exNav{margin-left:-14px;margin-right:-14px}
+  .card.exhead{padding-left:14px;padding-right:14px}
+}
+@media(max-width:760px){
+  #sysNav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
+  #sysNav.hide{display:none}
+  #sysNav button{justify-content:center;white-space:normal;text-align:center;line-height:1.2;padding:6px 10px;font-size:13px}
+}
+/* Điện thoại hẹp: bốn tab của đề hiện đủ cùng lúc (biểu tượng trên, chữ dưới) */
+@media(max-width:560px){
+  #exNav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible;padding:0 6px!important;margin-left:-14px;margin-right:-14px}
+  #exNav button{flex-direction:column;justify-content:center;gap:3px;padding:10px 2px 11px;font-size:12px}
+  #exNav button.on::after{left:14%;right:14%}
+  #exNav button .cnt{position:absolute;top:5px;left:calc(50% + 7px);margin:0;font-size:10px;line-height:1.5;padding:0 6px;background:var(--brand);color:#fff}
+  #exNav button .cnt:empty{display:none}
+}
 </style>
 </head>
 <body>
@@ -312,33 +414,68 @@ html{-webkit-text-size-adjust:100%}
 </div>
 
 <div id="app" class="hide">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.5-3 2.7-4.8 5.5-4.8s5 1.8 5.5 4.8"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.4c2.3.1 3.8 1.5 4.2 3.6"/></symbol>
+    <symbol id="i-mgr" viewBox="0 0 24 24"><circle cx="9.5" cy="8" r="3.3"/><path d="M3.5 19.5c.5-3.3 2.8-5 6-5s5.5 1.7 6 5"/><path d="m16 11 2 2 4-4"/></symbol>
+    <symbol id="i-set" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-9"/><path d="M3 20h18"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.2 1-1.2 1.8"/><circle cx="12" cy="17" r=".7" fill="currentColor"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3"/><path d="m16 8 4 4-4 4M20 12H9"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4 10 14"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 3 8.3 7 9.8 4-1.5 7-5.2 7-9.8V6z"/><path d="m9 12 2.2 2.2L15 10"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></symbol>
+  </defs></svg>
+  <aside class="side" id="side" aria-label="Menu quản trị">
+    <div class="side-brand"><div class="dot">KT</div><div><b>Quản trị</b><small>Bài kiểm tra</small></div></div>
+    <nav class="side-nav" aria-label="Mục chính">
+      <div class="nv-grp">Vận hành</div>
+      <button type="button" class="nv" data-nav="exams" onclick="switchTab('exams')" title="Đề thi"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg><span class="nv-l">Đề thi</span><span class="nv-cnt hide" id="nvExams"></span></button>
+      <button type="button" class="nv" data-nav="candidates" onclick="switchTab('candidates')" title="Thí sinh"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg><span class="nv-l">Thí sinh</span><span class="nv-cnt hide" id="nvCand"></span></button>
+      <button type="button" class="nv" data-nav="managerview" onclick="switchTab('managerview')" title="Quản lí"><svg class="ic" aria-hidden="true"><use href="#i-mgr"/></svg><span class="nv-l">Quản lí</span></button>
+      <div class="nv-grp">Hệ thống</div>
+      <button type="button" class="nv" data-nav="sys" onclick="switchTab('settings')" title="Cài đặt"><svg class="ic" aria-hidden="true"><use href="#i-set"/></svg><span class="nv-l">Cài đặt</span></button>
+      <div class="subnav sysnav sysnav-side hide" aria-label="Mục cài đặt">
+        <button type="button" data-sub="settings" onclick="switchTab('settings')"><svg class="ic" aria-hidden="true"><use href="#i-set"/></svg><span>Cài đặt mặc định</span></button>
+        <button type="button" data-sub="viewers" onclick="switchTab('viewers')"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg><span>Quản lí xem kết quả</span></button>
+        <button type="button" data-sub="banks" onclick="switchTab('banks')"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg><span>Ngân hàng (nâng cao)</span></button>
+        <button type="button" data-sub="audit" onclick="switchTab('audit')"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg><span>Nhật ký</span></button>
+      </div>
+      <div class="nv-grp">Liên kết nhanh</div>
+      <a class="nv" href="/kiemtra/" target="_blank" rel="noopener" title="Trang làm bài của thí sinh"><svg class="ic" aria-hidden="true"><use href="#i-ext"/></svg><span class="nv-l">Trang làm bài</span></a>
+      <a class="nv" href="/kiemtra/ketqua.html" target="_blank" rel="noopener" title="Trang xác thực kết quả"><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg><span class="nv-l">Xác thực kết quả</span></a>
+    </nav>
+    <div class="side-user">
+      <div class="av" id="meAv" aria-hidden="true">?</div>
+      <div class="who"><b id="meEmail"></b><span>Quản trị viên</span></div>
+      <button type="button" class="out" onclick="doLogout()" title="Đăng xuất" aria-label="Đăng xuất"><svg class="ic" aria-hidden="true"><use href="#i-out"/></svg></button>
+    </div>
+  </aside>
+  <div class="main">
   <div class="topbar">
     <div class="dot">KT</div>
-    <b>Quản trị bài kiểm tra</b>
-    <span class="small" id="meEmail"></span>
-    <button class="btn ghost sm" onclick="doLogout()">Đăng xuất</button>
+    <b id="tbTitle">Quản trị bài kiểm tra</b>
+    <button type="button" class="ibtn" onclick="doLogout()" title="Đăng xuất" aria-label="Đăng xuất"><svg class="ic" aria-hidden="true"><use href="#i-out"/></svg></button>
   </div>
   <div class="wrap">
     <style>body:not([data-tab=exams]) #hero{display:none}</style>
     <section class="khero hide" id="hero" aria-label="Tổng quan nhanh"></section>
-    <nav class="tabs" aria-label="Mục chính">
-      <button data-nav="exams" onclick="switchTab('exams')">📋 Đề thi</button>
-      <button data-nav="candidates" onclick="switchTab('candidates')">👥 Thí sinh</button>
-      <button data-nav="managerview" onclick="switchTab('managerview')">👤 Quản lí</button>
-      <button data-nav="sys" onclick="switchTab('settings')">⚙️ Cài đặt</button>
-    </nav>
 
-    <!-- Thanh phụ của nhóm Cài đặt & hệ thống -->
-    <div class="subnav card" id="sysNav">
-      <button data-sub="settings" onclick="switchTab('settings')">Cài đặt mặc định</button>
-      <button data-sub="viewers" onclick="switchTab('viewers')">Quản lí xem kết quả</button>
-      <button data-sub="banks" onclick="switchTab('banks')">Ngân hàng (nâng cao)</button>
-      <button data-sub="audit" onclick="switchTab('audit')">Nhật ký</button>
+    <!-- Menu con của nhóm Cài đặt (điện thoại / màn hình hẹp); màn hình rộng dùng menu con trong thanh bên -->
+    <div class="subnav card sysnav" id="sysNav">
+      <button type="button" data-sub="settings" onclick="switchTab('settings')"><svg class="ic" aria-hidden="true"><use href="#i-set"/></svg><span>Cài đặt mặc định</span></button>
+      <button type="button" data-sub="viewers" onclick="switchTab('viewers')"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg><span>Quản lí xem kết quả</span></button>
+      <button type="button" data-sub="banks" onclick="switchTab('banks')"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg><span>Ngân hàng (nâng cao)</span></button>
+      <button type="button" data-sub="audit" onclick="switchTab('audit')"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg><span>Nhật ký</span></button>
     </div>
 
     <!-- Đầu trang của MỘT đề thi: mọi việc của đề (kết quả, câu hỏi, cài đặt) nằm dưới đây -->
     <div class="card exhead" id="exHead">
-      <button class="back" type="button" onclick="switchTab('exams')">← Tất cả đề thi</button>
+      <button class="back" type="button" onclick="switchTab('exams')"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg><span>Tất cả đề thi</span></button>
       <div class="exh-top">
         <div style="min-width:0">
           <h1 id="ehTitle">Đề thi</h1>
@@ -347,10 +484,10 @@ html{-webkit-text-size-adjust:100%}
         <div class="exh-act" id="ehAct"></div>
       </div>
       <div class="subnav in" id="exNav">
-        <button data-sub="results" onclick="switchTab('results')">📊 Kết quả</button>
-        <button data-sub="analysis" onclick="switchTab('analysis')">📈 Phân tích</button>
-        <button data-sub="questions" onclick="switchTab('questions')">❓ Câu hỏi <span class="cnt" id="ehQ"></span></button>
-        <button data-sub="examset" onclick="switchTab('examset')">⚙️ Cài đặt đề</button>
+        <button data-sub="results" onclick="switchTab('results')"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg><span>Kết quả</span></button>
+        <button data-sub="analysis" onclick="switchTab('analysis')"><svg class="ic" aria-hidden="true"><use href="#i-trend"/></svg><span>Phân tích</span></button>
+        <button data-sub="questions" onclick="switchTab('questions')"><svg class="ic" aria-hidden="true"><use href="#i-help"/></svg><span>Câu hỏi</span> <span class="cnt" id="ehQ"></span></button>
+        <button data-sub="examset" onclick="switchTab('examset')"><svg class="ic" aria-hidden="true"><use href="#i-set"/></svg><span>Cài đặt đề</span></button>
       </div>
     </div>
 
@@ -878,6 +1015,13 @@ html{-webkit-text-size-adjust:100%}
       </div>
 
   </div>
+  </div>
+  <nav class="bottombar" aria-label="Mục chính">
+    <button type="button" class="bb" data-nav="exams" onclick="switchTab('exams')"><span class="icw"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg></span><span class="bl">Đề thi</span></button>
+    <button type="button" class="bb" data-nav="candidates" onclick="switchTab('candidates')"><span class="icw"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg></span><span class="bl">Thí sinh</span></button>
+    <button type="button" class="bb" data-nav="managerview" onclick="switchTab('managerview')"><span class="icw"><svg class="ic" aria-hidden="true"><use href="#i-mgr"/></svg></span><span class="bl">Quản lí</span></button>
+    <button type="button" class="bb" data-nav="sys" onclick="switchTab('settings')"><span class="icw"><svg class="ic" aria-hidden="true"><use href="#i-set"/></svg></span><span class="bl">Cài đặt</span></button>
+  </nav>
 </div>
 
 <script>
@@ -913,6 +1057,7 @@ async function boot(){
     if (!j.loggedIn){ $('loginScreen').classList.remove('hide'); return; }
     if (!j.isAdmin){ $('deniedEmail').textContent = j.email||''; $('deniedScreen').classList.remove('hide'); return; }
     $('meEmail').textContent = j.email;
+    $('meAv').textContent = String(j.email || '?').trim().charAt(0).toUpperCase() || '?';
     $('app').classList.remove('hide');
     { const [t, id] = parseHash(); if (WS.indexOf(t) >= 0 && id) openExam(id, t); else switchTab(t || 'exams'); }
     loadAll();
@@ -1015,11 +1160,13 @@ function switchTab(t){
   if (WS.indexOf(t) >= 0 && !CUR_EXAM && !(t === 'examset' && EX_NEW)) t = 'exams';
   if (t !== 'examset') EX_NEW = false;
   const inWs = WS.indexOf(t) >= 0, inSys = SYS.indexOf(t) >= 0;
-  document.querySelectorAll('.tabs button[data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === (inWs ? 'exams' : inSys ? 'sys' : t)));
-  $('sysNav').classList.toggle('hide', !inSys);
+  const navKey = inWs ? 'exams' : inSys ? 'sys' : t;
+  document.querySelectorAll('[data-nav]').forEach(b => { const on = b.dataset.nav === navKey; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  const tb = $('tbTitle'); if (tb) tb.textContent = inWs ? 'Đề thi' : inSys ? 'Cài đặt' : ({ exams:'Đề thi', candidates:'Thí sinh', managerview:'Quản lí' })[t] || 'Quản trị bài kiểm tra';
+  document.querySelectorAll('.sysnav').forEach(el => el.classList.toggle('hide', !inSys));
   $('exHead').classList.toggle('hide', !inWs);
   $('exNav').classList.toggle('hide', EX_NEW);
-  document.querySelectorAll('#sysNav button, #exNav button').forEach(b => b.classList.toggle('on', b.dataset.sub === t));
+  document.querySelectorAll('.sysnav button, #exNav button').forEach(b => b.classList.toggle('on', b.dataset.sub === t));
   document.querySelectorAll('.tabpane').forEach(p => p.classList.toggle('hide', p.id !== 'tab-'+t));
   document.body.dataset.tab = t;
   const h = '#' + t + (inWs && CUR_EXAM ? '/' + encodeURIComponent(CUR_EXAM) : '');
@@ -1089,6 +1236,7 @@ async function loadExams(){
   const { j } = await api('GET','/api/kt-admin?op=exams');
   if (!j.ok) return;
   EXAMS = j.exams || []; EX_DEFAULT = j.currentPeriod || '';
+  setNavCount('nvExams', EXAMS.length);
   if (QP !== null && QUESTIONS.length) renderQuestions();
   if (CUR_EXAM && WS.indexOf(document.body.dataset.tab) >= 0) renderExHead();
   renderExGrid();
@@ -1893,10 +2041,12 @@ async function saveQuestion(){
 }
 
 /* ---------- Thí sinh ---------- */
+function setNavCount(id, n){ const e = document.getElementById(id); if (!e) return; e.textContent = n; e.classList.toggle('hide', !n); }
 async function loadCandidates(){
   const { j } = await api('GET','/api/kt-admin?op=candidates');
   if (!j.ok) return;
   $('candCount').textContent = j.candidates.length;
+  setNavCount('nvCand', j.candidates.length);
   CANDIDATES = j.candidates;
   renderCandidates();
 }
