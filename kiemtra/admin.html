@@ -273,6 +273,19 @@ html{-webkit-text-size-adjust:100%}
   #tab-managerview .card{border-radius:12px}
   .mvframe{height:calc(100vh - 130px);height:calc(100dvh - 130px);min-height:480px}
 }
+/* Bảng danh sách có nút thao tác: trên điện thoại mỗi dòng thành một thẻ xếp dọc (không phải vuốt ngang mới thấy nút) */
+@media(max-width:760px){
+  .card table.stk{display:block;overflow:visible;max-width:100%}
+  .card table.stk thead{display:none}
+  .card table.stk tbody,.card table.stk tr{display:block;width:100%}
+  .card table.stk tr{padding:12px 0;border-bottom:1px solid var(--line)}
+  .card table.stk tr:last-child{border-bottom:0}
+  .card table.stk td{display:grid;grid-template-columns:96px minmax(0,1fr);gap:4px 10px;align-items:baseline;width:100%;padding:3px 0;border:0;white-space:normal;overflow-wrap:anywhere;text-align:left}
+  .card table.stk td[data-label]::before{content:attr(data-label);font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+  .card table.stk td.stk-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;white-space:normal!important}
+  .card table.stk td[colspan]{display:block}
+}
+
 </style>
 </head>
 <body>
@@ -457,7 +470,7 @@ html{-webkit-text-size-adjust:100%}
       </div>
       <div class="card">
         <h1>Danh sách ngân hàng</h1>
-        <table><thead><tr><th>Tên</th><th>Câu hỏi (dùng được / tổng)</th><th>Độ khó</th><th>Danh mục</th><th></th></tr></thead><tbody id="bkList"></tbody></table>
+        <table class="stk"><thead><tr><th>Tên</th><th>Câu hỏi (dùng được / tổng)</th><th>Độ khó</th><th>Danh mục</th><th></th></tr></thead><tbody id="bkList"></tbody></table>
         <div id="bkListMsg"></div>
       </div>
       <div class="card">
@@ -592,7 +605,7 @@ html{-webkit-text-size-adjust:100%}
         </div>
         <div id="qBackupBar"></div>
         <div id="qDelMsg"></div>
-        <table><thead><tr><th>Câu hỏi</th><th>Danh mục</th><th>Trạng thái</th><th></th></tr></thead><tbody id="qList"></tbody></table>
+        <table class="stk"><thead><tr><th>Câu hỏi</th><th>Danh mục</th><th>Trạng thái</th><th></th></tr></thead><tbody id="qList"></tbody></table>
         <div style="text-align:center;margin-top:10px"><button class="btn ghost sm hide" id="qMore" type="button" onclick="QLIM+=100;renderQList()"></button></div>
       </div>
     </div>
@@ -661,7 +674,7 @@ html{-webkit-text-size-adjust:100%}
           <select id="candSegF" onchange="renderCandidates()" aria-label="Lọc theo nhóm ngành"><option value="*">Mọi nhóm ngành</option><option value="both">Cả hai ngành</option><option value="may_loc">Máy lọc nước</option><option value="gia_dung">Gia dụng</option></select>
           <span class="small" id="candShown"></span>
         </div>
-        <table><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Email</th><th>Quản lí</th><th>Nhóm ngành</th><th>Xác nhận thông tin</th><th></th></tr></thead><tbody id="candList"></tbody></table>
+        <table class="stk"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Email</th><th>Quản lí</th><th>Nhóm ngành</th><th>Xác nhận thông tin</th><th></th></tr></thead><tbody id="candList"></tbody></table>
       </div>
     </div>
 
@@ -772,7 +785,7 @@ html{-webkit-text-size-adjust:100%}
       </div>
       <div class="card">
         <h1>Danh sách tài khoản quản lí (<span id="vwCount">0</span>)</h1>
-        <table><thead><tr><th>Email</th><th>Họ tên</th><th>Phạm vi</th><th>Số NV</th><th></th></tr></thead><tbody id="vwList"></tbody></table>
+        <table class="stk"><thead><tr><th>Email</th><th>Họ tên</th><th>Phạm vi</th><th>Số NV</th><th></th></tr></thead><tbody id="vwList"></tbody></table>
       </div>
     </div>
 
@@ -814,7 +827,7 @@ html{-webkit-text-size-adjust:100%}
             <button class="btn ghost sm" style="white-space:nowrap" onclick="exportResultsXlsx()">⬇ Xuất Excel</button>
           </div>
         </div>
-        <table style="margin-top:14px"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Quản lí</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Mã minh chứng</th><th>Cảnh báo</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
+        <table style="margin-top:14px" class="stk"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Quản lí</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Mã minh chứng</th><th>Cảnh báo</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
         <div class="panel" style="margin-top:14px"><details class="nd" id="dashNd"><summary id="dashNdSum">Chưa làm bài</summary><div class="ndg" id="dashNdList"></div></details></div>
       </div>
       <div class="card hide" id="resDetailCard">
@@ -867,6 +880,20 @@ html{-webkit-text-size-adjust:100%}
   </div>
 </div>
 
+<script>
+(function(){ // gán nhãn cột (từ tiêu đề bảng) cho từng ô của các bảng .stk; ô cuối không có tiêu đề = cột nút thao tác
+  function label(tb){
+    var t = tb.closest('table'), th = [].map.call(t.querySelectorAll('thead th'), function(h){ return h.textContent.trim(); });
+    [].forEach.call(tb.querySelectorAll('tr'), function(tr){
+      [].forEach.call(tr.children, function(td, i){
+        if (td.tagName !== 'TD' || td.colSpan > 1) return;
+        if (th[i]) td.setAttribute('data-label', th[i]); else td.classList.add('stk-act');
+      });
+    });
+  }
+  [].forEach.call(document.querySelectorAll('table.stk tbody'), function(tb){ label(tb); new MutationObserver(function(){ label(tb); }).observe(tb, { childList:true }); });
+})();
+</script>
 <div id="profOv" class="hide" role="dialog" aria-modal="true" aria-label="Hồ sơ học tập"><iframe id="profFrame" title="Hồ sơ học tập" src="about:blank"></iframe></div>
 <script>
 function $(id){ return document.getElementById(id); }
