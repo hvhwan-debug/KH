@@ -300,6 +300,21 @@ const handler = async function (context, req) {
     }
 
     // Sao chép đề từ kỳ này sang kỳ khác (tạo câu mới, bỏ qua câu trùng nội dung đã có ở kỳ đích)
+    // Đổi tên một danh mục cho TẤT CẢ câu hỏi của một kỳ đang dùng đúng tên cũ - dùng khi câu hỏi nhập vào
+    // có tên danh mục khác với tên "phân bổ riêng" của đề đang cấu hình (gõ sai/khác cách đặt tên).
+    if (op === "renameCategory") {
+      const per = typeof b.period === "string" ? b.period : "";
+      const from = String(b.from || "").trim(), to = String(b.to || "").trim();
+      if (!from || !to) return reply(context, 400, { ok: false, error: "Thiếu tên danh mục cũ hoặc mới." });
+      if (from === to) return reply(context, 400, { ok: false, error: "Tên mới trùng với tên cũ." });
+      const list = await quiz.getQuestions();
+      let changed = 0;
+      list.forEach((q) => { if ((q.period || "") === per && (q.category || "") === from) { q.category = to; changed++; } });
+      if (!changed) return reply(context, 404, { ok: false, error: "Không có câu hỏi nào của kỳ này đang dùng danh mục \"" + from + "\"." });
+      await quiz.saveQuestions(list);
+      return reply(context, 200, { ok: true, changed, questions: list });
+    }
+
     if (op === "copyQuestions") {
       const from = String(b.from == null ? "" : b.from), to = String(b.to || "");
       if (!quiz.validPeriod(from) || !/^\d{4}-\d{2}$/.test(to) || from === to) return reply(context, 400, { ok: false, error: "Chọn kỳ nguồn và kỳ đích hợp lệ (khác nhau)." });

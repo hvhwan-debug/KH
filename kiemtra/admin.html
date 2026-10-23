@@ -452,6 +452,11 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         <div class="qper hide" id="qPerList" role="tablist" aria-label="Chọn kỳ"></div>
         <div id="qUnassigned"></div>
         <div class="qready" id="qReady"></div>
+        <div class="qtools hide" id="qRenameBox">
+          <span class="small">Đổi tên danh mục</span><select id="qRenFrom" aria-label="Danh mục hiện có"></select>
+          <span class="small">thành</span><select id="qRenTo" aria-label="Tên danh mục mới"></select>
+          <button class="btn ghost sm" type="button" onclick="renameCategory()">✎ Đổi tên hàng loạt</button>
+        </div>
         <div class="qtools">
           <span class="small">Chép toàn bộ câu hỏi từ đề</span><select id="qCopyFrom" aria-label="Đề nguồn"></select><span class="small">sang đề này</span>
           <button class="btn ghost sm" type="button" onclick="copyQuestions()">⧉ Sao chép</button>
@@ -1613,6 +1618,21 @@ function renderQuestions(){
     (QP && QP !== cur && EXAMS.some(e => e.id === QP) ? '<p class="small" style="margin:8px 0 0">Đây là ngân hàng riêng của đề <b>' + esc(qPerLabel(QP)) + '</b> (link thi: <code>/kiemtra/?exam=' + esc(QP) + '</code>).</p>' :
      QP && QP !== cur ? '<p class="small" style="margin:8px 0 0">' + (QP > cur ? 'Đề sắp mở: chuẩn bị sẵn câu hỏi, rồi đổi "Đề mặc định" trong tab Đề thi khi bắt đầu mở đề.' : 'Đề đã qua: câu hỏi được giữ lại để đối chiếu.') + '</p>' : '');
   $('qCopyFrom').innerHTML = pers.filter(p => p !== QP).concat(un.length && QP !== '' ? [''] : []).map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + ' (' + cnt(p).length + ' câu)</option>').join('') || '<option value="">Chưa có kỳ khác</option>';
+  // Cong cu doi ten danh muc hang loat: chi hien khi phan bo rieng cua de dang bao thieu (thuong do ten danh
+  // muc cau hoi nhap vao khac voi ten de dang yeu cau, chu khong phai that su thieu cau).
+  (function(){
+    const exQ2 = EXAMS.find(e => e.id === QP), P2 = exQ2 && spHas(exQ2.segmentPlans) ? exQ2.segmentPlans : SEGPLANS;
+    const haveCats = Array.from(new Set(L.filter(q => q.active !== false).map(q => q.category).filter(Boolean))).sort();
+    const needCats = SP_SEGS.some(([k]) => P2[k] && P2[k].length) ? Array.from(new Set(SP_SEGS.flatMap(([k]) => (P2[k] || []).map(r => r.category)))).sort() : [];
+    const missing = needCats.filter(c => !haveCats.some(h => spNorm(h) === spNorm(c)));
+    if (missing.length && haveCats.length){
+      $('qRenameBox').classList.remove('hide');
+      $('qRenFrom').innerHTML = haveCats.map(c => '<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
+      $('qRenTo').innerHTML = missing.map(c => '<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
+    } else {
+      $('qRenameBox').classList.add('hide');
+    }
+  })();
   // Danh sách
   $('qListTitle').textContent = 'Câu hỏi của đề';
   $('qBulkPer').textContent = '→ vào ' + qPerLabel(QP).toLowerCase();
@@ -1621,6 +1641,16 @@ function renderQuestions(){
   QLIST = L; renderQList();
   $('qPeriod').innerHTML = pers.map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + (p === cur ? ' (hiện tại)' : '') + '</option>').join('') + (un.length ? '<option value="">Chưa gắn kỳ</option>' : '');
   $('qPeriod').value = QP;
+}
+async function renameCategory(){
+  const from = $('qRenFrom').value, to = $('qRenTo').value;
+  if (!from || !to) return;
+  if (!confirm('Đổi tên danh mục "'+from+'" thành "'+to+'" cho TẤT CẢ câu hỏi của đề này?')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'renameCategory', period: QP, from, to });
+  if (!j.ok){ msg('qPerMsg', j.error, 'err'); return; }
+  QUESTIONS = j.questions;
+  msg('qPerMsg', 'Đã đổi tên danh mục cho '+j.changed+' câu hỏi.', 'ok');
+  renderQuestions();
 }
 async function copyQuestions(){
   const from = $('qCopyFrom').value; if (!QP){ alert('Chọn kỳ đích (không phải "Chưa gắn kỳ").'); return; }
