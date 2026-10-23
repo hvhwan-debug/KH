@@ -498,6 +498,8 @@ function planExam(all, settings, segment) {
     source = "blueprint";
     return { picked, target, mode: "blueprint", short: Math.max(0, target - picked.length), pool, source, parts, error };
   }
+  const segRows = segPlanFor(settings, segment);
+  if (segRows) return planBySegment(all, settings, segRows);
   const bank = bankFor(all, settings.examPeriod);
   const active = bank.list;
   source = bank.source + (bank.from ? ":" + bank.from : "");
@@ -523,6 +525,61 @@ function planExam(all, settings, segment) {
   picked = picked.slice(0, target); // chốt chặn cuối cùng
   return { picked, target, mode: "segment", short: Math.max(0, target - picked.length), pool, source, parts, error };
 }
+// ---------- Phân bổ câu hỏi theo nhóm ngành (cài đặt chung) ----------
+// segmentPlans = { both: [{category, count}], may_loc: [...], gia_dung: [...] }. Nhóm nào có danh sách thì đề của thí sinh
+// thuộc nhóm đó rút đúng số câu từng danh mục (trong ngân hàng của kỳ); nhóm để trống thì dùng cách cũ.
+const PLAN_SEGS = ["both", "may_loc", "gia_dung"];
+const normCat = (c) => String(c || "").normalize("NFC").trim().replace(/\s+/g, " ").toLowerCase();
+function cleanSegmentPlans(sp) {
+  const out = {};
+  if (!sp || typeof sp !== "object") return out;
+  for (const seg of PLAN_SEGS) {
+    const rows = Array.isArray(sp[seg]) ? sp[seg] : [];
+    if (rows.length > 15) return { error: "Mỗi nhóm ngành tối đa 15 dòng phân bổ." };
+    const clean = [];
+    for (const r of rows) {
+      const category = String(r && r.category || "").trim().replace(/\s+/g, " ").slice(0, 100);
+      const count = toInt(r && r.count);
+      if (!category && !(count > 0)) continue; // dòng trống: bỏ qua
+      if (!category) return { error: "Có dòng phân bổ chưa ghi danh mục." };
+      if (!(count >= 1 && count <= 200)) return { error: "Số câu của danh mục \"" + category + "\" phải từ 1 đến 200." };
+      if (clean.some((x) => normCat(x.category) === normCat(category))) return { error: "Danh mục \"" + category + "\" bị lặp trong cùng một nhóm." };
+      clean.push({ category, count });
+    }
+    const total = clean.reduce((n, x) => n + x.count, 0);
+    if (total > MAX_QUESTION_COUNT) return { error: "Phân bổ cho nhóm " + ({ both: "bán cả 2 ngành", may_loc: "chỉ bán máy lọc", gia_dung: "chỉ bán gia dụng" }[seg]) + " cộng ra " + total + " câu, vượt giới hạn " + MAX_QUESTION_COUNT + " câu mỗi đề." };
+    if (clean.length) out[seg] = clean;
+  }
+  return out;
+}
+function segPlanFor(settings, segment) {
+  const sp = settings && settings.segmentPlans;
+  const rows = sp && sp[normSegment(segment)];
+  return Array.isArray(rows) && rows.length ? rows : null;
+}
+// Số câu thực tế của đề cho một thí sinh (để hiện ở thể lệ)
+function countFor(settings, segment) {
+  if (settings && settings.blueprint && settings.blueprint.rules && settings.blueprint.rules.length) return targetCount(settings);
+  const rows = segPlanFor(settings, segment);
+  return rows ? Math.min(MAX_QUESTION_COUNT, rows.reduce((n, r) => n + r.count, 0)) : targetCount(settings);
+}
+function planBySegment(all, settings, rows) {
+  const target = Math.min(MAX_QUESTION_COUNT, rows.reduce((n, r) => n + r.count, 0));
+  const bank = bankFor(all, settings.examPeriod), active = bank.list, used = new Set(), parts = [];
+  let picked = [], pool = 0;
+  rows.forEach((r) => {
+    const p = active.filter((q) => !used.has(q.id) && normCat(q.category) === normCat(r.category));
+    pool += p.length;
+    const take = shuffle(p).slice(0, r.count);
+    take.forEach((q) => used.add(q.id));
+    picked = picked.concat(take);
+    parts.push({ label: r.category, want: r.count, got: take.length });
+  });
+  picked = shuffle(picked).slice(0, target);
+  const error = !active.length ? "Ngân hàng đề kỳ này chưa có câu hỏi." : !picked.length ? "Chưa có câu hỏi thuộc các danh mục đã phân bổ." : "";
+  return { picked, target, mode: "segplan", short: Math.max(0, target - picked.length), pool, source: bank.source + (bank.from ? ":" + bank.from : ""), parts, error };
+}
+
 function ruleLabel(r) {
   return (r.bankId === "*" ? "Mọi ngân hàng" : "Ngân hàng " + r.bankId) + (r.category ? " · " + r.category : "") +
     (r.difficulty ? " · " + ({ easy: "Dễ", medium: "Trung bình", hard: "Khó" }[r.difficulty] || r.difficulty) : "") + (r.tag ? " · #" + r.tag : "");
@@ -726,7 +783,7 @@ module.exports = {
   getAttempt, putAttempt, saveIndex, activeForPeriod,
   getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary,
   getBanks, saveBanks, bankOf, validBankId, slugify, cleanQuestionMeta, DEFAULT_BANK, DIFFICULTIES,
-  cleanBlueprint, buildFromBlueprint, blueprintTotal, planExam, targetCount, validateCounts, MAX_QUESTION_COUNT, examAccessError, inAudience, examKnown, scoreAttempt, patchIndex, previousResult, loadAttempts,
+  cleanBlueprint, buildFromBlueprint, blueprintTotal, planExam, targetCount, cleanSegmentPlans, segPlanFor, countFor, validateCounts, MAX_QUESTION_COUNT, examAccessError, inAudience, examKnown, scoreAttempt, patchIndex, previousResult, loadAttempts,
   TYPES, qType, normText, normalizeQuestionInput, gradeAnswer,
   getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,

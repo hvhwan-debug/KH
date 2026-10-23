@@ -27,6 +27,13 @@ body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(-
 .btn.dghost{background:#fff;color:var(--bad);border:1.5px solid var(--line)}
 .btn.dghost:hover{border-color:var(--bad)}
 #resSearch{max-width:240px}
+.spg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+@media(max-width:900px){.spg{grid-template-columns:1fr}}
+.spbox{border:1px solid var(--line);border-radius:12px;padding:12px}
+.spbox h3{margin:0 0 2px;font-size:14px}.spbox .tot{font-size:12.5px;color:var(--muted);margin-bottom:8px}
+.sprow{display:grid;grid-template-columns:minmax(0,1fr) 64px 28px;gap:6px;align-items:center;margin-top:6px}
+.sprow input{margin:0}.sprow .x{border:0;background:transparent;color:var(--muted);font-size:18px;cursor:pointer}
+.sprow .have{grid-column:1/-1;font-size:11.5px;margin:-2px 0 2px 2px}.sprow .have.ok{color:var(--ok)}.sprow .have.bad{color:var(--warn)}
 
 /* Chẩn đoán hành vi học tập: bằng chứng -> nguyên nhân giả thuyết -> việc nên làm */
 .ins-narr{border:1.5px solid #CDE6EA;border-radius:16px;background:linear-gradient(180deg,#F5FBFC,#EDF7F9);padding:14px 16px;margin:0 0 12px;text-align:left}
@@ -411,7 +418,7 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
           <option value="fill">Điền vào chỗ trống</option>
         </select>
         <label>Phân loại (tuỳ chọn)</label>
-        <input type="text" id="qCategory" placeholder="VD: Nghiệp vụ, An toàn lao động...">
+        <input type="text" id="qCategory" list="catList" placeholder="VD: Nghiệp vụ, An toàn lao động...">
         <div class="grid2">
           <div><label>Ngân hàng</label><select id="qBank" aria-label="Ngân hàng của câu hỏi"></select></div>
           <div><label>Độ khó</label><select id="qDifficulty"><option value="">Không phân loại</option><option value="easy">Dễ</option><option value="medium">Trung bình</option><option value="hard">Khó</option></select></div>
@@ -442,7 +449,7 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         <p class="small">Mô tả chủ đề, AI soạn sẵn câu hỏi trắc nghiệm để bạn xem lại rồi mới đưa vào ngân hàng đề (không tự động lưu).</p>
         <div class="grid2" style="margin-top:8px">
           <div><label>Chủ đề</label><input type="text" id="aiQTopic" placeholder="Vd: An toàn điện khi lắp đặt bếp từ"></div>
-          <div><label>Danh mục (tuỳ chọn)</label><input type="text" id="aiQCategory" placeholder="Vd: Gia dụng"></div>
+          <div><label>Danh mục (tuỳ chọn)</label><input type="text" id="aiQCategory" list="catList" placeholder="Vd: Gia dụng"></div>
           <div><label>Số câu</label><input type="text" inputmode="numeric" id="aiQCount" value="10" style="max-width:100px"></div>
         </div>
         <button class="btn" style="margin-top:12px" onclick="genQuestionsAI()" id="aiQBtn">Soạn bằng AI</button>
@@ -555,6 +562,17 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         <label style="display:flex;align-items:center;gap:8px;margin-top:14px"><input type="checkbox" id="setRetake" style="width:18px;height:18px"> Cho phép thí sinh làm lại nhiều lần</label>
         <button class="btn" style="margin-top:14px" onclick="saveSettings()">Lưu cài đặt</button>
         <div id="setMsg"></div>
+      </div>
+      <div class="card" id="segPlanCard">
+        <h1>Phân bổ câu hỏi theo nhóm ngành</h1>
+        <p class="small">Mỗi nhóm thí sinh nhận đúng số câu của từng danh mục. Tên danh mục phải <b>trùng với ô "Phân loại"</b> của câu hỏi (không phân biệt hoa thường). Nhóm nào để trống thì dùng cách chia cũ ở trên (Tổng số câu + số câu Gia dụng cố định). Nếu một đề thi có "Cấu trúc đề" riêng thì cấu trúc đó được ưu tiên.</p>
+        <div class="spg" id="spWrap"></div>
+        <datalist id="catList"></datalist>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+          <button class="btn" type="button" onclick="saveSettings()">Lưu phân bổ</button>
+          <button class="btn ghost" type="button" onclick="spTemplate()">Điền theo mẫu chuẩn</button>
+        </div>
+        <div id="spMsg"></div>
       </div>
       <div class="card">
         <h1>Điểm tuân thủ học tập</h1>
@@ -1249,13 +1267,22 @@ function qPeriods(){
 async function loadQuestions(){
   const { j } = await api('GET','/api/kt-admin?op=questions');
   if (!j.ok) return;
-  QUESTIONS = j.questions; QMETA = j; setBanks(j.banks);
+  QUESTIONS = j.questions; QMETA = j; setBanks(j.banks); if ($('spWrap') && $('spWrap').children.length) spRefresh();
   if (QP === null) QP = j.currentPeriod || '';
   renderQuestions();
   if (!$('qOptsEdit').children.length) clearQForm();
   loadQBackup();
 }
 function qReadiness(list, isCur){
+  if (SP_SEGS.some(([k]) => SEGPLANS[k] && SEGPLANS[k].length)){
+    const act = list.filter(q => q.active !== false), cats = {};
+    act.forEach(q => { const k = spNorm(q.category); cats[k] = (cats[k] || 0) + 1; });
+    return SP_SEGS.filter(([k]) => SEGPLANS[k] && SEGPLANS[k].length).map(([k,l]) => {
+      const rows = SEGPLANS[k], need = rows.reduce((n,r) => n + r.count, 0), short = rows.filter(r => (cats[spNorm(r.category)] || 0) < r.count);
+      return '<div class="row"><span><b>' + l + '</b> (' + need + ' câu): ' + rows.map(r => esc(r.category) + ' ' + r.count).join(' · ') + '</span><span class="' + (short.length ? 'bad' : 'ok') + '">' +
+        (short.length ? '⚠ thiếu: ' + short.map(r => esc(r.category) + ' ' + (cats[spNorm(r.category)] || 0) + '/' + r.count).join(', ') : '✓ đủ') + '</span></div>';
+    }).join('').replace(/^/, '<div class="hd">Đủ câu theo phân bổ nhóm ngành chưa?</div>');
+  }
   const act = list.filter(q => q.active !== false), Q = +QMETA.questionCount || act.length, G = +QMETA.bothGiaDungCount || 0;
   const gd = act.filter(q => q.category === 'Gia dụng').length, ml = act.filter(q => q.category === 'Máy lọc nước').length, other = act.length - gd;
   const row = (name, have, need) => '<div class="row"><span>' + name + '</span><span class="' + (have >= need ? 'ok' : 'bad') + '">' + (have >= need ? '✓ đủ (' + have + ' câu)' : '⚠ thiếu ' + (need - have) + ' câu, đề chỉ có ' + have + '/' + need) + '</span></div>';
@@ -1516,6 +1543,8 @@ async function loadSettings(){
   $('setRetake').checked = !!s.allowRetake;
   $('setComplianceOn').checked = !!s.complianceEnabled;
   $('setCHigh').value = s.complianceHighMin; $('setCMid').value = s.complianceMidMin; $('setCLow').value = s.complianceLowMin;
+  SEGPLANS = s.segmentPlans || {}; renderSegPlans();
+  if (QP !== null) renderQuestions();
 }
 async function saveSettings(){
   const period = $('setPeriod').value.trim();
@@ -1530,13 +1559,67 @@ async function saveSettings(){
     op:'saveSettings', examPeriod: period, examTitle: $('setTitle').value, shareTitle: $('setShareTitle').value, questionCount: $('setCount').value, bothGiaDungCount: $('setBothGD').value,
     secondsPerQuestion: $('setSeconds').value, passEnabled: $('setPassOn').checked, passScore: $('setPass').value, allowRetake: $('setRetake').checked,
     complianceEnabled: $('setComplianceOn').checked, complianceHighMin: $('setCHigh').value,
-    complianceMidMin: $('setCMid').value, complianceLowMin: $('setCLow').value
+    complianceMidMin: $('setCMid').value, complianceLowMin: $('setCLow').value,
+    segmentPlans: readSegPlans()
   });
-  if (!j.ok){ msg('setMsg', j.error, 'err'); msg('setPeriodMsg', j.error, 'err'); return; }
-  CUR_PERIOD = j.settings.examPeriod;
+  if (!j.ok){ msg('setMsg', j.error, 'err'); msg('setPeriodMsg', j.error, 'err'); msg('spMsg', j.error, 'err'); return; }
+  CUR_PERIOD = j.settings.examPeriod; SEGPLANS = j.settings.segmentPlans || {}; renderSegPlans(); if (QP !== null) renderQuestions();
+  msg('spMsg','Đã lưu phân bổ câu hỏi.','ok');
   msg('setMsg','Đã lưu cài đặt.','ok'); msg('setPeriodMsg','Đã lưu kỳ kiểm tra: '+CUR_PERIOD+'.','ok');
 }
 let CUR_PERIOD = '';
+
+/* ---------- Phân bổ câu hỏi theo nhóm ngành ---------- */
+let SEGPLANS = {};
+const SP_SEGS = [['both','Bán cả 2 ngành'],['may_loc','Chỉ bán máy lọc nước'],['gia_dung','Chỉ bán gia dụng']];
+const SP_TEMPLATE = {
+  both: [['Thương hiệu',5],['Gia dụng',10],['Máy lọc nước',15],['Kỹ năng bán hàng máy lọc',5],['Kỹ năng bán hàng gia dụng',5]],
+  may_loc: [['Thương hiệu',5],['Máy lọc nước',25],['Kỹ năng bán hàng máy lọc',10]],
+  gia_dung: []
+};
+const spNorm = c => String(c || '').normalize('NFC').trim().replace(/\s+/g,' ').toLowerCase();
+// Câu đang dùng của kỳ hiện tại (cùng thứ tự dự phòng với máy chủ: câu của kỳ, nếu chưa có thì câu chưa gắn kỳ)
+function spBank(){
+  const act = (QUESTIONS || []).filter(q => q.active !== false), own = act.filter(q => (q.period || '') === CUR_PERIOD);
+  return own.length || !CUR_PERIOD ? own : act.filter(q => !q.period);
+}
+function spRowHTML(seg, r){
+  return '<div class="sprow" data-seg="'+seg+'"><input type="text" list="catList" placeholder="Danh mục" value="'+esc(r.category||'')+'" oninput="spRefresh()"><input type="text" inputmode="numeric" placeholder="Số câu" value="'+(r.count||'')+'" oninput="spRefresh()"><button class="x" type="button" title="Bỏ dòng" onclick="this.parentNode.remove();spRefresh()">×</button><div class="have"></div></div>';
+}
+function renderSegPlans(){
+  $('spWrap').innerHTML = SP_SEGS.map(([k,l]) => '<div class="spbox" data-box="'+k+'"><h3>'+l+'</h3><div class="tot"></div><div class="rows">'+
+    (SEGPLANS[k] || []).map(r => spRowHTML(k, r)).join('') + '</div><button class="btn ghost sm" type="button" style="margin-top:8px" onclick="spAdd(\''+k+'\')">＋ Thêm danh mục</button></div>').join('');
+  spRefresh();
+}
+function spAdd(seg){ const box = document.querySelector('[data-box="'+seg+'"] .rows'); box.insertAdjacentHTML('beforeend', spRowHTML(seg, {})); box.lastElementChild.querySelector('input').focus(); spRefresh(); }
+function readSegPlans(){
+  const out = {};
+  SP_SEGS.forEach(([k]) => { out[k] = Array.from(document.querySelectorAll('.sprow[data-seg="'+k+'"]')).map(r => { const i = r.querySelectorAll('input'); return { category: i[0].value.trim(), count: parseInt(i[1].value, 10) || 0 }; }).filter(r => r.category || r.count); });
+  return out;
+}
+function spRefresh(){
+  const bank = spBank(), cats = {};
+  bank.forEach(q => { const k = spNorm(q.category); if (k) cats[k] = (cats[k] || 0) + 1; });
+  SP_SEGS.forEach(([k]) => {
+    let tot = 0;
+    document.querySelectorAll('.sprow[data-seg="'+k+'"]').forEach(r => {
+      const i = r.querySelectorAll('input'), n = parseInt(i[1].value, 10) || 0, have = cats[spNorm(i[0].value)] || 0, h = r.querySelector('.have');
+      tot += n;
+      if (!i[0].value.trim()){ h.className = 'have'; h.textContent = ''; return; }
+      h.className = 'have ' + (have >= n ? 'ok' : 'bad');
+      h.textContent = have >= n ? '✓ ngân hàng kỳ hiện tại có ' + have + ' câu' : '⚠ ngân hàng kỳ hiện tại chỉ có ' + have + ' câu, thiếu ' + (n - have);
+    });
+    const t = document.querySelector('[data-box="'+k+'"] .tot');
+    if (t) t.textContent = tot ? 'Tổng ' + tot + ' câu mỗi đề' : 'Chưa phân bổ: dùng cách chia cũ';
+  });
+  const names = Array.from(new Set(bank.map(q => (q.category || '').trim()).filter(Boolean).concat(...Object.values(SP_TEMPLATE).map(a => a.map(x => x[0])))));
+  $('catList').innerHTML = names.map(n => '<option value="'+esc(n)+'">').join('');
+}
+function spTemplate(){
+  if (document.querySelector('.sprow') && !confirm('Thay phân bổ đang nhập bằng mẫu chuẩn?')) return;
+  SEGPLANS = {}; Object.keys(SP_TEMPLATE).forEach(k => { SEGPLANS[k] = SP_TEMPLATE[k].map(([category, count]) => ({ category, count })); });
+  renderSegPlans(); msg('spMsg', 'Đã điền mẫu. Kiểm tra lại rồi bấm "Lưu phân bổ".', 'ok');
+}
 
 /* ---------- Xuất Excel ---------- */
 let xjsP=null;

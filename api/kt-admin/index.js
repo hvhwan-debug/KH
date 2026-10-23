@@ -532,6 +532,8 @@ const handler = async function (context, req) {
       const cur = await quiz.getSettings();
       const verr = quiz.validateCounts({ questionCount: b.questionCount, bothGiaDungCount: b.bothGiaDungCount }, quiz.targetCount(cur));
       if (verr) return reply(context, 400, { ok: false, error: verr });
+      const sp = b.segmentPlans === undefined ? (cur.segmentPlans || {}) : quiz.cleanSegmentPlans(b.segmentPlans);
+      if (sp.error) return reply(context, 400, { ok: false, error: sp.error });
       const next = Object.assign({}, cur, {
         examTitle: String(b.examTitle || cur.examTitle || "").slice(0, 200),
         shareTitle: String(b.shareTitle == null ? cur.shareTitle || "" : b.shareTitle).trim().slice(0, 80),
@@ -545,7 +547,8 @@ const handler = async function (context, req) {
         complianceHighMin: Math.min(10, Math.max(0, parseFloat(b.complianceHighMin) || 0)),
         complianceMidMin: Math.min(10, Math.max(0, parseFloat(b.complianceMidMin) || 0)),
         complianceLowMin: Math.min(10, Math.max(0, parseFloat(b.complianceLowMin) || 0)),
-        examPeriod: quiz.validPeriod(String(b.examPeriod || "").trim()) && String(b.examPeriod || "").trim() ? String(b.examPeriod).trim() : cur.examPeriod
+        examPeriod: quiz.validPeriod(String(b.examPeriod || "").trim()) && String(b.examPeriod || "").trim() ? String(b.examPeriod).trim() : cur.examPeriod,
+        segmentPlans: sp
       });
       await quiz.saveSettings(next);
       return reply(context, 200, { ok: true, settings: next });
