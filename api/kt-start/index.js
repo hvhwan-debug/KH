@@ -59,7 +59,7 @@ module.exports = async function (context, req) {
       // AI kiểm tra ảnh có đúng một khuôn mặt người; không đạt -> không cho vào làm bài
       var faceCheck = null;
       if (process.env.FACE_CHECK !== "off") {
-        const fc = await require("../_lib/facecheck").verify(photo, b.face);
+        const fc = await require("../_lib/facecheck").verify(photo, b.face, found.code, settings.examPeriod);
         faceCheck = fc.record;
         if (!fc.allow) return reply(context, 422, { ok: false, faceRejected: true, error: fc.message });
       }

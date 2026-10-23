@@ -118,6 +118,10 @@ const handler = async function (context, req) {
       }
       if (op === "candidates") return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; return o; }) });
       if (op === "settings") return reply(context, 200, { ok: true, settings: await quiz.getSettings() });
+      if (op === "faceRejections") {
+        const list = (await require("../_lib/facecheck").getRejections()).slice().reverse();
+        return reply(context, 200, { ok: true, rejections: list });
+      }
       if (op === "exams") return reply(context, 200, { ok: true, exams: await quiz.listExamsSummary(), currentPeriod: (await quiz.getSettings()).examPeriod, maxQuestions: quiz.MAX_QUESTION_COUNT });
       if (op === "results") {
         const st = await quiz.getSettings();
