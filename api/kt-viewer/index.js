@@ -55,7 +55,12 @@ const handler = async function (context, req) {
         const period = qp !== null && quiz.validPeriod(qp) ? qp : settings.examPeriod; // nhận cả mã đề tự đặt
         const inMine = {}; mine.forEach((x) => { inMine[quiz.normCode(x.code)] = 1; });
         const subs = idx.filter((a) => a.status === "submitted" && inMine[quiz.normCode(a.code)]);
-        const periods = Array.from(new Set(subs.map((a) => a.period || "").concat([settings.examPeriod]))).sort().reverse();
+        // Danh sách mã đề để chọn: mọi đề đã đăng kí (kể cả đề chưa ai nộp bài / đề tự đặt như "thi-thu") dành cho nhóm của mình,
+        // cộng các kỳ đã có bài nộp và kỳ hiện tại. Trước đây chỉ liệt kê kỳ đã có bài nộp nên không chọn được đề khác.
+        const exams = await quiz.listExamsSummary();
+        const examFor = (e) => !Array.isArray(e.codes) || !e.codes.length || e.codes.some((c) => inMine[quiz.normCode(c)]);
+        const examTitles = {}; exams.forEach((e) => { if (e.title && String(e.title).trim() !== e.id) examTitles[e.id] = String(e.title).trim(); });
+        const periods = Array.from(new Set(subs.map((a) => a.period || "").concat([settings.examPeriod], exams.filter(examFor).map((e) => e.id)))).sort().reverse();
         const latest = {};
         subs.filter((a) => (a.period || "") === period).forEach((a) => {
           const k = quiz.normCode(a.code);
@@ -68,7 +73,7 @@ const handler = async function (context, req) {
           else if (period === settings.examPeriod) { active = await quiz.getActive(c.code); if (active && (active.period || "") === period) { const t = Object.assign({}, active); quiz.syncAttempt(t, Date.now()); if (t.cursor < t.questionIds.length) status = "doing"; } }
           return Object.assign(empView(c), { status, result: r ? summaryOf(r, settings, !!viewer.isAdmin) : null });
         }));
-        return reply(context, 200, { ok: true, employees: list, period, periods, currentPeriod: settings.examPeriod, serverNow: Date.now() });
+        return reply(context, 200, { ok: true, employees: list, period, periods, examTitles, currentPeriod: settings.examPeriod, serverNow: Date.now() });
       }
       // Chẩn đoán hành vi học tập của MỘT nhân viên trong phạm vi của quản lí (bằng chứng + nguyên nhân giả thuyết + việc nên làm).
       // Thiết bị / vị trí chỉ đưa vào phân tích khi người xem là quản trị viên (giống các màn hình khác).
