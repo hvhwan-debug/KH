@@ -24,8 +24,9 @@ const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".
 
 http.createServer(async (rq, rs) => {
   const url = new URL(rq.url, "http://localhost");
-  let raw = "";
-  for await (const c of rq) raw += c;
+  const parts = [];
+  for await (const c of rq) parts.push(c);
+  const raw = Buffer.concat(parts).toString("utf8"); // nối Buffer rồi mới giải mã, tránh vỡ ký tự tiếng Việt ở ranh giới chunk
   if (url.pathname === "/__mailbox") { rs.writeHead(200, { "Content-Type": "application/json" }); return rs.end(JSON.stringify(global.__mailbox || [])); }
   const r = routes.find((x) => x.route === url.pathname && x.methods.includes(rq.method));
   if (url.pathname.indexOf("/api/") === 0) {

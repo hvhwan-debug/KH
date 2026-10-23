@@ -424,7 +424,8 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
       <div class="card qbar">
         <button class="btn" type="button" data-qp="qFormCard" onclick="qPanel('qFormCard')">＋ Thêm câu hỏi</button>
         <button class="btn ghost" type="button" data-qp="qAiCard" onclick="qPanel('qAiCard')">✦ Soạn bằng AI</button>
-        <button class="btn ghost" type="button" data-qp="qBulkCard" onclick="qPanel('qBulkCard')">⇪ Nhập hàng loạt</button>
+        <button class="btn ghost" type="button" data-qp="qXlsCard" onclick="qPanel('qXlsCard')">📥 Nhập từ file Excel</button>
+        <button class="btn ghost" type="button" data-qp="qBulkCard" onclick="qPanel('qBulkCard')">⇪ Nhập JSON</button>
       </div>
       <div class="card hide" id="qFormCard">
         <button class="xclose" type="button" onclick="qPanel(null)" aria-label="Đóng">×</button>
@@ -477,6 +478,19 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         <button class="btn" style="margin-top:12px" onclick="genQuestionsAI()" id="aiQBtn">Soạn bằng AI</button>
         <div id="aiQMsg"></div>
         <div id="aiQPreview"></div>
+      </div>
+      <div class="card hide" id="qXlsCard">
+        <button class="xclose" type="button" onclick="qPanel(null)" aria-label="Đóng">×</button>
+        <h1>Nhập câu hỏi từ file Excel <span class="small" id="xlTarget" style="font-weight:600"></span></h1>
+        <p class="small">Mỗi sheet là một nhóm câu hỏi. Dòng đầu là tiêu đề cột, cần có: <b>Câu hỏi</b>, <b>Phương án A</b>, <b>Phương án B</b>, <b>Phương án C</b>, <b>Phương án D</b>, <b>Đáp án đúng</b> (A/B/C/D). Cột tuỳ chọn: <b>Danh mục</b>, <b>Phân loại sản phẩm / Chuyên đề</b> (thành thẻ), <b>Model / Chủ đề áp dụng</b> và <b>Trích dẫn / Tài liệu tham chiếu</b> (thành giải thích đáp án). Các cột khác bị bỏ qua.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn" type="button" onclick="$('xlFile').click()">📁 Chọn file Excel…</button>
+          <input type="file" id="xlFile" accept=".xlsx" style="display:none" onchange="xlRead(event)">
+          <button class="btn ghost sm" type="button" onclick="xlTemplate()">⬇ Tải file mẫu</button>
+          <span class="small" id="xlName"></span>
+        </div>
+        <div id="xlPreview"></div>
+        <div id="xlMsg"></div>
       </div>
       <div class="card hide" id="qBulkCard">
         <button class="xclose" type="button" onclick="qPanel(null)" aria-label="Đóng">×</button>
@@ -1397,6 +1411,7 @@ function renderQuestions(){
   // Danh sách
   $('qListTitle').textContent = 'Câu hỏi ' + (QP ? 'kỳ ' + qPerLabel(QP).replace('Tháng ','') : 'chưa gắn kỳ');
   $('qBulkPer').textContent = '→ vào ' + qPerLabel(QP).toLowerCase();
+  $('xlTarget').textContent = '→ vào ' + qPerLabel(QP); if (XL) xlRender();
   $('qCount').textContent = L.length;
   $('qList').innerHTML = L.map(q =>
     '<tr><td>'+esc(q.text.slice(0,70))+(q.text.length>70?'…':'')+'</td><td class="small">'+esc(bankName(q.bankId))+'<div>'+esc(TYPE_LABEL[qTypeOf(q)]||'')+'</div></td><td>'+esc(q.category||'')+'</td><td class="small">'+esc(DIFF_LABEL[q.difficulty]||'')+'</td><td>'+(q.active!==false?'<span class="badge y">Đang dùng</span>':'<span class="badge n">Đã ẩn</span>')+'</td>'+
@@ -1456,7 +1471,7 @@ async function deleteAllQuestions(){
 }
 /* Mở một khung trong tab Câu hỏi (bấm lại nút đang mở thì đóng) */
 function qPanel(id, keep){
-  ['qFormCard','qAiCard','qBulkCard'].forEach(k => {
+  ['qFormCard','qAiCard','qBulkCard','qXlsCard'].forEach(k => {
     const open = k === id && (keep || $(k).classList.contains('hide'));
     $(k).classList.toggle('hide', !open);
     const b = document.querySelector('[data-qp="'+k+'"]'); if (b) b.classList.toggle('on', open);
@@ -1645,6 +1660,116 @@ async function saveSettings(){
   msg('setMsg','Đã lưu cài đặt.','ok'); msg('setPeriodMsg','Đã lưu kỳ kiểm tra: '+CUR_PERIOD+'.','ok');
 }
 let CUR_PERIOD = '';
+
+/* ---------- Nhập câu hỏi từ Excel vào đề/kỳ đang chọn ---------- */
+let XL = null; // { sheets: [{ name, cat, colCat, rows:[q], bad:[{row, why}], dup }] }
+function xlGuessCat(name){
+  const n = spNorm(name);
+  if (/kỹ năng|ky nang|tư vấn|tu van/.test(n)) return /mln|máy lọc|may loc/.test(n) ? 'Kỹ năng bán hàng máy lọc' : /\bgia\b|gia dụng|gia dung/.test(n) ? 'Kỹ năng bán hàng gia dụng' : '';
+  if (/bảo hành|bao hanh|dịch vụ/.test(n)) return 'Bảo hành & Dịch vụ';
+  if (/thương hiệu|thuong hieu|tổng hợp|lịch sử|văn hoá|văn hóa/.test(n)) return 'Thương hiệu';
+  if (/máy lọc|may loc|mln/.test(n)) return 'Máy lọc nước';
+  if (/gia dụng|gia dung/.test(n)) return 'Gia dụng';
+  return '';
+}
+function xlText(v){
+  if (v == null) return '';
+  if (v instanceof Date) return 'Tháng ' + String(v.getUTCMonth() + 1).padStart(2,'0') + '/' + v.getUTCFullYear(); // Excel tự đổi "04/2012" thành ngày
+  if (typeof v === 'object'){
+    if (v.richText) return v.richText.map(t => t.text).join('');
+    if (v.result !== undefined) return xlText(v.result);
+    if (v.text !== undefined) return String(v.text);
+    return '';
+  }
+  if (typeof v === 'number' && Number.isInteger(v)) return String(v);
+  return String(v);
+}
+function xlClean(s, isOpt){
+  s = xlText(s).replace(/\\"/g, '"').replace(/\\'/g, "'").replace(/\s+/g, ' ').trim();
+  if (isOpt){ s = s.replace(/^[\s"\\]+|[\s"\\]+$/g, ''); if ((s.match(/"/g) || []).length % 2) s += '"'; } // bỏ ngoặc kép thừa bọc ngoài phương án
+  return s;
+}
+function xlCols(header){
+  const H = header.map(h => spNorm(xlText(h))), find = (...re) => H.findIndex(h => h && re.some(r => r.test(h)));
+  return { q: find(/^câu hỏi$/, /^nội dung/, /^câu hỏi/), a: find(/^phương án a$/, /^đáp án a$/, /^a$/), b: find(/^phương án b$/, /^đáp án b$/, /^b$/),
+    c: find(/^phương án c$/, /^đáp án c$/, /^c$/), d: find(/^phương án d$/, /^đáp án d$/, /^d$/), ans: find(/^đáp án đúng/, /^đáp án$/),
+    cat: find(/^danh mục/), tag: find(/^phân loại/, /^chuyên đề/), model: find(/^model/, /^chủ đề/), ref: find(/^trích dẫn/, /^tài liệu/, /^giải thích/, /^nguồn/) };
+}
+async function xlRead(ev){
+  const file = ev.target.files && ev.target.files[0]; ev.target.value = '';
+  if (!file) return;
+  $('xlName').textContent = file.name; $('xlPreview').innerHTML = '<div class="small" style="margin-top:10px">Đang đọc file…</div>'; msg('xlMsg','');
+  let wb;
+  try { const X = await loadExcelJS(); wb = new X.Workbook(); await wb.xlsx.load(await file.arrayBuffer()); }
+  catch(e){ $('xlPreview').innerHTML = ''; msg('xlMsg','Không đọc được file. Hãy lưu lại dưới dạng .xlsx rồi thử lại.','err'); return; }
+  const have = new Set(QUESTIONS.filter(q => (q.period || '') === (QP || '')).map(q => spNorm(q.text))), seen = new Set();
+  const sheets = [];
+  wb.eachSheet(ws => {
+    const header = []; ws.getRow(1).eachCell({ includeEmpty: true }, (c, i) => { header[i - 1] = c.value; });
+    const C = xlCols(header);
+    if (C.q < 0 || C.a < 0 || C.b < 0 || C.ans < 0) { sheets.push({ name: ws.name, skip: 'thiếu cột Câu hỏi / Phương án / Đáp án đúng', rows: [], bad: [], dup: 0 }); return; }
+    const sh = { name: ws.name, cat: xlGuessCat(ws.name) || (C.cat >= 0 ? '' : ws.name), colCat: C.cat >= 0, rows: [], bad: [], dup: 0, on: true };
+    ws.eachRow((row, r) => {
+      if (r === 1) return;
+      const v = (i) => i >= 0 ? row.getCell(i + 1).value : null;
+      const text = xlClean(v(C.q));
+      if (!text) return;
+      const opts = [C.a, C.b, C.c, C.d].filter(i => i >= 0).map(i => xlClean(v(i), true)).filter(Boolean);
+      const ans = xlClean(v(C.ans)).toUpperCase().replace(/[^A-F]/g, '').slice(0, 1), idx = 'ABCDEF'.indexOf(ans);
+      const why = opts.length < 2 ? 'thiếu phương án' : idx < 0 ? 'đáp án đúng không phải A/B/C/D' : idx >= opts.length ? 'đáp án ' + ans + ' không có phương án tương ứng' : new Set(opts.map(spNorm)).size < opts.length ? 'có phương án trùng nhau' : '';
+      if (why){ sh.bad.push({ row: r, why }); return; }
+      const k = spNorm(text);
+      if (have.has(k) || seen.has(k)){ sh.dup++; return; }
+      seen.add(k);
+      const tag = xlClean(v(C.tag)), model = xlClean(v(C.model)), ref = xlClean(v(C.ref));
+      sh.rows.push({ text, options: opts, correctIndex: idx, rowCat: xlClean(v(C.cat)), tags: tag ? [tag.slice(0, 40)] : [], explanation: ((model ? 'Áp dụng: ' + model + '. ' : '') + ref).slice(0, 1000) });
+    });
+    sheets.push(sh);
+  });
+  XL = { sheets }; xlRender();
+}
+function xlRender(){
+  if (!XL) return;
+  const dest = qPerLabel(QP || '');
+  $('xlPreview').innerHTML = '<table style="margin-top:12px"><thead><tr><th style="width:34px"></th><th>Sheet</th><th>Câu hợp lệ</th><th>Danh mục gán cho các câu</th><th>Bỏ qua</th></tr></thead><tbody>' +
+    XL.sheets.map((sh, i) => sh.skip ? '<tr><td></td><td>' + esc(sh.name) + '</td><td colspan="3" class="small" style="color:var(--warn)">Bỏ qua sheet: ' + esc(sh.skip) + '</td></tr>' :
+      '<tr><td><input type="checkbox" ' + (sh.on ? 'checked' : '') + ' onchange="XL.sheets[' + i + '].on=this.checked;xlSum()" style="width:18px;height:18px"></td><td><b>' + esc(sh.name) + '</b></td><td>' + sh.rows.length + '</td>' +
+      '<td><input type="text" list="catList" value="' + esc(sh.cat) + '" placeholder="' + (sh.colCat ? 'trống = lấy theo cột Danh mục' : 'nhập danh mục') + '" oninput="XL.sheets[' + i + '].cat=this.value.trim();xlSum()" style="margin:0"></td>' +
+      '<td class="small">' + [sh.dup ? sh.dup + ' câu đã có / trùng' : '', sh.bad.length ? '<span style="color:var(--warn)" title="' + esc(sh.bad.slice(0, 20).map(b => 'Dòng ' + b.row + ': ' + b.why).join('\n')) + '">' + sh.bad.length + ' dòng lỗi (di chuột để xem)</span>' : ''].filter(Boolean).join(' · ') + '</td></tr>').join('') +
+    '</tbody></table><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px"><button class="btn" type="button" id="xlGo" onclick="xlImport()"></button><span class="small" id="xlSum"></span></div>';
+  xlSum();
+}
+function xlPicked(){ return XL ? XL.sheets.filter(sh => !sh.skip && sh.on) : []; }
+function xlSum(){
+  const P = xlPicked(), n = P.reduce((t, sh) => t + sh.rows.length, 0), noCat = P.filter(sh => !sh.cat && !sh.colCat).length;
+  $('xlGo').textContent = 'Nhập ' + n + ' câu vào ' + qPerLabel(QP || '');
+  $('xlGo').disabled = !n || !!noCat;
+  $('xlSum').textContent = noCat ? 'Còn sheet chưa có danh mục.' : 'Danh mục phải trùng tên với phân bổ số câu (vd "Máy lọc nước") thì đề mới rút đúng.';
+}
+async function xlImport(){
+  const P = xlPicked();
+  const questions = [].concat(...P.map(sh => sh.rows.map(r => ({ text: r.text, options: r.options, correctIndex: r.correctIndex, category: sh.cat || r.rowCat, tags: r.tags, explanation: r.explanation }))));
+  if (!questions.length) return;
+  if (!QP && !confirm('Đang chọn "Chưa gắn kỳ". Nhập các câu này mà không gắn đề/kỳ nào?')) return;
+  $('xlGo').disabled = true; $('xlGo').textContent = 'Đang nhập…';
+  const { j } = await api('POST','/api/kt-admin', { op:'addQuestions', questions, period: QP || '', bankId: 'default' });
+  if (!j || !j.ok){ msg('xlMsg', (j && j.error) || 'Không nhập được.', 'err'); xlSum(); return; }
+  msg('xlMsg', 'Đã nhập ' + j.added + ' câu vào ' + qPerLabel(QP || '') + (j.skipped ? ', bỏ qua ' + j.skipped + ' câu thiếu dữ liệu' : '') + '.', 'ok');
+  XL = null; $('xlPreview').innerHTML = ''; $('xlName').textContent = '';
+  QUESTIONS = j.questions; loadQuestions();
+}
+async function xlTemplate(){
+  const X = await loadExcelJS(), wb = new X.Workbook();
+  const cols = ['Câu hỏi','Phương án A','Phương án B','Phương án C','Phương án D','Đáp án đúng','Danh mục','Phân loại sản phẩm','Model áp dụng','Trích dẫn'];
+  [['Máy lọc nước','Máy lọc nước'],['Thương hiệu','Thương hiệu'],['Kỹ năng bán hàng máy lọc','Kỹ năng bán hàng máy lọc']].forEach(([name, cat]) => {
+    const ws = wb.addWorksheet(name); ws.addRow(cols); ws.getRow(1).font = { bold: true };
+    if (name === 'Máy lọc nước') ws.addRow(['Ví dụ: Máy KAE-S88 Promax có bao nhiêu tấm điện cực?','5 tấm','7 tấm','9 tấm','11 tấm','B',cat,'Máy lọc nước Hydro-ion kiềm','KAE-S88 PROMAX','Catalog 2026, trang 3']);
+    ws.columns.forEach((c, i) => { c.width = i === 0 ? 60 : i < 5 ? 30 : 18; });
+  });
+  const buf = await wb.xlsx.writeBuffer(), a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })); a.download = 'mau-nhap-cau-hoi.xlsx'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
 
 /* ---------- Phân bổ câu hỏi theo nhóm ngành ---------- */
 // Dùng chung cho tab Cài đặt (phân bổ chung) và form đề thi (phân bổ riêng của từng đề). Mỗi khung là một .spg có data-bank = mã kỳ/đề để đếm câu.
