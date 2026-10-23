@@ -351,6 +351,47 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .tiles.t5{grid-template-columns:repeat(5,minmax(0,1fr))}
 @media (max-width:560px){.tiles.t5{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
+/* === Dashboard theo từng bài kiểm tra === */
+.dsh{padding:16px 18px;margin-bottom:14px}
+.dsh-hd{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.dsh-hd h2{margin:0;font-size:16px;font-weight:700;min-width:0;overflow-wrap:anywhere}
+.dkpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:14px 0 12px}
+.dk{border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.dk b{display:block;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.2}
+.dk b small{font-size:13px;font-weight:600;color:var(--muted)}
+.dk span{display:block;font-size:12px;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
+.dk.good b{color:var(--ok,#1E7F4F)}.dk.bad b{color:var(--bad,#B3261E)}
+.dpg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.dp{border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.dp h3{margin:0 0 10px;font-size:13.5px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.dp h3 small{font-weight:400;font-size:12px;color:var(--muted)}
+.dp.w2{grid-column:span 2}
+.dhist{display:flex;align-items:flex-end;gap:8px;height:140px;overflow-x:auto;padding-bottom:2px}
+.dhc{flex:1 0 34px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-width:0}
+.dhc em{font-style:normal;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.dhc i{display:block;width:100%;max-width:46px;border-radius:6px 6px 2px 2px;background:var(--c,var(--brand));min-height:3px}
+.dhc i.z{background:#DCE6E9}
+.dhc span{font-size:11px;color:var(--muted);white-space:nowrap}
+.dstack{display:flex;height:16px;border-radius:9px;overflow:hidden;background:var(--line);gap:2px;margin:4px 0 12px}
+.dstack i{display:block;height:100%}
+.dleg{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
+.dleg div{display:flex;align-items:center;gap:8px}
+.dleg div::before{content:'';width:10px;height:10px;border-radius:3px;background:var(--c);flex:0 0 auto}
+.dleg b{color:var(--ink);margin-left:auto;font-variant-numeric:tabular-nums}
+.dseg{display:grid;grid-template-columns:minmax(0,1fr) 84px 64px;gap:6px 10px;align-items:center;font-size:13px}
+.dseg .h{font-size:11.5px;color:var(--muted);font-weight:600}
+.dseg .r{text-align:right;font-variant-numeric:tabular-nums}
+.dseg .pb{height:6px;border-radius:4px;background:#E6EEF0;overflow:hidden;margin-top:4px}
+.dseg .pb i{display:block;height:100%;background:var(--brand)}
+.drows{display:flex;flex-direction:column;gap:2px}
+.drow{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:7px 8px;border-radius:8px;cursor:pointer;text-align:left;min-height:38px;font-size:13.5px}
+.drow:hover{background:var(--brand-soft)}
+.drow .dn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.drow b{font-variant-numeric:tabular-nums}.drow b.fail{color:var(--bad,#B3261E)}.drow b.pass{color:var(--ok,#1E7F4F)}
+.dnote{font-size:12.5px;color:var(--muted);line-height:1.6;margin:8px 0 0}
+@media(max-width:900px){.dkpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dkpis .dk:last-child{grid-column:1/-1}.dpg{grid-template-columns:1fr}.dp.w2{grid-column:auto}}
+@media(max-width:760px){.dsh{padding:14px 12px}.dhist{height:120px}}
+
 /* === Tối ưu di động (chỉ áp dụng màn hình nhỏ, không đổi giao diện máy tính) === */
 html{-webkit-text-size-adjust:100%}
 @media(max-width:760px){
@@ -439,6 +480,15 @@ html{-webkit-text-size-adjust:100%}
         <div class="legend" id="legend" role="group" aria-label="Lọc theo trạng thái"></div>
       </div>
       <div class="ov-side" id="ovSide"></div>
+    </section>
+
+    <!-- Dashboard theo từng bài kiểm tra (đổi theo bài đang chọn ở ô "Tiến độ làm bài") -->
+    <section class="card dsh" id="dash" aria-label="Dashboard bài kiểm tra">
+      <div class="dsh-hd">
+        <h2 id="dashTitle">Dashboard</h2>
+        <button class="btn ghost sm" id="dashToggle" type="button" aria-expanded="true" aria-controls="dashBody">Thu gọn</button>
+      </div>
+      <div id="dashBody"></div>
     </section>
 
     <div class="toolbar">
@@ -786,6 +836,7 @@ function sorted(list){
 }
 function render(){
   stat();
+  if (typeof renderDash === 'function') renderDash();
   var list = sorted(filtered());
   var isF = !!(fSt || $('fCf').value || $('q').value.trim());
   $('countTxt').innerHTML = isF ? 'Hiển thị <b>'+list.length+'</b> / '+EMP.length+' nhân viên' : '<b>'+EMP.length+'</b> nhân viên';
@@ -827,6 +878,110 @@ function render(){
       '</div></td></tr>';
   }).join('') || '<tr><td colspan="7"><div class="empty">'+(EMP.length ? 'Không có nhân viên nào khớp bộ lọc. <button type="button" class="linkbtn" id="clearF2">Xoá bộ lọc</button>' : 'Chưa có nhân viên nào trong phạm vi của bạn. Bấm “Thêm nhân viên” hoặc liên hệ quản trị viên.')+'</div></td></tr>';
 }
+/* ---------- Dashboard theo từng bài kiểm tra ---------- */
+var DASH_OPEN = (function(){
+  try { var v = localStorage.getItem('qlDash'); if (v === '1') return true; if (v === '0') return false; } catch(e){}
+  return !(window.matchMedia && window.matchMedia('(max-width:760px)').matches);
+})();
+function dayKey(ms){ return new Date(ms + 7*3600e3).toISOString().slice(0,10); } // ngày theo giờ Việt Nam
+function dayLbl(k){ return k.slice(8) + '/' + k.slice(5,7); }
+function dBars(items){ // items: [{v, l, c}]
+  var mx = Math.max.apply(null, items.map(function(x){ return x.v; }).concat([1]));
+  return '<div class="dhist">' + items.map(function(x){
+    return '<div class="dhc"><em>' + x.v + '</em><i class="' + (x.v ? '' : 'z') + '" style="height:' + (x.v ? Math.max(4, x.v / mx * 100) : 0) + '%;' + (x.c ? '--c:' + x.c : '') + '"></i><span>' + esc(x.l) + '</span></div>';
+  }).join('') + '</div>';
+}
+function dRows(list){
+  return '<div class="drows">' + list.map(function(e){
+    var r = e.result, cls = r.passed === true ? 'pass' : (r.passed === false ? 'fail' : '');
+    return '<button type="button" class="drow" data-dcode="' + esc(e.code) + '" title="Xem hồ sơ kiểm tra"><span class="dn">' + esc(e.name || e.code) + '</span><span class="small">' + r.score + '/' + r.total + '</span><b class="' + cls + '">' + pc(r.pct) + '</b></button>';
+  }).join('') + '</div>';
+}
+function renderDash(){
+  var box = $('dashBody'); if (!box) return;
+  $('dashTitle').textContent = 'Dashboard · ' + pName(CURP);
+  $('dashToggle').textContent = DASH_OPEN ? 'Thu gọn' : 'Mở rộng';
+  $('dashToggle').setAttribute('aria-expanded', DASH_OPEN);
+  box.classList.toggle('hide', !DASH_OPEN);
+  if (!DASH_OPEN) return;
+  var n = EMP.length;
+  if (!n){ box.innerHTML = '<div class="empty">Chưa có nhân viên nào trong phạm vi của bạn nên chưa có số liệu.</div>'; return; }
+  var done = EMP.filter(function(e){ return e.status === 'done' && e.result; });
+  var doing = EMP.filter(function(e){ return e.status === 'doing'; }).length;
+  var none = EMP.filter(function(e){ return e.status === 'none'; });
+  var avg = done.length ? done.reduce(function(a,e){ return a + (e.result.pct || 0); }, 0) / done.length : null;
+  var passN = done.filter(function(e){ return e.result.passed === true; }).length;
+  var failN = done.filter(function(e){ return e.result.passed === false; }).length;
+  var unkN = done.length - passN - failN;
+  var passRate = (passN + failN) ? Math.round(passN / (passN + failN) * 100) : null;
+  var byPct = done.slice().sort(function(a,b){ return (a.result.pct||0) - (b.result.pct||0); });
+  var lo = byPct[0], hi = byPct[byPct.length - 1];
+  var rate = Math.round(done.length / n * 100);
+
+  var kp = '<div class="dkpis">' +
+    '<div class="dk"><b>' + done.length + '<small> / ' + n + '</small></b><span>Đã làm bài (' + rate + '%)' + (doing ? ' · ' + doing + ' đang làm' : '') + '</span></div>' +
+    '<div class="dk"><b>' + (avg == null ? '–' : pc(avg)) + '</b><span>Tỉ lệ đúng trung bình</span></div>' +
+    '<div class="dk ' + (passRate == null ? '' : passRate >= 70 ? 'good' : passRate < 50 ? 'bad' : '') + '"><b>' + (passRate == null ? '–' : passRate + '%') + '</b><span>Tỉ lệ đạt' + (passRate == null ? '' : ' (' + passN + '/' + (passN + failN) + ' người)') + '</span></div>' +
+    '<div class="dk good"><b>' + (hi ? pc(hi.result.pct) : '–') + '</b><span>Cao nhất' + (hi ? ' · ' + esc(hi.name || hi.code) : '') + '</span></div>' +
+    '<div class="dk bad"><b>' + (lo ? pc(lo.result.pct) : '–') + '</b><span>Thấp nhất' + (lo ? ' · ' + esc(lo.name || lo.code) : '') + '</span></div>' +
+    '</div>';
+
+  // Phân bố điểm
+  var BIN = [['0–19%',0,20,'#B3261E'],['20–39%',20,40,'#E0753A'],['40–59%',40,60,'#E0A030'],['60–79%',60,80,'#4FA58A'],['80–100%',80,101,'#1E7F4F']];
+  var dist = BIN.map(function(b){ return { v: done.filter(function(e){ var p = e.result.pct || 0; return p >= b[1] && p < b[2]; }).length, l: b[0], c: b[3] }; });
+  var p1 = '<div class="dp"><h3>Phân bố điểm <small>số người theo tỉ lệ đúng</small></h3>' + (done.length ? dBars(dist) : '<div class="dnote">Chưa có ai nộp bài.</div>') + '</div>';
+
+  // Đạt / chưa đạt
+  var seg3 = [['Đạt', passN, '#1E7F4F'], ['Chưa đạt', failN, '#B3261E'], ['Chưa xác định', unkN, '#9AB0B5'], ['Chưa nộp bài', n - done.length, '#DCE6E9']];
+  var p2 = '<div class="dp"><h3>Kết quả chung <small>' + n + ' nhân viên</small></h3><div class="dstack" aria-hidden="true">' +
+    seg3.map(function(s){ return s[1] ? '<i style="width:' + (s[1] / n * 100) + '%;background:' + s[2] + '"></i>' : ''; }).join('') + '</div><div class="dleg">' +
+    seg3.filter(function(s){ return s[1]; }).map(function(s){ return '<div style="--c:' + s[2] + '">' + s[0] + '<b>' + s[1] + '</b></div>'; }).join('') + '</div>' +
+    (unkN ? '<p class="dnote">“Chưa xác định” là bài chưa có ngưỡng đạt để so sánh.</p>' : '') + '</div>';
+
+  // Tiến độ theo ngày
+  var days = {}; done.forEach(function(e){ if (e.result.submittedAt){ var k = dayKey(e.result.submittedAt); days[k] = (days[k] || 0) + 1; } });
+  var ks = Object.keys(days).sort(), tl = [];
+  if (ks.length){
+    var t0 = Date.parse(ks[0] + 'T00:00:00Z'), t1 = Date.parse(ks[ks.length-1] + 'T00:00:00Z');
+    for (var t = t0; t <= t1 && tl.length < 120; t += 864e5){ var k = new Date(t).toISOString().slice(0,10); tl.push({ v: days[k] || 0, l: dayLbl(k), c: 'var(--brand)' }); }
+    tl = tl.slice(-14);
+  }
+  var p3 = '<div class="dp"><h3>Nộp bài theo ngày <small>' + (tl.length ? 'tối đa 14 ngày gần nhất' : '') + '</small></h3>' + (tl.length ? dBars(tl) : '<div class="dnote">Chưa có bài nộp.</div>') + '</div>';
+
+  // Theo nhóm ngành (+ thử việc)
+  var groups = Object.keys(SEG).map(function(k){ return [SEG[k], EMP.filter(function(e){ return e.segment === k; })]; });
+  var tv = EMP.filter(function(e){ return !!e.probation; });
+  if (tv.length) groups.push(['Đang thử việc', tv]);
+  var rows = groups.filter(function(g){ return g[1].length; }).map(function(g){
+    var d = g[1].filter(function(e){ return e.status === 'done' && e.result; });
+    var a = d.length ? d.reduce(function(s,e){ return s + (e.result.pct || 0); }, 0) / d.length : null;
+    return '<div><b>' + esc(g[0]) + '</b><div class="pb"><i style="width:' + (d.length / g[1].length * 100) + '%"></i></div></div><div class="r">' + d.length + '/' + g[1].length + '</div><div class="r"><b>' + (a == null ? '–' : pc(a)) + '</b></div>';
+  }).join('');
+  var p4 = '<div class="dp"><h3>Theo nhóm ngành</h3><div class="dseg"><div class="h">Nhóm</div><div class="h r">Đã làm</div><div class="h r">Đúng TB</div>' + rows + '</div></div>';
+
+  // Cần chú ý
+  var low = byPct.filter(function(e){ return (e.result.pct || 0) < 60; }).slice(0, 5);
+  var p5 = '<div class="dp"><h3>Điểm thấp cần hỗ trợ <small>dưới 60%, tối đa 5 người</small></h3>' + (low.length ? dRows(low) : '<div class="dnote">' + (done.length ? 'Không ai dưới 60%.' : 'Chưa có ai nộp bài.') + '</div>') + '</div>';
+  var p6 = '<div class="dp"><h3>Chưa làm bài <small>' + none.length + ' người</small></h3>' + (none.length
+    ? '<div class="drows">' + none.slice(0, 6).map(function(e){ return '<button type="button" class="drow" data-dcode="' + esc(e.code) + '"><span class="dn">' + esc(e.name || e.code) + '</span><span class="small">' + esc(e.code) + '</span></button>'; }).join('') + '</div>' +
+      '<button type="button" class="btn ghost sm" data-dact="none" style="margin-top:8px">Lọc ' + none.length + ' người chưa làm trong bảng</button>'
+    : '<div class="dnote">Mọi người đều đã bắt đầu làm bài.</div>') + '</div>';
+
+  box.innerHTML = kp + '<div class="dpg">' + p1 + p2 + p3 + p4 + p5 + p6 + '</div>';
+}
+$('dashToggle').addEventListener('click', function(){
+  DASH_OPEN = !DASH_OPEN; try { localStorage.setItem('qlDash', DASH_OPEN ? '1' : '0'); } catch(e){}
+  renderDash();
+});
+$('dashBody').addEventListener('click', function(ev){
+  var a = ev.target.closest('[data-dact]');
+  if (a && a.getAttribute('data-dact') === 'none'){ fSt = 'none'; render(); var t = document.querySelector('.tcard'); if (t && t.scrollIntoView) t.scrollIntoView({ behavior:'smooth', block:'start' }); return; }
+  var b = ev.target.closest('[data-dcode]'); if (!b) return;
+  var code = b.getAttribute('data-dcode');
+  var e = EMP.filter(function(x){ return x.code === code; })[0];
+  if (e) openProfile(e);
+});
+
 $('fPer').addEventListener('change', function(){ PSEL = this.value; load(); });
 document.addEventListener('click', function(ev){ if (ev.target && ev.target.id === 'perBack'){ PSEL = CURRENT; load(); } });
 function vnDate(d){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d||''); return m ? m[3]+'/'+m[2]+'/'+m[1] : '–'; }
