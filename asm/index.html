@@ -1228,7 +1228,7 @@ function headerHTML(){
 }
 function navSum(all){if(ST.data&&ST.data.truncated)return{n:0};const t=team(all),T=attainSum(all);return{n:all.length,done:t.done,work:t.work,pct:T.pct,help:t.help};}
 function tabsHTML(nFeed,sm){
-  const me=ST.data.me,T=[['overview','Tổng quan','Tổng quan','chart','t-ov'],['today','Hôm nay','Hôm nay','home','t-home'],['staff','Nhân sự','Nhân sự','users','t-staff'],['plan','Kế hoạch ngày mai','Kế hoạch','cal','t-plan'],['heat','Bản đồ tháng','Bản đồ','grid','t-heat']];
+  const me=ST.data.me,T=[['overview','Tổng quan','Tổng quan','chart','t-ov'],['today','Hôm nay','Hôm nay','home','t-home'],['staff','Nhân sự','Nhân sự','users','t-staff'],['plan','Kế hoạch','Kế hoạch','cal','t-plan'],['heat','Bản đồ tháng','Bản đồ','grid','t-heat']];
   if(me.admin)T.push(['org','Quản trị','Quản trị','shield','t-org']);
   const bar=(p,c)=>'<div class="tf-b'+(c?' '+c:'')+'"><i style="width:'+Math.max(0,Math.min(100,(p||0)*100)).toFixed(0)+'%"></i></div>';
   const foot=false&&sm&&sm.n?'<div class="tfoot" aria-label="Tóm tắt hôm nay"><div class="tf-t">Hôm nay</div><div class="tf-r"><span>Đã báo cáo</span><b>'+sm.done+'/'+sm.work+'</b></div>'+bar(sm.work?sm.done/sm.work:0)+
@@ -1326,21 +1326,16 @@ function tableViewHTML(list,date){
   const rows=list.map(c=>{
     const e=c.e||{},g=NG[c.m.nganh]||NG[2],dayR=c.dayPlan>0&&c.sub?c.dayAch/c.dayPlan:null;
     const help=e.help?'<div style="margin-top:3px"><span class="badge bad" title="'+esc(e.note||'')+'"><span class="hm">Cần hỗ trợ</span><span class="mo2">Hỗ trợ</span></span></div>':'';
-    const bar=c.total>0?'<div class="mp2"><div class="prog '+(c.level==='bad'?'bad':c.level==='warn'?'warn':'')+'"><i style="width:'+Math.min(100,(c.pct||0)*100).toFixed(1)+'%"></i>'+(c.expPct!=null?'<span class="mk" style="left:'+Math.min(100,c.expPct*100).toFixed(1)+'%" title="Mốc kế hoạch"></span>':'')+'</div><span class="small nowrap"><b>'+fmt(c.ach,1)+'</b> / '+fmt(c.total)+' <span class="muted">('+pc(c.pct)+')</span></span></div><div class="tiny muted hm">còn thiếu '+fmt(Math.max(0,c.total-c.ach),1)+' tr</div>':'<span class="muted small">Chưa lập kế hoạch</span>';
     return '<tr class="trow'+(c.level==='bad'?' lv-bad':'')+'" data-act="detail" data-uid="'+c.m.uid+'">'+
       '<td class="selc hm"><input type="checkbox" data-tsel="'+c.m.uid+'"'+(ST.sel[c.m.uid]?' checked':'')+' aria-label="Chọn '+esc(c.name)+'"></td>'+
       '<td class="nmc"><div class="pn"><span class="av" style="background:'+avCol(c.m.email)+'">'+esc(ini(c.name))+'</span><div style="min-width:0"><button class="lnk" data-act="detail" data-uid="'+c.m.uid+'" title="'+esc(c.name)+'"><span class="fn">'+esc(c.name)+'</span><span class="sn">'+esc(shortName(c.name))+'</span></button><div class="tiny muted">'+(showNg()?'<i class="dot" style="background:'+g.col+'"></i>'+g.n+(c.m.province?'<span class="hm"> · '+esc(c.m.province)+'</span>':''):(c.m.province?'<span class="hm">'+esc(c.m.province)+'</span>':''))+'</div></div></div></td>'+
       '<td><span class="st '+c.status+'"><span class="hm">'+stText(c)+'</span><span class="mo2">'+({done:'✓ '+(c.e&&c.e.sub?hhmm(c.e.sub):''),wait:'Chờ',late:'Quá giờ',missed:'Chưa gửi',weekly:'Theo tuần',off:'Nghỉ',future:'—'}[c.status])+'</span></span>'+help+'</td>'+
       '<td class="r nowrap">'+(c.e?'<b>'+fmt(c.dayAch,1)+'</b>':'<span class="muted">–</span>')+'<div class="tiny muted"><span class="hm">KH '+fmt(c.dayPlan,1)+(dayR!=null?' · ':'')+'</span>'+(dayR!=null?pc(dayR):'')+'</div></td>'+
-      '<td>'+bar+'</td>'+
-      '<td class="small hm">'+groupCell(c,date)+'</td>'+
-      '<td class="r">'+(c.ratio!=null?'<span class="pill2 '+lvCls(c.level)+'">'+pc(c.ratio)+'</span>':'<span class="muted">–</span>')+'</td>'+
-      '<td class="r hm">'+(c.projPct!=null?pc(c.projPct):'–')+'</td>'+
-      '<td class="r hm">'+(c.cov==null?'–':pc(c.cov))+'</td>'+
+      '<td class="r">'+(c.ratio!=null?'<span class="pill2 '+lvCls(c.level)+'" title="Thực đạt tháng so với mốc kế hoạch hôm nay">'+pc(c.ratio)+'</span>':'<span class="muted">–</span>')+'</td>'+
       '<td class="r nowrap hm">'+fmt(e.htpp)+' · '+fmt(e.so)+'</td>'+
       '<td class="r nowrap hm"><button class="mini" data-act="compose" data-uid="'+c.m.uid+'">Giao việc</button></td></tr>';
   }).join('');
-  return '<div class="card tcard"><div class="tblwrap"><table class="t tv"><thead><tr><th class="selc hm"><input type="checkbox" data-tselall="1" aria-label="Chọn tất cả"'+(list.length&&list.every(c=>ST.sel[c.m.uid])?' checked':'')+'></th><th class="nmc">Nhân sự</th><th>Báo cáo</th><th class="r">DS ngày<span class="hm"> (tr)</span></th><th>Thực đạt<span class="hm"> / chỉ tiêu (tr)</span></th><th class="hm">Thực đạt / chỉ tiêu theo nhóm hàng</th><th class="r">So mốc</th><th class="r hm">Dự báo</th><th class="r hm">Độ phủ</th><th class="r hm">HTPP · SO</th><th class="hm"></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  return '<div class="card tcard"><div class="tblwrap"><table class="t tv"><thead><tr><th class="selc hm"><input type="checkbox" data-tselall="1" aria-label="Chọn tất cả"'+(list.length&&list.every(c=>ST.sel[c.m.uid])?' checked':'')+'></th><th class="nmc">Nhân sự</th><th>Báo cáo</th><th class="r">DS ngày<span class="hm"> (tr)</span></th><th class="r">So mốc</th><th class="r hm">HTPP · SO</th><th class="hm"></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
 /* ====== Tab: Hôm nay ====== */
@@ -1356,7 +1351,7 @@ function todayHTML(){
   const list=shown.length?(mode==='table'?tableViewHTML(shown,date):'<div class="cards">'+shown.map(c=>srCard(c,date)).join('')+'</div>'):'<div class="card empty"><div class="big">🔍</div>'+(all.length?'Không có nhân sự nào khớp bộ lọc.':'Chưa có nhân sự nào được gán cho bạn.<br><span class="small">Nhân sự cần đăng nhập app, chọn ngành và chọn ASM là bạn.</span>')+'</div>';
   return heroHTML(all,t,date)+
     '<div class="tgrid'+(mode==='table'?' tbl':'')+'"><aside class="tside">'+(ST.ai.off?'':aiPanelHTML())+feedHTML(feed)+'</aside>'+
-    '<section class="tmain">'+toolsHTML(counts,all.length)+list+'</section></div>'+selBarHTML(all)+'<div style="margin-top:12px;text-align:center"><button class="linkbtn" data-act="tab" data-v="overview">Xem tiến độ cả tháng ở tab Tổng quan →</button></div>';
+    '<section class="tmain">'+toolsHTML(counts,all.length)+list+'</section></div>'+selBarHTML(all);
 }
 
 /* ====== Tab: Kế hoạch ngày mai ====== */
@@ -1658,8 +1653,7 @@ function staffHTML(){
   const lvCls=l=>l==='ok'||l==='warn'||l==='bad'?l:'';
   const stat=(k,lbl,v,tone,sub)=>'<button class="stat sbtn" data-act="msf" data-v="'+k+'" aria-pressed="'+(S.f===k)+'"><div class="sl">'+lbl+'</div><div class="sv'+(tone&&v?' '+tone:'')+'">'+v+'</div><div class="ss">'+sub+'</div></button>';
   const needCount=all.filter(r=>pass.todo(r)||pass.debt(r)||pass.help(r)||pass.behind(r)).length;
-  const summary=(!big&&R.total>0)?'<div class="stf-summary '+(needCount>0?'bad':'ok')+'"><b>'+(needCount>0?needCount+' người cần bạn xử lý hôm nay':'Cả nhóm đang ổn, chưa ai cần xử lý gấp')+'</b><span>'+(needCount>0?'Xem chi tiết ở các thẻ bên dưới, hoặc bấm vào một thẻ để lọc đúng danh sách đó.':'Các thẻ bên dưới vẫn cho xem chi tiết từng nhóm nếu cần.')+'</span></div>':'';
-  const stats=big?'':summary+'<div class="stf-stats">'+stat('all','Tổng nhân sự',R.total,'','trong phạm vi quản lý')+stat('todo','Chưa báo cáo hôm nay',R.cnt.todo,'warn','cần nhắc')+stat('debt','Nợ báo cáo',R.cnt.debt,'bad','≥ 1 ngày làm việc')+stat('help','Cần hỗ trợ',R.cnt.help,'bad','SR đã bấm xin hỗ trợ')+stat('behind','Chậm tiến độ',R.cnt.behind,'warn','dưới 90% mốc')+stat('noplan','Chưa lập kế hoạch',R.cnt.noplan,'warn','chưa có chỉ tiêu tháng')+'</div>';
+  const stats=big?'':'<div class="stf-stats">'+stat('all','Tổng nhân sự',R.total,'','trong phạm vi quản lý')+stat('todo','Chưa báo cáo hôm nay',R.cnt.todo,'warn','cần nhắc')+stat('debt','Nợ báo cáo',R.cnt.debt,'bad','≥ 1 ngày làm việc')+stat('help','Cần hỗ trợ',R.cnt.help,'bad','SR đã bấm xin hỗ trợ')+stat('behind','Chậm tiến độ',R.cnt.behind,'warn','dưới 90% mốc')+stat('noplan','Chưa lập kế hoạch',R.cnt.noplan,'warn','chưa có chỉ tiêu tháng')+'</div>';
   const th=(k,t,cls)=>big?'<th class="'+(cls||'')+'">'+t+'</th>':'<th class="'+(cls||'')+'"><button class="sorth'+(S.k===k?' on':'')+'" data-act="msort" data-v="'+k+'">'+t+' <i>'+(S.k===k?(S.d===1?'▲':'▼'):'⇅')+'</i></button></th>';
   const lastTxt=r=>{if(!r.last)return '<span class="muted">Chưa có</span>';const gap=r.last===ST.today?0:r.last===addD(ST.today,-1)?1:2;return '<span class="'+(gap>=2?'stale':'')+'">'+(gap===0?'Hôm nay':gap===1?'Hôm qua':dmy(r.last))+'</span>';};
   const body=list.map(r=>{
@@ -1678,7 +1672,7 @@ function staffHTML(){
       '<td class="r">'+(c.streak>=1?'<span class="pill2 bad">'+c.streak+'<span class="hm"> ngày</span></span>':'<span class="okt">✓</span>')+'</td>'+
       '<td class="hm nowrap hlg">'+lastTxt(r)+'</td>'+
       '<td class="r hm nowrap hlg">'+(r.dt?'<span class="pill2 '+(r.dd===r.dt?'ok':'')+'" title="Việc đã giao 7 ngày qua: '+r.dd+' đã làm / '+r.dt+'">'+r.dd+'/'+r.dt+'</span>':'<span class="muted">—</span>')+'</td>'+
-      '<td class="r nowrap hm act"><button class="mini pri" data-act="compose" data-uid="'+c.m.uid+'">Giao việc</button> <button class="mini" data-act="detail" data-uid="'+c.m.uid+'">Chi tiết</button>'+(c.m.asmEmail?' <button class="mini dng" data-act="rmMember" data-uid="'+c.m.uid+'" data-name="'+esc(c.name)+'" title="Gỡ khỏi nhóm" aria-label="Gỡ '+esc(c.name)+' khỏi nhóm">✕</button>':' <span class="mini dng" style="visibility:hidden" aria-hidden="true">✕</span>')+'</td></tr>';
+      '<td class="r nowrap hm act"><button class="mini pri" data-act="compose" data-uid="'+c.m.uid+'">Giao việc</button> <button class="mini" data-act="detail" data-uid="'+c.m.uid+'">Chi tiết</button>'+'</td></tr>';
   }).join('');
   const nSel=list.filter(r=>ST.sel[r.c.m.uid]).length;
   const table=list.length?'<div class="card tcard"><div class="tblwrap"><table class="t tv stt"><thead><tr><th class="selc hm"><input type="checkbox" data-tselall="1" aria-label="Chọn tất cả"'+(list.length&&list.every(r=>ST.sel[r.c.m.uid])?' checked':'')+'></th>'+th('name','Nhân sự','nmc')+(showNg()?th('ng','Ngành · tỉnh (chọn)','hm'):'<th class="hm">Tỉnh (chọn)</th>')+(me.admin?'<th class="hm">ASM phụ trách</th>':'')+'<th>Hôm nay</th>'+th('pct','Thực đạt<span class="hm"> / chỉ tiêu (tr)</span>')+th('ratio','So mốc','r')+'<th class="r hm hxl">Dự báo</th>'+th('debt','Nợ BC','r')+th('last','BC gần nhất','hm hlg')+'<th class="r hm hlg">Việc giao</th><th class="hm act"></th></tr></thead><tbody>'+body+'</tbody></table></div></div>':
@@ -2092,7 +2086,7 @@ function render(){
   let view='';
   try{view=ST.tab==='overview'?dashHTML():ST.tab==='staff'?staffHTML():ST.tab==='plan'?planHTML():ST.tab==='heat'?heatHTML():ST.tab==='org'?orgHTML():todayHTML();}
   catch(e){console.error(e);view='<div class="card empty">Có lỗi khi hiển thị. Hãy tải lại trang.<div class="tiny muted" style="margin-top:8px">Chi tiết lỗi (gửi cho người hỗ trợ): '+esc(String((e&&e.message)||e).slice(0,160))+'</div></div>';}
-  if(ST.tab!=='overview'&&view.indexOf('Có lỗi khi hiển thị')<0){try{view=asmBanner(ST.tab,all)+view;}catch(e){console.error(e);}}
+  /* Lời chào chỉ hiện ở Tổng quan, các tab khác vào thẳng nội dung */
   root.innerHTML=headerHTML()+'<div class="wrap">'+(ST.err?'<div class="note" style="margin-top:10px">'+esc(ST.err)+'</div>':'')+(ST.data.truncated&&ST.tab!=='staff'&&ST.tab!=='org'&&ST.tab!=='overview'?'<div class="note bignote"><b>'+fmt(ST.data.total)+' nhân sự</b> trong phạm vi này, quá nhiều để hiển thị cùng lúc. Các số tổng hợp bên dưới chỉ tính trên <b>'+fmt(ST.data.members.length)+'</b> người đầu tiên. Hãy <button class="linkbtn" data-act="tab" data-v="staff">mở tab Nhân sự</button> hoặc chọn một ASM ở ô phía trên để xem đầy đủ.</div>':'')+tabsHTML(nFeed,navSum(all))+view+'</div>'+(ST.drawer?drawerHTML():'')+(ST.compose?composeHTML():'')+(ST.mm?mgmtHTML():'')+(ST.nm?newMemberHTML():'')+(ST.pv?provModalHTML():'')+(ST.chatAi?chatHTML():'<button class="asmai-fab" data-act="chatOpen">✦ Hỏi AI</button>');
   if(keep){const n=document.getElementById(keep.id);if(n){n.focus({preventScroll:true});try{n.setSelectionRange(keep.s,keep.e);}catch(e){}}}
   window.scrollTo(0,sy);
