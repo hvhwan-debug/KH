@@ -535,7 +535,8 @@ html{-webkit-text-size-adjust:100%}
           <textarea id="qAccepted" style="min-height:70px" placeholder="220&#10;220 V"></textarea>
           <p class="small">Hệ thống bỏ qua chữ hoa/thường, khoảng trắng thừa và dấu câu ở hai đầu; 1,5 và 1.5 coi là như nhau. Chữ có dấu tiếng Việt vẫn phải đúng dấu, nên hãy thêm cả cách viết không dấu nếu muốn chấp nhận.</p>
         </div>
-        <div style="margin-top:14px;display:flex;gap:8px">
+        <p class="small" style="margin:12px 0 0">Khi sửa một câu đã có, các bài thí sinh đã nộp có câu này sẽ được <b>tự chấm lại</b> theo đáp án mới (điểm, kết quả, bản sao bài làm). Câu mới thêm thì không ảnh hưởng bài cũ.</p>
+        <div style="margin-top:10px;display:flex;gap:8px">
           <button class="btn" onclick="saveQuestion()">Lưu câu hỏi</button>
           <button class="btn ghost" onclick="clearQForm()">Làm mới</button>
         </div>
@@ -1835,10 +1836,23 @@ async function saveQuestion(){
   $('qBank').dataset.last = question.bankId;
   const { j } = await api('POST','/api/kt-admin', { op:'saveQuestion', question });
   if (!j.ok){ msg('qMsg', j.error, 'err'); return; }
-  msg('qMsg','Đã lưu.','ok');
   QUESTIONS = j.questions;
   clearQForm();
   loadQuestions();
+  { // (đặt SAU clearQForm vì clearQForm xoá dòng thông báo) Sửa câu đã có: máy chủ tự chấm lại các bài đã nộp có câu này -> báo kết quả cho người sửa
+    const g = j.regrade; let note = 'Đã lưu.', cls = 'ok';
+    if (g && g.failed){ note += ' Nhưng chưa chấm lại được các bài đã nộp, hãy bấm “Chấm lại” ở màn thống kê của đề.'; cls = 'warn'; }
+    else if (g){
+      const parts = [];
+      if (g.changed) parts.push('đã chấm lại ' + g.changed + ' bài đã nộp (' + g.up + ' tăng điểm, ' + g.down + ' giảm điểm)');
+      if (g.paperUpdated) parts.push('cập nhật nội dung câu hỏi trong ' + g.paperUpdated + ' bài làm');
+      if (!parts.length && g.examined) parts.push('đã kiểm tra ' + g.examined + ' bài đã nộp có câu này, điểm không đổi');
+      if (parts.length){ const t = parts.join('; '); note += ' ' + t.charAt(0).toUpperCase() + t.slice(1) + '.'; }
+      if (g.skipped){ note += ' ' + g.skipped + ' bài không tự chấm lại được (đã đổi số phương án hoặc loại câu, hoặc có câu đã bị xoá) nên giữ nguyên.'; cls = 'warn'; }
+      if (g.incomplete){ note += ' Chưa xử lý hết do quá nhiều bài, hãy bấm “Chấm lại” ở màn thống kê của đề.'; cls = 'warn'; }
+    }
+    msg('qMsg', note, cls);
+  }
 }
 
 /* ---------- Thí sinh ---------- */

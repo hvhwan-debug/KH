@@ -9,6 +9,65 @@ const crypto = require("crypto");
 const { uidOf } = require("../_lib/session");
 const { inviteManager } = require("../_lib/invite");
 
+// ---------- Tự chấm lại khi SỬA câu hỏi trong ngân hàng ----------
+// Bài đã nộp lưu sẵn điểm + bản sao đề lúc nộp, nên trước đây sửa đáp án trong ngân hàng không làm các nơi đó đổi theo.
+// Nay: sửa câu hỏi xong thì mọi bài ĐÃ NỘP có chứa câu đó được chấm lại ngay (điểm, %, đạt/chưa đạt, điểm tuân thủ,
+// bản sao bài làm, dòng trong bảng chỉ số) -> kết quả, hồ sơ, trang xác thực, thống kê đều khớp đáp án mới.
+// An toàn: bài nào đổi số phương án / đổi loại câu hỏi (không còn khớp thứ tự thí sinh đã thấy) hoặc có câu đã xoá thì KHÔNG đụng tới.
+const REGRADE_BUDGET_MS = 25000; // quá thời gian này thì dừng và báo "chưa xong" (có thể bấm Chấm lại ở màn thống kê đề)
+function gradingSig(q) { // phần của câu hỏi mà bản sao bài làm / điểm phụ thuộc vào
+  if (!q) return "";
+  return JSON.stringify([q.text, q.category || "", quiz.qType(q), q.options || [], q.correctIndex, q.correctIndexes || [], q.accepted || []]);
+}
+function structureOk(a, qid, q) {
+  const t = quiz.qType(q);
+  const i = (a.questionIds || []).indexOf(qid);
+  const old = Array.isArray(a.paper) ? a.paper.find((x) => x && x.n === i + 1) : null;
+  if (old && old.type && old.type !== t) return false;                  // đổi loại câu (vd. chọn 1 -> điền từ)
+  if (t === "fill") return true;
+  const n = (q.options || []).length, order = a.orders && a.orders[qid];
+  if (Array.isArray(order)) return order.length === n && order.every((k) => Number.isInteger(k) && k >= 0 && k < n);
+  return !(old && Array.isArray(old.options) && old.options.length !== n);
+}
+async function regradeAffected(qids, by) {
+  const want = new Set(qids), started = Date.now();
+  const rows = (await quiz.getIndex()).filter((r) => r.status === "submitted");
+  const byId = {}; (await quiz.getQuestions()).forEach((q) => { byId[q.id] = q; });
+  const advice = require("../_lib/advice"), settingsOf = {};
+  const st = { scanned: 0, examined: 0, changed: 0, up: 0, down: 0, paperUpdated: 0, skipped: 0, incomplete: false };
+  const patches = {};
+  for (let i = 0; i < rows.length; i += 20) {
+    if (Date.now() - started > REGRADE_BUDGET_MS) { st.incomplete = true; break; }
+    const atts = await Promise.all(rows.slice(i, i + 20).map((r) => quiz.getAttempt(r.id).catch(() => null)));
+    for (const a of atts) {
+      if (!a || a.status !== "submitted") continue;
+      st.scanned++;
+      const hit = (a.questionIds || []).filter((qid) => want.has(qid));
+      if (!hit.length) continue;
+      if ((a.questionIds || []).some((qid) => !byId[qid]) || hit.some((qid) => !structureOk(a, qid, byId[qid]))) { st.skipped++; continue; }
+      st.examined++;
+      const per = a.period || "";
+      const settings = settingsOf[per] || (settingsOf[per] = await quiz.getExamSettings(per));
+      const sc = quiz.scoreAttempt(a, byId, settings);
+      const same = a.score === sc.correct && a.pct === sc.pct && a.wrong === sc.wrongN && (a.compliancePoints == null ? null : a.compliancePoints) === (sc.compliance == null ? null : sc.compliance);
+      const paper = quiz.buildPaper(a, byId);
+      const paperChanged = JSON.stringify(paper) !== JSON.stringify(a.paper || []);
+      if (same && !paperChanged) continue;
+      if (!same) {
+        st.changed++; if (sc.pct > a.pct) st.up++; else if (sc.pct < a.pct) st.down++;
+        (a.regrade = a.regrade || []).push({ at: Date.now(), by, auto: true, scoreBefore: a.score, pctBefore: a.pct, complianceBefore: a.compliancePoints == null ? null : a.compliancePoints, passedBefore: a.passed == null ? null : a.passed });
+        Object.assign(a, { score: sc.correct, total: sc.total, pct: sc.pct, passed: sc.passed, scoreOutOf10: sc.scoreOutOf10, compliancePoints: sc.compliance, wrong: sc.wrongN, blank: sc.blank, regradedAt: Date.now() });
+        a.advice = advice.rulesAdvice(advice.facts(a, settings, null)); // điểm đã đổi nên lời khuyên cũ không còn đúng: dựng lại theo luật
+        patches[a.id] = { score: sc.correct, total: sc.total, pct: sc.pct, passed: sc.passed, scoreOutOf10: sc.scoreOutOf10, compliancePoints: sc.compliance, wrong: sc.wrongN, blank: sc.blank, regradedAt: a.regradedAt };
+      } else st.paperUpdated++;
+      a.paper = paper;
+      await quiz.putAttempt(a);
+    }
+  }
+  if (Object.keys(patches).length) await quiz.patchIndex(patches);
+  return st;
+}
+
 const handler = async function (context, req) {
   try {
     if (guardConfigured(context)) return;
@@ -243,18 +302,27 @@ const handler = async function (context, req) {
       const base = Object.assign({ category: String(q.category || "").slice(0, 100) }, nq.fields);
       // Kỳ của câu hỏi: lấy theo yêu cầu; câu mới không nêu kỳ thì vào kỳ hiện tại
       const per = quiz.validPeriod(q.period) && typeof q.period === "string" ? q.period : undefined;
+      let editedId = "", gradingChanged = false;
       if (q.id) {
         const i = list.findIndex((x) => x.id === q.id);
         if (i < 0) return reply(context, 404, { ok: false, error: "Không tìm thấy câu hỏi." });
         const prev = Object.assign({}, list[i]);
+        const sigBefore = gradingSig(list[i]);
         if (nq.fields.type !== "multi") delete prev.correctIndexes;   // đổi loại: bỏ dữ liệu của loại cũ
         if (nq.fields.type !== "fill") delete prev.accepted;
         list[i] = Object.assign({}, prev, base, { active: q.active !== false }, quiz.cleanQuestionMeta(q, list[i]), per !== undefined ? { period: per } : {});
+        editedId = q.id; gradingChanged = sigBefore !== gradingSig(list[i]);
       } else {
         list.push(Object.assign({ id: quiz.genId(), active: true, period: per !== undefined ? per : (await quiz.getSettings()).examPeriod }, base, quiz.cleanQuestionMeta(q)));
       }
       await quiz.saveQuestions(list);
-      return reply(context, 200, { ok: true, questions: list });
+      // Sửa đáp án / nội dung câu đã có: chấm lại ngay các bài đã nộp có câu này để mọi nơi đổi theo
+      let regrade = null;
+      if (editedId && gradingChanged) {
+        try { regrade = await regradeAffected([editedId], u.email); }
+        catch (e) { context.log.error("regradeAffected", e && e.message); regrade = { failed: true }; }
+      }
+      return reply(context, 200, { ok: true, questions: list, regrade });
     }
 
     if (op === "genQuestions") {

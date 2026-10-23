@@ -111,7 +111,7 @@ function details(area, op, q, b, res, pre) {
     case "insight": case "paper": case "photo": case "profile": case "employee": d.code = q.code; if (q.id) d.attempt = q.id; if (q.period != null && op === "photo") d.period = q.period; break;
     case "result": d.attempt = q.id; if (r.attempt) { d.code = r.attempt.code; d.name = r.attempt.name; d.period = r.attempt.period || ""; } break;
     case "audit": d.day = q.day; break;
-    case "saveQuestion": { const qq = b.question || {}; d.question = s(qq.text, 100); if (qq.id) d.id = qq.id; if (typeof qq.period === "string") d.period = qq.period || "chưa gắn kỳ"; break; }
+    case "saveQuestion": { const qq = b.question || {}; d.question = s(qq.text, 100); if (qq.id) d.id = qq.id; if (typeof qq.period === "string") d.period = qq.period || "chưa gắn kỳ"; if (r.regrade && !r.regrade.failed) { d.regraded = r.regrade.changed; d.paperUpdated = r.regrade.paperUpdated; d.examined = r.regrade.examined; d.skipped = r.regrade.skipped; } break; }
     case "addQuestions": d.period = b.period; d.added = r.added; d.skipped = r.skipped; break;
     case "saveBank": d.bank = s(b.name, 80); if (b.id) d.id = b.id; break;
     case "deleteBank": d.id = b.id; d.moved = r.moved; break;
