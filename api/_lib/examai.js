@@ -29,6 +29,15 @@ function extractQuestions(text) {
   if (start < 0 || end < start) return null;
   try { return JSON.parse(s.slice(start, end + 1)); } catch (e) { return null; }
 }
+// AI đôi khi tự escape dấu ngoặc kép 2 lần khi viết đáp án dạng "lời thoại" (vd mời khách mua kèm),
+// khiến hiện ra chữ \" thừa thay vì dấu ngoặc bình thường; và hay bọc cả câu trong một cặp ngoặc kép
+// thừa (không cần thiết vì đã là một phương án riêng biệt trên màn hình). Dọn sạch cả hai trường hợp.
+function cleanText(s) {
+  let t = String(s || "").replace(/\\"/g, '"').replace(/\\'/g, "'").trim();
+  const m = t.match(/^"([\s\S]*)"$/);
+  if (m && m[1].indexOf('"') < 0) t = m[1].trim();
+  return t;
+}
 const norm = (t) => String(t || "").toLowerCase().normalize("NFC").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 // Độ giống nhau giữa 2 câu (Jaccard trên từ): >= 0,8 coi là trùng ý
 function similar(a, b) {
@@ -61,15 +70,15 @@ async function generateDraft(topic, count, category, existing) {
   raws.forEach((raw) => {
     const arr = extractQuestions(raw); if (!Array.isArray(arr)) { if (raw) bad++; return; }
     arr.forEach((q) => {
-      const text = String((q && q.text) || "").trim().slice(0, 2000);
-      const options = Array.isArray(q && q.options) ? q.options.map((o) => String(o || "").trim().slice(0, 500)).filter(Boolean) : [];
+      const text = cleanText((q && q.text) || "").slice(0, 2000);
+      const options = Array.isArray(q && q.options) ? q.options.map((o) => cleanText(o || "").slice(0, 500)).filter(Boolean) : [];
       const ci = Number.isInteger(q && q.correctIndex) ? q.correctIndex : -1;
       const distinct = new Set(options.map(norm)).size === options.length;
       if (!text || options.length < 2 || ci < 0 || ci >= options.length || !distinct) { bad++; return; }
       if (seen.some((x) => similar(x, text) >= 0.8)) { dup++; return; }
       seen.push(text);
       const sh = shuffleOptions(options, ci); // AI hay đặt đáp án đúng ở vị trí đầu: xáo lại cho đều
-      questions.push({ text, options: sh.options, correctIndex: sh.correctIndex, category: String(category || "").trim().slice(0, 100), explain: String((q && q.explain) || "").trim().slice(0, 300) });
+      questions.push({ text, options: sh.options, correctIndex: sh.correctIndex, category: String(category || "").trim().slice(0, 100), explain: cleanText((q && q.explain) || "").slice(0, 300) });
     });
   });
   if (!questions.length) return { ok: false, error: dup ? "AI chỉ soạn ra câu trùng với câu đã có, hãy đổi chủ đề hoặc thử lại." : "AI không trả về câu hỏi hợp lệ nào, thử lại." };
