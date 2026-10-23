@@ -689,6 +689,7 @@ html{-webkit-text-size-adjust:100%}
         <div style="margin-top:10px;display:flex;gap:8px">
           <button class="btn" onclick="saveQuestion()">Lưu câu hỏi</button>
           <button class="btn ghost" onclick="clearQForm()">Làm mới</button>
+          <button class="btn ghost hide" id="qRegradeBtn" type="button" onclick="regradeQuestionUI()" title="Chấm lại mọi bài thí sinh đã nộp có câu này theo đáp án hiện tại (dùng khi câu đã sửa nhưng điểm / bản sao bài làm chưa đổi theo)">↻ Chấm lại bài đã nộp có câu này</button>
         </div>
         <div id="qMsg"></div>
       </div>
@@ -1689,8 +1690,11 @@ async function regradeUI(){
   msg('itemMsg',''); $('regradeBox').innerHTML = '<p class="small">Đang tính thử…</p>';
   const { j: pv } = await api('POST','/api/kt-admin', { op:'regrade', exam: ITEM_EXAM, apply:false });
   if (!pv.ok){ $('regradeBox').innerHTML = ''; msg('itemMsg', pv.error || 'Không chấm lại được.'); return; }
-  const skip = pv.skipped ? ' · <b>'+pv.skipped+' bài bị bỏ qua</b> (có câu đã bị xoá khỏi ngân hàng nên không chấm lại được)' : '';
-  if (!pv.changed){ $('regradeBox').innerHTML = '<div class="msg ok">Đã kiểm tra '+pv.examined+' bài: không bài nào đổi điểm, không cần chấm lại.'+skip+'</div>'; return; }
+  const skip = (pv.skipped ? ' · <b>'+pv.skipped+' bài không chấm lại được</b> (bài cũ không lưu bản sao đề)' : '') +
+    (pv.frozen ? ' · <b>'+pv.frozen+' câu</b> giữ nguyên kết quả cũ (câu đã xoá hoặc đã đổi loại / nội dung phương án nên không đối chiếu được)' : '') +
+    (pv.incomplete ? ' · <b>chưa xử lý hết</b> do quá nhiều bài, hãy chạy lại sau khi áp dụng' : '');
+  if (!pv.changed && !pv.paperUpdated){ $('regradeBox').innerHTML = '<div class="msg ok">Đã kiểm tra '+pv.examined+' bài: không bài nào đổi điểm, không cần chấm lại.'+skip+'</div>'; return; }
+  if (!pv.changed){ $('regradeBox').innerHTML = '<div class="msg warn" style="margin-top:12px"><b>Xem trước:</b> điểm không đổi, nhưng nội dung câu hỏi / đáp án trong <b>'+pv.paperUpdated+' bài làm</b> chưa khớp ngân hàng đề hiện tại'+skip+'.</div><div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn danger" onclick="regradeApply()">Cập nhật '+pv.paperUpdated+' bài làm</button><button class="btn ghost" onclick="document.getElementById(\'regradeBox\').innerHTML=\'\'">Huỷ</button></div>'; return; }
   const fmtC = (c) => c == null ? '–' : c;
   const rows = pv.changes.slice(0, 15).map(c => '<tr><td>'+esc(c.code)+'</td><td>'+esc(c.name)+'</td><td>'+c.scoreBefore+'/'+c.total+' ('+c.pctBefore+'%) → <b style="color:var('+(c.pctAfter>c.pctBefore?'--ok':'--bad')+')">'+c.scoreAfter+'/'+c.total+' ('+c.pctAfter+'%)</b></td><td>'+fmtC(c.complianceBefore)+' → <b>'+fmtC(c.complianceAfter)+'</b></td></tr>').join('');
   $('regradeBox').innerHTML = '<div class="msg warn" style="margin-top:12px"><b>Xem trước:</b> chấm lại '+pv.examined+' bài sẽ làm <b>'+pv.changed+' bài đổi điểm</b> ('+pv.up+' tăng, '+pv.down+' giảm)'+skip+'. Chưa có gì bị thay đổi.</div>'+
@@ -1704,7 +1708,7 @@ async function regradeApply(){
   $('regradeBox').innerHTML = '<p class="small">Đang chấm lại…</p>';
   const { j } = await api('POST','/api/kt-admin', { op:'regrade', exam: ITEM_EXAM, apply:true });
   if (!j.ok){ $('regradeBox').innerHTML = ''; msg('itemMsg', j.error || 'Không chấm lại được.'); return; }
-  $('regradeBox').innerHTML = '<div class="msg ok">Đã chấm lại '+j.changed+' bài ('+j.up+' tăng, '+j.down+' giảm).</div>';
+  $('regradeBox').innerHTML = '<div class="msg ok">Đã chấm lại '+j.changed+' bài ('+j.up+' tăng, '+j.down+' giảm)'+(j.paperUpdated ? ' và cập nhật nội dung '+j.paperUpdated+' bài làm' : '')+'.'+(j.incomplete ? ' <b>Chưa xử lý hết</b>, hãy bấm chấm lại thêm một lần.' : '')+'</div>';
   loadExams(); openItemAnalysis(ITEM_EXAM);
 }
 function editQuestionFromItem(id){ switchTab('questions'); editQuestion(id); }
@@ -1754,6 +1758,7 @@ function onQTypeChange(){
   }
 }
 function clearQForm(){
+  $('qRegradeBtn').classList.add('hide');
   $('qEditId').value=''; $('qText').value=''; $('qCategory').value='';
   $('qDifficulty').value=''; $('qTags').value=''; $('qExplain').value=''; if ($('qBank').options.length) $('qBank').value = $('qBank').dataset.last || 'default';
   $('qType').value='single'; $('qAccepted').value=''; $('qOptsWrap').classList.remove('hide'); $('qFillWrap').classList.add('hide'); $('qAddOptBtn').classList.remove('hide');
@@ -1938,6 +1943,7 @@ function editQuestion(id){
   const q = QUESTIONS.find(x => x.id===id);
   if (!q) return;
   qPanel('qFormCard', true);
+  $('qRegradeBtn').classList.remove('hide');
   $('qEditId').value = q.id; $('qText').value = q.text; $('qCategory').value = q.category||'';
   $('qFormTitle').textContent = 'Sửa câu hỏi'; $('qPeriod').value = q.period || '';
   $('qBank').value = q.bankId || 'default'; $('qDifficulty').value = q.difficulty || ''; $('qTags').value = (q.tags || []).join(', '); $('qExplain').value = q.explanation || '';
@@ -2004,6 +2010,32 @@ async function addQuestionsBulk(){
   QUESTIONS = j.questions;
   loadQuestions();
 }
+// Tóm tắt kết quả tự chấm lại các bài đã nộp có một câu hỏi (g = regrade từ máy chủ)
+function regradeNote(g, head){
+  let note = head || '', cls = 'ok';
+  const add = (t) => { note += (note ? ' ' : '') + t; };
+  if (g && g.failed){ add('Nhưng chưa chấm lại được các bài đã nộp, hãy thử lại bằng nút “Chấm lại bài đã nộp có câu này”.'); return { text: note, cls: 'warn' }; }
+  if (!g) return { text: note, cls };
+  const parts = [];
+  if (g.changed) parts.push('đã chấm lại ' + g.changed + ' bài đã nộp (' + g.up + ' tăng điểm, ' + g.down + ' giảm điểm)');
+  if (g.paperUpdated) parts.push('cập nhật nội dung câu hỏi trong ' + g.paperUpdated + ' bài làm');
+  if (!parts.length && g.examined) parts.push('đã kiểm tra ' + g.examined + ' bài đã nộp có câu này, điểm không đổi');
+  if (!parts.length && !g.examined && !g.skipped) parts.push('chưa có bài đã nộp nào có câu này');
+  if (parts.length){ const t = parts.join('; '); add(t.charAt(0).toUpperCase() + t.slice(1) + '.'); }
+  if (g.frozen){ add('Với ' + g.frozen + ' câu trong các bài đó (đã bị xoá khỏi ngân hàng, hoặc đã đổi loại / nội dung phương án nên không đối chiếu được lựa chọn của thí sinh), hệ thống giữ nguyên kết quả cũ của câu ấy.'); }
+  if (g.skipped){ add(g.skipped + ' bài cũ không lưu bản sao đề nên không chấm lại được.'); cls = 'warn'; }
+  if (g.incomplete){ add('Chưa xử lý hết do quá nhiều bài, hãy bấm nút chấm lại thêm một lần.'); cls = 'warn'; }
+  return { text: note, cls };
+}
+async function regradeQuestionUI(){
+  const id = $('qEditId').value;
+  if (!id){ msg('qMsg','Hãy mở một câu hỏi đã có để chấm lại.'); return; }
+  const b = $('qRegradeBtn'); b.disabled = true; msg('qMsg','Đang chấm lại các bài đã nộp có câu này…','warn');
+  const { j } = await api('POST','/api/kt-admin', { op:'regradeQuestion', id });
+  b.disabled = false;
+  if (!j.ok){ msg('qMsg', j.error || 'Không chấm lại được.', 'err'); return; }
+  const n = regradeNote(j.regrade, 'Xong.'); msg('qMsg', n.text, n.cls);
+}
 async function saveQuestion(){
   const ui = qUIType();
   const options = Array.from(document.querySelectorAll('#qOptsEdit .opt-row')).map(r => r.querySelector('input[type=text]').value.trim());
@@ -2024,20 +2056,7 @@ async function saveQuestion(){
   QUESTIONS = j.questions;
   clearQForm();
   loadQuestions();
-  { // (đặt SAU clearQForm vì clearQForm xoá dòng thông báo) Sửa câu đã có: máy chủ tự chấm lại các bài đã nộp có câu này -> báo kết quả cho người sửa
-    const g = j.regrade; let note = 'Đã lưu.', cls = 'ok';
-    if (g && g.failed){ note += ' Nhưng chưa chấm lại được các bài đã nộp, hãy bấm “Chấm lại” ở màn thống kê của đề.'; cls = 'warn'; }
-    else if (g){
-      const parts = [];
-      if (g.changed) parts.push('đã chấm lại ' + g.changed + ' bài đã nộp (' + g.up + ' tăng điểm, ' + g.down + ' giảm điểm)');
-      if (g.paperUpdated) parts.push('cập nhật nội dung câu hỏi trong ' + g.paperUpdated + ' bài làm');
-      if (!parts.length && g.examined) parts.push('đã kiểm tra ' + g.examined + ' bài đã nộp có câu này, điểm không đổi');
-      if (parts.length){ const t = parts.join('; '); note += ' ' + t.charAt(0).toUpperCase() + t.slice(1) + '.'; }
-      if (g.skipped){ note += ' ' + g.skipped + ' bài không tự chấm lại được (đã đổi số phương án hoặc loại câu, hoặc có câu đã bị xoá) nên giữ nguyên.'; cls = 'warn'; }
-      if (g.incomplete){ note += ' Chưa xử lý hết do quá nhiều bài, hãy bấm “Chấm lại” ở màn thống kê của đề.'; cls = 'warn'; }
-    }
-    msg('qMsg', note, cls);
-  }
+  { const n = regradeNote(j.regrade, 'Đã lưu.'); msg('qMsg', n.text, n.cls); } // đặt SAU clearQForm vì clearQForm xoá dòng thông báo
 }
 
 /* ---------- Thí sinh ---------- */

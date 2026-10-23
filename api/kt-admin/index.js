@@ -14,11 +14,12 @@ const { inviteManager } = require("../_lib/invite");
 // Nay: sửa câu hỏi xong thì mọi bài ĐÃ NỘP có chứa câu đó được chấm lại ngay (điểm, %, đạt/chưa đạt, điểm tuân thủ,
 // bản sao bài làm, dòng trong bảng chỉ số) -> kết quả, hồ sơ, trang xác thực, thống kê đều khớp đáp án mới.
 // An toàn: bài nào đổi số phương án / đổi loại câu hỏi (không còn khớp thứ tự thí sinh đã thấy) hoặc có câu đã xoá thì KHÔNG đụng tới.
-const REGRADE_BUDGET_MS = 25000; // quá thời gian này thì dừng và báo "chưa xong" (có thể bấm Chấm lại ở màn thống kê đề)
+const REGRADE_BUDGET_MS = 25000; // quá thời gian này thì dừng và báo "chưa xong"
 function gradingSig(q) { // phần của câu hỏi mà bản sao bài làm / điểm phụ thuộc vào
   if (!q) return "";
   return JSON.stringify([q.text, q.category || "", quiz.qType(q), q.options || [], q.correctIndex, q.correctIndexes || [], q.accepted || []]);
 }
+// Thứ tự phương án thí sinh đã thấy còn khớp với câu hỏi hiện tại không (cùng loại, cùng số phương án)
 function structureOk(a, qid, q) {
   const t = quiz.qType(q);
   const i = (a.questionIds || []).indexOf(qid);
@@ -29,42 +30,99 @@ function structureOk(a, qid, q) {
   if (Array.isArray(order)) return order.length === n && order.every((k) => Number.isInteger(k) && k >= 0 && k < n);
   return !(old && Array.isArray(old.options) && old.options.length !== n);
 }
-async function regradeAffected(qids, by) {
-  const want = new Set(qids), started = Date.now();
-  const rows = (await quiz.getIndex()).filter((r) => r.status === "submitted");
-  const byId = {}; (await quiz.getQuestions()).forEach((q) => { byId[q.id] = q; });
-  const advice = require("../_lib/advice"), settingsOf = {};
-  const st = { scanned: 0, examined: 0, changed: 0, up: 0, down: 0, paperUpdated: 0, skipped: 0, incomplete: false };
-  const patches = {};
+// Khi số phương án đã đổi: đối chiếu theo NỘI DUNG phương án thí sinh đã chọn (lấy từ bản sao bài làm) với câu hỏi hiện tại.
+// Chỉ kết luận khi lựa chọn cũ vẫn còn nguyên văn trong câu hỏi mới; không thì trả null (giữ kết quả cũ của câu đó).
+function textGrade(q, old) {
+  const t = quiz.qType(q);
+  if (!old || old.type !== t || t === "fill" || !Array.isArray(old.options)) return null;
+  const chosenIdx = (old.chosenList && old.chosenList.length) ? old.chosenList : (old.chosen >= 0 ? [old.chosen] : []);
+  const want = t === "multi" ? (q.correctIndexes || []).slice() : [q.correctIndex];
+  const correctText = want.map((i) => q.options[i]).join("; ");
+  if (!chosenIdx.length) return { state: "blank", ok: false, chosenText: null, correctText, want };
+  const chosenTexts = chosenIdx.map((i) => old.options[i]);
+  if (chosenTexts.some((x) => x == null)) return null;
+  const nt = (q.options || []).map(quiz.normText);
+  const idxs = chosenTexts.map((x) => nt.indexOf(quiz.normText(x)));
+  if (idxs.some((i) => i < 0)) return null;
+  const w = want.slice().sort((x, y) => x - y), c = idxs.slice().sort((x, y) => x - y);
+  const ok = c.length === w.length && c.every((v, k) => v === w[k]);
+  return { state: ok ? "correct" : "wrong", ok, chosenText: chosenTexts.join("; "), correctText, want };
+}
+// Chấm lại MỘT bài theo từng câu: câu còn hợp lệ -> chấm theo đáp án hiện tại; câu đã bị xoá / đổi cấu trúc mà không đối chiếu
+// được -> GIỮ kết quả cũ trong bản sao bài làm. Trả null nếu không có gì để dựa vào (bài cũ không có bản sao).
+function evalAttempt(a, byId, settings) {
+  const qids = a.questionIds || [], oldPaper = Array.isArray(a.paper) ? a.paper : [];
+  let correct = 0, wrongN = 0, frozen = 0, text = 0;
+  const paper = [];
+  for (let i = 0; i < qids.length; i++) {
+    const qid = qids[i], q = byId[qid], old = oldPaper.find((x) => x && x.n === i + 1) || null;
+    if (q && structureOk(a, qid, q)) {
+      const g = quiz.gradeAnswer(q, a.answers && a.answers[qid], a.orders && a.orders[qid]);
+      if (g.state === "correct") correct++; else if (g.state === "wrong") wrongN++;
+      const e = quiz.buildPaper({ questionIds: [qid], answers: a.answers, orders: a.orders }, byId)[0];
+      if (e) { e.n = i + 1; paper.push(e); }
+      continue;
+    }
+    const t = q && old ? textGrade(q, old) : null;
+    if (t) {
+      text++;
+      if (t.state === "correct") correct++; else if (t.state === "wrong") wrongN++;
+      const wantTexts = t.want.map((k) => quiz.normText(q.options[k]));
+      const correctList = (old.options || []).map((o, k) => (wantTexts.indexOf(quiz.normText(o)) >= 0 ? k : -1)).filter((k) => k >= 0);
+      paper.push(Object.assign({}, old, { text: q.text, category: q.category || "", ok: t.ok, answerText: t.correctText, chosenText: t.chosenText, correct: correctList[0], correctList }));
+      continue;
+    }
+    if (old) { frozen++; if (old.ok) correct++; else if (old.chosenText != null) wrongN++; paper.push(old); continue; }
+    return null;
+  }
+  return { sc: quiz.summarize(correct, wrongN, qids.length, settings), paper, frozen, text };
+}
+// Lõi chấm lại dùng chung cho: tự chấm lại khi sửa câu hỏi, nút "Chấm lại bài có câu này", và "Chấm lại đề này".
+// o: { want: Set mã câu (null = mọi câu), by, apply, auto }. apply=false chỉ tính thử, không ghi gì.
+async function regradeCore(rows, byId, o) {
+  const advice = require("../_lib/advice"), settingsOf = {}, started = Date.now(), patches = {}, changes = [];
+  const st = { scanned: 0, examined: 0, changed: 0, up: 0, down: 0, unchanged: 0, paperUpdated: 0, skipped: 0, partial: 0, frozen: 0, textGraded: 0, incomplete: false };
   for (let i = 0; i < rows.length; i += 20) {
     if (Date.now() - started > REGRADE_BUDGET_MS) { st.incomplete = true; break; }
     const atts = await Promise.all(rows.slice(i, i + 20).map((r) => quiz.getAttempt(r.id).catch(() => null)));
     for (const a of atts) {
       if (!a || a.status !== "submitted") continue;
       st.scanned++;
-      const hit = (a.questionIds || []).filter((qid) => want.has(qid));
-      if (!hit.length) continue;
-      if ((a.questionIds || []).some((qid) => !byId[qid]) || hit.some((qid) => !structureOk(a, qid, byId[qid]))) { st.skipped++; continue; }
-      st.examined++;
+      const qids = a.questionIds || [];
+      if (o.want && !qids.some((id) => o.want.has(id))) continue;
       const per = a.period || "";
       const settings = settingsOf[per] || (settingsOf[per] = await quiz.getExamSettings(per));
-      const sc = quiz.scoreAttempt(a, byId, settings);
+      const ev = evalAttempt(a, byId, settings);
+      if (!ev) { st.skipped++; continue; }
+      st.examined++; st.frozen += ev.frozen; st.textGraded += ev.text; if (ev.frozen || ev.text) st.partial++;
+      const sc = ev.sc;
       const same = a.score === sc.correct && a.pct === sc.pct && a.wrong === sc.wrongN && (a.compliancePoints == null ? null : a.compliancePoints) === (sc.compliance == null ? null : sc.compliance);
-      const paper = quiz.buildPaper(a, byId);
-      const paperChanged = JSON.stringify(paper) !== JSON.stringify(a.paper || []);
-      if (same && !paperChanged) continue;
+      const paperChanged = JSON.stringify(ev.paper) !== JSON.stringify(a.paper || []);
+      if (same && !paperChanged) { st.unchanged++; continue; }
       if (!same) {
         st.changed++; if (sc.pct > a.pct) st.up++; else if (sc.pct < a.pct) st.down++;
-        (a.regrade = a.regrade || []).push({ at: Date.now(), by, auto: true, scoreBefore: a.score, pctBefore: a.pct, complianceBefore: a.compliancePoints == null ? null : a.compliancePoints, passedBefore: a.passed == null ? null : a.passed });
-        Object.assign(a, { score: sc.correct, total: sc.total, pct: sc.pct, passed: sc.passed, scoreOutOf10: sc.scoreOutOf10, compliancePoints: sc.compliance, wrong: sc.wrongN, blank: sc.blank, regradedAt: Date.now() });
-        a.advice = advice.rulesAdvice(advice.facts(a, settings, null)); // điểm đã đổi nên lời khuyên cũ không còn đúng: dựng lại theo luật
-        patches[a.id] = { score: sc.correct, total: sc.total, pct: sc.pct, passed: sc.passed, scoreOutOf10: sc.scoreOutOf10, compliancePoints: sc.compliance, wrong: sc.wrongN, blank: sc.blank, regradedAt: a.regradedAt };
+        changes.push({ id: a.id, code: a.code, name: a.name || "", scoreBefore: a.score, scoreAfter: sc.correct, total: sc.total, pctBefore: a.pct, pctAfter: sc.pct,
+          complianceBefore: a.compliancePoints == null ? null : a.compliancePoints, complianceAfter: sc.compliance, passedBefore: a.passed == null ? null : a.passed, passedAfter: sc.passed });
+        if (o.apply) {
+          (a.regrade = a.regrade || []).push({ at: Date.now(), by: o.by, auto: !!o.auto, scoreBefore: a.score, pctBefore: a.pct, complianceBefore: a.compliancePoints == null ? null : a.compliancePoints, passedBefore: a.passed == null ? null : a.passed });
+          Object.assign(a, { score: sc.correct, total: sc.total, pct: sc.pct, passed: sc.passed, scoreOutOf10: sc.scoreOutOf10, compliancePoints: sc.compliance, wrong: sc.wrongN, blank: sc.blank, regradedAt: Date.now() });
+          a.advice = advice.rulesAdvice(advice.facts(a, settings, null)); // điểm đã đổi nên lời khuyên cũ không còn đúng: dựng lại theo luật
+          patches[a.id] = { score: sc.correct, total: sc.total, pct: sc.pct, passed: sc.passed, scoreOutOf10: sc.scoreOutOf10, compliancePoints: sc.compliance, wrong: sc.wrongN, blank: sc.blank, regradedAt: a.regradedAt };
+        }
       } else st.paperUpdated++;
-      a.paper = paper;
-      await quiz.putAttempt(a);
+      if (o.apply) { a.paper = ev.paper; await quiz.putAttempt(a); }
     }
   }
-  if (Object.keys(patches).length) await quiz.patchIndex(patches);
+  if (o.apply && Object.keys(patches).length) await quiz.patchIndex(patches);
+  st.changes = changes;
+  return st;
+}
+// Sửa câu hỏi -> chấm lại mọi bài ĐÃ NỘP có câu đó (mọi kỳ)
+async function regradeAffected(qids, by) {
+  const rows = (await quiz.getIndex()).filter((r) => r.status === "submitted");
+  const byId = {}; (await quiz.getQuestions()).forEach((q) => { byId[q.id] = q; });
+  const st = await regradeCore(rows, byId, { want: new Set(qids), by, apply: true, auto: true });
+  delete st.changes;
   return st;
 }
 
@@ -428,34 +486,20 @@ const handler = async function (context, req) {
       const apply = b.apply === true;
       const rows = (await quiz.getIndex()).filter((r) => r.status === "submitted" && (r.period || "") === examId).slice(0, 1000);
       if (!rows.length) return reply(context, 400, { ok: false, error: "Đề này chưa có bài nộp nào để chấm lại." });
-      const settings = await quiz.getExamSettings(examId);
       const byId = {}; (await quiz.getQuestions()).forEach((q) => { byId[q.id] = q; });
-      const changes = [], patches = {}; let examined = 0, skipped = 0, unchanged = 0;
-      for (let i = 0; i < rows.length; i += 20) {
-        const atts = await Promise.all(rows.slice(i, i + 20).map((r) => quiz.getAttempt(r.id).catch(() => null)));
-        for (const a of atts) {
-          if (!a || a.status !== "submitted") { skipped++; continue; }
-          if ((a.questionIds || []).some((qid) => !byId[qid])) { skipped++; continue; } // có câu đã xoá: không chấm lại bài này
-          examined++;
-          const sc = quiz.scoreAttempt(a, byId, settings);
-          const same = a.score === sc.correct && a.pct === sc.pct && a.wrong === sc.wrongN && (a.compliancePoints == null ? null : a.compliancePoints) === (sc.compliance == null ? null : sc.compliance);
-          if (same) { unchanged++; continue; }
-          changes.push({ id: a.id, code: a.code, name: a.name || "", scoreBefore: a.score, scoreAfter: sc.correct, total: sc.total, pctBefore: a.pct, pctAfter: sc.pct,
-            complianceBefore: a.compliancePoints == null ? null : a.compliancePoints, complianceAfter: sc.compliance, passedBefore: a.passed == null ? null : a.passed, passedAfter: sc.passed });
-          if (apply) {
-            (a.regrade = a.regrade || []).push({ at: Date.now(), by: u.email, scoreBefore: a.score, pctBefore: a.pct, complianceBefore: a.compliancePoints == null ? null : a.compliancePoints, passedBefore: a.passed == null ? null : a.passed });
-            Object.assign(a, { score: sc.correct, total: sc.total, pct: sc.pct, passed: sc.passed, scoreOutOf10: sc.scoreOutOf10, compliancePoints: sc.compliance, wrong: sc.wrongN, blank: sc.blank, regradedAt: Date.now() });
-            a.paper = quiz.buildPaper(a, byId);
-            a.advice = require("../_lib/advice").rulesAdvice(require("../_lib/advice").facts(a, settings, null)); // điểm đã đổi nên lời khuyên cũ không còn đúng: dựng lại theo luật
-            await quiz.putAttempt(a);
-            patches[a.id] = { score: sc.correct, total: sc.total, pct: sc.pct, passed: sc.passed, scoreOutOf10: sc.scoreOutOf10, compliancePoints: sc.compliance, wrong: sc.wrongN, blank: sc.blank, regradedAt: a.regradedAt };
-          }
-        }
-      }
-      if (apply && changes.length) await quiz.patchIndex(patches);
-      return reply(context, 200, { ok: true, apply, exam: examId, examined, skipped, unchanged, changed: changes.length,
-        up: changes.filter((c) => c.pctAfter > c.pctBefore).length, down: changes.filter((c) => c.pctAfter < c.pctBefore).length,
-        changes: changes.slice(0, 100), truncated: changes.length > 100 });
+      const st = await regradeCore(rows, byId, { want: null, by: u.email, apply, auto: false });
+      return reply(context, 200, { ok: true, apply, exam: examId, examined: st.examined, skipped: st.skipped, unchanged: st.unchanged, changed: st.changed, paperUpdated: st.paperUpdated,
+        partial: st.partial, frozen: st.frozen, textGraded: st.textGraded, incomplete: st.incomplete,
+        up: st.up, down: st.down, changes: st.changes.slice(0, 100), truncated: st.changes.length > 100 });
+    }
+
+    // Chấm lại ngay các bài đã nộp có MỘT câu hỏi (dùng khi câu đã được sửa từ trước, hoặc lần tự chấm lại trước bị bỏ sót)
+    if (op === "regradeQuestion") {
+      const id = String(b.id || "");
+      if (!(await quiz.getQuestions()).some((x) => x.id === id)) return reply(context, 404, { ok: false, error: "Không tìm thấy câu hỏi." });
+      let regrade;
+      try { regrade = await regradeAffected([id], u.email); } catch (e) { context.log.error("regradeQuestion", e && e.message); return reply(context, 500, { ok: false, error: "Không chấm lại được, vui lòng thử lại." }); }
+      return reply(context, 200, { ok: true, regrade });
     }
 
     // Ẩn / hiện nhanh một câu hỏi (câu ẩn không được rút vào đề mới; bài đã làm vẫn giữ nguyên)

@@ -621,15 +621,8 @@ function checkVerifyToken(t) {
 
 // Chấm cả bài: dùng chung cho lúc nộp bài và khi "chấm lại" (đổi đáp án đúng sau khi đã có bài nộp).
 // Câu đã bị xoá khỏi ngân hàng được tính là bỏ trống (tổng số câu vẫn là số câu đã ra cho thí sinh).
-function scoreAttempt(attempt, byId, settings) {
-  let correct = 0, wrongN = 0;
-  (attempt.questionIds || []).forEach((qid) => {
-    const q = byId[qid];
-    if (!q) return;
-    const g = gradeAnswer(q, attempt.answers && attempt.answers[qid], attempt.orders && attempt.orders[qid]);
-    if (g.state === "correct") correct++; else if (g.state === "wrong") wrongN++;
-  });
-  const total = (attempt.questionIds || []).length;
+// Tổng hợp điểm từ số câu đúng / sai / tổng số câu (dùng chung cho chấm bài thường và chấm lại từng câu)
+function summarize(correct, wrongN, total, settings) {
   const pct = total ? Math.round((correct / total) * 100) : 0;
   const scoreOutOf10 = total ? (correct / total) * 10 : 0;
   return {
@@ -639,6 +632,16 @@ function scoreAttempt(attempt, byId, settings) {
     scoreOutOf10: Math.round(scoreOutOf10 * 100) / 100,
     compliance: settings.complianceEnabled ? compliancePoints(scoreOutOf10, settings) : null
   };
+}
+function scoreAttempt(attempt, byId, settings) {
+  let correct = 0, wrongN = 0;
+  (attempt.questionIds || []).forEach((qid) => {
+    const q = byId[qid];
+    if (!q) return;
+    const g = gradeAnswer(q, attempt.answers && attempt.answers[qid], attempt.orders && attempt.orders[qid]);
+    if (g.state === "correct") correct++; else if (g.state === "wrong") wrongN++;
+  });
+  return summarize(correct, wrongN, (attempt.questionIds || []).length, settings);
 }
 // Nạp nhiều bài làm (theo dòng bảng chỉ số) từng nhóm nhỏ, vì bài làm có kèm ảnh xác nhận nên khá nặng. Giữ nguyên thứ tự, bỏ bài lỗi.
 async function loadAttempts(rows) {
@@ -803,7 +806,7 @@ module.exports = {
   getAttempt, putAttempt, saveIndex, activeForPeriod,
   getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary, fmtVN,
   getBanks, saveBanks, bankOf, validBankId, slugify, cleanQuestionMeta, DEFAULT_BANK, DIFFICULTIES,
-  cleanBlueprint, buildFromBlueprint, blueprintTotal, planExam, targetCount, cleanSegmentPlans, segPlanFor, countFor, validateCounts, MAX_QUESTION_COUNT, examAccessError, inAudience, examKnown, scoreAttempt, patchIndex, previousResult, loadAttempts,
+  cleanBlueprint, buildFromBlueprint, blueprintTotal, planExam, targetCount, cleanSegmentPlans, segPlanFor, countFor, validateCounts, MAX_QUESTION_COUNT, examAccessError, inAudience, examKnown, scoreAttempt, summarize, patchIndex, previousResult, loadAttempts,
   TYPES, qType, normText, normalizeQuestionInput, gradeAnswer,
   getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,

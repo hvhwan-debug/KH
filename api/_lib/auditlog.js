@@ -57,7 +57,7 @@ const A = {
       addCandidates: ["Thêm / cập nhật thí sinh", "change"], deleteCandidate: ["Xoá thí sinh", "change"], renameCandidate: ["Đổi mã nhân viên", "change"], resetAttempt: ["Cho làm lại (xoá kết quả kỳ)", "change"],
       saveSettings: ["Đổi cài đặt", "change"], assignPeriod: ["Gắn kỳ cho bài chưa có kỳ", "change"],
       saveBank: ["Lưu ngân hàng câu hỏi", "change"], deleteBank: ["Xoá ngân hàng câu hỏi", "change"], moveToBank: ["Chuyển câu hỏi sang ngân hàng khác", "change"],
-      setQuestionActive: ["Ẩn / hiện câu hỏi", "change"], regrade: ["Chấm lại đề thi", "change"], saveExam: ["Lưu đề thi", "change"], deleteExam: ["Xoá đề thi", "change"], setDefaultExam: ["Đặt đề thi mặc định", "change"]
+      setQuestionActive: ["Ẩn / hiện câu hỏi", "change"], regrade: ["Chấm lại đề thi", "change"], regradeQuestion: ["Chấm lại bài có câu hỏi", "change"], saveExam: ["Lưu đề thi", "change"], deleteExam: ["Xoá đề thi", "change"], setDefaultExam: ["Đặt đề thi mặc định", "change"]
     }
   },
   viewer: {
@@ -118,6 +118,7 @@ function details(area, op, q, b, res, pre) {
     case "moveToBank": d.to = b.to; d.moved = r.moved; break;
     case "setQuestionActive": d.id = b.id; d.active = !!b.active; break;
     case "renameCandidate": d.from = s(b.from, 50); d.to = s(b.to, 50); d.moved = r.moved; break;
+    case "regradeQuestion": d.id = b.id; if (r.regrade) { d.changed = r.regrade.changed; d.examined = r.regrade.examined; d.skipped = r.regrade.skipped; } break;
     case "regrade": d.exam = b.exam; d.apply = b.apply === true; d.changed = r.changed; d.examined = r.examined; d.skipped = r.skipped; break;
     case "saveExam": { const ex = b.exam || b; d.exam = s(ex.id, 40); d.rules = ex.blueprint && Array.isArray(ex.blueprint.rules) ? ex.blueprint.rules.length : 0; break; }
     case "deleteExam": case "setDefaultExam": d.exam = s(b.id, 40); break;
