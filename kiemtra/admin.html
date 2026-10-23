@@ -32,6 +32,10 @@ body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(-
 .exadv summary{cursor:pointer;font-weight:700;color:var(--brand-deep)}
 .exadv[open] summary{margin-bottom:10px}
 .exh{font-size:14.5px;margin:18px 0 6px}
+.exsec{font-size:15px;margin:22px 0 8px;padding-top:14px;border-top:1px solid var(--line);color:var(--brand-deep)}
+label.chk{display:flex!important;align-items:center;gap:8px;font-weight:600;margin:0}
+label.chk input,#exSpMode input{width:18px!important;height:18px;margin:0;flex:0 0 auto}
+#exSpMode label{display:inline-flex!important;align-items:center;gap:6px;width:auto}
 .spg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
 @media(max-width:900px){.spg{grid-template-columns:1fr}}
 .spbox{border:1px solid var(--line);border-radius:12px;padding:12px}
@@ -150,7 +154,7 @@ table.dt td.num,table.dt th.num{text-align:right;font-variant-numeric:tabular-nu
 .wq li{display:grid;grid-template-columns:52px 1fr;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:13px;line-height:1.45}
 .wq li:first-child{border-top:0}
 .wq li.small{display:block}
-#dashCard.nodata .dgrid,#dashCard.nodata .panel{display:none}
+#anaCard.nodata .dgrid,#anaCard.nodata .panel,#anaCard.nodata #btnCohortIns{display:none}
 .wq .r{font-weight:800;color:var(--bad);font-variant-numeric:tabular-nums}
 .wq .a{display:block;font-size:12px;color:var(--ok);margin-top:2px}
 .wq .m{display:block;font-size:12px;color:var(--muted)}
@@ -297,6 +301,7 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
       </div>
       <div class="subnav in" id="exNav">
         <button data-sub="results" onclick="switchTab('results')">📊 Kết quả</button>
+        <button data-sub="analysis" onclick="switchTab('analysis')">📈 Phân tích</button>
         <button data-sub="questions" onclick="switchTab('questions')">❓ Câu hỏi <span class="cnt" id="ehQ"></span></button>
         <button data-sub="examset" onclick="switchTab('examset')">⚙️ Cài đặt đề</button>
       </div>
@@ -319,21 +324,37 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
       <div class="card" id="examFormCard">
         <h1 id="examFormTitle">Tạo đề thi mới</h1>
         <input type="hidden" id="exEditingId">
-        <p class="small" style="margin-top:0">Chỉ cần điền <b>mã đề</b> và <b>tên đề</b> rồi bấm <b>Lưu đề thi</b>. Các ô để trống sẽ dùng theo tab <b>Cài đặt</b> (thời gian mỗi câu, điểm đạt, phân bổ câu hỏi theo nhóm ngành…).</p>
+        <p class="small" style="margin-top:0">Ô nào để trống sẽ dùng giá trị ở <b>Cài đặt → Cài đặt mặc định</b>.</p>
+
+        <h2 class="exsec">1. Thông tin đề</h2>
         <div class="grid2">
-          <div><label>Mã đề thi (chỉ chữ thường, số, dấu gạch ngang; dùng trong link)</label><input type="text" id="exId" placeholder="vd: 2026-11 hoặc thi-thu-pc"></div>
+          <div><label>Mã đề thi (chữ thường, số, gạch ngang; dùng trong link)</label><input type="text" id="exId" placeholder="vd: 2026-11 hoặc thi-thu-pc"></div>
           <div><label>Tên đề thi (thí sinh thấy)</label><input type="text" id="exTitle" placeholder="vd: Kiểm tra kiến thức PC tháng 11"></div>
-          <div><label>Thời gian tối đa mỗi câu (giây)</label><input type="text" inputmode="numeric" id="exSeconds" placeholder="trống = theo Cài đặt"></div>
-          <div><label>Điểm đạt (% số câu đúng)</label><input type="text" inputmode="numeric" id="exPass" placeholder="trống = theo Cài đặt">
-            <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:600"><input type="checkbox" id="exPassOn" style="width:18px;height:18px"> Đề này có ngưỡng đạt</label>
-          </div>
-          <div><label>Mở đề lúc (trống = mở ngay)</label><input type="datetime-local" id="exOpen"></div>
-          <div><label>Đóng đề lúc (trống = không đóng)</label><input type="datetime-local" id="exClose"></div>
+          <div><label>Mô tả / thể lệ ngắn (tuỳ chọn)</label><input type="text" id="exDesc" placeholder="Vd: Kiểm tra kiến thức sản phẩm quý 4"></div>
+          <div><label>Tên rút gọn khi chia sẻ Zalo (tuỳ chọn)</label><input type="text" id="exShareTitle" placeholder="trống = dùng tên đề"></div>
         </div>
-        <label style="display:flex;align-items:center;gap:8px;margin-top:14px"><input type="checkbox" id="exRetake" style="width:18px;height:18px"> Cho phép thí sinh làm lại nhiều lần</label>
         <label style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;padding:10px 12px;border-radius:10px;background:#FFF6E0;border:1.5px solid #F0D58A;color:#6B4A00"><input type="checkbox" id="exPractice" style="width:18px;height:18px;margin-top:2px"> <span><b>Đề thi thử (không phải thi chính thức)</b><br><span class="small" style="color:#6B4A00">Thí sinh thấy dải chữ "THI THỬ" ở mọi màn hình; phiếu kết quả, ảnh chia sẻ và email đều ghi rõ "Thi thử, không phải thi chính thức". Điểm tuân thủ học tập <b>vẫn được quy đổi bình thường</b> (ghi là "nếu thi thật") để thí sinh hình dung điểm của mình.</span></span></label>
 
-        <div class="exq" id="exQBox">
+        <h2 class="exsec">2. Thời gian làm bài</h2>
+        <div class="grid2">
+          <div><label>Mở đề lúc (trống = mở ngay)</label><input type="datetime-local" id="exOpen"></div>
+          <div><label>Đóng đề lúc (trống = không đóng)</label><input type="datetime-local" id="exClose"></div>
+          <div><label>Thời gian tối đa mỗi câu (giây)</label><input type="text" inputmode="numeric" id="exSeconds" placeholder="trống = theo Cài đặt mặc định"></div>
+          <div><label>&nbsp;</label><label class="chk"><input type="checkbox" id="exRetake"> Cho phép thí sinh làm lại nhiều lần</label></div>
+        </div>
+
+        <h2 class="exsec">3. Chấm điểm</h2>
+        <div class="grid2">
+          <div><label>Điểm đạt (% số câu đúng)</label><input type="text" inputmode="numeric" id="exPass" placeholder="trống = theo Cài đặt mặc định">
+            <label class="chk" style="margin-top:8px"><input type="checkbox" id="exPassOn"> Đề này có ngưỡng Đạt / Chưa đạt</label></div>
+          <div><label>&nbsp;</label><label class="chk"><input type="checkbox" id="exComplianceOn"> Tính điểm tuân thủ học tập cho đề này</label></div>
+          <div><label>Điểm ≥ mốc này → 20 điểm tuân thủ</label><input type="text" inputmode="decimal" id="exCHigh" placeholder="trống = theo Cài đặt mặc định"></div>
+          <div><label>Điểm ≥ mốc này → 15 điểm tuân thủ</label><input type="text" inputmode="decimal" id="exCMid" placeholder="trống = theo Cài đặt mặc định"></div>
+          <div><label>Điểm ≥ mốc này → 10 điểm tuân thủ</label><input type="text" inputmode="decimal" id="exCLow" placeholder="trống = theo Cài đặt mặc định"></div>
+        </div>
+
+        <h2 class="exsec">4. Câu hỏi</h2>
+        <div class="exq" id="exQBox" style="margin-top:0">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
             <b>Số câu mỗi thí sinh nhận</b>
             <button class="btn ghost sm" type="button" onclick="previewPlan()">Kiểm tra đủ câu chưa</button>
@@ -348,14 +369,8 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         </div>
 
         <details class="exadv" id="exAdv">
-          <summary>Tuỳ chọn nâng cao <span class="small">(số câu riêng, cấu trúc đề, đối tượng thi, điểm tuân thủ, tên chia sẻ Zalo)</span></summary>
-          <div class="grid2">
-            <div><label>Tên rút gọn khi chia sẻ Zalo</label><input type="text" id="exShareTitle"></div>
-            <div><label>Mô tả / thể lệ ngắn</label><input type="text" id="exDesc" placeholder="Vd: Kiểm tra kiến thức sản phẩm quý 4"></div>
-            <div><label>Tổng số câu hỏi mỗi đề <span class="small">(chỉ dùng khi chưa có phân bổ nhóm ngành)</span></label><input type="text" inputmode="numeric" id="exCount"></div>
-            <div><label>Bán cả 2 ngành: số câu "Gia dụng" cố định <span class="small">(cách chia cũ)</span></label><input type="text" inputmode="numeric" id="exBothGD"></div>
-          </div>
-          <h2 class="exh">Đối tượng thi</h2>
+          <summary>5. Tuỳ chọn nâng cao <span class="small">(giới hạn đối tượng thi, cấu trúc đề riêng, cách chia số câu kiểu cũ)</span></summary>
+          <h2 class="exh" style="margin-top:4px">Đối tượng thi</h2>
           <label>Nhóm thí sinh được thi (không tick = tất cả)</label>
         <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:14px">
           <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="checkbox" class="exSeg" value="gia_dung" style="width:18px;height:18px"> Gia dụng</label>
@@ -365,14 +380,11 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         <label>Chỉ cho các mã nhân viên này thi (mỗi mã một dòng hoặc cách nhau dấu phẩy; để trống = không giới hạn theo mã)</label>
         <textarea id="exCodes" style="min-height:64px" placeholder="T100300025&#10;T100300026"></textarea>
         <p class="small">Kết hợp được với "nhóm thí sinh" ở trên (phải thoả cả hai). Người không thuộc đối tượng không vào thi được và không bị tính là "chưa làm" ở bảng tổng quan. Bài đang làm dở vẫn được làm tiếp kể cả khi đề đã đóng.</p>
-          <h2 class="exh">Điểm tuân thủ học tập</h2>
-          <div class="grid2" style="margin-top:14px">
-          <div><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="exComplianceOn" style="width:18px;height:18px"> Bật điểm tuân thủ học tập (đề này)</label></div>
-          <div></div>
-          <div><label>Điểm ≥ mốc này → 20 điểm</label><input type="text" inputmode="decimal" id="exCHigh"></div>
-          <div><label>Điểm ≥ mốc này → 15 điểm</label><input type="text" inputmode="decimal" id="exCMid"></div>
-          <div><label>Điểm ≥ mốc này → 10 điểm</label><input type="text" inputmode="decimal" id="exCLow"></div>
-        </div>
+          <h2 class="exh">Cách chia số câu kiểu cũ <span class="small">(chỉ dùng khi đề không có phân bổ theo nhóm ngành)</span></h2>
+          <div class="grid2">
+            <div><label>Tổng số câu hỏi mỗi đề</label><input type="text" inputmode="numeric" id="exCount"></div>
+            <div><label>Bán cả 2 ngành: số câu "Gia dụng" cố định</label><input type="text" inputmode="numeric" id="exBothGD"></div>
+          </div>
           <h2 class="exh">Cấu trúc đề riêng <span class="small">(thay cho phân bổ nhóm ngành, áp dụng cho MỌI thí sinh của đề này)</span></h2>
           <p class="small">Mỗi quy tắc lấy ngẫu nhiên <b>N câu</b> từ một ngân hàng (có thể lọc theo danh mục, độ khó, thẻ). Đề của mỗi thí sinh được rút riêng, không trùng câu. <b>Không có quy tắc nào</b> thì đề dùng cách ra đề cũ (theo kỳ + nhóm ngành, ở các ô số câu phía trên).</p>
         <div id="bpRules"></div>
@@ -571,7 +583,8 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         </div>
         <div id="candEditMsg"></div>
       </div>
-      <div class="card">
+      <div class="card hide" id="candAddCard">
+        <button class="xclose" type="button" onclick="$('candAddCard').classList.add('hide')" aria-label="Đóng">×</button>
         <h1>Thêm thí sinh</h1>
         <p class="small">Mỗi dòng một thí sinh, định dạng: <b>mã nhân viên, họ tên, email, quản lí, nhóm ngành</b>. Nhóm ngành ghi <code>ca_hai</code> (bán cả gia dụng &amp; máy lọc nước — đề trộn từ toàn bộ ngân hàng), <code>gia_dung</code> (chỉ đề Gia dụng) hoặc <code>may_loc</code> (chỉ đề Máy lọc nước); để trống sẽ hiểu là cả hai. Có thể dán nhiều dòng cùng lúc.</p>
         <textarea id="candText" placeholder="NV001, Nguyễn Văn A, a@congty.vn, Nguyễn Dạ Thảo, ca_hai&#10;NV002, Trần Thị B, b@congty.vn, Lê Thị Thanh Loan, may_loc"></textarea>
@@ -579,7 +592,16 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         <div id="candMsg"></div>
       </div>
       <div class="card">
-        <h1>Danh sách thí sinh (<span id="candCount">0</span>)</h1>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <h1 style="margin:0">Danh sách thí sinh (<span id="candCount">0</span>)</h1>
+          <button class="btn" type="button" onclick="$('candAddCard').classList.remove('hide');$('candAddCard').scrollIntoView({behavior:'smooth'});$('candText').focus()">＋ Thêm thí sinh</button>
+        </div>
+        <div class="qfilter">
+          <input type="search" id="candSearch" placeholder="Tìm mã NV, tên, email…" oninput="renderCandidates()" aria-label="Tìm thí sinh">
+          <select id="candMgrF" onchange="renderCandidates()" aria-label="Lọc theo quản lí"></select>
+          <select id="candSegF" onchange="renderCandidates()" aria-label="Lọc theo nhóm ngành"><option value="*">Mọi nhóm ngành</option><option value="both">Cả hai ngành</option><option value="may_loc">Máy lọc nước</option><option value="gia_dung">Gia dụng</option></select>
+          <span class="small" id="candShown"></span>
+        </div>
         <table><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Email</th><th>Quản lí</th><th>Nhóm ngành</th><th>Xác nhận thông tin</th><th></th></tr></thead><tbody id="candList"></tbody></table>
       </div>
     </div>
@@ -632,8 +654,8 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         <div id="setMsg"></div>
       </div>
       <div class="card" id="segPlanCard">
-        <h1>Phân bổ câu hỏi theo nhóm ngành</h1>
-        <p class="small">Mỗi nhóm thí sinh nhận đúng số câu của từng danh mục. Tên danh mục phải <b>trùng với ô "Phân loại"</b> của câu hỏi (không phân biệt hoa thường). Nhóm nào để trống thì dùng cách chia cũ ở trên (Tổng số câu + số câu Gia dụng cố định). Nếu một đề thi có "Cấu trúc đề" riêng thì cấu trúc đó được ưu tiên.</p>
+        <h1>Phân bổ câu hỏi mặc định theo nhóm ngành</h1>
+        <p class="small"><b>Đề mới tạo sẽ chép sẵn phân bổ này</b> (sửa riêng được trong “Cài đặt đề”). Mỗi nhóm thí sinh nhận đúng số câu của từng danh mục. Tên danh mục phải <b>trùng với ô "Phân loại"</b> của câu hỏi (không phân biệt hoa thường). Nhóm nào để trống thì dùng cách chia cũ ở trên (Tổng số câu + số câu Gia dụng cố định). Nếu một đề thi có "Cấu trúc đề" riêng thì cấu trúc đó được ưu tiên.</p>
         <div class="spg" id="spWrap"></div>
         <datalist id="catList"></datalist>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
@@ -643,7 +665,7 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         <div id="spMsg"></div>
       </div>
       <div class="card">
-        <h1>Điểm tuân thủ học tập</h1>
+        <h1>Điểm tuân thủ học tập (mặc định)</h1>
         <p class="small">Quy đổi tỉ lệ đúng (thang điểm 10) sang một mốc điểm cố định, hiện kèm theo kết quả bài kiểm tra và trong email gửi thí sinh.</p>
         <label style="display:flex;align-items:center;gap:8px;margin-top:0"><input type="checkbox" id="setComplianceOn" style="width:18px;height:18px"> Bật tính điểm tuân thủ học tập</label>
         <div class="grid2" style="margin-top:12px">
@@ -655,7 +677,7 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         <button class="btn" style="margin-top:14px" onclick="saveSettings()">Lưu cài đặt</button>
       </div>
           <div class="card" id="aiCheckCard">
-        <h1>Kiểm tra AI của lời khuyên</h1>
+        <h1>Công cụ: kiểm tra AI của lời khuyên</h1>
         <p class="small">Lời khuyên sau khi nộp bài và chẩn đoán hành vi dùng AI nếu có; nếu AI chưa cấu hình, trả lời chậm hoặc sai định dạng thì tự dùng bản dự phòng theo luật. Bấm để chạy thử đúng đường AI đó và biết lý do.</p>
         <button class="btn" type="button" id="btnAiCheck" onclick="runAiCheck()">Kiểm tra ngay</button>
         <div id="aiCheckOut"></div>
@@ -711,28 +733,10 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
 
     <!-- Kết quả -->
     <div id="tab-results" class="tabpane hide">
-      <div class="card hide" id="itemCard">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <h1 style="margin:0" id="itemTitle">Phân tích câu hỏi</h1>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn ghost sm" onclick="regradeUI()" title="Chấm lại tất cả bài đã nộp của đề này theo đáp án đúng hiện tại">Chấm lại đề này</button>
-            <button class="btn ghost sm" onclick="document.getElementById('itemCard').classList.add('hide')">Đóng</button>
-          </div>
-        </div>
-        <p class="small" style="margin-top:6px">Đọc từ bài làm đã nộp (mỗi người tính bài mới nhất). <b>% đúng</b> là độ khó thực tế. <b>Độ phân biệt</b> (−1 đến 1) cho biết câu đó có tách được người giỏi khỏi người yếu không: từ 0,3 là tốt, dưới 0,15 là kém, âm rõ rệt thường do đáp án bị gắn sai hoặc câu mơ hồ. Cần ít nhất <span id="itemMinN">30</span> lượt làm mỗi câu mới đánh giá độ phân biệt.</p>
-        <div id="itemSummary" class="small" style="margin:10px 0"></div>
-        <div id="itemMsg"></div>
-        <div id="regradeBox"></div>
-        <div id="itemTiming"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:18px 0 8px">
-          <h2 style="margin:0;font-size:15px">Từng câu hỏi</h2>
-          <label class="small" style="display:flex;align-items:center;gap:6px;margin:0">Sắp xếp
-            <select id="itemSort" onchange="renderItems()" style="width:auto;min-height:34px;padding:4px 8px">
-              <option value="review">Cần xem lại trước</option><option value="slow">Trả lời lâu nhất</option><option value="fast">Trả lời nhanh nhất</option>
-              <option value="timeout">Hết giờ nhiều nhất</option><option value="hard">% đúng thấp nhất</option>
-            </select></label>
-        </div>
-        <div style="overflow-x:auto"><table><thead><tr><th>Câu hỏi</th><th>Lượt</th><th>% đúng</th><th>% trống</th><th>Phân biệt</th><th style="min-width:190px">Thời gian trả lời</th><th>Nhận xét</th><th></th></tr></thead><tbody id="itemList"></tbody></table></div>
+      <div class="card" id="dashCard">
+        <div class="dash-h"><h1 id="dashTitle">Tổng quan kỳ</h1><p class="small" id="dashSub"></p></div>
+        <div id="dashBanner"></div>
+        <div class="kpis" id="dashKpis"></div>
       </div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
@@ -744,17 +748,19 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
           </div>
         </div>
         <table style="margin-top:14px"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Quản lí</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Mã minh chứng</th><th>Cảnh báo</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
+        <div class="panel" style="margin-top:14px"><details class="nd" id="dashNd"><summary id="dashNdSum">Chưa làm bài</summary><div class="ndg" id="dashNdList"></div></details></div>
       </div>
       <div class="card hide" id="resDetailCard">
         <h1>Chi tiết bài làm</h1>
         <div id="resDetail"></div>
         <button class="btn ghost sm" onclick="document.getElementById('resDetailCard').classList.add('hide')">Đóng</button>
       </div>
-      <div class="card" id="dashCard">
-        <div class="dash-h"><h1 id="dashTitle">Tổng quan kỳ</h1><p class="small" id="dashSub"></p><button class="btn sm" type="button" id="btnCohortIns" onclick="openCohortInsight()" title="Phân tích hành vi làm bài của cả nhóm, chẩn đoán nguyên nhân và đề xuất khắc phục">Chẩn đoán cả nhóm</button></div>
+    </div>
+
+    <div id="tab-analysis" class="tabpane hide">
+      <div class="card" id="anaCard">
+        <div class="dash-h"><h1>Phân tích kết quả</h1><p class="small" id="anaSub">Tính theo bài nộp gần nhất của mỗi nhân viên.</p><button class="btn sm" type="button" id="btnCohortIns" onclick="openCohortInsight()" title="Phân tích hành vi làm bài của cả nhóm, chẩn đoán nguyên nhân và đề xuất khắc phục">Chẩn đoán cả nhóm</button></div>
         <div id="insBoxWrap" class="hide" style="margin-bottom:14px"><div id="insBox"></div></div>
-        <div id="dashBanner"></div>
-        <div class="kpis" id="dashKpis"></div>
         <div class="dgrid">
           <div class="panel"><h2>Phân bố điểm tuân thủ</h2><div id="dashBands"></div></div>
           <div class="panel"><h2>Cảnh báo khi làm bài</h2><ul class="flags" id="dashFlags"></ul></div>
@@ -765,9 +771,32 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         </div>
         <div class="panel" style="margin-bottom:14px"><h2>Mảng kiến thức cả nhóm làm yếu nhất <span class="small" style="font-weight:400">· nên ưu tiên đào tạo lại</span></h2><ul class="wq" id="dashWeakCat"></ul></div>
         <div class="panel" style="margin-bottom:14px"><h2>Câu hỏi sai nhiều nhất <span class="small" id="dashWqNote" style="font-weight:400"></span></h2><ul class="wq" id="dashWq"></ul></div>
-        <div class="panel"><details class="nd" id="dashNd"><summary id="dashNdSum">Chưa làm bài</summary><div class="ndg" id="dashNdList"></div></details></div>
       </div>
-    </div>
+      <div class="card" id="itemCard">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <h1 style="margin:0" id="itemTitle">Phân tích câu hỏi</h1>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn ghost sm" onclick="regradeUI()" title="Chấm lại tất cả bài đã nộp của đề này theo đáp án đúng hiện tại">Chấm lại đề này</button>
+            
+          </div>
+        </div>
+        <p class="small" style="margin-top:6px">Đọc từ bài làm đã nộp (mỗi người tính bài mới nhất). <b>% đúng</b> là độ khó thực tế. <b>Độ phân biệt</b> (−1 đến 1) cho biết câu đó có tách được người giỏi khỏi người yếu không: từ 0,3 là tốt, dưới 0,15 là kém, âm rõ rệt thường do đáp án bị gắn sai hoặc câu mơ hồ. Cần ít nhất <span id="itemMinN">30</span> lượt làm mỗi câu mới đánh giá độ phân biệt.</p>
+        <div id="itemSummary" class="small" style="margin:10px 0"></div>
+        <div id="itemMsg"></div>
+        <div id="regradeBox"></div>
+        <div id="itemTiming"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:18px 0 8px">
+          <h2 style="margin:0;font-size:15px">Từng câu hỏi</h2>
+          <label class="small" style="display:flex;align-items:center;gap:6px;margin:0">Sắp xếp
+            <select id="itemSort" onchange="ITEM_LIM=15;renderItems()" style="width:auto;min-height:34px;padding:4px 8px">
+              <option value="review">Cần xem lại trước</option><option value="slow">Trả lời lâu nhất</option><option value="fast">Trả lời nhanh nhất</option>
+              <option value="timeout">Hết giờ nhiều nhất</option><option value="hard">% đúng thấp nhất</option>
+            </select></label>
+        </div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Câu hỏi</th><th>Lượt</th><th>% đúng</th><th>% trống</th><th>Phân biệt</th><th style="min-width:190px">Thời gian trả lời</th><th>Nhận xét</th><th></th></tr></thead><tbody id="itemList"></tbody></table></div>
+        <div style="text-align:center;margin-top:10px"><button class="btn ghost sm hide" id="itemMore" type="button" onclick="ITEM_LIM+=30;renderItems()"></button></div>
+      </div>
+
   </div>
 </div>
 
@@ -867,8 +896,8 @@ $('auXlsx').addEventListener('click', async function(){
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   logEv('exportExcel', { period: 'nhật ký ' + $('auDay').value });
 });
-const TABS = ['exams','candidates','results','questions','examset','settings','viewers','banks','audit'];
-const WS = ['results','questions','examset'], SYS = ['settings','viewers','banks','audit'];
+const TABS = ['exams','candidates','results','analysis','questions','examset','settings','viewers','banks','audit'];
+const WS = ['results','analysis','questions','examset'], SYS = ['settings','viewers','banks','audit'];
 let CUR_EXAM = null, EX_NEW = false, EX_DEFAULT = '';
 // Địa chỉ dạng #exams, #candidates, #settings… hoặc #results/<mã đề>, #questions/<mã đề>, #examset/<mã đề>
 function parseHash(){ const h = decodeURIComponent((location.hash || '').slice(1)), k = h.indexOf('/'); return k > 0 ? [h.slice(0,k), h.slice(k+1)] : [h, '']; }
@@ -893,14 +922,15 @@ function switchTab(t){
   if (location.hash !== h) history.replaceState(null, '', h);
   if (t === 'audit') loadAudit();
   if (inWs) renderExHead();
-  if (t === 'results' && CUR_EXAM){ $('resPeriod').innerHTML = '<option value="'+esc(CUR_EXAM)+'"></option>'; $('resPeriod').value = CUR_EXAM; $('resDetailCard').classList.add('hide'); loadResults(); }
+  if ((t === 'results' || t === 'analysis') && CUR_EXAM){ $('resPeriod').innerHTML = '<option value="'+esc(CUR_EXAM)+'"></option>'; $('resPeriod').value = CUR_EXAM; $('resDetailCard').classList.add('hide'); loadResults(); }
   if (t === 'questions' && CUR_EXAM && QP !== CUR_EXAM){ QP = CUR_EXAM; QLIM = 50; if ($('qSearch')) $('qSearch').value = ''; if (QUESTIONS.length || QMETA.questions) renderQuestions(); clearQForm(); qPanel(null); }
   if (t === 'examset' && !EX_NEW && CUR_EXAM) editExam(CUR_EXAM);
+  if (t === 'analysis' && CUR_EXAM && ITEM_EXAM !== CUR_EXAM){ const e = examById(CUR_EXAM); if (e && e.resultCount) openItemAnalysis(CUR_EXAM, true); else { ITEM_EXAM = CUR_EXAM; $('itemCard').classList.add('hide'); } }
   window.scrollTo({ top: 0 });
 }
 // Mở một đề thi: mọi tab con (kết quả, câu hỏi, cài đặt) đều làm việc trên đề này
 function openExam(id, sub){
-  CUR_EXAM = id; EX_NEW = false; QP = null; $('itemCard').classList.add('hide');
+  CUR_EXAM = id; EX_NEW = false; QP = null; ITEM_EXAM = null;
   switchTab(sub || 'results');
 }
 function fillSetPeriod(){
@@ -931,7 +961,6 @@ function renderExHead(){
     '<div class="ehlink"><span>Link thi:</span> <a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link.replace(/^https?:\/\//,'')) + '</a> <button class="btn ghost sm" type="button" onclick="copyText(\'' + esc(link) + '\', this)">Sao chép</button></div>';
   $('ehQ').textContent = qCountOf(e);
   $('ehAct').innerHTML = (e.id !== EX_DEFAULT ? '<button class="btn ghost sm" onclick="setDefaultExamUI(\'' + esc(e.id) + '\')" title="Link chung (không kèm ?exam=) sẽ dẫn tới đề này">Đặt làm đề mặc định</button>' : '') +
-    (e.resultCount ? '<button class="btn ghost sm" onclick="switchTab(\'results\');openItemAnalysis(\'' + esc(e.id) + '\')">Phân tích câu hỏi</button>' : '') +
     (e.id !== EX_DEFAULT ? '<button class="btn dghost sm" onclick="deleteExamUI(\'' + esc(e.id) + '\')">Xoá đề</button>' : '');
 }
 function examBadges(e){
@@ -1008,6 +1037,7 @@ function clearExamForm(){
   $('exDesc').value=''; $('exCodes').value=''; $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
   BP_RULES = []; renderBpRules(); $('bpPreview').innerHTML=''; $('bpTotal').textContent='';
   msg('exMsg',''); $('exAdv').open = false; exSpSet(false);
+  $('exPassOn').checked = !!SETCACHE.passEnabled; $('exRetake').checked = !!SETCACHE.allowRetake; $('exComplianceOn').checked = !!SETCACHE.complianceEnabled;
   $('exId').oninput = () => { $('exSp').dataset.bank = $('exId').value.trim(); spRefresh($('exSp')); exQSummary(); };
 }
 function openNewExam(){
@@ -1026,14 +1056,16 @@ function editExam(id){
   $('exEditingId').value = id; $('exId').value = id; $('exId').disabled = true;
   $('exTitle').value = e.title || ''; $('exShareTitle').value = e.shareTitle || '';
   $('exCount').value = e.questionCount || ''; $('exBothGD').value = e.bothGiaDungCount || '';
-  $('exSeconds').value = e.secondsPerQuestion || ''; $('exPass').value = e.passScore || ''; $('exPassOn').checked = !!e.passEnabled;
-  $('exRetake').checked = !!e.allowRetake; $('exPractice').checked = !!e.practice; $('exComplianceOn').checked = !!e.complianceEnabled;
+  $('exSeconds').value = e.secondsPerQuestion || ''; $('exPass').value = e.passScore || ''; $('exPassOn').checked = e.passEnabled != null ? !!e.passEnabled : !!SETCACHE.passEnabled;
+  // Ô tick chưa đặt riêng cho đề thì hiện theo Cài đặt mặc định (tránh lưu nhầm thành 'tắt')
+  const dflt = (k) => e[k] != null ? !!e[k] : !!SETCACHE[k];
+  $('exRetake').checked = dflt('allowRetake'); $('exPractice').checked = !!e.practice; $('exComplianceOn').checked = dflt('complianceEnabled');
   $('exCHigh').value = e.complianceHighMin || ''; $('exCMid').value = e.complianceMidMin || ''; $('exCLow').value = e.complianceLowMin || '';
   $('exDesc').value = e.description || ''; $('exCodes').value = (e.codes || []).join('\n'); $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
   document.querySelectorAll('.exSeg').forEach(c => c.checked = (e.segments || []).indexOf(c.value) >= 0);
   BP_RULES = e.blueprint && e.blueprint.rules ? e.blueprint.rules.map(r => Object.assign({}, r)) : []; renderBpRules();
   $('examFormTitle').textContent = 'Cài đặt đề';
-  $('exAdv').open = !!(BP_RULES.length || e.questionCount || e.bothGiaDungCount || (e.segments||[]).length || (e.codes||[]).length || e.complianceEnabled || e.shareTitle || e.description);
+  $('exAdv').open = !!(BP_RULES.length || e.questionCount || e.bothGiaDungCount || (e.segments||[]).length || (e.codes||[]).length);
   exSpSet(spHas(e.segmentPlans), e.segmentPlans); previewPlan();
   $('examFormCard').classList.remove('hide');
   $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
@@ -1277,13 +1309,13 @@ async function runAiCheck(){
 }
 
 /* ---------- Phân tích chất lượng câu hỏi ---------- */
-let ITEMS = [], ITEM_EXAM = '';
-async function openItemAnalysis(examId){
+let ITEMS = [], ITEM_EXAM = '', ITEM_LIM = 15;
+async function openItemAnalysis(examId, quiet){
   ITEM_EXAM = examId; $('regradeBox').innerHTML = '';
   $('itemCard').classList.remove('hide');
-  $('itemTitle').textContent = 'Phân tích câu hỏi: đề ' + examId;
+  $('itemTitle').textContent = 'Phân tích từng câu hỏi';
   $('itemSummary').textContent = 'Đang tính…'; $('itemList').innerHTML = ''; $('itemTiming').innerHTML = ''; msg('itemMsg','');
-  $('itemCard').scrollIntoView({behavior:'smooth',block:'start'});
+  if (!quiet) $('itemCard').scrollIntoView({behavior:'smooth',block:'start'});
   const { j } = await api('GET','/api/kt-admin?op=itemAnalysis&exam='+encodeURIComponent(examId));
   if (!j.ok){ $('itemSummary').textContent=''; msg('itemMsg', j.error || 'Không phân tích được.'); return; }
   ITEMS = j.items; $('itemMinN').textContent = j.summary.minN;
@@ -1378,7 +1410,8 @@ function sortedItems(){
 function renderItems(){
   const cls = { bad:'n', warn:'n', info:'', ok:'y' };
   const chipStyle = { bad:'background:var(--bad-soft);color:var(--bad)', warn:'background:#FBEBC8;color:#8A5500', info:'background:#EEF5F6;color:var(--muted)', ok:'background:var(--ok-soft);color:var(--ok)' };
-  $('itemList').innerHTML = sortedItems().map((it, k) => {
+  const ALL = sortedItems(); $('itemMore').classList.toggle('hide', ALL.length <= ITEM_LIM); $('itemMore').textContent = 'Xem thêm (còn ' + Math.max(0, ALL.length - ITEM_LIM) + ' câu)';
+  $('itemList').innerHTML = ALL.slice(0, ITEM_LIM).map((it, k) => {
     const tNotes = (ITEM_TIME[it.id] && ITEM_TIME[it.id].notes) || [];
     const r = it.discrimination == null ? '–' : (Math.round(it.discrimination * 100) / 100).toFixed(2);
     const opts = it.options ? '<details style="margin-top:4px"><summary class="small" style="cursor:pointer">Phương án</summary><ul style="margin:4px 0 0;padding-left:18px">'+it.options.map(o =>
@@ -1716,10 +1749,19 @@ async function loadCandidates(){
   if (!j.ok) return;
   $('candCount').textContent = j.candidates.length;
   CANDIDATES = j.candidates;
+  renderCandidates();
+}
+function renderCandidates(){
   const segLabel = { both:'Cả hai', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };
-  $('candList').innerHTML = j.candidates.map(c =>
+  const mgrs = Array.from(new Set(CANDIDATES.map(c => c.manager || ''))).sort(), mv = $('candMgrF').value;
+  $('candMgrF').innerHTML = '<option value="*">Mọi quản lí</option>' + mgrs.map(m => '<option value="' + esc(m) + '">' + esc(m || '(chưa có quản lí)') + ' (' + CANDIDATES.filter(c => (c.manager||'') === m).length + ')</option>').join('');
+  $('candMgrF').value = mgrs.indexOf(mv) >= 0 ? mv : '*';
+  const q = spNorm($('candSearch').value), mf = $('candMgrF').value, sf = $('candSegF').value;
+  const L = CANDIDATES.filter(c => (mf === '*' || (c.manager||'') === mf) && (sf === '*' || (c.segment||'both') === sf) && (!q || spNorm([c.code, c.name, c.email].join(' ')).indexOf(q) >= 0));
+  $('candShown').textContent = L.length === CANDIDATES.length ? '' : 'Đang lọc: ' + L.length + ' người';
+  $('candList').innerHTML = L.map(c =>
     '<tr><td>'+esc(c.code)+'</td><td>'+esc(c.name||'')+'</td><td>'+esc(c.email)+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.confirmed?'<span class="badge y">Đã xác nhận</span><br>'+esc(c.confirmed.byName||c.confirmed.by||'')+' · '+new Date(c.confirmed.at).toLocaleDateString('vi-VN'):'<span class="small">Chưa xác nhận</span>')+'</td><td style="white-space:nowrap"><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
-  ).join('') || '<tr><td colspan="7" class="small">Chưa có thí sinh nào.</td></tr>';
+  ).join('') || '<tr><td colspan="7" class="small">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Bấm “＋ Thêm thí sinh”.') + '</td></tr>';
 }
 let CANDIDATES = [];
 function editCandidateOpen(code){
@@ -1767,7 +1809,7 @@ async function loadSettings(){
   const { j } = await api('GET','/api/kt-admin?op=settings');
   if (!j.ok) return;
   const s = j.settings;
-  CUR_PERIOD = s.examPeriod || ''; fillSetPeriod();
+  CUR_PERIOD = s.examPeriod || ''; SETCACHE = s; fillSetPeriod();
   $('setTitle').value = s.examTitle; $('setShareTitle').value = s.shareTitle || ''; $('setCount').value = s.questionCount;
   $('setBothGD').value = s.bothGiaDungCount;
   $('setSeconds').value = s.secondsPerQuestion; $('setPass').value = s.passScore; $('setPassOn').checked = !!s.passEnabled; $('setPass').disabled = !s.passEnabled;
@@ -1797,7 +1839,7 @@ async function saveSettings(){
   msg('spMsg','Đã lưu phân bổ câu hỏi.','ok');
   msg('setMsg','Đã lưu cài đặt.','ok'); msg('setPeriodMsg','Đã lưu đề mặc định.','ok'); loadExams();
 }
-let CUR_PERIOD = '';
+let CUR_PERIOD = '', SETCACHE = {};
 
 /* ---------- Nhập câu hỏi từ Excel vào đề/kỳ đang chọn ---------- */
 let XL = null; // { sheets: [{ name, cat, colCat, rows:[q], bad:[{row, why}], dup }] }
@@ -2199,7 +2241,7 @@ async function loadDashboard(sel){
   DASH = j; $('dashCard').classList.remove('hide');
   if (j.period === j.currentPeriod) renderAdminHero(j);
   $('dashTitle').textContent = 'Tổng quan';
-  $('dashCard').classList.toggle('nodata', !j.submitted);
+  $('anaCard').classList.toggle('nodata', !j.submitted); $('anaSub').textContent = j.submitted ? 'Tính theo bài nộp gần nhất của mỗi nhân viên.' : 'Chưa có bài nộp nào, phần phân tích sẽ hiện khi có kết quả.';
   $('dashSub').textContent = (j.submitted ? '' : 'Chưa có bài nộp, phần phân tích sẽ hiện khi có kết quả. ') + 'Tính theo bài nộp gần nhất của mỗi nhân viên, trên danh sách thí sinh hiện có.';
   // Bài chưa gắn kỳ
   $('dashBanner').innerHTML = j.untagged ? '<div class="banner"><span class="sp"><b>' + j.untagged + ' bài làm chưa gắn kỳ</b> (nộp trước khi có tính năng kỳ). Những nhân viên này hiện vẫn bắt đầu làm lại được. Gắn vào kỳ để khoá lại và đưa vào thống kê.</span>' +
