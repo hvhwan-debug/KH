@@ -2,6 +2,7 @@
 const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const { isAdmin, validEmail, emailAllowed } = require("../_lib/config");
 const quiz = require("../_lib/quiz");
+const { modelName } = require("../_lib/devicename");
 const store = require("../_lib/store");
 const pwdlib = require("../_lib/pwd");
 const crypto = require("crypto");
@@ -214,6 +215,7 @@ const handler = async function (context, req) {
             chosenIndex, chosenIndexes: g ? g.chosenOrig : [], chosenText: g ? g.chosenText : "", answerText: g ? g.correctText : "", ok: g ? g.ok : false,
             answered: g ? g.state !== "blank" : !!ans };
         });
+        if (Array.isArray(a.devices)) a.devices = a.devices.map((d) => Object.assign({}, d, { model: modelName(d.model, d.screen) || d.model }));
         return reply(context, 200, { ok: true, attempt: a, detail });
       }
       return reply(context, 400, { ok: false, error: "Thiếu tham số op." });

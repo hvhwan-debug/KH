@@ -4,6 +4,7 @@
 const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const { validEmail, isAdmin } = require("../_lib/config");
 const quiz = require("../_lib/quiz");
+const { modelName, prettyLabel } = require("../_lib/devicename");
 const behavior = require("../_lib/behavior");
 
 const SEGMENT_INPUTS = ["both", "ca_hai", "gia_dung", "may_loc"]; // giá trị được chấp nhận; lưu dạng chuẩn: both | gia_dung | may_loc
@@ -20,7 +21,7 @@ function summaryOf(r, settings, admin) {
     id: r.id, period: r.period || "",
     score: r.score, total: r.total, pct: r.pct, compliancePoints: r.compliancePoints, passed: quiz.passState(r.pct, settings), practice: !!r.practice,
     submittedAt: r.submittedAt, startedAt: r.startedAt, durationSec: r.durationSec, wrong: r.wrong, blank: r.blank,
-    proof: quiz.proofCode(r.id), verify: quiz.verifyToken(r.id), flags: r.flags || null, mailOk: r.mailOk, device: admin ? (r.device || null) : undefined
+    proof: quiz.proofCode(r.id), verify: quiz.verifyToken(r.id), flags: r.flags || null, mailOk: r.mailOk, device: admin ? (r.device ? Object.assign({}, r.device, { label: prettyLabel(r.device.label) }) : null) : undefined
   };
 }
 
@@ -171,7 +172,7 @@ const handler = async function (context, req) {
         const photo = attempt && typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "";
         const devices = !viewer.isAdmin ? [] : attempt ? (Array.isArray(attempt.devices) ? attempt.devices : (attempt.device ? [attempt.device] : [])) : [];
         return reply(context, 200, { ok: true, photo, takenAt: (attempt && attempt.startedAt) || null, face: attempt && attempt.faceCheck ? attempt.faceCheck.status : null, period: attempt ? (attempt.period || "") : wantP, inProgress: !!(attempt && attempt.status === "in_progress"),
-          devices: !viewer.isAdmin ? undefined : devices.map((d) => ({ type: d.type, os: d.os, browser: d.browser, model: d.model, ip: d.ip, screen: d.screen, tz: d.tz, lang: d.lang, stage: d.stage, at: d.at, ua: d.ua, loc: d.loc || null, locErr: d.locErr || "" })) });
+          devices: !viewer.isAdmin ? undefined : devices.map((d) => ({ type: d.type, os: d.os, browser: d.browser, model: modelName(d.model, d.screen) || d.model, ip: d.ip, screen: d.screen, tz: d.tz, lang: d.lang, stage: d.stage, at: d.at, ua: d.ua, loc: d.loc || null, locErr: d.locErr || "" })) });
       }
       if (op === "employee") {
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));

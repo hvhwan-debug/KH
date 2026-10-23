@@ -1,5 +1,6 @@
 // Ghi nhận thiết bị thí sinh dùng khi làm bài (loại máy, hệ điều hành, trình duyệt, đời máy, IP...)
 // để quản lí đối chiếu. Chỉ đọc từ User-Agent + vài gợi ý do trình duyệt gửi lên, không dùng cookie theo dõi.
+const { modelName, prettyLabel } = require("./devicename");
 const clip = (v, n) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f<>"`]/g, "").trim().slice(0, n || 60);
 
 function ipOf(req) {
@@ -63,7 +64,8 @@ function km(a, b) { // khoảng cách 2 điểm (km)
   return 6371 * 2 * Math.asin(Math.sqrt(x));
 }
 const sig = (d) => d ? [d.type, d.os, d.browser, d.model].join("|") : "";
-const label = (d) => d ? [d.type, d.model, d.os, d.browser].filter(Boolean).join(" · ") : "";
+// Nhãn hiển thị: đời máy ghi theo tên thương mại (mã gốc vẫn giữ trong d.model để so khớp thiết bị)
+const label = (d) => d ? [d.type, modelName(d.model, d.screen), d.os, d.browser].filter(Boolean).join(" · ") : "";
 
 // Ghi thiết bị vào bài làm. Chỉ thêm mục mới khi thiết bị hoặc IP khác lần trước (giữ tối đa 10 mục).
 function record(attempt, dev) {
@@ -84,4 +86,4 @@ function brief(attempt) {
   return { label: label(first), type: first.type, ip: first.ip, changed: new Set(log.map(sig)).size > 1, ipCount: new Set(log.map((d) => d.ip).filter(Boolean)).size,
     loc: l0 ? l0.loc : null, locErr: l0 ? "" : (first.locErr || "none"), movedKm: moved };
 }
-module.exports = { capture, record, brief, label, ipOf, km };
+module.exports = { capture, record, brief, label, ipOf, km, modelName, prettyLabel };
