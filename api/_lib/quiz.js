@@ -791,7 +791,7 @@ module.exports = {
   getCandidates, saveCandidates,
   getSettings, saveSettings,
   getAttempt, putAttempt, saveIndex, activeForPeriod,
-  getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary,
+  getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary, fmtVN,
   getBanks, saveBanks, bankOf, validBankId, slugify, cleanQuestionMeta, DEFAULT_BANK, DIFFICULTIES,
   cleanBlueprint, buildFromBlueprint, blueprintTotal, planExam, targetCount, cleanSegmentPlans, segPlanFor, countFor, validateCounts, MAX_QUESTION_COUNT, examAccessError, inAudience, examKnown, scoreAttempt, patchIndex, previousResult, loadAttempts,
   TYPES, qType, normText, normalizeQuestionInput, gradeAnswer,

@@ -52,6 +52,18 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .proof{display:flex;align-items:center;gap:14px;margin:16px 0 0;padding:15px 16px;border:1.5px dashed #9FD2CB;border-radius:16px;background:#F2FAF8;text-align:left}
 .proof small{display:block;font-size:11px;letter-spacing:.08em;color:var(--muted);font-weight:700}.proof b{display:block;font-size:21px;letter-spacing:.06em;color:var(--brand-deep)}
 .proof span{display:block;font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px}
+.paperbox{margin:16px 0 0;text-align:left}
+.btn-outline{display:inline-flex;align-items:center;justify-content:center;width:100%;border:1.5px solid var(--line);background:#fff;color:var(--brand-deep);font:inherit;font-weight:700;font-size:14px;border-radius:12px;padding:12px;cursor:pointer}
+.btn-outline.solid{background:var(--brand);color:#fff;border-color:var(--brand);margin-top:10px}
+.pnote{font-size:12.5px;color:var(--muted);line-height:1.6;margin:10px 0}
+#paperForm input{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:11px 13px;font:inherit;font-size:14px;margin-top:8px;background:#FAFCFC}
+.pmsg{font-size:13px;border-radius:10px;padding:9px 12px;margin-top:10px;background:var(--bad-soft);color:var(--bad)}
+.pq{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:12px;font-size:13.5px}
+.pq .qt{font-weight:700;margin:0 0 10px}
+.pq .opt{padding:9px 12px;border-radius:9px;margin-bottom:6px;border:1px solid var(--line)}
+.pq .opt.correct{background:var(--ok-soft);border-color:#9FD2B5;font-weight:700}
+.pq .opt.wrong{background:var(--bad-soft);border-color:#F2C6C1}
+.pq .tag{display:inline-block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px}
 .foot{padding:16px 24px 22px;text-align:center;font-size:12.5px;color:var(--muted);line-height:1.7}
 .foot b{color:var(--brand-deep)}
 /* Đề thi thử: MỘT khung thông báo dịu + hoa văn chữ chìm phủ thẻ (hiện ở mọi ảnh chụp, không đè lên số liệu) */
@@ -89,6 +101,18 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
         <div class="bk hide" id="vBk"></div>
         <dl class="kv" id="vRows"></dl>
         <div class="proof"><svg width="38" height="38" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z" fill="#17794A"/><path d="m8.2 12.3 2.6 2.6 5-5.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><div><small>MÃ MINH CHỨNG</small><b id="vProof"></b><span>Mã này khớp với dữ liệu bài làm trên hệ thống.</span></div></div>
+
+        <div class="paperbox" id="paperBox">
+          <button type="button" class="btn-outline" id="paperToggle">Xem lại đề đã làm</button>
+          <div class="hide" id="paperForm">
+            <p class="pnote">Để bảo mật đề thi, chỉ xem lại được <b>sau khi bài kiểm tra đã kết thúc</b>, và cần nhập đúng mã nhân viên + email của chính bài làm này.</p>
+            <input type="text" id="pCode" placeholder="Mã nhân viên" autocomplete="off">
+            <input type="text" id="pEmail" placeholder="Email" autocomplete="off">
+            <button type="button" class="btn-outline solid" id="paperGo">Xem đề</button>
+            <div id="paperMsg"></div>
+          </div>
+          <div class="hide" id="paperView"></div>
+        </div>
       </div>
       <div class="foot">Xác thực bởi hệ thống lúc <b id="vSys"></b></div>
     </div>
@@ -106,8 +130,40 @@ function clock(sec){ sec = Math.max(0, Math.round(sec||0)); var h = Math.floor(s
 function initials(n){ var p = String(n||'').trim().split(/\s+/).filter(Boolean); if(!p.length) return '?'; return ((p.length>1?p[0].charAt(0):'')+p[p.length-1].charAt(0)).toUpperCase(); }
 function fail(text){ $('state').textContent = text; $('state').classList.remove('hide'); $('okView').classList.add('hide'); }
 
+var TOK = new URLSearchParams(location.search).get('t');
+$('paperToggle').addEventListener('click', function(){
+  $('paperToggle').classList.add('hide');
+  $('paperForm').classList.remove('hide');
+  $('pCode').focus();
+});
+async function loadMyPaper(){
+  var code = $('pCode').value.trim(), email = $('pEmail').value.trim();
+  if (!code || !email){ $('paperMsg').innerHTML = '<div class="pmsg">Nhập đủ mã nhân viên và email.</div>'; return; }
+  $('paperGo').disabled = true; $('paperMsg').innerHTML = '';
+  var res, j;
+  try {
+    res = await fetch('/api/kt-mypaper', { method:'POST', headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: JSON.stringify({ t: TOK, code: code, email: email }) });
+    j = await res.json();
+  } catch(e){ j = null; }
+  $('paperGo').disabled = false;
+  if (!j || !j.ok){ $('paperMsg').innerHTML = '<div class="pmsg">' + esc((j && j.error) || 'Không kết nối được máy chủ.') + '</div>'; return; }
+  $('paperForm').classList.add('hide');
+  $('paperView').classList.remove('hide');
+  $('paperView').innerHTML = '<p class="pnote" style="margin-top:0">Đề đã làm (' + j.paper.length + ' câu) — đáp án đúng tô xanh, đáp án bạn chọn sai tô đỏ.</p>' +
+    j.paper.map(function(q){
+      var opts = (q.options || []).map(function(o, idx){
+        var isCorrect = (q.correctList && q.correctList.indexOf(idx) >= 0) || q.correct === idx;
+        var isChosenWrong = !isCorrect && ((q.chosenList && q.chosenList.indexOf(idx) >= 0) || q.chosen === idx);
+        return '<div class="opt' + (isCorrect ? ' correct' : isChosenWrong ? ' wrong' : '') + '">' + esc(o) + (isCorrect ? ' ✓' : isChosenWrong ? ' ✗' : '') + '</div>';
+      }).join('');
+      return '<div class="pq"><span class="tag">Câu ' + q.n + (q.category ? ' · ' + esc(q.category) : '') + '</span><p class="qt">' + esc(q.text) + '</p>' + opts + '</div>';
+    }).join('');
+}
+$('paperGo').addEventListener('click', loadMyPaper);
+$('pEmail').addEventListener('keydown', function(e){ if (e.key === 'Enter') loadMyPaper(); });
+
 (async function(){
-  var t = new URLSearchParams(location.search).get('t');
+  var t = TOK;
   if (!t){ fail('Liên kết không hợp lệ. Hãy quét lại mã QR trên thẻ kết quả.'); return; }
   var res, j;
   try { res = await fetch('/api/kt-verify?t=' + encodeURIComponent(t), { credentials:'same-origin' }); j = await res.json(); }
