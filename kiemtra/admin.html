@@ -622,7 +622,7 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         <p class="small" style="margin-top:-4px">Đề nào để trống ô tương ứng trong “Cài đặt đề” sẽ dùng giá trị ở đây.</p>
         <div class="grid2">
           <div>
-            <label>Tên bài kiểm tra</label>
+            <label>Tên bài kiểm tra mặc định (dùng cho đề chưa đặt tên riêng)</label>
             <input type="text" id="setTitle">
           </div>
           <div>
@@ -943,7 +943,7 @@ function renderExGrid(){
   if ($('setPeriod')) fillSetPeriod();
   $('exGrid').innerHTML = EXAMS.map(e => {
     const plan = spHas(e.segmentPlans) ? 'Phân bổ riêng' : spHas(SEGPLANS) ? 'Phân bổ chung' : 'Chia theo nhóm ngành';
-    return '<button type="button" class="excard" onclick="openExam(\'' + esc(e.id) + '\')"><div class="t">' + esc(e.title || e.id) + '</div><div class="b">' + examBadges(e) + '</div>' +
+    return '<button type="button" class="excard" onclick="openExam(\'' + esc(e.id) + '\')"><div class="t">' + esc(exTitleOf(e)) + (!ownTitle(e) ? ' <span class="small" style="font-weight:500">(tên mặc định)</span>' : '') + '</div><div class="b">' + examBadges(e) + '</div>' +
       '<div class="st"><span><b>' + qCountOf(e) + '</b> câu hỏi</span><span><b>' + (e.resultCount || 0) + '</b> bài đã nộp</span></div>' +
       '<div class="small">' + esc(e.id) + ' · ' + plan + ' · ' + esc(examWindowText(e)) + '</div>' +
       (!qCountOf(e) ? '<div class="warn">⚠ Chưa có câu hỏi riêng</div>' : '') + '</button>';
@@ -951,12 +951,15 @@ function renderExGrid(){
 }
 // Số câu hỏi riêng của một đề (đếm trực tiếp khi đã tải ngân hàng câu hỏi)
 function qCountOf(e){ return QUESTIONS && QUESTIONS.length ? QUESTIONS.filter(q => (q.period || '') === e.id).length : (e.bankCount || 0); }
+// Tên thí sinh thấy: tên riêng của đề, chưa đặt thì dùng tên mặc định ở Cài đặt
+const ownTitle = (e) => !!(e && e.title && e.title !== e.id);
+const exTitleOf = (e) => ownTitle(e) ? e.title : (SETCACHE.examTitle || e.id);
 function examById(id){ return EXAMS.find(e => e.id === id) || null; }
 function renderExHead(){
   if (EX_NEW){ $('ehTitle').textContent = 'Tạo đề thi mới'; $('ehMeta').textContent = 'Điền mã đề và tên đề, các ô khác để trống sẽ theo Cài đặt mặc định.'; $('ehAct').innerHTML = ''; return; }
   const e = examById(CUR_EXAM) || { id: CUR_EXAM, title: CUR_EXAM };
   const link = location.origin + '/kiemtra/?exam=' + encodeURIComponent(e.id);
-  $('ehTitle').innerHTML = esc(e.title || e.id) + examBadges(e);
+  $('ehTitle').innerHTML = esc(exTitleOf(e)) + examBadges(e) + (!ownTitle(e) ? ' <span class="small" style="font-weight:500">(chưa đặt tên riêng, đang dùng tên mặc định)</span>' : '');
   $('ehMeta').innerHTML = 'Mã đề <code>' + esc(e.id) + '</code> · ' + esc(examWindowText(e)) +
     '<div class="ehlink"><span>Link thi:</span> <a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link.replace(/^https?:\/\//,'')) + '</a> <button class="btn ghost sm" type="button" onclick="copyText(\'' + esc(link) + '\', this)">Sao chép</button></div>';
   $('ehQ').textContent = qCountOf(e);
@@ -1054,7 +1057,7 @@ function editExam(id){
   const e = EXAMS.find(x => x.id === id) || { id };
   clearExamForm();
   $('exEditingId').value = id; $('exId').value = id; $('exId').disabled = true;
-  $('exTitle').value = e.title || ''; $('exShareTitle').value = e.shareTitle || '';
+  $('exTitle').value = ownTitle(e) ? e.title : ''; $('exShareTitle').value = e.shareTitle || '';
   $('exCount').value = e.questionCount || ''; $('exBothGD').value = e.bothGiaDungCount || '';
   $('exSeconds').value = e.secondsPerQuestion || ''; $('exPass').value = e.passScore || ''; $('exPassOn').checked = e.passEnabled != null ? !!e.passEnabled : !!SETCACHE.passEnabled;
   // Ô tick chưa đặt riêng cho đề thì hiện theo Cài đặt mặc định (tránh lưu nhầm thành 'tắt')
@@ -1095,6 +1098,9 @@ function renderPlan(j){
 }
 async function previewPlan(){ $('planPreview').innerHTML = '<div class="small" style="margin-top:8px">Đang kiểm tra…</div>'; renderPlan(await fetchPlan()); }
 async function saveExam(){
+  const tt = $('exTitle').value.trim(), prac = $('exPractice').checked;
+  if (!tt){ msg('exMsg','Nhập tên đề thi (thí sinh thấy tên này trên đề và phiếu kết quả).'); $('exTitle').focus(); return; }
+  if (/thi\s*thử/i.test(tt) && !prac && !confirm('Tên đề có chữ "thi thử" nhưng chưa tick "Đề thi thử".\n\nNếu đây là đề thi THẬT, hãy bỏ chữ "thi thử" khỏi tên (thí sinh sẽ thấy tên này trên phiếu kết quả).\n\nVẫn lưu như hiện tại?')) return;
   // Kiểm tra phân bổ đề trước khi lưu: sai cấu hình -> chặn; thiếu câu -> hỏi lại
   const pj = await fetchPlan();
   if (pj && pj.ok){

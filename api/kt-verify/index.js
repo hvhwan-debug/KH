@@ -22,7 +22,7 @@ module.exports = async function (context, req) {
     return reply(context, 200, {
       ok: true, serverNow: Date.now(),
       result: {
-        title: settings.examTitle || "Bài kiểm tra", practice,
+        title: attempt.examTitle || settings.examTitle || "Bài kiểm tra", practice,
         name: attempt.name || "", code: attempt.code || "",
         score: attempt.score, total: attempt.total, pct: attempt.pct, passed: quiz.passState(attempt.pct, settings),
         compliancePoints: attempt.compliancePoints, passScore: quiz.passScoreOf(settings),

@@ -228,6 +228,9 @@ async function getExamSettings(examId) {
   const ex = exams.find((e) => e.id === examId);
   const effective = Object.assign({}, base, ex ? pick(ex, OVERRIDABLE_FIELDS) : {});
   effective.examPeriod = examId != null ? examId : base.examPeriod;
+  // Tên đề thí sinh thấy: tên đặt ở form đề (title). Trước đây chỉ lưu title cho danh sách quản trị nên mọi đề
+  // đều hiện tên chung ở Cài đặt (vd một đề thật bị hiện chữ "THI THỬ" của tên chung). Đề chưa đặt tên riêng mới dùng tên chung.
+  if (ex && !ex.examTitle && ex.title && String(ex.title).trim() !== ex.id) effective.examTitle = String(ex.title).trim();
   // Cấu trúc đề + khung thời gian + đối tượng: chỉ có ở đề thi đã đăng ký (không kế thừa từ cài đặt chung).
   effective.blueprint = ex && ex.blueprint ? ex.blueprint : null;
   // Phân bổ câu theo nhóm ngành: đề có phân bổ riêng thì dùng của đề, không thì theo cài đặt chung

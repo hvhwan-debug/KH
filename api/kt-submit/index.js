@@ -46,6 +46,7 @@ module.exports = async function (context, req) {
     attempt.pct = pct;
     attempt.passed = passed;
     attempt.practice = !!settings.practice;
+    attempt.examTitle = settings.examTitle || ""; // giữ đúng tên đề lúc nộp: đổi tên đề sau này không làm đổi phiếu kết quả cũ
     attempt.scoreOutOf10 = scoreOutOf10;
     attempt.compliancePoints = compliance;
     attempt.paper = quiz.buildPaper(attempt, byId); // bản sao bài làm có cấu trúc, dùng để quản lí xem lại
