@@ -1331,15 +1331,17 @@ function saveBlob(blob){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
 }
-// Nội dung tin nhắn khi chia sẻ qua Zalo - đúng 3 dòng:
+// Nội dung tin nhắn khi chia sẻ qua Zalo - 4 dòng:
 //   <tên rút gọn kỳ kiểm tra>
 //   <HỌ TÊN IN HOA>
 //   ĐIỂM: <số câu đúng>/<tổng số câu>
+//   Xác thực: <link xác thực của thẻ kết quả>   (cùng link với mã QR trên ảnh; bỏ dòng này nếu chưa có mã xác thực)
 function shareText(){
   var r = ST.res.r, c = ST.cand || {};
   var title = String((ST.exam && (ST.exam.shareTitle || ST.exam.title)) || $('examTitle').textContent || 'Bài kiểm tra').trim();
   var name = String(c.name || c.code || '').trim().toLocaleUpperCase('vi-VN');
-  return (isPractice() ? '[THI THỬ - KHÔNG PHẢI THI CHÍNH THỨC] ' : '') + title + '\n' + name + '\nĐIỂM: ' + (r.score != null ? r.score : '–') + '/' + (r.total != null ? r.total : '–');
+  var link = verifyUrl(r);
+  return (isPractice() ? '[THI THỬ - KHÔNG PHẢI THI CHÍNH THỨC] ' : '') + title + '\n' + name + '\nĐIỂM: ' + (r.score != null ? r.score : '–') + '/' + (r.total != null ? r.total : '–') + (link ? '\nXác thực: ' + link : '');
 }
 async function copyText(t){
   try { if (navigator.clipboard && navigator.clipboard.writeText){ await navigator.clipboard.writeText(t); return true; } } catch(e){}
