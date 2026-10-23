@@ -258,6 +258,7 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .dev .pin:hover{color:var(--brand)}
 .dev-warn.amber{color:var(--warn);background:var(--warn-soft)}
 /* hồ sơ kiểm tra */
+.tv{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:600;background:#FFF4D6;color:#8A5A00;vertical-align:middle;white-space:nowrap}
 .who .nm{all:unset;cursor:pointer;font-weight:600;line-height:1.3;display:block;word-break:break-word}
 .who .nm:hover{color:var(--brand-deep);text-decoration:underline;text-underline-offset:3px}
 .who .nm:focus-visible{outline:3px solid #7CC6D0;outline-offset:2px;border-radius:4px}
@@ -740,7 +741,7 @@ function render(){
     var dis = done ? '' : ' disabled';
     var nm = esc(e.name||e.code);
     return '<tr data-code="'+esc(e.code)+'">'+
-      '<td class="c-who"><div class="who"><span class="av" aria-hidden="true">'+esc(initials(e.name||e.code))+'</span><div><button type="button" class="nm" data-act="prof" title="Xem hồ sơ kiểm tra">'+nm+'</button><small><span class="code">'+esc(e.code)+'</span> · '+esc(e.email||'')+'</small></div></div></td>'+
+      '<td class="c-who"><div class="who"><span class="av" aria-hidden="true">'+esc(initials(e.name||e.code))+'</span><div><button type="button" class="nm" data-act="prof" title="Xem hồ sơ kiểm tra">'+nm+'</button>'+(e.probation?'<span class=\"tv\" title=\"Thử việc từ '+esc(e.probation.from)+' đến hết '+esc(e.probation.until)+'\">Thử việc</span>':'')+'<small><span class="code">'+esc(e.code)+'</span> · '+esc(e.email||'')+'</small></div></div></td>'+
       '<td class="c-seg"><span class="seg-t">'+esc(SEG[e.segment]||'–')+'</span></td>'+
       '<td class="c-sc">'+sc+'</td>'+
       '<td class="c-when"><span class="when">'+when+'</span></td>'+
