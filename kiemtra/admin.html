@@ -74,6 +74,31 @@ textarea{resize:vertical;min-height:80px}
 .tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
 .tabs button{border:0;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:8px 14px;font:inherit;font-weight:700;font-size:13px;cursor:pointer;color:var(--muted)}
 .tabs button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+/* ===== Bố cục theo đề thi: Đề thi → (Kết quả · Câu hỏi · Cài đặt đề) ===== */
+.tabs button{padding:9px 16px;font-size:14px}
+.subnav{display:flex;gap:4px;flex-wrap:wrap;padding:6px!important;margin-bottom:14px}
+.subnav button{border:0;background:transparent;border-radius:9px;padding:8px 14px;font:inherit;font-weight:700;font-size:13.5px;color:var(--muted);cursor:pointer}
+.subnav button:hover{background:#F2F7F8;color:var(--ink)}
+.subnav button.on{background:#E3F4F2;color:var(--brand-deep)}
+.subnav.in{padding:0!important;margin:14px 0 -4px;border-top:1px solid var(--line);padding-top:10px!important;border-radius:0}
+.subnav .cnt{font-size:11.5px;background:#EEF3F5;border-radius:999px;padding:1px 7px;margin-left:2px;color:var(--muted)}
+.subnav button.on .cnt{background:#fff}
+.exhead{padding-bottom:12px!important}
+.exhead .back{border:0;background:transparent;color:var(--brand-deep);font:inherit;font-weight:700;font-size:13px;padding:0;cursor:pointer;margin-bottom:8px}
+.exh-top{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.exh-top h1{margin:0 0 4px;font-size:21px}
+.exh-act{display:flex;gap:8px;flex-wrap:wrap}
+.ehlink{margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}.ehlink a{color:var(--brand-deep);word-break:break-all}
+.exgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-top:14px}
+.excard{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:8px;padding:16px;border:1.5px solid var(--line);border-radius:14px;background:#fff;transition:border-color .15s,box-shadow .15s}
+.excard:hover,.excard:focus-visible{border-color:var(--brand);box-shadow:0 4px 16px rgba(6,122,140,.10)}
+.excard .t{font-weight:800;font-size:15.5px;line-height:1.35}
+.excard .st{display:flex;gap:16px;font-size:13px;color:var(--muted)}.excard .st b{color:var(--ink);font-size:17px}
+.excard .warn{font-size:12.5px;color:var(--warn);font-weight:600}
+.badge{white-space:nowrap}
+.qfilter{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 4px}
+.qfilter input{max-width:340px;margin:0}.qfilter select{max-width:260px;margin:0}
+body:not([data-tab=exams]) .khero{display:none}
 table{width:100%;border-collapse:collapse;font-size:13.5px}
 th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
 th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.03em}
@@ -124,6 +149,8 @@ table.dt td.num,table.dt th.num{text-align:right;font-variant-numeric:tabular-nu
 .wq{list-style:none;margin:0;padding:0}
 .wq li{display:grid;grid-template-columns:52px 1fr;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:13px;line-height:1.45}
 .wq li:first-child{border-top:0}
+.wq li.small{display:block}
+#dashCard.nodata .dgrid,#dashCard.nodata .panel{display:none}
 .wq .r{font-weight:800;color:var(--bad);font-variant-numeric:tabular-nums}
 .wq .a{display:block;font-size:12px;color:var(--ok);margin-top:2px}
 .wq .m{display:block;font-size:12px;color:var(--muted)}
@@ -244,25 +271,52 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
   <div class="wrap">
     <style>body:not([data-tab=exams]) #hero{display:none}</style>
     <section class="khero hide" id="hero" aria-label="Tổng quan nhanh"></section>
-    <div class="tabs">
-      <button data-tab="results" onclick="switchTab('results')">Kết quả</button>
-      <span class="tsep" aria-hidden="true"></span>
-      <button data-tab="exams" onclick="switchTab('exams')">Đề thi</button>
-      <button data-tab="questions" onclick="switchTab('questions')">Câu hỏi</button>
-      <button data-tab="banks" onclick="switchTab('banks')">Ngân hàng</button>
-      <button data-tab="candidates" onclick="switchTab('candidates')">Thí sinh</button>
-      <span class="tsep" aria-hidden="true"></span>
-      <button data-tab="settings" onclick="switchTab('settings')">Cài đặt</button>
-      <button data-tab="viewers" onclick="switchTab('viewers')">Quản lí xem</button>
-      <button data-tab="audit" onclick="switchTab('audit')">Nhật ký</button>
+    <nav class="tabs" aria-label="Mục chính">
+      <button data-nav="exams" onclick="switchTab('exams')">📋 Đề thi</button>
+      <button data-nav="candidates" onclick="switchTab('candidates')">👥 Thí sinh</button>
+      <button data-nav="sys" onclick="switchTab('settings')">⚙️ Cài đặt</button>
+    </nav>
+
+    <!-- Thanh phụ của nhóm Cài đặt & hệ thống -->
+    <div class="subnav card" id="sysNav">
+      <button data-sub="settings" onclick="switchTab('settings')">Cài đặt mặc định</button>
+      <button data-sub="viewers" onclick="switchTab('viewers')">Quản lí xem kết quả</button>
+      <button data-sub="banks" onclick="switchTab('banks')">Ngân hàng (nâng cao)</button>
+      <button data-sub="audit" onclick="switchTab('audit')">Nhật ký</button>
+    </div>
+
+    <!-- Đầu trang của MỘT đề thi: mọi việc của đề (kết quả, câu hỏi, cài đặt) nằm dưới đây -->
+    <div class="card exhead" id="exHead">
+      <button class="back" type="button" onclick="switchTab('exams')">← Tất cả đề thi</button>
+      <div class="exh-top">
+        <div style="min-width:0">
+          <h1 id="ehTitle">Đề thi</h1>
+          <div class="small" id="ehMeta"></div>
+        </div>
+        <div class="exh-act" id="ehAct"></div>
+      </div>
+      <div class="subnav in" id="exNav">
+        <button data-sub="results" onclick="switchTab('results')">📊 Kết quả</button>
+        <button data-sub="questions" onclick="switchTab('questions')">❓ Câu hỏi <span class="cnt" id="ehQ"></span></button>
+        <button data-sub="examset" onclick="switchTab('examset')">⚙️ Cài đặt đề</button>
+      </div>
     </div>
 
     <!-- Ngân hàng đề -->
     <div id="tab-exams" class="tabpane hide">
-      <div class="card">
-        <p class="small">Mỗi đề thi là một bộ cài đặt + ngân hàng đề + kết quả <b>độc lập</b>, có thể mở nhiều đề cùng lúc (ví dụ một đề kiểm tra định kỳ hàng tháng, cùng lúc một đề thi thử riêng). Đề đang đặt <b>mặc định</b> là đề link công khai (không kèm <code>?exam=</code>) sẽ dẫn thí sinh tới.</p>
+            <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <h1 style="margin:0">Danh sách đề thi</h1>
+          <button class="btn" onclick="openNewExam()">＋ Tạo đề thi mới</button>
+        </div>
+        <p class="small" style="margin:6px 0 0">Bấm vào một đề để xem kết quả, quản lý câu hỏi và cài đặt của đề đó.</p>
+        <div class="exgrid" id="exGrid"></div>
+        <table class="hide"><tbody id="exList"></tbody></table>
       </div>
-      <div class="card hide" id="examFormCard">
+    </div>
+
+    <div id="tab-examset" class="tabpane hide">
+      <div class="card" id="examFormCard">
         <h1 id="examFormTitle">Tạo đề thi mới</h1>
         <input type="hidden" id="exEditingId">
         <p class="small" style="margin-top:0">Chỉ cần điền <b>mã đề</b> và <b>tên đề</b> rồi bấm <b>Lưu đề thi</b>. Các ô để trống sẽ dùng theo tab <b>Cài đặt</b> (thời gian mỗi câu, điểm đạt, phân bổ câu hỏi theo nhóm ngành…).</p>
@@ -331,39 +385,9 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         </details>
         <div style="margin-top:16px;display:flex;gap:8px">
           <button class="btn" onclick="saveExam()">Lưu đề thi</button>
-          <button class="btn ghost" onclick="document.getElementById('examFormCard').classList.add('hide')">Huỷ</button>
+          <button class="btn ghost" onclick="cancelExamForm()">Huỷ</button>
         </div>
         <div id="exMsg"></div>
-      </div>
-      <div class="card hide" id="itemCard">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <h1 style="margin:0" id="itemTitle">Phân tích câu hỏi</h1>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn ghost sm" onclick="regradeUI()" title="Chấm lại tất cả bài đã nộp của đề này theo đáp án đúng hiện tại">Chấm lại đề này</button>
-            <button class="btn ghost sm" onclick="document.getElementById('itemCard').classList.add('hide')">Đóng</button>
-          </div>
-        </div>
-        <p class="small" style="margin-top:6px">Đọc từ bài làm đã nộp (mỗi người tính bài mới nhất). <b>% đúng</b> là độ khó thực tế. <b>Độ phân biệt</b> (−1 đến 1) cho biết câu đó có tách được người giỏi khỏi người yếu không: từ 0,3 là tốt, dưới 0,15 là kém, âm rõ rệt thường do đáp án bị gắn sai hoặc câu mơ hồ. Cần ít nhất <span id="itemMinN">30</span> lượt làm mỗi câu mới đánh giá độ phân biệt.</p>
-        <div id="itemSummary" class="small" style="margin:10px 0"></div>
-        <div id="itemMsg"></div>
-        <div id="regradeBox"></div>
-        <div id="itemTiming"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:18px 0 8px">
-          <h2 style="margin:0;font-size:15px">Từng câu hỏi</h2>
-          <label class="small" style="display:flex;align-items:center;gap:6px;margin:0">Sắp xếp
-            <select id="itemSort" onchange="renderItems()" style="width:auto;min-height:34px;padding:4px 8px">
-              <option value="review">Cần xem lại trước</option><option value="slow">Trả lời lâu nhất</option><option value="fast">Trả lời nhanh nhất</option>
-              <option value="timeout">Hết giờ nhiều nhất</option><option value="hard">% đúng thấp nhất</option>
-            </select></label>
-        </div>
-        <div style="overflow-x:auto"><table><thead><tr><th>Câu hỏi</th><th>Lượt</th><th>% đúng</th><th>% trống</th><th>Phân biệt</th><th style="min-width:190px">Thời gian trả lời</th><th>Nhận xét</th><th></th></tr></thead><tbody id="itemList"></tbody></table></div>
-      </div>
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <h1 style="margin:0">Danh sách đề thi</h1>
-          <button class="btn" onclick="openNewExam()">+ Tạo đề thi mới</button>
-        </div>
-        <table style="margin-top:14px"><thead><tr><th>Mã đề</th><th>Tên đề thi</th><th>Cấu trúc</th><th>Thời gian</th><th>Số bài đã nộp</th><th>Trạng thái</th><th></th></tr></thead><tbody id="exList"></tbody></table>
       </div>
     </div>
 
@@ -411,12 +435,12 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
 
     <div id="tab-questions" class="tabpane hide">
       <div class="card">
-        <div class="dash-h"><h1>Ngân hàng câu hỏi theo đề</h1><p class="small">Mỗi đề thi (hoặc kỳ) chỉ lấy câu hỏi của chính nó. Chọn đề bên dưới rồi thêm, nhập hoặc sao chép câu hỏi vào.</p></div>
-        <div class="qper" id="qPerList" role="tablist" aria-label="Chọn kỳ"></div>
+        <div class="dash-h"><h1>Tình trạng câu hỏi</h1><p class="small">Đề này chỉ lấy câu hỏi của chính nó.</p></div>
+        <div class="qper hide" id="qPerList" role="tablist" aria-label="Chọn kỳ"></div>
         <div id="qUnassigned"></div>
         <div class="qready" id="qReady"></div>
         <div class="qtools">
-          <span class="small">Sao chép đề từ</span><select id="qCopyFrom" aria-label="Kỳ nguồn"></select><span class="small">vào kỳ đang chọn</span>
+          <span class="small">Chép toàn bộ câu hỏi từ đề</span><select id="qCopyFrom" aria-label="Đề nguồn"></select><span class="small">sang đề này</span>
           <button class="btn ghost sm" type="button" onclick="copyQuestions()">⧉ Sao chép</button>
         </div>
         <div id="qPerMsg"></div>
@@ -507,11 +531,17 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h1 style="margin:0"><span id="qListTitle">Danh sách câu hỏi</span> (<span id="qCount">0</span>)</h1>
-          <button class="btn dghost sm" id="btnDelAllQ" onclick="deleteAllQuestions()">🗑 Xoá tất cả câu hỏi của kỳ này</button>
+          <button class="btn dghost sm" id="btnDelAllQ" onclick="deleteAllQuestions()">🗑 Xoá tất cả câu hỏi của đề này</button>
+        </div>
+        <div class="qfilter">
+          <input type="search" id="qSearch" placeholder="Tìm nội dung câu hỏi…" oninput="QLIM=50;renderQList()" aria-label="Tìm câu hỏi">
+          <select id="qCatF" onchange="QLIM=50;renderQList()" aria-label="Lọc danh mục"></select>
+          <span class="small" id="qShown"></span>
         </div>
         <div id="qBackupBar"></div>
         <div id="qDelMsg"></div>
-        <table><thead><tr><th>Câu hỏi</th><th>Ngân hàng</th><th>Phân loại</th><th>Độ khó</th><th>Trạng thái</th><th></th></tr></thead><tbody id="qList"></tbody></table>
+        <table><thead><tr><th>Câu hỏi</th><th>Danh mục</th><th>Trạng thái</th><th></th></tr></thead><tbody id="qList"></tbody></table>
+        <div style="text-align:center;margin-top:10px"><button class="btn ghost sm hide" id="qMore" type="button" onclick="QLIM+=100;renderQList()"></button></div>
       </div>
     </div>
 
@@ -557,15 +587,17 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
     <!-- Cài đặt -->
     <div id="tab-settings" class="tabpane hide">
       <div class="card">
-        <h1>Kỳ kiểm tra</h1>
-        <p class="small">Mỗi bài làm được gắn đúng kỳ đang chọn khi nộp bài. Thí sinh chỉ bị chặn "đã làm bài" trong <b>cùng một kỳ</b> — đổi sang kỳ mới (ví dụ sang tháng sau) là <b>mọi thí sinh tự động được làm lại từ đầu</b>, không cần reset tay từng người. Kết quả các kỳ cũ vẫn được lưu nguyên vẹn, xem lại ở tab Kết quả.</p>
-        <label>Kỳ hiện tại (định dạng năm-tháng, ví dụ 2026-10)</label>
-        <input type="text" id="setPeriod" placeholder="2026-10" style="max-width:160px">
-        <button class="btn" style="margin-top:14px" onclick="saveSettings()">Lưu kỳ kiểm tra</button>
+        <h1>Đề mặc định</h1>
+        <p class="small">Đề mà link chung <code>/kiemtra/</code> (không kèm <code>?exam=</code>) dẫn thí sinh tới. Mỗi đề vẫn có link riêng ở trang của đề.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <select id="setPeriod" style="max-width:420px;margin:0"></select>
+          <button class="btn" type="button" onclick="saveSettings()">Lưu</button>
+        </div>
         <div id="setPeriodMsg"></div>
       </div>
       <div class="card">
-        <h1>Cài đặt bài kiểm tra</h1>
+        <h1>Giá trị mặc định cho mọi đề</h1>
+        <p class="small" style="margin-top:-4px">Đề nào để trống ô tương ứng trong “Cài đặt đề” sẽ dùng giá trị ở đây.</p>
         <div class="grid2">
           <div>
             <label>Tên bài kiểm tra</label>
@@ -679,17 +711,39 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
 
     <!-- Kết quả -->
     <div id="tab-results" class="tabpane hide">
+      <div class="card hide" id="itemCard">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <h1 style="margin:0" id="itemTitle">Phân tích câu hỏi</h1>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn ghost sm" onclick="regradeUI()" title="Chấm lại tất cả bài đã nộp của đề này theo đáp án đúng hiện tại">Chấm lại đề này</button>
+            <button class="btn ghost sm" onclick="document.getElementById('itemCard').classList.add('hide')">Đóng</button>
+          </div>
+        </div>
+        <p class="small" style="margin-top:6px">Đọc từ bài làm đã nộp (mỗi người tính bài mới nhất). <b>% đúng</b> là độ khó thực tế. <b>Độ phân biệt</b> (−1 đến 1) cho biết câu đó có tách được người giỏi khỏi người yếu không: từ 0,3 là tốt, dưới 0,15 là kém, âm rõ rệt thường do đáp án bị gắn sai hoặc câu mơ hồ. Cần ít nhất <span id="itemMinN">30</span> lượt làm mỗi câu mới đánh giá độ phân biệt.</p>
+        <div id="itemSummary" class="small" style="margin:10px 0"></div>
+        <div id="itemMsg"></div>
+        <div id="regradeBox"></div>
+        <div id="itemTiming"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:18px 0 8px">
+          <h2 style="margin:0;font-size:15px">Từng câu hỏi</h2>
+          <label class="small" style="display:flex;align-items:center;gap:6px;margin:0">Sắp xếp
+            <select id="itemSort" onchange="renderItems()" style="width:auto;min-height:34px;padding:4px 8px">
+              <option value="review">Cần xem lại trước</option><option value="slow">Trả lời lâu nhất</option><option value="fast">Trả lời nhanh nhất</option>
+              <option value="timeout">Hết giờ nhiều nhất</option><option value="hard">% đúng thấp nhất</option>
+            </select></label>
+        </div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Câu hỏi</th><th>Lượt</th><th>% đúng</th><th>% trống</th><th>Phân biệt</th><th style="min-width:190px">Thời gian trả lời</th><th>Nhận xét</th><th></th></tr></thead><tbody id="itemList"></tbody></table></div>
+      </div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <h1 style="margin:0">Kết quả (<span id="resCount">0</span>)</h1>
+          <h1 style="margin:0">Bài đã nộp (<span id="resCount">0</span>)</h1>
           <div style="display:flex;gap:8px;align-items:center">
-            <label style="margin:0;font-weight:600;font-size:12.5px;color:var(--muted)">Kỳ:</label>
-            <select id="resPeriod" onchange="loadResults()" style="max-width:160px"></select>
+            <select id="resPeriod" class="hide" onchange="loadResults()"></select>
             <input type="search" id="resSearch" placeholder="Tìm mã NV, tên, quản lí…" oninput="filterResults()" aria-label="Tìm kết quả">
             <button class="btn ghost sm" style="white-space:nowrap" onclick="exportResultsXlsx()">⬇ Xuất Excel</button>
           </div>
         </div>
-        <table style="margin-top:14px"><thead><tr><th>Kỳ</th><th>Mã NV</th><th>Họ tên</th><th>Quản lí</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Mã minh chứng</th><th>Cảnh báo</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
+        <table style="margin-top:14px"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Quản lí</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Mã minh chứng</th><th>Cảnh báo</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
       </div>
       <div class="card hide" id="resDetailCard">
         <h1>Chi tiết bài làm</h1>
@@ -736,7 +790,7 @@ async function boot(){
     if (!j.isAdmin){ $('deniedEmail').textContent = j.email||''; $('deniedScreen').classList.remove('hide'); return; }
     $('meEmail').textContent = j.email;
     $('app').classList.remove('hide');
-    switchTab((location.hash || '').slice(1) || 'questions');
+    { const [t, id] = parseHash(); if (WS.indexOf(t) >= 0 && id) openExam(id, t); else switchTab(t || 'exams'); }
     loadAll();
   } catch (e) {
     $('loginScreen').classList.remove('hide');
@@ -813,16 +867,82 @@ $('auXlsx').addEventListener('click', async function(){
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   logEv('exportExcel', { period: 'nhật ký ' + $('auDay').value });
 });
-const TABS = ['results','exams','questions','banks','candidates','settings','viewers','audit'];
-window.addEventListener('hashchange', () => { const t = location.hash.slice(1); if (TABS.indexOf(t) >= 0 && !$('app').classList.contains('hide')) switchTab(t); });
+const TABS = ['exams','candidates','results','questions','examset','settings','viewers','banks','audit'];
+const WS = ['results','questions','examset'], SYS = ['settings','viewers','banks','audit'];
+let CUR_EXAM = null, EX_NEW = false, EX_DEFAULT = '';
+// Địa chỉ dạng #exams, #candidates, #settings… hoặc #results/<mã đề>, #questions/<mã đề>, #examset/<mã đề>
+function parseHash(){ const h = decodeURIComponent((location.hash || '').slice(1)), k = h.indexOf('/'); return k > 0 ? [h.slice(0,k), h.slice(k+1)] : [h, '']; }
+window.addEventListener('hashchange', () => {
+  if ($('app').classList.contains('hide')) return;
+  const [t, id] = parseHash(); if (TABS.indexOf(t) < 0) return;
+  if (WS.indexOf(t) >= 0 && id && id !== CUR_EXAM) openExam(id, t); else switchTab(t);
+});
 function switchTab(t){
-  if (TABS.indexOf(t) < 0) t = 'questions';
-  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab===t));
+  if (TABS.indexOf(t) < 0) t = 'exams';
+  if (WS.indexOf(t) >= 0 && !CUR_EXAM && !(t === 'examset' && EX_NEW)) t = 'exams';
+  if (t !== 'examset') EX_NEW = false;
+  const inWs = WS.indexOf(t) >= 0, inSys = SYS.indexOf(t) >= 0;
+  document.querySelectorAll('.tabs button[data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === (inWs ? 'exams' : inSys ? 'sys' : t)));
+  $('sysNav').classList.toggle('hide', !inSys);
+  $('exHead').classList.toggle('hide', !inWs);
+  $('exNav').classList.toggle('hide', EX_NEW);
+  document.querySelectorAll('#sysNav button, #exNav button').forEach(b => b.classList.toggle('on', b.dataset.sub === t));
   document.querySelectorAll('.tabpane').forEach(p => p.classList.toggle('hide', p.id !== 'tab-'+t));
   document.body.dataset.tab = t;
-  if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
+  const h = '#' + t + (inWs && CUR_EXAM ? '/' + encodeURIComponent(CUR_EXAM) : '');
+  if (location.hash !== h) history.replaceState(null, '', h);
   if (t === 'audit') loadAudit();
+  if (inWs) renderExHead();
+  if (t === 'results' && CUR_EXAM){ $('resPeriod').innerHTML = '<option value="'+esc(CUR_EXAM)+'"></option>'; $('resPeriod').value = CUR_EXAM; $('resDetailCard').classList.add('hide'); loadResults(); }
+  if (t === 'questions' && CUR_EXAM && QP !== CUR_EXAM){ QP = CUR_EXAM; QLIM = 50; if ($('qSearch')) $('qSearch').value = ''; if (QUESTIONS.length || QMETA.questions) renderQuestions(); clearQForm(); qPanel(null); }
+  if (t === 'examset' && !EX_NEW && CUR_EXAM) editExam(CUR_EXAM);
+  window.scrollTo({ top: 0 });
 }
+// Mở một đề thi: mọi tab con (kết quả, câu hỏi, cài đặt) đều làm việc trên đề này
+function openExam(id, sub){
+  CUR_EXAM = id; EX_NEW = false; QP = null; $('itemCard').classList.add('hide');
+  switchTab(sub || 'results');
+}
+function fillSetPeriod(){
+  const ids = EXAMS.map(e => e.id); if (CUR_PERIOD && ids.indexOf(CUR_PERIOD) < 0) ids.unshift(CUR_PERIOD);
+  $('setPeriod').innerHTML = ids.map(id => { const e = examById(id); return '<option value="' + esc(id) + '">' + esc((e && e.title && e.title !== id ? e.title + ' · ' : '') + id) + '</option>'; }).join('');
+  $('setPeriod').value = CUR_PERIOD;
+}
+function renderExGrid(){
+  if (!$('exGrid')) return;
+  if ($('setPeriod')) fillSetPeriod();
+  $('exGrid').innerHTML = EXAMS.map(e => {
+    const plan = spHas(e.segmentPlans) ? 'Phân bổ riêng' : spHas(SEGPLANS) ? 'Phân bổ chung' : 'Chia theo nhóm ngành';
+    return '<button type="button" class="excard" onclick="openExam(\'' + esc(e.id) + '\')"><div class="t">' + esc(e.title || e.id) + '</div><div class="b">' + examBadges(e) + '</div>' +
+      '<div class="st"><span><b>' + qCountOf(e) + '</b> câu hỏi</span><span><b>' + (e.resultCount || 0) + '</b> bài đã nộp</span></div>' +
+      '<div class="small">' + esc(e.id) + ' · ' + plan + ' · ' + esc(examWindowText(e)) + '</div>' +
+      (!qCountOf(e) ? '<div class="warn">⚠ Chưa có câu hỏi riêng</div>' : '') + '</button>';
+  }).join('') || '<div class="small" style="padding:20px 0">Chưa có đề thi nào. Bấm “＋ Tạo đề thi mới” để bắt đầu.</div>';
+}
+// Số câu hỏi riêng của một đề (đếm trực tiếp khi đã tải ngân hàng câu hỏi)
+function qCountOf(e){ return QUESTIONS && QUESTIONS.length ? QUESTIONS.filter(q => (q.period || '') === e.id).length : (e.bankCount || 0); }
+function examById(id){ return EXAMS.find(e => e.id === id) || null; }
+function renderExHead(){
+  if (EX_NEW){ $('ehTitle').textContent = 'Tạo đề thi mới'; $('ehMeta').textContent = 'Điền mã đề và tên đề, các ô khác để trống sẽ theo Cài đặt mặc định.'; $('ehAct').innerHTML = ''; return; }
+  const e = examById(CUR_EXAM) || { id: CUR_EXAM, title: CUR_EXAM };
+  const link = location.origin + '/kiemtra/?exam=' + encodeURIComponent(e.id);
+  $('ehTitle').innerHTML = esc(e.title || e.id) + examBadges(e);
+  $('ehMeta').innerHTML = 'Mã đề <code>' + esc(e.id) + '</code> · ' + esc(examWindowText(e)) +
+    '<div class="ehlink"><span>Link thi:</span> <a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link.replace(/^https?:\/\//,'')) + '</a> <button class="btn ghost sm" type="button" onclick="copyText(\'' + esc(link) + '\', this)">Sao chép</button></div>';
+  $('ehQ').textContent = qCountOf(e);
+  $('ehAct').innerHTML = (e.id !== EX_DEFAULT ? '<button class="btn ghost sm" onclick="setDefaultExamUI(\'' + esc(e.id) + '\')" title="Link chung (không kèm ?exam=) sẽ dẫn tới đề này">Đặt làm đề mặc định</button>' : '') +
+    (e.resultCount ? '<button class="btn ghost sm" onclick="switchTab(\'results\');openItemAnalysis(\'' + esc(e.id) + '\')">Phân tích câu hỏi</button>' : '') +
+    (e.id !== EX_DEFAULT ? '<button class="btn dghost sm" onclick="deleteExamUI(\'' + esc(e.id) + '\')">Xoá đề</button>' : '');
+}
+function examBadges(e){
+  const now = Date.now(), st = e.openAt && now < e.openAt ? ['n','Chưa mở'] : e.closeAt && now > e.closeAt ? ['n','Đã đóng'] : ['y','Đang mở'];
+  return ' <span class="badge ' + st[0] + '">' + st[1] + '</span>' + (e.id === EX_DEFAULT ? ' <span class="badge" style="background:#E3F0FF;color:#1D4F91">Mặc định</span>' : '') + (e.practice ? ' <span class="badge" style="background:#FDEBC8;color:#8A5200">Thi thử</span>' : '');
+}
+function copyText(t, btn){
+  const done = () => { if (btn){ const o = btn.textContent; btn.textContent = 'Đã chép ✓'; setTimeout(() => btn.textContent = o, 1500); } };
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, () => prompt('Sao chép link:', t)); else prompt('Sao chép link:', t);
+}
+function cancelExamForm(){ if (EX_NEW){ EX_NEW = false; switchTab('exams'); } else switchTab('results'); }
 
 function loadAll(){ loadBanks(); loadExams(); loadQuestions(); loadCandidates(); loadSettings(); loadResults(); loadViewers(); }
 
@@ -831,7 +951,11 @@ let EXAMS = [];
 async function loadExams(){
   const { j } = await api('GET','/api/kt-admin?op=exams');
   if (!j.ok) return;
-  EXAMS = j.exams || []; if (QP !== null && QUESTIONS.length) renderQuestions(); if (j.maxQuestions){ MAXQ = j.maxQuestions; if ($('maxQ')) $('maxQ').textContent = MAXQ; $('exCount').max = MAXQ; }
+  EXAMS = j.exams || []; EX_DEFAULT = j.currentPeriod || '';
+  if (QP !== null && QUESTIONS.length) renderQuestions();
+  if (CUR_EXAM && WS.indexOf(document.body.dataset.tab) >= 0) renderExHead();
+  renderExGrid();
+  if (j.maxQuestions){ MAXQ = j.maxQuestions; if ($('maxQ')) $('maxQ').textContent = MAXQ; $('exCount').max = MAXQ; }
   $('exList').innerHTML = EXAMS.map(e =>
     '<tr><td><code>'+esc(e.id)+'</code>'+(e.id===j.currentPeriod?' <span class="badge y">Mặc định</span>':'')+'</td>'+
     '<td>'+esc(e.title||e.id)+(e.practice?' <span class="badge" style="background:#FDEBC8;color:#8A5200">Thi thử</span>':'')+'<div class="small"><a href="/kiemtra/?exam='+encodeURIComponent(e.id)+'" target="_blank" rel="noopener">link thi</a> · '+(e.bankCount ? e.bankCount+' câu hỏi riêng' : '<span style="color:var(--warn)">chưa có câu hỏi riêng</span>')+'</div></td>'+
@@ -847,7 +971,7 @@ async function loadExams(){
     '</td></tr>'
   ).join('') || '<tr><td colspan="7" class="small">Chưa có đề thi nào, bấm "+ Tạo đề thi mới" để bắt đầu.</td></tr>';
 }
-function openExamQuestions(id){ QP = id; switchTab('questions'); renderQuestions(); clearQForm(); }
+function openExamQuestions(id){ openExam(id, 'questions'); }
 // Dòng tóm tắt "số câu mỗi thí sinh nhận" của đề đang soạn
 function exQSummary(){
   const box = $('exQSrc'); if (!box) return;
@@ -887,6 +1011,7 @@ function clearExamForm(){
   $('exId').oninput = () => { $('exSp').dataset.bank = $('exId').value.trim(); spRefresh($('exSp')); exQSummary(); };
 }
 function openNewExam(){
+  EX_NEW = true; CUR_EXAM = null; switchTab('examset');
   clearExamForm();
   $('examFormTitle').textContent = 'Tạo đề thi mới';
   // Đề mới: mặc định phân bổ riêng, điền sẵn theo phân bổ chung (nếu đã cài) hoặc mẫu chuẩn 5/10/15/5/5 và 5/25/10
@@ -907,7 +1032,7 @@ function editExam(id){
   $('exDesc').value = e.description || ''; $('exCodes').value = (e.codes || []).join('\n'); $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
   document.querySelectorAll('.exSeg').forEach(c => c.checked = (e.segments || []).indexOf(c.value) >= 0);
   BP_RULES = e.blueprint && e.blueprint.rules ? e.blueprint.rules.map(r => Object.assign({}, r)) : []; renderBpRules();
-  $('examFormTitle').textContent = 'Sửa đề thi';
+  $('examFormTitle').textContent = 'Cài đặt đề';
   $('exAdv').open = !!(BP_RULES.length || e.questionCount || e.bothGiaDungCount || (e.segments||[]).length || (e.codes||[]).length || e.complianceEnabled || e.shareTitle || e.description);
   exSpSet(spHas(e.segmentPlans), e.segmentPlans); previewPlan();
   $('examFormCard').classList.remove('hide');
@@ -961,10 +1086,11 @@ async function saveExam(){
   if (!exam.id){ msg('exMsg','Nhập mã đề thi.'); return; }
   const { j } = await api('POST','/api/kt-admin', { op:'saveExam', exam });
   if (!j.ok){ msg('exMsg', j.error, 'err'); return; }
-  msg('exMsg','Đã lưu đề thi.','ok');
   EXAMS = j.exams;
-  $('examFormCard').classList.add('hide');
-  loadExams();
+  const wasNew = EX_NEW;
+  await loadExams();
+  if (wasNew){ openExam(exam.id, 'questions'); msg('qPerMsg', 'Đã tạo đề “' + (exam.title || exam.id) + '”. Bước tiếp theo: nạp câu hỏi cho đề (nhập file Excel hoặc chép từ đề khác).', 'ok'); }
+  else msg('exMsg','Đã lưu cài đặt đề.','ok');
 }
 async function setDefaultExamUI(id){
   if (!confirm('Đặt "'+id+'" làm đề thi mặc định (link công khai không kèm ?exam= sẽ dẫn tới đề này)?')) return;
@@ -976,8 +1102,8 @@ async function deleteExamUI(id){
   if (!confirm('Xoá đề thi "'+id+'"? Chỉ xoá bản ghi cài đặt riêng của đề, không xoá câu hỏi/kết quả đã có.')) return;
   const { j } = await api('POST','/api/kt-admin', { op:'deleteExam', id });
   if (!j.ok){ alert(j.error); return; }
-  EXAMS = j.exams;
-  loadExams();
+  EXAMS = j.exams; CUR_EXAM = null;
+  await loadExams(); switchTab('exams');
 }
 
 /* ---------- Ngân hàng câu hỏi ---------- */
@@ -1345,7 +1471,23 @@ function clearQForm(){
   for (let i=0;i<4;i++) addOptRow(i===0);
   msg('qMsg','');
 }
-let QP = null, QMETA = {};
+let QP = null, QMETA = {}, QLIST = [], QLIM = 50;
+function renderQList(){
+  const L = QLIST, q0 = spNorm($('qSearch').value), cf = $('qCatF').value;
+  const cats = Array.from(new Set(L.map(q => q.category || ''))).sort();
+  $('qCatF').innerHTML = '<option value="*">Mọi danh mục (' + L.length + ')</option>' + cats.map(c => '<option value="' + esc(c) + '">' + esc(c || '(chưa có danh mục)') + ' (' + L.filter(q => (q.category||'') === c).length + ')</option>').join('');
+  $('qCatF').value = cats.indexOf(cf) >= 0 ? cf : '*';
+  const F = L.filter(q => ($('qCatF').value === '*' || (q.category||'') === $('qCatF').value) && (!q0 || spNorm(q.text).indexOf(q0) >= 0));
+  const V = F.slice(0, QLIM);
+  $('qShown').textContent = F.length === L.length ? '' : 'Đang lọc: ' + F.length + ' câu';
+  $('qList').innerHTML = V.map(q =>
+    '<tr><td>' + esc(q.text.slice(0,110)) + (q.text.length > 110 ? '…' : '') + '</td><td class="small">' + esc(q.category || '') + '</td><td>' + (q.active !== false ? '<span class="badge y">Đang dùng</span>' : '<span class="badge n">Đã ẩn</span>') + '</td>' +
+    '<td style="white-space:nowrap;text-align:right"><button class="btn ghost sm" onclick="editQuestion(\'' + q.id + '\')">Sửa</button> <button class="btn ghost sm" onclick="toggleQuestion(\'' + q.id + '\')">' + (q.active !== false ? 'Ẩn' : 'Hiện') + '</button> <button class="btn dghost sm" onclick="deleteQuestion(\'' + q.id + '\')">Xoá</button></td></tr>'
+  ).join('') || '<tr><td colspan="4" class="small">' + (L.length ? 'Không có câu nào khớp bộ lọc.' : 'Đề này chưa có câu hỏi. Bấm “📥 Nhập từ file Excel” hoặc chép từ đề khác ở trên.') + '</td></tr>';
+  $('qMore').classList.toggle('hide', F.length <= QLIM);
+  $('qMore').textContent = 'Xem thêm (còn ' + Math.max(0, F.length - QLIM) + ' câu)';
+  if (CUR_EXAM) $('ehQ').textContent = qCountOf({ id: CUR_EXAM }); renderExGrid();
+}
 const qPerLabel = (p) => { if (!p) return 'Chưa gắn kỳ'; const e = (typeof EXAMS !== 'undefined' ? EXAMS : []).find(x => x.id === p), m = /^\d{4}-\d{2}$/.test(p) ? 'Tháng ' + p.slice(5) + '/' + p.slice(0,4) : ''; return e && e.title && e.title !== p ? (m ? m + ' · ' : '') + e.title : (m || 'Đề ' + p); };
 function qPeriods(){
   const set = new Set(QUESTIONS.map(q => q.period || '').filter(Boolean));
@@ -1356,7 +1498,7 @@ function qPeriods(){
 async function loadQuestions(){
   const { j } = await api('GET','/api/kt-admin?op=questions');
   if (!j.ok) return;
-  QUESTIONS = j.questions; QMETA = j; setBanks(j.banks); document.querySelectorAll('.spg').forEach(g => { if (g.children.length) spRefresh(g); });
+  QUESTIONS = j.questions; QMETA = j; setBanks(j.banks); renderExGrid(); if (CUR_EXAM && WS.indexOf(document.body.dataset.tab) >= 0) renderExHead(); document.querySelectorAll('.spg').forEach(g => { if (g.children.length) spRefresh(g); });
   if (QP === null) QP = j.currentPeriod || '';
   renderQuestions();
   if (!$('qOptsEdit').children.length) clearQForm();
@@ -1409,14 +1551,11 @@ function renderQuestions(){
      QP && QP !== cur ? '<p class="small" style="margin:8px 0 0">' + (QP > cur ? 'Kỳ sắp tới: chuẩn bị sẵn đề, rồi đổi "Kỳ hiện tại" trong tab Cài đặt khi bắt đầu kỳ.' : 'Kỳ đã qua: đề được giữ lại để đối chiếu.') + '</p>' : '');
   $('qCopyFrom').innerHTML = pers.filter(p => p !== QP).concat(un.length && QP !== '' ? [''] : []).map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + ' (' + cnt(p).length + ' câu)</option>').join('') || '<option value="">Chưa có kỳ khác</option>';
   // Danh sách
-  $('qListTitle').textContent = 'Câu hỏi ' + (QP ? 'kỳ ' + qPerLabel(QP).replace('Tháng ','') : 'chưa gắn kỳ');
+  $('qListTitle').textContent = 'Câu hỏi của đề';
   $('qBulkPer').textContent = '→ vào ' + qPerLabel(QP).toLowerCase();
   $('xlTarget').textContent = '→ vào ' + qPerLabel(QP); if (XL) xlRender();
   $('qCount').textContent = L.length;
-  $('qList').innerHTML = L.map(q =>
-    '<tr><td>'+esc(q.text.slice(0,70))+(q.text.length>70?'…':'')+'</td><td class="small">'+esc(bankName(q.bankId))+'<div>'+esc(TYPE_LABEL[qTypeOf(q)]||'')+'</div></td><td>'+esc(q.category||'')+'</td><td class="small">'+esc(DIFF_LABEL[q.difficulty]||'')+'</td><td>'+(q.active!==false?'<span class="badge y">Đang dùng</span>':'<span class="badge n">Đã ẩn</span>')+'</td>'+
-    '<td style="white-space:nowrap"><button class="btn ghost sm" onclick="editQuestion(\''+q.id+'\')">Sửa</button> <button class="btn ghost sm" onclick="toggleQuestion(\''+q.id+'\')">'+(q.active!==false?'Ẩn':'Hiện')+'</button> <button class="btn dghost sm" onclick="deleteQuestion(\''+q.id+'\')">Xoá</button></td></tr>'
-  ).join('') || '<tr><td colspan="6" class="small">Kỳ này chưa có câu hỏi. Thêm câu mới, nhập hàng loạt hoặc sao chép từ kỳ khác.</td></tr>';
+  QLIST = L; renderQList();
   $('qPeriod').innerHTML = pers.map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + (p === cur ? ' (hiện tại)' : '') + '</option>').join('') + (un.length ? '<option value="">Chưa gắn kỳ</option>' : '');
   $('qPeriod').value = QP;
 }
@@ -1628,25 +1767,24 @@ async function loadSettings(){
   const { j } = await api('GET','/api/kt-admin?op=settings');
   if (!j.ok) return;
   const s = j.settings;
-  $('setPeriod').value = s.examPeriod || ''; CUR_PERIOD = s.examPeriod || '';
+  CUR_PERIOD = s.examPeriod || ''; fillSetPeriod();
   $('setTitle').value = s.examTitle; $('setShareTitle').value = s.shareTitle || ''; $('setCount').value = s.questionCount;
   $('setBothGD').value = s.bothGiaDungCount;
   $('setSeconds').value = s.secondsPerQuestion; $('setPass').value = s.passScore; $('setPassOn').checked = !!s.passEnabled; $('setPass').disabled = !s.passEnabled;
   $('setRetake').checked = !!s.allowRetake;
   $('setComplianceOn').checked = !!s.complianceEnabled;
   $('setCHigh').value = s.complianceHighMin; $('setCMid').value = s.complianceMidMin; $('setCLow').value = s.complianceLowMin;
-  SEGPLANS = s.segmentPlans || {}; renderSegPlans();
+  SEGPLANS = s.segmentPlans || {}; renderSegPlans(); renderExGrid();
   if (QP !== null) renderQuestions();
 }
 async function saveSettings(){
   const period = $('setPeriod').value.trim();
-  if (period && !/^\d{4}-\d{2}$/.test(period)){ msg('setPeriodMsg','Kỳ phải theo định dạng năm-tháng, ví dụ 2026-10.'); return; }
+  if (period && !/^[a-z0-9][a-z0-9-]{0,39}$/i.test(period)){ msg('setPeriodMsg','Mã đề không hợp lệ.'); return; }
   if (period && period !== CUR_PERIOD){
-    const act = QUESTIONS.filter(q => q.active !== false), own = act.filter(q => q.period === period).length, un = act.filter(q => !q.period).length;
-    const prevP = Array.from(new Set(act.filter(q => q.period && q.period < period).map(q => q.period))).sort().pop();
-    const w = own ? 'Ngân hàng đề kỳ này có ' + own + ' câu.' : '⚠ Kỳ ' + period + ' CHƯA có câu hỏi riêng: ' + (un ? 'đề sẽ tạm dùng ' + un + ' câu chưa gắn kỳ.' : prevP ? 'đề sẽ tạm dùng lại đề kỳ ' + prevP + '.' : 'thí sinh sẽ KHÔNG làm được bài.') + ' Bạn có thể sao chép đề từ kỳ khác ở tab Ngân hàng đề.';
-    if (!confirm('Đổi kỳ kiểm tra sang "'+period+'"? Mọi thí sinh sẽ được làm lại bài từ đầu (kết quả kỳ cũ vẫn giữ nguyên).\n\n' + w)) return;
+    const e = examById(period), own = QUESTIONS.filter(q => q.active !== false && q.period === period).length;
+    if (!confirm('Đặt “' + ((e && e.title) || period) + '” làm đề mặc định (link chung /kiemtra/ sẽ dẫn tới đề này)?' + (own ? '' : '\n\n⚠ Đề này chưa có câu hỏi riêng.'))) return;
   }
+
   const { j } = await api('POST','/api/kt-admin', {
     op:'saveSettings', examPeriod: period, examTitle: $('setTitle').value, shareTitle: $('setShareTitle').value, questionCount: $('setCount').value, bothGiaDungCount: $('setBothGD').value,
     secondsPerQuestion: $('setSeconds').value, passEnabled: $('setPassOn').checked, passScore: $('setPass').value, allowRetake: $('setRetake').checked,
@@ -1657,7 +1795,7 @@ async function saveSettings(){
   if (!j.ok){ msg('setMsg', j.error, 'err'); msg('setPeriodMsg', j.error, 'err'); msg('spMsg', j.error, 'err'); return; }
   CUR_PERIOD = j.settings.examPeriod; SEGPLANS = j.settings.segmentPlans || {}; renderSegPlans(); if (QP !== null) renderQuestions();
   msg('spMsg','Đã lưu phân bổ câu hỏi.','ok');
-  msg('setMsg','Đã lưu cài đặt.','ok'); msg('setPeriodMsg','Đã lưu kỳ kiểm tra: '+CUR_PERIOD+'.','ok');
+  msg('setMsg','Đã lưu cài đặt.','ok'); msg('setPeriodMsg','Đã lưu đề mặc định.','ok'); loadExams();
 }
 let CUR_PERIOD = '';
 
@@ -2000,7 +2138,7 @@ function renderAdminHero(j){
     '</div>' : '<p class="khero-s">Thêm thí sinh và câu hỏi để bắt đầu kỳ kiểm tra.</p>';
   const tag = j.untagged ? '<button type="button" class="hm-link" id="heroUntagged">' + j.untagged + ' bài chưa gắn kỳ · Gắn kỳ →</button>' : '';
   $('hero').innerHTML = '<div class="khero-in wide"><div class="khero-eb">Kỳ kiểm tra ' + perLabel(j.currentPeriod) + ' · ' + n + ' thí sinh</div><h1 class="khero-t">' + vnGreet() + ', quản trị viên</h1>' + meters + tag + '</div>';
-  if (j.untagged) $('heroUntagged').onclick = () => { switchTab('results'); setTimeout(() => { const b = $('dashBanner'); if (b) b.scrollIntoView({ behavior:'smooth', block:'center' }); }, 50); };
+  if (j.untagged) $('heroUntagged').onclick = () => { openExam(EX_DEFAULT || CUR_PERIOD, 'results'); setTimeout(() => { const b = $('dashBanner'); if (b) b.scrollIntoView({ behavior:'smooth', block:'center' }); }, 50); };
   $('hero').classList.remove('hide');
 }
 
@@ -2060,8 +2198,9 @@ async function loadDashboard(sel){
   if (!j.ok){ $('dashCard').classList.add('hide'); return; }
   DASH = j; $('dashCard').classList.remove('hide');
   if (j.period === j.currentPeriod) renderAdminHero(j);
-  $('dashTitle').textContent = 'Tổng quan kỳ ' + perLabel(j.period);
-  $('dashSub').textContent = (j.period === j.currentPeriod ? 'Kỳ hiện tại' : 'Kỳ hiện tại: ' + perLabel(j.currentPeriod)) + ' · tính theo bài nộp gần nhất của mỗi nhân viên, trên danh sách thí sinh hiện có.';
+  $('dashTitle').textContent = 'Tổng quan';
+  $('dashCard').classList.toggle('nodata', !j.submitted);
+  $('dashSub').textContent = (j.submitted ? '' : 'Chưa có bài nộp, phần phân tích sẽ hiện khi có kết quả. ') + 'Tính theo bài nộp gần nhất của mỗi nhân viên, trên danh sách thí sinh hiện có.';
   // Bài chưa gắn kỳ
   $('dashBanner').innerHTML = j.untagged ? '<div class="banner"><span class="sp"><b>' + j.untagged + ' bài làm chưa gắn kỳ</b> (nộp trước khi có tính năng kỳ). Những nhân viên này hiện vẫn bắt đầu làm lại được. Gắn vào kỳ để khoá lại và đưa vào thống kê.</span>' +
     '<input id="asgPeriod" value="' + esc(j.currentPeriod) + '" aria-label="Kỳ cần gắn (năm-tháng)"><button class="btn sm" id="asgBtn" type="button">Gắn kỳ</button></div>' : '';
@@ -2120,7 +2259,7 @@ async function loadResults(){
   $('resPeriod').innerHTML = '<option value="">Tất cả các kỳ</option>' + (j.periods||[]).map((p,i) => '<option value="'+esc(p)+'" '+(p===selBefore?'selected':'')+'>'+esc(opts[i])+'</option>').join('');
   $('resCount').textContent = j.results.length;
   $('resList').innerHTML = j.results.map(r =>
-    '<tr><td class="small">'+esc(r.period ? r.period.slice(5)+'/'+r.period.slice(0,4) : '–')+'</td><td>'+esc(r.code)+'</td><td>'+esc(r.name||'')+'</td><td>'+esc(r.manager||'')+'</td><td>'+r.score+'/'+r.total+'</td><td>'+r.pct+'%</td>'+
+    '<tr><td>'+esc(r.code)+'</td><td>'+esc(r.name||'')+'</td><td>'+esc(r.manager||'')+'</td><td>'+r.score+'/'+r.total+'</td><td>'+r.pct+'%</td>'+
     '<td>'+(r.compliancePoints!=null?r.compliancePoints:'–')+'</td>'+
     '<td>'+(r.passed==null?'<span class="small">–</span>':(r.passed?'<span class="badge y">Đạt</span>':'<span class="badge n">Chưa đạt</span>'))+'</td>'+
     '<td class="small"><b>'+esc(r.proof||('KT-'+String(r.id||'').slice(-8).toUpperCase()))+'</b></td>'+
