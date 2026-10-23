@@ -1,5 +1,6 @@
 // Thư viện dùng chung cho nền tảng kiểm tra: ngân hàng đề, danh sách thí sinh, cài đặt, bài làm.
 const store = require("./store");
+const { cleanText, cleanQuestion } = require("./cleantext");
 const crypto = require("crypto");
 const { cfg } = require("./config");
 
@@ -88,15 +89,15 @@ function normText(s) {
 function normalizeQuestionInput(q) {
   q = q || {};
   const type = TYPES.indexOf(q.type) >= 0 ? q.type : "single";
-  const text = String(q.text || "").trim().slice(0, 2000);
+  const text = cleanText(q.text).slice(0, 2000);
   if (!text) return { error: "Câu hỏi cần có nội dung." };
   if (type === "fill") {
     const raw = Array.isArray(q.accepted) ? q.accepted : String(q.accepted || "").split(/\r?\n/);
-    const accepted = raw.map((a) => String(a || "").trim().slice(0, 200)).filter(Boolean).filter((v, i, a) => a.findIndex((x) => normText(x) === normText(v)) === i).slice(0, 20);
+    const accepted = raw.map((a) => cleanText(a).slice(0, 200)).filter(Boolean).filter((v, i, a) => a.findIndex((x) => normText(x) === normText(v)) === i).slice(0, 20);
     if (!accepted.length) return { error: "Câu điền khuyết cần ít nhất một đáp án chấp nhận." };
     return { fields: { type, text, options: [], correctIndex: -1, accepted } };
   }
-  const options = Array.isArray(q.options) ? q.options.map((o) => String(o || "").trim().slice(0, 500)).filter(Boolean) : [];
+  const options = Array.isArray(q.options) ? q.options.map((o) => cleanText(o).slice(0, 500)).filter(Boolean) : [];
   if (options.length < 2) return { error: "Câu hỏi cần ít nhất 2 phương án." };
   if (options.length > 8) return { error: "Tối đa 8 phương án." };
   if (type === "multi") {
@@ -197,7 +198,7 @@ function inScope(viewer, candidate) {
   return mine.size > 0 && mine.has(normPerson(candidate && candidate.manager));
 }
 
-async function getQuestions() { return (await store.get(Q_KEY)) || []; }
+async function getQuestions() { return ((await store.get(Q_KEY)) || []).map(cleanQuestion); } // dọn ký tự \" thừa ở câu cũ đã lưu
 async function saveQuestions(list) { await store.put(Q_KEY, list); }
 
 async function getCandidates() { return (await store.get(C_KEY)) || []; }

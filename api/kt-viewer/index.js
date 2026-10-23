@@ -4,6 +4,7 @@
 const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const { validEmail, isAdmin } = require("../_lib/config");
 const quiz = require("../_lib/quiz");
+const { cleanText } = require("../_lib/cleantext");
 const { modelName, prettyLabel } = require("../_lib/devicename");
 const behavior = require("../_lib/behavior");
 
@@ -271,8 +272,8 @@ const handler = async function (context, req) {
       const per = typeof b.period === "string" && quiz.validPeriod(b.period) ? b.period : (await quiz.getSettings()).examPeriod;
       let added = 0, skipped = 0;
       incoming.forEach((q) => {
-        const text = String(q.text || "").trim().slice(0, 2000);
-        const options = Array.isArray(q.options) ? q.options.map((o) => String(o || "").trim().slice(0, 500)).filter(Boolean) : [];
+        const text = cleanText(q.text).slice(0, 2000);
+        const options = Array.isArray(q.options) ? q.options.map((o) => cleanText(o).slice(0, 500)).filter(Boolean) : [];
         const correctIndex = Number.isInteger(q.correctIndex) ? q.correctIndex : -1;
         if (!text || options.length < 2 || correctIndex < 0 || correctIndex >= options.length) { skipped++; return; }
         list.push({ id: quiz.genId(), text, options, correctIndex, category: String(q.category || "").trim().slice(0, 100), active: true, period: per, addedBy: who });

@@ -1,6 +1,7 @@
 // Tạo câu hỏi trắc nghiệm bằng AI, dùng chung cho cả admin (kt-admin) và quản lí (kt-viewer).
 // Trả về bản NHÁP để người dùng xem lại trước khi đưa vào ngân hàng đề - không tự động lưu.
 const llm = require("./llm");
+const { cleanText } = require("./cleantext");
 
 const MAX_COUNT = 30;
 
@@ -32,12 +33,6 @@ function extractQuestions(text) {
 // AI đôi khi tự escape dấu ngoặc kép 2 lần khi viết đáp án dạng "lời thoại" (vd mời khách mua kèm),
 // khiến hiện ra chữ \" thừa thay vì dấu ngoặc bình thường; và hay bọc cả câu trong một cặp ngoặc kép
 // thừa (không cần thiết vì đã là một phương án riêng biệt trên màn hình). Dọn sạch cả hai trường hợp.
-function cleanText(s) {
-  let t = String(s || "").replace(/\\"/g, '"').replace(/\\'/g, "'").trim();
-  const m = t.match(/^"([\s\S]*)"$/);
-  if (m && m[1].indexOf('"') < 0) t = m[1].trim();
-  return t;
-}
 const norm = (t) => String(t || "").toLowerCase().normalize("NFC").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 // Độ giống nhau giữa 2 câu (Jaccard trên từ): >= 0,8 coi là trùng ý
 function similar(a, b) {

@@ -3,6 +3,7 @@
 // SAU KHI đã đóng (có "Thời gian đóng" và đã qua) - tránh lộ đề/đáp án cho người khác khi kỳ thi còn mở.
 const { reply, guardConfigured, requireAjax } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
+const { cleanText, cleanList } = require("../_lib/cleantext");
 
 module.exports = async function (context, req) {
   try {
@@ -36,7 +37,7 @@ module.exports = async function (context, req) {
       title: attempt.examTitle || settings.examTitle || "Bài kiểm tra",
       name: attempt.name || "", code: attempt.code || "",
       score: attempt.score, total: attempt.total, pct: attempt.pct,
-      paper: attempt.paper.map((q) => ({ n: q.n, text: q.text, category: q.category, options: q.options, chosen: q.chosen, correct: q.correct, chosenList: q.chosenList, correctList: q.correctList, ok: q.ok, answerText: q.answerText, chosenText: q.chosenText, type: q.type }))
+      paper: attempt.paper.map((q) => ({ n: q.n, text: cleanText(q.text), category: q.category, options: cleanList(q.options), chosen: q.chosen, correct: q.correct, chosenList: q.chosenList, correctList: q.correctList, ok: q.ok, answerText: cleanText(q.answerText), chosenText: cleanText(q.chosenText), type: q.type }))
     });
   } catch (e) {
     context.log.error("kt-mypaper", e && e.message);
