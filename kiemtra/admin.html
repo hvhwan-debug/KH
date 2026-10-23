@@ -868,6 +868,8 @@ function clearExamForm(){
 function openNewExam(){
   clearExamForm();
   $('examFormTitle').textContent = 'Tạo đề thi mới';
+  // Đề mới: mặc định phân bổ riêng, điền sẵn theo phân bổ chung (nếu đã cài) hoặc mẫu chuẩn 5/10/15/5/5 và 5/25/10
+  exSpSet(true, JSON.parse(JSON.stringify(spHas(SEGPLANS) ? SEGPLANS : spTemplatePlans())));
   $('examFormCard').classList.remove('hide');
   previewPlan();
   $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
@@ -1682,6 +1684,7 @@ function spRefresh(el){
   const names = Array.from(new Set((QUESTIONS || []).map(q => (q.category || '').trim()).filter(Boolean).concat(...Object.values(SP_TEMPLATE).map(a => a.map(x => x[0])))));
   $('catList').innerHTML = names.map(n => '<option value="'+esc(n)+'">').join('');
 }
+function spTemplatePlans(){ const t = {}; Object.keys(SP_TEMPLATE).forEach(k => { t[k] = SP_TEMPLATE[k].map(([category, count]) => ({ category, count })); }); return t; }
 function spTemplate(){
   if (document.querySelector('#spWrap .sprow') && !confirm('Thay phân bổ đang nhập bằng mẫu chuẩn?')) return;
   const t = {}; Object.keys(SP_TEMPLATE).forEach(k => { t[k] = SP_TEMPLATE[k].map(([category, count]) => ({ category, count })); });
