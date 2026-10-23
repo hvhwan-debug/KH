@@ -2,6 +2,9 @@
 // Chỉ người đã đăng nhập (admin/quản lí) mới gọi được - tránh để dịch vụ miễn phí bị dùng tràn lan bởi người lạ.
 const { reply, guardConfigured, requireUserActive } = require("../_lib/http");
 
+// Bộ nhớ đệm trong tiến trình: cùng một chỗ (làm tròn ~11 m) không gọi Nominatim lại, nhẹ cho dịch vụ miễn phí khi xuất Excel.
+const CACHE = new Map(), CACHE_MAX = 5000;
+
 module.exports = async function (context, req) {
   try {
     if (guardConfigured(context)) return;
@@ -10,6 +13,9 @@ module.exports = async function (context, req) {
     const lat = parseFloat(req.query && req.query.lat);
     const lng = parseFloat(req.query && req.query.lng);
     if (!isFinite(lat) || !isFinite(lng)) return reply(context, 400, { ok: false, error: "Thiếu toạ độ hợp lệ." });
+
+    const key = lat.toFixed(4) + "," + lng.toFixed(4);
+    if (CACHE.has(key)) return reply(context, 200, { ok: true, label: CACHE.get(key) });
 
     const url = "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=" + encodeURIComponent(lat) +
       "&lon=" + encodeURIComponent(lng) + "&zoom=16&addressdetails=1&accept-language=vi";
@@ -31,6 +37,7 @@ module.exports = async function (context, req) {
       a.state
     ].filter(Boolean);
     const label = parts.length ? parts.join(", ") : (j.display_name || "");
+    if (label) { if (CACHE.size >= CACHE_MAX) CACHE.delete(CACHE.keys().next().value); CACHE.set(key, label); }
     return reply(context, 200, { ok: true, label });
   } catch (e) {
     context.log.error("kt-geocode", e && e.message);

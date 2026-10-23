@@ -1217,6 +1217,24 @@ async function resolveGeoNames(scopeEl){
     })(els[i]);
   }
 }
+/* Tên địa điểm cho file Excel: tra lần lượt từng toạ độ (dùng chung bộ nhớ đệm với giao diện), lỗi thì giữ toạ độ */
+var GEO_P = {};
+function geoName(lat, lng){
+  var key = Number(lat).toFixed(4) + ',' + Number(lng).toFixed(4);
+  if (GEO_CACHE[key] && GEO_CACHE[key] !== '__pending__') return Promise.resolve(GEO_CACHE[key]);
+  if (!GEO_P[key]) GEO_P[key] = api('GET', '/api/kt-geocode?lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lng))
+    .then(function(res){ var label = res.j && res.j.ok ? (res.j.label || '') : ''; if (label) GEO_CACHE[key] = label; else delete GEO_P[key]; return label; })
+    .catch(function(){ delete GEO_P[key]; return ''; });
+  return GEO_P[key];
+}
+async function addLocNames(rows, onProgress){
+  var todo = rows.filter(function(x){ return x.locLat != null; });
+  for (var i = 0; i < todo.length; i++){
+    if (onProgress) onProgress(i + 1, todo.length);
+    var name = await geoName(todo[i].locLat, todo[i].locLng);
+    if (name) todo[i].loc = name;
+  }
+}
 async function fillDev(id, e, sel){
   var el = $(id); if (!el) return;
   el.dataset.code = e.code; el.innerHTML = '';
@@ -1285,6 +1303,7 @@ function exportRows(){
       proof: d ? (r.proof||'') : '', dev: d && r.device ? r.device.label : '', ip: d && r.device ? (r.device.ip||'') : '',
       devCh: d && r.device ? (r.device.changed ? 'Có' : 'Không') : '',
       loc: d && r.device ? (r.device.loc ? r.device.loc.lat + ', ' + r.device.loc.lng : (LOCERR[r.device.locErr] || '')) : '',
+      locLat: d && r.device && r.device.loc ? r.device.loc.lat : null, locLng: d && r.device && r.device.loc ? r.device.loc.lng : null,
       locUrl: d && r.device && r.device.loc ? mapUrl(r.device.loc) : '', cf: e.confirmed ? 'Đã xác nhận' : 'Chưa xác nhận',
       cfBy: e.confirmed ? ((e.confirmed.byName||'') + ' - ' + new Date(e.confirmed.at).toLocaleDateString('vi-VN')) : '' };
   });
@@ -1302,7 +1321,7 @@ async function exportXLSX(rows){
   var COLS = [
     ['Mã NV','code',13],['Họ và tên','name',26],['Email','email',30],['Nhóm ngành','seg',15],['Trạng thái','st',15],
     ['Câu đúng','score',10],['Tổng câu','total',10],['Tỉ lệ đúng','pct',11],['Kết quả','pass',11],['Điểm tuân thủ','cp',13],
-    ['Nộp bài lúc','at',18],['Thời gian làm','dur',13],['Mã minh chứng','proof',18],['Thiết bị','dev',34],['Địa chỉ IP','ip',16],['Đổi thiết bị','devCh',12],['Vị trí','loc',24],['Xác nhận','cf',15],['Người xác nhận','cfBy',26]
+    ['Nộp bài lúc','at',18],['Thời gian làm','dur',13],['Mã minh chứng','proof',18],['Thiết bị','dev',34],['Địa chỉ IP','ip',16],['Đổi thiết bị','devCh',12],['Vị trí (bấm để mở bản đồ)','loc',42],['Xác nhận','cf',15],['Người xác nhận','cfBy',26]
   ];
   if (!VIEWER.isAdmin) COLS = COLS.filter(function(c){ return ['dev','ip','devCh','loc'].indexOf(c[1]) < 0; }); // chỉ quản trị viên
   ws.columns = COLS.map(function(c){ return { key:c[1], width:c[2] }; });
@@ -1350,6 +1369,8 @@ async function exportXLSX(rows){
 $('csvBtn').addEventListener('click', async function(){
   var btn = this, label = btn.textContent, rows = exportRows();
   btn.disabled = true; btn.textContent = 'Đang tạo file…';
+  if (VIEWER.isAdmin) await addLocNames(rows, function(i, n){ btn.textContent = 'Đang tra tên vị trí ' + i + '/' + n + '…'; });
+  btn.textContent = 'Đang tạo file…';
   try { await exportXLSX(rows); logEv('exportExcel', { period: CURP, count: rows.length }); }
   catch(e){ exportCSV(rows); logEv('exportCsv', { period: CURP, count: rows.length }); msg('listMsg','Không tạo được file Excel nên đã tải bản CSV thay thế.','warn'); }
   btn.disabled = false; btn.textContent = label;
