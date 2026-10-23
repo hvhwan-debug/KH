@@ -1117,7 +1117,7 @@ function renderResult(r, already){
     ? '<div class="msg warn" style="text-align:left">Kết quả đã được lưu nhưng hệ thống chưa gửi được email. Bạn có thể bấm gửi lại bên dưới, hoặc liên hệ quản trị viên nếu vẫn không nhận được.</div>'
     : '<div class="msg ok" style="text-align:left">Kết quả chi tiết đã được gửi tự động về email bạn đã nhập.</div>') +
     '<button class="btn ghost" id="btnResend" type="button" style="margin-top:10px;min-height:46px">' + RESEND_LABEL + '</button><div id="resendMsg" role="status"></div>';
-  renderAnalysis(r.advice);
+  renderAnalysis(null); // màn hình kết quả không hiện phần phân tích theo mảng kiến thức
   renderAdvice(r.advice);
   shareMsg('');
   show('result');
@@ -1301,9 +1301,7 @@ function shareData(){
     host: location.host + '/kiemtra',
     qr: r.verify ? qrMatrix(verifyUrl(r)) : null,
     avgSec: r.durationSec != null && r.total ? Math.round(r.durationSec / r.total) : null,
-    cats: (r.advice && r.advice.analysis && Array.isArray(r.advice.analysis.categories) ? r.advice.analysis.categories : [])
-      .filter(function(c){ return c && c.n; }).map(function(c){ return { name: c.name, ok: c.ok, n: c.n }; })
-      .sort(function(a, b){ return b.n - a.n; }).slice(0, 4)
+    cats: [] // ảnh chia sẻ chỉ ghi kết quả, không kèm phân tích theo mảng kiến thức
   };
 }
 async function makePng(){
