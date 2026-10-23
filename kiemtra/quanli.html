@@ -418,6 +418,32 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 html.pvonly #app{display:none!important}
 html.pvonly,html.pvonly body{background:transparent}
 
+/* Bảng nhân viên gọn: cột tên đủ rộng, email 1 dòng có dấu …, nhóm ngành kèm ngày vào làm; khi nhúng trong trang quản trị thì bỏ phần đầu trang lặp lại */
+.av{width:40px;height:40px;font-size:13.5px;font-weight:800}
+.who .wtx{min-width:0;flex:1}
+.who .wtx>.nm{display:inline}
+.who small.wsub{display:flex;flex-direction:column;gap:1px;word-break:normal;margin-top:2px}
+.who small.wsub .code{font-weight:600}
+.who small.wsub .em{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.seg-t{display:block;color:var(--ink);font-weight:600}
+.jd{display:block;margin-top:2px;font-size:12px;color:var(--muted);white-space:nowrap}
+.emp-t td{vertical-align:middle}
+/* Bố cục cột cố định: cột phụ rộng cố định, cột tên lấy phần còn lại và tự cắt email bằng "…" (không còn bị phình ra làm bảng tràn khung) */
+@media(min-width:981px){
+  table.emp-t{table-layout:fixed}
+  .emp-t th.c-seg{width:150px}
+  .emp-t th.c-sc{width:180px}
+  .emp-t th.c-when{width:230px}
+  .emp-t th.c-cf{width:158px}
+  .emp-t th.c-act{width:150px}
+  .emp-t td.c-when,.emp-t td.c-sc,.emp-t td.c-cf{overflow:hidden}
+  .emp-t td.c-act{padding-left:6px;padding-right:10px}
+  .score{min-width:0}
+  .dev{max-width:100%}
+}
+html.embed .top,html.embed .khero{display:none}
+html.embed .wrap{max-width:1560px;padding-top:18px}
+
 /* === Tối ưu di động (chỉ áp dụng màn hình nhỏ, không đổi giao diện máy tính) === */
 html{-webkit-text-size-adjust:100%}
 @media(max-width:760px){
@@ -563,13 +589,12 @@ html{-webkit-text-size-adjust:100%}
       <div class="thead-bar"><span id="countTxt"></span><button class="linkbtn hide" id="clearF" type="button">Xoá bộ lọc</button></div>
       <table class="emp-t">
         <thead><tr>
-          <th scope="col"><button type="button" data-sort="name">Nhân viên <span class="ar">▲▼</span></button></th>
-          <th scope="col" class="c-join">Ngày vào làm</th>
+          <th scope="col" class="c-who"><button type="button" data-sort="name">Nhân viên <span class="ar">▲▼</span></button></th>
           <th scope="col" class="c-seg">Nhóm ngành</th>
-          <th scope="col"><button type="button" data-sort="score">Kết quả <span class="ar">▲▼</span></button></th>
-          <th scope="col"><button type="button" data-sort="when">Nộp bài <span class="ar">▲▼</span></button></th>
-          <th scope="col">Thông tin</th>
-          <th scope="col" class="r">Thao tác</th>
+          <th scope="col" class="c-sc"><button type="button" data-sort="score">Kết quả <span class="ar">▲▼</span></button></th>
+          <th scope="col" class="c-when"><button type="button" data-sort="when">Nộp bài <span class="ar">▲▼</span></button></th>
+          <th scope="col" class="c-cf">Thông tin</th>
+          <th scope="col" class="r c-act">Thao tác</th>
         </tr></thead>
         <tbody id="list"></tbody>
       </table>
@@ -669,6 +694,8 @@ function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,
 function msg(id, text, cls){ var el = $(id); if (el) el.innerHTML = text ? '<div class="msg '+(cls||'err')+'">'+esc(text)+'</div>' : ''; }
 function fmt(ms){ try { return new Date(ms).toLocaleString('vi-VN',{timeZone:ZONE,hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric',hour12:false}); } catch(e){ return ''; } }
 function clock(sec){ sec = Math.max(0, Math.round(sec||0)); var h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60, p = function(x){ return (x<10?'0':'')+x; }; return h ? h+':'+p(m)+':'+p(s) : m+':'+p(s); }
+var QPAL = [['#E3F4F2','#067A8C'],['#E8EEFF','#2F5BD3'],['#FFF1DD','#A55F00'],['#F2E9FF','#7A3FC4'],['#FFE8EE','#C2325A'],['#E6F4E8','#2E7D32']];
+function qpal(code){ var h = 0; String(code || '').split('').forEach(function(c){ h = (h * 31 + c.charCodeAt(0)) >>> 0; }); return QPAL[h % QPAL.length]; }
 function initials(n){ var p = String(n||'').trim().split(/\s+/).filter(Boolean); if(!p.length) return '?'; return ((p.length>1?p[0].charAt(0):'')+p[p.length-1].charAt(0)).toUpperCase(); }
 async function api(method, path, body){
   var r = await fetch(path, { method:method, headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: body ? JSON.stringify(body) : undefined });
@@ -910,9 +937,8 @@ function render(){
     var dis = done ? '' : ' disabled';
     var nm = esc(e.name||e.code);
     return '<tr data-code="'+esc(e.code)+'">'+
-      '<td class="c-who"><div class="who"><span class="av" aria-hidden="true">'+esc(initials(e.name||e.code))+'</span><div><button type="button" class="nm" data-act="prof" title="Xem hồ sơ kiểm tra">'+nm+'</button>'+(e.probation?'<span class="tv" title="Thử việc từ '+esc(e.probation.from)+' đến hết '+esc(e.probation.until)+'">Thử việc</span>':'')+'<small><span class="code">'+esc(e.code)+'</span> · '+esc(e.email||'')+'</small></div></div></td>'+
-      '<td class="c-join">'+esc(vnDate(e.joinDate))+'</td>'+
-      '<td class="c-seg"><span class="seg-t">'+esc(SEG[e.segment]||'–')+'</span></td>'+
+      '<td class="c-who"><div class="who"><span class="av" style="background:'+qpal(e.code)[0]+';color:'+qpal(e.code)[1]+'" aria-hidden="true">'+esc(initials(e.name||e.code))+'</span><div class="wtx"><button type="button" class="nm" data-act="prof" title="Xem hồ sơ kiểm tra">'+nm+'</button>'+(e.probation?'<span class="tv" title="Thử việc từ '+esc(e.probation.from)+' đến hết '+esc(e.probation.until)+'">Thử việc</span>':'')+'<small class="wsub"><span class="code">'+esc(e.code)+'</span><span class="em" title="'+esc(e.email||'')+'">'+esc(e.email||'')+'</span></small></div></div></td>'+
+      '<td class="c-seg"><span class="seg-t">'+esc(SEG[e.segment]||'–')+'</span>'+(e.joinDate?'<small class="jd">Vào làm '+esc(vnDate(e.joinDate))+'</small>':'')+'</td>'+
       '<td class="c-sc">'+sc+'</td>'+
       '<td class="c-when'+(done?'':' na')+'"><span class="when">'+when+'</span></td>'+
       '<td class="c-cf">'+cfd+'</td>'+
@@ -922,7 +948,7 @@ function render(){
         '<button type="button" class="ib" data-act="edit" title="Sửa thông tin" aria-label="Sửa thông tin của '+nm+'">'+IC.edit+'</button>'+
         '<button type="button" class="ib danger" data-act="del" title="Xoá nhân viên" aria-label="Xoá '+nm+'">'+IC.del+'</button>'+
       '</div></td></tr>';
-  }).join('') || '<tr><td colspan="7"><div class="empty">'+(EMP.length ? 'Không có nhân viên nào khớp bộ lọc. <button type="button" class="linkbtn" id="clearF2">Xoá bộ lọc</button>' : 'Chưa có nhân viên nào trong phạm vi của bạn. Bấm “Thêm nhân viên” hoặc liên hệ quản trị viên.')+'</div></td></tr>';
+  }).join('') || '<tr><td colspan="6"><div class="empty">'+(EMP.length ? 'Không có nhân viên nào khớp bộ lọc. <button type="button" class="linkbtn" id="clearF2">Xoá bộ lọc</button>' : 'Chưa có nhân viên nào trong phạm vi của bạn. Bấm “Thêm nhân viên” hoặc liên hệ quản trị viên.')+'</div></td></tr>';
 }
 /* ---------- Dashboard theo từng bài kiểm tra ---------- */
 var DASH_OPEN = (function(){
