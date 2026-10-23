@@ -62,6 +62,10 @@ function normEmail(s) { return String(s || "").trim().toLowerCase(); }
 // Nhóm ngành hàng của thí sinh, quyết định đề sẽ trộn từ nhóm câu hỏi nào.
 // "both": cả hai ngành (đề trộn từ toàn bộ ngân hàng) · "gia_dung" / "may_loc": chỉ một ngành.
 const SEGMENTS = { both: "both", ca_hai: "both", "cả hai": "both", gia_dung: "gia_dung", "gia dụng": "gia_dung", may_loc: "may_loc", "máy lọc": "may_loc", "máy lọc nước": "may_loc" };
+// Chức danh của nhân viên (vd. PC, Sales, Giám sát). Hồ sơ cũ chưa có thì mặc định là "PC".
+const DEFAULT_TITLE = "PC";
+function normTitle(s) { return String(s == null ? "" : s).replace(/\s+/g, " ").trim().slice(0, 50); }
+function titleOf(c) { return normTitle(c && c.title) || DEFAULT_TITLE; }
 function normSegment(s) {
   const k = String(s || "").trim().toLowerCase();
   return SEGMENTS[k] || "both"; // mặc định: không rõ thì coi như bán cả hai (đề đầy đủ hơn, an toàn hơn)
@@ -799,7 +803,7 @@ function noteFail(req) {
 }
 
 module.exports = {
-  normCode, normEmail, normSegment, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
+  normCode, normEmail, normSegment, normTitle, titleOf, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
   getQuestions, saveQuestions,
   getCandidates, saveCandidates,
   getSettings, saveSettings,

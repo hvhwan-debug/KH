@@ -234,7 +234,7 @@ const handler = async function (context, req) {
         const managers = Array.from(new Set(cands.map((c) => String(c.manager || "").trim()).filter(Boolean))).sort();
         return reply(context, 200, { ok: true, viewers, managers });
       }
-      if (op === "candidates") return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; return o; }) });
+      if (op === "candidates") return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; o.title = quiz.titleOf(c); return o; }) });
       if (op === "settings") return reply(context, 200, { ok: true, settings: await quiz.getSettings() });
       if (op === "faceRejections") {
         const list = (await require("../_lib/facecheck").getRejections()).slice().reverse();
@@ -246,9 +246,10 @@ const handler = async function (context, req) {
         const all = await quiz.getIndex();
         const periods = Array.from(new Set(all.map((r) => r.period || "(chưa gắn kỳ)"))).sort().reverse();
         const wantPeriod = (req.query && req.query.period) || "";
+        const candBy = {}; (await quiz.getCandidates()).forEach((c) => { candBy[quiz.normCode(c.code)] = c; });
         const list = all.filter((r) => !wantPeriod || (r.period || "(chưa gắn kỳ)") === wantPeriod)
           .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0))
-          .map((r) => Object.assign({}, r, { passed: quiz.passState(r.pct, st) })); // luôn theo cài đặt hiện tại; null = bài không có ngưỡng
+          .map((r) => { const c = candBy[quiz.normCode(r.code)]; return Object.assign({}, r, { passed: quiz.passState(r.pct, st), title: c ? quiz.titleOf(c) : "" }); }); // passed: luôn theo cài đặt hiện tại (null = bài không có ngưỡng); title: chức danh hiện tại của nhân viên
         return reply(context, 200, { ok: true, results: list, periods, currentPeriod: st.examPeriod });
       }
       if (op === "audit") {
@@ -621,7 +622,7 @@ const handler = async function (context, req) {
       if (!rows.length && b.text) {
         rows = String(b.text).split("\n").map((line) => {
           const parts = line.split(",").map((s) => s.trim());
-          return { code: parts[0] || "", name: parts[1] || "", email: parts[2] || "", manager: parts[3] || "", segment: parts[4] || "" };
+          return { code: parts[0] || "", name: parts[1] || "", email: parts[2] || "", manager: parts[3] || "", segment: parts[4] || "", title: parts[5] || "" };
         }).filter((r) => r.code && r.email);
       }
       const list = await quiz.getCandidates();
@@ -633,18 +634,19 @@ const handler = async function (context, req) {
         const email = quiz.normEmail(r.email);
         if (!code || !email) return;
         const seg = quiz.normSegment(r.segment);
-        const entry = { code: String(r.code).trim().slice(0, 50), name: String(r.name || "").trim().slice(0, 100), email, manager: String(r.manager || "").trim().slice(0, 100), segment: seg };
+        const titleIn = quiz.normTitle(r.title);   // trống = giữ chức danh hiện có (người mới thì mặc định PC)
+        const entry = Object.assign({ code: String(r.code).trim().slice(0, 50), name: String(r.name || "").trim().slice(0, 100), email, manager: String(r.manager || "").trim().slice(0, 100), segment: seg }, titleIn ? { title: titleIn } : {});
         if (byCode[code] != null) {
           const old = list[byCode[code]];
           const merged = Object.assign({}, old, entry);
-          const same = quiz.normEmail(old.email) === entry.email && String(old.name || "") === entry.name && quiz.normSegment(old.segment) === entry.segment && quiz.normPerson(old.manager) === quiz.normPerson(entry.manager);
+          const same = quiz.normEmail(old.email) === entry.email && String(old.name || "") === entry.name && quiz.normSegment(old.segment) === entry.segment && quiz.normPerson(old.manager) === quiz.normPerson(entry.manager) && (!titleIn || quiz.titleOf(old) === titleIn);
           if (!same) {
             delete merged.confirmed; // thông tin đổi => cần xác nhận lại
             merged.audit = (old.audit || []).concat([{ at: Date.now(), kind: "edit", by: u.email, byName: "Quản trị viên", changes: { admin: { from: "", to: "cập nhật qua danh sách" } } }]).slice(-30);
           }
           list[byCode[code]] = merged; updated++;
         }
-        else { list.push(entry); byCode[code] = list.length - 1; added++; }
+        else { list.push(Object.assign({ title: quiz.DEFAULT_TITLE }, entry)); byCode[code] = list.length - 1; added++; }
       });
       await quiz.saveCandidates(list);
       return reply(context, 200, { ok: true, candidates: list, added, updated });

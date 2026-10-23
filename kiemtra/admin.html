@@ -466,6 +466,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
   #tab-managerview .card{margin-bottom:0}
   .mvframe{height:calc(100vh - 64px);height:calc(100dvh - 64px);min-height:520px}
 }
+.ttlchip{display:inline-block;padding:3px 11px;border-radius:999px;font-size:12.5px;font-weight:700;white-space:nowrap;background:#E3F4F2;color:var(--brand-deep)}
 </style>
 </head>
 <body>
@@ -857,6 +858,8 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
           <div><label>Họ tên</label><input type="text" id="candEditName"></div>
           <div><label>Email</label><input type="text" id="candEditEmail"></div>
           <div><label>Quản lí</label><input type="text" id="candEditManager"></div>
+          <div><label>Chức danh</label><input type="text" id="candEditTitle" list="titleList" autocomplete="off" maxlength="50" placeholder="PC"></div>
+          <datalist id="titleList"></datalist>
           <div>
             <label>Nhóm ngành</label>
             <select id="candEditSegment">
@@ -875,8 +878,8 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
       <div class="card hide" id="candAddCard">
         <button class="xclose" type="button" onclick="$('candAddCard').classList.add('hide')" aria-label="Đóng">×</button>
         <h1>Thêm thí sinh</h1>
-        <p class="small">Mỗi dòng một thí sinh, định dạng: <b>mã nhân viên, họ tên, email, quản lí, nhóm ngành</b>. Nhóm ngành ghi <code>ca_hai</code> (bán cả gia dụng &amp; máy lọc nước — đề trộn từ toàn bộ ngân hàng), <code>gia_dung</code> (chỉ đề Gia dụng) hoặc <code>may_loc</code> (chỉ đề Máy lọc nước); để trống sẽ hiểu là cả hai. Có thể dán nhiều dòng cùng lúc.</p>
-        <textarea id="candText" placeholder="NV001, Nguyễn Văn A, a@congty.vn, Nguyễn Dạ Thảo, ca_hai&#10;NV002, Trần Thị B, b@congty.vn, Lê Thị Thanh Loan, may_loc"></textarea>
+        <p class="small">Mỗi dòng một thí sinh, định dạng: <b>mã nhân viên, họ tên, email, quản lí, nhóm ngành, chức danh</b> (cột chức danh không bắt buộc: để trống thì người mới là <b>PC</b>, người đã có giữ nguyên). Nhóm ngành ghi <code>ca_hai</code> (bán cả gia dụng &amp; máy lọc nước — đề trộn từ toàn bộ ngân hàng), <code>gia_dung</code> (chỉ đề Gia dụng) hoặc <code>may_loc</code> (chỉ đề Máy lọc nước); để trống sẽ hiểu là cả hai. Có thể dán nhiều dòng cùng lúc.</p>
+        <textarea id="candText" placeholder="NV001, Nguyễn Văn A, a@congty.vn, Nguyễn Dạ Thảo, ca_hai, PC&#10;NV002, Trần Thị B, b@congty.vn, Lê Thị Thanh Loan, may_loc, Giám sát"></textarea>
         <button class="btn" style="margin-top:10px" onclick="addCandidates()">Thêm vào danh sách</button>
         <div id="candMsg"></div>
       </div>
@@ -888,10 +891,11 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
         <div class="qfilter">
           <input type="search" id="candSearch" placeholder="Tìm mã NV, tên, email…" oninput="renderCandidates()" aria-label="Tìm thí sinh">
           <select id="candMgrF" onchange="renderCandidates()" aria-label="Lọc theo quản lí"></select>
+          <select id="candTitleF" onchange="renderCandidates()" aria-label="Lọc theo chức danh"></select>
           <select id="candSegF" onchange="renderCandidates()" aria-label="Lọc theo nhóm ngành"><option value="*">Mọi nhóm ngành</option><option value="both">Cả hai ngành</option><option value="may_loc">Máy lọc nước</option><option value="gia_dung">Gia dụng</option></select>
           <span class="small" id="candShown"></span>
         </div>
-        <table class="stk"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Email</th><th>Quản lí</th><th>Nhóm ngành</th><th>Xác nhận thông tin</th><th></th></tr></thead><tbody id="candList"></tbody></table>
+        <table class="stk"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Chức danh</th><th>Email</th><th>Quản lí</th><th>Nhóm ngành</th><th>Xác nhận thông tin</th><th></th></tr></thead><tbody id="candList"></tbody></table>
       </div>
     </div>
 
@@ -2154,12 +2158,17 @@ function renderCandidates(){
   const mgrs = Array.from(new Set(CANDIDATES.map(c => c.manager || ''))).sort(), mv = $('candMgrF').value;
   $('candMgrF').innerHTML = '<option value="*">Mọi quản lí</option>' + mgrs.map(m => '<option value="' + esc(m) + '">' + esc(m || '(chưa có quản lí)') + ' (' + CANDIDATES.filter(c => (c.manager||'') === m).length + ')</option>').join('');
   $('candMgrF').value = mgrs.indexOf(mv) >= 0 ? mv : '*';
-  const q = spNorm($('candSearch').value), mf = $('candMgrF').value, sf = $('candSegF').value;
-  const L = CANDIDATES.filter(c => (mf === '*' || (c.manager||'') === mf) && (sf === '*' || (c.segment||'both') === sf) && (!q || spNorm([c.code, c.name, c.email].join(' ')).indexOf(q) >= 0));
+  const tcnt = {}; CANDIDATES.forEach(c => { const t = c.title || 'PC'; tcnt[t] = (tcnt[t] || 0) + 1; });
+  const titles = Object.keys(tcnt).sort((a, b) => a.localeCompare(b, 'vi')), tv = $('candTitleF').value;
+  $('candTitleF').innerHTML = '<option value="*">Mọi chức danh</option>' + titles.map(t => '<option value="' + esc(t) + '">' + esc(t) + ' (' + tcnt[t] + ')</option>').join('');
+  $('candTitleF').value = tcnt[tv] ? tv : '*';
+  $('titleList').innerHTML = (tcnt['PC'] ? titles : ['PC'].concat(titles)).map(t => '<option value="' + esc(t) + '">').join('');
+  const q = spNorm($('candSearch').value), mf = $('candMgrF').value, sf = $('candSegF').value, tf = $('candTitleF').value;
+  const L = CANDIDATES.filter(c => (mf === '*' || (c.manager||'') === mf) && (sf === '*' || (c.segment||'both') === sf) && (tf === '*' || (c.title||'PC') === tf) && (!q || spNorm([c.code, c.name, c.email, c.title || 'PC'].join(' ')).indexOf(q) >= 0));
   $('candShown').textContent = L.length === CANDIDATES.length ? '' : 'Đang lọc: ' + L.length + ' người';
   $('candList').innerHTML = L.map(c =>
-    '<tr><td>'+esc(c.code)+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button></td><td>'+esc(c.email)+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.confirmed?'<span class="badge y">Đã xác nhận</span><br>'+esc(c.confirmed.byName||c.confirmed.by||'')+' · '+new Date(c.confirmed.at).toLocaleDateString('vi-VN'):'<span class="small">Chưa xác nhận</span>')+'</td><td style="white-space:nowrap"><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
-  ).join('') || '<tr><td colspan="7" class="small">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Bấm “＋ Thêm thí sinh”.') + '</td></tr>';
+    '<tr><td>'+esc(c.code)+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button></td><td><span class="ttlchip">'+esc(c.title||'PC')+'</span></td><td>'+esc(c.email)+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.confirmed?'<span class="badge y">Đã xác nhận</span><br>'+esc(c.confirmed.byName||c.confirmed.by||'')+' · '+new Date(c.confirmed.at).toLocaleDateString('vi-VN'):'<span class="small">Chưa xác nhận</span>')+'</td><td style="white-space:nowrap"><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
+  ).join('') || '<tr><td colspan="8" class="small">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Bấm “＋ Thêm thí sinh”.') + '</td></tr>';
 }
 let CANDIDATES = [];
 /* Hồ sơ học tập của một thí sinh: dùng lại hộp thoại hồ sơ của trang quản lí (quanli.html?profile=MÃ) */
@@ -2185,6 +2194,7 @@ function editCandidateOpen(code){
   $('candEditEmail').value = c.email||'';
   $('candEditManager').value = c.manager||'';
   $('candEditSegment').value = c.segment||'both';
+  $('candEditTitle').value = c.title || 'PC';
   $('candEditCard').classList.remove('hide');
   candRenameToggle(false);
   msg('candEditMsg','');
@@ -2219,7 +2229,7 @@ async function saveCandidateEdit(){
   const email = $('candEditEmail').value.trim();
   if (!email){ msg('candEditMsg','Nhập email.'); return; }
   const { j } = await api('POST','/api/kt-admin', {
-    op:'addCandidates', rows:[{ code, name: $('candEditName').value.trim(), email, manager: $('candEditManager').value.trim(), segment: $('candEditSegment').value }]
+    op:'addCandidates', rows:[{ code, name: $('candEditName').value.trim(), email, manager: $('candEditManager').value.trim(), segment: $('candEditSegment').value, title: $('candEditTitle').value.trim() || 'PC' }]
   });
   if (!j.ok){ msg('candEditMsg', j.error, 'err'); return; }
   msg('candEditMsg','Đã lưu.','ok');
@@ -2478,6 +2488,7 @@ async function exportResultsXlsx(){
     { header:'Kỳ', key:'period', width:10 },
     { header:'Mã nhân viên', key:'code', width:16 },
     { header:'Họ tên', key:'name', width:24 },
+    { header:'Chức danh', key:'title', width:14 },
     { header:'Quản lí', key:'manager', width:22 },
     { header:'Nhóm ngành', key:'segment', width:14 },
     { header:'Số câu đúng', key:'score', width:12 },
@@ -2501,7 +2512,7 @@ async function exportResultsXlsx(){
 
   results.forEach(r => {
     const row = ws.addRow({
-      period: r.period || '', code: r.code, name: r.name||'', manager: r.manager||'', segment: segLabel[r.segment]||'Cả hai',
+      period: r.period || '', code: r.code, name: r.name||'', title: r.title||'', manager: r.manager||'', segment: segLabel[r.segment]||'Cả hai',
       score: r.score, total: r.total, pct: r.pct, compliance: r.compliancePoints!=null?r.compliancePoints:'',
       result: r.passed == null ? '' : (r.passed ? 'Đạt' : 'Chưa đạt'),
       shotYN: (r.flags && r.flags.shot) ? 'Có' : 'Không',
@@ -2766,7 +2777,7 @@ function resRow(r){
   const badge = r.passed == null ? '' : '<span class="badge ' + (r.passed ? 'y' : 'n') + '">' + (r.passed ? 'Đạt' : 'Chưa đạt') + '</span>';
   const nm = esc(r.name || r.code);
   return '<tr onclick="rtRow(event,\'' + esc(r.id) + '\')" title="Bấm để xem chi tiết bài làm">' +
-    '<td class="rt-who"><div class="who"><span class="av" style="background:' + pal[0] + ';color:' + pal[1] + '" aria-hidden="true">' + esc(resInitials(r.name || r.code)) + '</span><div style="min-width:0"><b>' + nm + tags + '</b><small><i>' + esc(r.code) + '</i>' + (r.manager ? ' · ' + esc(r.manager) : '') + '</small></div></div></td>' +
+    '<td class="rt-who"><div class="who"><span class="av" style="background:' + pal[0] + ';color:' + pal[1] + '" aria-hidden="true">' + esc(resInitials(r.name || r.code)) + '</span><div style="min-width:0"><b>' + nm + tags + '</b><small><i>' + esc(r.code) + '</i>' + (r.title ? ' · ' + esc(r.title) : '') + (r.manager ? ' · ' + esc(r.manager) : '') + '</small></div></div></td>' +
     '<td class="rt-res"><div class="rs"><div class="rs-top"><b>' + esc(r.score) + '/' + esc(r.total) + '</b><span class="rs-pct ' + st + '">' + esc(r.pct) + '%</span>' + badge + '</div><div class="rs-bar" aria-hidden="true"><i class="' + st + '" style="width:' + p + '%"></i></div></div></td>' +
     '<td class="rt-chips"><div class="chips">' + chips.join('') + '</div></td>' +
     '<td class="rt-time"><div class="tm"><b>' + (okD ? d.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit', second:'2-digit' }) : '–') + '</b><small>' + (okD ? d.toLocaleDateString('vi-VN') : '') + '</small></div><button type="button" class="proof" data-copy="' + esc(proof) + '" onclick="rtCopy(this)" title="Mã minh chứng, bấm để sao chép">' + esc(proof) + '</button></td>' +

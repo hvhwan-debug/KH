@@ -13,7 +13,7 @@ const SEGMENT_INPUTS = ["both", "ca_hai", "gia_dung", "may_loc"]; // giá trị 
 const AUDIT_MAX = 30;
 
 const empView = (c) => ({
-  code: c.code, name: c.name || "", email: c.email || "", manager: c.manager || "", segment: quiz.normSegment(c.segment), probation: probationOf(c.code, undefined, c.joinDate), joinDate: joinDateOf(c.code, c.joinDate),
+  code: c.code, name: c.name || "", email: c.email || "", manager: c.manager || "", title: quiz.titleOf(c), segment: quiz.normSegment(c.segment), probation: probationOf(c.code, undefined, c.joinDate), joinDate: joinDateOf(c.code, c.joinDate),
   confirmed: c.confirmed ? { by: c.confirmed.by, byName: c.confirmed.byName || c.confirmed.by, at: c.confirmed.at } : null
 });
 
@@ -219,7 +219,7 @@ const handler = async function (context, req) {
       if (all.some((x) => quiz.normCode(x.code) === quiz.normCode(code))) return reply(context, 409, { ok: false, field: "code", error: "Mã nhân viên này đã có trong hệ thống." });
       if (all.some((x) => quiz.normEmail(x.email) === email)) return reply(context, 409, { ok: false, field: "email", error: "Email này đã được dùng cho nhân viên khác." });
       const entry = {
-        code, name, email, manager: scope, segment: quiz.normSegment(segIn),
+        code, name, email, manager: scope, segment: quiz.normSegment(segIn), title: quiz.normTitle(b.title) || quiz.DEFAULT_TITLE,
         audit: [Object.assign({ at: Date.now(), kind: "create" }, who)]
       };
       all.push(entry);
@@ -242,14 +242,16 @@ const handler = async function (context, req) {
       if (!validEmail(email)) return reply(context, 400, { ok: false, field: "email", error: "Email không hợp lệ." });
       if (SEGMENT_INPUTS.indexOf(segIn) < 0) return reply(context, 400, { ok: false, field: "segment", error: "Nhóm ngành không hợp lệ." });
       const segment = quiz.normSegment(segIn);
+      const title = b.title == null ? quiz.titleOf(c) : (quiz.normTitle(b.title) || quiz.DEFAULT_TITLE);
       const dup = all.find((x, k) => k !== i && quiz.normEmail(x.email) === email);
       if (dup) return reply(context, 409, { ok: false, field: "email", error: "Email này đang được dùng cho nhân viên khác (mã " + dup.code + ")." });
       const changes = {};
       if (name !== (c.name || "")) changes.name = { from: c.name || "", to: name };
       if (email !== quiz.normEmail(c.email)) changes.email = { from: c.email || "", to: email };
       if (segment !== quiz.normSegment(c.segment)) changes.segment = { from: quiz.normSegment(c.segment), to: segment };
+      if (title !== quiz.titleOf(c)) changes.title = { from: quiz.titleOf(c), to: title };
       if (!Object.keys(changes).length) return reply(context, 200, { ok: true, unchanged: true, employee: empView(c) });
-      const next = Object.assign({}, c, { name, email, segment });
+      const next = Object.assign({}, c, { name, email, segment, title });
       delete next.confirmed; // thông tin đã đổi thì cần xác nhận lại
       next.audit = (c.audit || []).concat([Object.assign({ at: Date.now(), kind: "edit", changes }, who)]).slice(-AUDIT_MAX);
       all[i] = next;

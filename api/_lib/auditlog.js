@@ -92,7 +92,7 @@ async function before(area, op, b) {
     if (op === "saveSettings") return { settings: await quiz.getSettings() };
     if (["updateEmployee", "deleteEmployee", "confirmEmployee", "resetAttempt", "deleteCandidate"].indexOf(op) >= 0) {
       const c = (await quiz.getCandidates()).find((x) => quiz.normCode(x.code) === code);
-      return { cand: c ? { code: c.code, name: c.name || "", email: c.email || "", segment: c.segment || "", manager: c.manager || "" } : null };
+      return { cand: c ? { code: c.code, name: c.name || "", email: c.email || "", segment: c.segment || "", manager: c.manager || "", title: quiz.titleOf(c) } : null };
     }
     if (op === "deleteQuestion") { const q = (await quiz.getQuestions()).find((x) => x.id === b.id); return { q: q ? s(q.text, 100) : "" }; }
     if (op === "deleteAllQuestions") return { n: (await quiz.getQuestions()).length };
@@ -139,13 +139,14 @@ function details(area, op, q, b, res, pre) {
       SKEYS.forEach((k) => { if (n[k] !== undefined && String(a[k]) !== String(n[k])) ch.push(SLABEL[k] + ": " + s(a[k], 40) + " → " + s(n[k], 40)); });
       d.changes = ch.length ? ch.join("; ") : "không đổi"; break;
     }
-    case "addEmployee": d.code = s(b.code, 40); d.name = s(b.name, 80); d.email = s(b.email, 80); if (b.scope) d.manager = s(b.scope, 80); break;
+    case "addEmployee": d.code = s(b.code, 40); d.name = s(b.name, 80); d.email = s(b.email, 80); if (b.title) d.title = s(b.title, 50); if (b.scope) d.manager = s(b.scope, 80); break;
     case "updateEmployee": {
       d.code = b.code; if (cand) d.name = cand.name;
       const ch = [];
       if (cand) {
         if (b.name != null && s(b.name, 80) !== cand.name) ch.push("họ tên: " + cand.name + " → " + s(b.name, 80));
         if (b.email != null && s(b.email, 80).toLowerCase() !== String(cand.email).toLowerCase()) ch.push("email: " + cand.email + " → " + s(b.email, 80));
+        if (b.title != null && (quiz.normTitle(b.title) || quiz.DEFAULT_TITLE) !== cand.title) ch.push("chức danh: " + cand.title + " → " + (quiz.normTitle(b.title) || quiz.DEFAULT_TITLE));
         if (b.segment != null && quiz.normSegment(b.segment) !== quiz.normSegment(cand.segment)) ch.push("nhóm ngành: " + (SEGN[quiz.normSegment(cand.segment)] || cand.segment) + " → " + (SEGN[quiz.normSegment(b.segment)] || b.segment));
       }
       d.changes = r.unchanged ? "không đổi" : ch.join("; "); break;
