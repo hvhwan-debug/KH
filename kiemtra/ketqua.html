@@ -64,6 +64,9 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .pq .opt.correct{background:var(--ok-soft);border-color:#9FD2B5;font-weight:700}
 .pq .opt.wrong{background:var(--bad-soft);border-color:#F2C6C1}
 .pq .tag{display:inline-block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px}
+.pq .st{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;letter-spacing:.03em;padding:4px 10px;border-radius:999px;margin-bottom:8px;margin-left:8px}
+.pq .st.ok{background:var(--ok-soft);color:var(--ok)}.pq .st.no{background:var(--bad-soft);color:var(--bad)}.pq .st.bl{background:#ECEFF0;color:var(--muted)}
+.pq .opt.blank-note{background:#ECEFF0;border-color:var(--line);color:var(--muted);font-weight:600;font-style:italic}
 .foot{padding:16px 24px 22px;text-align:center;font-size:12.5px;color:var(--muted);line-height:1.7}
 .foot b{color:var(--brand-deep)}
 /* Đề thi thử: MỘT khung thông báo dịu + hoa văn chữ chìm phủ thẻ (hiện ở mọi ảnh chụp, không đè lên số liệu) */
@@ -124,6 +127,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 var $ = function(id){ return document.getElementById(id); };
 var ZONE = 'Asia/Ho_Chi_Minh', off = 0, VBAR_OFFICIAL = '';
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function hasAnswer(q){ return q.chosenList ? q.chosenList.length > 0 : (q.chosen != null && q.chosen >= 0); }
 function full(ms){ try { return new Date(ms).toLocaleString('vi-VN',{timeZone:ZONE,hour:'2-digit',minute:'2-digit',second:'2-digit',day:'2-digit',month:'2-digit',year:'numeric',hour12:false}); } catch(e){ return ''; } }
 function dur(sec){ sec = Math.max(0, Math.round(sec||0)); var m = Math.floor(sec/60), s = sec%60; return m+' phút '+(s<10?'0':'')+s+' giây'; }
 function clock(sec){ sec = Math.max(0, Math.round(sec||0)); var h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60, p = function(x){ return (x<10?'0':'')+x; }; return h ? h+':'+p(m)+':'+p(s) : m+':'+p(s); }
@@ -149,14 +153,19 @@ async function loadMyPaper(){
   if (!j || !j.ok){ $('paperMsg').innerHTML = '<div class="pmsg">' + esc((j && j.error) || 'Không kết nối được máy chủ.') + '</div>'; return; }
   $('paperForm').classList.add('hide');
   $('paperView').classList.remove('hide');
-  $('paperView').innerHTML = '<p class="pnote" style="margin-top:0">Đề đã làm (' + j.paper.length + ' câu) — đáp án đúng tô xanh, đáp án bạn chọn sai tô đỏ.</p>' +
+  var nOk = j.paper.filter(function(q){ return q.ok; }).length;
+  var nBlank = j.paper.filter(function(q){ return !hasAnswer(q); }).length;
+  var nWrong = j.paper.length - nOk - nBlank;
+  $('paperView').innerHTML = '<p class="pnote" style="margin-top:0">Đề đã làm (' + j.paper.length + ' câu: <b style="color:var(--ok)">' + nOk + ' đúng</b>, <b style="color:var(--bad)">' + nWrong + ' sai</b>, <b>' + nBlank + ' bỏ trống</b>) — đáp án đúng tô xanh, đáp án bạn chọn sai tô đỏ.</p>' +
     j.paper.map(function(q){
+      var answered = hasAnswer(q);
+      var st = !answered ? '<span class="st bl">— BỎ TRỐNG</span>' : q.ok ? '<span class="st ok">✓ ĐÚNG</span>' : '<span class="st no">✗ SAI</span>';
       var opts = (q.options || []).map(function(o, idx){
         var isCorrect = (q.correctList && q.correctList.indexOf(idx) >= 0) || q.correct === idx;
         var isChosenWrong = !isCorrect && ((q.chosenList && q.chosenList.indexOf(idx) >= 0) || q.chosen === idx);
         return '<div class="opt' + (isCorrect ? ' correct' : isChosenWrong ? ' wrong' : '') + '">' + esc(o) + (isCorrect ? ' ✓' : isChosenWrong ? ' ✗' : '') + '</div>';
       }).join('');
-      return '<div class="pq"><span class="tag">Câu ' + q.n + (q.category ? ' · ' + esc(q.category) : '') + '</span><p class="qt">' + esc(q.text) + '</p>' + opts + '</div>';
+      return '<div class="pq"><span class="tag">Câu ' + q.n + (q.category ? ' · ' + esc(q.category) : '') + '</span>' + st + (!answered ? '<div class="opt blank-note">Bạn đã bỏ trống, không chọn phương án nào.</div>' : '') + '<p class="qt">' + esc(q.text) + '</p>' + opts + '</div>';
     }).join('');
 }
 $('paperGo').addEventListener('click', loadMyPaper);
