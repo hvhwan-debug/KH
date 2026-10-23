@@ -587,8 +587,8 @@ async function load(){
   if (!r.j.ok){ msg('listMsg', r.j.error || 'Không tải được danh sách.'); return; }
   EMP = r.j.employees; PHOTO = {};
   CURP = r.j.period != null ? r.j.period : ''; PERIODS = r.j.periods || [CURP]; CURRENT = r.j.currentPeriod || CURP;
-  $('fPer').innerHTML = PERIODS.map(function(p){ return '<option value="' + esc(p) + '"' + (p === CURP ? ' selected' : '') + '>Kỳ ' + esc(perL(p)) + (p === CURRENT ? ' (hiện tại)' : '') + '</option>'; }).join('');
-  $('perNote').innerHTML = CURP !== CURRENT ? 'Đang xem kỳ cũ. Trạng thái, điểm và ảnh xác nhận bên dưới là của kỳ ' + esc(perL(CURP)) + '. <button type="button" class="linkbtn" id="perBack">Về kỳ hiện tại</button>' : '';
+  $('fPer').innerHTML = PERIODS.map(function(p){ return '<option value="' + esc(p) + '"' + (p === CURP ? ' selected' : '') + '>Đề ' + esc(perL(p)) + (p === CURRENT ? ' (hiện tại)' : '') + '</option>'; }).join('');
+  $('perNote').innerHTML = CURP !== CURRENT ? 'Đang xem đề cũ. Trạng thái, điểm và ảnh xác nhận bên dưới là của đề ' + esc(perL(CURP)) + '. <button type="button" class="linkbtn" id="perBack">Về đề hiện tại</button>' : '';
   $('perNote').classList.toggle('hide', CURP === CURRENT);
   render();
 }
@@ -663,7 +663,7 @@ function renderHero(n, c, avg){
   else if (!cur) s = 'Đang xem lại kỳ ' + esc(perL(CURP)) + ': <b>' + c.done + '/' + n + '</b> người đã làm bài' + (avg != null ? ', tỉ lệ đúng trung bình <b>' + avg + '%</b>' : '') + '.';
   else if (!left) s = 'Cả nhóm đã hoàn thành bài kiểm tra kỳ này' + (avg != null ? ', tỉ lệ đúng trung bình <b>' + avg + '%</b>' : '') + '. Bấm vào từng người để xem hồ sơ và khuyến nghị.';
   else s = 'Đã có <b>' + c.done + '/' + n + '</b> người làm bài kỳ này' + (c.doing ? ', <b>' + c.doing + '</b> người đang làm' : '') + ' — còn <b>' + (left - (c.doing||0)) + '</b> người chưa bắt đầu.' + (avg != null ? ' Tỉ lệ đúng trung bình <b>' + avg + '%</b>.' : '');
-  $('hero').innerHTML = heroHTML({ eb: 'Kỳ kiểm tra tháng ' + esc(perL(CURP)) + (cur ? '' : ' (kỳ cũ)') + ' · ' + n + ' nhân viên' + (VIEWER && VIEWER.isAdmin ? '' : ' trong nhóm của bạn'),
+  $('hero').innerHTML = heroHTML({ eb: 'Đề kiểm tra ' + esc(perL(CURP)) + (cur ? '' : ' (đề cũ)') + ' · ' + n + ' nhân viên' + (VIEWER && VIEWER.isAdmin ? '' : ' trong nhóm của bạn'),
     t: vnGreet() + ', ' + esc(nm), s: s, kpi: n ? rate + '%' : null, kl: 'đã làm bài' });
 }
 function stat(){
@@ -1036,7 +1036,7 @@ async function loadIns(url, boxId, title, wantAI){
 function insSecHTML(){ return '<div class="psec"><h3>Chẩn đoán hành vi học tập <small>từ thời gian làm từng câu, hết giờ, xu hướng giữa các kỳ</small></h3><div id="insBox"></div></div>'; }
 $('btnTeamIns').addEventListener('click', function(){
   var per = (typeof CURP !== 'undefined' && CURP != null) ? CURP : '';
-  $('insTitle').textContent = 'Chẩn đoán cả nhóm'; $('insSub').textContent = 'Kỳ ' + perL(per) + ' · nhân viên thuộc phạm vi của bạn · mỗi người tính bài mới nhất';
+  $('insTitle').textContent = 'Chẩn đoán cả nhóm'; $('insSub').textContent = 'Đề ' + perL(per) + ' · nhân viên thuộc phạm vi của bạn · mỗi người tính bài mới nhất';
   $('insBody').innerHTML = '<div id="insTeamBox"></div>'; $('ovIns').classList.remove('hide');
   loadIns('/api/kt-viewer?op=teamInsight&period=' + encodeURIComponent(per), 'insTeamBox', 'Chẩn đoán cả nhóm - kỳ ' + perL(per), false);
 });
@@ -1069,7 +1069,7 @@ function renderProfile(){
   var hiAvg = last.teamAvg != null ? Math.round((last.pct - last.teamAvg) * 10) / 10 : null;
   var html = '<div class="pkpi">' +
     '<div><b>' + H.length + '</b><span>Lần kiểm tra đã nộp</span></div>' +
-    '<div><b class="' + (last.pct < low ? 'down' : '') + '">' + pc(last.pct) + '</b><span>Kỳ ' + perL(last.period) + (hiAvg != null ? ' · ' + (hiAvg >= 0 ? 'hơn' : 'kém') + ' đội ' + pc(Math.abs(hiAvg)).replace('%',' điểm') : '') + '</span></div>' +
+    '<div><b class="' + (last.pct < low ? 'down' : '') + '">' + pc(last.pct) + '</b><span>Đề ' + perL(last.period) + (hiAvg != null ? ' · ' + (hiAvg >= 0 ? 'hơn' : 'kém') + ' đội ' + pc(Math.abs(hiAvg)).replace('%',' điểm') : '') + '</span></div>' +
     '<div><b>' + pc(avgAll) + '</b><span>Trung bình các lần</span></div>' +
     '<div><b class="' + (d == null ? '' : d > 0 ? 'up' : d < 0 ? 'down' : '') + '">' + (d == null ? '–' : (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + String(Math.abs(d)).replace('.', ',')) + '</b><span>' + (d == null ? 'Cần ít nhất 2 kỳ để so sánh' : 'Điểm % so với lần trước') + '</span></div></div>';
   html += '<div class="psec chart"><h3>Tỉ lệ đúng theo kỳ</h3>' + chartSvg(H, low) + '<div class="lg"><span><i style="background:#067A8C"></i>Nhân viên</span><span><i style="background:#E0A030;border-radius:50%"></i>Trung bình đội cùng kỳ</span>' + (H.some(function(x){ return !x.latest; }) ? '<span>* lần làm trước khi làm lại trong cùng kỳ</span>' : '') + '</div></div>';
@@ -1114,7 +1114,7 @@ async function runProfileAI(){
   var P = PROF, e = P.emp, btn = $('aiProfBtn'); if (!P) return;
   var low = (P.complianceLowMin || 6) * 10;
   var data = 'Nhân viên: ' + (e.name||e.code) + ' (mã ' + e.code + '), nhóm ngành: ' + (SEG[e.segment]||'') + '\nChuẩn tối thiểu: ' + low + '% câu đúng (dưới mức này là 0 điểm tuân thủ)\n\nLịch sử theo kỳ (cũ → mới):\n' +
-    P.history.map(function(x){ return '- Kỳ ' + perL(x.period) + ': ' + x.score + '/' + x.total + ' câu đúng (' + x.pct + '%), trung bình đội ' + pc(x.teamAvg) + ', hạng ' + (x.rank ? x.rank + '/' + x.teamSize : '?') + ', điểm tuân thủ ' + (x.compliancePoints != null ? x.compliancePoints : '?') + ', thời gian ' + (x.durationSec != null ? clock(x.durationSec) : '?') + (x.flags && (x.flags.blur || x.flags.shot) ? ', cảnh báo: rời trang ' + (x.flags.blur||0) + ' lần, chụp màn hình ' + (x.flags.shot||0) + ' lần' : ''); }).join('\n') +
+    P.history.map(function(x){ return '- Đề ' + perL(x.period) + ': ' + x.score + '/' + x.total + ' câu đúng (' + x.pct + '%), trung bình đội ' + pc(x.teamAvg) + ', hạng ' + (x.rank ? x.rank + '/' + x.teamSize : '?') + ', điểm tuân thủ ' + (x.compliancePoints != null ? x.compliancePoints : '?') + ', thời gian ' + (x.durationSec != null ? clock(x.durationSec) : '?') + (x.flags && (x.flags.blur || x.flags.shot) ? ', cảnh báo: rời trang ' + (x.flags.blur||0) + ' lần, chụp màn hình ' + (x.flags.shot||0) + ' lần' : ''); }).join('\n') +
     '\n\nKết quả theo mảng kiến thức (tổng các bài / kỳ gần nhất):\n' + P.categories.map(function(c){ return '- ' + c.category + ': ' + c.pct + '% trên ' + c.n + ' câu' + (c.lastPct != null ? ' / gần nhất ' + c.lastPct + '%' : ''); }).join('\n') +
     (P.repeatWrong.length ? '\n\nCâu sai lặp lại:\n' + P.repeatWrong.map(function(w){ return '- (' + w.times + ' lần, ' + w.category + ') ' + w.text + ' | Đáp án đúng: ' + w.answer; }).join('\n') : '') +
     (P.lastWrong.length ? '\n\nCâu sai kỳ gần nhất:\n' + P.lastWrong.map(function(w){ return '- (' + w.category + ') ' + w.text + ' | Đã chọn: ' + (w.chosen == null ? 'bỏ trống' : w.chosen) + ' | Đúng: ' + w.answer; }).join('\n') : '');

@@ -1587,7 +1587,7 @@ function renderQuestions(){
     (QP && !hasOwn ? '<div class="hd" style="color:var(--warn)">⚠ Kỳ này chưa có câu hỏi riêng. ' + (fbList ? 'Nếu bắt đầu kỳ bây giờ, đề sẽ TẠM dùng ' + fbNote + '. Hãy thêm câu hoặc sao chép đề vào kỳ này.' : 'Nếu bắt đầu kỳ bây giờ, thí sinh sẽ KHÔNG làm được bài.') + '</div>' : '') +
     qReadiness(fbList || L, QP === cur)) +
     (QP && QP !== cur && EXAMS.some(e => e.id === QP) ? '<p class="small" style="margin:8px 0 0">Đây là ngân hàng riêng của đề <b>' + esc(qPerLabel(QP)) + '</b> (link thi: <code>/kiemtra/?exam=' + esc(QP) + '</code>).</p>' :
-     QP && QP !== cur ? '<p class="small" style="margin:8px 0 0">' + (QP > cur ? 'Kỳ sắp tới: chuẩn bị sẵn đề, rồi đổi "Kỳ hiện tại" trong tab Cài đặt khi bắt đầu kỳ.' : 'Kỳ đã qua: đề được giữ lại để đối chiếu.') + '</p>' : '');
+     QP && QP !== cur ? '<p class="small" style="margin:8px 0 0">' + (QP > cur ? 'Đề sắp mở: chuẩn bị sẵn câu hỏi, rồi đổi "Đề mặc định" trong tab Đề thi khi bắt đầu mở đề.' : 'Đề đã qua: câu hỏi được giữ lại để đối chiếu.') + '</p>' : '');
   $('qCopyFrom').innerHTML = pers.filter(p => p !== QP).concat(un.length && QP !== '' ? [''] : []).map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + ' (' + cnt(p).length + ' câu)</option>').join('') || '<option value="">Chưa có kỳ khác</option>';
   // Danh sách
   $('qListTitle').textContent = 'Câu hỏi của đề';
@@ -1600,7 +1600,7 @@ function renderQuestions(){
 }
 async function copyQuestions(){
   const from = $('qCopyFrom').value; if (!QP){ alert('Chọn kỳ đích (không phải "Chưa gắn kỳ").'); return; }
-  const n = QUESTIONS.filter(q => (q.period || '') === from).length; if (!n){ alert('Kỳ nguồn chưa có câu hỏi.'); return; }
+  const n = QUESTIONS.filter(q => (q.period || '') === from).length; if (!n){ alert('Đề nguồn chưa có câu hỏi.'); return; }
   if (!confirm('Sao chép ' + n + ' câu từ ' + qPerLabel(from).toLowerCase() + ' vào ' + qPerLabel(QP).toLowerCase() + '?\nCâu trùng nội dung đã có ở kỳ đích sẽ được bỏ qua. Bản sao là câu riêng: sửa ở kỳ này không ảnh hưởng kỳ kia.')) return;
   const { j } = await api('POST','/api/kt-admin', { op:'copyQuestions', from, to: QP });
   if (!j.ok){ msg('qPerMsg', j.error || 'Không sao chép được.'); return; }
@@ -2185,7 +2185,7 @@ function renderAdminHero(j){
     card('Dưới chuẩn', done ? Math.round(weak / done * 100) + '% bài nộp' : '', weak + '<small> người</small>', done ? weak / done * 100 : 0, '#FF9A8F', weak ? 'Cần đào tạo lại' : (done ? 'Không ai dưới chuẩn' : '')) +
     '</div>' : '<p class="khero-s">Thêm thí sinh và câu hỏi để bắt đầu kỳ kiểm tra.</p>';
   const tag = j.untagged ? '<button type="button" class="hm-link" id="heroUntagged">' + j.untagged + ' bài chưa gắn kỳ · Gắn kỳ →</button>' : '';
-  $('hero').innerHTML = '<div class="khero-in wide"><div class="khero-eb">Kỳ kiểm tra ' + perLabel(j.currentPeriod) + ' · ' + n + ' thí sinh</div><h1 class="khero-t">' + vnGreet() + ', quản trị viên</h1>' + meters + tag + '</div>';
+  $('hero').innerHTML = '<div class="khero-in wide"><div class="khero-eb">Đề kiểm tra ' + perLabel(j.currentPeriod) + ' · ' + n + ' thí sinh</div><h1 class="khero-t">' + vnGreet() + ', quản trị viên</h1>' + meters + tag + '</div>';
   if (j.untagged) $('heroUntagged').onclick = () => { openExam(EX_DEFAULT || CUR_PERIOD, 'results'); setTimeout(() => { const b = $('dashBanner'); if (b) b.scrollIntoView({ behavior:'smooth', block:'center' }); }, 50); };
   $('hero').classList.remove('hide');
 }
@@ -2264,7 +2264,7 @@ async function loadDashboard(sel){
   $('dashKpis').innerHTML =
     '<div class="kpi"><div class="v">' + j.submitted + '<small> / ' + j.candidates + '</small></div><div class="l">Đã làm bài (' + rate + '%)</div><div class="bar"><i style="width:' + rate + '%"></i></div></div>' +
     '<div class="kpi"><div class="v">' + pctTxt(j.avgPct) + '</div><div class="l">Tỉ lệ đúng trung bình · trung vị ' + pctTxt(j.medianPct) + '</div>' + delta + '</div>' +
-    '<div class="kpi' + (lt ? ' alert' : '') + '"><div class="v">' + lt + '</div><div class="l">Dưới chuẩn (0 điểm tuân thủ), cần đào tạo lại</div>' + (j.prev ? '<div class="d flat">Kỳ trước: ' + j.prev.weak + ' người</div>' : '') + '</div>' +
+    '<div class="kpi' + (lt ? ' alert' : '') + '"><div class="v">' + lt + '</div><div class="l">Dưới chuẩn (0 điểm tuân thủ), cần đào tạo lại</div>' + (j.prev ? '<div class="d flat">Đề trước: ' + j.prev.weak + ' người</div>' : '') + '</div>' +
     '<div class="kpi"><div class="v" style="font-size:19px;padding:3px 0">' + durTxt(j.avgDurationSec) + '</div><div class="l">Thời gian làm bài trung bình</div>' + (j.minPct != null ? '<div class="d flat">Thấp nhất ' + pctTxt(j.minPct) + ' · cao nhất ' + pctTxt(j.maxPct) + '</div>' : '') + '</div>';
   // Phân bố điểm tuân thủ
   const BC = ['var(--bad)','#E0A030','#5FB3B9','var(--ok)'], tot = Math.max(1, j.submitted);
