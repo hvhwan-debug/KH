@@ -4,7 +4,7 @@
 const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const { validEmail, isAdmin } = require("../_lib/config");
 const quiz = require("../_lib/quiz");
-const { probationOf } = require("../_lib/probation");
+const { probationOf, joinDateOf } = require("../_lib/probation");
 const { modelName, prettyLabel } = require("../_lib/devicename");
 const behavior = require("../_lib/behavior");
 
@@ -12,7 +12,7 @@ const SEGMENT_INPUTS = ["both", "ca_hai", "gia_dung", "may_loc"]; // giá trị 
 const AUDIT_MAX = 30;
 
 const empView = (c) => ({
-  code: c.code, name: c.name || "", email: c.email || "", manager: c.manager || "", segment: quiz.normSegment(c.segment), probation: probationOf(c.code),
+  code: c.code, name: c.name || "", email: c.email || "", manager: c.manager || "", segment: quiz.normSegment(c.segment), probation: probationOf(c.code), joinDate: joinDateOf(c.code),
   confirmed: c.confirmed ? { by: c.confirmed.by, byName: c.confirmed.byName || c.confirmed.by, at: c.confirmed.at } : null
 });
 

@@ -4,9 +4,12 @@ const crypto = require("crypto");
 const data = require("./probation.json");
 const DAY = 86400000;
 
+const hashOf = (code) => crypto.createHash("sha256").update(String(code || "").trim().toLowerCase()).digest("hex");
+// Ngày vào công ty (YYYY-MM-DD) hoặc "" nếu nhân viên không có trong danh sách
+function joinDateOf(code) { return data.join[hashOf(code)] || ""; }
+
 function probationOf(code, now) {
-  const h = crypto.createHash("sha256").update(String(code || "").trim().toLowerCase()).digest("hex");
-  const j = data.join[h];
+  const j = joinDateOf(code);
   if (!j) return null;
   const start = Date.parse(j + "T00:00:00+07:00");
   const t = now || Date.now();
@@ -15,4 +18,4 @@ function probationOf(code, now) {
   const e = new Date(end - DAY + 7 * 3600000); // ngày cuối còn thử việc, theo giờ VN
   return { from: j, until: e.toISOString().slice(0, 10) };
 }
-module.exports = { probationOf };
+module.exports = { probationOf, joinDateOf };
