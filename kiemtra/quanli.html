@@ -588,13 +588,13 @@ async function boot(){
   $('scopeTxt').textContent = 'Nhân viên của: ' + (VIEWER.scopes || []).join('; ');
   show('app'); await load();
 }
-var CURP = '', PERIODS = [], CURRENT = '', PSEL = null;
+var CURP = '', PERIODS = [], CURRENT = '', PSEL = null, PTITLES = {};
 async function load(){
   var r = await api('GET','/api/kt-viewer?op=employees' + (PSEL != null ? '&period=' + encodeURIComponent(PSEL) : ''));
   if (!r.j.ok){ msg('listMsg', r.j.error || 'Không tải được danh sách.'); return; }
   EMP = r.j.employees; PHOTO = {};
-  CURP = r.j.period != null ? r.j.period : ''; PERIODS = r.j.periods || [CURP]; CURRENT = r.j.currentPeriod || CURP;
-  $('fPer').innerHTML = PERIODS.map(function(p){ return '<option value="' + esc(p) + '"' + (p === CURP ? ' selected' : '') + '>Đề ' + esc(perL(p)) + (p === CURRENT ? ' (hiện tại)' : '') + '</option>'; }).join('');
+  CURP = r.j.period != null ? r.j.period : ''; PERIODS = r.j.periods || [CURP]; PTITLES = r.j.examTitles || {}; CURRENT = r.j.currentPeriod || CURP;
+  $('fPer').innerHTML = PERIODS.map(function(p){ return '<option value="' + esc(p) + '"' + (p === CURP ? ' selected' : '') + '>Đề ' + esc(perL(p)) + (PTITLES[p] ? ' – ' + esc(PTITLES[p]) : '') + (p === CURRENT ? ' (hiện tại)' : '') + '</option>'; }).join('');
   $('perNote').innerHTML = CURP !== CURRENT ? 'Đang xem đề cũ. Trạng thái, điểm và ảnh xác nhận bên dưới là của đề ' + esc(perL(CURP)) + '. <button type="button" class="linkbtn" id="perBack">Về đề hiện tại</button>' : '';
   $('perNote').classList.toggle('hide', CURP === CURRENT);
   render();
