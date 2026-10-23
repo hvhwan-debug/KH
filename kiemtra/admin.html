@@ -240,6 +240,28 @@ details.nd summary{cursor:pointer;font-weight:700;font-size:14px}
 table.tm-t{width:100%;font-size:12.5px}
 table.tm-t th,table.tm-t td{padding:6px 6px;text-align:right;white-space:nowrap}
 table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:normal}
+
+/* === Tối ưu di động (chỉ áp dụng màn hình nhỏ, không đổi giao diện máy tính) === */
+html{-webkit-text-size-adjust:100%}
+.mvframe{width:100%;height:82vh;border:0;display:block}
+@media(max-width:760px){
+  body{overflow-x:hidden}
+  .topbar{padding:10px 12px;gap:8px;padding-top:max(10px,env(safe-area-inset-top))}
+  .topbar b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+  .topbar .small{min-width:0;max-width:34vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wrap{padding:12px 10px calc(40px + env(safe-area-inset-bottom))}
+  .tabs button{min-height:42px}
+  /* chống iOS tự phóng to khi chạm vào ô nhập (cần cỡ chữ >= 16px) */
+  input:not([type=checkbox]):not([type=radio]),select,textarea{font-size:16px}
+  .btn{min-height:42px}
+  /* bảng rộng: cuộn ngang trong khung thay vì làm vỡ cả trang */
+  .card table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .card table th,.card table td{white-space:nowrap}
+  .card table td .small,.card table td small{white-space:normal}
+  /* tab Quản lí: iframe chiếm gọn màn hình, dùng dvh để không bị thanh địa chỉ che */
+  #tab-managerview .card{border-radius:12px}
+  .mvframe{height:calc(100vh - 130px);height:calc(100dvh - 130px);min-height:480px}
+}
 </style>
 </head>
 <body>
@@ -569,7 +591,7 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
          sang trang/tab khac. Admin da tu dong co toan quyen o do (viewer ao), khong can dang nhap rieng. -->
     <div id="tab-managerview" class="tabpane hide">
       <div class="card" style="padding:0;overflow:hidden">
-        <iframe id="mvFrame" src="about:blank" title="Trang quản lí" style="width:100%;height:82vh;border:0;display:block"></iframe>
+        <iframe id="mvFrame" class="mvframe" src="about:blank" title="Trang quản lí"></iframe>
       </div>
     </div>
 
