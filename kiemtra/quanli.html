@@ -357,17 +357,29 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
     <div class="brand" style="margin-bottom:16px"><div class="logo" aria-hidden="true">KT</div><div><b>Quản lí nhân viên</b><span>Kết quả bài kiểm tra</span></div></div>
     <h1 id="authTitle">Đăng nhập quản lí</h1>
     <p class="lead">Dành cho quản lí được cấp quyền xem nhân viên và kết quả kiểm tra của mình.</p>
-    <div class="tabs" role="tablist"><button type="button" role="tab" id="tabLogin" aria-selected="true">Đăng nhập</button><button type="button" role="tab" id="tabReg" aria-selected="false">Đăng ký</button></div>
     <form id="authForm" novalidate>
-      <div class="field hide" id="fName"><label for="aName">Họ và tên</label><input id="aName" autocomplete="name" placeholder="Nguyễn Văn A"></div>
       <div class="field"><label for="aEmail">Email công ty</label><input id="aEmail" type="email" autocomplete="email" placeholder="ten@congty.vn" inputmode="email"></div>
-      <div class="field hide" id="fPhone"><label for="aPhone">Số điện thoại</label><input id="aPhone" autocomplete="tel" placeholder="0901234567" inputmode="tel"></div>
-      <div class="field"><label for="aPass">Mật khẩu</label><input id="aPass" type="password" autocomplete="current-password" placeholder="Ít nhất 6 ký tự"></div>
+      <div class="field" id="fPass"><label for="aPass">Mật khẩu</label><input id="aPass" type="password" autocomplete="current-password" placeholder="Ít nhất 6 ký tự"></div>
       <div class="field hide" id="fOtp"><label for="aOtp">Mã xác minh (đã gửi qua email)</label><input id="aOtp" inputmode="numeric" autocomplete="one-time-code" placeholder="6 số"></div>
       <button class="btn block" id="authBtn" type="submit">Đăng nhập</button>
       <div id="authMsg" role="alert"></div>
+      <button type="button" class="linkbtn" id="forgotBtn">Quên mật khẩu?</button>
     </form>
-    <p class="fine">Chưa được cấp quyền quản lí? Nhờ quản trị viên thêm email của bạn trước. Quên mật khẩu: dùng chức năng "Quên mật khẩu" ở <a href="/">trang chính</a>.</p>
+    <p class="fine" id="authFine">Tài khoản quản lí do quản trị viên cấp quyền; trang này không có đăng ký. Chưa được cấp quyền? Hãy nhờ quản trị viên thêm email của bạn. Quên mật khẩu: bấm “Quên mật khẩu?” ở trên (chỉ dành cho email đã được cấp quyền quản lí).</p>
+  </section>
+
+  <!-- Đặt mật khẩu mới (từ liên kết trong email) -->
+  <section class="card auth hide" id="resetScreen">
+    <div class="brand" style="margin-bottom:16px"><div class="logo" aria-hidden="true">KT</div><div><b>Quản lí nhân viên</b><span>Kết quả bài kiểm tra</span></div></div>
+    <h1>Đặt mật khẩu mới</h1>
+    <p class="lead">Nhập mật khẩu mới cho tài khoản quản lí của bạn.</p>
+    <form id="resetForm" novalidate>
+      <div class="field"><label for="rPass">Mật khẩu mới</label><input id="rPass" type="password" autocomplete="new-password" placeholder="Ít nhất 6 ký tự"></div>
+      <div class="field"><label for="rPass2">Nhập lại mật khẩu</label><input id="rPass2" type="password" autocomplete="new-password" placeholder="Nhập lại mật khẩu"></div>
+      <button class="btn block" id="resetBtn" type="submit">Đặt mật khẩu</button>
+      <div id="resetMsg" role="alert"></div>
+      <button type="button" class="linkbtn" id="resetCancel">Quay lại đăng nhập</button>
+    </form>
   </section>
 
   <!-- Chưa có quyền -->
@@ -545,26 +557,35 @@ async function api(method, path, body){
   var j = null; try { j = await r.json(); } catch(e){}
   return { s:r.status, j:j||{} };
 }
-function show(which){ ['loginScreen','deniedScreen','app'].forEach(function(id){ $(id).classList.toggle('hide', id !== which); }); }
+function show(which){ ['loginScreen','resetScreen','deniedScreen','app'].forEach(function(id){ $(id).classList.toggle('hide', id !== which); }); }
 
-/* ---------- Đăng nhập / đăng ký (dùng chung hệ thống tài khoản của trang chính) ---------- */
+/* ---------- Đăng nhập / quên mật khẩu (dùng chung hệ thống tài khoản của trang chính; KHÔNG có đăng ký ở trang này) ---------- */
 function setMode(m){
-  mode = m;
-  $('tabLogin').setAttribute('aria-selected', m === 'login'); $('tabReg').setAttribute('aria-selected', m === 'reg');
-  $('fName').classList.toggle('hide', m !== 'reg'); $('fPhone').classList.toggle('hide', m !== 'reg');
-  $('fOtp').classList.add('hide'); $('authBtn').textContent = m === 'reg' ? 'Đăng ký' : 'Đăng nhập';
-  $('authTitle').textContent = m === 'reg' ? 'Đăng ký tài khoản quản lí' : 'Đăng nhập quản lí';
-  $('aPass').setAttribute('autocomplete', m === 'reg' ? 'new-password' : 'current-password'); msg('authMsg','');
+  mode = m; var f = m === 'forgot';
+  $('fPass').classList.toggle('hide', f); $('fOtp').classList.add('hide');
+  $('authBtn').textContent = f ? 'Gửi liên kết đặt lại mật khẩu' : 'Đăng nhập';
+  $('authTitle').textContent = f ? 'Quên mật khẩu' : 'Đăng nhập quản lí';
+  $('forgotBtn').textContent = f ? '← Quay lại đăng nhập' : 'Quên mật khẩu?';
+  msg('authMsg','');
 }
-$('tabLogin').addEventListener('click', function(){ setMode('login'); });
-$('tabReg').addEventListener('click', function(){ setMode('reg'); });
+$('forgotBtn').addEventListener('click', function(){ setMode(mode === 'forgot' ? 'login' : 'forgot'); });
 $('authForm').addEventListener('submit', async function(e){
   e.preventDefault(); msg('authMsg','');
-  var body = { email:$('aEmail').value.trim(), password:$('aPass').value };
+  var email = $('aEmail').value.trim();
+  var btn = $('authBtn'), label = btn.textContent;
+  if (mode === 'forgot'){
+    if (!email){ msg('authMsg','Nhập email công ty của bạn.'); return; }
+    btn.disabled = true; btn.textContent = 'Đang gửi…';
+    var rr; try { rr = await api('POST','/api/kt-reset-request',{ email:email }); } catch(err){ rr = null; }
+    btn.disabled = false; btn.textContent = label;
+    if (!rr){ msg('authMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
+    msg('authMsg', rr.j.message || 'Đã gửi yêu cầu.', 'info');
+    return;
+  }
+  var body = { email:email, password:$('aPass').value };
   if (!body.email || !body.password){ msg('authMsg','Nhập email và mật khẩu.'); return; }
-  if (mode === 'reg'){ body.name = $('aName').value.trim(); body.phone = $('aPhone').value.trim(); }
   if (!$('fOtp').classList.contains('hide')) body.otp = $('aOtp').value.trim();
-  var btn = $('authBtn'), label = btn.textContent; btn.disabled = true; btn.textContent = 'Đang xử lý…';
+  btn.disabled = true; btn.textContent = 'Đang xử lý…';
   var res; try { res = await api('POST','/api/auth/request', body); } catch(err){ res = null; }
   btn.disabled = false; btn.textContent = label;
   if (!res){ msg('authMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
@@ -573,11 +594,29 @@ $('authForm').addEventListener('submit', async function(e){
   if (!j.ok){ msg('authMsg', j.error || 'Đăng nhập thất bại.'); return; }
   boot();
 });
+
+/* ---------- Đặt mật khẩu mới từ liên kết trong email (?reset=...) ---------- */
+var RESET_TOKEN = '';
+function clearResetParam(){ try { var u = new URL(location.href); u.searchParams.delete('reset'); history.replaceState(null,'',u.toString()); } catch(e){} }
+$('resetCancel').addEventListener('click', function(){ RESET_TOKEN = ''; clearResetParam(); setMode('login'); show('loginScreen'); });
+$('resetForm').addEventListener('submit', async function(e){
+  e.preventDefault(); msg('resetMsg','');
+  var p1 = $('rPass').value, p2 = $('rPass2').value;
+  if (p1.length < 6){ msg('resetMsg','Mật khẩu cần ít nhất 6 ký tự.'); return; }
+  if (p1 !== p2){ msg('resetMsg','Hai mật khẩu chưa giống nhau.'); return; }
+  var btn = $('resetBtn'), label = btn.textContent; btn.disabled = true; btn.textContent = 'Đang xử lý…';
+  var r; try { r = await api('POST','/api/auth/reset-confirm',{ token:RESET_TOKEN, password:p1 }); } catch(err){ r = null; }
+  btn.disabled = false; btn.textContent = label;
+  if (!r){ msg('resetMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
+  if (!r.j.ok){ msg('resetMsg', r.j.error || 'Không đặt lại được mật khẩu.'); return; }
+  RESET_TOKEN = ''; clearResetParam(); boot(); // đã đăng nhập sẵn bằng cookie; boot() kiểm tra quyền quản lí
+});
 $('logoutBtn').addEventListener('click', async function(){ await api('POST','/api/auth/logout',{}); location.reload(); });
 $('deniedOut').addEventListener('click', async function(){ await api('POST','/api/auth/logout',{}); location.reload(); });
 
 /* ---------- Khởi động ---------- */
 async function boot(){
+  try { var rt = new URL(location.href).searchParams.get('reset'); if (rt){ RESET_TOKEN = rt; show('resetScreen'); return; } } catch(e){}
   var me; try { me = (await api('GET','/api/auth/me')).j; } catch(e){ show('loginScreen'); msg('authMsg','Không kết nối được máy chủ, thử tải lại trang.'); return; }
   if (!me.loggedIn){ show('loginScreen'); return; }
   var v = await api('GET','/api/kt-viewer?op=me');
