@@ -610,10 +610,20 @@ html{-webkit-text-size-adjust:100%}
     <div id="tab-candidates" class="tabpane hide">
       <div class="card hide" id="candEditCard">
         <h1>Sửa thông tin thí sinh</h1>
-        <p class="small">Mã nhân viên không đổi được ở đây (đổi mã coi như thí sinh khác) — cần đổi mã thì xoá rồi thêm lại.</p>
+        <p class="small">Muốn sửa mã nhân viên, bấm <b>Đổi mã</b>: hồ sơ, các bài đã nộp, kết quả và bài đang làm dở của thí sinh sẽ chuyển theo sang mã mới. (Sau khi đổi, thí sinh phải dùng mã mới để vào bài.)</p>
         <input type="hidden" id="candEditCode">
         <div class="grid2">
-          <div><label>Mã nhân viên</label><input type="text" id="candEditCodeShow" disabled style="background:#f3f6f6;color:var(--muted)"></div>
+          <div>
+            <label>Mã nhân viên</label>
+            <div style="display:flex;gap:8px;align-items:center"><input type="text" id="candEditCodeShow" disabled style="background:#f3f6f6;color:var(--muted);margin:0;flex:1;min-width:0"><button class="btn ghost sm" type="button" id="candRenameBtn" onclick="candRenameToggle(true)" style="flex:0 0 auto;white-space:nowrap">Đổi mã</button></div>
+            <div id="candRenamePanel" class="hide" style="margin-top:10px;padding:12px;border:1.5px solid var(--line);border-radius:12px;background:#F7FBFB">
+              <label for="candRenameTo" style="margin-top:0">Mã mới</label>
+              <input type="text" id="candRenameTo" autocomplete="off" placeholder="Ví dụ: T100300001" maxlength="50">
+              <p class="small" style="margin:6px 0 10px">Chỉ gồm chữ, số và dấu . _ - (không khoảng trắng). Không phân biệt hoa/thường. Nếu mã mới đã có thí sinh khác dùng thì hệ thống sẽ từ chối.</p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" type="button" onclick="candRenameDo()">Xác nhận đổi mã</button><button class="btn ghost sm" type="button" onclick="candRenameToggle(false)">Huỷ</button></div>
+              <div id="candRenameMsg"></div>
+            </div>
+          </div>
           <div><label>Họ tên</label><input type="text" id="candEditName"></div>
           <div><label>Email</label><input type="text" id="candEditEmail"></div>
           <div><label>Quản lí</label><input type="text" id="candEditManager"></div>
@@ -1900,8 +1910,33 @@ function editCandidateOpen(code){
   $('candEditManager').value = c.manager||'';
   $('candEditSegment').value = c.segment||'both';
   $('candEditCard').classList.remove('hide');
+  candRenameToggle(false);
   msg('candEditMsg','');
   $('candEditCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+/* Đổi mã nhân viên: máy chủ chuyển theo hồ sơ, bài đã nộp, kết quả và bài đang làm dở (op renameCandidate) */
+function candRenameToggle(on){
+  $('candRenamePanel').classList.toggle('hide', !on);
+  $('candRenameBtn').classList.toggle('hide', !!on);
+  msg('candRenameMsg','');
+  if (on){ $('candRenameTo').value = $('candEditCode').value; $('candRenameTo').focus(); $('candRenameTo').select(); }
+}
+async function candRenameDo(merge){
+  const from = $('candEditCode').value, to = $('candRenameTo').value.trim();
+  if (!to){ msg('candRenameMsg','Nhập mã mới.'); return; }
+  if (to === from){ msg('candRenameMsg','Mã mới trùng mã hiện tại.'); return; }
+  if (merge !== true && !confirm('Đổi mã ' + from + ' → ' + to + '?\n\nHồ sơ, các bài đã nộp, kết quả và bài đang làm dở của thí sinh này sẽ chuyển theo sang mã mới. Thí sinh phải dùng mã mới để vào bài.')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'renameCandidate', from, to, merge: merge === true });
+  if (j.needMerge){
+    if (confirm(j.error + '\n\nChỉ bấm OK nếu đó đúng là bài của chính thí sinh này và muốn gộp vào.')) return candRenameDo(true);
+    return;
+  }
+  if (!j.ok){ msg('candRenameMsg', j.error || 'Không đổi được mã.', 'err'); return; }
+  $('candEditCode').value = j.to; $('candEditCodeShow').value = j.to;
+  candRenameToggle(false);
+  msg('candEditMsg', 'Đã đổi mã ' + j.from + ' → ' + j.to + (j.moved ? ' (đã chuyển ' + j.moved + ' bài kiểm tra sang mã mới)' : '') + '.', 'ok');
+  CANDIDATES = j.candidates || CANDIDATES;
+  renderCandidates();
 }
 async function saveCandidateEdit(){
   const code = $('candEditCode').value;

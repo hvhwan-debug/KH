@@ -699,6 +699,15 @@ async function getActive(code) {
   return a && a.status === "in_progress" ? a : null;
 }
 async function setActive(code, attemptId) { await store.put(actKey(code), { attemptId, at: Date.now() }); }
+// Đổi mã nhân viên: chuyển con trỏ bài đang làm dở sang khoá của mã mới (true nếu có chuyển)
+async function moveActive(from, to) {
+  const k1 = actKey(from), k2 = actKey(to);
+  if (k1 === k2) return false;
+  const p = await store.get(k1);
+  if (!p) return false;
+  await store.put(k2, p); await store.del(k1);
+  return true;
+}
 
 // Xoá (các) bản ghi kết quả "đã nộp" của một mã nhân viên khỏi bảng chỉ số, để họ được làm bài lại từ đầu
 // (không đụng tới bài làm cũ đã lưu riêng trong kt/attempt/<id>.json, chỉ bỏ dấu "đã nộp" đang chặn check/start).
@@ -798,5 +807,5 @@ module.exports = {
   TYPES, qType, normText, normalizeQuestionInput, gradeAnswer,
   getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,
-  buildPaper, getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, syncAttempt, clientState, tooManyFails, noteFail
+  buildPaper, getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, moveActive, syncAttempt, clientState, tooManyFails, noteFail
 };

@@ -626,6 +626,51 @@ const handler = async function (context, req) {
       return reply(context, 200, { ok: true, removed });
     }
 
+    // Đổi mã nhân viên: mã là khoá nối thí sinh với kết quả, nên chuyển theo cả bài đã nộp, bảng chỉ số và bài đang làm dở.
+    // Thứ tự: bài làm -> bảng chỉ số -> con trỏ bài dở -> hồ sơ thí sinh (bước CUỐI mới là lúc "chốt"). Gián đoạn giữa chừng
+    // thì bấm đổi lại đúng mã cũ -> mã mới là chạy tiếp được (từng bước đều đặt lại về cùng một giá trị).
+    if (op === "renameCandidate") {
+      const oldN = quiz.normCode(b.from), rawNew = String(b.to == null ? "" : b.to).trim(), newN = quiz.normCode(rawNew);
+      if (!oldN) return reply(context, 400, { ok: false, error: "Thiếu mã nhân viên cần đổi." });
+      if (!/^[A-Za-z0-9._-]{1,50}$/.test(rawNew)) return reply(context, 400, { ok: false, error: "Mã mới chỉ gồm chữ, số và các dấu . _ - (tối đa 50 ký tự), không có khoảng trắng." });
+      const list = await quiz.getCandidates();
+      const i = list.findIndex((c) => quiz.normCode(c.code) === oldN);
+      if (i < 0) return reply(context, 404, { ok: false, error: "Không tìm thấy thí sinh có mã này." });
+      const cur = list[i], sameRecord = oldN === newN;
+      if (String(cur.code) === rawNew) return reply(context, 400, { ok: false, error: "Mã mới trùng với mã hiện tại." });
+      if (!sameRecord && list.some((c, k) => k !== i && quiz.normCode(c.code) === newN)) return reply(context, 409, { ok: false, error: "Mã " + rawNew + " đã có thí sinh khác dùng." });
+      const idx = await quiz.getIndex();
+      const oldRows = idx.filter((r) => quiz.normCode(r.code) === oldN);
+      const act = await quiz.getActive(cur.code);                       // bài đang làm dở của mã cũ (nếu có)
+      let leftover = 0;
+      if (!sameRecord) {
+        leftover = idx.filter((r) => quiz.normCode(r.code) === newN).length;
+        const actNew = await quiz.getActive(rawNew);
+        if (act && actNew) return reply(context, 409, { ok: false, error: "Cả hai mã đều đang có bài làm dở, hãy huỷ bớt một bài rồi đổi lại." });
+        if ((leftover || actNew) && b.merge !== true) return reply(context, 409, { ok: false, needMerge: true, leftover, error: "Mã " + rawNew + " hiện chưa có thí sinh nhưng còn " + (leftover + (actNew ? 1 : 0)) + " bài kiểm tra cũ gắn với mã này (có thể của một thí sinh đã bị xoá)." });
+      }
+      const ids = new Set(oldRows.map((r) => r.id)); if (act) ids.add(act.id);
+      let moved = 0;
+      for (const id of ids) {
+        const a = await quiz.getAttempt(id).catch(() => null);
+        if (!a) continue;
+        const ac = quiz.normCode(a.code);
+        if (ac !== oldN && ac !== newN) continue;                         // an toàn: không đụng bài của người khác
+        if (a.code !== rawNew) { a.code = rawNew; await quiz.putAttempt(a); }
+        moved++;
+      }
+      const patches = {}; oldRows.forEach((r) => { patches[r.id] = { code: rawNew }; });
+      if (oldRows.length) await quiz.patchIndex(patches);
+      if (!sameRecord && act) await quiz.moveActive(cur.code, rawNew);
+      // Ngày vào làm / thử việc tra theo mã băm của MÃ CŨ trong file dữ liệu cố định -> ghi riêng lên hồ sơ để không mất
+      const jd = require("../_lib/probation").joinDateOf(cur.code, cur.joinDate);
+      list[i] = Object.assign({}, cur, { code: rawNew }, jd ? { joinDate: jd } : {}, {
+        audit: (cur.audit || []).concat([{ at: Date.now(), kind: "edit", by: u.email, byName: "Quản trị viên", changes: { code: { from: String(cur.code), to: rawNew } } }]).slice(-30)
+      });
+      await quiz.saveCandidates(list);
+      return reply(context, 200, { ok: true, from: String(cur.code), to: rawNew, moved, candidates: list.map((c) => { const o = Object.assign({}, c); delete o.audit; return o; }) });
+    }
+
     if (op === "deleteCandidate") {
       let list = await quiz.getCandidates();
       list = list.filter((c) => quiz.normCode(c.code) !== quiz.normCode(b.code));

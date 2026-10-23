@@ -6,10 +6,11 @@ const DAY = 86400000;
 
 const hashOf = (code) => crypto.createHash("sha256").update(String(code || "").trim().toLowerCase()).digest("hex");
 // Ngày vào công ty (YYYY-MM-DD) hoặc "" nếu nhân viên không có trong danh sách
-function joinDateOf(code) { return data.join[hashOf(code)] || ""; }
+// override: ngày vào làm ghi riêng trên hồ sơ thí sinh (đặt khi đổi mã nhân viên, vì danh sách tra theo mã băm của mã cũ)
+function joinDateOf(code, override) { return /^\d{4}-\d{2}-\d{2}$/.test(override || "") ? override : (data.join[hashOf(code)] || ""); }
 
-function probationOf(code, now) {
-  const j = joinDateOf(code);
+function probationOf(code, now, override) {
+  const j = joinDateOf(code, override);
   if (!j) return null;
   const start = Date.parse(j + "T00:00:00+07:00");
   const t = now || Date.now();
