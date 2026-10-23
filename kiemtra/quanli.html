@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <script>try{if(self!==top)document.documentElement.classList.add("embed")}catch(e){document.documentElement.classList.add("embed")}</script>
+<script>try{if(/[?&]profile=/.test(location.search))document.documentElement.classList.add("pvonly")}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#067A8C">
@@ -413,6 +414,10 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 }
 @supports not (overflow:clip){.tcard{overflow:hidden}}
 
+/* Chế độ chỉ xem hồ sơ một nhân viên (mở từ trang admin, tab Thí sinh) */
+html.pvonly #app{display:none!important}
+html.pvonly,html.pvonly body{background:transparent}
+
 /* === Tối ưu di động (chỉ áp dụng màn hình nhỏ, không đổi giao diện máy tính) === */
 html{-webkit-text-size-adjust:100%}
 @media(max-width:760px){
@@ -727,6 +732,17 @@ $('resetForm').addEventListener('submit', async function(e){
 $('logoutBtn').addEventListener('click', async function(){ await api('POST','/api/auth/logout',{}); location.reload(); });
 $('deniedOut').addEventListener('click', async function(){ await api('POST','/api/auth/logout',{}); location.reload(); });
 
+/* ---------- Chế độ chỉ xem hồ sơ (?profile=MÃ) ---------- */
+var PV_CODE = (function(){ try { return (new URL(location.href).searchParams.get('profile') || '').trim(); } catch(e){ return ''; } })();
+function pvClose(){ try { parent.postMessage({ kt:'closeProfile' }, location.origin); } catch(e){} }
+function pvOpen(){
+  var key = PV_CODE.toLowerCase();
+  var e = EMP.filter(function(x){ return String(x.code).toLowerCase() === key; })[0] || { code: PV_CODE, name: PV_CODE, email: '', segment: '' };
+  openProfile(e);
+  // Khi mọi hộp thoại đã đóng thì báo cho trang admin đóng khung này
+  var watch = new MutationObserver(function(){ if (!document.querySelector('.ov:not(.hide)')) pvClose(); });
+  document.querySelectorAll('.ov').forEach(function(o){ watch.observe(o, { attributes:true, attributeFilter:['class'] }); });
+}
 /* ---------- Khởi động ---------- */
 async function boot(){
   try { var rt = new URL(location.href).searchParams.get('reset'); if (rt){ RESET_TOKEN = rt; show('resetScreen'); return; } } catch(e){}
@@ -739,6 +755,7 @@ async function boot(){
   $('meName').textContent = VIEWER.name || VIEWER.email;
   $('scopeTxt').textContent = 'Nhân viên của: ' + (VIEWER.scopes || []).join('; ');
   show('app'); await load();
+  if (PV_CODE) pvOpen();
 }
 var CURP = '', PERIODS = [], CURRENT = '', PSEL = null, PTITLES = {};
 function pName(p){ return PTITLES[p] || ('Bài kiểm tra ' + perL(p)); } // chọn theo tên bài kiểm tra, không phân biệt cũ / hiện tại
