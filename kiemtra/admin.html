@@ -27,6 +27,11 @@ body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(-
 .btn.dghost{background:#fff;color:var(--bad);border:1.5px solid var(--line)}
 .btn.dghost:hover{border-color:var(--bad)}
 #resSearch{max-width:240px}
+.exq{margin-top:16px;padding:12px 14px;border:1.5px solid var(--brand-soft,#CDEBEA);border-radius:12px;background:#F7FBFB}
+.exadv{margin-top:16px;border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.exadv summary{cursor:pointer;font-weight:700;color:var(--brand-deep)}
+.exadv[open] summary{margin-bottom:10px}
+.exh{font-size:14.5px;margin:18px 0 6px}
 .spg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
 @media(max-width:900px){.spg{grid-template-columns:1fr}}
 .spbox{border:1px solid var(--line);border-radius:12px;padding:12px}
@@ -260,36 +265,39 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
       <div class="card hide" id="examFormCard">
         <h1 id="examFormTitle">Tạo đề thi mới</h1>
         <input type="hidden" id="exEditingId">
+        <p class="small" style="margin-top:0">Chỉ cần điền <b>mã đề</b> và <b>tên đề</b> rồi bấm <b>Lưu đề thi</b>. Các ô để trống sẽ dùng theo tab <b>Cài đặt</b> (thời gian mỗi câu, điểm đạt, phân bổ câu hỏi theo nhóm ngành…).</p>
         <div class="grid2">
-          <div><label>Mã đề thi (dùng trong link, vd thu-nghiem hoặc 2026-11)</label><input type="text" id="exId" placeholder="thu-nghiem"></div>
-          <div><label>Tên đề thi</label><input type="text" id="exTitle" placeholder="Bài thi thử PC"></div>
-          <div><label>Tên rút gọn khi chia sẻ Zalo</label><input type="text" id="exShareTitle"></div>
-          <div><label>Tổng số câu hỏi mỗi đề</label><input type="text" inputmode="numeric" id="exCount"></div>
-          <div><label>Thí sinh bán cả 2 ngành: số câu "Gia dụng" cố định</label><input type="text" inputmode="numeric" id="exBothGD"></div>
-          <div><label>Thời gian tối đa mỗi câu (giây)</label><input type="text" inputmode="numeric" id="exSeconds"></div>
-          <div><label>Điểm đạt (% số câu đúng)</label><input type="text" inputmode="numeric" id="exPass">
+          <div><label>Mã đề thi (chỉ chữ thường, số, dấu gạch ngang; dùng trong link)</label><input type="text" id="exId" placeholder="vd: 2026-11 hoặc thi-thu-pc"></div>
+          <div><label>Tên đề thi (thí sinh thấy)</label><input type="text" id="exTitle" placeholder="vd: Kiểm tra kiến thức PC tháng 11"></div>
+          <div><label>Thời gian tối đa mỗi câu (giây)</label><input type="text" inputmode="numeric" id="exSeconds" placeholder="trống = theo Cài đặt"></div>
+          <div><label>Điểm đạt (% số câu đúng)</label><input type="text" inputmode="numeric" id="exPass" placeholder="trống = theo Cài đặt">
             <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:600"><input type="checkbox" id="exPassOn" style="width:18px;height:18px"> Đề này có ngưỡng đạt</label>
           </div>
+          <div><label>Mở đề lúc (trống = mở ngay)</label><input type="datetime-local" id="exOpen"></div>
+          <div><label>Đóng đề lúc (trống = không đóng)</label><input type="datetime-local" id="exClose"></div>
         </div>
-        <label style="display:flex;align-items:center;gap:8px;margin-top:14px"><input type="checkbox" id="exRetake" style="width:18px;height:18px"> Cho phép thí sinh làm lại nhiều lần (đề này)</label>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:14px"><input type="checkbox" id="exRetake" style="width:18px;height:18px"> Cho phép thí sinh làm lại nhiều lần</label>
         <label style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;padding:10px 12px;border-radius:10px;background:#FFF6E0;border:1.5px solid #F0D58A;color:#6B4A00"><input type="checkbox" id="exPractice" style="width:18px;height:18px;margin-top:2px"> <span><b>Đề thi thử (không phải thi chính thức)</b><br><span class="small" style="color:#6B4A00">Thí sinh thấy dải chữ "THI THỬ" ở mọi màn hình; phiếu kết quả, ảnh chia sẻ và email đều ghi rõ "Thi thử, không phải thi chính thức". Điểm tuân thủ học tập <b>vẫn được quy đổi bình thường</b> (ghi là "nếu thi thật") để thí sinh hình dung điểm của mình.</span></span></label>
-        <div class="grid2" style="margin-top:14px">
-          <div><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="exComplianceOn" style="width:18px;height:18px"> Bật điểm tuân thủ học tập (đề này)</label></div>
-          <div></div>
-          <div><label>Điểm ≥ mốc này → 20 điểm</label><input type="text" inputmode="decimal" id="exCHigh"></div>
-          <div><label>Điểm ≥ mốc này → 15 điểm</label><input type="text" inputmode="decimal" id="exCMid"></div>
-          <div><label>Điểm ≥ mốc này → 10 điểm</label><input type="text" inputmode="decimal" id="exCLow"></div>
-        </div>
-        <p class="small">Để trống một ô là đề này dùng theo <b>cài đặt chung</b> (tab Cài đặt) cho mục đó.</p>
 
-        <h1 style="margin-top:22px;font-size:16px">Khung thời gian &amp; đối tượng</h1>
-        <label>Mô tả / thể lệ ngắn (tuỳ chọn)</label>
-        <input type="text" id="exDesc" placeholder="Vd: Kiểm tra kiến thức sản phẩm quý 4">
-        <div class="grid2" style="margin-top:6px">
-          <div><label>Mở đề lúc (để trống = mở ngay)</label><input type="datetime-local" id="exOpen"></div>
-          <div><label>Đóng đề lúc (để trống = không đóng)</label><input type="datetime-local" id="exClose"></div>
+        <div class="exq" id="exQBox">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <b>Số câu mỗi thí sinh nhận</b>
+            <button class="btn ghost sm" type="button" onclick="previewPlan()">Kiểm tra đủ câu chưa</button>
+          </div>
+          <div id="exQSrc" class="small" style="margin-top:4px"></div>
+          <div id="planPreview"></div>
         </div>
-        <label>Nhóm thí sinh được thi (không tick = tất cả)</label>
+
+        <details class="exadv" id="exAdv">
+          <summary>Tuỳ chọn nâng cao <span class="small">(số câu riêng, cấu trúc đề, đối tượng thi, điểm tuân thủ, tên chia sẻ Zalo)</span></summary>
+          <div class="grid2">
+            <div><label>Tên rút gọn khi chia sẻ Zalo</label><input type="text" id="exShareTitle"></div>
+            <div><label>Mô tả / thể lệ ngắn</label><input type="text" id="exDesc" placeholder="Vd: Kiểm tra kiến thức sản phẩm quý 4"></div>
+            <div><label>Tổng số câu hỏi mỗi đề <span class="small">(chỉ dùng khi chưa có phân bổ nhóm ngành)</span></label><input type="text" inputmode="numeric" id="exCount"></div>
+            <div><label>Bán cả 2 ngành: số câu "Gia dụng" cố định <span class="small">(cách chia cũ)</span></label><input type="text" inputmode="numeric" id="exBothGD"></div>
+          </div>
+          <h2 class="exh">Đối tượng thi</h2>
+          <label>Nhóm thí sinh được thi (không tick = tất cả)</label>
         <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:14px">
           <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="checkbox" class="exSeg" value="gia_dung" style="width:18px;height:18px"> Gia dụng</label>
           <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="checkbox" class="exSeg" value="may_loc" style="width:18px;height:18px"> Máy lọc nước</label>
@@ -298,9 +306,16 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         <label>Chỉ cho các mã nhân viên này thi (mỗi mã một dòng hoặc cách nhau dấu phẩy; để trống = không giới hạn theo mã)</label>
         <textarea id="exCodes" style="min-height:64px" placeholder="T100300025&#10;T100300026"></textarea>
         <p class="small">Kết hợp được với "nhóm thí sinh" ở trên (phải thoả cả hai). Người không thuộc đối tượng không vào thi được và không bị tính là "chưa làm" ở bảng tổng quan. Bài đang làm dở vẫn được làm tiếp kể cả khi đề đã đóng.</p>
-
-        <h1 style="margin-top:22px;font-size:16px">Cấu trúc đề</h1>
-        <p class="small">Mỗi quy tắc lấy ngẫu nhiên <b>N câu</b> từ một ngân hàng (có thể lọc theo danh mục, độ khó, thẻ). Đề của mỗi thí sinh được rút riêng, không trùng câu. <b>Không có quy tắc nào</b> thì đề dùng cách ra đề cũ (theo kỳ + nhóm ngành, ở các ô số câu phía trên).</p>
+          <h2 class="exh">Điểm tuân thủ học tập</h2>
+          <div class="grid2" style="margin-top:14px">
+          <div><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="exComplianceOn" style="width:18px;height:18px"> Bật điểm tuân thủ học tập (đề này)</label></div>
+          <div></div>
+          <div><label>Điểm ≥ mốc này → 20 điểm</label><input type="text" inputmode="decimal" id="exCHigh"></div>
+          <div><label>Điểm ≥ mốc này → 15 điểm</label><input type="text" inputmode="decimal" id="exCMid"></div>
+          <div><label>Điểm ≥ mốc này → 10 điểm</label><input type="text" inputmode="decimal" id="exCLow"></div>
+        </div>
+          <h2 class="exh">Cấu trúc đề riêng <span class="small">(thay cho phân bổ nhóm ngành, áp dụng cho MỌI thí sinh của đề này)</span></h2>
+          <p class="small">Mỗi quy tắc lấy ngẫu nhiên <b>N câu</b> từ một ngân hàng (có thể lọc theo danh mục, độ khó, thẻ). Đề của mỗi thí sinh được rút riêng, không trùng câu. <b>Không có quy tắc nào</b> thì đề dùng cách ra đề cũ (theo kỳ + nhóm ngành, ở các ô số câu phía trên).</p>
         <div id="bpRules"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
           <button class="btn ghost sm" type="button" onclick="addBpRule()">+ Thêm quy tắc</button>
@@ -308,12 +323,7 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         </div>
         <div id="bpTotal" class="small" style="margin-top:8px"></div>
         <div id="bpPreview"></div>
-
-        <h1 style="margin-top:22px;font-size:16px">Phân bổ đề sẽ phát</h1>
-        <p class="small">Mỗi thí sinh nhận <b>đúng</b> số câu ở ô "Tổng số câu hỏi mỗi đề" (tối đa <b id="maxQ">60</b> câu), không bao giờ nhiều hơn. Bấm xem trước để biết từng nhóm thí sinh sẽ nhận bao nhiêu câu, lấy từ đâu, có thiếu câu không. Khi bấm Lưu, hệ thống cũng tự kiểm tra.</p>
-        <button class="btn ghost sm" type="button" onclick="previewPlan()">Xem trước đề sẽ phát</button>
-        <div id="planPreview"></div>
-
+        </details>
         <div style="margin-top:16px;display:flex;gap:8px">
           <button class="btn" onclick="saveExam()">Lưu đề thi</button>
           <button class="btn ghost" onclick="document.getElementById('examFormCard').classList.add('hide')">Huỷ</button>
@@ -795,7 +805,7 @@ let EXAMS = [];
 async function loadExams(){
   const { j } = await api('GET','/api/kt-admin?op=exams');
   if (!j.ok) return;
-  EXAMS = j.exams || []; if (j.maxQuestions){ MAXQ = j.maxQuestions; $('maxQ').textContent = MAXQ; $('exCount').max = MAXQ; }
+  EXAMS = j.exams || []; if (j.maxQuestions){ MAXQ = j.maxQuestions; if ($('maxQ')) $('maxQ').textContent = MAXQ; $('exCount').max = MAXQ; }
   $('exList').innerHTML = EXAMS.map(e =>
     '<tr><td><code>'+esc(e.id)+'</code>'+(e.id===j.currentPeriod?' <span class="badge y">Mặc định</span>':'')+'</td>'+
     '<td>'+esc(e.title||e.id)+(e.practice?' <span class="badge" style="background:#FDEBC8;color:#8A5200">Thi thử</span>':'')+'<div class="small"><a href="/kiemtra/?exam='+encodeURIComponent(e.id)+'" target="_blank" rel="noopener">link thi</a></div></td>'+
@@ -810,6 +820,15 @@ async function loadExams(){
     '</td></tr>'
   ).join('') || '<tr><td colspan="7" class="small">Chưa có đề thi nào, bấm "+ Tạo đề thi mới" để bắt đầu.</td></tr>';
 }
+// Dòng tóm tắt "số câu mỗi thí sinh nhận" của đề đang soạn
+function exQSummary(){
+  const box = $('exQSrc'); if (!box) return;
+  if (BP_RULES.length){ const t = BP_RULES.reduce((n,r) => n + (+r.count||0), 0); box.innerHTML = 'Theo <b>cấu trúc đề riêng</b> (Tuỳ chọn nâng cao): ' + t + ' câu cho mọi thí sinh.'; return; }
+  const segs = SP_SEGS.filter(([k]) => SEGPLANS[k] && SEGPLANS[k].length);
+  const old = ($('exCount').value.trim() ? 'tổng ' + $('exCount').value.trim() + ' câu' : 'tổng số câu theo Cài đặt') + ' (cách chia cũ)';
+  box.innerHTML = segs.length ? 'Theo <b>Phân bổ nhóm ngành</b> ở tab Cài đặt: ' + segs.map(([k,l]) => l + ' <b>' + SEGPLANS[k].reduce((n,r) => n + r.count, 0) + ' câu</b>').join(' · ') +
+    (segs.length < 3 ? ' · nhóm còn lại: ' + old : '') : old + '. Muốn chia theo danh mục cho từng nhóm ngành, chỉnh ở tab Cài đặt → Phân bổ câu hỏi theo nhóm ngành.';
+}
 function clearExamForm(){
   $('planPreview').innerHTML = ''; $('exCount').oninput = () => { updateBpTotal(); $('planPreview').innerHTML = ''; };
   $('exEditingId').value=''; $('exId').value=''; $('exId').disabled=false; $('exTitle').value=''; $('exShareTitle').value='';
@@ -817,12 +836,13 @@ function clearExamForm(){
   $('exRetake').checked=false; $('exPractice').checked=false; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
   $('exDesc').value=''; $('exCodes').value=''; $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
   BP_RULES = []; renderBpRules(); $('bpPreview').innerHTML=''; $('bpTotal').textContent='';
-  msg('exMsg','');
+  msg('exMsg',''); $('exAdv').open = false; exQSummary();
 }
 function openNewExam(){
   clearExamForm();
   $('examFormTitle').textContent = 'Tạo đề thi mới';
   $('examFormCard').classList.remove('hide');
+  previewPlan();
   $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function editExam(id){
@@ -838,6 +858,8 @@ function editExam(id){
   document.querySelectorAll('.exSeg').forEach(c => c.checked = (e.segments || []).indexOf(c.value) >= 0);
   BP_RULES = e.blueprint && e.blueprint.rules ? e.blueprint.rules.map(r => Object.assign({}, r)) : []; renderBpRules();
   $('examFormTitle').textContent = 'Sửa đề thi';
+  $('exAdv').open = !!(BP_RULES.length || e.questionCount || e.bothGiaDungCount || (e.segments||[]).length || (e.codes||[]).length || e.complianceEnabled || e.shareTitle || e.description);
+  exQSummary(); previewPlan();
   $('examFormCard').classList.remove('hide');
   $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -1000,6 +1022,9 @@ function renderBpRules(){
   updateBpTotal();
 }
 function updateBpTotal(){
+  // Có cấu trúc đề riêng thì tổng số câu của đề = tổng các quy tắc (tự điền, khỏi phải khớp tay)
+  if (BP_RULES.length) $('exCount').value = bpTotalOf({ rules: BP_RULES }) || '';
+  exQSummary();
   const t = bpTotalOf({ rules: BP_RULES }), want = parseInt($('exCount').value, 10) || 0, el = $('bpTotal');
   if (!BP_RULES.length){ el.innerHTML = ''; return; }
   const ok = want > 0 && t === want;
