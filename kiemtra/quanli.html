@@ -145,7 +145,7 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14.5px;line-height:1.7}
 #listMsg .msg{margin:0 0 10px}
 
-@media(max-width:760px){
+@media(max-width:980px){
   .emp-t thead{display:none}
   .emp-t,.emp-t tbody,.emp-t tr,.emp-t td{display:block;width:100%}
   .emp-t tr{display:grid;grid-template-columns:1fr auto;gap:8px 12px;padding:14px 14px 10px;border-bottom:1px solid var(--line)}
@@ -153,7 +153,12 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
   .emp-t td{padding:0;border:0}
   .emp-t tbody tr:hover td{background:none}
   .emp-t td.c-who{grid-column:1/-1}
-  .emp-t td.c-seg,.emp-t td.c-when,.emp-t td.c-join,.emp-t th.c-join{display:none}
+  .emp-t td.c-seg,.emp-t td.c-join,.emp-t th.c-join,.emp-t th.c-seg,.emp-t td.c-when.na{display:none}
+  .emp-t td.c-sc{grid-column:1;grid-row:2}
+  .emp-t td.c-cf{grid-column:2;grid-row:2}
+  .emp-t td.c-when{grid-column:1/-1;grid-row:3}
+  .emp-t td.c-act{grid-row:4}
+  .emp-t td.c-when .when{white-space:normal}
   .emp-t td.c-cf{text-align:right;align-self:center}
   .emp-t td.c-act{grid-column:1/-1;border-top:1px solid #EEF3F4;padding-top:6px}
   .acts{justify-content:space-between}
@@ -255,7 +260,7 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .loc{display:inline-flex;align-items:center;gap:4px;margin-top:3px;font-size:12px;font-weight:600}
 .loc a{color:var(--brand-deep)}
 .loc.bad{color:var(--warn)}
-.dev .pin{display:inline-grid;place-items:center;color:var(--brand-deep);margin-left:2px}
+.dev .pin{display:inline-grid;place-items:center;color:var(--brand-deep);margin-left:2px;border:0;background:none;padding:4px;margin:-4px -2px -4px 0;cursor:pointer;border-radius:6px;font:inherit}
 .dev .pin:hover{color:var(--brand)}
 .dev-warn.amber{color:var(--warn);background:var(--warn-soft)}
 /* hồ sơ kiểm tra */
@@ -393,6 +398,20 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .dnote{font-size:12.5px;color:var(--muted);line-height:1.6;margin:8px 0 0}
 @media(max-width:900px){.dkpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dkpis .dk:last-child{grid-column:1/-1}.dpg{grid-template-columns:1fr}.dp.w2{grid-column:auto}}
 @media(max-width:760px){.dsh{padding:14px 12px}.dhist{height:120px}}
+
+/* Khung hiện vị trí khi trỏ / chạm vào biểu tượng ghim */
+.loctip{position:fixed;z-index:80;max-width:min(280px,calc(100vw - 16px));background:#0D2A31;color:#fff;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5;box-shadow:0 12px 30px -8px rgba(0,0,0,.45)}
+.loctip .lt-h{display:flex;gap:8px;align-items:flex-start}
+.loctip .lt-h svg{flex:0 0 auto;margin-top:3px;color:#7FD6DE}
+.loctip .lt-n{font-weight:600;overflow-wrap:anywhere}
+.loctip .lt-s{font-size:12px;color:#B7CBD0;margin-top:2px}
+.loctip a{display:inline-block;margin-top:6px;font-size:12.5px;font-weight:700;color:#7FD6DE;text-decoration:underline;text-underline-offset:3px}
+
+/* Laptop nhỏ / máy tính bảng ngang: bỏ cột phụ để bảng vừa khung, không bị cắt cột Thao tác */
+@media(min-width:981px) and (max-width:1180px){
+  .emp-t th.c-join,.emp-t td.c-join,.emp-t th.c-seg,.emp-t td.c-seg{display:none}
+}
+@supports not (overflow:clip){.tcard{overflow:hidden}}
 
 /* === Tối ưu di động (chỉ áp dụng màn hình nhỏ, không đổi giao diện máy tính) === */
 html{-webkit-text-size-adjust:100%}
@@ -541,7 +560,7 @@ html{-webkit-text-size-adjust:100%}
         <thead><tr>
           <th scope="col"><button type="button" data-sort="name">Nhân viên <span class="ar">▲▼</span></button></th>
           <th scope="col" class="c-join">Ngày vào làm</th>
-          <th scope="col">Nhóm ngành</th>
+          <th scope="col" class="c-seg">Nhóm ngành</th>
           <th scope="col"><button type="button" data-sort="score">Kết quả <span class="ar">▲▼</span></button></th>
           <th scope="col"><button type="button" data-sort="when">Nộp bài <span class="ar">▲▼</span></button></th>
           <th scope="col">Thông tin</th>
@@ -863,7 +882,7 @@ function render(){
       var p = Math.max(0, Math.min(100, r.pct||0)), pc = r.passed === true ? 'pass' : (r.passed === false ? 'fail' : '');
       sc = '<div class="score"><div class="top-l"><b>'+r.score+'/'+r.total+'</b><span class="pct '+pc+'">'+r.pct+'%'+(r.passed===true?' · Đạt':r.passed===false?' · Chưa đạt':'')+'</span></div><div class="bar" aria-hidden="true"><i class="'+pc+'" style="width:'+p+'%"></i></div></div>';
       when = r.submittedAt ? esc(fmt(r.submittedAt)) : '–';
-      if (r.device && VIEWER.isAdmin) when += '<span class="dev" title="'+esc(r.device.label + (r.device.ip ? ' · IP ' + r.device.ip : ''))+'">'+devIcon(r.device.type)+'<span class="t">'+esc(String(r.device.label||r.device.type||'').split(' · ').slice(1,3).join(' · ') || r.device.type || '')+'</span>'+(r.device.loc?'<a class="pin" href="'+mapUrl(r.device.loc)+'" target="_blank" rel="noopener" title="Xem vị trí trên bản đồ" aria-label="Xem vị trí làm bài trên bản đồ">'+PIN+'</a>':(r.device.locErr==='denied'?'<span class="dev-warn amber">Chặn vị trí</span>':''))+(r.device.changed?'<span class="dev-warn">Đổi máy</span>':'')+'</span>';
+      if (r.device && VIEWER.isAdmin) when += '<span class="dev" title="'+esc(r.device.label + (r.device.ip ? ' · IP ' + r.device.ip : ''))+'">'+devIcon(r.device.type)+'<span class="t">'+esc(String(r.device.label||r.device.type||'').split(' · ').slice(1,3).join(' · ') || r.device.type || '')+'</span>'+(r.device.loc?'<button type="button" class="pin" title="" data-lat="'+esc(r.device.loc.lat)+'" data-lng="'+esc(r.device.loc.lng)+'" data-acc="'+esc(r.device.loc.acc==null?'':r.device.loc.acc)+'" aria-haspopup="true" aria-label="Xem vị trí làm bài">'+PIN+'</button>':(r.device.locErr==='denied'?'<span class="dev-warn amber">Chặn vị trí</span>':''))+(r.device.changed?'<span class="dev-warn">Đổi máy</span>':'')+'</span>';
     } else {
       sc = e.status === 'doing' ? '<span class="pill info">Đang làm bài</span>' : '<span class="pill">Chưa làm bài</span>';
       when = '–';
@@ -878,7 +897,7 @@ function render(){
       '<td class="c-join">'+esc(vnDate(e.joinDate))+'</td>'+
       '<td class="c-seg"><span class="seg-t">'+esc(SEG[e.segment]||'–')+'</span></td>'+
       '<td class="c-sc">'+sc+'</td>'+
-      '<td class="c-when"><span class="when">'+when+'</span></td>'+
+      '<td class="c-when'+(done?'':' na')+'"><span class="when">'+when+'</span></td>'+
       '<td class="c-cf">'+cfd+'</td>'+
       '<td class="c-act"><div class="acts">'+
         '<button type="button" class="ib" data-act="res" title="Xem kết quả" aria-label="Xem kết quả của '+nm+'"'+dis+'>'+IC.res+'</button>'+
@@ -991,6 +1010,49 @@ $('dashBody').addEventListener('click', function(ev){
   var e = EMP.filter(function(x){ return x.code === code; })[0];
   if (e) openProfile(e);
 });
+
+/* ---------- Hiện vị trí làm bài khi trỏ / chạm vào biểu tượng ghim (không mở bản đồ) ---------- */
+var LOCTIP = null, LOCTIP_EL = null, LOCTIP_T = 0;
+function locTipHide(){ clearTimeout(LOCTIP_T); if (LOCTIP){ LOCTIP.remove(); LOCTIP = null; LOCTIP_EL = null; } }
+function locTipPlace(){
+  if (!LOCTIP || !LOCTIP_EL) return;
+  var r = LOCTIP_EL.getBoundingClientRect(), t = LOCTIP.getBoundingClientRect(), vw = document.documentElement.clientWidth, vh = window.innerHeight;
+  var x = Math.max(8, Math.min(r.left + r.width / 2 - t.width / 2, vw - t.width - 8));
+  var y = r.bottom + 8; if (y + t.height > vh - 8) y = Math.max(8, r.top - t.height - 8);
+  LOCTIP.style.left = x + 'px'; LOCTIP.style.top = y + 'px';
+}
+function locTipShow(el){
+  if (LOCTIP_EL === el && LOCTIP) { clearTimeout(LOCTIP_T); return; }
+  locTipHide();
+  var lat = el.getAttribute('data-lat'), lng = el.getAttribute('data-lng'), acc = el.getAttribute('data-acc');
+  var tip = document.createElement('div'); tip.className = 'loctip'; tip.setAttribute('role', 'tooltip');
+  var coord = lat + ', ' + lng;
+  tip.innerHTML = '<div class="lt-h">' + PIN + '<div><div class="lt-n">Đang tra cứu địa điểm…</div><div class="lt-s">' + esc(coord) + (acc ? ' · ±' + esc(acc) + ' m' : '') + '</div></div></div>' +
+    '<a href="' + mapUrl({ lat: lat, lng: lng }) + '" target="_blank" rel="noopener">Mở trên bản đồ ↗</a>';
+  document.body.appendChild(tip); LOCTIP = tip; LOCTIP_EL = el;
+  tip.addEventListener('mouseenter', function(){ clearTimeout(LOCTIP_T); });
+  tip.addEventListener('mouseleave', function(){ LOCTIP_T = setTimeout(locTipHide, 200); });
+  locTipPlace();
+  geoName(lat, lng).then(function(name){
+    if (LOCTIP !== tip) return;
+    tip.querySelector('.lt-n').textContent = name || 'Chưa tra được tên địa điểm';
+    locTipPlace();
+  });
+}
+var LOCPT = ''; // loại con trỏ gần nhất: 'mouse' | 'touch' | 'pen'
+['pointerdown','pointermove'].forEach(function(n){ document.addEventListener(n, function(ev){ LOCPT = ev.pointerType || ''; }, true); });
+document.addEventListener('mouseover', function(ev){ if (LOCPT === 'touch') return; var b = ev.target.closest && ev.target.closest('.dev .pin'); if (b) locTipShow(b); });
+document.addEventListener('mouseout', function(ev){ if (LOCPT === 'touch') return; var b = ev.target.closest && ev.target.closest('.dev .pin'); if (b){ clearTimeout(LOCTIP_T); LOCTIP_T = setTimeout(locTipHide, 200); } });
+document.addEventListener('focusin', function(ev){ var b = ev.target.closest && ev.target.closest('.dev .pin'); if (b && LOCPT !== 'touch' && b.matches(':focus-visible')) locTipShow(b); }); // chỉ khi dùng bàn phím
+document.addEventListener('focusout', function(ev){ if (LOCPT !== 'touch' && ev.target.closest && ev.target.closest('.dev .pin')) LOCTIP_T = setTimeout(locTipHide, 200); });
+document.addEventListener('click', function(ev){ // chạm trên điện thoại: bật / tắt; chạm chỗ khác thì đóng
+  var b = ev.target.closest && ev.target.closest('.dev .pin');
+  if (b){ ev.preventDefault(); ev.stopPropagation(); var same = LOCTIP_EL === b && !!LOCTIP;
+    if (LOCPT === 'touch' || ev.detail === 0){ if (same) locTipHide(); else locTipShow(b); } else locTipShow(b); return; }
+  if (LOCTIP && !ev.target.closest('.loctip')) locTipHide();
+}, true);
+window.addEventListener('scroll', locTipHide, true); window.addEventListener('resize', locTipHide);
+document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') locTipHide(); });
 
 $('fPer').addEventListener('change', function(){ PSEL = this.value; load(); });
 document.addEventListener('click', function(ev){ if (ev.target && ev.target.id === 'perBack'){ PSEL = CURRENT; load(); } });
