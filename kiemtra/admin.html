@@ -16,7 +16,17 @@ body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(-
 .topbar{background:#fff;border-bottom:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5}
 .topbar .dot{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand-deep));display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px}
 .topbar b{font-size:15px;flex:1}
-.wrap{max-width:980px;margin:0 auto;padding:22px 18px 70px}
+.wrap{max-width:1240px;margin:0 auto;padding:22px 18px 70px}
+/* Thanh tab dính dưới thanh trên cùng, chia 3 nhóm việc */
+.tabs{position:sticky;top:61px;z-index:4;background:var(--bg);padding:8px 0;margin:-8px 0 14px!important;align-items:center}
+.tabs .tsep{width:1px;height:22px;background:var(--line);margin:0 4px}
+@media(max-width:700px){.tabs{position:static;flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;margin:0 0 12px!important}.tabs button{flex:0 0 auto}}
+.qbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.qbar .btn.on{background:var(--brand-deep);color:#fff;border-color:var(--brand-deep)}
+.card .xclose{float:right;border:0;background:transparent;font-size:20px;line-height:1;color:var(--muted);cursor:pointer;padding:2px 6px}
+.btn.dghost{background:#fff;color:var(--bad);border:1.5px solid var(--line)}
+.btn.dghost:hover{border-color:var(--bad)}
+#resSearch{max-width:240px}
 
 /* Chẩn đoán hành vi học tập: bằng chứng -> nguyên nhân giả thuyết -> việc nên làm */
 .ins-narr{border:1.5px solid #CDE6EA;border-radius:16px;background:linear-gradient(180deg,#F5FBFC,#EDF7F9);padding:14px 16px;margin:0 0 12px;text-align:left}
@@ -220,14 +230,17 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
     <button class="btn ghost sm" onclick="doLogout()">Đăng xuất</button>
   </div>
   <div class="wrap">
+    <style>body:not([data-tab=exams]) #hero{display:none}</style>
     <section class="khero hide" id="hero" aria-label="Tổng quan nhanh"></section>
     <div class="tabs">
-      <button data-tab="exams" onclick="switchTab('exams')">Đề thi</button>
-      <button data-tab="banks" onclick="switchTab('banks')">Ngân hàng</button>
-      <button data-tab="questions" onclick="switchTab('questions')">Câu hỏi</button>
-      <button data-tab="candidates" onclick="switchTab('candidates')">Thí sinh</button>
-      <button data-tab="settings" onclick="switchTab('settings')">Cài đặt</button>
       <button data-tab="results" onclick="switchTab('results')">Kết quả</button>
+      <span class="tsep" aria-hidden="true"></span>
+      <button data-tab="exams" onclick="switchTab('exams')">Đề thi</button>
+      <button data-tab="questions" onclick="switchTab('questions')">Câu hỏi</button>
+      <button data-tab="banks" onclick="switchTab('banks')">Ngân hàng</button>
+      <button data-tab="candidates" onclick="switchTab('candidates')">Thí sinh</button>
+      <span class="tsep" aria-hidden="true"></span>
+      <button data-tab="settings" onclick="switchTab('settings')">Cài đặt</button>
       <button data-tab="viewers" onclick="switchTab('viewers')">Quản lí xem</button>
       <button data-tab="audit" onclick="switchTab('audit')">Nhật ký</button>
     </div>
@@ -379,7 +392,13 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         </div>
         <div id="qPerMsg"></div>
       </div>
-      <div class="card">
+      <div class="card qbar">
+        <button class="btn" type="button" data-qp="qFormCard" onclick="qPanel('qFormCard')">＋ Thêm câu hỏi</button>
+        <button class="btn ghost" type="button" data-qp="qAiCard" onclick="qPanel('qAiCard')">✦ Soạn bằng AI</button>
+        <button class="btn ghost" type="button" data-qp="qBulkCard" onclick="qPanel('qBulkCard')">⇪ Nhập hàng loạt</button>
+      </div>
+      <div class="card hide" id="qFormCard">
+        <button class="xclose" type="button" onclick="qPanel(null)" aria-label="Đóng">×</button>
         <h1 id="qFormTitle">Thêm câu hỏi mới</h1>
         <input type="hidden" id="qEditId">
         <label>Nội dung câu hỏi</label>
@@ -417,7 +436,8 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         </div>
         <div id="qMsg"></div>
       </div>
-      <div class="card ai-find">
+      <div class="card ai-find hide" id="qAiCard">
+        <button class="xclose" type="button" onclick="qPanel(null)" aria-label="Đóng">×</button>
         <div class="ai-find-h">✦ Soạn câu hỏi bằng AI</div>
         <p class="small">Mô tả chủ đề, AI soạn sẵn câu hỏi trắc nghiệm để bạn xem lại rồi mới đưa vào ngân hàng đề (không tự động lưu).</p>
         <div class="grid2" style="margin-top:8px">
@@ -429,7 +449,8 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         <div id="aiQMsg"></div>
         <div id="aiQPreview"></div>
       </div>
-      <div class="card">
+      <div class="card hide" id="qBulkCard">
+        <button class="xclose" type="button" onclick="qPanel(null)" aria-label="Đóng">×</button>
         <h1>Nhập câu hỏi hàng loạt <span class="small" id="qBulkPer" style="font-weight:600"></span></h1>
         <p class="small">Dán vào đây một mảng JSON các câu hỏi, dạng <code>[{"text":"...","options":["A","B","C","D"],"correctIndex":0,"category":"Gia dụng","difficulty":"easy","tags":["pccc"]}, ...]</code>. <code>correctIndex</code> đếm từ 0 (0=phương án đầu tiên). <code>difficulty</code> là easy/medium/hard, <code>tags</code> và <code>difficulty</code> không bắt buộc. Câu được nhập vào <b>ngân hàng đang chọn ở ô "Ngân hàng"</b> phía trên (trừ khi câu tự ghi <code>bankId</code>).</p>
         <textarea id="qBulkText" style="min-height:120px" placeholder='[{"text":"Câu hỏi...","options":["A","B","C","D"],"correctIndex":0,"category":"Gia dụng"}]'></textarea>
@@ -443,7 +464,7 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h1 style="margin:0"><span id="qListTitle">Danh sách câu hỏi</span> (<span id="qCount">0</span>)</h1>
-          <button class="btn danger sm" id="btnDelAllQ" onclick="deleteAllQuestions()">🗑 Xoá tất cả câu hỏi của kỳ này</button>
+          <button class="btn dghost sm" id="btnDelAllQ" onclick="deleteAllQuestions()">🗑 Xoá tất cả câu hỏi của kỳ này</button>
         </div>
         <div id="qBackupBar"></div>
         <div id="qDelMsg"></div>
@@ -604,6 +625,23 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
 
     <!-- Kết quả -->
     <div id="tab-results" class="tabpane hide">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <h1 style="margin:0">Kết quả (<span id="resCount">0</span>)</h1>
+          <div style="display:flex;gap:8px;align-items:center">
+            <label style="margin:0;font-weight:600;font-size:12.5px;color:var(--muted)">Kỳ:</label>
+            <select id="resPeriod" onchange="loadResults()" style="max-width:160px"></select>
+            <input type="search" id="resSearch" placeholder="Tìm mã NV, tên, quản lí…" oninput="filterResults()" aria-label="Tìm kết quả">
+            <button class="btn ghost sm" style="white-space:nowrap" onclick="exportResultsXlsx()">⬇ Xuất Excel</button>
+          </div>
+        </div>
+        <table style="margin-top:14px"><thead><tr><th>Kỳ</th><th>Mã NV</th><th>Họ tên</th><th>Quản lí</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Mã minh chứng</th><th>Cảnh báo</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
+      </div>
+      <div class="card hide" id="resDetailCard">
+        <h1>Chi tiết bài làm</h1>
+        <div id="resDetail"></div>
+        <button class="btn ghost sm" onclick="document.getElementById('resDetailCard').classList.add('hide')">Đóng</button>
+      </div>
       <div class="card" id="dashCard">
         <div class="dash-h"><h1 id="dashTitle">Tổng quan kỳ</h1><p class="small" id="dashSub"></p><button class="btn sm" type="button" id="btnCohortIns" onclick="openCohortInsight()" title="Phân tích hành vi làm bài của cả nhóm, chẩn đoán nguyên nhân và đề xuất khắc phục">Chẩn đoán cả nhóm</button></div>
         <div id="insBoxWrap" class="hide" style="margin-bottom:14px"><div id="insBox"></div></div>
@@ -620,22 +658,6 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
         <div class="panel" style="margin-bottom:14px"><h2>Mảng kiến thức cả nhóm làm yếu nhất <span class="small" style="font-weight:400">· nên ưu tiên đào tạo lại</span></h2><ul class="wq" id="dashWeakCat"></ul></div>
         <div class="panel" style="margin-bottom:14px"><h2>Câu hỏi sai nhiều nhất <span class="small" id="dashWqNote" style="font-weight:400"></span></h2><ul class="wq" id="dashWq"></ul></div>
         <div class="panel"><details class="nd" id="dashNd"><summary id="dashNdSum">Chưa làm bài</summary><div class="ndg" id="dashNdList"></div></details></div>
-      </div>
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <h1 style="margin:0">Kết quả (<span id="resCount">0</span>)</h1>
-          <div style="display:flex;gap:8px;align-items:center">
-            <label style="margin:0;font-weight:600;font-size:12.5px;color:var(--muted)">Kỳ:</label>
-            <select id="resPeriod" onchange="loadResults()" style="max-width:160px"></select>
-            <button class="btn ghost sm" onclick="exportResultsXlsx()">⬇ Xuất Excel</button>
-          </div>
-        </div>
-        <table style="margin-top:14px"><thead><tr><th>Kỳ</th><th>Mã NV</th><th>Họ tên</th><th>Quản lí</th><th>Điểm</th><th>Tỉ lệ</th><th>Tuân thủ</th><th>Kết quả</th><th>Mã minh chứng</th><th>Cảnh báo</th><th>Nộp lúc</th><th></th></tr></thead><tbody id="resList"></tbody></table>
-      </div>
-      <div class="card hide" id="resDetailCard">
-        <h1>Chi tiết bài làm</h1>
-        <div id="resDetail"></div>
-        <button class="btn ghost sm" onclick="document.getElementById('resDetailCard').classList.add('hide')">Đóng</button>
       </div>
     </div>
   </div>
@@ -660,7 +682,7 @@ async function boot(){
     if (!j.isAdmin){ $('deniedEmail').textContent = j.email||''; $('deniedScreen').classList.remove('hide'); return; }
     $('meEmail').textContent = j.email;
     $('app').classList.remove('hide');
-    switchTab('questions');
+    switchTab((location.hash || '').slice(1) || 'questions');
     loadAll();
   } catch (e) {
     $('loginScreen').classList.remove('hide');
@@ -737,9 +759,14 @@ $('auXlsx').addEventListener('click', async function(){
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   logEv('exportExcel', { period: 'nhật ký ' + $('auDay').value });
 });
+const TABS = ['results','exams','questions','banks','candidates','settings','viewers','audit'];
+window.addEventListener('hashchange', () => { const t = location.hash.slice(1); if (TABS.indexOf(t) >= 0 && !$('app').classList.contains('hide')) switchTab(t); });
 function switchTab(t){
+  if (TABS.indexOf(t) < 0) t = 'questions';
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab===t));
   document.querySelectorAll('.tabpane').forEach(p => p.classList.toggle('hide', p.id !== 'tab-'+t));
+  document.body.dataset.tab = t;
+  if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
   if (t === 'audit') loadAudit();
 }
 
@@ -761,7 +788,7 @@ async function loadExams(){
       (e.id!==j.currentPeriod?'<button class="btn ghost sm" onclick="setDefaultExamUI(\''+esc(e.id)+'\')">Đặt mặc định</button> ':'')+
       '<button class="btn ghost sm" onclick="editExam(\''+esc(e.id)+'\')">Sửa</button> '+
       (e.resultCount ? '<button class="btn ghost sm" onclick="openItemAnalysis(\''+esc(e.id)+'\')">Phân tích câu hỏi</button> ' : '')+
-      (e.id!==j.currentPeriod?'<button class="btn danger sm" onclick="deleteExamUI(\''+esc(e.id)+'\')">Xoá</button>':'')+
+      (e.id!==j.currentPeriod?'<button class="btn dghost sm" onclick="deleteExamUI(\''+esc(e.id)+'\')">Xoá</button>':'')+
     '</td></tr>'
   ).join('') || '<tr><td colspan="7" class="small">Chưa có đề thi nào, bấm "+ Tạo đề thi mới" để bắt đầu.</td></tr>';
 }
@@ -884,7 +911,7 @@ async function loadBanks(){
   $('bkList').innerHTML = j.banks.map(b =>
     '<tr><td><b>'+esc(b.name)+'</b>'+(b.description?'<div class="small">'+esc(b.description)+'</div>':'')+'<div class="small"><code>'+esc(b.id)+'</code></div></td>'+
     '<td>'+b.usable+' / '+b.total+'</td><td class="small">'+dl(b.byDifficulty)+'</td><td class="small">'+cl(b.byCategory)+'</td>'+
-    '<td style="white-space:nowrap">'+(b.id!=='default' ? '<button class="btn ghost sm" onclick="editBank(\''+esc(b.id)+'\')">Sửa</button> <button class="btn danger sm" onclick="deleteBankUI(\''+esc(b.id)+'\')">Xoá</button>' : '<span class="small">Mặc định</span>')+'</td></tr>'
+    '<td style="white-space:nowrap">'+(b.id!=='default' ? '<button class="btn ghost sm" onclick="editBank(\''+esc(b.id)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteBankUI(\''+esc(b.id)+'\')">Xoá</button>' : '<span class="small">Mặc định</span>')+'</td></tr>'
   ).join('');
   window.BANK_STATS = j.banks;
   renderBankQuestions();
@@ -945,7 +972,7 @@ function renderBpRules(){
       '<div><label>Độ khó</label><select data-i="'+i+'" data-k="difficulty">'+diffOpts(r.difficulty)+'</select></div>'+
       '<div><label>Thẻ</label><input type="text" data-i="'+i+'" data-k="tag" value="'+esc(r.tag||'').replace(/"/g,'&quot;')+'" placeholder="Tất cả"></div>'+
       '<div><label>Số câu</label><input type="text" inputmode="numeric" data-i="'+i+'" data-k="count" value="'+esc(r.count||'')+'"></div>'+
-      '<div><button class="btn danger sm" type="button" onclick="removeBpRule('+i+')" title="Xoá quy tắc">✕</button></div>'+
+      '<div><button class="btn dghost sm" type="button" onclick="removeBpRule('+i+')" title="Xoá quy tắc">✕</button></div>'+
     '</div>'
   ).join('') || '<p class="small" style="margin:0">Chưa có quy tắc: đề dùng cách ra đề cũ.</p>';
   box.querySelectorAll('[data-k]').forEach(el => {
@@ -1269,7 +1296,7 @@ function renderQuestions(){
   $('qCount').textContent = L.length;
   $('qList').innerHTML = L.map(q =>
     '<tr><td>'+esc(q.text.slice(0,70))+(q.text.length>70?'…':'')+'</td><td class="small">'+esc(bankName(q.bankId))+'<div>'+esc(TYPE_LABEL[qTypeOf(q)]||'')+'</div></td><td>'+esc(q.category||'')+'</td><td class="small">'+esc(DIFF_LABEL[q.difficulty]||'')+'</td><td>'+(q.active!==false?'<span class="badge y">Đang dùng</span>':'<span class="badge n">Đã ẩn</span>')+'</td>'+
-    '<td style="white-space:nowrap"><button class="btn ghost sm" onclick="editQuestion(\''+q.id+'\')">Sửa</button> <button class="btn ghost sm" onclick="toggleQuestion(\''+q.id+'\')">'+(q.active!==false?'Ẩn':'Hiện')+'</button> <button class="btn danger sm" onclick="deleteQuestion(\''+q.id+'\')">Xoá</button></td></tr>'
+    '<td style="white-space:nowrap"><button class="btn ghost sm" onclick="editQuestion(\''+q.id+'\')">Sửa</button> <button class="btn ghost sm" onclick="toggleQuestion(\''+q.id+'\')">'+(q.active!==false?'Ẩn':'Hiện')+'</button> <button class="btn dghost sm" onclick="deleteQuestion(\''+q.id+'\')">Xoá</button></td></tr>'
   ).join('') || '<tr><td colspan="6" class="small">Kỳ này chưa có câu hỏi. Thêm câu mới, nhập hàng loạt hoặc sao chép từ kỳ khác.</td></tr>';
   $('qPeriod').innerHTML = pers.map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + (p === cur ? ' (hiện tại)' : '') + '</option>').join('') + (un.length ? '<option value="">Chưa gắn kỳ</option>' : '');
   $('qPeriod').value = QP;
@@ -1323,9 +1350,19 @@ async function deleteAllQuestions(){
     msg('qDelMsg','Đã xoá ' + j.deleted + ' câu hỏi. Bạn có thể khôi phục bằng nút ở trên nếu xoá nhầm.','ok');
   } finally { btn.disabled = false; }
 }
+/* Mở một khung trong tab Câu hỏi (bấm lại nút đang mở thì đóng) */
+function qPanel(id, keep){
+  ['qFormCard','qAiCard','qBulkCard'].forEach(k => {
+    const open = k === id && (keep || $(k).classList.contains('hide'));
+    $(k).classList.toggle('hide', !open);
+    const b = document.querySelector('[data-qp="'+k+'"]'); if (b) b.classList.toggle('on', open);
+  });
+  if (id && !$(id).classList.contains('hide')) $(id).scrollIntoView({behavior:'smooth', block:'start'});
+}
 function editQuestion(id){
   const q = QUESTIONS.find(x => x.id===id);
   if (!q) return;
+  qPanel('qFormCard', true);
   $('qEditId').value = q.id; $('qText').value = q.text; $('qCategory').value = q.category||'';
   $('qFormTitle').textContent = 'Sửa câu hỏi'; $('qPeriod').value = q.period || '';
   $('qBank').value = q.bankId || 'default'; $('qDifficulty').value = q.difficulty || ''; $('qTags').value = (q.tags || []).join(', '); $('qExplain').value = q.explanation || '';
@@ -1423,7 +1460,7 @@ async function loadCandidates(){
   CANDIDATES = j.candidates;
   const segLabel = { both:'Cả hai', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };
   $('candList').innerHTML = j.candidates.map(c =>
-    '<tr><td>'+esc(c.code)+'</td><td>'+esc(c.name||'')+'</td><td>'+esc(c.email)+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.confirmed?'<span class="badge y">Đã xác nhận</span><br>'+esc(c.confirmed.byName||c.confirmed.by||'')+' · '+new Date(c.confirmed.at).toLocaleDateString('vi-VN'):'<span class="small">Chưa xác nhận</span>')+'</td><td style="white-space:nowrap"><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn danger sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
+    '<tr><td>'+esc(c.code)+'</td><td>'+esc(c.name||'')+'</td><td>'+esc(c.email)+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.confirmed?'<span class="badge y">Đã xác nhận</span><br>'+esc(c.confirmed.byName||c.confirmed.by||'')+' · '+new Date(c.confirmed.at).toLocaleDateString('vi-VN'):'<span class="small">Chưa xác nhận</span>')+'</td><td style="white-space:nowrap"><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
   ).join('') || '<tr><td colspan="7" class="small">Chưa có thí sinh nào.</td></tr>';
 }
 let CANDIDATES = [];
@@ -1606,7 +1643,7 @@ async function loadViewers(){
   $('vwCount').textContent = VIEWERS.length;
   $('vwList').innerHTML = VIEWERS.map(v =>
     '<tr><td>'+esc(v.email)+'</td><td>'+esc(v.name||'')+'</td><td>'+esc((v.scopes||[]).join('; '))+'</td><td>'+v.employees+'</td>'+
-    '<td><button class="btn ghost sm" onclick="editViewer(\''+esc(v.email)+'\')">Sửa</button> <button class="btn danger sm" onclick="deleteViewerAcc(\''+esc(v.email)+'\')">Thu hồi</button></td></tr>'
+    '<td><button class="btn ghost sm" onclick="editViewer(\''+esc(v.email)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteViewerAcc(\''+esc(v.email)+'\')">Thu hồi</button></td></tr>'
   ).join('') || '<tr><td colspan="5" class="small">Chưa có tài khoản quản lí nào.</td></tr>';
 }
 function editViewer(email){
@@ -1793,8 +1830,13 @@ async function loadResults(){
     '<td class="small"><b>'+esc(r.proof||('KT-'+String(r.id||'').slice(-8).toUpperCase()))+'</b></td>'+
     '<td class="small">'+esc(flagText(r)||'–')+'</td>'+
     '<td class="small">'+new Date(r.submittedAt).toLocaleString('vi-VN')+'</td>'+
-    '<td style="white-space:nowrap"><button class="btn ghost sm" onclick="viewResult(\''+r.id+'\')">Xem</button> <button class="btn danger sm" onclick="resetAttempt(\''+esc(r.code)+'\',\''+esc(r.period||'')+'\')">↺ Làm lại</button></td></tr>'
+    '<td style="white-space:nowrap"><button class="btn ghost sm" onclick="viewResult(\''+r.id+'\')">Xem</button> <button class="btn dghost sm" title="Cho phép làm lại bài này" onclick="resetAttempt(\''+esc(r.code)+'\',\''+esc(r.period||'')+'\')">↺ Làm lại</button></td></tr>'
   ).join('') || '<tr><td colspan="12" class="small">Chưa có bài làm nào được nộp.</td></tr>';
+  filterResults();
+}
+function filterResults(){
+  const q = (($('resSearch') || {}).value || '').trim().toLowerCase();
+  document.querySelectorAll('#resList tr').forEach(tr => { tr.style.display = !q || tr.textContent.toLowerCase().indexOf(q) >= 0 ? '' : 'none'; });
 }
 async function resetAttempt(code, period){
   period = period || '';
@@ -1824,6 +1866,7 @@ async function viewResult(id){
   const { j } = await api('GET','/api/kt-admin?op=result&id='+encodeURIComponent(id));
   if (!j.ok){ alert(j.error); return; }
   $('resDetailCard').classList.remove('hide');
+  setTimeout(() => $('resDetailCard').scrollIntoView({behavior:'smooth', block:'start'}), 0);
   $('resDetail').innerHTML = '<p><b>'+esc(j.attempt.name||'')+'</b> ('+esc(j.attempt.code)+') — '+j.attempt.score+'/'+j.attempt.total+' câu đúng, '+j.attempt.pct+'%</p>' +
     (j.attempt.photo ? '<figure style="margin:0 0 14px"><img src="'+j.attempt.photo+'" alt="Ảnh xác nhận của thí sinh" style="max-width:220px;border-radius:12px;border:1px solid var(--line);display:block"><figcaption class="small" style="margin-top:6px">Ảnh chụp ngay trước khi bắt đầu bài kiểm tra <b>'+esc(j.attempt.period ? 'kỳ ' + perLabel(j.attempt.period) : '(chưa gắn kỳ)')+'</b>'+(j.attempt.startedAt ? ', lúc ' + esc(new Date(j.attempt.startedAt).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour12:false})) : '')+'. Chỉ là minh chứng cho kỳ này.'+(j.attempt.faceCheck ? '<br>Kiểm tra khuôn mặt: <b>'+esc(({ ok:'AI xác nhận có đúng 1 khuôn mặt', unclear:'AI thấy 1 khuôn mặt nhưng chưa rõ nét', client_ok:'nhận diện trên máy thí sinh, AI máy chủ chưa xác minh', unverified:'chưa xác minh được' })[j.attempt.faceCheck.status] || j.attempt.faceCheck.status)+'</b>'+(j.attempt.faceCheck.server && j.attempt.faceCheck.server.reason ? ' ('+esc(j.attempt.faceCheck.server.reason)+')' : '') : '')+'</figcaption></figure>' : '<p class="small">Không có ảnh xác nhận (bài làm trước khi có tính năng này).</p>') +
     devHtml(j.attempt) +
