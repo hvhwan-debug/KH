@@ -3,6 +3,7 @@
 const { reply, guardConfigured, requireAjax } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
 const device = require("../_lib/device");
+const now0 = () => Date.now();
 
 module.exports = async function (context, req) {
   try {
@@ -53,6 +54,17 @@ module.exports = async function (context, req) {
       await quiz.saveCandidates(candidates);
     }
 
+    // PC phải chọn tỉnh/thành + miền (Bắc/Nam) trước khi làm bài mới: miền quyết định bộ đề sản phẩm. Lưu vào hồ sơ thí sinh.
+    // Bài đang làm dở (bắt đầu trước khi có quy định này) vẫn được làm tiếp bình thường.
+    const PROV = require("../_lib/provinces");
+    if (!hasActive && quiz.needsRegion(found) && !(PROV.canonProvince(found.province) && quiz.normRegion(found.region))) {
+      const pv = PROV.canonProvince(b.province), rg = quiz.normRegion(b.region);
+      if (!pv) return reply(context, 400, { ok: false, needRegion: true, error: "Vui lòng chọn tỉnh/thành bạn đang làm việc." });
+      if (!rg) return reply(context, 400, { ok: false, needRegion: true, error: "Vui lòng chọn miền (Miền Bắc hoặc Miền Nam) để nhận đúng đề sản phẩm." });
+      found.province = pv; found.region = rg; found.regionSetAt = now0();
+      await quiz.saveCandidates(candidates);
+    }
+
     await quiz.ensureBankPeriods();
     const allQuestions = await quiz.getQuestions();
     const byId = {};
@@ -75,14 +87,14 @@ module.exports = async function (context, req) {
       }
       const segment = quiz.normSegment(found.segment);
       // Phân bổ đề: dùng DUY NHẤT quiz.planExam (khống chế số câu, trần cứng, không bao giờ phát cả ngân hàng)
-      const plan = quiz.planExam(allQuestions, settings, segment);
+      const plan = quiz.planExam(allQuestions, settings, segment, found.region);
       if (plan.error || !plan.picked.length) return reply(context, 503, { ok: false, error: (plan.error || "Chưa có câu hỏi phù hợp để tạo đề.") + " Liên hệ quản trị viên." });
       const picked = plan.picked;
       if (plan.short) (context.log.warn || context.log)("kt-start: de thieu cau", settings.examPeriod, segment, plan.picked.length + "/" + plan.target);
       const orders = {};
       picked.forEach((q) => { orders[q.id] = quiz.shuffle(q.options.map((_, i) => i)); }); // order[vị trí hiển thị] = chỉ số gốc
       attempt = {
-        id: quiz.genId(), code: found.code, name: found.name, email: found.email, phone: normPhone(found.phone), manager: found.manager || "", segment,
+        id: quiz.genId(), code: found.code, name: found.name, email: found.email, phone: normPhone(found.phone), manager: found.manager || "", segment, province: found.province || "", region: quiz.normRegion(found.region),
         period: settings.examPeriod,
         questionIds: picked.map((q) => q.id), orders,
         answers: {},

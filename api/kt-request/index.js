@@ -40,10 +40,22 @@ module.exports = async function (context, req) {
     if (inp.manager != null) proposed.manager = clean(inp.manager, 100);
     if (inp.title != null) proposed.title = quiz.normTitle(inp.title) || quiz.DEFAULT_TITLE;
     if (inp.segment != null) proposed.segment = quiz.normSegment(inp.segment);
+    const PROV = require("../_lib/provinces");
+    if (inp.province != null && String(inp.province).trim()) {
+      const pv = PROV.canonProvince(inp.province);
+      if (!pv) return reply(context, 400, { ok: false, error: "Tỉnh/thành không có trong danh sách. Hãy chọn từ danh sách." });
+      proposed.province = pv;
+    }
+    if (inp.region != null && String(inp.region).trim()) {
+      const rg = quiz.normRegion(inp.region);
+      if (!rg) return reply(context, 400, { ok: false, error: "Miền chỉ có thể là Miền Bắc hoặc Miền Nam." });
+      proposed.region = rg;
+    }
 
     const cur = {
       name: String(found.name || ""), email: quiz.normEmail(found.email), manager: String(found.manager || ""), title: quiz.titleOf(found),
-      segment: quiz.normSegment(found.segment), phone: normPhone(found.phone)
+      segment: quiz.normSegment(found.segment), phone: normPhone(found.phone),
+      province: String(found.province || ""), region: quiz.normRegion(found.region)
     };
     const changes = {};
     cr.FIELDS.forEach((k) => {

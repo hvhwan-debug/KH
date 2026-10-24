@@ -72,6 +72,31 @@ function normSegment(s) {
 }
 const CATEGORY_BY_SEGMENT = { gia_dung: "Gia dụng", may_loc: "Máy lọc nước" };
 
+// ---------- Miền bán hàng (Miền Bắc / Miền Nam) ----------
+// Miền KHÔNG suy ra từ tỉnh (công ty chia miền không theo địa lý): PC tự chọn tỉnh + miền trước khi làm bài.
+// Câu hỏi gắn tag "Miền Bắc" / "Miền Nam" chỉ phát cho PC thuộc miền đó; câu không gắn tag miền dùng chung.
+const REGION_LABEL = { bac: "Miền Bắc", nam: "Miền Nam" };
+const foldRg = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, " ").trim();
+function normRegion(s) {
+  const k = foldRg(s).replace(/^mien /, "");
+  return k === "bac" || k === "mb" ? "bac" : k === "nam" || k === "mn" ? "nam" : "";
+}
+// Miền của một câu hỏi theo tag ("Miền Bắc", "mien-bac", "#mienbac"...). Gắn cả hai miền hoặc không gắn = dùng chung ("").
+function questionRegion(q) {
+  let r = "";
+  (Array.isArray(q && q.tags) ? q.tags : []).forEach((t) => {
+    const k = foldRg(t).replace(/ /g, "");
+    const v = k === "mienbac" ? "bac" : k === "miennam" ? "nam" : "";
+    if (v) r = r && r !== v ? "*" : v;
+  });
+  return r === "*" ? "" : r;
+}
+// Thí sinh có phải chọn tỉnh + miền trước khi làm bài không (nhóm PC / Nhân viên tư vấn sản phẩm)
+function needsRegion(c) {
+  const t = foldRg(titleOf(c));
+  return t === "pc" || t.indexOf("tu van san pham") >= 0;
+}
+
 // Ngân hàng đề THEO KỲ: mỗi câu hỏi có period ("YYYY-MM"); "" = chưa gắn kỳ.
 // Đề của kỳ P chỉ lấy câu thuộc kỳ P. Nếu kỳ P chưa có câu nào, tạm dùng các câu CHƯA GẮN KỲ (dự phòng),
 // để bài thi không bị gián đoạn khi mới chuyển sang cấu trúc theo kỳ.
@@ -501,7 +526,10 @@ function validateCounts(fields, inheritedCount) {
 }
 // Lên đề cho MỘT thí sinh (theo nhóm ngành). Trả về:
 //   { picked, target, mode: "blueprint"|"segment", short, pool, source, parts: [{label, want, got}] , error }
-function planExam(all, settings, segment) {
+function planExam(all, settings, segment, region) {
+  // Có miền: bỏ các câu dành riêng cho miền kia (câu không gắn miền vẫn dùng chung)
+  const rg = normRegion(region);
+  if (rg) all = all.filter((q) => { const qr = questionRegion(q); return !qr || qr === rg; });
   const target = targetCount(settings);
   const parts = [];
   let picked = [], pool = 0, source = "", error = "";
@@ -803,7 +831,7 @@ function noteFail(req) {
 }
 
 module.exports = {
-  normCode, normEmail, normSegment, normTitle, titleOf, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
+  normCode, normEmail, normSegment, normTitle, titleOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
   getQuestions, saveQuestions,
   getCandidates, saveCandidates,
   getSettings, saveSettings,

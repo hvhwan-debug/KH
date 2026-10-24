@@ -32,7 +32,10 @@ module.exports = async function (context, req) {
       return reply(context, 404, { ok: false, error: "Không tìm thấy đề thi này. Hãy kiểm tra lại đường link hoặc liên hệ quản trị viên." });
     }
     const settings = await quiz.getExamSettings(examId);
-    const candidate = { code: found.code, name: found.name, email: found.email, manager: found.manager || "", phone: require("../_lib/phone").normPhone(found.phone), segment: quiz.normSegment(found.segment), title: quiz.titleOf(found) };
+    const candidate = { code: found.code, name: found.name, email: found.email, manager: found.manager || "", phone: require("../_lib/phone").normPhone(found.phone), segment: quiz.normSegment(found.segment), title: quiz.titleOf(found),
+      province: require("../_lib/provinces").canonProvince(found.province) || "", region: quiz.normRegion(found.region) };
+    // PC chưa có tỉnh/miền: phải chọn ở màn xác nhận trước khi làm bài (miền quyết định bộ đề sản phẩm)
+    candidate.needRegion = quiz.needsRegion(found) && !(candidate.province && candidate.region);
     const pendingRequest = (await require("../_lib/changereq").getAll()).some((r) => r.status === "pending" && quiz.normCode(r.code) === code);
     // Khung thời gian mở/đóng + đối tượng được thi (chỉ áp dụng cho đề thi có cấu hình các mục này)
     const denied = quiz.examAccessError(settings, found, Date.now());

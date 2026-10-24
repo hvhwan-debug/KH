@@ -655,6 +655,9 @@ const handler = async function (context, req) {
         const titleIn = quiz.normTitle(r.title);   // trống = giữ chức danh hiện có (người mới thì mặc định PC)
         const phoneIn = require("../_lib/phone").normPhone(r.phone);   // trống / không hợp lệ = giữ số hiện có
         const entry = Object.assign({ code: String(r.code).trim().slice(0, 50), name: String(r.name || "").trim().slice(0, 100), email, manager: String(r.manager || "").trim().slice(0, 100), segment: seg }, titleIn ? { title: titleIn } : {}, phoneIn ? { phone: phoneIn } : {});
+        // Tỉnh / miền: chỉ đổi khi có gửi (sửa từ form quản trị); chuỗi rỗng = xoá để thí sinh tự chọn lại khi vào thi
+        if (r.province !== undefined) entry.province = require("../_lib/provinces").canonProvince(r.province);
+        if (r.region !== undefined) entry.region = quiz.normRegion(r.region);
         if (byCode[code] != null) {
           const old = list[byCode[code]];
           const merged = Object.assign({}, old, entry);
@@ -808,6 +811,8 @@ const handler = async function (context, req) {
         else if (k === "title") merged.title = quiz.normTitle(to) || quiz.DEFAULT_TITLE;
         else if (k === "segment") merged.segment = quiz.normSegment(to);
         else if (k === "phone") { const p = np(to); if (!p) return; merged.phone = p; }
+        else if (k === "province") { const pv = require("../_lib/provinces").canonProvince(to); if (!pv) return; merged.province = pv; }
+        else if (k === "region") { const rg = quiz.normRegion(to); if (!rg) return; merged.region = rg; }
         else return;
         applied[k] = { from: String((ch[k] && ch[k].from) || ""), to: String(to) };
       });

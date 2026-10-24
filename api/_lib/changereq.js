@@ -3,7 +3,7 @@
 const crypto = require("crypto");
 const store = require("./store");
 const KEY = "kt/changeRequests.json";
-const FIELDS = ["name", "email", "manager", "title", "segment", "phone"];
+const FIELDS = ["name", "email", "manager", "title", "segment", "phone", "province", "region"];
 const KEEP_DONE = 200;
 
 async function getAll() { return (await store.get(KEY)) || []; }

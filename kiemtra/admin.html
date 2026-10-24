@@ -965,6 +965,8 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
           <div><label>Email</label><input type="text" id="candEditEmail"></div>
           <div><label>Quản lí</label><input type="text" id="candEditManager"></div>
           <div><label>Số điện thoại / Zalo</label><input type="text" id="candEditPhone" inputmode="tel" autocomplete="off" maxlength="20" placeholder="Chưa có"></div>
+          <div><label>Tỉnh/thành làm việc</label><select id="candEditProvince"><option value="">(chưa chọn — PC tự chọn khi vào thi)</option></select></div>
+          <div><label>Miền bán hàng</label><select id="candEditRegion"><option value="">(chưa chọn — PC tự chọn khi vào thi)</option><option value="bac">Miền Bắc</option><option value="nam">Miền Nam</option></select></div>
           <div><label>Chức danh</label><input type="text" id="candEditTitle" list="titleList" autocomplete="off" maxlength="50" placeholder="PC"></div>
           <datalist id="titleList"></datalist>
           <div>
@@ -1025,9 +1027,10 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
           <select id="candMgrF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo quản lí"></select>
           <select id="candTitleF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo chức danh"></select>
           <select id="candSegF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo nhóm ngành"><option value="*">Mọi nhóm ngành</option><option value="both">Cả hai ngành</option><option value="may_loc">Máy lọc nước</option><option value="gia_dung">Gia dụng</option></select>
+          <select id="candRgF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo miền"><option value="*">Mọi miền</option><option value="bac">Miền Bắc</option><option value="nam">Miền Nam</option><option value="">Chưa chọn miền</option></select>
           <span class="small" id="candShown"></span>
         </div>
-        <table class="stk"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Chức danh</th><th>Email</th><th>SĐT / Zalo</th><th>Quản lí</th><th>Nhóm ngành</th><th>Ngày vào làm</th><th></th></tr></thead><tbody id="candList"></tbody></table>
+        <table class="stk"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Chức danh</th><th>Email</th><th>SĐT / Zalo</th><th>Quản lí</th><th>Nhóm ngành</th><th>Tỉnh / Miền</th><th>Ngày vào làm</th><th></th></tr></thead><tbody id="candList"></tbody></table>
       </div>
     </div>
 
@@ -2282,12 +2285,15 @@ async function saveQuestion(){
 /* ---------- Thí sinh ---------- */
 function setNavCount(id, n){ const e = document.getElementById(id); if (!e) return; e.textContent = n; e.classList.toggle('hide', !n); }
 
-const CRQ_LABEL = { name:'Họ tên', email:'Email', phone:'SĐT / Zalo', manager:'Quản lí', title:'Chức danh', segment:'Nhóm ngành' };
+const CRQ_LABEL = { name:'Họ tên', email:'Email', phone:'SĐT / Zalo', manager:'Quản lí', title:'Chức danh', segment:'Nhóm ngành', province:'Tỉnh/thành', region:'Miền bán hàng' };
+const RG_LABEL = { bac:'Miền Bắc', nam:'Miền Nam' };
+// 63 tỉnh/thành trước sáp nhập — khớp api/_lib/provinces.js
+const PROVINCES_VN = ["An Giang","Bà Rịa - Vũng Tàu","Bạc Liêu","Bắc Giang","Bắc Kạn","Bắc Ninh","Bến Tre","Bình Dương","Bình Định","Bình Phước","Bình Thuận","Cà Mau","Cao Bằng","Cần Thơ","Đà Nẵng","Đắk Lắk","Đắk Nông","Điện Biên","Đồng Nai","Đồng Tháp","Gia Lai","Hà Giang","Hà Nam","Hà Nội","Hà Tĩnh","Hải Dương","Hải Phòng","Hậu Giang","Hòa Bình","Thành phố Hồ Chí Minh","Hưng Yên","Khánh Hòa","Kiên Giang","Kon Tum","Lai Châu","Lâm Đồng","Lạng Sơn","Lào Cai","Long An","Nam Định","Nghệ An","Ninh Bình","Ninh Thuận","Phú Thọ","Phú Yên","Quảng Bình","Quảng Nam","Quảng Ngãi","Quảng Ninh","Quảng Trị","Sóc Trăng","Sơn La","Tây Ninh","Thái Bình","Thái Nguyên","Thanh Hóa","Thừa Thiên Huế","Tiền Giang","Trà Vinh","Tuyên Quang","Vĩnh Long","Vĩnh Phúc","Yên Bái"];
 const CRQ_SEG = { both:'Cả hai', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };
 function renderChangeRequests(list){
   const card = $('candReqCard'); $('candReqCount').textContent = list.length;
   card.classList.toggle('hide', !list.length);
-  const v = (k, x) => k === 'segment' ? (CRQ_SEG[x] || x) : (x || '(trống)');
+  const v = (k, x) => k === 'segment' ? (CRQ_SEG[x] || x) : k === 'region' ? (RG_LABEL[x] || '(chưa chọn)') : (x || '(trống)');
   $('candReqList').innerHTML = list.map(r => {
     const rows = Object.keys(r.changes || {}).map(k => '<tr><td>' + esc(CRQ_LABEL[k] || k) + '</td><td><span class="fr">' + esc(v(k, r.changes[k].from)) + '</span> → <span class="to">' + esc(v(k, r.changes[k].to)) + '</span></td></tr>').join('');
     return '<div class="crq"><div class="crq-h"><b>' + esc(r.name || r.code) + ' <span class="small" style="font-weight:600;color:var(--muted)">' + esc(r.code) + '</span></b><small>' + esc(new Date(r.at).toLocaleString('vi-VN', { hour12:false })) + '</small></div>' +
@@ -2341,7 +2347,7 @@ async function loadCandidates(){
 }
 function resetCandFilters(){
   ['candSearch'].forEach(id => { const e = $(id); if (e) e.value = ''; });
-  ['candMgrF','candTitleF','candSegF'].forEach(id => { const e = $(id); if (e) e.value = '*'; });
+  ['candMgrF','candTitleF','candSegF','candRgF'].forEach(id => { const e = $(id); if (e) e.value = '*'; });
   renderCandidates();
 }
 function renderCandidates(){
@@ -2355,12 +2361,12 @@ function renderCandidates(){
   $('candTitleF').innerHTML = '<option value="*">Mọi chức danh</option>' + titles.map(t => '<option value="' + esc(t) + '">' + esc(t) + ' (' + tcnt[t] + ')</option>').join('');
   $('candTitleF').value = tcnt[tv] ? tv : '*';
   $('titleList').innerHTML = (tcnt['PC'] ? titles : ['PC'].concat(titles)).map(t => '<option value="' + esc(t) + '">').join('');
-  const q = spNorm($('candSearch').value), mf = $('candMgrF').value, sf = $('candSegF').value, tf = $('candTitleF').value;
-  const L = CANDIDATES.filter(c => (mf === '*' || (c.manager||'') === mf) && (sf === '*' || (c.segment||'both') === sf) && (tf === '*' || (c.title||'PC') === tf) && (!q || spNorm([c.code, c.name, c.email, c.phone || '', c.title || 'PC'].join(' ')).indexOf(q) >= 0));
+  const q = spNorm($('candSearch').value), mf = $('candMgrF').value, sf = $('candSegF').value, tf = $('candTitleF').value, rf = $('candRgF').value;
+  const L = CANDIDATES.filter(c => (rf === '*' || (c.region||'') === rf) && (mf === '*' || (c.manager||'') === mf) && (sf === '*' || (c.segment||'both') === sf) && (tf === '*' || (c.title||'PC') === tf) && (!q || spNorm([c.code, c.name, c.email, c.phone || '', c.title || 'PC', c.province || ''].join(' ')).indexOf(q) >= 0));
   $('candShown').textContent = L.length === CANDIDATES.length ? '' : 'Đang lọc: ' + L.length + ' người';
   $('candList').innerHTML = L.map(c =>
-    '<tr><td>'+esc(c.code)+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button></td><td><span class="ttlchip">'+esc(c.title||'PC')+'</span></td><td>'+esc(c.email)+'</td><td>'+(c.phone?esc(c.phone):'<span class="badge n" title="Thí sinh sẽ phải tự điền khi vào làm bài">Chưa có</span>')+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.joinDate?esc(c.joinDate.split('-').reverse().join('/')):'–')+'</td><td style="white-space:nowrap"><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
-  ).join('') || '<tr><td colspan="9" class="small">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Bấm “＋ Thêm thí sinh”.') + '</td></tr>';
+    '<tr><td>'+esc(c.code)+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button></td><td><span class="ttlchip">'+esc(c.title||'PC')+'</span></td><td>'+esc(c.email)+'</td><td>'+(c.phone?esc(c.phone):'<span class="badge n" title="Thí sinh sẽ phải tự điền khi vào làm bài">Chưa có</span>')+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.province||c.region ? esc(c.province||'–')+'<br><b>'+esc(RG_LABEL[c.region]||'Chưa chọn miền')+'</b>' : '<span class="badge n" title="PC sẽ phải tự chọn khi vào làm bài">Chưa chọn</span>')+'</td><td class="small">'+(c.joinDate?esc(c.joinDate.split('-').reverse().join('/')):'–')+'</td><td style="white-space:nowrap"><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
+  ).join('') || '<tr><td colspan="10" class="small">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Bấm “＋ Thêm thí sinh”.') + '</td></tr>';
 }
 let CANDIDATES = [];
 /* Hồ sơ học tập của một thí sinh: dùng lại hộp thoại hồ sơ của trang quản lí (quanli.html?profile=MÃ) */
@@ -2388,6 +2394,9 @@ function editCandidateOpen(code){
   $('candEditSegment').value = c.segment||'both';
   $('candEditTitle').value = c.title || 'PC';
   $('candEditPhone').value = c.phone || '';
+  const pSel = $('candEditProvince');
+  if (pSel.options.length < 2) pSel.innerHTML += PROVINCES_VN.slice().sort((a, b) => a.localeCompare(b, 'vi')).map(p => '<option value="' + esc(p) + '">' + esc(p) + '</option>').join('');
+  pSel.value = c.province || ''; $('candEditRegion').value = c.region || '';
   $('candEditCard').classList.remove('hide');
   candRenameToggle(false);
   msg('candEditMsg','');
@@ -2422,7 +2431,7 @@ async function saveCandidateEdit(){
   const email = $('candEditEmail').value.trim();
   if (!email){ msg('candEditMsg','Nhập email.'); return; }
   const { j } = await api('POST','/api/kt-admin', {
-    op:'addCandidates', rows:[{ code, name: $('candEditName').value.trim(), email, manager: $('candEditManager').value.trim(), segment: $('candEditSegment').value, title: $('candEditTitle').value.trim() || 'PC', phone: $('candEditPhone').value.trim() }]
+    op:'addCandidates', rows:[{ code, name: $('candEditName').value.trim(), email, manager: $('candEditManager').value.trim(), segment: $('candEditSegment').value, title: $('candEditTitle').value.trim() || 'PC', phone: $('candEditPhone').value.trim(), province: $('candEditProvince').value, region: $('candEditRegion').value }]
   });
   if (!j.ok){ msg('candEditMsg', j.error, 'err'); return; }
   msg('candEditMsg','Đã lưu.','ok');

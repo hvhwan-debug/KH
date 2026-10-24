@@ -110,6 +110,21 @@ button,input{font:inherit;color:inherit}
 .field input:hover{border-color:#B9C3D0}
 .field input:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 4px var(--brand-soft)}
 .field input[aria-invalid=true]{border-color:var(--bad)}
+/* Chọn tỉnh/thành + miền (PC) */
+.rgbox{margin-top:16px;padding:16px;border:1.5px solid var(--line);border-radius:16px;background:#F7FAFC}
+.rgbox h2{font-size:16px;margin:0 0 4px}
+.rgbox .field{margin-bottom:14px}
+.selwrap select{width:100%;appearance:none;-webkit-appearance:none;border:1.5px solid var(--line);border-radius:14px;padding:14px 40px 14px 46px;font-size:16px;font-family:inherit;color:var(--ink);background:#FAFCFC url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234F6486' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 15px center}
+.selwrap select:focus{outline:none;border-color:var(--brand);background-color:#fff;box-shadow:0 0 0 4px var(--brand-soft)}
+.selwrap select[aria-invalid=true]{border-color:var(--bad)}
+.rgpick{display:grid;grid-template-columns:1fr 1fr;gap:10px;border:0;margin:0;padding:0}
+.rgpick legend{font-size:13px;font-weight:700;margin-bottom:7px;padding:0}
+.rgpick label{position:relative;display:block;cursor:pointer}
+.rgpick input{position:absolute;opacity:0;width:1px;height:1px}
+.rgpick span{display:block;text-align:center;border:1.5px solid var(--line);border-radius:14px;padding:13px 10px;font-weight:700;background:#FAFCFC;transition:border-color .15s,background .15s,box-shadow .15s}
+.rgpick input:checked+span{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-deep);box-shadow:0 0 0 3px var(--brand-soft)}
+.rgpick input:focus-visible+span{outline:2px solid var(--brand);outline-offset:2px}
+.rgpick.bad span{border-color:var(--bad)}
 .btn{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:54px;border:0;border-radius:14px;padding:12px 20px;font-weight:700;font-size:16px;cursor:pointer;background:var(--grad);color:#fff;box-shadow:0 16px 28px -14px rgba(10,99,196,.85);transition:transform .15s,box-shadow .2s,filter .15s}
 .btn:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 20px 32px -14px rgba(10,99,196,.9)}
 .btn:active{transform:translateY(1px)}
@@ -619,6 +634,20 @@ body.introbg .btn.go:active{transform:scale(.99)}
         <p class="small" style="margin:6px 2px 0;color:var(--muted)">Hồ sơ của bạn chưa có số liên hệ. Hãy nhập số điện thoại (hoặc số đăng ký Zalo) để quản lí liên hệ khi cần. Bạn cần điền trước khi làm bài.</p>
         <div id="phoneMsg" role="alert"></div>
       </div>
+      <div class="rgbox hide" id="regionBox">
+        <h2>Nơi làm việc và miền bán hàng</h2>
+        <p class="small" style="margin:0 0 14px;color:var(--muted)">Chọn tỉnh/thành bạn đang làm việc và miền bán hàng của bạn. Miền bán hàng quyết định đề kiểm tra về dòng sản phẩm bạn đang bán, nên hãy chọn theo miền công ty phân cho bạn, không phải theo vị trí địa lý.</p>
+        <div class="field">
+          <label for="inProvince">Tỉnh/thành làm việc <span style="color:var(--bad)">*</span></label>
+          <div class="inwrap selwrap"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><select id="inProvince"><option value="">Chọn tỉnh/thành</option></select></div>
+        </div>
+        <fieldset class="rgpick" id="inRegion">
+          <legend>Miền bán hàng <span style="color:var(--bad)">*</span></legend>
+          <label><input type="radio" name="region" value="bac"><span>Miền Bắc</span></label>
+          <label><input type="radio" name="region" value="nam"><span>Miền Nam</span></label>
+        </fieldset>
+        <div id="regionMsg" role="alert"></div>
+      </div>
       <div class="rules" id="rulesBox"></div>
       <ul class="notes" id="notesBox"></ul>
       <div id="resumeMsg"></div>
@@ -633,6 +662,8 @@ body.introbg .btn.go:active{transform:scale(.99)}
         <div class="field"><label for="rqManager">Quản lí</label><input id="rqManager" type="text" autocomplete="off" maxlength="100" style="padding-left:14px"></div>
         <div class="field"><label for="rqTitle">Chức danh</label><input id="rqTitle" type="text" autocomplete="off" maxlength="50" style="padding-left:14px"></div>
         <div class="field"><label for="rqSegment">Nhóm ngành</label><select id="rqSegment" style="width:100%;border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;font-size:16px;background:#FAFCFC"><option value="both">Cả hai (Gia dụng + Máy lọc nước)</option><option value="gia_dung">Chỉ Gia dụng</option><option value="may_loc">Chỉ Máy lọc nước</option></select></div>
+        <div class="field"><label for="rqProvince">Tỉnh/thành làm việc</label><select id="rqProvince" style="width:100%;border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;font-size:16px;background:#FAFCFC"><option value="">(chưa chọn)</option></select></div>
+        <div class="field"><label for="rqRegion">Miền bán hàng</label><select id="rqRegion" style="width:100%;border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;font-size:16px;background:#FAFCFC"><option value="">(chưa chọn)</option><option value="bac">Miền Bắc</option><option value="nam">Miền Nam</option></select></div>
         <div class="field"><label for="rqNote">Ghi chú cho quản trị viên (không bắt buộc)</label><textarea id="rqNote" rows="3" maxlength="500" placeholder="Ví dụ: tên tôi bị sai dấu, hoặc tôi đã chuyển sang nhóm của chị B..." style="width:100%;border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;font-size:16px;font-family:inherit;background:#FAFCFC;resize:vertical"></textarea></div>
         <button class="btn go" id="btnReqSend" type="button">Gửi yêu cầu</button>
         <button class="btn ghost" id="btnReqCancel" type="button">Huỷ</button>
@@ -832,8 +863,8 @@ $('scrCheck').addEventListener('submit', async function(e){
   var j = res.j;
   noteServerTime(j);
   if (!j.ok){ msg('checkMsg', j.error || 'Có lỗi xảy ra, thử lại sau.'); return; }
-  ST.cand = { code:j.candidate.code, name:j.candidate.name, email:j.candidate.email, manager:j.candidate.manager, phone:j.candidate.phone || '', segment:j.candidate.segment || 'both', title:j.candidate.title || 'PC', inCode:code, inEmail:email };
-  ST.phoneNew = ''; ST.pending = !!j.pendingRequest;
+  ST.cand = { code:j.candidate.code, name:j.candidate.name, email:j.candidate.email, manager:j.candidate.manager, phone:j.candidate.phone || '', segment:j.candidate.segment || 'both', title:j.candidate.title || 'PC', province:j.candidate.province || '', region:j.candidate.region || '', needRegion:!!j.candidate.needRegion, inCode:code, inEmail:email };
+  ST.phoneNew = ''; ST.rgNew = null; ST.pending = !!j.pendingRequest;
   ST.exam = j.exam || {};
   applyPractice();
   if (ST.exam.title) $('examTitle').textContent = ST.exam.title;
@@ -850,11 +881,22 @@ function renderConfirm(){
     '<div><dt>Mã nhân viên</dt><dd>'+esc(c.code)+'</dd></div>'+
     '<div><dt>Email</dt><dd>'+esc(c.email)+'</dd></div>'+
     (c.manager ? '<div><dt>Quản lí</dt><dd>'+esc(c.manager)+'</dd></div>' : '')+
-    (c.phone ? '<div><dt>Số điện thoại / Zalo</dt><dd>'+esc(c.phone)+'</dd></div>' : '');
+    (c.phone ? '<div><dt>Số điện thoại / Zalo</dt><dd>'+esc(c.phone)+'</dd></div>' : '')+
+    (c.province ? '<div><dt>Tỉnh/thành</dt><dd>'+esc(c.province)+'</dd></div>' : '')+
+    (c.region ? '<div><dt>Miền bán hàng</dt><dd>'+esc(REGION_LABEL[c.region]||c.region)+'</dd></div>' : '');
   $('reqBox').classList.add('hide'); $('btnReqOpen').classList.remove('hide'); msg('reqMsg','');
   $('reqState').innerHTML = ST.pending ? '<div class="msg info">Yêu cầu điều chỉnh thông tin của bạn đang chờ quản trị viên xác nhận. Bạn vẫn có thể làm bài.</div>' : '';
   $('phoneBox').classList.toggle('hide', !!c.phone);
   if (!c.phone){ $('inPhone').value = ST.phoneNew || ''; msg('phoneMsg',''); }
+  var askRg = c.needRegion && !ST.inProgress; // bài đang dở thì làm tiếp, không bắt chọn lại
+  $('regionBox').classList.toggle('hide', !askRg);
+  if (askRg){
+    fillProvinces($('inProvince'), 'Chọn tỉnh/thành');
+    $('inProvince').value = (ST.rgNew && ST.rgNew.province) || c.province || '';
+    var rv = (ST.rgNew && ST.rgNew.region) || c.region || '';
+    Array.prototype.forEach.call(document.querySelectorAll('#inRegion input'), function(r){ r.checked = r.value === rv; });
+    $('inProvince').removeAttribute('aria-invalid'); $('inRegion').classList.remove('bad'); msg('regionMsg','');
+  }
   var secs = x.secondsPerQuestion || 60, n = x.questionCount || 0;
   var rl = ['<div><b>'+(n||'–')+'</b><span>Số câu hỏi</span></div>', '<div><b>'+secs+'s</b><span>Mỗi câu</span></div>'];
   if (x.passScore > 0) rl.push('<div><b>'+x.passScore+'%</b><span>Ngưỡng đạt</span></div>');
@@ -876,6 +918,18 @@ function renderConfirm(){
 }
 $('btnBack').addEventListener('click', function(){ show('check'); $('inCode').focus(); });
 
+var REGION_LABEL = { bac:'Miền Bắc', nam:'Miền Nam' };
+// 63 tỉnh/thành trước sáp nhập — khớp với danh sách máy chủ (api/_lib/provinces.js)
+var PROVINCES = ["An Giang","Bà Rịa - Vũng Tàu","Bạc Liêu","Bắc Giang","Bắc Kạn","Bắc Ninh","Bến Tre","Bình Dương","Bình Định","Bình Phước","Bình Thuận","Cà Mau","Cao Bằng","Cần Thơ","Đà Nẵng","Đắk Lắk","Đắk Nông","Điện Biên","Đồng Nai","Đồng Tháp","Gia Lai","Hà Giang","Hà Nam","Hà Nội","Hà Tĩnh","Hải Dương","Hải Phòng","Hậu Giang","Hòa Bình","Thành phố Hồ Chí Minh","Hưng Yên","Khánh Hòa","Kiên Giang","Kon Tum","Lai Châu","Lâm Đồng","Lạng Sơn","Lào Cai","Long An","Nam Định","Nghệ An","Ninh Bình","Ninh Thuận","Phú Thọ","Phú Yên","Quảng Bình","Quảng Nam","Quảng Ngãi","Quảng Ninh","Quảng Trị","Sóc Trăng","Sơn La","Tây Ninh","Thái Bình","Thái Nguyên","Thanh Hóa","Thừa Thiên Huế","Tiền Giang","Trà Vinh","Tuyên Quang","Vĩnh Long","Vĩnh Phúc","Yên Bái"];
+function fillProvinces(sel, first){
+  if (sel.options.length > 1) return;
+  var list = PROVINCES.slice().sort(function(a, b){ return a.localeCompare(b, 'vi'); });
+  sel.innerHTML = '<option value="">'+esc(first)+'</option>' + list.map(function(p){ return '<option value="'+esc(p)+'">'+esc(p)+'</option>'; }).join('');
+}
+function pickedRegion(){
+  var r = document.querySelector('#inRegion input:checked');
+  return r ? r.value : '';
+}
 function normPhoneVN(v){
   var s = String(v || '').trim().slice(0, 30).replace(/[\s.\-()]/g, '');
   if (/^\+84/.test(s)) s = '0' + s.slice(3); else if (/^84\d{9}$/.test(s)) s = '0' + s.slice(2);
@@ -886,6 +940,7 @@ $('btnReqOpen').addEventListener('click', function(){
   var c = ST.cand;
   $('rqName').value = c.name || ''; $('rqEmail').value = c.email || ''; $('rqPhone').value = c.phone || '';
   $('rqManager').value = c.manager || ''; $('rqTitle').value = c.title || 'PC'; $('rqSegment').value = c.segment || 'both'; $('rqNote').value = '';
+  fillProvinces($('rqProvince'), '(chưa chọn)'); $('rqProvince').value = c.province || ''; $('rqRegion').value = c.region || '';
   msg('reqMsg',''); $('reqBox').classList.remove('hide'); $('btnReqOpen').classList.add('hide'); $('rqName').focus();
 });
 $('btnReqCancel').addEventListener('click', function(){ $('reqBox').classList.add('hide'); $('btnReqOpen').classList.remove('hide'); });
@@ -896,7 +951,7 @@ $('btnReqSend').addEventListener('click', async function(){
   btn.disabled = true; btn.textContent = 'Đang gửi…'; msg('reqMsg','');
   var res;
   try { res = await api('/api/kt-request', { code:ST.cand.inCode, email:ST.cand.inEmail, note:$('rqNote').value,
-    changes:{ name:$('rqName').value, email:$('rqEmail').value, phone:phone, manager:$('rqManager').value, title:$('rqTitle').value, segment:$('rqSegment').value } }); } catch(e){ res = null; }
+    changes:{ name:$('rqName').value, email:$('rqEmail').value, phone:phone, manager:$('rqManager').value, title:$('rqTitle').value, segment:$('rqSegment').value, province:$('rqProvince').value, region:$('rqRegion').value } }); } catch(e){ res = null; }
   btn.disabled = false; btn.textContent = label;
   if (!res){ msg('reqMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
   if (!res.j.ok){ msg('reqMsg', res.j.error || 'Không gửi được yêu cầu.'); return; }
@@ -911,6 +966,15 @@ $('btnStart').addEventListener('click', function(){
     $('inPhone').setAttribute('aria-invalid', p ? 'false' : 'true');
     if (!p){ msg('phoneMsg', $('inPhone').value.trim() ? 'Số điện thoại chưa đúng (cần 10 số, bắt đầu bằng 0).' : 'Vui lòng nhập số điện thoại hoặc Zalo trước khi làm bài.'); $('inPhone').focus(); return; }
     ST.phoneNew = p; msg('phoneMsg','');
+  }
+  if (!$('regionBox').classList.contains('hide')){
+    var pv = $('inProvince').value, rg = pickedRegion();
+    $('inProvince').setAttribute('aria-invalid', pv ? 'false' : 'true');
+    $('inRegion').classList.toggle('bad', !rg);
+    if (!pv){ msg('regionMsg','Vui lòng chọn tỉnh/thành bạn đang làm việc.'); $('inProvince').focus(); return; }
+    if (!rg){ msg('regionMsg','Vui lòng chọn miền bán hàng (Miền Bắc hoặc Miền Nam).'); document.querySelector('#inRegion input').focus(); return; }
+    if (!confirm('Xác nhận: bạn làm việc tại ' + pv + ', bán hàng thuộc ' + REGION_LABEL[rg] + '?\n\nĐề kiểm tra sẽ theo dòng sản phẩm của ' + REGION_LABEL[rg] + '. Sau khi bắt đầu, muốn đổi phải gửi yêu cầu điều chỉnh cho quản trị viên.')) return;
+    ST.rgNew = { province: pv, region: rg }; msg('regionMsg','');
   }
   show('photo');
   photoInit();
@@ -1039,12 +1103,14 @@ $('btnPhotoOk').addEventListener('click', async function(){
   btn.disabled = true; btn.textContent = 'Đang kiểm tra ảnh và chuẩn bị đề…'; msg('photoMsg','');
   var res;
   if (LOC.p) await Promise.race([LOC.p, new Promise(function(r){ setTimeout(r, 6000); })]);
-  try { res = await api('/api/kt-start', { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, face: PH.face, device: DEV, examId:EXAM_ID, phone: ST.cand.phone || ST.phoneNew || '' }); } catch(e){ res = null; }
+  try { res = await api('/api/kt-start', { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, face: PH.face, device: DEV, examId:EXAM_ID, phone: ST.cand.phone || ST.phoneNew || '', province: (ST.rgNew && ST.rgNew.province) || '', region: (ST.rgNew && ST.rgNew.region) || '' }); } catch(e){ res = null; }
   btn.disabled = false; btn.textContent = label;
   if (!res){ msg('photoMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
   if (!res.j.ok && res.j.needPhone){ photoStop(); show('confirm'); msg('phoneMsg', res.j.error); return; }
+  if (!res.j.ok && res.j.needRegion){ photoStop(); ST.cand.needRegion = true; ST.inProgress = null; renderConfirm(); msg('regionMsg', res.j.error); return; }
   if (!res.j.ok){ msg('photoMsg', (res.j.faceRejected ? '⚠ ' : '') + (res.j.error || 'Không thể bắt đầu bài kiểm tra.')); if (res.j.faceRejected){ btn.classList.add('hide'); $('btnPhotoRetry').classList.remove('hide'); } return; }
   if (!ST.cand.phone && ST.phoneNew) ST.cand.phone = ST.phoneNew;
+  if (ST.rgNew){ ST.cand.province = ST.rgNew.province; ST.cand.region = ST.rgNew.region; ST.cand.needRegion = false; }
   ST.attemptId = res.j.attemptId;
   if (res.j.examTitle) $('examTitle').textContent = res.j.examTitle;
   show('quiz');
