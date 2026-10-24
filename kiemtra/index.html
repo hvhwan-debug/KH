@@ -111,7 +111,7 @@ button,input{font:inherit;color:inherit}
 .field input:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 4px var(--brand-soft)}
 .field input[aria-invalid=true]{border-color:var(--bad)}
 /* Chọn tỉnh/thành + miền (PC) */
-.rgbox{margin-top:16px;padding:18px;border:1.5px solid var(--line);border-radius:16px;background:#F7FAFC}
+.rgbox{position:relative;z-index:20;margin-top:16px;padding:18px;border:1.5px solid var(--line);border-radius:16px;background:#F7FAFC}
 .rgbox h2{font-size:16px;margin:0 0 4px;color:var(--ink)}
 .rgbox .rgdesc{font-size:13.5px;line-height:1.5;color:var(--muted);margin:0 0 16px}
 .rgbox .field{margin-bottom:16px}
@@ -119,6 +119,16 @@ button,input{font:inherit;color:inherit}
 .selwrap select{width:100%;appearance:none;-webkit-appearance:none;border:1.5px solid var(--line);border-radius:14px;padding:14px 40px 14px 46px;font-size:16px;font-family:inherit;color:var(--ink);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234F6486' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 15px center}
 .selwrap select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-soft)}
 .selwrap select[aria-invalid=true]{border-color:var(--bad)}
+.combo input[type=text]{width:100%;border:1.5px solid var(--line);border-radius:14px;padding:14px 40px 14px 46px;font-size:16px;font-family:inherit;color:var(--ink);background:#fff}
+.combo input[type=text]:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-soft)}
+.combo input[type=text][aria-invalid=true]{border-color:var(--bad)}
+.combo .cbclear{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;border-radius:50%;background:transparent;color:var(--muted);font-size:20px;line-height:1;cursor:pointer}
+.combo .cbclear:hover{background:var(--brand-soft)}
+.cblist{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:30;max-height:264px;overflow-y:auto;margin:0;padding:6px;list-style:none;background:#fff;border:1.5px solid var(--line);border-radius:14px;box-shadow:0 18px 36px -16px rgba(10,37,82,.35)}
+.cblist li{padding:11px 12px;border-radius:10px;cursor:pointer;font-size:15.5px;color:var(--ink)}
+.cblist li[aria-selected=true],.cblist li:hover{background:var(--brand-soft);color:var(--brand-deep)}
+.cblist li.none{color:var(--muted);cursor:default;background:none}
+.cblist mark{background:none;color:inherit;font-weight:800}
 .rgpick{border:0;margin:0;padding:0;min-width:0}
 .rgpick legend{display:block;font-size:13px;font-weight:700;margin-bottom:7px;padding:0;color:var(--ink)}
 .rgopts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -649,8 +659,8 @@ body.introbg .btn.go:active{transform:scale(.99)}
         <h2>Nơi làm việc và miền bán hàng</h2>
         <p class="rgdesc">Miền bán hàng quyết định bộ đề về dòng sản phẩm bạn đang bán. Hãy chọn theo miền công ty phân cho bạn, không theo vị trí địa lý.</p>
         <div class="field">
-          <label for="inProvince">Tỉnh/thành làm việc <span class="req">*</span></label>
-          <div class="inwrap selwrap"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><select id="inProvince"><option value="">Chọn tỉnh/thành</option></select></div>
+          <label for="inProvinceQ">Tỉnh/thành làm việc <span class="req">*</span></label>
+          <div class="inwrap combo" id="provCombo"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><input id="inProvinceQ" type="text" role="combobox" aria-expanded="false" aria-controls="provList" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="Gõ để tìm, ví dụ: Cần Thơ"><button type="button" class="cbclear hide" id="provClear" aria-label="Xoá tỉnh đã chọn">×</button><input type="hidden" id="inProvince"><ul class="cblist hide" id="provList" role="listbox" aria-label="Danh sách tỉnh/thành"></ul></div>
         </div>
         <fieldset class="rgpick" id="inRegion">
           <legend>Miền bán hàng <span class="req">*</span></legend>
@@ -906,11 +916,10 @@ function renderConfirm(){
   var askRg = c.needRegion; // hồ sơ thiếu tỉnh/miền thì luôn bắt chọn, kể cả khi làm tiếp bài dở
   $('regionBox').classList.toggle('hide', !askRg);
   if (askRg){
-    fillProvinces($('inProvince'), 'Chọn tỉnh/thành');
-    $('inProvince').value = (ST.rgNew && ST.rgNew.province) || c.province || '';
+    provSet((ST.rgNew && ST.rgNew.province) || c.province || '');
     var rv = (ST.rgNew && ST.rgNew.region) || c.region || '';
     Array.prototype.forEach.call(document.querySelectorAll('#inRegion input'), function(r){ r.checked = r.value === rv; });
-    $('inProvince').removeAttribute('aria-invalid'); $('inRegion').classList.remove('bad'); msg('regionMsg','');
+    $('inProvinceQ').removeAttribute('aria-invalid'); $('inRegion').classList.remove('bad'); msg('regionMsg','');
   }
   var secs = x.secondsPerQuestion || 60, n = x.questionCount || 0;
   var rl = ['<div><b>'+(n||'–')+'</b><span>Số câu hỏi</span></div>', '<div><b>'+secs+'s</b><span>Mỗi câu</span></div>'];
@@ -948,6 +957,71 @@ function fillProvinces(sel, first){
   var list = PROVINCES.slice().sort(function(a, b){ return a.localeCompare(b, 'vi'); });
   sel.innerHTML = '<option value="">'+esc(first)+'</option>' + list.map(function(p){ return '<option value="'+esc(p)+'">'+esc(p)+'</option>'; }).join('');
 }
+/* Ô tỉnh/thành: gõ để tìm (không cần dấu, nhận cả viết tắt hcm, hn, brvt...) */
+function vnFold(x){ return String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/[^a-z0-9]+/g,' ').trim(); }
+var PROV_ALIAS = { 'hcm':'Thành phố Hồ Chí Minh', 'tphcm':'Thành phố Hồ Chí Minh', 'tp hcm':'Thành phố Hồ Chí Minh', 'sai gon':'Thành phố Hồ Chí Minh', 'saigon':'Thành phố Hồ Chí Minh', 'sg':'Thành phố Hồ Chí Minh', 'hn':'Hà Nội', 'brvt':'Bà Rịa - Vũng Tàu', 'vung tau':'Bà Rịa - Vũng Tàu', 'hue':'Thừa Thiên Huế', 'dn':'Đà Nẵng', 'hp':'Hải Phòng', 'ct':'Cần Thơ' };
+var PROV_SORTED = null, CB = { items:[], idx:-1 };
+function provMatches(q){
+  if (!PROV_SORTED) PROV_SORTED = PROVINCES.slice().sort(function(a, b){ return a.localeCompare(b, 'vi'); });
+  var f = vnFold(q).replace(/^(tp|thanh pho|tinh)\s+/, '');
+  if (!f) return PROV_SORTED.slice();
+  var al = PROV_ALIAS[f] || PROV_ALIAS[f.replace(/ /g,'')], starts = [], words = [], inside = [];
+  PROV_SORTED.forEach(function(p){
+    var k = vnFold(p).replace(/^thanh pho /, '');
+    if (k.indexOf(f) === 0) starts.push(p);
+    else if ((' ' + k).indexOf(' ' + f) >= 0) words.push(p);
+    else if (k.indexOf(f) >= 0 || k.replace(/ /g,'').indexOf(f.replace(/ /g,'')) >= 0) inside.push(p);
+  });
+  var out = starts.concat(words, inside);
+  if (al && out.indexOf(al) < 0) out.unshift(al);
+  return out;
+}
+function provRender(){
+  var q = $('inProvinceQ').value, list = $('provList'), f = vnFold(q);
+  CB.items = provMatches(q); CB.idx = CB.items.length ? 0 : -1;
+  list.innerHTML = CB.items.length ? CB.items.map(function(p, i){
+    var t = esc(p);
+    if (f){ var k = vnFold(p), at = k.indexOf(f); if (at >= 0 && k.length === p.length) t = esc(p.slice(0, at)) + '<mark>' + esc(p.slice(at, at + f.length)) + '</mark>' + esc(p.slice(at + f.length)); }
+    return '<li role="option" id="pv-'+i+'" aria-selected="'+(i===CB.idx)+'" data-i="'+i+'">'+t+'</li>';
+  }).join('') : '<li class="none">Không tìm thấy tỉnh/thành phù hợp</li>';
+  provOpen(true);
+}
+function provOpen(on){
+  $('provList').classList.toggle('hide', !on); $('inProvinceQ').setAttribute('aria-expanded', on ? 'true' : 'false');
+  if (on && CB.idx >= 0) $('inProvinceQ').setAttribute('aria-activedescendant', 'pv-' + CB.idx); else $('inProvinceQ').removeAttribute('aria-activedescendant');
+}
+function provHi(i){
+  var lis = $('provList').querySelectorAll('li[role=option]'); if (!lis.length) return;
+  CB.idx = (i + lis.length) % lis.length;
+  lis.forEach(function(li, k){ li.setAttribute('aria-selected', k === CB.idx ? 'true' : 'false'); });
+  lis[CB.idx].scrollIntoView({ block:'nearest' }); $('inProvinceQ').setAttribute('aria-activedescendant', 'pv-' + CB.idx);
+}
+function provSet(p){
+  $('inProvince').value = p || ''; $('inProvinceQ').value = p || '';
+  $('provClear').classList.toggle('hide', !p); provOpen(false);
+  if (p){ $('inProvinceQ').setAttribute('aria-invalid','false'); if ($('regionMsg').textContent.indexOf('tỉnh') >= 0) msg('regionMsg',''); }
+}
+(function(){
+  var q = $('inProvinceQ');
+  q.addEventListener('focus', function(){ if (!$('inProvince').value) provRender(); else q.select(); });
+  q.addEventListener('click', function(){ if ($('provList').classList.contains('hide')) provRender(); });
+  q.addEventListener('input', function(){ $('inProvince').value = ''; $('provClear').classList.toggle('hide', !q.value); provRender(); });
+  q.addEventListener('keydown', function(ev){
+    var open = !$('provList').classList.contains('hide');
+    if (ev.key === 'ArrowDown'){ ev.preventDefault(); if (!open) provRender(); else provHi(CB.idx + 1); }
+    else if (ev.key === 'ArrowUp'){ ev.preventDefault(); if (open) provHi(CB.idx - 1); }
+    else if (ev.key === 'Enter'){ if (open && CB.idx >= 0 && CB.items[CB.idx]){ ev.preventDefault(); provSet(CB.items[CB.idx]); } }
+    else if (ev.key === 'Escape'){ if (open){ ev.preventDefault(); provOpen(false); } }
+  });
+  q.addEventListener('blur', function(){
+    setTimeout(function(){
+      if (!$('inProvince').value){ var m = provMatches(q.value); if (q.value.trim() && m.length === 1) provSet(m[0]); else if (m.length && vnFold(m[0]) === vnFold(q.value)) provSet(m[0]); }
+      provOpen(false);
+    }, 150);
+  });
+  $('provList').addEventListener('mousedown', function(ev){ var li = ev.target.closest('li[data-i]'); if (!li) return; ev.preventDefault(); provSet(CB.items[+li.dataset.i]); });
+  $('provClear').addEventListener('click', function(){ provSet(''); q.focus(); });
+})();
 function pickedRegion(){
   var r = document.querySelector('#inRegion input:checked');
   return r ? r.value : '';
@@ -993,9 +1067,9 @@ $('btnStart').addEventListener('click', function(){
   }
   if (!$('regionBox').classList.contains('hide')){
     var pv = $('inProvince').value, rg = pickedRegion();
-    $('inProvince').setAttribute('aria-invalid', pv ? 'false' : 'true');
+    $('inProvinceQ').setAttribute('aria-invalid', pv ? 'false' : 'true');
     $('inRegion').classList.toggle('bad', !rg);
-    if (!pv){ msg('regionMsg','Vui lòng chọn tỉnh/thành bạn đang làm việc.'); $('inProvince').focus(); return; }
+    if (!pv){ msg('regionMsg', $('inProvinceQ').value.trim() ? 'Không có tỉnh/thành “' + $('inProvinceQ').value.trim() + '”. Hãy chọn một tỉnh trong danh sách gợi ý.' : 'Vui lòng chọn tỉnh/thành bạn đang làm việc.'); $('inProvinceQ').focus(); return; }
     if (!rg){ msg('regionMsg','Vui lòng chọn miền bán hàng (Miền Bắc hoặc Miền Nam).'); document.querySelector('#inRegion input').focus(); return; }
     if (!confirm('Xác nhận: bạn làm việc tại ' + pv + ', bán hàng thuộc ' + REGION_LABEL[rg] + '?\n\nĐề kiểm tra sẽ theo dòng sản phẩm của ' + REGION_LABEL[rg] + '. Sau khi bắt đầu, muốn đổi phải gửi yêu cầu điều chỉnh cho quản trị viên.')) return;
     ST.rgNew = { province: pv, region: rg }; msg('regionMsg','');
