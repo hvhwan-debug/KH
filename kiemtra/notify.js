@@ -37,7 +37,7 @@ var TEMPLATES = [
     text:'THƯ MỜI THAM DỰ ĐÀO TẠO\nThân gửi : {ten},\nNhằm nâng cao kiến thức chuyên môn, chuẩn hóa năng lực và hỗ trợ nâng cao hiệu quả công việc, ĐTKDGT trân trọng kính mời Anh/Chị tham dự chương trình đào tạo với thông tin cụ thể như sau:\n\n1. THÔNG TIN CHƯƠNG TRÌNH\n\n* Tên khóa đào tạo: {ten_khoa}\n* Thời gian: {thoi_gian}\n* Hình thức: {hinh_thuc}\n* Địa điểm / Đường dẫn tham dự: {dia_diem}\n* Giảng viên / Đơn vị tổ chức: {giang_vien}\n* Nội dung chính: {noi_dung}\n\n2. QUY ĐỊNH THAM DỰ\n\nĐể bảo đảm chất lượng và hiệu quả chương trình, Anh/Chị vui lòng thực hiện các yêu cầu sau:\n\n* Tham dự đầy đủ, đúng giờ và tuân thủ thời lượng của chương trình.\n* Chủ động chuẩn bị các điều kiện cần thiết để tham gia đào tạo; đối với chương trình trực tuyến, vui lòng kiểm tra thiết bị và đường truyền trước giờ học.\n* Tích cực tham gia các hoạt động học tập, trao đổi và thực hành theo hướng dẫn của giảng viên.\n* Hoàn thành bài kiểm tra, khảo sát hoặc các yêu cầu sau đào tạo theo thông báo của Ban Tổ chức (nếu có).\n* Trường hợp không thể tham dự hoặc phát sinh vấn đề ảnh hưởng đến việc tham gia, vui lòng thông báo sớm cho {lien_he} để được hướng dẫn xử lý.\n\n3. XÁC NHẬN THAM DỰ\n\nVui lòng xác nhận tham dự trước {han_xn} với {lien_he} để Ban Tổ chức chủ động công tác chuẩn bị.\nSự tham gia nghiêm túc và chủ động của Anh/Chị là yếu tố quan trọng góp phần nâng cao hiệu quả chương trình đào tạo và khả năng vận dụng kiến thức vào thực tiễn công việc.\n\nTrân trọng,\nĐÀO TẠO KINH DOANH |  GT' }
 ];
 var VARS = [['ten','Tên'],['ma_nv','Mã NV'],['ten_de','Tên đề'],['link','Link làm bài'],['mo','Giờ mở'],['han','Hạn làm bài'],['diem','Số câu đúng'],['tong','Tổng số câu'],['phan_tram','Phần trăm'],['link_ket_qua','Link kết quả'],['quan_li','Quản lí']];
-var CHANNELS = [['zalo','Zalo'],['sms','Tin nhắn SMS'],['email','Email']];
+var CHANNELS = [['zalo','Zalo'],['sms','Tin nhắn SMS'],['email','Email'],['png','Ảnh PNG']];
 
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmt(ms){
@@ -77,6 +77,115 @@ function render(tpl, r, ex, origin, extra, optional){
   });
   return lines.join('\n').replace(/\{(\w+)\}/g, function(m, k){ return k in vals ? String(vals[k]) : m; });
 }
+
+/* ---------- Xuất ảnh PNG thư mời ---------- */
+var FONT = '"Be Vietnam Pro","Segoe UI",Roboto,Arial,sans-serif';
+var CAPS_RE = /^[\p{Lu}\d][\p{Lu}\d \t,.\-–:\/|()]*$/u, SEC_RE = /^\d+\.\s+[\p{Lu}\d \t,.\-–:\/|()]+$/u, URL_RE = /^https?:\/\//i;
+// Vẽ (hoặc chỉ đo khi dry = true) thư mời lên canvas. Trả về chiều cao ảnh (đơn vị 1x). logo: ảnh biểu tượng (có thể null).
+function paintLetter(ctx, o, dry){
+  var W = 1080, M = 64, LH = 44, BODY = 28, NAVY = '#102e5b', BLUE = '#0b3f94', LINK = '#0869df';
+  var raw = String(o.text || '').split('\n').map(function(l){ return l.replace(/\s+$/, ''); });
+  var title = o.kind === 'invite' ? 'THƯ MỜI' : 'THÔNG BÁO';
+  if (raw.length && CAPS_RE.test(raw[0].trim()) && raw[0].trim().length <= 60){ title = raw.shift().trim(); while (raw.length && !raw[0].trim()) raw.shift(); }
+  function font(bold, size){ ctx.font = (bold ? '700 ' : '400 ') + size + 'px ' + FONT; }
+  function rr(x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  // tách các đoạn có kiểu chữ riêng thành từng từ, rồi ngắt dòng theo bề rộng
+  function words(segs){
+    var out = [];
+    segs.forEach(function(sg){
+      String(sg.t).split(/(\s+)/).forEach(function(w){ if (w !== '') out.push({ t:w, b:!!sg.b, c:sg.c, sp:/^\s+$/.test(w) }); });
+    });
+    return out;
+  }
+  function flow(segs, x0, maxX, y, size){ // trả về y sau đoạn; vẽ nếu !dry
+    var x = x0, ws = words(segs), lines = 1;
+    function put(t, b, c){ font(b, size); var w = ctx.measureText(t).width; if (!dry){ ctx.fillStyle = c; ctx.fillText(t, x, y + (lines - 1) * LH); } x += w; }
+    ws.forEach(function(w){
+      font(w.b, size);
+      var width = ctx.measureText(w.t).width, col = URL_RE.test(w.t) ? LINK : (w.c || NAVY);
+      if (w.sp){ if (x > x0) x += width; return; }
+      if (x + width > maxX && x > x0){ lines++; x = x0; }
+      if (width > maxX - x0){ // từ dài (đường dẫn): ngắt theo ký tự
+        var buf = '';
+        for (var i = 0; i < w.t.length; i++){
+          var tryT = buf + w.t[i]; font(w.b, size);
+          if (x + ctx.measureText(tryT).width > maxX && buf){ put(buf, w.b, col); lines++; x = x0; buf = w.t[i]; } else buf = tryT;
+        }
+        if (buf) put(buf, w.b, col);
+      } else put(w.t, w.b, col);
+    });
+    return y + lines * LH;
+  }
+  var headH = 150;
+  // nền + dải tiêu đề
+  if (!dry){
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, o.H);
+    var g = ctx.createLinearGradient(0, 0, W, 0); g.addColorStop(0, '#0869df'); g.addColorStop(1, '#08b9d4');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, headH);
+    ctx.fillStyle = '#ffffff'; rr(M, 39, 72, 72, 20); ctx.fill();
+    if (o.logo){ try { ctx.drawImage(o.logo, M + 8, 47, 56, 56); } catch(e){} }
+    ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#ffffff'; font(true, 38); ctx.fillText(title, M + 72 + 26, 82);
+    font(false, 21); ctx.fillStyle = 'rgba(255,255,255,.88)'; ctx.fillText('Hệ thống kiểm tra đánh giá trực tuyến', M + 72 + 26, 114);
+  }
+  var y = headH + 62;
+  raw.forEach(function(l){
+    var t = l.trim();
+    if (!t){ y += 18; return; }
+    if (SEC_RE.test(t)){
+      y += 14;
+      if (!dry){ ctx.fillStyle = '#08b9d4'; rr(M, y - 31, 8, 40, 4); ctx.fill(); font(true, 30); ctx.fillStyle = BLUE; ctx.fillText(t, M + 24, y); }
+      y += 50; return;
+    }
+    if (/^[*\-•]\s+/.test(t)){
+      var body = t.replace(/^[*\-•]\s+/, ''), i = body.indexOf(': '), label = i > 0 ? body.slice(0, i) : '', segs;
+      if (label && label.length <= 50 && !/[.,;]/.test(label)) segs = [{ t:label + ':', b:true, c:NAVY }, { t:' ' + body.slice(i + 2) }]; else segs = [{ t:body }];
+      if (!dry){ ctx.fillStyle = '#08b9d4'; ctx.beginPath(); ctx.arc(M + 12, y - 10, 5, 0, Math.PI * 2); ctx.fill(); }
+      y = flow(segs, M + 36, W - M, y, BODY) + 6; return;
+    }
+    if (CAPS_RE.test(t) && t.length <= 60){ y = flow([{ t:t, b:true, c:BLUE }], M, W - M, y, BODY) + 4; return; }
+    y = flow([{ t:t }], M, W - M, y, BODY) + 6;
+  });
+  if (o.cta && URL_RE.test(o.cta.url || '')){
+    y += 20;
+    var bw = 440, bh = 76;
+    if (!dry){
+      var g2 = ctx.createLinearGradient(M, 0, M + bw, 0); g2.addColorStop(0, '#0869df'); g2.addColorStop(1, '#08b9d4');
+      ctx.fillStyle = g2; rr(M, y, bw, bh, 20); ctx.fill();
+      ctx.fillStyle = '#ffffff'; font(true, 28); var tw = ctx.measureText(o.cta.label).width; ctx.fillText(o.cta.label, M + (bw - tw) / 2, y + 49);
+    }
+    y += bh + 34;
+    y = flow([{ t:o.cta.url, c:'#526b91' }], M, W - M, y, 22) + 4;
+  }
+  y += 34;
+  if (!dry){ ctx.strokeStyle = '#e1ecf8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(M, y); ctx.lineTo(W - M, y); ctx.stroke(); font(false, 20); ctx.fillStyle = '#7186a5'; ctx.fillText('Hệ thống kiểm tra đánh giá trực tuyến', M, y + 40); }
+  return y + 72;
+}
+function newCanvas(w, h){ var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+var logoP = null;
+function loadLogo(){
+  if (logoP) return logoP;
+  logoP = new Promise(function(res){ var im = new Image(); im.onload = function(){ res(im); }; im.onerror = function(){ res(null); }; im.src = '/kiemtra/logo-mark.png'; });
+  return logoP;
+}
+// Trả về Promise<Blob> ảnh PNG (độ nét x2)
+async function renderPng(o){
+  try { if (document.fonts && document.fonts.load){ await Promise.all([document.fonts.load('400 28px "Be Vietnam Pro"'), document.fonts.load('700 28px "Be Vietnam Pro"')]); } } catch(e){}
+  var logo = await loadLogo(), S = 2;
+  var probe = newCanvas(10, 10).getContext('2d'), H = Math.ceil(paintLetter(probe, { text:o.text, kind:o.kind, cta:o.cta }, true));
+  var c = newCanvas(1080 * S, H * S), ctx = c.getContext('2d'); ctx.scale(S, S);
+  paintLetter(ctx, { text:o.text, kind:o.kind, cta:o.cta, logo:logo, H:H }, false);
+  return new Promise(function(res, rej){ c.toBlob(function(b){ b ? res(b) : rej(new Error('png')); }, 'image/png'); });
+}
+function slug(s){ return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0, 40) || 'thu-moi'; }
+function saveBlob(blob, name){ var a = document.createElement('a'), u = URL.createObjectURL(blob); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); }, 4000); }
+var zipP = null;
+function loadZip(){
+  if (window.JSZip) return Promise.resolve(window.JSZip);
+  if (zipP) return zipP;
+  zipP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'; sc.onload = function(){ res(window.JSZip); }; sc.onerror = function(){ zipP = null; rej(new Error('zip')); }; document.head.appendChild(sc); });
+  return zipP;
+}
+
 function css(){
   if (document.getElementById('ntCss')) return;
   var s = document.createElement('style'); s.id = 'ntCss';
@@ -119,6 +228,7 @@ function css(){
   '.nt-fields input,.nt-fields select,.nt-fields textarea{width:100%;border:1.5px solid var(--l);border-radius:10px;padding:8px 10px;font:inherit;font-size:13.5px;background:#fff;color:var(--k)}'+
   '.nt-fields textarea{min-height:64px;resize:vertical}'+
   '.nt-req{color:#B3261E}'+
+  '.nt-imgbox{margin-top:12px;border:1px solid var(--l);border-radius:12px;padding:8px 10px;background:#fff;text-align:center}.nt-imgbox small{display:block;text-align:left;font-weight:700;color:var(--m)}.nt-imgbox img{max-width:100%;display:block;margin:8px auto 2px;border-radius:8px;box-shadow:0 6px 20px rgba(16,46,91,.15)}'+
   '.nt-msg{font-size:13px;margin-top:8px;padding:8px 12px;border-radius:10px}.nt-msg.ok{background:#DDF1E6;color:#17794A}.nt-msg.er{background:#FBE3E0;color:#B3261E}';
   document.head.appendChild(s);
 }
@@ -185,14 +295,14 @@ function mount(root, cfg){
       '<div class="nt-chips" aria-label="Chèn thông tin tự động">'+chips.map(function(v){ return '<button type="button" class="nt-chip" data-v="'+v[0]+'" title="Chèn {'+v[0]+'}">'+esc(v[1])+'</button>'; }).join('')+'</div>'+
       '<label class="nl">Kênh gửi</label><div class="nt-seg">'+CHANNELS.map(function(c){ return '<button type="button" data-ch="'+c[0]+'" class="'+(c[0]===S.channel?'on':'')+'">'+c[1]+'</button>'; }).join('')+'</div>'+
       (S.channel === 'email' ? '<label class="nl" for="ntSubj">Tiêu đề email</label><input type="text" id="ntSubj" value="'+esc(subjFor(first))+'">' : '')+
-      '<div class="nt-prev" id="ntPrev"></div>'+
-      '<p class="nt-hint" style="margin:10px 0 0">'+(S.channel==='zalo' ? 'Bấm “Mở Zalo” ở từng người: nội dung được sao chép sẵn, bạn chỉ cần dán (Cmd/Ctrl+V) rồi gửi.' : S.channel==='sms' ? 'Bấm “Soạn SMS” ở từng người: ứng dụng tin nhắn mở sẵn với nội dung và số điện thoại.' : (t.kind === 'invite' ? 'Hệ thống gửi email thư mời có khung riêng'+(t.cta ? ' và nút bấm' : '')+' tới email đã lưu của những người được chọn.' : 'Hệ thống gửi email trực tiếp tới email đã lưu của những người được chọn.'))+'</p></div>'+
+      '<div class="nt-prev" id="ntPrev"></div>'+(S.channel==='png' ? '<div class="nt-imgbox"><small>Ảnh sẽ xuất</small><img id="ntImg" alt="Xem trước ảnh thư mời"></div>' : '')+
+      '<p class="nt-hint" style="margin:10px 0 0">'+(S.channel==='png' ? 'Xuất thư thành ảnh PNG để gửi qua Zalo, Messenger hoặc in. Mỗi người một ảnh có ghi sẵn tên. Bấm “Sao chép” rồi dán thẳng vào khung chat, hoặc “Tải ảnh” để lưu.' : S.channel==='zalo' ? 'Bấm “Mở Zalo” ở từng người: nội dung được sao chép sẵn, bạn chỉ cần dán (Cmd/Ctrl+V) rồi gửi.' : S.channel==='sms' ? 'Bấm “Soạn SMS” ở từng người: ứng dụng tin nhắn mở sẵn với nội dung và số điện thoại.' : (t.kind === 'invite' ? 'Hệ thống gửi email thư mời có khung riêng'+(t.cta ? ' và nút bấm' : '')+' tới email đã lưu của những người được chọn.' : 'Hệ thống gửi email trực tiếp tới email đã lưu của những người được chọn.'))+'</p></div>'+
       '<div class="nt-box"><div class="nt-bar">'+
         [['todo','Chưa làm'],['done','Đã làm'],['all','Tất cả'],['nophone','Thiếu SĐT']].map(function(f){ return '<button type="button" class="nt-f'+(S.filter===f[0]?' on':'')+'" data-f="'+f[0]+'">'+f[1]+' ('+count(f[0])+')</button>'; }).join('')+
         '<input type="search" id="ntQ" placeholder="Tìm tên, mã NV, SĐT…" value="'+esc(S.q)+'"></div>'+
       '<label style="display:flex;gap:8px;align-items:center;font-size:13px;font-weight:700;margin:0 0 8px"><input type="checkbox" id="ntAll"'+(vis.length && nsel === vis.length ? ' checked' : '')+'> Chọn tất cả ('+nsel+'/'+vis.length+')</label>'+
       '<div class="nt-rows">'+(vis.length ? vis.map(function(r){ return rowHtml(r); }).join('') : '<div style="padding:18px;text-align:center" class="nt-hint">Không có ai trong bộ lọc này.</div>')+'</div>'+
-      '<div class="nt-foot">'+(S.channel==='email' ? '<button type="button" class="nt-go" id="ntSend"'+(nmail?'':' disabled')+'>Gửi email cho '+nmail+' người</button>'+(nmail < nsel ? '<span class="nt-hint">'+(nsel-nmail)+' người đã chọn chưa có email nên sẽ bị bỏ qua.</span>' : '') : '<span class="nt-hint">Bấm nút ở từng dòng để gửi. Dòng đã mở sẽ được tô xanh.</span>')+'</div><div id="ntRes"></div></div>'+
+      '<div class="nt-foot">'+(S.channel==='email' ? '<button type="button" class="nt-go" id="ntSend"'+(nmail?'':' disabled')+'>Gửi email cho '+nmail+' người</button>'+(nmail < nsel ? '<span class="nt-hint">'+(nsel-nmail)+' người đã chọn chưa có email nên sẽ bị bỏ qua.</span>' : '') : (S.channel==='png' ? '<button type="button" class="nt-go" id="ntZip"'+(nsel?'':' disabled')+'>Tải '+nsel+' ảnh (.zip)</button>' : '<span class="nt-hint">Bấm nút ở từng dòng để gửi. Dòng đã mở sẽ được tô xanh.</span>'))+'</div><div id="ntRes"></div></div>'+
     '</div></div>';
     if (window.KTDt24) window.KTDt24.upgrade(root);
     refresh();
@@ -204,7 +314,8 @@ function mount(root, cfg){
     else if (S.channel === 'sms') act = '<a class="nt-act'+(r.phone?'':' dis')+'" data-sms="'+esc(r.code)+'" href="'+(r.phone ? 'sms:'+r.phone+'?&body='+encodeURIComponent(msgFor(r)) : '#')+'">Soạn SMS</a>';
     else act = S.err[r.code] ? '<span class="nt-st er">'+esc(S.err[r.code])+'</span>' : (S.sent[r.code] ? '<span class="nt-st ok">Đã gửi</span>' : (r.email ? '' : '<span class="nt-no">Chưa có email</span>'));
     var contact = S.channel === 'email' ? (r.email || '') : (r.phone || '');
-    return '<div class="nt-row'+(S.sent[r.code]?' sent':'')+'"><input type="checkbox" data-sel="'+esc(r.code)+'"'+(S.sel[r.code]?' checked':'')+' aria-label="Chọn '+esc(r.name||r.code)+'"><div><b>'+esc(r.name||r.code)+'</b><small>'+esc(r.code)+(r.manager?' · '+esc(r.manager):'')+' · '+(contact ? esc(contact) : '<span class="nt-no">'+(S.channel==='email'?'Chưa có email':'Chưa có SĐT')+'</span>')+' · '+(r.status==='done'?'Đã làm':'Chưa làm')+'</small></div><div>'+act+'</div></div>';
+    if (S.channel === 'png') act = '<button type="button" class="nt-act" data-png="'+esc(r.code)+'">Tải ảnh</button> <button type="button" class="nt-act" data-pngcopy="'+esc(r.code)+'">Sao chép</button>';
+    return '<div class="nt-row'+(S.sent[r.code]?' sent':'')+'"><input type="checkbox" data-sel="'+esc(r.code)+'"'+(S.sel[r.code]?' checked':'')+' aria-label="Chọn '+esc(r.name||r.code)+'"><div><b>'+esc(r.name||r.code)+'</b><small>'+esc(r.code)+(r.manager?' · '+esc(r.manager):'')+(S.channel==='png' ? '' : ' · '+(contact ? esc(contact) : '<span class="nt-no">'+(S.channel==='email'?'Chưa có email':'Chưa có SĐT')+'</span>'))+' · '+(r.status==='done'?'Đã làm':'Chưa làm')+'</small></div><div>'+act+'</div></div>';
   }
   function byCode(code){ return all.filter(function(r){ return r.code === code; })[0]; }
   function copy(t){ return (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(t) : Promise.reject()).catch(function(){ window.prompt('Sao chép nội dung:', t); }); }
@@ -223,6 +334,39 @@ function mount(root, cfg){
     var sj = q('#ntSubj'); if (sj) sj.addEventListener('input', function(){ S.subjEdited = true; });
     qa('[data-zalo]').forEach(function(b){ b.addEventListener('click', function(){ if (warn()) return; var r = byCode(b.dataset.zalo); if (!r || !r.phone) return; copy(msgFor(r)).then(function(){ S.sent[r.code] = true; window.open('https://zalo.me/'+r.phone, '_blank', 'noopener'); var row = b.closest('.nt-row'); if (row) row.classList.add('sent'); b.textContent = 'Mở lại Zalo'; }); }); });
     qa('[data-sms]').forEach(function(a){ a.addEventListener('click', function(e){ if (warn()){ e.preventDefault(); return; } S.sent[a.dataset.sms] = true; var row = a.closest('.nt-row'); if (row) row.classList.add('sent'); }); });
+    function pngOf(r){ return renderPng({ text: msgFor(r), kind: tplOf(S.tpl).kind || '', cta: ctaFor(r) }); }
+    function fname(r){ return slug(r.code + '-' + (r.name || '')) + '.png'; }
+    function mark(r, el){ S.sent[r.code] = true; var row = el.closest('.nt-row'); if (row) row.classList.add('sent'); }
+    qa('[data-png]').forEach(function(b){ b.addEventListener('click', async function(){
+      if (warn()) return; var r = byCode(b.dataset.png); if (!r) return;
+      var t0 = b.textContent; b.disabled = true; b.textContent = 'Đang tạo…';
+      try { saveBlob(await pngOf(r), fname(r)); mark(r, b); } catch(e){ q('#ntRes').innerHTML = '<div class="nt-msg er">Không tạo được ảnh, thử lại.</div>'; }
+      b.disabled = false; b.textContent = t0;
+    }); });
+    qa('[data-pngcopy]').forEach(function(b){ b.addEventListener('click', async function(){
+      if (warn()) return; var r = byCode(b.dataset.pngcopy); if (!r) return;
+      var t0 = b.textContent; b.disabled = true; b.textContent = 'Đang tạo…';
+      try {
+        var blob = await pngOf(r);
+        if (navigator.clipboard && window.ClipboardItem){ await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); b.textContent = 'Đã sao chép'; mark(r, b); setTimeout(function(){ b.textContent = t0; b.disabled = false; }, 1600); return; }
+        saveBlob(blob, fname(r)); q('#ntRes').innerHTML = '<div class="nt-msg ok">Trình duyệt không cho sao chép ảnh nên ảnh đã được tải về.</div>'; mark(r, b);
+      } catch(e){ q('#ntRes').innerHTML = '<div class="nt-msg er">Không sao chép được ảnh. Hãy dùng “Tải ảnh”.</div>'; }
+      b.disabled = false; b.textContent = t0;
+    }); });
+    var zip = q('#ntZip');
+    if (zip) zip.addEventListener('click', async function(){
+      if (warn()) return;
+      var rows = visible().filter(function(r){ return S.sel[r.code]; }).slice(0, 300);
+      if (!rows.length) return;
+      var t0 = zip.textContent; zip.disabled = true; q('#ntRes').innerHTML = '';
+      try {
+        var Z = await loadZip(), z = new Z();
+        for (var i = 0; i < rows.length; i++){ zip.textContent = 'Đang tạo ' + (i + 1) + '/' + rows.length + '…'; z.file(fname(rows[i]), await pngOf(rows[i])); mark(rows[i], zip); }
+        saveBlob(await z.generateAsync({ type:'blob' }), 'thu-moi-' + slug(tplOf(S.tpl).name) + '.zip');
+        q('#ntRes').innerHTML = '<div class="nt-msg ok">Đã tạo ' + rows.length + ' ảnh.</div>';
+      } catch(e){ q('#ntRes').innerHTML = '<div class="nt-msg er">Không tạo được file zip (cần kết nối mạng để tải thư viện nén). Bạn có thể dùng “Tải ảnh” cho từng người.</div>'; }
+      zip.disabled = false; zip.textContent = t0; draw();
+    });
     var send = q('#ntSend');
     if (send) send.addEventListener('click', async function(){
       if (warn()) return;
@@ -246,9 +390,13 @@ function mount(root, cfg){
     var p = root.querySelector('#ntPrev');
     if (p) p.innerHTML = '<small>Xem trước'+(first ? ' (cho '+esc(first.name||first.code)+')' : '')+'</small>'+(first ? esc(msgFor(first)) : 'Chưa có người nhận trong danh sách.')+(mi.length ? '<span class="nt-req" style="display:block;margin-top:6px;font-weight:700">Cần nhập: '+esc(mi.join(', '))+'</span>' : '');
     var sj = root.querySelector('#ntSubj'); if (sj && !S.subjEdited) sj.value = subjFor(first);
+    var im = root.querySelector('#ntImg');
+    if (im && first){ clearTimeout(S.pt); var snap = S.text + JSON.stringify(S.vars) + first.code; S.pt = setTimeout(async function(){
+      try { var blob = await renderPng({ text: msgFor(first), kind: tplOf(S.tpl).kind || '', cta: ctaFor(first) }); if (im.isConnected){ if (im.dataset.u) URL.revokeObjectURL(im.dataset.u); im.dataset.u = URL.createObjectURL(blob); im.src = im.dataset.u; } } catch(e){}
+    }, 350); }
     [].forEach.call(root.querySelectorAll('[data-sms]'), function(a){ var r = byCode(a.dataset.sms); if (r && r.phone) a.href = 'sms:'+r.phone+'?&body='+encodeURIComponent(msgFor(r)); });
   }
   setTpl('remind'); draw();
 }
-window.KTNotify = { mount: mount };
+window.KTNotify = { mount: mount, _paint: paintLetter };
 })();
