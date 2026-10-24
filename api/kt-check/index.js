@@ -81,7 +81,8 @@ module.exports = async function (context, req) {
             score: prior.score, total: prior.total, pct: prior.pct, passed: quiz.passState(prior.pct, settings),
             compliancePoints: prior.compliancePoints, submittedAt: prior.submittedAt,
             mailOk: prior.mailOk, passScore: exam.passScore, durationSec: prior.durationSec,
-            startedAt: prior.startedAt, wrong: prior.wrong, blank: prior.blank, proof: quiz.proofCode(prior.id), verify: quiz.verifyToken(prior.id), advice: adv
+            startedAt: prior.startedAt, wrong: prior.wrong, blank: prior.blank, proof: quiz.proofCode(prior.id), verify: quiz.verifyToken(prior.id), advice: adv,
+            attempts: quiz.attemptsSummary(idxAll, code, settings.examPeriod, settings, prior.id)
           },
           serverNow: Date.now()
         });

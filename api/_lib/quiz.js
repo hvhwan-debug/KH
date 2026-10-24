@@ -360,6 +360,19 @@ async function ensureNoSkill() {
   try { await require("./auditlog").write({ area: "system", role: "system", by: "hệ thống", name: "Hệ thống", op: "pauseSkillQuestions", label: "Ngưng dùng câu kỹ năng, thay bằng câu Máy lọc nước", kind: "change", status: 200, ok: true, details: info }); } catch (e) {}
   return info;
 }
+// Tóm tắt các lần làm của một thí sinh trong một đề (cho màn kết quả): mỗi lần điểm/tỉ lệ/thời gian,
+// đánh dấu lần CHÍNH THỨC (điểm cao nhất) và lần đang xem; kèm số lượt tối đa / còn lại (0 = không giới hạn).
+function attemptsSummary(idx, code, period, settings, currentId) {
+  const subs = submittedOf(idx, code, period);
+  let best = null; subs.forEach((a) => { if (betterResult(a, best)) best = a; });
+  const lim = attemptLimit(settings), max = lim === Infinity ? 0 : lim;
+  return {
+    max, left: max ? Math.max(0, max - subs.length) : null,
+    list: subs.map((a, i) => ({ n: i + 1, score: a.score, total: a.total, pct: a.pct, submittedAt: a.submittedAt,
+      durationSec: a.durationSec != null ? a.durationSec : (a.startedAt ? Math.round(((a.submittedAt || 0) - a.startedAt) / 1000) : null),
+      official: !!best && best.id === a.id, current: a.id === currentId }))
+  };
+}
 // Thứ tự lấy đề cho kỳ P: câu của kỳ P -> câu chưa gắn kỳ -> đề của kỳ gần nhất TRƯỚC P (dự phòng tạm thời,
 // để đổi sang kỳ mới mà chưa kịp soạn đề thì thí sinh vẫn làm được bài; trang quản trị báo rõ đang dùng tạm).
 function bankFor(all, period) {
@@ -1021,7 +1034,7 @@ function noteFail(req) {
 }
 
 module.exports = {
-  runMigrations, normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, betterResult, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
+  runMigrations, normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, betterResult, attemptsSummary, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
   getQuestions, saveQuestions,
   getCandidates, saveCandidates,
   getSettings, saveSettings,

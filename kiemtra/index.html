@@ -195,6 +195,19 @@ button,input{font:inherit;color:inherit}
 .rules div{background:linear-gradient(180deg,#F4F9FA,#EAEFF6);border:1px solid #D5DFEC;border-radius:16px;padding:14px 8px;text-align:center}
 .rules b{display:block;font-size:22px;font-weight:800;color:var(--brand-deep);line-height:1.2}
 .rules span{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+.tries{margin:14px 0 6px;text-align:left}
+.tries .th{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px;font-size:13px;color:var(--muted)}
+.tries .th b{color:var(--ink);font-size:14px}
+.tries .tl{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:8px}
+.tries .t{position:relative;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;background:#fff}
+.tries .t .n{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:12px;font-weight:700;color:var(--muted)}
+.tries .t .sc{display:block;font-size:20px;font-weight:800;color:var(--ink);line-height:1.25;margin-top:2px}
+.tries .t .mt{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.tries .t.cur{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.tries .t.off{background:linear-gradient(180deg,#F1FAF5,#E4F3EA);border-color:#9FD3B5}
+.tries .t.off .sc{color:var(--ok)}
+.tries .tag{font-size:10.5px;font-weight:800;color:var(--ok);background:#fff;border:1px solid #9FD3B5;border-radius:999px;padding:1px 7px}
+.tries .note{margin:8px 0 0;font-size:13px;color:var(--muted)}
 .rules div.best{background:linear-gradient(180deg,#EEF8F2,#E2F2E9);border-color:#BFE3CE}
 .rules div.best b{color:var(--ok)}
 .notes{margin:0 0 4px;padding:0 0 0 18px;font-size:13px;line-height:1.75;color:var(--muted)}
@@ -752,6 +765,7 @@ body.introbg .btn.go:active{transform:scale(.99)}
         <h1 tabindex="-1">Kết quả của bạn</h1>
         <p class="lead" id="resSub" style="margin-bottom:14px"></p>
         <div class="rv-person"><span class="av" id="rvAv" aria-hidden="true">?</span><div><b id="rvName"></b><span id="rvCode"></span></div></div>
+        <div class="tries hide" id="resTries"></div>
         <div class="ring" id="resRing"><svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="gP" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5C25E"/><stop offset="1" stop-color="#D68F1E"/></linearGradient><linearGradient id="gY" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12B5C9"/><stop offset="1" stop-color="#17794A"/></linearGradient><linearGradient id="gN" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B3261E"/></linearGradient><linearGradient id="gT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12B5C9"/><stop offset="1" stop-color="#0A63C4"/></linearGradient><linearGradient id="gScRed" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B3261E"/></linearGradient><linearGradient id="gScYellow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5C25E"/><stop offset="1" stop-color="#D68F1E"/></linearGradient><linearGradient id="gScBlue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5BA8E8"/><stop offset="1" stop-color="#1D6FC2"/></linearGradient><linearGradient id="gScGreen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5FD08A"/><stop offset="1" stop-color="#17794A"/></linearGradient></defs><circle class="trk" cx="60" cy="60" r="52" fill="none" stroke-width="10"/><circle class="prg" id="resArc" cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73"/></svg><div class="c"><b id="resPct">0%</b><span>Tỉ lệ đúng</span></div></div>
         <p class="thr" id="resThr"></p>
         <p class="cheer" id="resCheer"></p>
@@ -1507,8 +1521,29 @@ function renderAdvice(a){
     (a.goal ? '<div class="goal"><span aria-hidden="true">🎯</span><div><b>Mục tiêu lần tới.</b> ' + esc(String(a.goal).replace(/^Lần tới:\s*/i, '')) + '</div></div>' : '');
   box.classList.remove('hide');
 }
+function triesTime(ms){ var d = new Date(ms + 7 * 3600 * 1000), p = function(n){ return (n < 10 ? '0' : '') + n; }; return p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ' ' + p(d.getUTCDate()) + '/' + p(d.getUTCMonth() + 1); }
+// Khung "Các lần làm bài": mỗi lần một ô, lần điểm cao nhất gắn nhãn Chính thức, ô đang xem được viền xanh
+function renderTries(A){
+  var box = $('resTries');
+  if (!A || !A.list || !A.list.length || (A.list.length < 2 && !(A.max > 1) && A.max !== 0)){ box.classList.add('hide'); box.innerHTML = ''; return; }
+  var cur = A.list.filter(function(t){ return t.current; })[0], off = A.list.filter(function(t){ return t.official; })[0];
+  var head = '<div class="th"><b>Các lần làm bài</b><span>' + (A.max ? (A.left > 0 ? 'Còn ' + A.left + '/' + A.max + ' lượt' : 'Đã dùng hết ' + A.max + ' lượt') : 'Không giới hạn lượt') + '</span></div>';
+  var cells = A.list.map(function(t){
+    return '<div class="t' + (t.official ? ' off' : '') + (t.current ? ' cur' : '') + '"' + (t.current ? ' aria-current="true"' : '') + '>' +
+      '<span class="n">Lần ' + t.n + (t.current ? ' · đang xem' : '') + (t.official ? '<span class="tag">★ Chính thức</span>' : '') + '</span>' +
+      '<span class="sc">' + t.score + '/' + t.total + '</span>' +
+      '<span class="mt">' + (t.pct != null ? t.pct + '%' : '') + (t.submittedAt ? ' · ' + triesTime(t.submittedAt) : '') + '</span></div>';
+  }).join('');
+  var note = '';
+  if (cur && off && cur !== off) note = 'Lần này thấp hơn lần ' + off.n + ', nên kết quả chính thức vẫn là <b>lần ' + off.n + ' (' + off.score + '/' + off.total + ')</b>.';
+  else if (A.list.length > 1) note = 'Kết quả chính thức là lần có điểm cao nhất.';
+  else if (A.left > 0) note = 'Bạn còn ' + A.left + ' lượt làm lại. Kết quả chính thức là lần có điểm cao nhất.';
+  box.innerHTML = head + '<div class="tl">' + cells + '</div>' + (note ? '<p class="note">' + note + '</p>' : '');
+  box.classList.remove('hide');
+}
 function renderResult(r, already){
   ST.res = { r:r, already:already };
+  renderTries(r.attempts);
   var prac = isPractice();
   var ps = (r.passed === true || r.passed === false) ? r.passed : null; // null = bài không có ngưỡng đạt
   var pct = r.pct == null ? 0 : r.pct, c = ST.cand || {};
