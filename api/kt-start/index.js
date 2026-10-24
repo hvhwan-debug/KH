@@ -43,6 +43,15 @@ module.exports = async function (context, req) {
       if (prior) return reply(context, 409, { ok: false, error: "Bạn đã hoàn thành bài kiểm tra này rồi." });
     }
 
+    // Bắt buộc có số điện thoại / Zalo: chưa có trong hồ sơ thì phải nhập (và được lưu lại vào hồ sơ thí sinh)
+    const { normPhone } = require("../_lib/phone");
+    if (!normPhone(found.phone)) {
+      const np = normPhone(b.phone);
+      if (!np) return reply(context, 400, { ok: false, needPhone: true, error: "Vui lòng nhập số điện thoại hoặc Zalo của bạn (10 số, ví dụ 0912345678)." });
+      found.phone = np;
+      await quiz.saveCandidates(candidates);
+    }
+
     await quiz.ensureBankPeriods();
     const allQuestions = await quiz.getQuestions();
     const byId = {};
@@ -72,7 +81,7 @@ module.exports = async function (context, req) {
       const orders = {};
       picked.forEach((q) => { orders[q.id] = quiz.shuffle(q.options.map((_, i) => i)); }); // order[vị trí hiển thị] = chỉ số gốc
       attempt = {
-        id: quiz.genId(), code: found.code, name: found.name, email: found.email, manager: found.manager || "", segment,
+        id: quiz.genId(), code: found.code, name: found.name, email: found.email, phone: normPhone(found.phone), manager: found.manager || "", segment,
         period: settings.examPeriod,
         questionIds: picked.map((q) => q.id), orders,
         answers: {},

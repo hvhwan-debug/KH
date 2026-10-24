@@ -622,7 +622,7 @@ const handler = async function (context, req) {
       if (!rows.length && b.text) {
         rows = String(b.text).split("\n").map((line) => {
           const parts = line.split(",").map((s) => s.trim());
-          return { code: parts[0] || "", name: parts[1] || "", email: parts[2] || "", manager: parts[3] || "", segment: parts[4] || "", title: parts[5] || "" };
+          return { code: parts[0] || "", name: parts[1] || "", email: parts[2] || "", manager: parts[3] || "", segment: parts[4] || "", title: parts[5] || "", phone: parts[6] || "" };
         }).filter((r) => r.code && r.email);
       }
       const list = await quiz.getCandidates();
@@ -635,7 +635,8 @@ const handler = async function (context, req) {
         if (!code || !email) return;
         const seg = quiz.normSegment(r.segment);
         const titleIn = quiz.normTitle(r.title);   // trống = giữ chức danh hiện có (người mới thì mặc định PC)
-        const entry = Object.assign({ code: String(r.code).trim().slice(0, 50), name: String(r.name || "").trim().slice(0, 100), email, manager: String(r.manager || "").trim().slice(0, 100), segment: seg }, titleIn ? { title: titleIn } : {});
+        const phoneIn = require("../_lib/phone").normPhone(r.phone);   // trống / không hợp lệ = giữ số hiện có
+        const entry = Object.assign({ code: String(r.code).trim().slice(0, 50), name: String(r.name || "").trim().slice(0, 100), email, manager: String(r.manager || "").trim().slice(0, 100), segment: seg }, titleIn ? { title: titleIn } : {}, phoneIn ? { phone: phoneIn } : {});
         if (byCode[code] != null) {
           const old = list[byCode[code]];
           const merged = Object.assign({}, old, entry);

@@ -13,7 +13,7 @@ const SEGMENT_INPUTS = ["both", "ca_hai", "gia_dung", "may_loc"]; // giá trị 
 const AUDIT_MAX = 30;
 
 const empView = (c) => ({
-  code: c.code, name: c.name || "", email: c.email || "", manager: c.manager || "", title: quiz.titleOf(c), segment: quiz.normSegment(c.segment), probation: probationOf(c.code, undefined, c.joinDate), joinDate: joinDateOf(c.code, c.joinDate),
+  code: c.code, name: c.name || "", email: c.email || "", manager: c.manager || "", phone: require("../_lib/phone").normPhone(c.phone), title: quiz.titleOf(c), segment: quiz.normSegment(c.segment), probation: probationOf(c.code, undefined, c.joinDate), joinDate: joinDateOf(c.code, c.joinDate),
   confirmed: c.confirmed ? { by: c.confirmed.by, byName: c.confirmed.byName || c.confirmed.by, at: c.confirmed.at } : null
 });
 

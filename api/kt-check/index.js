@@ -31,7 +31,7 @@ module.exports = async function (context, req) {
       return reply(context, 404, { ok: false, error: "Không tìm thấy đề thi này. Hãy kiểm tra lại đường link hoặc liên hệ quản trị viên." });
     }
     const settings = await quiz.getExamSettings(examId);
-    const candidate = { code: found.code, name: found.name, email: found.email, manager: found.manager || "" };
+    const candidate = { code: found.code, name: found.name, email: found.email, manager: found.manager || "", phone: require("../_lib/phone").normPhone(found.phone) };
     // Khung thời gian mở/đóng + đối tượng được thi (chỉ áp dụng cho đề thi có cấu hình các mục này)
     const denied = quiz.examAccessError(settings, found, Date.now());
     if (denied) return reply(context, 403, { ok: false, error: denied });

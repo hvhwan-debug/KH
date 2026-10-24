@@ -1660,7 +1660,7 @@ function confirmEmp(e){
   cfEmp = e; msg('cMsg','');
   $('cTitle').textContent = e.confirmed ? 'Xác nhận lại thông tin' : 'Xác nhận thông tin';
   $('cSub').textContent = (e.name || e.code) + ', mã ' + e.code;
-  $('cRows').innerHTML = [['Mã nhân viên', e.code], ['Họ và tên', e.name], ['Email', e.email], ['Chức danh', e.title || 'PC'], ['Ngày vào làm', vnDate(e.joinDate)], ['Nhóm ngành', SEG[e.segment] || ''], ['Quản lí', e.manager]]
+  $('cRows').innerHTML = [['Mã nhân viên', e.code], ['Họ và tên', e.name], ['Email', e.email], ['Số điện thoại / Zalo', e.phone], ['Chức danh', e.title || 'PC'], ['Ngày vào làm', vnDate(e.joinDate)], ['Nhóm ngành', SEG[e.segment] || ''], ['Quản lí', e.manager]]
     .map(function(x){ return '<div><dt>' + x[0] + '</dt><dd>' + esc(x[1] || '–') + '</dd></div>'; }).join('') +
     (e.confirmed ? '<div><dt>Lần xác nhận trước</dt><dd>' + esc(e.confirmed.byName || '') + ', ' + esc(new Date(e.confirmed.at).toLocaleDateString('vi-VN')) + '</dd></div>' : '');
   $('cOk').textContent = e.confirmed ? 'Xác nhận lại' : 'Xác nhận thông tin';
