@@ -79,10 +79,10 @@ const EVENTS = {
 };
 
 const SEGN = { both: "Cả hai ngành", gia_dung: "Gia dụng", may_loc: "Máy lọc nước" };
-const SKEYS = ["examTitle", "shareTitle", "examPeriod", "questionCount", "bothGiaDungCount", "secondsPerQuestion", "passEnabled", "passScore", "allowRetake",
+const SKEYS = ["examTitle", "shareTitle", "examPeriod", "questionCount", "bothGiaDungCount", "secondsPerQuestion", "passEnabled", "passScore", "allowRetake", "maxAttempts",
   "complianceEnabled", "complianceHighMin", "complianceMidMin", "complianceLowMin"];
 const SLABEL = { examTitle: "tên bài", shareTitle: "tiêu đề chia sẻ", examPeriod: "kỳ hiện tại", questionCount: "số câu", bothGiaDungCount: "số câu gia dụng (cả hai ngành)",
-  secondsPerQuestion: "giây mỗi câu", passEnabled: "bật ngưỡng đạt", passScore: "ngưỡng đạt", allowRetake: "cho làm lại", complianceEnabled: "bật điểm tuân thủ",
+  secondsPerQuestion: "giây mỗi câu", passEnabled: "bật ngưỡng đạt", passScore: "ngưỡng đạt", allowRetake: "cho làm lại", maxAttempts: "số lượt làm", complianceEnabled: "bật điểm tuân thủ",
   complianceHighMin: "mốc 20 điểm", complianceMidMin: "mốc 15 điểm", complianceLowMin: "mốc 10 điểm" };
 
 // Đọc trạng thái TRƯỚC khi thao tác (để ghi được "từ ... thành ...")

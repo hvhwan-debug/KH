@@ -23,6 +23,8 @@ const DEFAULT_SETTINGS = {
   passEnabled: false,
   passScore: 70,
   allowRetake: false,
+  // Số lượt làm tối đa của mỗi thí sinh trong một đề (khi không bật "làm lại nhiều lần"). Mặc định 1.
+  maxAttempts: 1,
   // Điểm tuân thủ học tập: quy đổi từ tỉ lệ đúng (thang điểm 10) sang một mốc điểm cố định
   // (mặc định theo quy tắc kiểm tra định kỳ PC: <6 → 0, 6-6.99 → 10, 7-8.99 → 15, >=9 → 20).
   complianceEnabled: true,
@@ -212,6 +214,13 @@ async function ensureRegionTags() {
   try { await require("./auditlog").write({ area: "system", role: "system", by: "hệ thống", name: "Hệ thống", op: "migrateRegion", label: "Tự gắn nhãn Miền Bắc cho câu Máy lọc nước / Kỹ năng bán hàng có sẵn", kind: "change", status: 200, ok: true, details: { tagged: n, byCat } }); } catch (e) {}
   return { tagged: n, byCat };
 }
+// ---------- Số lượt làm ----------
+// Giới hạn lượt của một đề: bật "làm lại nhiều lần" = không giới hạn; không thì theo maxAttempts (mặc định 1).
+function attemptLimit(settings) { return settings && settings.allowRetake ? Infinity : Math.max(1, toInt(settings && settings.maxAttempts) || 1); }
+// Các bài ĐÃ NỘP của một thí sinh trong một đề, cũ -> mới
+function submittedOf(idx, code, period) {
+  return (idx || []).filter((a) => normCode(a.code) === normCode(code) && a.status === "submitted" && (a.period || "") === period).sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0));
+}
 // Thứ tự lấy đề cho kỳ P: câu của kỳ P -> câu chưa gắn kỳ -> đề của kỳ gần nhất TRƯỚC P (dự phòng tạm thời,
 // để đổi sang kỳ mới mà chưa kịp soạn đề thì thí sinh vẫn làm được bài; trang quản trị báo rõ đang dùng tạm).
 function bankFor(all, period) {
@@ -278,7 +287,7 @@ async function saveSettings(s) { await store.put(S_KEY, s); }
 // tuân thủ...); đề nào không tự nêu cài đặt riêng thì dùng theo cài đặt chung (getSettings()) làm mặc định.
 const OVERRIDABLE_FIELDS = [
   "examTitle", "shareTitle", "questionCount", "bothGiaDungCount", "secondsPerQuestion",
-  "passEnabled", "passScore", "allowRetake",
+  "passEnabled", "passScore", "allowRetake", "maxAttempts",
   "complianceEnabled", "complianceHighMin", "complianceMidMin", "complianceLowMin"
 ];
 
@@ -336,9 +345,10 @@ async function upsertExam(data) {
   if (entry.questionCount !== undefined) entry.questionCount = toInt(entry.questionCount);
   if (entry.bothGiaDungCount !== undefined) entry.bothGiaDungCount = toInt(entry.bothGiaDungCount);
   if (entry.secondsPerQuestion !== undefined) { const sp = toInt(entry.secondsPerQuestion); if (!(sp >= 10 && sp <= 600)) return { ok: false, error: "Thời gian mỗi câu phải từ 10 đến 600 giây." }; entry.secondsPerQuestion = sp; }
+  if (entry.maxAttempts !== undefined) { const ma = toInt(entry.maxAttempts); if (!(ma >= 1 && ma <= 20)) return { ok: false, error: "Số lượt làm mỗi người phải từ 1 đến 20." }; entry.maxAttempts = ma; }
   if (entry.passScore !== undefined) { const ps = toInt(entry.passScore); if (!(ps >= 0 && ps <= 100)) return { ok: false, error: "Điểm đạt phải từ 0 đến 100%." }; entry.passScore = ps; }
   // Ô để trống = kế thừa cài đặt chung: xoá giá trị cũ đã lưu (trước đây để trống KHÔNG xoá được giá trị cũ)
-  if (data) ["questionCount", "bothGiaDungCount", "secondsPerQuestion", "passScore"].forEach((k) => { if (data[k] === "" && i >= 0) delete exams[i][k]; });
+  if (data) ["questionCount", "bothGiaDungCount", "secondsPerQuestion", "passScore", "maxAttempts"].forEach((k) => { if (data[k] === "" && i >= 0) delete exams[i][k]; });
   if (data && data.practice !== undefined) entry.practice = !!data.practice;
   if (data && data.description !== undefined) entry.description = String(data.description || "").trim().slice(0, 500);
   if (data && data.blueprint !== undefined) {
@@ -869,7 +879,7 @@ function noteFail(req) {
 }
 
 module.exports = {
-  normCode, normEmail, normSegment, normTitle, titleOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
+  normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
   getQuestions, saveQuestions,
   getCandidates, saveCandidates,
   getSettings, saveSettings,

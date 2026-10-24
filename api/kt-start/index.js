@@ -39,10 +39,11 @@ module.exports = async function (context, req) {
       const denied = quiz.examAccessError(settings, found, Date.now());
       if (denied) return reply(context, 403, { ok: false, error: denied });
     }
-    if (!settings.allowRetake) {
-      const idx = await quiz.getIndex();
-      const prior = idx.find((a) => quiz.normCode(a.code) === code && a.status === "submitted" && (a.period || "") === settings.examPeriod);
-      if (prior) return reply(context, 409, { ok: false, error: "Bạn đã hoàn thành bài kiểm tra này rồi." });
+    // Hết lượt làm (bài đang dở vẫn được làm tiếp)
+    const limit = quiz.attemptLimit(settings);
+    if (!hasActive && limit !== Infinity) {
+      const used = quiz.submittedOf(await quiz.getIndex(), code, settings.examPeriod).length;
+      if (used >= limit) return reply(context, 409, { ok: false, error: limit > 1 ? "Bạn đã dùng hết " + limit + " lượt làm bài kiểm tra này." : "Bạn đã hoàn thành bài kiểm tra này rồi." });
     }
 
     // Bắt buộc có số điện thoại / Zalo: chưa có trong hồ sơ thì phải nhập (và được lưu lại vào hồ sơ thí sinh)

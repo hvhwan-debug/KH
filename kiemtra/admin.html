@@ -698,7 +698,8 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
           <div><label>Mở đề lúc (trống = mở ngay)</label><input type="datetime-local" id="exOpen"></div>
           <div><label>Đóng đề lúc (trống = không đóng)</label><input type="datetime-local" id="exClose"></div>
           <div><label>Thời gian tối đa mỗi câu (giây)</label><input type="text" inputmode="numeric" id="exSeconds" placeholder="trống = theo Cài đặt mặc định"></div>
-          <div><label>&nbsp;</label><label class="chk"><input type="checkbox" id="exRetake"> Cho phép thí sinh làm lại nhiều lần</label></div>
+          <div><label>Số lượt làm mỗi người</label><input type="text" inputmode="numeric" id="exAttempts" maxlength="2" placeholder="trống = 1 lượt"><p class="small" style="margin:4px 0 0">Muốn cho thêm 1 lượt thì đặt 2. Người đã làm sẽ được làm tiếp đến hết lượt. Kết quả tính theo lần nộp <b>mới nhất</b>.</p></div>
+          <div><label>&nbsp;</label><label class="chk"><input type="checkbox" id="exRetake" onchange="$('exAttempts').disabled=this.checked"> Cho phép thí sinh làm lại không giới hạn</label></div>
         </div>
 
         <h2 class="exsec">3. Chấm điểm</h2>
@@ -1531,11 +1532,11 @@ function clearExamForm(){
   $('planPreview').innerHTML = ''; $('exCount').oninput = () => { updateBpTotal(); $('planPreview').innerHTML = ''; };
   $('exEditingId').value=''; $('exId').value=''; $('exId').disabled=false; $('exTitle').value=''; $('exShareTitle').value='';
   $('exCount').value=''; $('exBothGD').value=''; $('exSeconds').value=''; $('exPass').value=''; $('exPassOn').checked=false;
-  $('exRetake').checked=false; $('exPractice').checked=false; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
+  $('exRetake').checked=false; $('exAttempts').value=''; $('exAttempts').disabled=false; $('exPractice').checked=false; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
   $('exDesc').value=''; $('exCodes').value=''; $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
   BP_RULES = []; renderBpRules(); $('bpPreview').innerHTML=''; $('bpTotal').textContent='';
   msg('exMsg',''); $('exAdv').open = false; exSpSet(false);
-  $('exPassOn').checked = !!SETCACHE.passEnabled; $('exRetake').checked = !!SETCACHE.allowRetake; $('exComplianceOn').checked = !!SETCACHE.complianceEnabled;
+  $('exPassOn').checked = !!SETCACHE.passEnabled; $('exRetake').checked = !!SETCACHE.allowRetake; $('exAttempts').disabled = $('exRetake').checked; $('exComplianceOn').checked = !!SETCACHE.complianceEnabled;
   $('exId').oninput = () => { $('exSp').dataset.bank = $('exId').value.trim(); spRefresh($('exSp')); exQSummary(); };
 }
 function openNewExam(){
@@ -1557,7 +1558,7 @@ function editExam(id){
   $('exSeconds').value = e.secondsPerQuestion || ''; $('exPass').value = e.passScore || ''; $('exPassOn').checked = e.passEnabled != null ? !!e.passEnabled : !!SETCACHE.passEnabled;
   // Ô tick chưa đặt riêng cho đề thì hiện theo Cài đặt mặc định (tránh lưu nhầm thành 'tắt')
   const dflt = (k) => e[k] != null ? !!e[k] : !!SETCACHE[k];
-  $('exRetake').checked = dflt('allowRetake'); $('exPractice').checked = !!e.practice; $('exComplianceOn').checked = dflt('complianceEnabled');
+  $('exRetake').checked = dflt('allowRetake'); $('exAttempts').value = e.maxAttempts > 1 ? e.maxAttempts : ''; $('exAttempts').disabled = $('exRetake').checked; $('exPractice').checked = !!e.practice; $('exComplianceOn').checked = dflt('complianceEnabled');
   $('exCHigh').value = e.complianceHighMin || ''; $('exCMid').value = e.complianceMidMin || ''; $('exCLow').value = e.complianceLowMin || '';
   $('exDesc').value = e.description || ''; $('exCodes').value = (e.codes || []).join('\n'); $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
   document.querySelectorAll('.exSeg').forEach(c => c.checked = (e.segments || []).indexOf(c.value) >= 0);
@@ -1608,7 +1609,7 @@ async function saveExam(){
     id: $('exEditingId').value || $('exId').value.trim(),
     title: $('exTitle').value.trim(), shareTitle: $('exShareTitle').value.trim(),
     questionCount: $('exCount').value, bothGiaDungCount: $('exBothGD').value, secondsPerQuestion: $('exSeconds').value,
-    passEnabled: $('exPassOn').checked, passScore: $('exPass').value, allowRetake: $('exRetake').checked, practice: $('exPractice').checked,
+    passEnabled: $('exPassOn').checked, passScore: $('exPass').value, allowRetake: $('exRetake').checked, maxAttempts: $('exAttempts').value.trim(), practice: $('exPractice').checked,
     complianceEnabled: $('exComplianceOn').checked, complianceHighMin: $('exCHigh').value, complianceMidMin: $('exCMid').value, complianceLowMin: $('exCLow').value,
     description: $('exDesc').value.trim(), codes: $('exCodes').value,
     openAt: localToMs($('exOpen').value), closeAt: localToMs($('exClose').value),

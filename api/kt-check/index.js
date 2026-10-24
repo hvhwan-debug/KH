@@ -47,12 +47,17 @@ module.exports = async function (context, req) {
       questionCount: quiz.countFor(settings, found.segment, found.region),
       secondsPerQuestion: Math.max(10, settings.secondsPerQuestion || 60),
       passScore: quiz.passScoreOf(settings),
-      practice: !!settings.practice
+      practice: !!settings.practice,
+      maxAttempts: quiz.attemptLimit(settings) === Infinity ? 0 : quiz.attemptLimit(settings) // 0 = không giới hạn
     };
+    const idxAll = await quiz.getIndex();
+    const subs = quiz.submittedOf(idxAll, code, settings.examPeriod);
+    const limit = quiz.attemptLimit(settings);
 
-    if (!settings.allowRetake) {
-      const idx = await quiz.getIndex();
-      const prior = idx.find((a) => quiz.normCode(a.code) === code && a.status === "submitted" && (a.period || "") === settings.examPeriod);
+    const active0 = await quiz.activeForPeriod(found.code, settings.examPeriod);
+    if (subs.length >= limit && !active0) {
+      const idx = idxAll;
+      const prior = subs[subs.length - 1]; // hết lượt: hiện kết quả lần làm mới nhất
       if (prior) {
         let adv = null;
         try { const pa = await quiz.getAttempt(prior.id); if (pa) { const pv = quiz.previousResult(idx, pa.code, pa.period, pa.id); adv = advicelib.ensureAnalysis(pa.advice || advicelib.rulesAdvice(advicelib.facts(pa, settings, pv)), pa, settings, pv); } } catch (e) { adv = null; }
@@ -76,7 +81,10 @@ module.exports = async function (context, req) {
       quiz.syncAttempt(active, Date.now());
       inProgress = { answered: Math.min(active.cursor, active.questionIds.length), total: active.questionIds.length };
     }
-    return reply(context, 200, { ok: true, candidate, exam, pendingRequest, inProgress, examTitle: settings.examTitle, serverNow: Date.now() });
+    // Đã làm nhưng còn lượt: báo số lượt đã dùng + kết quả lần gần nhất
+    const last = subs[subs.length - 1];
+    const attempts = subs.length ? { used: subs.length, max: exam.maxAttempts, last: last ? { score: last.score, total: last.total, pct: last.pct, submittedAt: last.submittedAt } : null } : null;
+    return reply(context, 200, { ok: true, candidate, exam, pendingRequest, inProgress, attempts, examTitle: settings.examTitle, serverNow: Date.now() });
   } catch (e) {
     context.log.error("kt-check", e && e.message);
     return reply(context, 500, { ok: false, error: "Có lỗi xảy ra, thử lại sau." });
