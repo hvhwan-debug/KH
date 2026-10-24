@@ -895,7 +895,7 @@ function renderConfirm(){
   $('reqState').innerHTML = ST.pending ? '<div class="msg info">Yêu cầu điều chỉnh thông tin của bạn đang chờ quản trị viên xác nhận. Bạn vẫn có thể làm bài.</div>' : '';
   $('phoneBox').classList.toggle('hide', !!c.phone);
   if (!c.phone){ $('inPhone').value = ST.phoneNew || ''; msg('phoneMsg',''); }
-  var askRg = c.needRegion && !ST.inProgress; // bài đang dở thì làm tiếp, không bắt chọn lại
+  var askRg = c.needRegion; // hồ sơ thiếu tỉnh/miền thì luôn bắt chọn, kể cả khi làm tiếp bài dở
   $('regionBox').classList.toggle('hide', !askRg);
   if (askRg){
     fillProvinces($('inProvince'), 'Chọn tỉnh/thành');
@@ -1123,7 +1123,7 @@ $('btnPhotoOk').addEventListener('click', async function(){
   btn.disabled = false; btn.textContent = label;
   if (!res){ msg('photoMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
   if (!res.j.ok && res.j.needPhone){ photoStop(); show('confirm'); msg('phoneMsg', res.j.error); return; }
-  if (!res.j.ok && res.j.needRegion){ photoStop(); ST.cand.needRegion = true; ST.inProgress = null; renderConfirm(); msg('regionMsg', res.j.error); return; }
+  if (!res.j.ok && res.j.needRegion){ photoStop(); ST.cand.needRegion = true; renderConfirm(); msg('regionMsg', res.j.error); return; }
   if (!res.j.ok){ msg('photoMsg', (res.j.faceRejected ? '⚠ ' : '') + (res.j.error || 'Không thể bắt đầu bài kiểm tra.')); if (res.j.faceRejected){ btn.classList.add('hide'); $('btnPhotoRetry').classList.remove('hide'); } return; }
   if (!ST.cand.phone && ST.phoneNew) ST.cand.phone = ST.phoneNew;
   if (ST.rgNew){ ST.cand.province = ST.rgNew.province; ST.cand.region = ST.rgNew.region; ST.cand.needRegion = false; }

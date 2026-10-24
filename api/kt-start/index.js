@@ -55,10 +55,10 @@ module.exports = async function (context, req) {
       await quiz.saveCandidates(candidates);
     }
 
-    // PC phải chọn tỉnh/thành + miền (Bắc/Nam) trước khi làm bài mới: miền quyết định bộ đề sản phẩm. Lưu vào hồ sơ thí sinh.
-    // Bài đang làm dở (bắt đầu trước khi có quy định này) vẫn được làm tiếp bình thường.
+    // Thí sinh phải chọn tỉnh/thành + miền (Bắc/Nam) trước khi vào bài: miền quyết định bộ đề sản phẩm. Lưu vào hồ sơ thí sinh.
+    // Áp dụng cả khi làm tiếp bài dở (hồ sơ phải đủ thông tin); bài dở vẫn giữ nguyên các câu đã được phát.
     const PROV = require("../_lib/provinces");
-    if (!hasActive && quiz.needsRegion(found) && !(PROV.canonProvince(found.province) && quiz.normRegion(found.region))) {
+    if (quiz.needsRegion(found) && !(PROV.canonProvince(found.province) && quiz.normRegion(found.region))) {
       const pv = PROV.canonProvince(b.province), rg = quiz.normRegion(b.region);
       if (!pv) return reply(context, 400, { ok: false, needRegion: true, error: "Vui lòng chọn tỉnh/thành bạn đang làm việc." });
       if (!rg) return reply(context, 400, { ok: false, needRegion: true, error: "Vui lòng chọn miền (Miền Bắc hoặc Miền Nam) để nhận đúng đề sản phẩm." });
