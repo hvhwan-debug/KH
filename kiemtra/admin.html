@@ -65,6 +65,7 @@ body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(-
 @media(prefers-reduced-motion:reduce){.modal-box{animation:none}}
 
 .candsub{display:block;margin-top:2px;max-width:300px;font-size:11.5px;font-weight:500;color:var(--muted);line-height:1.35}.cand-banner{margin:10px 0 4px;padding:10px 14px;border:1px solid #F1DFB6;background:#FFF9EC;border-radius:12px;font-size:13.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cand-banner .btn{margin-left:auto}
+@media(max-width:600px){.cand-banner{padding:8px 10px;font-size:12.5px;gap:6px}.cand-banner .btn{margin-left:0}}
 .cand-prof>summary{cursor:pointer;font-weight:700;font-size:14px}.cand-prof .pf{display:grid;grid-template-columns:minmax(120px,170px) 1fr;gap:4px 14px;margin:10px 0 2px;font-size:13.5px}.cand-prof .pf dt{color:var(--muted)}.cand-prof .pf dd{margin:0;font-weight:600;word-break:break-word}
 
 .hr-tb{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}.hr-tb th,.hr-tb td{padding:7px 10px;border-bottom:1px solid #EEF1F4;text-align:left}.hr-tb th{color:var(--muted);font-size:12px;font-weight:700}
@@ -128,6 +129,7 @@ label.chk input,#exSpMode input{width:18px!important;height:18px;margin:0;flex:0
 .insf h5{margin:8px 0 3px;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;color:#4F6486}
 .insf ul{margin:0;padding-left:18px;font-size:13px;line-height:1.6}.insf li .iwho{margin-right:6px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 8px 20px -14px rgba(0,48,60,.15)}
+@media(max-width:600px){.card{padding:14px;border-radius:14px}}
 h1{font-size:18px;margin:0 0 14px}
 label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:12px 0 6px}
 label:first-of-type{margin-top:0}
@@ -165,6 +167,13 @@ textarea{resize:vertical;min-height:80px}
 .badge{white-space:nowrap}
 .qfilter{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 4px}
 .qfilter input{max-width:340px;margin:0}.qfilter select{max-width:260px;margin:0}
+/* Di động: 2 ô lọc mỗi hàng thay vì xếp chồng cả cột dài — đỡ tốn chỗ, đỡ phải cuộn mới thấy danh sách. */
+@media(max-width:600px){
+  .qfilter{gap:6px;margin:10px 0 2px}
+  .qfilter input{max-width:none;flex:1 1 100%}
+  .qfilter select{max-width:none;flex:1 1 calc(50% - 3px);font-size:13px;padding:8px 9px}
+  .qfilter #candShown{flex:1 1 100%;order:9}
+}
 body:not([data-tab=exams]) .khero{display:none}
 table{width:100%;border-collapse:collapse;font-size:13.5px}
 th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
