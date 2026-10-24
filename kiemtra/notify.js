@@ -18,6 +18,17 @@ var TRAIN_FIELDS = [
   { k:'han_xn', label:'Hạn xác nhận tham dự', type:'datetime-local', keep:true },
   { k:'lien_he', label:'Liên hệ xác nhận', ph:'Tên, số điện thoại hoặc email', keep:true }
 ];
+var CUSTOM_FIELDS = [
+  { k:'tieu_de', label:'Tiêu đề thư mời', req:true, w:true, max:60, def:'THƯ MỜI', ph:'Ví dụ: THƯ MỜI HỌP TỔNG KẾT QUÝ' },
+  { k:'noi_dung', label:'Nội dung lời mời', type:'textarea', req:true, w:true, ph:'Viết lời mời: lý do, mục đích và nội dung chính. Ví dụ: Ban Tổ chức trân trọng kính mời Anh/Chị tham dự…' },
+  { k:'bat_dau', label:'Thời gian bắt đầu (không bắt buộc)', type:'datetime-local' },
+  { k:'ket_thuc', label:'Kết thúc (không bắt buộc)', type:'datetime-local' },
+  { k:'dia_diem', label:'Địa điểm (không bắt buộc)', w:true, ph:'Số phòng, địa chỉ hoặc đường link họp' },
+  { k:'han_xn', label:'Hạn xác nhận (không bắt buộc)', type:'datetime-local' },
+  { k:'lien_he', label:'Liên hệ xác nhận (không bắt buộc)', ph:'Tên, số điện thoại hoặc email' },
+  { k:'lien_ket', label:'Liên kết cho nút bấm (không bắt buộc)', w:true, ph:'https://… (hiện thành nút trong email và ảnh)' },
+  { k:'nut', label:'Chữ trên nút', def:'Mở liên kết' }
+];
 var TEST_FIELDS = [ { k:'ghi_chu', label:'Lưu ý thêm (không bắt buộc)', type:'textarea', w:true, ph:'Ví dụ: Làm bài ở nơi yên tĩnh, dùng điện thoại hoặc máy tính có camera.' } ];
 var TEMPLATES = [
   { id:'remind', group:'Thông báo', name:'Nhắc làm bài', filter:'todo', subject:'Nhắc làm bài kiểm tra: {ten_de}',
@@ -32,6 +43,9 @@ var TEMPLATES = [
   { id:'inviteTest', group:'Thư mời', name:'Mời làm bài kiểm tra', filter:'todo', kind:'invite', fields:TEST_FIELDS, cta:'test',
     subject:'Thư mời làm bài kiểm tra: {ten_de}',
     text:'Kính gửi {ten},\nBộ phận quản lý trân trọng mời bạn tham gia bài kiểm tra “{ten_de}”.\n- Thời gian mở đề: {mo_tuy}\n- Hạn hoàn thành: {han_tuy}\n- Đường dẫn làm bài: {link}\nBạn nhập mã nhân viên và email công ty để vào bài, bài làm được lưu và chấm tự động.\n{ghi_chu}\nTrân trọng.' },
+  { id:'inviteCustom', group:'Thư mời', name:'Thư mời tuỳ chọn', filter:'all', allAudience:true, kind:'invite', fields:CUSTOM_FIELDS, cta:'custom',
+    subject:'{tieu_de}',
+    text:'{tieu_de}\nThân gửi : {ten},\n{noi_dung}\n\n* Thời gian: {thoi_gian}\n* Địa điểm / Đường dẫn: {dia_diem}\n\nVui lòng xác nhận tham dự trước {han_xn}.\nLiên hệ xác nhận: {lien_he}\nTrân trọng.' },
   { id:'inviteTrain', group:'Thư mời', name:'Mời tham dự đào tạo', filter:'all', allAudience:true, kind:'invite', fields:TRAIN_FIELDS, cta:'train',
     subject:'Thư mời tham dự đào tạo: {ten_khoa}',
     text:'THƯ MỜI THAM DỰ ĐÀO TẠO\nThân gửi : {ten},\nNhằm nâng cao kiến thức chuyên môn, chuẩn hóa năng lực và hỗ trợ nâng cao hiệu quả công việc, ĐTKDGT trân trọng kính mời Anh/Chị tham dự chương trình đào tạo với thông tin cụ thể như sau:\n\n1. THÔNG TIN CHƯƠNG TRÌNH\n\n* Tên khóa đào tạo: {ten_khoa}\n* Thời gian: {thoi_gian}\n* Hình thức: {hinh_thuc}\n* Địa điểm / Đường dẫn tham dự: {dia_diem}\n* Giảng viên / Đơn vị tổ chức: {giang_vien}\n* Nội dung chính: {noi_dung}\n\n2. QUY ĐỊNH THAM DỰ\n\nĐể bảo đảm chất lượng và hiệu quả chương trình, Anh/Chị vui lòng thực hiện các yêu cầu sau:\n\n* Tham dự đầy đủ, đúng giờ và tuân thủ thời lượng của chương trình.\n* Chủ động chuẩn bị các điều kiện cần thiết để tham gia đào tạo; đối với chương trình trực tuyến, vui lòng kiểm tra thiết bị và đường truyền trước giờ học.\n* Tích cực tham gia các hoạt động học tập, trao đổi và thực hành theo hướng dẫn của giảng viên.\n* Hoàn thành bài kiểm tra, khảo sát hoặc các yêu cầu sau đào tạo theo thông báo của Ban Tổ chức (nếu có).\n* Trường hợp không thể tham dự hoặc phát sinh vấn đề ảnh hưởng đến việc tham gia, vui lòng thông báo sớm cho {lien_he} để được hướng dẫn xử lý.\n\n3. XÁC NHẬN THAM DỰ\n\nVui lòng xác nhận tham dự trước {han_xn} với {lien_he} để Ban Tổ chức chủ động công tác chuẩn bị.\nSự tham gia nghiêm túc và chủ động của Anh/Chị là yếu tố quan trọng góp phần nâng cao hiệu quả chương trình đào tạo và khả năng vận dụng kiến thức vào thực tiễn công việc.\n\nTrân trọng,\nĐÀO TẠO KINH DOANH |  GT' }
@@ -55,10 +69,11 @@ function range(a, b){
   if (!y) return x.t + ' ngày ' + x.d;
   return x.d === y.d ? x.t + ' – ' + y.t + ', ngày ' + x.d : x.t + ' ' + x.d + ' – ' + y.t + ' ' + y.d;
 }
-function eventVars(v){
-  var h = dl(v.han_xn);
+function eventVars(v, base){
+  var h = dl(v.han_xn), tr = base === 'inviteTrain';
   return { ten_khoa: v.ten_khoa || '', thoi_gian: range(v.bat_dau, v.ket_thuc), hinh_thuc: v.hinh_thuc || '', dia_diem: v.dia_diem || '', giang_vien: v.giang_vien || '',
-    noi_dung: v.noi_dung || '', han_xn: h ? h.t + ' ngày ' + h.d : 'thời hạn do Ban Tổ chức thông báo', lien_he: v.lien_he || 'Ban Tổ chức', ghi_chu: v.ghi_chu || '' };
+    noi_dung: v.noi_dung || '', han_xn: h ? h.t + ' ngày ' + h.d : (tr ? 'thời hạn do Ban Tổ chức thông báo' : ''), lien_he: v.lien_he || (tr ? 'Ban Tổ chức' : ''), ghi_chu: v.ghi_chu || '',
+    tieu_de: String(v.tieu_de || '').trim().toLocaleUpperCase('vi'), lien_ket: v.lien_ket || '', nut: v.nut || '' };
 }
 function render(tpl, r, ex, origin, extra, optional){
   var NONE = 'theo thông báo của quản lý';
@@ -237,12 +252,22 @@ function mount(root, cfg){
   var all = cfg.recipients || [];
   var origin = cfg.origin || location.origin, ex = cfg.exam || {};
   var S = { tpl:'remind', text:'', subj:'', subjEdited:false, vars:{}, channel:'zalo', filter:'todo', q:'', sel:{}, sent:{}, err:{} };
-  function tplOf(id){ return TEMPLATES.filter(function(t){ return t.id === id; })[0]; }
+  var LS = 'ktNotifyTpl';
+  function myList(){ try { var a = JSON.parse(localStorage.getItem(LS) || '[]'); return Array.isArray(a) ? a : []; } catch(e){ return []; } }
+  function myPut(a){ try { localStorage.setItem(LS, JSON.stringify(a.slice(0, 30))); return true; } catch(e){ return false; } }
+  function myTpl(m){
+    var b = TEMPLATES.filter(function(t){ return t.id === m.base; })[0] || TEMPLATES[0];
+    return { id:'my:' + m.id, group:'Mẫu của tôi', name:m.name, filter:b.filter, kind:b.kind, allAudience:b.allAudience, fields:b.fields, cta:b.cta, subject:m.subject, text:m.text, vars:m.vars || {}, base:b.id, mine:true };
+  }
+  function allTpl(){ return TEMPLATES.concat(myList().map(myTpl)); }
+  function tplOf(id){ return allTpl().filter(function(t){ return t.id === id; })[0] || TEMPLATES[0]; }
+  function baseId(){ var t = tplOf(S.tpl); return t.base || t.id; }
   function fieldsOf(){ return tplOf(S.tpl).fields || []; }
-  function optionalKeys(){ var t = tplOf(S.tpl); return (t.fields || []).filter(function(f){ return !f.req && !f.keep; }).map(function(f){ return f.k; }).concat(t.id === 'inviteTrain' ? ['thoi_gian'] : []).concat(t.id === 'inviteTest' ? ['mo_tuy','han_tuy'] : []); }
+  function optionalKeys(){ var t = tplOf(S.tpl), b = baseId(); return (t.fields || []).filter(function(f){ return !f.req && !f.keep; }).map(function(f){ return f.k; }).concat(b === 'inviteTrain' || b === 'inviteCustom' ? ['thoi_gian'] : []).concat(b === 'inviteTest' ? ['mo_tuy','han_tuy'] : []); }
   function setTpl(id){
     var t = tplOf(id); S.tpl = id; S.text = t.text; S.subj = t.subject; S.subjEdited = false; S.filter = t.filter; S.vars = {};
     (t.fields || []).forEach(function(f){ if (f.def) S.vars[f.k] = f.def; });
+    Object.keys(t.vars || {}).forEach(function(k){ S.vars[k] = t.vars[k]; });
     selVisible();
   }
   function pool(){ var t = tplOf(S.tpl); return t.allAudience ? all : all.filter(function(r){ return r.eligible !== false; }); }
@@ -256,7 +281,7 @@ function mount(root, cfg){
     });
   }
   function selVisible(){ S.sel = {}; visible().forEach(function(r){ S.sel[r.code] = true; }); }
-  function xvars(){ return eventVars(S.vars); }
+  function xvars(){ return eventVars(S.vars, baseId()); }
   function msgFor(r){ return render(S.text, r, ex, origin, xvars(), optionalKeys()); }
   function subjFor(r){ return render(S.subj, r || {}, ex, origin, xvars(), []); }
   function missing(){
@@ -265,6 +290,7 @@ function mount(root, cfg){
   function ctaFor(r){
     var t = tplOf(S.tpl);
     if (t.cta === 'test') return { label:'Làm bài kiểm tra', url: render('{link}', r, ex, origin, {}, []) };
+    if (t.cta === 'custom' && /^https?:\/\//i.test(String(S.vars.lien_ket || '').trim())) return { label: String(S.vars.nut || '').trim() || 'Mở liên kết', url: String(S.vars.lien_ket).trim() };
     if (t.cta === 'train' && /^https?:\/\//i.test(String(S.vars.dia_diem || '').trim())) return { label:'Tham gia trực tuyến', url: String(S.vars.dia_diem).trim() };
     return null;
   }
@@ -272,11 +298,11 @@ function mount(root, cfg){
   function fieldsHtml(){
     var fl = fieldsOf(); if (!fl.length) return '';
     var t = tplOf(S.tpl);
-    return '<div class="nt-fields"><h4>'+(t.id === 'inviteTrain' ? 'Thông tin buổi đào tạo' : 'Thông tin thêm cho thư mời')+'</h4><div class="fr">'+fl.map(function(f){
+    return '<div class="nt-fields"><h4>'+((t.base || t.id) === 'inviteTrain' ? 'Thông tin buổi đào tạo' : (t.base || t.id) === 'inviteCustom' ? 'Nội dung thư mời' : 'Thông tin thêm cho thư mời')+'</h4><div class="fr">'+fl.map(function(f){
       var v = S.vars[f.k] || '', id = 'ntF_'+f.k, ctl;
       if (f.type === 'select') ctl = '<select id="'+id+'" data-fk="'+f.k+'">'+f.opts.map(function(o){ return '<option'+(o===v?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+'</select>';
       else if (f.type === 'textarea') ctl = '<textarea id="'+id+'" data-fk="'+f.k+'" placeholder="'+esc(f.ph||'')+'">'+esc(v)+'</textarea>';
-      else ctl = '<input id="'+id+'" data-fk="'+f.k+'" type="'+(f.type||'text')+'" value="'+esc(v)+'" placeholder="'+esc(f.ph||'')+'">';
+      else ctl = '<input id="'+id+'" data-fk="'+f.k+'" type="'+(f.type||'text')+'" value="'+esc(v)+'" placeholder="'+esc(f.ph||'')+'"'+(f.max?' maxlength="'+f.max+'"':'')+'>';
       return '<div class="ff'+(f.w?' w':'')+'"><label for="'+id+'">'+esc(f.label)+(f.req?' <span class="nt-req">*</span>':'')+'</label>'+ctl+'</div>';
     }).join('')+'</div></div>';
   }
@@ -285,13 +311,14 @@ function mount(root, cfg){
     var nsel = vis.filter(function(r){ return S.sel[r.code]; }).length;
     var nmail = vis.filter(function(r){ return S.sel[r.code] && r.email; }).length;
     var t = tplOf(S.tpl), groups = {};
-    TEMPLATES.forEach(function(x){ (groups[x.group] = groups[x.group] || []).push(x); });
+    allTpl().forEach(function(x){ (groups[x.group] = groups[x.group] || []).push(x); });
     var chips = VARS.concat((t.fields || []).map(function(f){ return [f.k, f.label.replace(/ \(.*\)$/,'')]; }));
     var mi = missing();
     root.innerHTML = '<div class="nt"><div class="nt-grid">'+
       '<div class="nt-box"><label class="nl" for="ntTpl">Mẫu</label><select id="ntTpl">'+Object.keys(groups).map(function(g){ return '<optgroup label="'+esc(g)+'">'+groups[g].map(function(x){ return '<option value="'+x.id+'"'+(x.id===S.tpl?' selected':'')+'>'+esc(x.name)+'</option>'; }).join('')+'</optgroup>'; }).join('')+'</select>'+
       fieldsHtml()+
       '<label class="nl" for="ntText">Nội dung</label><textarea id="ntText">'+esc(S.text)+'</textarea>'+
+      '<div class="nt-chips" style="margin-bottom:2px"><button type="button" class="nt-chip" id="ntSave" title="Lưu nội dung và thông tin đang nhập thành mẫu dùng lại (lưu trong trình duyệt này)">+ Lưu thành mẫu của tôi</button>'+(t.mine ? '<button type="button" class="nt-chip" id="ntDel" style="background:#FBE3E0;color:#B3261E">Xoá mẫu này</button>' : '')+'</div>'+
       '<div class="nt-chips" aria-label="Chèn thông tin tự động">'+chips.map(function(v){ return '<button type="button" class="nt-chip" data-v="'+v[0]+'" title="Chèn {'+v[0]+'}">'+esc(v[1])+'</button>'; }).join('')+'</div>'+
       '<label class="nl">Kênh gửi</label><div class="nt-seg">'+CHANNELS.map(function(c){ return '<button type="button" data-ch="'+c[0]+'" class="'+(c[0]===S.channel?'on':'')+'">'+c[1]+'</button>'; }).join('')+'</div>'+
       (S.channel === 'email' ? '<label class="nl" for="ntSubj">Tiêu đề email</label><input type="text" id="ntSubj" value="'+esc(subjFor(first))+'">' : '')+
@@ -332,6 +359,21 @@ function mount(root, cfg){
     q('#ntAll').addEventListener('change', function(e){ S.sel = {}; if (e.target.checked) visible().forEach(function(r){ S.sel[r.code] = true; }); draw(); });
     qa('[data-sel]').forEach(function(c){ c.addEventListener('change', function(){ if (c.checked) S.sel[c.dataset.sel] = true; else delete S.sel[c.dataset.sel]; draw(); }); });
     var sj = q('#ntSubj'); if (sj) sj.addEventListener('input', function(){ S.subjEdited = true; });
+    q('#ntSave').addEventListener('click', function(){
+      var cur = tplOf(S.tpl), def = cur.mine ? cur.name : cur.name + ' (của tôi)';
+      var name = window.prompt('Đặt tên cho mẫu của bạn:', def); if (name === null) return; name = name.trim().slice(0, 60); if (!name) return;
+      var list = myList(), id = 'm' + Date.now().toString(36), at = cur.mine ? list.map(function(m){ return 'my:' + m.id; }).indexOf(cur.id) : -1;
+      var rec = { id: at >= 0 && list[at].name === name ? list[at].id : id, name: name, base: baseId(), text: S.text, subject: S.subj, vars: JSON.parse(JSON.stringify(S.vars)) };
+      var i = list.map(function(m){ return m.id; }).indexOf(rec.id); if (i >= 0) list[i] = rec; else list.unshift(rec);
+      if (!myPut(list)){ q('#ntRes').innerHTML = '<div class="nt-msg er">Trình duyệt không cho lưu mẫu (đang ở chế độ riêng tư?).</div>'; return; }
+      var keepVars = S.vars, keepText = S.text, keepSubj = S.subj; S.tpl = 'my:' + rec.id; S.vars = keepVars; S.text = keepText; S.subj = keepSubj; draw();
+      q('#ntRes').innerHTML = '<div class="nt-msg ok">Đã lưu mẫu “' + esc(name) + '”. Mẫu nằm trong nhóm Mẫu của tôi (chỉ dùng được trên trình duyệt này).</div>';
+    });
+    var dl = q('#ntDel');
+    if (dl) dl.addEventListener('click', function(){
+      var cur = tplOf(S.tpl); if (!window.confirm('Xoá mẫu “' + cur.name + '”?')) return;
+      myPut(myList().filter(function(m){ return 'my:' + m.id !== cur.id; })); setTpl(cur.base || 'remind'); draw();
+    });
     qa('[data-zalo]').forEach(function(b){ b.addEventListener('click', function(){ if (warn()) return; var r = byCode(b.dataset.zalo); if (!r || !r.phone) return; copy(msgFor(r)).then(function(){ S.sent[r.code] = true; window.open('https://zalo.me/'+r.phone, '_blank', 'noopener'); var row = b.closest('.nt-row'); if (row) row.classList.add('sent'); b.textContent = 'Mở lại Zalo'; }); }); });
     qa('[data-sms]').forEach(function(a){ a.addEventListener('click', function(e){ if (warn()){ e.preventDefault(); return; } S.sent[a.dataset.sms] = true; var row = a.closest('.nt-row'); if (row) row.classList.add('sent'); }); });
     function pngOf(r){ return renderPng({ text: msgFor(r), kind: tplOf(S.tpl).kind || '', cta: ctaFor(r) }); }
