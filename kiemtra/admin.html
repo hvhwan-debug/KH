@@ -1095,8 +1095,24 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
           <button class="btn" type="button" onclick="saveSettings()">Lưu phân bổ</button>
           <button class="btn ghost" type="button" onclick="spTemplate()">Điền theo mẫu chuẩn</button>
+          <button class="btn ghost" type="button" onclick="rgTagOpen()">Gắn nhãn miền cho câu hỏi</button>
         </div>
         <div id="spMsg"></div>
+        <div class="hide" id="rgTagBox" style="margin-top:14px;padding:14px;border:1.5px solid #9FC3EE;border-radius:12px;background:#F5F9FE">
+          <h3 style="margin:0 0 4px;font-size:15px">Gắn nhãn miền hàng loạt</h3>
+          <p class="small" style="margin:0 0 10px">Thêm tag miền cho <b>mọi câu hỏi (mọi đề/kỳ)</b> thuộc các danh mục được chọn. Câu đã thuộc một miền sẽ được giữ nguyên. Gắn nhầm thì chọn “Gỡ nhãn” để hoàn tác.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+            <select id="rgTagMode" onchange="rgTagPreview()" aria-label="Thao tác"><option value="add">Gắn nhãn</option><option value="remove">Gỡ nhãn</option></select>
+            <select id="rgTagRegion" onchange="rgTagPreview()" aria-label="Miền"><option value="bac">Miền Bắc</option><option value="nam">Miền Nam</option></select>
+          </div>
+          <div id="rgTagCats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px"></div>
+          <div id="rgTagSum" class="small" style="margin-top:10px"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <button class="btn sm" type="button" id="rgTagGo" onclick="rgTagApply()">Áp dụng</button>
+            <button class="btn ghost sm" type="button" onclick="$('rgTagBox').classList.add('hide')">Đóng</button>
+          </div>
+          <div id="rgTagMsg"></div>
+        </div>
       </div>
       <div class="card">
         <h1>Điểm tuân thủ học tập (mặc định)</h1>
@@ -2693,6 +2709,40 @@ function spRefresh(el){
   });
   const names = Array.from(new Set((QUESTIONS || []).map(q => (q.category || '').trim()).filter(Boolean).concat(...Object.values(SP_TEMPLATE).map(a => a.map(x => x[0])))));
   $('catList').innerHTML = names.map(n => '<option value="'+esc(n)+'">').join('');
+}
+/* ---------- Gắn nhãn miền hàng loạt cho câu hỏi ---------- */
+function rgTagOpen(){
+  const cnt = {};
+  (QUESTIONS || []).forEach(q => { const c = (q.category || '').trim(); if (c) cnt[c] = (cnt[c] || 0) + 1; });
+  const cats = Object.keys(cnt).sort((a, b) => a.localeCompare(b, 'vi'));
+  // Chọn sẵn các danh mục Máy lọc nước và Kỹ năng bán hàng
+  const pre = c => { const f = rgFold(c); return f.indexOf('may loc') >= 0 || /\bk[yi] nang\b/.test(f); };
+  $('rgTagCats').innerHTML = cats.length ? cats.map(c => '<label style="display:flex;gap:8px;align-items:center;margin:0;font-weight:500"><input type="checkbox" value="'+esc(c)+'" '+(pre(c)?'checked':'')+' onchange="rgTagPreview()" style="width:17px;height:17px"> '+esc(c)+' <span class="small" style="color:var(--muted)">('+cnt[c]+' câu)</span></label>').join('') : '<span class="small">Chưa tải được câu hỏi. Mở tab Câu hỏi một lần rồi thử lại.</span>';
+  $('rgTagMode').value = 'add'; $('rgTagRegion').value = 'bac'; msg('rgTagMsg','');
+  $('rgTagBox').classList.remove('hide');
+  rgTagPreview();
+}
+const rgTagCats = () => Array.from(document.querySelectorAll('#rgTagCats input:checked')).map(i => i.value);
+async function rgTagPreview(){
+  const cats = rgTagCats(), rm = $('rgTagMode').value === 'remove', rl = $('rgTagRegion').selectedOptions[0].textContent;
+  $('rgTagGo').textContent = (rm ? 'Gỡ nhãn ' : 'Gắn nhãn ') + rl;
+  if (!cats.length){ $('rgTagSum').textContent = 'Chọn ít nhất một danh mục.'; $('rgTagGo').disabled = true; return; }
+  $('rgTagSum').textContent = 'Đang đếm…';
+  const { j } = await api('POST','/api/kt-admin', { op:'tagRegion', region: $('rgTagRegion').value, categories: cats, remove: rm, dryRun: true });
+  if (!j.ok){ $('rgTagSum').textContent = j.error || 'Không đếm được.'; $('rgTagGo').disabled = true; return; }
+  $('rgTagGo').disabled = !j.changed;
+  $('rgTagSum').innerHTML = j.changed ? 'Sẽ ' + (rm ? 'gỡ' : 'gắn') + ' nhãn <b>' + esc(j.label) + '</b> cho <b>' + j.changed + ' câu</b>: ' + Object.keys(j.byCat).map(c => esc(c) + ' ' + j.byCat[c]).join(' · ') : (rm ? 'Không có câu nào đang mang nhãn ' : 'Không còn câu nào chưa thuộc miền để gắn nhãn ') + esc(j.label) + ' trong các danh mục đã chọn.';
+}
+async function rgTagApply(){
+  const cats = rgTagCats(), rm = $('rgTagMode').value === 'remove', rl = $('rgTagRegion').selectedOptions[0].textContent;
+  if (!cats.length) return;
+  if (!confirm((rm ? 'Gỡ nhãn ' : 'Gắn nhãn ') + rl + ' cho các câu thuộc danh mục:\n- ' + cats.join('\n- ') + '\n\nÁp dụng cho mọi đề/kỳ. Tiếp tục?')) return;
+  $('rgTagGo').disabled = true;
+  const { j } = await api('POST','/api/kt-admin', { op:'tagRegion', region: $('rgTagRegion').value, categories: cats, remove: rm });
+  if (!j.ok){ msg('rgTagMsg', j.error || 'Không thực hiện được.', 'err'); $('rgTagGo').disabled = false; return; }
+  if (j.questions){ QUESTIONS = j.questions; document.querySelectorAll('.spg').forEach(g => { if (g.children.length) spRefresh(g); }); if (QP !== null && typeof renderQuestions === 'function') renderQuestions(); }
+  msg('rgTagMsg', 'Đã ' + (rm ? 'gỡ' : 'gắn') + ' nhãn ' + j.label + ' cho ' + j.changed + ' câu.', 'ok');
+  rgTagPreview();
 }
 function spTemplatePlans(){ const t = {}; Object.keys(SP_TEMPLATE).forEach(k => { t[k] = SP_TEMPLATE[k].map(([category, count]) => ({ category, count })); }); return t; }
 function spTemplate(){

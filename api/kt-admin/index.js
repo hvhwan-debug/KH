@@ -451,6 +451,37 @@ const handler = async function (context, req) {
     // Sao chép đề từ kỳ này sang kỳ khác (tạo câu mới, bỏ qua câu trùng nội dung đã có ở kỳ đích)
     // Đổi tên một danh mục cho TẤT CẢ câu hỏi của một kỳ đang dùng đúng tên cũ - dùng khi câu hỏi nhập vào
     // có tên danh mục khác với tên "phân bổ riêng" của đề đang cấu hình (gõ sai/khác cách đặt tên).
+    // Gắn nhãn miền hàng loạt: thêm tag "Miền Bắc"/"Miền Nam" cho mọi câu (mọi kỳ/đề) thuộc các danh mục đã chọn
+    // mà CHƯA thuộc miền nào. dryRun = chỉ đếm để xem trước. Sao lưu ngân hàng đề trước khi ghi (khôi phục được).
+    if (op === "tagRegion") {
+      const rg = quiz.normRegion(b.region);
+      if (!rg) return reply(context, 400, { ok: false, error: "Chọn miền: Miền Bắc hoặc Miền Nam." });
+      const label = quiz.REGION_LABEL[rg];
+      const nc = (c) => String(c || "").normalize("NFC").trim().replace(/\s+/g, " ").toLowerCase();
+      const cats = (Array.isArray(b.categories) ? b.categories : []).map(nc).filter(Boolean);
+      if (!cats.length) return reply(context, 400, { ok: false, error: "Chọn ít nhất một danh mục." });
+      const list = await quiz.getQuestions();
+      const before = JSON.parse(JSON.stringify(list)); // bản gốc để sao lưu
+      const byCat = {}; let changed = 0;
+      const isRgTag = (t) => quiz.questionRegion({ tags: [t] }) === rg;
+      list.forEach((q) => {
+        if (cats.indexOf(nc(q.category)) < 0) return;
+        if (b.remove) { // gỡ nhãn (hoàn tác)
+          if (!(q.tags || []).some(isRgTag)) return;
+          byCat[q.category] = (byCat[q.category] || 0) + 1; changed++;
+          if (!b.dryRun) q.tags = q.tags.filter((t) => !isRgTag(t));
+          return;
+        }
+        if (quiz.questionRegion(q)) return; // câu đã thuộc một miền: giữ nguyên
+        byCat[q.category] = (byCat[q.category] || 0) + 1; changed++;
+        if (!b.dryRun) q.tags = (Array.isArray(q.tags) ? q.tags : []).concat([label]).slice(-12);
+      });
+      if (b.dryRun || !changed) return reply(context, 200, { ok: true, dryRun: true, changed, byCat, label });
+      await quiz.backupQuestions(before);
+      await quiz.saveQuestions(list);
+      return reply(context, 200, { ok: true, changed, byCat, label, questions: list });
+    }
+
     if (op === "renameCategory") {
       const per = typeof b.period === "string" ? b.period : "";
       const from = String(b.from || "").trim(), to = String(b.to || "").trim();
