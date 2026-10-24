@@ -36,6 +36,24 @@ body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(-
 .exadv summary{cursor:pointer;font-weight:700;color:var(--brand-deep)}
 .exadv[open] summary{margin-bottom:10px}
 .exh{font-size:14.5px;margin:18px 0 6px}
+.cand-views{display:inline-flex;gap:6px;margin:0 0 14px;padding:4px;border:1px solid var(--line);border-radius:999px;background:#fff}
+.cand-views button{border:0;background:transparent;border-radius:999px;padding:7px 18px;font:inherit;font-size:14px;font-weight:700;color:var(--muted);cursor:pointer}
+.cand-views button.on{background:var(--brand-soft,#E6F0FC);color:var(--brand-deep,#0B3F94)}
+.st-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.st-tools{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 12px}.st-tools label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--muted);margin:0;flex:1 1 190px;min-width:0}.st-tools select{margin:0;font-weight:500;color:var(--ink)}
+.st-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:6px 0 14px}
+.st-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-bottom:14px}
+.st-panel{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:#fff;min-width:0}.st-panel h3{margin:0 0 2px;font-size:15px}.st-panel .small{margin:0 0 10px}
+.st-row{display:grid;grid-template-columns:minmax(92px,128px) minmax(0,1fr) 78px 54px;gap:10px;align-items:center;padding:5px 0;font-size:13px}
+.st-l{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.st-b{display:block;height:10px;border-radius:6px;background:#EEF1F4;overflow:hidden}.st-b i{display:block;height:100%;border-radius:6px;background:var(--brand-deep,#0B3F94)}
+.st-n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}.st-n small{font-weight:500;color:var(--muted)}
+.st-s{text-align:center;font-size:12px;font-weight:800;border-radius:999px;padding:2px 0;background:#EEF1F4;color:var(--muted)}.st-s.ok{background:#E2F2E9;color:#1E6B42}.st-s.mid{background:#FDF0DA;color:#8A5500}.st-s.bad{background:#FBE3E0;color:#9E2A20}
+.st-hd{display:grid;grid-template-columns:minmax(92px,128px) minmax(0,1fr) 78px 54px;gap:10px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding-bottom:4px;border-bottom:1px solid #EEF1F4}.st-hd span:nth-child(3){text-align:right}.st-hd span:nth-child(4){text-align:center}
+.st-ins{border:1px solid #CFE3F7;background:#F3F9FF;border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:13.5px}.st-ins ul{margin:6px 0 0;padding-left:20px}.st-ins li{margin:3px 0}
+.st-tb{width:100%;border-collapse:collapse;font-size:13px}.st-tb th,.st-tb td{padding:7px 10px;border-bottom:1px solid #EEF1F4;text-align:right;white-space:nowrap}.st-tb th:first-child,.st-tb td:first-child{text-align:left;white-space:normal}.st-tb th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.st-scroll{max-height:340px;overflow:auto}.st-grid.st-one{grid-template-columns:minmax(0,1fr)}
+@media(max-width:640px){.st-row,.st-hd{grid-template-columns:minmax(80px,104px) minmax(0,1fr) 68px 48px}.st-grid{grid-template-columns:1fr}}
+
 .modal-bg{position:fixed;inset:0;z-index:500;display:flex;align-items:flex-start;justify-content:center;padding:20px;background:rgba(10,37,82,.45);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);overflow-y:auto}
 .modal-bg.hide{display:none}
 .modal-box{position:relative;width:min(840px,100%);margin:auto;max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px);overflow-y:auto;box-shadow:0 30px 80px -20px rgba(2,20,70,.6);animation:mdIn .18s ease-out}
@@ -677,7 +695,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
 <script src="/kiemtra/mailtpl.js?v=1"></script>
-<script src="/kiemtra/hrimport.js?v=4"></script>
+<script src="/kiemtra/hrimport.js?v=5"></script>
 <script src="/kiemtra/notify.js?v=14"></script>
 </head>
 <body>
@@ -1098,6 +1116,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
     </div>
 
     <div id="tab-candidates" class="tabpane hide">
+      <div class="cand-views" role="tablist" aria-label="Chế độ xem hồ sơ học tập"><button type="button" id="cvList" class="on" role="tab" onclick="candView('list')">Danh sách</button><button type="button" id="cvStats" role="tab" onclick="candView('stats')">Thống kê hồ sơ</button></div>
       <div class="card hide" id="candReqCard" style="border-color:#F0C36A">
         <h1>Yêu cầu điều chỉnh thông tin (<span id="candReqCount">0</span>)</h1>
         <p class="small" style="margin-top:-4px">Thí sinh báo thông tin chưa đúng ở bước xác nhận trước khi làm bài. Chỉ khi bạn bấm <b>Xác nhận đúng</b> thì dữ liệu mới được cập nhật.</p>
@@ -1189,7 +1208,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
         </div>
         <div id="candMsg"></div>
       </div>
-      <div class="card">
+      <div class="card" id="candListCard">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h1 style="margin:0">Hồ sơ học tập (<span id="candCount">0</span>)</h1>
           <button class="btn" type="button" onclick="$('candAddCard').classList.remove('hide');$('candAddCard').scrollIntoView({behavior:'smooth'});candAddMode('form');$('candNewCode').focus()">＋ Thêm thí sinh</button>
@@ -1204,6 +1223,17 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
         </div>
         <div id="candProfBanner" class="cand-banner hide"></div>
         <table class="stk"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Chức danh</th><th>Email</th><th>SĐT / Zalo</th><th>Quản lí</th><th>Nhóm ngành</th><th>Tỉnh / Miền</th><th>Ngày vào làm</th><th></th></tr></thead><tbody id="candList"></tbody></table>
+      </div>
+      <div class="card hide" id="candStatsCard">
+        <div class="st-h"><h1 style="margin:0">Thống kê hồ sơ nhân sự</h1><span class="small" id="stNote"></span></div>
+        <p class="small" style="margin:4px 0 0">Kinh nghiệm (thâm niên), trình độ và độ tuổi của nhân sự, ghép với điểm làm bài của đề/kỳ bạn chọn. Chỉ quản trị viên xem được; chỉ hiện số liệu tổng hợp.</p>
+        <div class="st-tools">
+          <label>Đề / kỳ (để xem điểm)<select id="stPeriod" onchange="candStatsRender()"></select></label>
+          <label>Chức danh<select id="stTitle" onchange="candStatsRender()"></select></label>
+          <label>Quản lí<select id="stMgr" onchange="candStatsRender()"></select></label>
+          <label>Nhóm ngành<select id="stSeg" onchange="candStatsRender()"></select></label>
+        </div>
+        <div id="stBody"></div>
       </div>
     </div>
 
@@ -1595,7 +1625,7 @@ function switchTab(t){
   document.body.dataset.tab = t;
   const h = '#' + t + (inWs && CUR_EXAM ? '/' + encodeURIComponent(CUR_EXAM) : '');
   if (location.hash !== h) history.replaceState(null, '', h);
-  if (t === 'candidates' && prevTab !== 'candidates') resetCandFilters(); // vào tab Thí sinh: luôn hiện đủ danh sách, không giữ bộ lọc lần trước
+  if (t === 'candidates' && prevTab !== 'candidates') resetCandFilters(); if (t === 'candidates' && prevTab !== 'candidates') candView('list'); // vào tab Thí sinh: luôn hiện đủ danh sách, không giữ bộ lọc lần trước
   if (t === 'notify') loadNotify();
   if (t === 'audit') { loadAudit(); loadFaceRejections(); }
   if (t === 'managerview' && $('mvFrame').src === 'about:blank') $('mvFrame').src = '/kiemtra/quanli.html';
@@ -2623,7 +2653,7 @@ async function loadCandidates(){
   $('candCount').textContent = j.candidates.length;
   setNavCount('nvCand', j.candidates.length);
   CANDIDATES = j.candidates;
-  renderCandidates(); if (typeof asgRender === 'function') asgRender();
+  renderCandidates(); if (typeof asgRender === 'function') asgRender(); if ($('candStatsCard') && !$('candStatsCard').classList.contains('hide')) candStatsRender();
   loadChangeRequests();
 }
 function resetCandFilters(){
@@ -2652,6 +2682,111 @@ function mgrPick(selId, inputId){
   const sel = $(selId), inp = $(inputId);
   if (sel.value === MGR_NEW){ inp.classList.remove('hide'); inp.value = ''; inp.focus(); }
   else { inp.classList.add('hide'); inp.value = sel.value; }
+}
+/* ---------- Thống kê hồ sơ: kinh nghiệm, trình độ, tuổi (ghép với điểm làm bài) ---------- */
+let ST_RES = null; // toàn bộ kết quả đã nộp (op=results), nạp một lần khi mở thống kê
+const ST_TEN = [{ l:'Dưới 6 tháng', lo:0, hi:6 }, { l:'6 – 12 tháng', lo:6, hi:12 }, { l:'1 – 2 năm', lo:12, hi:24 }, { l:'2 – 3 năm', lo:24, hi:36 }, { l:'3 – 5 năm', lo:36, hi:60 }, { l:'5 – 10 năm', lo:60, hi:120 }, { l:'Từ 10 năm', lo:120, hi:1e9 }];
+const ST_AGE = [{ l:'Dưới 25', lo:0, hi:25 }, { l:'25 – 29', lo:25, hi:30 }, { l:'30 – 34', lo:30, hi:35 }, { l:'35 – 39', lo:35, hi:40 }, { l:'40 – 44', lo:40, hi:45 }, { l:'Từ 45', lo:45, hi:200 }];
+const ST_EDU = ['Sau đại học', 'Đại học', 'Cao đẳng', 'Trung cấp', 'THPT', 'THCS', 'Khác / chưa rõ'];
+function eduLevel(p){
+  const f = KTHr.fold([p.trinhDo, p.bangCap].filter(Boolean).join(' ')); if (!f) return '';
+  if (/thac si|tien si|sau dai hoc|master/.test(f)) return 'Sau đại học';
+  if (/dai hoc|cu nhan|ky su/.test(f)) return 'Đại học';
+  if (/cao dang/.test(f)) return 'Cao đẳng';
+  if (/trung cap|trung hoc chuyen nghiep/.test(f)) return 'Trung cấp';
+  if (/trung hoc pho thong|thpt|cap 3|12\/12/.test(f)) return 'THPT';
+  if (/trung hoc co so|thcs|cap 2/.test(f)) return 'THCS';
+  return 'Khác / chưa rõ';
+}
+function monthsOf(p){
+  const since = p && (p.vaoLanDau || p.vaoCongTy), t = since ? Date.parse(since) : NaN; if (isNaN(t)) return null;
+  const a = new Date(t), b = new Date(); return Math.max(0, (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth() - (b.getDate() < a.getDate() ? 1 : 0));
+}
+const fmtTen = m => m == null ? '–' : (m >= 12 ? Math.floor(m / 12) + ' năm' + (m % 12 ? ' ' + (m % 12) + ' th' : '') : m + ' tháng');
+const stAvg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const stPct = v => v == null ? '–' : Math.round(v) + '%';
+function stScCls(v){ if (v == null) return ''; const ps = +(SETCACHE && SETCACHE.passScore) || 60; return v >= ps ? 'ok' : v >= ps - 15 ? 'mid' : 'bad'; }
+function candView(v){
+  const st = v === 'stats';
+  $('candListCard').classList.toggle('hide', st); $('candStatsCard').classList.toggle('hide', !st);
+  $('cvList').classList.toggle('on', !st); $('cvStats').classList.toggle('on', st);
+  if (st) candStatsOpen();
+}
+async function candStatsOpen(){
+  $('stBody').innerHTML = '<div class="small" style="margin-top:12px">Đang tính…</div>';
+  if (!ST_RES){ try { const { j } = await api('GET', '/api/kt-admin?op=results'); ST_RES = j && j.ok ? j : { results: [], periods: [], currentPeriod: '' }; } catch(e){ ST_RES = { results: [], periods: [], currentPeriod: '' }; } }
+  const ids = Array.from(new Set((ST_RES.periods || []).concat(EXAMS.map(e => e.id)))).filter(Boolean);
+  const lbl = id => (examById(id) && examById(id).title) || id, cur = $('stPeriod').value;
+  $('stPeriod').innerHTML = '<option value="">Không xem điểm</option>' + ids.map(id => '<option value="' + esc(id) + '">' + esc(lbl(id)) + '</option>').join('');
+  $('stPeriod').value = cur && ids.indexOf(cur) >= 0 ? cur : (ids.indexOf(ST_RES.currentPeriod) >= 0 ? ST_RES.currentPeriod : (ids[0] || ''));
+  const fill = (id, all, opts) => { const el = $(id), v = el.value; el.innerHTML = '<option value="*">' + all + '</option>' + opts.map(o => '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>').join(''); el.value = opts.some(o => o[0] === v) ? v : '*'; };
+  const tc = {}; CANDIDATES.forEach(c => { const t = c.title || 'PC'; tc[t] = (tc[t] || 0) + 1; });
+  fill('stTitle', 'Mọi chức danh', Object.keys(tc).sort((a, b) => a.localeCompare(b, 'vi')).map(t => [t, t + ' (' + tc[t] + ')']));
+  fill('stMgr', 'Mọi quản lí', mgrOptions().map(o => [o.key, o.name + ' (' + o.n + ')']));
+  fill('stSeg', 'Mọi nhóm ngành', [['may_loc', 'Ngành 1 · Máy lọc nước'], ['gia_dung', 'Ngành 2 · Gia dụng'], ['both', 'Cả hai ngành']]);
+  candStatsRender();
+}
+function stBands(items, valueOf, bands){
+  const rows = bands.map(b => ({ label: b.l, n: 0, sc: [] }));
+  items.forEach(it => { const v = valueOf(it); if (v == null) return; const i = bands.findIndex(b => v >= b.lo && v < b.hi); if (i < 0) return; rows[i].n++; if (it.score != null) rows[i].sc.push(it.score); });
+  return rows;
+}
+function stPanel(title, sub, rows, hasScore, noData){
+  const tot = rows.reduce((a, r) => a + r.n, 0), mx = Math.max(1, ...rows.map(r => r.n));
+  const body = tot ? '<div class="st-hd"><span></span><span></span><span>Người</span><span>' + (hasScore ? 'ĐTB' : '') + '</span></div>' + rows.map(r => {
+    const a = r.sc.length >= 3 ? stAvg(r.sc) : null;
+    return '<div class="st-row"><span class="st-l" title="' + esc(r.label) + '">' + esc(r.label) + '</span><span class="st-b"><i style="width:' + Math.round(r.n / mx * 100) + '%"></i></span><span class="st-n">' + r.n + ' <small>(' + Math.round(r.n / tot * 100) + '%)</small></span><span class="st-s ' + stScCls(a) + '" title="' + r.sc.length + ' người có điểm">' + (hasScore ? stPct(a) : '') + '</span></div>'; }).join('')
+    : '<p class="small" style="margin:6px 0 0">' + noData + '</p>';
+  return '<div class="st-panel"><h3>' + esc(title) + '</h3><p class="small">' + esc(sub) + (tot ? ' · ' + tot + ' người có dữ liệu' : '') + '</p>' + body + '</div>';
+}
+function stInsights(parts){
+  const out = [];
+  parts.forEach(([name, rows, unit]) => {
+    const ok = rows.filter(r => r.sc.length >= 5).map(r => ({ l: r.label, a: stAvg(r.sc), n: r.sc.length })); if (ok.length < 2) return;
+    const hi = ok.reduce((a, b) => b.a > a.a ? b : a), lo = ok.reduce((a, b) => b.a < a.a ? b : a);
+    if (hi.a - lo.a >= 5) out.push('Theo <b>' + name + '</b>: nhóm <b>' + esc(hi.l) + '</b> có điểm trung bình cao nhất (' + stPct(hi.a) + ', ' + hi.n + ' người), nhóm <b>' + esc(lo.l) + '</b> thấp nhất (' + stPct(lo.a) + ', ' + lo.n + ' người), chênh <b>' + Math.round(hi.a - lo.a) + ' điểm %</b>.');
+  });
+  return out;
+}
+function stGroupTable(items, keyOf, labelOf, first, hasScore, limit){
+  const g = {};
+  items.forEach(it => { const k = keyOf(it); (g[k] = g[k] || { k, items: [] }).items.push(it); });
+  const rows = Object.values(g).sort((a, b) => b.items.length - a.items.length).slice(0, limit || 99);
+  return '<div class="st-scroll"><table class="st-tb"><thead><tr><th>' + first + '</th><th>Người</th><th>Thâm niên TB</th><th>Tuổi TB</th><th>Đại học+</th>' + (hasScore ? '<th>ĐTB điểm</th>' : '') + '</tr></thead><tbody>' + rows.map(r => {
+    const ms = r.items.map(i => i.months).filter(v => v != null), ag = r.items.map(i => i.age).filter(v => v != null), ed = r.items.filter(i => i.edu), sc = r.items.map(i => i.score).filter(v => v != null);
+    const up = ed.length ? Math.round(ed.filter(i => i.edu === 'Đại học' || i.edu === 'Sau đại học').length / ed.length * 100) + '%' : '–';
+    return '<tr><td><b>' + esc(labelOf(r.k)) + '</b></td><td>' + r.items.length + '</td><td>' + fmtTen(ms.length ? Math.round(stAvg(ms)) : null) + '</td><td>' + (ag.length ? Math.round(stAvg(ag)) : '–') + '</td><td>' + up + '</td>' + (hasScore ? '<td>' + (sc.length >= 3 ? '<span class="st-s ' + stScCls(stAvg(sc)) + '" style="display:inline-block;padding:2px 10px">' + stPct(stAvg(sc)) + '</span>' : '–') + '</td>' : '') + '</tr>'; }).join('') + '</tbody></table></div>';
+}
+function candStatsRender(){
+  if ($('candStatsCard').classList.contains('hide') || !ST_RES) return;
+  const period = $('stPeriod').value, tf = $('stTitle').value, mf = $('stMgr').value, sf = $('stSeg').value, hasScore = !!period;
+  const best = {}; if (hasScore) (ST_RES.results || []).forEach(r => { if (r.status !== 'submitted' || (r.period || '(chưa gắn kỳ)') !== period) return; const v = Number(r.pct); if (isNaN(v) || r.pct == null) return; const k = String(r.code || '').toLowerCase(); if (!(k in best) || v > best[k]) best[k] = v; });
+  const yr = new Date().getFullYear();
+  const base = CANDIDATES.filter(c => (tf === '*' || (c.title || 'PC') === tf) && (mf === '*' || mgrNorm(c.manager) === mf) && (sf === '*' || (c.segment || 'both') === sf));
+  const items = base.map(c => { const p = c.profile || null; return { c, p, months: p ? monthsOf(p) : null, age: p && p.namSinh ? yr - p.namSinh : null, edu: p ? eduLevel(p) : '', score: best[String(c.code || '').toLowerCase()] != null ? best[String(c.code || '').toLowerCase()] : null }; });
+  const withP = items.filter(i => i.p), scored = items.filter(i => i.score != null);
+  $('stNote').textContent = 'Có hồ sơ ' + withP.length + '/' + base.length + ' người' + (hasScore ? ' · có điểm ' + scored.length : '');
+  if (!base.length){ $('stBody').innerHTML = '<div class="small" style="margin-top:12px">Không có ai khớp bộ lọc.</div>'; return; }
+  if (!withP.length){ $('stBody').innerHTML = '<div class="cand-banner" style="margin-top:12px"><span>Chưa có hồ sơ nhân sự nào để thống kê. Hãy nhập từ file Excel nhân sự (tick "Lưu hồ sơ nhân sự").</span><button class="btn sm" type="button" onclick="candView(\'list\');$(\'candAddCard\').classList.remove(\'hide\');candAddMode(\'xl\');$(\'candAddCard\').scrollIntoView({behavior:\'smooth\'})">Nhập từ file Excel</button></div>'; return; }
+  const ms = items.map(i => i.months).filter(v => v != null), ag = items.map(i => i.age).filter(v => v != null), ed = items.filter(i => i.edu);
+  const up = ed.length ? Math.round(ed.filter(i => i.edu === 'Đại học' || i.edu === 'Sau đại học').length / ed.length * 100) : null;
+  const kpi = (v, l, extra) => '<div class="kpi"><div class="v">' + v + '</div><div class="l">' + l + '</div>' + (extra || '') + '</div>';
+  const pcov = Math.round(withP.length / base.length * 100);
+  const kpis = '<div class="st-kpis">' +
+    kpi(withP.length + '<small> / ' + base.length + '</small>', 'Nhân sự có hồ sơ (' + pcov + '%)', '<div class="bar"><i style="width:' + pcov + '%"></i></div>') +
+    kpi(fmtTen(ms.length ? Math.round(stAvg(ms)) : null), 'Thâm niên trung bình') +
+    kpi(ag.length ? Math.round(stAvg(ag)) + '<small> tuổi</small>' : '–', ag.length ? 'Tuổi trung bình (' + ag.length + ' người)' : 'Chưa có năm sinh — nhập lại file Excel để bổ sung') +
+    kpi(up == null ? '–' : up + '%', 'Trình độ Đại học trở lên') +
+    (hasScore ? kpi(scored.length ? stPct(stAvg(scored.map(i => i.score))) : '–', 'Điểm trung bình đề đã chọn (' + scored.length + ' người)') : '') + '</div>';
+  const rTen = stBands(items, i => i.months, ST_TEN), rAge = stBands(items, i => i.age, ST_AGE);
+  const rEdu = ST_EDU.map(l => ({ label: l, n: 0, sc: [] })); items.forEach(i => { if (!i.edu) return; const r = rEdu.find(x => x.label === i.edu); r.n++; if (i.score != null) r.sc.push(i.score); });
+  const ins = hasScore ? stInsights([['kinh nghiệm (thâm niên)', rTen], ['trình độ', rEdu.filter(r => r.label !== 'Khác / chưa rõ')], ['độ tuổi', rAge]]) : [];
+  const insHtml = ins.length ? '<div class="st-ins"><b>Nhận xét nhanh từ dữ liệu</b><ul>' + ins.map(x => '<li>' + x + '</li>').join('') + '</ul><div class="small" style="margin:6px 0 0">Chỉ so sánh nhóm có từ 5 người có điểm trở lên. Đây là mối liên hệ trong số liệu, chưa chứng minh nguyên nhân, nên dùng để tham khảo khi xếp lớp đào tạo, không dùng để đánh giá cá nhân.</div></div>' : '';
+  const t1 = stGroupTable(items, i => i.c.title || 'PC', k => k, 'Chức danh', hasScore, 30);
+  const t2 = stGroupTable(items, i => mgrNorm(i.c.manager), k => k ? ((mgrOptions().find(o => o.key === k) || {}).name || k) : '(chưa có quản lí)', 'Quản lí', hasScore, 40);
+  $('stBody').innerHTML = kpis + insHtml +
+    '<div class="st-grid">' + stPanel('Kinh nghiệm tại công ty', 'Thâm niên tính từ ngày vào công ty', rTen, hasScore, 'Chưa có ngày vào công ty.') + stPanel('Trình độ học vấn', 'Theo cột Trình độ / Bằng cấp', rEdu, hasScore, 'Chưa có dữ liệu trình độ.') + stPanel('Độ tuổi', 'Tính theo năm sinh', rAge, hasScore, 'Chưa có năm sinh. Nhập lại file Excel (tick "Lưu hồ sơ nhân sự") để bổ sung.') + '</div>' +
+    '<div class="st-grid st-one"><div class="st-panel"><h3>Theo chức danh</h3><p class="small">Thâm niên, tuổi, tỉ lệ Đại học trở lên' + (hasScore ? ' và điểm trung bình' : '') + '</p>' + t1 + '</div><div class="st-panel"><h3>Theo quản lí</h3><p class="small">Đội của từng quản lí (nhiều người nhất trước)</p>' + t2 + '</div></div>';
 }
 function renderCandidates(){
   const noProf = CANDIDATES.filter(c => !c.profile).length, bn = $('candProfBanner');
@@ -2841,7 +2976,7 @@ function hrRender(){
     '<table class="hr-tb"><thead><tr><th></th><th>Chức danh</th><th>Gồm</th><th style="text-align:right">Trong file</th><th style="text-align:right">Đã có trong hệ thống</th></tr></thead><tbody>' + rows + '</tbody></table>' +
     '<div class="hr-opts"><label><input type="checkbox" ' + (HR.usePersonal ? 'checked' : '') + ' onchange="HR.usePersonal=this.checked;hrRender()"> Dùng email cá nhân khi người đó chưa có email công ty</label>' +
     '<label><input type="checkbox" ' + (HR.applySegment ? 'checked' : '') + ' onchange="HR.applySegment=this.checked;hrRender()"> Đặt <b>nhóm ngành</b> theo chức danh: SR 1 / ASM 1 → <b>Ngành 1 · Máy lọc nước</b>, SR 2 / ASM 2 → <b>Ngành 2 · Gia dụng</b> <span class="small">(PC và nhóm Khác giữ "Cả hai")</span></label>' +
-    '<label><input type="checkbox" ' + (HR.saveProfile ? 'checked' : '') + ' onchange="HR.saveProfile=this.checked;hrRender()"> Lưu <b>hồ sơ nhân sự</b> cho từng người để AI hiểu vị trí của họ (chức danh gốc, đơn vị, khu vực, quản lí, ngày vào công ty, trình độ). <span class="small">Không lưu ngày sinh, địa chỉ, quê quán, tôn giáo, dân tộc, hôn nhân, giới tính.</span></label></div>' +
+    '<label><input type="checkbox" ' + (HR.saveProfile ? 'checked' : '') + ' onchange="HR.saveProfile=this.checked;hrRender()"> Lưu <b>hồ sơ nhân sự</b> cho từng người để AI hiểu vị trí của họ (chức danh gốc, đơn vị, khu vực, quản lí, ngày vào công ty, trình độ). <span class="small">Chỉ lưu <b>năm sinh</b> (để thống kê độ tuổi); không lưu ngày sinh đầy đủ, địa chỉ, quê quán, tôn giáo, dân tộc, hôn nhân, giới tính.</span></label></div>' +
     '<p style="margin:8px 0"><b>Sẽ thêm ' + pk.send.length + ' người mới</b>' + (pk.exist ? ' · <b>' + pk.exist + '</b> người đã có trong hệ thống (trùng mã NV): giữ nguyên thông tin' + (pk.existProfiles.length ? ', chỉ bổ sung hồ sơ' : ', bỏ qua') : '') +
     (pk.personal ? ' · <span style="color:var(--bad)">' + pk.personal + ' người dùng email cá nhân</span>' : '') + (pk.noMail.length ? ' · <span style="color:var(--bad)">' + pk.noMail.length + ' người thiếu email nên chưa thêm được</span>' : '') + '</p>' +
     (probs.length ? '<details><summary class="small" style="cursor:pointer">' + probs.length + ' dòng bị loại / cần chú ý</summary><div class="hr-prob">' + probs.join('<br>') + '</div></details>' : '') +

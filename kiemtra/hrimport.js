@@ -69,6 +69,10 @@
       vaoCongTy: isoDate(g(row, C.vaoCT)), vaoLanDau: isoDate(g(row, C.vaoDau)), kyHDChinhThuc: isoDate(g(row, C.hdct)),
       trinhDo: g(row, C.trinhDo), bangCap: g(row, C.bangCap), chuyenNganh: g(row, C.chuyenNganh), truong: g(row, C.truong), tinhPhuTrach: g(row, C.tinh),
       tapDoan: g(row, C.tapDoan), hinhThuc: g(row, C.hinhThuc), hieuLuc: g(row, C.hieuLuc), msnvCu: g(row, C.msnvCu), maChamCong: g(row, C.maCC) };
+    // Chỉ giữ NĂM SINH (đủ để thống kê độ tuổi); không lưu ngày/tháng sinh. Thiếu ngày sinh thì ước từ cột Tuổi.
+    var by = 0, dm2 = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(g(row, C.dob));
+    if (dm2) by = +dm2[3]; else { var tu = parseInt(g(row, C.tuoi), 10); if (tu >= 14 && tu <= 80) by = new Date().getFullYear() - tu; }
+    if (by >= 1940 && by <= new Date().getFullYear() - 14) P.namSinh = by;
     Object.keys(P).forEach(function (k) { if (P[k] === '' || P[k] == null) delete P[k]; });
     return P;
   }
@@ -96,7 +100,7 @@
           loaiNV: f(/^loai nhan vien$/), noiLV: f(/^noi lam viec$/), mien: f(/^khu vuc lam viec$/, /^khu vuc$/),
           vaoCT: f(/^ngay vao cong ty$/), vaoDau: f(/^ngay vao cong ty dau tien$/, /^ngay vao tap doan$/), hdct: f(/^ngay ky hop dong chinh thuc dau tien$/),
           trinhDo: f(/^trinh do$/), bangCap: f(/^bang cap$/), chuyenNganh: f(/^chuyen nganh$/), truong: f(/^truong tot nghiep$/), tinh: f(/^(cac tinh phu trach|provices|provinces)$/),
-          tapDoan: f(/^tap doan$/), hinhThuc: f(/^hinh thuc$/), hieuLuc: f(/^tu ngay - den ngay$/), msnvCu: f(/^msnv cu$/), maCC: f(/^ma cham cong$/)
+          dob: f(/^ngay sinh$/), tuoi: f(/^tuoi$/), tapDoan: f(/^tap doan$/), hinhThuc: f(/^hinh thuc$/), hieuLuc: f(/^tu ngay - den ngay$/), msnvCu: f(/^msnv cu$/), maCC: f(/^ma cham cong$/)
         } };
       }
     }
