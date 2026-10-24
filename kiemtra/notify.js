@@ -51,7 +51,7 @@ var TEMPLATES = [
     text:'THƯ MỜI THAM DỰ ĐÀO TẠO\nThân gửi : {ten},\nNhằm nâng cao kiến thức chuyên môn, chuẩn hóa năng lực và hỗ trợ nâng cao hiệu quả công việc, ĐTKDGT trân trọng kính mời Anh/Chị tham dự chương trình đào tạo với thông tin cụ thể như sau:\n\n1. THÔNG TIN CHƯƠNG TRÌNH\n\n* Tên khóa đào tạo: {ten_khoa}\n* Thời gian: {thoi_gian}\n* Hình thức: {hinh_thuc}\n* Địa điểm / Đường dẫn tham dự: {dia_diem}\n* Giảng viên / Đơn vị tổ chức: {giang_vien}\n* Nội dung chính: {noi_dung}\n\n2. QUY ĐỊNH THAM DỰ\n\nĐể bảo đảm chất lượng và hiệu quả chương trình, Anh/Chị vui lòng thực hiện các yêu cầu sau:\n\n* Tham dự đầy đủ, đúng giờ và tuân thủ thời lượng của chương trình.\n* Chủ động chuẩn bị các điều kiện cần thiết để tham gia đào tạo; đối với chương trình trực tuyến, vui lòng kiểm tra thiết bị và đường truyền trước giờ học.\n* Tích cực tham gia các hoạt động học tập, trao đổi và thực hành theo hướng dẫn của giảng viên.\n* Hoàn thành bài kiểm tra, khảo sát hoặc các yêu cầu sau đào tạo theo thông báo của Ban Tổ chức (nếu có).\n* Trường hợp không thể tham dự hoặc phát sinh vấn đề ảnh hưởng đến việc tham gia, vui lòng thông báo sớm cho {lien_he} để được hướng dẫn xử lý.\n\n3. XÁC NHẬN THAM DỰ\n\nVui lòng xác nhận tham dự trước {han_xn} với {lien_he} để Ban Tổ chức chủ động công tác chuẩn bị.\nSự tham gia nghiêm túc và chủ động của Anh/Chị là yếu tố quan trọng góp phần nâng cao hiệu quả chương trình đào tạo và khả năng vận dụng kiến thức vào thực tiễn công việc.\n\nTrân trọng,\nĐÀO TẠO KINH DOANH |  GT' }
 ];
 var VARS = [['ten','Tên'],['ma_nv','Mã NV'],['ten_de','Tên đề'],['link','Link làm bài'],['mo','Giờ mở'],['han','Hạn làm bài'],['diem','Số câu đúng'],['tong','Tổng số câu'],['phan_tram','Phần trăm'],['link_ket_qua','Link kết quả'],['quan_li','Quản lí']];
-var CHANNELS = [['zalo','Zalo'],['sms','Tin nhắn SMS'],['email','Email'],['png','Ảnh PNG']];
+var CHANNELS = [['zalo','Zalo'],['sms','Tin nhắn SMS'],['email','Email'],['png','Ảnh PNG'],['pdf','Xuất PDF']];
 
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmt(ms){
@@ -182,9 +182,12 @@ function loadLogo(){
   logoP = new Promise(function(res){ var im = new Image(); im.onload = function(){ res(im); }; im.onerror = function(){ res(null); }; im.src = '/kiemtra/logo-mark.png'; });
   return logoP;
 }
+async function ensureFonts(){
+  try { if (document.fonts && document.fonts.load){ await Promise.all([document.fonts.load('400 28px "Be Vietnam Pro"'), document.fonts.load('700 28px "Be Vietnam Pro"')]); } } catch(e){}
+}
 // Trả về Promise<Blob> ảnh PNG (độ nét x2)
 async function renderPng(o){
-  try { if (document.fonts && document.fonts.load){ await Promise.all([document.fonts.load('400 28px "Be Vietnam Pro"'), document.fonts.load('700 28px "Be Vietnam Pro"')]); } } catch(e){}
+  await ensureFonts();
   var logo = await loadLogo(), S = 2;
   var probe = newCanvas(10, 10).getContext('2d'), H = Math.ceil(paintLetter(probe, { text:o.text, kind:o.kind, cta:o.cta }, true));
   var c = newCanvas(1080 * S, H * S), ctx = c.getContext('2d'); ctx.scale(S, S);
@@ -200,6 +203,31 @@ function loadZip(){
   zipP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'; sc.onload = function(){ res(window.JSZip); }; sc.onerror = function(){ zipP = null; rej(new Error('zip')); }; document.head.appendChild(sc); });
   return zipP;
 }
+var pdfP = null;
+function loadPdfLib(){
+  if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+  if (pdfP) return pdfP;
+  pdfP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'; sc.onload = function(){ res(window.jspdf && window.jspdf.jsPDF); }; sc.onerror = function(){ pdfP = null; rej(new Error('pdf')); }; document.head.appendChild(sc); });
+  return pdfP;
+}
+// Trả về Promise<Blob> PDF từ một hoặc nhiều thư (mỗi thư một trang, khổ A4, co theo tỉ lệ của thư)
+async function renderPdf(items){
+  var JsPDF = await loadPdfLib(); if (!JsPDF) throw new Error('pdf');
+  await ensureFonts();
+  var logo = await loadLogo(), S = 2, W_MM = 210, doc = null;
+  for (var i = 0; i < items.length; i++){
+    var o = items[i];
+    var probe = newCanvas(10, 10).getContext('2d'), H = Math.ceil(paintLetter(probe, { text:o.text, kind:o.kind, cta:o.cta }, true));
+    var c = newCanvas(1080 * S, H * S), ctx = c.getContext('2d'); ctx.scale(S, S);
+    paintLetter(ctx, { text:o.text, kind:o.kind, cta:o.cta, logo:logo, H:H }, false);
+    var imgData = c.toDataURL('image/jpeg', 0.92), hMm = W_MM * H / 1080;
+    if (!doc) doc = new JsPDF({ unit:'mm', format:[W_MM, hMm], compress:true });
+    else doc.addPage([W_MM, hMm]);
+    doc.addImage(imgData, 'JPEG', 0, 0, W_MM, hMm);
+  }
+  return doc.output('blob');
+}
+function fnamePdf(r){ return slug(r.code + '-' + (r.name || '')) + '.pdf'; }
 
 function css(){
   if (document.getElementById('ntCss')) return;
@@ -322,14 +350,14 @@ function mount(root, cfg){
       '<div class="nt-chips" aria-label="Chèn thông tin tự động">'+chips.map(function(v){ return '<button type="button" class="nt-chip" data-v="'+v[0]+'" title="Chèn {'+v[0]+'}">'+esc(v[1])+'</button>'; }).join('')+'</div>'+
       '<label class="nl">Kênh gửi</label><div class="nt-seg">'+CHANNELS.map(function(c){ return '<button type="button" data-ch="'+c[0]+'" class="'+(c[0]===S.channel?'on':'')+'">'+c[1]+'</button>'; }).join('')+'</div>'+
       (S.channel === 'email' ? '<label class="nl" for="ntSubj">Tiêu đề email</label><input type="text" id="ntSubj" value="'+esc(subjFor(first))+'">' : '')+
-      '<div class="nt-prev" id="ntPrev"></div>'+(S.channel==='png' ? '<div class="nt-imgbox"><small>Ảnh sẽ xuất</small><img id="ntImg" alt="Xem trước ảnh thư mời"></div>' : '')+
-      '<p class="nt-hint" style="margin:10px 0 0">'+(S.channel==='png' ? 'Xuất thư thành ảnh PNG để gửi qua Zalo, Messenger hoặc in. Mỗi người một ảnh có ghi sẵn tên. Bấm “Sao chép” rồi dán thẳng vào khung chat, hoặc “Tải ảnh” để lưu.' : S.channel==='zalo' ? 'Bấm “Mở Zalo” ở từng người: nội dung được sao chép sẵn, bạn chỉ cần dán (Cmd/Ctrl+V) rồi gửi.' : S.channel==='sms' ? 'Bấm “Soạn SMS” ở từng người: ứng dụng tin nhắn mở sẵn với nội dung và số điện thoại.' : (t.kind === 'invite' ? 'Hệ thống gửi email thư mời có khung riêng'+(t.cta ? ' và nút bấm' : '')+' tới email đã lưu của những người được chọn.' : 'Hệ thống gửi email trực tiếp tới email đã lưu của những người được chọn.'))+'</p></div>'+
+      '<div class="nt-prev" id="ntPrev"></div>'+((S.channel==='png'||S.channel==='pdf') ? '<div class="nt-imgbox"><small>Ảnh sẽ xuất</small><img id="ntImg" alt="Xem trước ảnh thư mời"></div>' : '')+
+      '<p class="nt-hint" style="margin:10px 0 0">'+(S.channel==='png' ? 'Xuất thư thành ảnh PNG để gửi qua Zalo, Messenger hoặc in. Mỗi người một ảnh có ghi sẵn tên. Bấm “Sao chép” rồi dán thẳng vào khung chat, hoặc “Tải ảnh” để lưu.' : S.channel==='pdf' ? 'Xuất thư mời thành file PDF (khổ A4) để in hoặc gửi đính kèm. Bấm “Tải PDF” ở từng người, hoặc “Tải PDF gộp” để tải một file nhiều trang cho tất cả người đã chọn.' : S.channel==='zalo' ? 'Bấm “Mở Zalo” ở từng người: nội dung được sao chép sẵn, bạn chỉ cần dán (Cmd/Ctrl+V) rồi gửi.' : S.channel==='sms' ? 'Bấm “Soạn SMS” ở từng người: ứng dụng tin nhắn mở sẵn với nội dung và số điện thoại.' : (t.kind === 'invite' ? 'Hệ thống gửi email thư mời có khung riêng'+(t.cta ? ' và nút bấm' : '')+' tới email đã lưu của những người được chọn.' : 'Hệ thống gửi email trực tiếp tới email đã lưu của những người được chọn.'))+'</p></div>'+
       '<div class="nt-box"><div class="nt-bar">'+
         [['todo','Chưa làm'],['done','Đã làm'],['all','Tất cả'],['nophone','Thiếu SĐT']].map(function(f){ return '<button type="button" class="nt-f'+(S.filter===f[0]?' on':'')+'" data-f="'+f[0]+'">'+f[1]+' ('+count(f[0])+')</button>'; }).join('')+
         '<input type="search" id="ntQ" placeholder="Tìm tên, mã NV, SĐT…" value="'+esc(S.q)+'"></div>'+
       '<label style="display:flex;gap:8px;align-items:center;font-size:13px;font-weight:700;margin:0 0 8px"><input type="checkbox" id="ntAll"'+(vis.length && nsel === vis.length ? ' checked' : '')+'> Chọn tất cả ('+nsel+'/'+vis.length+')</label>'+
       '<div class="nt-rows">'+(vis.length ? vis.map(function(r){ return rowHtml(r); }).join('') : '<div style="padding:18px;text-align:center" class="nt-hint">Không có ai trong bộ lọc này.</div>')+'</div>'+
-      '<div class="nt-foot">'+(S.channel==='email' ? '<button type="button" class="nt-go" id="ntSend"'+(nmail?'':' disabled')+'>Gửi email cho '+nmail+' người</button>'+(nmail < nsel ? '<span class="nt-hint">'+(nsel-nmail)+' người đã chọn chưa có email nên sẽ bị bỏ qua.</span>' : '') : (S.channel==='png' ? '<button type="button" class="nt-go" id="ntZip"'+(nsel?'':' disabled')+'>Tải '+nsel+' ảnh (.zip)</button>' : '<span class="nt-hint">Bấm nút ở từng dòng để gửi. Dòng đã mở sẽ được tô xanh.</span>'))+'</div><div id="ntRes"></div></div>'+
+      '<div class="nt-foot">'+(S.channel==='email' ? '<button type="button" class="nt-go" id="ntSend"'+(nmail?'':' disabled')+'>Gửi email cho '+nmail+' người</button>'+(nmail < nsel ? '<span class="nt-hint">'+(nsel-nmail)+' người đã chọn chưa có email nên sẽ bị bỏ qua.</span>' : '') : (S.channel==='png' ? '<button type="button" class="nt-go" id="ntZip"'+(nsel?'':' disabled')+'>Tải '+nsel+' ảnh (.zip)</button>' : (S.channel==='pdf' ? '<button type="button" class="nt-go" id="ntPdfAll"'+(nsel?'':' disabled')+'>Tải PDF gộp ('+nsel+' trang)</button>' : '<span class="nt-hint">Bấm nút ở từng dòng để gửi. Dòng đã mở sẽ được tô xanh.</span>')))+'</div><div id="ntRes"></div></div>'+
     '</div></div>';
     if (window.KTDt24) window.KTDt24.upgrade(root);
     refresh();
@@ -342,7 +370,8 @@ function mount(root, cfg){
     else act = S.err[r.code] ? '<span class="nt-st er">'+esc(S.err[r.code])+'</span>' : (S.sent[r.code] ? '<span class="nt-st ok">Đã gửi</span>' : (r.email ? '' : '<span class="nt-no">Chưa có email</span>'));
     var contact = S.channel === 'email' ? (r.email || '') : (r.phone || '');
     if (S.channel === 'png') act = '<button type="button" class="nt-act" data-png="'+esc(r.code)+'">Tải ảnh</button> <button type="button" class="nt-act" data-pngcopy="'+esc(r.code)+'">Sao chép</button>';
-    return '<div class="nt-row'+(S.sent[r.code]?' sent':'')+'"><input type="checkbox" data-sel="'+esc(r.code)+'"'+(S.sel[r.code]?' checked':'')+' aria-label="Chọn '+esc(r.name||r.code)+'"><div><b>'+esc(r.name||r.code)+'</b><small>'+esc(r.code)+(r.manager?' · '+esc(r.manager):'')+(S.channel==='png' ? '' : ' · '+(contact ? esc(contact) : '<span class="nt-no">'+(S.channel==='email'?'Chưa có email':'Chưa có SĐT')+'</span>'))+' · '+(r.status==='done'?'Đã làm':'Chưa làm')+'</small></div><div>'+act+'</div></div>';
+    if (S.channel === 'pdf') act = '<button type="button" class="nt-act" data-pdf="'+esc(r.code)+'">Tải PDF</button>';
+    return '<div class="nt-row'+(S.sent[r.code]?' sent':'')+'"><input type="checkbox" data-sel="'+esc(r.code)+'"'+(S.sel[r.code]?' checked':'')+' aria-label="Chọn '+esc(r.name||r.code)+'"><div><b>'+esc(r.name||r.code)+'</b><small>'+esc(r.code)+(r.manager?' · '+esc(r.manager):'')+((S.channel==='png'||S.channel==='pdf') ? '' : ' · '+(contact ? esc(contact) : '<span class="nt-no">'+(S.channel==='email'?'Chưa có email':'Chưa có SĐT')+'</span>'))+' · '+(r.status==='done'?'Đã làm':'Chưa làm')+'</small></div><div>'+act+'</div></div>';
   }
   function byCode(code){ return all.filter(function(r){ return r.code === code; })[0]; }
   function copy(t){ return (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(t) : Promise.reject()).catch(function(){ window.prompt('Sao chép nội dung:', t); }); }
@@ -408,6 +437,27 @@ function mount(root, cfg){
         q('#ntRes').innerHTML = '<div class="nt-msg ok">Đã tạo ' + rows.length + ' ảnh.</div>';
       } catch(e){ q('#ntRes').innerHTML = '<div class="nt-msg er">Không tạo được file zip (cần kết nối mạng để tải thư viện nén). Bạn có thể dùng “Tải ảnh” cho từng người.</div>'; }
       zip.disabled = false; zip.textContent = t0; draw();
+    });
+    qa('[data-pdf]').forEach(function(b){ b.addEventListener('click', async function(){
+      if (warn()) return; var r = byCode(b.dataset.pdf); if (!r) return;
+      var t0 = b.textContent; b.disabled = true; b.textContent = 'Đang tạo…';
+      try { saveBlob(await renderPdf([{ text: msgFor(r), kind: tplOf(S.tpl).kind || '', cta: ctaFor(r) }]), fnamePdf(r)); mark(r, b); } catch(e){ q('#ntRes').innerHTML = '<div class="nt-msg er">Không tạo được PDF (cần kết nối mạng để tải thư viện), thử lại.</div>'; }
+      b.disabled = false; b.textContent = t0;
+    }); });
+    var pdfAll = q('#ntPdfAll');
+    if (pdfAll) pdfAll.addEventListener('click', async function(){
+      if (warn()) return;
+      var rows = visible().filter(function(r){ return S.sel[r.code]; }).slice(0, 300);
+      if (!rows.length) return;
+      var t0 = pdfAll.textContent; pdfAll.disabled = true; q('#ntRes').innerHTML = '';
+      try {
+        var items = rows.map(function(r){ return { text: msgFor(r), kind: tplOf(S.tpl).kind || '', cta: ctaFor(r) }; });
+        var blob = await renderPdf(items);
+        rows.forEach(function(r){ S.sent[r.code] = true; });
+        saveBlob(blob, 'thu-moi-' + slug(tplOf(S.tpl).name) + '.pdf');
+        q('#ntRes').innerHTML = '<div class="nt-msg ok">Đã tạo PDF gồm ' + rows.length + ' trang.</div>';
+      } catch(e){ q('#ntRes').innerHTML = '<div class="nt-msg er">Không tạo được file PDF (cần kết nối mạng để tải thư viện). Bạn có thể tải từng PDF.</div>'; }
+      pdfAll.disabled = false; pdfAll.textContent = t0; draw();
     });
     var send = q('#ntSend');
     if (send) send.addEventListener('click', async function(){
