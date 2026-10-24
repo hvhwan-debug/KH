@@ -167,7 +167,9 @@ const handler = async function (context, req) {
         const act = await quiz.getActive(c.code);
         if (act) { const t = Object.assign({}, act); quiz.syncAttempt(t, Date.now()); if (t.cursor < t.questionIds.length) status = "doing"; }
         return reply(context, 200, { ok: true, employee: empView(c), currentPeriod: settings.examPeriod, status, passEnabled: !!settings.passEnabled,
-          complianceLowMin: settings.complianceLowMin, history, categories, repeatWrong, lastWrong: lastWrong.slice(0, 15), papersRead: atts.filter(Boolean).length });
+          complianceLowMin: settings.complianceLowMin, history, categories, repeatWrong, lastWrong: lastWrong.slice(0, 15), papersRead: atts.filter(Boolean).length,
+          // Hồ sơ nhân sự CHỈ dành cho quản trị viên (ADMIN_EMAILS). Quản lí thường không nhận khối này.
+          hr: viewer.isAdmin && c.profile ? c.profile : undefined });
       }
       if (op === "photo") {
         // Ảnh xác nhận khuôn mặt chụp ngay trước khi bắt đầu làm bài - minh chứng cho ĐÚNG MỘT kỳ, không dùng chéo sang kỳ khác.
