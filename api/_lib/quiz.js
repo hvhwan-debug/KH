@@ -175,7 +175,7 @@ function usableQ(q) {
 // Các bước chuyển đổi dữ liệu một lần (gắn nhãn miền Bắc -> nhập câu miền Nam -> ngưng câu kỹ năng).
 // Gọi ở MỌI thao tác quản trị và khi thí sinh vào bài; sau lần đầu chỉ tốn một lần đọc cờ cho mỗi tiến trình.
 async function runMigrations(log) {
-  for (const [name, fn] of [["regionTags", ensureRegionTags], ["seeds", ensureSeeds], ["noSkill", ensureNoSkill]]) {
+  for (const [name, fn] of [["regionTags", ensureRegionTags], ["seeds", ensureSeeds], ["moveNam", ensureMoveNam], ["noSkill", ensureNoSkill]]) {
     try { await fn(); } catch (e) { if (log) (log.warn || log)("migration " + name + " loi: " + (e && e.message)); } // lỗi thì lần gọi sau thử lại
   }
 }
@@ -273,6 +273,39 @@ async function ensureSeeds() {
   }
   seedsDone = true;
   return report;
+}
+// ---------- Chuyển 100 câu Máy lọc nước Miền Nam sang đúng đề KTDKPCS102026 (chạy một lần) ----------
+// Bộ nhập lần đầu đưa nhầm vào ngân hàng của đề MẶC ĐỊNH; câu phải thuộc đề "Kiểm tra định kì PCs - Tháng 10/2026 | GT".
+// Nhận diện đúng các câu của bộ nhập (nội dung trùng file + tag Miền Nam). Đề đích đã có câu trùng thì bỏ bản thừa.
+const MOVE_NAM_KEY = "kt/migrate-move-nam-KTDKPCS102026-v1.json";
+const MOVE_NAM_TARGET = "KTDKPCS102026";
+let moveNamDone = false;
+async function ensureMoveNam() {
+  if (moveNamDone) return null;
+  if (await store.get(MOVE_NAM_KEY)) { moveNamDone = true; return null; }
+  const exams = await getExams();
+  if (!exams.some((e) => e.id === MOVE_NAM_TARGET)) { moveNamDone = true; return null; } // không có đề này: bỏ qua
+  let data; try { data = require("./seed/mien-nam-may-loc-v1.json"); } catch (e) { return null; }
+  const normT = (t) => String(t || "").normalize("NFC").toLowerCase().replace(/\s+/g, " ").trim();
+  const seedTexts = new Set((data.questions || []).map((q) => normT(q.text)));
+  const list = await getQuestions();
+  const before = JSON.parse(JSON.stringify(list));
+  const inTarget = new Set(list.filter((q) => (q.period || "") === MOVE_NAM_TARGET).map((q) => normT(q.text)));
+  const catName = (list.find((q) => (q.period || "") === MOVE_NAM_TARGET && foldRg(q.category) === "may loc nuoc") || {}).category || "Máy lọc nước";
+  let moved = 0, dropped = 0; const from = {};
+  const out = list.filter((q) => {
+    if ((q.period || "") === MOVE_NAM_TARGET || questionRegion(q) !== "nam" || !seedTexts.has(normT(q.text))) return true;
+    from[q.period || ""] = (from[q.period || ""] || 0) + 1;
+    if (inTarget.has(normT(q.text))) { dropped++; return false; } // đề đích đã có câu này
+    q.period = MOVE_NAM_TARGET; q.category = catName; inTarget.add(normT(q.text)); moved++;
+    return true;
+  });
+  if (moved || dropped) { await backupQuestions(before); await saveQuestions(out); }
+  const info = { at: Date.now(), target: MOVE_NAM_TARGET, moved, dropped, from };
+  await store.put(MOVE_NAM_KEY, info);
+  moveNamDone = true;
+  try { await require("./auditlog").write({ area: "system", role: "system", by: "hệ thống", name: "Hệ thống", op: "moveNamQuestions", label: "Chuyển câu Máy lọc nước Miền Nam sang đề " + MOVE_NAM_TARGET, kind: "change", status: 200, ok: true, details: info }); } catch (e) {}
+  return info;
 }
 // ---------- Ngưng dùng câu hỏi KỸ NĂNG (10/2026, chưa đảm bảo chất lượng) — chạy một lần ----------
 // 1) Tạm ngưng (active=false, KHÔNG xoá; đánh dấu pausedBy để bật lại được) mọi câu kỹ năng bán hàng/tư vấn,
