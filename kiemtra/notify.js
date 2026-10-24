@@ -171,11 +171,41 @@ function paintLetter(ctx, o, dry){
       ctx.fillStyle = '#ffffff'; font(true, 28); var tw = ctx.measureText(o.cta.label).width; ctx.fillText(o.cta.label, M + (bw - tw) / 2, y + 49);
     }
     y += bh + 34;
+    if (o.qr){ // mã QR thật của đường link, để quét trực tiếp bằng điện thoại
+      var qs = 160;
+      if (!dry){
+        ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#d6e6f9'; ctx.lineWidth = 2; rr(M, y, qs, qs, 16); ctx.fill(); ctx.stroke();
+        try { ctx.drawImage(o.qr, M + 14, y + 14, qs - 28, qs - 28); } catch(e){}
+        font(false, 20); ctx.fillStyle = '#526b91'; var ql = ['Quét mã QR', 'để mở liên kết']; ctx.fillText(ql[0], M + qs + 20, y + qs / 2 - 2); ctx.fillText(ql[1], M + qs + 20, y + qs / 2 + 24);
+      }
+      y += qs + 24;
+    }
     y = flow([{ t:o.cta.url, c:'#526b91' }], M, W - M, y, 22) + 4;
   }
   y += 34;
   if (!dry){ ctx.strokeStyle = '#e1ecf8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(M, y); ctx.lineTo(W - M, y); ctx.stroke(); font(false, 20); ctx.fillStyle = '#7186a5'; ctx.fillText('Hệ thống kiểm tra đánh giá trực tuyến', M, y + 40); }
   return y + 72;
+}
+var qrLibP = null;
+function loadQrLib(){
+  if (window.qrcode) return Promise.resolve(window.qrcode);
+  if (qrLibP) return qrLibP;
+  qrLibP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'; sc.onload = function(){ res(window.qrcode); }; sc.onerror = function(){ qrLibP = null; rej(new Error('qr')); }; document.head.appendChild(sc); });
+  return qrLibP;
+}
+// Trả về Promise<string|null> data URL (PNG) của mã QR cho một đường link, hoặc null nếu không tạo được
+async function qrDataUrl(text){
+  try {
+    var lib = await loadQrLib(), qr = lib(0, 'M');
+    qr.addData(String(text)); qr.make();
+    return qr.createDataURL(6, 2);
+  } catch(e){ return null; }
+}
+// Trả về Promise<HTMLImageElement|null> ảnh QR đã tải xong (sẵn sàng vẽ lên canvas), cho một đường link; null nếu đường link không hợp lệ hoặc không tạo được QR
+async function qrImageFor(url){
+  if (!URL_RE.test(String(url || '').trim())) return null;
+  var durl = await qrDataUrl(String(url).trim()); if (!durl) return null;
+  return new Promise(function(res){ var im = new Image(); im.onload = function(){ res(im); }; im.onerror = function(){ res(null); }; im.src = durl; });
 }
 function newCanvas(w, h){ var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 var logoP = null;
@@ -191,10 +221,10 @@ async function ensureFonts(){
 async function renderPng(o){
   if (o.canvas) return new Promise(function(res, rej){ o.canvas.toBlob(function(b){ b ? res(b) : rej(new Error('png')); }, 'image/png'); });
   await ensureFonts();
-  var logo = await loadLogo(), S = 2;
-  var probe = newCanvas(10, 10).getContext('2d'), H = Math.ceil(paintLetter(probe, { text:o.text, kind:o.kind, cta:o.cta }, true));
+  var logo = await loadLogo(), S = 2, qr = o.cta ? await qrImageFor(o.cta.url) : null;
+  var probe = newCanvas(10, 10).getContext('2d'), H = Math.ceil(paintLetter(probe, { text:o.text, kind:o.kind, cta:o.cta, qr:qr }, true));
   var c = newCanvas(1080 * S, H * S), ctx = c.getContext('2d'); ctx.scale(S, S);
-  paintLetter(ctx, { text:o.text, kind:o.kind, cta:o.cta, logo:logo, H:H }, false);
+  paintLetter(ctx, { text:o.text, kind:o.kind, cta:o.cta, qr:qr, logo:logo, H:H }, false);
   return new Promise(function(res, rej){ c.toBlob(function(b){ b ? res(b) : rej(new Error('png')); }, 'image/png'); });
 }
 function slug(s){ return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0, 40) || 'thu-moi'; }
@@ -223,9 +253,10 @@ async function renderPdf(items){
     var o = items[i], c;
     if (o.canvas) c = o.canvas;
     else {
-      var probe = newCanvas(10, 10).getContext('2d'), H = Math.ceil(paintLetter(probe, { text:o.text, kind:o.kind, cta:o.cta }, true));
+      var qr = o.cta ? await qrImageFor(o.cta.url) : null;
+      var probe = newCanvas(10, 10).getContext('2d'), H = Math.ceil(paintLetter(probe, { text:o.text, kind:o.kind, cta:o.cta, qr:qr }, true));
       c = newCanvas(1080 * S, H * S); var ctx = c.getContext('2d'); ctx.scale(S, S);
-      paintLetter(ctx, { text:o.text, kind:o.kind, cta:o.cta, logo:logo, H:H }, false);
+      paintLetter(ctx, { text:o.text, kind:o.kind, cta:o.cta, qr:qr, logo:logo, H:H }, false);
     }
     var imgData = c.toDataURL('image/jpeg', 0.92), hMm = W_MM * c.height / c.width;
     if (!doc) doc = new JsPDF({ unit:'mm', format:[W_MM, hMm], compress:true });
@@ -249,7 +280,7 @@ var POSTER_STYLES = [
   { blue:'#098f8a', yellow:'#b8f0d9', avatar:'👩🏻‍💼', dateIcon:'💬' },
   { blue:'#073d91', yellow:'#ffcc4d', avatar:'👨🏻‍💼', dateIcon:'🚀' }
 ];
-var POSTER_CSS = '\n*{box-sizing:border-box}body{margin:0;background:#fff;color:#102c53;font-family:Arial,"Segoe UI",sans-serif}\n.poster{--blue:#0878ed;--yellow:#ffe16a;background:#fff;border-radius:23px;overflow:hidden;box-shadow:none;position:relative;isolation:isolate}\n.poster-top{padding:24px 25px 22px;background:linear-gradient(135deg,#d9f0ff 0%,#f9fdff 52%,#c3e7ff 100%);position:relative;overflow:hidden}\n.poster-top:before{content:"";position:absolute;width:270px;height:270px;border-radius:50%;background:#fff9;right:-100px;top:-90px;z-index:0}\n.poster-top:after{content:"";position:absolute;width:170px;height:170px;border-radius:50%;background:var(--blue);opacity:.08;right:-35px;top:-65px;z-index:0}\n.brand{display:flex;align-items:center;gap:7px;color:var(--blue);font-size:11px;font-weight:900;letter-spacing:.6px;position:relative;z-index:1}.brand-logo{display:grid;place-items:center;width:25px;height:25px;border-radius:8px;background:var(--blue);color:white}.brand small{margin-left:auto;font-size:8px;letter-spacing:.8px}\n.megaphone{position:absolute;right:22px;top:55px;font-size:39px;transform:rotate(-12deg);z-index:2;filter:drop-shadow(0 5px 3px #124c8022)}\n.eyebrow{position:relative;z-index:2;display:inline-block;margin-top:22px;padding:8px 14px;border-radius:999px;background:var(--blue);color:white;font-weight:900;font-size:11px;letter-spacing:1px;box-shadow:0 5px 0 #004cae22}\n.poster h2{position:relative;z-index:2;color:#092f68;font-size:30px;line-height:1.08;letter-spacing:-.7px;text-transform:uppercase;margin:14px 0 10px;font-weight:1000;text-shadow:0 2px white}\n.subpill{position:relative;z-index:2;display:inline-block;background:var(--yellow);color:#123a70;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;max-width:100%}\n.hero-row{display:flex;gap:14px;align-items:flex-end;margin-top:16px;position:relative;z-index:2}\n.intro{flex:1 1 auto;min-width:0}.intro p{margin:0 0 6px;font-size:13px;line-height:1.55;color:#20365e}.intro p:last-child{margin-bottom:0}\n.character{flex:0 0 auto;text-align:center}.character-halo{display:none}.avatar{font-size:54px;line-height:1}\n.character-caption{margin-top:2px;background:var(--blue);color:#fff;font-size:10px;font-weight:900;border-radius:10px;padding:4px 8px;line-height:1.3}\n.deadline-band{display:flex;align-items:center;gap:14px;padding:16px 22px;background:#f4f9ff;border-top:1px dashed #cfe3fb;border-bottom:1px dashed #cfe3fb}\n.date-icon{font-size:30px;flex:0 0 auto}\n.deadline-copy{flex:1 1 auto;min-width:0}.deadline-copy small{display:block;color:#5c7aa6;font-weight:800;font-size:10px;letter-spacing:.6px}.deadline-copy strong{display:block;color:#0b3f94;font-size:16px;margin:2px 0}.deadline-copy span{display:block;color:#5c7aa6;font-size:11.5px}\n.qr{flex:0 0 auto;text-align:center;font-size:9px;color:#5c7aa6;font-weight:800}.fake-qr{font-size:22px;background:#fff;border:1.5px solid #cfe3fb;border-radius:10px;width:46px;height:46px;display:grid;place-items:center;margin:0 auto 4px}\n.info-grid{display:grid;grid-template-columns:1fr;gap:12px;padding:18px 22px}\n.info{display:flex;gap:10px;align-items:flex-start}.info-icon{font-size:20px;flex:0 0 auto}.info small{display:block;color:#5c7aa6;font-weight:800;font-size:10px;letter-spacing:.5px}.info b{display:block;color:#15335e;font-size:13.5px;font-weight:700;line-height:1.45}\n.footer-cta{display:flex;gap:10px;align-items:flex-start;padding:16px 22px;background:#f4f9ff;position:relative}.chat-icon{font-size:22px;flex:0 0 auto}.footer-cta strong{display:block;color:#0b3f94;font-size:13.5px}.footer-cta p{margin:3px 0 0;color:#426089;font-size:12px;line-height:1.5}.spark{position:absolute;right:18px;top:14px;color:var(--yellow);font-size:16px}\n.poster-foot{display:flex;justify-content:space-between;gap:10px;padding:10px 22px 16px;color:#8ca3c4;font-size:9.5px;font-weight:800;letter-spacing:.4px}';
+var POSTER_CSS = '\n*{box-sizing:border-box}body{margin:0;background:#fff;color:#102c53;font-family:Arial,"Segoe UI",sans-serif}\n.poster{--blue:#0878ed;--yellow:#ffe16a;background:#fff;border-radius:23px;overflow:hidden;box-shadow:none;position:relative;isolation:isolate}\n.poster-top{padding:24px 25px 22px;background:linear-gradient(135deg,#d9f0ff 0%,#f9fdff 52%,#c3e7ff 100%);position:relative;overflow:hidden}\n.poster-top:before{content:"";position:absolute;width:270px;height:270px;border-radius:50%;background:#fff9;right:-100px;top:-90px;z-index:0}\n.poster-top:after{content:"";position:absolute;width:170px;height:170px;border-radius:50%;background:var(--blue);opacity:.08;right:-35px;top:-65px;z-index:0}\n.brand{display:flex;align-items:center;gap:7px;color:var(--blue);font-size:11px;font-weight:900;letter-spacing:.6px;position:relative;z-index:1}.brand-logo{display:grid;place-items:center;width:25px;height:25px;border-radius:8px;background:var(--blue);color:white}.brand small{margin-left:auto;font-size:8px;letter-spacing:.8px}\n.megaphone{position:absolute;right:22px;top:55px;font-size:39px;transform:rotate(-12deg);z-index:2;filter:drop-shadow(0 5px 3px #124c8022)}\n.eyebrow{position:relative;z-index:2;display:inline-block;margin-top:22px;padding:8px 14px;border-radius:999px;background:var(--blue);color:white;font-weight:900;font-size:11px;letter-spacing:1px;box-shadow:0 5px 0 #004cae22}\n.poster h2{position:relative;z-index:2;color:#092f68;font-size:30px;line-height:1.08;letter-spacing:-.7px;text-transform:uppercase;margin:14px 0 10px;font-weight:1000;text-shadow:0 2px white}\n.subpill{position:relative;z-index:2;display:inline-block;background:var(--yellow);color:#123a70;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;max-width:100%}\n.hero-row{display:flex;gap:14px;align-items:flex-end;margin-top:16px;position:relative;z-index:2}\n.intro{flex:1 1 auto;min-width:0}.intro p{margin:0 0 6px;font-size:13px;line-height:1.55;color:#20365e}.intro p:last-child{margin-bottom:0}\n.character{flex:0 0 auto;text-align:center}.character-halo{display:none}.avatar{font-size:54px;line-height:1}\n.character-caption{margin-top:2px;background:var(--blue);color:#fff;font-size:10px;font-weight:900;border-radius:10px;padding:4px 8px;line-height:1.3}\n.deadline-band{display:flex;align-items:center;gap:14px;padding:16px 22px;background:#f4f9ff;border-top:1px dashed #cfe3fb;border-bottom:1px dashed #cfe3fb}\n.date-icon{font-size:30px;flex:0 0 auto}\n.deadline-copy{flex:1 1 auto;min-width:0}.deadline-copy small{display:block;color:#5c7aa6;font-weight:800;font-size:10px;letter-spacing:.6px}.deadline-copy strong{display:block;color:#0b3f94;font-size:16px;margin:2px 0}.deadline-copy span{display:block;color:#5c7aa6;font-size:11.5px}\n.qr{flex:0 0 auto;text-align:center;font-size:9px;color:#5c7aa6;font-weight:800;max-width:76px}.fake-qr{font-size:22px;background:#fff;border:1.5px solid #cfe3fb;border-radius:10px;width:58px;height:58px;display:grid;place-items:center;margin:0 auto 4px;object-fit:contain;padding:3px}\n.info-grid{display:grid;grid-template-columns:1fr;gap:12px;padding:18px 22px}\n.info{display:flex;gap:10px;align-items:flex-start}.info-icon{font-size:20px;flex:0 0 auto}.info small{display:block;color:#5c7aa6;font-weight:800;font-size:10px;letter-spacing:.5px}.info b{display:block;color:#15335e;font-size:13.5px;font-weight:700;line-height:1.45}\n.footer-cta{display:flex;gap:10px;align-items:flex-start;padding:16px 22px;background:#f4f9ff;position:relative}.chat-icon{font-size:22px;flex:0 0 auto}.footer-cta strong{display:block;color:#0b3f94;font-size:13.5px}.footer-cta p{margin:3px 0 0;color:#426089;font-size:12px;line-height:1.5}.spark{position:absolute;right:18px;top:14px;color:var(--yellow);font-size:16px}\n.poster-foot{display:flex;justify-content:space-between;gap:10px;padding:10px 22px 16px;color:#8ca3c4;font-size:9.5px;font-weight:800;letter-spacing:.4px}';
 
 function posterBody(v, ms){
   return '<section class="poster" style="--blue:'+v.blue+';--yellow:'+v.yellow+'">'+
@@ -271,7 +302,7 @@ function posterBody(v, ms){
     '<div class="deadline-band">'+
       '<div class="date-icon">'+v.dateIcon+'</div>'+
       '<div class="deadline-copy"><small>THỜI GIAN</small><strong>'+esc(ms.thoigian)+'</strong><span>'+esc(ms.hanxn)+'</span></div>'+
-      '<div class="qr"><div class="fake-qr">☎</div><b>LIÊN HỆ</b><small>'+esc(ms.lienhe)+'</small></div>'+
+      '<div class="qr">'+(ms.qr ? '<img class="fake-qr" src="'+ms.qr+'" alt="QR">' : '<div class="fake-qr">☎</div>')+'<b>'+(ms.qr ? 'QUÉT MÃ QR' : 'LIÊN HỆ')+'</b><small>'+esc(ms.qr ? (ms.qrLabel || 'Tham gia trực tuyến') : ms.lienhe)+'</small></div>'+
     '</div>'+
     '<div class="info-grid">'+
       '<div class="info"><div class="info-icon">🖥️</div><div><small>HÌNH THỨC / ĐỊA ĐIỂM</small><b>'+esc(ms.hinhthuc)+'</b></div></div>'+
@@ -400,8 +431,9 @@ function mount(root, cfg){
     var m = /(\d+)/.exec(String(S.vars.kieu_mau || ''));
     return m ? (parseInt(m[1], 10) - 1) : -1;
   }
-  function posterMsFor(r){
+  async function posterMsFor(r){
     var ev = xvars(), noi = String(ev.noi_dung || '').trim(), sub = (noi.split(/[\n,.;]/)[0] || '').trim().slice(0, 70);
+    var cta = ctaFor(r), qr = cta ? await qrDataUrl(cta.url) : null;
     return {
       brand:'KAROFI | LIVOTEC', brandSub:'ĐÀO TẠO KINH DOANH',
       name: r.name || r.code, title: ev.ten_khoa || 'CHƯƠNG TRÌNH ĐÀO TẠO',
@@ -410,10 +442,11 @@ function mount(root, cfg){
       hanxn: 'Xác nhận trước: ' + (ev.han_xn || 'theo thông báo của Ban Tổ chức'),
       lienhe: ev.lien_he || 'Ban Tổ chức',
       hinhthuc: [ev.hinh_thuc, ev.dia_diem].filter(function(x){ return x; }).join(' · ') || 'Theo thông báo',
-      noidung: ev.noi_dung || '', giangvien: ev.giang_vien || 'Ban Tổ chức'
+      noidung: ev.noi_dung || '', giangvien: ev.giang_vien || 'Ban Tổ chức',
+      qr: qr, qrLabel: cta ? cta.label : ''
     };
   }
-  function posterCanvasFor(r){ var idx = posterVariantIdx(); return renderPosterCanvas(POSTER_STYLES[idx] || POSTER_STYLES[0], posterMsFor(r)); }
+  async function posterCanvasFor(r){ var idx = posterVariantIdx(); return renderPosterCanvas(POSTER_STYLES[idx] || POSTER_STYLES[0], await posterMsFor(r)); }
   function pngOf(r){ var idx = posterVariantIdx(); if (idx >= 0) return posterCanvasFor(r).then(function(c){ return renderPng({ canvas:c }); }); return renderPng({ text: msgFor(r), kind: tplOf(S.tpl).kind || '', cta: ctaFor(r) }); }
   function pdfItemFor(r){ var idx = posterVariantIdx(); if (idx >= 0) return posterCanvasFor(r).then(function(c){ return { canvas:c }; }); return Promise.resolve({ text: msgFor(r), kind: tplOf(S.tpl).kind || '', cta: ctaFor(r) }); }
   function subjFor(r){ return render(S.subj, r || {}, ex, origin, xvars(), []); }
@@ -456,7 +489,7 @@ function mount(root, cfg){
       '<label class="nl">Kênh gửi</label><div class="nt-seg">'+CHANNELS.map(function(c){ return '<button type="button" data-ch="'+c[0]+'" class="'+(c[0]===S.channel?'on':'')+'">'+c[1]+'</button>'; }).join('')+'</div>'+
       (S.channel === 'email' ? '<label class="nl" for="ntSubj">Tiêu đề email</label><input type="text" id="ntSubj" value="'+esc(subjFor(first))+'">' : '')+
       '<div class="nt-prev" id="ntPrev"></div>'+((S.channel==='png'||S.channel==='pdf') ? '<div class="nt-imgbox"><small>Ảnh sẽ xuất</small><img id="ntImg" alt="Xem trước ảnh thư mời"></div>' : '')+
-      '<p class="nt-hint" style="margin:10px 0 0">'+(S.channel==='png' ? 'Xuất thư thành ảnh PNG để gửi qua Zalo, Messenger hoặc in. Mỗi người một ảnh có ghi sẵn tên. Bấm “Sao chép” rồi dán thẳng vào khung chat, hoặc “Tải ảnh” để lưu.' : S.channel==='pdf' ? 'Xuất thư mời thành file PDF (khổ A4) để in hoặc gửi đính kèm. Bấm “Tải PDF” ở từng người, hoặc “Tải PDF gộp” để tải một file nhiều trang cho tất cả người đã chọn.' : S.channel==='zalo' ? 'Bấm “Mở Zalo” ở từng người: nội dung được sao chép sẵn, bạn chỉ cần dán (Cmd/Ctrl+V) rồi gửi.' : S.channel==='sms' ? 'Bấm “Soạn SMS” ở từng người: ứng dụng tin nhắn mở sẵn với nội dung và số điện thoại.' : (t.kind === 'invite' ? 'Hệ thống gửi email thư mời có khung riêng'+(t.cta ? ' và nút bấm' : '')+' tới email đã lưu của những người được chọn.' : 'Hệ thống gửi email trực tiếp tới email đã lưu của những người được chọn.'))+((S.channel==='png'||S.channel==='pdf') && posterVariantIdx() >= 0 ? ' Đang dùng mẫu minh hoạ (poster) đã chọn ở trên — mỗi người một ảnh/PDF riêng, tự điền tên và thông tin khoá học.' : '')+'</p></div>'+
+      '<p class="nt-hint" style="margin:10px 0 0">'+(S.channel==='png' ? 'Xuất thư thành ảnh PNG để gửi qua Zalo, Messenger hoặc in. Mỗi người một ảnh có ghi sẵn tên. Bấm “Sao chép” rồi dán thẳng vào khung chat, hoặc “Tải ảnh” để lưu.' : S.channel==='pdf' ? 'Xuất thư mời thành file PDF (khổ A4) để in hoặc gửi đính kèm. Bấm “Tải PDF” ở từng người, hoặc “Tải PDF gộp” để tải một file nhiều trang cho tất cả người đã chọn.' : S.channel==='zalo' ? 'Bấm “Mở Zalo” ở từng người: nội dung được sao chép sẵn, bạn chỉ cần dán (Cmd/Ctrl+V) rồi gửi.' : S.channel==='sms' ? 'Bấm “Soạn SMS” ở từng người: ứng dụng tin nhắn mở sẵn với nội dung và số điện thoại.' : (t.kind === 'invite' ? 'Hệ thống gửi email thư mời có khung riêng'+(t.cta ? ' và nút bấm' : '')+' tới email đã lưu của những người được chọn.' : 'Hệ thống gửi email trực tiếp tới email đã lưu của những người được chọn.'))+((S.channel==='png'||S.channel==='pdf') && posterVariantIdx() >= 0 ? ' Đang dùng mẫu minh hoạ (poster) đã chọn ở trên — mỗi người một ảnh/PDF riêng, tự điền tên và thông tin khoá học.' : '')+((S.channel==='png'||S.channel==='pdf') && posterVariantIdx() < 0 && t.cta && first && ctaFor(first) ? ' Có đường link nên hệ thống tự sinh mã QR thật của link đó để quét trực tiếp.' : '')+'</p></div>'+
       '<div class="nt-box"><div class="nt-bar">'+
         [['todo','Chưa làm'],['done','Đã làm'],['all','Tất cả'],['nophone','Thiếu SĐT']].map(function(f){ return '<button type="button" class="nt-f'+(S.filter===f[0]?' on':'')+'" data-f="'+f[0]+'">'+f[1]+' ('+count(f[0])+')</button>'; }).join('')+
         '<input type="search" id="ntQ" placeholder="Tìm tên, mã NV, SĐT…" value="'+esc(S.q)+'"></div>'+
