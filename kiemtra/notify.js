@@ -16,10 +16,9 @@ var TRAIN_FIELDS = [
   { k:'giang_vien', label:'Giảng viên / đơn vị tổ chức', w:true },
   { k:'noi_dung', label:'Nội dung chính', type:'textarea', w:true, ph:'Mỗi ý một dòng hoặc ngăn cách bằng dấu phẩy' },
   { k:'han_xn', label:'Hạn xác nhận tham dự', type:'datetime-local', keep:true },
-  { k:'lien_he', label:'Liên hệ xác nhận', ph:'Tên, số điện thoại hoặc email', keep:true },
-  { k:'kieu_mau', label:'Mẫu minh hoạ khi xuất ảnh / PDF', type:'select', w:true, keep:true,
-    opts:['Không dùng (thư đơn giản)','Mẫu 1','Mẫu 2','Mẫu 3','Mẫu 4','Mẫu 5','Mẫu 6','Mẫu 7','Mẫu 8','Mẫu 9','Mẫu 10'], def:'Không dùng (thư đơn giản)' }
+  { k:'lien_he', label:'Liên hệ xác nhận', ph:'Tên, số điện thoại hoặc email', keep:true }
 ];
+var POSTER_OPTS = ['Không dùng (thư đơn giản)','Mẫu 1','Mẫu 2','Mẫu 3','Mẫu 4','Mẫu 5','Mẫu 6','Mẫu 7','Mẫu 8','Mẫu 9','Mẫu 10'];
 var CUSTOM_FIELDS = [
   { k:'tieu_de', label:'Tiêu đề thư mời', req:true, w:true, max:60, def:'THƯ MỜI', ph:'Ví dụ: THƯ MỜI HỌP TỔNG KẾT QUÝ' },
   { k:'noi_dung', label:'Nội dung lời mời', type:'textarea', req:true, w:true, ph:'Viết lời mời: lý do, mục đích và nội dung chính. Ví dụ: Ban Tổ chức trân trọng kính mời Anh/Chị tham dự…' },
@@ -411,6 +410,7 @@ function mount(root, cfg){
     var t = tplOf(id); S.tpl = id; S.text = t.text; S.subj = t.subject; S.subjEdited = false; S.filter = t.filter; S.vars = {};
     (t.fields || []).forEach(function(f){ if (f.def) S.vars[f.k] = f.def; });
     Object.keys(t.vars || {}).forEach(function(k){ S.vars[k] = t.vars[k]; });
+    if (baseId() === 'inviteTrain') S.vars.kieu_mau = POSTER_OPTS[0];
     selVisible();
   }
   function pool(){ var t = tplOf(S.tpl); return t.allAudience ? all : all.filter(function(r){ return r.eligible !== false; }); }
@@ -487,6 +487,7 @@ function mount(root, cfg){
       '<div class="nt-chips" style="margin-bottom:2px"><button type="button" class="nt-chip" id="ntSave" title="Lưu nội dung và thông tin đang nhập thành mẫu dùng lại (lưu trong trình duyệt này)">+ Lưu thành mẫu của tôi</button>'+(t.mine ? '<button type="button" class="nt-chip" id="ntDel" style="background:#FBE3E0;color:#B3261E">Xoá mẫu này</button>' : '')+'</div>'+
       '<div class="nt-chips" aria-label="Chèn thông tin tự động">'+chips.map(function(v){ return '<button type="button" class="nt-chip" data-v="'+v[0]+'" title="Chèn {'+v[0]+'}">'+esc(v[1])+'</button>'; }).join('')+'</div>'+
       '<label class="nl">Kênh gửi</label><div class="nt-seg">'+CHANNELS.map(function(c){ return '<button type="button" data-ch="'+c[0]+'" class="'+(c[0]===S.channel?'on':'')+'">'+c[1]+'</button>'; }).join('')+'</div>'+
+      (baseId() === 'inviteTrain' && (S.channel === 'png' || S.channel === 'pdf') ? '<label class="nl" for="ntPoster">Mẫu minh hoạ (poster) — chỉ dùng cho Ảnh PNG / Xuất PDF</label><select id="ntPoster">'+POSTER_OPTS.map(function(o){ return '<option'+(o === (S.vars.kieu_mau || POSTER_OPTS[0]) ? ' selected' : '')+'>'+esc(o)+'</option>'; }).join('')+'</select><p class="nt-hint" style="margin:4px 0 0">Chọn “Không dùng” để xuất khung thư chữ đơn giản như trước; chọn Mẫu 1–10 để xuất theo đúng thiết kế poster, tự điền tên và thông tin cho từng người.</p>' : '')+
       (S.channel === 'email' ? '<label class="nl" for="ntSubj">Tiêu đề email</label><input type="text" id="ntSubj" value="'+esc(subjFor(first))+'">' : '')+
       '<div class="nt-prev" id="ntPrev"></div>'+((S.channel==='png'||S.channel==='pdf') ? '<div class="nt-imgbox"><small>Ảnh sẽ xuất</small><img id="ntImg" alt="Xem trước ảnh thư mời"></div>' : '')+
       '<p class="nt-hint" style="margin:10px 0 0">'+(S.channel==='png' ? 'Xuất thư thành ảnh PNG để gửi qua Zalo, Messenger hoặc in. Mỗi người một ảnh có ghi sẵn tên. Bấm “Sao chép” rồi dán thẳng vào khung chat, hoặc “Tải ảnh” để lưu.' : S.channel==='pdf' ? 'Xuất thư mời thành file PDF (khổ A4) để in hoặc gửi đính kèm. Bấm “Tải PDF” ở từng người, hoặc “Tải PDF gộp” để tải một file nhiều trang cho tất cả người đã chọn.' : S.channel==='zalo' ? 'Bấm “Mở Zalo” ở từng người: nội dung được sao chép sẵn, bạn chỉ cần dán (Cmd/Ctrl+V) rồi gửi.' : S.channel==='sms' ? 'Bấm “Soạn SMS” ở từng người: ứng dụng tin nhắn mở sẵn với nội dung và số điện thoại.' : (t.kind === 'invite' ? 'Hệ thống gửi email thư mời có khung riêng'+(t.cta ? ' và nút bấm' : '')+' tới email đã lưu của những người được chọn.' : 'Hệ thống gửi email trực tiếp tới email đã lưu của những người được chọn.'))+((S.channel==='png'||S.channel==='pdf') && posterVariantIdx() >= 0 ? ' Đang dùng mẫu minh hoạ (poster) đã chọn ở trên — mỗi người một ảnh/PDF riêng, tự điền tên và thông tin khoá học.' : '')+((S.channel==='png'||S.channel==='pdf') && posterVariantIdx() < 0 && t.cta && first && ctaFor(first) ? ' Có đường link nên hệ thống tự sinh mã QR thật của link đó để quét trực tiếp.' : '')+'</p></div>'+
@@ -521,6 +522,7 @@ function mount(root, cfg){
     qa('[data-fk]').forEach(function(el){ var h = function(){ S.vars[el.dataset.fk] = el.value; refresh(); }; el.addEventListener('input', h); el.addEventListener('change', h); });
     qa('.nt-chip').forEach(function(b){ b.addEventListener('click', function(){ var t = q('#ntText'), v = '{'+b.dataset.v+'}', a = t.selectionStart || t.value.length, z = t.selectionEnd || a; t.value = t.value.slice(0,a)+v+t.value.slice(z); S.text = t.value; t.focus(); t.selectionStart = t.selectionEnd = a+v.length; refresh(); }); });
     qa('[data-ch]').forEach(function(b){ b.addEventListener('click', function(){ S.channel = b.dataset.ch; draw(); }); });
+    var ps = q('#ntPoster'); if (ps) ps.addEventListener('change', function(){ S.vars.kieu_mau = ps.value; draw(); });
     qa('[data-f]').forEach(function(b){ b.addEventListener('click', function(){ S.filter = b.dataset.f; selVisible(); draw(); }); });
     q('#ntQ').addEventListener('input', function(e){ S.q = e.target.value; selVisible(); var pos = e.target.selectionStart; draw(); var n = q('#ntQ'); n.focus(); try { n.setSelectionRange(pos,pos); } catch(_){} });
     q('#ntAll').addEventListener('change', function(e){ S.sel = {}; if (e.target.checked) visible().forEach(function(r){ S.sel[r.code] = true; }); draw(); });
