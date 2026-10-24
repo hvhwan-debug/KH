@@ -84,11 +84,14 @@ function normRegion(s) {
 // Miền của một câu hỏi theo tag ("Miền Bắc", "mien-bac", "#mienbac"...). Gắn cả hai miền hoặc không gắn = dùng chung ("").
 function questionRegion(q) {
   let r = "";
+  const mark = (v) => { if (v) r = r && r !== v ? "*" : v; };
   (Array.isArray(q && q.tags) ? q.tags : []).forEach((t) => {
     const k = foldRg(t).replace(/ /g, "");
-    const v = k === "mienbac" ? "bac" : k === "miennam" ? "nam" : "";
-    if (v) r = r && r !== v ? "*" : v;
+    mark(k === "mienbac" ? "bac" : k === "miennam" ? "nam" : "");
   });
+  const c = " " + foldRg(q && q.category) + " ";
+  if (c.indexOf(" mien bac ") >= 0) mark("bac");
+  if (c.indexOf(" mien nam ") >= 0) mark("nam");
   return r === "*" ? "" : r;
 }
 // Thí sinh có phải chọn tỉnh + miền trước khi làm bài không (nhóm PC / Nhân viên tư vấn sản phẩm)
@@ -541,7 +544,7 @@ function planExam(all, settings, segment, region) {
     source = "blueprint";
     return { picked, target, mode: "blueprint", short: Math.max(0, target - picked.length), pool, source, parts, error };
   }
-  const segRows = segPlanFor(settings, segment);
+  const segRows = segPlanFor(settings, segment, rg);
   if (segRows) return planBySegment(all, settings, segRows);
   const bank = bankFor(all, settings.examPeriod);
   const active = bank.list;
@@ -571,7 +574,7 @@ function planExam(all, settings, segment, region) {
 // ---------- Phân bổ câu hỏi theo nhóm ngành (cài đặt chung) ----------
 // segmentPlans = { both: [{category, count}], may_loc: [...], gia_dung: [...] }. Nhóm nào có danh sách thì đề của thí sinh
 // thuộc nhóm đó rút đúng số câu từng danh mục (trong ngân hàng của kỳ); nhóm để trống thì dùng cách cũ.
-const PLAN_SEGS = ["both", "may_loc", "gia_dung"];
+const PLAN_SEGS = ["both", "may_loc", "gia_dung", "mien_bac", "mien_nam"];
 const normCat = (c) => String(c || "").normalize("NFC").trim().replace(/\s+/g, " ").toLowerCase();
 function cleanSegmentPlans(sp) {
   const out = {};
@@ -590,20 +593,24 @@ function cleanSegmentPlans(sp) {
       clean.push({ category, count });
     }
     const total = clean.reduce((n, x) => n + x.count, 0);
-    if (total > MAX_QUESTION_COUNT) return { error: "Phân bổ cho nhóm " + ({ both: "bán cả 2 ngành", may_loc: "chỉ bán máy lọc", gia_dung: "chỉ bán gia dụng" }[seg]) + " cộng ra " + total + " câu, vượt giới hạn " + MAX_QUESTION_COUNT + " câu mỗi đề." };
+    if (total > MAX_QUESTION_COUNT) return { error: "Phân bổ cho nhóm " + ({ both: "bán cả 2 ngành", may_loc: "chỉ bán máy lọc", gia_dung: "chỉ bán gia dụng", mien_bac: "PC Miền Bắc", mien_nam: "PC Miền Nam" }[seg]) + " cộng ra " + total + " câu, vượt giới hạn " + MAX_QUESTION_COUNT + " câu mỗi đề." };
     if (clean.length) out[seg] = clean;
   }
   return out;
 }
-function segPlanFor(settings, segment) {
+// PC đã chọn miền: ưu tiên phân bổ của miền ("mien_bac"/"mien_nam"); miền đó chưa phân bổ thì theo nhóm ngành như cũ.
+function segPlanFor(settings, segment, region) {
   const sp = settings && settings.segmentPlans;
+  const rg = normRegion(region);
+  const rgRows = rg && sp && sp["mien_" + rg];
+  if (Array.isArray(rgRows) && rgRows.length) return rgRows;
   const rows = sp && sp[normSegment(segment)];
   return Array.isArray(rows) && rows.length ? rows : null;
 }
 // Số câu thực tế của đề cho một thí sinh (để hiện ở thể lệ)
-function countFor(settings, segment) {
+function countFor(settings, segment, region) {
   if (settings && settings.blueprint && settings.blueprint.rules && settings.blueprint.rules.length) return targetCount(settings);
-  const rows = segPlanFor(settings, segment);
+  const rows = segPlanFor(settings, segment, region);
   return rows ? Math.min(MAX_QUESTION_COUNT, rows.reduce((n, r) => n + r.count, 0)) : targetCount(settings);
 }
 function planBySegment(all, settings, rows) {

@@ -44,7 +44,7 @@ module.exports = async function (context, req) {
       id: examId,
       title: settings.examTitle,
       shareTitle: String(settings.shareTitle || "").trim() || settings.examTitle,
-      questionCount: quiz.countFor(settings, found.segment),
+      questionCount: quiz.countFor(settings, found.segment, found.region),
       secondsPerQuestion: Math.max(10, settings.secondsPerQuestion || 60),
       passScore: quiz.passScoreOf(settings),
       practice: !!settings.practice

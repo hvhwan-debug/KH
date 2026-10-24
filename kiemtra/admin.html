@@ -41,6 +41,8 @@ label.chk{display:flex!important;align-items:center;gap:8px;font-weight:600;marg
 label.chk input,#exSpMode input{width:18px!important;height:18px;margin:0;flex:0 0 auto}
 #exSpMode label{display:inline-flex!important;align-items:center;gap:6px;width:auto}
 .spg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+.spbox[data-box^=mien_]{border-color:#9FC3EE;background:#F5F9FE}
+.spbox .rgnote{font-size:12px;color:var(--muted);margin:0 0 8px}
 @media(max-width:900px){.spg{grid-template-columns:1fr}}
 .spbox{border:1px solid var(--line);border-radius:12px;padding:12px}
 .spbox h3{margin:0 0 2px;font-size:14px}.spbox .tot{font-size:12.5px;color:var(--muted);margin-bottom:8px}
@@ -1087,7 +1089,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
       </div>
       <div class="card" id="segPlanCard">
         <h1>Phân bổ câu hỏi mặc định theo nhóm ngành</h1>
-        <p class="small"><b>Đề mới tạo sẽ chép sẵn phân bổ này</b> (sửa riêng được trong “Cài đặt đề”). Mỗi nhóm thí sinh nhận đúng số câu của từng danh mục. Tên danh mục phải <b>trùng với ô "Phân loại"</b> của câu hỏi (không phân biệt hoa thường). Nhóm nào để trống thì dùng cách chia cũ ở trên (Tổng số câu + số câu Gia dụng cố định). Nếu một đề thi có "Cấu trúc đề" riêng thì cấu trúc đó được ưu tiên.</p>
+        <p class="small"><b>Đề mới tạo sẽ chép sẵn phân bổ này</b> (sửa riêng được trong “Cài đặt đề”). Mỗi nhóm thí sinh nhận đúng số câu của từng danh mục. Tên danh mục phải <b>trùng với ô "Phân loại"</b> của câu hỏi (không phân biệt hoa thường). Nhóm nào để trống thì dùng cách chia cũ ở trên (Tổng số câu + số câu Gia dụng cố định). Nếu một đề thi có "Cấu trúc đề" riêng thì cấu trúc đó được ưu tiên. <b>PC Miền Bắc / PC Miền Nam</b>: PC đã chọn miền sẽ nhận đề theo khung của miền mình (ưu tiên hơn nhóm ngành); câu hỏi gắn tag “Miền Bắc”/“Miền Nam” (hoặc danh mục có chữ “Miền Bắc”/“Miền Nam”) chỉ phát cho đúng miền, câu không gắn miền dùng chung.</p>
         <div class="spg" id="spWrap"></div>
         <datalist id="catList"></datalist>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
@@ -1493,7 +1495,7 @@ function exQSummary(){
   const segs = SP_SEGS.filter(([k]) => SEGPLANS[k] && SEGPLANS[k].length);
   const old = ($('exCount').value.trim() ? 'tổng ' + $('exCount').value.trim() + ' câu' : 'tổng số câu theo Cài đặt') + ' (cách chia cũ)';
   box.innerHTML = segs.length ? 'Theo <b>Phân bổ nhóm ngành</b> ở tab Cài đặt: ' + segs.map(([k,l]) => l + ' <b>' + SEGPLANS[k].reduce((n,r) => n + r.count, 0) + ' câu</b>').join(' · ') +
-    (segs.length < 3 ? ' · nhóm còn lại: ' + old : '') + note : old + '. Muốn chia theo danh mục cho từng nhóm ngành, chọn "Phân bổ riêng cho đề này" hoặc chỉnh ở tab Cài đặt.' + note;
+    (segs.filter(([k]) => k.indexOf('mien_') < 0).length < 3 ? ' · nhóm còn lại: ' + old : '') + note : old + '. Muốn chia theo danh mục cho từng nhóm ngành, chọn "Phân bổ riêng cho đề này" hoặc chỉnh ở tab Cài đặt.' + note;
 }
 const exSpOwn = () => { const r = document.querySelector('input[name=exSpMode]:checked'); return !!r && r.value === 'own'; };
 function exSpSet(own, plans){
@@ -2624,12 +2626,25 @@ async function xlTemplate(){
 /* ---------- Phân bổ câu hỏi theo nhóm ngành ---------- */
 // Dùng chung cho tab Cài đặt (phân bổ chung) và form đề thi (phân bổ riêng của từng đề). Mỗi khung là một .spg có data-bank = mã kỳ/đề để đếm câu.
 let SEGPLANS = {};
-const SP_SEGS = [['both','Bán cả 2 ngành'],['may_loc','Chỉ bán máy lọc nước'],['gia_dung','Chỉ bán gia dụng']];
+const SP_SEGS = [['both','Bán cả 2 ngành'],['may_loc','Chỉ bán máy lọc nước'],['gia_dung','Chỉ bán gia dụng'],['mien_bac','PC Miền Bắc'],['mien_nam','PC Miền Nam']];
 const SP_TEMPLATE = {
   both: [['Thương hiệu',5],['Gia dụng',10],['Máy lọc nước',15],['Kỹ năng bán hàng máy lọc',5],['Kỹ năng bán hàng gia dụng',5]],
   may_loc: [['Thương hiệu',5],['Máy lọc nước',25],['Kỹ năng bán hàng máy lọc',10]],
-  gia_dung: []
+  gia_dung: [],
+  mien_bac: [['Máy lọc nước',30],['Kỹ năng bán hàng máy lọc',10]],
+  mien_nam: [['Máy lọc nước',30],['Kỹ năng bán hàng máy lọc',10]]
 };
+// Miền của câu hỏi (khớp quiz.questionRegion ở máy chủ): tag "Miền Bắc"/"Miền Nam" hoặc tên danh mục có chữ "Miền Bắc"/"Miền Nam"
+const rgFold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/[^a-z0-9]+/g, ' ').trim();
+function qRegion(q){
+  let r = '';
+  const mark = v => { if (v) r = r && r !== v ? '*' : v; };
+  (q.tags || []).forEach(t => { const k = rgFold(t).replace(/ /g, ''); mark(k === 'mienbac' ? 'bac' : k === 'miennam' ? 'nam' : ''); });
+  const c = ' ' + rgFold(q.category) + ' ';
+  if (c.indexOf(' mien bac ') >= 0) mark('bac');
+  if (c.indexOf(' mien nam ') >= 0) mark('nam');
+  return r === '*' ? '' : r;
+}
 const spNorm = c => String(c || '').normalize('NFC').trim().replace(/\s+/g,' ').toLowerCase();
 const spHas = plans => SP_SEGS.some(([k]) => plans && plans[k] && plans[k].length);
 // Câu đang dùng của một kỳ/đề (cùng thứ tự dự phòng với máy chủ: câu của kỳ/đề → câu chưa gắn kỳ → kỳ gần nhất trước đó)
@@ -2645,7 +2660,7 @@ function spRowHTML(seg, r){
   return '<div class="sprow" data-seg="'+seg+'"><input type="text" list="catList" placeholder="Danh mục" value="'+esc(r.category||'')+'" oninput="spRefresh(this)"><input type="text" inputmode="numeric" placeholder="Số câu" value="'+(r.count||'')+'" oninput="spRefresh(this)"><button class="x" type="button" title="Bỏ dòng" onclick="const g=this.closest(\'.spg\');this.parentNode.remove();spRefresh(g)">×</button><div class="have"></div></div>';
 }
 function spRender(root, plans){
-  root.innerHTML = SP_SEGS.map(([k,l]) => '<div class="spbox" data-box="'+k+'"><h3>'+l+'</h3><div class="tot"></div><div class="rows">'+
+  root.innerHTML = SP_SEGS.map(([k,l]) => '<div class="spbox" data-box="'+k+'"><h3>'+l+'</h3><div class="tot"></div>'+(k.indexOf('mien_') === 0 ? '<p class="rgnote">Ưu tiên hơn nhóm ngành. Chỉ rút câu gắn tag “'+l.replace('PC ','')+'” và câu dùng chung (không gắn miền).</p>' : '')+'<div class="rows">'+
     ((plans || {})[k] || []).map(r => spRowHTML(k, r)).join('') + '</div><button class="btn ghost sm" type="button" style="margin-top:8px" onclick="spAdd(this,\''+k+'\')">＋ Thêm danh mục</button></div>').join('');
   spRefresh(root);
 }
@@ -2660,9 +2675,11 @@ function readSegPlans(){ return spRead($('spWrap')); }
 function spRefresh(el){
   const root = el && el.closest ? (el.classList && el.classList.contains('spg') ? el : el.closest('.spg')) : $('spWrap');
   if (!root) return;
-  const bank = bankOfPeriod(root.dataset.bank || CUR_PERIOD).list, cats = {};
-  bank.forEach(q => { const k = spNorm(q.category); if (k) cats[k] = (cats[k] || 0) + 1; });
+  const bank = bankOfPeriod(root.dataset.bank || CUR_PERIOD).list, catsOf = {};
+  // Đếm câu theo danh mục; khung của miền chỉ đếm câu của miền đó + câu dùng chung
+  ['', 'bac', 'nam'].forEach(rg => { const m = catsOf[rg] = {}; bank.forEach(q => { const qr = rg ? qRegion(q) : ''; if (rg && qr && qr !== rg) return; const k = spNorm(q.category); if (k) m[k] = (m[k] || 0) + 1; }); });
   SP_SEGS.forEach(([k]) => {
+    const cats = catsOf[k === 'mien_bac' ? 'bac' : k === 'mien_nam' ? 'nam' : ''];
     let tot = 0;
     root.querySelectorAll('.sprow[data-seg="'+k+'"]').forEach(r => {
       const i = r.querySelectorAll('input'), n = parseInt(i[1].value, 10) || 0, have = cats[spNorm(i[0].value)] || 0, h = r.querySelector('.have');
@@ -2672,7 +2689,7 @@ function spRefresh(el){
       h.textContent = have >= n ? '✓ ngân hàng có ' + have + ' câu' : '⚠ ngân hàng chỉ có ' + have + ' câu, thiếu ' + (n - have);
     });
     const t = root.querySelector('[data-box="'+k+'"] .tot');
-    if (t) t.textContent = tot ? 'Tổng ' + tot + ' câu mỗi đề' : 'Chưa phân bổ: dùng cách chia cũ';
+    if (t) t.textContent = tot ? 'Tổng ' + tot + ' câu mỗi đề' : (k.indexOf('mien_') === 0 ? 'Chưa phân bổ: PC miền này dùng phân bổ theo nhóm ngành' : 'Chưa phân bổ: dùng cách chia cũ');
   });
   const names = Array.from(new Set((QUESTIONS || []).map(q => (q.category || '').trim()).filter(Boolean).concat(...Object.values(SP_TEMPLATE).map(a => a.map(x => x[0])))));
   $('catList').innerHTML = names.map(n => '<option value="'+esc(n)+'">').join('');

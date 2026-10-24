@@ -206,8 +206,11 @@ const handler = async function (context, req) {
         if (draft.blueprint !== undefined) { const bp = quiz.cleanBlueprint(draft.blueprint); if (bp && bp.error) return reply(context, 400, { ok: false, error: bp.error }); eff.blueprint = bp; }
         const err = quiz.validateCounts({ questionCount: eff.questionCount, bothGiaDungCount: eff.bothGiaDungCount, blueprint: eff.blueprint }, 0);
         const all = await quiz.getQuestions();
-        const segs = eff.blueprint && eff.blueprint.rules && eff.blueprint.rules.length ? [["*", "Mọi thí sinh"]] : [["gia_dung", "Bán Gia dụng"], ["may_loc", "Bán Máy lọc nước"], ["both", "Bán cả 2 ngành"]];
-        const plans = segs.map(([seg, label]) => { const p = quiz.planExam(all, eff, seg); return { segment: seg, label, target: p.target, got: p.picked.length, short: p.short, pool: p.pool, mode: p.mode, source: p.source, parts: p.parts, error: p.error }; });
+        const hasBp = eff.blueprint && eff.blueprint.rules && eff.blueprint.rules.length, spx = eff.segmentPlans || {};
+        const segs = hasBp ? [["*", "Mọi thí sinh"]] : [["gia_dung", "Bán Gia dụng"], ["may_loc", "Bán Máy lọc nước"], ["both", "Bán cả 2 ngành"]];
+        // Xem trước thêm đề của PC từng miền (khi đã phân bổ theo miền)
+        if (!hasBp) [["bac", "PC Miền Bắc"], ["nam", "PC Miền Nam"]].forEach(([rg, label]) => { if (Array.isArray(spx["mien_" + rg]) && spx["mien_" + rg].length) segs.push(["mien_" + rg, label, rg]); });
+        const plans = segs.map(([seg, label, rg]) => { const p = quiz.planExam(all, eff, rg ? "both" : seg, rg); return { segment: seg, label, target: p.target, got: p.picked.length, short: p.short, pool: p.pool, mode: p.mode, source: p.source, parts: p.parts, error: p.error }; });
         return reply(context, 200, { ok: true, max: quiz.MAX_QUESTION_COUNT, invalid: err || "", plans });
       }
       if (op === "previewBlueprint") {
