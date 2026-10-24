@@ -43,7 +43,7 @@ function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace
 function fmt(ms){
   if (!ms) return '';
   try {
-    var p = {}; new Intl.DateTimeFormat('en-GB', { timeZone:'Asia/Ho_Chi_Minh', hour12:false, hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' }).formatToParts(new Date(ms)).forEach(function(x){ p[x.type] = x.value; });
+    var p = {}; new Intl.DateTimeFormat('en-GB', { timeZone:'Asia/Ho_Chi_Minh', hourCycle:'h23', hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' }).formatToParts(new Date(ms)).forEach(function(x){ p[x.type] = x.value; });
     return p.hour + ':' + p.minute + ' ' + p.day + '/' + p.month + '/' + p.year;
   } catch(e){ return ''; }
 }
@@ -194,6 +194,7 @@ function mount(root, cfg){
       '<div class="nt-rows">'+(vis.length ? vis.map(function(r){ return rowHtml(r); }).join('') : '<div style="padding:18px;text-align:center" class="nt-hint">Không có ai trong bộ lọc này.</div>')+'</div>'+
       '<div class="nt-foot">'+(S.channel==='email' ? '<button type="button" class="nt-go" id="ntSend"'+(nmail?'':' disabled')+'>Gửi email cho '+nmail+' người</button>'+(nmail < nsel ? '<span class="nt-hint">'+(nsel-nmail)+' người đã chọn chưa có email nên sẽ bị bỏ qua.</span>' : '') : '<span class="nt-hint">Bấm nút ở từng dòng để gửi. Dòng đã mở sẽ được tô xanh.</span>')+'</div><div id="ntRes"></div></div>'+
     '</div></div>';
+    if (window.KTDt24) window.KTDt24.upgrade(root);
     refresh();
     wire();
   }
