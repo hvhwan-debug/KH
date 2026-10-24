@@ -1,6 +1,8 @@
 // Công khai, không cần đăng nhập: thí sinh nhập mã nhân viên + email để vào bài kiểm tra.
 // Trả về: thông tin thí sinh, thể lệ bài thi, và trạng thái (chưa làm / đang làm dở / đã hoàn thành).
-const { reply, guardConfigured, requireAjax } = require("../_lib/http");
+const _http = require("../_lib/http");
+const { guardConfigured, requireAjax } = _http;
+const reply = (ctx, status, body) => _http.reply(ctx, status, require("../_lib/profile").stripProfile(body)); // không bao giờ trả hồ sơ nhân sự ra ngoài kt-admin
 const quiz = require("../_lib/quiz");
 const advicelib = require("../_lib/advice");
 

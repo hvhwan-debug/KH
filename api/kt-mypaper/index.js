@@ -1,7 +1,9 @@
 // Công khai nhưng có kiểm soát: thí sinh xem lại ĐÚNG đề mình đã làm, từ link/QR trên thẻ kết quả.
 // Các lớp bảo vệ: (1) phải đúng mã nhân viên + email của chính bài làm đó, (2) quét khuôn mặt đối chiếu ảnh đã lưu, (3) đề chỉ xem lại được
 // SAU KHI đã đóng (có "Thời gian đóng" và đã qua) - tránh lộ đề/đáp án cho người khác khi kỳ thi còn mở.
-const { reply, guardConfigured, requireAjax } = require("../_lib/http");
+const _http = require("../_lib/http");
+const { guardConfigured, requireAjax } = _http;
+const reply = (ctx, status, body) => _http.reply(ctx, status, require("../_lib/profile").stripProfile(body)); // không bao giờ trả hồ sơ nhân sự ra ngoài kt-admin
 const quiz = require("../_lib/quiz");
 const { cleanText, cleanList } = require("../_lib/cleantext");
 const { userFromReq } = require("../_lib/session");

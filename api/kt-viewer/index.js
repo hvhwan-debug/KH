@@ -1,7 +1,9 @@
 // Tài khoản QUẢN LÍ (do quản trị viên cấp): xem nhân viên thuộc phạm vi của mình và kết quả của họ,
 // thêm nhân viên mới, sửa / xoá / xác nhận thông tin nhân viên thuộc phạm vi của mình.
 // Không xoá được KẾT QUẢ bài làm (chỉ quản trị viên mới reset được bài làm, qua kt-admin).
-const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
+const _http = require("../_lib/http");
+const { guardConfigured, requireAjax, requireUserActive } = _http;
+const reply = (ctx, status, body) => _http.reply(ctx, status, require("../_lib/profile").stripProfile(body)); // không bao giờ trả hồ sơ nhân sự ra ngoài kt-admin
 const { validEmail, isAdmin } = require("../_lib/config");
 const quiz = require("../_lib/quiz");
 const { cleanText } = require("../_lib/cleantext");

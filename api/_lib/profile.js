@@ -41,4 +41,13 @@ async function forCode(code) {
     return c && c.profile ? c.profile : null;
   } catch (e) { return null; }
 }
-module.exports = { cleanProfile, brief, monthsSince, forCode };
+// Lớp chặn thứ hai: mọi phản hồi gửi cho QUẢN LÍ / THÍ SINH đều bị loại khoá "profile" (kể cả khi sau này ai đó lỡ trả nguyên bản ghi thí sinh).
+// Hồ sơ chỉ ra khỏi máy chủ qua kt-admin (quản trị viên) và, dạng tóm tắt không có thông tin cá nhân, qua lời khuyên AI.
+function stripProfile(v, depth) {
+  if (v == null || typeof v !== "object" || (depth || 0) > 12) return v;
+  if (Array.isArray(v)) return v.map((x) => stripProfile(x, (depth || 0) + 1));
+  const o = {};
+  Object.keys(v).forEach((k) => { if (k !== "profile") o[k] = stripProfile(v[k], (depth || 0) + 1); });
+  return o;
+}
+module.exports = { cleanProfile, brief, monthsSince, forCode, stripProfile };
