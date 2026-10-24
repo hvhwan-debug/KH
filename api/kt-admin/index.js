@@ -366,7 +366,26 @@ const handler = async function (context, req) {
             answered: g ? g.state !== "blank" : !!ans };
         });
         if (Array.isArray(a.devices)) a.devices = a.devices.map((d) => Object.assign({}, d, { model: modelName(d.model, d.screen) || d.model }));
-        return reply(context, 200, { ok: true, attempt: a, detail });
+        // Các lần làm khác của cùng người trong cùng đề: tóm tắt + tỉ lệ đúng theo từng danh mục để so sánh tiến bộ
+        let attempts = [];
+        try {
+          const subs = quiz.submittedOf(await quiz.getIndex(), a.code, a.period || "");
+          if (subs.length > 1) {
+            let best = null; subs.forEach((r) => { if (quiz.betterResult(r, best)) best = r; });
+            for (let i = 0; i < subs.length; i++) {
+              const r = subs[i], full = r.id === a.id ? a : await quiz.getAttempt(r.id).catch(() => null), cats = {};
+              if (full && Array.isArray(full.questionIds)) full.questionIds.forEach((qid) => {
+                const q = byId[qid]; if (!q) return;
+                const c = String(q.category || "Khác").trim() || "Khác", g = quiz.gradeAnswer(q, full.answers[qid], (full.orders || {})[qid]);
+                const x = cats[c] = cats[c] || { n: 0, ok: 0 }; x.n++; if (g.ok) x.ok++;
+              });
+              attempts.push({ id: r.id, n: i + 1, score: r.score, total: r.total, pct: r.pct, wrong: r.wrong, blank: r.blank, submittedAt: r.submittedAt,
+                durationSec: r.durationSec != null ? r.durationSec : (r.startedAt ? Math.round(((r.submittedAt || 0) - r.startedAt) / 1000) : null),
+                blur: (r.flags && r.flags.blur) || 0, shot: (r.flags && r.flags.shot) || 0, official: !!best && best.id === r.id, current: r.id === a.id, cats });
+            }
+          }
+        } catch (e) { attempts = []; }
+        return reply(context, 200, { ok: true, attempt: a, detail, attempts });
       }
       return reply(context, 400, { ok: false, error: "Thiếu tham số op." });
     }

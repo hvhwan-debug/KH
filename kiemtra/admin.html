@@ -506,6 +506,38 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 .rd-ring{width:92px;height:92px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--c) calc(var(--p)*1%),#E4E8EE 0)}
 .rd-ring span{width:70px;height:70px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:20px;font-weight:800;color:var(--c)}
 .rd-score small{font-size:12.5px;color:var(--muted);font-weight:600}
+.cmp{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:0 0 12px;background:#fff}
+.cmp-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.cmp-h b{font-size:15px}
+.cmp-lg{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.cmp-lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-left:6px}
+.cmp i.g{background:#2E8B57}.cmp i.r{background:#C0392B}.cmp i.b{background:#C5CCD6}
+.cmp-row{display:grid;grid-template-columns:170px minmax(0,1fr) 78px;align-items:center;gap:12px;width:100%;border:1.5px solid transparent;background:none;border-radius:12px;padding:8px 10px;font:inherit;text-align:left;cursor:pointer;color:inherit}
+.cmp-row:hover:not([disabled]){background:#F4F8FD}
+.cmp-row[disabled]{cursor:default}
+.cmp-row.cur{border-color:#9DBCE8;background:#F4F8FD}
+.cmp-l{display:flex;flex-wrap:wrap;align-items:center;gap:2px 6px}
+.cmp-l small{flex-basis:100%;font-size:11.5px;color:var(--muted)}
+.cmp-l .offtag{font-style:normal}
+.cmp-bar{display:flex;height:16px;border-radius:999px;overflow:hidden;background:#EEF1F4}
+.cmp-bar i{display:block;height:100%}
+.cmp-v{text-align:right;line-height:1.2}.cmp-v b{display:block;font-size:15px}.cmp-v small{font-size:11.5px;color:var(--muted)}
+.cmp-row.off .cmp-v b{color:var(--ok)}
+.cmp-chg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 4px}
+.cmp-chg>div{background:#F6F8FB;border-radius:10px;padding:8px 12px}
+.cmp-chg span{display:block;font-size:11.5px;color:var(--muted)}
+.cmp-chg b{font-size:14.5px}
+.cmp .up{color:var(--ok)}.cmp .down{color:var(--bad)}
+.cmp-cats{margin-top:10px}
+.cmp-cats summary{cursor:pointer;font-weight:700;font-size:13.5px;padding:4px 0}
+.cmp-tw{overflow-x:auto}
+.cmp-cats table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+.cmp-cats th,.cmp-cats td{padding:7px 8px;border-bottom:1px solid #EEF1F4;text-align:left;white-space:nowrap}
+.cmp-cats thead th{font-size:11.5px;color:var(--muted);font-weight:700}
+.cmp-cats tbody th{font-weight:600;white-space:normal;text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)}
+.cmp-pc{display:inline-block;min-width:44px;font-weight:700;background:linear-gradient(90deg,#DDF1E6 var(--p),transparent var(--p));border-radius:6px;padding:1px 6px}
+.cmp-cats td small{color:var(--muted);margin-left:4px}
+@media(max-width:640px){.cmp-row{grid-template-columns:96px minmax(0,1fr) 62px;gap:8px}.cmp-chg{grid-template-columns:1fr}}
 .rd-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
 .rd-stats>div{border-radius:12px;padding:10px 14px;display:flex;align-items:baseline;gap:8px}
 .rd-stats b{font-size:22px}.rd-stats span{font-size:13px;font-weight:600}
@@ -3220,6 +3252,37 @@ function rdJump(i){
   el.scrollIntoView({ behavior:'smooth', block:'center' });
   el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1400);
 }
+// So sánh các lần làm của cùng một người trong cùng đề: biểu đồ thanh, thay đổi giữa lần đầu và lần cuối, tỉ lệ đúng theo mảng
+function rdCompare(L){
+  if (!Array.isArray(L) || L.length < 2) return '';
+  const tm = s => s == null ? '–' : rdDur(s) || (s + ' giây');
+  const when = ms => { if (!ms) return ''; const d = new Date(ms + 7 * 3600 * 1000), p = n => (n < 10 ? '0' : '') + n; return p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ' ' + p(d.getUTCDate()) + '/' + p(d.getUTCMonth() + 1); };
+  const bars = L.map(t => {
+    const T = t.total || 1, ok = t.score || 0, bad = t.wrong != null ? t.wrong : Math.max(0, T - ok - (t.blank || 0)), bl = t.blank || 0;
+    return '<button type="button" class="cmp-row' + (t.current ? ' cur' : '') + (t.official ? ' off' : '') + '" ' + (t.current ? 'aria-current="true" disabled' : 'onclick="viewResult(\'' + esc(t.id) + '\')" title="Bấm để xem bài của lần ' + t.n + '"') + '>' +
+      '<span class="cmp-l"><b>Lần ' + t.n + '</b>' + (t.official ? '<i class="offtag">★ Chính thức</i>' : '') + '<small>' + esc(when(t.submittedAt)) + (t.current ? ' · đang xem' : '') + '</small></span>' +
+      '<span class="cmp-bar" aria-hidden="true"><i class="g" style="width:' + (ok / T * 100) + '%"></i><i class="r" style="width:' + (bad / T * 100) + '%"></i><i class="b" style="width:' + (bl / T * 100) + '%"></i></span>' +
+      '<span class="cmp-v"><b>' + ok + '/' + T + '</b><small>' + (t.pct != null ? t.pct + '%' : '') + '</small></span></button>';
+  }).join('');
+  // Thay đổi giữa lần đầu và lần gần nhất
+  const a = L[0], z = L[L.length - 1], dp = (z.pct || 0) - (a.pct || 0), ds = (z.score || 0) - (a.score || 0);
+  const sign = v => (v > 0 ? '+' : '') + v, cls = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
+  const chg = '<div class="cmp-chg">' +
+    '<div><span>Điểm (lần ' + a.n + ' → ' + z.n + ')</span><b class="' + cls(ds) + '">' + sign(ds) + ' câu · ' + sign(dp) + '%</b></div>' +
+    '<div><span>Thời gian làm</span><b>' + esc(tm(a.durationSec)) + ' → ' + esc(tm(z.durationSec)) + '</b></div>' +
+    '<div><span>Rời trang</span><b class="' + cls(-((z.blur || 0) - (a.blur || 0))) + '">' + (a.blur || 0) + ' → ' + (z.blur || 0) + ' lần</b></div>' +
+  '</div>';
+  // Theo mảng kiến thức
+  const cats = Array.from(new Set([].concat.apply([], L.map(t => Object.keys(t.cats || {}))))).sort((x, y) => x.localeCompare(y, 'vi'));
+  const cell = (t, c) => { const x = (t.cats || {})[c]; return x && x.n ? Math.round(x.ok / x.n * 100) : null; };
+  const catRows = cats.map(c => {
+    const v = L.map(t => cell(t, c)), first = v.find(x => x != null), last = [...v].reverse().find(x => x != null), d = first != null && last != null && v.filter(x => x != null).length > 1 ? last - first : null;
+    return '<tr><th>' + esc(c) + '</th>' + L.map((t, i) => { const x = (t.cats || {})[c]; return '<td>' + (x && x.n ? '<span class="cmp-pc" style="--p:' + v[i] + '%">' + v[i] + '%</span><small>' + x.ok + '/' + x.n + '</small>' : '<small>–</small>') + '</td>'; }).join('') +
+      '<td class="' + (d == null ? '' : cls(d)) + '">' + (d == null ? '' : (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + sign(d) + '%') + '</td></tr>';
+  }).join('');
+  const catTable = cats.length ? '<details class="cmp-cats" open><summary>Tỉ lệ đúng theo mảng kiến thức</summary><div class="cmp-tw"><table><thead><tr><th>Mảng</th>' + L.map(t => '<th>Lần ' + t.n + '</th>').join('') + '<th>Thay đổi</th></tr></thead><tbody>' + catRows + '</tbody></table></div><p class="small" style="margin:6px 0 0">Mỗi lần làm được phát bộ câu ngẫu nhiên khác nhau, nên so sánh theo mảng kiến thức thay vì từng câu.</p></details>' : '';
+  return '<div class="cmp"><div class="cmp-h"><b>So sánh ' + L.length + ' lần làm</b><span class="cmp-lg"><i class="g"></i>Đúng <i class="r"></i>Sai <i class="b"></i>Bỏ trống</span></div>' + bars + chg + catTable + '</div>';
+}
 async function viewResult(id){
   const { j } = await api('GET','/api/kt-admin?op=result&id='+encodeURIComponent(id));
   if (!j.ok){ alert(j.error); return; }
@@ -3283,7 +3346,7 @@ async function viewResult(id){
     }
     return '<div class="rd-q '+s+'" id="rdq-'+i+'" data-st="'+s+'">'+top+body+'</div>';
   }).join('');
-  $('resDetail').innerHTML = head + devBlock + '<div class="rd-sticky">' + tabs + nav + '</div><div class="rd-list">' + qs + '</div>';
+  $('resDetail').innerHTML = head + rdCompare(j.attempts) + devBlock + '<div class="rd-sticky">' + tabs + nav + '</div><div class="rd-list">' + qs + '</div>';
   resolveGeoNames($('resDetail'));
 }
 
