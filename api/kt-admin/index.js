@@ -238,7 +238,7 @@ const handler = async function (context, req) {
         const managers = Array.from(new Set(cands.map((c) => String(c.manager || "").trim()).filter(Boolean))).sort();
         return reply(context, 200, { ok: true, viewers, managers });
       }
-      if (op === "candidates") return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; o.title = quiz.titleOf(c); o.joinDate = require("../_lib/probation").joinDateOf(c.code, c.joinDate); return o; }) });
+      if (op === "candidates") return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; o.title = quiz.titleOf(c); const prob = require("../_lib/probation"); o.joinDate = prob.joinDateOf(c.code, c.joinDate); o.probation = prob.probationOf(c.code, undefined, o.joinDate); return o; }) });
       if (op === "changeRequests") return reply(context, 200, { ok: true, requests: (await require("../_lib/changereq").getAll()).filter((r) => r.status === "pending") });
       if (op === "notifyData") {
         // Dữ liệu cho màn Gửi thông báo: thí sinh thuộc đối tượng của đề, đã làm / chưa làm, số điện thoại, liên kết kết quả
