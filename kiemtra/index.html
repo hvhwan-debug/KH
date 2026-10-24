@@ -392,6 +392,36 @@ body.introbg main>.feats .fi svg{stroke:var(--brand);width:17px;height:17px}
 body.introbg main>.feats b{display:block;color:var(--ink);font-size:12px;line-height:1.35;margin:0;font-weight:700}
 body.introbg main>.feats span:not(.fi){display:none}
 body.introbg .foot{margin-top:14px;text-align:center;color:rgba(255,255,255,.88);font-size:12px;text-shadow:0 1px 8px rgba(2,20,70,.6)}
+/* ---- Hiệu ứng xuất hiện: trượt và mờ dần, từng phần nối nhau cho mượt ---- */
+@keyframes lpUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes lpDown{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+@keyframes lpIn{from{opacity:0;transform:translateX(34px)}to{opacity:1;transform:none}}
+@keyframes lpVig{from{opacity:0}to{opacity:1}}
+@keyframes lpPan{from{background-position:80% center}to{background-position:72% center}}
+body.introbg{animation:lpPan 1.6s cubic-bezier(.2,.7,.2,1) both}
+body.introbg::before{animation:lpVig 1s ease-out both}
+body.introbg .top{animation:lpDown .6s cubic-bezier(.2,.8,.2,1) both}
+body.introbg .stage>main{overflow:hidden;animation:lpUp .7s cubic-bezier(.2,.8,.2,1) .08s both}
+body.introbg .card{animation:lpIn .5s cubic-bezier(.2,.8,.2,1) both}
+body.introbg .card:not(.hide)>*{animation:lpUp .55s cubic-bezier(.2,.8,.2,1) both}
+body.introbg .card:not(.hide)>*:nth-child(1){animation-delay:.10s}
+body.introbg .card:not(.hide)>*:nth-child(2){animation-delay:.16s}
+body.introbg .card:not(.hide)>*:nth-child(3){animation-delay:.22s}
+body.introbg .card:not(.hide)>*:nth-child(4){animation-delay:.28s}
+body.introbg .card:not(.hide)>*:nth-child(5){animation-delay:.34s}
+body.introbg .card:not(.hide)>*:nth-child(6){animation-delay:.40s}
+body.introbg .card:not(.hide)>*:nth-child(n+7){animation-delay:.46s}
+body.introbg main>.feats li{animation:lpUp .6s cubic-bezier(.2,.8,.2,1) both}
+body.introbg main>.feats li:nth-child(1){animation-delay:.45s}
+body.introbg main>.feats li:nth-child(2){animation-delay:.55s}
+body.introbg main>.feats li:nth-child(3){animation-delay:.65s}
+body.introbg .foot{animation:lpVig .8s ease-out .5s both}
+body.introbg .btn.go{transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+body.introbg .btn.go:hover{transform:translateY(-1px);filter:brightness(1.05)}
+body.introbg .btn.go:active{transform:scale(.99)}
+@media(prefers-reduced-motion:reduce){
+  body.introbg,body.introbg *,body.introbg::before{animation:none!important;transition:none!important}
+}
 @media(max-width:560px){
   body.introbg{background-image:url(/kiemtra/bg-login-sm.jpg);background-position:center bottom;background-attachment:scroll}
   body.introbg .wrap{padding:20px 14px 18px}
