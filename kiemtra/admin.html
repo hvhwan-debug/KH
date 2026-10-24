@@ -2948,6 +2948,7 @@ function resRow(r){
     '<td class="rt-chips"><div class="chips">' + chips.join('') + '</div></td>' +
     '<td class="rt-time"><div class="tm"><b>' + (okD ? d.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit', second:'2-digit' }) : '–') + '</b><small>' + (okD ? d.toLocaleDateString('vi-VN') : '') + '</small></div><button type="button" class="proof" data-copy="' + esc(proof) + '" onclick="rtCopy(this)" title="Mã minh chứng, bấm để sao chép">' + esc(proof) + '</button></td>' +
     '<td class="rt-act"><div class="rt-btns"><button type="button" class="rt-ib" title="Xem chi tiết bài làm" aria-label="Xem bài làm của ' + nm + '" onclick="viewResult(\'' + esc(r.id) + '\')"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg></button>' +
+    (r.verify ? '<a class="rt-ib" style="text-decoration:none" href="/kiemtra/ketqua.html?t=' + encodeURIComponent(r.verify) + '" target="_blank" rel="noopener" title="Xem đề như thí sinh (mở trang xác thực, không cần nhập mã)" aria-label="Xem đề của ' + nm + '"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg></a>' : '') +
     '<button type="button" class="rt-ib danger" title="Cho phép làm lại bài này" aria-label="Cho làm lại bài của ' + nm + '" onclick="resetAttempt(\'' + esc(r.code) + '\',\'' + esc(r.period || '') + '\')"><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg></button></div></td></tr>';
 }
 function renderResults(){

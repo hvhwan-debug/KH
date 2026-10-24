@@ -4,15 +4,14 @@
 const { reply, guardConfigured, requireAjax } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
 const { cleanText, cleanList } = require("../_lib/cleantext");
-const crypto = require("crypto");
+const { userFromReq } = require("../_lib/session");
+const { isAdmin } = require("../_lib/config");
+const auditlog = require("../_lib/auditlog");
+const device = require("../_lib/device");
 
-// Cặp mã NV + email "xem mọi bài": không bị chặn bởi kiểm tra đúng chủ bài và điều kiện đề đã đóng.
-// Chỉ lưu dạng băm SHA-256 (không để lộ trong mã nguồn). Có thể đổi bằng biến môi trường KT_MASTER_REVIEW_SHA256.
-const MASTER_HASH = process.env.KT_MASTER_REVIEW_SHA256 || "5475df25e68663a88248af023f662c89f47c809a0463ae39595c32f9ac040630";
-function isMaster(code, email) {
-  const h = crypto.createHash("sha256").update(code + "|" + email).digest();
-  const m = Buffer.from(MASTER_HASH, "hex");
-  return m.length === h.length && crypto.timingSafeEqual(h, m);
+// Quản trị viên đang đăng nhập (cookie phiên) được xem mọi bài mà không cần mã NV + email của chủ bài.
+function adminOf(req) {
+  try { const u = userFromReq(req); return u && u.email && isAdmin(u.email) ? u : null; } catch (e) { return null; }
 }
 
 module.exports = async function (context, req) {
@@ -24,12 +23,14 @@ module.exports = async function (context, req) {
       return reply(context, 429, { ok: false, error: "Bạn đã thử quá nhiều lần. Vui lòng đợi vài phút rồi thử lại." });
     }
     const b = req.body || {};
+    const adminU = adminOf(req);
+    if (b.probe) return reply(context, 200, { ok: true, admin: !!adminU }); // trang kết quả hỏi: có phải quản trị viên không
     const id = quiz.checkVerifyToken(b.t);
     const attempt = id ? await quiz.getAttempt(id) : null;
     if (!attempt || attempt.status !== "submitted") { quiz.noteFail(req); return reply(context, 404, { ok: false, error: "Không tìm thấy kết quả. Mã QR không hợp lệ." }); }
 
     const code = quiz.normCode(b.code), email = quiz.normEmail(b.email);
-    const master = !!code && !!email && isMaster(code, email);
+    const master = !!(adminU && b.admin === true);
     if (!master && (!code || !email || quiz.normCode(attempt.code) !== code || quiz.normEmail(attempt.email) !== email)) {
       quiz.noteFail(req);
       return reply(context, 403, { ok: false, error: "Mã nhân viên hoặc email không khớp với bài làm này." });
@@ -47,6 +48,10 @@ module.exports = async function (context, req) {
       return reply(context, 404, { ok: false, error: "Bài làm này chưa có bản lưu đề để xem lại." });
     }
 
+    if (master) {
+      await auditlog.write({ area: "admin", role: "admin", by: String(adminU.email).toLowerCase(), name: adminU.name || "", op: "viewPaper", label: "Xem đề như thí sinh", kind: "read", status: 200, ok: true,
+        details: { code: attempt.code, name: attempt.name, attempt: attempt.id }, ip: device.ipOf(req) });
+    }
     return reply(context, 200, {
       ok: true,
       title: attempt.examTitle || settings.examTitle || "Bài kiểm tra",

@@ -250,7 +250,7 @@ const handler = async function (context, req) {
         const candBy = {}; (await quiz.getCandidates()).forEach((c) => { candBy[quiz.normCode(c.code)] = c; });
         const list = all.filter((r) => !wantPeriod || (r.period || "(chưa gắn kỳ)") === wantPeriod)
           .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0))
-          .map((r) => { const c = candBy[quiz.normCode(r.code)]; return Object.assign({}, r, { passed: quiz.passState(r.pct, st), title: c ? quiz.titleOf(c) : "", probation: require("../_lib/probation").probationOf(r.code, r.submittedAt || Date.now(), c && c.joinDate) }); }); // passed: luôn theo cài đặt hiện tại (null = bài không có ngưỡng); title: chức danh hiện tại của nhân viên
+          .map((r) => { const c = candBy[quiz.normCode(r.code)]; return Object.assign({}, r, { passed: quiz.passState(r.pct, st), title: c ? quiz.titleOf(c) : "", verify: r.status === "submitted" ? quiz.verifyToken(r.id) : "", probation: require("../_lib/probation").probationOf(r.code, r.submittedAt || Date.now(), c && c.joinDate) }); }); // passed: luôn theo cài đặt hiện tại (null = bài không có ngưỡng); title: chức danh hiện tại của nhân viên
         return reply(context, 200, { ok: true, results: list, periods, currentPeriod: st.examPeriod });
       }
       if (op === "audit") {

@@ -107,6 +107,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 
         <div class="paperbox" id="paperBox">
           <button type="button" class="btn-outline" id="paperToggle">Xem lại đề đã làm</button>
+          <button type="button" class="btn-outline solid hide" id="paperAdmin" style="margin-top:8px">Xem đề (quản trị viên)</button>
           <div class="hide" id="paperForm">
             <p class="pnote">Để bảo mật đề thi, chỉ xem lại được <b>sau khi bài kiểm tra đã kết thúc</b>, và cần nhập đúng mã nhân viên + email của chính bài làm này.</p>
             <input type="text" id="pCode" placeholder="Mã nhân viên" autocomplete="off">
@@ -165,18 +166,20 @@ $('paperToggle').addEventListener('click', function(){
   $('paperForm').classList.remove('hide');
   $('pCode').focus();
 });
-async function loadMyPaper(){
+async function loadMyPaper(asAdmin){
+  asAdmin = asAdmin === true;
   var code = $('pCode').value.trim(), email = $('pEmail').value.trim();
-  if (!code || !email){ $('paperMsg').innerHTML = '<div class="pmsg">Nhập đủ mã nhân viên và email.</div>'; return; }
+  if (!asAdmin && (!code || !email)){ $('paperMsg').innerHTML = '<div class="pmsg">Nhập đủ mã nhân viên và email.</div>'; return; }
   $('paperGo').disabled = true; $('paperMsg').innerHTML = '';
   var res, j;
   try {
-    res = await fetch('/api/kt-mypaper', { method:'POST', headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: JSON.stringify({ t: TOK, code: code, email: email }) });
+    res = await fetch('/api/kt-mypaper', { method:'POST', headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: JSON.stringify({ t: TOK, code: code, email: email, admin: asAdmin }) });
     j = await res.json();
   } catch(e){ j = null; }
   $('paperGo').disabled = false;
+  if (asAdmin && (!j || !j.ok)) $('paperForm').classList.remove('hide');
   if (!j || !j.ok){ $('paperMsg').innerHTML = '<div class="pmsg">' + esc((j && j.error) || 'Không kết nối được máy chủ.') + '</div>'; return; }
-  $('paperForm').classList.add('hide');
+  $('paperForm').classList.add('hide'); $('paperToggle').classList.add('hide'); $('paperAdmin').classList.add('hide');
   $('paperView').classList.remove('hide');
   var nOk = j.paper.filter(function(q){ return q.ok; }).length;
   var nBlank = j.paper.filter(function(q){ return !hasAnswer(q); }).length;
@@ -193,8 +196,18 @@ async function loadMyPaper(){
       return '<div class="pq"><span class="tag">Câu ' + q.n + (q.category ? ' · ' + esc(q.category) : '') + '</span>' + st + (!answered ? '<div class="opt blank-note">Bạn đã bỏ trống, không chọn phương án nào.</div>' : '') + '<p class="qt">' + esc(q.text) + '</p>' + opts + '</div>';
     }).join('');
 }
-$('paperGo').addEventListener('click', loadMyPaper);
-$('pEmail').addEventListener('keydown', function(e){ if (e.key === 'Enter') loadMyPaper(); });
+$('paperGo').addEventListener('click', function(){ loadMyPaper(false); });
+$('pEmail').addEventListener('keydown', function(e){ if (e.key === 'Enter') loadMyPaper(false); });
+$('paperAdmin').addEventListener('click', function(){ loadMyPaper(true); });
+// Quản trị viên đang đăng nhập: hiện nút xem thẳng, không cần nhập mã NV + email
+(async function(){
+  if (!TOK) return;
+  try {
+    var r = await fetch('/api/kt-mypaper', { method:'POST', headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: JSON.stringify({ t: TOK, probe: true }) });
+    var j = await r.json();
+    if (j && j.ok && j.admin) $('paperAdmin').classList.remove('hide');
+  } catch(e){}
+})();
 
 (async function(){
   var t = TOK;
