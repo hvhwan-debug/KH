@@ -195,6 +195,8 @@ button,input{font:inherit;color:inherit}
 .rules div{background:linear-gradient(180deg,#F4F9FA,#EAEFF6);border:1px solid #D5DFEC;border-radius:16px;padding:14px 8px;text-align:center}
 .rules b{display:block;font-size:22px;font-weight:800;color:var(--brand-deep);line-height:1.2}
 .rules span{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+.rules div.best{background:linear-gradient(180deg,#EEF8F2,#E2F2E9);border-color:#BFE3CE}
+.rules div.best b{color:var(--ok)}
 .notes{margin:0 0 4px;padding:0 0 0 18px;font-size:13px;line-height:1.75;color:var(--muted)}
 
 /* Làm bài */
@@ -929,9 +931,15 @@ function renderConfirm(){
   var secs = x.secondsPerQuestion || 60, n = x.questionCount || 0;
   var rl = ['<div><b>'+(n||'–')+'</b><span>Số câu hỏi</span></div>', '<div><b>'+secs+'s</b><span>Mỗi câu</span></div>'];
   if (x.passScore > 0) rl.push('<div><b>'+x.passScore+'%</b><span>Ngưỡng đạt</span></div>');
-  $('rulesBox').style.gridTemplateColumns = 'repeat(' + rl.length + ',minmax(0,1fr))';
+  // Đã làm, còn lượt: thêm ô "Lượt còn lại" và "Điểm cao nhất" ngay trong khung thống kê
+  var AT = !ST.inProgress && ST.attempts && ST.attempts.used ? ST.attempts : null;
+  if (AT){
+    rl.push('<div><b>'+(AT.max ? (AT.max - AT.used) + '/' + AT.max : '∞')+'</b><span>Lượt còn lại</span></div>');
+    if (AT.best) rl.push('<div class="best"><b>'+AT.best.score+'/'+AT.best.total+'</b><span>Điểm cao nhất</span></div>');
+  }
+  $('rulesBox').style.gridTemplateColumns = 'repeat(' + (rl.length === 4 ? 2 : rl.length) + ',minmax(0,1fr))';
   $('rulesBox').innerHTML = rl.join('');
-  $('notesBox').innerHTML =
+  $('notesBox').innerHTML = (AT ? '<li>Bạn đã làm bài này <b>' + AT.used + ' lần</b>. Kết quả chính thức là <b>lần có điểm cao nhất</b>, làm lại không bị mất điểm cũ.</li>' : '') +
     '<li>Mỗi câu có thời gian riêng. Hết giờ, hệ thống tự chuyển sang câu kế tiếp và <b>không thể quay lại</b>.</li>'+
     '<li>Nếu lỡ thoát hoặc tải lại trang, bạn làm tiếp đúng câu đang dở nhưng <b>đồng hồ vẫn chạy</b>.</li>'+
     '<li>Mỗi câu chỉ chọn một đáp án. Kết quả được chấm và gửi về email ngay sau khi nộp.</li>';
@@ -939,11 +947,8 @@ function renderConfirm(){
     $('resumeMsg').innerHTML = '<div class="msg info">Bạn có một bài đang làm dở (đã xong '+ST.inProgress.answered+'/'+ST.inProgress.total+' câu). Bấm tiếp tục để làm tiếp.</div>';
     $('btnStart').textContent = 'Tiếp tục làm bài';
   } else if (ST.attempts && ST.attempts.used){
-    var A = ST.attempts, L = A.best, left = A.max ? A.max - A.used : 0;
-    $('resumeMsg').innerHTML = '<div class="msg info">Bạn đã làm bài này <b>' + A.used + ' lần</b>' +
-      (L ? ', điểm cao nhất hiện tại: đúng <b>' + L.score + '/' + L.total + '</b> câu' : '') + '. ' +
-      (A.max ? 'Đề cho phép tối đa ' + A.max + ' lượt, bạn còn <b>' + left + ' lượt</b>. ' : '') +
-      'Kết quả chính thức là <b>lần có điểm cao nhất</b>, làm lại không bị mất điểm cũ.</div>';
+    var A = ST.attempts;
+    $('resumeMsg').innerHTML = '';
     $('btnStart').textContent = 'Làm lại bài (lượt ' + (A.used + 1) + (A.max ? '/' + A.max : '') + ')';
   } else {
     $('resumeMsg').innerHTML = '';
