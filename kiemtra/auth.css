@@ -1,0 +1,60 @@
+/* Giao diện chung cho các màn hình đăng nhập của /kiemtra: quản trị, quản lí, xác thực kết quả.
+   Cùng ngôn ngữ thiết kế với màn hình vào bài của thí sinh: nền ảnh sáng, thanh trên cùng, thẻ kính mờ ở giữa. */
+:root{--au-ink:#102e5b;--au-muted:#526b91}
+body:has(#loginScreen:not(.hide),#resetScreen:not(.hide),#deniedScreen:not(.hide)),body.au-lookup{
+  background:#eaf5ff url(/kiemtra/bg-light.jpg) center center/cover fixed no-repeat}
+body:has(#loginScreen:not(.hide),#resetScreen:not(.hide),#deniedScreen:not(.hide))::before,body.au-lookup::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(90deg,rgba(235,247,255,.35),rgba(235,247,255,.45) 55%,rgba(255,255,255,.04))}
+/* thanh trên cùng */
+.au-bar{display:none}
+body:has(#loginScreen:not(.hide),#resetScreen:not(.hide),#deniedScreen:not(.hide)) .au-bar,body.au-lookup .au-bar{display:flex}
+html.embed .au-bar{display:none!important}
+.au-bar{position:relative;z-index:5;height:76px;padding:0 clamp(24px,4.5vw,78px);align-items:center;justify-content:space-between;background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.8)}
+.au-brand{display:flex;align-items:center;gap:12px;min-width:0;font-weight:800;font-size:18px;color:var(--au-ink);text-decoration:none}
+.au-mark{flex:0 0 auto;width:44px;height:44px;border-radius:14px;background:#fff;display:grid;place-items:center;padding:5px;box-shadow:0 5px 18px rgba(22,76,140,.1)}
+.au-mark img{width:100%;height:100%;object-fit:contain;display:block}
+.au-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.au-back{flex:0 0 auto;font-size:13px;font-weight:700;color:#29466e;text-decoration:none;padding:9px 12px;border-radius:10px}
+.au-back:hover{background:rgba(255,255,255,.75)}
+/* vùng chứa thẻ: căn giữa màn hình */
+body:has(#loginScreen:not(.hide),#deniedScreen:not(.hide)) :is(#loginScreen,#deniedScreen) .wrap{max-width:none!important;min-height:calc(100vh - 76px);padding:24px 20px!important;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+body:has(.card.auth:not(.hide)) .wrap{max-width:none;min-height:calc(100vh - 76px);padding:24px 20px;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+body.au-lookup .wrap{max-width:none;min-height:calc(100vh - 76px);padding:24px 20px;justify-content:center;align-items:center;position:relative;z-index:1}
+body.au-lookup .top{display:none}
+/* thẻ */
+:is(#loginScreen,#deniedScreen) .card,.card.auth,body.au-lookup #card{
+  width:min(440px,100%);margin:0;background:rgba(255,255,255,.96);border:1px solid #e0ecfa;border-radius:26px;padding:34px 34px 30px;
+  box-shadow:0 22px 65px rgba(22,75,133,.18);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);overflow:hidden;animation:auUp .6s cubic-bezier(.2,.8,.2,1) both}
+.card.auth{max-width:440px}
+:is(#loginScreen,#deniedScreen) .card::before,.card.auth::before{display:none}
+.brandfull{display:block;margin:0 auto 8px;width:auto;height:96px;max-width:60%;object-fit:contain}
+:is(#loginScreen,#deniedScreen) .card h1,.card.auth h1,body.au-lookup .au-h{text-align:center;margin:0 0 8px;font-size:26px;letter-spacing:-.5px;color:var(--au-ink)}
+:is(#loginScreen,#deniedScreen) .card p.small,.card.auth p.lead,body.au-lookup .au-p{text-align:center;color:var(--au-muted);font-size:14px;line-height:1.65;margin:0 auto 22px}
+/* ô nhập và nút */
+:is(#loginScreen,#deniedScreen) .card label,.card.auth .field label{display:block;font-size:14px;font-weight:800;color:var(--au-ink);margin:14px 0 8px}
+:is(#loginScreen,#deniedScreen) .card input,.card.auth .field input,body.au-lookup .au-form input{
+  width:100%;height:54px;min-height:0;border:1.5px solid #9fc7ff;border-radius:14px;padding:0 16px;font:inherit;font-size:15px;color:var(--au-ink);background:#fff;box-shadow:0 0 0 4px #e9f3ff;outline:none;transition:border-color .15s,box-shadow .15s}
+:is(#loginScreen,#deniedScreen) .card input:focus,.card.auth .field input:focus,body.au-lookup .au-form input:focus{border-color:#0878e8;box-shadow:0 0 0 4px rgba(8,120,232,.15)}
+.card.auth .field{margin-bottom:0}
+#loginScreen .card .btn,.card.auth .btn.block,body.au-lookup .au-btn{
+  width:100%;height:56px;min-height:0;margin-top:20px;border:0;border-radius:14px;color:#fff;font:inherit;font-weight:800;font-size:16px;cursor:pointer;
+  background:linear-gradient(100deg,#0869df,#08b9d4);box-shadow:0 12px 25px rgba(8,120,232,.2);display:flex;align-items:center;justify-content:center;transition:transform .15s,filter .15s}
+.card.auth .btn.ghost.block{background:#fff;color:#0b4fb5;border:1.5px solid #9fc7ff;box-shadow:none}
+#loginScreen .card .btn:hover,.card.auth .btn.block:hover,body.au-lookup .au-btn:hover{transform:translateY(-1px);filter:brightness(1.04)}
+.card.auth .linkbtn{display:block;margin:16px auto 0;font-weight:700;color:#0b6bd6}
+body.au-lookup .au-form{display:grid;gap:0}
+body.au-lookup #lkMsg{margin-top:12px;font-size:13.5px;line-height:1.5;color:#B3261E;text-align:center}
+body.au-lookup .state{padding:6px 0 0;color:var(--au-muted)}
+.au-foot{display:none}
+@keyframes auUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes auDown{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+.au-bar{animation:auDown .6s cubic-bezier(.2,.8,.2,1) both}
+@media(max-width:560px){
+  .au-bar{height:64px;padding:0 4vw}
+  .au-brand{font-size:14px;gap:10px}
+  .au-mark{width:38px;height:38px;border-radius:12px}
+  :is(#loginScreen,#deniedScreen) .card,.card.auth,body.au-lookup #card{padding:26px 21px 24px;border-radius:22px}
+  body:has(#loginScreen:not(.hide),#deniedScreen:not(.hide)) :is(#loginScreen,#deniedScreen) .wrap,body:has(.card.auth:not(.hide)) .wrap,body.au-lookup .wrap{min-height:calc(100vh - 64px)}
+  body:has(#loginScreen:not(.hide),#resetScreen:not(.hide),#deniedScreen:not(.hide)),body.au-lookup{background-image:url(/kiemtra/bg-light-sm.jpg);background-position:60% center;background-attachment:scroll}
+}
+@media(prefers-reduced-motion:reduce){.au-bar,:is(#loginScreen,#deniedScreen) .card,.card.auth,body.au-lookup #card{animation:none!important}}

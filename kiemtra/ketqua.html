@@ -135,8 +135,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .fm-b.solid{background:#fff;color:#0A3F94;border-color:#fff}
 @media(prefers-reduced-motion:reduce){.fm-scan::after,.fm-stage.s-check .fm-ring{animation:none}}
 </style>
+<link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 </head>
 <body>
+<header class="au-bar"><a class="au-brand" href="/kiemtra/"><span class="au-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span class="au-name">Hệ thống kiểm tra đánh giá trực tuyến</span></a><a class="au-back" href="/kiemtra/">Trang làm bài →</a></header>
 <div class="wrap">
   <header class="top"><div class="logo" aria-hidden="true"><img src="/kiemtra/logo-mark.png" alt="" width="40" height="40"></div><div><b>Nền tảng kiểm tra trực tuyến</b><span>Xác thực kết quả bài kiểm tra</span></div></header>
 
@@ -216,12 +218,13 @@ function fail(text){ $('state').textContent = text; $('state').classList.remove(
 /* Mở trang này không kèm mã (vd. từ link trong trang quản trị): cho dán liên kết xác thực in trên thẻ kết quả */
 function showLookup(){
   var st = $('state'); st.classList.remove('hide'); $('okView').classList.add('hide');
-  st.innerHTML = '<b style="display:block;color:var(--ink);font-size:18px;margin-bottom:6px">Xác thực kết quả kiểm tra</b>' +
-    '<p style="margin:0 0 14px">Quét mã QR trên thẻ kết quả, hoặc dán <b>liên kết xác thực</b> của thẻ vào ô bên dưới.</p>' +
-    '<form id="lkForm" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">' +
-    '<input id="lkIn" type="text" autocomplete="off" placeholder="Dán liên kết xác thực…" aria-label="Liên kết xác thực" style="flex:1 1 260px;min-width:0;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;font-size:16px;background:#FAFCFC">' +
-    '<button type="submit" style="border:0;border-radius:12px;padding:12px 20px;min-height:46px;font:inherit;font-weight:700;color:#fff;background:var(--brand);cursor:pointer">Xác thực</button></form>' +
-    '<div id="lkMsg" role="alert" style="margin-top:12px;font-size:13.5px;color:#B3261E"></div>';
+  document.body.classList.add('au-lookup');
+  st.innerHTML = '<img class="brandfull" src="/kiemtra/logo.png" alt="Hệ thống kiểm tra đánh giá trực tuyến">' +
+    '<h1 class="au-h">Xác thực kết quả kiểm tra</h1>' +
+    '<p class="au-p">Quét mã QR trên thẻ kết quả, hoặc dán <b>liên kết xác thực</b> của thẻ vào ô bên dưới.</p>' +
+    '<form id="lkForm" class="au-form"><input id="lkIn" type="text" autocomplete="off" placeholder="Dán liên kết xác thực…" aria-label="Liên kết xác thực">' +
+    '<button type="submit" class="au-btn">Xác thực</button></form>' +
+    '<div id="lkMsg" role="alert"></div>';
   $('lkForm').addEventListener('submit', function(ev){
     ev.preventDefault();
     var v = $('lkIn').value.trim(), tok = '';
