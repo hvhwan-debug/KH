@@ -221,8 +221,8 @@ function showLookup(){
   document.body.classList.add('au-lookup');
   st.innerHTML = '<img class="brandfull" src="/kiemtra/logo.png" alt="Hệ thống kiểm tra đánh giá trực tuyến">' +
     '<h1 class="au-h">Xác thực kết quả kiểm tra</h1>' +
-    '<p class="au-p">Quét mã QR trên thẻ kết quả, hoặc dán <b>liên kết xác thực</b> của thẻ vào ô bên dưới.</p>' +
-    '<form id="lkForm" class="au-form"><input id="lkIn" type="text" autocomplete="off" placeholder="Dán liên kết xác thực…" aria-label="Liên kết xác thực">' +
+    '<p class="au-p">Quét mã QR trên thẻ kết quả, dán <b>liên kết xác thực</b>, hoặc nhập <b>mã KT-…</b> in trên thẻ vào ô bên dưới.</p>' +
+    '<form id="lkForm" class="au-form"><input id="lkIn" type="text" autocomplete="off" placeholder="Dán liên kết hoặc nhập mã KT-…" aria-label="Liên kết xác thực hoặc mã KT">' +
     '<button type="submit" class="au-btn">Xác thực</button></form>' +
     '<div id="lkMsg" role="alert"></div>';
   $('lkForm').addEventListener('submit', function(ev){
@@ -231,9 +231,9 @@ function showLookup(){
     try { tok = new URL(v, location.origin).searchParams.get('t') || ''; } catch(e){}
     if (!tok && /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(v)) tok = v;
     if (!tok){
-      $('lkMsg').textContent = /^KT-[0-9A-F]{8}$/i.test(v)
-        ? 'Mã KT-… chỉ để đối chiếu trên thẻ. Để xác thực, hãy quét mã QR hoặc dán liên kết xác thực của thẻ.'
-        : 'Chưa nhận ra liên kết xác thực. Hãy dán đúng liên kết (dạng …/kiemtra/ketqua.html?t=…) hoặc quét lại mã QR.';
+      var m = /^KT-?([0-9A-Za-z]{8})$/.exec(v);
+      if (m){ location.href = '/kiemtra/ketqua.html?c=' + encodeURIComponent('KT-' + m[1].toUpperCase()); return; }
+      $('lkMsg').textContent = 'Chưa nhận ra mã. Hãy nhập mã KT-… trên thẻ, dán liên kết xác thực (dạng …/kiemtra/ketqua.html?t=…) hoặc quét lại mã QR.';
       return;
     }
     location.href = '/kiemtra/ketqua.html?t=' + encodeURIComponent(tok);
@@ -242,6 +242,7 @@ function showLookup(){
 }
 
 var TOK = new URLSearchParams(location.search).get('t');
+var KCODE = new URLSearchParams(location.search).get('c'); // mã minh chứng KT-… (tra cứu không cần liên kết có chữ ký)
 $('paperToggle').addEventListener('click', function(){
   $('paperToggle').classList.add('hide');
   $('paperForm').classList.remove('hide');
@@ -429,9 +430,9 @@ $('paperAdmin').addEventListener('click', adminView);
 
 (async function(){
   var t = TOK;
-  if (!t){ showLookup(); return; }
+  if (!t && !KCODE){ showLookup(); return; }
   var res, j;
-  try { res = await fetch('/api/kt-verify?t=' + encodeURIComponent(t), { credentials:'same-origin' }); j = await res.json(); }
+  try { res = await fetch('/api/kt-verify?' + (t ? 't=' + encodeURIComponent(t) : 'c=' + encodeURIComponent(KCODE)), { credentials:'same-origin' }); j = await res.json(); }
   catch(e){ fail('Không kết nối được máy chủ, vui lòng thử lại.'); return; }
   if (!j || !j.ok){ fail((j && j.error) || 'Không xác thực được kết quả.'); return; }
   off = (j.serverNow || Date.now()) - Date.now();

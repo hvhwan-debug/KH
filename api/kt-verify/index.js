@@ -9,11 +9,23 @@ module.exports = async function (context, req) {
     if (quiz.tooManyFails(req, 20, 10 * 60 * 1000)) {
       return reply(context, 429, { ok: false, error: "Bạn đã thử quá nhiều lần. Vui lòng đợi vài phút rồi thử lại." });
     }
-    const id = quiz.checkVerifyToken(req.query && req.query.t);
+    let id = quiz.checkVerifyToken(req.query && req.query.t);
+    // Hoặc tra bằng mã minh chứng KT-XXXXXXXX in trên thẻ kết quả (không cần liên kết có chữ ký).
+    // Mã này chỉ cho xem đúng những gì in trên thẻ; KHÔNG trả về token nên không mở được phần xem bài làm chi tiết.
+    let byCode = false, codeBad = false;
+    if (!id && req.query && req.query.c) {
+      byCode = true;
+      const m = /^KT-?([0-9A-Z]{8})$/.exec(String(req.query.c).trim().toUpperCase());
+      if (m) {
+        const want = "KT-" + m[1];
+        const hit = (await quiz.getIndex()).filter((x) => x.status === "submitted" && String(x.proof || quiz.proofCode(x.id)).toUpperCase() === want);
+        if (hit.length === 1) id = hit[0].id; else codeBad = true;
+      } else codeBad = true;
+    }
     const attempt = id ? await quiz.getAttempt(id) : null;
     if (!attempt || attempt.status !== "submitted") {
       quiz.noteFail(req);
-      return reply(context, 404, { ok: false, error: "Không tìm thấy kết quả. Mã QR không hợp lệ hoặc đã bị chỉnh sửa." });
+      return reply(context, 404, { ok: false, error: byCode ? "Không tìm thấy kết quả với mã này. Kiểm tra lại mã KT-… trên thẻ kết quả." : "Không tìm thấy kết quả. Mã QR không hợp lệ hoặc đã bị chỉnh sửa." });
     }
     // Cài đặt của ĐÚNG đề thí sinh đã làm (tiêu đề, ngưỡng đạt, thi thử...), không phải cài đặt chung.
     const settings = await quiz.getExamSettings(attempt.period || "");
