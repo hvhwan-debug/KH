@@ -697,14 +697,31 @@ function mount(root, cfg){
       var subj = (q('#ntSubj') || {}).value || '';
       if (!subj.trim()){ q('#ntRes').innerHTML = '<div class="nt-msg er">Nhập tiêu đề email.</div>'; return; }
       if (!confirm('Gửi email cho ' + rows.length + ' người đã chọn?')) return;
-      send.disabled = true; send.textContent = 'Đang gửi…'; q('#ntRes').innerHTML = '';
-      var j = null, kind = tplOf(S.tpl).kind || '';
-      try { j = await cfg.sendEmail(rows.map(function(r){ var it = { code:r.code, text: msgFor(r) }, c = ctaFor(r); if (c) it.cta = c; return it; }), subj, kind); } catch(e){ j = null; }
-      var bad = {}; ((j && j.failed) || []).forEach(function(f){ bad[f.code] = f.error || 'Lỗi'; });
-      ((j && j.skipped) || []).forEach(function(f){ bad[f.code] = f.reason || 'Bỏ qua'; });
-      rows.forEach(function(r){ if (bad[r.code]) S.err[r.code] = bad[r.code]; else if (j && (j.ok || j.sent)) { S.sent[r.code] = true; delete S.err[r.code]; } });
-      draw();
-      q('#ntRes').innerHTML = j ? '<div class="nt-msg '+(j.ok && !(j.failed||[]).length ? 'ok' : 'er')+'">'+(j.error ? esc(j.error) : 'Đã gửi '+(j.sent||0)+' email'+((j.failed||[]).length ? ', lỗi '+j.failed.length : '')+((j.skipped||[]).length ? ', bỏ qua '+j.skipped.length : '')+'.')+'</div>' : '<div class="nt-msg er">Không kết nối được máy chủ, thử lại sau.</div>';
+      send.disabled = true; q('#ntRes').innerHTML = '';
+      var kind = tplOf(S.tpl).kind || '', label0 = send.textContent;
+      // Gửi theo từng đợt nhỏ (máy chủ ngắt mỗi yêu cầu sau ~45 giây). Người máy chủ chưa kịp gửi được đưa vào đợt sau.
+      var queue = rows.map(function(r){ var it = { code:r.code, text: msgFor(r) }, c = ctaFor(r); if (c) it.cta = c; return it; });
+      var tot = { sent:0, failed:[], skipped:[], dup:[] }, fatal = '', done = 0, guard = 0, BATCH = 12;
+      while (queue.length && !fatal && guard++ < 60){
+        send.textContent = 'Đang gửi… ' + done + '/' + rows.length;
+        var part = queue.splice(0, BATCH), j = null;
+        try { j = await cfg.sendEmail(part, subj, kind); } catch(e){ j = null; }
+        if (!j || (j.sent == null && !j.error)){ fatal = 'Mất kết nối với máy chủ giữa chừng. Bấm gửi lại: những người đã nhận sẽ không bị gửi trùng.'; queue = part.concat(queue); break; }
+        if (j.error && !j.sent && !(j.pending||[]).length && !(j.failed||[]).length){ fatal = j.error; break; }
+        tot.sent += j.sent || 0; tot.failed = tot.failed.concat(j.failed || []); tot.skipped = tot.skipped.concat(j.skipped || []); tot.dup = tot.dup.concat(j.dup || []);
+        var bad = {}; (j.failed || []).forEach(function(f){ bad[f.code] = f.error || 'Lỗi'; }); (j.skipped || []).forEach(function(f){ bad[f.code] = f.reason || 'Bỏ qua'; });
+        var pend = {}; (j.pending || []).forEach(function(c){ pend[c] = 1; });
+        part.forEach(function(it){ if (bad[it.code]) S.err[it.code] = bad[it.code]; else if (!pend[it.code]) { S.sent[it.code] = true; delete S.err[it.code]; done++; } });
+        if (j.error) fatal = j.error;
+        queue = part.filter(function(it){ return pend[it.code]; }).concat(queue);
+        draw(); send = q('#ntSend') || send; send.disabled = true;
+      }
+      send.disabled = false; send.textContent = label0;
+      var left = queue.length, okAll = !fatal && !tot.failed.length && !left;
+      var m = 'Đã gửi ' + tot.sent + ' email' + (tot.dup.length ? ', ' + tot.dup.length + ' người đã nhận thư này trước đó nên không gửi lại' : '') +
+        (tot.failed.length ? ', lỗi ' + tot.failed.length : '') + (tot.skipped.length ? ', bỏ qua ' + tot.skipped.length : '') + (left ? ', còn ' + left + ' người chưa gửi' : '') + '.';
+      q('#ntRes').innerHTML = '<div class="nt-msg ' + (okAll ? 'ok' : 'er') + '">' + esc(m) + (fatal ? '<br>' + esc(fatal) : '') +
+        (tot.failed.length ? '<br><small>' + esc(tot.failed.slice(0, 3).map(function(f){ return f.code + ': ' + f.error; }).join(' · ')) + '</small>' : '') + '</div>';
     });
   }
   function refresh(){ // cập nhật xem trước, tiêu đề email và liên kết SMS khi đang gõ, không vẽ lại cả khung (giữ con trỏ)

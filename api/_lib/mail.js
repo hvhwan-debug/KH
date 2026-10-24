@@ -16,6 +16,7 @@ async function send({ to, subject, html, text, headers }) {
       host: c.smtp.host,
       port: c.smtp.port,
       secure: c.smtp.secure,
+      pool: true, maxConnections: 4, maxMessages: 100,
       auth: c.smtp.user ? { user: c.smtp.user, pass: c.smtp.pass } : undefined
     });
   }
