@@ -109,9 +109,16 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
           <button type="button" class="btn-outline" id="paperToggle">Xem lại đề đã làm</button>
           <button type="button" class="btn-outline solid hide" id="paperAdmin" style="margin-top:8px">Xem đề (quản trị viên)</button>
           <div class="hide" id="paperForm">
-            <p class="pnote">Để bảo mật đề thi, chỉ xem lại được <b>sau khi bài kiểm tra đã kết thúc</b>, và cần nhập đúng mã nhân viên + email của chính bài làm này.</p>
+            <p class="pnote">Để bảo mật đề thi, chỉ xem lại được <b>sau khi bài kiểm tra đã kết thúc</b>, và cần nhập đúng mã nhân viên, email, số điện thoại của chính bài làm này, đồng thời <b>chụp ảnh khuôn mặt</b> để hệ thống đối chiếu với ảnh đã lưu. Ảnh vừa chụp chỉ dùng để đối chiếu, không được lưu lại.</p>
             <input type="text" id="pCode" placeholder="Mã nhân viên" autocomplete="off">
             <input type="text" id="pEmail" placeholder="Email" autocomplete="off">
+            <input type="tel" id="pPhone" inputmode="tel" placeholder="Số điện thoại (10 số, bắt đầu bằng 0)" autocomplete="off" maxlength="20">
+            <div id="camBox" style="margin:8px 0">
+              <video id="camVideo" class="hide" autoplay playsinline muted style="width:100%;max-height:280px;border-radius:12px;background:#0B3B3A;object-fit:cover;transform:scaleX(-1)"></video>
+              <canvas id="camCanvas" class="hide"></canvas>
+              <img id="camImg" class="hide" alt="Ảnh vừa chụp" style="width:100%;max-height:280px;border-radius:12px;object-fit:cover;transform:scaleX(-1)">
+              <button type="button" class="btn-outline" id="camBtn" style="margin-top:8px">📷 Bật camera để chụp khuôn mặt</button>
+            </div>
             <button type="button" class="btn-outline solid" id="paperGo">Xem đề</button>
             <div id="paperMsg"></div>
           </div>
@@ -166,19 +173,43 @@ $('paperToggle').addEventListener('click', function(){
   $('paperForm').classList.remove('hide');
   $('pCode').focus();
 });
+
+/* ---------- Camera chụp khuôn mặt để đối chiếu ---------- */
+var CAM = { stream:null, photo:'' };
+function camStop(){ if (CAM.stream){ CAM.stream.getTracks().forEach(function(t){ t.stop(); }); CAM.stream = null; } $('camVideo').classList.add('hide'); }
+$('camBtn').addEventListener('click', async function(){
+  var btn = $('camBtn');
+  if (CAM.stream){ // đang bật camera -> chụp
+    var v = $('camVideo'), c = $('camCanvas'), w = Math.min(480, v.videoWidth || 480), h = Math.round(w * (v.videoHeight || 360) / (v.videoWidth || 480));
+    c.width = w; c.height = h; c.getContext('2d').drawImage(v, 0, 0, w, h);
+    CAM.photo = c.toDataURL('image/jpeg', 0.72);
+    $('camImg').src = CAM.photo; $('camImg').classList.remove('hide'); camStop();
+    btn.textContent = '📷 Chụp lại'; return;
+  }
+  try {
+    CAM.photo = ''; $('camImg').classList.add('hide');
+    CAM.stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ ideal:640 } }, audio:false });
+    $('camVideo').srcObject = CAM.stream; $('camVideo').classList.remove('hide');
+    btn.textContent = '📸 Chụp ảnh';
+  } catch(e){
+    $('paperMsg').innerHTML = '<div class="pmsg">Không mở được camera. Hãy cho phép trình duyệt dùng camera (và mở bằng Chrome/Safari, không mở trong Zalo/Facebook).</div>';
+  }
+});
 async function loadMyPaper(asAdmin){
   asAdmin = asAdmin === true;
-  var code = $('pCode').value.trim(), email = $('pEmail').value.trim();
-  if (!asAdmin && (!code || !email)){ $('paperMsg').innerHTML = '<div class="pmsg">Nhập đủ mã nhân viên và email.</div>'; return; }
+  var code = $('pCode').value.trim(), email = $('pEmail').value.trim(), phone = $('pPhone').value.trim();
+  if (!asAdmin && (!code || !email || !phone)){ $('paperMsg').innerHTML = '<div class="pmsg">Nhập đủ mã nhân viên, email và số điện thoại.</div>'; return; }
+  if (!asAdmin && !CAM.photo){ $('paperMsg').innerHTML = '<div class="pmsg">Hãy bật camera và chụp ảnh khuôn mặt để đối chiếu.</div>'; return; }
   $('paperGo').disabled = true; $('paperMsg').innerHTML = '';
   var res, j;
   try {
-    res = await fetch('/api/kt-mypaper', { method:'POST', headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: JSON.stringify({ t: TOK, code: code, email: email, admin: asAdmin }) });
+    res = await fetch('/api/kt-mypaper', { method:'POST', headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: JSON.stringify({ t: TOK, code: code, email: email, phone: phone, photo: asAdmin ? '' : CAM.photo, admin: asAdmin }) });
     j = await res.json();
   } catch(e){ j = null; }
   $('paperGo').disabled = false;
   if (asAdmin && (!j || !j.ok)) $('paperForm').classList.remove('hide');
   if (!j || !j.ok){ $('paperMsg').innerHTML = '<div class="pmsg">' + esc((j && j.error) || 'Không kết nối được máy chủ.') + '</div>'; return; }
+  camStop(); CAM.photo = ''; $('camImg').src = '';
   $('paperForm').classList.add('hide'); $('paperToggle').classList.add('hide'); $('paperAdmin').classList.add('hide');
   $('paperView').classList.remove('hide');
   var nOk = j.paper.filter(function(q){ return q.ok; }).length;
@@ -197,7 +228,7 @@ async function loadMyPaper(asAdmin){
     }).join('');
 }
 $('paperGo').addEventListener('click', function(){ loadMyPaper(false); });
-$('pEmail').addEventListener('keydown', function(e){ if (e.key === 'Enter') loadMyPaper(false); });
+$('pPhone').addEventListener('keydown', function(e){ if (e.key === 'Enter') loadMyPaper(false); });
 $('paperAdmin').addEventListener('click', function(){ loadMyPaper(true); });
 // Quản trị viên đang đăng nhập: hiện nút xem thẳng, không cần nhập mã NV + email
 (async function(){

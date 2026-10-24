@@ -8,10 +8,20 @@ const { userFromReq } = require("../_lib/session");
 const { isAdmin } = require("../_lib/config");
 const auditlog = require("../_lib/auditlog");
 const device = require("../_lib/device");
+const facecheck = require("../_lib/facecheck");
+const { normPhone } = require("../_lib/phone");
 
 // Quản trị viên đang đăng nhập (cookie phiên) được xem mọi bài mà không cần mã NV + email của chủ bài.
 function adminOf(req) {
   try { const u = userFromReq(req); return u && u.email && isAdmin(u.email) ? u : null; } catch (e) { return null; }
+}
+
+// Ghi nhật ký mỗi lần xem lại đề của người thường (kể cả bị từ chối). Không lưu ảnh vừa chụp.
+async function logView(req, attempt, result, why, detail) {
+  try {
+    await auditlog.write({ area: "verify", role: "candidate", by: String(attempt.code || "").toLowerCase(), name: attempt.name || "", op: "viewPaper", label: "Thí sinh xem lại đề (SĐT + đối chiếu khuôn mặt)",
+      kind: result === "ok" ? "read" : "denied", status: result === "ok" ? 200 : 403, ok: result === "ok", details: { attempt: attempt.id, result: why, note: detail || "" }, ip: device.ipOf(req) });
+  } catch (e) { /* không chặn luồng chính */ }
 }
 
 module.exports = async function (context, req) {
@@ -46,6 +56,35 @@ module.exports = async function (context, req) {
     }
     if (!paper.length) {
       return reply(context, 404, { ok: false, error: "Bài làm này chưa có bản lưu đề để xem lại." });
+    }
+
+    // Người thường: phải nhập đúng số điện thoại trong hồ sơ VÀ đối chiếu khuôn mặt với ảnh đã lưu của chủ bài.
+    if (!master) {
+      const phone = normPhone(b.phone);
+      if (!phone) return reply(context, 400, { ok: false, error: "Nhập số điện thoại (10 số, bắt đầu bằng 0)." });
+      const cands = await quiz.getCandidates();
+      const prof = cands.find((c) => quiz.normCode(c.code) === quiz.normCode(attempt.code));
+      const onFile = prof ? normPhone(prof.phone) : "";
+      if (onFile && onFile !== phone) {
+        quiz.noteFail(req);
+        await logView(req, attempt, "denied", "phone");
+        return reply(context, 403, { ok: false, error: "Số điện thoại không khớp với hồ sơ." });
+      }
+      const selfie = typeof b.photo === "string" ? b.photo : "";
+      if (!selfie.startsWith("data:image/") || selfie.length > 350000) return reply(context, 400, { ok: false, error: "Cần chụp ảnh khuôn mặt bằng camera để đối chiếu." });
+      // Ảnh đã lưu của chủ hồ sơ: ảnh của bài này trước, rồi các bài khác cùng mã nhân viên (mới nhất trước)
+      const refs = [];
+      if (attempt.photo) refs.push(attempt.photo);
+      const rows = (await quiz.getIndex()).filter((r) => quiz.normCode(r.code) === quiz.normCode(attempt.code) && r.id !== attempt.id).sort((a, c) => (c.startedAt || 0) - (a.startedAt || 0)).slice(0, 4);
+      for (const r of rows) { if (refs.length >= 3) break; const a2 = await quiz.getAttempt(r.id); if (a2 && a2.photo) refs.push(a2.photo); }
+      const cmp = await facecheck.compare(selfie, refs);
+      if (!cmp.ok) {
+        if (cmp.code !== "unavailable") quiz.noteFail(req);
+        await logView(req, attempt, "denied", "face:" + cmp.code, cmp.result && cmp.result.reason);
+        return reply(context, cmp.code === "unavailable" ? 503 : 403, { ok: false, error: cmp.message });
+      }
+      if (prof && !onFile) { prof.phone = phone; await quiz.saveCandidates(cands); } // hồ sơ chưa có số: lưu số vừa nhập sau khi khuôn mặt khớp
+      await logView(req, attempt, "ok", "face:ok", cmp.result && cmp.result.reason);
     }
 
     if (master) {
