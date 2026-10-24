@@ -234,7 +234,7 @@ const handler = async function (context, req) {
         const managers = Array.from(new Set(cands.map((c) => String(c.manager || "").trim()).filter(Boolean))).sort();
         return reply(context, 200, { ok: true, viewers, managers });
       }
-      if (op === "candidates") return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; o.title = quiz.titleOf(c); return o; }) });
+      if (op === "candidates") return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; o.title = quiz.titleOf(c); o.joinDate = require("../_lib/probation").joinDateOf(c.code, c.joinDate); return o; }) });
       if (op === "settings") return reply(context, 200, { ok: true, settings: await quiz.getSettings() });
       if (op === "faceRejections") {
         const list = (await require("../_lib/facecheck").getRejections()).slice().reverse();

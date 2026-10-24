@@ -919,7 +919,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
           <select id="candSegF" onchange="renderCandidates()" aria-label="Lọc theo nhóm ngành"><option value="*">Mọi nhóm ngành</option><option value="both">Cả hai ngành</option><option value="may_loc">Máy lọc nước</option><option value="gia_dung">Gia dụng</option></select>
           <span class="small" id="candShown"></span>
         </div>
-        <table class="stk"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Chức danh</th><th>Email</th><th>Quản lí</th><th>Nhóm ngành</th><th>Xác nhận thông tin</th><th></th></tr></thead><tbody id="candList"></tbody></table>
+        <table class="stk"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Chức danh</th><th>Email</th><th>Quản lí</th><th>Nhóm ngành</th><th>Ngày vào làm</th><th></th></tr></thead><tbody id="candList"></tbody></table>
       </div>
     </div>
 
@@ -2192,7 +2192,7 @@ function renderCandidates(){
   const L = CANDIDATES.filter(c => (mf === '*' || (c.manager||'') === mf) && (sf === '*' || (c.segment||'both') === sf) && (tf === '*' || (c.title||'PC') === tf) && (!q || spNorm([c.code, c.name, c.email, c.title || 'PC'].join(' ')).indexOf(q) >= 0));
   $('candShown').textContent = L.length === CANDIDATES.length ? '' : 'Đang lọc: ' + L.length + ' người';
   $('candList').innerHTML = L.map(c =>
-    '<tr><td>'+esc(c.code)+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button></td><td><span class="ttlchip">'+esc(c.title||'PC')+'</span></td><td>'+esc(c.email)+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.confirmed?'<span class="badge y">Đã xác nhận</span><br>'+esc(c.confirmed.byName||c.confirmed.by||'')+' · '+new Date(c.confirmed.at).toLocaleDateString('vi-VN'):'<span class="small">Chưa xác nhận</span>')+'</td><td style="white-space:nowrap"><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
+    '<tr><td>'+esc(c.code)+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button></td><td><span class="ttlchip">'+esc(c.title||'PC')+'</span></td><td>'+esc(c.email)+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.joinDate?esc(c.joinDate.split('-').reverse().join('/')):'–')+'</td><td style="white-space:nowrap"><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
   ).join('') || '<tr><td colspan="8" class="small">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Bấm “＋ Thêm thí sinh”.') + '</td></tr>';
 }
 let CANDIDATES = [];
