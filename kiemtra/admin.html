@@ -531,10 +531,10 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 .pg-score{border:0;background:none;padding:0;font:inherit;font-size:13.5px;color:var(--ink);cursor:pointer;text-align:left}.pg-score:hover{text-decoration:underline}
 .pg-sub{display:block;color:var(--muted);font-size:12px}
 .pg-empty{padding:20px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
-.pg-tg{border:0;background:none;padding:2px 6px;margin-left:2px;cursor:pointer;color:var(--muted);font:inherit;font-size:13px;border-radius:8px;line-height:1}
-.pg-tg:hover{background:#EEF1F4;color:var(--ink)}.pg-tg svg{display:inline-block;transition:transform .15s}
-.pg-row.collapsed .pg-info{display:none}.pg-row.collapsed .pg-tg svg{transform:rotate(-90deg)}
-.pg-row.collapsed{padding-top:7px;padding-bottom:7px}
+.pg-fold{border:0;background:#EEF1F4;color:var(--ink);width:30px;height:30px;border-radius:9px;margin-right:10px;cursor:pointer;vertical-align:middle;padding:0;line-height:1}
+.pg-fold:hover{background:#E1E7EE}.pg-fold svg{transition:transform .15s}
+#pgCard.folded .pg-fold svg{transform:rotate(-90deg)}#pgCard.folded #pgBody{display:none}
+.pg-sum{font-size:13px;font-weight:600;color:var(--muted);margin-left:12px;display:none}#pgCard.folded .pg-sum{display:inline}
 .pg-auto{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:6px;background:#FDF0DA;color:#8A5500;vertical-align:middle}
 @media(max-width:640px){.pg-row{grid-template-columns:12px minmax(0,1fr) auto;gap:8px 10px}.pg-info{grid-column:2/-1}}
 .cmp{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:0 0 12px;background:#fff}
@@ -1274,16 +1274,17 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
         <div class="kpis" id="dashKpis"></div>
       </div>
       <div class="card" id="pgCard">
-        <div class="pg-h"><h1 style="margin:0">Tình trạng làm bài</h1><span class="small" id="pgUpd"></span></div>
+        <div class="pg-h"><h1 style="margin:0"><button type="button" class="pg-fold" id="pgFold" aria-expanded="true" aria-controls="pgBody" onclick="pgFold()" title="Thu gọn / mở rộng"><svg width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>Tình trạng làm bài<span class="pg-sum" id="pgSum"></span></h1><span class="small" id="pgUpd"></span></div>
+        <div id="pgBody">
         <div class="pg-tabs" role="tablist" id="pgTabs"></div>
         <div class="pg-tools">
           <input type="search" id="pgSearch" placeholder="Tìm tên, mã NV, quản lí, tỉnh…" oninput="renderProgress()" aria-label="Tìm thí sinh">
           <select id="pgMgr" onchange="renderProgress()" aria-label="Lọc theo quản lí"></select>
           <button class="btn ghost sm" type="button" onclick="loadProgress()">↻ Làm mới</button>
           <button class="btn ghost sm" type="button" id="pgCopy" onclick="pgCopy()">Sao chép danh sách</button>
-          <button class="btn ghost sm" type="button" id="pgColl" onclick="pgToggleAll()">Thu gọn tất cả</button>
         </div>
         <div class="pg-list" id="pgList"></div>
+        </div>
       </div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
@@ -3089,7 +3090,7 @@ const perLabel = (p) => /^\d{4}-\d{2}$/.test(p||'') ? 'tháng ' + p.slice(5) + '
 const pctTxt = (v) => v == null ? '–' : (Math.round(v*10)/10).toString().replace('.', ',') + '%';
 const durTxt = (s) => { if (s == null) return '–'; const m = Math.floor(s/60), x = s%60; return m + ' phút ' + (x<10?'0':'') + x + ' giây'; };
 /* ---------- Tình trạng làm bài: Đã làm / Đang làm / Chưa làm ---------- */
-let PG = null, PG_F = 'all', PG_P = '', PG_T = null, PG_C = {}; // PG_C: mã NV → true nếu dòng đang thu gọn (chỉ áp dụng cho Đang làm / Đã làm)
+let PG = null, PG_F = 'all', PG_P = '', PG_T = null;
 const PG_LBL = { all:'Tất cả', doing:'Đang làm', done:'Đã làm', none:'Chưa làm' };
 async function loadProgress(sel){
   if (sel !== undefined) PG_P = /^[a-z0-9][a-z0-9-]{0,39}$/i.test(sel || '') ? sel : '';
@@ -3101,19 +3102,19 @@ async function loadProgress(sel){
   const mv = $('pgMgr').value, mgrs = Array.from(new Set(j.list.map(x => x.manager || ''))).sort((a, b) => a.localeCompare(b, 'vi'));
   $('pgMgr').innerHTML = '<option value="*">Mọi quản lí</option>' + mgrs.map(m => '<option value="' + esc(m) + '">' + esc(m || '(chưa có quản lí)') + '</option>').join('');
   $('pgMgr').value = mgrs.indexOf(mv) >= 0 ? mv : '*';
-  renderProgress();
+  renderProgress(); pgSummary();
   clearTimeout(PG_T);
   // Có người đang làm: tự làm mới khi khung còn hiển thị
   if (j.count.doing) PG_T = setTimeout(() => { if ($('pgCard').offsetParent) loadProgress(); }, 30000);
 }
 function pgSetF(f){ PG_F = f; renderProgress(); }
-function pgToggle(code){ PG_C[code] = !PG_C[code]; renderProgress(); }
-function pgToggleAll(){
-  const L = PG ? pgRows().filter(x => x.status !== 'none' && (PG_F === 'all' || x.status === PG_F)) : [];
-  const allCollapsed = L.length && L.every(x => PG_C[x.code]);
-  L.forEach(x => { PG_C[x.code] = !allCollapsed; });
-  renderProgress();
+function pgFold(force){
+  const c = $('pgCard'), on = typeof force === 'boolean' ? force : !c.classList.contains('folded');
+  c.classList.toggle('folded', on); $('pgFold').setAttribute('aria-expanded', String(!on));
+  try { localStorage.setItem('kt_pg_fold', on ? '1' : '0'); } catch (e) {}
 }
+function pgSummary(){ if (!PG) return; $('pgSum').textContent = 'Đang làm ' + PG.count.doing + ' · Đã làm ' + PG.count.done + ' · Chưa làm ' + PG.count.none; }
+try { if (localStorage.getItem('kt_pg_fold') === '1') document.addEventListener('DOMContentLoaded', () => pgFold(true)); } catch (e) {}
 function pgRows(){
   const q = spNorm($('pgSearch').value || ''), m = $('pgMgr').value || '*';
   return PG.list.filter(x => (m === '*' || (x.manager || '') === m) && (!q || spNorm([x.name, x.code, x.manager, x.province, x.phone].join(' ')).indexOf(q) >= 0));
@@ -3126,7 +3127,6 @@ function renderProgress(){
   const ORD = { doing:0, none:1, done:2 };
   const L = base.filter(x => PG_F === 'all' || x.status === PG_F).sort((a, b) => (ORD[a.status] - ORD[b.status]) || String(a.name).localeCompare(String(b.name), 'vi'));
   $('pgCopy').classList.toggle('hide', PG_F !== 'none' || !L.length);
-  const collL = L.filter(x => x.status !== 'none'); $('pgColl').classList.toggle('hide', !collL.length); $('pgColl').textContent = collL.length && collL.every(x => PG_C[x.code]) ? 'Mở rộng tất cả' : 'Thu gọn tất cả';
   $('pgList').innerHTML = L.map(x => {
     let info = '';
     if (x.status === 'doing'){
@@ -3137,11 +3137,9 @@ function renderProgress(){
       const d = x.done;
       info = '<button type="button" class="pg-score" onclick="viewResult(\'' + esc(d.id) + '\')" title="Xem bài làm"><b>' + d.score + '/' + d.total + '</b> ' + d.pct + '%' + (d.tries > 1 ? ' · ' + d.tries + ' lần' : '') + '</button><small class="pg-sub">nộp ' + fm(d.submittedAt) + '</small>';
     } else info = '<small class="pg-sub">' + (x.phone ? esc(x.phone) : 'Chưa có số điện thoại') + '</small>';
-    const canColl = x.status !== 'none', coll = canColl && !!PG_C[x.code];
-    const tg = canColl ? '<button type="button" class="pg-tg" aria-expanded="' + !coll + '" title="' + (coll ? 'Mở rộng' : 'Thu gọn') + '" onclick="pgToggle(\'' + esc(x.code) + '\')"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' : '';
-    return '<div class="pg-row ' + x.status + (coll ? ' collapsed' : '') + '"><span class="pg-dot" aria-hidden="true"></span>' +
+    return '<div class="pg-row ' + x.status + '"><span class="pg-dot" aria-hidden="true"></span>' +
       '<div class="pg-who"><b>' + esc(x.name || x.code) + '</b><small>' + esc(x.code) + (x.manager ? ' · ' + esc(x.manager) : '') + (x.province ? ' · ' + esc(x.province) : '') + (x.region ? ' · ' + (x.region === 'bac' ? 'Miền Bắc' : 'Miền Nam') : '') + '</small></div>' +
-      '<span class="pg-st">' + PG_LBL[x.status] + (x.done && x.status === 'done' && x.done.auto ? '<span class="pg-auto" title="Hết giờ, hệ thống tự thu bài">tự thu</span>' : '') + tg + '</span><div class="pg-info">' + info + '</div></div>';
+      '<span class="pg-st">' + PG_LBL[x.status] + (x.done && x.status === 'done' && x.done.auto ? '<span class="pg-auto" title="Hết giờ, hệ thống tự thu bài">tự thu</span>' : '') + '</span><div class="pg-info">' + info + '</div></div>';
   }).join('') || '<div class="pg-empty">Không có thí sinh nào ở mục này.</div>';
 }
 function pgCopy(){
