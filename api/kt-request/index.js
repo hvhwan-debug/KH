@@ -52,6 +52,11 @@ module.exports = async function (context, req) {
       proposed.region = rg;
     }
 
+    // Tỉnh/thành và miền bán hàng là bắt buộc: sau khi điều chỉnh vẫn phải có đủ cả hai
+    const finalProv = proposed.province || PROV.canonProvince(found.province), finalRg = proposed.region || quiz.normRegion(found.region);
+    if (!finalProv) return reply(context, 400, { ok: false, error: "Vui lòng chọn tỉnh/thành làm việc." });
+    if (!finalRg) return reply(context, 400, { ok: false, error: "Vui lòng chọn miền bán hàng (Miền Bắc hoặc Miền Nam)." });
+
     const cur = {
       name: String(found.name || ""), email: quiz.normEmail(found.email), manager: String(found.manager || ""), title: quiz.titleOf(found),
       segment: quiz.normSegment(found.segment), phone: normPhone(found.phone),

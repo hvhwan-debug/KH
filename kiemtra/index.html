@@ -662,8 +662,8 @@ body.introbg .btn.go:active{transform:scale(.99)}
         <div class="field"><label for="rqManager">Quản lí</label><input id="rqManager" type="text" autocomplete="off" maxlength="100" style="padding-left:14px"></div>
         <div class="field"><label for="rqTitle">Chức danh</label><input id="rqTitle" type="text" autocomplete="off" maxlength="50" style="padding-left:14px"></div>
         <div class="field"><label for="rqSegment">Nhóm ngành</label><select id="rqSegment" style="width:100%;border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;font-size:16px;background:#FAFCFC"><option value="both">Cả hai (Gia dụng + Máy lọc nước)</option><option value="gia_dung">Chỉ Gia dụng</option><option value="may_loc">Chỉ Máy lọc nước</option></select></div>
-        <div class="field"><label for="rqProvince">Tỉnh/thành làm việc</label><select id="rqProvince" style="width:100%;border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;font-size:16px;background:#FAFCFC"><option value="">(chưa chọn)</option></select></div>
-        <div class="field"><label for="rqRegion">Miền bán hàng</label><select id="rqRegion" style="width:100%;border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;font-size:16px;background:#FAFCFC"><option value="">(chưa chọn)</option><option value="bac">Miền Bắc</option><option value="nam">Miền Nam</option></select></div>
+        <div class="field"><label for="rqProvince">Tỉnh/thành làm việc <span style="color:var(--bad)">*</span></label><select id="rqProvince" required style="width:100%;border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;font-size:16px;background:#FAFCFC"><option value="">Chọn tỉnh/thành</option></select></div>
+        <div class="field"><label for="rqRegion">Miền bán hàng <span style="color:var(--bad)">*</span></label><select id="rqRegion" required style="width:100%;border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;font-size:16px;background:#FAFCFC"><option value="">Chọn miền bán hàng</option><option value="bac">Miền Bắc</option><option value="nam">Miền Nam</option></select></div>
         <div class="field"><label for="rqNote">Ghi chú cho quản trị viên (không bắt buộc)</label><textarea id="rqNote" rows="3" maxlength="500" placeholder="Ví dụ: tên tôi bị sai dấu, hoặc tôi đã chuyển sang nhóm của chị B..." style="width:100%;border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;font-size:16px;font-family:inherit;background:#FAFCFC;resize:vertical"></textarea></div>
         <button class="btn go" id="btnReqSend" type="button">Gửi yêu cầu</button>
         <button class="btn ghost" id="btnReqCancel" type="button">Huỷ</button>
@@ -948,7 +948,7 @@ $('btnReqOpen').addEventListener('click', function(){
   var c = ST.cand;
   $('rqName').value = c.name || ''; $('rqEmail').value = c.email || ''; $('rqPhone').value = c.phone || '';
   $('rqManager').value = c.manager || ''; $('rqTitle').value = c.title || 'PC'; $('rqSegment').value = c.segment || 'both'; $('rqNote').value = '';
-  fillProvinces($('rqProvince'), '(chưa chọn)'); $('rqProvince').value = c.province || ''; $('rqRegion').value = c.region || '';
+  fillProvinces($('rqProvince'), 'Chọn tỉnh/thành'); $('rqProvince').value = c.province || ''; $('rqRegion').value = c.region || '';
   msg('reqMsg',''); $('reqBox').classList.remove('hide'); $('btnReqOpen').classList.add('hide'); $('rqName').focus();
 });
 $('btnReqCancel').addEventListener('click', function(){ $('reqBox').classList.add('hide'); $('btnReqOpen').classList.remove('hide'); });
@@ -956,6 +956,8 @@ $('btnReqSend').addEventListener('click', async function(){
   var btn = $('btnReqSend'), label = btn.textContent;
   var phone = $('rqPhone').value.trim();
   if (phone && !normPhoneVN(phone)){ msg('reqMsg','Số điện thoại chưa đúng (cần 10 số, bắt đầu bằng 0).'); $('rqPhone').focus(); return; }
+  if (!$('rqProvince').value){ msg('reqMsg','Vui lòng chọn tỉnh/thành làm việc.'); $('rqProvince').focus(); return; }
+  if (!$('rqRegion').value){ msg('reqMsg','Vui lòng chọn miền bán hàng (Miền Bắc hoặc Miền Nam) để hệ thống phát đúng bộ đề.'); $('rqRegion').focus(); return; }
   btn.disabled = true; btn.textContent = 'Đang gửi…'; msg('reqMsg','');
   var res;
   try { res = await api('/api/kt-request', { code:ST.cand.inCode, email:ST.cand.inEmail, note:$('rqNote').value,

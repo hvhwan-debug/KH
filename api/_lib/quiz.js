@@ -96,11 +96,9 @@ function questionRegion(q) {
   if (c.indexOf(" mien nam ") >= 0) mark("nam");
   return r === "*" ? "" : r;
 }
-// Thí sinh có phải chọn tỉnh + miền trước khi làm bài không (nhóm PC / Nhân viên tư vấn sản phẩm)
-function needsRegion(c) {
-  const t = foldRg(titleOf(c));
-  return t === "pc" || t.indexOf("tu van san pham") >= 0;
-}
+// Thí sinh có phải chọn tỉnh + miền trước khi làm bài không: BẮT BUỘC với mọi thí sinh (miền quyết định bộ đề được phát;
+// không phụ thuộc chức danh để người bị ghi sai chức danh cũng không lọt qua và nhận sai đề).
+function needsRegion(c) { return true; }
 
 // Ngân hàng đề THEO KỲ: mỗi câu hỏi có period ("YYYY-MM"); "" = chưa gắn kỳ.
 // Đề của kỳ P chỉ lấy câu thuộc kỳ P. Nếu kỳ P chưa có câu nào, tạm dùng các câu CHƯA GẮN KỲ (dự phòng),
