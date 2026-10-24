@@ -148,6 +148,10 @@ button,input{font:inherit;color:inherit}
 .btn.go::after{content:'\2192';font-weight:700;transition:transform .2s}
 .btn.go:hover::after{transform:translateX(4px)}
 .btn.go:disabled::after{content:''}
+.sublinks{display:flex;flex-direction:column;align-items:center;gap:0;margin-top:10px}
+.lnk{display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:8px 6px;font:inherit;font-size:14px;font-weight:600;white-space:nowrap;max-width:100%;color:var(--brand-deep);cursor:pointer;border-radius:8px}
+.lnk:hover{color:var(--brand);text-decoration:underline;text-underline-offset:3px}
+.lnk:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 .btn.ghost{background:#fff;color:var(--brand-deep);border:1.5px solid var(--line);margin-top:10px;box-shadow:none;min-height:50px}
 .btn.ghost:hover{background:var(--brand-soft);box-shadow:none;filter:none}
 /* Khung giờ mở/đóng đề: hiện ngay khi mở link, trước khi nhập mã */
@@ -674,7 +678,6 @@ body.introbg .btn.go:active{transform:scale(.99)}
       <ul class="notes" id="notesBox"></ul>
       <div id="resumeMsg"></div>
       <div id="reqState"></div>
-      <button class="btn ghost" id="btnReqOpen" type="button" style="margin-top:12px">Thông tin chưa đúng? Yêu cầu điều chỉnh</button>
       <div class="reqbox hide" id="reqBox">
         <h2 style="font-size:16px;margin:0 0 4px">Yêu cầu điều chỉnh thông tin</h2>
         <p class="small" style="margin:0 0 12px;color:var(--muted)">Sửa các ô chưa đúng rồi gửi. Thông tin chỉ được cập nhật sau khi quản trị viên xác nhận. Bạn vẫn có thể làm bài ngay trong lúc chờ.</p>
@@ -692,7 +695,10 @@ body.introbg .btn.go:active{transform:scale(.99)}
         <div id="reqMsg" role="alert"></div>
       </div>
       <button class="btn go" id="btnStart" type="button" style="margin-top:20px">Bắt đầu làm bài</button>
-      <button class="btn ghost" id="btnBack" type="button">Không phải tôi, nhập lại</button>
+      <div class="sublinks">
+        <button class="lnk" id="btnBack" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Không phải tôi? Nhập lại</button>
+        <button class="lnk" id="btnReqOpen" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Thông tin sai? Yêu cầu điều chỉnh</button>
+      </div>
       <div id="startMsg" role="alert"></div>
     </section>
 
@@ -1036,7 +1042,8 @@ $('btnReqOpen').addEventListener('click', function(){
   $('rqName').value = c.name || ''; $('rqEmail').value = c.email || ''; $('rqPhone').value = c.phone || '';
   $('rqManager').value = c.manager || ''; $('rqTitle').value = c.title || 'PC'; $('rqSegment').value = c.segment || 'both'; $('rqNote').value = '';
   fillProvinces($('rqProvince'), 'Chọn tỉnh/thành'); $('rqProvince').value = c.province || ''; $('rqRegion').value = c.region || '';
-  msg('reqMsg',''); $('reqBox').classList.remove('hide'); $('btnReqOpen').classList.add('hide'); $('rqName').focus();
+  msg('reqMsg',''); $('reqBox').classList.remove('hide'); $('btnReqOpen').classList.add('hide');
+  $('reqBox').scrollIntoView({ behavior:'smooth', block:'start' }); setTimeout(function(){ $('rqName').focus({ preventScroll:true }); }, 300);
 });
 $('btnReqCancel').addEventListener('click', function(){ $('reqBox').classList.add('hide'); $('btnReqOpen').classList.remove('hide'); });
 $('btnReqSend').addEventListener('click', async function(){
