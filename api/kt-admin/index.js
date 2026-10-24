@@ -132,6 +132,7 @@ const handler = async function (context, req) {
     const u = await requireUserActive(context, req);
     if (!u) return;
     if (!isAdmin(u.email)) return reply(context, 403, { ok: false, error: "Bạn không có quyền quản trị." });
+    await quiz.runMigrations(context.log);
 
     if (req.method === "GET") {
       const op = (req.query && req.query.op) || "";

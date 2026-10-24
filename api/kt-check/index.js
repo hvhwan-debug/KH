@@ -17,6 +17,7 @@ module.exports = async function (context, req) {
     const email = quiz.normEmail(b.email);
     if (!code || !email) return reply(context, 400, { ok: false, error: "Nhập đầy đủ mã nhân viên và email." });
 
+    await quiz.runMigrations(context.log);
     const candidates = await quiz.getCandidates();
     const found = candidates.find((c) => quiz.normCode(c.code) === code && quiz.normEmail(c.email) === email);
     if (!found) {

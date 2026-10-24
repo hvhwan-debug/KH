@@ -2678,7 +2678,7 @@ function spRowHTML(seg, r){
   return '<div class="sprow" data-seg="'+seg+'"><input type="text" list="catList" placeholder="Danh mục" value="'+esc(r.category||'')+'" oninput="spRefresh(this)"><input type="text" inputmode="numeric" placeholder="Số câu" value="'+(r.count||'')+'" oninput="spRefresh(this)"><button class="x" type="button" title="Bỏ dòng" onclick="const g=this.closest(\'.spg\');this.parentNode.remove();spRefresh(g)">×</button><div class="have"></div></div>';
 }
 function spRender(root, plans){
-  root.innerHTML = SP_SEGS.map(([k,l]) => '<div class="spbox" data-box="'+k+'"><h3>'+l+'</h3><div class="tot"></div>'+(k.indexOf('mien_') === 0 ? '<p class="rgnote">Ưu tiên hơn nhóm ngành. Chỉ rút câu gắn tag “'+l.replace('PC ','')+'” và câu dùng chung (không gắn miền).</p>' : '')+'<div class="rows">'+
+  root.innerHTML = SP_SEGS.map(([k,l]) => '<div class="spbox" data-box="'+k+'"><h3>'+l+'</h3><div class="tot"></div>'+(k.indexOf('mien_') === 0 ? '<p class="rgnote"><b>Thường để trống:</b> PC '+l.replace('PC ','')+' vẫn nhận đúng câu của miền mình theo phân bổ nhóm ngành ở trên. Chỉ điền khi miền này cần cấu trúc đề khác; khi điền, khung này thay thế phân bổ nhóm ngành cho mọi PC của miền (kể cả PC bán gia dụng).</p>' : '')+'<div class="rows">'+
     ((plans || {})[k] || []).map(r => spRowHTML(k, r)).join('') + '</div><button class="btn ghost sm" type="button" style="margin-top:8px" onclick="spAdd(this,\''+k+'\')">＋ Thêm danh mục</button></div>').join('');
   spRefresh(root);
 }
@@ -2707,7 +2707,7 @@ function spRefresh(el){
       h.textContent = have >= n ? '✓ ngân hàng có ' + have + ' câu' : '⚠ ngân hàng chỉ có ' + have + ' câu, thiếu ' + (n - have);
     });
     const t = root.querySelector('[data-box="'+k+'"] .tot');
-    if (t) t.textContent = tot ? 'Tổng ' + tot + ' câu mỗi đề' : (k.indexOf('mien_') === 0 ? 'Chưa phân bổ: PC miền này dùng phân bổ theo nhóm ngành' : 'Chưa phân bổ: dùng cách chia cũ');
+    if (t) t.textContent = tot ? 'Tổng ' + tot + ' câu mỗi đề' : (k.indexOf('mien_') === 0 ? 'Để trống: dùng phân bổ nhóm ngành, tự lọc câu đúng miền' : 'Chưa phân bổ: dùng cách chia cũ');
   });
   const names = Array.from(new Set((QUESTIONS || []).map(q => (q.category || '').trim()).filter(Boolean).concat(...Object.values(SP_TEMPLATE).map(a => a.map(x => x[0])))));
   $('catList').innerHTML = names.map(n => '<option value="'+esc(n)+'">').join('');

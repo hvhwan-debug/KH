@@ -172,10 +172,15 @@ function usableQ(q) {
   return Array.isArray(q.options) && q.options.length >= 2;
 }
 // Chuyển đổi một lần: ngân hàng đề cũ (chưa câu nào có kỳ) chính là đề của kỳ đang chạy -> gắn vào kỳ hiện tại.
+// Các bước chuyển đổi dữ liệu một lần (gắn nhãn miền Bắc -> nhập câu miền Nam -> ngưng câu kỹ năng).
+// Gọi ở MỌI thao tác quản trị và khi thí sinh vào bài; sau lần đầu chỉ tốn một lần đọc cờ cho mỗi tiến trình.
+async function runMigrations(log) {
+  for (const [name, fn] of [["regionTags", ensureRegionTags], ["seeds", ensureSeeds], ["noSkill", ensureNoSkill]]) {
+    try { await fn(); } catch (e) { if (log) (log.warn || log)("migration " + name + " loi: " + (e && e.message)); } // lỗi thì lần gọi sau thử lại
+  }
+}
 async function ensureBankPeriods() {
-  try { await ensureRegionTags(); } catch (e) { /* không chặn việc tạo đề nếu chuyển đổi lỗi; lần gọi sau thử lại */ }
-  try { await ensureSeeds(); } catch (e) { /* như trên */ }
-  try { await ensureNoSkill(); } catch (e) { /* như trên */ }
+  await runMigrations();
   const list = await getQuestions();
   if (!list.length || list.some((q) => q.period)) return null;
   const st = await getSettings();
@@ -738,6 +743,9 @@ function cleanSegmentPlans(sp) {
     if (total > MAX_QUESTION_COUNT) return { error: "Phân bổ cho nhóm " + ({ both: "bán cả 2 ngành", may_loc: "chỉ bán máy lọc", gia_dung: "chỉ bán gia dụng", mien_bac: "PC Miền Bắc", mien_nam: "PC Miền Nam" }[seg]) + " cộng ra " + total + " câu, vượt giới hạn " + MAX_QUESTION_COUNT + " câu mỗi đề." };
     if (clean.length) out[seg] = clean;
   }
+  // Đang ngưng câu kỹ năng: dòng kỹ năng (trừ gia dụng) tự chuyển sang "Máy lọc nước" khi lưu/xem trước,
+  // để form cũ còn dòng kỹ năng có bấm Lưu cũng không đưa câu kỹ năng trở lại đề.
+  if (noSkillDone) return plansWithoutSkill(out, "Máy lọc nước").sp;
   return out;
 }
 // PC đã chọn miền: ưu tiên phân bổ của miền ("mien_bac"/"mien_nam"); miền đó chưa phân bổ thì theo nhóm ngành như cũ.
@@ -980,7 +988,7 @@ function noteFail(req) {
 }
 
 module.exports = {
-  normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, betterResult, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
+  runMigrations, normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, betterResult, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
   getQuestions, saveQuestions,
   getCandidates, saveCandidates,
   getSettings, saveSettings,
