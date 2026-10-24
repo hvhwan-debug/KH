@@ -16,7 +16,9 @@ var TRAIN_FIELDS = [
   { k:'giang_vien', label:'Giảng viên / đơn vị tổ chức', w:true },
   { k:'noi_dung', label:'Nội dung chính', type:'textarea', w:true, ph:'Mỗi ý một dòng hoặc ngăn cách bằng dấu phẩy' },
   { k:'han_xn', label:'Hạn xác nhận tham dự', type:'datetime-local', keep:true },
-  { k:'lien_he', label:'Liên hệ xác nhận', ph:'Tên, số điện thoại hoặc email', keep:true }
+  { k:'lien_he', label:'Liên hệ xác nhận', ph:'Tên, số điện thoại hoặc email', keep:true },
+  { k:'kieu_mau', label:'Mẫu minh hoạ khi xuất ảnh / PDF', type:'select', w:true, keep:true,
+    opts:['Không dùng (thư đơn giản)','Mẫu 1','Mẫu 2','Mẫu 3','Mẫu 4','Mẫu 5','Mẫu 6','Mẫu 7','Mẫu 8','Mẫu 9','Mẫu 10'], def:'Không dùng (thư đơn giản)' }
 ];
 var CUSTOM_FIELDS = [
   { k:'tieu_de', label:'Tiêu đề thư mời', req:true, w:true, max:60, def:'THƯ MỜI', ph:'Ví dụ: THƯ MỜI HỌP TỔNG KẾT QUÝ' },
@@ -185,8 +187,9 @@ function loadLogo(){
 async function ensureFonts(){
   try { if (document.fonts && document.fonts.load){ await Promise.all([document.fonts.load('400 28px "Be Vietnam Pro"'), document.fonts.load('700 28px "Be Vietnam Pro"')]); } } catch(e){}
 }
-// Trả về Promise<Blob> ảnh PNG (độ nét x2)
+// Trả về Promise<Blob> ảnh PNG (độ nét x2). o.canvas (nếu có, ví dụ ảnh minh hoạ dựng sẵn) được dùng trực tiếp thay vì vẽ khung thư đơn giản.
 async function renderPng(o){
+  if (o.canvas) return new Promise(function(res, rej){ o.canvas.toBlob(function(b){ b ? res(b) : rej(new Error('png')); }, 'image/png'); });
   await ensureFonts();
   var logo = await loadLogo(), S = 2;
   var probe = newCanvas(10, 10).getContext('2d'), H = Math.ceil(paintLetter(probe, { text:o.text, kind:o.kind, cta:o.cta }, true));
@@ -210,17 +213,21 @@ function loadPdfLib(){
   pdfP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'; sc.onload = function(){ res(window.jspdf && window.jspdf.jsPDF); }; sc.onerror = function(){ pdfP = null; rej(new Error('pdf')); }; document.head.appendChild(sc); });
   return pdfP;
 }
-// Trả về Promise<Blob> PDF từ một hoặc nhiều thư (mỗi thư một trang, khổ A4, co theo tỉ lệ của thư)
+// Trả về Promise<Blob> PDF từ một hoặc nhiều thư (mỗi thư một trang, khổ A4, co theo tỉ lệ của thư).
+// Mỗi phần tử: { text, kind, cta } để vẽ khung thư đơn giản, hoặc { canvas } để dùng trực tiếp ảnh minh hoạ đã dựng sẵn.
 async function renderPdf(items){
   var JsPDF = await loadPdfLib(); if (!JsPDF) throw new Error('pdf');
   await ensureFonts();
   var logo = await loadLogo(), S = 2, W_MM = 210, doc = null;
   for (var i = 0; i < items.length; i++){
-    var o = items[i];
-    var probe = newCanvas(10, 10).getContext('2d'), H = Math.ceil(paintLetter(probe, { text:o.text, kind:o.kind, cta:o.cta }, true));
-    var c = newCanvas(1080 * S, H * S), ctx = c.getContext('2d'); ctx.scale(S, S);
-    paintLetter(ctx, { text:o.text, kind:o.kind, cta:o.cta, logo:logo, H:H }, false);
-    var imgData = c.toDataURL('image/jpeg', 0.92), hMm = W_MM * H / 1080;
+    var o = items[i], c;
+    if (o.canvas) c = o.canvas;
+    else {
+      var probe = newCanvas(10, 10).getContext('2d'), H = Math.ceil(paintLetter(probe, { text:o.text, kind:o.kind, cta:o.cta }, true));
+      c = newCanvas(1080 * S, H * S); var ctx = c.getContext('2d'); ctx.scale(S, S);
+      paintLetter(ctx, { text:o.text, kind:o.kind, cta:o.cta, logo:logo, H:H }, false);
+    }
+    var imgData = c.toDataURL('image/jpeg', 0.92), hMm = W_MM * c.height / c.width;
     if (!doc) doc = new JsPDF({ unit:'mm', format:[W_MM, hMm], compress:true });
     else doc.addPage([W_MM, hMm]);
     doc.addImage(imgData, 'JPEG', 0, 0, W_MM, hMm);
@@ -228,6 +235,83 @@ async function renderPdf(items){
   return doc.output('blob');
 }
 function fnamePdf(r){ return slug(r.code + '-' + (r.name || '')) + '.pdf'; }
+
+/* ---------- 10 mẫu minh hoạ (poster) cho thư mời tham dự đào tạo ---------- */
+var POSTER_STYLES = [
+  { blue:'#0878ed', yellow:'#ffe16a', avatar:'👩🏻‍💼', dateIcon:'📋' },
+  { blue:'#0878ed', yellow:'#ffd65b', avatar:'👨🏻‍💼', dateIcon:'🤝' },
+  { blue:'#073d91', yellow:'#ffcf4d', avatar:'👩🏻‍💼', dateIcon:'📈' },
+  { blue:'#006acb', yellow:'#ffe36a', avatar:'👨🏻‍💼', dateIcon:'🛠️' },
+  { blue:'#06a8d9', yellow:'#ffdc63', avatar:'👩🏻‍💼', dateIcon:'💧' },
+  { blue:'#082d68', yellow:'#ffd05a', avatar:'👨🏻‍💼', dateIcon:'♟️' },
+  { blue:'#0878ed', yellow:'#ffe16a', avatar:'👩🏻‍💼', dateIcon:'🎯' },
+  { blue:'#0786df', yellow:'#a9eddf', avatar:'👨🏻‍💼', dateIcon:'🛒' },
+  { blue:'#098f8a', yellow:'#b8f0d9', avatar:'👩🏻‍💼', dateIcon:'💬' },
+  { blue:'#073d91', yellow:'#ffcc4d', avatar:'👨🏻‍💼', dateIcon:'🚀' }
+];
+var POSTER_CSS = '\n*{box-sizing:border-box}body{margin:0;background:#fff;color:#102c53;font-family:Arial,"Segoe UI",sans-serif}\n.poster{--blue:#0878ed;--yellow:#ffe16a;background:#fff;border-radius:23px;overflow:hidden;box-shadow:none;position:relative;isolation:isolate}\n.poster-top{padding:24px 25px 22px;background:linear-gradient(135deg,#d9f0ff 0%,#f9fdff 52%,#c3e7ff 100%);position:relative;overflow:hidden}\n.poster-top:before{content:"";position:absolute;width:270px;height:270px;border-radius:50%;background:#fff9;right:-100px;top:-90px;z-index:0}\n.poster-top:after{content:"";position:absolute;width:170px;height:170px;border-radius:50%;background:var(--blue);opacity:.08;right:-35px;top:-65px;z-index:0}\n.brand{display:flex;align-items:center;gap:7px;color:var(--blue);font-size:11px;font-weight:900;letter-spacing:.6px;position:relative;z-index:1}.brand-logo{display:grid;place-items:center;width:25px;height:25px;border-radius:8px;background:var(--blue);color:white}.brand small{margin-left:auto;font-size:8px;letter-spacing:.8px}\n.megaphone{position:absolute;right:22px;top:55px;font-size:39px;transform:rotate(-12deg);z-index:2;filter:drop-shadow(0 5px 3px #124c8022)}\n.eyebrow{position:relative;z-index:2;display:inline-block;margin-top:22px;padding:8px 14px;border-radius:999px;background:var(--blue);color:white;font-weight:900;font-size:11px;letter-spacing:1px;box-shadow:0 5px 0 #004cae22}\n.poster h2{position:relative;z-index:2;color:#092f68;font-size:30px;line-height:1.08;letter-spacing:-.7px;text-transform:uppercase;margin:14px 0 10px;font-weight:1000;text-shadow:0 2px white}\n.subpill{position:relative;z-index:2;display:inline-block;background:var(--yellow);color:#123a70;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;max-width:100%}\n.hero-row{display:flex;gap:14px;align-items:flex-end;margin-top:16px;position:relative;z-index:2}\n.intro{flex:1 1 auto;min-width:0}.intro p{margin:0 0 6px;font-size:13px;line-height:1.55;color:#20365e}.intro p:last-child{margin-bottom:0}\n.character{flex:0 0 auto;text-align:center}.character-halo{display:none}.avatar{font-size:54px;line-height:1}\n.character-caption{margin-top:2px;background:var(--blue);color:#fff;font-size:10px;font-weight:900;border-radius:10px;padding:4px 8px;line-height:1.3}\n.deadline-band{display:flex;align-items:center;gap:14px;padding:16px 22px;background:#f4f9ff;border-top:1px dashed #cfe3fb;border-bottom:1px dashed #cfe3fb}\n.date-icon{font-size:30px;flex:0 0 auto}\n.deadline-copy{flex:1 1 auto;min-width:0}.deadline-copy small{display:block;color:#5c7aa6;font-weight:800;font-size:10px;letter-spacing:.6px}.deadline-copy strong{display:block;color:#0b3f94;font-size:16px;margin:2px 0}.deadline-copy span{display:block;color:#5c7aa6;font-size:11.5px}\n.qr{flex:0 0 auto;text-align:center;font-size:9px;color:#5c7aa6;font-weight:800}.fake-qr{font-size:22px;background:#fff;border:1.5px solid #cfe3fb;border-radius:10px;width:46px;height:46px;display:grid;place-items:center;margin:0 auto 4px}\n.info-grid{display:grid;grid-template-columns:1fr;gap:12px;padding:18px 22px}\n.info{display:flex;gap:10px;align-items:flex-start}.info-icon{font-size:20px;flex:0 0 auto}.info small{display:block;color:#5c7aa6;font-weight:800;font-size:10px;letter-spacing:.5px}.info b{display:block;color:#15335e;font-size:13.5px;font-weight:700;line-height:1.45}\n.footer-cta{display:flex;gap:10px;align-items:flex-start;padding:16px 22px;background:#f4f9ff;position:relative}.chat-icon{font-size:22px;flex:0 0 auto}.footer-cta strong{display:block;color:#0b3f94;font-size:13.5px}.footer-cta p{margin:3px 0 0;color:#426089;font-size:12px;line-height:1.5}.spark{position:absolute;right:18px;top:14px;color:var(--yellow);font-size:16px}\n.poster-foot{display:flex;justify-content:space-between;gap:10px;padding:10px 22px 16px;color:#8ca3c4;font-size:9.5px;font-weight:800;letter-spacing:.4px}';
+
+function posterBody(v, ms){
+  return '<section class="poster" style="--blue:'+v.blue+';--yellow:'+v.yellow+'">'+
+    '<div class="poster-top">'+
+      '<div class="brand"><span class="brand-logo">✦</span><span>'+esc(ms.brand)+'</span><small>'+esc(ms.brandSub)+'</small></div>'+
+      '<div class="megaphone">📣</div>'+
+      '<div class="eyebrow">THƯ MỜI ĐÀO TẠO</div>'+
+      '<h2>'+esc(ms.title)+'</h2>'+
+      '<div class="subpill">'+esc(ms.subpill)+'</div>'+
+      '<div class="hero-row">'+
+        '<div class="intro">'+
+          '<p><b>Kính gửi '+esc(ms.name)+',</b></p>'+
+          '<p>Nhằm nâng cao kiến thức và năng lực ứng dụng vào công việc thực tế, kính mời Anh/Chị tham gia chương trình đào tạo theo thông tin bên dưới.</p>'+
+          '<p>Hãy cùng học hỏi, thực hành và chuyển hóa kiến thức thành kết quả!</p>'+
+        '</div>'+
+        '<div class="character"><div class="avatar">'+v.avatar+'</div><div class="character-caption">CÙNG HỌC<br>CÙNG BỨT PHÁ!</div></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="deadline-band">'+
+      '<div class="date-icon">'+v.dateIcon+'</div>'+
+      '<div class="deadline-copy"><small>THỜI GIAN</small><strong>'+esc(ms.thoigian)+'</strong><span>'+esc(ms.hanxn)+'</span></div>'+
+      '<div class="qr"><div class="fake-qr">☎</div><b>LIÊN HỆ</b><small>'+esc(ms.lienhe)+'</small></div>'+
+    '</div>'+
+    '<div class="info-grid">'+
+      '<div class="info"><div class="info-icon">🖥️</div><div><small>HÌNH THỨC / ĐỊA ĐIỂM</small><b>'+esc(ms.hinhthuc)+'</b></div></div>'+
+      '<div class="info"><div class="info-icon">🎯</div><div><small>NỘI DUNG</small><b>'+esc(ms.noidung)+'</b></div></div>'+
+      '<div class="info"><div class="info-icon">👤</div><div><small>GIẢNG VIÊN / ĐƠN VỊ</small><b>'+esc(ms.giangvien)+'</b></div></div>'+
+    '</div>'+
+    '<div class="footer-cta"><div class="chat-icon">💬</div><div><strong>Hẹn gặp Anh/Chị tại chương trình!</strong><p>Vui lòng xác nhận tham dự trước '+esc(ms.hanxn)+'. Liên hệ: '+esc(ms.lienhe)+'.</p></div><span class="spark">✦</span></div>'+
+    '<div class="poster-foot"><span>HỌC ĐỂ ỨNG DỤNG · ỨNG DỤNG ĐỂ TĂNG TRƯỞNG</span><span>ĐÀO TẠO KINH DOANH</span></div>'+
+  '</section>';
+}
+var h2cP = null;
+function loadHtml2Canvas(){
+  if (window.html2canvas) return Promise.resolve(window.html2canvas);
+  if (h2cP) return h2cP;
+  h2cP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; sc.onload = function(){ res(window.html2canvas); }; sc.onerror = function(){ h2cP = null; rej(new Error('h2c')); }; document.head.appendChild(sc); });
+  return h2cP;
+}
+function posterFrame(bodyHtml){
+  return new Promise(function(resolve, reject){
+    var ifr = document.createElement('iframe');
+    ifr.style.cssText = 'position:fixed;left:-99999px;top:0;width:720px;height:10px;border:0';
+    ifr.setAttribute('aria-hidden', 'true');
+    var done = false;
+    ifr.onload = function(){ done = true; resolve(ifr); };
+    document.body.appendChild(ifr);
+    try { ifr.srcdoc = '<!doctype html><html><head><meta charset="utf-8"><style>'+POSTER_CSS+'</style></head><body>'+bodyHtml+'</body></html>'; }
+    catch(e){ reject(e); return; }
+    setTimeout(function(){ if (!done) resolve(ifr); }, 1500);
+  });
+}
+// Trả về Promise<HTMLCanvasElement> ảnh minh hoạ (poster) đã điền thông tin, độ nét x2
+async function renderPosterCanvas(variant, ms){
+  var H2C = await loadHtml2Canvas();
+  var ifr = await posterFrame(posterBody(variant, ms));
+  try {
+    var body = ifr.contentDocument.body, h = Math.max(body.scrollHeight, 400);
+    ifr.style.height = h + 'px';
+    return await H2C(body, { backgroundColor:'#ffffff', scale:2, width:720, windowWidth:720, useCORS:true });
+  } finally { if (ifr.parentNode) ifr.parentNode.removeChild(ifr); }
+}
 
 function css(){
   if (document.getElementById('ntCss')) return;
@@ -311,6 +395,27 @@ function mount(root, cfg){
   function selVisible(){ S.sel = {}; visible().forEach(function(r){ S.sel[r.code] = true; }); }
   function xvars(){ return eventVars(S.vars, baseId()); }
   function msgFor(r){ return render(S.text, r, ex, origin, xvars(), optionalKeys()); }
+  function posterVariantIdx(){ // -1 = không dùng mẫu minh hoạ; 0..9 = chỉ số mẫu
+    if (baseId() !== 'inviteTrain') return -1;
+    var m = /(\d+)/.exec(String(S.vars.kieu_mau || ''));
+    return m ? (parseInt(m[1], 10) - 1) : -1;
+  }
+  function posterMsFor(r){
+    var ev = xvars(), noi = String(ev.noi_dung || '').trim(), sub = (noi.split(/[\n,.;]/)[0] || '').trim().slice(0, 70);
+    return {
+      brand:'KAROFI | LIVOTEC', brandSub:'ĐÀO TẠO KINH DOANH',
+      name: r.name || r.code, title: ev.ten_khoa || 'CHƯƠNG TRÌNH ĐÀO TẠO',
+      subpill: sub || 'Nâng cao năng lực · Áp dụng ngay vào công việc',
+      thoigian: ev.thoi_gian || 'Theo thông báo của Ban Tổ chức',
+      hanxn: 'Xác nhận trước: ' + (ev.han_xn || 'theo thông báo của Ban Tổ chức'),
+      lienhe: ev.lien_he || 'Ban Tổ chức',
+      hinhthuc: [ev.hinh_thuc, ev.dia_diem].filter(function(x){ return x; }).join(' · ') || 'Theo thông báo',
+      noidung: ev.noi_dung || '', giangvien: ev.giang_vien || 'Ban Tổ chức'
+    };
+  }
+  function posterCanvasFor(r){ var idx = posterVariantIdx(); return renderPosterCanvas(POSTER_STYLES[idx] || POSTER_STYLES[0], posterMsFor(r)); }
+  function pngOf(r){ var idx = posterVariantIdx(); if (idx >= 0) return posterCanvasFor(r).then(function(c){ return renderPng({ canvas:c }); }); return renderPng({ text: msgFor(r), kind: tplOf(S.tpl).kind || '', cta: ctaFor(r) }); }
+  function pdfItemFor(r){ var idx = posterVariantIdx(); if (idx >= 0) return posterCanvasFor(r).then(function(c){ return { canvas:c }; }); return Promise.resolve({ text: msgFor(r), kind: tplOf(S.tpl).kind || '', cta: ctaFor(r) }); }
   function subjFor(r){ return render(S.subj, r || {}, ex, origin, xvars(), []); }
   function missing(){
     return fieldsOf().filter(function(f){ return f.req && !String(S.vars[f.k] || '').trim(); }).map(function(f){ return f.label; });
@@ -351,7 +456,7 @@ function mount(root, cfg){
       '<label class="nl">Kênh gửi</label><div class="nt-seg">'+CHANNELS.map(function(c){ return '<button type="button" data-ch="'+c[0]+'" class="'+(c[0]===S.channel?'on':'')+'">'+c[1]+'</button>'; }).join('')+'</div>'+
       (S.channel === 'email' ? '<label class="nl" for="ntSubj">Tiêu đề email</label><input type="text" id="ntSubj" value="'+esc(subjFor(first))+'">' : '')+
       '<div class="nt-prev" id="ntPrev"></div>'+((S.channel==='png'||S.channel==='pdf') ? '<div class="nt-imgbox"><small>Ảnh sẽ xuất</small><img id="ntImg" alt="Xem trước ảnh thư mời"></div>' : '')+
-      '<p class="nt-hint" style="margin:10px 0 0">'+(S.channel==='png' ? 'Xuất thư thành ảnh PNG để gửi qua Zalo, Messenger hoặc in. Mỗi người một ảnh có ghi sẵn tên. Bấm “Sao chép” rồi dán thẳng vào khung chat, hoặc “Tải ảnh” để lưu.' : S.channel==='pdf' ? 'Xuất thư mời thành file PDF (khổ A4) để in hoặc gửi đính kèm. Bấm “Tải PDF” ở từng người, hoặc “Tải PDF gộp” để tải một file nhiều trang cho tất cả người đã chọn.' : S.channel==='zalo' ? 'Bấm “Mở Zalo” ở từng người: nội dung được sao chép sẵn, bạn chỉ cần dán (Cmd/Ctrl+V) rồi gửi.' : S.channel==='sms' ? 'Bấm “Soạn SMS” ở từng người: ứng dụng tin nhắn mở sẵn với nội dung và số điện thoại.' : (t.kind === 'invite' ? 'Hệ thống gửi email thư mời có khung riêng'+(t.cta ? ' và nút bấm' : '')+' tới email đã lưu của những người được chọn.' : 'Hệ thống gửi email trực tiếp tới email đã lưu của những người được chọn.'))+'</p></div>'+
+      '<p class="nt-hint" style="margin:10px 0 0">'+(S.channel==='png' ? 'Xuất thư thành ảnh PNG để gửi qua Zalo, Messenger hoặc in. Mỗi người một ảnh có ghi sẵn tên. Bấm “Sao chép” rồi dán thẳng vào khung chat, hoặc “Tải ảnh” để lưu.' : S.channel==='pdf' ? 'Xuất thư mời thành file PDF (khổ A4) để in hoặc gửi đính kèm. Bấm “Tải PDF” ở từng người, hoặc “Tải PDF gộp” để tải một file nhiều trang cho tất cả người đã chọn.' : S.channel==='zalo' ? 'Bấm “Mở Zalo” ở từng người: nội dung được sao chép sẵn, bạn chỉ cần dán (Cmd/Ctrl+V) rồi gửi.' : S.channel==='sms' ? 'Bấm “Soạn SMS” ở từng người: ứng dụng tin nhắn mở sẵn với nội dung và số điện thoại.' : (t.kind === 'invite' ? 'Hệ thống gửi email thư mời có khung riêng'+(t.cta ? ' và nút bấm' : '')+' tới email đã lưu của những người được chọn.' : 'Hệ thống gửi email trực tiếp tới email đã lưu của những người được chọn.'))+((S.channel==='png'||S.channel==='pdf') && posterVariantIdx() >= 0 ? ' Đang dùng mẫu minh hoạ (poster) đã chọn ở trên — mỗi người một ảnh/PDF riêng, tự điền tên và thông tin khoá học.' : '')+'</p></div>'+
       '<div class="nt-box"><div class="nt-bar">'+
         [['todo','Chưa làm'],['done','Đã làm'],['all','Tất cả'],['nophone','Thiếu SĐT']].map(function(f){ return '<button type="button" class="nt-f'+(S.filter===f[0]?' on':'')+'" data-f="'+f[0]+'">'+f[1]+' ('+count(f[0])+')</button>'; }).join('')+
         '<input type="search" id="ntQ" placeholder="Tìm tên, mã NV, SĐT…" value="'+esc(S.q)+'"></div>'+
@@ -405,7 +510,6 @@ function mount(root, cfg){
     });
     qa('[data-zalo]').forEach(function(b){ b.addEventListener('click', function(){ if (warn()) return; var r = byCode(b.dataset.zalo); if (!r || !r.phone) return; copy(msgFor(r)).then(function(){ S.sent[r.code] = true; window.open('https://zalo.me/'+r.phone, '_blank', 'noopener'); var row = b.closest('.nt-row'); if (row) row.classList.add('sent'); b.textContent = 'Mở lại Zalo'; }); }); });
     qa('[data-sms]').forEach(function(a){ a.addEventListener('click', function(e){ if (warn()){ e.preventDefault(); return; } S.sent[a.dataset.sms] = true; var row = a.closest('.nt-row'); if (row) row.classList.add('sent'); }); });
-    function pngOf(r){ return renderPng({ text: msgFor(r), kind: tplOf(S.tpl).kind || '', cta: ctaFor(r) }); }
     function fname(r){ return slug(r.code + '-' + (r.name || '')) + '.png'; }
     function mark(r, el){ S.sent[r.code] = true; var row = el.closest('.nt-row'); if (row) row.classList.add('sent'); }
     qa('[data-png]').forEach(function(b){ b.addEventListener('click', async function(){
@@ -441,7 +545,7 @@ function mount(root, cfg){
     qa('[data-pdf]').forEach(function(b){ b.addEventListener('click', async function(){
       if (warn()) return; var r = byCode(b.dataset.pdf); if (!r) return;
       var t0 = b.textContent; b.disabled = true; b.textContent = 'Đang tạo…';
-      try { saveBlob(await renderPdf([{ text: msgFor(r), kind: tplOf(S.tpl).kind || '', cta: ctaFor(r) }]), fnamePdf(r)); mark(r, b); } catch(e){ q('#ntRes').innerHTML = '<div class="nt-msg er">Không tạo được PDF (cần kết nối mạng để tải thư viện), thử lại.</div>'; }
+      try { saveBlob(await renderPdf([await pdfItemFor(r)]), fnamePdf(r)); mark(r, b); } catch(e){ q('#ntRes').innerHTML = '<div class="nt-msg er">Không tạo được PDF (cần kết nối mạng để tải thư viện), thử lại.</div>'; }
       b.disabled = false; b.textContent = t0;
     }); });
     var pdfAll = q('#ntPdfAll');
@@ -451,7 +555,8 @@ function mount(root, cfg){
       if (!rows.length) return;
       var t0 = pdfAll.textContent; pdfAll.disabled = true; q('#ntRes').innerHTML = '';
       try {
-        var items = rows.map(function(r){ return { text: msgFor(r), kind: tplOf(S.tpl).kind || '', cta: ctaFor(r) }; });
+        var items = [];
+        for (var pi = 0; pi < rows.length; pi++){ pdfAll.textContent = 'Đang tạo ' + (pi + 1) + '/' + rows.length + '…'; items.push(await pdfItemFor(rows[pi])); }
         var blob = await renderPdf(items);
         rows.forEach(function(r){ S.sent[r.code] = true; });
         saveBlob(blob, 'thu-moi-' + slug(tplOf(S.tpl).name) + '.pdf');
@@ -484,7 +589,7 @@ function mount(root, cfg){
     var sj = root.querySelector('#ntSubj'); if (sj && !S.subjEdited) sj.value = subjFor(first);
     var im = root.querySelector('#ntImg');
     if (im && first){ clearTimeout(S.pt); var snap = S.text + JSON.stringify(S.vars) + first.code; S.pt = setTimeout(async function(){
-      try { var blob = await renderPng({ text: msgFor(first), kind: tplOf(S.tpl).kind || '', cta: ctaFor(first) }); if (im.isConnected){ if (im.dataset.u) URL.revokeObjectURL(im.dataset.u); im.dataset.u = URL.createObjectURL(blob); im.src = im.dataset.u; } } catch(e){}
+      try { var blob = await pngOf(first); if (im.isConnected){ if (im.dataset.u) URL.revokeObjectURL(im.dataset.u); im.dataset.u = URL.createObjectURL(blob); im.src = im.dataset.u; } } catch(e){}
     }, 350); }
     [].forEach.call(root.querySelectorAll('[data-sms]'), function(a){ var r = byCode(a.dataset.sms); if (r && r.phone) a.href = 'sms:'+r.phone+'?&body='+encodeURIComponent(msgFor(r)); });
   }
