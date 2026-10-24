@@ -18,7 +18,9 @@ var TRAIN_FIELDS = [
   { k:'han_xn', label:'Hạn xác nhận tham dự', type:'datetime-local', keep:true },
   { k:'lien_he', label:'Liên hệ xác nhận', ph:'Tên, số điện thoại hoặc email', keep:true }
 ];
-var POSTER_OPTS = ['Không dùng (thư đơn giản)','Mẫu 1','Mẫu 2','Mẫu 3','Mẫu 4','Mẫu 5','Mẫu 6','Mẫu 7','Mẫu 8','Mẫu 9','Mẫu 10'];
+var POSTER_OPTS = ['Không dùng (thư đơn giản)','Mẫu 1','Mẫu 2','Mẫu 3','Mẫu 4','Mẫu 5','Mẫu 6','Mẫu 7','Mẫu 8','Mẫu 9','Mẫu 10',
+  'Mẫu 11 (chuyên nghiệp)','Mẫu 12 (chuyên nghiệp)','Mẫu 13 (chuyên nghiệp)','Mẫu 14 (chuyên nghiệp)','Mẫu 15 (chuyên nghiệp)',
+  'Mẫu 16 (chuyên nghiệp)','Mẫu 17 (chuyên nghiệp)','Mẫu 18 (chuyên nghiệp)','Mẫu 19 (chuyên nghiệp)','Mẫu 20 (chuyên nghiệp)'];
 var CUSTOM_FIELDS = [
   { k:'tieu_de', label:'Tiêu đề thư mời', req:true, w:true, max:60, def:'THƯ MỜI', ph:'Ví dụ: THƯ MỜI HỌP TỔNG KẾT QUÝ' },
   { k:'noi_dung', label:'Nội dung lời mời', type:'textarea', req:true, w:true, ph:'Viết lời mời: lý do, mục đích và nội dung chính. Ví dụ: Ban Tổ chức trân trọng kính mời Anh/Chị tham dự…' },
@@ -281,6 +283,20 @@ var POSTER_STYLES = [
 ];
 var POSTER_CSS = '\n*{box-sizing:border-box}body{margin:0;background:#fff;color:#102c53;font-family:Arial,"Segoe UI",sans-serif}\n.poster{--blue:#0878ed;--yellow:#ffe16a;background:#fff;border-radius:23px;overflow:hidden;box-shadow:none;position:relative;isolation:isolate}\n.poster-top{padding:24px 25px 22px;background:linear-gradient(135deg,#d9f0ff 0%,#f9fdff 52%,#c3e7ff 100%);position:relative;overflow:hidden}\n.poster-top:before{content:"";position:absolute;width:270px;height:270px;border-radius:50%;background:#fff9;right:-100px;top:-90px;z-index:0}\n.poster-top:after{content:"";position:absolute;width:170px;height:170px;border-radius:50%;background:var(--blue);opacity:.08;right:-35px;top:-65px;z-index:0}\n.brand{display:flex;align-items:center;gap:7px;color:var(--blue);font-size:11px;font-weight:900;letter-spacing:.6px;position:relative;z-index:1}.brand-logo{display:grid;place-items:center;width:25px;height:25px;border-radius:8px;background:var(--blue);color:white}.brand small{margin-left:auto;font-size:8px;letter-spacing:.8px}\n.megaphone{position:absolute;right:22px;top:55px;font-size:39px;transform:rotate(-12deg);z-index:2;filter:drop-shadow(0 5px 3px #124c8022)}\n.eyebrow{position:relative;z-index:2;display:inline-block;margin-top:22px;padding:8px 14px;border-radius:999px;background:var(--blue);color:white;font-weight:900;font-size:11px;letter-spacing:1px;box-shadow:0 5px 0 #004cae22}\n.poster h2{position:relative;z-index:2;color:#092f68;font-size:30px;line-height:1.08;letter-spacing:-.7px;text-transform:uppercase;margin:14px 0 10px;font-weight:1000;text-shadow:0 2px white}\n.subpill{position:relative;z-index:2;display:inline-block;background:var(--yellow);color:#123a70;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;max-width:100%}\n.hero-row{display:flex;gap:14px;align-items:flex-end;margin-top:16px;position:relative;z-index:2}\n.intro{flex:1 1 auto;min-width:0}.intro p{margin:0 0 6px;font-size:13px;line-height:1.55;color:#20365e}.intro p:last-child{margin-bottom:0}\n.character{flex:0 0 auto;text-align:center}.character-halo{display:none}.avatar{font-size:54px;line-height:1}\n.character-caption{margin-top:2px;background:var(--blue);color:#fff;font-size:10px;font-weight:900;border-radius:10px;padding:4px 8px;line-height:1.3}\n.deadline-band{display:flex;align-items:center;gap:14px;padding:16px 22px;background:#f4f9ff;border-top:1px dashed #cfe3fb;border-bottom:1px dashed #cfe3fb}\n.date-icon{font-size:30px;flex:0 0 auto}\n.deadline-copy{flex:1 1 auto;min-width:0}.deadline-copy small{display:block;color:#5c7aa6;font-weight:800;font-size:10px;letter-spacing:.6px}.deadline-copy strong{display:block;color:#0b3f94;font-size:16px;margin:2px 0}.deadline-copy span{display:block;color:#5c7aa6;font-size:11.5px}\n.qr{flex:0 0 auto;text-align:center;font-size:9px;color:#5c7aa6;font-weight:800;max-width:76px}.fake-qr{font-size:22px;background:#fff;border:1.5px solid #cfe3fb;border-radius:10px;width:58px;height:58px;display:grid;place-items:center;margin:0 auto 4px;object-fit:contain;padding:3px}\n.info-grid{display:grid;grid-template-columns:1fr;gap:12px;padding:18px 22px}\n.info{display:flex;gap:10px;align-items:flex-start}.info-icon{font-size:20px;flex:0 0 auto}.info small{display:block;color:#5c7aa6;font-weight:800;font-size:10px;letter-spacing:.5px}.info b{display:block;color:#15335e;font-size:13.5px;font-weight:700;line-height:1.45}\n.footer-cta{display:flex;gap:10px;align-items:flex-start;padding:16px 22px;background:#f4f9ff;position:relative}.chat-icon{font-size:22px;flex:0 0 auto}.footer-cta strong{display:block;color:#0b3f94;font-size:13.5px}.footer-cta p{margin:3px 0 0;color:#426089;font-size:12px;line-height:1.5}.spark{position:absolute;right:18px;top:14px;color:var(--yellow);font-size:16px}\n.poster-foot{display:flex;justify-content:space-between;gap:10px;padding:10px 22px 16px;color:#8ca3c4;font-size:9.5px;font-weight:800;letter-spacing:.4px}';
 
+var POSTER_STYLES2 = [
+  { blue:'#0759b5', accent:'#31b6d8', icon:'▣' },
+  { blue:'#0759b5', accent:'#43c4e8', icon:'↗' },
+  { blue:'#082f63', accent:'#f2bd52', icon:'◆' },
+  { blue:'#0759b5', accent:'#45c4e5', icon:'▤' },
+  { blue:'#086dbb', accent:'#3ab9d3', icon:'＋' },
+  { blue:'#087c83', accent:'#69d2c2', icon:'◎' },
+  { blue:'#082f63', accent:'#e4bd62', icon:'◇' },
+  { blue:'#0759b5', accent:'#41bfe1', icon:'◈' },
+  { blue:'#0759b5', accent:'#40c9d7', icon:'⌘' },
+  { blue:'#082f63', accent:'#f2bd52', icon:'↑' }
+];
+var PROF_CSS = '\n*{box-sizing:border-box}body{margin:0;background:#edf2f7;color:#122d4b;font-family:Inter,"Segoe UI",Arial,sans-serif}\n.toolbar{position:sticky;top:0;z-index:9;background:#fff;border-bottom:1px solid #d9e4ee;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 3px 14px #0b2c4d0c}\n.toolbar b{font-size:14px}.toolbar small{display:block;color:#6c8093;font-size:11px;margin-top:3px}.buttons{display:flex;gap:8px;flex-wrap:wrap}button{border:0;border-radius:8px;padding:10px 14px;background:#0759b5;color:white;font-weight:750;cursor:pointer}.secondary{background:#eaf2fa;color:#164a7e}\n.intro{max-width:1120px;margin:28px auto 18px;padding:0 18px}.intro h1{font-size:clamp(27px,4vw,43px);letter-spacing:-1.2px;margin:0 0 8px;color:#10375f}.intro p{margin:0;color:#637b91;line-height:1.6;font-size:14px}\n.gallery{max-width:1120px;margin:0 auto;padding:0 18px 40px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}\n.poster{--blue:#0759b5;--accent:#31b6d8;background:white;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px #143b5c18;break-inside:avoid}\n.hero{background:linear-gradient(115deg,#fff 0%,#eef8ff 56%,#d9efff 100%);padding:22px 24px 20px;position:relative;overflow:hidden;border-bottom:1px solid #d5e7f5}\n.hero:after{content:"";position:absolute;width:230px;height:230px;border-radius:50%;border:1px solid #7ab6e744;right:-90px;top:-100px;box-shadow:0 0 0 24px #d8edfa55,0 0 0 48px #e6f4fc55}\n.brand{position:relative;z-index:1;display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.5px;color:var(--blue);font-weight:900}.brand-icon{display:grid;place-items:center;width:25px;height:25px;background:var(--blue);color:white;border-radius:7px;font-weight:900}.brand small{margin-left:auto;color:#59748d;font-size:8px;letter-spacing:.7px}\n.hero-layout{display:grid;grid-template-columns:1fr 115px;gap:10px;align-items:center;position:relative;z-index:1;margin-top:20px}.eyebrow{display:inline-block;background:var(--blue);color:white;border-radius:5px;padding:7px 10px;font-size:9px;letter-spacing:1px;font-weight:900}\nh2{font-size:clamp(21px,2.6vw,30px);line-height:1.08;letter-spacing:-.7px;color:#12345c;margin:12px 0 8px;font-weight:900}.subtitle{font-size:13px;line-height:1.45;font-weight:750;color:var(--blue);margin:0}.accent-line{width:54px;height:4px;background:var(--accent);border-radius:4px;margin:13px 0}.promise{font-size:10px;line-height:1.55;color:#5c748b;margin:0}\n.visual{height:140px;position:relative;display:grid;place-items:center}.visual-ring{position:absolute;width:112px;height:112px;border-radius:50%;background:linear-gradient(145deg,#fff,#b8e0fa);border:1px solid #9ecbe9;box-shadow:inset 0 0 0 9px #ffffff8a}.visual-icon{position:relative;font-size:58px;color:var(--blue);font-weight:900;text-shadow:0 5px 0 #77b9e555}.visual-caption{position:absolute;bottom:1px;right:0;background:var(--blue);color:white;border:3px solid white;border-radius:7px;padding:6px 8px;font-size:8px;line-height:1.25;font-weight:900;text-align:center;transform:rotate(3deg)}\n.meta{display:grid;grid-template-columns:repeat(3,1fr);padding:15px 14px;background:#fff;border-bottom:1px solid #e1eaf1}.meta-item{display:flex;gap:8px;padding:2px 9px;border-right:1px solid #dce8f1;min-width:0}.meta-item:last-child{border:0}.icon{width:29px;height:29px;flex-shrink:0;border-radius:8px;display:grid;place-items:center;background:#e5f3ff;color:var(--blue);font-size:17px}.meta-item small{display:block;color:var(--blue);font-size:8px;font-weight:900;margin-bottom:5px}.meta-item b,.meta-item span{display:block;font-size:10px;line-height:1.4}.meta-item b{color:#163c64}.meta-item span{color:#617b93;margin-top:2px}\n.body{display:grid;grid-template-columns:1fr 145px;gap:15px;padding:18px 20px 16px}.section-title{font-size:11px;font-weight:900;color:#123c69;display:flex;align-items:center;gap:8px;margin-bottom:12px}.section-title span{height:2px;background:var(--accent);flex:1}\n.agenda-row{display:grid;grid-template-columns:28px 1fr;gap:8px;margin:11px 0}.agenda-row>span{display:grid;place-items:center;width:27px;height:27px;border-radius:7px;background:#e6f3ff;color:var(--blue);font-size:10px;font-weight:900}.agenda-row b{display:block;font-size:11px;line-height:1.35;color:#173b62}.agenda-row p{font-size:9px;line-height:1.45;color:#6c8093;margin:4px 0 0}\n.qr-panel{border-radius:12px;background:linear-gradient(160deg,#063f83,var(--blue));color:white;text-align:center;padding:13px 10px;align-self:stretch}.qr-heading{font-size:10px;font-weight:900;line-height:1.35}.qr-placeholder{width:83px;height:83px;background:white;border-radius:7px;margin:11px auto 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--blue);border:5px solid #e4f4ff}.qr-placeholder span{font-size:28px;font-weight:900;letter-spacing:3px}.qr-placeholder small{font-size:6px;line-height:1.2;font-weight:900}.qr-panel>b{font-size:8px;display:block}.qr-panel>p{font-size:8px;line-height:1.45;color:#d9edff}.deadline{border-top:1px solid #ffffff44;margin-top:10px;padding-top:9px}.deadline small{display:block;font-size:7px;line-height:1.3;color:#bfe7ff}.deadline strong{display:block;font-size:9px;margin-top:5px}\n.benefits{display:grid;grid-template-columns:repeat(3,1fr);margin:0 18px 16px;background:#eaf5fc;border-radius:10px;padding:11px 5px}.benefits>div{text-align:center;border-right:1px solid #c9e0f1;padding:2px 5px}.benefits>div:last-child{border:0}.benefits span{display:block;color:var(--blue);font-size:9px;font-weight:900;margin-bottom:5px}.benefits b{display:block;font-size:10px;color:#173e66}.benefits small{display:block;font-size:8px;color:#6a8195;margin-top:3px}\nfooter{background:linear-gradient(100deg,#063d7e,var(--blue));color:white;padding:15px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}footer p{font-family:Georgia,serif;font-style:italic;font-size:14px;margin:0}footer div{text-align:right}footer b{font-size:9px;letter-spacing:1px;display:block}footer small{font-size:8px;display:block;color:#d7eaff;margin-top:4px}\n[contenteditable=true]{outline:none;border-radius:2px}[contenteditable=true]:focus{outline:2px dashed #f0b935;outline-offset:2px;background:#fff8d9}\n.note{max-width:1120px;padding:0 18px 30px;margin:auto;color:#647b90;font-size:12px;line-height:1.6}\n@media(max-width:720px){.gallery{grid-template-columns:1fr;max-width:560px}.toolbar{position:static}.hero-layout{grid-template-columns:1fr 100px}.visual{height:125px}.body{grid-template-columns:1fr 130px;gap:10px;padding:15px}.meta{padding:12px 6px}.meta-item{padding:2px 6px;gap:5px}.meta-item b,.meta-item span{font-size:9px}.meta-item .icon{width:25px;height:25px}.poster h2{font-size:26px}}\n@media(max-width:390px){.hero{padding:17px}.hero-layout{grid-template-columns:1fr 75px}.visual{height:100px}.visual-ring{width:75px;height:75px}.visual-icon{font-size:39px}.body{grid-template-columns:1fr}.qr-panel{display:grid;grid-template-columns:1fr 80px;align-items:center;text-align:left;gap:5px}.qr-placeholder{grid-column:2;grid-row:1/4;margin:0}.qr-panel>b,.qr-panel>p,.deadline{grid-column:1}.qr-panel>p{margin:4px 0}.deadline{margin-top:3px}.meta-item{display:block}.meta-item .icon{margin-bottom:6px}.brand small{font-size:7px}}\n@media print{@page{size:A4 portrait;margin:8mm}body{background:#fff}.toolbar,.intro,.note{display:none!important}.gallery{display:block;max-width:none;padding:0;margin:0}.poster{box-shadow:none;border:1px solid #dbe5ed;margin-bottom:7mm;break-after:page;border-radius:0}.poster:last-child{break-after:auto}.hero{padding:15mm 12mm 8mm}.hero-layout{margin-top:9mm}h2{font-size:28pt}.meta{padding:6mm}.body{padding:6mm 8mm}.benefits{margin:0 8mm 6mm}footer{padding:6mm 8mm}}\n';
+
 function posterBody(v, ms){
   return '<section class="poster" style="--blue:'+v.blue+';--yellow:'+v.yellow+'">'+
     '<div class="poster-top">'+
@@ -312,6 +328,49 @@ function posterBody(v, ms){
     '<div class="poster-foot"><span>HỌC ĐỂ ỨNG DỤNG · ỨNG DỤNG ĐỂ TĂNG TRƯỞNG</span><span>ĐÀO TẠO KINH DOANH</span></div>'+
   '</section>';
 }
+// Mẫu "chuyên nghiệp" (họ thiết kế thứ hai, 10 mẫu, chọn qua Mẫu 11-20)
+function posterBody2(v, ms){
+  var items = (ms.agenda && ms.agenda.length) ? ms.agenda : ['Nội dung chương trình đào tạo'];
+  var agenda = items.map(function(txt, i){
+    return '<div class="agenda-row"><span>0'+(i + 1)+'</span><div><b>'+esc(txt)+'</b><p>Trọng tâm nội dung buổi học.</p></div></div>';
+  }).join('');
+  return '<section class="poster" style="--blue:'+v.blue+';--accent:'+v.accent+'">'+
+    '<header class="hero">'+
+      '<div class="brand"><span class="brand-icon">K</span><span>'+esc(ms.brand)+'</span><small>'+esc(ms.brandSub)+'</small></div>'+
+      '<div class="hero-layout">'+
+        '<div class="headline">'+
+          '<div class="eyebrow">THƯ MỜI ĐÀO TẠO</div>'+
+          '<h2>'+esc(ms.title)+'</h2>'+
+          '<p class="subtitle">Kính gửi: '+esc(ms.name)+'</p>'+
+          '<div class="accent-line"></div>'+
+          '<p class="promise">'+esc(ms.subpill)+'</p>'+
+        '</div>'+
+        '<div class="visual"><div class="visual-ring"></div><div class="visual-icon">'+v.icon+'</div><div class="visual-caption">LEARNING<br>IN ACTION</div></div>'+
+      '</div>'+
+    '</header>'+
+    '<div class="meta">'+
+      '<div class="meta-item"><span class="icon">▦</span><div><small>THỜI GIAN</small><b>'+esc(ms.thoigian)+'</b><span></span></div></div>'+
+      '<div class="meta-item"><span class="icon">▣</span><div><small>HÌNH THỨC</small><b>'+esc(ms.hinhthuc)+'</b><span></span></div></div>'+
+      '<div class="meta-item"><span class="icon">♧</span><div><small>GIẢNG VIÊN / ĐƠN VỊ</small><b>'+esc(ms.giangvien)+'</b><span></span></div></div>'+
+    '</div>'+
+    '<div class="body">'+
+      '<div class="agenda"><div class="section-title">NỘI DUNG CHƯƠNG TRÌNH <span></span></div>'+agenda+'</div>'+
+      '<aside class="qr-panel">'+
+        '<div class="qr-heading">'+(ms.qr ? 'THAM GIA CHƯƠNG TRÌNH' : 'LIÊN HỆ XÁC NHẬN')+'</div>'+
+        (ms.qr ? '<div class="qr-placeholder"><img src="'+ms.qr+'" alt="QR" style="width:100%;height:100%;object-fit:contain"></div>' : '<div class="qr-placeholder"><span>☎</span></div>')+
+        '<b>'+(ms.qr ? 'QUÉT MÃ ĐỂ TRUY CẬP' : esc(ms.lienhe))+'</b>'+
+        '<p>'+(ms.qr ? esc(ms.qrLabel || 'Tham gia trực tuyến') : 'Vui lòng liên hệ để được hỗ trợ.')+'</p>'+
+        '<div class="deadline"><small>HẠN HOÀN THÀNH / XÁC NHẬN</small><strong>'+esc(ms.hanxn)+'</strong></div>'+
+      '</aside>'+
+    '</div>'+
+    '<div class="benefits">'+
+      '<div><span>01</span><b>Hiểu rõ hơn</b><small>Kiến thức cốt lõi</small></div>'+
+      '<div><span>02</span><b>Tự tin hơn</b><small>Kỹ năng ứng dụng</small></div>'+
+      '<div><span>03</span><b>Hiệu quả hơn</b><small>Kết quả công việc</small></div>'+
+    '</div>'+
+    '<footer><p>Hẹn gặp Anh/Chị tại chương trình!</p><div><b>ĐÀO TẠO KINH DOANH</b><small>Liên hệ: '+esc(ms.lienhe)+'</small></div></footer>'+
+  '</section>';
+}
 var h2cP = null;
 function loadHtml2Canvas(){
   if (window.html2canvas) return Promise.resolve(window.html2canvas);
@@ -319,7 +378,7 @@ function loadHtml2Canvas(){
   h2cP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; sc.onload = function(){ res(window.html2canvas); }; sc.onerror = function(){ h2cP = null; rej(new Error('h2c')); }; document.head.appendChild(sc); });
   return h2cP;
 }
-function posterFrame(bodyHtml){
+function posterFrame(bodyHtml, cssText){
   return new Promise(function(resolve, reject){
     var ifr = document.createElement('iframe');
     ifr.style.cssText = 'position:fixed;left:-99999px;top:0;width:720px;height:10px;border:0';
@@ -327,15 +386,15 @@ function posterFrame(bodyHtml){
     var done = false;
     ifr.onload = function(){ done = true; resolve(ifr); };
     document.body.appendChild(ifr);
-    try { ifr.srcdoc = '<!doctype html><html><head><meta charset="utf-8"><style>'+POSTER_CSS+'</style></head><body>'+bodyHtml+'</body></html>'; }
+    try { ifr.srcdoc = '<!doctype html><html><head><meta charset="utf-8"><style>'+cssText+'</style></head><body>'+bodyHtml+'</body></html>'; }
     catch(e){ reject(e); return; }
     setTimeout(function(){ if (!done) resolve(ifr); }, 1500);
   });
 }
-// Trả về Promise<HTMLCanvasElement> ảnh minh hoạ (poster) đã điền thông tin, độ nét x2
-async function renderPosterCanvas(variant, ms){
+// Trả về Promise<HTMLCanvasElement> ảnh minh hoạ (poster) đã điền thông tin, độ nét x2. cssText/bodyHtml ứng với một "họ" thiết kế (xem posterBody/posterBody2…)
+async function renderPosterCanvas(cssText, bodyHtml){
   var H2C = await loadHtml2Canvas();
-  var ifr = await posterFrame(posterBody(variant, ms));
+  var ifr = await posterFrame(bodyHtml, cssText);
   try {
     var body = ifr.contentDocument.body, h = Math.max(body.scrollHeight, 400);
     ifr.style.height = h + 'px';
@@ -426,18 +485,20 @@ function mount(root, cfg){
   function selVisible(){ S.sel = {}; visible().forEach(function(r){ S.sel[r.code] = true; }); }
   function xvars(){ return eventVars(S.vars, baseId()); }
   function msgFor(r){ return render(S.text, r, ex, origin, xvars(), optionalKeys()); }
-  function posterVariantIdx(){ // -1 = không dùng mẫu minh hoạ; 0..9 = chỉ số mẫu
+  function posterVariantIdx(){ // -1 = không dùng mẫu minh hoạ; 1..10 = mẫu 3D cartoon; 11..20 = mẫu chuyên nghiệp
     if (baseId() !== 'inviteTrain') return -1;
     var m = /(\d+)/.exec(String(S.vars.kieu_mau || ''));
-    return m ? (parseInt(m[1], 10) - 1) : -1;
+    return m ? parseInt(m[1], 10) : -1;
   }
   async function posterMsFor(r){
     var ev = xvars(), noi = String(ev.noi_dung || '').trim(), sub = (noi.split(/[\n,.;]/)[0] || '').trim().slice(0, 70);
+    var agenda = noi.split(/[\n,]/).map(function(x){ return x.trim(); }).filter(function(x){ return x; }).slice(0, 3);
     var cta = ctaFor(r), qr = cta ? await qrDataUrl(cta.url) : null;
     return {
       brand:'KAROFI | LIVOTEC', brandSub:'ĐÀO TẠO KINH DOANH',
       name: r.name || r.code, title: ev.ten_khoa || 'CHƯƠNG TRÌNH ĐÀO TẠO',
       subpill: sub || 'Nâng cao năng lực · Áp dụng ngay vào công việc',
+      agenda: agenda,
       thoigian: ev.thoi_gian || 'Theo thông báo của Ban Tổ chức',
       hanxn: 'Xác nhận trước: ' + (ev.han_xn || 'theo thông báo của Ban Tổ chức'),
       lienhe: ev.lien_he || 'Ban Tổ chức',
@@ -446,7 +507,12 @@ function mount(root, cfg){
       qr: qr, qrLabel: cta ? cta.label : ''
     };
   }
-  async function posterCanvasFor(r){ var idx = posterVariantIdx(); return renderPosterCanvas(POSTER_STYLES[idx] || POSTER_STYLES[0], await posterMsFor(r)); }
+  async function posterCanvasFor(r){
+    var n = posterVariantIdx(); if (n < 1) n = 1;
+    var ms = await posterMsFor(r);
+    if (n <= 10) return renderPosterCanvas(POSTER_CSS, posterBody(POSTER_STYLES[n - 1] || POSTER_STYLES[0], ms));
+    return renderPosterCanvas(PROF_CSS, posterBody2(POSTER_STYLES2[n - 11] || POSTER_STYLES2[0], ms));
+  }
   function pngOf(r){ var idx = posterVariantIdx(); if (idx >= 0) return posterCanvasFor(r).then(function(c){ return renderPng({ canvas:c }); }); return renderPng({ text: msgFor(r), kind: tplOf(S.tpl).kind || '', cta: ctaFor(r) }); }
   function pdfItemFor(r){ var idx = posterVariantIdx(); if (idx >= 0) return posterCanvasFor(r).then(function(c){ return { canvas:c }; }); return Promise.resolve({ text: msgFor(r), kind: tplOf(S.tpl).kind || '', cta: ctaFor(r) }); }
   function subjFor(r){ return render(S.subj, r || {}, ex, origin, xvars(), []); }
@@ -487,7 +553,7 @@ function mount(root, cfg){
       '<div class="nt-chips" style="margin-bottom:2px"><button type="button" class="nt-chip" id="ntSave" title="Lưu nội dung và thông tin đang nhập thành mẫu dùng lại (lưu trong trình duyệt này)">+ Lưu thành mẫu của tôi</button>'+(t.mine ? '<button type="button" class="nt-chip" id="ntDel" style="background:#FBE3E0;color:#B3261E">Xoá mẫu này</button>' : '')+'</div>'+
       '<div class="nt-chips" aria-label="Chèn thông tin tự động">'+chips.map(function(v){ return '<button type="button" class="nt-chip" data-v="'+v[0]+'" title="Chèn {'+v[0]+'}">'+esc(v[1])+'</button>'; }).join('')+'</div>'+
       '<label class="nl">Kênh gửi</label><div class="nt-seg">'+CHANNELS.map(function(c){ return '<button type="button" data-ch="'+c[0]+'" class="'+(c[0]===S.channel?'on':'')+'">'+c[1]+'</button>'; }).join('')+'</div>'+
-      (baseId() === 'inviteTrain' && (S.channel === 'png' || S.channel === 'pdf') ? '<label class="nl" for="ntPoster">Mẫu minh hoạ (poster) — chỉ dùng cho Ảnh PNG / Xuất PDF</label><select id="ntPoster">'+POSTER_OPTS.map(function(o){ return '<option'+(o === (S.vars.kieu_mau || POSTER_OPTS[0]) ? ' selected' : '')+'>'+esc(o)+'</option>'; }).join('')+'</select><p class="nt-hint" style="margin:4px 0 0">Chọn “Không dùng” để xuất khung thư chữ đơn giản như trước; chọn Mẫu 1–10 để xuất theo đúng thiết kế poster, tự điền tên và thông tin cho từng người.</p>' : '')+
+      (baseId() === 'inviteTrain' && (S.channel === 'png' || S.channel === 'pdf') ? '<label class="nl" for="ntPoster">Mẫu minh hoạ (poster) — chỉ dùng cho Ảnh PNG / Xuất PDF</label><select id="ntPoster">'+POSTER_OPTS.map(function(o){ return '<option'+(o === (S.vars.kieu_mau || POSTER_OPTS[0]) ? ' selected' : '')+'>'+esc(o)+'</option>'; }).join('')+'</select><p class="nt-hint" style="margin:4px 0 0">Chọn “Không dùng” để xuất khung thư chữ đơn giản như trước; Mẫu 1–10 là phong cách 3D cartoon, Mẫu 11–20 là phong cách chuyên nghiệp — hệ thống tự điền tên và thông tin cho từng người.</p>' : '')+
       (S.channel === 'email' ? '<label class="nl" for="ntSubj">Tiêu đề email</label><input type="text" id="ntSubj" value="'+esc(subjFor(first))+'">' : '')+
       '<div class="nt-prev" id="ntPrev"></div>'+((S.channel==='png'||S.channel==='pdf') ? '<div class="nt-imgbox"><small>Ảnh sẽ xuất</small><img id="ntImg" alt="Xem trước ảnh thư mời"></div>' : '')+
       '<p class="nt-hint" style="margin:10px 0 0">'+(S.channel==='png' ? 'Xuất thư thành ảnh PNG để gửi qua Zalo, Messenger hoặc in. Mỗi người một ảnh có ghi sẵn tên. Bấm “Sao chép” rồi dán thẳng vào khung chat, hoặc “Tải ảnh” để lưu.' : S.channel==='pdf' ? 'Xuất thư mời thành file PDF (khổ A4) để in hoặc gửi đính kèm. Bấm “Tải PDF” ở từng người, hoặc “Tải PDF gộp” để tải một file nhiều trang cho tất cả người đã chọn.' : S.channel==='zalo' ? 'Bấm “Mở Zalo” ở từng người: nội dung được sao chép sẵn, bạn chỉ cần dán (Cmd/Ctrl+V) rồi gửi.' : S.channel==='sms' ? 'Bấm “Soạn SMS” ở từng người: ứng dụng tin nhắn mở sẵn với nội dung và số điện thoại.' : (t.kind === 'invite' ? 'Hệ thống gửi email thư mời có khung riêng'+(t.cta ? ' và nút bấm' : '')+' tới email đã lưu của những người được chọn.' : 'Hệ thống gửi email trực tiếp tới email đã lưu của những người được chọn.'))+((S.channel==='png'||S.channel==='pdf') && posterVariantIdx() >= 0 ? ' Đang dùng mẫu minh hoạ (poster) đã chọn ở trên — mỗi người một ảnh/PDF riêng, tự điền tên và thông tin khoá học.' : '')+((S.channel==='png'||S.channel==='pdf') && posterVariantIdx() < 0 && t.cta && first && ctaFor(first) ? ' Có đường link nên hệ thống tự sinh mã QR thật của link đó để quét trực tiếp.' : '')+'</p></div>'+
