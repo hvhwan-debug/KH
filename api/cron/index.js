@@ -16,6 +16,8 @@ module.exports = async function (context, req) {
     // Chỉ khi chạy thử (mail ở chế độ memory) mới cho phép giả lập thời gian
     const now = (c.mailMode === "memory" && req.headers["x-test-now"]) ? new Date(req.headers["x-test-now"]) : new Date();
 
+    let swept = 0;
+    try { swept = await require("../_lib/finalize").sweepOverdue(context, { max: 50 }); } catch (e) { context.log.error("cron sweep", e && e.message); }
     const names = await store.list("user/");
     let users = 0, sent = 0, failed = 0;
     for (const name of names) {
@@ -44,7 +46,7 @@ module.exports = async function (context, req) {
         context.log.error("cron user", name, e && e.message);
       }
     }
-    return reply(context, 200, { ok: true, users, sent, failed });
+    return reply(context, 200, { ok: true, users, sent, failed, swept });
   } catch (e) {
     context.log.error("cron", e && e.message);
     return reply(context, 500, { ok: false });
