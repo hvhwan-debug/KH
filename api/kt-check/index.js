@@ -25,6 +25,19 @@ module.exports = async function (context, req) {
       return reply(context, 404, { ok: false, error: "Không tìm thấy thông tin khớp với mã nhân viên và email đã nhập. Kiểm tra lại hoặc liên hệ quản trị viên." });
     }
 
+    // Thí sinh vừa chọn tỉnh/thành + miền ở màn xác nhận: lưu NGAY vào hồ sơ (chỉ khi hồ sơ còn thiếu),
+    // để lần sau vào không phải chọn lại kể cả khi chưa bắt đầu làm bài.
+    if (b.saveRegion) {
+      const PROV = require("../_lib/provinces");
+      const pv = PROV.canonProvince(b.province), rg = quiz.normRegion(b.region);
+      if (!pv || !rg) return reply(context, 400, { ok: false, error: !pv ? "Vui lòng chọn tỉnh/thành bạn đang làm việc." : "Vui lòng chọn miền bán hàng (Miền Bắc hoặc Miền Nam)." });
+      if (!(PROV.canonProvince(found.province) && quiz.normRegion(found.region))) {
+        found.province = pv; found.region = rg; found.regionSetAt = Date.now();
+        await quiz.saveCandidates(candidates);
+      }
+      return reply(context, 200, { ok: true, province: found.province, region: quiz.normRegion(found.region) });
+    }
+
     const defaultSettings = await quiz.getSettings();
     const examId = String(b.examId || (req.query && req.query.exam) || "").trim();
     if (!examId) return reply(context, 400, { ok: false, needExam: true, error: "Vui lòng nhập mã đề thi hoặc mở đường link của đề.", serverNow: Date.now() });

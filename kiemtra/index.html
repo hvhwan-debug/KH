@@ -1064,7 +1064,7 @@ $('btnReqSend').addEventListener('click', async function(){
   $('reqState').innerHTML = '<div class="msg ok">Đã gửi yêu cầu điều chỉnh. Quản trị viên sẽ xem xét và cập nhật nếu thông tin đúng. Bạn vẫn có thể làm bài ngay.</div>';
 });
 
-$('btnStart').addEventListener('click', function(){
+$('btnStart').addEventListener('click', async function(){
   if (!ST.cand.phone){
     var p = normPhoneVN($('inPhone').value);
     $('inPhone').setAttribute('aria-invalid', p ? 'false' : 'true');
@@ -1079,6 +1079,13 @@ $('btnStart').addEventListener('click', function(){
     if (!rg){ msg('regionMsg','Vui lòng chọn miền bán hàng (Miền Bắc hoặc Miền Nam).'); document.querySelector('#inRegion input').focus(); return; }
     if (!confirm('Xác nhận: bạn làm việc tại ' + pv + ', bán hàng thuộc ' + REGION_LABEL[rg] + '?\n\nĐề kiểm tra sẽ theo dòng sản phẩm của ' + REGION_LABEL[rg] + '. Sau khi bắt đầu, muốn đổi phải gửi yêu cầu điều chỉnh cho quản trị viên.')) return;
     ST.rgNew = { province: pv, region: rg }; msg('regionMsg','');
+    // Lưu ngay vào hồ sơ: lần sau vào không phải chọn lại (kể cả khi dừng ở bước chụp ảnh)
+    var btn = $('btnStart'), lbl = btn.textContent; btn.disabled = true; btn.textContent = 'Đang lưu thông tin…';
+    var sv; try { sv = await api('/api/kt-check', { code:ST.cand.inCode, email:ST.cand.inEmail, examId:EXAM_ID, saveRegion:true, province:pv, region:rg }); } catch(e){ sv = null; }
+    btn.disabled = false; btn.textContent = lbl;
+    if (!sv){ msg('regionMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
+    if (!sv.j.ok){ msg('regionMsg', sv.j.error || 'Không lưu được thông tin, vui lòng thử lại.'); return; }
+    ST.cand.province = sv.j.province; ST.cand.region = sv.j.region; ST.cand.needRegion = false;
   }
   show('photo');
   photoInit();
