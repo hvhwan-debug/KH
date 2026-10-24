@@ -386,22 +386,29 @@ body.introbg .hero h3{font-size:clamp(34px,3.1vw,53px);line-height:1.08;letter-s
 body.introbg .hero h3 span{color:#1269db}
 body.introbg .hero h3.long{font-size:clamp(26px,2.4vw,40px);line-height:1.18;letter-spacing:-.8px}
 body.introbg .hero .hsub{font-size:16px;line-height:1.7;color:#344f75;max-width:470px;margin:0 0 30px;text-shadow:none}
-body.introbg .hero .feats{display:grid;gap:20px;margin:0;padding:0;list-style:none}
-body.introbg .hero .feats li{display:grid;grid-template-columns:48px 1fr;gap:13px;align-items:start;padding:0;background:none;border:0}
-body.introbg .hero .feats .fi{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.85);border:1px solid #d6eaff;box-shadow:0 6px 18px rgba(28,110,197,.11);display:grid;place-items:center}
-body.introbg .hero .feats .fi svg{stroke:var(--brand);width:22px;height:22px}
-body.introbg .hero .feats b{display:block;font-size:15px;margin:1px 0 5px;color:var(--ink)}
-body.introbg .hero .feats span:not(.fi){display:block;font-size:13px;line-height:1.55;color:#496386}
+body.introbg .hero .feats{display:grid;gap:22px;margin:0;padding:0;list-style:none}
+body.introbg .hero .feats li{display:grid;grid-template-columns:67px 1fr;gap:24px;align-items:center;padding:0;background:none;border:0}
+body.introbg .hero .feats .fi{width:67px;height:67px;border-radius:18px;background:rgba(255,255,255,.92);border:1px solid #e2effc;box-shadow:0 8px 22px rgba(28,110,197,.12);display:grid;place-items:center;color:#1673e6}
+body.introbg .hero .feats .fi svg{width:30px;height:30px}
+body.introbg .hero .feats b{display:block;font-size:16px;margin:0 0 5px;color:var(--ink)}
+body.introbg .hero .feats span:not(.fi){display:block;font-size:14px;line-height:1.55;color:#496386}
 /* biểu mẫu (giữa) */
 body.introbg .stage>main{display:flex;flex-direction:column;gap:18px;width:100%;max-width:560px;justify-self:center;min-width:0}
 body[data-scr="confirm"].introbg .stage>main{max-width:640px}
-body.introbg .steps{margin:0 4px;gap:7px}
-body.introbg .steps li{font-size:12.5px;font-weight:700}
-body.introbg .steps li:not(.cur) .t{display:inline}
-body.introbg .steps .n{width:34px;height:34px;font-size:14px}
-body.introbg .steps li.cur .n{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(8,120,232,.23)}
+body.introbg .steps{margin:0 4px;gap:0;align-items:flex-start}
+body.introbg .steps li{position:relative;flex:1 1 0;flex-direction:column;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#526b91;text-align:center}
+body.introbg .steps li:last-child{flex:1 1 0}
+body.introbg .steps li .t{display:block;overflow:visible;text-overflow:clip;white-space:nowrap}
+body.introbg .steps li:not(.cur) .t{display:block}
+body.introbg .steps .n{width:36px;height:36px;font-size:14px;position:relative;z-index:1}
+body.introbg .steps .bar{position:absolute;top:16px;left:calc(50% + 26px);width:calc(100% - 52px);height:3px;flex:none;min-width:0;background:#d2e5fa}
+body.introbg .steps li:last-child .bar{display:none}
+body.introbg .steps li.done .bar{background:var(--brand)}
+body.introbg .steps li.cur{color:var(--ink)}
+body.introbg .steps li.cur .n{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(8,120,232,.28)}
 body.introbg .card{background:rgba(255,255,255,.96);border:1px solid #e0ecfa;border-radius:26px;padding:clamp(25px,3vw,42px);box-shadow:0 22px 65px rgba(22,75,133,.18);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);overflow:hidden}
-body.introbg .card .brandfull{display:block;height:86px;max-width:60%;margin:0 auto 14px}
+body.introbg .card::before{display:none}
+body.introbg .card .brandfull{display:block;height:100px;max-width:60%;margin:0 auto 14px}
 body.introbg .card h1{font-size:clamp(25px,2.1vw,31px);text-align:center;margin:0 0 11px;letter-spacing:-.6px}
 body.introbg .card .lead{text-align:center;color:var(--muted);font-size:14px;line-height:1.65;margin:0 auto 24px;max-width:440px}
 body.introbg #scrConfirm h1{text-align:left}
@@ -465,13 +472,14 @@ body.introbg .btn.go:active{transform:scale(.99)}
   body.introbg .hero .feats{display:none}
   body.introbg .card{padding:26px 21px;border-radius:22px}
   body.introbg .card .brandfull{height:70px}
-  body.introbg .steps .n{width:29px;height:29px;font-size:13px}
+  body.introbg .steps .n{width:30px;height:30px;font-size:13px}
+  body.introbg .steps .bar{top:13px;left:calc(50% + 22px);width:calc(100% - 44px)}
   body.introbg .benefits{gap:6px}
   body.introbg .benefit{font-size:10.5px}
 }
 @media(max-width:560px){
   body.introbg{background-image:url(/kiemtra/bg-light-sm.jpg);background-position:60% center;background-attachment:scroll}
-  body.introbg .steps li:not(.cur) .t{display:none}
+  body.introbg .steps li{font-size:11px}
   body.introbg .lp-nav button span{display:none}
 }
 @media(prefers-reduced-motion:reduce){
@@ -498,14 +506,14 @@ body.introbg .btn.go:active{transform:scale(.99)}
   <div class="stage">
     <aside class="hero" aria-label="Giới thiệu">
       <div>
-        <span class="eyebrow"><i></i>Chào mừng bạn đến với</span>
-        <h3>HỆ THỐNG<br><span>KIỂM TRA</span><br><span>TRỰC TUYẾN!</span></h3>
+        <span class="eyebrow"><i></i>Nền tảng kiểm tra trực tuyến</span>
+        <h3>HỆ THỐNG<br><span>KIỂM TRA</span><br><span>TRỰC TUYẾN</span></h3>
         <p class="hsub">Nền tảng tổ chức kiểm tra, đánh giá kiến thức và năng lực nhân sự một cách nhanh chóng, minh bạch và hiệu quả.</p>
       </div>
       <ul class="feats">
-        <li><span class="fi" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg></span><div><b>Truy cập nhanh chóng</b><span>Tham gia bài kiểm tra bằng mã nhân viên và email công ty, không cần đăng nhập tài khoản.</span></div></li>
-        <li><span class="fi" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg></span><div><b>Kiểm soát thời gian minh bạch</b><span>Thời gian làm bài được ghi nhận tự động trên hệ thống, bảo đảm tính nhất quán trong quá trình kiểm tra.</span></div></li>
-        <li><span class="fi" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg></span><div><b>Lưu tiến độ làm bài</b><span>Tiếp tục làm bài từ vị trí đã dừng khi tải lại trang hoặc kết nối bị gián đoạn, theo cơ chế lưu bài của hệ thống.</span></div></li>
+        <li><span class="fi" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.2" fill="currentColor"/><path d="M3.8 21.5c0-4.6 3.7-7.4 8.2-7.4s8.2 2.8 8.2 7.4z" fill="currentColor"/></svg></span><div><b>Truy cập nhanh chóng</b><span>Tham gia bài kiểm tra bằng mã nhân viên và email công ty, không cần đăng nhập tài khoản.</span></div></li>
+        <li><span class="fi" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 6.6V12l3.6 2.3" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><b>Kiểm soát thời gian minh bạch</b><span>Thời gian làm bài được ghi nhận tự động trên hệ thống, bảo đảm tính nhất quán trong quá trình kiểm tra.</span></div></li>
+        <li><span class="fi" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 12a8.2 8.2 0 0 1-14 5.8M3.8 12a8.2 8.2 0 0 1 14-5.8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M18.6 2.4v4.9h-4.9M5.4 21.6v-4.9h4.9" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><b>Lưu tiến độ làm bài</b><span>Tiếp tục làm bài từ vị trí đã dừng khi tải lại trang hoặc kết nối bị gián đoạn, theo cơ chế lưu bài của hệ thống.</span></div></li>
       </ul>
       <div class="art" aria-hidden="true">
         <svg width="54" height="54" viewBox="0 0 54 54"><circle cx="27" cy="27" r="22" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="6"/><circle cx="27" cy="27" r="22" fill="none" stroke="#7FE3F2" stroke-width="6" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="40" transform="rotate(-90 27 27)"/><path d="m18 28 6 6 12-13" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
