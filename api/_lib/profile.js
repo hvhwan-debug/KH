@@ -2,7 +2,8 @@
 // Cố ý KHÔNG lưu: ngày sinh, tuổi, giới tính, địa chỉ, nơi sinh, quê quán, tôn giáo, dân tộc, quốc tịch, tình trạng hôn nhân.
 // Mọi dữ liệu vào đều qua cleanProfile (danh sách trường cố định, giới hạn độ dài): không nhận trường lạ từ trình duyệt.
 const STR = { donVi: 80, khoi: 60, phong: 60, boPhan: 80, toNhom: 60, khuVucCon: 30, noiLamViec: 60, mien: 30, loaiNV: 40, chucDanhGoc: 80, quanLy: 80,
-  trinhDo: 50, bangCap: 50, chuyenNganh: 80, truong: 100, tinhPhuTrach: 300 };
+  trinhDo: 50, bangCap: 50, chuyenNganh: 80, truong: 100, tinhPhuTrach: 300,
+  tapDoan: 60, hinhThuc: 40, hieuLuc: 40, msnvCu: 30, maChamCong: 30 };
 const DATES = ["vaoCongTy", "vaoLanDau", "kyHDChinhThuc"];
 const clip = (s, n) => String(s == null ? "" : s).replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, n);
 
