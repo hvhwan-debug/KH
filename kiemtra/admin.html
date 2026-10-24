@@ -1006,10 +1006,10 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
           <button class="btn" type="button" onclick="$('candAddCard').classList.remove('hide');$('candAddCard').scrollIntoView({behavior:'smooth'});candAddMode('form');$('candNewCode').focus()">＋ Thêm thí sinh</button>
         </div>
         <div class="qfilter">
-          <input type="search" id="candSearch" placeholder="Tìm mã NV, tên, email…" oninput="renderCandidates()" aria-label="Tìm thí sinh">
-          <select id="candMgrF" onchange="renderCandidates()" aria-label="Lọc theo quản lí"></select>
-          <select id="candTitleF" onchange="renderCandidates()" aria-label="Lọc theo chức danh"></select>
-          <select id="candSegF" onchange="renderCandidates()" aria-label="Lọc theo nhóm ngành"><option value="*">Mọi nhóm ngành</option><option value="both">Cả hai ngành</option><option value="may_loc">Máy lọc nước</option><option value="gia_dung">Gia dụng</option></select>
+          <input type="search" id="candSearch" autocomplete="off" placeholder="Tìm mã NV, tên, email…" oninput="renderCandidates()" aria-label="Tìm thí sinh">
+          <select id="candMgrF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo quản lí"></select>
+          <select id="candTitleF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo chức danh"></select>
+          <select id="candSegF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo nhóm ngành"><option value="*">Mọi nhóm ngành</option><option value="both">Cả hai ngành</option><option value="may_loc">Máy lọc nước</option><option value="gia_dung">Gia dụng</option></select>
           <span class="small" id="candShown"></span>
         </div>
         <table class="stk"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Chức danh</th><th>Email</th><th>SĐT / Zalo</th><th>Quản lí</th><th>Nhóm ngành</th><th>Ngày vào làm</th><th></th></tr></thead><tbody id="candList"></tbody></table>
@@ -1359,6 +1359,7 @@ window.addEventListener('hashchange', () => {
   if (WS.indexOf(t) >= 0 && id && id !== CUR_EXAM) openExam(id, t); else switchTab(t);
 });
 function switchTab(t){
+  const prevTab = document.body.dataset.tab;
   if (TABS.indexOf(t) < 0) t = 'exams';
   if (WS.indexOf(t) >= 0 && !CUR_EXAM && !(t === 'examset' && EX_NEW)) t = 'exams';
   if (t !== 'examset') EX_NEW = false;
@@ -1374,6 +1375,7 @@ function switchTab(t){
   document.body.dataset.tab = t;
   const h = '#' + t + (inWs && CUR_EXAM ? '/' + encodeURIComponent(CUR_EXAM) : '');
   if (location.hash !== h) history.replaceState(null, '', h);
+  if (t === 'candidates' && prevTab !== 'candidates') resetCandFilters(); // vào tab Thí sinh: luôn hiện đủ danh sách, không giữ bộ lọc lần trước
   if (t === 'audit') { loadAudit(); loadFaceRejections(); }
   if (t === 'managerview' && $('mvFrame').src === 'about:blank') $('mvFrame').src = '/kiemtra/quanli.html';
   if (inWs) renderExHead();
@@ -2304,6 +2306,11 @@ async function loadCandidates(){
   CANDIDATES = j.candidates;
   renderCandidates();
   loadChangeRequests();
+}
+function resetCandFilters(){
+  ['candSearch'].forEach(id => { const e = $(id); if (e) e.value = ''; });
+  ['candMgrF','candTitleF','candSegF'].forEach(id => { const e = $(id); if (e) e.value = '*'; });
+  renderCandidates();
 }
 function renderCandidates(){
   const segLabel = { both:'Cả hai', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };
