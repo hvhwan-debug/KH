@@ -2645,11 +2645,12 @@ async function xlTemplate(){
 let SEGPLANS = {};
 const SP_SEGS = [['both','Bán cả 2 ngành'],['may_loc','Chỉ bán máy lọc nước'],['gia_dung','Chỉ bán gia dụng'],['mien_bac','PC Miền Bắc'],['mien_nam','PC Miền Nam']];
 const SP_TEMPLATE = {
-  both: [['Thương hiệu',5],['Gia dụng',10],['Máy lọc nước',15],['Kỹ năng bán hàng máy lọc',5],['Kỹ năng bán hàng gia dụng',5]],
-  may_loc: [['Thương hiệu',5],['Máy lọc nước',25],['Kỹ năng bán hàng máy lọc',10]],
+  // Từ 10/2026 ngưng dùng câu kỹ năng bán hàng máy lọc (chưa đảm bảo chất lượng): phần đó thay bằng câu Máy lọc nước
+  both: [['Thương hiệu',5],['Gia dụng',10],['Máy lọc nước',20],['Kỹ năng bán hàng gia dụng',5]],
+  may_loc: [['Thương hiệu',5],['Máy lọc nước',35]],
   gia_dung: [],
-  mien_bac: [['Máy lọc nước',30],['Kỹ năng bán hàng máy lọc',10]],
-  mien_nam: [['Máy lọc nước',30],['Kỹ năng bán hàng máy lọc',10]]
+  mien_bac: [['Máy lọc nước',40]],
+  mien_nam: [['Máy lọc nước',40]]
 };
 // Miền của câu hỏi (khớp quiz.questionRegion ở máy chủ): tag "Miền Bắc"/"Miền Nam" hoặc tên danh mục có chữ "Miền Bắc"/"Miền Nam"
 const rgFold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/[^a-z0-9]+/g, ' ').trim();

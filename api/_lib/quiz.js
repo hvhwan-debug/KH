@@ -177,6 +177,7 @@ function usableQ(q) {
 async function ensureBankPeriods() {
   try { await ensureRegionTags(); } catch (e) { /* không chặn việc tạo đề nếu chuyển đổi lỗi; lần gọi sau thử lại */ }
   try { await ensureSeeds(); } catch (e) { /* như trên */ }
+  try { await ensureNoSkill(); } catch (e) { /* như trên */ }
   const list = await getQuestions();
   if (!list.length || list.some((q) => q.period)) return null;
   const st = await getSettings();
@@ -269,6 +270,59 @@ async function ensureSeeds() {
   }
   seedsDone = true;
   return report;
+}
+// ---------- Ngưng dùng câu hỏi KỸ NĂNG (10/2026, chưa đảm bảo chất lượng) — chạy một lần ----------
+// 1) Tạm ngưng (active=false, KHÔNG xoá; đánh dấu pausedBy để bật lại được) mọi câu kỹ năng bán hàng/tư vấn,
+//    trừ "Kỹ năng bán hàng gia dụng" (PC chỉ bán gia dụng không có câu máy lọc để thay).
+// 2) Khung phân bổ (cài đặt chung + từng đề): số câu của dòng kỹ năng được cộng sang dòng "Máy lọc nước" để giữ tổng số câu.
+const NOSKILL_KEY = "kt/migrate-no-skill-v1.json";
+const isSkillCat = (c) => { const f = foldRg(c); return /\bk[yi] nang\b/.test(f) && f.indexOf("gia dung") < 0; };
+function isSkillQ(q) {
+  if (isSkillCat(q && q.category)) return true;
+  return (Array.isArray(q && q.tags) ? q.tags : []).some((t) => /^k[yi] nang (tu van|ban hang)/.test(foldRg(t)) && foldRg(t).indexOf("gia dung") < 0);
+}
+function plansWithoutSkill(sp, mayLocName) {
+  if (!sp || typeof sp !== "object") return { sp, moved: 0 };
+  const out = {}; let moved = 0;
+  Object.keys(sp).forEach((seg) => {
+    const rows = Array.isArray(sp[seg]) ? sp[seg].map((r) => Object.assign({}, r)) : sp[seg];
+    if (!Array.isArray(rows) || seg === "gia_dung") { out[seg] = rows; return; }
+    const skill = rows.filter((r) => isSkillCat(r.category)), n = skill.reduce((x, r) => x + (toInt(r.count) || 0), 0);
+    if (!skill.length) { out[seg] = rows; return; }
+    const keep = rows.filter((r) => !isSkillCat(r.category));
+    const ml = keep.find((r) => foldRg(r.category) === "may loc nuoc");
+    if (ml) ml.count = (toInt(ml.count) || 0) + n; else keep.push({ category: mayLocName, count: n });
+    out[seg] = keep; moved += n;
+  });
+  return { sp: out, moved };
+}
+let noSkillDone = false;
+async function ensureNoSkill() {
+  if (noSkillDone) return null;
+  if (await store.get(NOSKILL_KEY)) { noSkillDone = true; return null; }
+  const list = await getQuestions();
+  const before = JSON.parse(JSON.stringify(list)), byCat = {};
+  let paused = 0;
+  list.forEach((q) => {
+    if (q.active === false || !isSkillQ(q)) return;
+    q.active = false; q.pausedBy = "no-skill-v1"; paused++;
+    byCat[q.category || "(trống)"] = (byCat[q.category || "(trống)"] || 0) + 1;
+  });
+  const mlName = (list.find((q) => foldRg(q.category) === "may loc nuoc") || {}).category || "Máy lọc nước";
+  if (paused) { await backupQuestions(before); await saveQuestions(list); }
+  // Khung phân bổ chung
+  const raw = (await store.get(S_KEY)) || {};
+  const g = plansWithoutSkill(raw.segmentPlans, mlName);
+  if (g.moved) { raw.segmentPlans = g.sp; await saveSettings(raw); }
+  // Khung phân bổ riêng của từng đề
+  const exams = await getExams(); let exMoved = 0;
+  exams.forEach((e) => { const r = plansWithoutSkill(e.segmentPlans, mlName); if (r.moved) { e.segmentPlans = r.sp; exMoved += r.moved; } });
+  if (exMoved) await saveExams(exams);
+  const info = { at: Date.now(), paused, byCat, planMovedGlobal: g.moved, planMovedExams: exMoved };
+  await store.put(NOSKILL_KEY, info);
+  noSkillDone = true;
+  try { await require("./auditlog").write({ area: "system", role: "system", by: "hệ thống", name: "Hệ thống", op: "pauseSkillQuestions", label: "Ngưng dùng câu kỹ năng, thay bằng câu Máy lọc nước", kind: "change", status: 200, ok: true, details: info }); } catch (e) {}
+  return info;
 }
 // Thứ tự lấy đề cho kỳ P: câu của kỳ P -> câu chưa gắn kỳ -> đề của kỳ gần nhất TRƯỚC P (dự phòng tạm thời,
 // để đổi sang kỳ mới mà chưa kịp soạn đề thì thí sinh vẫn làm được bài; trang quản trị báo rõ đang dùng tạm).
