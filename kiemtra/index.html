@@ -155,18 +155,18 @@ button,input{font:inherit;color:inherit}
 .btn.ghost{background:#fff;color:var(--brand-deep);border:1.5px solid var(--line);margin-top:10px;box-shadow:none;min-height:50px}
 .btn.ghost:hover{background:var(--brand-soft);box-shadow:none;filter:none}
 /* Khung giờ mở/đóng đề: hiện ngay khi mở link, trước khi nhập mã */
-.sched{display:flex;gap:12px;align-items:flex-start;border-radius:14px;padding:13px 15px;margin:0 0 18px;border:1px solid var(--line);background:#F7F9FB}
+.sched{display:flex;gap:9px;align-items:center;border-radius:12px;padding:9px 13px;margin:0 0 14px;border:1px solid var(--line);background:#F7F9FB}
 .sched.hide{display:none}
-.sched .si{flex:0 0 auto;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#fff;border:1px solid var(--line);color:var(--brand-deep)}
-.sched .sx{min-width:0;flex:1}
-.sched .sl{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-.sched .sl i{width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 auto}
-.sched .st{display:block;font-size:16px;font-weight:800;color:var(--ink);margin-top:3px;line-height:1.35}
-.sched .sd{display:block;font-size:13px;color:var(--muted);margin-top:2px;line-height:1.5}
-.sched .cd{display:inline-block;margin-top:8px;font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:99px;background:#fff;border:1px solid var(--line);font-variant-numeric:tabular-nums}
-.sched.up{background:#FFF9EC;border-color:#F1DFB6}.sched.up .sl{color:var(--warn)}.sched.up .si{color:var(--warn);border-color:#F1DFB6}.sched.up .cd{color:var(--warn);border-color:#F1DFB6}
-.sched.on{background:#F1F9F5;border-color:#CDE8D9}.sched.on .sl{color:var(--ok)}.sched.on .si{color:var(--ok);border-color:#CDE8D9}.sched.on .cd{color:var(--ok);border-color:#CDE8D9}
-.sched.off{background:#FDF3F2;border-color:#F3D3CF}.sched.off .sl{color:var(--bad)}.sched.off .si{color:var(--bad);border-color:#F3D3CF}
+.sched .si{flex:0 0 auto;display:grid;place-items:center;color:var(--brand-deep)}.sched .si svg{width:18px;height:18px}
+.sched .sx{min-width:0;flex:1;display:flex;flex-wrap:wrap;align-items:center;column-gap:10px;row-gap:1px}
+.sched .sl{flex:1 0 100%;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sched .sl i{width:6px;height:6px;border-radius:50%;background:currentColor;flex:0 0 auto}
+.sched .st{display:block;flex:1 1 auto;min-width:0;font-size:14px;font-weight:700;color:var(--ink);line-height:1.4}
+.sched .sd{display:block;flex:1 0 100%;font-size:12px;color:var(--muted);line-height:1.45}
+.sched .cd{display:inline-block;margin:0;font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;background:rgba(255,255,255,.75);border:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sched.up{background:#FFF9EC;border-color:#F1DFB6}.sched.up .sl{color:var(--warn)}.sched.up .si{color:var(--warn)}.sched.up .cd{color:var(--warn);border-color:#F1DFB6}
+.sched.on{background:#F1F9F5;border-color:#CDE8D9}.sched.on .sl{color:var(--ok)}.sched.on .si{color:var(--ok)}.sched.on .cd{color:var(--ok);border-color:#CDE8D9}
+.sched.off{background:#FDF3F2;border-color:#F3D3CF}.sched.off .sl{color:var(--bad)}.sched.off .si{color:var(--bad)}
 .msg{font-size:13.5px;line-height:1.55;border-radius:14px;padding:12px 15px;margin:14px 0 0}
 .photo-box{position:relative;width:100%;max-width:360px;margin:0 auto;aspect-ratio:4/3;background:#0B1B1F;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .photo-box video,.photo-box img{width:100%;height:100%;object-fit:cover;display:block}
@@ -2079,7 +2079,7 @@ function renderSched(){
     html = '<span class="si">' + IC_CLK + '</span><div class="sx"><span class="sl"><i></i>Đang mở</span>' +
       (x.closeAt ? '<span class="st">Đóng lúc ' + fmtWhen(x.closeAt) + '</span>' : '<span class="st">Bạn có thể vào làm bài ngay</span>') +
       (x.openAt ? '<span class="sd">Mở từ ' + fmtWhen(x.openAt) + '</span>' : '') +
-      (x.closeAt ? '<span class="cd">Còn ' + fmtLeft(x.closeAt - now) + ' để làm bài</span>' : '') + '</div>';
+      (x.closeAt ? '<span class="cd">Còn ' + fmtLeft(x.closeAt - now) + '</span>' : '') + '</div>';
   }
   box.className = 'sched ' + st; box.innerHTML = html;
   // Chưa mở: khoá nút Tiếp tục, tự mở khoá đúng giờ (theo giờ máy chủ). Đã đóng: máy chủ vẫn là nơi quyết định cuối cùng.
