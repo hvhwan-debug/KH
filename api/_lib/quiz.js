@@ -176,6 +176,7 @@ function usableQ(q) {
 // Chuyển đổi một lần: ngân hàng đề cũ (chưa câu nào có kỳ) chính là đề của kỳ đang chạy -> gắn vào kỳ hiện tại.
 async function ensureBankPeriods() {
   try { await ensureRegionTags(); } catch (e) { /* không chặn việc tạo đề nếu chuyển đổi lỗi; lần gọi sau thử lại */ }
+  try { await ensureSeeds(); } catch (e) { /* như trên */ }
   const list = await getQuestions();
   if (!list.length || list.some((q) => q.period)) return null;
   const st = await getSettings();
@@ -228,6 +229,46 @@ function betterResult(a, b) {
   if ((a.pct || 0) !== (b.pct || 0)) return (a.pct || 0) > (b.pct || 0);
   if ((a.score || 0) !== (b.score || 0)) return (a.score || 0) > (b.score || 0);
   return (a.submittedAt || 0) > (b.submittedAt || 0);
+}
+// ---------- Nhập bộ câu hỏi có sẵn trong repo (api/_lib/seed/*.json), mỗi bộ đúng MỘT lần ----------
+// Đích: đề mặc định hiện tại (cài đặt chung); nếu đề đó chưa có câu cùng danh mục thì vào đề gần nhất đang có danh mục đó.
+// Danh mục lấy đúng tên đang dùng trong hệ thống (không phân biệt hoa thường). Bỏ qua câu trùng nội dung trong cùng đề.
+const SEEDS = ["mien-nam-may-loc-v1"];
+let seedsDone = false;
+async function ensureSeeds() {
+  if (seedsDone) return null;
+  const report = {};
+  for (const name of SEEDS) {
+    const key = "kt/seed-" + name + ".json";
+    if (await store.get(key)) continue;
+    let data; try { data = require("./seed/" + name + ".json"); } catch (e) { continue; }
+    const list = await getQuestions(), st = await getSettings();
+    const want = foldRg(data.category);
+    const sameCat = list.filter((q) => foldRg(q.category) === want);
+    let period = st.examPeriod;
+    if (!sameCat.some((q) => (q.period || "") === period)) {
+      const ps = Array.from(new Set(sameCat.map((q) => q.period || ""))).filter(Boolean).sort();
+      if (ps.length) period = ps[ps.length - 1];
+    }
+    const catName = (sameCat.find((q) => (q.period || "") === period) || sameCat[0] || {}).category || data.category;
+    const normT = (t) => String(t || "").normalize("NFC").toLowerCase().replace(/\s+/g, " ").trim();
+    const have = new Set(list.filter((q) => (q.period || "") === period).map((q) => normT(q.text)));
+    const before = JSON.parse(JSON.stringify(list));
+    let added = 0, skipped = 0;
+    (data.questions || []).forEach((q) => {
+      const nq = normalizeQuestionInput(q);
+      if (nq.error || have.has(normT(nq.fields.text))) { skipped++; return; }
+      have.add(normT(nq.fields.text));
+      list.push(Object.assign({ id: genId(), category: catName, active: true, period }, nq.fields, cleanQuestionMeta({ tags: q.tags, explanation: q.explanation })));
+      added++;
+    });
+    if (added) { await backupQuestions(before); await saveQuestions(list); }
+    await store.put(key, { at: Date.now(), period, category: catName, added, skipped });
+    report[name] = { period, category: catName, added, skipped };
+    try { await require("./auditlog").write({ area: "system", role: "system", by: "hệ thống", name: "Hệ thống", op: "seedQuestions", label: "Nhập bộ câu hỏi " + name, kind: "change", status: 200, ok: true, details: report[name] }); } catch (e) {}
+  }
+  seedsDone = true;
+  return report;
 }
 // Thứ tự lấy đề cho kỳ P: câu của kỳ P -> câu chưa gắn kỳ -> đề của kỳ gần nhất TRƯỚC P (dự phòng tạm thời,
 // để đổi sang kỳ mới mà chưa kịp soạn đề thì thí sinh vẫn làm được bài; trang quản trị báo rõ đang dùng tạm).
