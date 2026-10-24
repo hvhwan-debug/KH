@@ -410,6 +410,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 .rt .who small i{font-style:normal;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
 .rt .tag{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.02em;vertical-align:middle;background:#EEF3F4;color:var(--muted);white-space:nowrap}
 .rt .tag-w{background:var(--warn-soft);color:var(--warn)}
+.rt .tag-tv{background:#FFF4D6;color:#8A5A00}
 .rt thead th.rt-who{width:31%}
 .rt thead th.rt-res{width:21%}
 .rt thead th.rt-time{width:152px}
@@ -2889,7 +2890,7 @@ function resRow(r){
   if (f.blur) chips.push('<span class="ch ' + (f.blur >= 20 ? 'ch-d' : 'ch-w') + '" title="Số lần rời khỏi trang làm bài">Rời trang ×' + esc(f.blur) + '</span>');
   if (!f.shot && !f.blur) chips.push('<span class="ch ch-ok">✓ Không cảnh báo</span>');
   const d = new Date(r.submittedAt), okD = !isNaN(d.getTime());
-  const tags = (r.practice ? '<span class="tag tag-w">Thi thử</span>' : '') + (r.regradedAt ? '<span class="tag" title="Đã được chấm lại theo đáp án mới">Đã chấm lại</span>' : '');
+  const tags = (r.probation ? '<span class="tag tag-tv" title="Thử việc từ ' + esc(r.probation.from) + ' đến hết ' + esc(r.probation.until) + '">Thử việc</span>' : '') + (r.practice ? '<span class="tag tag-w">Thi thử</span>' : '') + (r.regradedAt ? '<span class="tag" title="Đã được chấm lại theo đáp án mới">Đã chấm lại</span>' : '');
   const badge = r.passed == null ? '' : '<span class="badge ' + (r.passed ? 'y' : 'n') + '">' + (r.passed ? 'Đạt' : 'Chưa đạt') + '</span>';
   const nm = esc(r.name || r.code);
   return '<tr onclick="rtRow(event,\'' + esc(r.id) + '\')" title="Bấm để xem chi tiết bài làm">' +
