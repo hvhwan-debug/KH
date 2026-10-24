@@ -1,5 +1,5 @@
 // Công khai nhưng có kiểm soát: thí sinh xem lại ĐÚNG đề mình đã làm, từ link/QR trên thẻ kết quả.
-// Hai lớp bảo vệ: (1) phải đúng mã nhân viên + email của chính bài làm đó, (2) đề chỉ xem lại được
+// Các lớp bảo vệ: (1) phải đúng mã nhân viên + email của chính bài làm đó, (2) quét khuôn mặt đối chiếu ảnh đã lưu, (3) đề chỉ xem lại được
 // SAU KHI đã đóng (có "Thời gian đóng" và đã qua) - tránh lộ đề/đáp án cho người khác khi kỳ thi còn mở.
 const { reply, guardConfigured, requireAjax } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
@@ -20,7 +20,7 @@ function adminOf(req) {
 // Ghi nhật ký mỗi lần xem lại đề của người thường (kể cả bị từ chối). Không lưu ảnh vừa chụp.
 async function logView(req, attempt, result, why, detail) {
   try {
-    await auditlog.write({ area: "verify", role: "candidate", by: String(attempt.code || "").toLowerCase(), name: attempt.name || "", op: "viewPaper", label: "Thí sinh xem lại đề (SĐT + đối chiếu khuôn mặt)",
+    await auditlog.write({ area: "verify", role: "candidate", by: String(attempt.code || "").toLowerCase(), name: attempt.name || "", op: "viewPaper", label: "Thí sinh xem lại đề (đối chiếu khuôn mặt)",
       kind: result === "ok" ? "read" : "denied", status: result === "ok" ? 200 : 403, ok: result === "ok", details: { attempt: attempt.id, result: why, note: detail || "" }, ip: device.ipOf(req) });
   } catch (e) { /* không chặn luồng chính */ }
 }
@@ -59,20 +59,12 @@ module.exports = async function (context, req) {
       return reply(context, 404, { ok: false, error: "Bài làm này chưa có bản lưu đề để xem lại." });
     }
 
-    // Người thường: phải nhập đúng số điện thoại trong hồ sơ VÀ đối chiếu khuôn mặt với ảnh đã lưu của chủ bài.
+    // Người thường: (1) bước "check": đúng mã NV + email, kiểm tra hồ sơ đã có số điện thoại chưa (chưa có thì giao diện bắt điền);
+    // (2) bước xác thực: đối chiếu khuôn mặt với ảnh đã lưu của chủ bài. Số điện thoại mới chỉ được lưu SAU KHI khuôn mặt khớp.
     if (!master) {
-      const phone = normPhone(b.phone);
-      if (!phone) return reply(context, 400, { ok: false, error: "Nhập số điện thoại (10 số, bắt đầu bằng 0)." });
       const cands = await quiz.getCandidates();
       const prof = cands.find((c) => quiz.normCode(c.code) === quiz.normCode(attempt.code));
       const onFile = prof ? normPhone(prof.phone) : "";
-      if (onFile && onFile !== phone) {
-        quiz.noteFail(req);
-        await logView(req, attempt, "denied", "phone");
-        return reply(context, 403, { ok: false, error: "Số điện thoại không khớp với hồ sơ." });
-      }
-      const selfie = typeof b.photo === "string" ? b.photo : "";
-      if (!selfie.startsWith("data:image/") || selfie.length > 350000) return reply(context, 400, { ok: false, error: "Cần chụp ảnh khuôn mặt bằng camera để đối chiếu." });
       // Ảnh đã lưu của chủ hồ sơ: ảnh của bài này trước, rồi các bài khác cùng mã nhân viên (mới nhất trước).
       // Dấu vân khuôn mặt của ảnh đã lưu được tính một lần rồi ghi vào bài làm (faceDesc) để lần sau xem nhanh hơn.
       const refs = [];
@@ -80,6 +72,16 @@ module.exports = async function (context, req) {
       addRef(attempt);
       const rows = (await quiz.getIndex()).filter((r) => quiz.normCode(r.code) === quiz.normCode(attempt.code) && r.id !== attempt.id).sort((a, c) => (c.startedAt || 0) - (a.startedAt || 0)).slice(0, 4);
       for (const r of rows) { if (refs.length >= 3) break; addRef(await quiz.getAttempt(r.id)); }
+      if (!refs.length) {
+        await logView(req, attempt, "denied", "face:noref");
+        return reply(context, 403, { ok: false, error: "Hồ sơ chưa có ảnh khuôn mặt đã lưu để đối chiếu. Vui lòng liên hệ quản trị viên." });
+      }
+      if (b.step === "check") return reply(context, 200, { ok: true, needPhone: !onFile });
+
+      const phone = onFile || normPhone(b.phone);
+      if (!phone) return reply(context, 400, { ok: false, needPhone: true, error: "Vui lòng nhập số điện thoại hoặc Zalo (10 số, bắt đầu bằng 0)." });
+      const selfie = typeof b.photo === "string" ? b.photo : "";
+      if (!selfie.startsWith("data:image/") || selfie.length > 350000) return reply(context, 400, { ok: false, error: "Cần quét khuôn mặt bằng camera để xác thực." });
       // 1) Ảnh phải chụp trực tiếp, không phải chụp lại từ màn hình / ảnh in (AI nhìn ảnh; AI không trả lời được thì bỏ qua bước này)
       const live = await facecheck.verify(selfie, null, attempt.code, "xem-lai-de");
       if (!live.allow) {
@@ -96,6 +98,8 @@ module.exports = async function (context, req) {
       }
       if (prof && !onFile) { prof.phone = phone; await quiz.saveCandidates(cands); } // hồ sơ chưa có số: lưu số vừa nhập sau khi khuôn mặt khớp
       await logView(req, attempt, "ok", "face:ok", "khoảng cách " + cmp.distance.toFixed(3) + " (ngưỡng " + cmp.threshold + ")");
+    } else if (b.step === "check") {
+      return reply(context, 200, { ok: true, needPhone: false });
     }
 
     if (master) {
