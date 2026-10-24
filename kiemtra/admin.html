@@ -358,6 +358,27 @@ html{-webkit-text-size-adjust:100%}
   .card table.stk td[data-label]::before{content:attr(data-label);font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
   .card table.stk td.stk-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;white-space:normal!important}
   .card table.stk td[colspan]{display:block}
+  .card table.stk td .badge,.card table.stk td .ttlchip{justify-self:start} /* nhãn/chip ôm sát chữ thay vì kéo dài hết cột */
+}
+/* Thẻ "Hồ sơ học tập" (danh sách thí sinh) trên di động: gộp các trường liên quan thành 2 cột mỗi hàng,
+   tên nổi bật ở đầu — gọn và dễ nhìn hơn so với 9 hàng xếp dọc từng trường một. */
+@media(max-width:760px){
+  #candList tr{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;align-items:start;padding:14px 0}
+  #candList td[data-label]{font-size:13.5px}
+  #candList td[data-label]::before{font-size:10px}
+  #candList td[data-label="Chức danh"]{grid-column:1;grid-row:2}
+  #candList td[data-label="Nhóm ngành"]{grid-column:2;grid-row:2}
+  #candList td[data-label="Email"]{grid-column:1/-1;grid-row:3}
+  #candList td[data-label="SĐT / Zalo"]{grid-column:1;grid-row:4}
+  #candList td[data-label="Tỉnh / Miền"]{grid-column:2;grid-row:4}
+  #candList td[data-label="Quản lí"]{grid-column:1;grid-row:5}
+  #candList td[data-label="Ngày vào làm"]{grid-column:2;grid-row:5}
+  #candList td.stk-act{grid-column:1/-1;grid-row:6;margin-top:4px}
+  #candList td[data-label="Họ tên"]{grid-column:1;grid-row:1;grid-template-columns:1fr;padding-bottom:0}
+  #candList td[data-label="Họ tên"]::before{display:none}
+  #candList td[data-label="Họ tên"] .candnm{font-size:16.5px;font-weight:800}
+  #candList td[data-label="Mã NV"]{grid-column:2;grid-row:1;grid-template-columns:1fr;text-align:right;padding-bottom:0;font-size:12px;font-weight:700;color:var(--muted);padding-top:3px}
+  #candList td[data-label="Mã NV"]::before{display:none}
 }
 
 /* ===================== MENU MỚI: thanh bên (máy tính) · cột biểu tượng (máy tính bảng) · thanh dưới (điện thoại) ===================== */
