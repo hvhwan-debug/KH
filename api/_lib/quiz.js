@@ -174,8 +174,32 @@ function usableQ(q) {
 // Chuyển đổi một lần: ngân hàng đề cũ (chưa câu nào có kỳ) chính là đề của kỳ đang chạy -> gắn vào kỳ hiện tại.
 // Các bước chuyển đổi dữ liệu một lần (gắn nhãn miền Bắc -> nhập câu miền Nam -> ngưng câu kỹ năng).
 // Gọi ở MỌI thao tác quản trị và khi thí sinh vào bài; sau lần đầu chỉ tốn một lần đọc cờ cho mỗi tiến trình.
+// Chuyển đổi một lần: nhóm ngành theo chức danh. Ngành 1 = máy lọc nước, ngành 2 = gia dụng (đúng định nghĩa ở org.js).
+// Chỉ đổi người đang là "Cả hai" (mặc định) có chức danh SR 1 / ASM 1 / SR 2 / ASM 2; người đã được đặt nhóm ngành riêng giữ nguyên.
+// Đổi nhóm ngành thì xác nhận của quản lí không còn đúng nên gỡ để quản lí xác nhận lại (giống khi sửa thông tin). Sao lưu danh sách trước khi ghi.
+const SEG_TITLE_KEY = "kt/migrate-segment-by-title-v1.json";
+const SEG_BY_TITLE = { "sr 1": "may_loc", "asm 1": "may_loc", "sr 2": "gia_dung", "asm 2": "gia_dung" };
+let segTitleDone = false;
+async function ensureSegmentByTitle() {
+  if (segTitleDone) return null;
+  if (await store.get(SEG_TITLE_KEY)) { segTitleDone = true; return null; }
+  const list = await getCandidates();
+  const before = JSON.parse(JSON.stringify(list));
+  let n = 0;
+  list.forEach((c) => {
+    const want = SEG_BY_TITLE[normTitle(c && c.title).toLowerCase()];
+    if (!want || normSegment(c.segment) !== "both") return;
+    c.segment = want; delete c.confirmed;
+    c.audit = (c.audit || []).concat([{ at: Date.now(), kind: "edit", by: "system", byName: "Hệ thống", changes: { admin: { from: "", to: "đặt nhóm ngành theo chức danh (ngành 1 = máy lọc, ngành 2 = gia dụng)" } } }]).slice(-30);
+    n++;
+  });
+  if (n) { await store.put("kt/candidates-backup-before-segment-v1.json", { at: Date.now(), candidates: before }); await saveCandidates(list); }
+  await store.put(SEG_TITLE_KEY, { at: Date.now(), changed: n });
+  segTitleDone = true;
+  return n;
+}
 async function runMigrations(log) {
-  for (const [name, fn] of [["regionTags", ensureRegionTags], ["seeds", ensureSeeds], ["moveNam", ensureMoveNam], ["noSkill", ensureNoSkill]]) {
+  for (const [name, fn] of [["regionTags", ensureRegionTags], ["seeds", ensureSeeds], ["moveNam", ensureMoveNam], ["noSkill", ensureNoSkill], ["segByTitle", ensureSegmentByTitle]]) {
     try { await fn(); } catch (e) { if (log) (log.warn || log)("migration " + name + " loi: " + (e && e.message)); } // lỗi thì lần gọi sau thử lại
   }
 }

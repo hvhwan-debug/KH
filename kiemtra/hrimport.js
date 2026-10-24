@@ -165,12 +165,17 @@
       if (old) { if (old.group === 'Khác') { old.group = 'ASM ' + x.nganh; old.title = old.group; } if (!old.mailC && RE_MAIL.test(x.mail)) old.mailC = x.mail; old.profile = old.profile || {}; if (x.tinh && !old.profile.tinhPhuTrach) old.profile.tinhPhuTrach = x.tinh; return; }
       put({ code: code, name: x.name, title: 'ASM ' + x.nganh, group: 'ASM ' + x.nganh, rawTitle: x.rawTitle, nganh: x.nganh, manager: x.mgr, phone: '', mailC: RE_MAIL.test(x.mail) ? x.mail : '', mailP: '', sheets: [x.sheet + ' d.' + x.row], profile: (function () { var P = { nganh: x.nganh, chucDanhGoc: x.rawTitle, quanLy: x.mgr, mien: x.mien, tinhPhuTrach: x.tinh }; Object.keys(P).forEach(function (k) { if (!P[k]) delete P[k]; }); return P; })() }, 3);
     });
-    var records = order.map(function (k) { var r = recs[k]; delete r._prio; return r; });
+    var records = order.map(function (k) { var r = recs[k]; delete r._prio; r.segment = segmentOf(r.group); return r; });
     var counts = {}; GROUPS.forEach(function (g) { counts[g] = 0; }); records.forEach(function (r) { counts[r.group]++; });
     return { records: records, problems: problems, ignored: ignored, counts: counts };
+  }
+  // Nhóm ngành của hệ thống theo chức danh: ngành 1 = máy lọc nước, ngành 2 = gia dụng (đúng định nghĩa ở api/_lib/org.js).
+  // Chỉ áp cho SR / ASM; PC và nhóm khác giữ mặc định (cả hai) vì có thể bán cả hai nhóm hàng.
+  function segmentOf(group) {
+    return group === 'SR 1' || group === 'ASM 1' ? 'may_loc' : group === 'SR 2' || group === 'ASM 2' ? 'gia_dung' : '';
   }
   // Email dùng để đăng nhập: ưu tiên email công ty; thiếu thì (nếu cho phép) dùng email cá nhân
   function pickEmail(r, usePersonal) { return r.mailC || (usePersonal ? r.mailP : '') || ''; }
 
-  return { GROUPS: GROUPS, parse: parse, pickEmail: pickEmail, sheetsFromExcelJS: sheetsFromExcelJS, normPhone: normPhone, fold: fold };
+  return { GROUPS: GROUPS, parse: parse, segmentOf: segmentOf, pickEmail: pickEmail, sheetsFromExcelJS: sheetsFromExcelJS, normPhone: normPhone, fold: fold };
 });

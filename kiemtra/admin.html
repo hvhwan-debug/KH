@@ -667,7 +667,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
 <script src="/kiemtra/mailtpl.js?v=1"></script>
-<script src="/kiemtra/hrimport.js?v=2"></script>
+<script src="/kiemtra/hrimport.js?v=3"></script>
 <script src="/kiemtra/notify.js?v=14"></script>
 </head>
 <body>
@@ -1109,8 +1109,8 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
             <label>Nhóm ngành</label>
             <select id="candEditSegment">
               <option value="both">Cả hai (Gia dụng + Máy lọc nước)</option>
-              <option value="gia_dung">Chỉ Gia dụng</option>
-              <option value="may_loc">Chỉ Máy lọc nước</option>
+              <option value="gia_dung">Chỉ Gia dụng (ngành 2)</option>
+              <option value="may_loc">Chỉ Máy lọc nước (ngành 1)</option>
             </select>
           </div>
         </div>
@@ -1144,8 +1144,8 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
               <label>Nhóm ngành</label>
               <select id="candNewSegment">
                 <option value="both">Cả hai (Gia dụng + Máy lọc nước)</option>
-                <option value="gia_dung">Chỉ Gia dụng</option>
-                <option value="may_loc">Chỉ Máy lọc nước</option>
+                <option value="gia_dung">Chỉ Gia dụng (ngành 2)</option>
+                <option value="may_loc">Chỉ Máy lọc nước (ngành 1)</option>
               </select>
             </div>
           </div>
@@ -1174,7 +1174,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
           <input type="search" id="candSearch" autocomplete="off" placeholder="Tìm mã NV, tên, email…" oninput="renderCandidates()" aria-label="Tìm thí sinh">
           <select id="candMgrF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo quản lí"></select>
           <select id="candTitleF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo chức danh"></select>
-          <select id="candSegF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo nhóm ngành"><option value="*">Mọi nhóm ngành</option><option value="both">Cả hai ngành</option><option value="may_loc">Máy lọc nước</option><option value="gia_dung">Gia dụng</option></select>
+          <select id="candSegF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo nhóm ngành"><option value="*">Mọi nhóm ngành</option><option value="both">Cả hai ngành</option><option value="may_loc">Ngành 1 · Máy lọc nước</option><option value="gia_dung">Ngành 2 · Gia dụng</option></select>
           <select id="candRgF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo miền"><option value="*">Mọi miền</option><option value="bac">Miền Bắc</option><option value="nam">Miền Nam</option><option value="">Chưa chọn miền</option></select>
           <span class="small" id="candShown"></span>
         </div>
@@ -2573,7 +2573,7 @@ function resetCandFilters(){
   renderCandidates();
 }
 function renderCandidates(){
-  const segLabel = { both:'Cả hai', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };
+  const segLabel = { both:'Cả hai', gia_dung:'Ngành 2 · Gia dụng', may_loc:'Ngành 1 · Máy lọc nước' };
   const mgrs = Array.from(new Set(CANDIDATES.map(c => c.manager || ''))).sort(), mv = $('candMgrF').value;
   $('candMgrF').innerHTML = '<option value="*">Mọi quản lí</option>' + mgrs.map(m => '<option value="' + esc(m) + '">' + esc(m || '(chưa có quản lí)') + ' (' + CANDIDATES.filter(c => (c.manager||'') === m).length + ')</option>').join('');
   $('candMgrF').value = mgrs.indexOf(mv) >= 0 ? mv : '*';
@@ -2714,7 +2714,7 @@ async function hrRead(ev){
   catch(e){ $('hrPreview').innerHTML = ''; msg('hrMsg','Không đọc được file. Hãy lưu lại dưới dạng .xlsx rồi thử lại.','err'); return; }
   const res = KTHr.parse(KTHr.sheetsFromExcelJS(wb));
   if (!res.records.length){ $('hrPreview').innerHTML = ''; msg('hrMsg','Không thấy nhân sự nào. File cần có các sheet GT1, GT2, ASM GT1, ASM GT2 với cột "MSNV mới", "Họ và tên", "Chức danh".','err'); return; }
-  HR = { res, on: { 'SR 1':true, 'SR 2':true, 'ASM 1':true, 'ASM 2':true, 'PC':true, 'Khác':false }, usePersonal: true, saveProfile: true };
+  HR = { res, on: { 'SR 1':true, 'SR 2':true, 'ASM 1':true, 'ASM 2':true, 'PC':true, 'Khác':false }, usePersonal: true, saveProfile: true, applySegment: true };
   hrRender();
 }
 function hrHave(){ const h = new Set(); (CANDIDATES || []).forEach(c => h.add(String(c.code || '').trim().toLowerCase())); return h; }
@@ -2727,7 +2727,7 @@ function hrPick(){
     const email = KTHr.pickEmail(r, HR.usePersonal);
     if (!email) { out.noMail.push(r); return; }
     if (!r.mailC) out.personal++;
-    const row = { code: r.code, name: r.name, email, manager: r.manager, segment: '', title: r.title, phone: r.phone };
+    const row = { code: r.code, name: r.name, email, manager: r.manager, segment: HR.applySegment ? (r.segment || '') : '', title: r.title, phone: r.phone };
     if (HR.saveProfile && r.profile) row.profile = r.profile;
     out.send.push(row);
   });
@@ -2746,6 +2746,7 @@ function hrRender(){
   $('hrPreview').innerHTML =
     '<table class="hr-tb"><thead><tr><th></th><th>Chức danh</th><th>Gồm</th><th style="text-align:right">Trong file</th><th style="text-align:right">Đã có trong hệ thống</th></tr></thead><tbody>' + rows + '</tbody></table>' +
     '<div class="hr-opts"><label><input type="checkbox" ' + (HR.usePersonal ? 'checked' : '') + ' onchange="HR.usePersonal=this.checked;hrRender()"> Dùng email cá nhân khi người đó chưa có email công ty</label>' +
+    '<label><input type="checkbox" ' + (HR.applySegment ? 'checked' : '') + ' onchange="HR.applySegment=this.checked;hrRender()"> Đặt <b>nhóm ngành</b> theo chức danh: SR 1 / ASM 1 → <b>Ngành 1 · Máy lọc nước</b>, SR 2 / ASM 2 → <b>Ngành 2 · Gia dụng</b> <span class="small">(PC và nhóm Khác giữ "Cả hai")</span></label>' +
     '<label><input type="checkbox" ' + (HR.saveProfile ? 'checked' : '') + ' onchange="HR.saveProfile=this.checked;hrRender()"> Lưu <b>hồ sơ nhân sự</b> cho từng người để AI hiểu vị trí của họ (chức danh gốc, đơn vị, khu vực, quản lí, ngày vào công ty, trình độ). <span class="small">Không lưu ngày sinh, địa chỉ, quê quán, tôn giáo, dân tộc, hôn nhân, giới tính.</span></label></div>' +
     '<p style="margin:8px 0"><b>Sẽ thêm ' + pk.send.length + ' người mới</b>' + (pk.exist ? ' · <b>' + pk.exist + '</b> người đã có trong hệ thống (trùng mã NV): giữ nguyên thông tin' + (pk.existProfiles.length ? ', chỉ bổ sung hồ sơ' : ', bỏ qua') : '') +
     (pk.personal ? ' · <span style="color:var(--bad)">' + pk.personal + ' người dùng email cá nhân</span>' : '') + (pk.noMail.length ? ' · <span style="color:var(--bad)">' + pk.noMail.length + ' người thiếu email nên chưa thêm được</span>' : '') + '</p>' +
