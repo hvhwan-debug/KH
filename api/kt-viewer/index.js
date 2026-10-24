@@ -74,7 +74,10 @@ const handler = async function (context, req) {
           let status = "none", active = null;
           if (r) status = "done";
           else if (period === settings.examPeriod) { active = await quiz.getActive(c.code); if (active && (active.period || "") === period) { const t = Object.assign({}, active); quiz.syncAttempt(t, Date.now()); if (t.cursor < t.questionIds.length) status = "doing"; } }
-          return Object.assign(empView(c), { status, eligible: quiz.inAudience(exSt0, c), result: r ? summaryOf(r, settings, !!viewer.isAdmin) : null });
+          // Nhiều lượt: kèm các lần làm (điểm từng lần, lần chính thức = cao nhất) để quản lí thấy đủ
+          const tries = r ? subs.filter((a) => (a.period || "") === period && quiz.normCode(a.code) === quiz.normCode(c.code)).sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0))
+            .map((a, i) => ({ n: i + 1, score: a.score, total: a.total, pct: a.pct, submittedAt: a.submittedAt, official: a.id === r.id })) : [];
+          return Object.assign(empView(c), { status, eligible: quiz.inAudience(exSt0, c), result: r ? Object.assign(summaryOf(r, settings, !!viewer.isAdmin), { tries }) : null });
         }));
         return reply(context, 200, { ok: true, employees: list, exam: { id: period, title: exSt0.examTitle || period, openAt: exSt0.openAt || 0, closeAt: exSt0.closeAt || 0 }, period, periods, examTitles, currentPeriod: settings.examPeriod, serverNow: Date.now() });
       }

@@ -424,6 +424,22 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 .rs{min-width:190px}
 .proof,.tm b,.tm small{white-space:nowrap}
 .rs-top{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap}
+.tries-t{display:inline-flex;align-items:center;gap:4px;border:1.5px solid #B7CDEB;background:#EEF4FC;color:var(--brand-deep,#0B3F94);border-radius:999px;padding:2px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.tries-t:hover{background:#E1ECFA}
+.tries-t .cv{display:inline-block;transition:transform .15s}
+.tries-t[aria-expanded=true] .cv{transform:rotate(180deg)}
+.rt tr.rt-sub td{background:#F7FAFC}
+.rt tr.rt-sub.off td{background:#F1FAF5}
+.rt tr.rt-sub .rs-top b{font-size:15px}
+.who.sub{padding-left:48px;display:flex;align-items:center;gap:8px;min-height:32px}
+.who.sub .sn{font-weight:700;font-size:13.5px;color:var(--ink)}
+@media(max-width:760px){
+  .rt tbody tr.rt-sub{margin:-4px 0 10px 18px;padding:10px 12px;gap:8px;border-left:3px solid #B7CDEB;border-radius:4px 14px 14px 4px;box-shadow:none;background:#F7FAFC}
+  .rt tbody tr.rt-sub.off{background:#F1FAF5;border-left-color:#5DB585}
+  .rt tbody tr.rt-main:has(+ tr.rt-sub:not(.hide)){margin-bottom:8px}
+  .who.sub{padding-left:0;min-height:0}
+}
+.offtag{font-size:11px;font-weight:800;color:var(--ok);background:#fff;border:1px solid #9FD3B5;border-radius:999px;padding:1px 8px;white-space:nowrap}
 .rs-top b{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .rs-pct{font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
 .rs-pct.pass{color:var(--ok)}.rs-pct.fail{color:var(--bad)}
@@ -3061,7 +3077,6 @@ async function loadResults(){
   const opts = (j.periods||[]).map(p => { const l = /^\d{4}-\d{2}$/.test(p) ? 'Tháng ' + p.slice(5) + '/' + p.slice(0,4) : p; return p === j.currentPeriod ? l + ' (hiện tại)' : l; });
   loadDashboard(selBefore);
   $('resPeriod').innerHTML = '<option value="">Tất cả các kỳ</option>' + (j.periods||[]).map((p,i) => '<option value="'+esc(p)+'" '+(p===selBefore?'selected':'')+'>'+esc(opts[i])+'</option>').join('');
-  $('resCount').textContent = j.results.length;
   RESULTS = j.results || [];
   renderResults();
 }
@@ -3071,7 +3086,8 @@ const RES_PAL = [['#E3F1F4','#0A63C4'],['#E8EEFF','#2F5BD3'],['#FFF1DD','#A55F00
 function resInitials(n){ const p = String(n || '').trim().split(/\s+/).filter(Boolean); if (!p.length) return '?'; return ((p[0].charAt(0) || '') + (p.length > 1 ? p[p.length-1].charAt(0) : '')).toLocaleUpperCase('vi-VN'); }
 function resPal(code){ let h = 0; String(code || '').split('').forEach(c => { h = (h * 31 + c.charCodeAt(0)) >>> 0; }); return RES_PAL[h % RES_PAL.length]; }
 const IC_SH = '<svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>';
-function resRow(r){
+function resRow(r, o){
+  o = o || {};
   const p = Math.max(0, Math.min(100, r.pct || 0)), st = r.passed === true ? 'pass' : r.passed === false ? 'fail' : '';
   const pal = resPal(r.code), proof = r.proof || ('KT-' + String(r.id || '').slice(-8).toUpperCase()), f = r.flags || {}, chips = [];
   if (r.compliancePoints != null) chips.push('<span class="ch ch-n" title="Điểm tuân thủ học tập">' + IC_SH + esc(r.compliancePoints) + ' điểm</span>');
@@ -3082,25 +3098,56 @@ function resRow(r){
   const tags = (r.probation ? '<span class="tag tag-tv" title="Thử việc từ ' + esc(r.probation.from) + ' đến hết ' + esc(r.probation.until) + '">Thử việc</span>' : '') + (r.practice ? '<span class="tag tag-w">Thi thử</span>' : '') + (r.regradedAt ? '<span class="tag" title="Đã được chấm lại theo đáp án mới">Đã chấm lại</span>' : '');
   const badge = r.passed == null ? '' : '<span class="badge ' + (r.passed ? 'y' : 'n') + '">' + (r.passed ? 'Đạt' : 'Chưa đạt') + '</span>';
   const nm = esc(r.name || r.code);
-  return '<tr onclick="rtRow(event,\'' + esc(r.id) + '\')" title="Bấm để xem chi tiết bài làm">' +
-    '<td class="rt-who"><div class="who"><span class="av" style="background:' + pal[0] + ';color:' + pal[1] + '" aria-hidden="true">' + esc(resInitials(r.name || r.code)) + '</span><div style="min-width:0"><b>' + nm + tags + '</b><small><i>' + esc(r.code) + '</i>' + (r.title ? ' · ' + esc(r.title) : '') + (r.manager ? ' · ' + esc(r.manager) : '') + '</small></div></div></td>' +
-    '<td class="rt-res"><div class="rs"><div class="rs-top"><b>' + esc(r.score) + '/' + esc(r.total) + '</b><span class="rs-pct ' + st + '">' + esc(r.pct) + '%</span>' + badge + '</div><div class="rs-bar" aria-hidden="true"><i class="' + st + '" style="width:' + p + '%"></i></div></div></td>' +
+  const gAttr = o.g != null ? ' data-g="' + o.g + '"' : '';
+  const who = o.sub
+    ? '<td class="rt-who"><div class="who sub"><span class="sn">Lần ' + o.n + '</span>' + (o.official ? '<span class="offtag">★ Chính thức</span>' : '<span class="small" style="color:var(--muted)">không tính</span>') + '</div></td>'
+    : '<td class="rt-who"><div class="who"><span class="av" style="background:' + pal[0] + ';color:' + pal[1] + '" aria-hidden="true">' + esc(resInitials(r.name || r.code)) + '</span><div style="min-width:0"><b>' + nm + tags + '</b><small><i>' + esc(r.code) + '</i>' + (r.title ? ' · ' + esc(r.title) : '') + (r.manager ? ' · ' + esc(r.manager) : '') + '</small></div></div></td>';
+  const triesBtn = o.tries > 1 ? '<button type="button" class="tries-t" aria-expanded="' + (o.open ? 'true' : 'false') + '" onclick="resToggle(event,' + o.g + ')" title="Xem từng lần làm">' + o.tries + ' lần làm · cao nhất <span class="cv">▾</span></button>' : '';
+  return '<tr class="' + (o.sub ? 'rt-sub' + (o.official ? ' off' : '') + (o.open ? '' : ' hide') : 'rt-main') + '"' + gAttr + ' onclick="rtRow(event,\'' + esc(r.id) + '\')" title="Bấm để xem chi tiết bài làm">' +
+    who +
+    '<td class="rt-res"><div class="rs"><div class="rs-top"><b>' + esc(r.score) + '/' + esc(r.total) + '</b><span class="rs-pct ' + st + '">' + esc(r.pct) + '%</span>' + badge + triesBtn + '</div><div class="rs-bar" aria-hidden="true"><i class="' + st + '" style="width:' + p + '%"></i></div></div></td>' +
     '<td class="rt-chips"><div class="chips">' + chips.join('') + '</div></td>' +
     '<td class="rt-time"><div class="tm"><b>' + (okD ? d.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit', second:'2-digit' }) : '–') + '</b><small>' + (okD ? d.toLocaleDateString('vi-VN') : '') + '</small></div><button type="button" class="proof" data-copy="' + esc(proof) + '" onclick="rtCopy(this)" title="Mã minh chứng, bấm để sao chép">' + esc(proof) + '</button></td>' +
     '<td class="rt-act"><div class="rt-btns"><button type="button" class="rt-ib" title="Xem chi tiết bài làm" aria-label="Xem bài làm của ' + nm + '" onclick="viewResult(\'' + esc(r.id) + '\')"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg></button>' +
     (r.verify ? '<a class="rt-ib" style="text-decoration:none" href="/kiemtra/ketqua.html?t=' + encodeURIComponent(r.verify) + '" target="_blank" rel="noopener" title="Xem đề như thí sinh (mở trang xác thực, không cần nhập mã)" aria-label="Xem đề của ' + nm + '"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg></a>' : '') +
-    '<button type="button" class="rt-ib danger" title="Cho phép làm lại bài này" aria-label="Cho làm lại bài của ' + nm + '" onclick="resetAttempt(\'' + esc(r.code) + '\',\'' + esc(r.period || '') + '\')"><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg></button></div></td></tr>';
+    (o.sub ? '' : '<button type="button" class="rt-ib danger" title="Cho phép làm lại bài này" aria-label="Cho làm lại bài của ' + nm + '" onclick="resetAttempt(\'' + esc(r.code) + '\',\'' + esc(r.period || '') + '\')"><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg></button>') + '</div></td></tr>';
+}
+// Gộp bài nộp theo (đề, mã NV): mỗi người một dòng = lần điểm CAO NHẤT (chính thức); các lần làm xổ ra bên dưới.
+let RES_GROUPS = [], RES_OPEN = {};
+const resBetter = (x, y) => !y || ((x.pct||0) !== (y.pct||0) ? (x.pct||0) > (y.pct||0) : (x.score||0) !== (y.score||0) ? (x.score||0) > (y.score||0) : (x.submittedAt||0) > (y.submittedAt||0));
+function resGroups(){
+  const g = {}, out = [];
+  RESULTS.forEach(r => {
+    if (r.status && r.status !== 'submitted'){ out.push({ key:'x|' + r.id, list:[r], best:r }); return; }
+    const k = (r.period || '') + '|' + String(r.code || '').toLowerCase();
+    (g[k] = g[k] || { key:k, list:[] }).list.push(r);
+  });
+  Object.keys(g).forEach(k => { const x = g[k]; x.list.sort((a, b) => (a.submittedAt||0) - (b.submittedAt||0)); x.best = x.list.reduce((b, a) => resBetter(a, b) ? a : b, null); out.push(x); });
+  return out;
 }
 function renderResults(){
   const k = RES_SORT.k, dir = RES_SORT.d;
   const parts = r => String(r.name || r.code || '').trim().split(/\s+/);
   const byName = (a, b) => { const x = parts(a), y = parts(b); return x[x.length-1].localeCompare(y[y.length-1], 'vi') || x.join(' ').localeCompare(y.join(' '), 'vi'); }; // tên gọi trước (Anh < Ánh), rồi họ tên đầy đủ
-  const L = RESULTS.slice().sort((a, b) => k === 'name' ? dir * byName(a, b)
-    : (dir * ((k === 'score' ? (a.pct || 0) - (b.pct || 0) : (a.submittedAt || 0) - (b.submittedAt || 0))) || (b.submittedAt || 0) - (a.submittedAt || 0)));
-  $('resList').innerHTML = L.map(resRow).join('') || '<tr class="rt-emptyrow"><td colspan="5" class="rt-empty">Chưa có bài làm nào được nộp.</td></tr>';
+  const cmp = (a, b) => k === 'name' ? dir * byName(a, b)
+    : (dir * ((k === 'score' ? (a.pct || 0) - (b.pct || 0) : (a.submittedAt || 0) - (b.submittedAt || 0))) || (b.submittedAt || 0) - (a.submittedAt || 0));
+  RES_GROUPS = resGroups().sort((a, b) => cmp(a.best, b.best));
+  $('resList').innerHTML = RES_GROUPS.map((G, gi) => {
+    const open = !!RES_OPEN[G.key], n = G.list.length;
+    return resRow(G.best, { g:gi, tries:n, open }) + (n > 1 ? G.list.map((r, i) => resRow(r, { g:gi, sub:true, n:i + 1, official:r === G.best, open })).join('') : '');
+  }).join('') || '<tr class="rt-emptyrow"><td colspan="5" class="rt-empty">Chưa có bài làm nào được nộp.</td></tr>';
+  const people = RES_GROUPS.length, multi = RES_GROUPS.filter(G => G.list.length > 1).length;
+  $('resCount').textContent = people + (RESULTS.length !== people ? ' người · ' + RESULTS.length + ' bài làm' + (multi ? ' · ' + multi + ' người làm nhiều lần' : '') : '');
   document.querySelectorAll('#resTable th button[data-rs]').forEach(b => { const on = b.dataset.rs === k; if (on) b.setAttribute('data-dir', dir > 0 ? 'asc' : 'desc'); else b.removeAttribute('data-dir'); b.querySelector('.ar').textContent = on ? (dir > 0 ? '▲' : '▼') : '▲▼'; });
   if ($('resSort')) $('resSort').value = k + ':' + (dir > 0 ? 'asc' : 'desc');
   filterResults();
+}
+function resToggle(ev, gi){
+  ev.stopPropagation();
+  const G = RES_GROUPS[gi]; if (!G) return;
+  const open = !RES_OPEN[G.key]; RES_OPEN[G.key] = open;
+  document.querySelectorAll('#resList tr.rt-sub[data-g="' + gi + '"]').forEach(tr => tr.classList.toggle('hide', !open));
+  const b = document.querySelector('#resList tr.rt-main[data-g="' + gi + '"] .tries-t'); if (b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
 }
 function resSortBy(k){ if (RES_SORT.k === k) RES_SORT.d = -RES_SORT.d; else RES_SORT = { k, d: k === 'name' ? 1 : -1 }; renderResults(); }
 function resSortSel(v){ const x = String(v).split(':'); RES_SORT = { k: x[0], d: x[1] === 'asc' ? 1 : -1 }; renderResults(); }
@@ -3111,7 +3158,9 @@ function rtCopy(btn){
 }
 function filterResults(){
   const q = (($('resSearch') || {}).value || '').trim().toLowerCase();
-  document.querySelectorAll('#resList tr').forEach(tr => { tr.style.display = !q || tr.textContent.toLowerCase().indexOf(q) >= 0 ? '' : 'none'; });
+  const vis = {};
+  document.querySelectorAll('#resList tr:not(.rt-sub)').forEach(tr => { const ok = !q || tr.textContent.toLowerCase().indexOf(q) >= 0; tr.style.display = ok ? '' : 'none'; if (tr.dataset.g != null) vis[tr.dataset.g] = ok; });
+  document.querySelectorAll('#resList tr.rt-sub').forEach(tr => { tr.style.display = vis[tr.dataset.g] ? '' : 'none'; });
 }
 async function resetAttempt(code, period){
   period = period || '';

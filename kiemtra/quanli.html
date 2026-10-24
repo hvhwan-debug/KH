@@ -495,6 +495,7 @@ html{-webkit-text-size-adjust:100%}
 .logo,.side-brand .dot,.topbar .dot{background:#fff!important;padding:3px;overflow:hidden;box-shadow:0 6px 16px -8px rgba(5,25,70,.55)}
 .logo img,.side-brand .dot img,.topbar .dot img{width:100%;height:100%;object-fit:contain;display:block}
 .brandfull{display:block;margin:0 auto 10px;width:auto;height:112px;max-width:70%;object-fit:contain}
+.trieschip{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;color:#0B3F94;background:#EEF4FC;border:1px solid #B7CDEB;white-space:nowrap;vertical-align:middle;cursor:help}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -965,7 +966,8 @@ function render(){
     var r = e.result, done = e.status === 'done' && r, sc, when;
     if (done){
       var p = Math.max(0, Math.min(100, r.pct||0)), pc = r.passed === true ? 'pass' : (r.passed === false ? 'fail' : '');
-      sc = '<div class="score"><div class="top-l"><b>'+r.score+'/'+r.total+'</b><span class="pct '+pc+'">'+r.pct+'%'+(r.passed===true?' · Đạt':r.passed===false?' · Chưa đạt':'')+'</span></div><div class="bar" aria-hidden="true"><i class="'+pc+'" style="width:'+p+'%"></i></div></div>';
+      var tr = r.tries && r.tries.length > 1 ? '<span class="trieschip" title="' + esc(r.tries.map(function(t){ return 'Lần ' + t.n + ': ' + t.score + '/' + t.total + (t.official ? ' (chính thức)' : ''); }).join(' · ')) + '">' + r.tries.length + ' lần · cao nhất</span>' : '';
+      sc = '<div class="score"><div class="top-l"><b>'+r.score+'/'+r.total+'</b><span class="pct '+pc+'">'+r.pct+'%'+(r.passed===true?' · Đạt':r.passed===false?' · Chưa đạt':'')+'</span>'+tr+'</div><div class="bar" aria-hidden="true"><i class="'+pc+'" style="width:'+p+'%"></i></div></div>';
       when = r.submittedAt ? esc(fmt(r.submittedAt)) : '–';
       if (r.device && VIEWER.isAdmin) when += '<span class="dev" title="'+esc(r.device.label + (r.device.ip ? ' · IP ' + r.device.ip : ''))+'">'+devIcon(r.device.type)+'<span class="t">'+esc(String(r.device.label||r.device.type||'').split(' · ').slice(1,3).join(' · ') || r.device.type || '')+'</span>'+(r.device.loc?'<button type="button" class="pin" title="" data-lat="'+esc(r.device.loc.lat)+'" data-lng="'+esc(r.device.loc.lng)+'" data-acc="'+esc(r.device.loc.acc==null?'':r.device.loc.acc)+'" aria-haspopup="true" aria-label="Xem vị trí làm bài">'+PIN+'</button>':(r.device.locErr==='denied'?'<span class="dev-warn amber">Chặn vị trí</span>':''))+(r.device.changed?'<span class="dev-warn">Đổi máy</span>':'')+'</span>';
     } else {
@@ -1220,6 +1222,7 @@ function openRes(e){
     $('rBk').innerHTML = '<div class="b" aria-hidden="true">'+s.map(function(g){ return g.n>0?'<i style="--c:'+g.c+';width:'+(g.n/r.total*100)+'%"></i>':''; }).join('')+'</div><div class="lg">'+s.map(function(g){ return '<span style="--c:'+g.c+'">'+g.l+' <b>'+g.n+'</b></span>'; }).join('')+'</div>';
   } else $('rBk').innerHTML = '';
   var rows = '<div><dt>Tỉ lệ đúng</dt><dd>'+r.pct+'%</dd></div>';
+  if (r.tries && r.tries.length > 1) rows += '<div><dt>Các lần làm</dt><dd>' + r.tries.map(function(t){ return (t.official ? '<b>' : '') + 'Lần ' + t.n + ': ' + t.score + '/' + t.total + (t.official ? ' ★ chính thức</b>' : ''); }).join('<br>') + '</dd></div>';
   if (r.passed === true || r.passed === false) rows += '<div><dt>Kết quả</dt><dd>'+(r.passed?'Đạt':'Chưa đạt')+'</dd></div>';
   if (r.startedAt) rows += '<div><dt>Bắt đầu lúc</dt><dd>'+esc(fmt(r.startedAt))+'</dd></div>';
   if (r.submittedAt) rows += '<div><dt>Nộp bài lúc</dt><dd>'+esc(fmt(r.submittedAt))+'</dd></div>';
