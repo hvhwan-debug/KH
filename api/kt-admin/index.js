@@ -281,6 +281,35 @@ const handler = async function (context, req) {
         const r = await al.readDay(day, 3000);
         return reply(context, 200, { ok: true, day, items: r.items, total: r.total });
       }
+      // Tình trạng làm bài của từng thí sinh trong một đề: Đã làm / Đang làm / Chưa làm (đúng đối tượng của đề)
+      if (op === "progress") {
+        const st = await quiz.getSettings();
+        const reqP = String((req.query && req.query.period) || "");
+        const period = reqP && quiz.validPeriod(reqP) ? reqP : st.examPeriod;
+        const exSt = await quiz.getExamSettings(period);
+        const cands = (await quiz.getCandidates()).filter((c) => quiz.inAudience(exSt, c));
+        const idx = (await quiz.getIndex()).filter((r) => r.status === "submitted" && (r.period || "") === period);
+        const best = {}, tries = {};
+        idx.forEach((r) => { const k = quiz.normCode(r.code); tries[k] = (tries[k] || 0) + 1; if (quiz.betterResult(r, best[k])) best[k] = r; });
+        const now = Date.now();
+        const list = await Promise.all(cands.map(async (c) => {
+          const k = quiz.normCode(c.code), b = best[k];
+          // CHỈ ĐỌC: không dùng activeForPeriod (hàm đó huỷ bài dở của đề khác) — chỉ xem, không thay đổi gì
+          let act = null; try { act = await quiz.getActive(c.code); } catch (e) { act = null; }
+          if (act && ((act.period || "") !== period || act.status !== "in_progress")) act = null;
+          const o = { code: c.code, name: c.name || "", manager: c.manager || "", phone: c.phone || "", province: c.province || "", region: quiz.normRegion(c.region) };
+          if (b) o.done = { score: b.score, total: b.total, pct: b.pct, submittedAt: b.submittedAt, id: b.id, tries: tries[k] };
+          if (act) {
+            const t = Object.assign({}, act); quiz.syncAttempt(t, now);
+            const total = (t.questionIds || []).length, at = Math.min(t.cursor || 0, total);
+            o.doing = { answered: at, total, startedAt: t.startedAt, finished: at >= total };
+          }
+          o.status = o.doing ? "doing" : o.done ? "done" : "none";
+          return o;
+        }));
+        const count = { done: 0, doing: 0, none: 0 }; list.forEach((x) => { count[x.status]++; });
+        return reply(context, 200, { ok: true, period, title: exSt.examTitle || period, list, count, total: list.length, serverNow: now });
+      }
       if (op === "dashboard") {
         // Tổng quan để đánh giá một kỳ: hoàn thành, phân bố điểm, điểm tuân thủ, theo quản lí / nhóm ngành,
         // ai chưa làm, cảnh báo gian lận, câu hỏi sai nhiều nhất, so sánh với kỳ trước.

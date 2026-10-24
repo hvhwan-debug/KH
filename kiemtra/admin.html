@@ -506,6 +506,32 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 .rd-ring{width:92px;height:92px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--c) calc(var(--p)*1%),#E4E8EE 0)}
 .rd-ring span{width:70px;height:70px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:20px;font-weight:800;color:var(--c)}
 .rd-score small{font-size:12.5px;color:var(--muted);font-weight:600}
+.pg-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pg-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 10px}
+.pg-tab{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}
+.pg-tab b{font-variant-numeric:tabular-nums}
+.pg-tab i{width:9px;height:9px;border-radius:50%;background:#9AA6B6}
+.pg-tab.doing i{background:#E08A00}.pg-tab.done i{background:#2E8B57}.pg-tab.none i{background:#C0392B}.pg-tab.all i{display:none}
+.pg-tab.on{border-color:var(--brand);background:var(--brand-soft,#E6F0FC);color:var(--brand-deep,#0B3F94)}
+.pg-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.pg-tools input{flex:1 1 220px;min-width:0;margin:0}.pg-tools select{flex:0 1 220px;margin:0}
+.pg-list{display:flex;flex-direction:column;gap:6px;max-height:560px;overflow-y:auto;padding-right:2px}
+.pg-row{display:grid;grid-template-columns:12px minmax(0,1.3fr) 92px minmax(0,1.2fr);align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.pg-dot{width:10px;height:10px;border-radius:50%;background:#9AA6B6}
+.pg-row.doing .pg-dot{background:#E08A00;box-shadow:0 0 0 0 rgba(224,138,0,.5);animation:pgPulse 1.8s infinite}
+.pg-row.done .pg-dot{background:#2E8B57}.pg-row.none .pg-dot{background:#C0392B}
+@keyframes pgPulse{70%{box-shadow:0 0 0 7px rgba(224,138,0,0)}100%{box-shadow:0 0 0 0 rgba(224,138,0,0)}}
+@media(prefers-reduced-motion:reduce){.pg-row.doing .pg-dot{animation:none}}
+.pg-who{min-width:0}.pg-who b{display:block;font-size:14.5px}.pg-who small{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-st{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;text-align:center;background:#EEF1F4;color:#5B6676}
+.pg-row.doing .pg-st{background:#FDF0DA;color:#8A5500}.pg-row.done .pg-st{background:#E2F2E9;color:#1E6B42}.pg-row.none .pg-st{background:#FBE3E0;color:#9E2A20}
+.pg-info{min-width:0;font-size:13px}
+.pg-prog{display:flex;flex-direction:column;gap:4px}.pg-prog span:last-child{color:var(--muted);font-size:12px}
+.pg-bar{display:block;height:7px;border-radius:999px;background:#EEF1F4;overflow:hidden}.pg-bar i{display:block;height:100%;background:#E08A00;border-radius:999px}
+.pg-score{border:0;background:none;padding:0;font:inherit;font-size:13.5px;color:var(--ink);cursor:pointer;text-align:left}.pg-score:hover{text-decoration:underline}
+.pg-sub{display:block;color:var(--muted);font-size:12px}
+.pg-empty{padding:20px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+@media(max-width:640px){.pg-row{grid-template-columns:12px minmax(0,1fr) auto;gap:8px 10px}.pg-info{grid-column:2/-1}}
 .cmp{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:0 0 12px;background:#fff}
 .cmp-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
 .cmp-h b{font-size:15px}
@@ -1241,6 +1267,17 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
         <div id="dashBanner"></div>
         <div class="kpis" id="dashKpis"></div>
       </div>
+      <div class="card" id="pgCard">
+        <div class="pg-h"><h1 style="margin:0">Tình trạng làm bài</h1><span class="small" id="pgUpd"></span></div>
+        <div class="pg-tabs" role="tablist" id="pgTabs"></div>
+        <div class="pg-tools">
+          <input type="search" id="pgSearch" placeholder="Tìm tên, mã NV, quản lí, tỉnh…" oninput="renderProgress()" aria-label="Tìm thí sinh">
+          <select id="pgMgr" onchange="renderProgress()" aria-label="Lọc theo quản lí"></select>
+          <button class="btn ghost sm" type="button" onclick="loadProgress()">↻ Làm mới</button>
+          <button class="btn ghost sm" type="button" id="pgCopy" onclick="pgCopy()">Sao chép danh sách</button>
+        </div>
+        <div class="pg-list" id="pgList"></div>
+      </div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h1 style="margin:0">Bài đã nộp (<span id="resCount">0</span>)</h1>
@@ -1252,7 +1289,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
           </div>
         </div>
         <div class="rt-wrap"><table class="rt" id="resTable"><thead><tr><th class="rt-who"><button type="button" data-rs="name" onclick="resSortBy('name')">Thí sinh <span class="ar">▲▼</span></button></th><th class="rt-res"><button type="button" data-rs="score" onclick="resSortBy('score')">Kết quả <span class="ar">▲▼</span></button></th><th class="rt-chips">Tuân thủ · Cảnh báo</th><th class="rt-time"><button type="button" data-rs="time" onclick="resSortBy('time')">Nộp lúc <span class="ar">▲▼</span></button></th><th class="rt-act"></th></tr></thead><tbody id="resList"></tbody></table></div>
-        <div class="panel" style="margin-top:14px"><details class="nd" id="dashNd"><summary id="dashNdSum">Chưa làm bài</summary><div class="ndg" id="dashNdList"></div></details></div>
+        <div class="panel hide" style="margin-top:14px"><details class="nd" id="dashNd"><summary id="dashNdSum">Chưa làm bài</summary><div class="ndg" id="dashNdList"></div></details></div>
       </div>
       <div class="card hide" id="resDetailCard">
         <button class="xclose" type="button" onclick="closeResDetail()" aria-label="Đóng">×</button>
@@ -3044,6 +3081,58 @@ let DASH = null;
 const perLabel = (p) => /^\d{4}-\d{2}$/.test(p||'') ? 'tháng ' + p.slice(5) + '/' + p.slice(0,4) : (p||'');
 const pctTxt = (v) => v == null ? '–' : (Math.round(v*10)/10).toString().replace('.', ',') + '%';
 const durTxt = (s) => { if (s == null) return '–'; const m = Math.floor(s/60), x = s%60; return m + ' phút ' + (x<10?'0':'') + x + ' giây'; };
+/* ---------- Tình trạng làm bài: Đã làm / Đang làm / Chưa làm ---------- */
+let PG = null, PG_F = 'all', PG_P = '', PG_T = null;
+const PG_LBL = { all:'Tất cả', doing:'Đang làm', done:'Đã làm', none:'Chưa làm' };
+async function loadProgress(sel){
+  if (sel !== undefined) PG_P = /^[a-z0-9][a-z0-9-]{0,39}$/i.test(sel || '') ? sel : '';
+  const { j } = await api('GET', '/api/kt-admin?op=progress' + (PG_P ? '&period=' + encodeURIComponent(PG_P) : ''));
+  if (!j || !j.ok){ $('pgCard').classList.add('hide'); return; }
+  PG = j; $('pgCard').classList.remove('hide');
+  const t = new Date(j.serverNow + 7 * 3600 * 1000), p = n => (n < 10 ? '0' : '') + n;
+  $('pgUpd').textContent = 'Cập nhật ' + p(t.getUTCHours()) + ':' + p(t.getUTCMinutes()) + ':' + p(t.getUTCSeconds()) + (j.count.doing ? ' · tự làm mới mỗi 30 giây' : '');
+  const mv = $('pgMgr').value, mgrs = Array.from(new Set(j.list.map(x => x.manager || ''))).sort((a, b) => a.localeCompare(b, 'vi'));
+  $('pgMgr').innerHTML = '<option value="*">Mọi quản lí</option>' + mgrs.map(m => '<option value="' + esc(m) + '">' + esc(m || '(chưa có quản lí)') + '</option>').join('');
+  $('pgMgr').value = mgrs.indexOf(mv) >= 0 ? mv : '*';
+  renderProgress();
+  clearTimeout(PG_T);
+  // Có người đang làm: tự làm mới khi khung còn hiển thị
+  if (j.count.doing) PG_T = setTimeout(() => { if ($('pgCard').offsetParent) loadProgress(); }, 30000);
+}
+function pgSetF(f){ PG_F = f; renderProgress(); }
+function pgRows(){
+  const q = spNorm($('pgSearch').value || ''), m = $('pgMgr').value || '*';
+  return PG.list.filter(x => (m === '*' || (x.manager || '') === m) && (!q || spNorm([x.name, x.code, x.manager, x.province, x.phone].join(' ')).indexOf(q) >= 0));
+}
+function renderProgress(){
+  if (!PG) return;
+  const base = pgRows(), cnt = { all: base.length, doing: 0, done: 0, none: 0 }; base.forEach(x => cnt[x.status]++);
+  $('pgTabs').innerHTML = ['all','doing','done','none'].map(k => '<button type="button" role="tab" class="pg-tab ' + k + (PG_F === k ? ' on' : '') + '" aria-selected="' + (PG_F === k) + '" onclick="pgSetF(\'' + k + '\')"><i></i>' + PG_LBL[k] + ' <b>' + cnt[k] + '</b></button>').join('');
+  const fm = ms => { const d = new Date(ms + 7 * 3600 * 1000), p = n => (n < 10 ? '0' : '') + n; return p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ' ' + p(d.getUTCDate()) + '/' + p(d.getUTCMonth() + 1); };
+  const ORD = { doing:0, none:1, done:2 };
+  const L = base.filter(x => PG_F === 'all' || x.status === PG_F).sort((a, b) => (ORD[a.status] - ORD[b.status]) || String(a.name).localeCompare(String(b.name), 'vi'));
+  $('pgCopy').classList.toggle('hide', PG_F !== 'none' || !L.length);
+  $('pgList').innerHTML = L.map(x => {
+    let info = '';
+    if (x.status === 'doing'){
+      const d = x.doing, w = d.total ? Math.round(d.answered / d.total * 100) : 0;
+      info = '<div class="pg-prog"><span class="pg-bar"><i style="width:' + w + '%"></i></span><span>' + (d.finished ? 'Đã hết câu, chưa nộp' : 'Câu ' + d.answered + '/' + d.total) + ' · bắt đầu ' + fm(d.startedAt) + '</span></div>' +
+        (x.done ? '<small class="pg-sub">Đang làm lại · điểm cao nhất hiện có ' + x.done.score + '/' + x.done.total + '</small>' : '');
+    } else if (x.status === 'done'){
+      const d = x.done;
+      info = '<button type="button" class="pg-score" onclick="viewResult(\'' + esc(d.id) + '\')" title="Xem bài làm"><b>' + d.score + '/' + d.total + '</b> ' + d.pct + '%' + (d.tries > 1 ? ' · ' + d.tries + ' lần' : '') + '</button><small class="pg-sub">nộp ' + fm(d.submittedAt) + '</small>';
+    } else info = '<small class="pg-sub">' + (x.phone ? esc(x.phone) : 'Chưa có số điện thoại') + '</small>';
+    return '<div class="pg-row ' + x.status + '"><span class="pg-dot" aria-hidden="true"></span>' +
+      '<div class="pg-who"><b>' + esc(x.name || x.code) + '</b><small>' + esc(x.code) + (x.manager ? ' · ' + esc(x.manager) : '') + (x.province ? ' · ' + esc(x.province) : '') + (x.region ? ' · ' + (x.region === 'bac' ? 'Miền Bắc' : 'Miền Nam') : '') + '</small></div>' +
+      '<span class="pg-st">' + PG_LBL[x.status] + '</span><div class="pg-info">' + info + '</div></div>';
+  }).join('') || '<div class="pg-empty">Không có thí sinh nào ở mục này.</div>';
+}
+function pgCopy(){
+  const L = pgRows().filter(x => x.status === 'none');
+  const t = L.map(x => x.name + ' (' + x.code + ')' + (x.manager ? ' - ' + x.manager : '') + (x.phone ? ' - ' + x.phone : '')).join('\n');
+  const done = () => { const b = $('pgCopy'), o = b.textContent; b.textContent = 'Đã chép ' + L.length + ' người ✓'; setTimeout(() => { b.textContent = o; }, 1500); };
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, () => prompt('Sao chép danh sách:', t)); else prompt('Sao chép danh sách:', t);
+}
 async function loadDashboard(sel){
   const want = /^[a-z0-9][a-z0-9-]{0,39}$/i.test(sel||'') ? sel : ''; // cả mã tháng (2026-10) lẫn mã đề tự đặt (thi-thu)
   const { j } = await api('GET','/api/kt-admin?op=dashboard'+(want?'&period='+encodeURIComponent(want):''));
@@ -3051,8 +3140,8 @@ async function loadDashboard(sel){
   DASH = j; $('dashCard').classList.remove('hide');
   if (j.period === j.currentPeriod) renderAdminHero(j);
   $('dashTitle').textContent = 'Tổng quan';
-  $('anaCard').classList.toggle('nodata', !j.submitted); $('anaSub').textContent = j.submitted ? 'Tính theo bài nộp gần nhất của mỗi nhân viên.' : 'Chưa có bài nộp nào, phần phân tích sẽ hiện khi có kết quả.';
-  $('dashSub').textContent = (j.submitted ? '' : 'Chưa có bài nộp, phần phân tích sẽ hiện khi có kết quả. ') + 'Tính theo bài nộp gần nhất của mỗi nhân viên, trên danh sách thí sinh hiện có.';
+  $('anaCard').classList.toggle('nodata', !j.submitted); $('anaSub').textContent = j.submitted ? 'Tính theo lần điểm cao nhất của mỗi nhân viên.' : 'Chưa có bài nộp nào, phần phân tích sẽ hiện khi có kết quả.';
+  $('dashSub').textContent = (j.submitted ? '' : 'Chưa có bài nộp, phần phân tích sẽ hiện khi có kết quả. ') + 'Tính theo lần điểm cao nhất của mỗi nhân viên, trên danh sách thí sinh hiện có.';
   // Bài chưa gắn kỳ
   $('dashBanner').innerHTML = j.untagged ? '<div class="banner"><span class="sp"><b>' + j.untagged + ' bài làm chưa gắn kỳ</b> (nộp trước khi có tính năng kỳ). Những nhân viên này hiện vẫn bắt đầu làm lại được. Gắn vào kỳ để khoá lại và đưa vào thống kê.</span>' +
     '<input id="asgPeriod" value="' + esc(j.currentPeriod) + '" aria-label="Kỳ cần gắn (năm-tháng)"><button class="btn sm" id="asgBtn" type="button">Gắn kỳ</button></div>' : '';
@@ -3107,7 +3196,7 @@ async function loadResults(){
   const { j } = await api('GET','/api/kt-admin?op=results'+(selBefore?'&period='+encodeURIComponent(selBefore):''));
   if (!j.ok) return;
   const opts = (j.periods||[]).map(p => { const l = /^\d{4}-\d{2}$/.test(p) ? 'Tháng ' + p.slice(5) + '/' + p.slice(0,4) : p; return p === j.currentPeriod ? l + ' (hiện tại)' : l; });
-  loadDashboard(selBefore);
+  loadDashboard(selBefore); loadProgress(selBefore);
   $('resPeriod').innerHTML = '<option value="">Tất cả các kỳ</option>' + (j.periods||[]).map((p,i) => '<option value="'+esc(p)+'" '+(p===selBefore?'selected':'')+'>'+esc(opts[i])+'</option>').join('');
   RESULTS = j.results || [];
   renderResults();
