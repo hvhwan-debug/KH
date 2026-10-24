@@ -556,6 +556,45 @@ body.introbg .btn.go:active{transform:scale(.99)}
   body.introbg .card .btn.go.idle{background:#aabfd8;box-shadow:0 8px 18px rgba(107,148,195,.11)}
 }
 @media(max-width:370px){body.introbg .lp-practice{max-width:150px;font-size:10.5px}body.introbg .hero h3{font-size:29px}}
+/* ===== Vừa một màn hình: màn vào bài (máy tính) co theo chiều cao cửa sổ, không phải cuộn trang =====
+   Mọi giá trị dùng clamp(nhỏ nhất, theo vh, giá trị gốc): màn hình cao thì giữ nguyên như thiết kế cũ. */
+@media(min-width:861px){
+  body.introbg{--bar:clamp(52px,8vh,76px);--sn:clamp(26px,4.2vh,36px)}
+  body.introbg .lp-bar{height:var(--bar)}
+  body.introbg .lp-mark{width:clamp(34px,5.4vh,44px);height:clamp(34px,5.4vh,44px)}
+  body.introbg .wrap{min-height:calc(100vh - var(--bar));padding-bottom:clamp(2px,.8vh,16px)}
+  body.introbg .stage{padding:clamp(4px,1.4vh,34px) 0 clamp(2px,.8vh,18px)}
+  body.introbg .stage>main{gap:clamp(5px,1.1vh,18px)}
+  body.introbg .steps .n{width:var(--sn);height:var(--sn);font-size:clamp(12px,1.9vh,14px)}
+  body.introbg .steps li{gap:clamp(3px,.8vh,8px)}
+  body.introbg .steps .bar{top:calc(var(--sn)/2 - 1.5px);left:calc(50% + var(--sn)/2 + 8px);width:calc(100% - var(--sn) - 16px)}
+  body.introbg .card{padding:clamp(12px,2.5vh,42px) clamp(24px,3vw,42px)}
+  body.introbg .card .brandfull{height:clamp(36px,7vh,100px);margin-bottom:clamp(2px,.7vh,14px)}
+  body.introbg .card h1{font-size:min(clamp(25px,2.1vw,31px),max(21px,3.3vh));margin-bottom:clamp(3px,.8vh,11px)}
+  body.introbg .card .lead{margin-bottom:clamp(7px,1.7vh,24px);font-size:clamp(13px,1.9vh,14px);line-height:1.5}
+  body.introbg .card .field{margin-bottom:clamp(7px,1.4vh,18px)}
+  body.introbg .card .field label{margin-bottom:clamp(3px,.8vh,7px);font-size:clamp(12.5px,1.8vh,13px)}
+  body.introbg .card .field input{height:clamp(40px,5.2vh,57px)}
+  body.introbg .card .btn.go{height:clamp(42px,5.4vh,58px)}
+  body.introbg .sched{margin-bottom:clamp(6px,1.2vh,14px);padding:clamp(5px,1vh,9px) 12px}
+  body.introbg .benefits{margin-top:clamp(6px,1.5vh,24px);padding-top:clamp(6px,1.4vh,21px);gap:6px}
+  body.introbg .benefit{font-size:clamp(11px,1.7vh,12px);line-height:1.35}
+  body.introbg .benefit .ico{width:clamp(24px,3.3vh,37px);height:clamp(24px,3.3vh,37px);margin-bottom:clamp(2px,.6vh,8px)}
+  body.introbg .benefit .ico svg{width:clamp(14px,1.9vh,18px);height:clamp(14px,1.9vh,18px)}
+  body.introbg .hero{padding:clamp(6px,2vh,25px) 0}
+  body.introbg .hero h3{margin:clamp(8px,2.2vh,23px) 0 clamp(6px,1.6vh,17px)}
+  body.introbg .hero .hsub{margin-bottom:clamp(10px,2.8vh,30px);font-size:clamp(14px,2vh,16px);line-height:1.55}
+  body.introbg .hero .feats{gap:clamp(8px,2vh,22px)}
+  body.introbg .hero .feats li{grid-template-columns:clamp(42px,6.8vh,67px) 1fr;gap:clamp(12px,2.2vh,24px)}
+  body.introbg .hero .feats .fi{width:clamp(42px,6.8vh,67px);height:clamp(42px,6.8vh,67px);border-radius:clamp(12px,1.8vh,18px)}
+  body.introbg .hero .feats .fi svg{width:clamp(20px,3vh,30px);height:clamp(20px,3vh,30px)}
+  body.introbg .hero .feats b{font-size:clamp(14px,1.7vh,16px);margin-bottom:clamp(1px,.4vh,5px)}
+  body.introbg .hero .feats span:not(.fi){font-size:clamp(12.5px,1.55vh,14px);line-height:1.45}
+}
+/* cửa sổ rất thấp (≤ 700px): bỏ hàng 3 biểu tượng trang trí trong thẻ để vẫn thấy đủ ô nhập và nút */
+@media(min-width:861px) and (max-height:700px){body.introbg .benefits{display:none}}
+/* màn rộng nhưng không cao (vd. 1920×1080 đã trừ thanh trình duyệt): bỏ phóng to để không bị tràn xuống dưới */
+@media(min-width:1800px) and (max-height:1050px){body.introbg{--z:1}}
 @media(prefers-reduced-motion:reduce){
   body.introbg,body.introbg *,body.introbg::before{animation:none!important;transition:none!important}
 }
