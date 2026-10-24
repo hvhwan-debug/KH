@@ -378,28 +378,52 @@ function loadHtml2Canvas(){
   h2cP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = '/kiemtra/vendor/export/canvas-render.js'; sc.onload = function(){ res(window.html2canvas); }; sc.onerror = function(){ h2cP = null; rej(new Error('h2c')); }; document.head.appendChild(sc); });
   return h2cP;
 }
-function posterFrame(bodyHtml, cssText){
+// Giới hạn thời gian chờ cho một promise, để không bao giờ bị treo vô thời hạn
+function withTimeout(p, ms, msg){
   return new Promise(function(resolve, reject){
-    var ifr = document.createElement('iframe');
-    ifr.style.cssText = 'position:fixed;left:-99999px;top:0;width:720px;height:10px;border:0';
-    ifr.setAttribute('aria-hidden', 'true');
-    var done = false;
-    ifr.onload = function(){ done = true; resolve(ifr); };
-    document.body.appendChild(ifr);
-    try { ifr.srcdoc = '<!doctype html><html><head><meta charset="utf-8"><style>'+cssText+'</style></head><body>'+bodyHtml+'</body></html>'; }
-    catch(e){ reject(e); return; }
-    setTimeout(function(){ if (!done) resolve(ifr); }, 1500);
+    var done = false, t = setTimeout(function(){ if (!done){ done = true; reject(new Error(msg || 'timeout')); } }, ms);
+    p.then(function(v){ if (!done){ done = true; clearTimeout(t); resolve(v); } }, function(e){ if (!done){ done = true; clearTimeout(t); reject(e); } });
   });
 }
-// Trả về Promise<HTMLCanvasElement> ảnh minh hoạ (poster) đã điền thông tin, độ nét x2. cssText/bodyHtml ứng với một "họ" thiết kế (xem posterBody/posterBody2…)
-async function renderPosterCanvas(cssText, bodyHtml){
-  var H2C = await loadHtml2Canvas();
-  var ifr = await posterFrame(bodyHtml, cssText);
+// Bỏ các khối @media (không cần vì luôn dựng ở bề rộng cố định 720px) để việc "đóng khung" CSS bên dưới không phải xử lý at-rule lồng nhau
+function stripMedia(css){ return css.replace(/@media[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, ''); }
+// "Đóng khung" (scope) một khối CSS vào trong scopeSel, để không ảnh hưởng tới các lớp/CSS khác của trang quản trị
+function scopeCss(css, scopeSel){
+  return stripMedia(css).replace(/([^{}]+)\{/g, function(m, sel){
+    var parts = sel.split(',').map(function(s){ s = s.trim(); return !s ? '' : (s === 'body' || s === 'html') ? scopeSel : scopeSel + ' ' + s; }).filter(Boolean);
+    return parts.length ? parts.join(', ') + '{' : m;
+  });
+}
+var POSTER_HOST_ID = 'ktPosterHost', posterCssReady = false;
+// Khung chứa (ẩn, ngoài màn hình) dùng chung để dựng ảnh minh hoạ trực tiếp trong trang — không dùng iframe nữa vì html2canvas có thể bị treo khi chụp nội dung lồng trong iframe ở một số trình duyệt
+function ensurePosterHost(){
+  var host = document.getElementById(POSTER_HOST_ID);
+  if (!host){
+    host = document.createElement('div'); host.id = POSTER_HOST_ID;
+    host.style.cssText = 'position:fixed;left:-99999px;top:0;width:720px;background:#fff';
+    host.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(host);
+  }
+  return host;
+}
+function ensurePosterCss(){
+  if (posterCssReady) return;
+  var s = document.createElement('style'); s.id = 'ktPosterCss';
+  s.textContent = scopeCss(POSTER_CSS, '#' + POSTER_HOST_ID) + '\n' + scopeCss(PROF_CSS, '#' + POSTER_HOST_ID);
+  document.head.appendChild(s);
+  posterCssReady = true;
+}
+// Trả về Promise<HTMLCanvasElement> ảnh minh hoạ (poster) đã điền thông tin, độ nét x2
+async function renderPosterCanvas(bodyHtml){
+  var H2C = await withTimeout(loadHtml2Canvas(), 15000, 'Không tải được thư viện dựng ảnh (hết thời gian chờ, kiểm tra kết nối mạng).');
+  ensurePosterCss();
+  var host = ensurePosterHost();
+  host.innerHTML = bodyHtml;
+  await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); }); // đợi trình duyệt dựng xong bố cục trước khi chụp
+  var target = host.firstElementChild || host;
   try {
-    var body = ifr.contentDocument.body, h = Math.max(body.scrollHeight, 400);
-    ifr.style.height = h + 'px';
-    return await H2C(body, { backgroundColor:'#ffffff', scale:2, width:720, windowWidth:720, useCORS:true });
-  } finally { if (ifr.parentNode) ifr.parentNode.removeChild(ifr); }
+    return await withTimeout(H2C(target, { backgroundColor:'#ffffff', scale:2, width:720, windowWidth:720, useCORS:true }), 20000, 'Dựng ảnh quá lâu, thử lại.');
+  } finally { host.innerHTML = ''; }
 }
 
 function css(){
@@ -510,8 +534,8 @@ function mount(root, cfg){
   async function posterCanvasFor(r){
     var n = posterVariantIdx(); if (n < 1) n = 1;
     var ms = await posterMsFor(r);
-    if (n <= 10) return renderPosterCanvas(POSTER_CSS, posterBody(POSTER_STYLES[n - 1] || POSTER_STYLES[0], ms));
-    return renderPosterCanvas(PROF_CSS, posterBody2(POSTER_STYLES2[n - 11] || POSTER_STYLES2[0], ms));
+    if (n <= 10) return renderPosterCanvas(posterBody(POSTER_STYLES[n - 1] || POSTER_STYLES[0], ms));
+    return renderPosterCanvas(posterBody2(POSTER_STYLES2[n - 11] || POSTER_STYLES2[0], ms));
   }
   function pngOf(r){ var idx = posterVariantIdx(); if (idx >= 0) return posterCanvasFor(r).then(function(c){ return renderPng({ canvas:c }); }); return renderPng({ text: msgFor(r), kind: tplOf(S.tpl).kind || '', cta: ctaFor(r) }); }
   function pdfItemFor(r){ var idx = posterVariantIdx(); if (idx >= 0) return posterCanvasFor(r).then(function(c){ return { canvas:c }; }); return Promise.resolve({ text: msgFor(r), kind: tplOf(S.tpl).kind || '', cta: ctaFor(r) }); }
