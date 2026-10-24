@@ -526,6 +526,13 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 .rd-fill small{font-size:11.5px;color:var(--muted);font-weight:700}.rd-fill b{font-size:14.5px}
 .rd-fill.ok{background:var(--ok-soft);color:var(--ok);border-color:#9AD3B5}.rd-fill.bad{background:var(--bad-soft);color:var(--bad);border-color:#EDA7A1}.rd-fill.blank{background:#F1F4F5}
 @media(max-width:640px){.rd-opts,.rd-fill{margin-left:0}.rd-head{padding:12px}.rd-qh{flex-wrap:wrap}.rd-opt{flex-wrap:wrap}}
+
+#rdBackdrop{position:fixed;inset:0;z-index:90;background:rgba(6,48,45,.55);backdrop-filter:blur(2px);display:none}
+#resDetailCard.rd-pop{position:fixed;z-index:100;top:4vh;left:50%;transform:translateX(-50%);width:min(980px,94vw);max-height:92vh;overflow:auto;margin:0;border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.35);animation:rdIn .18s ease-out}
+#resDetailCard.rd-pop .rd-sticky{top:-20px;padding-top:14px}
+#resDetailCard.rd-pop .rd-q{scroll-margin-top:130px}
+@keyframes rdIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+@media(max-width:640px){#resDetailCard.rd-pop{top:0;width:100vw;max-height:100vh;border-radius:0}}
 </style>
 </head>
 <body>
@@ -1136,10 +1143,10 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
         <div class="panel" style="margin-top:14px"><details class="nd" id="dashNd"><summary id="dashNdSum">Chưa làm bài</summary><div class="ndg" id="dashNdList"></div></details></div>
       </div>
       <div class="card hide" id="resDetailCard">
-        <button class="xclose" type="button" onclick="document.getElementById('resDetailCard').classList.add('hide')" aria-label="Đóng">×</button>
+        <button class="xclose" type="button" onclick="closeResDetail()" aria-label="Đóng">×</button>
         <h1>Chi tiết bài làm</h1>
         <div id="resDetail"></div>
-        <button class="btn ghost sm" style="margin-top:14px" onclick="document.getElementById('resDetailCard').classList.add('hide')">Đóng</button>
+        <button class="btn ghost sm" style="margin-top:14px" onclick="closeResDetail()">Đóng</button>
       </div>
     </div>
 
@@ -1343,7 +1350,7 @@ function switchTab(t){
   if (t === 'audit') { loadAudit(); loadFaceRejections(); }
   if (t === 'managerview' && $('mvFrame').src === 'about:blank') $('mvFrame').src = '/kiemtra/quanli.html';
   if (inWs) renderExHead();
-  if ((t === 'results' || t === 'analysis') && CUR_EXAM){ $('resPeriod').innerHTML = '<option value="'+esc(CUR_EXAM)+'"></option>'; $('resPeriod').value = CUR_EXAM; $('resDetailCard').classList.add('hide'); loadResults(); }
+  if ((t === 'results' || t === 'analysis') && CUR_EXAM){ $('resPeriod').innerHTML = '<option value="'+esc(CUR_EXAM)+'"></option>'; $('resPeriod').value = CUR_EXAM; closeResDetail(); loadResults(); }
   if (t === 'questions' && CUR_EXAM && QP !== CUR_EXAM){ QP = CUR_EXAM; QLIM = 50; if ($('qSearch')) $('qSearch').value = ''; if (QUESTIONS.length || QMETA.questions) renderQuestions(); clearQForm(); qPanel(null); }
   if (t === 'examset' && !EX_NEW && CUR_EXAM) editExam(CUR_EXAM);
   if (t === 'analysis' && CUR_EXAM && ITEM_EXAM !== CUR_EXAM){ const e = examById(CUR_EXAM); if (e && e.resultCount) openItemAnalysis(CUR_EXAM, true); else { ITEM_EXAM = CUR_EXAM; $('itemCard').classList.add('hide'); } }
@@ -2935,12 +2942,27 @@ function devHtml(a){
       return '<li title="' + esc(d.ua || '').replace(/"/g,'&quot;') + '"><b>' + esc(ST[d.stage] || '') + '</b> ' + esc(fmtT(d.at)) + ': ' + esc(name) + (d.ip ? ' · IP ' + esc(d.ip) : '') + (d.screen ? ' · ' + esc(d.screen) : '') + '<br>' + loc + '</li>';
     }).join('') + '</ul></div>';
 }
+function openResDetail(){
+  let bd = document.getElementById('rdBackdrop');
+  if (!bd){ bd = document.createElement('div'); bd.id = 'rdBackdrop'; bd.onclick = closeResDetail; document.body.appendChild(bd); }
+  bd.style.display = 'block';
+  const c = $('resDetailCard'); c.classList.add('rd-pop'); c.classList.remove('hide'); c.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+}
+function closeResDetail(){
+  const c = $('resDetailCard'); if (!c || c.classList.contains('hide')) return;
+  c.classList.add('hide'); c.classList.remove('rd-pop');
+  const bd = document.getElementById('rdBackdrop'); if (bd) bd.style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !document.getElementById('rdZoomOv')) closeResDetail(); });
 function rdFmtT(ms){ try { return new Date(ms).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour12:false}); } catch(e){ return ''; } }
 function rdDur(sec){ if (!(sec > 0)) return ''; const m = Math.floor(sec / 60), s = sec % 60; return m ? m + ' phút' + (s ? ' ' + s + ' giây' : '') : s + ' giây'; }
 function rdZoom(src){
-  const ov = document.createElement('div');
+  const ov = document.createElement('div'); ov.id = 'rdZoomOv';
+  const escZ = e => { if (e.key === 'Escape'){ ov.remove(); document.removeEventListener('keydown', escZ, true); } }; document.addEventListener('keydown', escZ, true);
   ov.style.cssText = 'position:fixed;inset:0;z-index:200;background:rgba(6,48,45,.82);display:grid;place-items:center;padding:20px;cursor:zoom-out';
-  ov.onclick = () => ov.remove();
+  ov.onclick = () => { ov.remove(); document.removeEventListener('keydown', escZ, true); };
   const im = document.createElement('img'); im.src = src; im.alt = 'Ảnh xác nhận'; im.style.cssText = 'max-width:min(92vw,720px);max-height:92vh;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.45)';
   ov.appendChild(im); document.body.appendChild(ov);
 }
@@ -2959,8 +2981,7 @@ async function viewResult(id){
   const { j } = await api('GET','/api/kt-admin?op=result&id='+encodeURIComponent(id));
   if (!j.ok){ alert(j.error); return; }
   const a = j.attempt, D = j.detail;
-  $('resDetailCard').classList.remove('hide');
-  setTimeout(() => $('resDetailCard').scrollIntoView({behavior:'smooth', block:'start'}), 0);
+  openResDetail();
   const st = d => d.ok ? 'ok' : (d.answered ? 'bad' : 'blank');
   const nOk = D.filter(d => st(d) === 'ok').length, nBad = D.filter(d => st(d) === 'bad').length, nBlank = D.filter(d => st(d) === 'blank').length;
   const pct = Number(a.pct) || 0, col = pct >= 80 ? 'var(--ok)' : pct >= 50 ? 'var(--warn)' : 'var(--bad)';
