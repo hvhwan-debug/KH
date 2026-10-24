@@ -595,6 +595,44 @@ body.introbg .btn.go:active{transform:scale(.99)}
 @media(min-width:861px) and (max-height:700px){body.introbg .benefits{display:none}}
 /* màn rộng nhưng không cao (vd. 1920×1080 đã trừ thanh trình duyệt): bỏ phóng to để không bị tràn xuống dưới */
 @media(min-width:1800px) and (max-height:1050px){body.introbg{--z:1}}
+/* ===== Điện thoại: bỏ tiêu đề lặp lại "HỆ THỐNG KIỂM TRA TRỰC TUYẾN" (đã có ở thanh trên và logo trong thẻ) và co cho vừa một màn hình ===== */
+@media(max-width:860px){
+  body.introbg{--bar:clamp(52px,7.6vh,66px)}
+  body.introbg .lp-bar{height:var(--bar)}
+  body.introbg .lp-mark{width:clamp(32px,5vh,38px);height:clamp(32px,5vh,38px)}
+  body.introbg .wrap{min-height:calc(100vh - var(--bar));min-height:calc(100svh - var(--bar));padding-bottom:4px;justify-content:center}
+  body.introbg .stage{padding:clamp(6px,1.6vh,16px) 0 clamp(4px,1.2vh,16px);gap:clamp(4px,1vh,8px)}
+  /* chỉ giữ tên đề thi (khi có) làm tiêu đề; mặc định ẩn hẳn khối giới thiệu lặp */
+  body.introbg .hero{padding:0 4px}
+  body.introbg .hero .eyebrow,body.introbg .hero .mline,body.introbg .hero h3:not(.long){display:none}
+  body.introbg .hero h3.long{font-size:clamp(17px,2.9vh,21px);line-height:1.25;letter-spacing:-.3px;margin:0 0 2px}
+  body.introbg .steps{margin:0 4px clamp(4px,1vh,10px)}
+  body.introbg .steps .n{width:clamp(26px,4.4vh,34px);height:clamp(26px,4.4vh,34px);font-size:clamp(12px,1.9vh,14px)}
+  body.introbg .steps li{gap:clamp(3px,.7vh,8px)}
+  body.introbg .steps .bar{top:calc(clamp(26px,4.4vh,34px)/2 - 1.5px);left:calc(50% + clamp(26px,4.4vh,34px)/2 + 6px);width:calc(100% - clamp(26px,4.4vh,34px) - 12px)}
+  body.introbg .card{padding:clamp(14px,2.6vh,24px) 18px clamp(14px,2.6vh,24px)}
+  body.introbg .card .brandfull{height:clamp(34px,6.5vh,54px);margin-bottom:clamp(2px,.8vh,10px)}
+  body.introbg .card h1{font-size:clamp(20px,3.3vh,25px);margin-bottom:clamp(3px,.8vh,11px)}
+  body.introbg .card .lead{margin-bottom:clamp(8px,1.8vh,19px);font-size:clamp(13px,1.9vh,14px)}
+  body.introbg .card .field{margin-bottom:clamp(7px,1.4vh,18px)}
+  body.introbg .card .field label{margin-bottom:clamp(3px,.7vh,7px)}
+  body.introbg .card .field input{height:clamp(42px,6vh,57px)}
+  body.introbg .card .btn.go{height:clamp(44px,6.2vh,58px)}
+  body.introbg .sched{margin-bottom:clamp(6px,1.2vh,14px)}
+  body.introbg .foot{font-size:10.5px;line-height:1.3;padding:0 4vw}
+  /* vệt màu trang trí nền không được nhô ra ngoài mép màn hình (làm trình duyệt di động phóng nhỏ trang và thừa chiều cao) */
+  body.introbg::after{right:0;bottom:0;width:70vw;height:30vh}
+  html,body{overflow-x:clip}
+  body.introbg .hero h3.long{font-size:clamp(15px,2.4vh,18px)}
+  /* khung giờ mở/đóng gọn: bỏ icon và dòng "Mở từ…" khi đang mở */
+  body.introbg .sched{gap:0;padding:clamp(5px,1vh,8px) 11px}
+  body.introbg .sched .si{display:none}
+  body.introbg .sched.on .sd{display:none}
+  body.introbg .sched .st{font-size:13.5px;line-height:1.3}
+  body.introbg .sched .sl{font-size:10.5px}
+}
+/* điện thoại thấp: logo trong thẻ trùng với logo ở thanh trên nên ẩn đi */
+@media(max-width:860px) and (max-height:760px){body.introbg .card .brandfull{display:none}}
 @media(prefers-reduced-motion:reduce){
   body.introbg,body.introbg *,body.introbg::before{animation:none!important;transition:none!important}
 }
