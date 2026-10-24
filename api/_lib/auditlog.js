@@ -54,7 +54,7 @@ const A = {
       saveQuestion: ["Lưu câu hỏi", "change"], addQuestions: ["Thêm câu hỏi hàng loạt", "change"], deleteQuestion: ["Xoá câu hỏi", "change"],
       deleteAllQuestions: ["XOÁ TOÀN BỘ ngân hàng đề của kỳ", "change"], copyQuestions: ["Sao chép đề sang kỳ khác", "change"], moveQuestions: ["Chuyển câu hỏi sang kỳ khác", "change"], restoreQuestions: ["Khôi phục ngân hàng đề", "change"],
       saveViewer: ["Cấp / sửa quyền quản lí", "change"], setViewerPassword: ["Đặt mật khẩu cho quản lí", "change"], deleteViewer: ["Thu hồi quyền quản lí", "change"],
-      addCandidates: ["Thêm / cập nhật thí sinh", "change"], approveChange: ["Duyệt yêu cầu điều chỉnh thông tin", "change"], rejectChange: ["Từ chối yêu cầu điều chỉnh thông tin", "change"], deleteCandidate: ["Xoá thí sinh", "change"], renameCandidate: ["Đổi mã nhân viên", "change"], resetAttempt: ["Cho làm lại (xoá kết quả kỳ)", "change"],
+      addCandidates: ["Thêm / cập nhật thí sinh", "change"], approveChange: ["Duyệt yêu cầu điều chỉnh thông tin", "change"], notifyEmail: ["Gửi thông báo qua email", "change"], rejectChange: ["Từ chối yêu cầu điều chỉnh thông tin", "change"], deleteCandidate: ["Xoá thí sinh", "change"], renameCandidate: ["Đổi mã nhân viên", "change"], resetAttempt: ["Cho làm lại (xoá kết quả kỳ)", "change"],
       saveSettings: ["Đổi cài đặt", "change"], assignPeriod: ["Gắn kỳ cho bài chưa có kỳ", "change"],
       saveBank: ["Lưu ngân hàng câu hỏi", "change"], deleteBank: ["Xoá ngân hàng câu hỏi", "change"], moveToBank: ["Chuyển câu hỏi sang ngân hàng khác", "change"],
       setQuestionActive: ["Ẩn / hiện câu hỏi", "change"], regrade: ["Chấm lại đề thi", "change"], regradeQuestion: ["Chấm lại bài có câu hỏi", "change"], saveExam: ["Lưu đề thi", "change"], deleteExam: ["Xoá đề thi", "change"], setDefaultExam: ["Đặt đề thi mặc định", "change"]
@@ -68,7 +68,7 @@ const A = {
     },
     POST: {
       addEmployee: ["Thêm nhân viên", "change"], updateEmployee: ["Sửa thông tin nhân viên", "change"],
-      confirmEmployee: ["Xác nhận thông tin nhân viên", "change"], deleteEmployee: ["Xoá nhân viên", "change"]
+      confirmEmployee: ["Xác nhận thông tin nhân viên", "change"], deleteEmployee: ["Xoá nhân viên", "change"], notifyEmail: ["Gửi thông báo qua email", "change"]
     }
   }
 };
@@ -134,6 +134,7 @@ function details(area, op, q, b, res, pre) {
     case "deleteCandidate": case "deleteEmployee": d.code = b.code; if (cand) { d.name = cand.name; d.email = cand.email; d.manager = cand.manager; } break;
     case "resetAttempt": d.code = b.code; d.period = typeof b.period === "string" ? (b.period || "chưa gắn kỳ") : "mọi kỳ"; d.removed = r.removed; if (cand) d.name = cand.name; break;
     case "approveChange": case "rejectChange": d.id = b.id; break;
+    case "notifyEmail": d.count = Array.isArray(b.items) ? b.items.length : 0; d.sent = r.sent; d.subject = s(b.subject, 100); break;
     case "assignPeriod": d.period = b.period; d.assigned = r.assigned; break;
     case "saveSettings": {
       const a = pre.settings || {}, n = r.settings || {}, ch = [];

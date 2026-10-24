@@ -555,6 +555,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 .brandfull{display:block;margin:0 auto 10px;width:auto;height:112px;max-width:70%;object-fit:contain}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
+<script src="/kiemtra/notify.js?v=1"></script>
 </head>
 <body>
 <header class="au-bar"><a class="au-brand" href="/kiemtra/"><span class="au-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span class="au-name">Hệ thống kiểm tra đánh giá trực tuyến</span></a><a class="au-back" href="/kiemtra/">Trang làm bài →</a></header>
@@ -605,6 +606,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
       <div class="nv-grp">Vận hành</div>
       <button type="button" class="nv" data-nav="exams" onclick="switchTab('exams')" title="Đề thi"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg><span class="nv-l">Đề thi</span><span class="nv-cnt hide" id="nvExams"></span></button>
       <button type="button" class="nv" data-nav="candidates" onclick="switchTab('candidates')" title="Thí sinh"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg><span class="nv-l">Thí sinh</span><span class="nv-cnt hide" id="nvCand"></span></button>
+      <button type="button" class="nv" data-nav="notify" onclick="switchTab('notify')" title="Gửi thông báo"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg><span class="nv-l">Thông báo</span></button>
       <button type="button" class="nv" data-nav="managerview" onclick="switchTab('managerview')" title="Quản lí"><svg class="ic" aria-hidden="true"><use href="#i-mgr"/></svg><span class="nv-l">Quản lí</span></button>
       <div class="nv-grp">Hệ thống</div>
       <button type="button" class="nv" data-nav="sys" onclick="switchTab('settings')" title="Cài đặt"><svg class="ic" aria-hidden="true"><use href="#i-set"/></svg><span class="nv-l">Cài đặt</span></button>
@@ -924,6 +926,15 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
     <div id="tab-managerview" class="tabpane hide">
       <div class="card" style="padding:0;overflow:hidden">
         <iframe id="mvFrame" class="mvframe" src="about:blank" title="Trang quản lí"></iframe>
+      </div>
+    </div>
+
+    <div id="tab-notify" class="tabpane hide">
+      <div class="card">
+        <h1>Gửi thông báo</h1>
+        <p class="small" style="margin-top:-4px">Chọn đề thi và mẫu thông báo, rồi gửi qua <b>Zalo</b>, <b>tin nhắn SMS</b> hoặc <b>email</b> theo số điện thoại và email đã lưu của thí sinh. Zalo và SMS mở sẵn ứng dụng để bạn bấm gửi; email do hệ thống gửi trực tiếp.</p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 14px"><label style="margin:0">Đề thi</label><select id="ntExam" style="max-width:420px;margin:0" onchange="loadNotify()"></select><button class="btn ghost sm" type="button" onclick="loadNotify()">Tải lại</button></div>
+        <div id="ntMount"><p class="small">Đang tải danh sách…</p></div>
       </div>
     </div>
 
@@ -1351,7 +1362,7 @@ $('auXlsx').addEventListener('click', async function(){
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   logEv('exportExcel', { period: 'nhật ký ' + $('auDay').value });
 });
-const TABS = ['exams','candidates','managerview','results','analysis','questions','examset','settings','viewers','banks','audit'];
+const TABS = ['exams','candidates','managerview','notify','results','analysis','questions','examset','settings','viewers','banks','audit'];
 const WS = ['results','analysis','questions','examset'], SYS = ['settings','viewers','banks','audit'];
 let CUR_EXAM = null, EX_NEW = false, EX_DEFAULT = '';
 // Địa chỉ dạng #exams, #candidates, #settings… hoặc #results/<mã đề>, #questions/<mã đề>, #examset/<mã đề>
@@ -1369,7 +1380,7 @@ function switchTab(t){
   const inWs = WS.indexOf(t) >= 0, inSys = SYS.indexOf(t) >= 0;
   const navKey = inWs ? 'exams' : inSys ? 'sys' : t;
   document.querySelectorAll('[data-nav]').forEach(b => { const on = b.dataset.nav === navKey; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-  const tb = $('tbTitle'); if (tb) tb.textContent = inWs ? 'Đề thi' : inSys ? 'Cài đặt' : ({ exams:'Đề thi', candidates:'Thí sinh', managerview:'Quản lí' })[t] || 'Quản trị bài kiểm tra';
+  const tb = $('tbTitle'); if (tb) tb.textContent = inWs ? 'Đề thi' : inSys ? 'Cài đặt' : ({ exams:'Đề thi', candidates:'Thí sinh', notify:'Thông báo', managerview:'Quản lí' })[t] || 'Quản trị bài kiểm tra';
   document.querySelectorAll('.sysnav').forEach(el => el.classList.toggle('hide', !inSys));
   $('exHead').classList.toggle('hide', !inWs);
   $('exNav').classList.toggle('hide', EX_NEW);
@@ -1379,6 +1390,7 @@ function switchTab(t){
   const h = '#' + t + (inWs && CUR_EXAM ? '/' + encodeURIComponent(CUR_EXAM) : '');
   if (location.hash !== h) history.replaceState(null, '', h);
   if (t === 'candidates' && prevTab !== 'candidates') resetCandFilters(); // vào tab Thí sinh: luôn hiện đủ danh sách, không giữ bộ lọc lần trước
+  if (t === 'notify') loadNotify();
   if (t === 'audit') { loadAudit(); loadFaceRejections(); }
   if (t === 'managerview' && $('mvFrame').src === 'about:blank') $('mvFrame').src = '/kiemtra/quanli.html';
   if (inWs) renderExHead();
@@ -2300,6 +2312,22 @@ async function crqReject(id){
   const { j } = await api('POST','/api/kt-admin', { op:'rejectChange', id, reason });
   if (!j.ok){ alert(j.error || 'Có lỗi xảy ra.'); return; }
   renderChangeRequests(j.requests || []);
+}
+async function loadNotify(){
+  const sel = $('ntExam');
+  if (!sel.options.length || sel.dataset.n !== String((EXAMS || []).length)){
+    const list = (EXAMS || []).slice();
+    sel.innerHTML = list.map(e => '<option value="' + esc(e.id) + '">' + esc(exTitleOf(e) || e.id) + ' (' + esc(e.id) + ')</option>').join('');
+    sel.dataset.n = String(list.length);
+    sel.value = EX_DEFAULT && list.some(e => e.id === EX_DEFAULT) ? EX_DEFAULT : (list[0] ? list[0].id : '');
+  }
+  const id = sel.value;
+  if (!id){ $('ntMount').innerHTML = '<p class="small">Chưa có đề thi nào.</p>'; return; }
+  $('ntMount').innerHTML = '<p class="small">Đang tải danh sách…</p>';
+  const { j } = await api('GET', '/api/kt-admin?op=notifyData&exam=' + encodeURIComponent(id));
+  if (!j.ok){ $('ntMount').innerHTML = '<div class="msg err">' + esc(j.error || 'Không tải được dữ liệu.') + '</div>'; return; }
+  KTNotify.mount($('ntMount'), { recipients: j.recipients, exam: j.exam, origin: location.origin,
+    sendEmail: async (items, subject) => (await api('POST', '/api/kt-admin', { op: 'notifyEmail', subject, items })).j });
 }
 async function loadCandidates(){
   const { j } = await api('GET','/api/kt-admin?op=candidates');

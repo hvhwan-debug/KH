@@ -68,14 +68,15 @@ const handler = async function (context, req) {
           const k = quiz.normCode(a.code);
           if (!latest[k] || (a.submittedAt || 0) > (latest[k].submittedAt || 0)) latest[k] = a;
         });
+        const exSt0 = await quiz.getExamSettings(period);
         const list = await Promise.all(mine.map(async (c) => {
           const r = latest[quiz.normCode(c.code)];
           let status = "none", active = null;
           if (r) status = "done";
           else if (period === settings.examPeriod) { active = await quiz.getActive(c.code); if (active && (active.period || "") === period) { const t = Object.assign({}, active); quiz.syncAttempt(t, Date.now()); if (t.cursor < t.questionIds.length) status = "doing"; } }
-          return Object.assign(empView(c), { status, result: r ? summaryOf(r, settings, !!viewer.isAdmin) : null });
+          return Object.assign(empView(c), { status, eligible: quiz.inAudience(exSt0, c), result: r ? summaryOf(r, settings, !!viewer.isAdmin) : null });
         }));
-        return reply(context, 200, { ok: true, employees: list, period, periods, examTitles, currentPeriod: settings.examPeriod, serverNow: Date.now() });
+        return reply(context, 200, { ok: true, employees: list, exam: { id: period, title: exSt0.examTitle || period, openAt: exSt0.openAt || 0, closeAt: exSt0.closeAt || 0 }, period, periods, examTitles, currentPeriod: settings.examPeriod, serverNow: Date.now() });
       }
       // Chẩn đoán hành vi học tập của MỘT nhân viên trong phạm vi của quản lí (bằng chứng + nguyên nhân giả thuyết + việc nên làm).
       // Thiết bị / vị trí chỉ đưa vào phân tích khi người xem là quản trị viên (giống các màn hình khác).
@@ -270,6 +271,12 @@ const handler = async function (context, req) {
 
     // Soạn câu hỏi bằng AI (nháp, chưa lưu) và đưa vào ngân hàng đề - quản lí dùng được, không cần xem/duyệt
     // toàn bộ ngân hàng đề sẵn có (chỉ thấy đúng những câu mình vừa soạn, để xét duyệt trước khi lưu).
+    if (op === "notifyEmail") {
+      // Quản lí chỉ gửi được cho nhân viên thuộc phạm vi của mình
+      const r = await require("../_lib/notify").sendEmails({ items: b.items, subject: b.subject, allowed: (c) => quiz.inScope(viewer, c) });
+      return reply(context, r.status, r.body);
+    }
+
     if (op === "genQuestions") {
       const r = await require("../_lib/examai").generateDraft(b.topic, b.count, b.category, (await quiz.getQuestions()).map((q) => q.text));
       return reply(context, 200, r);

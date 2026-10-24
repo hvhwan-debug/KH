@@ -236,6 +236,23 @@ const handler = async function (context, req) {
       }
       if (op === "candidates") return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; o.title = quiz.titleOf(c); o.joinDate = require("../_lib/probation").joinDateOf(c.code, c.joinDate); return o; }) });
       if (op === "changeRequests") return reply(context, 200, { ok: true, requests: (await require("../_lib/changereq").getAll()).filter((r) => r.status === "pending") });
+      if (op === "notifyData") {
+        // Dữ liệu cho màn Gửi thông báo: thí sinh thuộc đối tượng của đề, đã làm / chưa làm, số điện thoại, liên kết kết quả
+        const id = String((req.query && req.query.exam) || "").trim();
+        const base = await quiz.getSettings();
+        if (!id || !(await quiz.examKnown(id, base))) return reply(context, 404, { ok: false, error: "Không tìm thấy đề thi." });
+        const exSt = await quiz.getExamSettings(id);
+        const cands = await quiz.getCandidates();
+        const latest = {};
+        (await quiz.getIndex()).filter((a) => a.status === "submitted" && (a.period || "") === exSt.examPeriod).forEach((a) => { const k = quiz.normCode(a.code); if (!latest[k] || (a.submittedAt || 0) > (latest[k].submittedAt || 0)) latest[k] = a; });
+        const { normPhone } = require("../_lib/phone");
+        const recipients = cands.filter((c) => quiz.inAudience(exSt, c)).map((c) => {
+          const r = latest[quiz.normCode(c.code)];
+          return { code: c.code, name: c.name || "", email: c.email || "", phone: normPhone(c.phone), manager: c.manager || "", status: r ? "done" : "none",
+            result: r ? { score: r.score, total: r.total, pct: r.pct, verify: quiz.verifyToken(r.id) } : null };
+        });
+        return reply(context, 200, { ok: true, exam: { id, title: exSt.examTitle || id, openAt: exSt.openAt || 0, closeAt: exSt.closeAt || 0 }, recipients });
+      }
       if (op === "settings") return reply(context, 200, { ok: true, settings: await quiz.getSettings() });
       if (op === "faceRejections") {
         const list = (await require("../_lib/facecheck").getRejections()).slice().reverse();
@@ -801,6 +818,11 @@ const handler = async function (context, req) {
       rq.status = "approved"; rq.doneAt = Date.now(); rq.by = u.email;
       await crl.saveAll(all);
       return reply(context, 200, { ok: true, candidates: list, requests: all.filter((r) => r.status === "pending") });
+    }
+
+    if (op === "notifyEmail") {
+      const r = await require("../_lib/notify").sendEmails({ items: b.items, subject: b.subject });
+      return reply(context, r.status, r.body);
     }
 
     if (op === "setDefaultExam") {
