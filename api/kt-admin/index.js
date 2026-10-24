@@ -247,7 +247,7 @@ const handler = async function (context, req) {
         const exSt = await quiz.getExamSettings(id);
         const cands = await quiz.getCandidates();
         const latest = {};
-        (await quiz.getIndex()).filter((a) => a.status === "submitted" && (a.period || "") === exSt.examPeriod).forEach((a) => { const k = quiz.normCode(a.code); if (!latest[k] || (a.submittedAt || 0) > (latest[k].submittedAt || 0)) latest[k] = a; });
+        (await quiz.getIndex()).filter((a) => a.status === "submitted" && (a.period || "") === exSt.examPeriod).forEach((a) => { const k = quiz.normCode(a.code); if (quiz.betterResult(a, latest[k])) latest[k] = a; });
         const { normPhone } = require("../_lib/phone");
         const recipients = cands.map((c) => {
           const r = latest[quiz.normCode(c.code)];
@@ -293,7 +293,7 @@ const handler = async function (context, req) {
         cands = cands.filter((c) => quiz.inAudience(exSt, c)); // "chưa làm" chỉ tính trên đúng đối tượng của đề
         const periods = Array.from(new Set(all.map((r) => r.period).filter(Boolean).concat([st.examPeriod]))).sort();
         const untagged = all.filter((r) => !r.period).length;
-        const latestOf = (p) => { const m = {}; all.filter((r) => (r.period || "") === p).forEach((r) => { const k = quiz.normCode(r.code); if (!m[k] || (r.submittedAt || 0) > (m[k].submittedAt || 0)) m[k] = r; }); return m; };
+        const latestOf = (p) => { const m = {}; all.filter((r) => (r.period || "") === p).forEach((r) => { const k = quiz.normCode(r.code); if (quiz.betterResult(r, m[k])) m[k] = r; }); return m; }; // mỗi người: lần điểm cao nhất
         const cur = latestOf(period), rows = Object.values(cur);
         const candBy = {}; allCands.forEach((c) => { candBy[quiz.normCode(c.code)] = c; });
         const segOf = (code) => { const c = candBy[quiz.normCode(code)]; return c ? quiz.normSegment(c.segment) : ""; };

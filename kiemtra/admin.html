@@ -698,7 +698,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
           <div><label>Mở đề lúc (trống = mở ngay)</label><input type="datetime-local" id="exOpen"></div>
           <div><label>Đóng đề lúc (trống = không đóng)</label><input type="datetime-local" id="exClose"></div>
           <div><label>Thời gian tối đa mỗi câu (giây)</label><input type="text" inputmode="numeric" id="exSeconds" placeholder="trống = theo Cài đặt mặc định"></div>
-          <div><label>Số lượt làm mỗi người</label><input type="text" inputmode="numeric" id="exAttempts" maxlength="2" placeholder="trống = 1 lượt"><p class="small" style="margin:4px 0 0">Muốn cho thêm 1 lượt thì đặt 2. Người đã làm sẽ được làm tiếp đến hết lượt. Kết quả tính theo lần nộp <b>mới nhất</b>.</p></div>
+          <div><label>Số lượt làm mỗi người</label><input type="text" inputmode="numeric" id="exAttempts" maxlength="2" placeholder="trống = 1 lượt"><p class="small" style="margin:4px 0 0">Muốn cho thêm 1 lượt thì đặt 2. Người đã làm sẽ được làm tiếp đến hết lượt. Kết quả chính thức (tổng quan, xuất Excel) lấy <b>lần điểm cao nhất</b>.</p></div>
           <div><label>&nbsp;</label><label class="chk"><input type="checkbox" id="exRetake" onchange="$('exAttempts').disabled=this.checked"> Cho phép thí sinh làm lại không giới hạn</label></div>
         </div>
 
@@ -2774,7 +2774,9 @@ async function exportResultsXlsx(){
 
   const wb = new E.Workbook();
   wb.creator = 'Hệ thống kiểm tra'; wb.created = new Date();
-  const ws = wb.addWorksheet('Kết quả', { views:[{ state:'frozen', ySplit:1 }] });
+  // Sheet: mỗi dòng một bài. withCount = thêm cột "Số lần làm" (sheet chính)
+  const makeSheet = (name, list, withCount) => {
+  const ws = wb.addWorksheet(name, { views:[{ state:'frozen', ySplit:1 }] });
   ws.columns = [
     { header:'Kỳ', key:'period', width:10 },
     { header:'Mã nhân viên', key:'code', width:16 },
@@ -2792,7 +2794,7 @@ async function exportResultsXlsx(){
     { header:'Thời điểm nộp bài', key:'submitted', width:20 },
     { header:'Cảnh báo', key:'flags', width:26 },
     { header:'Mã minh chứng', key:'proof', width:16 }
-  ];
+  ].concat(withCount ? [{ header:'Số lần làm', key:'tries', width:11 }] : [{ header:'Trạng thái', key:'st', width:16 }]);
   const header = ws.getRow(1);
   header.eachCell(c => {
     c.font = { bold:true, color:{ argb:'FFFFFFFF' } };
@@ -2801,7 +2803,7 @@ async function exportResultsXlsx(){
   });
   header.height = 22;
 
-  results.forEach(r => {
+  list.forEach(r => {
     const row = ws.addRow({
       period: r.period || '', code: r.code, name: r.name||'', title: r.title||'', manager: r.manager||'', segment: segLabel[r.segment]||'Cả hai',
       score: r.score, total: r.total, pct: r.pct, compliance: r.compliancePoints!=null?r.compliancePoints:'',
@@ -2810,8 +2812,11 @@ async function exportResultsXlsx(){
       shotCount: (r.flags && r.flags.shot) || 0,
       submitted: r.submittedAt ? new Date(r.submittedAt).toLocaleString('vi-VN') : '',
       flags: flagText(r),
-      proof: r.proof || ('KT-' + String(r.id || '').slice(-8).toUpperCase())
+      proof: r.proof || ('KT-' + String(r.id || '').slice(-8).toUpperCase()),
+      tries: r._tries || 1,
+      st: r.status === 'submitted' ? (r._best ? 'Điểm cao nhất' : 'Đã nộp') : 'Đang làm / chưa nộp'
     });
+    if (r._best && !withCount) row.getCell('st').font = { bold:true, color:{ argb:'FF1E7F4F' } };
     const resultCell = row.getCell('result');
     if (r.passed == null) { /* bài không có ngưỡng đạt */ }
     else if (r.passed) { resultCell.font = { bold:true, color:{ argb:'FF1E7F4F' } }; }
@@ -2819,7 +2824,16 @@ async function exportResultsXlsx(){
     if (r.flags && r.flags.shot) { row.getCell('shotYN').font = { bold:true, color:{ argb:'FFB3261E' } }; }
     ['score','total','pct','compliance','shotYN','shotCount'].forEach(k => { row.getCell(k).alignment = { horizontal:'center' }; });
   });
-  ws.autoFilter = { from:'A1', to:'O1' };
+  ws.autoFilter = { from:'A1', to:'Q1' };
+  };
+  // Kết quả chính thức: mỗi người (mỗi kỳ/đề) một dòng = lần nộp có điểm CAO NHẤT (khớp quiz.betterResult ở máy chủ)
+  const better = (x, y) => !y || ((x.pct||0) !== (y.pct||0) ? (x.pct||0) > (y.pct||0) : (x.score||0) !== (y.score||0) ? (x.score||0) > (y.score||0) : (x.submittedAt||0) > (y.submittedAt||0));
+  const bestBy = {}, tries = {};
+  results.filter(r => r.status === 'submitted').forEach(r => { const k = (r.period||'') + '|' + String(r.code||'').toLowerCase(); tries[k] = (tries[k]||0) + 1; if (better(r, bestBy[k])) bestBy[k] = r; });
+  const bestIds = new Set(Object.values(bestBy).map(r => r.id));
+  const official = Object.keys(bestBy).map(k => Object.assign({}, bestBy[k], { _tries: tries[k] })).sort((a, b) => (b.submittedAt||0) - (a.submittedAt||0));
+  makeSheet('Kết quả (điểm cao nhất)', official, true);
+  if (results.length > official.length) makeSheet('Tất cả lần làm', results.map(r => Object.assign({}, r, { _best: bestIds.has(r.id) })), false);
   if (DASH){ // trang Tổng quan (theo kỳ đang xem ở dashboard)
     const o = wb.addWorksheet('Tổng quan ' + DASH.period, { views:[{ showGridLines:false }] });
     o.columns = [{ width:34 }, { width:12 }, { width:12 }, { width:14 }, { width:14 }];

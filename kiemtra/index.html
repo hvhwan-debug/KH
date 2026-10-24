@@ -911,11 +911,11 @@ function renderConfirm(){
     $('resumeMsg').innerHTML = '<div class="msg info">Bạn có một bài đang làm dở (đã xong '+ST.inProgress.answered+'/'+ST.inProgress.total+' câu). Bấm tiếp tục để làm tiếp.</div>';
     $('btnStart').textContent = 'Tiếp tục làm bài';
   } else if (ST.attempts && ST.attempts.used){
-    var A = ST.attempts, L = A.last, left = A.max ? A.max - A.used : 0;
+    var A = ST.attempts, L = A.best, left = A.max ? A.max - A.used : 0;
     $('resumeMsg').innerHTML = '<div class="msg info">Bạn đã làm bài này <b>' + A.used + ' lần</b>' +
-      (L ? ' (lần gần nhất đúng <b>' + L.score + '/' + L.total + '</b> câu)' : '') + '. ' +
+      (L ? ', điểm cao nhất hiện tại: đúng <b>' + L.score + '/' + L.total + '</b> câu' : '') + '. ' +
       (A.max ? 'Đề cho phép tối đa ' + A.max + ' lượt, bạn còn <b>' + left + ' lượt</b>. ' : '') +
-      'Kết quả được tính theo lần nộp mới nhất.</div>';
+      'Kết quả chính thức là <b>lần có điểm cao nhất</b>, làm lại không bị mất điểm cũ.</div>';
     $('btnStart').textContent = 'Làm lại bài (lượt ' + (A.used + 1) + (A.max ? '/' + A.max : '') + ')';
   } else {
     $('resumeMsg').innerHTML = '';

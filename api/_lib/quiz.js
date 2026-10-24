@@ -221,6 +221,14 @@ function attemptLimit(settings) { return settings && settings.allowRetake ? Infi
 function submittedOf(idx, code, period) {
   return (idx || []).filter((a) => normCode(a.code) === normCode(code) && a.status === "submitted" && (a.period || "") === period).sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0));
 }
+// Kết quả CHÍNH THỨC của một người trong một đề (khi làm nhiều lượt) = lần có điểm CAO NHẤT.
+// So sánh: tỉ lệ đúng cao hơn -> số câu đúng nhiều hơn -> nộp sau (hoà điểm thì lấy lần gần nhất).
+function betterResult(a, b) {
+  if (!b) return true;
+  if ((a.pct || 0) !== (b.pct || 0)) return (a.pct || 0) > (b.pct || 0);
+  if ((a.score || 0) !== (b.score || 0)) return (a.score || 0) > (b.score || 0);
+  return (a.submittedAt || 0) > (b.submittedAt || 0);
+}
 // Thứ tự lấy đề cho kỳ P: câu của kỳ P -> câu chưa gắn kỳ -> đề của kỳ gần nhất TRƯỚC P (dự phòng tạm thời,
 // để đổi sang kỳ mới mà chưa kịp soạn đề thì thí sinh vẫn làm được bài; trang quản trị báo rõ đang dùng tạm).
 function bankFor(all, period) {
@@ -879,7 +887,7 @@ function noteFail(req) {
 }
 
 module.exports = {
-  normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
+  normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, betterResult, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
   getQuestions, saveQuestions,
   getCandidates, saveCandidates,
   getSettings, saveSettings,

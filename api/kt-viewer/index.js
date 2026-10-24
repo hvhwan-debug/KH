@@ -66,7 +66,7 @@ const handler = async function (context, req) {
         const latest = {};
         subs.filter((a) => (a.period || "") === period).forEach((a) => {
           const k = quiz.normCode(a.code);
-          if (!latest[k] || (a.submittedAt || 0) > (latest[k].submittedAt || 0)) latest[k] = a;
+          if (quiz.betterResult(a, latest[k])) latest[k] = a; // nhiều lượt: lấy lần điểm cao nhất
         });
         const exSt0 = await quiz.getExamSettings(period);
         const list = await Promise.all(mine.map(async (c) => {
@@ -128,7 +128,7 @@ const handler = async function (context, req) {
         // Bài nộp gần nhất của mỗi người trong phạm vi, theo từng kỳ -> trung bình đội & thứ hạng
         const team = {};
         idx.forEach((a) => { const k = quiz.normCode(a.code); if (!inMine[k]) return; const p = a.period || "";
-          const t = (team[p] = team[p] || {}); if (!t[k] || (a.submittedAt || 0) > (t[k].submittedAt || 0)) t[k] = a; });
+          const t = (team[p] = team[p] || {}); if (quiz.betterResult(a, t[k])) t[k] = a; });
         const mineList = idx.filter((a) => quiz.normCode(a.code) === quiz.normCode(c.code)).sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0));
         const lo = settings.complianceLowMin * 10;
         const history = mineList.map((a) => {

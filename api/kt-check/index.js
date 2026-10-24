@@ -57,7 +57,7 @@ module.exports = async function (context, req) {
     const active0 = await quiz.activeForPeriod(found.code, settings.examPeriod);
     if (subs.length >= limit && !active0) {
       const idx = idxAll;
-      const prior = subs[subs.length - 1]; // hết lượt: hiện kết quả lần làm mới nhất
+      let prior = null; subs.forEach((a) => { if (quiz.betterResult(a, prior)) prior = a; }); // hết lượt: hiện kết quả CAO NHẤT
       if (prior) {
         let adv = null;
         try { const pa = await quiz.getAttempt(prior.id); if (pa) { const pv = quiz.previousResult(idx, pa.code, pa.period, pa.id); adv = advicelib.ensureAnalysis(pa.advice || advicelib.rulesAdvice(advicelib.facts(pa, settings, pv)), pa, settings, pv); } } catch (e) { adv = null; }
@@ -82,8 +82,8 @@ module.exports = async function (context, req) {
       inProgress = { answered: Math.min(active.cursor, active.questionIds.length), total: active.questionIds.length };
     }
     // Đã làm nhưng còn lượt: báo số lượt đã dùng + kết quả lần gần nhất
-    const last = subs[subs.length - 1];
-    const attempts = subs.length ? { used: subs.length, max: exam.maxAttempts, last: last ? { score: last.score, total: last.total, pct: last.pct, submittedAt: last.submittedAt } : null } : null;
+    let best = null; subs.forEach((a) => { if (quiz.betterResult(a, best)) best = a; });
+    const attempts = subs.length ? { used: subs.length, max: exam.maxAttempts, best: best ? { score: best.score, total: best.total, pct: best.pct, submittedAt: best.submittedAt } : null } : null;
     return reply(context, 200, { ok: true, candidate, exam, pendingRequest, inProgress, attempts, examTitle: settings.examTitle, serverNow: Date.now() });
   } catch (e) {
     context.log.error("kt-check", e && e.message);
