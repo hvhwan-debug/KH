@@ -744,6 +744,7 @@ const handler = async function (context, req) {
         // Tỉnh / miền: chỉ đổi khi có gửi (sửa từ form quản trị); chuỗi rỗng = xoá để thí sinh tự chọn lại khi vào thi
         if (r.province !== undefined) entry.province = require("../_lib/provinces").canonProvince(r.province);
         if (r.region !== undefined) entry.region = quiz.normRegion(r.region);
+        if (r.profile !== undefined) { const pf = require("../_lib/profile").cleanProfile(r.profile); if (pf) entry.profile = pf; } // hồ sơ nhân sự: chỉ trường công việc đã làm sạch
         if (byCode[code] != null && skipExisting) { skipped++; return; }
         if (byCode[code] != null) {
           const old = list[byCode[code]];
@@ -759,6 +760,23 @@ const handler = async function (context, req) {
       });
       await quiz.saveCandidates(list);
       return reply(context, 200, { ok: true, candidates: list, added, updated, skipped });
+    }
+
+    // Gắn / cập nhật HỒ SƠ NHÂN SỰ cho người đã có trong danh sách (chỉ sửa trường profile, không đụng email, tên, chức danh...)
+    if (op === "setProfiles") {
+      const rows = Array.isArray(b.rows) ? b.rows.slice(0, 2000) : [];
+      const list = await quiz.getCandidates(), byCode = {};
+      list.forEach((c, i) => { byCode[quiz.normCode(c.code)] = i; });
+      let updated = 0, notFound = 0, invalid = 0;
+      rows.forEach((r) => {
+        const i = byCode[quiz.normCode(r && r.code)];
+        if (i == null) { notFound++; return; }
+        const pf = require("../_lib/profile").cleanProfile(r.profile);
+        if (!pf) { invalid++; return; }
+        list[i] = Object.assign({}, list[i], { profile: pf }); updated++;
+      });
+      if (updated) await quiz.saveCandidates(list);
+      return reply(context, 200, { ok: true, updated, notFound, invalid });
     }
 
     if (op === "assignPeriod") {

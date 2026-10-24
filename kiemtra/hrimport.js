@@ -17,7 +17,7 @@
   }
   function cellText(v) {
     if (v == null) return '';
-    if (v instanceof Date) return '';
+    if (v instanceof Date) { if (isNaN(v.getTime())) return ''; var p2 = function (n) { return (n < 10 ? '0' : '') + n; }; return p2(v.getUTCDate()) + '/' + p2(v.getUTCMonth() + 1) + '/' + v.getUTCFullYear(); }
     if (typeof v === 'object') {
       if (Array.isArray(v.richText)) return v.richText.map(function (t) { return t.text; }).join('');
       if (v.result != null) return cellText(v.result);
@@ -54,6 +54,23 @@
   function stripCode(s) { return String(s || '').replace(/^\s*[A-Za-z]*\d{4,}\s*-\s*/, '').trim(); }
   function nameKey(s) { return fold(s).replace(/[^a-z0-9 ]/g, ''); }
 
+  function isoDate(v) {
+    var m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(v || '').trim());
+    if (!m) return '';
+    var d = +m[1], mo = +m[2], y = +m[3];
+    if (mo < 1 || mo > 12 || d < 1 || d > 31 || y < 1950 || y > 2100) return '';
+    return y + '-' + (mo < 10 ? '0' : '') + mo + '-' + (d < 10 ? '0' : '') + d;
+  }
+  function profileOf(row, C, g, nganh, rawTitle, mgr) {
+    var dm = /nganh\s*([12])\b/.exec(fold(g(row, C.dept))); if (dm) nganh = +dm[1]; // cột Bộ phận ghi rõ ngành thì theo đó
+    var P = { nganh: nganh, chucDanhGoc: rawTitle, quanLy: mgr,
+      donVi: g(row, C.donVi), khoi: g(row, C.khoi), phong: g(row, C.phong), boPhan: g(row, C.dept), toNhom: g(row, C.toNhom), khuVucCon: g(row, C.capBS),
+      noiLamViec: g(row, C.noiLV), mien: g(row, C.mien), loaiNV: g(row, C.loaiNV),
+      vaoCongTy: isoDate(g(row, C.vaoCT)), vaoLanDau: isoDate(g(row, C.vaoDau)), kyHDChinhThuc: isoDate(g(row, C.hdct)),
+      trinhDo: g(row, C.trinhDo), bangCap: g(row, C.bangCap), chuyenNganh: g(row, C.chuyenNganh), truong: g(row, C.truong), tinhPhuTrach: g(row, C.tinh) };
+    Object.keys(P).forEach(function (k) { if (P[k] === '' || P[k] == null) delete P[k]; });
+    return P;
+  }
   function sheetKind(name) {
     var k = fold(name).replace(/\s+/g, '');
     if (k === 'gt1') return { kind: 'gt', nganh: 1 };
@@ -72,7 +89,12 @@
         return { row: i, col: {
           code: f(/^(msnv moi|ma nv)$/), name: f(/^ho va ten day du$/, /^ho va ten$/), title: f(/^chuc danh$/, /^chuc vu$/),
           dept: f(/^bo phan$/), mgr: f(/^quan ly truc tiep$/), phone: f(/^(so di dong|sdt|so dien thoai)$/),
-          mailC: f(/^email cong ty$/), mailP: f(/^email ca nhan$/), mail: f(/^email$/), resign: f(/^ngay thoi viec$/)
+          mailC: f(/^email cong ty$/), mailP: f(/^email ca nhan$/), mail: f(/^email$/), resign: f(/^ngay thoi viec$/),
+          // cột hồ sơ nhân sự (chỉ dữ liệu liên quan công việc; KHÔNG đọc ngày sinh, địa chỉ, quê quán, tôn giáo, dân tộc, hôn nhân, giới tính)
+          donVi: f(/^don vi thanh vien$/), khoi: f(/^khoi( \/ khu vuc)?$/), phong: f(/^ban \/ phong$/), toNhom: f(/^to nhom$/), capBS: f(/^cap bo sung 1$/),
+          loaiNV: f(/^loai nhan vien$/), noiLV: f(/^noi lam viec$/), mien: f(/^khu vuc lam viec$/, /^khu vuc$/),
+          vaoCT: f(/^ngay vao cong ty$/), vaoDau: f(/^ngay vao cong ty dau tien$/, /^ngay vao tap doan$/), hdct: f(/^ngay ky hop dong chinh thuc dau tien$/),
+          trinhDo: f(/^trinh do$/), bangCap: f(/^bang cap$/), chuyenNganh: f(/^chuyen nganh$/), truong: f(/^truong tot nghiep$/), tinh: f(/^(cac tinh phu trach|provices|provinces)$/)
         } };
       }
     }
@@ -96,6 +118,7 @@
       // gộp: bản ưu tiên cao hơn quyết định chức danh; các trường còn thiếu lấy từ bản kia
       var hi = prio < old._prio ? r : old, lo = hi === r ? old : r;
       ['name', 'mailC', 'mailP', 'phone', 'manager'].forEach(function (f) { if (!hi[f] && lo[f]) hi[f] = lo[f]; });
+      hi.profile = Object.assign({}, lo.profile || {}, hi.profile || {});
       hi._prio = Math.min(prio, old._prio); hi.sheets = (old.sheets || []).concat(r.sheets || []);
       recs[k] = hi;
     }
@@ -116,7 +139,7 @@
         if (kind.kind === 'asm' && C.code < 0) {
           // Sheet ASM kiểu "Họ và tên / Chức vụ" không có mã NV: chỉ lấy ASM / Senior ASM, mã dò theo tên ở bước sau
           if (groupOf(rawTitle, kind.nganh) !== 'ASM ' + kind.nganh) continue;
-          noCode.push({ sheet: sh.name, row: rowNo, name: name, rawTitle: rawTitle, nganh: kind.nganh, mail: g(row, C.mail) || g(row, C.mailC), mgr: mgr });
+          noCode.push({ sheet: sh.name, row: rowNo, name: name, rawTitle: rawTitle, nganh: kind.nganh, mail: g(row, C.mail) || g(row, C.mailC), mgr: mgr, tinh: g(row, C.tinh), mien: g(row, C.mien) });
           continue;
         }
         if (!RE_CODE.test(code)) { if (name) problems.push({ sheet: sh.name, row: rowNo, code: code, name: name, reason: 'không có mã NV hợp lệ' }); continue; }
@@ -126,7 +149,8 @@
         // "Khác" ở sheet ASM (vd. dòng bị trống chức danh): vẫn là ASM của sheet đó
         var title = grp === 'Khác' ? rawTitle : grp;
         var r = { code: code, name: name, title: title, group: grp, rawTitle: rawTitle, nganh: kind.nganh, manager: mgr,
-          phone: normPhone(g(row, C.phone)), mailC: g(row, C.mailC) || g(row, C.mail), mailP: g(row, C.mailP), sheets: [sh.name + ' d.' + rowNo] };
+          phone: normPhone(g(row, C.phone)), mailC: g(row, C.mailC) || g(row, C.mail), mailP: g(row, C.mailP), sheets: [sh.name + ' d.' + rowNo],
+          profile: profileOf(row, C, g, kind.nganh, rawTitle, mgr) };
         if (!RE_MAIL.test(r.mailC)) r.mailC = ''; if (!RE_MAIL.test(r.mailP)) r.mailP = '';
         nameToCode[nameKey(name)] = code;
         // sheet GT (đủ thông tin) ưu tiên hơn sheet ASM
@@ -138,8 +162,8 @@
       var code = nameToCode[nameKey(x.name)];
       if (!code) { problems.push({ sheet: x.sheet, row: x.row, code: '', name: x.name, reason: 'không dò được mã NV theo tên' }); return; }
       var k = code.toUpperCase(), old = recs[k];
-      if (old) { if (old.group === 'Khác') { old.group = 'ASM ' + x.nganh; old.title = old.group; } if (!old.mailC && RE_MAIL.test(x.mail)) old.mailC = x.mail; return; }
-      put({ code: code, name: x.name, title: 'ASM ' + x.nganh, group: 'ASM ' + x.nganh, rawTitle: x.rawTitle, nganh: x.nganh, manager: x.mgr, phone: '', mailC: RE_MAIL.test(x.mail) ? x.mail : '', mailP: '', sheets: [x.sheet + ' d.' + x.row] }, 3);
+      if (old) { if (old.group === 'Khác') { old.group = 'ASM ' + x.nganh; old.title = old.group; } if (!old.mailC && RE_MAIL.test(x.mail)) old.mailC = x.mail; old.profile = old.profile || {}; if (x.tinh && !old.profile.tinhPhuTrach) old.profile.tinhPhuTrach = x.tinh; return; }
+      put({ code: code, name: x.name, title: 'ASM ' + x.nganh, group: 'ASM ' + x.nganh, rawTitle: x.rawTitle, nganh: x.nganh, manager: x.mgr, phone: '', mailC: RE_MAIL.test(x.mail) ? x.mail : '', mailP: '', sheets: [x.sheet + ' d.' + x.row], profile: (function () { var P = { nganh: x.nganh, chucDanhGoc: x.rawTitle, quanLy: x.mgr, mien: x.mien, tinhPhuTrach: x.tinh }; Object.keys(P).forEach(function (k) { if (!P[k]) delete P[k]; }); return P; })() }, 3);
     });
     var records = order.map(function (k) { var r = recs[k]; delete r._prio; return r; });
     var counts = {}; GROUPS.forEach(function (g) { counts[g] = 0; }); records.forEach(function (r) { counts[r.group]++; });

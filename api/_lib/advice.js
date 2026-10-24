@@ -62,6 +62,7 @@ function facts(attempt, settings, prev, ctx) {
     total, correct, wrong: attempt.wrong != null ? attempt.wrong : Math.max(0, total - correct - (attempt.blank || 0)), blank: attempt.blank || 0,
     pct: attempt.pct != null ? attempt.pct : (total ? Math.round(correct / total * 100) : 0),
     timeouts, categories: cats,
+    profile: (function () { try { return ctx && ctx.profile ? require("./profile").brief(ctx.profile) : null; } catch (e) { return null; } })(), // tóm tắt công việc (không có thông tin cá nhân) đưa cho AI
     weak: cats.filter((c) => c.ok < c.n && c.pct < 70).slice(0, 3),
     strong: cats.filter((c) => c.n >= 2 && c.pct >= 90).slice(0, 2),
     compliance: attempt.compliancePoints == null ? null : attempt.compliancePoints,
@@ -189,12 +190,14 @@ function buildPrompt(f) {
     "(6) Nếu ket_qua_gan_muc_doan_bua là true: nói rõ kết quả chưa phản ánh thực lực, khuyên làm lại nghiêm túc, KHÔNG nhận xét mảng kiến thức. " +
     "(7) Nếu la_bai_thi_thu là true: nhắc ngắn gọn đây không phải thi chính thức. " +
     "(8) Ưu tiên dùng cac_dac_diem_noi_bat (đã được thống kê kiểm chứng) làm xương sống cho portrait. " +
+    "(9) Nếu có ho_so_cong_viec: chỉ dùng làm bối cảnh để giọng điệu và ví dụ hợp với vị trí, khu vực, thâm niên của họ (người mới vào khác người nhiều năm kinh nghiệm); không suy diễn thêm về con người họ, không nêu trình độ học vấn, không đem ra so sánh với ai. " +
     "Chỉ trả về DUY NHẤT một đối tượng JSON hợp lệ, đúng dạng: " +
     '{"headline":"tối đa 80 ký tự, câu nhận định đắt nhất về bài làm này","portrait":"2-3 câu chân dung cách người này làm bài, mỗi câu một bằng chứng cụ thể","strengths":["1-2 điểm mạnh có bằng chứng"],"actions":["3-4 việc nên làm, mỗi việc bắt đầu bằng động từ, gắn với một bằng chứng và nói rõ cách làm"],"goal":"một mục tiêu đo được cho lần tới, bắt đầu bằng \\"Lần tới:\\""}';
   const ins = f.insight || {};
   const data = {
     ten_goi: f.firstName || null,
     so_cau_dung: f.correct, tong_so_cau: f.total, ty_le_dung_phan_tram: f.pct, so_cau_sai: f.wrong, so_cau_bo_trong: f.blank, so_cau_het_gio: f.timeouts,
+    ho_so_cong_viec: f.profile || null,
     la_bai_thi_thu: f.practice, ket_qua_gan_muc_doan_bua: !!(f.beh && f.beh.random), ty_le_dung_neu_chon_bua_phan_tram: f.beh && f.beh.random ? f.beh.random.chancePct : null,
     diem_tuan_thu: f.compliance, moc_diem_tuan_thu_ke_tiep: f.nextBand ? { diem: f.nextBand.points, can_dung_toi_thieu: f.nextBand.needCorrect, con_thieu: f.nextBand.gap } : null,
     thoi_gian_toi_da_moi_cau_giay: f.secsPerQ,

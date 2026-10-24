@@ -52,7 +52,8 @@ async function finalizeAttempt(context, attempt, opts) {
         .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0))[0];
       let prevAttempt = null;
       if (prevRow) { try { prevAttempt = await quiz.getAttempt(prevRow.id); } catch (e) { prevAttempt = null; } }
-      advice = await advicelib.build(attempt, settings, quiz.previousResult(idxAll, attempt.code, attempt.period, attempt.id), { ctx: { index: idxAll, prevAttempt } });
+      const profile = await require("./profile").forCode(attempt.code); // hồ sơ công việc (nếu đã nhập) để lời khuyên đúng vị trí / thâm niên
+      advice = await advicelib.build(attempt, settings, quiz.previousResult(idxAll, attempt.code, attempt.period, attempt.id), { ctx: { index: idxAll, prevAttempt, profile } });
     } catch (e) {
       (context.log.warn || context.log)("kt-submit advice", e && e.message);
       advice = advicelib.rulesAdvice(advicelib.facts(attempt, settings, null));
