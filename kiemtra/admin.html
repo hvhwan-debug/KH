@@ -1122,7 +1122,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
           </div>
           <div><label>Họ tên</label><input type="text" id="candEditName"></div>
           <div><label>Email</label><input type="text" id="candEditEmail"></div>
-          <div><label>Quản lí</label><input type="text" id="candEditManager"></div>
+          <div><label>Quản lí</label><select id="candEditMgrSel" onchange="mgrPick('candEditMgrSel','candEditManager')" aria-label="Chọn quản lí"></select><input type="text" id="candEditManager" class="hide" autocomplete="off" maxlength="100" placeholder="Gõ tên quản lí mới" style="margin-top:6px"></div>
           <div><label>Số điện thoại / Zalo</label><input type="text" id="candEditPhone" inputmode="tel" autocomplete="off" maxlength="20" placeholder="Chưa có"></div>
           <div><label>Tỉnh/thành làm việc</label><select id="candEditProvince"><option value="">(chưa chọn — thí sinh bắt buộc tự chọn khi vào thi)</option></select></div>
           <div><label>Miền bán hàng</label><select id="candEditRegion"><option value="">(chưa chọn — thí sinh bắt buộc tự chọn khi vào thi)</option><option value="bac">Miền Bắc</option><option value="nam">Miền Nam</option></select></div>
@@ -1160,7 +1160,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
             <div><label>Mã nhân viên</label><input type="text" id="candNewCode" autocomplete="off" maxlength="50" placeholder="Ví dụ: T1003260002"></div>
             <div><label>Họ tên</label><input type="text" id="candNewName" autocomplete="off" placeholder="Nguyễn Văn A"></div>
             <div><label>Email</label><input type="text" id="candNewEmail" autocomplete="off" placeholder="a@congty.vn"></div>
-            <div><label>Quản lí</label><input type="text" id="candNewManager" list="mgrList" autocomplete="off" placeholder="Chọn từ danh sách hoặc gõ tên mới"><datalist id="mgrList"></datalist></div>
+            <div><label>Quản lí</label><select id="candNewMgrSel" onchange="mgrPick('candNewMgrSel','candNewManager')" aria-label="Chọn quản lí"></select><input type="text" id="candNewManager" class="hide" autocomplete="off" maxlength="100" placeholder="Gõ tên quản lí mới" style="margin-top:6px"></div>
             <div><label>Số điện thoại / Zalo</label><input type="text" id="candNewPhone" inputmode="tel" autocomplete="off" maxlength="20" placeholder="Có thể để trống"></div>
             <div><label>Chức danh</label><input type="text" id="candNewTitle" list="titleList" autocomplete="off" maxlength="50" placeholder="PC"></div>
             <div>
@@ -1714,7 +1714,7 @@ let ASG = { mode:'all', set:new Set(), dim:'manager' };
 const asgKey = c => String(c || '').trim().toLowerCase();
 const ASG_SEG = { both:'Cả hai ngành', gia_dung:'Ngành 2 · Gia dụng', may_loc:'Ngành 1 · Máy lọc nước' };
 const ASG_DIM = {
-  manager: { key: c => c.manager || '', label: k => k || '(chưa có quản lí)' },
+  manager: { key: c => mgrNorm(c.manager), label: k => k ? ((mgrOptions().find(o => o.key === k) || {}).name || k) : '(chưa có quản lí)' },
   title:   { key: c => c.title || 'PC', label: k => k },
   segment: { key: c => ({ gia_dung:'gia_dung', may_loc:'may_loc' }[c.segment] || 'both'), label: k => ASG_SEG[k] || k }
 };
@@ -2629,19 +2629,41 @@ function resetCandFilters(){
   ['candMgrF','candTitleF','candSegF','candRgF'].forEach(id => { const e = $(id); if (e) e.value = '*'; });
   renderCandidates();
 }
+/* ---------- Chọn quản lí từ danh sách (không phân biệt hoa/thường, dấu, khoảng trắng) ---------- */
+const MGR_NEW = '__new__';
+const mgrNorm = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/đ/g, 'd').replace(/\s+/g, ' ').trim();
+// Danh sách quản lí không trùng: gộp các cách viết khác nhau của cùng một người, lấy cách viết phổ biến nhất
+function mgrOptions(){
+  const m = {};
+  CANDIDATES.forEach(c => { const raw = String(c.manager || '').replace(/\s+/g, ' ').trim(); if (!raw) return; const k = mgrNorm(raw); const o = m[k] = m[k] || { n: 0, names: {} }; o.n++; o.names[raw] = (o.names[raw] || 0) + 1; });
+  return Object.keys(m).map(k => ({ key: k, n: m[k].n, name: Object.keys(m[k].names).sort((a, b) => m[k].names[b] - m[k].names[a] || a.localeCompare(b))[0] })).sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+}
+function mgrFill(selId, inputId, current){
+  const sel = $(selId), inp = $(inputId), opts = mgrOptions(), cur = String(current || '').replace(/\s+/g, ' ').trim();
+  const found = cur ? opts.find(o => o.key === mgrNorm(cur)) : null;
+  sel.innerHTML = '<option value="">(chưa có quản lí)</option>' + opts.map(o => '<option value="' + esc(o.name) + '">' + esc(o.name) + ' (' + o.n + ')</option>').join('') + '<option value="' + MGR_NEW + '">＋ Quản lí khác (gõ tên mới)…</option>';
+  if (!cur){ sel.value = ''; inp.value = ''; inp.classList.add('hide'); }
+  else if (found){ sel.value = found.name; inp.value = found.name; inp.classList.add('hide'); }
+  else { sel.value = MGR_NEW; inp.value = cur; inp.classList.remove('hide'); }
+}
+function mgrPick(selId, inputId){
+  const sel = $(selId), inp = $(inputId);
+  if (sel.value === MGR_NEW){ inp.classList.remove('hide'); inp.value = ''; inp.focus(); }
+  else { inp.classList.add('hide'); inp.value = sel.value; }
+}
 function renderCandidates(){
   const segLabel = { both:'Cả hai', gia_dung:'Ngành 2 · Gia dụng', may_loc:'Ngành 1 · Máy lọc nước' };
-  const mgrs = Array.from(new Set(CANDIDATES.map(c => c.manager || ''))).sort(), mv = $('candMgrF').value;
-  $('candMgrF').innerHTML = '<option value="*">Mọi quản lí</option>' + mgrs.map(m => '<option value="' + esc(m) + '">' + esc(m || '(chưa có quản lí)') + ' (' + CANDIDATES.filter(c => (c.manager||'') === m).length + ')</option>').join('');
-  $('candMgrF').value = mgrs.indexOf(mv) >= 0 ? mv : '*';
-  $('mgrList').innerHTML = mgrs.filter(Boolean).map(m => '<option value="' + esc(m) + '">').join('');
+  const mopts = mgrOptions(), mnone = CANDIDATES.filter(c => !String(c.manager || '').trim()).length, mv = $('candMgrF').value;
+  $('candMgrF').innerHTML = '<option value="*">Mọi quản lí</option>' + (mnone ? '<option value="">(chưa có quản lí) (' + mnone + ')</option>' : '') + mopts.map(o => '<option value="' + esc(o.name) + '">' + esc(o.name) + ' (' + o.n + ')</option>').join('');
+  $('candMgrF').value = mv === '*' || (mv === '' && mnone) || mopts.some(o => o.name === mv) ? mv : '*';
+  mgrFill('candNewMgrSel', 'candNewManager', $('candNewManager').value); // làm mới danh sách chọn ở form thêm, giữ lựa chọn đang có
   const tcnt = {}; CANDIDATES.forEach(c => { const t = c.title || 'PC'; tcnt[t] = (tcnt[t] || 0) + 1; });
   const titles = Object.keys(tcnt).sort((a, b) => a.localeCompare(b, 'vi')), tv = $('candTitleF').value;
   $('candTitleF').innerHTML = '<option value="*">Mọi chức danh</option>' + titles.map(t => '<option value="' + esc(t) + '">' + esc(t) + ' (' + tcnt[t] + ')</option>').join('');
   $('candTitleF').value = tcnt[tv] ? tv : '*';
   $('titleList').innerHTML = (tcnt['PC'] ? titles : ['PC'].concat(titles)).map(t => '<option value="' + esc(t) + '">').join('');
   const q = spNorm($('candSearch').value), mf = $('candMgrF').value, sf = $('candSegF').value, tf = $('candTitleF').value, rf = $('candRgF').value;
-  const L = CANDIDATES.filter(c => (rf === '*' || (c.region||'') === rf) && (mf === '*' || (c.manager||'') === mf) && (sf === '*' || (c.segment||'both') === sf) && (tf === '*' || (c.title||'PC') === tf) && (!q || spNorm([c.code, c.name, c.email, c.phone || '', c.title || 'PC', c.province || ''].join(' ')).indexOf(q) >= 0));
+  const L = CANDIDATES.filter(c => (rf === '*' || (c.region||'') === rf) && (mf === '*' || mgrNorm(c.manager) === mgrNorm(mf)) && (sf === '*' || (c.segment||'both') === sf) && (tf === '*' || (c.title||'PC') === tf) && (!q || spNorm([c.code, c.name, c.email, c.phone || '', c.title || 'PC', c.province || ''].join(' ')).indexOf(q) >= 0));
   $('candShown').textContent = L.length === CANDIDATES.length ? '' : 'Đang lọc: ' + L.length + ' người';
   $('candList').innerHTML = L.map(c =>
     '<tr><td>'+esc(c.code)+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button></td><td><span class="ttlchip">'+esc(c.title||'PC')+'</span></td><td>'+esc(c.email)+'</td><td>'+(c.phone?esc(c.phone):'<span class="badge n" title="Thí sinh sẽ phải tự điền khi vào làm bài">Chưa có</span>')+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.province||c.region ? esc(c.province||'–')+'<br><b>'+esc(RG_LABEL[c.region]||'Chưa chọn miền')+'</b>' : '<span class="badge n" title="Thí sinh bắt buộc tự chọn khi vào làm bài">Chưa chọn</span>')+'</td><td class="small">'+(c.joinDate?esc(c.joinDate.split('-').reverse().join('/')):'–')+'</td><td style="white-space:nowrap"><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
@@ -2681,7 +2703,7 @@ function editCandidateOpen(code){
   $('candEditCodeShow').value = c.code;
   $('candEditName').value = c.name||'';
   $('candEditEmail').value = c.email||'';
-  $('candEditManager').value = c.manager||'';
+  mgrFill('candEditMgrSel', 'candEditManager', c.manager);
   $('candEditSegment').value = c.segment||'both';
   $('candEditTitle').value = c.title || 'PC';
   $('candEditPhone').value = c.phone || '';

@@ -729,7 +729,7 @@ const handler = async function (context, req) {
         }).filter((r) => r.code && r.email);
       }
       const list = await quiz.getCandidates();
-      const byCode = {};
+      const byCode = {}, canonMgr = quiz.managerCanon(list); // tên quản lí gõ tay: không phân biệt hoa/thường, dấu, khoảng trắng
       list.forEach((c, i) => { byCode[quiz.normCode(c.code)] = i; });
       let added = 0, updated = 0, skipped = 0;
       const skipExisting = b.skipExisting === true; // true = người đã có (trùng mã NV) giữ nguyên, không cập nhật
@@ -740,7 +740,7 @@ const handler = async function (context, req) {
         const seg = quiz.normSegment(r.segment);
         const titleIn = quiz.normTitle(r.title);   // trống = giữ chức danh hiện có (người mới thì mặc định PC)
         const phoneIn = require("../_lib/phone").normPhone(r.phone);   // trống / không hợp lệ = giữ số hiện có
-        const entry = Object.assign({ code: String(r.code).trim().slice(0, 50), name: String(r.name || "").trim().slice(0, 100), email, manager: String(r.manager || "").trim().slice(0, 100), segment: seg }, titleIn ? { title: titleIn } : {}, phoneIn ? { phone: phoneIn } : {});
+        const entry = Object.assign({ code: String(r.code).trim().slice(0, 50), name: String(r.name || "").trim().slice(0, 100), email, manager: canonMgr(r.manager), segment: seg }, titleIn ? { title: titleIn } : {}, phoneIn ? { phone: phoneIn } : {});
         // Tỉnh / miền: chỉ đổi khi có gửi (sửa từ form quản trị); chuỗi rỗng = xoá để thí sinh tự chọn lại khi vào thi
         if (r.province !== undefined) entry.province = require("../_lib/provinces").canonProvince(r.province);
         if (r.region !== undefined) entry.region = quiz.normRegion(r.region);

@@ -435,6 +435,29 @@ async function saveViewers(list) { await store.put(V_KEY, list); }
 function normPerson(s) {
   return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase().replace(/\s+/g, " ").trim();
 }
+// Chuẩn hoá TÊN QUẢN LÍ khi lưu: "lê thị thanh loan", "LÊ THỊ THANH LOAN" và "Lê Thị Thanh Loan" là MỘT người.
+// Trùng quản lí đã có (không phân biệt hoa/thường, dấu, khoảng trắng) thì dùng đúng cách viết đang phổ biến nhất của người đó;
+// tên mới viết toàn HOA hoặc toàn thường thì tự viết hoa chữ cái đầu mỗi từ. Trả về hàm chuẩn hoá (nhớ cả tên mới thêm trong cùng đợt).
+function properCaseName(s) {
+  const hasL = /\p{Ll}/u.test(s), hasU = /\p{Lu}/u.test(s);
+  return hasL && hasU ? s : s.toLowerCase().replace(/(^|\s)(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+}
+function managerCanon(list) {
+  const stat = {};
+  (list || []).forEach((c) => {
+    const n = String((c && c.manager) || "").replace(/\s+/g, " ").trim(); if (!n) return;
+    const k = normPerson(n); stat[k] = stat[k] || {}; stat[k][n] = (stat[k][n] || 0) + 1;
+  });
+  const best = {};
+  Object.keys(stat).forEach((k) => { best[k] = Object.keys(stat[k]).sort((a, b) => stat[k][b] - stat[k][a] || a.localeCompare(b))[0]; });
+  return (input) => {
+    const n = String(input == null ? "" : input).replace(/\s+/g, " ").trim().slice(0, 100);
+    if (!n) return "";
+    const k = normPerson(n);
+    if (!best[k]) best[k] = properCaseName(n);
+    return best[k];
+  };
+}
 async function findViewer(email) {
   const e = normEmail(email);
   return (await getViewers()).find((v) => normEmail(v.email) === e) || null;
@@ -1058,7 +1081,7 @@ function noteFail(req) {
 }
 
 module.exports = {
-  runMigrations, normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, betterResult, attemptsSummary, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
+  runMigrations, managerCanon, properCaseName, normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, betterResult, attemptsSummary, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
   getQuestions, saveQuestions,
   getCandidates, saveCandidates,
   getSettings, saveSettings,
