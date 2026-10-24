@@ -718,7 +718,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
     <nav class="side-nav" aria-label="Mục chính">
       <div class="nv-grp">Vận hành</div>
       <button type="button" class="nv" data-nav="exams" onclick="switchTab('exams')" title="Đề thi"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg><span class="nv-l">Đề thi</span><span class="nv-cnt hide" id="nvExams"></span></button>
-      <button type="button" class="nv" data-nav="candidates" onclick="switchTab('candidates')" title="Thí sinh"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg><span class="nv-l">Thí sinh</span><span class="nv-cnt hide" id="nvCand"></span></button>
+      <button type="button" class="nv" data-nav="candidates" onclick="switchTab('candidates')" title="Hồ sơ học tập"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg><span class="nv-l">Hồ sơ học tập</span><span class="nv-cnt hide" id="nvCand"></span></button>
       <button type="button" class="nv" data-nav="notify" onclick="switchTab('notify')" title="Gửi thông báo và thư mời"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg><span class="nv-l">Thông báo, thư mời</span></button>
       <button type="button" class="nv" data-nav="managerview" onclick="switchTab('managerview')" title="Quản lí"><svg class="ic" aria-hidden="true"><use href="#i-mgr"/></svg><span class="nv-l">Quản lí</span></button>
       <div class="nv-grp">Hệ thống</div>
@@ -1167,7 +1167,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
       </div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <h1 style="margin:0">Danh sách thí sinh (<span id="candCount">0</span>)</h1>
+          <h1 style="margin:0">Hồ sơ học tập (<span id="candCount">0</span>)</h1>
           <button class="btn" type="button" onclick="$('candAddCard').classList.remove('hide');$('candAddCard').scrollIntoView({behavior:'smooth'});candAddMode('form');$('candNewCode').focus()">＋ Thêm thí sinh</button>
         </div>
         <div class="qfilter">
@@ -1719,7 +1719,7 @@ function asgRender(keepText){
   const L = asgFiltered();
   $('asgList').innerHTML = L.map(c => { const on = ASG.set.has(asgKey(c.code));
     return '<label class="asg-row' + (on ? ' on' : '') + '"><input type="checkbox" data-c="' + esc(c.code) + '"' + (on ? ' checked' : '') + '><b>' + esc(c.code) + '</b><span>' + esc(c.name || '') + '</span><small>' + esc(c.manager || '') + '</small></label>'; }).join('')
-    || '<div class="asg-empty">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Thêm thí sinh ở mục "Thí sinh" trước.') + '</div>';
+    || '<div class="asg-empty">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Thêm thí sinh ở mục "Hồ sơ học tập" trước.') + '</div>';
   asgCount();
 }
 function asgToggle(ev){
