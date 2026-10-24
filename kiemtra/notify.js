@@ -191,7 +191,7 @@ var qrLibP = null;
 function loadQrLib(){
   if (window.qrcode) return Promise.resolve(window.qrcode);
   if (qrLibP) return qrLibP;
-  qrLibP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'; sc.onload = function(){ res(window.qrcode); }; sc.onerror = function(){ qrLibP = null; rej(new Error('qr')); }; document.head.appendChild(sc); });
+  qrLibP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = '/kiemtra/vendor/export/qr-make.js'; sc.onload = function(){ res(window.qrcode); }; sc.onerror = function(){ qrLibP = null; rej(new Error('qr')); }; document.head.appendChild(sc); });
   return qrLibP;
 }
 // Trả về Promise<string|null> data URL (PNG) của mã QR cho một đường link, hoặc null nếu không tạo được
@@ -234,14 +234,14 @@ var zipP = null;
 function loadZip(){
   if (window.JSZip) return Promise.resolve(window.JSZip);
   if (zipP) return zipP;
-  zipP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'; sc.onload = function(){ res(window.JSZip); }; sc.onerror = function(){ zipP = null; rej(new Error('zip')); }; document.head.appendChild(sc); });
+  zipP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = '/kiemtra/vendor/export/zip-make.js'; sc.onload = function(){ res(window.JSZip); }; sc.onerror = function(){ zipP = null; rej(new Error('zip')); }; document.head.appendChild(sc); });
   return zipP;
 }
 var pdfP = null;
 function loadPdfLib(){
   if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
   if (pdfP) return pdfP;
-  pdfP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'; sc.onload = function(){ res(window.jspdf && window.jspdf.jsPDF); }; sc.onerror = function(){ pdfP = null; rej(new Error('pdf')); }; document.head.appendChild(sc); });
+  pdfP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = '/kiemtra/vendor/export/pdf-make.js'; sc.onload = function(){ res(window.jspdf && window.jspdf.jsPDF); }; sc.onerror = function(){ pdfP = null; rej(new Error('pdf')); }; document.head.appendChild(sc); });
   return pdfP;
 }
 // Trả về Promise<Blob> PDF từ một hoặc nhiều thư (mỗi thư một trang, khổ A4, co theo tỉ lệ của thư).
@@ -375,7 +375,7 @@ var h2cP = null;
 function loadHtml2Canvas(){
   if (window.html2canvas) return Promise.resolve(window.html2canvas);
   if (h2cP) return h2cP;
-  h2cP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'; sc.onload = function(){ res(window.html2canvas); }; sc.onerror = function(){ h2cP = null; rej(new Error('h2c')); }; document.head.appendChild(sc); });
+  h2cP = new Promise(function(res, rej){ var sc = document.createElement('script'); sc.src = '/kiemtra/vendor/export/canvas-render.js'; sc.onload = function(){ res(window.html2canvas); }; sc.onerror = function(){ h2cP = null; rej(new Error('h2c')); }; document.head.appendChild(sc); });
   return h2cP;
 }
 function posterFrame(bodyHtml, cssText){
@@ -690,7 +690,13 @@ function mount(root, cfg){
     var sj = root.querySelector('#ntSubj'); if (sj && !S.subjEdited) sj.value = subjFor(first);
     var im = root.querySelector('#ntImg');
     if (im && first){ clearTimeout(S.pt); var snap = S.text + JSON.stringify(S.vars) + first.code; S.pt = setTimeout(async function(){
-      try { var blob = await pngOf(first); if (im.isConnected){ if (im.dataset.u) URL.revokeObjectURL(im.dataset.u); im.dataset.u = URL.createObjectURL(blob); im.src = im.dataset.u; } } catch(e){}
+      var box = im.closest('.nt-imgbox'), err = box ? box.querySelector('.nt-img-err') : null;
+      try {
+        var blob = await pngOf(first);
+        if (im.isConnected){ if (im.dataset.u) URL.revokeObjectURL(im.dataset.u); im.dataset.u = URL.createObjectURL(blob); im.src = im.dataset.u; im.style.display = ''; if (err) err.remove(); }
+      } catch(e){
+        if (im.isConnected){ im.style.display = 'none'; if (box && !err){ err = document.createElement('div'); err.className = 'nt-img-err nt-msg er'; box.appendChild(err); } if (err) err.textContent = 'Không dựng được ảnh xem trước (cần kết nối mạng để tải thư viện). Thử tải lại trang hoặc kiểm tra tiện ích chặn quảng cáo trong trình duyệt.'; }
+      }
     }, 350); }
     [].forEach.call(root.querySelectorAll('[data-sms]'), function(a){ var r = byCode(a.dataset.sms); if (r && r.phone) a.href = 'sms:'+r.phone+'?&body='+encodeURIComponent(msgFor(r)); });
   }
