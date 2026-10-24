@@ -15,8 +15,8 @@ var TRAIN_FIELDS = [
   { k:'dia_diem', label:'Địa điểm hoặc liên kết tham gia', ph:'Số phòng, địa chỉ hoặc đường link họp' },
   { k:'giang_vien', label:'Giảng viên / đơn vị tổ chức', w:true },
   { k:'noi_dung', label:'Nội dung chính', type:'textarea', w:true, ph:'Mỗi ý một dòng hoặc ngăn cách bằng dấu phẩy' },
-  { k:'han_xn', label:'Hạn xác nhận tham dự', type:'datetime-local' },
-  { k:'lien_he', label:'Liên hệ xác nhận', ph:'Tên, số điện thoại hoặc email' }
+  { k:'han_xn', label:'Hạn xác nhận tham dự', type:'datetime-local', keep:true },
+  { k:'lien_he', label:'Liên hệ xác nhận', ph:'Tên, số điện thoại hoặc email', keep:true }
 ];
 var TEST_FIELDS = [ { k:'ghi_chu', label:'Lưu ý thêm (không bắt buộc)', type:'textarea', w:true, ph:'Ví dụ: Làm bài ở nơi yên tĩnh, dùng điện thoại hoặc máy tính có camera.' } ];
 var TEMPLATES = [
@@ -34,7 +34,7 @@ var TEMPLATES = [
     text:'Kính gửi {ten},\nBộ phận quản lý trân trọng mời bạn tham gia bài kiểm tra “{ten_de}”.\n- Thời gian mở đề: {mo_tuy}\n- Hạn hoàn thành: {han_tuy}\n- Đường dẫn làm bài: {link}\nBạn nhập mã nhân viên và email công ty để vào bài, bài làm được lưu và chấm tự động.\n{ghi_chu}\nTrân trọng.' },
   { id:'inviteTrain', group:'Thư mời', name:'Mời tham dự đào tạo', filter:'all', allAudience:true, kind:'invite', fields:TRAIN_FIELDS, cta:'train',
     subject:'Thư mời tham dự đào tạo: {ten_khoa}',
-    text:'Kính gửi {ten},\nBộ phận quản lý trân trọng mời bạn tham dự khoá đào tạo “{ten_khoa}”.\n- Thời gian: {thoi_gian}\n- Hình thức: {hinh_thuc}\n- Địa điểm / liên kết: {dia_diem}\n- Giảng viên / đơn vị tổ chức: {giang_vien}\n- Nội dung chính: {noi_dung}\nVui lòng xác nhận tham dự trước {han_xn} với {lien_he}.\nTrân trọng.' }
+    text:'THƯ MỜI THAM DỰ ĐÀO TẠO\nThân gửi : {ten},\nNhằm nâng cao kiến thức chuyên môn, chuẩn hóa năng lực và hỗ trợ nâng cao hiệu quả công việc, ĐTKDGT trân trọng kính mời Anh/Chị tham dự chương trình đào tạo với thông tin cụ thể như sau:\n\n1. THÔNG TIN CHƯƠNG TRÌNH\n\n* Tên khóa đào tạo: {ten_khoa}\n* Thời gian: {thoi_gian}\n* Hình thức: {hinh_thuc}\n* Địa điểm / Đường dẫn tham dự: {dia_diem}\n* Giảng viên / Đơn vị tổ chức: {giang_vien}\n* Nội dung chính: {noi_dung}\n\n2. QUY ĐỊNH THAM DỰ\n\nĐể bảo đảm chất lượng và hiệu quả chương trình, Anh/Chị vui lòng thực hiện các yêu cầu sau:\n\n* Tham dự đầy đủ, đúng giờ và tuân thủ thời lượng của chương trình.\n* Chủ động chuẩn bị các điều kiện cần thiết để tham gia đào tạo; đối với chương trình trực tuyến, vui lòng kiểm tra thiết bị và đường truyền trước giờ học.\n* Tích cực tham gia các hoạt động học tập, trao đổi và thực hành theo hướng dẫn của giảng viên.\n* Hoàn thành bài kiểm tra, khảo sát hoặc các yêu cầu sau đào tạo theo thông báo của Ban Tổ chức (nếu có).\n* Trường hợp không thể tham dự hoặc phát sinh vấn đề ảnh hưởng đến việc tham gia, vui lòng thông báo sớm cho {lien_he} để được hướng dẫn xử lý.\n\n3. XÁC NHẬN THAM DỰ\n\nVui lòng xác nhận tham dự trước {han_xn} với {lien_he} để Ban Tổ chức chủ động công tác chuẩn bị.\nSự tham gia nghiêm túc và chủ động của Anh/Chị là yếu tố quan trọng góp phần nâng cao hiệu quả chương trình đào tạo và khả năng vận dụng kiến thức vào thực tiễn công việc.\n\nTrân trọng,\nĐÀO TẠO KINH DOANH |  GT' }
 ];
 var VARS = [['ten','Tên'],['ma_nv','Mã NV'],['ten_de','Tên đề'],['link','Link làm bài'],['mo','Giờ mở'],['han','Hạn làm bài'],['diem','Số câu đúng'],['tong','Tổng số câu'],['phan_tram','Phần trăm'],['link_ket_qua','Link kết quả'],['quan_li','Quản lí']];
 var CHANNELS = [['zalo','Zalo'],['sms','Tin nhắn SMS'],['email','Email']];
@@ -58,7 +58,7 @@ function range(a, b){
 function eventVars(v){
   var h = dl(v.han_xn);
   return { ten_khoa: v.ten_khoa || '', thoi_gian: range(v.bat_dau, v.ket_thuc), hinh_thuc: v.hinh_thuc || '', dia_diem: v.dia_diem || '', giang_vien: v.giang_vien || '',
-    noi_dung: v.noi_dung || '', han_xn: h ? h.t + ' ngày ' + h.d : '', lien_he: v.lien_he || '', ghi_chu: v.ghi_chu || '' };
+    noi_dung: v.noi_dung || '', han_xn: h ? h.t + ' ngày ' + h.d : 'thời hạn do Ban Tổ chức thông báo', lien_he: v.lien_he || 'Ban Tổ chức', ghi_chu: v.ghi_chu || '' };
 }
 function render(tpl, r, ex, origin, extra, optional){
   var NONE = 'theo thông báo của quản lý';
@@ -129,7 +129,7 @@ function mount(root, cfg){
   var S = { tpl:'remind', text:'', subj:'', subjEdited:false, vars:{}, channel:'zalo', filter:'todo', q:'', sel:{}, sent:{}, err:{} };
   function tplOf(id){ return TEMPLATES.filter(function(t){ return t.id === id; })[0]; }
   function fieldsOf(){ return tplOf(S.tpl).fields || []; }
-  function optionalKeys(){ var t = tplOf(S.tpl); return (t.fields || []).filter(function(f){ return !f.req; }).map(function(f){ return f.k; }).concat(t.id === 'inviteTrain' ? ['thoi_gian'] : []).concat(t.id === 'inviteTest' ? ['mo_tuy','han_tuy'] : []); }
+  function optionalKeys(){ var t = tplOf(S.tpl); return (t.fields || []).filter(function(f){ return !f.req && !f.keep; }).map(function(f){ return f.k; }).concat(t.id === 'inviteTrain' ? ['thoi_gian'] : []).concat(t.id === 'inviteTest' ? ['mo_tuy','han_tuy'] : []); }
   function setTpl(id){
     var t = tplOf(id); S.tpl = id; S.text = t.text; S.subj = t.subject; S.subjEdited = false; S.filter = t.filter; S.vars = {};
     (t.fields || []).forEach(function(f){ if (f.def) S.vars[f.k] = f.def; });
