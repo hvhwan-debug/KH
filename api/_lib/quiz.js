@@ -173,6 +173,7 @@ function usableQ(q) {
 }
 // Chuyển đổi một lần: ngân hàng đề cũ (chưa câu nào có kỳ) chính là đề của kỳ đang chạy -> gắn vào kỳ hiện tại.
 async function ensureBankPeriods() {
+  try { await ensureRegionTags(); } catch (e) { /* không chặn việc tạo đề nếu chuyển đổi lỗi; lần gọi sau thử lại */ }
   const list = await getQuestions();
   if (!list.length || list.some((q) => q.period)) return null;
   const st = await getSettings();
@@ -180,6 +181,36 @@ async function ensureBankPeriods() {
   await saveQuestions(list);
   try { await require("./auditlog").write({ area: "system", role: "system", by: "hệ thống", name: "Hệ thống", op: "migrateBank", label: "Tự gắn ngân hàng đề cũ vào kỳ hiện tại", kind: "change", status: 200, ok: true, details: { count: list.length, period: st.examPeriod } }); } catch (e) {}
   return { migrated: list.length, period: st.examPeriod };
+}
+// Chuyển đổi một lần (10/2026): toàn bộ câu Máy lọc nước + Kỹ năng bán hàng có sẵn trước khi tách miền đều là đề MIỀN BẮC
+// -> tự gắn tag "Miền Bắc". Chỉ áp dụng cho câu tạo TRƯỚC mốc REGION_MIGRATE_CUTOFF (mã câu chứa thời điểm tạo), chưa thuộc miền nào.
+// Câu miền Nam thêm sau mốc này không bị đụng tới. Chạy đúng một lần (đánh dấu trong kho), sao lưu ngân hàng đề trước khi ghi.
+const REGION_MIGRATE_KEY = "kt/migrate-region-bac-v1.json";
+const REGION_MIGRATE_CUTOFF = 1792828265984;
+function regionMigrateCat(c) {
+  const f = foldRg(c);
+  if (f.indexOf("may loc") >= 0) return true;                                  // Máy lọc nước, Kỹ năng bán hàng máy lọc...
+  return /\bk[yi] nang ban hang\b/.test(f) && f.indexOf("gia dung") < 0;       // Kỹ năng bán hàng (trừ kỹ năng bán hàng gia dụng)
+}
+function idTime(id) { const t = parseInt(String(id || "").slice(0, 8), 36); return t > 1.4e12 && t < 4e12 ? t : 0; }
+let regionMigrated = false;
+async function ensureRegionTags() {
+  if (regionMigrated) return null;
+  if (await store.get(REGION_MIGRATE_KEY)) { regionMigrated = true; return null; }
+  const list = await getQuestions();
+  const before = JSON.parse(JSON.stringify(list)), byCat = {};
+  let n = 0;
+  list.forEach((q) => {
+    if (!regionMigrateCat(q.category) || questionRegion(q)) return;
+    const t = idTime(q.id); if (t && t >= REGION_MIGRATE_CUTOFF) return;
+    q.tags = (Array.isArray(q.tags) ? q.tags : []).concat(["Miền Bắc"]).slice(-12);
+    byCat[q.category] = (byCat[q.category] || 0) + 1; n++;
+  });
+  if (n) { await backupQuestions(before); await saveQuestions(list); }
+  await store.put(REGION_MIGRATE_KEY, { at: Date.now(), tagged: n, byCat });
+  regionMigrated = true;
+  try { await require("./auditlog").write({ area: "system", role: "system", by: "hệ thống", name: "Hệ thống", op: "migrateRegion", label: "Tự gắn nhãn Miền Bắc cho câu Máy lọc nước / Kỹ năng bán hàng có sẵn", kind: "change", status: 200, ok: true, details: { tagged: n, byCat } }); } catch (e) {}
+  return { tagged: n, byCat };
 }
 // Thứ tự lấy đề cho kỳ P: câu của kỳ P -> câu chưa gắn kỳ -> đề của kỳ gần nhất TRƯỚC P (dự phòng tạm thời,
 // để đổi sang kỳ mới mà chưa kịp soạn đề thì thí sinh vẫn làm được bài; trang quản trị báo rõ đang dùng tạm).
