@@ -444,6 +444,7 @@ function css(){
   '.nt-seg button.on{border-color:var(--c);background:#E6F0FC;color:#0B3F94}'+
   '.nt-prev{margin-top:12px;border:1px dashed #9fc7ff;background:#F4F9FF;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--k)}'+
   '.nt-prev small{display:block;color:var(--m);font-weight:700;margin-bottom:4px}'+
+  '.nt-prev.mail{white-space:normal;padding:8px 6px;background:#EEF3FA;border-style:solid}.nt-prev.mail small{padding:0 8px 6px}'+
   '.nt-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}'+
   '.nt-f{border:1.5px solid var(--l);background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:700;color:var(--m);cursor:pointer}'+
   '.nt-f.on{background:var(--c);border-color:var(--c);color:#fff}'+
@@ -543,6 +544,7 @@ function mount(root, cfg){
   function missing(){
     return fieldsOf().filter(function(f){ return f.req && !String(S.vars[f.k] || '').trim(); }).map(function(f){ return f.label; });
   }
+  function toneFor(){ return tplOf(S.tpl).kind === 'invite' ? 'invite' : baseId(); } // kiểu khung email: invite / remind / open / close / result / custom
   function ctaFor(r){
     var t = tplOf(S.tpl);
     if (t.cta === 'test') return { label:'Làm bài kiểm tra', url: render('{link}', r, ex, origin, {}, []) };
@@ -698,7 +700,7 @@ function mount(root, cfg){
       if (!subj.trim()){ q('#ntRes').innerHTML = '<div class="nt-msg er">Nhập tiêu đề email.</div>'; return; }
       if (!confirm('Gửi email cho ' + rows.length + ' người đã chọn?')) return;
       send.disabled = true; q('#ntRes').innerHTML = '';
-      var kind = tplOf(S.tpl).kind || '', label0 = send.textContent;
+      var kind = toneFor(), label0 = send.textContent;
       // Gửi theo từng đợt nhỏ (máy chủ ngắt mỗi yêu cầu sau ~45 giây). Người máy chủ chưa kịp gửi được đưa vào đợt sau.
       var queue = rows.map(function(r){ var it = { code:r.code, text: msgFor(r) }, c = ctaFor(r); if (c) it.cta = c; return it; });
       var tot = { sent:0, failed:[], skipped:[], dup:[] }, fatal = '', done = 0, guard = 0, BATCH = 12;
@@ -727,7 +729,9 @@ function mount(root, cfg){
   function refresh(){ // cập nhật xem trước, tiêu đề email và liên kết SMS khi đang gõ, không vẽ lại cả khung (giữ con trỏ)
     var vis = visible(), first = vis.filter(function(r){ return S.sel[r.code]; })[0] || vis[0], mi = missing();
     var p = root.querySelector('#ntPrev');
-    if (p) p.innerHTML = '<small>Xem trước'+(first ? ' (cho '+esc(first.name||first.code)+')' : '')+'</small>'+(first ? esc(msgFor(first)) : 'Chưa có người nhận trong danh sách.')+(mi.length ? '<span class="nt-req" style="display:block;margin-top:6px;font-weight:700">Cần nhập: '+esc(mi.join(', '))+'</span>' : '');
+    var asMail = !!(p && first && S.channel === 'email' && window.KTMail);
+    if (p) p.classList.toggle('mail', asMail);
+    if (p) p.innerHTML = '<small>Xem trước'+(S.channel === 'email' ? ' email' : '')+(first ? ' (cho '+esc(first.name||first.code)+')' : '')+'</small>'+(first ? (asMail ? KTMail.build({ text: msgFor(first), tone: toneFor(), cta: ctaFor(first) }) : esc(msgFor(first))) : 'Chưa có người nhận trong danh sách.')+(mi.length ? '<span class="nt-req" style="display:block;margin-top:6px;font-weight:700">Cần nhập: '+esc(mi.join(', '))+'</span>' : '');
     var sj = root.querySelector('#ntSubj'); if (sj && !S.subjEdited) sj.value = subjFor(first);
     var im = root.querySelector('#ntImg');
     if (im && first){ clearTimeout(S.pt); var snap = S.text + JSON.stringify(S.vars) + first.code; S.pt = setTimeout(async function(){
