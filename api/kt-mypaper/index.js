@@ -9,6 +9,7 @@ const { isAdmin } = require("../_lib/config");
 const auditlog = require("../_lib/auditlog");
 const device = require("../_lib/device");
 const facecheck = require("../_lib/facecheck");
+const facematch = require("../_lib/facematch");
 const { normPhone } = require("../_lib/phone");
 
 // Quản trị viên đang đăng nhập (cookie phiên) được xem mọi bài mà không cần mã NV + email của chủ bài.
@@ -72,19 +73,29 @@ module.exports = async function (context, req) {
       }
       const selfie = typeof b.photo === "string" ? b.photo : "";
       if (!selfie.startsWith("data:image/") || selfie.length > 350000) return reply(context, 400, { ok: false, error: "Cần chụp ảnh khuôn mặt bằng camera để đối chiếu." });
-      // Ảnh đã lưu của chủ hồ sơ: ảnh của bài này trước, rồi các bài khác cùng mã nhân viên (mới nhất trước)
+      // Ảnh đã lưu của chủ hồ sơ: ảnh của bài này trước, rồi các bài khác cùng mã nhân viên (mới nhất trước).
+      // Dấu vân khuôn mặt của ảnh đã lưu được tính một lần rồi ghi vào bài làm (faceDesc) để lần sau xem nhanh hơn.
       const refs = [];
-      if (attempt.photo) refs.push(attempt.photo);
+      const addRef = (a) => { if (a && a.photo && refs.length < 3) refs.push({ photo: a.photo, desc: a.faceDesc, save: async (d) => { a.faceDesc = d; await quiz.putAttempt(a); } }); };
+      addRef(attempt);
       const rows = (await quiz.getIndex()).filter((r) => quiz.normCode(r.code) === quiz.normCode(attempt.code) && r.id !== attempt.id).sort((a, c) => (c.startedAt || 0) - (a.startedAt || 0)).slice(0, 4);
-      for (const r of rows) { if (refs.length >= 3) break; const a2 = await quiz.getAttempt(r.id); if (a2 && a2.photo) refs.push(a2.photo); }
-      const cmp = await facecheck.compare(selfie, refs);
+      for (const r of rows) { if (refs.length >= 3) break; addRef(await quiz.getAttempt(r.id)); }
+      // 1) Ảnh phải chụp trực tiếp, không phải chụp lại từ màn hình / ảnh in (AI nhìn ảnh; AI không trả lời được thì bỏ qua bước này)
+      const live = await facecheck.verify(selfie, null, attempt.code, "xem-lai-de");
+      if (!live.allow) {
+        quiz.noteFail(req);
+        await logView(req, attempt, "denied", "live", live.message);
+        return reply(context, 403, { ok: false, error: live.message });
+      }
+      // 2) Đối chiếu khuôn mặt bằng mô hình nhận diện chạy trên máy chủ: không chắc chắn thì KHÔNG cho xem
+      const cmp = await facematch.compare(selfie, refs);
       if (!cmp.ok) {
         if (cmp.code !== "unavailable") quiz.noteFail(req);
-        await logView(req, attempt, "denied", "face:" + cmp.code, cmp.result && cmp.result.reason);
+        await logView(req, attempt, "denied", "face:" + cmp.code, cmp.distance != null ? "khoảng cách " + cmp.distance.toFixed(3) + " (ngưỡng " + cmp.threshold + ")" : "");
         return reply(context, cmp.code === "unavailable" ? 503 : 403, { ok: false, error: cmp.message });
       }
       if (prof && !onFile) { prof.phone = phone; await quiz.saveCandidates(cands); } // hồ sơ chưa có số: lưu số vừa nhập sau khi khuôn mặt khớp
-      await logView(req, attempt, "ok", "face:ok", cmp.result && cmp.result.reason);
+      await logView(req, attempt, "ok", "face:ok", "khoảng cách " + cmp.distance.toFixed(3) + " (ngưỡng " + cmp.threshold + ")");
     }
 
     if (master) {
