@@ -360,20 +360,16 @@ html{-webkit-text-size-adjust:100%}
   .card table.stk td[colspan]{display:block}
   .card table.stk td .badge,.card table.stk td .ttlchip{justify-self:start} /* nhãn/chip ôm sát chữ thay vì kéo dài hết cột */
 }
-/* Thẻ "Hồ sơ học tập" (danh sách thí sinh) trên di động: gộp các trường liên quan thành 2 cột mỗi hàng,
-   tên nổi bật ở đầu — gọn và dễ nhìn hơn so với 9 hàng xếp dọc từng trường một. */
+/* Thẻ "Hồ sơ học tập" (danh sách thí sinh) trên di động: tên + mã NV chung 1 hàng ở đầu (đã kiểm tra, không vỡ
+   vì cả hai đều ngắn/1 dòng). Các trường còn lại để MỖI TRƯỜNG MỘT HÀNG RIÊNG (không ghép 2 cột nữa) — vì nội
+   dung dài ngắn chênh lệch nhau nhiều (vd "Nguyễn Dạ Thảo", "Ngành 1 · Máy lọc nước", "03/09/2026") nên ghép
+   cột bị vỡ dòng xấu, trông lộn xộn. Mỗi dòng riêng vẫn là cách an toàn, dễ đọc nhất khi không biết trước độ
+   dài nội dung thực tế. */
 @media(max-width:760px){
-  #candList tr{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;align-items:start;padding:14px 0}
-  #candList td[data-label]{font-size:13.5px}
+  #candList tr{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;align-items:start;padding:14px 0}
+  #candList td[data-label]{font-size:13.5px;grid-column:1/-1}
   #candList td[data-label]::before{font-size:10px}
-  #candList td[data-label="Chức danh"]{grid-column:1;grid-row:2}
-  #candList td[data-label="Nhóm ngành"]{grid-column:2;grid-row:2}
-  #candList td[data-label="Email"]{grid-column:1/-1;grid-row:3}
-  #candList td[data-label="SĐT / Zalo"]{grid-column:1;grid-row:4}
-  #candList td[data-label="Tỉnh / Miền"]{grid-column:2;grid-row:4}
-  #candList td[data-label="Quản lí"]{grid-column:1;grid-row:5}
-  #candList td[data-label="Ngày vào làm"]{grid-column:2;grid-row:5}
-  #candList td.stk-act{grid-column:1/-1;grid-row:6;margin-top:4px}
+  #candList td.stk-act{grid-column:1/-1;margin-top:6px}
   #candList td[data-label="Họ tên"]{grid-column:1;grid-row:1;grid-template-columns:1fr;padding-bottom:0}
   #candList td[data-label="Họ tên"]::before{display:none}
   #candList td[data-label="Họ tên"] .candnm{font-size:16.5px;font-weight:800}
