@@ -273,7 +273,7 @@ const handler = async function (context, req) {
     // toàn bộ ngân hàng đề sẵn có (chỉ thấy đúng những câu mình vừa soạn, để xét duyệt trước khi lưu).
     if (op === "notifyEmail") {
       // Quản lí chỉ gửi được cho nhân viên thuộc phạm vi của mình
-      const r = await require("../_lib/notify").sendEmails({ items: b.items, subject: b.subject, allowed: (c) => quiz.inScope(viewer, c) });
+      const r = await require("../_lib/notify").sendEmails({ items: b.items, subject: b.subject, kind: b.kind, allowed: (c) => quiz.inScope(viewer, c) });
       return reply(context, r.status, r.body);
     }
 

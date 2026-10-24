@@ -497,7 +497,7 @@ html{-webkit-text-size-adjust:100%}
 .brandfull{display:block;margin:0 auto 10px;width:auto;height:112px;max-width:70%;object-fit:contain}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
-<script src="/kiemtra/notify.js?v=1"></script>
+<script src="/kiemtra/notify.js?v=2"></script>
 <style>#ovNotify .dlg{max-width:1060px;width:min(1060px,96vw);max-height:92vh;overflow:auto;text-align:left}</style>
 </head>
 <body>
@@ -575,7 +575,7 @@ html{-webkit-text-size-adjust:100%}
       <span class="sp"></span>
       <button class="btn ghost" id="aiToggle" type="button" aria-expanded="false" aria-controls="aiFind">✦ Hỏi trợ lí</button>
       <button class="btn ghost" id="aiQToggle" type="button" aria-expanded="false" aria-controls="aiQGen">✦ Soạn đề bằng AI</button>
-      <button class="btn ghost" id="notifyBtn" type="button">Gửi thông báo</button>
+      <button class="btn ghost" id="notifyBtn" type="button">Thông báo, thư mời</button>
       <button class="btn ghost" id="csvBtn" type="button">Tải Excel</button>
       <button class="btn" id="addBtn" type="button">+ Thêm nhân viên</button>
     </div>
@@ -693,8 +693,8 @@ html{-webkit-text-size-adjust:100%}
 
 <!-- Hộp thoại gửi thông báo -->
 <div class="ov hide" id="ovNotify" role="dialog" aria-modal="true" aria-labelledby="ntTitle"><div class="dlg">
-  <h2 id="ntTitle">Gửi thông báo cho nhân viên</h2>
-  <p class="sub">Chọn mẫu rồi gửi qua Zalo, tin nhắn SMS hoặc email cho nhân viên trong phạm vi của bạn.</p>
+  <h2 id="ntTitle">Gửi thông báo, thư mời cho nhân viên</h2>
+  <p class="sub">Chọn mẫu (nhắc làm bài, thư mời làm bài kiểm tra, thư mời đào tạo…) rồi gửi qua Zalo, tin nhắn SMS hoặc email cho nhân viên trong phạm vi của bạn.</p>
   <div id="ntMount"></div>
   <div class="dact"><button class="btn ghost" type="button" data-close="ovNotify">Đóng</button></div>
 </div></div>
@@ -1707,7 +1707,7 @@ document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') ['ov
 $('notifyBtn').addEventListener('click', function(){
   $('ovNotify').classList.remove('hide');
   KTNotify.mount($('ntMount'), { recipients: EMP, exam: EXAM, origin: location.origin,
-    sendEmail: async function(items, subject){ var r = await api('POST', '/api/kt-viewer', { op: 'notifyEmail', subject: subject, items: items }); return r.j; } });
+    sendEmail: async function(items, subject, kind){ var r = await api('POST', '/api/kt-viewer', { op: 'notifyEmail', subject: subject, items: items, kind: kind }); return r.j; } });
 });
 
 /* ---------- Tải Excel (có định dạng; dự phòng CSV) ---------- */

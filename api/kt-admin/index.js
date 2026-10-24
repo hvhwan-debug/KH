@@ -246,9 +246,9 @@ const handler = async function (context, req) {
         const latest = {};
         (await quiz.getIndex()).filter((a) => a.status === "submitted" && (a.period || "") === exSt.examPeriod).forEach((a) => { const k = quiz.normCode(a.code); if (!latest[k] || (a.submittedAt || 0) > (latest[k].submittedAt || 0)) latest[k] = a; });
         const { normPhone } = require("../_lib/phone");
-        const recipients = cands.filter((c) => quiz.inAudience(exSt, c)).map((c) => {
+        const recipients = cands.map((c) => {
           const r = latest[quiz.normCode(c.code)];
-          return { code: c.code, name: c.name || "", email: c.email || "", phone: normPhone(c.phone), manager: c.manager || "", status: r ? "done" : "none",
+          return { code: c.code, name: c.name || "", email: c.email || "", phone: normPhone(c.phone), manager: c.manager || "", eligible: quiz.inAudience(exSt, c), status: r ? "done" : "none",
             result: r ? { score: r.score, total: r.total, pct: r.pct, verify: quiz.verifyToken(r.id) } : null };
         });
         return reply(context, 200, { ok: true, exam: { id, title: exSt.examTitle || id, openAt: exSt.openAt || 0, closeAt: exSt.closeAt || 0 }, recipients });
@@ -821,7 +821,7 @@ const handler = async function (context, req) {
     }
 
     if (op === "notifyEmail") {
-      const r = await require("../_lib/notify").sendEmails({ items: b.items, subject: b.subject });
+      const r = await require("../_lib/notify").sendEmails({ items: b.items, subject: b.subject, kind: b.kind });
       return reply(context, r.status, r.body);
     }
 
