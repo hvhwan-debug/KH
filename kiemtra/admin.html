@@ -878,15 +878,39 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
       <div class="card hide" id="candAddCard">
         <button class="xclose" type="button" onclick="$('candAddCard').classList.add('hide')" aria-label="Đóng">×</button>
         <h1>Thêm thí sinh</h1>
+        <div class="seg-tabs" style="display:flex;gap:8px;margin:8px 0 14px;flex-wrap:wrap">
+          <button class="btn sm" type="button" id="candModeFormBtn" onclick="candAddMode('form')">Nhập từng người</button>
+          <button class="btn ghost sm" type="button" id="candModeBulkBtn" onclick="candAddMode('bulk')">Dán nhiều dòng</button>
+        </div>
+        <div id="candAddForm">
+          <div class="grid2">
+            <div><label>Mã nhân viên</label><input type="text" id="candNewCode" autocomplete="off" maxlength="50" placeholder="Ví dụ: T1003260002"></div>
+            <div><label>Họ tên</label><input type="text" id="candNewName" autocomplete="off" placeholder="Nguyễn Văn A"></div>
+            <div><label>Email</label><input type="text" id="candNewEmail" autocomplete="off" placeholder="a@congty.vn"></div>
+            <div><label>Quản lí</label><input type="text" id="candNewManager" list="mgrList" autocomplete="off" placeholder="Chọn từ danh sách hoặc gõ tên mới"><datalist id="mgrList"></datalist></div>
+            <div><label>Chức danh</label><input type="text" id="candNewTitle" list="titleList" autocomplete="off" maxlength="50" placeholder="PC"></div>
+            <div>
+              <label>Nhóm ngành</label>
+              <select id="candNewSegment">
+                <option value="both">Cả hai (Gia dụng + Máy lọc nước)</option>
+                <option value="gia_dung">Chỉ Gia dụng</option>
+                <option value="may_loc">Chỉ Máy lọc nước</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn" style="margin-top:12px" onclick="addCandidateForm()">Thêm vào danh sách</button>
+        </div>
+        <div id="candAddBulk" class="hide">
         <p class="small">Mỗi dòng một thí sinh, định dạng: <b>mã nhân viên, họ tên, email, quản lí, nhóm ngành, chức danh</b> (cột chức danh không bắt buộc: để trống thì người mới là <b>PC</b>, người đã có giữ nguyên). Nhóm ngành ghi <code>ca_hai</code> (bán cả gia dụng &amp; máy lọc nước — đề trộn từ toàn bộ ngân hàng), <code>gia_dung</code> (chỉ đề Gia dụng) hoặc <code>may_loc</code> (chỉ đề Máy lọc nước); để trống sẽ hiểu là cả hai. Có thể dán nhiều dòng cùng lúc.</p>
         <textarea id="candText" placeholder="NV001, Nguyễn Văn A, a@congty.vn, Nguyễn Dạ Thảo, ca_hai, PC&#10;NV002, Trần Thị B, b@congty.vn, Lê Thị Thanh Loan, may_loc, Giám sát"></textarea>
         <button class="btn" style="margin-top:10px" onclick="addCandidates()">Thêm vào danh sách</button>
+        </div>
         <div id="candMsg"></div>
       </div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h1 style="margin:0">Danh sách thí sinh (<span id="candCount">0</span>)</h1>
-          <button class="btn" type="button" onclick="$('candAddCard').classList.remove('hide');$('candAddCard').scrollIntoView({behavior:'smooth'});$('candText').focus()">＋ Thêm thí sinh</button>
+          <button class="btn" type="button" onclick="$('candAddCard').classList.remove('hide');$('candAddCard').scrollIntoView({behavior:'smooth'});candAddMode('form');$('candNewCode').focus()">＋ Thêm thí sinh</button>
         </div>
         <div class="qfilter">
           <input type="search" id="candSearch" placeholder="Tìm mã NV, tên, email…" oninput="renderCandidates()" aria-label="Tìm thí sinh">
@@ -2158,6 +2182,7 @@ function renderCandidates(){
   const mgrs = Array.from(new Set(CANDIDATES.map(c => c.manager || ''))).sort(), mv = $('candMgrF').value;
   $('candMgrF').innerHTML = '<option value="*">Mọi quản lí</option>' + mgrs.map(m => '<option value="' + esc(m) + '">' + esc(m || '(chưa có quản lí)') + ' (' + CANDIDATES.filter(c => (c.manager||'') === m).length + ')</option>').join('');
   $('candMgrF').value = mgrs.indexOf(mv) >= 0 ? mv : '*';
+  $('mgrList').innerHTML = mgrs.filter(Boolean).map(m => '<option value="' + esc(m) + '">').join('');
   const tcnt = {}; CANDIDATES.forEach(c => { const t = c.title || 'PC'; tcnt[t] = (tcnt[t] || 0) + 1; });
   const titles = Object.keys(tcnt).sort((a, b) => a.localeCompare(b, 'vi')), tv = $('candTitleF').value;
   $('candTitleF').innerHTML = '<option value="*">Mọi chức danh</option>' + titles.map(t => '<option value="' + esc(t) + '">' + esc(t) + ' (' + tcnt[t] + ')</option>').join('');
@@ -2235,6 +2260,27 @@ async function saveCandidateEdit(){
   msg('candEditMsg','Đã lưu.','ok');
   $('candEditCard').classList.add('hide');
   loadCandidates();
+}
+async function addCandidateForm(){
+  const code = $('candNewCode').value.trim(), email = $('candNewEmail').value.trim();
+  if (!code){ msg('candMsg','Nhập mã nhân viên.'); return; }
+  if (!email){ msg('candMsg','Nhập email.'); return; }
+  const { j } = await api('POST','/api/kt-admin', {
+    op:'addCandidates', rows:[{ code, name: $('candNewName').value.trim(), email, manager: $('candNewManager').value.trim(), segment: $('candNewSegment').value, title: $('candNewTitle').value.trim() || 'PC' }]
+  });
+  if (!j.ok){ msg('candMsg', j.error, 'err'); return; }
+  msg('candMsg', 'Đã thêm '+j.added+' thí sinh mới, cập nhật '+j.updated+' thí sinh.', 'ok');
+  ['candNewCode','candNewName','candNewEmail'].forEach(id => $(id).value='');
+  $('candNewCode').focus();
+  loadCandidates();
+}
+function candAddMode(m){
+  const form = m !== 'bulk';
+  $('candAddForm').classList.toggle('hide', !form);
+  $('candAddBulk').classList.toggle('hide', form);
+  $('candModeFormBtn').classList.toggle('ghost', !form);
+  $('candModeBulkBtn').classList.toggle('ghost', form);
+  msg('candMsg','');
 }
 async function addCandidates(){
   const text = $('candText').value;
