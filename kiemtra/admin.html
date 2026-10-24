@@ -36,6 +36,18 @@ body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(-
 .exadv summary{cursor:pointer;font-weight:700;color:var(--brand-deep)}
 .exadv[open] summary{margin-bottom:10px}
 .exh{font-size:14.5px;margin:18px 0 6px}
+.asg-mode{display:flex;gap:18px;flex-wrap:wrap;font-size:14px;margin:4px 0 8px}.asg-mode label{display:flex;align-items:center;gap:7px;margin:0;font-weight:600;cursor:pointer}.asg-mode input{width:18px;height:18px}
+.asg-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}.asg-tools input[type=search]{flex:1 1 220px;min-width:0;margin:0}.asg-tools select{flex:0 1 220px;margin:0}
+.asg-count{margin:2px 0 6px}.asg-count b{color:var(--brand-deep,#0B3F94)}
+.asg-list{max-height:320px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
+.asg-row{display:grid;grid-template-columns:22px 118px minmax(0,1.2fr) minmax(0,1fr);gap:10px;align-items:center;margin:0;padding:8px 12px;border-bottom:1px solid #EEF1F4;cursor:pointer;font-size:13.5px;font-weight:500}
+.asg-row:last-child{border-bottom:0}.asg-row:hover{background:#F6F9FC}.asg-row.on{background:#EEF6FF}
+.asg-row input{width:17px;height:17px;margin:0}.asg-row b{font-variant-numeric:tabular-nums}.asg-row small{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.asg-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.asg-empty{padding:18px;text-align:center;color:var(--muted);font-size:13.5px}
+.asg-paste{margin-top:10px}.asg-paste summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--brand-deep,#0B3F94)}
+@media(max-width:640px){.asg-row{grid-template-columns:22px 92px minmax(0,1fr)}.asg-row small{display:none}}
+
 .exsec{font-size:15px;margin:22px 0 8px;padding-top:14px;border-top:1px solid var(--line);color:var(--brand-deep)}
 label.chk{display:flex!important;align-items:center;gap:8px;font-weight:600;margin:0}
 label.chk input,#exSpMode input{width:18px!important;height:18px;margin:0;flex:0 0 auto}
@@ -807,8 +819,31 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
           <div id="planPreview"></div>
         </div>
 
+        <div class="asg" id="asg">
+          <h2 class="exh" style="margin-top:18px">5. Gán nhân viên làm đề này</h2>
+          <div class="asg-mode" role="radiogroup" aria-label="Đối tượng làm đề">
+            <label><input type="radio" name="asgMode" value="all" checked onchange="asgSetMode('all')"> Tất cả nhân viên</label>
+            <label><input type="radio" name="asgMode" value="pick" onchange="asgSetMode('pick')"> Chỉ những nhân viên được chọn</label>
+          </div>
+          <div id="asgPick" class="hide">
+            <div class="asg-tools">
+              <input type="search" id="asgQ" autocomplete="off" placeholder="Tìm mã NV, tên, quản lí, tỉnh…" oninput="asgRender()" aria-label="Tìm nhân viên">
+              <select id="asgMgr" autocomplete="off" onchange="asgRender()" aria-label="Lọc theo quản lí"></select>
+              <button class="btn ghost sm" type="button" onclick="asgBulk(true)">Chọn tất cả đang hiện</button>
+              <button class="btn ghost sm" type="button" onclick="asgBulk(false)">Bỏ chọn đang hiện</button>
+            </div>
+            <div class="asg-count small" id="asgCount"></div>
+            <div class="asg-list" id="asgList" onchange="asgToggle(event)"></div>
+            <details class="asg-paste"><summary>Dán hoặc sao chép danh sách mã nhân viên</summary>
+              <textarea id="exCodes" style="min-height:64px" placeholder="T100300025&#10;T100300026" oninput="asgFromText()" aria-label="Danh sách mã nhân viên"></textarea>
+              <p class="small" style="margin:4px 0 0">Mỗi mã một dòng hoặc cách nhau dấu phẩy. Ô này luôn khớp với các ô đã tick ở trên.</p>
+            </details>
+          </div>
+          <p class="small" id="asgHint" style="margin:6px 0 0">Mặc định mọi nhân viên (theo nhóm ngành đã chọn) đều làm được đề. Chọn "Chỉ những nhân viên được chọn" để giới hạn theo từng người.</p>
+        </div>
+
         <details class="exadv" id="exAdv">
-          <summary>5. Tuỳ chọn nâng cao <span class="small">(giới hạn đối tượng thi, cấu trúc đề riêng, cách chia số câu kiểu cũ)</span></summary>
+          <summary>6. Tuỳ chọn nâng cao <span class="small">(giới hạn đối tượng thi, cấu trúc đề riêng, cách chia số câu kiểu cũ)</span></summary>
           <h2 class="exh" style="margin-top:4px">Đối tượng thi</h2>
           <label>Nhóm thí sinh được thi (không tick = tất cả)</label>
         <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:14px">
@@ -816,9 +851,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
           <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="checkbox" class="exSeg" value="may_loc" style="width:18px;height:18px"> Máy lọc nước</label>
           <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="checkbox" class="exSeg" value="both" style="width:18px;height:18px"> Cả hai ngành</label>
         </div>
-        <label>Chỉ cho các mã nhân viên này thi (mỗi mã một dòng hoặc cách nhau dấu phẩy; để trống = không giới hạn theo mã)</label>
-        <textarea id="exCodes" style="min-height:64px" placeholder="T100300025&#10;T100300026"></textarea>
-        <p class="small">Kết hợp được với "nhóm thí sinh" ở trên (phải thoả cả hai). Người không thuộc đối tượng không vào thi được và không bị tính là "chưa làm" ở bảng tổng quan. Bài đang làm dở vẫn được làm tiếp kể cả khi đề đã đóng.</p>
+        <p class="small">Kết hợp được với phần <b>"Gán nhân viên"</b> phía trên (phải thoả cả hai). Người không thuộc đối tượng không vào thi được và không bị tính là "chưa làm" ở bảng tổng quan. Bài đang làm dở vẫn được làm tiếp kể cả khi đề đã đóng.</p>
           <h2 class="exh">Cách chia số câu kiểu cũ <span class="small">(chỉ dùng khi đề không có phân bổ theo nhóm ngành)</span></h2>
           <div class="grid2">
             <div><label>Tổng số câu hỏi mỗi đề</label><input type="text" inputmode="numeric" id="exCount"></div>
@@ -1621,12 +1654,56 @@ function exSpModeChanged(){
   exSpSet(own, own ? (spHas(spRead($('exSp'))) ? spRead($('exSp')) : JSON.parse(JSON.stringify(spHas(SEGPLANS) ? SEGPLANS : {}))) : null);
   $('planPreview').innerHTML = '';
 }
+/* ---------- Gán nhân viên theo từng đề (lưu vào exam.codes; ô #exCodes là nơi giữ danh sách) ---------- */
+let ASG = { mode:'all', set:new Set() };
+const asgKey = c => String(c || '').trim().toLowerCase();
+function asgLoad(codes){
+  ASG.set = new Set((codes || []).map(asgKey).filter(Boolean));
+  ASG.mode = ASG.set.size ? 'pick' : 'all';
+  asgSync(); if ($('asgQ')) $('asgQ').value = ''; if ($('asgMgr')) $('asgMgr').value = '*'; asgRender();
+}
+function asgSync(){ $('exCodes').value = Array.from(ASG.set).join('\n'); }
+function asgSetMode(m){ ASG.mode = m; asgRender(); }
+function asgFromText(){ ASG.set = new Set(String($('exCodes').value || '').split(/[\s,;]+/).map(asgKey).filter(Boolean)); asgRender(true); }
+function asgFiltered(){
+  const q = spNorm($('asgQ').value || ''), m = $('asgMgr').value || '*';
+  return CANDIDATES.filter(c => (m === '*' || (c.manager || '') === m) && (!q || spNorm([c.code, c.name, c.manager, c.title, c.province].join(' ')).indexOf(q) >= 0));
+}
+function asgCount(){
+  const known = new Set(CANDIDATES.map(c => asgKey(c.code)));
+  let orphan = 0; ASG.set.forEach(k => { if (!known.has(k)) orphan++; });
+  $('asgCount').innerHTML = 'Đã gán <b>' + ASG.set.size + '</b> nhân viên' + (CANDIDATES.length ? ' / ' + CANDIDATES.length + ' trong danh sách' : '') +
+    (orphan ? ' · <span style="color:var(--bad)">' + orphan + ' mã chưa có trong danh sách thí sinh</span>' : '');
+}
+function asgRender(keepText){
+  document.querySelectorAll('input[name=asgMode]').forEach(r => { r.checked = r.value === ASG.mode; });
+  const pick = ASG.mode === 'pick';
+  $('asgPick').classList.toggle('hide', !pick);
+  $('asgHint').classList.toggle('hide', pick);
+  if (!pick) return;
+  const mv = $('asgMgr').value, mgrs = Array.from(new Set(CANDIDATES.map(c => c.manager || ''))).sort((a, b) => a.localeCompare(b, 'vi'));
+  $('asgMgr').innerHTML = '<option value="*">Mọi quản lí</option>' + mgrs.map(m => '<option value="' + esc(m) + '">' + esc(m || '(chưa có quản lí)') + '</option>').join('');
+  $('asgMgr').value = mgrs.indexOf(mv) >= 0 ? mv : '*';
+  const L = asgFiltered();
+  $('asgList').innerHTML = L.map(c => { const on = ASG.set.has(asgKey(c.code));
+    return '<label class="asg-row' + (on ? ' on' : '') + '"><input type="checkbox" data-c="' + esc(c.code) + '"' + (on ? ' checked' : '') + '><b>' + esc(c.code) + '</b><span>' + esc(c.name || '') + '</span><small>' + esc(c.manager || '') + '</small></label>'; }).join('')
+    || '<div class="asg-empty">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Thêm thí sinh ở mục "Thí sinh" trước.') + '</div>';
+  asgCount();
+}
+function asgToggle(ev){
+  const cb = ev.target; if (!cb || !cb.dataset || !cb.dataset.c) return;
+  const k = asgKey(cb.dataset.c); if (cb.checked) ASG.set.add(k); else ASG.set.delete(k);
+  cb.closest('.asg-row').classList.toggle('on', cb.checked);
+  asgSync(); asgCount();
+}
+function asgBulk(on){ asgFiltered().forEach(c => { const k = asgKey(c.code); if (on) ASG.set.add(k); else ASG.set.delete(k); }); asgSync(); asgRender(); }
+
 function clearExamForm(){
   $('planPreview').innerHTML = ''; $('exCount').oninput = () => { updateBpTotal(); $('planPreview').innerHTML = ''; };
   $('exEditingId').value=''; $('exId').value=''; $('exId').disabled=false; $('exTitle').value=''; $('exShareTitle').value='';
   $('exCount').value=''; $('exBothGD').value=''; $('exSeconds').value=''; $('exPass').value=''; $('exPassOn').checked=false;
   $('exRetake').checked=false; $('exAttempts').value=''; $('exAttempts').disabled=false; $('exPractice').checked=false; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
-  $('exDesc').value=''; $('exCodes').value=''; $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
+  $('exDesc').value=''; asgLoad([]); $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
   BP_RULES = []; renderBpRules(); $('bpPreview').innerHTML=''; $('bpTotal').textContent='';
   msg('exMsg',''); $('exAdv').open = false; exSpSet(false);
   $('exPassOn').checked = !!SETCACHE.passEnabled; $('exRetake').checked = !!SETCACHE.allowRetake; $('exAttempts').disabled = $('exRetake').checked; $('exComplianceOn').checked = !!SETCACHE.complianceEnabled;
@@ -1653,11 +1730,11 @@ function editExam(id){
   const dflt = (k) => e[k] != null ? !!e[k] : !!SETCACHE[k];
   $('exRetake').checked = dflt('allowRetake'); $('exAttempts').value = e.maxAttempts > 1 ? e.maxAttempts : ''; $('exAttempts').disabled = $('exRetake').checked; $('exPractice').checked = !!e.practice; $('exComplianceOn').checked = dflt('complianceEnabled');
   $('exCHigh').value = e.complianceHighMin || ''; $('exCMid').value = e.complianceMidMin || ''; $('exCLow').value = e.complianceLowMin || '';
-  $('exDesc').value = e.description || ''; $('exCodes').value = (e.codes || []).join('\n'); $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
+  $('exDesc').value = e.description || ''; asgLoad(e.codes || []); $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
   document.querySelectorAll('.exSeg').forEach(c => c.checked = (e.segments || []).indexOf(c.value) >= 0);
   BP_RULES = e.blueprint && e.blueprint.rules ? e.blueprint.rules.map(r => Object.assign({}, r)) : []; renderBpRules();
   $('examFormTitle').textContent = 'Cài đặt đề';
-  $('exAdv').open = !!(BP_RULES.length || e.questionCount || e.bothGiaDungCount || (e.segments||[]).length || (e.codes||[]).length);
+  $('exAdv').open = !!(BP_RULES.length || e.questionCount || e.bothGiaDungCount || (e.segments||[]).length);
   exSpSet(spHas(e.segmentPlans), e.segmentPlans); previewPlan();
   $('examFormCard').classList.remove('hide');
   $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
@@ -1690,6 +1767,7 @@ async function saveExam(){
   const tt = $('exTitle').value.trim(), prac = $('exPractice').checked;
   if (!tt){ msg('exMsg','Nhập tên đề thi (thí sinh thấy tên này trên đề và phiếu kết quả).'); $('exTitle').focus(); return; }
   if (/thi\s*thử/i.test(tt) && !prac && !confirm('Tên đề có chữ "thi thử" nhưng chưa tick "Đề thi thử".\n\nNếu đây là đề thi THẬT, hãy bỏ chữ "thi thử" khỏi tên (thí sinh sẽ thấy tên này trên phiếu kết quả).\n\nVẫn lưu như hiện tại?')) return;
+  if (ASG.mode === 'pick' && !ASG.set.size){ msg('exMsg','Bạn chọn "Chỉ những nhân viên được chọn" nhưng chưa tick ai. Hãy chọn ít nhất 1 nhân viên hoặc đổi sang "Tất cả nhân viên".'); $('asg').scrollIntoView({behavior:'smooth',block:'center'}); return; }
   // Kiểm tra phân bổ đề trước khi lưu: sai cấu hình -> chặn; thiếu câu -> hỏi lại
   const pj = await fetchPlan();
   if (pj && pj.ok){
@@ -1704,7 +1782,7 @@ async function saveExam(){
     questionCount: $('exCount').value, bothGiaDungCount: $('exBothGD').value, secondsPerQuestion: $('exSeconds').value,
     passEnabled: $('exPassOn').checked, passScore: $('exPass').value, allowRetake: $('exRetake').checked, maxAttempts: $('exAttempts').value.trim(), practice: $('exPractice').checked,
     complianceEnabled: $('exComplianceOn').checked, complianceHighMin: $('exCHigh').value, complianceMidMin: $('exCMid').value, complianceLowMin: $('exCLow').value,
-    description: $('exDesc').value.trim(), codes: $('exCodes').value,
+    description: $('exDesc').value.trim(), codes: ASG.mode === 'pick' ? $('exCodes').value : '',
     openAt: localToMs($('exOpen').value), closeAt: localToMs($('exClose').value),
     segments: Array.from(document.querySelectorAll('.exSeg:checked')).map(c => c.value),
     segmentPlans: exSpOwn() ? spRead($('exSp')) : null,
@@ -1865,7 +1943,7 @@ function msToLocal(ms){ if (!ms) return ''; const d = new Date(+ms); return d.ge
 function localToMs(v){ if (!v) return 0; const t = new Date(v).getTime(); return isNaN(t) ? 0 : t; }
 function examWindowText(e){
   const f = (ms) => new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
-  const seg = ((e.segments || []).length ? ' · ' + e.segments.map(s => ({gia_dung:'Gia dụng',may_loc:'Máy lọc',both:'Cả hai'}[s]||s)).join('/') : '') + ((e.codes || []).length ? ' · ' + e.codes.length + ' mã NV' : '');
+  const seg = ((e.segments || []).length ? ' · ' + e.segments.map(s => ({gia_dung:'Gia dụng',may_loc:'Máy lọc',both:'Cả hai'}[s]||s)).join('/') : '') + ((e.codes || []).length ? ' · gán ' + e.codes.length + ' NV' : '');
   if (e.openAt && e.closeAt) return f(e.openAt) + ' → ' + f(e.closeAt) + seg;
   if (e.openAt) return 'Từ ' + f(e.openAt) + seg;
   if (e.closeAt) return 'Đến ' + f(e.closeAt) + seg;
@@ -2454,7 +2532,7 @@ async function loadCandidates(){
   $('candCount').textContent = j.candidates.length;
   setNavCount('nvCand', j.candidates.length);
   CANDIDATES = j.candidates;
-  renderCandidates();
+  renderCandidates(); if (typeof asgRender === 'function') asgRender();
   loadChangeRequests();
 }
 function resetCandFilters(){
