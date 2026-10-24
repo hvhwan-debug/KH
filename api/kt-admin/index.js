@@ -731,7 +731,8 @@ const handler = async function (context, req) {
       const list = await quiz.getCandidates();
       const byCode = {};
       list.forEach((c, i) => { byCode[quiz.normCode(c.code)] = i; });
-      let added = 0, updated = 0;
+      let added = 0, updated = 0, skipped = 0;
+      const skipExisting = b.skipExisting === true; // true = người đã có (trùng mã NV) giữ nguyên, không cập nhật
       rows.forEach((r) => {
         const code = quiz.normCode(r.code);
         const email = quiz.normEmail(r.email);
@@ -743,6 +744,7 @@ const handler = async function (context, req) {
         // Tỉnh / miền: chỉ đổi khi có gửi (sửa từ form quản trị); chuỗi rỗng = xoá để thí sinh tự chọn lại khi vào thi
         if (r.province !== undefined) entry.province = require("../_lib/provinces").canonProvince(r.province);
         if (r.region !== undefined) entry.region = quiz.normRegion(r.region);
+        if (byCode[code] != null && skipExisting) { skipped++; return; }
         if (byCode[code] != null) {
           const old = list[byCode[code]];
           const merged = Object.assign({}, old, entry);
@@ -756,7 +758,7 @@ const handler = async function (context, req) {
         else { list.push(Object.assign({ title: quiz.DEFAULT_TITLE }, entry)); byCode[code] = list.length - 1; added++; }
       });
       await quiz.saveCandidates(list);
-      return reply(context, 200, { ok: true, candidates: list, added, updated });
+      return reply(context, 200, { ok: true, candidates: list, added, updated, skipped });
     }
 
     if (op === "assignPeriod") {

@@ -36,6 +36,11 @@ body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(-
 .exadv summary{cursor:pointer;font-weight:700;color:var(--brand-deep)}
 .exadv[open] summary{margin-bottom:10px}
 .exh{font-size:14.5px;margin:18px 0 6px}
+.hr-tb{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}.hr-tb th,.hr-tb td{padding:7px 10px;border-bottom:1px solid #EEF1F4;text-align:left}.hr-tb th{color:var(--muted);font-size:12px;font-weight:700}
+.hr-tb td.n{text-align:right;font-variant-numeric:tabular-nums}.hr-tb tr.off td{color:var(--muted)}.hr-tb input{width:17px;height:17px;margin:0}
+.hr-opts{display:flex;flex-direction:column;gap:6px;margin:8px 0;font-size:13.5px}.hr-opts label{display:flex;align-items:flex-start;gap:8px;margin:0;font-weight:500;cursor:pointer}.hr-opts input{width:17px;height:17px;margin:2px 0 0}
+.hr-prob{max-height:180px;overflow:auto;font-size:12.5px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:6px}
+
 .asg-mode{display:flex;gap:18px;flex-wrap:wrap;font-size:14px;margin:4px 0 8px}.asg-mode label{display:flex;align-items:center;gap:7px;margin:0;font-weight:600;cursor:pointer}.asg-mode input{width:18px;height:18px}
 .asg-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}.asg-tools input[type=search]{flex:1 1 220px;min-width:0;margin:0}.asg-tools select{flex:0 1 220px;margin:0}
 .asg-count{margin:2px 0 6px}.asg-count b{color:var(--brand-deep,#0B3F94)}
@@ -650,6 +655,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
 <script src="/kiemtra/mailtpl.js?v=1"></script>
+<script src="/kiemtra/hrimport.js?v=1"></script>
 <script src="/kiemtra/notify.js?v=14"></script>
 </head>
 <body>
@@ -1106,6 +1112,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
         <div class="seg-tabs" style="display:flex;gap:8px;margin:8px 0 14px;flex-wrap:wrap">
           <button class="btn sm" type="button" id="candModeFormBtn" onclick="candAddMode('form')">Nhập từng người</button>
           <button class="btn ghost sm" type="button" id="candModeBulkBtn" onclick="candAddMode('bulk')">Dán nhiều dòng</button>
+          <button class="btn ghost sm" type="button" id="candModeXlBtn" onclick="candAddMode('xl')">Nhập từ Excel</button>
         </div>
         <div id="candAddForm">
           <div class="grid2">
@@ -1125,6 +1132,13 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
             </div>
           </div>
           <button class="btn" style="margin-top:12px" onclick="addCandidateForm()">Thêm vào danh sách</button>
+        </div>
+        <div id="candAddXl" class="hide">
+          <p class="small">Chọn file <b>Danh sách nhân sự</b> (các sheet <b>GT1, GT2, ASM GT1, ASM GT2</b>). Hệ thống tự gán chức danh: Đại diện bán hàng → <b>SR 1</b> (ngành 1) / <b>SR 2</b> (ngành 2); Trưởng Kinh doanh Khu vực → <b>ASM 1</b> / <b>ASM 2</b>; Nhân viên Tư vấn Sản phẩm → <b>PC</b>. Người <b>đã có trong hệ thống</b> (trùng mã NV) được bỏ qua, không bị sửa.</p>
+          <input type="file" id="hrFile" accept=".xlsx" style="display:none" onchange="hrRead(event)">
+          <button class="btn ghost sm" type="button" onclick="$('hrFile').click()">Chọn file Excel…</button> <span class="small" id="hrName"></span>
+          <div id="hrPreview"></div>
+          <div id="hrMsg"></div>
         </div>
         <div id="candAddBulk" class="hide">
         <p class="small">Mỗi dòng một thí sinh, định dạng: <b>mã nhân viên, họ tên, email, quản lí, nhóm ngành, chức danh, số điện thoại/Zalo</b> (hai cột cuối không bắt buộc: chức danh để trống thì người mới là <b>PC</b>, người đã có giữ nguyên; số điện thoại để trống thì thí sinh sẽ được yêu cầu tự điền khi vào làm bài). Nhóm ngành ghi <code>ca_hai</code> (bán cả gia dụng &amp; máy lọc nước — đề trộn từ toàn bộ ngân hàng), <code>gia_dung</code> (chỉ đề Gia dụng) hoặc <code>may_loc</code> (chỉ đề Máy lọc nước); để trống sẽ hiểu là cả hai. Có thể dán nhiều dòng cùng lúc.</p>
@@ -2642,12 +2656,77 @@ async function addCandidateForm(){
   loadCandidates();
 }
 function candAddMode(m){
-  const form = m !== 'bulk';
-  $('candAddForm').classList.toggle('hide', !form);
-  $('candAddBulk').classList.toggle('hide', form);
-  $('candModeFormBtn').classList.toggle('ghost', !form);
-  $('candModeBulkBtn').classList.toggle('ghost', form);
+  $('candAddForm').classList.toggle('hide', m === 'bulk' || m === 'xl');
+  $('candAddBulk').classList.toggle('hide', m !== 'bulk');
+  $('candAddXl').classList.toggle('hide', m !== 'xl');
+  $('candModeFormBtn').classList.toggle('ghost', m === 'bulk' || m === 'xl');
+  $('candModeBulkBtn').classList.toggle('ghost', m !== 'bulk');
+  $('candModeXlBtn').classList.toggle('ghost', m !== 'xl');
   msg('candMsg','');
+}
+/* ---------- Nhập nhân sự từ file Excel (SR 1 / SR 2 / ASM 1 / ASM 2 / PC); người đã có thì bỏ qua ---------- */
+let HR = null; // { res, on:{nhóm:bool}, usePersonal }
+async function hrRead(ev){
+  const file = ev.target.files && ev.target.files[0]; ev.target.value = '';
+  if (!file) return;
+  $('hrName').textContent = file.name; $('hrPreview').innerHTML = '<div class="small" style="margin-top:10px">Đang đọc file…</div>'; msg('hrMsg','');
+  let wb;
+  try { const X = await loadExcelJS(); wb = new X.Workbook(); await wb.xlsx.load(await file.arrayBuffer()); }
+  catch(e){ $('hrPreview').innerHTML = ''; msg('hrMsg','Không đọc được file. Hãy lưu lại dưới dạng .xlsx rồi thử lại.','err'); return; }
+  const res = KTHr.parse(KTHr.sheetsFromExcelJS(wb));
+  if (!res.records.length){ $('hrPreview').innerHTML = ''; msg('hrMsg','Không thấy nhân sự nào. File cần có các sheet GT1, GT2, ASM GT1, ASM GT2 với cột "MSNV mới", "Họ và tên", "Chức danh".','err'); return; }
+  HR = { res, on: { 'SR 1':true, 'SR 2':true, 'ASM 1':true, 'ASM 2':true, 'PC':true, 'Khác':false }, usePersonal: true };
+  hrRender();
+}
+function hrHave(){ const h = new Set(); (CANDIDATES || []).forEach(c => h.add(String(c.code || '').trim().toLowerCase())); return h; }
+function hrPick(){
+  // người sẽ gửi lên: đúng nhóm được tick, có email dùng được
+  const have = hrHave(), out = { send: [], exist: 0, noMail: [], personal: 0 };
+  HR.res.records.forEach(r => {
+    if (!HR.on[r.group]) return;
+    if (have.has(r.code.toLowerCase())) { out.exist++; return; }
+    const email = KTHr.pickEmail(r, HR.usePersonal);
+    if (!email) { out.noMail.push(r); return; }
+    if (!r.mailC) out.personal++;
+    out.send.push({ code: r.code, name: r.name, email, manager: r.manager, segment: '', title: r.title, phone: r.phone });
+  });
+  return out;
+}
+function hrRender(){
+  if (!HR) return;
+  const R = HR.res, have = hrHave(), pk = hrPick();
+  const cnt = {}, ex = {}; KTHr.GROUPS.forEach(g => { cnt[g] = 0; ex[g] = 0; });
+  R.records.forEach(r => { cnt[r.group]++; if (have.has(r.code.toLowerCase())) ex[r.group]++; });
+  const note = { 'SR 1':'Đại diện bán hàng GT ngành 1', 'SR 2':'Đại diện bán hàng GT ngành 2', 'ASM 1':'Trưởng KD khu vực ngành 1', 'ASM 2':'Trưởng KD khu vực ngành 2', 'PC':'Nhân viên Tư vấn Sản phẩm', 'Khác':'Task Force, Giám đốc, Trợ lý… (giữ nguyên chức danh gốc)' };
+  const rows = KTHr.GROUPS.filter(g => cnt[g]).map(g =>
+    '<tr class="' + (HR.on[g] ? '' : 'off') + '"><td><input type="checkbox" ' + (HR.on[g] ? 'checked' : '') + ' onchange="hrTick(\'' + g + '\',this.checked)" aria-label="Thêm nhóm ' + esc(g) + '"></td><td><b>' + esc(g) + '</b></td><td>' + esc(note[g]) + '</td><td class="n">' + cnt[g] + '</td><td class="n">' + ex[g] + '</td></tr>').join('');
+  const probs = R.problems.map(p => esc(p.sheet) + ' dòng ' + p.row + ': ' + esc((p.code ? p.code + ' ' : '') + (p.name || '')) + ' → ' + esc(p.reason)).concat(
+    pk.noMail.map(r => esc(r.code + ' ' + r.name) + ' → thiếu email' + (HR.usePersonal ? '' : ' công ty')));
+  $('hrPreview').innerHTML =
+    '<table class="hr-tb"><thead><tr><th></th><th>Chức danh</th><th>Gồm</th><th style="text-align:right">Trong file</th><th style="text-align:right">Đã có trong hệ thống</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+    '<div class="hr-opts"><label><input type="checkbox" ' + (HR.usePersonal ? 'checked' : '') + ' onchange="HR.usePersonal=this.checked;hrRender()"> Dùng email cá nhân khi người đó chưa có email công ty</label></div>' +
+    '<p style="margin:8px 0"><b>Sẽ thêm ' + pk.send.length + ' người mới</b>' + (pk.exist ? ' · bỏ qua <b>' + pk.exist + '</b> người đã có trong hệ thống (trùng mã NV)' : '') +
+    (pk.personal ? ' · <span style="color:var(--bad)">' + pk.personal + ' người dùng email cá nhân</span>' : '') + (pk.noMail.length ? ' · <span style="color:var(--bad)">' + pk.noMail.length + ' người thiếu email nên chưa thêm được</span>' : '') + '</p>' +
+    (probs.length ? '<details><summary class="small" style="cursor:pointer">' + probs.length + ' dòng bị loại / cần chú ý</summary><div class="hr-prob">' + probs.join('<br>') + '</div></details>' : '') +
+    (R.ignored.length ? '<p class="small" style="margin:6px 0 0">Bỏ qua sheet: ' + R.ignored.map(esc).join(', ') + '.</p>' : '') +
+    '<button class="btn" type="button" style="margin-top:12px" ' + (pk.send.length ? '' : 'disabled') + ' onclick="hrImport()">Thêm ' + pk.send.length + ' người vào danh sách</button>';
+}
+function hrTick(g, on){ HR.on[g] = on; hrRender(); }
+async function hrImport(){
+  if (!HR) return;
+  const pk = hrPick();
+  if (!pk.send.length){ msg('hrMsg','Không có ai để thêm.'); return; }
+  if (!confirm('Thêm ' + pk.send.length + ' người mới vào danh sách thí sinh?\nNgười đã có trong hệ thống sẽ được bỏ qua, không bị sửa.')) return;
+  let added = 0, skipped = 0, bad = '';
+  for (let i = 0; i < pk.send.length; i += 150){
+    const { j } = await api('POST','/api/kt-admin', { op:'addCandidates', rows: pk.send.slice(i, i + 150), skipExisting: true });
+    if (!j || !j.ok){ bad = (j && j.error) || 'Lỗi máy chủ'; break; }
+    added += j.added || 0; skipped += j.skipped || 0;
+  }
+  if (bad){ msg('hrMsg', 'Đã thêm ' + added + ' người rồi dừng: ' + bad, 'err'); }
+  else msg('hrMsg', 'Đã thêm ' + added + ' người mới' + (skipped ? ', bỏ qua ' + skipped + ' người đã có' : '') + '.', 'ok');
+  HR = null; $('hrPreview').innerHTML = ''; $('hrName').textContent = '';
+  loadCandidates();
 }
 async function addCandidates(){
   const text = $('candText').value;
