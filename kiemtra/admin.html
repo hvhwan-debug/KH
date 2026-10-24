@@ -534,6 +534,16 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 #resDetailCard.rd-pop .rd-q{scroll-margin-top:130px}
 @keyframes rdIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
 @media(max-width:640px){#resDetailCard.rd-pop{top:0;width:100vw;max-height:100vh;border-radius:0}}
+
+.crq{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:10px;background:#fff}
+.crq-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+.crq-h b{font-size:15px}.crq-h small{color:var(--muted)}
+.crq table{width:100%;border-collapse:collapse;margin:10px 0 6px;font-size:14px}
+.crq td{padding:6px 8px;border-top:1px solid var(--line);vertical-align:top}
+.crq td:first-child{width:130px;color:var(--muted);font-weight:600}
+.crq .fr{color:var(--bad);text-decoration:line-through}.crq .to{color:var(--ok);font-weight:700}
+.crq .nt{margin:8px 0 0;padding:8px 12px;border-radius:10px;background:#F4F7F8;font-size:13.5px;line-height:1.5}
+.crq .ac{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 </style>
 </head>
 <body>
@@ -906,6 +916,11 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
     </div>
 
     <div id="tab-candidates" class="tabpane hide">
+      <div class="card hide" id="candReqCard" style="border-color:#F0C36A">
+        <h1>Yêu cầu điều chỉnh thông tin (<span id="candReqCount">0</span>)</h1>
+        <p class="small" style="margin-top:-4px">Thí sinh báo thông tin chưa đúng ở bước xác nhận trước khi làm bài. Chỉ khi bạn bấm <b>Xác nhận đúng</b> thì dữ liệu mới được cập nhật.</p>
+        <div id="candReqList"></div>
+      </div>
       <div class="card hide" id="candEditCard">
         <h1>Sửa thông tin thí sinh</h1>
         <p class="small">Muốn sửa mã nhân viên, bấm <b>Đổi mã</b>: hồ sơ, các bài đã nộp, kết quả và bài đang làm dở của thí sinh sẽ chuyển theo sang mã mới. (Sau khi đổi, thí sinh phải dùng mã mới để vào bài.)</p>
@@ -2239,6 +2254,39 @@ async function saveQuestion(){
 
 /* ---------- Thí sinh ---------- */
 function setNavCount(id, n){ const e = document.getElementById(id); if (!e) return; e.textContent = n; e.classList.toggle('hide', !n); }
+
+const CRQ_LABEL = { name:'Họ tên', email:'Email', phone:'SĐT / Zalo', manager:'Quản lí', title:'Chức danh', segment:'Nhóm ngành' };
+const CRQ_SEG = { both:'Cả hai', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };
+function renderChangeRequests(list){
+  const card = $('candReqCard'); $('candReqCount').textContent = list.length;
+  card.classList.toggle('hide', !list.length);
+  const v = (k, x) => k === 'segment' ? (CRQ_SEG[x] || x) : (x || '(trống)');
+  $('candReqList').innerHTML = list.map(r => {
+    const rows = Object.keys(r.changes || {}).map(k => '<tr><td>' + esc(CRQ_LABEL[k] || k) + '</td><td><span class="fr">' + esc(v(k, r.changes[k].from)) + '</span> → <span class="to">' + esc(v(k, r.changes[k].to)) + '</span></td></tr>').join('');
+    return '<div class="crq"><div class="crq-h"><b>' + esc(r.name || r.code) + ' <span class="small" style="font-weight:600;color:var(--muted)">' + esc(r.code) + '</span></b><small>' + esc(new Date(r.at).toLocaleString('vi-VN', { hour12:false })) + '</small></div>' +
+      (rows ? '<table>' + rows + '</table>' : '<p class="small" style="margin:8px 0 0">Không đổi ô nào, chỉ gửi ghi chú.</p>') +
+      (r.note ? '<div class="nt"><b>Ghi chú:</b> ' + esc(r.note) + '</div>' : '') +
+      '<div class="ac">' + (rows ? '<button class="btn sm" type="button" onclick="crqApprove(\'' + esc(r.id) + '\')">Xác nhận đúng, cập nhật</button>' : '') +
+      '<button class="btn ghost sm" type="button" onclick="crqReject(\'' + esc(r.id) + '\')">' + (rows ? 'Từ chối' : 'Đã xử lý') + '</button></div></div>';
+  }).join('');
+}
+async function loadChangeRequests(){
+  const { j } = await api('GET','/api/kt-admin?op=changeRequests');
+  if (j && j.ok) renderChangeRequests(j.requests || []);
+}
+async function crqApprove(id){
+  if (!confirm('Xác nhận thông tin mới là đúng và cập nhật vào hồ sơ thí sinh?\nThí sinh sẽ cần được xác nhận lại thông tin.')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'approveChange', id });
+  if (!j.ok){ alert(j.error || 'Không cập nhật được.'); loadChangeRequests(); return; }
+  renderChangeRequests(j.requests || []); loadCandidates();
+}
+async function crqReject(id){
+  const reason = prompt('Lý do từ chối / bỏ qua (không bắt buộc):', '');
+  if (reason === null) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'rejectChange', id, reason });
+  if (!j.ok){ alert(j.error || 'Có lỗi xảy ra.'); return; }
+  renderChangeRequests(j.requests || []);
+}
 async function loadCandidates(){
   const { j } = await api('GET','/api/kt-admin?op=candidates');
   if (!j.ok) return;
@@ -2246,6 +2294,7 @@ async function loadCandidates(){
   setNavCount('nvCand', j.candidates.length);
   CANDIDATES = j.candidates;
   renderCandidates();
+  loadChangeRequests();
 }
 function renderCandidates(){
   const segLabel = { both:'Cả hai', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };

@@ -31,7 +31,8 @@ module.exports = async function (context, req) {
       return reply(context, 404, { ok: false, error: "Không tìm thấy đề thi này. Hãy kiểm tra lại đường link hoặc liên hệ quản trị viên." });
     }
     const settings = await quiz.getExamSettings(examId);
-    const candidate = { code: found.code, name: found.name, email: found.email, manager: found.manager || "", phone: require("../_lib/phone").normPhone(found.phone) };
+    const candidate = { code: found.code, name: found.name, email: found.email, manager: found.manager || "", phone: require("../_lib/phone").normPhone(found.phone), segment: quiz.normSegment(found.segment), title: quiz.titleOf(found) };
+    const pendingRequest = (await require("../_lib/changereq").getAll()).some((r) => r.status === "pending" && quiz.normCode(r.code) === code);
     // Khung thời gian mở/đóng + đối tượng được thi (chỉ áp dụng cho đề thi có cấu hình các mục này)
     const denied = quiz.examAccessError(settings, found, Date.now());
     if (denied) return reply(context, 403, { ok: false, error: denied });
@@ -52,7 +53,7 @@ module.exports = async function (context, req) {
         let adv = null;
         try { const pa = await quiz.getAttempt(prior.id); if (pa) { const pv = quiz.previousResult(idx, pa.code, pa.period, pa.id); adv = advicelib.ensureAnalysis(pa.advice || advicelib.rulesAdvice(advicelib.facts(pa, settings, pv)), pa, settings, pv); } } catch (e) { adv = null; }
         return reply(context, 200, {
-          ok: true, candidate, exam, alreadyDone: true,
+          ok: true, candidate, exam, pendingRequest, alreadyDone: true,
           result: {
             score: prior.score, total: prior.total, pct: prior.pct, passed: quiz.passState(prior.pct, settings),
             compliancePoints: prior.compliancePoints, submittedAt: prior.submittedAt,
@@ -71,7 +72,7 @@ module.exports = async function (context, req) {
       quiz.syncAttempt(active, Date.now());
       inProgress = { answered: Math.min(active.cursor, active.questionIds.length), total: active.questionIds.length };
     }
-    return reply(context, 200, { ok: true, candidate, exam, inProgress, examTitle: settings.examTitle, serverNow: Date.now() });
+    return reply(context, 200, { ok: true, candidate, exam, pendingRequest, inProgress, examTitle: settings.examTitle, serverNow: Date.now() });
   } catch (e) {
     context.log.error("kt-check", e && e.message);
     return reply(context, 500, { ok: false, error: "Có lỗi xảy ra, thử lại sau." });

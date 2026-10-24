@@ -235,6 +235,7 @@ const handler = async function (context, req) {
         return reply(context, 200, { ok: true, viewers, managers });
       }
       if (op === "candidates") return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; o.title = quiz.titleOf(c); o.joinDate = require("../_lib/probation").joinDateOf(c.code, c.joinDate); return o; }) });
+      if (op === "changeRequests") return reply(context, 200, { ok: true, requests: (await require("../_lib/changereq").getAll()).filter((r) => r.status === "pending") });
       if (op === "settings") return reply(context, 200, { ok: true, settings: await quiz.getSettings() });
       if (op === "faceRejections") {
         const list = (await require("../_lib/facecheck").getRejections()).slice().reverse();
@@ -764,6 +765,42 @@ const handler = async function (context, req) {
       if (id === (await quiz.getSettings()).examPeriod) return reply(context, 400, { ok: false, error: "Không thể xoá đề đang đặt làm mặc định. Hãy đặt đề khác làm mặc định trước." });
       await quiz.deleteExam(id);
       return reply(context, 200, { ok: true, exams: await quiz.listExamsSummary() });
+    }
+
+    // Thí sinh gửi yêu cầu điều chỉnh thông tin: chỉ khi quản trị viên xác nhận đúng thì mới cập nhật vào hồ sơ
+    if (op === "approveChange" || op === "rejectChange") {
+      const crl = require("../_lib/changereq");
+      const all = await crl.getAll();
+      const rq = all.find((r) => r.id === String(b.id || "") && r.status === "pending");
+      if (!rq) return reply(context, 404, { ok: false, error: "Không tìm thấy yêu cầu (có thể đã được xử lý)." });
+      if (op === "rejectChange") {
+        rq.status = "rejected"; rq.doneAt = Date.now(); rq.by = u.email; rq.reason = String(b.reason || "").trim().slice(0, 300);
+        await crl.saveAll(all);
+        return reply(context, 200, { ok: true, requests: all.filter((r) => r.status === "pending") });
+      }
+      const list = await quiz.getCandidates();
+      const i = list.findIndex((c) => quiz.normCode(c.code) === quiz.normCode(rq.code));
+      if (i < 0) return reply(context, 404, { ok: false, error: "Thí sinh này không còn trong danh sách." });
+      const { normPhone: np } = require("../_lib/phone");
+      const old = list[i], ch = rq.changes || {}, merged = Object.assign({}, old), applied = {};
+      Object.keys(ch).forEach((k) => {
+        const to = ch[k] && ch[k].to;
+        if (k === "name") merged.name = String(to).slice(0, 100);
+        else if (k === "email") merged.email = quiz.normEmail(to);
+        else if (k === "manager") merged.manager = String(to).slice(0, 100);
+        else if (k === "title") merged.title = quiz.normTitle(to) || quiz.DEFAULT_TITLE;
+        else if (k === "segment") merged.segment = quiz.normSegment(to);
+        else if (k === "phone") { const p = np(to); if (!p) return; merged.phone = p; }
+        else return;
+        applied[k] = { from: String((ch[k] && ch[k].from) || ""), to: String(to) };
+      });
+      delete merged.confirmed; // thông tin đổi => cần xác nhận lại
+      merged.audit = (old.audit || []).concat([{ at: Date.now(), kind: "edit", by: u.email, byName: "Quản trị viên (duyệt yêu cầu của thí sinh)", changes: applied }]).slice(-30);
+      list[i] = merged;
+      await quiz.saveCandidates(list);
+      rq.status = "approved"; rq.doneAt = Date.now(); rq.by = u.email;
+      await crl.saveAll(all);
+      return reply(context, 200, { ok: true, candidates: list, requests: all.filter((r) => r.status === "pending") });
     }
 
     if (op === "setDefaultExam") {

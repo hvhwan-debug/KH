@@ -95,6 +95,8 @@ button,input{font:inherit;color:inherit}
 
 /* Form */
 .field{margin-bottom:18px}
+.reqbox{margin-top:14px;padding:16px;border:1.5px solid var(--line);border-radius:16px;background:#F7FBFB}
+.reqbox .field{margin-bottom:12px}
 .field label{display:block;font-size:13px;font-weight:700;margin-bottom:7px}
 .inwrap{position:relative}
 .inwrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;transition:color .15s}
@@ -429,6 +431,22 @@ body.exam #wm{display:block}
       <div class="rules" id="rulesBox"></div>
       <ul class="notes" id="notesBox"></ul>
       <div id="resumeMsg"></div>
+      <div id="reqState"></div>
+      <button class="btn ghost" id="btnReqOpen" type="button" style="margin-top:12px">Thông tin chưa đúng? Yêu cầu điều chỉnh</button>
+      <div class="reqbox hide" id="reqBox">
+        <h2 style="font-size:16px;margin:0 0 4px">Yêu cầu điều chỉnh thông tin</h2>
+        <p class="small" style="margin:0 0 12px;color:var(--muted)">Sửa các ô chưa đúng rồi gửi. Thông tin chỉ được cập nhật sau khi quản trị viên xác nhận. Bạn vẫn có thể làm bài ngay trong lúc chờ.</p>
+        <div class="field"><label for="rqName">Họ và tên</label><input id="rqName" type="text" autocomplete="off" maxlength="80" style="padding-left:14px"></div>
+        <div class="field"><label for="rqEmail">Email</label><input id="rqEmail" type="email" autocomplete="off" autocapitalize="none" maxlength="120" style="padding-left:14px"></div>
+        <div class="field"><label for="rqPhone">Số điện thoại / Zalo</label><input id="rqPhone" type="tel" inputmode="tel" autocomplete="off" maxlength="20" style="padding-left:14px"></div>
+        <div class="field"><label for="rqManager">Quản lí</label><input id="rqManager" type="text" autocomplete="off" maxlength="100" style="padding-left:14px"></div>
+        <div class="field"><label for="rqTitle">Chức danh</label><input id="rqTitle" type="text" autocomplete="off" maxlength="50" style="padding-left:14px"></div>
+        <div class="field"><label for="rqSegment">Nhóm ngành</label><select id="rqSegment" style="width:100%;border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;font-size:16px;background:#FAFCFC"><option value="both">Cả hai (Gia dụng + Máy lọc nước)</option><option value="gia_dung">Chỉ Gia dụng</option><option value="may_loc">Chỉ Máy lọc nước</option></select></div>
+        <div class="field"><label for="rqNote">Ghi chú cho quản trị viên (không bắt buộc)</label><textarea id="rqNote" rows="3" maxlength="500" placeholder="Ví dụ: tên tôi bị sai dấu, hoặc tôi đã chuyển sang nhóm của chị B..." style="width:100%;border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;font-size:16px;font-family:inherit;background:#FAFCFC;resize:vertical"></textarea></div>
+        <button class="btn go" id="btnReqSend" type="button">Gửi yêu cầu</button>
+        <button class="btn ghost" id="btnReqCancel" type="button">Huỷ</button>
+        <div id="reqMsg" role="alert"></div>
+      </div>
       <button class="btn go" id="btnStart" type="button" style="margin-top:20px">Bắt đầu làm bài</button>
       <button class="btn ghost" id="btnBack" type="button">Không phải tôi, nhập lại</button>
       <div id="startMsg" role="alert"></div>
@@ -619,8 +637,8 @@ $('scrCheck').addEventListener('submit', async function(e){
   var j = res.j;
   noteServerTime(j);
   if (!j.ok){ msg('checkMsg', j.error || 'Có lỗi xảy ra, thử lại sau.'); return; }
-  ST.cand = { code:j.candidate.code, name:j.candidate.name, email:j.candidate.email, manager:j.candidate.manager, phone:j.candidate.phone || '', inCode:code, inEmail:email };
-  ST.phoneNew = '';
+  ST.cand = { code:j.candidate.code, name:j.candidate.name, email:j.candidate.email, manager:j.candidate.manager, phone:j.candidate.phone || '', segment:j.candidate.segment || 'both', title:j.candidate.title || 'PC', inCode:code, inEmail:email };
+  ST.phoneNew = ''; ST.pending = !!j.pendingRequest;
   ST.exam = j.exam || {};
   applyPractice();
   if (ST.exam.title) $('examTitle').textContent = ST.exam.title;
@@ -638,6 +656,8 @@ function renderConfirm(){
     '<div><dt>Email</dt><dd>'+esc(c.email)+'</dd></div>'+
     (c.manager ? '<div><dt>Quản lí</dt><dd>'+esc(c.manager)+'</dd></div>' : '')+
     (c.phone ? '<div><dt>Số điện thoại / Zalo</dt><dd>'+esc(c.phone)+'</dd></div>' : '');
+  $('reqBox').classList.add('hide'); $('btnReqOpen').classList.remove('hide'); msg('reqMsg','');
+  $('reqState').innerHTML = ST.pending ? '<div class="msg info">Yêu cầu điều chỉnh thông tin của bạn đang chờ quản trị viên xác nhận. Bạn vẫn có thể làm bài.</div>' : '';
   $('phoneBox').classList.toggle('hide', !!c.phone);
   if (!c.phone){ $('inPhone').value = ST.phoneNew || ''; msg('phoneMsg',''); }
   var secs = x.secondsPerQuestion || 60, n = x.questionCount || 0;
@@ -666,6 +686,30 @@ function normPhoneVN(v){
   if (/^\+84/.test(s)) s = '0' + s.slice(3); else if (/^84\d{9}$/.test(s)) s = '0' + s.slice(2);
   return /^0[2-9]\d{8}$/.test(s) ? s : '';
 }
+/* ---------- Yêu cầu điều chỉnh thông tin (quản trị viên xác nhận mới cập nhật) ---------- */
+$('btnReqOpen').addEventListener('click', function(){
+  var c = ST.cand;
+  $('rqName').value = c.name || ''; $('rqEmail').value = c.email || ''; $('rqPhone').value = c.phone || '';
+  $('rqManager').value = c.manager || ''; $('rqTitle').value = c.title || 'PC'; $('rqSegment').value = c.segment || 'both'; $('rqNote').value = '';
+  msg('reqMsg',''); $('reqBox').classList.remove('hide'); $('btnReqOpen').classList.add('hide'); $('rqName').focus();
+});
+$('btnReqCancel').addEventListener('click', function(){ $('reqBox').classList.add('hide'); $('btnReqOpen').classList.remove('hide'); });
+$('btnReqSend').addEventListener('click', async function(){
+  var btn = $('btnReqSend'), label = btn.textContent;
+  var phone = $('rqPhone').value.trim();
+  if (phone && !normPhoneVN(phone)){ msg('reqMsg','Số điện thoại chưa đúng (cần 10 số, bắt đầu bằng 0).'); $('rqPhone').focus(); return; }
+  btn.disabled = true; btn.textContent = 'Đang gửi…'; msg('reqMsg','');
+  var res;
+  try { res = await api('/api/kt-request', { code:ST.cand.inCode, email:ST.cand.inEmail, note:$('rqNote').value,
+    changes:{ name:$('rqName').value, email:$('rqEmail').value, phone:phone, manager:$('rqManager').value, title:$('rqTitle').value, segment:$('rqSegment').value } }); } catch(e){ res = null; }
+  btn.disabled = false; btn.textContent = label;
+  if (!res){ msg('reqMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
+  if (!res.j.ok){ msg('reqMsg', res.j.error || 'Không gửi được yêu cầu.'); return; }
+  ST.pending = true;
+  $('reqBox').classList.add('hide'); $('btnReqOpen').classList.remove('hide');
+  $('reqState').innerHTML = '<div class="msg ok">Đã gửi yêu cầu điều chỉnh. Quản trị viên sẽ xem xét và cập nhật nếu thông tin đúng. Bạn vẫn có thể làm bài ngay.</div>';
+});
+
 $('btnStart').addEventListener('click', function(){
   if (!ST.cand.phone){
     var p = normPhoneVN($('inPhone').value);
