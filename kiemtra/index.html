@@ -359,53 +359,49 @@ body.exam #wm{display:block}
 .logo img,.side-brand .dot img,.topbar .dot img{width:100%;height:100%;object-fit:contain;display:block}
 .brandfull{display:block;margin:0 auto 10px;width:auto;height:112px;max-width:70%;object-fit:contain}
 
-/* ===== Màn hình vào bài (nhập mã đề / xác thực / xác nhận): tách đôi gọn, biểu mẫu trắng bên trái, ảnh minh hoạ bên phải ===== */
-:root{--lp-w:clamp(420px,38vw,540px)}
-body.introbg{background:#fff}
-body.introbg::before{content:"";position:fixed;z-index:0;top:12px;right:12px;bottom:12px;left:var(--lp-w);border-radius:24px;background:#0A63C4 url(/kiemtra/bg-login.jpg) no-repeat 82% 60%/cover;box-shadow:0 30px 70px -40px rgba(10,42,102,.6)}
+/* ===== Màn hình vào bài (nhập mã đề / xác thực / xác nhận): ảnh nền toàn khung, thẻ biểu mẫu căn giữa ===== */
+body.introbg{background:#0A63C4 url(/kiemtra/bg-login.jpg) no-repeat 72% center/cover;background-attachment:fixed}
+body.introbg::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(80% 90% at 50% 50%,rgba(4,27,84,.08),rgba(4,27,84,.42))}
 body.introbg .practice-bar{position:relative;z-index:3}
-body.introbg .wrap{position:relative;z-index:1;width:var(--lp-w);max-width:none;margin:0;gap:0;padding:24px clamp(24px,3.2vw,48px) 16px;background:#fff;min-height:100vh;justify-content:flex-start}
-body.introbg .top{display:flex;margin:0}
-body.introbg .top .logo{width:34px;height:34px;border-radius:10px}
-body.introbg .top h2{font-size:14px;color:var(--ink)}
-body.introbg .stage{display:flex;flex-direction:column;justify-content:center;flex:1;max-width:none;margin:0;width:100%;gap:0;grid-template-columns:none}
-body.introbg .stage>main{order:1;gap:14px}
+body.introbg .wrap{position:relative;z-index:1;width:100%;max-width:none;margin:0;gap:0;padding:28px 20px 22px;min-height:100vh;justify-content:center;align-items:center;background:none}
+body.introbg .top{display:flex;justify-content:center;margin:0 0 16px}
+body.introbg .top h2{color:#fff;font-size:16px;text-shadow:0 2px 14px rgba(2,20,70,.55)}
+body.introbg .stage{display:block;flex:0 0 auto;width:min(460px,100%);max-width:none;margin:0;gap:0;grid-template-columns:none}
+body[data-scr="confirm"].introbg .stage{width:min(560px,100%)}
 body.introbg .hero{display:contents}
 body.introbg .hero>div:first-child,body.introbg .hero .art{display:none}
+body.introbg .stage>main{background:#fff;border-radius:24px;padding:22px 26px;gap:14px;box-shadow:0 40px 90px -30px rgba(2,20,70,.75),0 2px 10px rgba(2,20,70,.12)}
 body.introbg .card{background:transparent;border:0;box-shadow:none;padding:0;border-radius:0;overflow:visible;animation:none}
 body.introbg .card::before{display:none}
-body.introbg .card .brandfull{display:none}
-body.introbg .card h1{font-size:26px;margin:0 0 6px}
-body.introbg .card .lead{font-size:14px;line-height:1.55;margin:0 0 14px}
+body.introbg .card .brandfull{display:block;height:84px;max-width:60%;margin:0 auto 6px}
+body.introbg .card h1{font-size:25px;margin:0 0 6px;text-align:center}
+body.introbg .card .lead{font-size:14px;line-height:1.55;margin:0 0 14px;text-align:center}
+body.introbg #scrConfirm h1,body.introbg #scrConfirm .lead{text-align:left}
 body.introbg .card .field{margin-bottom:12px}
 body.introbg .card .field input{padding-top:12px;padding-bottom:12px}
 body.introbg .card .btn.go{padding-top:13px;padding-bottom:13px}
 body.introbg .steps li{font-size:12px}
-/* ba lợi ích: một hàng nhỏ gọn, chỉ biểu tượng và tiêu đề */
-body.introbg .hero .feats{order:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:22px 0 0;padding:16px 0 0;border-top:1px solid var(--line);list-style:none}
-body.introbg .hero .feats li{display:flex;flex-direction:column;gap:6px;align-items:flex-start;padding:0;background:none;border:0}
-body.introbg .hero .feats .fi{flex:0 0 auto;width:30px;height:30px;border-radius:9px;background:var(--brand-soft);border:0}
-body.introbg .hero .feats .fi svg{stroke:var(--brand);width:17px;height:17px}
-body.introbg .hero .feats b{display:block;color:var(--ink);font-size:12.5px;line-height:1.35;margin:0;font-weight:700}
-body.introbg .hero .feats span:not(.fi){display:none}
-body.introbg .foot{margin-top:10px;text-align:left;color:var(--muted);font-size:11.5px}
-@media(max-width:899px){
-  body.introbg::before{left:0;right:0;top:0;bottom:auto;height:200px;border-radius:0 0 28px 28px;background:linear-gradient(180deg,rgba(4,27,84,.6),rgba(4,27,84,.12)),#0A63C4 url(/kiemtra/bg-login-sm.jpg) no-repeat 70% 35%/cover;box-shadow:none}
-  body.introbg .wrap{width:100%;background:transparent;padding:22px 18px 24px;min-height:100vh}
-  body.introbg .top{margin-bottom:12px}
-  body.introbg .top h2{color:#fff;text-shadow:0 1px 8px rgba(2,20,70,.5)}
-  body.introbg .steps li{color:#fff}
-  body.introbg .steps .bar{background:rgba(255,255,255,.4)}
-  body.introbg .steps li.done .bar{background:#fff}
-  body.introbg .steps li.cur .n{box-shadow:0 0 0 4px rgba(255,255,255,.3)}
-  body.introbg .card{background:#fff;border-radius:22px;padding:22px 18px;box-shadow:0 20px 50px -26px rgba(10,37,82,.5)}
-  body.introbg .hero .feats{display:none}
-  body.introbg .card h1{font-size:24px}
-}
+/* ba lợi ích: hàng nhỏ ngay trong thẻ (chỉ ở màn nhập mã đề và xác thực) */
+.stage>main>.feats{display:none}
+body.introbg main>.feats{display:none}
+body.introbg .top .logo{display:none}
+body[data-scr="exam"].introbg main>.feats,body[data-scr="check"].introbg main>.feats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:4px 0 0;padding:14px 0 0;border-top:1px solid var(--line);list-style:none}
+body.introbg main>.feats li{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;padding:0;background:none;border:0}
+body.introbg main>.feats .fi{width:30px;height:30px;border-radius:9px;background:var(--brand-soft);border:0}
+body.introbg main>.feats .fi svg{stroke:var(--brand);width:17px;height:17px}
+body.introbg main>.feats b{display:block;color:var(--ink);font-size:12px;line-height:1.35;margin:0;font-weight:700}
+body.introbg main>.feats span:not(.fi){display:none}
+body.introbg .foot{margin-top:14px;text-align:center;color:rgba(255,255,255,.88);font-size:12px;text-shadow:0 1px 8px rgba(2,20,70,.6)}
+@media(max-width:560px){
+  body.introbg{background-image:url(/kiemtra/bg-login-sm.jpg);background-position:center bottom;background-attachment:scroll}
+  body.introbg .wrap{padding:20px 14px 18px}
+  body.introbg .stage>main{padding:18px 16px;border-radius:20px}
+  body.introbg .card .brandfull{height:70px}
+  body.introbg .card h1{font-size:22px}
 }
 </style>
 </head>
-<body class="introbg">
+<body class="introbg" data-scr="check">
 <div class="practice-bar hide" id="practiceBar" role="status"><span>THI THỬ</span><small>Không phải thi chính thức</small></div>
 <div class="wrap intro" id="app">
   <header class="top">
@@ -636,6 +632,7 @@ var $ = function(id){ return document.getElementById(id); };
 var ST = { off:0, res:null, sysT:null, flags:{ blur:0, shot:0 }, cand:null, exam:null, inProgress:null, attemptId:'', q:null, index:0, total:0, secs:60, endsAt:0, timer:null, selected:-1, sel:[], text:'', busy:false, quizOn:false };
 // Mỗi đề thi có thể có link riêng dạng ...?exam=<mã đề>; không truyền thì dùng đúng đề đang đặt mặc định phía máy chủ.
 var EXAM_ID = new URLSearchParams(location.search).get('exam') || '';
+(function(){ var f = document.querySelector('.hero .feats'), m = document.querySelector('.stage > main'); if (f && m) m.appendChild(f); })();
 var SCREENS = { exam:'scrExam', check:'scrCheck', confirm:'scrConfirm', photo:'scrPhoto', quiz:'scrQuiz', result:'scrResult', inapp:'scrInAppBlock' };
 var STEP_OF = { exam:1, check:1, confirm:2, photo:2, quiz:3, result:4 };
 
@@ -681,6 +678,7 @@ function show(name){
   ST.quizOn = (name === 'quiz');
   document.body.classList.toggle('exam', name === 'quiz');
   document.body.classList.toggle('rs', name === 'result'); // bước kết quả: ẩn tiêu đề trang vì thẻ kết quả đã có tên đề
+  document.body.dataset.scr = name;
   var isIntro = (name === 'exam' || name === 'check' || name === 'confirm');
   document.body.classList.toggle('introbg', isIntro); // nền ảnh chỉ ở các màn vào bài, các màn làm bài/kết quả giữ nền phẳng để dễ đọc
   $('app').className = 'wrap ' + (isIntro ? 'intro' : 'focus');
