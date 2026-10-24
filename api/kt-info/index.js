@@ -8,7 +8,8 @@ module.exports = async function (context, req) {
     if (guardConfigured(context)) return;
     if (!requireAjax(context, req)) return;
     const defaultSettings = await quiz.getSettings();
-    const examId = String((req.query && req.query.exam) || defaultSettings.examPeriod || "");
+    const examId = String((req.query && req.query.exam) || "").trim();
+    if (!examId) return reply(context, 400, { ok: false, needExam: true, error: "Vui lòng nhập mã đề thi hoặc mở đường link của đề.", serverNow: Date.now() });
     if (!(await quiz.examKnown(examId, defaultSettings))) {
       return reply(context, 404, { ok: false, error: "Không tìm thấy đề thi này. Hãy kiểm tra lại đường link hoặc liên hệ quản trị viên.", serverNow: Date.now() });
     }

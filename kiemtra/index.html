@@ -371,7 +371,7 @@ body.exam #wm{display:block}
     <aside class="hero" aria-label="Giới thiệu">
       <div>
         <span class="pill"><i></i>Nền tảng kiểm tra trực tuyến</span>
-        <h3>BÀI KIỂM TRA ĐỊNH KÌ - PCs THÁNG 10.2026</h3>
+        <h3>HỆ THỐNG KIỂM TRA TRỰC TUYẾN</h3>
       </div>
       <ul class="feats">
         <li><span class="fi" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="2"/><path d="M6 16c.6-1.8 2-2.6 3-2.6s2.4.8 3 2.6M14 9h4M14 13h4"/></svg></span><div><b>Không cần đăng nhập</b><span>Vào bài chỉ với mã nhân viên và email công ty.</span></div></li>
@@ -408,6 +408,19 @@ body.exam #wm{display:block}
       <button class="btn ghost" id="btnInAppRetry" type="button">Tôi đã mở bằng trình duyệt khác, thử lại</button>
       <div id="inAppMsg" role="status"></div>
     </section>
+
+    <!-- 0. Nhập mã đề thi (khi mở trang mà không kèm link của đề) -->
+    <form class="card hide" id="scrExam" novalidate>
+      <img class="brandfull" src="/kiemtra/logo.png" alt="Hệ thống kiểm tra trực tuyến">
+      <h1 tabindex="-1">Nhập mã đề thi</h1>
+      <p class="lead">Nhập mã đề do quản lí cung cấp, hoặc mở trực tiếp đường link của đề thi.</p>
+      <div class="field">
+        <label for="inExam">Mã đề thi</label>
+        <div class="inwrap"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><input id="inExam" name="exam" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="40" placeholder="Ví dụ: 2026-10" required></div>
+      </div>
+      <button class="btn go" id="btnExam" type="submit">Tiếp tục</button>
+      <div id="examMsg" role="alert"></div>
+    </form>
 
     <!-- 1. Nhập thông tin -->
     <form class="card" id="scrCheck" novalidate>
@@ -577,8 +590,8 @@ var $ = function(id){ return document.getElementById(id); };
 var ST = { off:0, res:null, sysT:null, flags:{ blur:0, shot:0 }, cand:null, exam:null, inProgress:null, attemptId:'', q:null, index:0, total:0, secs:60, endsAt:0, timer:null, selected:-1, sel:[], text:'', busy:false, quizOn:false };
 // Mỗi đề thi có thể có link riêng dạng ...?exam=<mã đề>; không truyền thì dùng đúng đề đang đặt mặc định phía máy chủ.
 var EXAM_ID = new URLSearchParams(location.search).get('exam') || '';
-var SCREENS = { check:'scrCheck', confirm:'scrConfirm', photo:'scrPhoto', quiz:'scrQuiz', result:'scrResult', inapp:'scrInAppBlock' };
-var STEP_OF = { check:1, confirm:2, photo:2, quiz:3, result:4 };
+var SCREENS = { exam:'scrExam', check:'scrCheck', confirm:'scrConfirm', photo:'scrPhoto', quiz:'scrQuiz', result:'scrResult', inapp:'scrInAppBlock' };
+var STEP_OF = { exam:1, check:1, confirm:2, photo:2, quiz:3, result:4 };
 
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 // Mốc màu theo điểm (tỉ lệ đúng %, tương đương thang 10): <60% đỏ, 60-70% vàng, 70-90% xanh dương, >=90% xanh lá.
@@ -622,7 +635,7 @@ function show(name){
   ST.quizOn = (name === 'quiz');
   document.body.classList.toggle('exam', name === 'quiz');
   document.body.classList.toggle('rs', name === 'result'); // bước kết quả: ẩn tiêu đề trang vì thẻ kết quả đã có tên đề
-  $('app').className = 'wrap ' + ((name === 'check' || name === 'confirm') ? 'intro' : 'focus');
+  $('app').className = 'wrap ' + ((name === 'exam' || name === 'check' || name === 'confirm') ? 'intro' : 'focus');
   var h = document.querySelector('#'+SCREENS[name]+' [tabindex="-1"]');
   if (h) h.focus({preventScroll:true});
   window.scrollTo(0,0);
@@ -1583,11 +1596,35 @@ $('btnCopyLink').addEventListener('click', async function(){
   catch(e){ $('inAppUrl').select(); document.execCommand('copy'); msg('inAppMsg','Đã sao chép. Dán vào Chrome/Safari để mở.', 'ok'); }
 });
 $('btnInAppRetry').addEventListener('click', function(){
-  if (!checkInApp()){ show('check'); $('inCode').focus(); }
+  if (!checkInApp()){ if (!EXAM_ID){ show('exam'); $('inExam').focus(); } else { show('check'); $('inCode').focus(); } }
   else msg('inAppMsg','Vẫn đang mở trong '+$('inAppName').textContent+'. Hãy mở bằng trình duyệt mặc định trước.', 'err');
 });
 
-if (!checkInApp()) $('inCode').focus();
+if (!checkInApp()){
+  if (!EXAM_ID){ show('exam'); $('inExam').focus(); } else $('inCode').focus();
+}
+
+
+/* ---------- Bước 0: nhập mã đề (vào bằng /kiemtra/ không kèm link của đề) ---------- */
+async function lookupExam(code){
+  try {
+    var r = await fetch('/api/kt-info?exam=' + encodeURIComponent(code), { headers:{ 'X-Requested-With':'livotec' }, credentials:'same-origin' });
+    var j = await r.json(); return j && j.ok && j.exam ? j.exam : null;
+  } catch(e){ return undefined; }
+}
+$('scrExam').addEventListener('submit', async function(ev){
+  ev.preventDefault();
+  var raw = $('inExam').value.trim();
+  msg('examMsg','');
+  if (!raw){ msg('examMsg','Nhập mã đề thi.'); $('inExam').focus(); return; }
+  var btn = $('btnExam'); btn.disabled = true; btn.textContent = 'Đang kiểm tra…';
+  var code = raw, ex = await lookupExam(code);
+  if (!ex && ex !== undefined && raw.toLowerCase() !== raw){ code = raw.toLowerCase(); ex = await lookupExam(code); }
+  btn.disabled = false; btn.textContent = 'Tiếp tục';
+  if (ex === undefined){ msg('examMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
+  if (!ex){ msg('examMsg','Không tìm thấy đề thi với mã này. Kiểm tra lại mã hoặc liên hệ quản lí.'); $('inExam').focus(); return; }
+  location.href = '/kiemtra/?exam=' + encodeURIComponent(ex.id || code);
+});
 
 /* ---------- Giờ mở / đóng đề: hiện ngay khi mở link ---------- */
 var INFO = null, schedT = null, BTN_CHECK_LABEL = '';
@@ -1639,13 +1676,14 @@ function renderSched(){
   }
 }
 async function loadInfo(){
+  if (!EXAM_ID) return;
   var r = null;
   try { r = await fetch('/api/kt-info' + (EXAM_ID ? '?exam=' + encodeURIComponent(EXAM_ID) : ''), { headers:{ 'X-Requested-With':'livotec' }, credentials:'same-origin' }); r = await r.json(); } catch(e){ r = null; }
   if (!r) return;
   noteServerTime(r);
   if (!r.ok || !r.exam) return;
   INFO = r.exam;
-  if (INFO.title) $('examTitle').textContent = INFO.title;
+  if (INFO.title){ $('examTitle').textContent = INFO.title; var hh = document.querySelector('.hero h3'); if (hh) hh.textContent = INFO.title.toUpperCase(); }
   if (!ST.exam){ ST.exam = { title: INFO.title, practice: INFO.practice }; applyPractice(); }
   renderSched();
   clearInterval(schedT);

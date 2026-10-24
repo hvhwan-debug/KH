@@ -1020,13 +1020,13 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
     <div id="tab-settings" class="tabpane hide">
       <div class="card">
         <h1>Đề mặc định</h1>
-        <p class="small">Đề mà link chung <code>/kiemtra/</code> (không kèm <code>?exam=</code>) dẫn thí sinh tới. Mỗi đề vẫn có link riêng ở trang của đề.</p>
+        <p class="small">Chỉ dùng làm đề mặc định trong trang quản trị và thống kê. Thí sinh <b>không</b> còn vào thẳng đề này: họ vào bằng link riêng của từng đề (<code>/kiemtra/?exam=&lt;mã đề&gt;</code>) hoặc mở <code>/kiemtra/</code> rồi nhập <b>mã đề</b>. Mã đề và link riêng nằm ở trang của từng đề.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <select id="setPeriod" style="max-width:420px;margin:0"></select>
           <button class="btn" type="button" onclick="saveSettings()">Lưu</button>
         </div>
         <div id="setPeriodMsg"></div>
-        <div class="lnkrow"><span>Link thi chung:</span> <a id="lnkExam" target="_blank" rel="noopener"></a> <button class="btn ghost sm" type="button" onclick="copyText(this.getAttribute('data-copy'), this)">Sao chép</button></div>
+        <div class="lnkrow"><span>Trang nhập mã đề:</span> <a id="lnkExam" target="_blank" rel="noopener"></a> <button class="btn ghost sm" type="button" onclick="copyText(this.getAttribute('data-copy'), this)">Sao chép</button></div>
         <div class="lnkrow"><span>Trang xác thực kết quả:</span> <a id="lnkVerify" target="_blank" rel="noopener"></a> <button class="btn ghost sm" type="button" onclick="copyText(this.getAttribute('data-copy'), this)">Sao chép</button></div>
         <p class="small" style="margin:2px 0 0">Mỗi thẻ kết quả có liên kết xác thực riêng (qua mã QR). Mở trang này rồi dán liên kết đó vào để kiểm tra một thẻ bất kỳ.</p>
         <script>(function(){var o=location.origin;[['lnkExam','/kiemtra/'],['lnkVerify','/kiemtra/ketqua.html']].forEach(function(x){var a=document.getElementById(x[0]);a.href=o+x[1];a.textContent=o.replace(/^https?:\/\//,'')+x[1];a.nextElementSibling.setAttribute('data-copy',o+x[1]);});})();</script>
@@ -1420,7 +1420,7 @@ function renderExHead(){
   $('ehMeta').innerHTML = 'Mã đề <code>' + esc(e.id) + '</code> · ' + esc(examWindowText(e)) +
     '<div class="ehlink"><span>Link thi:</span> <a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link.replace(/^https?:\/\//,'')) + '</a> <button class="btn ghost sm" type="button" onclick="copyText(\'' + esc(link) + '\', this)">Sao chép</button></div>';
   $('ehQ').textContent = qCountOf(e);
-  $('ehAct').innerHTML = (e.id !== EX_DEFAULT ? '<button class="btn ghost sm" onclick="setDefaultExamUI(\'' + esc(e.id) + '\')" title="Link chung (không kèm ?exam=) sẽ dẫn tới đề này">Đặt làm đề mặc định</button>' : '') +
+  $('ehAct').innerHTML = (e.id !== EX_DEFAULT ? '<button class="btn ghost sm" onclick="setDefaultExamUI(\'' + esc(e.id) + '\')" title="Đề mặc định chỉ dùng trong trang quản trị; thí sinh vào bằng link hoặc mã đề">Đặt làm đề mặc định</button>' : '') +
     (e.id !== EX_DEFAULT ? '<button class="btn dghost sm" onclick="deleteExamUI(\'' + esc(e.id) + '\')">Xoá đề</button>' : '');
 }
 function examBadges(e){
@@ -1589,7 +1589,7 @@ async function saveExam(){
   else msg('exMsg','Đã lưu cài đặt đề.','ok');
 }
 async function setDefaultExamUI(id){
-  if (!confirm('Đặt "'+id+'" làm đề thi mặc định (link công khai không kèm ?exam= sẽ dẫn tới đề này)?')) return;
+  if (!confirm('Đặt "'+id+'" làm đề thi mặc định (chỉ dùng trong trang quản trị; thí sinh vẫn phải vào bằng link hoặc mã đề)?')) return;
   const { j } = await api('POST','/api/kt-admin', { op:'setDefaultExam', id });
   if (!j.ok){ alert(j.error); return; }
   await loadExams(); await loadSettings();
@@ -2453,7 +2453,7 @@ async function saveSettings(){
   if (period && !/^[a-z0-9][a-z0-9-]{0,39}$/i.test(period)){ msg('setPeriodMsg','Mã đề không hợp lệ.'); return; }
   if (period && period !== CUR_PERIOD){
     const e = examById(period), own = QUESTIONS.filter(q => q.active !== false && q.period === period).length;
-    if (!confirm('Đặt “' + ((e && e.title) || period) + '” làm đề mặc định (link chung /kiemtra/ sẽ dẫn tới đề này)?' + (own ? '' : '\n\n⚠ Đề này chưa có câu hỏi riêng.'))) return;
+    if (!confirm('Đặt “' + ((e && e.title) || period) + '” làm đề mặc định (chỉ dùng trong trang quản trị; thí sinh vẫn phải vào bằng link hoặc mã đề)?' + (own ? '' : '\n\n⚠ Đề này chưa có câu hỏi riêng.'))) return;
   }
 
   const { j } = await api('POST','/api/kt-admin', {
