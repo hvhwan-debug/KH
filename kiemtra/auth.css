@@ -58,3 +58,10 @@ body.au-lookup .state{padding:6px 0 0;color:var(--au-muted)}
   body:has(#loginScreen:not(.hide),#resetScreen:not(.hide),#deniedScreen:not(.hide)),body.au-lookup{background-image:url(/kiemtra/bg-light-sm.jpg);background-position:60% center;background-attachment:scroll}
 }
 @media(prefers-reduced-motion:reduce){.au-bar,:is(#loginScreen,#deniedScreen) .card,.card.auth,body.au-lookup #card{animation:none!important}}
+
+/* Điện thoại: ô nhập 16px (iOS không tự phóng to trang khi chạm vào ô), vùng chạm tối thiểu 44px */
+@media(max-width:560px){
+  :is(#loginScreen,#resetScreen,#deniedScreen,.card.auth,body.au-lookup) input:not([type=checkbox]):not([type=radio]){font-size:16px}
+  .au-back{display:inline-flex;align-items:center;min-height:44px;padding:0 12px}
+  :is(#loginScreen,#resetScreen,#deniedScreen,.card.auth) .linkbtn{min-height:44px;padding:0 6px}
+}
