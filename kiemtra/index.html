@@ -1644,9 +1644,29 @@ function renderTries(A){
   if (cur && off && cur !== off) note = 'Lần này thấp hơn lần ' + off.n + ', nên kết quả chính thức vẫn là <b>lần ' + off.n + ' (' + off.score + '/' + off.total + ')</b>.';
   else if (A.list.length > 1) note = 'Kết quả chính thức là lần có điểm cao nhất.';
   else if (A.left > 0) note = 'Bạn còn ' + A.left + ' lượt làm lại. Kết quả chính thức là lần có điểm cao nhất.';
-  box.innerHTML = head + '<div class="tl">' + cells + '</div>' + (note ? '<p class="note">' + note + '</p>' : '');
+  var retry = (A.max > 0 && A.left > 0)
+    ? '<button class="btn go" id="btnRetry" type="button" style="margin-top:12px">Làm tiếp (lượt ' + (A.list.length + 1) + '/' + A.max + ')</button><div id="retryMsg" role="status"></div>'
+    : '';
+  box.innerHTML = head + '<div class="tl">' + cells + '</div>' + (note ? '<p class="note">' + note + '</p>' : '') + retry;
   box.classList.remove('hide');
 }
+// Nút "Làm tiếp" ở màn hình kết quả (khi còn lượt): kiểm tra lại với máy chủ rồi vào màn hình xác nhận để làm lượt kế tiếp
+$('resTries').addEventListener('click', async function(e){
+  var b = e.target.closest ? e.target.closest('#btnRetry') : null;
+  if (!b || !ST.cand || !ST.cand.inCode) return;
+  var lbl = b.textContent; b.disabled = true; b.textContent = 'Đang kiểm tra…';
+  var res; try { res = await api('/api/kt-check', { code:ST.cand.inCode, email:ST.cand.inEmail, examId:EXAM_ID }); } catch(err){ res = null; }
+  var gone = !document.body.contains(b); if (!gone){ b.disabled = false; b.textContent = lbl; }
+  if (!res){ msg('retryMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
+  var j = res.j; noteServerTime(j);
+  if (!j.ok){ msg('retryMsg', j.error || 'Có lỗi xảy ra, thử lại sau.'); return; }
+  if (j.alreadyDone){ renderResult(j.result, true); return; }
+  var c = j.candidate || {};
+  ST.cand.phone = c.phone || ST.cand.phone || ''; ST.cand.province = c.province || ''; ST.cand.region = c.region || ''; ST.cand.needRegion = !!c.needRegion;
+  ST.exam = j.exam || ST.exam; ST.pending = !!j.pendingRequest;
+  ST.inProgress = j.inProgress || null; ST.attempts = j.attempts || null;
+  renderConfirm();
+});
 function renderResult(r, already){
   ST.res = { r:r, already:already };
   renderTries(r.attempts);
