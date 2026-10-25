@@ -104,7 +104,7 @@ function ensureAnalysis(adv, attempt, settings, prev) {
 function rulesAdvice(f) {
   const p = f.pct, b = f.beh || {}, rnd = b.random || null;
   const headline = rnd ? "Kết quả này chưa phản ánh đúng sức của bạn"
-    : p >= 90 ? "Bạn làm bài rất vững" : p >= 80 ? "Kết quả tốt, chỉ cần thêm chút nữa là xuất sắc" : p >= 70 ? "Khá ổn, vẫn còn chỗ để bứt lên" : p >= 50 ? "Bạn đã có nền, cần ôn thêm vài chỗ" : "Nên củng cố lại phần kiến thức nền";
+    : p >= 90 ? "Bạn làm bài rất tốt" : p >= 80 ? "Kết quả tốt, chỉ cần thêm chút nữa là xuất sắc" : p >= 70 ? "Khá ổn, còn có thể tăng thêm" : p >= 50 ? "Bạn đã có nền, cần ôn thêm vài chỗ" : "Nên củng cố lại phần kiến thức nền";
   const parts = [rnd
     ? "Bạn đúng " + f.correct + "/" + f.total + " câu (" + p + "%), gần bằng mức nếu chọn bừa (khoảng " + rnd.chancePct + "%)" + (f.avgSecPerQ != null ? ", và mỗi câu chỉ mất khoảng " + f.avgSecPerQ + " giây" : "") + "."
     : "Bạn trả lời đúng " + f.correct + "/" + f.total + " câu (" + p + "%)."];
@@ -114,7 +114,7 @@ function rulesAdvice(f) {
 
   const actions = [];
   const timeoutAction = () => (f.beh && f.beh.lateTimeouts
-    ? "Các câu hết giờ (" + f.timeouts + " câu) dồn ở cuối bài: hãy giữ nhịp, không dành quá " + Math.round(f.secsPerQ * 0.7) + " giây cho một câu; câu chưa chắc thì chọn phương án hợp lý nhất rồi làm tiếp."
+    ? "Các câu hết giờ (" + f.timeouts + " câu) dồn ở cuối bài: bạn nên chia đều thời gian, không dành quá " + Math.round(f.secsPerQ * 0.7) + " giây cho một câu; câu chưa chắc thì chọn phương án hợp lý nhất rồi làm tiếp."
     : "Có " + f.timeouts + " câu hết giờ chưa kịp trả lời: tập đọc đề nhanh hơn, và khi chưa chắc hãy chọn phương án hợp lý nhất thay vì để trống.");
   if (rnd) {
     // Làm bừa: thống kê theo mảng chỉ là nhiễu, nên KHÔNG khuyên ôn mảng nào, mà khuyên làm lại cho đúng
@@ -146,7 +146,7 @@ function rulesAdvice(f) {
   }
   // Câu kết luôn có, dù danh sách phía trên dài đến đâu
   const closing = rnd ? "Nếu sau khi làm lại nghiêm túc vẫn còn phần chưa chắc, hãy hỏi quản lí trực tiếp để được giải đáp."
-    : p >= 90 ? "Bạn nắm kiến thức rất vững, đừng ngại chia sẻ cách học của mình với đồng nghiệp trong nhóm nhé." : "Ôn xong mà vẫn còn phần chưa rõ, bạn cứ hỏi thẳng quản lí để được giải đáp.";
+    : p >= 90 ? "Bạn nắm kiến thức rất tốt, đừng ngại chia sẻ cách học của mình với đồng nghiệp trong nhóm nhé." : "Ôn xong mà vẫn còn phần chưa rõ, bạn cứ hỏi thẳng quản lí để được giải đáp.";
   const ins = f.insight;
   const strengths = [];
   if (!rnd && ins) {
@@ -168,7 +168,7 @@ function goalOf(f) {
   if (ins.weakest && ins.weakest.pct < 70) bits.push("đúng ít nhất " + Math.min(ins.weakest.n, ins.weakest.correct + Math.max(1, Math.ceil(ins.weakest.n * 0.2))) + "/" + ins.weakest.n + " câu \"" + ins.weakest.name + "\"");
   if (f.nextBand) bits.push("đạt " + f.nextBand.needCorrect + "/" + f.total + " câu để lên " + f.nextBand.points + " điểm tuân thủ");
   if (f.timeouts >= 2) bits.push("không quá 1 câu hết giờ");
-  if (!bits.length) return f.pct >= 90 ? "Lần tới: giữ vững từ " + f.correct + "/" + f.total + " câu đúng trở lên." : "Lần tới: tăng thêm ít nhất 2 câu đúng (từ " + f.correct + " lên " + Math.min(f.total, f.correct + 2) + "/" + f.total + ").";
+  if (!bits.length) return f.pct >= 90 ? "Lần tới: giữ được từ " + f.correct + "/" + f.total + " câu đúng trở lên." : "Lần tới: tăng thêm ít nhất 2 câu đúng (từ " + f.correct + " lên " + Math.min(f.total, f.correct + 2) + "/" + f.total + ").";
   return "Lần tới: " + bits.slice(0, 2).join(" và ") + ".";
 }
 
@@ -182,12 +182,12 @@ function buildPrompt(f) {
     "Bạn là một người quản lí bán hàng tinh ý và thân thiện, vừa ngồi quan sát nhân viên (điện máy gia dụng, máy lọc nước) làm bài kiểm tra, giờ ngồi nói chuyện lại với họ. " +
     "Hãy viết nhận xét RIÊNG cho người này bằng tiếng Việt, xưng \"bạn\", đọc lên phải như một người thật đang nói chứ không phải báo cáo. " +
     "GIỌNG VĂN: ấm áp, thẳng thắn, đời thường; câu ngắn đến vừa, như nhắn tin cho đồng nghiệp. Mở đầu bằng điều đáng ghi nhận nhất ở bài này rồi mới nói đến chỗ cần cải thiện. " +
-    "Không dùng thuật ngữ thống kê (trung vị, phân vị, độ lệch, tỷ lệ...): nói \"thường mất khoảng 12 giây một câu\" thay vì \"trung vị 12 giây\". " +
+    "Không dùng thuật ngữ thống kê (trung vị, phân vị, độ lệch, tỷ lệ...) và không dùng cách nói văn vẻ, sáo ngữ như: chắc tay, vững vàng, hụt hơi, vào nhịp, bứt phá, phong độ, đà tăng, khoảng trống kiến thức, bị đồng hồ lấy mất, xương sống. Dùng lời thường ngày: làm tốt, trả lời đúng, làm chậm lại, hết giờ, tăng thêm điểm, chưa nắm chắc: nói \"thường mất khoảng 12 giây một câu\" thay vì \"trung vị 12 giây\". " +
     "Không dồn số liệu: cả bài nhận xét chỉ nhắc khoảng 3 đến 5 con số quan trọng nhất, còn lại diễn đạt bằng lời. " +
     "Không dùng văn mẫu và các cụm máy móc như \"Điều này cho thấy\", \"Cần lưu ý rằng\", \"Bạn đã đạt được\"; các mục không được lặp cùng một khuôn câu; không lạm dụng chữ \"hãy\" (tối đa một lần); không hoa mỹ, không nịnh, không phán xét. " +
-    "Ví dụ về GIỌNG VĂN (chỉ tham khảo cách nói, TUYỆT ĐỐI không chép lại nội dung hay con số): \"Nửa đầu bài bạn làm rất chắc, đến cuối thì hơi hụt hơi và mấy câu cuối bị đồng hồ lấy mất. Nếu giữ được nhịp như đoạn đầu thì điểm sẽ cao hơn nữa.\" " +
+    "Ví dụ về GIỌNG VĂN (chỉ tham khảo cách nói, TUYỆT ĐỐI không chép lại nội dung hay con số): \"Nửa đầu bài bạn làm rất tốt, càng về cuối thì làm chậm lại và mấy câu cuối chưa kịp chọn thì đã hết giờ. Nếu giữ được nhịp như đoạn đầu thì điểm sẽ cao hơn nữa.\" " +
     "NGUYÊN TẮC BẮT BUỘC: " +
-    "(1) Mọi nhận xét phải dựa trên dữ liệu được cung cấp và nêu được quan sát CỤ THỂ về chính bài này (vị trí câu, nhịp làm bài, tên mảng, so với kỳ trước...). " +
+    "(1) Mọi nhận xét phải dựa trên dữ liệu được cung cấp và nêu được quan sát CỤ THỂ về chính bài này (vị trí câu, tốc độ làm bài, tên mảng, so với kỳ trước...). " +
     "(2) Chỉ dùng ĐÚNG các con số có trong dữ liệu, không tự tính ra số mới, không làm tròn khác đi, không bịa. " +
     "(3) TUYỆT ĐỐI không tiết lộ hay đoán đáp án, không nêu nội dung câu hỏi, không bịa thông số sản phẩm, chính sách hay quy trình của công ty. " +
     "(4) Tránh câu sáo rỗng áp dụng cho ai cũng được (như \"hãy cố gắng hơn\", \"cần chăm chỉ\"). " +
