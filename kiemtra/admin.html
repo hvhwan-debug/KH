@@ -514,6 +514,17 @@ html{-webkit-text-size-adjust:100%}
 }
 /* ===================== Bảng "Bài đã nộp" ===================== */
 .rt-wrap{margin-top:16px}
+.qtxt{cursor:pointer}
+.qtxt:hover{color:var(--brand-deep);text-decoration:underline;text-underline-offset:3px}
+.qp-q{font-size:17px;font-weight:700;line-height:1.55;color:var(--ink);overflow-wrap:anywhere}
+.qp-opt{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin-top:8px;border:1.5px solid var(--line);border-radius:12px;font-size:14.5px;line-height:1.5}
+.qp-opt .lt{flex:0 0 auto;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#EEF1F4;color:var(--muted);font-weight:800;font-size:13px}
+.qp-opt.ok{background:var(--ok-soft);border-color:#9AD3B5;font-weight:600}
+.qp-opt.ok .lt{background:var(--ok);color:#fff}
+.qp-tag{flex:0 0 auto;font-size:11px;font-weight:800;color:var(--ok);background:#fff;border:1px solid #9FD3B5;border-radius:999px;padding:1px 8px;white-space:nowrap;align-self:center}
+.qp-ex{margin-top:14px;padding:12px 14px;border-radius:12px;background:#F4F8FB;font-size:14px;line-height:1.6}
+.qp-ex b{display:block;margin-bottom:2px;color:var(--brand-deep)}
+@media(max-width:640px){.qp-tag{display:none}.qp-q{font-size:16px}}
 .rc-sub{display:block;margin-top:3px;font-size:13px;font-weight:500;color:var(--muted)}
 table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;overflow:visible}
 .rt thead th{position:sticky;top:0;z-index:2;background:#F6F8FA;text-align:left;font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:11px 14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);white-space:nowrap}
@@ -2438,9 +2449,10 @@ function renderQList(){
   $('qCatF').value = cats.indexOf(cf) >= 0 ? cf : '*';
   const F = L.filter(q => ($('qCatF').value === '*' || (q.category||'') === $('qCatF').value) && (!q0 || spNorm(q.text).indexOf(q0) >= 0));
   const V = F.slice(0, QLIM);
+  QPREV_IDS = V.map(q => q.id);
   $('qShown').textContent = F.length === L.length ? '' : 'Đang lọc: ' + F.length + ' câu';
   $('qList').innerHTML = V.map(q =>
-    '<tr><td>' + esc(q.text.slice(0,110)) + (q.text.length > 110 ? '…' : '') + '</td><td class="small">' + esc(q.category || '') + '</td><td>' + (q.active !== false ? '<span class="badge y">Đang dùng</span>' : '<span class="badge n">Đã ẩn</span>') + '</td>' +
+    '<tr><td class="qtxt" onclick="qPreview(\'' + q.id + '\')" title="Bấm để xem câu hỏi và đáp án">' + esc(q.text.slice(0,110)) + (q.text.length > 110 ? '…' : '') + '</td><td class="small">' + esc(q.category || '') + '</td><td>' + (q.active !== false ? '<span class="badge y">Đang dùng</span>' : '<span class="badge n">Đã ẩn</span>') + '</td>' +
     '<td style="white-space:nowrap;text-align:right"><button class="btn ghost sm" onclick="editQuestion(\'' + q.id + '\')">Sửa</button> <button class="btn ghost sm" onclick="toggleQuestion(\'' + q.id + '\')">' + (q.active !== false ? 'Ẩn' : 'Hiện') + '</button> <button class="btn dghost sm" onclick="deleteQuestion(\'' + q.id + '\')">Xoá</button></td></tr>'
   ).join('') || '<tr><td colspan="4" class="small">' + (L.length ? 'Không có câu nào khớp bộ lọc.' : 'Đề này chưa có câu hỏi. Bấm “📥 Nhập từ file Excel” hoặc chép từ đề khác ở trên.') + '</td></tr>';
   $('qMore').classList.toggle('hide', F.length <= QLIM);
@@ -2601,6 +2613,50 @@ function qPanel(id, keep){
   });
   if (id && !$(id).classList.contains('hide')) $(id).scrollIntoView({behavior:'smooth', block:'start'});
 }
+// ----- Xem nhanh câu hỏi + đáp án: bấm vào câu hỏi trong ngân hàng đề -----
+let QPREV_IDS = [], QPREV_I = -1;
+const QP_TYPE = { single:'Một đáp án', multi:'Nhiều đáp án', tf:'Đúng / Sai', fill:'Điền đáp án' };
+function qPrevEnsure(){
+  let bg = document.getElementById('qPrevBg'); if (bg) return bg;
+  bg = document.createElement('div'); bg.id = 'qPrevBg'; bg.className = 'modal-bg hide';
+  bg.setAttribute('role', 'dialog'); bg.setAttribute('aria-modal', 'true'); bg.setAttribute('aria-label', 'Xem câu hỏi');
+  bg.onclick = ev => { if (ev.target === bg) qPrevClose(); };
+  bg.innerHTML = '<div class="card modal-box" style="width:min(680px,100%)"><button class="xclose modal-x" type="button" onclick="qPrevClose()" aria-label="Đóng">×</button><div id="qPrevBody"></div>' +
+    '<div class="modal-actions" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost sm" type="button" id="qpPrev" onclick="qPrevGo(-1)">‹ Câu trước</button><button class="btn sm" type="button" onclick="qPrevEdit()">Sửa câu hỏi</button><button class="btn ghost sm" type="button" id="qpNext" onclick="qPrevGo(1)">Câu sau ›</button></div></div>';
+  document.body.appendChild(bg); return bg;
+}
+function qPrevRender(){
+  const q = QUESTIONS.find(x => x.id === QPREV_IDS[QPREV_I]); if (!q) return;
+  const t = qTypeOf(q), opts = q.options || [];
+  const okSet = t === 'multi' ? (q.correctIndexes || []) : [q.correctIndex];
+  const meta = [q.category ? '<span class="ttlchip">' + esc(q.category) + '</span>' : '', '<span class="ttlchip" style="background:#EEF1F4;color:var(--muted)">' + esc(QP_TYPE[t] || t) + '</span>',
+    q.active !== false ? '<span class="badge y">Đang dùng</span>' : '<span class="badge n">Đã ẩn</span>'].join(' ');
+  let ans;
+  if (t === 'fill') {
+    ans = '<div class="small" style="margin:14px 0 6px;font-weight:700">Đáp án được chấp nhận</div>' + ((q.accepted || []).length ? (q.accepted || []).map(a => '<div class="qp-opt ok"><span class="lt">✓</span><span>' + esc(a) + '</span></div>').join('') : '<div class="small">Chưa có đáp án.</div>');
+  } else {
+    ans = '<div class="small" style="margin:14px 0 2px;font-weight:700">Các phương án</div>' + opts.map((o, i) => {
+      const ok = okSet.indexOf(i) >= 0;
+      return '<div class="qp-opt' + (ok ? ' ok' : '') + '"><span class="lt">' + (ok ? '✓' : String.fromCharCode(65 + i)) + '</span><span style="flex:1;min-width:0;overflow-wrap:anywhere">' + esc(o) + '</span>' + (ok ? '<span class="qp-tag">Đáp án đúng</span>' : '') + '</div>';
+    }).join('');
+  }
+  $('qPrevBody').innerHTML = '<div class="small" style="color:var(--muted);margin-bottom:8px">Câu ' + (QPREV_I + 1) + ' / ' + QPREV_IDS.length + '</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">' + meta + '</div>' +
+    '<div class="qp-q">' + esc(q.text) + '</div>' + ans +
+    (q.explanation ? '<div class="qp-ex"><b>Giải thích</b><div>' + esc(q.explanation) + '</div></div>' : '');
+  $('qpPrev').disabled = QPREV_I <= 0; $('qpNext').disabled = QPREV_I >= QPREV_IDS.length - 1;
+  const box = document.querySelector('#qPrevBg .modal-box'); if (box) box.scrollTop = 0;
+}
+function qPreview(id){
+  const i = QPREV_IDS.indexOf(id); if (i < 0) QPREV_IDS = [id]; QPREV_I = Math.max(0, QPREV_IDS.indexOf(id));
+  qPrevEnsure().classList.remove('hide'); document.body.style.overflow = 'hidden'; qPrevRender();
+}
+function qPrevGo(d){ const n = QPREV_I + d; if (n < 0 || n >= QPREV_IDS.length) return; QPREV_I = n; qPrevRender(); }
+function qPrevClose(){ const bg = document.getElementById('qPrevBg'); if (bg) bg.classList.add('hide'); document.body.style.overflow = ''; }
+function qPrevEdit(){ const id = QPREV_IDS[QPREV_I]; qPrevClose(); if (id) editQuestion(id); }
+document.addEventListener('keydown', ev => {
+  const bg = document.getElementById('qPrevBg'); if (!bg || bg.classList.contains('hide')) return;
+  if (ev.key === 'Escape') qPrevClose(); else if (ev.key === 'ArrowLeft') qPrevGo(-1); else if (ev.key === 'ArrowRight') qPrevGo(1);
+});
 function editQuestion(id){
   const q = QUESTIONS.find(x => x.id===id);
   if (!q) return;
