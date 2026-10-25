@@ -771,6 +771,10 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 .rd-fill.ok{background:var(--ok-soft);color:var(--ok);border-color:#9AD3B5}.rd-fill.bad{background:var(--bad-soft);color:var(--bad);border-color:#EDA7A1}.rd-fill.blank{background:#F1F3F5}
 @media(max-width:640px){.rd-opts,.rd-fill{margin-left:0}.rd-head{padding:12px}.rd-qh{flex-wrap:wrap}.rd-opt{flex-wrap:wrap}}
 
+#popBackdrop{position:fixed;inset:0;z-index:90;background:rgba(10,37,82,.55);backdrop-filter:blur(2px);display:none}
+.card.pop-card{position:fixed;z-index:100;top:4vh;left:50%;transform:translateX(-50%);width:min(860px,94vw);max-height:92vh;overflow:auto;margin:0;border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.35);animation:rdIn .18s ease-out}
+.card.pop-card > .xclose{position:sticky;top:0;float:right;z-index:6;width:42px;height:42px;margin:-6px -6px 0 8px;padding:0;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.97);color:var(--ink);font-size:26px;box-shadow:0 4px 16px rgba(10,37,82,.28)}
+@media(max-width:640px){.card.pop-card{top:0;width:100vw;max-height:100vh;border-radius:0}}
 #rdBackdrop{position:fixed;inset:0;z-index:90;background:rgba(10,37,82,.55);backdrop-filter:blur(2px);display:none}
 #resDetailCard.rd-pop{position:fixed;z-index:100;top:4vh;left:50%;transform:translateX(-50%);width:min(980px,94vw);max-height:92vh;overflow:auto;margin:0;border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.35);animation:rdIn .18s ease-out}
 #resDetailCard.rd-pop .rd-sticky{top:-20px;padding-top:14px}
@@ -1044,7 +1048,8 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
       <div class="card">
         <p class="small">Mỗi <b>ngân hàng</b> là một bộ câu hỏi độc lập theo chủ đề (ví dụ: An toàn lao động, Sản phẩm bếp từ). Một ngân hàng dùng được cho <b>nhiều đề thi</b> mà không cần sao chép câu hỏi: khi tạo đề, bạn chọn lấy bao nhiêu câu từ ngân hàng nào, độ khó nào (tab Đề thi → Cấu trúc đề).</p>
       </div>
-      <div class="card">
+      <div class="card hide" id="bkFormCard">
+        <button class="xclose" type="button" onclick="bkClose()" aria-label="Đóng">×</button>
         <h1 id="bkFormTitle">Tạo ngân hàng mới</h1>
         <input type="hidden" id="bkEditId">
         <div class="grid2">
@@ -1058,7 +1063,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
         <div id="bkMsg"></div>
       </div>
       <div class="card">
-        <h1>Danh sách ngân hàng</h1>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h1 style="margin:0">Danh sách ngân hàng</h1><button class="btn sm" type="button" onclick="bkOpen()">＋ Tạo ngân hàng</button></div>
         <table class="stk"><thead><tr><th>Tên</th><th>Câu hỏi (dùng được / tổng)</th><th>Độ khó</th><th>Danh mục</th><th></th></tr></thead><tbody id="bkList"></tbody></table>
         <div id="bkListMsg"></div>
       </div>
@@ -2099,18 +2104,20 @@ async function loadBanks(){
   window.BANK_STATS = j.banks;
   renderBankQuestions();
 }
+function bkOpen(){ clearBankForm(); $('bkFormCard').classList.remove('hide'); $('bkName').focus(); }
+function bkClose(){ $('bkFormCard').classList.add('hide'); }
 function clearBankForm(){ $('bkEditId').value=''; $('bkName').value=''; $('bkDesc').value=''; $('bkFormTitle').textContent='Tạo ngân hàng mới'; msg('bkMsg',''); }
 function editBank(id){
   const b = BANKS.find(x => x.id === id); if (!b) return;
   $('bkEditId').value = id; $('bkName').value = b.name; $('bkDesc').value = b.description || '';
-  $('bkFormTitle').textContent = 'Sửa ngân hàng'; window.scrollTo({top:0,behavior:'smooth'});
+  $('bkFormTitle').textContent = 'Sửa ngân hàng'; $('bkFormCard').classList.remove('hide');
 }
 async function saveBank(){
   const name = $('bkName').value.trim();
   if (!name){ msg('bkMsg','Nhập tên ngân hàng.'); return; }
   const { j } = await api('POST','/api/kt-admin', { op:'saveBank', id: $('bkEditId').value || undefined, name, description: $('bkDesc').value.trim() });
   if (!j.ok){ msg('bkMsg', j.error || 'Không lưu được.'); return; }
-  clearBankForm(); msg('bkMsg','Đã lưu ngân hàng.','ok'); await loadBanks();
+  clearBankForm(); bkClose(); msg('bkListMsg','Đã lưu ngân hàng.','ok'); await loadBanks();
 }
 async function deleteBankUI(id){
   const b = BANKS.find(x => x.id === id), st = (window.BANK_STATS || []).find(x => x.id === id);
@@ -2613,6 +2620,30 @@ function qPanel(id, keep){
   });
   if (id && !$(id).classList.contains('hide')) $(id).scrollIntoView({behavior:'smooth', block:'start'});
 }
+// ----- Form sửa/thêm hiện thành cửa sổ nổi giữa màn hình (thay vì cuộn lên đầu trang); đóng xong trang về đúng chỗ đang đứng -----
+(function(){
+  var IDS = ['qFormCard','qAiCard','qXlsCard','qBulkCard','candAddCard','bkFormCard'], saved = 0, openId = null;
+  function backdrop(){ var b = document.getElementById('popBackdrop'); if (!b){ b = document.createElement('div'); b.id = 'popBackdrop'; b.onclick = closeTop; document.body.appendChild(b); } return b; }
+  function closeTop(){ var el = openId && document.getElementById(openId); if (!el) return; var x = el.querySelector(':scope > .xclose'); if (x) x.click(); else el.classList.add('hide'); }
+  function back(y){ try { window.scrollTo({ top:y, left:0, behavior:'instant' }); } catch(e){ window.scrollTo(0, y); } }
+  function sync(){
+    var cur = null;
+    IDS.forEach(function(id){ var el = document.getElementById(id); if (el && !el.classList.contains('hide') && !cur) cur = el; });
+    IDS.forEach(function(id){ var el = document.getElementById(id); if (el && el !== cur && el.classList.contains('pop-card')) el.classList.remove('pop-card'); }); // chỉ gỡ khi đang có: classList.remove luôn ghi lại thuộc tính, sẽ làm bộ theo dõi tự gọi lại vô hạn
+    if (cur && !cur.classList.contains('pop-card')){
+      if (!openId) saved = window.scrollY;
+      cur.classList.add('pop-card'); cur.scrollTop = 0; openId = cur.id;
+      backdrop().style.display = 'block'; document.body.style.overflow = 'hidden';
+      back(saved); // huỷ cú cuộn lên đầu trang do chỗ mở form gọi
+    } else if (!cur && openId){
+      openId = null; backdrop().style.display = 'none'; document.body.style.overflow = ''; back(saved);
+    }
+  }
+  var mo = new MutationObserver(sync);
+  IDS.forEach(function(id){ var el = document.getElementById(id); if (el) mo.observe(el, { attributes:true, attributeFilter:['class'] }); });
+  document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape' && openId && !document.querySelector('.modal-bg:not(.hide)') && !document.getElementById('rdZoomOv')) closeTop(); });
+  sync();
+})();
 // ----- Xem nhanh câu hỏi + đáp án: bấm vào câu hỏi trong ngân hàng đề -----
 let QPREV_IDS = [], QPREV_I = -1;
 const QP_TYPE = { single:'Một đáp án', multi:'Nhiều đáp án', tf:'Đúng / Sai', fill:'Điền đáp án' };
