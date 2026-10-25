@@ -1693,13 +1693,20 @@ function exportRows(){
       devCh: d && r.device ? (r.device.changed ? 'Có' : 'Không') : '',
       loc: d && r.device ? (r.device.loc ? r.device.loc.lat + ', ' + r.device.loc.lng : (LOCERR[r.device.locErr] || '')) : '',
       locLat: d && r.device && r.device.loc ? r.device.loc.lat : null, locLng: d && r.device && r.device.loc ? r.device.loc.lng : null,
-      locUrl: d && r.device && r.device.loc ? mapUrl(r.device.loc) : '' };
+      locUrl: d && r.device && r.device.loc ? mapUrl(r.device.loc) : '',
+      note: probNote(e.probation) };
   });
 }
+// Ghi chú cho file Excel/CSV: nhân viên đang thử việc (probation = { from, until } dạng YYYY-MM-DD)
+function probNote(p){
+  if (!p) return '';
+  var f = function(d){ return String(d || '').split('-').reverse().join('/'); };
+  return 'Đang thử việc (từ ' + f(p.from) + ' đến hết ' + f(p.until) + ')';
+}
 function exportCSV(rows){
-  var out = [['Mã nhân viên','Họ tên','Chức danh','Email','Nhóm ngành','Trạng thái','Số câu đúng','Tổng số câu','Tỉ lệ đúng (%)','Kết quả','Điểm tuân thủ','Nộp bài lúc','Thời gian hoàn thành','Mã minh chứng','Thiết bị','Địa chỉ IP','Đổi thiết bị','Vị trí']];
-  rows.forEach(function(x){ out.push([x.code,x.name,x.ttl,x.email,x.seg,x.st,x.score,x.total,x.pct==null?'':Math.round(x.pct*100),x.pass,x.cp,x.at,x.dur,x.proof,x.dev,x.ip,x.devCh,x.loc]); });
-  if (!VIEWER.isAdmin) out = out.map(function(r){ return r.slice(0,13).concat(r.slice(17)); }); // bỏ 4 cột thiết bị/vị trí
+  var out = [['Mã nhân viên','Họ tên','Chức danh','Email','Nhóm ngành','Trạng thái','Số câu đúng','Tổng số câu','Tỉ lệ đúng (%)','Kết quả','Điểm tuân thủ','Nộp bài lúc','Thời gian hoàn thành','Mã minh chứng','Thiết bị','Địa chỉ IP','Đổi thiết bị','Vị trí','Ghi chú']];
+  rows.forEach(function(x){ out.push([x.code,x.name,x.ttl,x.email,x.seg,x.st,x.score,x.total,x.pct==null?'':Math.round(x.pct*100),x.pass,x.cp,x.at,x.dur,x.proof,x.dev,x.ip,x.devCh,x.loc,x.note]); });
+  if (!VIEWER.isAdmin) out = out.map(function(r){ return r.slice(0,14).concat(r.slice(18)); }); // bỏ 4 cột thiết bị/vị trí, giữ cột Ghi chú
   saveBlob(new Blob(['\ufeff' + out.map(function(r){ return r.map(cell).join(','); }).join('\r\n')], { type:'text/csv;charset=utf-8' }), 'nhan-vien-ket-qua.csv');
 }
 async function exportXLSX(rows){
@@ -1709,7 +1716,7 @@ async function exportXLSX(rows){
   var COLS = [
     ['Mã NV','code',13],['Họ và tên','name',26],['Chức danh','ttl',16],['Email','email',30],['Nhóm ngành','seg',15],['Trạng thái','st',15],
     ['Câu đúng','score',10],['Tổng câu','total',10],['Tỉ lệ đúng','pct',11],['Kết quả','pass',11],['Điểm tuân thủ','cp',13],
-    ['Nộp bài lúc','at',18],['Thời gian làm','dur',13],['Mã minh chứng','proof',18],['Thiết bị','dev',34],['Địa chỉ IP','ip',16],['Đổi thiết bị','devCh',12],['Vị trí (bấm để mở bản đồ)','loc',42]
+    ['Nộp bài lúc','at',18],['Thời gian làm','dur',13],['Mã minh chứng','proof',18],['Thiết bị','dev',34],['Địa chỉ IP','ip',16],['Đổi thiết bị','devCh',12],['Vị trí (bấm để mở bản đồ)','loc',42],['Ghi chú','note',34]
   ];
   if (!VIEWER.isAdmin) COLS = COLS.filter(function(c){ return ['dev','ip','devCh','loc'].indexOf(c[1]) < 0; }); // chỉ quản trị viên
   ws.columns = COLS.map(function(c){ return { key:c[1], width:c[2] }; });
@@ -1742,6 +1749,8 @@ async function exportXLSX(rows){
     if (x.st === XST.done) pill('st','FF055A68','FFE4F3F5'); else if (x.st === XST.doing) pill('st','FF8A5500','FFFBEBC8'); else pill('st',MUTED,'FFEEF3F4');
     if (x.pct != null){ var pc = r.getCell('pct'); pc.font = { name:F, size:10.5, bold:true, color:{ argb: x.pass === 'Chưa đạt' ? 'FFB3261E' : x.pass === 'Đạt' ? 'FF17794A' : 'FF0D2A31' } }; }
     if (x.devCh === 'Có') pill('devCh','FFB3261E','FFFBE3E0');
+    if (x.note) pill('note','FF8A5500','FFFBEBC8');
+    if (x.note) r.getCell('note').alignment = { vertical:'middle', horizontal:'left' };
     if (x.locUrl){ var lc = r.getCell('loc'); lc.value = { text: x.loc, hyperlink: x.locUrl }; lc.font = { name:F, size:10, color:{ argb:'FF055A68' }, underline:true }; }
     else if (x.loc) r.getCell('loc').font = { name:F, size:10, color:{ argb:'FF8A5500' } };
     ['email','cfBy','at','proof'].concat(VIEWER.isAdmin ? ['dev','ip'] : []).forEach(function(k){ r.getCell(k).font = { name:F, size:10, color:{ argb:MUTED } }; });

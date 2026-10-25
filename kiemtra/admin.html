@@ -3356,6 +3356,12 @@ function loadExcelJS(){
   });
   return xjsP;
 }
+// Ghi chú cho file Excel: nhân viên đang thử việc (probation = { from, until } dạng YYYY-MM-DD)
+function probNote(p){
+  if (!p) return '';
+  const f = (d) => String(d || '').split('-').reverse().join('/');
+  return 'Đang thử việc (từ ' + f(p.from) + ' đến hết ' + f(p.until) + ')';
+}
 async function exportResultsXlsx(){
   let E; try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel, kiểm tra kết nối mạng.'); return; }
   const selPeriod = $('resPeriod').value;
@@ -3386,7 +3392,8 @@ async function exportResultsXlsx(){
     { header:'Thời điểm nộp bài', key:'submitted', width:20 },
     { header:'Cảnh báo', key:'flags', width:26 },
     { header:'Mã minh chứng', key:'proof', width:16 }
-  ].concat(withCount ? [{ header:'Số lần làm', key:'tries', width:11 }] : [{ header:'Trạng thái', key:'st', width:16 }]);
+  ].concat(withCount ? [{ header:'Số lần làm', key:'tries', width:11 }] : [{ header:'Trạng thái', key:'st', width:16 }])
+   .concat([{ header:'Ghi chú', key:'note', width:40 }]);
   const header = ws.getRow(1);
   header.eachCell(c => {
     c.font = { bold:true, color:{ argb:'FFFFFFFF' } };
@@ -3406,8 +3413,10 @@ async function exportResultsXlsx(){
       flags: flagText(r),
       proof: r.proof || ('KT-' + String(r.id || '').slice(-8).toUpperCase()),
       tries: r._tries || 1,
-      st: r.status === 'submitted' ? (r._best ? 'Điểm cao nhất' : 'Đã nộp') : 'Đang làm / chưa nộp'
+      st: r.status === 'submitted' ? (r._best ? 'Điểm cao nhất' : 'Đã nộp') : 'Đang làm / chưa nộp',
+      note: probNote(r.probation)
     });
+    if (r.probation) { const nc = row.getCell('note'); nc.font = { bold:true, color:{ argb:'FF8A5500' } }; nc.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFBEBC8' } }; }
     if (r._best && !withCount) row.getCell('st').font = { bold:true, color:{ argb:'FF1E7F4F' } };
     const resultCell = row.getCell('result');
     if (r.passed == null) { /* bài không có ngưỡng đạt */ }
@@ -3416,7 +3425,7 @@ async function exportResultsXlsx(){
     if (r.flags && r.flags.shot) { row.getCell('shotYN').font = { bold:true, color:{ argb:'FFB3261E' } }; }
     ['score','total','pct','compliance','shotYN','shotCount'].forEach(k => { row.getCell(k).alignment = { horizontal:'center' }; });
   });
-  ws.autoFilter = { from:'A1', to:'Q1' };
+  ws.autoFilter = { from:'A1', to:'R1' };
   };
   // Kết quả chính thức: mỗi người (mỗi kỳ/đề) một dòng = lần nộp có điểm CAO NHẤT (khớp quiz.betterResult ở máy chủ)
   const better = (x, y) => !y || ((x.pct||0) !== (y.pct||0) ? (x.pct||0) > (y.pct||0) : (x.score||0) !== (y.score||0) ? (x.score||0) > (y.score||0) : (x.submittedAt||0) > (y.submittedAt||0));
