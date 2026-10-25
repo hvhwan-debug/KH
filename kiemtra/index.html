@@ -355,6 +355,19 @@ body.rs .stage{margin-top:6px}
 .ana .note{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#FFF6E2;border:1px solid #F0DDB0;color:#6B4A00;font-size:12.5px;line-height:1.6}
 .btn.zalo{background:#0068FF;box-shadow:0 16px 28px -14px rgba(0,104,255,.85)}
 .btn.zalo:hover{filter:brightness(1.07)}
+#scrInAppBlock{text-align:center}
+.ia{display:flex;flex-direction:column;align-items:center;padding:6px 2px 2px}
+.ia-ic{width:72px;height:72px;border-radius:22px;background:var(--grad);display:grid;place-items:center;box-shadow:0 16px 30px -14px rgba(10,99,196,.7);margin:6px 0 18px}
+#scrInAppBlock h1{font-size:24px;line-height:1.25;margin:0 0 8px}
+.ia-sub{margin:0 0 24px;font-size:15px;line-height:1.6;color:var(--muted);max-width:30ch}
+.ia-sub b{color:var(--ink)}
+#scrInAppBlock .btn.go{width:100%;margin:0}
+.ia-link{margin-top:4px;border:0;background:none;color:var(--brand-deep);font:inherit;font-weight:700;font-size:14.5px;padding:12px 16px;cursor:pointer}
+.ia-help{width:100%;margin-top:2px;font-size:13.5px;color:var(--muted)}
+.ia-help summary{cursor:pointer;list-style:none;padding:8px;font-weight:600}
+.ia-help summary::-webkit-details-marker{display:none}
+.ia-help ol{text-align:left;margin:4px 0 0;padding:12px 16px 12px 36px;background:#F3F7FB;border-radius:12px;line-height:1.8;color:var(--ink)}
+.ia-url{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 .sharehint{margin:4px 0 0;font-size:12px;line-height:1.65;color:var(--muted);text-align:center}
 .sharehint a,.msg a{color:inherit;font-weight:700;text-decoration:underline}
 @media(max-width:480px){.rv-head{padding:18px 16px}.rv-body{padding:22px 16px 8px}.share{padding:12px 16px 22px}}
@@ -734,18 +747,18 @@ body.introbg .btn.go:active{transform:scale(.99)}
 
     <!-- Chặn trình duyệt trong app (Zalo/Facebook/Messenger...): không cho làm bài cho tới khi mở bằng trình duyệt mặc định -->
     <section class="card hide" id="scrInAppBlock">
-      <h1 tabindex="-1">Hãy mở bằng trình duyệt mặc định</h1>
-      <p class="lead">Bạn đang mở trang này trong <b id="inAppName">một ứng dụng nhắn tin</b> — trình duyệt này thường chặn camera/vị trí nên <b>không làm bài được</b>. Hãy mở lại bằng Chrome, Safari hoặc trình duyệt mặc định của máy.</p>
-      <button class="btn go" id="btnOpenExt" type="button" style="margin-top:6px">Mở bằng trình duyệt mặc định</button>
-      <div class="msg warn" style="margin-top:14px">
-        <b>Nếu nút trên chưa tự mở được, cách mở thủ công:</b> bấm vào biểu tượng <b>⋯</b> (dấu ba chấm, thường ở góc trên bên phải) → chọn <b>"Mở bằng trình duyệt"</b> / <b>"Open in browser"</b>. Nếu không thấy, sao chép đường link bên dưới rồi dán vào Chrome/Safari.
+      <div class="ia">
+        <div class="ia-ic" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.9 5.6 3.9 9S14.6 18.4 12 21c-2.6-2.6-3.9-5.6-3.9-9S9.4 5.6 12 3Z"/></svg></div>
+        <h1 tabindex="-1">Mở bằng trình duyệt</h1>
+        <p class="ia-sub">Để làm bài, hãy mở trang này bằng Chrome hoặc Safari thay vì <b id="inAppName">ứng dụng này</b>.</p>
+        <button class="btn go" id="btnOpenExt" type="button">Mở trình duyệt</button>
+        <button class="ia-link" id="btnCopyLink" type="button">Sao chép link</button>
+        <details class="ia-help" id="iaHelp"><summary>Không mở được?</summary>
+          <ol><li>Bấm <b>⋯</b> ở góc trên bên phải</li><li>Chọn <b>Mở bằng trình duyệt</b></li></ol>
+        </details>
+        <input type="text" id="inAppUrl" class="ia-url" readonly tabindex="-1" aria-hidden="true">
+        <div id="inAppMsg" role="status"></div>
       </div>
-      <div class="inwrap" style="margin-top:16px">
-        <input type="text" id="inAppUrl" readonly style="padding-left:14px">
-      </div>
-      <button class="btn go" id="btnCopyLink" type="button" style="margin-top:14px">Sao chép đường link</button>
-      <button class="btn ghost" id="btnInAppRetry" type="button">Tôi đã mở bằng trình duyệt khác, thử lại</button>
-      <div id="inAppMsg" role="status"></div>
     </section>
 
     <!-- 0. Nhập mã đề thi (khi mở trang mà không kèm link của đề) -->
@@ -2120,7 +2133,7 @@ function inAppInfo(){
 function checkInApp(){
   var name = inAppInfo();
   if (!name) return false;
-  $('inAppName').textContent = 'ứng dụng ' + name;
+  $('inAppName').textContent = name;
   $('inAppUrl').value = location.href;
   show('inapp');
   return true;
@@ -2133,23 +2146,19 @@ $('btnOpenExt').addEventListener('click', function(){
   var onVis = function(){ if (document.hidden) went = true; };
   document.addEventListener('visibilitychange', onVis);
   window.addEventListener('pagehide', function(){ went = true; }, { once:true });
-  msg('inAppMsg','Đang mở trình duyệt…','ok');
+  msg('inAppMsg','');
   try {
     if (u && /Android/i.test(ua)) location.href = 'intent://' + u.host + u.pathname + u.search + u.hash + '#Intent;scheme=' + u.protocol.replace(':','') + ';action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end';
     else if (u && /iPhone|iPad|iPod/i.test(ua)) location.href = 'x-safari-' + location.href;
   } catch(e){}
   setTimeout(function(){
     document.removeEventListener('visibilitychange', onVis);
-    if (!went && !document.hidden) msg('inAppMsg','Ứng dụng này chưa cho tự chuyển. Bạn bấm ⋯ ở góc trên → “Mở bằng trình duyệt”, hoặc sao chép link bên dưới rồi dán vào Chrome/Safari.','warn');
+    if (!went && !document.hidden) { $('iaHelp').open = true; msg('inAppMsg','Chưa tự mở được. Làm theo hướng dẫn bên trên, hoặc sao chép link rồi dán vào Chrome/Safari.','warn'); }
   }, 1800);
 });
 $('btnCopyLink').addEventListener('click', async function(){
-  try { await navigator.clipboard.writeText(location.href); msg('inAppMsg','Đã sao chép. Dán vào Chrome/Safari để mở.', 'ok'); }
-  catch(e){ $('inAppUrl').select(); document.execCommand('copy'); msg('inAppMsg','Đã sao chép. Dán vào Chrome/Safari để mở.', 'ok'); }
-});
-$('btnInAppRetry').addEventListener('click', function(){
-  if (!checkInApp()){ if (!EXAM_ID){ show('exam'); $('inExam').focus(); } else { show('check'); $('inCode').focus(); } }
-  else msg('inAppMsg','Vẫn đang mở trong '+$('inAppName').textContent+'. Hãy mở bằng trình duyệt mặc định trước.', 'err');
+  try { await navigator.clipboard.writeText(location.href); msg('inAppMsg','Đã sao chép link. Dán vào Chrome hoặc Safari.', 'ok'); }
+  catch(e){ $('inAppUrl').select(); document.execCommand('copy'); msg('inAppMsg','Đã sao chép link. Dán vào Chrome hoặc Safari.', 'ok'); }
 });
 
 if (!checkInApp()){
