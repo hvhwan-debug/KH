@@ -3260,7 +3260,10 @@ async function hrsRead(ev){
   const res = KTHrSync.parseReport(KTHr.sheetsFromExcelJS(wb));
   if (!res.records.length){ $('hrsBody').innerHTML = ''; msg('hrsMsg', 'File không đúng định dạng: ' + ((res.problems[0] || {}).reason || 'không có dòng nhân viên nào') + '.', 'err'); return; }
   await loadCandidates();
-  HRS = { res, file: file.name }; hrsCompute(); ev.target.value = '';
+  // Tình trạng làm bài của đề hiện tại: để tự chọn sẵn người không còn trong HR mà CHƯA làm bài (người đã làm bài thì không chọn sẵn)
+  const st = {}; let period = '';
+  try { const { j } = await api('GET', '/api/kt-admin?op=progress'); if (j && j.ok && Array.isArray(j.list)){ period = j.period || ''; j.list.forEach(x => { st[String(x.code || '').trim().toLowerCase()] = x.status; }); } } catch(e) {}
+  HRS = { res, file: file.name, st, period }; hrsCompute(); ev.target.value = '';
 }
 function hrsCompute(){ HRS.out = KTHrSync.compare(HRS.res.records, CANDIDATES, vnToday()); hrsRender(); }
 function hrsRender(){
@@ -3271,7 +3274,8 @@ function hrsRender(){
   const addH = o.added.map(a => li('add', a.code, '', a.emailOk, !a.emailOk, nm(a.name, a.code) + '<small>' + esc(a.manager || '(chưa có quản lí)') + ' · ' + esc(a.title || '—') + (a.segment === 'may_loc' ? ' · Máy lọc' : a.segment === 'gia_dung' ? ' · Gia dụng' : '') + ' · ' + (a.emailOk ? esc(a.email) : '<em class="hrs-bad">không thêm được: ' + esc(a.blocked) + '</em>') + '</small>')).join('');
   const chH = o.changed.map(c => '<div class="hrs-chg">' + nm(c.name, c.code) + (c.left ? ' <span class="tag tag-left">Đã nghỉ việc</span>' : '') + c.diffs.map(d => li('chg', c.code, d.field, d.on, false, '<span class="hrs-dl">' + d.label + '</span> ' + (d.from ? '<s>' + esc(d.from) + '</s>' : '<i>(trống)</i>') + ' → <b>' + esc(d.to) + '</b>' + (d.field === 'email' ? ' <em class="hrs-warn">đổi email đăng nhập, nên kiểm tra trước</em>' : ''))).join('') + '</div>').join('');
   const lvH = o.leaving.map(l => li('leave', l.code, '', l.state === 'past', false, nm(l.name, l.code) + '<small>' + esc(l.manager || '') + ' · ' + (l.state === 'past' ? '<b class="hrs-bad">đã nghỉ từ ' + dm(l.lastDay) + '</b>' : 'sẽ nghỉ ngày ' + dm(l.lastDay) + ' (chưa tới, mặc định chưa chọn)') + '</small>')).join('');
-  const msH = o.missing.map(m => li('miss', m.code, '', false, false, nm(m.name, m.code) + '<small>' + esc(m.manager || '(chưa có quản lí)') + ' · ' + esc(m.title || '') + '</small>')).join('');
+  const EXL = { none:'<b class="hrs-bad">chưa làm bài</b>', done:'đã làm bài', doing:'đang làm bài' };
+  const msH = o.missing.map(m => { const stt = HRS.st && HRS.st[String(m.code).trim().toLowerCase()]; return li('miss', m.code, '', stt === 'none', false, nm(m.name, m.code) + '<small>' + esc(m.manager || '(chưa có quản lí)') + ' · ' + esc(m.title || '') + (EXL[stt] ? ' · ' + EXL[stt] : '') + '</small>'); }).join('');
   const list = (arr, f) => arr.length ? '<ul class="hrs-ul">' + arr.map(f).join('') + '</ul>' : '';
   const anH = '<p class="small hrs-hint">Chỉ để bạn biết, không có gì để chọn.</p>' +
     (A.badEmail.length ? '<p><b>' + A.badEmail.length + ' người có email không dùng được</b> (giả @example.com hoặc sai dạng): các email này sẽ không bao giờ được ghi đè lên email đang có.</p>' + list(A.badEmail, x => '<li>' + esc(x.name) + ' <span class="small">' + esc(x.code) + ' · ' + esc(x.email || '(trống)') + '</span></li>') : '') +
@@ -3285,7 +3289,7 @@ function hrsRender(){
     '<div class="hrs-sum"><b>' + esc(HRS.file) + '</b> · ' + o.total + ' người trong file · <b>' + o.same + '</b> khớp hoàn toàn so với ' + CANDIDATES.length + ' thí sinh trong hệ thống</div>' +
     '<div class="hrs-chips"><span><b>' + o.added.length + '</b> mới</span><span><b>' + o.changed.length + '</b> lệch thông tin</span><span><b>' + o.leaving.length + '</b> có ngày nghỉ</span><span><b>' + o.missing.length + '</b> không còn trong HR</span><span><b>' + anN + '</b> bất thường</span></div>' +
     sec('Nghỉ việc theo file HR', o.leaving.length, 'Người có "Ngày làm việc cuối cùng". Đã qua ngày đó thì mặc định được chọn để đánh dấu nghỉ việc.', lvH, 'leave', true) +
-    sec('Có trong hệ thống nhưng không còn trong file HR', o.missing.length, 'Nhiều khả năng đã nghỉ, nhưng file HR có thể không phải danh sách đầy đủ nên mặc định <b>chưa chọn</b>. Tick người nào đã nghỉ thật để đánh dấu nghỉ việc (hồ sơ và kết quả cũ vẫn giữ, làm lại được).', msH, 'miss', true) +
+    sec('Có trong hệ thống nhưng không còn trong file HR', o.missing.length, 'Nhiều khả năng đã nghỉ. Người <b>chưa làm bài</b> ở đề hiện tại được chọn sẵn; người đã làm bài thì chưa chọn (đã có kết quả, nên kiểm tra thêm với HR). File HR có thể không phải danh sách đầy đủ, hãy soát lại trước khi bấm Áp dụng. Đánh dấu nghỉ việc có thể hoàn lại bất cứ lúc nào, hồ sơ và kết quả cũ vẫn giữ.', msH, 'miss', true) +
     sec('Lệch thông tin', o.changed.length, 'Họ tên và quản lí mặc định được chọn. Email mặc định chưa chọn vì đó là thông tin đăng nhập của thí sinh. Người được sửa sẽ phải xác nhận lại thông tin khi vào làm bài.', chH, 'chg', false) +
     sec('Người mới trong file HR', o.added.length, 'Chưa có trong hệ thống. Chức danh và nhóm ngành lấy theo quy tắc của hệ thống (PC / SR 1 / SR 2), bạn có thể sửa lại sau ở nút Sửa. Người không có email hợp lệ không thêm được.', addH, 'add', false) +
     sec('Bất thường trong file HR', anN, '', anH, '', false) +
