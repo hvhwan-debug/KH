@@ -326,7 +326,12 @@ const handler = async function (context, req) {
         const periods = Array.from(new Set(all.map((r) => r.period).filter(Boolean).concat([st.examPeriod]))).sort();
         const untagged = all.filter((r) => !r.period).length;
         const latestOf = (p) => { const m = {}; all.filter((r) => (r.period || "") === p).forEach((r) => { const k = quiz.normCode(r.code); if (quiz.betterResult(r, m[k])) m[k] = r; }); return m; }; // mỗi người: lần điểm cao nhất
-        const cur = latestOf(period), rows = Object.values(cur);
+        const cur = latestOf(period);
+        // Chỉ tính những bài làm của người HIỆN vẫn thuộc đúng đối tượng đề này (cands đã lọc theo inAudience).
+        // Nếu không lọc, người đã bị xoá hoặc đổi chức danh/quản lí sau khi nộp bài vẫn bị tính vào "đã nộp", khiến
+        // tổng có thể vượt quá số thí sinh hiện có (vd 62/61 = 102%), vô lý.
+        const curCodes = new Set(cands.map((c) => quiz.normCode(c.code)));
+        const rows = Object.values(cur).filter((r) => curCodes.has(quiz.normCode(r.code)));
         const candBy = {}; allCands.forEach((c) => { candBy[quiz.normCode(c.code)] = c; });
         const segOf = (code) => { const c = candBy[quiz.normCode(code)]; return c ? quiz.normSegment(c.segment) : ""; };
         const pcts = rows.map((r) => r.pct || 0).sort((a, b) => a - b);

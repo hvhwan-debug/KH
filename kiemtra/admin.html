@@ -4260,7 +4260,7 @@ async function loadDashboard(sel){
     '<input id="asgPeriod" value="' + esc(j.currentPeriod) + '" aria-label="Kỳ cần gắn (năm-tháng)"><button class="btn sm" id="asgBtn" type="button">Gắn kỳ</button></div>' : '';
   if (j.untagged) $('asgBtn').onclick = assignPeriod;
   // KPI
-  const rate = j.candidates ? Math.round(j.submitted / j.candidates * 100) : 0;
+  const rate = j.candidates ? Math.min(100, Math.round(j.submitted / j.candidates * 100)) : 0; // chặn trên 100% phòng trường hợp dữ liệu lệch
   const lt = j.bands[0] ? j.bands[0].n : 0;
   let delta = '';
   if (j.prev && j.prev.avgPct != null && j.avgPct != null){
