@@ -405,7 +405,24 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
 #candList .tag{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.04em;line-height:1.5;vertical-align:middle;white-space:nowrap}
 #candList .tag-tv{background:#FFF4D6;color:#8A5A00}
 #candList .tag-left{background:#FBE3E0;color:#9E2A20}
-@media(min-width:761px){#candList td:nth-child(2){min-width:215px}}
+.candmail{display:none}
+/* Danh sách thí sinh trên máy tính: tên không xuống dòng; email rút gọn (rê chuột xem đủ); ô gọn để cả hàng vừa khung */
+@media(min-width:761px){
+  #candList td{padding-left:8px;padding-right:8px}
+  table.stk:has(#candList) thead th{padding-left:8px;padding-right:8px}
+  #candList td{font-size:13px}
+  #candList td:nth-child(2),#candList td:nth-child(7),#candList td:nth-child(8){white-space:nowrap}
+  #candList td:nth-child(6){min-width:92px}
+  #candList td:nth-child(2) .candnm{font-size:13.5px}
+  /* email nằm ở dòng phụ dưới tên nên ẩn cột email riêng trên máy tính */
+  #candList td:nth-child(4),table.stk:has(#candList) thead th:nth-child(4){display:none}
+  .candmail{display:block;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:11.5px;font-weight:500;margin-top:1px}
+  #candList td:last-child .btn.sm{padding:6px 10px}
+  #candList td:first-child{font-size:12.5px}
+  /* khung bảng tự cuộn ngang nếu thiếu chỗ; cột Sửa / Xoá luôn dính mép phải để không bị che */
+  .stk-scroll{overflow-x:auto;max-width:100%}
+  .stk-scroll table.stk th:last-child,#candList td:last-child{position:sticky;right:0;z-index:2;background:#fff;box-shadow:-12px 0 12px -12px rgba(10,42,102,.22)}
+}
 .phbtn{border:0;background:none;padding:2px 0;font:inherit;color:var(--brand-deep);cursor:pointer;text-align:left;white-space:nowrap}
 .phbtn:hover,.phbtn[aria-expanded="true"]{text-decoration:underline;text-underline-offset:3px}
 .phmenu{position:fixed;z-index:9999;min-width:210px;background:#fff;border:1px solid #CFDCE6;border-radius:14px;box-shadow:0 14px 34px -10px rgba(10,30,60,.35);padding:6px}
@@ -1472,7 +1489,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
           <span class="small" id="candShown"></span>
         </div>
         <div id="candProfBanner" class="cand-banner hide"></div>
-        <table class="stk"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Chức danh</th><th>Email</th><th>SĐT / Zalo</th><th>Quản lí</th><th>Nhóm ngành</th><th>Tỉnh / Miền</th><th>Ngày vào làm</th><th></th></tr></thead><tbody id="candList"></tbody></table>
+        <div class="stk-scroll"><table class="stk"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Chức danh</th><th>Email</th><th>SĐT / Zalo</th><th>Quản lí</th><th>Nhóm ngành</th><th>Tỉnh / Miền</th><th>Ngày vào làm</th><th></th></tr></thead><tbody id="candList"></tbody></table></div>
       </div>
       <div class="card hide" id="candStatsCard">
         <div class="st-h"><h1 style="margin:0">Thống kê hồ sơ nhân sự</h1><span class="small" id="stNote"></span></div>
@@ -3166,7 +3183,7 @@ function renderCandidates(){
   const ef = $('candEmpF').value, L = CANDIDATES.filter(c => (ef === '*' || (ef === 'left') === !!c.left) && (rf === '*' || (c.region||'') === rf) && (mf === '*' || mgrNorm(c.manager) === mgrNorm(mf)) && (sf === '*' || (c.segment||'both') === sf) && (tf === '*' || (c.title||'PC') === tf) && (!q || spNorm([c.code, c.name, c.email, c.phone || '', c.title || 'PC', c.province || ''].join(' ')).indexOf(q) >= 0));
   $('candShown').textContent = L.length === CANDIDATES.length ? '' : 'Đang lọc: ' + L.length + ' người';
   $('candList').innerHTML = L.map(c =>
-    '<tr'+(c.left?' class="left"':'')+'><td>'+esc(c.code)+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button>'+(c.left?'<span class="tag tag-left" aria-label="Đã nghỉ việc" title="'+(c.leftAt?'Nghỉ việc từ '+new Date(c.leftAt).toLocaleDateString('vi-VN')+'. ':'')+'Không gán đề, không gửi thông báo">ĐNV</span>':'')+(c.probation&&!c.left?'<span class="tag tag-tv" aria-label="Thử việc" title="Thử việc từ '+esc(c.probation.from)+' đến hết '+esc(c.probation.until)+'">TV</span>':'')+profSub(c)+'</td><td><span class="ttlchip">'+esc(c.title||'PC')+'</span></td><td>'+esc(c.email)+'</td><td>'+(c.phone?'<button type="button" class="phbtn" data-phone="'+esc(c.phone)+'" aria-haspopup="menu" title="Nhắn SMS, mở Zalo hoặc gọi điện">'+esc(c.phone)+'</button>':'<span class="badge n" title="Thí sinh sẽ phải tự điền khi vào làm bài">Chưa có</span>')+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.province||c.region ? esc(c.province||'–')+'<br><b>'+esc(RG_LABEL[c.region]||'Chưa chọn miền')+'</b>' : '<span class="badge n" title="Thí sinh bắt buộc tự chọn khi vào làm bài">Chưa chọn</span>')+'</td><td class="small">'+(c.joinDate?esc(c.joinDate.split('-').reverse().join('/')):'–')+'</td><td style="white-space:nowrap"><button type="button" class="stk-more" onclick="candToggle(this)">Chi tiết ▾</button><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
+    '<tr'+(c.left?' class="left"':'')+'><td>'+esc(c.code)+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button>'+(c.left?'<span class="tag tag-left" aria-label="Đã nghỉ việc" title="'+(c.leftAt?'Nghỉ việc từ '+new Date(c.leftAt).toLocaleDateString('vi-VN')+'. ':'')+'Không gán đề, không gửi thông báo">ĐNV</span>':'')+(c.probation&&!c.left?'<span class="tag tag-tv" aria-label="Thử việc" title="Thử việc từ '+esc(c.probation.from)+' đến hết '+esc(c.probation.until)+'">TV</span>':'')+profSub(c)+'<small class="candmail" title="'+esc(c.email)+'">'+esc(c.email)+'</small>'+'</td><td><span class="ttlchip">'+esc(c.title||'PC')+'</span></td><td>'+esc(c.email)+'</td><td>'+(c.phone?'<button type="button" class="phbtn" data-phone="'+esc(c.phone)+'" aria-haspopup="menu" title="Nhắn SMS, mở Zalo hoặc gọi điện">'+esc(c.phone)+'</button>':'<span class="badge n" title="Thí sinh sẽ phải tự điền khi vào làm bài">Chưa có</span>')+'</td><td>'+esc(c.manager||'')+'</td><td title="'+esc(segLabel[c.segment]||'Cả hai')+'">'+esc((segLabel[c.segment]||'Cả hai').split(' · ')[0])+'</td><td class="small">'+(c.province||c.region ? esc(c.province||'–')+'<br><b>'+esc(RG_LABEL[c.region]||'Chưa chọn miền')+'</b>' : '<span class="badge n" title="Thí sinh bắt buộc tự chọn khi vào làm bài">Chưa chọn</span>')+'</td><td class="small">'+(c.joinDate?esc(c.joinDate.split('-').reverse().join('/')):'–')+'</td><td style="white-space:nowrap"><button type="button" class="stk-more" onclick="candToggle(this)">Chi tiết ▾</button><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
   ).join('') || '<tr><td colspan="10" class="small">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Bấm “＋ Thêm thí sinh”.') + '</td></tr>';
 }
 function candToggle(btn){ var tr = btn.closest('tr'), open = tr.classList.toggle('open'); btn.textContent = open ? 'Thu gọn ▴' : 'Chi tiết ▾'; }
