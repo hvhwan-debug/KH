@@ -1359,7 +1359,7 @@ function renderHr(p){
   if (!isNaN(t)){ var a = new Date(t), b = new Date(), m = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth() - (b.getDate() < a.getDate() ? 1 : 0); m = Math.max(0, m); ten = m >= 12 ? Math.floor(m / 12) + ' năm ' + (m % 12) + ' tháng' : m + ' tháng'; }
   var val = { nganh: p.nganh ? 'Ngành ' + p.nganh : '', vaoLanDau: dm(p.vaoLanDau), thamNien: ten };
   var rows = HR_LBL.map(function(x){ var v = x[0] in val ? val[x[0]] : p[x[0]]; return v ? '<dt>' + esc(x[1]) + '</dt><dd>' + esc(v) + '</dd>' : ''; }).join('');
-  el.innerHTML = '<details class="hrbox" open><summary>Hồ sơ nhân sự <small>chỉ quản trị viên thấy</small></summary><dl class="hrdl">' + rows + '</dl></details>';
+  el.innerHTML = '<details class="hrbox"><summary>Hồ sơ nhân sự <small>chỉ quản trị viên thấy</small></summary><dl class="hrdl">' + rows + '</dl></details>';
   el.classList.remove('hide');
 }
 async function openProfile(e){
