@@ -3357,10 +3357,22 @@ function loadExcelJS(){
   return xjsP;
 }
 // Ghi chú cho file Excel: nhân viên đang thử việc (probation = { from, until } dạng YYYY-MM-DD)
-function probNote(p){
+// Nhân viên thử việc: chỉ trong file Excel, điểm tuân thủ quy đổi theo thang riêng (thang 10: 5 điểm = 10, 6 điểm = 15, 7 điểm = 20).
+// Màn hình kết quả và dữ liệu trên hệ thống giữ nguyên thang thường.
+function tvPoints(score, total, fallback){
+  if (!total) return fallback;
+  const s = score / total * 10;
+  return s >= 7 ? 20 : s >= 6 ? 15 : s >= 5 ? 10 : 0;
+}
+function probNote(p, r){
   if (!p) return '';
   const f = (d) => String(d || '').split('-').reverse().join('/');
-  return 'Đang thử việc (từ ' + f(p.from) + ' đến hết ' + f(p.until) + ')';
+  let t = 'Đang thử việc (từ ' + f(p.from) + ' đến hết ' + f(p.until) + ').';
+  if (r && r.compliancePoints != null && r.total) {
+    const tv = tvPoints(r.score, r.total, r.compliancePoints);
+    t += ' Điểm tuân thủ tính theo thang thử việc (điểm 5 = 10, điểm 6 = 15, điểm 7 = 20): ' + tv + ' điểm' + (tv !== r.compliancePoints ? ' (thang thường: ' + r.compliancePoints + ' điểm)' : '') + '.';
+  }
+  return t;
 }
 async function exportResultsXlsx(){
   let E; try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel, kiểm tra kết nối mạng.'); return; }
@@ -3393,7 +3405,7 @@ async function exportResultsXlsx(){
     { header:'Cảnh báo', key:'flags', width:26 },
     { header:'Mã minh chứng', key:'proof', width:16 }
   ].concat(withCount ? [{ header:'Số lần làm', key:'tries', width:11 }] : [{ header:'Trạng thái', key:'st', width:16 }])
-   .concat([{ header:'Ghi chú', key:'note', width:40 }]);
+   .concat([{ header:'Ghi chú', key:'note', width:70 }]);
   const header = ws.getRow(1);
   header.eachCell(c => {
     c.font = { bold:true, color:{ argb:'FFFFFFFF' } };
@@ -3405,7 +3417,7 @@ async function exportResultsXlsx(){
   list.forEach(r => {
     const row = ws.addRow({
       period: r.period || '', code: r.code, name: r.name||'', title: r.title||'', manager: r.manager||'', segment: segLabel[r.segment]||'Cả hai',
-      score: r.score, total: r.total, pct: r.pct, compliance: r.compliancePoints!=null?r.compliancePoints:'',
+      score: r.score, total: r.total, pct: r.pct, compliance: r.compliancePoints!=null ? (r.probation ? tvPoints(r.score, r.total, r.compliancePoints) : r.compliancePoints) : '',
       result: r.passed == null ? '' : (r.passed ? 'Đạt' : 'Chưa đạt'),
       shotYN: (r.flags && r.flags.shot) ? 'Có' : 'Không',
       shotCount: (r.flags && r.flags.shot) || 0,
@@ -3414,9 +3426,9 @@ async function exportResultsXlsx(){
       proof: r.proof || ('KT-' + String(r.id || '').slice(-8).toUpperCase()),
       tries: r._tries || 1,
       st: r.status === 'submitted' ? (r._best ? 'Điểm cao nhất' : 'Đã nộp') : 'Đang làm / chưa nộp',
-      note: probNote(r.probation)
+      note: probNote(r.probation, r)
     });
-    if (r.probation) { const nc = row.getCell('note'); nc.font = { bold:true, color:{ argb:'FF8A5500' } }; nc.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFBEBC8' } }; }
+    if (r.probation) { const nc = row.getCell('note'); nc.font = { bold:true, color:{ argb:'FF8A5500' } }; nc.alignment = { wrapText:true, vertical:'top' }; nc.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFBEBC8' } }; }
     if (r._best && !withCount) row.getCell('st').font = { bold:true, color:{ argb:'FF1E7F4F' } };
     const resultCell = row.getCell('result');
     if (r.passed == null) { /* bài không có ngưỡng đạt */ }

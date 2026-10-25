@@ -1688,20 +1688,32 @@ function exportRows(){
     return { code:e.code, name:e.name, ttl:e.title||'PC', email:e.email, seg:SEG[e.segment]||'', st:XST[e.status]||'',
       score: d ? r.score : null, total: d ? r.total : null, pct: d && r.pct != null ? r.pct/100 : null,
       pass: d ? (r.passed === true ? 'Đạt' : r.passed === false ? 'Chưa đạt' : '') : '',
-      cp: d ? r.compliancePoints : null, at: d && r.submittedAt ? fmt(r.submittedAt) : '', dur: d && r.durationSec != null ? clock(r.durationSec) : '',
+      cp: d ? (e.probation && r.compliancePoints != null ? tvPoints(r.score, r.total, r.compliancePoints) : r.compliancePoints) : null, at: d && r.submittedAt ? fmt(r.submittedAt) : '', dur: d && r.durationSec != null ? clock(r.durationSec) : '',
       proof: d ? (r.proof||'') : '', dev: d && r.device ? r.device.label : '', ip: d && r.device ? (r.device.ip||'') : '',
       devCh: d && r.device ? (r.device.changed ? 'Có' : 'Không') : '',
       loc: d && r.device ? (r.device.loc ? r.device.loc.lat + ', ' + r.device.loc.lng : (LOCERR[r.device.locErr] || '')) : '',
       locLat: d && r.device && r.device.loc ? r.device.loc.lat : null, locLng: d && r.device && r.device.loc ? r.device.loc.lng : null,
       locUrl: d && r.device && r.device.loc ? mapUrl(r.device.loc) : '',
-      note: probNote(e.probation) };
+      note: probNote(e.probation, d ? r : null) };
   });
 }
 // Ghi chú cho file Excel/CSV: nhân viên đang thử việc (probation = { from, until } dạng YYYY-MM-DD)
-function probNote(p){
+// Nhân viên thử việc: chỉ trong file xuất, điểm tuân thủ quy đổi theo thang riêng (thang 10: 5 điểm = 10, 6 điểm = 15, 7 điểm = 20).
+// Màn hình kết quả và dữ liệu trên hệ thống giữ nguyên thang thường.
+function tvPoints(score, total, fallback){
+  if (!total) return fallback;
+  var s = score / total * 10;
+  return s >= 7 ? 20 : s >= 6 ? 15 : s >= 5 ? 10 : 0;
+}
+function probNote(p, r){
   if (!p) return '';
   var f = function(d){ return String(d || '').split('-').reverse().join('/'); };
-  return 'Đang thử việc (từ ' + f(p.from) + ' đến hết ' + f(p.until) + ')';
+  var t = 'Đang thử việc (từ ' + f(p.from) + ' đến hết ' + f(p.until) + ').';
+  if (r && r.compliancePoints != null && r.total) {
+    var tv = tvPoints(r.score, r.total, r.compliancePoints);
+    t += ' Điểm tuân thủ tính theo thang thử việc (điểm 5 = 10, điểm 6 = 15, điểm 7 = 20): ' + tv + ' điểm' + (tv !== r.compliancePoints ? ' (thang thường: ' + r.compliancePoints + ' điểm)' : '') + '.';
+  }
+  return t;
 }
 function exportCSV(rows){
   var out = [['Mã nhân viên','Họ tên','Chức danh','Email','Nhóm ngành','Trạng thái','Số câu đúng','Tổng số câu','Tỉ lệ đúng (%)','Kết quả','Điểm tuân thủ','Nộp bài lúc','Thời gian hoàn thành','Mã minh chứng','Thiết bị','Địa chỉ IP','Đổi thiết bị','Vị trí','Ghi chú']];
@@ -1716,7 +1728,7 @@ async function exportXLSX(rows){
   var COLS = [
     ['Mã NV','code',13],['Họ và tên','name',26],['Chức danh','ttl',16],['Email','email',30],['Nhóm ngành','seg',15],['Trạng thái','st',15],
     ['Câu đúng','score',10],['Tổng câu','total',10],['Tỉ lệ đúng','pct',11],['Kết quả','pass',11],['Điểm tuân thủ','cp',13],
-    ['Nộp bài lúc','at',18],['Thời gian làm','dur',13],['Mã minh chứng','proof',18],['Thiết bị','dev',34],['Địa chỉ IP','ip',16],['Đổi thiết bị','devCh',12],['Vị trí (bấm để mở bản đồ)','loc',42],['Ghi chú','note',34]
+    ['Nộp bài lúc','at',18],['Thời gian làm','dur',13],['Mã minh chứng','proof',18],['Thiết bị','dev',34],['Địa chỉ IP','ip',16],['Đổi thiết bị','devCh',12],['Vị trí (bấm để mở bản đồ)','loc',42],['Ghi chú','note',70]
   ];
   if (!VIEWER.isAdmin) COLS = COLS.filter(function(c){ return ['dev','ip','devCh','loc'].indexOf(c[1]) < 0; }); // chỉ quản trị viên
   ws.columns = COLS.map(function(c){ return { key:c[1], width:c[2] }; });
@@ -1750,7 +1762,7 @@ async function exportXLSX(rows){
     if (x.pct != null){ var pc = r.getCell('pct'); pc.font = { name:F, size:10.5, bold:true, color:{ argb: x.pass === 'Chưa đạt' ? 'FFB3261E' : x.pass === 'Đạt' ? 'FF17794A' : 'FF0D2A31' } }; }
     if (x.devCh === 'Có') pill('devCh','FFB3261E','FFFBE3E0');
     if (x.note) pill('note','FF8A5500','FFFBEBC8');
-    if (x.note) r.getCell('note').alignment = { vertical:'middle', horizontal:'left' };
+    if (x.note) r.getCell('note').alignment = { vertical:'middle', horizontal:'left', wrapText:true }; if (x.note) r.height = Math.max(21, Math.ceil(x.note.length / 62) * 15 + 6);
     if (x.locUrl){ var lc = r.getCell('loc'); lc.value = { text: x.loc, hyperlink: x.locUrl }; lc.font = { name:F, size:10, color:{ argb:'FF055A68' }, underline:true }; }
     else if (x.loc) r.getCell('loc').font = { name:F, size:10, color:{ argb:'FF8A5500' } };
     ['email','cfBy','at','proof'].concat(VIEWER.isAdmin ? ['dev','ip'] : []).forEach(function(k){ r.getCell(k).font = { name:F, size:10, color:{ argb:MUTED } }; });
