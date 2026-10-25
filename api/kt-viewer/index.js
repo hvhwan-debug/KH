@@ -170,7 +170,7 @@ const handler = async function (context, req) {
         return reply(context, 200, { ok: true, employee: empView(c), currentPeriod: settings.examPeriod, status, passEnabled: !!settings.passEnabled,
           complianceLowMin: settings.complianceLowMin, history, categories, repeatWrong, lastWrong: lastWrong.slice(0, 15), papersRead: atts.filter(Boolean).length,
           // Hồ sơ nhân sự CHỈ dành cho quản trị viên (ADMIN_EMAILS). Quản lí thường không nhận khối này.
-          hr: viewer.isAdmin && c.profile ? c.profile : undefined });
+          hr: viewer.isAdmin && c.profile ? c.profile : undefined, hrEmpty: viewer.isAdmin && !c.profile });
       }
       if (op === "photo") {
         // Ảnh xác nhận khuôn mặt chụp ngay trước khi bắt đầu làm bài - minh chứng cho ĐÚNG MỘT kỳ, không dùng chéo sang kỳ khác.

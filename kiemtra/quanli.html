@@ -1352,8 +1352,13 @@ function perL(p){ return /^\d{4}-\d{2}$/.test(p||'') ? p.slice(5) + '/' + p.slic
 function pc(v){ return v == null ? '–' : String(Math.round(v*10)/10).replace('.', ',') + '%'; }
 /* Hồ sơ nhân sự (chỉ quản trị viên nhận được: máy chủ không gửi cho quản lí thường) */
 var HR_LBL = [['chucDanhGoc','Nghề nghiệp (chức danh gốc)'],['thamNien','Kinh nghiệm tại công ty'],['trinhDo','Trình độ'],['bangCap','Bằng cấp'],['chuyenNganh','Chuyên ngành'],['truong','Trường tốt nghiệp'],['nganh','Ngành'],['loaiNV','Loại nhân viên'],['hinhThuc','Hình thức'],['hieuLuc','Hiệu lực từ'],['donVi','Đơn vị'],['tapDoan','Tập đoàn'],['phong','Phòng'],['boPhan','Bộ phận'],['toNhom','Tổ nhóm'],['khuVucCon','Khu vực'],['noiLamViec','Nơi làm việc'],['mien','Miền'],['tinhPhuTrach','Tỉnh phụ trách'],['quanLy','Quản lý trực tiếp'],['vaoLanDau','Vào công ty lần đầu'],['msnvCu','MSNV cũ'],['maChamCong','Mã chấm công']];
-function renderHr(p){
-  var el = $('fHr'); if (!p){ el.classList.add('hide'); el.innerHTML = ''; return; }
+function renderHr(p, empty){
+  var el = $('fHr');
+  if (!p){
+    if (empty){ el.classList.remove('hide'); el.innerHTML = '<p class="small" style="color:var(--muted);margin:10px 0 0">Chưa có hồ sơ nhân sự (nghề nghiệp, kinh nghiệm, trình độ…) cho người này — nhập từ file Excel nhân sự để bổ sung.</p>'; }
+    else { el.classList.add('hide'); el.innerHTML = ''; }
+    return;
+  }
   var dm = function(v){ return String(v || '').replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3/$2/$1'); };
   var since = p.vaoLanDau || p.vaoCongTy, t = since ? Date.parse(since) : NaN, ten = '';
   if (!isNaN(t)){ var a = new Date(t), b = new Date(), m = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth() - (b.getDate() < a.getDate() ? 1 : 0); m = Math.max(0, m); ten = m >= 12 ? Math.floor(m / 12) + ' năm ' + (m % 12) + ' tháng' : m + ' tháng'; }
@@ -1370,7 +1375,7 @@ async function openProfile(e){
   $('ovProf').classList.remove('hide'); $('fPhoto').innerHTML = ''; $('fPhoto').className = 'ph';
   var r; try { r = await api('GET','/api/kt-viewer?op=profile&code=' + encodeURIComponent(e.code)); } catch(err){ r = null; }
   if (!r || !r.j.ok){ $('fBody').innerHTML = '<div class="msg err">' + esc(r ? (r.j.error || 'Không tải được hồ sơ.') : 'Không kết nối được máy chủ.') + '</div>'; return; }
-  PROF = r.j; PROF.emp = e; renderProfile(); renderHr(PROF.hr);
+  PROF = r.j; PROF.emp = e; renderProfile(); renderHr(PROF.hr, PROF.hrEmpty);
   var HH = PROF.history; if (HH.length) fillPhoto('fPhoto', e, { id: HH[HH.length-1].id }); else { $('fPhoto').className = 'ph none'; $('fPhoto').innerHTML = '<span>Chưa có ảnh</span>'; }
   HH.forEach(function(x){ fillPhoto('th-' + x.id, e, { id: x.id }); });
 }
