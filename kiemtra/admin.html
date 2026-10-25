@@ -512,6 +512,7 @@ html{-webkit-text-size-adjust:100%}
 }
 /* ===================== Bảng "Bài đã nộp" ===================== */
 .rt-wrap{margin-top:16px}
+.rc-sub{display:block;margin-top:3px;font-size:13px;font-weight:500;color:var(--muted)}
 table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;overflow:visible}
 .rt thead th{position:sticky;top:0;z-index:2;background:#F6F8FA;text-align:left;font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:11px 14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);white-space:nowrap}
 .rt thead th:first-child{border-left:1px solid var(--line);border-top-left-radius:12px}
@@ -608,6 +609,23 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
   .ch{padding:2px 8px;font-size:11px}
   .proof{display:none} /* theo yêu cầu: ẩn mã minh chứng trên di động vì ít dùng tới hàng ngày */
   .rt-ib{width:34px;height:34px}
+}
+/* Thẻ kết quả trên di động: 3 dòng gọn (tên / kết quả + điểm tuân thủ / giờ nộp + nút) thay vì xếp chồng nhiều tầng */
+@media(max-width:760px){
+  .card table.rt tbody tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:12px 14px;margin-bottom:8px}
+  .card table.rt tbody tr.rt-emptyrow{display:block}
+  .card .rt tbody td.rt-who{flex:1 1 100%;min-width:0}
+  .card .rt tbody td.rt-res{order:1;flex:0 1 auto;min-width:0}
+  .card .rt tbody td.rt-chips{order:2;flex:0 1 auto}
+  .card .rt tbody td.rt-chips:not(:has(.ch:not(.ch-ok))){display:none}
+  .card table.rt tbody tr::after{content:'';order:3;flex:1 1 100%;height:0;margin-bottom:-6px}
+  .card .rt tbody td.rt-time{order:4;flex:1 1 0;min-width:0;display:block}
+  .rt td.rt-time .tm{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 8px}
+  .rt td.rt-time .tm b{font-size:12.5px;font-weight:600;color:var(--muted)}
+  .rt td.rt-time .tm small{margin:0;font-size:12.5px}
+  .card .rt tbody td.rt-act{order:5;flex:0 0 auto;margin-left:auto}
+  .rs-top{gap:4px 10px}
+  .rc-sub{font-size:12.5px}
 }
 /* Tab Quản lí (trang quản lí nhúng): dùng hết chiều rộng và chiều cao còn lại, không để khoảng trống phía dưới */
 @media(min-width:761px){
@@ -1477,7 +1495,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
       </div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <h1 style="margin:0">Bài đã nộp (<span id="resCount">0</span>)</h1>
+          <h1 style="margin:0">Bài đã nộp (<span id="resCount">0</span>)<small class="rc-sub" id="resCountSub"></small></h1>
           <div class="rt-tools" style="display:flex;gap:8px;align-items:center">
             <select id="resPeriod" class="hide" onchange="loadResults()"></select>
             <input type="search" id="resSearch" placeholder="Tìm mã NV, tên, quản lí…" oninput="filterResults()" aria-label="Tìm kết quả">
@@ -3834,7 +3852,7 @@ function renderResults(){
     return resRow(G.best, { g:gi, tries:n, open }) + (n > 1 ? G.list.map((r, i) => resRow(r, { g:gi, sub:true, n:i + 1, official:r === G.best, open })).join('') : '');
   }).join('') || '<tr class="rt-emptyrow"><td colspan="5" class="rt-empty">Chưa có bài làm nào được nộp.</td></tr>';
   const people = RES_GROUPS.length, multi = RES_GROUPS.filter(G => G.list.length > 1).length;
-  $('resCount').textContent = people + (RESULTS.length !== people ? ' người · ' + RESULTS.length + ' bài làm' + (multi ? ' · ' + multi + ' người làm nhiều lần' : '') : '');
+  $('resCount').textContent = people + ' người'; $('resCountSub').textContent = RESULTS.length !== people ? RESULTS.length + ' bài làm' + (multi ? ' · ' + multi + ' người làm nhiều lần' : '') : '';
   document.querySelectorAll('#resTable th button[data-rs]').forEach(b => { const on = b.dataset.rs === k; if (on) b.setAttribute('data-dir', dir > 0 ? 'asc' : 'desc'); else b.removeAttribute('data-dir'); b.querySelector('.ar').textContent = on ? (dir > 0 ? '▲' : '▼') : '▲▼'; });
   if ($('resSort')) $('resSort').value = k + ':' + (dir > 0 ? 'asc' : 'desc');
   filterResults();
