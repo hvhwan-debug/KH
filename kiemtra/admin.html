@@ -3816,7 +3816,15 @@ function renderProgress(){
 }
 function pgCopy(){
   const L = pgRows().filter(x => x.status === 'none');
-  const t = L.map(x => x.name + ' (' + x.code + ')' + (x.manager ? ' - ' + x.manager : '') + (x.phone ? ' - ' + x.phone : '')).join('\n');
+  // Gom theo quản lí, đánh số, có tổng số; không kèm mã NV và số điện thoại
+  const g = new Map();
+  L.forEach(x => { const m = x.manager || '(chưa có quản lí)'; if (!g.has(m)) g.set(m, []); g.get(m).push(x.name || x.code); });
+  const vn = new Date(Date.now() + 7 * 3600 * 1000), p2 = n => (n < 10 ? '0' : '') + n;
+  const ds = p2(vn.getUTCDate()) + '/' + p2(vn.getUTCMonth() + 1) + '/' + vn.getUTCFullYear();
+  const t = ['📋 DANH SÁCH CHƯA LÀM BÀI – ' + ds, 'Tổng: ' + L.length + ' người', ''].concat(
+    [...g.entries()].sort((a, b) => (b[1].length - a[1].length) || a[0].localeCompare(b[0], 'vi')).map(([m, ns]) =>
+      '👤 ' + m + ' (' + ns.length + ')\n' + ns.sort((a, b) => String(a).localeCompare(String(b), 'vi')).map((n, i) => (i + 1) + '. ' + n).join('\n') + '\n')
+  ).join('\n').trim();
   const done = () => { const b = $('pgCopy'), o = b.textContent; b.textContent = 'Đã chép ' + L.length + ' người ✓'; setTimeout(() => { b.textContent = o; }, 1500); };
   if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, () => prompt('Sao chép danh sách:', t)); else prompt('Sao chép danh sách:', t);
 }
