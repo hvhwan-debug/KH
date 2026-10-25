@@ -112,6 +112,32 @@ body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(-
 @media(max-width:1100px){#dashKpis{grid-template-columns:repeat(2,minmax(0,1fr))}#dashKpis .k-ring,#dashKpis .k-score{grid-column:1/-1}}
 @media(max-width:600px){#dashKpis .kpi{padding:14px}#dashKpis .k-time .v{font-size:22px}#dashKpis .k-ring .ring{width:88px;height:88px}#dashKpis .k-ring .v{font-size:32px}.exh-top h1{font-size:21px}}
 @media(prefers-reduced-motion:reduce){#dashKpis .k-ring .prg,.exhead .badge.y::before{animation:none}}
+/* Đối chiếu file HR */
+.hrs-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.hrs-file{display:inline-flex;cursor:pointer}
+.hrs-sum{margin:14px 0 10px;font-size:14px}
+.hrs-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.hrs-chips span{border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;background:#F7FAFB}.hrs-chips b{font-variant-numeric:tabular-nums}
+.hrs-sec{border:1px solid var(--line);border-radius:12px;margin:8px 0;background:#fff}
+.hrs-sec>summary{cursor:pointer;padding:11px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;list-style:none}
+.hrs-sec>summary::-webkit-details-marker{display:none}
+.hrs-n{background:#E6F0FC;color:#0B3F94;border-radius:99px;padding:1px 9px;font-size:12.5px;font-weight:700}
+.hrs-bulk{margin-left:auto;border:0;background:none;color:var(--brand-deep);font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:6px 4px}
+.hrs-hint{margin:0 14px 8px}
+.hrs-row{display:flex;gap:10px;align-items:flex-start;padding:9px 14px;border-top:1px solid #EEF1F4;cursor:pointer}
+.hrs-row input{margin-top:3px;width:18px;height:18px;flex:0 0 auto}
+.hrs-row>span{min-width:0;font-size:14px}.hrs-row small{display:block;color:var(--muted);font-size:12.5px;margin-top:1px}
+.hrs-row small,.hrs-row .small,.hrs-chg>.small{font-weight:400}.hrs-row small b{font-weight:700}
+.hrs-row.dis{cursor:not-allowed;opacity:.7}
+.hrs-chg{border-top:1px solid #EEF1F4;padding-top:8px}.hrs-chg>.hrs-row{border-top:0;padding-top:4px;padding-bottom:4px}.hrs-chg>b{margin-left:14px}
+.hrs-chg>b+.small{margin-left:4px}
+.hrs-dl{display:inline-block;min-width:54px;color:var(--muted);font-size:12.5px}
+.hrs-bad{color:var(--bad);font-style:normal}.hrs-warn{color:#8A5500;font-style:normal;font-size:12px}
+.hrs-ul{margin:4px 14px 10px;padding-left:18px;font-size:13.5px}
+.hrs-sec>p:not(.hrs-hint){margin:6px 14px}
+.hrs-act{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px;position:sticky;bottom:0;background:linear-gradient(to top,#fff 70%,rgba(255,255,255,0));padding:10px 0 2px}
+@media(max-width:760px){.hrs-act{bottom:calc(72px + env(safe-area-inset-bottom,0px));flex-wrap:nowrap;gap:8px}.hrs-act #hrsApply{flex:1 1 auto;min-height:46px;padding:0 12px}.hrs-act .btn.ghost{flex:0 0 auto;min-height:46px;padding:0 12px}#hrsSel{display:none}}
+@media(max-width:600px){.hrs-row{padding:10px 12px}}
 @media(prefers-reduced-motion:reduce){.modal-box{animation:none}}
 
 .candsub{display:block;margin-top:2px;max-width:300px;font-size:11.5px;font-weight:500;color:var(--muted);line-height:1.35}.cand-banner{margin:10px 0 4px;padding:10px 14px;border:1px solid #F1DFB6;background:#FFF9EC;border-radius:12px;font-size:13.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cand-banner .btn{margin-left:auto}
@@ -892,6 +918,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 <script src="/kiemtra/dt24.js?v=1"></script>
 <script src="/kiemtra/mailtpl.js?v=1"></script>
 <script src="/kiemtra/hrimport.js?v=5"></script>
+<script src="/kiemtra/hrsync.js?v=1"></script>
 <script src="/kiemtra/notify.js?v=14"></script>
 </head>
 <body>
@@ -1368,6 +1395,14 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
         <div id="candEditMsg"></div>
       </div>
       </div>
+      <div class="card hide" id="hrsCard">
+        <div class="hrs-h"><h1 style="margin:0">Đối chiếu file HR</h1><button class="btn ghost sm" type="button" onclick="hrsToggle(false)">Đóng</button></div>
+        <p class="small" style="margin:6px 0 12px">Chọn file <b>Báo cáo nhân viên tóm tắt</b> (.xlsx) tải từ hệ thống HR. File chỉ được đọc trong trình duyệt của bạn; bạn xem trước, chọn thay đổi rồi mới bấm Áp dụng. Chưa bấm Áp dụng thì chưa có gì thay đổi.</p>
+        <label class="btn sm hrs-file" for="hrsFile">Chọn file Excel…</label><span class="small" id="hrsName" style="margin-left:10px"></span>
+        <input type="file" id="hrsFile" accept=".xlsx" style="display:none" onchange="hrsRead(event)">
+        <div id="hrsBody"></div>
+        <div id="hrsMsg"></div>
+      </div>
       <div class="card hide" id="candAddCard">
         <button class="xclose" type="button" onclick="$('candAddCard').classList.add('hide')" aria-label="Đóng">×</button>
         <h1>Thêm thí sinh</h1>
@@ -1413,6 +1448,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h1 style="margin:0">Hồ sơ học tập (<span id="candCount">0</span>)</h1>
           <button class="btn" type="button" onclick="$('candAddCard').classList.remove('hide');$('candAddCard').scrollIntoView({behavior:'smooth'});candAddMode('form');$('candNewCode').focus()">＋ Thêm thí sinh</button>
+          <button class="btn ghost sm" type="button" onclick="hrsToggle()">⇄ Đối chiếu file HR</button>
         </div>
         <div class="qfilter">
           <input type="search" id="candSearch" autocomplete="off" placeholder="Tìm mã NV, tên, email…" oninput="renderCandidates()" aria-label="Tìm thí sinh">
@@ -3179,6 +3215,113 @@ function editCandidateOpen(code){
   msg('candEditMsg','');
   $('candEditCard').scrollTop = 0; $('candEditCard').querySelector('.modal-box').scrollTop = 0;
   setTimeout(() => { try { $('candEditName').focus(); } catch(e){} }, 30);
+}
+/* ---------- Đối chiếu file HR (module: hrsync.js) ---------- */
+let HRS = null;
+function hrsToggle(force){
+  const c = $('hrsCard'), on = typeof force === 'boolean' ? force : c.classList.contains('hide');
+  c.classList.toggle('hide', !on);
+  if (on) c.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+async function hrsRead(ev){
+  const file = ev.target.files && ev.target.files[0]; if (!file) return;
+  $('hrsName').textContent = file.name; msg('hrsMsg', ''); $('hrsBody').innerHTML = '<p class="small">Đang đọc file…</p>';
+  let wb; try { const X = await loadExcelJS(); wb = new X.Workbook(); await wb.xlsx.load(await file.arrayBuffer()); }
+  catch(e){ $('hrsBody').innerHTML = ''; msg('hrsMsg', 'Không đọc được file. Hãy chọn đúng file .xlsx tải từ HR (kiểm tra kết nối mạng nếu thư viện Excel chưa tải được).', 'err'); return; }
+  const res = KTHrSync.parseReport(KTHr.sheetsFromExcelJS(wb));
+  if (!res.records.length){ $('hrsBody').innerHTML = ''; msg('hrsMsg', 'File không đúng định dạng: ' + ((res.problems[0] || {}).reason || 'không có dòng nhân viên nào') + '.', 'err'); return; }
+  await loadCandidates();
+  HRS = { res, file: file.name }; hrsCompute(); ev.target.value = '';
+}
+function hrsCompute(){ HRS.out = KTHrSync.compare(HRS.res.records, CANDIDATES, vnToday()); hrsRender(); }
+function hrsRender(){
+  const o = HRS.out, dm = KTHrSync.dmy, A = o.anomalies;
+  const li = (kind, code, field, on, dis, html) => '<label class="hrs-row' + (dis ? ' dis' : '') + '"><input type="checkbox" class="hrs-cb" data-kind="' + kind + '" data-code="' + esc(code) + '"' + (field ? ' data-field="' + field + '"' : '') + (on ? ' checked' : '') + (dis ? ' disabled' : '') + ' onchange="hrsCount()"><span>' + html + '</span></label>';
+  const sec = (title, n, hint, body, bulk, open) => n ? '<details class="hrs-sec"' + (open ? ' open' : '') + '><summary><b>' + title + '</b> <span class="hrs-n">' + n + '</span>' + (bulk ? '<button type="button" class="hrs-bulk" onclick="event.preventDefault();hrsAll(\'' + bulk + '\')">Chọn / bỏ chọn tất cả</button>' : '') + '</summary><p class="small hrs-hint">' + hint + '</p>' + body + '</details>' : '';
+  const nm = (n, c) => '<b>' + esc(n || c) + '</b> <span class="small">' + esc(c) + '</span>';
+  const addH = o.added.map(a => li('add', a.code, '', a.emailOk, !a.emailOk, nm(a.name, a.code) + '<small>' + esc(a.manager || '(chưa có quản lí)') + ' · ' + esc(a.title || '—') + (a.segment === 'may_loc' ? ' · Máy lọc' : a.segment === 'gia_dung' ? ' · Gia dụng' : '') + ' · ' + (a.emailOk ? esc(a.email) : '<em class="hrs-bad">không thêm được: ' + esc(a.blocked) + '</em>') + '</small>')).join('');
+  const chH = o.changed.map(c => '<div class="hrs-chg">' + nm(c.name, c.code) + (c.left ? ' <span class="tag tag-left">Đã nghỉ việc</span>' : '') + c.diffs.map(d => li('chg', c.code, d.field, d.on, false, '<span class="hrs-dl">' + d.label + '</span> ' + (d.from ? '<s>' + esc(d.from) + '</s>' : '<i>(trống)</i>') + ' → <b>' + esc(d.to) + '</b>' + (d.field === 'email' ? ' <em class="hrs-warn">đổi email đăng nhập, nên kiểm tra trước</em>' : ''))).join('') + '</div>').join('');
+  const lvH = o.leaving.map(l => li('leave', l.code, '', l.state === 'past', false, nm(l.name, l.code) + '<small>' + esc(l.manager || '') + ' · ' + (l.state === 'past' ? '<b class="hrs-bad">đã nghỉ từ ' + dm(l.lastDay) + '</b>' : 'sẽ nghỉ ngày ' + dm(l.lastDay) + ' (chưa tới, mặc định chưa chọn)') + '</small>')).join('');
+  const msH = o.missing.map(m => li('miss', m.code, '', false, false, nm(m.name, m.code) + '<small>' + esc(m.manager || '(chưa có quản lí)') + ' · ' + esc(m.title || '') + '</small>')).join('');
+  const list = (arr, f) => arr.length ? '<ul class="hrs-ul">' + arr.map(f).join('') + '</ul>' : '';
+  const anH = '<p class="small hrs-hint">Chỉ để bạn biết, không có gì để chọn.</p>' +
+    (A.badEmail.length ? '<p><b>' + A.badEmail.length + ' người có email không dùng được</b> (giả @example.com hoặc sai dạng): các email này sẽ không bao giờ được ghi đè lên email đang có.</p>' + list(A.badEmail, x => '<li>' + esc(x.name) + ' <span class="small">' + esc(x.code) + ' · ' + esc(x.email || '(trống)') + '</span></li>') : '') +
+    (A.dupEmail.length ? '<p><b>Email dùng chung:</b></p>' + list(A.dupEmail, x => '<li>' + esc(x.email) + ' ← ' + esc(x.people.join(', ')) + '</li>') : '') +
+    (A.noJoin.length ? '<p><b>' + A.noJoin.length + ' người thiếu ngày vào công ty:</b> ' + esc(A.noJoin.map(x => x.code).join(', ')) + '</p>' : '') +
+    (A.dupName.length ? '<p><b>Tên giống nhau:</b></p>' + list(A.dupName, x => '<li>' + esc(x.name) + ' ← ' + esc(x.people.join(', ')) + '</li>') : '') +
+    (A.personalEmail ? '<p class="small">' + A.personalEmail + ' người dùng email cá nhân (gmail, icloud…) ở cột "Email công việc".</p>' : '') +
+    (o.alreadyLeftNotInSystem.length ? '<p class="small">' + o.alreadyLeftNotInSystem.length + ' người trong file đã có ngày làm việc cuối đã qua và chưa có trong hệ thống: bỏ qua, không thêm.</p>' : '');
+  const anN = A.badEmail.length + A.dupEmail.length + A.noJoin.length + A.dupName.length;
+  $('hrsBody').innerHTML =
+    '<div class="hrs-sum"><b>' + esc(HRS.file) + '</b> · ' + o.total + ' người trong file · <b>' + o.same + '</b> khớp hoàn toàn so với ' + CANDIDATES.length + ' thí sinh trong hệ thống</div>' +
+    '<div class="hrs-chips"><span><b>' + o.added.length + '</b> mới</span><span><b>' + o.changed.length + '</b> lệch thông tin</span><span><b>' + o.leaving.length + '</b> có ngày nghỉ</span><span><b>' + o.missing.length + '</b> không còn trong HR</span><span><b>' + anN + '</b> bất thường</span></div>' +
+    sec('Nghỉ việc theo file HR', o.leaving.length, 'Người có "Ngày làm việc cuối cùng". Đã qua ngày đó thì mặc định được chọn để đánh dấu nghỉ việc.', lvH, 'leave', true) +
+    sec('Có trong hệ thống nhưng không còn trong file HR', o.missing.length, 'Nhiều khả năng đã nghỉ, nhưng file HR có thể không phải danh sách đầy đủ nên mặc định <b>chưa chọn</b>. Tick người nào đã nghỉ thật để đánh dấu nghỉ việc (hồ sơ và kết quả cũ vẫn giữ, làm lại được).', msH, 'miss', true) +
+    sec('Lệch thông tin', o.changed.length, 'Họ tên và quản lí mặc định được chọn. Email mặc định chưa chọn vì đó là thông tin đăng nhập của thí sinh. Người được sửa sẽ phải xác nhận lại thông tin khi vào làm bài.', chH, 'chg', false) +
+    sec('Người mới trong file HR', o.added.length, 'Chưa có trong hệ thống. Chức danh và nhóm ngành lấy theo quy tắc của hệ thống (PC / SR 1 / SR 2), bạn có thể sửa lại sau ở nút Sửa. Người không có email hợp lệ không thêm được.', addH, 'add', false) +
+    sec('Bất thường trong file HR', anN, '', anH, '', false) +
+    '<div class="hrs-act"><button type="button" class="btn" id="hrsApply" onclick="hrsApply()">Áp dụng</button><button type="button" class="btn ghost" onclick="hrsExport()">Tải báo cáo (.csv)</button><span class="small" id="hrsSel"></span></div>';
+  hrsCount();
+}
+function hrsAll(kind){
+  const cbs = Array.from(document.querySelectorAll('#hrsBody .hrs-cb[data-kind="' + kind + '"]:not(:disabled)')), all = cbs.every(c => c.checked);
+  cbs.forEach(c => { c.checked = !all; }); hrsCount();
+}
+function hrsCount(){
+  const n = document.querySelectorAll('#hrsBody .hrs-cb:checked').length, b = $('hrsApply'); if (!b) return;
+  b.disabled = !n; b.textContent = n ? 'Áp dụng ' + n + ' thay đổi đã chọn' : 'Chưa chọn thay đổi nào';
+  $('hrsSel').textContent = '';
+}
+async function hrsApply(){
+  if (!HRS) return;
+  const o = HRS.out, sel = Array.from(document.querySelectorAll('#hrsBody .hrs-cb:checked'));
+  if (!sel.length) return;
+  const addSel = new Set(sel.filter(x => x.dataset.kind === 'add').map(x => x.dataset.code)), chg = {}, leave = [];
+  sel.filter(x => x.dataset.kind === 'chg').forEach(x => { (chg[x.dataset.code] = chg[x.dataset.code] || {})[x.dataset.field] = 1; });
+  sel.filter(x => x.dataset.kind === 'leave' || x.dataset.kind === 'miss').forEach(x => { if (leave.indexOf(x.dataset.code) < 0) leave.push(x.dataset.code); });
+  const rows = [];
+  o.added.forEach(a => { if (addSel.has(a.code) && a.emailOk) rows.push({ code:a.code, name:a.name, email:a.email, manager:a.manager, segment:a.segment, title:a.title }); });
+  let nChg = 0;
+  o.changed.forEach(ch => {
+    const f = chg[ch.code]; if (!f) return;
+    const c = CANDIDATES.find(x => x.code === ch.code); if (!c) return;
+    // giữ nguyên mọi trường khác (nhóm ngành, chức danh, số điện thoại): chỉ đổi đúng trường được chọn
+    const row = { code:c.code, name:c.name || '', email:c.email || '', manager:c.manager || '', segment:c.segment || 'both', title:c.title || 'PC', phone:c.phone || '' };
+    ch.diffs.forEach(d => { if (f[d.field]) row[d.field] = d.to; });
+    rows.push(row); nChg++;
+  });
+  const nAdd = rows.length - nChg;
+  if (!confirm('Áp dụng vào hệ thống?\n\n• Thêm mới: ' + nAdd + ' người\n• Sửa thông tin: ' + nChg + ' người\n• Đánh dấu nghỉ việc: ' + leave.length + ' người\n\nNgười nghỉ việc sẽ không nhận thông báo, không được gán đề và không vào thi được (đánh dấu lại được bất cứ lúc nào).')) return;
+  const btn = $('hrsApply'); btn.disabled = true; btn.textContent = 'Đang áp dụng…'; msg('hrsMsg', '');
+  let r1 = null;
+  if (rows.length){
+    const { j } = await api('POST', '/api/kt-admin', { op:'addCandidates', rows });
+    if (!j.ok){ msg('hrsMsg', 'Không thêm/sửa được: ' + (j.error || 'lỗi máy chủ') + '. Chưa đánh dấu nghỉ việc ai.', 'err'); hrsCount(); return; }
+    r1 = j;
+  }
+  let okL = 0; const failL = [];
+  for (const code of leave){
+    const { j } = await api('POST', '/api/kt-admin', { op:'setEmployment', code, left:true });
+    if (j.ok) okL++; else failL.push(code);
+  }
+  await loadCandidates(); hrsCompute();
+  const parts = [];
+  if (r1) parts.push('thêm ' + r1.added + ', cập nhật ' + r1.updated);
+  if (leave.length) parts.push('đánh dấu nghỉ việc ' + okL + '/' + leave.length);
+  msg('hrsMsg', 'Đã áp dụng: ' + parts.join(' · ') + '.' + (failL.length ? ' Không đánh dấu được: ' + failL.join(', ') + '.' : ''), failL.length ? 'err' : 'ok');
+}
+function hrsExport(){
+  if (!HRS) return;
+  const o = HRS.out, dm = KTHrSync.dmy, rows = [['Nhóm', 'Mã nhân viên', 'Họ tên', 'Quản lí', 'Chi tiết']];
+  o.leaving.forEach(l => rows.push(['Nghỉ việc theo HR', l.code, l.name, l.manager, (l.state === 'past' ? 'đã nghỉ từ ' : 'sẽ nghỉ ngày ') + dm(l.lastDay)]));
+  o.missing.forEach(m => rows.push(['Không còn trong HR', m.code, m.name, m.manager, m.title]));
+  o.changed.forEach(c => c.diffs.forEach(d => rows.push(['Lệch thông tin', c.code, c.name, '', d.label + ': ' + d.from + ' → ' + d.to])));
+  o.added.forEach(a => rows.push(['Mới trong HR', a.code, a.name, a.manager, a.emailOk ? a.email : 'không thêm được: ' + a.blocked]));
+  o.anomalies.badEmail.forEach(x => rows.push(['Email không dùng được', x.code, x.name, '', x.email || '(trống)']));
+  o.anomalies.noJoin.forEach(x => rows.push(['Thiếu ngày vào công ty', x.code, x.name, '', '']));
+  const csv = '\ufeff' + rows.map(r => r.map(v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' })); a.download = 'doi-chieu-hr-' + vnToday() + '.csv';
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
 function candEditClose(){ $('candEditCard').classList.add('hide'); }
 /* Tình trạng làm việc: đã nghỉ việc thì không gán đề, không gửi thông báo, không tính vào "chưa làm", không vào thi được */
