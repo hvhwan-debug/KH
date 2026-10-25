@@ -626,6 +626,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
   .card .rt tbody td.rt-act{order:5;flex:0 0 auto;margin-left:auto}
   .rs-top{gap:4px 10px}
   .rc-sub{font-size:12.5px}
+  .tr-best{display:none} /* di động: chỉ ghi "2 lần làm", bỏ chữ "cao nhất" */
 }
 /* Tab Quản lí (trang quản lí nhúng): dùng hết chiều rộng và chiều cao còn lại, không để khoảng trống phía dưới */
 @media(min-width:761px){
@@ -3817,7 +3818,7 @@ function resRow(r, o){
   const who = o.sub
     ? '<td class="rt-who"><div class="who sub"><span class="sn">Lần ' + o.n + '</span>' + (o.official ? '<span class="offtag">★ Chính thức</span>' : '<span class="small" style="color:var(--muted)">không tính</span>') + '</div></td>'
     : '<td class="rt-who"><div class="who"><span class="av" style="background:' + pal[0] + ';color:' + pal[1] + '" aria-hidden="true">' + esc(resInitials(r.name || r.code)) + '</span><div style="min-width:0"><b>' + nm + tags + '</b><small><i>' + esc(r.code) + '</i>' + (r.title ? ' · ' + esc(r.title) : '') + (r.manager ? ' · ' + esc(r.manager) : '') + '</small></div></div></td>';
-  const triesBtn = o.tries > 1 ? '<button type="button" class="tries-t" aria-expanded="' + (o.open ? 'true' : 'false') + '" onclick="resToggle(event,' + o.g + ')" title="Xem từng lần làm">' + o.tries + ' lần làm · cao nhất <span class="cv">▾</span></button>' : '';
+  const triesBtn = o.tries > 1 ? '<button type="button" class="tries-t" aria-expanded="' + (o.open ? 'true' : 'false') + '" onclick="resToggle(event,' + o.g + ')" title="Xem từng lần làm">' + o.tries + ' lần làm<span class="tr-best"> · cao nhất</span> <span class="cv">▾</span></button>' : '';
   return '<tr class="' + (o.sub ? 'rt-sub' + (o.official ? ' off' : '') + (o.open ? '' : ' hide') : 'rt-main') + '"' + gAttr + ' onclick="rtRow(event,\'' + esc(r.id) + '\')" title="Bấm để xem chi tiết bài làm">' +
     who +
     '<td class="rt-res"><div class="rs"><div class="rs-top"><b>' + esc(r.score) + '/' + esc(r.total) + '</b><span class="rs-pct ' + st + '">' + esc(r.pct) + '%</span>' + badge + triesBtn + '</div><div class="rs-bar" aria-hidden="true"><i class="' + st + '" style="width:' + p + '%"></i></div></div></td>' +
