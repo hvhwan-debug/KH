@@ -77,9 +77,9 @@ function trendSentence(f) {
   if (!f.prev) return "";
   const d = f.pct - f.prev.pct;
   const where = f.prev.period ? " kỳ " + f.prev.period : " lần trước";
-  if (d >= 5) return "Bạn tiến bộ " + d + " điểm phần trăm so với" + where + " (" + f.prev.pct + "%).";
-  if (d <= -5) return "Kết quả thấp hơn" + where + " (" + f.prev.pct + "%) " + Math.abs(d) + " điểm phần trăm, hãy xem lại cách ôn tập.";
-  return "Kết quả tương đương" + where + " (" + f.prev.pct + "%).";
+  if (d >= 5) return "So với" + where + " (" + f.prev.pct + "%), bạn đã tiến lên " + d + " điểm phần trăm, rất đáng ghi nhận.";
+  if (d <= -5) return "Lần này thấp hơn" + where + " (" + f.prev.pct + "%) khoảng " + Math.abs(d) + " điểm phần trăm, có lẽ cách ôn tập cần điều chỉnh một chút.";
+  return "Kết quả của bạn khá ổn định so với" + where + " (" + f.prev.pct + "%).";
 }
 
 // Số liệu phân tích có cấu trúc để màn hình kết quả và email vẽ biểu đồ từ CÙNG một nguồn.
@@ -103,12 +103,12 @@ function ensureAnalysis(adv, attempt, settings, prev) {
 // Thứ tự ưu tiên: (1) điều quan trọng nhất của bài này, (2) mảng cần ôn (gộp, không lặp mẫu câu), (3) cách làm bài, (4) mốc điểm, (5) bước tiếp theo.
 function rulesAdvice(f) {
   const p = f.pct, b = f.beh || {}, rnd = b.random || null;
-  const headline = rnd ? "Kết quả gần bằng mức đoán ngẫu nhiên"
-    : p >= 90 ? "Kết quả xuất sắc" : p >= 80 ? "Kết quả tốt" : p >= 70 ? "Kết quả khá, còn có thể tốt hơn" : p >= 50 ? "Cần ôn tập thêm" : "Cần củng cố lại kiến thức nền";
+  const headline = rnd ? "Kết quả này chưa phản ánh đúng sức của bạn"
+    : p >= 90 ? "Bạn làm bài rất vững" : p >= 80 ? "Kết quả tốt, chỉ cần thêm chút nữa là xuất sắc" : p >= 70 ? "Khá ổn, vẫn còn chỗ để bứt lên" : p >= 50 ? "Bạn đã có nền, cần ôn thêm vài chỗ" : "Nên củng cố lại phần kiến thức nền";
   const parts = [rnd
     ? "Bạn đúng " + f.correct + "/" + f.total + " câu (" + p + "%), gần bằng mức nếu chọn bừa (khoảng " + rnd.chancePct + "%)" + (f.avgSecPerQ != null ? ", và mỗi câu chỉ mất khoảng " + f.avgSecPerQ + " giây" : "") + "."
     : "Bạn trả lời đúng " + f.correct + "/" + f.total + " câu (" + p + "%)."];
-  if (rnd) parts.push("Kết quả này nhiều khả năng chưa phản ánh đúng kiến thức của bạn.");
+  if (rnd) parts.push("Nhiều khả năng kết quả này chưa nói lên đúng kiến thức của bạn.");
   else { const tr = trendSentence(f); if (tr) parts.push(tr); }
   if (f.practice) parts.push("Đây là bài thi thử, không phải thi chính thức.");
 
@@ -127,13 +127,13 @@ function rulesAdvice(f) {
     if (f.weak.length >= 2) {
       const list = f.weak.map((c) => "\"" + c.name + "\" (đúng " + c.ok + "/" + c.n + ")").join(", ");
       const allWeak = f.categories.length >= 3 && f.categories.every((c) => c.pct < 60);
-      actions.push((allWeak ? "Hầu hết các mảng đều yếu, nên cần ôn lại nội dung nền một cách có hệ thống, bắt đầu từ " : "Ưu tiên ôn các mảng sau, theo thứ tự yếu nhất: ") + list +
-        ". Với mỗi mảng: đọc lại tài liệu hoặc quy trình, ghi 3-5 ý chính rồi tự trả lời lại không nhìn tài liệu.");
+      actions.push((allWeak ? "Hầu hết các mảng đều còn yếu, nên bạn ôn lại nội dung nền từng bước một, bắt đầu từ " : "Bạn nên ôn trước những mảng này: ") + list +
+        ". Mẹo nhỏ: đọc lại tài liệu, ghi ra 3-5 ý chính rồi thử trả lời lại mà không nhìn.");
     } else if (f.weak.length === 1) {
       const c = f.weak[0];
-      actions.push("Ôn lại mảng \"" + c.name + "\" (đúng " + c.ok + "/" + c.n + " câu): đọc lại tài liệu hoặc quy trình của mảng này, ghi ra 3-5 ý chính rồi tự trả lời lại không nhìn tài liệu.");
-    } else if (f.wrong === 1) actions.push("Bạn chỉ sai 1 câu, có thể chỉ do đọc đề chưa kỹ: lần sau hãy đọc đủ các phương án trước khi chọn.");
-    else if (f.wrong > 1) actions.push("Các câu sai rải rác ở nhiều mảng, không có mảng nào yếu rõ rệt: hãy đọc kỹ đề và đủ các phương án trước khi chọn, tránh chọn vội theo cảm tính.");
+      actions.push("Mảng \"" + c.name + "\" mới đúng " + c.ok + "/" + c.n + " câu, đây là chỗ nên ôn trước. Bạn đọc lại tài liệu, ghi ra 3-5 ý chính rồi thử trả lời lại mà không nhìn.");
+    } else if (f.wrong === 1) actions.push("Bạn chỉ sai đúng 1 câu, nhiều khả năng do đọc đề hơi vội. Lần sau thử đọc hết các phương án rồi hãy chọn.");
+    else if (f.wrong > 1) actions.push("Các câu sai nằm rải rác, không có mảng nào yếu rõ rệt, nên điểm mất đi nhiều khả năng do chọn hơi vội. Lần sau thử đọc kỹ đề và đủ các phương án trước khi chọn.");
     if (b.rush) {
       // Chỉ so sánh với câu đúng khi tốc độ thật sự khác nhau (nếu câu đúng cũng nhanh như vậy thì so sánh chẳng có nghĩa)
       const cmp = b.rightMedSec != null && b.fastWrongSec != null && b.rightMedSec >= b.fastWrongSec * 1.5;
@@ -146,7 +146,7 @@ function rulesAdvice(f) {
   }
   // Câu kết luôn có, dù danh sách phía trên dài đến đâu
   const closing = rnd ? "Nếu sau khi làm lại nghiêm túc vẫn còn phần chưa chắc, hãy hỏi quản lí trực tiếp để được giải đáp."
-    : p >= 90 ? "Bạn nắm kiến thức rất vững: hãy chia sẻ cách học của mình với đồng nghiệp trong nhóm." : "Sau khi ôn, hãy hỏi quản lí trực tiếp để được giải đáp những phần còn mơ hồ.";
+    : p >= 90 ? "Bạn nắm kiến thức rất vững, đừng ngại chia sẻ cách học của mình với đồng nghiệp trong nhóm nhé." : "Ôn xong mà vẫn còn phần chưa rõ, bạn cứ hỏi thẳng quản lí để được giải đáp.";
   const ins = f.insight;
   const strengths = [];
   if (!rnd && ins) {
@@ -179,20 +179,25 @@ function aiConfigured() {
 }
 function buildPrompt(f) {
   const sys =
-    "Bạn là một huấn luyện viên đào tạo nghiệp vụ tinh ý, vừa ngồi quan sát nhân viên bán hàng (điện máy gia dụng, máy lọc nước) làm bài kiểm tra. " +
-    "Nhiệm vụ: viết nhận xét RIÊNG cho người này bằng tiếng Việt, xưng \"bạn\", để khi đọc xong họ thấy \"đúng là mình\". " +
+    "Bạn là một người quản lí bán hàng tinh ý và thân thiện, vừa ngồi quan sát nhân viên (điện máy gia dụng, máy lọc nước) làm bài kiểm tra, giờ ngồi nói chuyện lại với họ. " +
+    "Hãy viết nhận xét RIÊNG cho người này bằng tiếng Việt, xưng \"bạn\", đọc lên phải như một người thật đang nói chứ không phải báo cáo. " +
+    "GIỌNG VĂN: ấm áp, thẳng thắn, đời thường; câu ngắn đến vừa, như nhắn tin cho đồng nghiệp. Mở đầu bằng điều đáng ghi nhận nhất ở bài này rồi mới nói đến chỗ cần cải thiện. " +
+    "Không dùng thuật ngữ thống kê (trung vị, phân vị, độ lệch, tỷ lệ...): nói \"thường mất khoảng 12 giây một câu\" thay vì \"trung vị 12 giây\". " +
+    "Không dồn số liệu: cả bài nhận xét chỉ nhắc khoảng 3 đến 5 con số quan trọng nhất, còn lại diễn đạt bằng lời. " +
+    "Không dùng văn mẫu và các cụm máy móc như \"Điều này cho thấy\", \"Cần lưu ý rằng\", \"Bạn đã đạt được\"; các mục không được lặp cùng một khuôn câu; không lạm dụng chữ \"hãy\" (tối đa một lần); không hoa mỹ, không nịnh, không phán xét. " +
+    "Ví dụ về GIỌNG VĂN (chỉ tham khảo cách nói, TUYỆT ĐỐI không chép lại nội dung hay con số): \"Nửa đầu bài bạn làm rất chắc, đến cuối thì hơi hụt hơi và mấy câu cuối bị đồng hồ lấy mất. Nếu giữ được nhịp như đoạn đầu thì điểm sẽ cao hơn nữa.\" " +
     "NGUYÊN TẮC BẮT BUỘC: " +
-    "(1) Mọi nhận xét phải dựa trên dữ liệu được cung cấp; mỗi câu trong portrait phải nêu ít nhất một quan sát CỤ THỂ (số câu, vị trí câu, số giây, tên mảng, so với kỳ trước hoặc đồng nghiệp). " +
+    "(1) Mọi nhận xét phải dựa trên dữ liệu được cung cấp và nêu được quan sát CỤ THỂ về chính bài này (vị trí câu, nhịp làm bài, tên mảng, so với kỳ trước...). " +
     "(2) Chỉ dùng ĐÚNG các con số có trong dữ liệu, không tự tính ra số mới, không làm tròn khác đi, không bịa. " +
     "(3) TUYỆT ĐỐI không tiết lộ hay đoán đáp án, không nêu nội dung câu hỏi, không bịa thông số sản phẩm, chính sách hay quy trình của công ty. " +
-    "(4) Tránh câu sáo rỗng áp dụng cho ai cũng được (như \"hãy cố gắng hơn\", \"cần chăm chỉ\"). Nói như người đã thấy tận mắt nhịp làm bài của họ: chỗ họ chắc tay, chỗ họ vội, chỗ họ hụt hơi. " +
-    "(5) Giọng ấm áp, thẳng thắn, khích lệ, không phán xét, không nịnh. Có thể gọi tên (ten_goi) ở headline. " +
-    "(6) Nếu ket_qua_gan_muc_doan_bua là true: nói rõ kết quả chưa phản ánh thực lực, khuyên làm lại nghiêm túc, KHÔNG nhận xét mảng kiến thức. " +
+    "(4) Tránh câu sáo rỗng áp dụng cho ai cũng được (như \"hãy cố gắng hơn\", \"cần chăm chỉ\"). " +
+    "(5) Có thể gọi tên (ten_goi) ở headline. " +
+    "(6) Nếu ket_qua_gan_muc_doan_bua là true: nói nhẹ nhàng rằng kết quả chưa phản ánh thực lực, khuyên làm lại thong thả, KHÔNG nhận xét mảng kiến thức. " +
     "(7) Nếu la_bai_thi_thu là true: nhắc ngắn gọn đây không phải thi chính thức. " +
-    "(8) Ưu tiên dùng cac_dac_diem_noi_bat (đã được thống kê kiểm chứng) làm xương sống cho portrait. " +
-    "(9) Nếu có ho_so_cong_viec: chỉ dùng làm bối cảnh để giọng điệu và ví dụ hợp với vị trí, khu vực, thâm niên của họ (người mới vào khác người nhiều năm kinh nghiệm); không suy diễn thêm về con người họ, không nêu trình độ học vấn, không đem ra so sánh với ai. " +
+    "(8) Ưu tiên dùng cac_dac_diem_noi_bat (đã được thống kê kiểm chứng) làm xương sống cho portrait, nhưng diễn đạt lại bằng lời của bạn. " +
+    "(9) Nếu có ho_so_cong_viec: chỉ dùng làm bối cảnh để giọng điệu và ví dụ hợp với vị trí, khu vực, thâm niên của họ; không suy diễn thêm về con người họ, không nêu trình độ học vấn, không so sánh với ai. " +
     "Chỉ trả về DUY NHẤT một đối tượng JSON hợp lệ, đúng dạng: " +
-    '{"headline":"tối đa 80 ký tự, câu nhận định đắt nhất về bài làm này","portrait":"2-3 câu chân dung cách người này làm bài, mỗi câu một bằng chứng cụ thể","strengths":["1-2 điểm mạnh có bằng chứng"],"actions":["3-4 việc nên làm, mỗi việc bắt đầu bằng động từ, gắn với một bằng chứng và nói rõ cách làm"],"goal":"một mục tiêu đo được cho lần tới, bắt đầu bằng \\"Lần tới:\\""}';
+    '{"headline":"tối đa 60 ký tự, một câu nhận định gọn, tự nhiên về bài làm này","portrait":"2-3 câu liền mạch như đang nói chuyện, mỗi câu gắn với một điều cụ thể đã quan sát","strengths":["1-2 điểm mạnh, nói như khen thật lòng"],"actions":["2-3 việc nên làm trong thời gian tới, mỗi việc 1-2 câu, nói rõ làm gì và vì sao"],"goal":"một mục tiêu đo được cho lần tới, bắt đầu bằng \\"Lần tới:\\""}';
   const ins = f.insight || {};
   const data = {
     ten_goi: f.firstName || null,
@@ -271,10 +276,10 @@ async function aiAdvice(f, timeoutMs) {
     const left = deadline - Date.now();
     if (left < 1500) break;
     let raw;
-    try { raw = await withTimeout(llm.chat(msgs, { temperature: 0.5, max_tokens: 1400, task: "advice", json: true, timeoutMs: left - 100 }), left); }
+    try { raw = await withTimeout(llm.chat(msgs, { temperature: 0.65, max_tokens: 1400, task: "advice", json: true, timeoutMs: left - 100 }), left); }
     catch (e) { return { advice: null, status: e && (e.message === "timeout" || e.status === 504) ? "timeout" : "error" }; }
     const ad = parseAi(raw);
-    if (!ad) { status = "invalid"; msgs = P.messages.concat([{ role: "assistant", content: String(raw || "").slice(0, 2000) }, { role: "user", content: "Bản trên chưa đúng định dạng JSON yêu cầu (cần headline, portrait, strengths, actions 3-4 mục, goal). Hãy trả lại đúng một đối tượng JSON." }]); continue; }
+    if (!ad) { status = "invalid"; msgs = P.messages.concat([{ role: "assistant", content: String(raw || "").slice(0, 2000) }, { role: "user", content: "Bản trên chưa đúng định dạng JSON yêu cầu (cần headline, portrait, strengths, actions 2-3 mục, goal). Hãy trả lại đúng một đối tượng JSON." }]); continue; }
     const bn = badNumbers(ad, P.data), bc = badCategories(ad, f);
     if (!bn.length && !bc.length) return { advice: ad, status: round ? "ok_retry" : "ok" };
     status = "numbers";

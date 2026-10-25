@@ -371,6 +371,25 @@ body.rs .stage{margin-top:6px}
 .advice .goal{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:12px 14px;border-radius:14px;background:#FFF8E8;border:1px solid #F1DFB6;font-size:14px;line-height:1.6;color:#5E3D00}
 .advice .goal b{color:#8A5500}
 .advice.hide{display:none}
+@media(max-width:480px){
+  .rv-body .stats.c3{gap:8px}
+  .rv-body .stats.c3 div{padding:12px 6px;display:flex;flex-direction:column;align-items:center}
+  .rv-body .stats.c3 b{font-size:19px;white-space:nowrap}
+  .rv-body .stats.c3 span{font-size:11.5px;line-height:1.35;margin-top:4px}
+  .tries{margin:12px 0 4px}
+  .tries .t .sc{font-size:18px}
+  .tries #btnRetry{width:100%}
+  .advice{padding:14px 12px 12px;border-radius:16px;margin-top:16px}
+  .advice .adh{flex-wrap:wrap;gap:8px}
+  .advice .adh .tag{margin-left:0}
+  .advice h3{font-size:16px;line-height:1.45}
+  .advice .traits{display:none}
+  .advice .portrait{padding:12px 13px 12px 15px;font-size:14.5px;line-height:1.75}
+  .advice .sub{margin:14px 0 6px}
+  .advice li{padding:10px 11px 10px 36px;font-size:14px;line-height:1.65}
+  .advice li::before{left:10px}
+  .advice .goal{padding:11px 12px;font-size:13.5px}
+}
 .advice .adh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .advice .adh .ic{flex:0 0 auto;width:34px;height:34px;border-radius:11px;background:var(--grad);display:grid;place-items:center}
 .advice .adh b{font-size:15px;color:var(--ink)}
@@ -863,7 +882,7 @@ body.introbg .btn.go:active{transform:scale(.99)}
     <section class="card res hide" id="scrResult">
       <canvas class="confetti hide" id="confetti" aria-hidden="true"></canvas>
       <div class="rv-head">
-        <div class="rv-brand"><span class="logo" aria-hidden="true">KT</span><div><b id="rvTitle">Bài kiểm tra</b><small>Kết quả bài kiểm tra</small></div></div>
+        <div class="rv-brand"><span class="logo" aria-hidden="true"><img src="/kiemtra/logo-mark.png" alt="" width="40" height="40"></span><div><b id="rvTitle">Bài kiểm tra</b><small>Kết quả bài kiểm tra</small></div></div>
         <div id="resBadge"></div>
       </div>
       <div class="rv-body">
@@ -1618,13 +1637,13 @@ function renderAdvice(a){
   if (!a || !a.headline || !a.actions || !a.actions.length){ box.classList.add('hide'); box.innerHTML = ''; return; }
   var portrait = a.portrait || a.summary || '';
   box.innerHTML = '<div class="adh"><span class="ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3Z"/></svg></span>' +
-    '<b id="advTitle">Nhận xét dành riêng cho bạn</b><span class="tag">' + (a.source === 'ai' ? 'Gợi ý bởi AI' : 'Phân tích tự động') + '</span></div>' +
+    '<b id="advTitle">Vài lời dành riêng cho bạn</b><span class="tag">' + (a.source === 'ai' ? 'Gợi ý bởi AI' : 'Nhận xét nhanh') + '</span></div>' +
     '<h3>' + esc(a.headline) + '</h3>' +
     (a.traits && a.traits.length ? '<div class="traits">' + a.traits.slice(0, 4).map(function(t){ return '<span>' + esc(t) + '</span>'; }).join('') + '</div>' : '') +
-    (portrait ? '<div class="portrait"><span class="pl">Cách bạn đã làm bài</span>' + esc(portrait) + '</div>' : '') +
-    (a.strengths && a.strengths.length ? '<span class="sub">Điểm mạnh</span><ul class="str">' + a.strengths.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') +
-    '<span class="sub">Việc nên làm</span><ul>' + a.actions.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' +
-    (a.goal ? '<div class="goal"><span aria-hidden="true">🎯</span><div><b>Mục tiêu lần tới.</b> ' + esc(String(a.goal).replace(/^Lần tới:\s*/i, '')) + '</div></div>' : '');
+    (portrait ? '<div class="portrait"><span class="pl">Nhìn lại bài làm của bạn</span>' + esc(portrait) + '</div>' : '') +
+    (a.strengths && a.strengths.length ? '<span class="sub">Điều bạn làm tốt</span><ul class="str">' + a.strengths.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') +
+    '<span class="sub">Gợi ý cho lần tới</span><ul>' + a.actions.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' +
+    (a.goal ? '<div class="goal"><span aria-hidden="true">🎯</span><div><b>Mục tiêu nhỏ cho lần tới:</b> ' + esc(String(a.goal).replace(/^Lần tới:\s*/i, '')) + '</div></div>' : '');
   box.classList.remove('hide');
 }
 function triesTime(ms){ var d = new Date(ms + 7 * 3600 * 1000), p = function(n){ return (n < 10 ? '0' : '') + n; }; return p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ' ' + p(d.getUTCDate()) + '/' + p(d.getUTCMonth() + 1); }
