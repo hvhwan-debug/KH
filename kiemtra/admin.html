@@ -326,6 +326,13 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
 /* Hồ sơ học tập mở từ danh sách thí sinh */
 .candnm{border:0;background:none;padding:2px 0;font:inherit;font-weight:600;color:var(--brand-deep);cursor:pointer;text-align:left}
 .candnm:hover{text-decoration:underline;text-underline-offset:3px}
+.phbtn{border:0;background:none;padding:2px 0;font:inherit;color:var(--brand-deep);cursor:pointer;text-align:left;white-space:nowrap}
+.phbtn:hover,.phbtn[aria-expanded="true"]{text-decoration:underline;text-underline-offset:3px}
+.phmenu{position:fixed;z-index:9999;min-width:210px;background:#fff;border:1px solid #CFDCE6;border-radius:14px;box-shadow:0 14px 34px -10px rgba(10,30,60,.35);padding:6px}
+.phmenu .ph-h{padding:6px 10px 8px;font-size:12px;color:#5B7471;border-bottom:1px solid #E6EDF1;margin-bottom:4px;font-weight:700}
+.phmenu a,.phmenu button{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;padding:10px 12px;border:0;background:none;border-radius:10px;font:inherit;font-size:14px;color:#0D2A31;text-decoration:none;cursor:pointer;text-align:left}
+.phmenu a:hover,.phmenu button:hover,.phmenu a:focus-visible,.phmenu button:focus-visible{background:#EEF4F8;outline:none}
+.phmenu .zl{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:#0068FF;color:#fff;font-size:10px;font-weight:800}
 #profOv{position:fixed;inset:0;z-index:70}
 #profOv iframe{width:100%;height:100%;border:0;background:transparent;display:block}
 
@@ -1740,6 +1747,41 @@ function examBadges(e){
   const now = Date.now(), st = e.openAt && now < e.openAt ? ['n','Chưa mở'] : e.closeAt && now > e.closeAt ? ['n','Đã đóng'] : ['y','Đang mở'];
   return ' <span class="badge ' + st[0] + '">' + st[1] + '</span>' + (e.id === EX_DEFAULT ? ' <span class="badge" style="background:#E3F0FF;color:#1D4F91">Mặc định</span>' : '') + (e.practice ? ' <span class="badge" style="background:#FDEBC8;color:#8A5200">Thi thử</span>' : '');
 }
+// Bấm vào số điện thoại ở danh sách thí sinh: menu nhắn SMS / mở Zalo / gọi điện / sao chép số
+(function(){
+  var menu = null, anchor = null;
+  function close(){ if (menu){ menu.remove(); menu = null; } if (anchor){ anchor.setAttribute('aria-expanded','false'); anchor = null; } }
+  function open(btn){
+    close();
+    var raw = btn.getAttribute('data-phone') || '', d = raw.replace(/[^\d+]/g, '');
+    if (!d) return;
+    anchor = btn; btn.setAttribute('aria-expanded','true');
+    menu = document.createElement('div'); menu.className = 'phmenu'; menu.setAttribute('role','menu');
+    menu.innerHTML = '<div class="ph-h">' + esc(raw) + '</div>' +
+      '<a role="menuitem" href="sms:' + esc(d) + '">&#128172; Nhắn tin SMS</a>' +
+      '<a role="menuitem" href="https://zalo.me/' + esc(d.replace(/^\+/, '')) + '" target="_blank" rel="noopener"><span class="zl" aria-hidden="true">Z</span> Mở Zalo</a>' +
+      '<a role="menuitem" href="tel:' + esc(d) + '">&#128222; Gọi điện</a>' +
+      '<button type="button" role="menuitem" data-ph-copy>&#128203; Sao chép số</button>';
+    document.body.appendChild(menu);
+    var r = btn.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
+    var left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8);
+    var top = r.bottom + 6; if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 6);
+    menu.style.left = left + 'px'; menu.style.top = top + 'px';
+    var cp = menu.querySelector('[data-ph-copy]');
+    cp.onclick = function(){
+      var done = function(){ cp.innerHTML = '&#10003; Đã sao chép'; setTimeout(close, 700); };
+      if (navigator.clipboard) navigator.clipboard.writeText(raw).then(done, function(){ prompt('Sao chép số:', raw); close(); }); else { prompt('Sao chép số:', raw); close(); }
+    };
+    var first = menu.querySelector('a'); if (first) first.focus();
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('.phbtn') : null;
+    if (b){ e.preventDefault(); if (anchor === b) close(); else open(b); return; }
+    if (menu && !menu.contains(e.target)) close(); else if (menu && e.target.closest && e.target.closest('a')) setTimeout(close, 50);
+  });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && menu){ var a = anchor; close(); if (a) a.focus(); } });
+  window.addEventListener('scroll', close, true); window.addEventListener('resize', close);
+})();
 function copyText(t, btn){
   const done = () => { if (btn){ const o = btn.textContent; btn.textContent = 'Đã chép ✓'; setTimeout(() => btn.textContent = o, 1500); } };
   if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, () => prompt('Sao chép link:', t)); else prompt('Sao chép link:', t);
@@ -2868,7 +2910,7 @@ function renderCandidates(){
   const L = CANDIDATES.filter(c => (rf === '*' || (c.region||'') === rf) && (mf === '*' || mgrNorm(c.manager) === mgrNorm(mf)) && (sf === '*' || (c.segment||'both') === sf) && (tf === '*' || (c.title||'PC') === tf) && (!q || spNorm([c.code, c.name, c.email, c.phone || '', c.title || 'PC', c.province || ''].join(' ')).indexOf(q) >= 0));
   $('candShown').textContent = L.length === CANDIDATES.length ? '' : 'Đang lọc: ' + L.length + ' người';
   $('candList').innerHTML = L.map(c =>
-    '<tr><td>'+esc(c.code)+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button>'+(c.probation?'<span class="tag tag-tv" title="Thử việc từ '+esc(c.probation.from)+' đến hết '+esc(c.probation.until)+'">Thử việc</span>':'')+profSub(c)+'</td><td><span class="ttlchip">'+esc(c.title||'PC')+'</span></td><td>'+esc(c.email)+'</td><td>'+(c.phone?esc(c.phone):'<span class="badge n" title="Thí sinh sẽ phải tự điền khi vào làm bài">Chưa có</span>')+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.province||c.region ? esc(c.province||'–')+'<br><b>'+esc(RG_LABEL[c.region]||'Chưa chọn miền')+'</b>' : '<span class="badge n" title="Thí sinh bắt buộc tự chọn khi vào làm bài">Chưa chọn</span>')+'</td><td class="small">'+(c.joinDate?esc(c.joinDate.split('-').reverse().join('/')):'–')+'</td><td style="white-space:nowrap"><button type="button" class="stk-more" onclick="candToggle(this)">Chi tiết ▾</button><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
+    '<tr><td>'+esc(c.code)+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button>'+(c.probation?'<span class="tag tag-tv" title="Thử việc từ '+esc(c.probation.from)+' đến hết '+esc(c.probation.until)+'">Thử việc</span>':'')+profSub(c)+'</td><td><span class="ttlchip">'+esc(c.title||'PC')+'</span></td><td>'+esc(c.email)+'</td><td>'+(c.phone?'<button type="button" class="phbtn" data-phone="'+esc(c.phone)+'" aria-haspopup="menu" title="Nhắn SMS, mở Zalo hoặc gọi điện">'+esc(c.phone)+'</button>':'<span class="badge n" title="Thí sinh sẽ phải tự điền khi vào làm bài">Chưa có</span>')+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.province||c.region ? esc(c.province||'–')+'<br><b>'+esc(RG_LABEL[c.region]||'Chưa chọn miền')+'</b>' : '<span class="badge n" title="Thí sinh bắt buộc tự chọn khi vào làm bài">Chưa chọn</span>')+'</td><td class="small">'+(c.joinDate?esc(c.joinDate.split('-').reverse().join('/')):'–')+'</td><td style="white-space:nowrap"><button type="button" class="stk-more" onclick="candToggle(this)">Chi tiết ▾</button><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
   ).join('') || '<tr><td colspan="10" class="small">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Bấm “＋ Thêm thí sinh”.') + '</td></tr>';
 }
 function candToggle(btn){ var tr = btn.closest('tr'), open = tr.classList.toggle('open'); btn.textContent = open ? 'Thu gọn ▴' : 'Chi tiết ▾'; }
