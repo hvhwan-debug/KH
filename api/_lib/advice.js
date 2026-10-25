@@ -156,7 +156,7 @@ function rulesAdvice(f) {
     else if (ins.history && ins.history.deltaFromLast >= 5) strengths.push("Tiến bộ " + ins.history.deltaFromLast + " điểm % so với kỳ trước.");
   }
   return { source: "rules", headline: (f.firstName && !rnd ? f.firstName + ", " + headline.charAt(0).toLowerCase() + headline.slice(1) : headline), summary: parts.join(" "),
-    portrait: ins ? require("./insight").portraitText(ins, f) : "", traits: ins && !rnd ? ins.traits.map((t) => t.label) : [],
+    portrait: ins ? require("./insight").portraitText(ins, f) : "", traits: [],
     strengths: strengths.slice(0, 2), goal: goalOf(f),
     actions: actions.slice(0, MAX_ACTIONS - 1).concat([closing]), analysis: analysisOf(f) };
 }
@@ -179,25 +179,26 @@ function aiConfigured() {
 }
 function buildPrompt(f) {
   const sys =
-    "Bạn là một người quản lí bán hàng tinh ý và thân thiện, vừa ngồi quan sát nhân viên (điện máy gia dụng, máy lọc nước) làm bài kiểm tra, giờ ngồi nói chuyện lại với họ. " +
-    "Hãy viết nhận xét RIÊNG cho người này bằng tiếng Việt, xưng \"bạn\", đọc lên phải như một người thật đang nói chứ không phải báo cáo. " +
-    "GIỌNG VĂN: ấm áp, thẳng thắn, đời thường; câu ngắn đến vừa, như nhắn tin cho đồng nghiệp. Mở đầu bằng điều đáng ghi nhận nhất ở bài này rồi mới nói đến chỗ cần cải thiện. " +
-    "Không dùng thuật ngữ thống kê (trung vị, phân vị, độ lệch, tỷ lệ...) và không dùng cách nói văn vẻ, sáo ngữ như: chắc tay, vững vàng, hụt hơi, vào nhịp, bứt phá, phong độ, đà tăng, khoảng trống kiến thức, bị đồng hồ lấy mất, xương sống. Dùng lời thường ngày: làm tốt, trả lời đúng, làm chậm lại, hết giờ, tăng thêm điểm, chưa nắm chắc: nói \"thường mất khoảng 12 giây một câu\" thay vì \"trung vị 12 giây\". " +
-    "Không dồn số liệu: cả bài nhận xét chỉ nhắc khoảng 3 đến 5 con số quan trọng nhất, còn lại diễn đạt bằng lời. " +
-    "Không dùng văn mẫu và các cụm máy móc như \"Điều này cho thấy\", \"Cần lưu ý rằng\", \"Bạn đã đạt được\"; các mục không được lặp cùng một khuôn câu; không lạm dụng chữ \"hãy\" (tối đa một lần); không hoa mỹ, không nịnh, không phán xét. " +
-    "Ví dụ về GIỌNG VĂN (chỉ tham khảo cách nói, TUYỆT ĐỐI không chép lại nội dung hay con số): \"Nửa đầu bài bạn làm rất tốt, càng về cuối thì làm chậm lại và mấy câu cuối chưa kịp chọn thì đã hết giờ. Nếu giữ được nhịp như đoạn đầu thì điểm sẽ cao hơn nữa.\" " +
+    "Bạn là chuyên viên đào tạo bán hàng giàu kinh nghiệm, vừa xem nhân viên (điện máy gia dụng, máy lọc nước) làm bài kiểm tra và giờ viết nhận xét riêng cho họ. " +
+    "Mục tiêu: người đọc cảm thấy được một người thật, hiểu việc, nhận xét một cách tử tế, rõ ràng và có ích. " +
+    "CÁCH VIẾT: tiếng Việt tự nhiên, chuyên nghiệp mà gần gũi, xưng \"bạn\", như một người quản lí tốt nói chuyện trực tiếp. " +
+    "Dùng từ ngữ thông dụng ở nơi làm việc. Không dùng ẩn dụ, thành ngữ, từ lóng hay cách nói văn vẻ, không dùng thuật ngữ thống kê; cái gì cũng nói thẳng bằng từ bình thường. " +
+    "Mỗi người một cách diễn đạt riêng: không dùng khuôn câu chung, không lặp cấu trúc giữa các mục, không lặp lại cùng một ý. " +
+    "Mỗi nhận xét nên có đủ ba phần: điều quan sát được ở bài này, điều đó có ý nghĩa gì với công việc bán hàng, và nên làm gì tiếp. " +
+    "Bắt đầu bằng điều đáng ghi nhận nhất, rồi mới nói đến chỗ cần cải thiện; giọng thẳng thắn nhưng không phán xét, không nịnh. " +
+    "Chỉ nhắc khoảng 3 đến 5 con số quan trọng nhất trong cả bài; phần còn lại diễn đạt bằng lời. " +
     "NGUYÊN TẮC BẮT BUỘC: " +
-    "(1) Mọi nhận xét phải dựa trên dữ liệu được cung cấp và nêu được quan sát CỤ THỂ về chính bài này (vị trí câu, tốc độ làm bài, tên mảng, so với kỳ trước...). " +
+    "(1) Mọi nhận xét phải dựa trên dữ liệu được cung cấp và nêu quan sát CỤ THỂ về chính bài này (vị trí câu, tốc độ làm bài, tên mảng, so với kỳ trước...). " +
     "(2) Chỉ dùng ĐÚNG các con số có trong dữ liệu, không tự tính ra số mới, không làm tròn khác đi, không bịa. " +
     "(3) TUYỆT ĐỐI không tiết lộ hay đoán đáp án, không nêu nội dung câu hỏi, không bịa thông số sản phẩm, chính sách hay quy trình của công ty. " +
     "(4) Tránh câu sáo rỗng áp dụng cho ai cũng được (như \"hãy cố gắng hơn\", \"cần chăm chỉ\"). " +
     "(5) Có thể gọi tên (ten_goi) ở headline. " +
-    "(6) Nếu ket_qua_gan_muc_doan_bua là true: nói nhẹ nhàng rằng kết quả chưa phản ánh thực lực, khuyên làm lại thong thả, KHÔNG nhận xét mảng kiến thức. " +
+    "(6) Nếu ket_qua_gan_muc_doan_bua là true: nói nhẹ nhàng rằng kết quả chưa phản ánh đúng khả năng, khuyên làm lại thong thả, KHÔNG nhận xét mảng kiến thức. " +
     "(7) Nếu la_bai_thi_thu là true: nhắc ngắn gọn đây không phải thi chính thức. " +
-    "(8) Ưu tiên dùng cac_dac_diem_noi_bat (đã được thống kê kiểm chứng) làm xương sống cho portrait, nhưng diễn đạt lại bằng lời của bạn. " +
+    "(8) Trường nhung_quan_sat_noi_bat là các dữ kiện đã được kiểm chứng, KHÔNG phải câu để chép lại: hãy tự rút ra ý nghĩa và viết bằng lời của bạn. " +
     "(9) Nếu có ho_so_cong_viec: chỉ dùng làm bối cảnh để giọng điệu và ví dụ hợp với vị trí, khu vực, thâm niên của họ; không suy diễn thêm về con người họ, không nêu trình độ học vấn, không so sánh với ai. " +
     "Chỉ trả về DUY NHẤT một đối tượng JSON hợp lệ, đúng dạng: " +
-    '{"headline":"tối đa 60 ký tự, một câu nhận định gọn, tự nhiên về bài làm này","portrait":"2-3 câu liền mạch như đang nói chuyện, mỗi câu gắn với một điều cụ thể đã quan sát","strengths":["1-2 điểm mạnh, nói như khen thật lòng"],"actions":["2-3 việc nên làm trong thời gian tới, mỗi việc 1-2 câu, nói rõ làm gì và vì sao"],"goal":"một mục tiêu đo được cho lần tới, bắt đầu bằng \\"Lần tới:\\""}';
+    '{"headline":"tối đa 60 ký tự, một câu nhận định gọn về bài làm này","portrait":"2-3 câu liền mạch nhìn lại cách người này làm bài, mỗi câu gắn với một điều cụ thể đã quan sát","strengths":["1-2 điểm mạnh, nêu rõ bằng chứng"],"actions":["2-3 việc nên làm trong thời gian tới, mỗi việc 1-2 câu, nói rõ làm gì và vì sao"],"goal":"một mục tiêu đo được cho lần tới, bắt đầu bằng \\"Lần tới:\\""}';
   const ins = f.insight || {};
   const data = {
     ten_goi: f.firstName || null,
@@ -206,7 +207,7 @@ function buildPrompt(f) {
     la_bai_thi_thu: f.practice, ket_qua_gan_muc_doan_bua: !!(f.beh && f.beh.random), ty_le_dung_neu_chon_bua_phan_tram: f.beh && f.beh.random ? f.beh.random.chancePct : null,
     diem_tuan_thu: f.compliance, moc_diem_tuan_thu_ke_tiep: f.nextBand ? { diem: f.nextBand.points, can_dung_toi_thieu: f.nextBand.needCorrect, con_thieu: f.nextBand.gap } : null,
     thoi_gian_toi_da_moi_cau_giay: f.secsPerQ,
-    cac_dac_diem_noi_bat: (ins.traits || []).map((t) => ({ dac_diem: t.label, bang_chung: t.evidence, dien_giai: t.say })),
+    nhung_quan_sat_noi_bat: (ins.traits || []).map((t) => t.evidence),
     goi_y_so_giay_toi_thieu_moi_cau: ins.suggestSecPerQ || Math.max(10, Math.round(f.secsPerQ * 0.25)),
     nhip_do: ins.speed ? {
       trung_vi_giay_moi_cau: ins.speed.medianSec, trung_binh_giay_moi_cau: ins.speed.meanSec,
@@ -276,7 +277,7 @@ async function aiAdvice(f, timeoutMs) {
     const left = deadline - Date.now();
     if (left < 1500) break;
     let raw;
-    try { raw = await withTimeout(llm.chat(msgs, { temperature: 0.65, max_tokens: 1400, task: "advice", json: true, timeoutMs: left - 100 }), left); }
+    try { raw = await withTimeout(llm.chat(msgs, { temperature: 0.7, max_tokens: 1400, task: "advice", json: true, timeoutMs: left - 100 }), left); }
     catch (e) { return { advice: null, status: e && (e.message === "timeout" || e.status === 504) ? "timeout" : "error" }; }
     const ad = parseAi(raw);
     if (!ad) { status = "invalid"; msgs = P.messages.concat([{ role: "assistant", content: String(raw || "").slice(0, 2000) }, { role: "user", content: "Bản trên chưa đúng định dạng JSON yêu cầu (cần headline, portrait, strengths, actions 2-3 mục, goal). Hãy trả lại đúng một đối tượng JSON." }]); continue; }
@@ -297,9 +298,9 @@ async function build(attempt, settings, prev, opt) {
   const r = useAI ? await aiAdvice(f, opt && opt.timeoutMs) : { advice: null, status: "skipped" };
   const out = r.advice || rules;
   out.analysis = rules.analysis; // phần số liệu luôn lấy từ bản luật (AI chỉ viết lại lời văn)
-  out.traits = rules.traits;     // nhãn đặc điểm luôn lấy từ thống kê đã kiểm chứng
+  out.traits = [];               // không còn nhãn đặc điểm viết sẵn: toàn bộ lời nhận xét do AI (hoặc bản dự phòng) viết
   if (!out.goal) out.goal = rules.goal;
-  if (!out.strengths || !out.strengths.length) out.strengths = rules.strengths;
+  if (out.source !== "ai" && (!out.strengths || !out.strengths.length)) out.strengths = rules.strengths; // bản AI không bị chèn câu viết sẵn
   out.aiStatus = r.status; // lưu để quản trị viên biết vì sao một lời khuyên là bản luật
   out.at = Date.now();
   return out;

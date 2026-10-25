@@ -155,7 +155,6 @@ function build(attempt, settings, advice) {
       '<td style="padding:20px 20px 12px;font-family:' + FONT + '">' +
       (a.source === "ai" ? '<div style="margin:0 0 8px"><span style="display:inline-block;background:#DDF0F3;color:' + C.deep + ';font-size:10.5px;font-weight:800;letter-spacing:.08em;padding:3px 10px;border-radius:99px">GỢI Ý BỞI AI</span></div>' : "") +
       (a.headline ? '<div style="font-size:17px;font-weight:800;line-height:1.4;color:' + C.ink + ';margin:0 0 10px">' + esc(a.headline) + "</div>" : "") +
-      (a.traits && a.traits.length ? '<div style="margin:0 0 12px;line-height:2.1">' + a.traits.slice(0, 4).map((t) => '<span style="display:inline-block;margin:0 4px 0 0;padding:3px 10px;border-radius:99px;background:#ffffff;border:1px solid #CFE5E9;font-size:12px;font-weight:700;color:' + C.deep + '">' + esc(t) + "</span>").join("") + "</div>" : "") +
       (portrait ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="border-collapse:separate;background:#ffffff;border:1px solid #D3E9ED;border-radius:12px"><tr><td style="padding:12px 14px;font-family:' + FONT + '">' +
         '<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + C.deep + ';margin:0 0 4px">Cách bạn đã làm bài</div>' +
         '<div style="font-size:14.5px;line-height:1.7;color:' + C.ink + '">' + esc(portrait) + "</div></td></tr></table>" : "") +
