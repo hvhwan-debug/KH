@@ -736,8 +736,9 @@ body.introbg .btn.go:active{transform:scale(.99)}
     <section class="card hide" id="scrInAppBlock">
       <h1 tabindex="-1">Hãy mở bằng trình duyệt mặc định</h1>
       <p class="lead">Bạn đang mở trang này trong <b id="inAppName">một ứng dụng nhắn tin</b> — trình duyệt này thường chặn camera/vị trí nên <b>không làm bài được</b>. Hãy mở lại bằng Chrome, Safari hoặc trình duyệt mặc định của máy.</p>
-      <div class="msg warn" style="margin-top:4px">
-        <b>Cách mở:</b> bấm vào biểu tượng <b>⋯</b> (dấu ba chấm, thường ở góc trên bên phải) → chọn <b>"Mở bằng trình duyệt"</b> / <b>"Open in browser"</b>. Nếu không thấy, sao chép đường link bên dưới rồi dán vào Chrome/Safari.
+      <button class="btn go" id="btnOpenExt" type="button" style="margin-top:6px">Mở bằng trình duyệt mặc định</button>
+      <div class="msg warn" style="margin-top:14px">
+        <b>Nếu nút trên chưa tự mở được, cách mở thủ công:</b> bấm vào biểu tượng <b>⋯</b> (dấu ba chấm, thường ở góc trên bên phải) → chọn <b>"Mở bằng trình duyệt"</b> / <b>"Open in browser"</b>. Nếu không thấy, sao chép đường link bên dưới rồi dán vào Chrome/Safari.
       </div>
       <div class="inwrap" style="margin-top:16px">
         <input type="text" id="inAppUrl" readonly style="padding-left:14px">
@@ -2124,6 +2125,24 @@ function checkInApp(){
   show('inapp');
   return true;
 }
+// Tự chuyển sang trình duyệt mặc định: Android dùng intent://, iPhone dùng x-safari-https://.
+// Mỗi ứng dụng (Zalo, Facebook...) tự quyết định có cho phép hay không; nếu không mở được thì hướng dẫn thủ công vẫn nằm ngay bên dưới.
+$('btnOpenExt').addEventListener('click', function(){
+  var ua = navigator.userAgent || '', u = null, went = false;
+  try { u = new URL(location.href); } catch(e){}
+  var onVis = function(){ if (document.hidden) went = true; };
+  document.addEventListener('visibilitychange', onVis);
+  window.addEventListener('pagehide', function(){ went = true; }, { once:true });
+  msg('inAppMsg','Đang mở trình duyệt…','ok');
+  try {
+    if (u && /Android/i.test(ua)) location.href = 'intent://' + u.host + u.pathname + u.search + u.hash + '#Intent;scheme=' + u.protocol.replace(':','') + ';action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end';
+    else if (u && /iPhone|iPad|iPod/i.test(ua)) location.href = 'x-safari-' + location.href;
+  } catch(e){}
+  setTimeout(function(){
+    document.removeEventListener('visibilitychange', onVis);
+    if (!went && !document.hidden) msg('inAppMsg','Ứng dụng này chưa cho tự chuyển. Bạn bấm ⋯ ở góc trên → “Mở bằng trình duyệt”, hoặc sao chép link bên dưới rồi dán vào Chrome/Safari.','warn');
+  }, 1800);
+});
 $('btnCopyLink').addEventListener('click', async function(){
   try { await navigator.clipboard.writeText(location.href); msg('inAppMsg','Đã sao chép. Dán vào Chrome/Safari để mở.', 'ok'); }
   catch(e){ $('inAppUrl').select(); document.execCommand('copy'); msg('inAppMsg','Đã sao chép. Dán vào Chrome/Safari để mở.', 'ok'); }
