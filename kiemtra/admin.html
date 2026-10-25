@@ -942,6 +942,44 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 #candList .tag-tv,.rt .tag-tv{background:#FFF1C7;color:#7A4E00}
 #candList .tag-left{background:#FBE3E0;color:#9E2A20}
 @media(max-width:760px){#candList td[data-label="Họ tên"]{column-gap:3px}#candList td[data-label="Họ tên"] .tag{align-self:flex-start;margin-top:3px}}
+/* ===== Đầu trang đề thi ===== */
+.card.exhead .exh-top{align-items:center;gap:16px}
+.exh-id{display:flex;gap:16px;align-items:flex-start;min-width:0;flex:1 1 520px}
+.exh-tile{flex:0 0 auto;width:54px;height:54px;border-radius:17px;display:grid;place-items:center;color:#fff;background:radial-gradient(60px 40px at 100% 0%,rgba(127,227,242,.45),transparent 70%),linear-gradient(150deg,#0A2A66 0%,#0A63C4 62%,#10A3C9 100%);box-shadow:0 14px 24px -14px rgba(10,42,102,.9)}
+.exh-tile svg{width:27px;height:27px}
+.exh-body{min-width:0;flex:1}
+.card.exhead .exh-top h1{margin:0;font-size:26px;line-height:1.2;letter-spacing:-.022em;font-weight:800;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
+.exh-name{min-width:0;overflow-wrap:anywhere}
+.exh-suf{padding:2px 10px;border-radius:9px;font-size:13px;font-weight:800;letter-spacing:.05em;color:#0B3F94;background:#E6F0FC;border:1px solid #C9DDF5}
+.exh-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;font-size:13px}
+.exh-note{color:var(--muted);font-size:13.5px}
+.exh-chip{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:#F2F6FA;border:1px solid #E1E8F0;color:#3A5373;font:inherit;font-size:12.5px;line-height:1.3;white-space:nowrap}
+.exh-chip svg{width:15px;height:15px;flex:0 0 auto;opacity:.75}
+.exh-chip b{color:#0A2A66;font-weight:700}
+.exh-chip code{font-size:12px;color:#0A2A66;background:none;padding:0}
+.exh-chip em{font-style:normal;font-weight:700;color:#0B3F94;padding-left:8px;border-left:1px solid #CBD7E6}
+.exh-chip.soon{background:#FFF4D6;border-color:#F1DFB6;color:#7A4E00}.exh-chip.soon b,.exh-chip.soon em{color:#7A4E00;border-color:#E8CF92}
+.exh-chip.urgent{background:#FDECE9;border-color:#F0C9C3;color:#9E2A20}.exh-chip.urgent b,.exh-chip.urgent em{color:#9E2A20;border-color:#EBB5AD}
+.exh-chip.closed{background:#EEF1F4;color:#5B6676}.exh-chip.closed b{color:#44505F}
+button.exh-chip{cursor:pointer}button.exh-chip:hover{background:#E8F0F9;border-color:#C9D8EA}
+.exh-br{flex:1 1 100%;height:0}
+.exh-link{flex:0 1 560px;min-width:0;display:flex;align-items:center;gap:9px;max-width:560px;padding:4px 4px 4px 13px;border-radius:13px;background:#F7FAFD;border:1px dashed #BFD0E4}
+.exh-link svg{width:16px;height:16px;flex:0 0 auto;color:#5B7FA8}
+.exh-link a{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--brand-deep);font-size:13px;text-decoration:none}
+.exh-link a:hover{text-decoration:underline}
+.exh-link .btn{white-space:nowrap;flex:0 0 auto}
+.exh-b{display:inline-flex;align-items:center;gap:7px}.exh-b svg{width:15px;height:15px}
+@media(max-width:700px){
+  .exh-tile{width:44px;height:44px;border-radius:14px}.exh-tile svg{width:22px;height:22px}
+  /* điện thoại: ô biểu tượng + tên ở hàng trên, các chip và link chiếm trọn chiều ngang bên dưới */
+  .exh-id{gap:10px 12px;flex-basis:100%;flex-wrap:wrap;align-items:center}
+  .exh-body{display:contents}
+  .card.exhead .exh-top h1{font-size:20px;flex:1 1 0;min-width:0}
+  .exh-meta{flex:1 1 100%;min-width:0;margin-top:2px}
+  .exh-chip{max-width:100%}
+  .exh-act{width:100%}.exh-act .btn{flex:1 1 auto;justify-content:center;min-height:44px}
+  .exh-link{flex:1 1 100%;max-width:none;min-width:0;box-sizing:border-box}
+}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -1041,9 +1079,12 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
     <div class="card exhead" id="exHead">
       <button class="back" type="button" onclick="switchTab('exams')"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg><span>Tất cả đề thi</span></button>
       <div class="exh-top">
-        <div style="min-width:0">
-          <h1 id="ehTitle">Đề thi</h1>
-          <div class="small" id="ehMeta"></div>
+        <div class="exh-id">
+          <div class="exh-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14l2 2 4-4"/></svg></div>
+          <div class="exh-body">
+            <h1 id="ehTitle">Đề thi</h1>
+            <div class="exh-meta" id="ehMeta"></div>
+          </div>
         </div>
         <div class="exh-act" id="ehAct"></div>
       </div>
@@ -1931,16 +1972,50 @@ function qCountOf(e){ return QUESTIONS && QUESTIONS.length ? QUESTIONS.filter(q 
 const ownTitle = (e) => !!(e && e.title && e.title !== e.id);
 const exTitleOf = (e) => ownTitle(e) ? e.title : (SETCACHE.examTitle || e.id);
 function examById(id){ return EXAMS.find(e => e.id === id) || null; }
+const EXI = {
+  key:'<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>',
+  cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2.3.6 3.5 2.6 3.5 5.5"/>',
+  layers:'<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+  link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+  trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'
+};
+const exIc = (n) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + EXI[n] + '</svg>';
+function exRemain(ms){
+  const m = Math.max(1, Math.round(ms / 60000));
+  if (m < 60) return m + ' phút';
+  const h = Math.floor(m / 60);
+  if (h < 10) return h + ' giờ' + (m % 60 ? ' ' + (m % 60) + ' phút' : '');
+  if (h < 48) return h + ' giờ';
+  return Math.floor(h / 24) + ' ngày';
+}
+// Khung giờ của đề: { text, sub, cls } — cls: '' bình thường, soon (< 24 giờ), urgent (< 3 giờ), closed
+function exWindow(e){
+  const f = (ms) => new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' }), now = Date.now();
+  if (e.openAt && now < e.openAt) return { text:'Mở lúc ' + f(e.openAt) + (e.closeAt ? ' → ' + f(e.closeAt) : ''), sub:'còn ' + exRemain(e.openAt - now) + ' nữa mở', cls:'soon' };
+  if (e.closeAt && now > e.closeAt) return { text:'Đã đóng lúc ' + f(e.closeAt), sub:'', cls:'closed' };
+  if (e.closeAt){ const left = e.closeAt - now; return { text:'Đến ' + f(e.closeAt), sub:'còn ' + exRemain(left), cls: left < 3 * 3600e3 ? 'urgent' : left < 24 * 3600e3 ? 'soon' : '' }; }
+  return { text:'Không giới hạn thời gian', sub:'', cls:'' };
+}
 function renderExHead(){
-  if (EX_NEW){ $('ehTitle').textContent = 'Tạo đề thi mới'; $('ehMeta').textContent = 'Điền mã đề và tên đề, các ô khác để trống sẽ theo Cài đặt mặc định.'; $('ehAct').innerHTML = ''; return; }
+  if (EX_NEW){ $('ehTitle').textContent = 'Tạo đề thi mới'; $('ehMeta').innerHTML = '<span class="exh-note">Điền mã đề và tên đề, các ô khác để trống sẽ theo Cài đặt mặc định.</span>'; $('ehAct').innerHTML = ''; return; }
   const e = examById(CUR_EXAM) || { id: CUR_EXAM, title: CUR_EXAM };
-  const link = location.origin + '/kiemtra/?exam=' + encodeURIComponent(e.id);
-  $('ehTitle').innerHTML = esc(exTitleOf(e)) + examBadges(e) + (!ownTitle(e) ? ' <span class="small" style="font-weight:500">(chưa đặt tên riêng, đang dùng tên mặc định)</span>' : '');
-  $('ehMeta').innerHTML = 'Mã đề <code>' + esc(e.id) + '</code> · ' + esc(examWindowText(e)) +
-    '<div class="ehlink"><span>Link thi:</span> <a href="' + esc(link) + '" target="_blank" rel="noopener">' + esc(link.replace(/^https?:\/\//,'')) + '</a> <button class="btn ghost sm" type="button" onclick="copyText(\'' + esc(link) + '\', this)">Sao chép</button></div>';
+  const link = location.origin + '/kiemtra/?exam=' + encodeURIComponent(e.id), full = exTitleOf(e);
+  // "Tên đề | GT": phần sau dấu | thành nhãn riêng bên cạnh tên
+  const cut = full.lastIndexOf(' | '), main = cut > 0 ? full.slice(0, cut) : full, suf = cut > 0 ? full.slice(cut + 3).trim() : '';
+  $('ehTitle').innerHTML = '<span class="exh-name">' + esc(main) + '</span>' + (suf ? '<span class="exh-suf">' + esc(suf) + '</span>' : '') + examBadges(e) +
+    (!ownTitle(e) ? ' <span class="small" style="font-weight:500">(chưa đặt tên riêng, đang dùng tên mặc định)</span>' : '');
+  const w = exWindow(e), segs = (e.segments || []).map(x => ({ gia_dung:'Gia dụng', may_loc:'Máy lọc', both:'Cả hai' }[x] || x)), nCodes = (e.codes || []).length;
+  $('ehMeta').innerHTML =
+    '<button type="button" class="exh-chip exh-btn" title="Bấm để sao chép mã đề" onclick="copyText(\'' + esc(e.id) + '\', this.querySelector(\'code\'))">' + exIc('key') + '<span>Mã đề</span> <code>' + esc(e.id) + '</code></button>' +
+    '<span class="exh-chip ' + w.cls + '" title="' + esc(examWindowText(e)) + '">' + exIc('cal') + '<b>' + esc(w.text) + '</b>' + (w.sub ? '<em>' + esc(w.sub) + '</em>' : '') + '</span>' +
+    '<span class="exh-chip">' + exIc('users') + (nCodes ? 'Gán <b>' + nCodes + '</b> NV' : 'Mọi nhân viên thuộc nhóm ngành') + '</span>' +
+    (segs.length ? '<span class="exh-chip">' + exIc('layers') + esc(segs.join(' / ')) + '</span>' : '') +
+    '<span class="exh-br"></span><div class="exh-link">' + exIc('link') + '<a href="' + esc(link) + '" target="_blank" rel="noopener" title="Mở trang thí sinh">' + esc(link.replace(/^https?:\/\//, '')) + '</a><button class="btn ghost sm" type="button" onclick="copyText(\'' + esc(link) + '\', this)">Sao chép</button></div>';
   $('ehQ').textContent = qCountOf(e);
-  $('ehAct').innerHTML = (e.id !== EX_DEFAULT ? '<button class="btn ghost sm" onclick="setDefaultExamUI(\'' + esc(e.id) + '\')" title="Đề mặc định chỉ dùng trong trang quản trị; thí sinh vào bằng link hoặc mã đề">Đặt làm đề mặc định</button>' : '') +
-    (e.id !== EX_DEFAULT ? '<button class="btn dghost sm" onclick="deleteExamUI(\'' + esc(e.id) + '\')">Xoá đề</button>' : '');
+  $('ehAct').innerHTML = (e.id !== EX_DEFAULT ? '<button class="btn ghost sm exh-b" onclick="setDefaultExamUI(\'' + esc(e.id) + '\')" title="Đề mặc định chỉ dùng trong trang quản trị; thí sinh vào bằng link hoặc mã đề">' + exIc('star') + 'Đặt làm đề mặc định</button>' : '') +
+    (e.id !== EX_DEFAULT ? '<button class="btn dghost sm exh-b" onclick="deleteExamUI(\'' + esc(e.id) + '\')">' + exIc('trash') + 'Xoá đề</button>' : '');
 }
 function examBadges(e){
   const now = Date.now(), st = e.openAt && now < e.openAt ? ['n','Chưa mở'] : e.closeAt && now > e.closeAt ? ['n','Đã đóng'] : ['y','Đang mở'];
