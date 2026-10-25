@@ -199,6 +199,7 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .hist li{padding:7px 0;border-top:1px solid var(--line)}.hist li:first-child{border-top:0}
 .dact{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.dact .btn{flex:1 1 140px}
 .dlg.wide{max-width:780px}
+.dlg-x{display:none}
 .pf{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
 .pf button{border:1.5px solid var(--line);background:#fff;border-radius:999px;min-height:38px;padding:6px 14px;font-weight:700;font-size:13px;color:var(--muted);cursor:pointer}
 .pf button[aria-pressed=true]{background:var(--brand-soft);border-color:var(--brand);color:var(--brand-deep)}
@@ -471,6 +472,7 @@ html{-webkit-text-size-adjust:100%}
   .kpi{min-width:0;flex:1 1 120px}
   .thead-bar{flex-wrap:wrap;padding:10px 14px}
   .ov{padding:8px}
+  .dlg-x{position:sticky;top:0;float:right;z-index:6;width:42px;height:42px;margin:-6px -4px 0 8px;padding:0;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(255,255,255,.97);color:#0D2A31;font-size:26px;line-height:1;cursor:pointer;box-shadow:0 4px 16px rgba(10,37,82,.28)}
   .dlg{padding:18px 14px 16px;border-radius:18px}
   .dlg h2{font-size:17px}
   .dact .btn{flex:1 1 100%}
@@ -1662,6 +1664,12 @@ async function fillDev(id, e, sel){
   resolveGeoNames(el);
 }
 /* ---------- Đóng hộp thoại ---------- */
+// Nút × nổi ở góc trên phải mỗi hộp thoại (chỉ hiện trên di động): đóng được ở mọi vị trí khi cuộn, không phải cuộn xuống cuối tìm nút Đóng
+Array.prototype.forEach.call(document.querySelectorAll('.ov'), function(ov){
+  var d = ov.querySelector('.dlg'); if (!d || !ov.id) return;
+  var b = document.createElement('button'); b.type = 'button'; b.className = 'dlg-x noprint'; b.setAttribute('aria-label', 'Đóng'); b.setAttribute('data-close', ov.id); b.textContent = '×';
+  d.insertBefore(b, d.firstChild);
+});
 document.addEventListener('click', function(ev){ var c = ev.target.closest('[data-close]'); if (c) $(c.getAttribute('data-close')).classList.add('hide'); if (ev.target.classList && ev.target.classList.contains('ov')) ev.target.classList.add('hide'); });
 document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') ['ovImg','ovProf','ovRes','ovEdit','ovPaper','ovAdd','ovNotify'].forEach(function(id){ $(id).classList.add('hide'); }); });
 
