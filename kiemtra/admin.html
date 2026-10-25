@@ -64,6 +64,14 @@ body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(-
 @media(max-width:640px){.modal-bg{padding:10px}.modal-box{max-height:calc(100vh - 20px);max-height:calc(100dvh - 20px)}
   /* Nút × luôn nổi ở góc trên phải khi cuộn (trước đây cuộn đi mất, phải lên đầu hoặc xuống cuối mới đóng được) */
   .modal-bg .modal-box .modal-x{position:sticky;top:0;right:auto;float:right;z-index:6;width:42px;height:42px;margin:-6px -6px 0 8px;padding:0;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.97);color:var(--ink);font-size:26px;box-shadow:0 4px 16px rgba(10,37,82,.28)}}
+/* Tình trạng làm việc (hồ sơ nhân viên) */
+.cand-emp{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#F7FAFB}
+.cand-emp.left{border-color:#E8B4AE;background:#FDF1EF}
+.cand-emp-t{flex:1 1 220px;min-width:0;font-size:14px}.cand-emp-t small{display:block;margin-top:3px;color:var(--muted);font-size:12.5px;line-height:1.45}
+.cand-emp.left .cand-emp-t b{color:var(--bad)}
+.tag-left{background:#FBE3E0;color:#9E2A20}
+#candList tr.left td:not(:last-child){opacity:.62}
+@media(max-width:600px){.cand-emp .btn{width:100%;min-height:44px}}
 @media(prefers-reduced-motion:reduce){.modal-box{animation:none}}
 
 .candsub{display:block;margin-top:2px;max-width:300px;font-size:11.5px;font-weight:500;color:var(--muted);line-height:1.35}.cand-banner{margin:10px 0 4px;padding:10px 14px;border:1px solid #F1DFB6;background:#FFF9EC;border-radius:12px;font-size:13.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cand-banner .btn{margin-left:auto}
@@ -398,6 +406,7 @@ html{-webkit-text-size-adjust:100%}
   #candList tr.open td[data-label="Ngày vào làm"]{display:grid}
   #candList .tag{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.02em;vertical-align:middle;white-space:nowrap}
   #candList .tag-tv{background:#FFF4D6;color:#8A5A00}
+  #candList .tag-left{background:#FBE3E0;color:#9E2A20}
   #candList .stk-more{border:0;background:none;padding:0;margin-right:auto;font:inherit;font-size:12.5px;font-weight:700;color:var(--brand-deep);cursor:pointer}
 }
 @media(min-width:761px){ .stk-more{display:none} } /* máy tính đã đủ chỗ hiện hết, không cần nút thu gọn */
@@ -1266,6 +1275,10 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
             </select>
           </div>
         </div>
+        <div id="candEmpBox" class="cand-emp">
+          <div class="cand-emp-t" id="candEmpTxt"></div>
+          <button type="button" class="btn sm" id="candEmpBtn" onclick="candEmpToggle()"></button>
+        </div>
         <details id="candProfile" class="cand-prof" style="margin-top:12px"><summary>Hồ sơ nhân sự <span class="small" id="candProfileSum"></span></summary>
           <div id="candProfileBody"></div>
         </details>
@@ -1328,6 +1341,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
           <select id="candTitleF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo chức danh"></select>
           <select id="candSegF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo nhóm ngành"><option value="*">Mọi nhóm ngành</option><option value="both">Cả hai ngành</option><option value="may_loc">Ngành 1 · Máy lọc nước</option><option value="gia_dung">Ngành 2 · Gia dụng</option></select>
           <select id="candRgF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo miền"><option value="*">Mọi miền</option><option value="bac">Miền Bắc</option><option value="nam">Miền Nam</option><option value="">Chưa chọn miền</option></select>
+          <select id="candEmpF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo tình trạng làm việc"><option value="*">Mọi tình trạng</option><option value="active">Đang làm việc</option><option value="left">Đã nghỉ việc</option></select>
           <span class="small" id="candShown"></span>
         </div>
         <div id="candProfBanner" class="cand-banner hide"></div>
@@ -1904,19 +1918,22 @@ function asgSetMode(m){ ASG.mode = m; asgRender(); }
 function asgFromText(){ ASG.set = new Set(String($('exCodes').value || '').split(/[\s,;]+/).map(asgKey).filter(Boolean)); asgRender(true); }
 function asgFiltered(){
   const q = spNorm($('asgQ').value || ''), m = $('asgMgr').value || '*', t = $('asgTitle').value || '*', g = $('asgSeg').value || '*';
-  return CANDIDATES.filter(c => (m === '*' || ASG_DIM.manager.key(c) === m) && (t === '*' || ASG_DIM.title.key(c) === t) && (g === '*' || ASG_DIM.segment.key(c) === g) &&
+  return CANDIDATES.filter(c => !c.left && (m === '*' || ASG_DIM.manager.key(c) === m) && (t === '*' || ASG_DIM.title.key(c) === t) && (g === '*' || ASG_DIM.segment.key(c) === g) &&
     (!q || spNorm([c.code, c.name, c.manager, c.title, c.province].join(' ')).indexOf(q) >= 0));
 }
 function asgCount(){
   const known = new Set(CANDIDATES.map(c => asgKey(c.code)));
   let orphan = 0; ASG.set.forEach(k => { if (!known.has(k)) orphan++; });
-  $('asgCount').innerHTML = 'Đã gán <b>' + ASG.set.size + '</b> nhân viên' + (CANDIDATES.length ? ' / ' + CANDIDATES.length + ' trong danh sách' : '') +
+  const leftSet = new Set(CANDIDATES.filter(c => c.left).map(c => asgKey(c.code))), nAct = CANDIDATES.filter(c => !c.left).length;
+  let leftN = 0; ASG.set.forEach(k => { if (leftSet.has(k)) leftN++; });
+  $('asgCount').innerHTML = 'Đã gán <b>' + (ASG.set.size - leftN) + '</b> nhân viên' + (nAct ? ' / ' + nAct + ' đang làm việc' : '') +
+    (leftN ? ' · <span style="color:var(--muted)">' + leftN + ' người đã nghỉ việc (không được gán)</span>' : '') +
     (orphan ? ' · <span style="color:var(--bad)">' + orphan + ' mã chưa có trong danh sách thí sinh</span>' : '');
 }
 // Nhóm theo một tiêu chí: [{ key, label, codes:[mã viết thường] }], sắp theo tên
 function asgGroups(dim){
   const D = ASG_DIM[dim], g = {};
-  CANDIDATES.forEach(c => { const k = D.key(c); (g[k] = g[k] || { key: k, label: D.label(k), codes: [] }).codes.push(asgKey(c.code)); });
+  CANDIDATES.filter(c => !c.left).forEach(c => { const k = D.key(c); (g[k] = g[k] || { key: k, label: D.label(k), codes: [] }).codes.push(asgKey(c.code)); });
   return Object.values(g).sort((a, b) => dim === 'segment' ? 0 : a.label.localeCompare(b.label, 'vi'));
 }
 function asgQuickTab(dim){ ASG.dim = dim; asgQuickRender(); }
@@ -2873,7 +2890,7 @@ async function loadCandidates(){
 }
 function resetCandFilters(){
   ['candSearch'].forEach(id => { const e = $(id); if (e) e.value = ''; });
-  ['candMgrF','candTitleF','candSegF','candRgF'].forEach(id => { const e = $(id); if (e) e.value = '*'; });
+  ['candMgrF','candTitleF','candSegF','candRgF','candEmpF'].forEach(id => { const e = $(id); if (e) e.value = '*'; });
   renderCandidates();
 }
 /* ---------- Chọn quản lí từ danh sách (không phân biệt hoa/thường, dấu, khoảng trắng) ---------- */
@@ -3018,10 +3035,10 @@ function renderCandidates(){
   $('candTitleF').value = tcnt[tv] ? tv : '*';
   $('titleList').innerHTML = (tcnt['PC'] ? titles : ['PC'].concat(titles)).map(t => '<option value="' + esc(t) + '">').join('');
   const q = spNorm($('candSearch').value), mf = $('candMgrF').value, sf = $('candSegF').value, tf = $('candTitleF').value, rf = $('candRgF').value;
-  const L = CANDIDATES.filter(c => (rf === '*' || (c.region||'') === rf) && (mf === '*' || mgrNorm(c.manager) === mgrNorm(mf)) && (sf === '*' || (c.segment||'both') === sf) && (tf === '*' || (c.title||'PC') === tf) && (!q || spNorm([c.code, c.name, c.email, c.phone || '', c.title || 'PC', c.province || ''].join(' ')).indexOf(q) >= 0));
+  const ef = $('candEmpF').value, L = CANDIDATES.filter(c => (ef === '*' || (ef === 'left') === !!c.left) && (rf === '*' || (c.region||'') === rf) && (mf === '*' || mgrNorm(c.manager) === mgrNorm(mf)) && (sf === '*' || (c.segment||'both') === sf) && (tf === '*' || (c.title||'PC') === tf) && (!q || spNorm([c.code, c.name, c.email, c.phone || '', c.title || 'PC', c.province || ''].join(' ')).indexOf(q) >= 0));
   $('candShown').textContent = L.length === CANDIDATES.length ? '' : 'Đang lọc: ' + L.length + ' người';
   $('candList').innerHTML = L.map(c =>
-    '<tr><td>'+esc(c.code)+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button>'+(c.probation?'<span class="tag tag-tv" title="Thử việc từ '+esc(c.probation.from)+' đến hết '+esc(c.probation.until)+'">Thử việc</span>':'')+profSub(c)+'</td><td><span class="ttlchip">'+esc(c.title||'PC')+'</span></td><td>'+esc(c.email)+'</td><td>'+(c.phone?'<button type="button" class="phbtn" data-phone="'+esc(c.phone)+'" aria-haspopup="menu" title="Nhắn SMS, mở Zalo hoặc gọi điện">'+esc(c.phone)+'</button>':'<span class="badge n" title="Thí sinh sẽ phải tự điền khi vào làm bài">Chưa có</span>')+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.province||c.region ? esc(c.province||'–')+'<br><b>'+esc(RG_LABEL[c.region]||'Chưa chọn miền')+'</b>' : '<span class="badge n" title="Thí sinh bắt buộc tự chọn khi vào làm bài">Chưa chọn</span>')+'</td><td class="small">'+(c.joinDate?esc(c.joinDate.split('-').reverse().join('/')):'–')+'</td><td style="white-space:nowrap"><button type="button" class="stk-more" onclick="candToggle(this)">Chi tiết ▾</button><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
+    '<tr'+(c.left?' class="left"':'')+'><td>'+esc(c.code)+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button>'+(c.left?'<span class="tag tag-left" title="'+(c.leftAt?'Nghỉ việc từ '+new Date(c.leftAt).toLocaleDateString('vi-VN')+'. ':'')+'Không gán đề, không gửi thông báo">Đã nghỉ việc</span>':'')+(c.probation?'<span class="tag tag-tv" title="Thử việc từ '+esc(c.probation.from)+' đến hết '+esc(c.probation.until)+'">Thử việc</span>':'')+profSub(c)+'</td><td><span class="ttlchip">'+esc(c.title||'PC')+'</span></td><td>'+esc(c.email)+'</td><td>'+(c.phone?'<button type="button" class="phbtn" data-phone="'+esc(c.phone)+'" aria-haspopup="menu" title="Nhắn SMS, mở Zalo hoặc gọi điện">'+esc(c.phone)+'</button>':'<span class="badge n" title="Thí sinh sẽ phải tự điền khi vào làm bài">Chưa có</span>')+'</td><td>'+esc(c.manager||'')+'</td><td>'+esc(segLabel[c.segment]||'Cả hai')+'</td><td class="small">'+(c.province||c.region ? esc(c.province||'–')+'<br><b>'+esc(RG_LABEL[c.region]||'Chưa chọn miền')+'</b>' : '<span class="badge n" title="Thí sinh bắt buộc tự chọn khi vào làm bài">Chưa chọn</span>')+'</td><td class="small">'+(c.joinDate?esc(c.joinDate.split('-').reverse().join('/')):'–')+'</td><td style="white-space:nowrap"><button type="button" class="stk-more" onclick="candToggle(this)">Chi tiết ▾</button><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
   ).join('') || '<tr><td colspan="10" class="small">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Bấm “＋ Thêm thí sinh”.') + '</td></tr>';
 }
 function candToggle(btn){ var tr = btn.closest('tr'), open = tr.classList.toggle('open'); btn.textContent = open ? 'Thu gọn ▴' : 'Chi tiết ▾'; }
@@ -3076,7 +3093,7 @@ function editCandidateOpen(code){
   const pSel = $('candEditProvince');
   if (pSel.options.length < 2) pSel.innerHTML += PROVINCES_VN.slice().sort((a, b) => a.localeCompare(b, 'vi')).map(p => '<option value="' + esc(p) + '">' + esc(p) + '</option>').join('');
   pSel.value = c.province || ''; $('candEditRegion').value = c.region || '';
-  renderCandProfile(c);
+  renderCandProfile(c); candEmpRender(c);
   $('candEditCard').classList.remove('hide');
   candRenameToggle(false);
   msg('candEditMsg','');
@@ -3084,6 +3101,28 @@ function editCandidateOpen(code){
   setTimeout(() => { try { $('candEditName').focus(); } catch(e){} }, 30);
 }
 function candEditClose(){ $('candEditCard').classList.add('hide'); }
+/* Tình trạng làm việc: đã nghỉ việc thì không gán đề, không gửi thông báo, không tính vào "chưa làm", không vào thi được */
+function candEmpRender(c){
+  const left = !!(c && c.left);
+  $('candEmpBox').classList.toggle('left', left);
+  $('candEmpTxt').innerHTML = left
+    ? '<b>Đã nghỉ việc</b>' + (c.leftAt ? ' từ ' + esc(new Date(c.leftAt).toLocaleDateString('vi-VN')) : '') + '<small>Không gán đề, không gửi thông báo, không tính vào danh sách chưa làm bài và không vào thi được. Kết quả cũ vẫn được giữ.</small>'
+    : '<b>Đang làm việc</b><small>Nhận thông báo và được gán đề bình thường.</small>';
+  const b = $('candEmpBtn'); b.textContent = left ? 'Đánh dấu làm việc lại' : 'Đánh dấu đã nghỉ việc'; b.className = 'btn sm ' + (left ? 'ghost' : 'dghost');
+}
+async function candEmpToggle(){
+  const code = $('candEditCode').value, c = CANDIDATES.find(x => x.code === code); if (!c) return;
+  const toLeft = !c.left;
+  if (toLeft && !confirm('Đánh dấu ' + (c.name || c.code) + ' đã nghỉ việc?\n\nSau khi đánh dấu: không gửi thông báo, không gán đề thi, không tính vào danh sách chưa làm bài và không vào thi được. Kết quả cũ vẫn được giữ.')) return;
+  const btn = $('candEmpBtn'); btn.disabled = true;
+  const { j } = await api('POST', '/api/kt-admin', { op:'setEmployment', code, left: toLeft });
+  btn.disabled = false;
+  if (!j.ok){ msg('candEditMsg', j.error || 'Không lưu được, thử lại.', 'err'); return; }
+  c.left = toLeft; if (toLeft) c.leftAt = j.leftAt; else delete c.leftAt;
+  candEmpRender(c);
+  msg('candEditMsg', toLeft ? 'Đã đánh dấu nghỉ việc.' : 'Đã đánh dấu đang làm việc.', 'ok');
+  loadCandidates();
+}
 // Cửa sổ sửa thí sinh: khoá cuộn trang nền khi đang mở; bấm Esc để đóng
 (function(){
   const m = $('candEditCard');

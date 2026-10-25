@@ -844,6 +844,23 @@ const handler = async function (context, req) {
       return reply(context, 200, { ok: true, from: String(cur.code), to: rawNew, moved, candidates: list.map((c) => { const o = Object.assign({}, c); delete o.audit; return o; }) });
     }
 
+    // Tình trạng làm việc: left = true -> đã nghỉ việc (không gán đề, không thông báo, không tính vào "chưa làm", không vào thi); false -> làm việc lại.
+    // Không xoá hồ sơ và kết quả cũ. Nhập lại danh sách (addCandidates) không tự bật lại người đã nghỉ.
+    if (op === "setEmployment") {
+      const k = quiz.normCode(b.code), left = b.left === true;
+      const list = await quiz.getCandidates();
+      const i = list.findIndex((c) => quiz.normCode(c.code) === k);
+      if (i < 0) return reply(context, 404, { ok: false, error: "Không tìm thấy thí sinh có mã này." });
+      const cur = list[i];
+      if (!!cur.left === left) return reply(context, 200, { ok: true, left, leftAt: cur.leftAt || 0, unchanged: true });
+      const next = Object.assign({}, cur);
+      if (left) { next.left = true; next.leftAt = Date.now(); } else { delete next.left; delete next.leftAt; }
+      next.audit = (cur.audit || []).concat([{ at: Date.now(), kind: "edit", by: u.email, byName: "Quản trị viên", changes: { admin: { from: "", to: left ? "đánh dấu đã nghỉ việc" : "đánh dấu đang làm việc trở lại" } } }]).slice(-30);
+      list[i] = next;
+      await quiz.saveCandidates(list);
+      return reply(context, 200, { ok: true, left, leftAt: next.leftAt || 0 });
+    }
+
     if (op === "deleteCandidate") {
       let list = await quiz.getCandidates();
       list = list.filter((c) => quiz.normCode(c.code) !== quiz.normCode(b.code));

@@ -676,7 +676,10 @@ function buildFromBlueprint(all, blueprint) {
 // Trả về chuỗi lỗi (tiếng Việt) nếu thí sinh không được vào đề này lúc này, ngược lại trả về "".
 // Thí sinh có thuộc đối tượng của đề không (theo nhóm ngành và/hoặc danh sách mã nhân viên)? Dùng cả khi cho vào thi lẫn khi
 // tính "ai chưa làm" ở bảng tổng quan, để người không thuộc đối tượng không bị tính là "chưa làm".
+// Nhân viên đã nghỉ việc (quản trị viên đánh dấu ở hồ sơ): không gán đề, không tính vào "chưa làm", không được vào thi, không nhận thông báo.
+function isLeft(c) { return !!(c && c.left); }
 function inAudience(settings, candidate) {
+  if (isLeft(candidate)) return false;
   const segs = settings && settings.segments || [], codes = settings && settings.codes || [];
   if (segs.length && segs.indexOf(normSegment(candidate && candidate.segment)) < 0) return false;
   if (codes.length && codes.indexOf(normCode(candidate && candidate.code)) < 0) return false;
@@ -684,6 +687,7 @@ function inAudience(settings, candidate) {
 }
 function examAccessError(settings, candidate, now) {
   const t = now || Date.now();
+  if (isLeft(candidate)) return "Tài khoản này đã được đánh dấu nghỉ việc nên không thể làm bài. Nếu có nhầm lẫn, hãy liên hệ quản trị viên.";
   if (settings.openAt && t < settings.openAt) return "Bài kiểm tra chưa mở. Thời gian mở: " + fmtVN(settings.openAt) + ".";
   if (settings.closeAt && t > settings.closeAt) return "Bài kiểm tra đã đóng từ " + fmtVN(settings.closeAt) + ".";
   if (settings.codes && settings.codes.length && settings.codes.indexOf(normCode(candidate && candidate.code)) < 0) {
@@ -1088,7 +1092,7 @@ module.exports = {
   getAttempt, putAttempt, saveIndex, activeForPeriod,
   getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary, fmtVN,
   getBanks, saveBanks, bankOf, validBankId, slugify, cleanQuestionMeta, DEFAULT_BANK, DIFFICULTIES,
-  cleanBlueprint, buildFromBlueprint, blueprintTotal, planExam, targetCount, cleanSegmentPlans, segPlanFor, countFor, validateCounts, MAX_QUESTION_COUNT, examAccessError, inAudience, examKnown, scoreAttempt, summarize, patchIndex, previousResult, loadAttempts,
+  isLeft, cleanBlueprint, buildFromBlueprint, blueprintTotal, planExam, targetCount, cleanSegmentPlans, segPlanFor, countFor, validateCounts, MAX_QUESTION_COUNT, examAccessError, inAudience, examKnown, scoreAttempt, summarize, patchIndex, previousResult, loadAttempts,
   TYPES, qType, normText, normalizeQuestionInput, gradeAnswer,
   getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,

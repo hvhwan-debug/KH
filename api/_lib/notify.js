@@ -33,6 +33,7 @@ async function sendEmails({ items, subject, kind, allowed }) {
     const code = String((it && it.code) || ""), c = byCode[quiz.normCode(code)];
     const text = clean(it && it.text, MAX_TEXT).trim();
     if (!c || !text || (allowed && !allowed(c))) { res.skipped.push({ code, reason: "không hợp lệ" }); continue; }
+    if (quiz.isLeft(c)) { res.skipped.push({ code, reason: "đã nghỉ việc" }); continue; } // nghỉ việc: không gửi thông báo nào
     if (!c.email) { res.skipped.push({ code, reason: "chưa có email" }); continue; }
     const key = sig(code, subj, text);
     if (log[key]) { res.dup.push(code); continue; } // đã gửi đúng thư này trước đó: không gửi lại
