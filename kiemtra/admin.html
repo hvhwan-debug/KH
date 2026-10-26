@@ -1038,10 +1038,30 @@ button.rd-st:disabled{opacity:.55;cursor:default}
       <p class="small">Dùng tài khoản quản trị viên của kh.io.vn để vào trang quản lý bài kiểm tra.</p>
       <label>Email</label>
       <input type="email" id="loginEmail">
-      <label>Mật khẩu</label>
-      <input type="password" id="loginPass">
-      <button class="btn" style="width:100%;margin-top:14px;justify-content:center" onclick="doLogin()">Đăng nhập</button>
+      <div id="fLoginPass">
+        <label>Mật khẩu</label>
+        <input type="password" id="loginPass">
+      </div>
+      <button class="btn" id="loginBtn" style="width:100%;margin-top:14px;justify-content:center" onclick="doLogin()">Đăng nhập</button>
       <div id="loginMsg"></div>
+      <button type="button" class="linkbtn" id="forgotBtn" style="margin-top:10px" onclick="setLoginMode(loginMode==='forgot'?'login':'forgot')">Quên mật khẩu?</button>
+    </div>
+  </div>
+</div>
+
+<div id="resetScreen" class="hide">
+  <div class="wrap" style="max-width:420px;padding-top:60px">
+    <div class="card">
+      <img class="brandfull" src="/kiemtra/logo.png" alt="Hệ thống kiểm tra đánh giá trực tuyến">
+      <h1>Đặt mật khẩu mới</h1>
+      <p class="small">Nhập mật khẩu mới cho tài khoản quản trị của bạn.</p>
+      <label>Mật khẩu mới</label>
+      <input type="password" id="rPass" autocomplete="new-password">
+      <label>Nhập lại mật khẩu</label>
+      <input type="password" id="rPass2" autocomplete="new-password">
+      <button class="btn" id="resetBtn" style="width:100%;margin-top:14px;justify-content:center" onclick="doResetConfirm()">Đặt mật khẩu</button>
+      <div id="resetMsg"></div>
+      <button type="button" class="linkbtn" style="margin-top:10px" onclick="RESET_TOKEN='';clearResetParam();$('resetScreen').classList.add('hide');$('loginScreen').classList.remove('hide')">Quay lại đăng nhập</button>
     </div>
   </div>
 </div>
@@ -1852,7 +1872,41 @@ async function api(method, path, body){
 }
 function msg(id, text, cls){ $(id).innerHTML = text ? '<div class="msg '+(cls||'err')+'">'+esc(text)+'</div>' : ''; }
 
+var loginMode = 'login', RESET_TOKEN = '';
+function clearResetParam(){ try { const u = new URL(location.href); u.searchParams.delete('reset'); history.replaceState(null,'',u.toString()); } catch(e){} }
+function setLoginMode(m){
+  loginMode = m; const f = m === 'forgot';
+  $('fLoginPass').classList.toggle('hide', f);
+  $('loginBtn').textContent = f ? 'Gửi liên kết đặt lại mật khẩu' : 'Đăng nhập';
+  $('loginBtn').onclick = f ? doForgot : doLogin;
+  $('forgotBtn').textContent = f ? '← Quay lại đăng nhập' : 'Quên mật khẩu?';
+  msg('loginMsg','');
+}
+async function doForgot(){
+  const email = $('loginEmail').value.trim();
+  if (!email){ msg('loginMsg','Nhập email quản trị của bạn.'); return; }
+  const btn = $('loginBtn'), label = btn.textContent; btn.disabled = true; btn.textContent = 'Đang gửi…';
+  let r; try { r = await api('POST','/api/kt-reset-request', { email }); } catch(e){ r = null; }
+  btn.disabled = false; btn.textContent = label;
+  if (!r){ msg('loginMsg','Không kết nối được máy chủ, thử lại.'); return; }
+  msg('loginMsg', r.j.message || 'Đã gửi yêu cầu.', 'ok');
+}
+async function doResetConfirm(){
+  const p1 = $('rPass').value, p2 = $('rPass2').value;
+  if (p1.length < 6){ msg('resetMsg','Mật khẩu cần ít nhất 6 ký tự.'); return; }
+  if (p1 !== p2){ msg('resetMsg','Hai mật khẩu chưa giống nhau.'); return; }
+  const btn = $('resetBtn'), label = btn.textContent; btn.disabled = true; btn.textContent = 'Đang xử lý…';
+  let r; try { r = await api('POST','/api/auth/reset-confirm', { token:RESET_TOKEN, password:p1 }); } catch(e){ r = null; }
+  btn.disabled = false; btn.textContent = label;
+  if (!r){ msg('resetMsg','Không kết nối được máy chủ, thử lại.'); return; }
+  if (!r.j.ok){ msg('resetMsg', r.j.error || 'Không đặt lại được mật khẩu.'); return; }
+  RESET_TOKEN = ''; clearResetParam(); location.reload();
+}
 async function boot(){
+  try {
+    const rt = new URL(location.href).searchParams.get('reset');
+    if (rt){ RESET_TOKEN = rt; $('resetScreen').classList.remove('hide'); return; }
+  } catch(e){}
   try {
     const { j } = await api('GET','/api/auth/me');
     if (!j.loggedIn){ $('loginScreen').classList.remove('hide'); return; }

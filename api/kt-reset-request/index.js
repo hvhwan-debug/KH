@@ -35,7 +35,7 @@ module.exports = async function (context, req) {
     await store.put(key, ud);
 
     if (mailConfigured()) {
-      const link = cfg().appUrl + "/kiemtra/quanli?reset=" + encodeURIComponent(resetToken(uid));
+      const link = cfg().appUrl + (isAdmin(email) ? "/kiemtra/admin" : "/kiemtra/quanli") + "?reset=" + encodeURIComponent(resetToken(uid));
       const L = layout({
         tone: "info",
         title: "Đặt lại mật khẩu quản lí",
