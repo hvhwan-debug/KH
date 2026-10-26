@@ -153,7 +153,7 @@ module.exports = async function (context, req) {
         "1) HỎI VỀ CHÍNH SÁCH / SỐ LIỆU (khuyến mại, chiết khấu, bảng giá, điều kiện, mốc thời gian, thông số sản phẩm, chương trình đầu tư hình ảnh...): " +
         "CHỈ dựa trên đúng nội dung phần TÀI LIỆU bên dưới. Có thể trích nguyên số liệu, điều kiện, mốc thời gian và nêu mã thông báo nếu có. " +
         "Tuyệt đối không bịa hoặc suy đoán số liệu, điều kiện, tên sản phẩm không có trong tài liệu. " +
-        "Nếu tài liệu không có hoặc không đủ rõ, nói thẳng là chưa có thông tin này trong tài liệu và gợi ý liên hệ phòng ban phụ trách; nhưng nếu vẫn giúp được phần nào (ví dụ giải thích cách hiểu, cách áp dụng phần đã có) thì giúp luôn thay vì chỉ từ chối.\n\n" +
+        "Nếu tài liệu không có hoặc không đủ rõ, nói thẳng là chưa có thông tin này trong tài liệu, rồi kết thúc bằng đúng câu: \"Nếu cần thêm thông tin, vui lòng liên hệ quản lí hoặc Mr. Lâm Anh để được hỗ trợ.\" (không gợi ý liên hệ phòng ban hay người nào khác); nhưng nếu vẫn giúp được phần nào (ví dụ giải thích cách hiểu, cách áp dụng phần đã có) thì giúp luôn thay vì chỉ từ chối.\n\n" +
         "2) HỎI VỀ KỸ NĂNG BÁN HÀNG / TƯ VẤN / CÁCH LÀM (cách giới thiệu sản phẩm, thuyết phục khách, xử lý từ chối, so sánh, mở đầu cuộc nói chuyện, chốt đơn, chăm sóc khách, giải thích dễ hiểu...): " +
         "trả lời linh hoạt, nhẹ nhàng, thực tế bằng kiến thức bán hàng chung, có thể đưa ví dụ câu nói mẫu và các bước ngắn gọn. " +
         "Khi có thể, gắn với điểm mạnh sản phẩm hoặc chính sách có trong TÀI LIỆU để lời tư vấn sát thực tế. " +
