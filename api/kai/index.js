@@ -11,7 +11,7 @@ const store = require("../_lib/store");
 const session = require("../_lib/session");
 const { isAdmin } = require("../_lib/config");
 const llm = require("../_lib/llm");
-const { KAI_KB } = require("../_lib/kai-kb");
+const { pickRelevant } = require("../_lib/kai-kb");
 
 const DAILY_LIMIT = 30;
 const ANON_LIMIT = 3;
@@ -135,13 +135,13 @@ module.exports = async function (context, req) {
         "Nếu câu hỏi không có thông tin hoặc thông tin không đủ rõ trong tài liệu, phải trả lời rằng bạn chưa có thông tin này trong tài liệu và đề nghị người hỏi liên hệ phòng ban phụ trách. " +
         "TUYỆT ĐỐI không suy đoán, không bịa thêm số liệu, điều kiện, mốc thời gian hay tên sản phẩm không có trong tài liệu. " +
         "Trả lời ngắn gọn, rõ ràng, bằng tiếng Việt; có thể trích nguyên số liệu/mốc thời gian/điều kiện khi có; liệt kê gạch đầu dòng nếu có nhiều mục liên quan.\n\n" +
-        "TÀI LIỆU:\n" + KAI_KB;
+        "TÀI LIỆU:\n" + pickRelevant(question, 9000);
 
       let answer;
       try {
-        answer = await llm.chat([{ role: "system", content: sys }, { role: "user", content: question }], { temperature: 0.2, max_tokens: 700, timeoutMs: 20000 });
+        answer = await llm.chat([{ role: "system", content: sys }, { role: "user", content: question }], { temperature: 0.2, max_tokens: 700, timeoutMs: 25000 });
       } catch (e) {
-        context.log.error("kai ask", e && e.message);
+        context.log.error("kai ask", e && e.message, e && e.status, "promptChars:", sys.length);
         return reply(context, 502, { ok: false, error: "Trợ lí đang bận hoặc chưa sẵn sàng, thử lại sau." }, headers);
       }
       const newUsed = await usageInc(usageKey);

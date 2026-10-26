@@ -1,6 +1,8 @@
-// Kho kiến thức chính sách Karofi/Livotec dùng cho trợ lí KAI. Sinh ra từ tài liệu do công ty cung cấp (tháng 10/2026).
-// Cập nhật: thêm nội dung mới vào biến KAI_KB bên dưới, hoặc thêm hằng số mới rồi nối vào cuối.
-const KAI_KB = `# Bảng giá sản phẩm Livotec (giá thuần đại lý, VNĐ)
+// Kho kiến thức chính sách Karofi/Livotec dùng cho trợ lí KAI, chia theo từng mục để chỉ gửi phần LIÊN QUAN
+// tới câu hỏi (tránh gửi quá nhiều chữ mỗi lần hỏi, có thể vượt giới hạn độ dài của mô hình AI).
+// Cập nhật: thêm mục mới vào mảng KAI_SECTIONS bên dưới (mỗi mục { title, text }).
+const KAI_SECTIONS = [
+  { title: `Bảng giá sản phẩm Livotec (giá thuần đại lý, VNĐ)`, text: `# Bảng giá sản phẩm Livotec (giá thuần đại lý, VNĐ)
 Lưu ý: đây là "Giá thuần đại lý" — giá bán cho Đại lý, chưa tính các chương trình khuyến mại/chiết khấu riêng (xem thêm các thông báo CTKM khác nếu có).
 
 ## BÌNH NƯỚC NÓNG
@@ -140,11 +142,8 @@ Dòng B26/V26S/I26S thêm: Thanh đốt SUS316L bền bỉ, Thanh magie AZ63B c�
 | Chảo Kochmax KMP-28 | (như trên) | 1.042.000 |
 
 ---
-Ghi chú: Giá trên là bảng giá thuần đại lý tham khảo; các chương trình khuyến mại (CTKM) riêng theo từng thời điểm có thể có giá ưu đãi khác — xem thêm các thông báo CTKM tương ứng (ví dụ: CTKM mùa đông bình nước nóng, CTKM gói gia dụng hội nghị...).
-
----
-
-# CTKM Gói gia dụng (Hội nghị 2026) — Bảng giá ưu đãi dành cho Đại lý
+Ghi chú: Giá trên là bảng giá thuần đại lý tham khảo; các chương trình khuyến mại (CTKM) riêng theo từng thời điểm có thể có giá ưu đãi khác — xem thêm các thông báo CTKM tương ứng (ví dụ: CTKM mùa đông bình nước nóng, CTKM gói gia dụng hội nghị...).` },
+  { title: `CTKM Gói gia dụng (Hội nghị 2026) — Bảng giá ưu đãi dành cho Đại lý`, text: `# CTKM Gói gia dụng (Hội nghị 2026) — Bảng giá ưu đãi dành cho Đại lý
 **Thời gian áp dụng:** Từ ngày 01/03/2026 đến hết ngày 31/06/2026.
 Đây là chương trình khuyến mại combo "mua số lượng tặng hàng" cho Đại lý, áp dụng trên các nhóm sản phẩm gia dụng Livotec. Giá ĐL Theo CTKM thấp hơn giá ĐL thường, kèm điều kiện tặng hàng theo số lượng mua.
 
@@ -235,11 +234,8 @@ Ghi chú: Giá trên là bảng giá thuần đại lý tham khảo; các chươ
 (mua combo điều hòa + bình nước nóng, từ 01/03/2026 đến hết 31/06/2026, tặng chọn 1 trong 2 ở mỗi nhóm):
 - Tặng 1: 01 Quạt S-400, hoặc 01 Bếp từ đơn LIS-660C/P/B, hoặc 01 Máy hút bụi LV-100
 - Tặng 2: 01 Quạt S-200, hoặc 01 Bình tắm nước nóng ID20
-- Tặng 3: 02 Nồi cơm LRC-6218G, hoặc 01 Quạt điều hòa LAC-G66S, hoặc 02 Quạt S-100
-
----
-
-# Bảng mã lỗi điều hòa DHV dòng I
+- Tặng 3: 02 Nồi cơm LRC-6218G, hoặc 01 Quạt điều hòa LAC-G66S, hoặc 02 Quạt S-100` },
+  { title: `Bảng mã lỗi điều hòa DHV dòng I`, text: `# Bảng mã lỗi điều hòa DHV dòng I
 
 BẢNG MÃ LỖI VÀ CÁCH XỬ LÍ
 
@@ -397,11 +393,8 @@ Mã lỗi                Tên lỗi và Trạng thái                           
  U8
          nóng
 
- U9      Bảo vệ mạch PFC
-
----
-
-# Bảng mã lỗi điều hòa DHV dòng J
+ U9      Bảo vệ mạch PFC` },
+  { title: `Bảng mã lỗi điều hòa DHV dòng J`, text: `# Bảng mã lỗi điều hòa DHV dòng J
 
 BẢNG MÃ LỖI VÀ CÁCH XỬ LÍ
 
@@ -523,11 +516,8 @@ Mã lỗi    Mô tả chi tiết                      Phương pháp xử lý (K
      U8
           điện PFC dàn nóng
 
-     U9   Bảo vệ mạch PFC
-
----
-
-# TB04d — Chính sách bán hàng dành cho Nhà Phân Phối (NPP) Livotec ngành Gia dụng và Điện gia dụng năm 2026
+     U9   Bảo vệ mạch PFC` },
+  { title: `TB04d — Chính sách bán hàng dành cho Nhà Phân Phối (NPP) Livotec ngành Gia dụng và Điện gia dụng năm 2026`, text: `# TB04d — Chính sách bán hàng dành cho Nhà Phân Phối (NPP) Livotec ngành Gia dụng và Điện gia dụng năm 2026
 (Số 04d/2026/TB-LVT, ngày 02/01/2026)
 
 **Thời gian áp dụng:** Từ 01/01/2026 cho đến khi có thông báo mới.
@@ -566,11 +556,8 @@ Mã lỗi    Mô tả chi tiết                      Phương pháp xử lý (K
 - Thời gian trả thưởng năm: ngày 15 tháng 02 năm kế tiếp.
 - Hình thức trả thưởng: đối trừ công nợ.
 
-(Nguồn: Công ty TNHH Livotec, TP. Vận hành kinh doanh Cao Tiến Hải)
-
----
-
-# TB147 — Chính sách bán hàng dành cho Đại Lý điện máy nhập hàng trực tiếp từ Livotec 2026
+(Nguồn: Công ty TNHH Livotec, TP. Vận hành kinh doanh Cao Tiến Hải)` },
+  { title: `TB147 — Chính sách bán hàng dành cho Đại Lý điện máy nhập hàng trực tiếp từ Livotec 2026`, text: `# TB147 — Chính sách bán hàng dành cho Đại Lý điện máy nhập hàng trực tiếp từ Livotec 2026
 (Số 147/2025/TB-LVT, ngày 31/12/2025)
 
 **Thời gian áp dụng:** Từ 02/01/2026 cho tới khi có thông báo mới.
@@ -590,11 +577,8 @@ Mã lỗi    Mô tả chi tiết                      Phương pháp xử lý (K
 - Chính sách này không áp dụng cho kênh bán hàng Online.
 - Hình thức trả thưởng: được đối trừ trực tiếp ngay trên đơn hàng.
 
-(Nguồn: Công ty TNHH Livotec, TP. Vận hành kinh doanh Cao Tiến Hải)
-
----
-
-# TB150 — Chương trình đầu tư biển bảng, quầy kệ sản phẩm theo mùa vụ (BBQK)
+(Nguồn: Công ty TNHH Livotec, TP. Vận hành kinh doanh Cao Tiến Hải)` },
+  { title: `TB150 — Chương trình đầu tư biển bảng, quầy kệ sản phẩm theo mùa vụ (BBQK)`, text: `# TB150 — Chương trình đầu tư biển bảng, quầy kệ sản phẩm theo mùa vụ (BBQK)
 (Số 150/2025/TB-LVT, ngày 31/12/2025)
 
 **Đối tượng áp dụng:** Đại Lý (ĐL) Livotec kênh GT.
@@ -618,11 +602,8 @@ Mã lỗi    Mô tả chi tiết                      Phương pháp xử lý (K
 - Ưu đãi không được quy đổi thành tiền mặt hoặc sản phẩm khác.
 - Hình thức trả thưởng: Livotec/Nhà thầu trực tiếp triển khai thi công tại ĐL.
 
-(Nguồn: Công ty TNHH Livotec, TP. Vận hành kinh doanh Cao Tiến Hải)
-
----
-
-# TB151 — Chương trình đầu tư biển bảng, quầy kệ Showroom
+(Nguồn: Công ty TNHH Livotec, TP. Vận hành kinh doanh Cao Tiến Hải)` },
+  { title: `TB151 — Chương trình đầu tư biển bảng, quầy kệ Showroom`, text: `# TB151 — Chương trình đầu tư biển bảng, quầy kệ Showroom
 (Số 151/2025/TB-LVT, ngày 31/12/2025)
 
 **Đối tượng áp dụng:** Đại Lý (ĐL) Livotec kênh GT.
@@ -659,11 +640,8 @@ Mã lỗi    Mô tả chi tiết                      Phương pháp xử lý (K
 - Hình thức trả thưởng: Livotec/Nhà thầu trực tiếp triển khai thi công tại ĐL.
 - Livotec có quyền thu hồi các hạng mục đã đầu tư nếu ĐL không đạt được mức cam kết doanh số bán ra.
 
-(Nguồn: Công ty TNHH Livotec, TP. Vận hành kinh doanh Cao Tiến Hải)
-
----
-
-# TB152 — Chương trình đầu tư biển bảng, quầy kệ Shop in Shop
+(Nguồn: Công ty TNHH Livotec, TP. Vận hành kinh doanh Cao Tiến Hải)` },
+  { title: `TB152 — Chương trình đầu tư biển bảng, quầy kệ Shop in Shop`, text: `# TB152 — Chương trình đầu tư biển bảng, quầy kệ Shop in Shop
 (Số 152/2025/TB-LVT, ngày 31/12/2025)
 
 **Đối tượng áp dụng:** Đại Lý (ĐL) Livotec kênh GT.
@@ -694,11 +672,8 @@ Mã lỗi    Mô tả chi tiết                      Phương pháp xử lý (K
 - Hình thức trả thưởng: Livotec/Nhà thầu trực tiếp triển khai thi công tại ĐL.
 - Livotec có quyền thu hồi các hạng mục đã đầu tư nếu ĐL không đạt được mức cam kết doanh số bán ra.
 
-(Nguồn: Công ty TNHH Livotec, TP. Vận hành kinh doanh Cao Tiến Hải)
-
----
-
-# TB153 — Chương trình Sắc màu thương hiệu Livotec (toàn quốc)
+(Nguồn: Công ty TNHH Livotec, TP. Vận hành kinh doanh Cao Tiến Hải)` },
+  { title: `TB153 — Chương trình Sắc màu thương hiệu Livotec (toàn quốc)`, text: `# TB153 — Chương trình Sắc màu thương hiệu Livotec (toàn quốc)
 (Số 153/2025/TB-LVT, ngày 31/12/2025)
 
 **Đối tượng áp dụng:** ĐL kênh GT toàn quốc.
@@ -733,11 +708,8 @@ Mã lỗi    Mô tả chi tiết                      Phương pháp xử lý (K
 - Ưu đãi không được quy đổi thành tiền mặt hoặc sản phẩm khác.
 - Hình thức trả thưởng: Livotec/Nhà thầu trực tiếp triển khai thi công tại ĐL.
 
-(Nguồn: Công ty TNHH Livotec, TP. Vận hành kinh doanh Cao Tiến Hải)
-
----
-
-# TB78 — Chương trình khuyến mại dành cho khách hàng tham gia hội nghị Online
+(Nguồn: Công ty TNHH Livotec, TP. Vận hành kinh doanh Cao Tiến Hải)` },
+  { title: `TB78 — Chương trình khuyến mại dành cho khách hàng tham gia hội nghị Online`, text: `# TB78 — Chương trình khuyến mại dành cho khách hàng tham gia hội nghị Online
 (Số 78/2026/TB-LVT, ngày 01/08/2026)
 
 **Thời gian áp dụng:** Từ ngày 01/08/2026 đến hết ngày 15/09/2026.
@@ -764,11 +736,8 @@ Mã lỗi    Mô tả chi tiết                      Phương pháp xử lý (K
    - Thời gian trả thưởng: 20 ngày sau khi kết thúc thời gian quy định.
    - Hình thức trả thưởng: Trực tiếp tới ĐL/Thông qua NPP.
 
-(Nguồn: Công ty TNHH Livotec)
-
----
-
-# TB78a — Chương trình khuyến mại ưu đãi đặc biệt trực tiếp cho Bình nước nóng (dành cho NPP)
+(Nguồn: Công ty TNHH Livotec)` },
+  { title: `TB78a — Chương trình khuyến mại ưu đãi đặc biệt trực tiếp cho Bình nước nóng (dành cho NPP)`, text: `# TB78a — Chương trình khuyến mại ưu đãi đặc biệt trực tiếp cho Bình nước nóng (dành cho NPP)
 (Số 78a/2026/TB-LVT, ngày 01/08/2026)
 
 **Đối tượng áp dụng:** Nhà Phân Phối (NPP) kênh GT toàn quốc.
@@ -788,5 +757,45 @@ Mã lỗi    Mô tả chi tiết                      Phương pháp xử lý (K
 - Tiến độ thanh toán tổng giá trị đơn hàng dành cho NPP theo chính sách đã ban hành.
 - Quy định áp dụng khuyến mại này với các chính sách đã ban hành: Chiết khấu thanh toán: Không. Thưởng hoàn thành mục tiêu Tháng/Quý/Năm: Không (nhưng được ghi nhận làm điều kiện tính thưởng hoàn thành mục tiêu tháng, quý, năm).
 
-(Nguồn: Công ty TNHH Livotec, TP. Vận hành kinh doanh Cao Tiến Hải)`;
-module.exports = { KAI_KB };
+(Nguồn: Công ty TNHH Livotec, TP. Vận hành kinh doanh Cao Tiến Hải)` }
+];
+
+// Bỏ dấu tiếng Việt để so khớp từ khoá không phân biệt có dấu/không dấu.
+function stripDiacritics(s) {
+  return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+}
+function tokenize(s) {
+  return stripDiacritics(String(s || "").toLowerCase()).split(/[^a-z0-9]+/).filter((w) => w.length >= 2);
+}
+const STOP = new Set(["la","co","cua","cho","voi","mot","nhu","nao","the","nay","khi","nhung","neu","duoc","hay","gi","sao","bao","nhieu","toi","ban","minh","day","kia","mn"]);
+
+// Chọn các mục liên quan nhất tới câu hỏi (theo số từ khoá trùng), ghép lại không vượt quá maxChars.
+// Luôn kèm mục "Bảng giá sản phẩm" vì hầu hết câu hỏi đều có thể liên quan tới giá/model.
+function pickRelevant(question, maxChars) {
+  maxChars = maxChars || 14000;
+  const qTokens = tokenize(question).filter((w) => !STOP.has(w));
+  const scored = KAI_SECTIONS.map((sec) => {
+    const hay = stripDiacritics((sec.title + " " + sec.text).toLowerCase());
+    let score = 0;
+    qTokens.forEach((t) => { if (hay.indexOf(t) >= 0) score++; });
+    return { sec, score };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  const picked = [], seen = new Set();
+  let total = 0;
+  const priceSec = KAI_SECTIONS.find((s) => /bang gia/i.test(stripDiacritics(s.title)));
+  const ordered = [];
+  scored.forEach((x) => { if (x.score > 0) ordered.push(x.sec); });
+  if (priceSec && ordered.indexOf(priceSec) < 0) ordered.push(priceSec);
+  // Nếu không mục nào khớp từ khoá, vẫn gửi vài mục đầu để mô hình còn ngữ cảnh chung mà trả lời "chưa có thông tin".
+  if (!ordered.length) KAI_SECTIONS.slice(0, 3).forEach((s) => ordered.push(s));
+  for (const sec of ordered) {
+    if (seen.has(sec.title)) continue;
+    if (total + sec.text.length > maxChars && picked.length) break;
+    picked.push(sec.text); seen.add(sec.title); total += sec.text.length;
+    if (total >= maxChars) break;
+  }
+  return picked.join("\n\n---\n\n");
+}
+
+module.exports = { KAI_SECTIONS, pickRelevant };
