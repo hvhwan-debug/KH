@@ -3,7 +3,8 @@
 // - Đăng nhập (mã NV + email đối chiếu với danh sách nhân viên trong hệ thống kiemtra, hoặc danh sách đã
 //   được quản trị viên duyệt riêng): hỏi tối đa DAILY_LIMIT câu/ngày (theo giờ Việt Nam).
 // - Không khớp danh sách: tạo yêu cầu chờ quản trị viên duyệt (op "pending"/"approve"/"reject", chỉ admin).
-// - Trả lời CHỈ dựa trên nội dung tài liệu trong api/_lib/kai-kb.js, không bịa thêm.
+// - Chính sách/số liệu: CHỈ dựa trên tài liệu trong api/_lib/kai-kb.js, không bịa thêm.
+// - Kỹ năng bán hàng/tư vấn: được trả lời linh hoạt (ghi rõ là gợi ý tham khảo). Có nhận lịch sử hội thoại gần nhất.
 const crypto = require("crypto");
 const { reply, guardConfigured, requireAjax } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
@@ -130,16 +131,40 @@ module.exports = async function (context, req) {
         return reply(context, 403, { ok: false, quotaExceeded: true, used, limit, error: msg }, headers);
       }
 
-      const sys = "Bạn là KAI, trợ lí nội bộ tra cứu chính sách và thông tin sản phẩm của Karofi/Livotec, dùng cho nhân viên nội bộ. " +
-        "QUY TẮC BẮT BUỘC: Chỉ được trả lời dựa trên đúng nội dung tài liệu được cung cấp dưới đây. " +
-        "Nếu câu hỏi không có thông tin hoặc thông tin không đủ rõ trong tài liệu, phải trả lời rằng bạn chưa có thông tin này trong tài liệu và đề nghị người hỏi liên hệ phòng ban phụ trách. " +
-        "TUYỆT ĐỐI không suy đoán, không bịa thêm số liệu, điều kiện, mốc thời gian hay tên sản phẩm không có trong tài liệu. " +
-        "Trả lời ngắn gọn, rõ ràng, bằng tiếng Việt; có thể trích nguyên số liệu/mốc thời gian/điều kiện khi có; liệt kê gạch đầu dòng nếu có nhiều mục liên quan.\n\n" +
-        "TÀI LIỆU:\n" + pickRelevant(question, 9000);
+      // Lịch sử gần nhất do trình duyệt gửi lên để KAI hiểu câu hỏi nối tiếp ("giá này", "sản phẩm đó"...).
+      const hist = [];
+      if (Array.isArray(b.history)) {
+        b.history.slice(-6).forEach((m) => {
+          if (!m || (m.role !== "user" && m.role !== "assistant")) return;
+          const t = String(m.content || "").trim().slice(0, 1200);
+          if (t) hist.push({ role: m.role, content: t });
+        });
+      }
+      // Tìm tài liệu theo cả câu hỏi hiện tại lẫn câu hỏi người dùng liền trước (để câu hỏi ngắn vẫn đúng ngữ cảnh).
+      const lastUser = hist.filter((m) => m.role === "user").slice(-1)[0];
+      const searchText = (lastUser ? lastUser.content + " " : "") + question;
+
+      const sys = "Bạn là KAI, trợ lí nội bộ của Karofi/Livotec dành cho nhân viên kinh doanh. Giọng văn thân thiện, tự nhiên như một đồng nghiệp giàu kinh nghiệm, xưng \"mình\", gọi người hỏi là \"bạn\", bằng tiếng Việt, ngắn gọn, rõ ràng.\n\n" +
+        "BẠN CÓ HAI CHẾ ĐỘ TRẢ LỜI, tự nhận biết theo câu hỏi:\n\n" +
+        "1) HỎI VỀ CHÍNH SÁCH / SỐ LIỆU (khuyến mại, chiết khấu, bảng giá, điều kiện, mốc thời gian, thông số sản phẩm, chương trình đầu tư hình ảnh...): " +
+        "CHỈ dựa trên đúng nội dung phần TÀI LIỆU bên dưới. Có thể trích nguyên số liệu, điều kiện, mốc thời gian và nêu mã thông báo nếu có. " +
+        "Tuyệt đối không bịa hoặc suy đoán số liệu, điều kiện, tên sản phẩm không có trong tài liệu. " +
+        "Nếu tài liệu không có hoặc không đủ rõ, nói thẳng là chưa có thông tin này trong tài liệu và gợi ý liên hệ phòng ban phụ trách; nhưng nếu vẫn giúp được phần nào (ví dụ giải thích cách hiểu, cách áp dụng phần đã có) thì giúp luôn thay vì chỉ từ chối.\n\n" +
+        "2) HỎI VỀ KỸ NĂNG BÁN HÀNG / TƯ VẤN / CÁCH LÀM (cách giới thiệu sản phẩm, thuyết phục khách, xử lý từ chối, so sánh, mở đầu cuộc nói chuyện, chốt đơn, chăm sóc khách, giải thích dễ hiểu...): " +
+        "trả lời linh hoạt, nhẹ nhàng, thực tế bằng kiến thức bán hàng chung, có thể đưa ví dụ câu nói mẫu và các bước ngắn gọn. " +
+        "Khi có thể, gắn với điểm mạnh sản phẩm hoặc chính sách có trong TÀI LIỆU để lời tư vấn sát thực tế. " +
+        "Ghi rõ phần nào là gợi ý kỹ năng tham khảo chung (không phải quy định của công ty). " +
+        "Vẫn KHÔNG tự đặt ra con số giảm giá, quà tặng, chương trình khuyến mại hay cam kết không có trong tài liệu.\n\n" +
+        "Nếu câu hỏi trộn cả hai (ví dụ: \"giá này thì bán thế nào\"), hãy tách rõ: nêu phần số liệu theo tài liệu trước, rồi gợi ý cách bán. " +
+        "Câu hỏi nối tiếp (\"giá này\", \"sản phẩm đó\", \"còn loại kia\") phải hiểu theo cuộc trò chuyện trước đó. " +
+        "Chào hỏi, cảm ơn hay trò chuyện xã giao thì đáp lại thân thiện, ngắn gọn rồi hỏi bạn cần tra cứu gì. " +
+        "Không trả lời chủ đề hoàn toàn không liên quan đến công việc bán hàng, sản phẩm, chính sách của công ty.\n\n" +
+        "Trình bày: ưu tiên câu ngắn, dùng gạch đầu dòng khi có nhiều ý, in đậm số liệu quan trọng.\n\n" +
+        "TÀI LIỆU:\n" + pickRelevant(searchText, 9000);
 
       let answer;
       try {
-        answer = await llm.chat([{ role: "system", content: sys }, { role: "user", content: question }], { temperature: 0.2, max_tokens: 700, timeoutMs: 25000 });
+        answer = await llm.chat([{ role: "system", content: sys }].concat(hist, [{ role: "user", content: question }]), { temperature: 0.35, max_tokens: 900, timeoutMs: 25000 });
       } catch (e) {
         context.log.error("kai ask", e && e.message, e && e.status, "promptChars:", sys.length);
         return reply(context, 502, { ok: false, error: "Trợ lí đang bận hoặc chưa sẵn sàng, thử lại sau." }, headers);
