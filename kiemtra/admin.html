@@ -773,6 +773,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 .pg-tab.doing i{background:#E08A00}.pg-tab.done i{background:#2E8B57}.pg-tab.none i{background:#C0392B}.pg-tab.all i{display:none}
 .pg-tab.on{border-color:var(--brand);background:var(--brand-soft,#E6F0FC);color:var(--brand-deep,#0B3F94)}
 .pg-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+#pgUpd{margin-left:auto}
 .pg-tools input{flex:1 1 220px;min-width:0;margin:0}.pg-tools select{flex:0 1 220px;margin:0}
 .pg-list{display:flex;flex-direction:column;gap:6px;max-height:560px;overflow-y:auto;padding-right:2px}
 .pg-row{display:grid;grid-template-columns:12px minmax(0,1.3fr) 92px minmax(0,1.2fr);align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#fff}
@@ -792,10 +793,6 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 .pg-score{border:0;background:none;padding:0;font:inherit;font-size:13.5px;color:var(--ink);cursor:pointer;text-align:left}.pg-score:hover{text-decoration:underline}
 .pg-sub{display:block;color:var(--muted);font-size:12px}
 .pg-empty{padding:20px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
-.pg-fold{border:0;background:#EEF1F4;color:var(--ink);width:30px;height:30px;border-radius:9px;margin-right:10px;cursor:pointer;vertical-align:middle;padding:0;line-height:1}
-.pg-fold:hover{background:#E1E7EE}.pg-fold svg{transition:transform .15s}
-#pgCard.folded .pg-fold svg{transform:rotate(-90deg)}#pgCard.folded #pgBody{display:none}
-.pg-sum{font-size:13px;font-weight:600;color:var(--muted);margin-left:12px;display:none}#pgCard.folded .pg-sum{display:inline}
 .pg-auto{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:6px;background:#FDF0DA;color:#8A5500;vertical-align:middle}
 @media(max-width:640px){.pg-row{grid-template-columns:12px minmax(0,1fr) auto;gap:8px 10px}.pg-info{grid-column:2/-1}}
 /* ===== Điện thoại: thẻ "Tình trạng làm bài" =====
@@ -815,6 +812,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
   .pg-tools .pg-rf{width:44px;padding:0;font-size:18px}
   .pg-rtxt{display:none}
   #pgCopy{grid-column:1/-1;background:var(--brand);border-color:var(--brand);color:#fff}
+  #pgUpd{grid-column:1/-1;text-align:center;margin-top:2px;margin-left:0}
   .pg-list{max-height:none;overflow:visible;padding-right:0}
   .pg-row{padding:10px 12px;gap:6px 10px}
   .pg-who small{display:flex;gap:0}
@@ -1760,9 +1758,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <div id="dashBanner"></div>
         <div class="kpis" id="dashKpis"></div>
       </div>
-      <div class="card" id="pgCard">
-        <div class="pg-h"><h1 style="margin:0"><button type="button" class="pg-fold" id="pgFold" aria-expanded="true" aria-controls="pgBody" onclick="pgFold()" title="Thu gọn / mở rộng"><svg width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>Tình trạng làm bài<span class="pg-sum" id="pgSum"></span></h1><span class="small" id="pgUpd"></span></div>
-        <div id="pgBody">
+      <div id="pgCard">
         <div class="pg-pulse" id="pgPulse" aria-hidden="true"></div>
         <div class="pg-tabs" role="tablist" id="pgTabs"></div>
         <div class="pg-tools">
@@ -1770,9 +1766,9 @@ button.rd-st:disabled{opacity:.55;cursor:default}
           <select id="pgMgr" onchange="renderProgress()" aria-label="Lọc theo quản lí"></select>
           <button class="btn ghost sm pg-rf" type="button" onclick="loadProgress()" aria-label="Làm mới" title="Làm mới"><span aria-hidden="true">↻</span><span class="pg-rtxt"> Làm mới</span></button>
           <button class="btn ghost sm" type="button" id="pgCopy" onclick="pgCopy()">Sao chép danh sách</button>
+          <span class="small" id="pgUpd"></span>
         </div>
         <div class="pg-list" id="pgList"></div>
-        </div>
       </div>
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
@@ -4235,19 +4231,12 @@ async function loadProgress(sel){
   const mv = $('pgMgr').value, mgrs = Array.from(new Set(j.list.map(x => x.manager || ''))).sort((a, b) => a.localeCompare(b, 'vi'));
   $('pgMgr').innerHTML = '<option value="*">Mọi quản lí</option>' + mgrs.map(m => '<option value="' + esc(m) + '">' + esc(m || '(chưa có quản lí)') + '</option>').join('');
   $('pgMgr').value = mgrs.indexOf(mv) >= 0 ? mv : '*';
-  renderProgress(); pgSummary();
+  renderProgress();
   clearTimeout(PG_T);
   // Có người đang làm: tự làm mới khi khung còn hiển thị
   if (j.count.doing) PG_T = setTimeout(() => { if ($('pgCard').offsetParent) loadProgress(); }, 30000);
 }
 function pgSetF(f){ PG_F = f; renderProgress(); }
-function pgFold(force){
-  const c = $('pgCard'), on = typeof force === 'boolean' ? force : !c.classList.contains('folded');
-  c.classList.toggle('folded', on); $('pgFold').setAttribute('aria-expanded', String(!on));
-  try { localStorage.setItem('kt_pg_fold', on ? '1' : '0'); } catch (e) {}
-}
-function pgSummary(){ if (!PG) return; $('pgSum').textContent = 'Đang làm ' + PG.count.doing + ' · Đã làm ' + PG.count.done + ' · Chưa làm ' + PG.count.none; }
-try { if (localStorage.getItem('kt_pg_fold') === '1') document.addEventListener('DOMContentLoaded', () => pgFold(true)); } catch (e) {}
 function pgRows(){
   const q = spNorm($('pgSearch').value || ''), m = $('pgMgr').value || '*';
   return PG.list.filter(x => (m === '*' || (x.manager || '') === m) && (!q || spNorm([x.name, x.code, x.manager, x.province, x.phone].join(' ')).indexOf(q) >= 0));
