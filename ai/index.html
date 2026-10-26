@@ -100,10 +100,11 @@ main{flex:1;display:flex;flex-direction:column;max-width:720px;margin:0 auto;wid
     <div id="chat"></div>
     <div class="composer">
       <div class="row">
-        <textarea id="q" rows="1" placeholder="Nhập câu hỏi, ví dụ: Chiết khấu thương mại cho NPP gia dụng 2026 là bao nhiêu?"></textarea>
+        <textarea id="q" rows="1" maxlength="700" placeholder="Nhập câu hỏi ngắn gọn, ví dụ: Chiết khấu thương mại cho NPP gia dụng 2026 là bao nhiêu?"></textarea>
         <button type="button" id="send">Gửi</button>
       </div>
       <div class="quota" id="quota"></div>
+      <div class="quota hide" id="qlen"></div>
     </div>
   </div>
 
@@ -216,8 +217,8 @@ function addThinking(){
 
 async function sendQuestion(){
   var ta = $('q'), text = ta.value.trim();
-  if (!text) return;
-  ta.value = ''; ta.style.height = 'auto';
+  if (!text || text.length > QMAX) return;
+  ta.value = ''; ta.style.height = 'auto'; checkLen();
   addMsg('me', text);
   var thinking = addThinking();
   $('send').disabled = true;
@@ -233,9 +234,20 @@ async function sendQuestion(){
   }
 }
 
+var QMAX = 600;
+function checkLen(){
+  var n = $('q').value.length, over = n > QMAX;
+  if (n > QMAX * 0.7){
+    $('qlen').classList.remove('hide');
+    $('qlen').innerHTML = over
+      ? '<b style="color:var(--bad)">'+n+' / '+QMAX+' ký tự — dài quá, rút gọn lại nhé (có thể bạn đã lỡ dán nguyên câu trả lời trước vào đây).</b>'
+      : n+' / '+QMAX+' ký tự.';
+  } else { $('qlen').classList.add('hide'); }
+  $('send').disabled = over;
+}
 $('send').addEventListener('click', sendQuestion);
 $('q').addEventListener('keydown', function(e){ if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendQuestion(); } });
-$('q').addEventListener('input', function(){ this.style.height='auto'; this.style.height = Math.min(120, this.scrollHeight) + 'px'; });
+$('q').addEventListener('input', function(){ this.style.height='auto'; this.style.height = Math.min(120, this.scrollHeight) + 'px'; checkLen(); });
 
 $('btnLogin').addEventListener('click', function(){ show('login'); });
 $('lBack').addEventListener('click', function(){ show('chat'); msg2(''); });
