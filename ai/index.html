@@ -149,7 +149,7 @@ main{flex:1;display:flex;flex-direction:column;max-width:760px;margin:0 auto;wid
 
   <div id="scrLogin" class="card hide">
     <h2>Đăng nhập bằng mã nhân viên</h2>
-    <p>Dùng đúng mã nhân viên và email đã đăng ký trong hệ thống để hỏi được tới 30 câu/ngày.</p>
+    <p>Dùng đúng mã nhân viên và email đã đăng ký trong hệ thống để hỏi được nhiều câu hơn mỗi ngày.</p>
     <label for="lCode">Mã nhân viên</label>
     <input id="lCode" autocomplete="off" placeholder="Ví dụ: T100300057">
     <label for="lEmail">Email</label>
@@ -184,7 +184,7 @@ function renderWho(){
   $('btnLogout').classList.toggle('hide', !STATE.loggedIn);
   $('quota').innerHTML = STATE.loggedIn
     ? 'Đã hỏi <b>'+STATE.used+'</b> / '+STATE.limit+' câu hôm nay.'
-    : 'Dùng thử <b>'+STATE.used+'</b> / '+STATE.limit+' câu. <button type="button" class="linkbtn" onclick="show(\'login\')" style="padding:0">Đăng nhập</button> để hỏi được tới 30 câu/ngày.';
+    : 'Dùng thử <b>'+STATE.used+'</b> / '+STATE.limit+' câu. <button type="button" class="linkbtn" onclick="show(\'login\')" style="padding:0">Đăng nhập</button> để hỏi được nhiều câu hơn mỗi ngày.';
 }
 
 async function refreshMe(){
@@ -307,7 +307,7 @@ $('lSubmit').addEventListener('click', async function(){
   if (r.j.matched){
     await refreshMe();
     show('chat');
-    addMsg('bot', 'Xin chào ' + (r.j.name || '') + '! Bạn đã đăng nhập, hỏi được tới 30 câu/ngày.');
+    addMsg('bot', 'Xin chào ' + (r.j.name || '') + '! Bạn đã đăng nhập, hỏi được tới ' + STATE.limit + ' câu/ngày.');
   } else if (r.j.pending){
     msg2('Mã nhân viên/email này chưa khớp danh sách — đã gửi yêu cầu, chờ quản trị viên duyệt. Trong lúc chờ bạn vẫn dùng được lượt hỏi thử.', 'ok');
   }

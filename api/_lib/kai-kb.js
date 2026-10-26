@@ -1,7 +1,7 @@
 // Kho kiến thức chính sách Karofi/Livotec dùng cho trợ lí KAI, chia theo từng mục để chỉ gửi phần LIÊN QUAN
 // tới câu hỏi (tránh gửi quá nhiều chữ mỗi lần hỏi, có thể vượt giới hạn độ dài của mô hình AI).
 // Cập nhật: thêm mục mới vào mảng KAI_SECTIONS bên dưới (mỗi mục { title, text }).
-const KAI_SECTIONS = [
+const STATIC_SECTIONS = [
   { title: `Bảng giá sản phẩm Livotec (giá thuần đại lý, VNĐ)`, text: `# Bảng giá sản phẩm Livotec (giá thuần đại lý, VNĐ)
 Lưu ý: đây là "Giá thuần đại lý" — giá bán cho Đại lý, chưa tính các chương trình khuyến mại/chiết khấu riêng (xem thêm các thông báo CTKM khác nếu có).
 
@@ -771,13 +771,15 @@ const STOP = new Set(["la","co","cua","cho","voi","mot","nhu","nao","the","nay",
 
 // Chọn các mục liên quan nhất tới câu hỏi (theo số từ khoá trùng), ghép lại không vượt quá maxChars.
 // Luôn kèm mục "Bảng giá sản phẩm" vì hầu hết câu hỏi đều có thể liên quan tới giá/model.
-function pickRelevant(question, maxChars) {
+function pickRelevant(question, maxChars, sections) {
   maxChars = maxChars || 14000;
+  const KAI_SECTIONS = sections && sections.length ? sections : STATIC_SECTIONS;
   const qTokens = tokenize(question).filter((w) => !STOP.has(w));
+  // Khớp theo TỪ nguyên (không khớp chuỗi con như "tra" trong "tra cứu"), từ trùng trong tiêu đề được tính gấp đôi.
   const scored = KAI_SECTIONS.map((sec) => {
-    const hay = stripDiacritics((sec.title + " " + sec.text).toLowerCase());
+    const body = new Set(tokenize(sec.text)), head = new Set(tokenize(sec.title));
     let score = 0;
-    qTokens.forEach((t) => { if (hay.indexOf(t) >= 0) score++; });
+    qTokens.forEach((t) => { if (head.has(t)) score += 2; else if (body.has(t)) score++; });
     return { sec, score };
   });
   scored.sort((a, b) => b.score - a.score);
@@ -798,4 +800,60 @@ function pickRelevant(question, maxChars) {
   return picked.join("\n\n---\n\n");
 }
 
-module.exports = { KAI_SECTIONS, pickRelevant };
+
+// ---------- Tài liệu do quản trị viên thêm trên trang quản trị (lưu trong Blob, không cần sửa code) ----------
+const store = require("./store");
+const DOCS_KEY = "kai/docs.json";
+const SETTINGS_KEY = "kai/settings.json";
+const CHUNK = 3000; // ký tự mỗi mục khi cắt tài liệu dài, để chỉ gửi phần liên quan tới câu hỏi
+
+// Cắt văn bản dài theo tiêu đề (# ...) rồi theo đoạn, mỗi mục tối đa ~CHUNK ký tự.
+function chunkText(title, text) {
+  const paras = String(text || "").replace(/\r/g, "").split(/\n{2,}/);
+  const out = []; let cur = "";
+  const flush = () => { if (cur.trim()) out.push(cur.trim()); cur = ""; };
+  paras.forEach((p) => {
+    if (/^#{1,3}\s/.test(p.trim()) && cur.length > CHUNK * 0.4) flush();
+    if (p.length > CHUNK) { // đoạn quá dài: cắt theo dòng
+      flush();
+      p.split("\n").forEach((line) => { if (cur.length + line.length + 1 > CHUNK) flush(); cur += line + "\n"; });
+      return;
+    }
+    if (cur.length + p.length + 2 > CHUNK) flush();
+    cur += p + "\n\n";
+  });
+  flush();
+  const n = out.length;
+  return out.map((t, i) => {
+    const ti = n > 1 ? title + " (phần " + (i + 1) + "/" + n + ")" : title;
+    return { title: ti, text: "# " + ti + "\n" + t };
+  });
+}
+function docToSections(d) { return d && d.enabled !== false ? chunkText(d.title, d.text) : []; }
+
+let cache = { at: 0, sections: null };
+async function getDocs() { return (await store.get(DOCS_KEY)) || []; }
+async function saveDocs(list) { await store.put(DOCS_KEY, list); cache = { at: 0, sections: null }; }
+async function getSections() {
+  if (cache.sections && Date.now() - cache.at < 30000) return cache.sections;
+  let extra = [];
+  try { (await getDocs()).forEach((d) => { extra = extra.concat(docToSections(d)); }); } catch (e) { /* lỗi đọc: dùng tài liệu có sẵn */ }
+  cache = { at: Date.now(), sections: STATIC_SECTIONS.concat(extra) };
+  return cache.sections;
+}
+
+const DEFAULT_SETTINGS = { defaultLimit: 30, anonLimit: 3, paused: false, pausedMsg: "", blocked: {}, limits: {} };
+async function getSettings() {
+  const s = (await store.get(SETTINGS_KEY)) || {};
+  const num = (v, d, lo, hi) => { v = Number(v); return Number.isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : d; };
+  return {
+    defaultLimit: num(s.defaultLimit, DEFAULT_SETTINGS.defaultLimit, 1, 500),
+    anonLimit: num(s.anonLimit, DEFAULT_SETTINGS.anonLimit, 0, 50),
+    paused: !!s.paused, pausedMsg: String(s.pausedMsg || "").slice(0, 300),
+    blocked: s.blocked && typeof s.blocked === "object" ? s.blocked : {},
+    limits: s.limits && typeof s.limits === "object" ? s.limits : {}
+  };
+}
+async function saveSettings(s) { await store.put(SETTINGS_KEY, s); }
+
+module.exports = { KAI_SECTIONS: STATIC_SECTIONS, STATIC_SECTIONS, pickRelevant, chunkText, getDocs, saveDocs, getSections, getSettings, saveSettings };

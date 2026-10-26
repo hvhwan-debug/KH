@@ -587,7 +587,7 @@ html{-webkit-text-size-adjust:100%}
   .topbar .dot{width:34px;height:34px;border-radius:10px;font-size:13px;background:linear-gradient(135deg,#2AB5D7,#07428F)}
   .topbar b{flex:1;min-width:0;font-size:16px}
   .ibtn{width:40px;height:40px;flex:0 0 auto;display:grid;place-items:center;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--brand-deep);cursor:pointer}
-  .bottombar{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:50;padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+  .bottombar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:50;padding:6px 6px calc(6px + env(safe-area-inset-bottom));
     background:rgba(255,255,255,.94);backdrop-filter:saturate(1.5) blur(16px);border-top:1px solid var(--line);box-shadow:0 -12px 32px -20px rgba(10,37,82,.45)}
   .bb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:54px;border:0;background:none;color:var(--muted);font:inherit;font-size:11.5px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
   .bb .icw{display:grid;place-items:center;width:58px;height:30px;border-radius:15px;transition:background .2s,transform .15s}
@@ -1017,6 +1017,21 @@ button.rd-st:disabled{opacity:.55;cursor:default}
   .rd-st .ic{grid-row:auto;width:30px;height:30px;border-radius:9px}.rd-st .ic svg{width:16px;height:16px}
   .rd-st .n{font-size:26px}.rd-st .lb em{margin-left:5px}
 }
+
+/* Trợ lí KAI */
+.kaix-sub{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 14px}
+.kaix-sub button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 15px;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);cursor:pointer}
+.kaix-sub button.on{border-color:var(--brand);background:var(--brand-soft,#E6F0FC);color:var(--brand-deep,#0B3F94)}
+.kaix-sec.hide{display:none}
+.kaix-form{display:grid;gap:10px}
+.kaix-grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.kaix-doc-text{min-height:220px;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.5}
+.kaix-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
+.kaix-row:last-child{border-bottom:0}
+.kaix-tag{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px;background:var(--brand-soft,#E6F0FC);color:var(--brand-deep,#0B3F94);margin-left:6px}
+.kaix-tag.off{background:#EEF1F4;color:var(--muted)}.kaix-tag.bad{background:var(--bad-soft);color:var(--bad)}
+.kaix-act{display:flex;gap:6px;flex-wrap:wrap}
+.kaix-bar{height:6px;border-radius:6px;background:var(--line);overflow:hidden;width:90px;margin-top:4px}.kaix-bar i{display:block;height:100%;background:var(--brand)}.kaix-bar.hot i{background:#E8A22B}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -1096,6 +1111,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
       <button type="button" class="nv" data-nav="candidates" onclick="switchTab('candidates')" title="Hồ sơ học tập"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg><span class="nv-l">Hồ sơ học tập</span><span class="nv-cnt hide" id="nvCand"></span></button>
       <button type="button" class="nv" data-nav="notify" onclick="switchTab('notify')" title="Gửi thông báo và thư mời"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg><span class="nv-l">Thông báo, thư mời</span></button>
       <button type="button" class="nv" data-nav="managerview" onclick="switchTab('managerview')" title="Quản lí"><svg class="ic" aria-hidden="true"><use href="#i-mgr"/></svg><span class="nv-l">Quản lí</span></button>
+      <button type="button" class="nv" data-nav="kai" onclick="switchTab('kai')" title="Trợ lí KAI: tài liệu và người dùng"><svg class="ic" aria-hidden="true"><use href="#i-help"/></svg><span class="nv-l">Trợ lí KAI</span></button>
       <div class="nv-grp">Hệ thống</div>
       <button type="button" class="nv" data-nav="sys" onclick="switchTab('settings')" title="Cài đặt"><svg class="ic" aria-hidden="true"><use href="#i-set"/></svg><span class="nv-l">Cài đặt</span></button>
       <div class="subnav sysnav sysnav-side hide" aria-label="Mục cài đặt">
@@ -1706,6 +1722,93 @@ button.rd-st:disabled{opacity:.55;cursor:default}
       </div>
     </div>
 
+
+    <!-- Trợ lí KAI: tài liệu + người dùng -->
+    <div id="tab-kai" class="tabpane hide">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <h1 style="margin:0">Trợ lí KAI</h1>
+          <a class="btn ghost sm" href="/ai" target="_blank" rel="noopener">↗ Mở trang KAI</a>
+        </div>
+        <p class="small" style="margin:6px 0 12px">Thêm tài liệu chính sách cho KAI đọc và quản lí việc dùng KAI của từng người. Tài liệu thêm ở đây có hiệu lực sau tối đa 30 giây, không cần sửa mã nguồn.</p>
+        <div class="kpis" id="kaixKpis"></div>
+        <div class="kaix-sub" id="kaixSub">
+          <button type="button" data-k="docs" class="on">Tài liệu</button>
+          <button type="button" data-k="users">Người dùng</button>
+          <button type="button" data-k="pending">Chờ duyệt <span id="kaixPendN"></span></button>
+          <button type="button" data-k="cfg">Cài đặt chung</button>
+        </div>
+
+        <!-- Tài liệu -->
+        <div class="kaix-sec" data-k="docs">
+          <div class="kaix-form">
+            <div><label for="kdTitle">Tiêu đề tài liệu</label><input id="kdTitle" maxlength="150" placeholder="Ví dụ: Chính sách đổi trả tháng 11/2026"></div>
+            <div><label for="kdText">Nội dung (dán văn bản vào đây, hoặc chọn file .txt / .md / .csv bên dưới)</label>
+              <textarea id="kdText" class="kaix-doc-text" placeholder="Dán nội dung chính sách… Dùng dòng bắt đầu bằng # để đặt tiêu đề từng phần, KAI sẽ tìm đúng phần liên quan khi trả lời."></textarea>
+              <div class="small" id="kdCount" style="margin-top:4px"></div></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <input type="file" id="kdFile" accept=".txt,.md,.csv,.json,text/plain" style="width:auto;max-width:100%">
+              <label class="chk" style="margin:0"><input type="checkbox" id="kdOn" checked> Cho KAI dùng tài liệu này</label>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn" type="button" id="kdSave">Lưu tài liệu</button>
+              <button class="btn ghost" type="button" id="kdClear">Soạn mới</button>
+            </div>
+            <div id="kdMsg"></div>
+          </div>
+          <hr style="margin:18px 0;border:0;border-top:1px solid var(--line)">
+          <h2 style="margin:0 0 4px;font-size:16px">Tài liệu đã thêm <span class="small" id="kdN"></span></h2>
+          <div id="kdList"></div>
+          <details style="margin-top:14px"><summary class="small" style="cursor:pointer">Tài liệu có sẵn trong mã nguồn (chỉ xem)</summary><div id="kdBuiltin" class="small" style="margin-top:8px"></div></details>
+        </div>
+
+        <!-- Người dùng -->
+        <div class="kaix-sec hide" data-k="users">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+            <h2 style="margin:0;font-size:16px">Mức dùng hôm nay <span class="small" id="kuDay"></span></h2>
+            <button class="btn ghost sm" type="button" onclick="kaixLoadUsers()">Tải lại</button>
+          </div>
+          <div id="kuList"></div>
+          <hr style="margin:16px 0;border:0;border-top:1px solid var(--line)">
+          <h2 style="margin:0 0 8px;font-size:16px">Đặt hạn mức riêng hoặc khoá một người</h2>
+          <div class="kaix-grid2">
+            <div><label for="kuCode">Mã nhân viên</label><input id="kuCode" placeholder="Ví dụ: T100300057" autocomplete="off"></div>
+            <div><label for="kuLimit">Hạn mức câu/ngày (để trống = dùng mặc định)</label><input id="kuLimit" type="number" min="1" max="500" placeholder="Mặc định"></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <button class="btn" type="button" id="kuSetLimit">Lưu hạn mức</button>
+            <button class="btn dghost" type="button" id="kuBlock">Khoá người này</button>
+            <button class="btn ghost" type="button" id="kuUnblock">Mở khoá</button>
+          </div>
+          <div id="kuMsg"></div>
+          <div class="small" id="kuDays" style="margin-top:14px"></div>
+        </div>
+
+        <!-- Chờ duyệt + đã duyệt -->
+        <div class="kaix-sec hide" data-k="pending">
+          <h2 style="margin:0 0 4px;font-size:16px">Yêu cầu chờ duyệt</h2>
+          <p class="small" style="margin:0 0 6px">Mã nhân viên + email không khớp Hồ sơ học tập sẽ chờ bạn duyệt ở đây.</p>
+          <div id="kpList"></div>
+          <hr style="margin:16px 0;border:0;border-top:1px solid var(--line)">
+          <h2 style="margin:0 0 4px;font-size:16px">Đã duyệt thủ công</h2>
+          <div id="kaList"></div>
+        </div>
+
+        <!-- Cài đặt chung -->
+        <div class="kaix-sec hide" data-k="cfg">
+          <div class="kaix-grid2">
+            <div><label for="kcDefault">Hạn mức mặc định (câu/ngày, đã đăng nhập)</label><input id="kcDefault" type="number" min="1" max="500"></div>
+            <div><label for="kcAnon">Số câu dùng thử (chưa đăng nhập, 0 = tắt dùng thử)</label><input id="kcAnon" type="number" min="0" max="50"></div>
+          </div>
+          <label class="chk" style="margin:14px 0 0"><input type="checkbox" id="kcPaused"> Tạm dừng KAI cho mọi người</label>
+          <label for="kcMsg" style="margin-top:10px">Thông báo hiện khi tạm dừng (không bắt buộc)</label>
+          <input id="kcMsg" maxlength="300" placeholder="KAI đang bảo trì, vui lòng quay lại sau.">
+          <button class="btn" type="button" style="margin-top:12px" id="kcSave">Lưu cài đặt</button>
+          <div id="kcOut"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Tài khoản quản lí -->
     <div id="tab-viewers" class="tabpane hide">
       <div class="card">
@@ -1843,6 +1946,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
     <button type="button" class="bb" data-nav="exams" onclick="switchTab('exams')"><span class="icw"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg></span><span class="bl">Đề thi</span></button>
     <button type="button" class="bb" data-nav="candidates" onclick="switchTab('candidates')"><span class="icw"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg></span><span class="bl">Thí sinh</span></button>
     <button type="button" class="bb" data-nav="managerview" onclick="switchTab('managerview')"><span class="icw"><svg class="ic" aria-hidden="true"><use href="#i-mgr"/></svg></span><span class="bl">Quản lí</span></button>
+    <button type="button" class="bb" data-nav="kai" onclick="switchTab('kai')"><span class="icw"><svg class="ic" aria-hidden="true"><use href="#i-help"/></svg></span><span class="bl">KAI</span></button>
     <button type="button" class="bb" data-nav="sys" onclick="switchTab('settings')"><span class="icw"><svg class="ic" aria-hidden="true"><use href="#i-set"/></svg></span><span class="bl">Cài đặt</span></button>
   </nav>
 </div>
@@ -2002,7 +2106,7 @@ $('auXlsx').addEventListener('click', async function(){
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   logEv('exportExcel', { period: 'nhật ký ' + $('auDay').value });
 });
-const TABS = ['exams','candidates','managerview','notify','results','analysis','questions','examset','settings','viewers','banks','audit'];
+const TABS = ['exams','candidates','managerview','notify','kai','results','analysis','questions','examset','settings','viewers','banks','audit'];
 const WS = ['results','analysis','questions','examset'], SYS = ['settings','viewers','banks','audit'];
 let CUR_EXAM = null, EX_NEW = false, EX_DEFAULT = '';
 // Địa chỉ dạng #exams, #candidates, #settings… hoặc #results/<mã đề>, #questions/<mã đề>, #examset/<mã đề>
@@ -2020,7 +2124,7 @@ function switchTab(t){
   const inWs = WS.indexOf(t) >= 0, inSys = SYS.indexOf(t) >= 0;
   const navKey = inWs ? 'exams' : inSys ? 'sys' : t;
   document.querySelectorAll('[data-nav]').forEach(b => { const on = b.dataset.nav === navKey; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-  const tb = $('tbTitle'); if (tb) tb.textContent = inWs ? 'Đề thi' : inSys ? 'Cài đặt' : ({ exams:'Đề thi', candidates:'Thí sinh', notify:'Thông báo, thư mời', managerview:'Quản lí' })[t] || 'Quản trị bài kiểm tra';
+  const tb = $('tbTitle'); if (tb) tb.textContent = inWs ? 'Đề thi' : inSys ? 'Cài đặt' : ({ exams:'Đề thi', candidates:'Thí sinh', notify:'Thông báo, thư mời', managerview:'Quản lí', kai:'Trợ lí KAI' })[t] || 'Quản trị bài kiểm tra';
   document.querySelectorAll('.sysnav').forEach(el => el.classList.toggle('hide', !inSys));
   $('exHead').classList.toggle('hide', !inWs);
   $('exNav').classList.toggle('hide', EX_NEW);
@@ -2031,6 +2135,7 @@ function switchTab(t){
   if (location.hash !== h) history.replaceState(null, '', h);
   if (t === 'candidates' && prevTab !== 'candidates') resetCandFilters(); if (t === 'candidates' && prevTab !== 'candidates') candView('list'); // vào tab Thí sinh: luôn hiện đủ danh sách, không giữ bộ lọc lần trước
   if (t === 'notify') loadNotify();
+  if (t === 'kai') kaixOpen();
   if (t === 'settings' && prevTab !== 'settings') loadKaiPending();
   if (t === 'audit') { loadAudit(); loadFaceRejections(); }
   if (t === 'managerview' && $('mvFrame').src === 'about:blank') $('mvFrame').src = '/kiemtra/quanli.html';
@@ -2560,6 +2665,120 @@ function examStatusText(e, cur){
 $('exPractice').addEventListener('change', function(){
   if (this.checked && !$('exRetake').checked){ $('exRetake').checked = true; msg('exMsg','Đã tự bật "Cho phép làm lại nhiều lần" cho đề thi thử. Bỏ tick nếu muốn thí sinh chỉ thi thử một lần.','ok'); }
 });
+
+
+/* ---------- Trợ lí KAI: tài liệu + người dùng ---------- */
+var KX = { inited:false, docEdit:null, sub:'docs', usage:null };
+async function kaixApi(payload){ var r; try { r = await api('POST', '/api/kai-admin', payload); } catch(e){ return { ok:false, error:'Không kết nối được máy chủ.' }; } return r.j.ok ? r.j : { ok:false, error:r.j.error || 'Không thực hiện được, thử lại.' }; }
+function kaixOpen(){
+  if (!KX.inited){
+    KX.inited = true;
+    $('kaixSub').addEventListener('click', function(e){ var b = e.target.closest('button'); if (b) kaixSub(b.dataset.k); });
+    $('kdSave').onclick = kaixSaveDoc; $('kdClear').onclick = kaixClearDoc;
+    $('kdText').addEventListener('input', kaixCount);
+    $('kdFile').addEventListener('change', kaixReadFile);
+    $('kuSetLimit').onclick = function(){ kaixUserSet({ limit: $('kuLimit').value.trim() === '' ? null : Number($('kuLimit').value) }, 'Đã lưu hạn mức.'); };
+    $('kuBlock').onclick = function(){ if (confirm('Khoá mã ' + $('kuCode').value.trim() + ' khỏi KAI?')) kaixUserSet({ blocked:true }, 'Đã khoá.'); };
+    $('kuUnblock').onclick = function(){ kaixUserSet({ blocked:false }, 'Đã mở khoá.'); };
+    $('kcSave').onclick = kaixSaveCfg;
+  }
+  kaixSub(KX.sub); kaixLoadDocs(); kaixLoadUsers(true); kaixLoadPending();
+}
+function kaixSub(k){
+  KX.sub = k;
+  document.querySelectorAll('#kaixSub button').forEach(function(b){ b.classList.toggle('on', b.dataset.k === k); });
+  document.querySelectorAll('.kaix-sec').forEach(function(el){ el.classList.toggle('hide', el.dataset.k !== k); });
+}
+function kaixCount(){ var n = $('kdText').value.length; $('kdCount').innerHTML = n ? '<b>' + n.toLocaleString('vi-VN') + '</b> / 60.000 ký tự' + (n > 60000 ? ' <span style="color:var(--bad)">— quá dài, hãy tách thành nhiều tài liệu</span>' : '') : ''; }
+function kaixReadFile(){
+  var f = this.files && this.files[0]; if (!f) return;
+  if (f.size > 400000){ msg('kdMsg', 'File quá lớn (tối đa khoảng 400 KB văn bản). Hãy tách nhỏ.'); this.value = ''; return; }
+  var rd = new FileReader();
+  rd.onload = function(){ $('kdText').value = String(rd.result || ''); if (!$('kdTitle').value.trim()) $('kdTitle').value = f.name.replace(/\.[^.]+$/, ''); kaixCount(); msg('kdMsg', 'Đã đọc file “' + f.name + '”. Kiểm tra nội dung rồi bấm Lưu tài liệu.', 'ok'); };
+  rd.onerror = function(){ msg('kdMsg', 'Không đọc được file.'); };
+  rd.readAsText(f, 'utf-8'); this.value = '';
+}
+function kaixClearDoc(){ KX.docEdit = null; $('kdTitle').value = ''; $('kdText').value = ''; $('kdOn').checked = true; $('kdSave').textContent = 'Lưu tài liệu'; msg('kdMsg', ''); kaixCount(); }
+async function kaixSaveDoc(){
+  var btn = $('kdSave'); btn.disabled = true; msg('kdMsg', '');
+  var j = await kaixApi({ op:'docSave', id:KX.docEdit || undefined, title:$('kdTitle').value, text:$('kdText').value, enabled:$('kdOn').checked });
+  btn.disabled = false;
+  if (!j.ok){ msg('kdMsg', j.error); return; }
+  msg('kdMsg', 'Đã lưu. KAI sẽ dùng tài liệu này sau tối đa 30 giây (' + j.chunks + ' phần).', 'ok');
+  kaixClearDoc(); msg('kdMsg', 'Đã lưu. KAI sẽ dùng tài liệu này sau tối đa 30 giây (' + j.chunks + ' phần).', 'ok'); kaixLoadDocs();
+}
+async function kaixLoadDocs(){
+  var j = await kaixApi({ op:'docList' });
+  if (!j.ok){ $('kdList').innerHTML = '<div class="msg err">' + esc(j.error) + '</div>'; return; }
+  $('kdN').textContent = '(' + j.docs.length + '/' + j.limits.maxDocs + ')';
+  $('kdBuiltin').innerHTML = j.builtin.map(function(x){ return '<div>• ' + esc(x.title) + ' <span class="small">(' + x.chars.toLocaleString('vi-VN') + ' ký tự)</span></div>'; }).join('') + '<p class="small" style="margin-top:8px">Muốn sửa các mục này, cần chỉnh trong mã nguồn (api/_lib/kai-kb.js) hoặc soạn lại thành tài liệu mới ở trên.</p>';
+  if (!j.docs.length){ $('kdList').innerHTML = '<p class="small">Chưa có tài liệu nào được thêm ở đây.</p>'; return; }
+  var f = function(ms){ return ms ? new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' }) : ''; };
+  $('kdList').innerHTML = j.docs.map(function(d){
+    return '<div class="kaix-row"><div style="min-width:0"><b>' + esc(d.title) + '</b>' + (d.enabled ? '' : '<span class="kaix-tag off">đang tắt</span>') +
+      '<br><small class="small">' + d.chars.toLocaleString('vi-VN') + ' ký tự · ' + d.chunks + ' phần · ' + esc(f(d.updatedAt)) + (d.updatedBy ? ' · ' + esc(d.updatedBy) : '') + '</small></div>' +
+      '<div class="kaix-act"><button class="btn ghost sm" type="button" onclick="kaixEditDoc(\'' + esc(d.id) + '\')">Sửa</button>' +
+      '<button class="btn ghost sm" type="button" onclick="kaixToggleDoc(\'' + esc(d.id) + '\',' + (!d.enabled) + ')">' + (d.enabled ? 'Tắt' : 'Bật') + '</button>' +
+      '<button class="btn dghost sm" type="button" onclick="kaixDelDoc(\'' + esc(d.id) + '\')">Xoá</button></div></div>';
+  }).join('');
+}
+async function kaixEditDoc(id){
+  var j = await kaixApi({ op:'docGet', id:id }); if (!j.ok){ msg('kdMsg', j.error); return; }
+  KX.docEdit = id; $('kdTitle').value = j.doc.title; $('kdText').value = j.doc.text; $('kdOn').checked = j.doc.enabled !== false;
+  $('kdSave').textContent = 'Cập nhật tài liệu'; kaixCount(); msg('kdMsg', 'Đang sửa tài liệu “' + j.doc.title + '”.', 'warn'); kaixSub('docs'); $('kdTitle').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+async function kaixToggleDoc(id, on){ var j = await kaixApi({ op:'docToggle', id:id, enabled:on }); if (!j.ok) alert(j.error); kaixLoadDocs(); }
+async function kaixDelDoc(id){ if (!confirm('Xoá tài liệu này? KAI sẽ không còn dùng nó nữa.')) return; var j = await kaixApi({ op:'docDelete', id:id }); if (!j.ok) alert(j.error); if (KX.docEdit === id) kaixClearDoc(); kaixLoadDocs(); }
+
+async function kaixLoadUsers(fillCfg){
+  var j = await kaixApi({ op:'usage' });
+  if (!j.ok){ $('kuList').innerHTML = '<div class="msg err">' + esc(j.error) + '</div>'; return; }
+  KX.usage = j; var st = j.settings;
+  $('kaixKpis').innerHTML = [['Câu hỏi hôm nay', j.totalToday], ['Người dùng hôm nay', j.users.filter(function(u){ return u.used > 0; }).length], ['Khách dùng thử (tổng)', j.anonVisitors], ['Trạng thái', st.paused ? 'Đang tạm dừng' : 'Đang chạy']]
+    .map(function(k){ return '<div class="kpi"><div class="v">' + esc(String(k[1])) + '</div><div class="l">' + k[0] + '</div></div>'; }).join('');
+  $('kuDay').textContent = '(' + j.today + ')';
+  if (fillCfg !== false){ $('kcDefault').value = st.defaultLimit; $('kcAnon').value = st.anonLimit; $('kcPaused').checked = st.paused; $('kcMsg').value = st.pausedMsg || ''; }
+  $('kuList').innerHTML = j.users.length ? j.users.map(function(u){
+    var pct = Math.min(100, Math.round(u.used / u.limit * 100));
+    return '<div class="kaix-row"><div style="min-width:0"><b>' + esc(u.name || '(chưa rõ tên)') + '</b> <span class="small">' + esc(u.code) + (u.email ? ' · ' + esc(u.email) : '') + '</span>' +
+      (u.blocked ? '<span class="kaix-tag bad">đã khoá</span>' : '') + (u.custom ? '<span class="kaix-tag">hạn mức riêng</span>' : '') +
+      '<div class="small"><b>' + u.used + '</b> / ' + u.limit + ' câu</div><div class="kaix-bar' + (pct >= 80 ? ' hot' : '') + '"><i style="width:' + pct + '%"></i></div></div>' +
+      '<div class="kaix-act"><button class="btn ghost sm" type="button" onclick="kaixPick(\'' + esc(u.code) + '\',' + (u.custom ? u.limit : 'null') + ')">Đặt hạn mức</button>' +
+      '<button class="btn ghost sm" type="button" onclick="kaixReset(\'' + esc(u.code) + '\')">Đặt lại lượt</button>' +
+      '<button class="btn ' + (u.blocked ? 'ghost' : 'dghost') + ' sm" type="button" onclick="kaixBlock(\'' + esc(u.code) + '\',' + (!u.blocked) + ')">' + (u.blocked ? 'Mở khoá' : 'Khoá') + '</button></div></div>';
+  }).join('') : '<p class="small">Hôm nay chưa có ai hỏi KAI.</p>';
+  $('kuDays').innerHTML = j.days.length ? '<b>Số người dùng mỗi ngày (7 ngày gần nhất):</b> ' + j.days.map(function(d){ return esc(d.day.slice(5)) + ': <b>' + d.users + '</b>'; }).join(' · ') : '';
+}
+function kaixPick(code, limit){ $('kuCode').value = code; $('kuLimit').value = limit == null ? '' : limit; $('kuCode').scrollIntoView({ behavior:'smooth', block:'center' }); $('kuLimit').focus(); }
+async function kaixUserSet(extra, okText){
+  var code = $('kuCode').value.trim(); if (!code){ msg('kuMsg', 'Nhập mã nhân viên.'); return; }
+  var j = await kaixApi(Object.assign({ op:'userSet', code:code }, extra));
+  if (!j.ok){ msg('kuMsg', j.error); return; }
+  msg('kuMsg', okText, 'ok'); kaixLoadUsers(false);
+}
+async function kaixBlock(code, on){ if (on && !confirm('Khoá mã ' + code + ' khỏi KAI?')) return; var j = await kaixApi({ op:'userSet', code:code, blocked:on }); if (!j.ok) alert(j.error); kaixLoadUsers(false); }
+async function kaixReset(code){ if (!confirm('Đặt lại số lượt hỏi hôm nay của ' + code + ' về 0?')) return; var j = await kaixApi({ op:'userReset', code:code }); if (!j.ok) alert(j.error); kaixLoadUsers(false); }
+async function kaixSaveCfg(){
+  var j = await kaixApi({ op:'settingsSave', defaultLimit:Number($('kcDefault').value), anonLimit:Number($('kcAnon').value), paused:$('kcPaused').checked, pausedMsg:$('kcMsg').value.trim() });
+  if (!j.ok){ msg('kcOut', j.error); return; }
+  msg('kcOut', 'Đã lưu cài đặt.', 'ok'); kaixLoadUsers(true);
+}
+async function kaixLoadPending(){
+  var res; try { res = await api('POST', '/api/kai', { op:'pending' }); } catch(e){ res = null; }
+  var list = (res && res.j.ok && res.j.list) || [];
+  $('kaixPendN').textContent = list.length ? '(' + list.length + ')' : '';
+  $('kpList').innerHTML = !res || !res.j.ok ? '<div class="msg err">' + esc((res && res.j.error) || 'Không tải được.') + '</div>' : !list.length ? '<p class="small">Không có yêu cầu nào đang chờ.</p>' : list.map(function(r){
+    return '<div class="kaix-row"><div><b>' + esc(r.name || '(chưa rõ tên)') + '</b><br><small class="small">Mã ' + esc(r.code) + ' · ' + esc(r.email) + '</small></div><div class="kaix-act">' +
+      '<button class="btn sm" type="button" onclick="kaixDecide(\'' + esc(r.id) + '\',\'approve\')">Duyệt</button><button class="btn dghost sm" type="button" onclick="kaixDecide(\'' + esc(r.id) + '\',\'reject\')">Từ chối</button></div></div>';
+  }).join('');
+  var a = await kaixApi({ op:'approvedList' });
+  $('kaList').innerHTML = !a.ok ? '<div class="msg err">' + esc(a.error) + '</div>' : !a.list.length ? '<p class="small">Chưa có ai được duyệt thủ công.</p>' : a.list.map(function(r){
+    return '<div class="kaix-row"><div><b>' + esc(r.name || '(chưa rõ tên)') + '</b><br><small class="small">Mã ' + esc(r.code) + ' · ' + esc(r.email) + '</small></div>' +
+      '<button class="btn dghost sm" type="button" onclick="kaixUnapprove(\'' + esc(r.code) + '\',\'' + esc(r.email) + '\')">Gỡ quyền</button></div>';
+  }).join('');
+}
+async function kaixDecide(id, op){ var res; try { res = await api('POST', '/api/kai', { op:op, id:id }); } catch(e){ res = null; } if (!res || !res.j.ok) alert((res && res.j.error) || 'Không thực hiện được.'); kaixLoadPending(); }
+async function kaixUnapprove(code, email){ if (!confirm('Gỡ quyền dùng KAI của mã ' + code + '?')) return; var j = await kaixApi({ op:'approvedRemove', code:code, email:email }); if (!j.ok) alert(j.error); kaixLoadPending(); }
 
 /* ---------- Kiểm tra AI ---------- */
 async function loadKaiPending(){

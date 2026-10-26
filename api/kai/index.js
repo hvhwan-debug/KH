@@ -12,10 +12,9 @@ const store = require("../_lib/store");
 const session = require("../_lib/session");
 const { isAdmin } = require("../_lib/config");
 const llm = require("../_lib/llm");
-const { pickRelevant } = require("../_lib/kai-kb");
+const kb = require("../_lib/kai-kb");
 
-const DAILY_LIMIT = 30;
-const ANON_LIMIT = 3;
+// Hạn mức mặc định (30 câu/ngày, 3 câu dùng thử) có thể đổi trong trang quản trị > Trợ lí KAI (kai/settings.json).
 const COOKIE_NAME = "kai_id";
 const ANON_COOKIE = "kai_anon";
 const MAX_AGE = 180 * 24 * 3600; // giây, 180 ngày
@@ -70,15 +69,17 @@ module.exports = async function (context, req) {
 
     if (op === "me") {
       const id = identityFromReq(req);
+      const cfgK = await kb.getSettings();
       if (id && id.kind === "emp") {
         const used = await usageCount("kai/usage/emp-" + id.code + "-" + vnDate() + ".json");
-        return reply(context, 200, { ok: true, loggedIn: true, name: id.name, used, limit: DAILY_LIMIT });
+        const blocked = !!cfgK.blocked[id.code];
+        return reply(context, 200, { ok: true, loggedIn: true, name: id.name, used, limit: cfgK.limits[id.code] || cfgK.defaultLimit, blocked });
       }
       const headers = {};
       let anonId = id && id.kind === "anon" ? id.id : null;
       if (!anonId) { anonId = newAnonId(); headers["Set-Cookie"] = kaiCookie(ANON_COOKIE, { id: anonId }, MAX_AGE); }
       const used = await usageCount("kai/usage/anon-" + anonId + ".json");
-      return reply(context, 200, { ok: true, loggedIn: false, used, limit: ANON_LIMIT }, headers);
+      return reply(context, 200, { ok: true, loggedIn: false, used, limit: cfgK.anonLimit }, headers);
     }
 
     if (op === "login") {
@@ -113,21 +114,24 @@ module.exports = async function (context, req) {
 
       const id = identityFromReq(req);
       const headers = {};
+      const cfgK = await kb.getSettings();
+      if (cfgK.paused) return reply(context, 503, { ok: false, error: cfgK.pausedMsg || "KAI đang tạm dừng để bảo trì, vui lòng quay lại sau." });
       let usageKey, limit;
       if (id && id.kind === "emp") {
+        if (cfgK.blocked[id.code]) return reply(context, 403, { ok: false, error: "Tài khoản của bạn đang bị tạm khoá sử dụng KAI. Vui lòng liên hệ quản trị viên." });
         usageKey = "kai/usage/emp-" + id.code + "-" + vnDate() + ".json";
-        limit = DAILY_LIMIT;
+        limit = cfgK.limits[id.code] || cfgK.defaultLimit;
       } else {
         let anonId = id && id.kind === "anon" ? id.id : null;
         if (!anonId) { anonId = newAnonId(); headers["Set-Cookie"] = kaiCookie(ANON_COOKIE, { id: anonId }, MAX_AGE); }
         usageKey = "kai/usage/anon-" + anonId + ".json";
-        limit = ANON_LIMIT;
+        limit = cfgK.anonLimit;
       }
       const used = await usageCount(usageKey);
       if (used >= limit) {
         const msg = id && id.kind === "emp"
           ? "Bạn đã hỏi đủ " + limit + " câu hôm nay, quay lại vào ngày mai nhé."
-          : "Bạn đã dùng hết " + limit + " câu hỏi thử miễn phí. Đăng nhập bằng mã nhân viên để hỏi thêm (tối đa " + DAILY_LIMIT + " câu/ngày).";
+          : "Bạn đã dùng hết " + limit + " câu hỏi thử miễn phí. Đăng nhập bằng mã nhân viên để hỏi thêm (hỏi được nhiều câu hơn mỗi ngày).";
         return reply(context, 403, { ok: false, quotaExceeded: true, used, limit, error: msg }, headers);
       }
 
@@ -160,7 +164,7 @@ module.exports = async function (context, req) {
         "Chào hỏi, cảm ơn hay trò chuyện xã giao thì đáp lại thân thiện, ngắn gọn rồi hỏi bạn cần tra cứu gì. " +
         "Không trả lời chủ đề hoàn toàn không liên quan đến công việc bán hàng, sản phẩm, chính sách của công ty.\n\n" +
         "Trình bày: ưu tiên câu ngắn, dùng gạch đầu dòng khi có nhiều ý, in đậm số liệu quan trọng.\n\n" +
-        "TÀI LIỆU:\n" + pickRelevant(searchText, 9000);
+        "TÀI LIỆU:\n" + kb.pickRelevant(searchText, 9000, await kb.getSections());
 
       let answer;
       try {
