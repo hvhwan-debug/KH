@@ -4,7 +4,7 @@
 // - Cài đặt chung: hạn mức mặc định, số câu dùng thử, tạm dừng KAI.
 const crypto = require("crypto");
 const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
-const { isAdmin } = require("../_lib/config");
+const { isAdmin, validEmail } = require("../_lib/config");
 const store = require("../_lib/store");
 const quiz = require("../_lib/quiz");
 const kb = require("../_lib/kai-kb");
@@ -125,6 +125,36 @@ module.exports = async function (context, req) {
       return reply(context, 200, { ok: true });
     }
     if (op === "approvedList") return reply(context, 200, { ok: true, list: (await store.get("kai/approved.json")) || [] });
+    // Chủ động cấp quyền dùng KAI cho nhiều người một lần (không cần chờ họ gửi yêu cầu).
+    if (op === "approvedAdd") {
+      const items = Array.isArray(b.items) ? b.items.slice(0, 200) : [];
+      if (!items.length) return reply(context, 400, { ok: false, error: "Nhập ít nhất một người." });
+      const [list, pend, cands, cfgK] = await Promise.all([store.get("kai/approved.json"), store.get("kai/pending.json"), quiz.getCandidates(), kb.getSettings()]);
+      const appr = list || [], pending = pend || [];
+      const added = [], skipped = [], invalid = [];
+      let limit = null;
+      if (b.limit !== undefined && b.limit !== null && b.limit !== "") {
+        limit = Number(b.limit);
+        if (!Number.isFinite(limit) || limit < 1 || limit > 500) return reply(context, 400, { ok: false, error: "Hạn mức phải từ 1 đến 500 câu/ngày." });
+        limit = Math.round(limit);
+      }
+      items.forEach((it) => {
+        const c = code(it && it.code), e = quiz.normEmail(it && it.email), name = String((it && it.name) || "").trim().slice(0, 100);
+        if (!c || c.length > 40 || !e || !validEmail(e)) { invalid.push(String((it && it.code) || "") + " / " + String((it && it.email) || "")); return; }
+        const inCands = (cands || []).some((x) => code(x.code) === c && quiz.normEmail(x.email) === e);
+        const inAppr = appr.some((x) => code(x.code) === c && quiz.normEmail(x.email) === e);
+        if (!inAppr && !inCands) appr.push({ code: c, email: e, name, addedBy: u.email, addedAt: Date.now() });
+        if (inAppr || inCands) skipped.push(c); else added.push(c);
+        pending.forEach((p) => { if (p.status === "pending" && code(p.code) === c && quiz.normEmail(p.email) === e) { p.status = "approved"; p.doneAt = Date.now(); } });
+        if (limit) cfgK.limits[c] = limit;
+        if (b.unlimited) cfgK.unlimited[c] = true;
+        if (b.unlimited === false) delete cfgK.unlimited[c];
+      });
+      if (added.length) await store.put("kai/approved.json", appr);
+      await store.put("kai/pending.json", pending);
+      if (limit || b.unlimited !== undefined) await kb.saveSettings(cfgK);
+      return reply(context, 200, { ok: true, added, skipped, invalid });
+    }
     if (op === "approvedRemove") {
       const list = (await store.get("kai/approved.json")) || [];
       const next = list.filter((x) => !(code(x.code) === code(b.code) && quiz.normEmail(x.email) === quiz.normEmail(b.email)));

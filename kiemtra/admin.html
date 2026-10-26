@@ -1735,7 +1735,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <div class="kaix-sub" id="kaixSub">
           <button type="button" data-k="docs" class="on">Tài liệu</button>
           <button type="button" data-k="users">Người dùng</button>
-          <button type="button" data-k="pending">Chờ duyệt <span id="kaixPendN"></span></button>
+          <button type="button" data-k="pending">Cấp quyền <span id="kaixPendN"></span></button>
           <button type="button" data-k="cfg">Cài đặt chung</button>
         </div>
 
@@ -1788,11 +1788,21 @@ button.rd-st:disabled{opacity:.55;cursor:default}
 
         <!-- Chờ duyệt + đã duyệt -->
         <div class="kaix-sec hide" data-k="pending">
+          <h2 style="margin:0 0 4px;font-size:16px">Thêm người được dùng KAI</h2>
+          <p class="small" style="margin:0 0 8px">Mỗi dòng một người: <b>mã nhân viên, email, họ tên</b> (họ tên không bắt buộc). Có thể dán nhiều dòng từ Excel. Người được thêm đăng nhập KAI bằng đúng mã và email này, không cần chờ duyệt.</p>
+          <textarea id="kaAddText" rows="5" placeholder="T100300057, nguyenvana@congty.vn, Nguyễn Văn A&#10;T100300058, tranthib@congty.vn, Trần Thị B"></textarea>
+          <div class="kaix-grid2" style="margin-top:10px">
+            <div><label for="kaAddLimit">Hạn mức riêng câu/ngày (để trống = mặc định)</label><input id="kaAddLimit" type="number" min="1" max="500" placeholder="Mặc định"></div>
+            <div style="display:flex;align-items:flex-end"><label class="chk" style="margin:0 0 10px"><input type="checkbox" id="kaAddUnl"> Không giới hạn lượt hỏi</label></div>
+          </div>
+          <button class="btn" type="button" id="kaAddBtn" style="margin-top:4px">Thêm vào danh sách được dùng</button>
+          <div id="kaAddMsg"></div>
+          <hr style="margin:16px 0;border:0;border-top:1px solid var(--line)">
           <h2 style="margin:0 0 4px;font-size:16px">Yêu cầu chờ duyệt</h2>
           <p class="small" style="margin:0 0 6px">Mã nhân viên + email không khớp Hồ sơ học tập sẽ chờ bạn duyệt ở đây.</p>
           <div id="kpList"></div>
           <hr style="margin:16px 0;border:0;border-top:1px solid var(--line)">
-          <h2 style="margin:0 0 4px;font-size:16px">Đã duyệt thủ công</h2>
+          <h2 style="margin:0 0 4px;font-size:16px">Đã được cấp quyền thủ công</h2>
           <div id="kaList"></div>
         </div>
 
@@ -2685,6 +2695,7 @@ function kaixOpen(){
     $('kuUnlim').onclick = function(){ kaixUserSet({ unlimited:true, blocked:false }, 'Đã bật không giới hạn lượt hỏi.'); };
     $('kuLimOff').onclick = function(){ kaixUserSet({ unlimited:false }, 'Đã bỏ không giới hạn, quay lại hạn mức thường.'); };
     $('kcSave').onclick = kaixSaveCfg;
+    $('kaAddBtn').onclick = kaixAddApproved;
   }
   kaixSub(KX.sub); kaixLoadDocs(); kaixLoadUsers(true); kaixLoadPending();
 }
@@ -2767,6 +2778,25 @@ async function kaixSaveCfg(){
   if (!j.ok){ msg('kcOut', j.error); return; }
   msg('kcOut', 'Đã lưu cài đặt.', 'ok'); kaixLoadUsers(true);
 }
+async function kaixAddApproved(){
+  var lines = $('kaAddText').value.split(/\r?\n/).map(function(l){ return l.trim(); }).filter(Boolean), items = [], bad = [];
+  lines.forEach(function(l){
+    var p = l.split(/[\t,;]+/).map(function(x){ return x.trim(); }).filter(function(x, i){ return i < 2 || x; });
+    if (p.length < 2 || !/^\S+@\S+\.\S+$/.test(p[1])){ bad.push(l); return; }
+    items.push({ code:p[0], email:p[1], name:p.slice(2).join(' ') });
+  });
+  if (!items.length){ msg('kaAddMsg', bad.length ? 'Dòng chưa đúng dạng "mã, email, họ tên": ' + bad[0] : 'Nhập ít nhất một người.'); return; }
+  var btn = $('kaAddBtn'); btn.disabled = true; msg('kaAddMsg', '');
+  var j = await kaixApi({ op:'approvedAdd', items:items, limit:$('kaAddLimit').value.trim() === '' ? undefined : Number($('kaAddLimit').value), unlimited:$('kaAddUnl').checked ? true : undefined });
+  btn.disabled = false;
+  if (!j.ok){ msg('kaAddMsg', j.error); return; }
+  var t = 'Đã thêm ' + j.added.length + ' người.';
+  if (j.skipped.length) t += ' ' + j.skipped.length + ' người đã có quyền từ trước (bỏ qua).';
+  var extra = bad.length + j.invalid.length; if (extra) t += ' ' + extra + ' dòng sai định dạng nên không thêm.';
+  msg('kaAddMsg', t, extra ? 'warn' : 'ok');
+  if (!extra) $('kaAddText').value = '';
+  kaixLoadPending(); kaixLoadUsers(false);
+}
 async function kaixLoadPending(){
   var res; try { res = await api('POST', '/api/kai', { op:'pending' }); } catch(e){ res = null; }
   var list = (res && res.j.ok && res.j.list) || [];
@@ -2776,7 +2806,7 @@ async function kaixLoadPending(){
       '<button class="btn sm" type="button" onclick="kaixDecide(\'' + esc(r.id) + '\',\'approve\')">Duyệt</button><button class="btn dghost sm" type="button" onclick="kaixDecide(\'' + esc(r.id) + '\',\'reject\')">Từ chối</button></div></div>';
   }).join('');
   var a = await kaixApi({ op:'approvedList' });
-  $('kaList').innerHTML = !a.ok ? '<div class="msg err">' + esc(a.error) + '</div>' : !a.list.length ? '<p class="small">Chưa có ai được duyệt thủ công.</p>' : a.list.map(function(r){
+  $('kaList').innerHTML = !a.ok ? '<div class="msg err">' + esc(a.error) + '</div>' : !a.list.length ? '<p class="small">Chưa có ai được cấp quyền thủ công.</p>' : a.list.map(function(r){
     return '<div class="kaix-row"><div><b>' + esc(r.name || '(chưa rõ tên)') + '</b><br><small class="small">Mã ' + esc(r.code) + ' · ' + esc(r.email) + '</small></div>' +
       '<button class="btn dghost sm" type="button" onclick="kaixUnapprove(\'' + esc(r.code) + '\',\'' + esc(r.email) + '\')">Gỡ quyền</button></div>';
   }).join('');
