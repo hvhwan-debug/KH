@@ -140,15 +140,17 @@ module.exports = async function (context, req) {
       // Lịch sử gần nhất do trình duyệt gửi lên để KAI hiểu câu hỏi nối tiếp ("giá này", "sản phẩm đó"...).
       const hist = [];
       if (Array.isArray(b.history)) {
-        b.history.slice(-6).forEach((m) => {
+        b.history.slice(-8).forEach((m) => {
           if (!m || (m.role !== "user" && m.role !== "assistant")) return;
-          const t = String(m.content || "").trim().slice(0, 1200);
+          const t = String(m.content || "").trim().slice(0, 1500);
           if (t) hist.push({ role: m.role, content: t });
         });
       }
       // Tìm tài liệu theo cả câu hỏi hiện tại lẫn câu hỏi người dùng liền trước (để câu hỏi ngắn vẫn đúng ngữ cảnh).
       const lastUser = hist.filter((m) => m.role === "user").slice(-1)[0];
-      const searchText = (lastUser ? lastUser.content + " " : "") + question;
+      const lastBot = hist.filter((m) => m.role === "assistant").slice(-1)[0];
+      // Câu hỏi ngắn ("có", "còn loại kia?") phụ thuộc ngữ cảnh: tìm tài liệu theo cả câu trước và đoạn đầu câu trả lời trước.
+      const searchText = (lastUser ? lastUser.content + " " : "") + question + (question.length < 40 && lastBot ? " " + lastBot.content.slice(0, 400) : "");
 
       const sys = "Bạn là KAI, trợ lí nội bộ của Karofi/Livotec dành cho nhân viên kinh doanh. Giọng văn thân thiện, tự nhiên như một đồng nghiệp giàu kinh nghiệm, xưng \"mình\", gọi người hỏi là \"bạn\", bằng tiếng Việt, ngắn gọn, rõ ràng.\n\n" +
         "BẠN CÓ HAI CHẾ ĐỘ TRẢ LỜI, tự nhận biết theo câu hỏi:\n\n" +
@@ -165,12 +167,20 @@ module.exports = async function (context, req) {
         "Câu hỏi nối tiếp (\"giá này\", \"sản phẩm đó\", \"còn loại kia\") phải hiểu theo cuộc trò chuyện trước đó. " +
         "Chào hỏi, cảm ơn hay trò chuyện xã giao thì đáp lại thân thiện, ngắn gọn rồi hỏi bạn cần tra cứu gì. " +
         "Không trả lời chủ đề hoàn toàn không liên quan đến công việc bán hàng, sản phẩm, chính sách của công ty.\n\n" +
+        "MẠCH TRÒ CHUYỆN (rất quan trọng, phải nói chuyện liền mạch như người thật):\n" +
+        "- Chỉ chào ở tin đầu tiên hoặc khi người dùng vừa chào. Các câu trả lời sau KHÔNG mở đầu bằng \"Chào bạn\", \"Xin chào\", \"Xin lỗi\" lặp lại, vào thẳng nội dung.\n" +
+        "- Không kết thúc mọi câu trả lời bằng câu hỏi chung chung như \"Còn gì mình có thể hỗ trợ thêm không?\". Chỉ gợi ý bước tiếp theo khi thật sự có ích và phải cụ thể (ví dụ: \"Bạn muốn mình so sánh với model 30L không?\").\n" +
+        "- Tin ngắn như \"có\", \"ok\", \"tiếp đi\", \"rồi sao\" là phản hồi cho câu bạn vừa hỏi hoặc gợi ý ở lượt trước: làm tiếp đúng việc đó, tuyệt đối không quay về lời chào hay hỏi lại từ đầu.\n" +
+        "- Nếu người dùng dán lại một đoạn từ câu trả lời trước kèm một câu hỏi ngắn, hiểu đoạn dán là NGỮ CẢNH và câu hỏi ngắn là ý chính cần trả lời, ví dụ \"khách hàng mất tiền không\" nghĩa là khoản đó có thu phí hay không.\n" +
+        "- Hiểu ý theo ngữ cảnh gần nhất và trả lời luôn. Chỉ hỏi lại một câu ngắn khi thật sự không đoán được; không bắt người dùng nói lại.\n" +
+        "- Khi tài liệu không có đúng phần được hỏi, nói rõ cụ thể thiếu gì (ví dụ: \"tài liệu chỉ nói công ty cung cấp kệ trưng bày, không nói có thu phí hay không\") và nêu phần liên quan đã có, thay vì từ chối chung chung.\n" +
+        "- Giữ giọng nhất quán, đoạn văn liền ý, không dùng biểu tượng cảm xúc trừ khi người dùng dùng trước.\n\n" +
         "Trình bày: ưu tiên câu ngắn, dùng gạch đầu dòng khi có nhiều ý, in đậm số liệu quan trọng.\n\n" +
         "TÀI LIỆU:\n" + kb.pickRelevant(searchText, 9000, await kb.getSections());
 
       let answer;
       try {
-        answer = await llm.chat([{ role: "system", content: sys }].concat(hist, [{ role: "user", content: question }]), { temperature: 0.35, max_tokens: 900, timeoutMs: 25000 });
+        answer = await llm.chat([{ role: "system", content: sys }].concat(hist, [{ role: "user", content: question }]), { temperature: 0.4, max_tokens: 900, timeoutMs: 25000 });
       } catch (e) {
         context.log.error("kai ask", e && e.message, e && e.status, "promptChars:", sys.length);
         return reply(context, 502, { ok: false, error: "Trợ lí đang bận hoặc chưa sẵn sàng, thử lại sau." }, headers);

@@ -263,7 +263,7 @@ async function sendQuestion(){
   var ta = $('q'), text = ta.value.trim();
   if (!text || text.length > QMAX) return;
   ta.value = ''; ta.style.height = 'auto'; checkLen();
-  var ctx = loadHistory().filter(function(m){ return m.kind === 'me' || m.kind === 'bot'; }).slice(-6)
+  var ctx = loadHistory().filter(function(m){ return m.kind === 'me' || m.kind === 'bot'; }).slice(-8)
     .map(function(m){ return { role: m.kind === 'me' ? 'user' : 'assistant', content: m.text }; });
   addMsg('me', text);
   var thinking = addThinking();
