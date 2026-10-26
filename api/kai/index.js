@@ -138,12 +138,14 @@ module.exports = async function (context, req) {
       }
 
       // Lịch sử gần nhất do trình duyệt gửi lên để KAI hiểu câu hỏi nối tiếp ("giá này", "sản phẩm đó"...).
-      const hist = [];
+      // Giữ ngắn gọn: tối đa 6 tin, mỗi tin bị cắt, tổng ~3000 ký tự (tính từ tin MỚI nhất), vì prompt quá dài làm mô hình báo lỗi/quá tải.
+      let hist = [];
       if (Array.isArray(b.history)) {
-        b.history.slice(-8).forEach((m) => {
-          if (!m || (m.role !== "user" && m.role !== "assistant")) return;
-          const t = String(m.content || "").trim().slice(0, 1500);
-          if (t) hist.push({ role: m.role, content: t });
+        let budget = 3000;
+        b.history.slice(-6).reverse().forEach((m) => {
+          if (!m || (m.role !== "user" && m.role !== "assistant") || budget <= 200) return;
+          const t = String(m.content || "").trim().slice(0, m.role === "assistant" ? 700 : 500).slice(0, budget);
+          if (t) { hist.unshift({ role: m.role, content: t }); budget -= t.length; }
         });
       }
       // Tìm tài liệu theo cả câu hỏi hiện tại lẫn câu hỏi người dùng liền trước (để câu hỏi ngắn vẫn đúng ngữ cảnh).
@@ -152,7 +154,8 @@ module.exports = async function (context, req) {
       // Câu hỏi ngắn ("có", "còn loại kia?") phụ thuộc ngữ cảnh: tìm tài liệu theo cả câu trước và đoạn đầu câu trả lời trước.
       const searchText = (lastUser ? lastUser.content + " " : "") + question + (question.length < 40 && lastBot ? " " + lastBot.content.slice(0, 400) : "");
 
-      const sys = "Bạn là KAI, trợ lí nội bộ của Karofi/Livotec dành cho nhân viên kinh doanh. Giọng văn thân thiện, tự nhiên như một đồng nghiệp giàu kinh nghiệm, xưng \"mình\", gọi người hỏi là \"bạn\", bằng tiếng Việt, ngắn gọn, rõ ràng.\n\n" +
+      const sections = await kb.getSections();
+      const buildSys = (docChars) => "Bạn là KAI, trợ lí nội bộ của Karofi/Livotec dành cho nhân viên kinh doanh. Giọng văn thân thiện, tự nhiên như một đồng nghiệp giàu kinh nghiệm, xưng \"mình\", gọi người hỏi là \"bạn\", bằng tiếng Việt, ngắn gọn, rõ ràng.\n\n" +
         "BẠN CÓ HAI CHẾ ĐỘ TRẢ LỜI, tự nhận biết theo câu hỏi:\n\n" +
         "1) HỎI VỀ CHÍNH SÁCH / SỐ LIỆU (khuyến mại, chiết khấu, bảng giá, điều kiện, mốc thời gian, thông số sản phẩm, chương trình đầu tư hình ảnh...): " +
         "CHỈ dựa trên đúng nội dung phần TÀI LIỆU bên dưới. Có thể trích nguyên số liệu, điều kiện, mốc thời gian và nêu mã thông báo nếu có. " +
@@ -176,14 +179,27 @@ module.exports = async function (context, req) {
         "- Khi tài liệu không có đúng phần được hỏi, nói rõ cụ thể thiếu gì (ví dụ: \"tài liệu chỉ nói công ty cung cấp kệ trưng bày, không nói có thu phí hay không\") và nêu phần liên quan đã có, thay vì từ chối chung chung.\n" +
         "- Giữ giọng nhất quán, đoạn văn liền ý, không dùng biểu tượng cảm xúc trừ khi người dùng dùng trước.\n\n" +
         "Trình bày: ưu tiên câu ngắn, dùng gạch đầu dòng khi có nhiều ý, in đậm số liệu quan trọng.\n\n" +
-        "TÀI LIỆU:\n" + kb.pickRelevant(searchText, 9000, await kb.getSections());
+        "TÀI LIỆU:\n" + kb.pickRelevant(searchText, docChars, sections);
 
       let answer;
-      try {
-        answer = await llm.chat([{ role: "system", content: sys }].concat(hist, [{ role: "user", content: question }]), { temperature: 0.4, max_tokens: 900, timeoutMs: 25000 });
-      } catch (e) {
-        context.log.error("kai ask", e && e.message, e && e.status, "promptChars:", sys.length);
-        return reply(context, 502, { ok: false, error: "Trợ lí đang bận hoặc chưa sẵn sàng, thử lại sau." }, headers);
+      const attempts = [
+        { docChars: 8000, h: hist, max: 800, ms: 22000 },
+        { docChars: 3500, h: hist.slice(-2), max: 600, ms: 14000 } // dự phòng: ngữ cảnh gọn hơn nếu lần đầu lỗi (quá dài / quá tải)
+      ];
+      let lastErr = null;
+      for (let i = 0; i < attempts.length && !answer; i++) {
+        const a = attempts[i], sys = buildSys(a.docChars);
+        try {
+          answer = await llm.chat([{ role: "system", content: sys }].concat(a.h, [{ role: "user", content: question }]), { temperature: 0.4, max_tokens: a.max, timeoutMs: a.ms });
+        } catch (e) {
+          lastErr = e;
+          context.log.error("kai ask lần " + (i + 1), e && e.message, e && e.status, "promptChars:", sys.length + a.h.reduce((n, m) => n + m.content.length, 0));
+        }
+      }
+      if (!answer) {
+        const st = lastErr && lastErr.status;
+        const msg = st === 429 ? "KAI đang quá tải, vui lòng thử lại sau ít giây." : st === 503 ? "KAI chưa được cấu hình AI, vui lòng báo quản trị viên." : "Trợ lí đang bận hoặc chưa sẵn sàng, thử lại sau.";
+        return reply(context, 502, { ok: false, error: msg }, headers);
       }
       const newUsed = await usageInc(usageKey);
       return reply(context, 200, { ok: true, answer, used: newUsed, limit, unlimited }, headers);

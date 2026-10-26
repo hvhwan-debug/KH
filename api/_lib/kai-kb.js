@@ -794,7 +794,9 @@ function pickRelevant(question, maxChars, sections) {
   for (const sec of ordered) {
     if (seen.has(sec.title)) continue;
     if (total + sec.text.length > maxChars && picked.length) break;
-    picked.push(sec.text); seen.add(sec.title); total += sec.text.length;
+    // Mục đầu tiên quá dài so với ngân sách (vd. chế độ dự phòng ngữ cảnh gọn): cắt bớt để prompt thật sự ngắn lại.
+    const text = !picked.length && sec.text.length > maxChars * 1.5 ? sec.text.slice(0, Math.floor(maxChars * 1.5)) + "\n[...đã rút gọn]" : sec.text;
+    picked.push(text); seen.add(sec.title); total += text.length;
     if (total >= maxChars) break;
   }
   return picked.join("\n\n---\n\n");
