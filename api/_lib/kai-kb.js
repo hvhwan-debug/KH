@@ -771,7 +771,22 @@ const STOP = new Set(["la","co","cua","cho","voi","mot","nhu","nao","the","nay",
 
 // Chọn các mục liên quan nhất tới câu hỏi (theo số từ khoá trùng), ghép lại không vượt quá maxChars.
 // Luôn kèm mục "Bảng giá sản phẩm" vì hầu hết câu hỏi đều có thể liên quan tới giá/model.
-function pickRelevant(question, maxChars, sections) {
+// Đọc "Thời gian áp dụng: Từ ngày dd/mm/yyyy đến hết ngày dd/mm/yyyy" (hoặc "cho đến khi có thông báo mới") trong mục tài liệu.
+function validityOf(text) {
+  const m = /Thời gian áp dụng:?\*{0,2}\s*(?:Từ(?: ngày)?\s*)?(\d{1,2})\/(\d{1,2})\/(\d{4})\s*(?:đến(?: hết)?(?: ngày)?\s*(\d{1,2})\/(\d{1,2})\/(\d{4})|(?:cho |tới |đến )?(?:đến |tới )?khi)/i.exec(String(text || ""));
+  if (!m) return null;
+  const start = new Date(+m[3], +m[2] - 1, +m[1]).getTime();
+  const end = m[4] ? new Date(+m[6], +m[5] - 1, +m[4], 23, 59, 59).getTime() : Infinity;
+  return { start, end };
+}
+function validOn(text, today) { // today: Date theo giờ Việt Nam (các trường UTC đã cộng 7 giờ)
+  const v = validityOf(text); if (!v) return null;
+  const t = new Date(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 12).getTime();
+  return t >= v.start && t <= v.end;
+}
+const ASKS_NOW = /(tháng này|hiện (nay|tại)|đang áp dụng|đang chạy|mới nhất|bây giờ|hôm nay|tuần này|còn hiệu lực|còn áp dụng)/i;
+
+function pickRelevant(question, maxChars, sections, today) {
   maxChars = maxChars || 14000;
   const KAI_SECTIONS = sections && sections.length ? sections : STATIC_SECTIONS;
   const qTokens = tokenize(question).filter((w) => !STOP.has(w));
@@ -779,7 +794,9 @@ function pickRelevant(question, maxChars, sections) {
   const scored = KAI_SECTIONS.map((sec) => {
     const body = new Set(tokenize(sec.text)), head = new Set(tokenize(sec.title));
     let score = 0;
-    qTokens.forEach((t) => { if (head.has(t)) score += 2; else if (body.has(t)) score++; });
+    qTokens.forEach((t) => { if (head.has(t)) score += 3; else if (body.has(t)) score++; });
+    // Hỏi về "tháng này / hiện nay / đang áp dụng": ưu tiên các mục còn hiệu lực tại ngày hôm nay.
+    if (today && ASKS_NOW.test(question) && validOn(sec.text, today) === true && score > 0) score += 2;
     return { sec, score };
   });
   scored.sort((a, b) => b.score - a.score);
@@ -793,7 +810,7 @@ function pickRelevant(question, maxChars, sections) {
   if (!ordered.length) KAI_SECTIONS.slice(0, 3).forEach((s) => ordered.push(s));
   for (const sec of ordered) {
     if (seen.has(sec.title)) continue;
-    if (total + sec.text.length > maxChars && picked.length) break;
+    if (total + sec.text.length > maxChars && picked.length) continue; // mục này không vừa: thử mục nhỏ hơn phía sau thay vì dừng hẳn
     // Mục đầu tiên quá dài so với ngân sách (vd. chế độ dự phòng ngữ cảnh gọn): cắt bớt để prompt thật sự ngắn lại.
     const text = !picked.length && sec.text.length > maxChars * 1.5 ? sec.text.slice(0, Math.floor(maxChars * 1.5)) + "\n[...đã rút gọn]" : sec.text;
     picked.push(text); seen.add(sec.title); total += text.length;
@@ -860,4 +877,4 @@ async function getSettings() {
 }
 async function saveSettings(s) { await store.put(SETTINGS_KEY, s); }
 
-module.exports = { KAI_SECTIONS: STATIC_SECTIONS, STATIC_SECTIONS, pickRelevant, chunkText, getDocs, saveDocs, getSections, getSettings, saveSettings };
+module.exports = { KAI_SECTIONS: STATIC_SECTIONS, STATIC_SECTIONS, pickRelevant, validOn, validityOf, chunkText, getDocs, saveDocs, getSections, getSettings, saveSettings };

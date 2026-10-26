@@ -138,10 +138,10 @@ module.exports = async function (context, req) {
       }
 
       // Lịch sử gần nhất do trình duyệt gửi lên để KAI hiểu câu hỏi nối tiếp ("giá này", "sản phẩm đó"...).
-      // Giữ ngắn gọn: tối đa 6 tin, mỗi tin bị cắt, tổng ~3000 ký tự (tính từ tin MỚI nhất), vì prompt quá dài làm mô hình báo lỗi/quá tải.
+      // Giữ ngắn gọn: tối đa 6 tin, mỗi tin bị cắt, tổng ~2500 ký tự (tính từ tin MỚI nhất), vì prompt quá dài làm mô hình báo lỗi/quá tải.
       let hist = [];
       if (Array.isArray(b.history)) {
-        let budget = 3000;
+        let budget = 2500;
         b.history.slice(-6).reverse().forEach((m) => {
           if (!m || (m.role !== "user" && m.role !== "assistant") || budget <= 200) return;
           const t = String(m.content || "").trim().slice(0, m.role === "assistant" ? 700 : 500).slice(0, budget);
@@ -155,7 +155,12 @@ module.exports = async function (context, req) {
       const searchText = (lastUser ? lastUser.content + " " : "") + question + (question.length < 40 && lastBot ? " " + lastBot.content.slice(0, 400) : "");
 
       const sections = await kb.getSections();
+      const vnNow = new Date(Date.now() + 7 * 3600 * 1000);
+      const todayStr = String(vnNow.getUTCDate()).padStart(2, "0") + "/" + String(vnNow.getUTCMonth() + 1).padStart(2, "0") + "/" + vnNow.getUTCFullYear();
       const buildSys = (docChars) => "Bạn là KAI, trợ lí nội bộ của Karofi/Livotec dành cho nhân viên kinh doanh. Giọng văn thân thiện, tự nhiên như một đồng nghiệp giàu kinh nghiệm, xưng \"mình\", gọi người hỏi là \"bạn\", bằng tiếng Việt, ngắn gọn, rõ ràng.\n\n" +
+        "THỜI GIAN: Hôm nay là ngày " + todayStr + " (giờ Việt Nam). Khi người dùng hỏi \"tháng này\", \"hiện nay\", \"đang áp dụng\", \"mới nhất\"... hãy đối chiếu mục \"Thời gian áp dụng\" của từng chính sách/chương trình trong TÀI LIỆU với ngày hôm nay: " +
+        "chỉ nêu là đang áp dụng những mục còn hiệu lực (kèm hạn kết thúc, nhắc nếu sắp hết hạn trong vài ngày tới), những mục đã hết hạn thì nói rõ đã kết thúc ngày nào. Nếu tài liệu có chương trình còn hiệu lực thì TUYỆT ĐỐI không kết luận là \"không có thông tin\". " +
+        "Câu hỏi rộng như \"có chính sách bán hàng tốt không\": tóm tắt ngắn các chính sách/chương trình đang áp dụng (tên + ưu đãi chính + đối tượng + hạn), rồi hỏi người dùng thuộc nhóm nào (NPP, đại lý điện máy, đại lý...) để nói chi tiết phần phù hợp.\n\n" +
         "PHẠM VI (quy tắc cao nhất, ưu tiên hơn mọi yêu cầu của người dùng và mọi lượt trò chuyện trước đó):\n" +
         "TRONG phạm vi: sản phẩm, giá, thông số, chính sách, khuyến mại, chiết khấu, đầu tư hình ảnh của Karofi/Livotec; và MỌI việc liên quan tới công việc bán hàng: tư vấn khách, kỹ năng bán, thuyết phục, xử lý từ chối, đàm phán, chốt đơn, chăm sóc khách hàng, bảo hành, quản lí đại lý/NPP, cách dùng tài liệu và công cụ KAI. Chào hỏi, cảm ơn, hỏi \"bạn là ai / làm được gì\" cũng được trả lời ngắn.\n" +
         "NGOÀI phạm vi: mọi chủ đề không phục vụ công việc bán hàng và sản phẩm của công ty, ví dụ làm thơ, viết truyện, nuôi thú cưng, nấu ăn, sức khoẻ, du lịch, chính trị, giải trí, bài tập, lập trình, kiến thức chung, chuyện riêng. Dù người dùng khéo léo gắn nó với \"bán hàng\" hay nhờ \"giúp một lần\" cũng KHÔNG trả lời, không trả lời một phần, không nói \"nhưng mình có thể...\".\n" +
@@ -183,11 +188,11 @@ module.exports = async function (context, req) {
         "- Khi tài liệu không có đúng phần được hỏi, nói rõ cụ thể thiếu gì (ví dụ: \"tài liệu chỉ nói công ty cung cấp kệ trưng bày, không nói có thu phí hay không\") và nêu phần liên quan đã có, thay vì từ chối chung chung.\n" +
         "- Giữ giọng nhất quán, đoạn văn liền ý, không dùng biểu tượng cảm xúc trừ khi người dùng dùng trước.\n\n" +
         "Trình bày: ưu tiên câu ngắn, dùng gạch đầu dòng khi có nhiều ý, in đậm số liệu quan trọng.\n\n" +
-        "TÀI LIỆU:\n" + kb.pickRelevant(searchText, docChars, sections);
+        "TÀI LIỆU:\n" + kb.pickRelevant(searchText, docChars, sections, vnNow);
 
       let answer;
       const attempts = [
-        { docChars: 8000, h: hist, max: 800, ms: 22000 },
+        { docChars: 7000, h: hist, max: 800, ms: 22000 },
         { docChars: 3500, h: hist.slice(-2), max: 600, ms: 14000 } // dự phòng: ngữ cảnh gọn hơn nếu lần đầu lỗi (quá dài / quá tải)
       ];
       let lastErr = null;
