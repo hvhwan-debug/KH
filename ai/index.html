@@ -6,76 +6,109 @@
 <meta name="theme-color" content="#0A63C4">
 <link rel="icon" href="/favicon.png" type="image/png">
 <title>KAI — Trợ lí tra cứu chính sách Karofi &amp; Livotec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#EEF3F5; --surface:#FFFFFF; --ink:#12222B; --muted:#5B6B74; --line:#D7E0E5;
-  --brand:#0A63C4; --brand-soft:#DCEAF8; --ok:#1E7F4F; --ok-soft:#D9F0E4; --bad:#B3261E; --bad-soft:#F9DAD7;
+  --bg:#F3F7FA; --surface:#FFFFFF; --ink:#10243A; --muted:#566B80; --line:#DAE4EE;
+  --brand:#0A63C4; --brand-deep:#074A94; --brand-soft:#E4F0FB; --water:#CFE6F7; --amber-soft:#FFF1D2;
+  --ok:#1E7F4F; --ok-soft:#D9F0E4; --bad:#B3261E; --bad-soft:#F9DAD7;
+  --sans:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
   box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){ --bg:#0E171C; --surface:#16232A; --ink:#E6EEF1; --muted:#8FA2AC; --line:#2A3C45; --brand:#5BA3E8; --brand-soft:#1A3247; --ok:#4CC38A; --ok-soft:#14352A; --bad:#FF8A80; --bad-soft:#3C1B19; }
+  :root:not([data-theme="light"]){ --bg:#0C1A2A; --surface:#12253A; --ink:#E8F0F8; --muted:#9DB2C8; --line:#22384F; --brand:#4DA3F5; --brand-deep:#8CC4FA; --brand-soft:#12304F; --water:#1E4468; --amber-soft:#3F3112; --ok:#4CC38A; --ok-soft:#14352A; --bad:#FF8A80; --bad-soft:#3C1B19; }
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;display:flex;flex-direction:column}
-header{display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
-header .logo{width:34px;height:34px;border-radius:10px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:900;font-size:15px;flex:0 0 auto}
-header h1{font-size:16px;margin:0}
-header small{display:block;color:var(--muted);font-size:12px;font-weight:500}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:3px solid #E8A22B;outline-offset:2px;border-radius:8px}
+header{display:flex;align-items:center;gap:12px;padding:12px 18px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header .logo{width:40px;height:40px;border-radius:12px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700;font-size:20px;flex:0 0 auto;box-shadow:inset 0 -6px 12px rgba(0,0,0,.18)}
+header h1{font-size:18px;font-weight:700;margin:0;line-height:1.2}
+header small{display:block;color:var(--muted);font-size:12.5px;font-weight:400}
 header .right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.badge{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--brand-soft);color:var(--brand);white-space:nowrap}
-.linkbtn{border:0;background:none;color:var(--brand);font:inherit;font-weight:700;cursor:pointer;padding:6px 4px;font-size:13px}
-.linkbtn.muted{color:var(--muted);font-weight:600}
-main{flex:1;display:flex;flex-direction:column;max-width:720px;margin:0 auto;width:100%;padding:16px}
-.intro{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;font-size:13.5px;color:var(--muted)}
-.intro b{color:var(--ink)}
+.badge{font-size:12px;font-weight:600;padding:4px 11px;border-radius:999px;background:var(--brand-soft);color:var(--brand-deep);white-space:nowrap}
+.linkbtn{border:0;background:none;color:var(--brand-deep);font:inherit;font-weight:600;cursor:pointer;padding:6px 4px;font-size:13.5px}
+.linkbtn:hover{text-decoration:underline;text-underline-offset:3px}
+.linkbtn.muted{color:var(--muted);font-weight:500}
+main{flex:1;display:flex;flex-direction:column;max-width:760px;margin:0 auto;width:100%;padding:16px}
+#scrChat{flex:1;display:flex;flex-direction:column}
+
+/* Màn chào */
+.hero{padding:22px 0 6px}
+.rings{position:relative;width:84px;height:84px;margin-bottom:16px}
+.rings span{position:absolute;inset:0;border-radius:50%;border:2px solid var(--water);animation:ripple 2.4s ease-out 1 both}
+.rings span:nth-child(2){animation-delay:.35s}
+.rings span:nth-child(3){animation-delay:.7s}
+.rings .logo2{position:absolute;inset:18px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700;font-size:22px}
+@keyframes ripple{0%{transform:scale(.45);opacity:0}30%{opacity:1}100%{transform:scale(1);opacity:1}}
+.hero h2{font-family:var(--serif);font-weight:600;font-size:28px;line-height:1.25;margin:0 0 10px;max-width:18em}
+.hero p{margin:0;color:var(--muted);max-width:36em;font-size:14.5px}
+.hero p b{color:var(--ink);font-weight:600}
+.asks{margin:20px 0 6px;padding:0;list-style:none;border-top:1px solid var(--line)}
+.asks button{width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:14px 4px;cursor:pointer;font:inherit;font-size:15px;font-weight:500;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.asks button:hover{background:var(--brand-soft)}
+.asks svg{flex:none;color:var(--brand)}
+
 .histbar{display:flex;align-items:center;justify-content:flex-end;margin:-6px 0 8px}
-#chat{flex:1;display:flex;flex-direction:column;gap:14px;padding-bottom:12px}
-.bubble-row{display:flex;align-items:flex-end;gap:8px;max-width:92%;animation:popin .18s ease}
-.bubble-row.me{align-self:flex-end;flex-direction:row-reverse}
-.bubble-row.bot{align-self:flex-start}
+#chat{flex:1;display:flex;flex-direction:column;gap:18px;padding-bottom:14px}
+.bubble-row{display:flex;align-items:flex-start;gap:10px;animation:popin .18s ease}
+.bubble-row.me{align-self:flex-end;flex-direction:row-reverse;max-width:88%}
+.bubble-row.bot{align-self:stretch}
 @keyframes popin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.av{flex:0 0 auto;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff}
+.av{flex:0 0 auto;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;margin-top:2px}
 .av.bot{background:var(--brand)}
-.av.me{background:#8B98A1}
-.msg{padding:11px 14px;border-radius:16px;font-size:14.5px;line-height:1.55;min-width:0}
-.msg.me{background:var(--brand);color:#fff;border-bottom-right-radius:5px}
-.msg.bot{background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:5px}
-.msg.bot.err{background:var(--bad-soft);color:var(--bad);border-color:transparent}
-.msg p{margin:0 0 8px}
+.av.me{display:none}
+.msg{font-size:15px;line-height:1.6;min-width:0}
+.msg.me{background:var(--brand);color:#fff;padding:10px 15px;border-radius:18px 18px 4px 18px;white-space:pre-wrap;word-wrap:break-word}
+.msg.bot{font-family:var(--serif);font-size:17px;line-height:1.65;border-left:3px solid var(--water);padding:2px 0 2px 14px}
+.msg.bot.err{font-family:var(--sans);font-size:14.5px;background:var(--bad-soft);color:var(--bad);border-left-color:var(--bad);padding:10px 14px;border-radius:0 12px 12px 0}
+.msg p{margin:0 0 .8em}
 .msg p:last-child{margin-bottom:0}
-.msg ul,.msg ol{margin:2px 0 8px;padding-left:20px}
-.msg li{margin:2px 0}
-.msg code{background:rgba(127,127,127,.18);padding:1px 6px;border-radius:5px;font-size:.92em}
-.bcol{display:flex;flex-direction:column;min-width:0}
-.bubble-row.me .bcol{align-items:flex-end}
-.bubble-row.bot .bcol{align-items:flex-start}
-.dots{display:inline-flex;gap:3px;padding:3px 2px}
-.dots i{width:5px;height:5px;border-radius:50%;background:var(--muted);display:block;animation:bounce 1.1s infinite ease-in-out}
+.msg ul,.msg ol{margin:2px 0 .8em;padding-left:1.3em}
+.msg li{margin:.25em 0}
+.msg.bot b{font-weight:600;background:linear-gradient(transparent 62%,var(--amber-soft) 62%)}
+.msg code{font-family:ui-monospace,Consolas,monospace;background:var(--brand-soft);padding:1px 6px;border-radius:5px;font-size:.88em}
+.bcol{display:flex;flex-direction:column;min-width:0;flex:1}
+.bubble-row.me .bcol{align-items:flex-end;flex:0 1 auto}
+.dots{display:inline-flex;gap:5px;padding:8px 0 8px 14px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--brand);display:block;animation:bounce 1.1s infinite ease-in-out}
 .dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
-@keyframes bounce{0%,80%,100%{transform:scale(.6);opacity:.5}40%{transform:scale(1);opacity:1}}
-.tstamp{font-size:10.5px;color:var(--muted);margin:3px 6px 0}
-.composer{position:sticky;bottom:0;background:var(--bg);padding-top:10px}
-.composer .row{display:flex;gap:8px;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:8px}
-.composer textarea{flex:1;border:0;background:none;resize:none;font:inherit;color:var(--ink);padding:8px;max-height:120px}
+@keyframes bounce{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+.tstamp{font-size:11px;color:var(--muted);margin:4px 2px 0 14px}
+.bubble-row.me .tstamp{margin:4px 4px 0 0}
+
+.composer{position:sticky;bottom:0;background:var(--bg);padding-top:10px;padding-bottom:4px}
+.composer .row{display:flex;align-items:flex-end;gap:8px;background:var(--surface);border:1.5px solid var(--line);border-radius:22px;padding:6px 6px 6px 16px;transition:border-color .15s}
+.composer .row:focus-within{border-color:var(--brand)}
+.composer textarea{flex:1;border:0;background:none;resize:none;font:inherit;color:var(--ink);padding:7px 0;max-height:120px;line-height:1.5}
 .composer textarea:focus{outline:0}
-.composer button{border:0;background:var(--brand);color:#fff;border-radius:12px;padding:0 18px;font:inherit;font-weight:700;cursor:pointer}
-.composer button:disabled{opacity:.5;cursor:default}
-.quota{text-align:center;color:var(--muted);font-size:12px;margin-top:8px}
-.quota b{color:var(--ink)}
+.composer textarea::placeholder{color:var(--muted);opacity:.85}
+.composer button#send{width:42px;height:42px;border:0;background:var(--brand);color:#fff;border-radius:50%;display:grid;place-items:center;cursor:pointer;flex:none;padding:0;transition:background .15s}
+.composer button#send:hover{background:var(--brand-deep)}
+.composer button#send:disabled{opacity:.4;cursor:default}
+.quota{text-align:center;color:var(--muted);font-size:12.5px;margin-top:8px}
+.quota b{color:var(--ink);font-weight:600}
 
 /* Màn đăng nhập */
-.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;max-width:380px;margin:40px auto;text-align:center}
-.card h2{margin:0 0 6px;font-size:18px}
-.card p{color:var(--muted);font-size:13.5px;margin:0 0 18px}
-.card label{display:block;text-align:left;font-size:13px;font-weight:700;margin:12px 0 5px}
-.card input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;background:var(--bg);color:var(--ink)}
-.card .btn{width:100%;margin-top:16px;border:0;background:var(--brand);color:#fff;border-radius:10px;padding:12px;font:inherit;font-weight:700;cursor:pointer}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:24px;max-width:420px;margin:32px auto;text-align:left}
+.card h2{margin:0 0 6px;font-family:var(--serif);font-weight:600;font-size:22px}
+.card p{color:var(--muted);font-size:14px;margin:0 0 14px}
+.card label{display:block;font-size:13px;font-weight:600;margin:14px 0 5px}
+.card input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;font:inherit;background:var(--bg);color:var(--ink)}
+.card input:focus{outline:0;border-color:var(--brand)}
+.card .btn{width:100%;margin-top:18px;border:0;background:var(--brand);color:#fff;border-radius:12px;padding:13px;font:inherit;font-weight:600;cursor:pointer}
+.card .btn:hover{background:var(--brand-deep)}
 .card .btn:disabled{opacity:.6}
-.card .msg2{margin-top:10px;font-size:13px}
+.card .msg2{margin-top:10px;font-size:13.5px}
 .card .msg2.err{color:var(--bad)}
 .card .msg2.ok{color:var(--ok)}
 .hide{display:none!important}
+@media (max-width:420px){.hero h2{font-size:24px}.msg.bot{font-size:16.5px}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -92,16 +125,22 @@ main{flex:1;display:flex;flex-direction:column;max-width:720px;margin:0 auto;wid
 
 <main>
   <div id="scrChat">
-    <div class="intro">
-      Hỏi KAI về <b>chính sách bán hàng, khuyến mại, bảng giá, chương trình đầu tư hình ảnh</b> của Karofi/Livotec.
-      KAI chỉ trả lời dựa trên tài liệu chính sách đã được cung cấp — nếu không có trong tài liệu, KAI sẽ nói rõ là chưa có thông tin thay vì đoán bừa.
+    <div class="hero" id="hero">
+      <div class="rings" aria-hidden="true"><span></span><span></span><span></span><div class="logo2">K</div></div>
+      <h2>Hỏi KAI về chính sách bán hàng</h2>
+      <p>Khuyến mại, bảng giá, chương trình đầu tư hình ảnh của Karofi/Livotec. KAI <b>chỉ trả lời dựa trên tài liệu chính sách đã được cung cấp</b>. Nếu tài liệu chưa có, KAI sẽ nói rõ là chưa có thông tin thay vì đoán bừa.</p>
+      <ul class="asks" id="asks">
+        <li><button type="button">Chính sách khuyến mại đang áp dụng là gì?</button></li>
+        <li><button type="button">Chiết khấu thương mại cho NPP gia dụng 2026 là bao nhiêu?</button></li>
+        <li><button type="button">Điều kiện tham gia chương trình đầu tư hình ảnh</button></li>
+      </ul>
     </div>
     <div class="histbar hide" id="histbar"><button type="button" class="linkbtn muted" id="btnClearHist">Xoá lịch sử trò chuyện</button></div>
     <div id="chat"></div>
     <div class="composer">
       <div class="row">
-        <textarea id="q" rows="1" maxlength="700" placeholder="Nhập câu hỏi ngắn gọn, ví dụ: Chiết khấu thương mại cho NPP gia dụng 2026 là bao nhiêu?"></textarea>
-        <button type="button" id="send">Gửi</button>
+        <textarea id="q" rows="1" maxlength="700" placeholder="Nhập câu hỏi ngắn gọn về chính sách…" aria-label="Câu hỏi"></textarea>
+        <button type="button" id="send" aria-label="Gửi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
       </div>
       <div class="quota" id="quota"></div>
       <div class="quota hide" id="qlen"></div>
@@ -187,6 +226,7 @@ function renderBubble(kind, text, ts, record){
   if (ts){ var t = document.createElement('div'); t.className = 'tstamp'; t.textContent = hhmm(ts); col.appendChild(t); }
   row.appendChild(av); row.appendChild(col);
   $('chat').appendChild(row);
+  $('hero').classList.add('hide');
   row.scrollIntoView({behavior:'smooth', block:'end'});
   if (record !== false){ var h = loadHistory(); h.push({ kind:kind, text:text, ts:ts||Date.now() }); saveHistory(h); $('histbar').classList.remove('hide'); }
   return row;
@@ -197,6 +237,7 @@ function restoreHistory(){
   var h = loadHistory();
   if (!h.length) return;
   $('histbar').classList.remove('hide');
+  $('hero').classList.add('hide');
   h.forEach(function(m){ renderBubble(m.kind, m.text, m.ts, false); });
 }
 $('btnClearHist').addEventListener('click', function(){
@@ -204,6 +245,7 @@ $('btnClearHist').addEventListener('click', function(){
   localStorage.removeItem(HIST_KEY);
   $('chat').innerHTML = '';
   $('histbar').classList.add('hide');
+  $('hero').classList.remove('hide');
 });
 
 function addThinking(){
@@ -276,6 +318,11 @@ $('btnLogout').addEventListener('click', async function(){
   show('chat');
 });
 
+var ARROW = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+Array.prototype.forEach.call(document.querySelectorAll('#asks button'), function(b){
+  b.innerHTML = '<span>' + esc(b.textContent) + '</span>' + ARROW;
+  b.addEventListener('click', function(){ $('q').value = b.textContent; sendQuestion(); });
+});
 restoreHistory();
 refreshMe();
 </script>
