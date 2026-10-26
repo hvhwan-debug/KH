@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A63C4">
+<link rel="icon" href="/favicon.png" type="image/png">
+<title>KAI — Trợ lí tra cứu chính sách Karofi &amp; Livotec</title>
+<style>
+:root{
+  --bg:#EEF3F5; --surface:#FFFFFF; --ink:#12222B; --muted:#5B6B74; --line:#D7E0E5;
+  --brand:#0A63C4; --brand-soft:#DCEAF8; --ok:#1E7F4F; --ok-soft:#D9F0E4; --bad:#B3261E; --bad-soft:#F9DAD7;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#0E171C; --surface:#16232A; --ink:#E6EEF1; --muted:#8FA2AC; --line:#2A3C45; --brand:#5BA3E8; --brand-soft:#1A3247; --ok:#4CC38A; --ok-soft:#14352A; --bad:#FF8A80; --bad-soft:#3C1B19; }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header .logo{width:34px;height:34px;border-radius:10px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:900;font-size:15px;flex:0 0 auto}
+header h1{font-size:16px;margin:0}
+header small{display:block;color:var(--muted);font-size:12px;font-weight:500}
+header .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.badge{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--brand-soft);color:var(--brand);white-space:nowrap}
+.linkbtn{border:0;background:none;color:var(--brand);font:inherit;font-weight:700;cursor:pointer;padding:6px 4px;font-size:13px}
+main{flex:1;display:flex;flex-direction:column;max-width:720px;margin:0 auto;width:100%;padding:16px}
+.intro{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;font-size:13.5px;color:var(--muted)}
+.intro b{color:var(--ink)}
+#chat{flex:1;display:flex;flex-direction:column;gap:14px;padding-bottom:12px}
+.msg{max-width:88%;padding:11px 14px;border-radius:14px;font-size:14.5px;white-space:pre-wrap;line-height:1.55}
+.msg.me{align-self:flex-end;background:var(--brand);color:#fff;border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.bot.err{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.msg.think{align-self:flex-start;color:var(--muted);font-style:italic}
+.composer{position:sticky;bottom:0;background:var(--bg);padding-top:10px}
+.composer .row{display:flex;gap:8px;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:8px}
+.composer textarea{flex:1;border:0;background:none;resize:none;font:inherit;color:var(--ink);padding:8px;max-height:120px}
+.composer textarea:focus{outline:0}
+.composer button{border:0;background:var(--brand);color:#fff;border-radius:12px;padding:0 18px;font:inherit;font-weight:700;cursor:pointer}
+.composer button:disabled{opacity:.5;cursor:default}
+.quota{text-align:center;color:var(--muted);font-size:12px;margin-top:8px}
+.quota b{color:var(--ink)}
+
+/* Màn đăng nhập */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;max-width:380px;margin:40px auto;text-align:center}
+.card h2{margin:0 0 6px;font-size:18px}
+.card p{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+.card label{display:block;text-align:left;font-size:13px;font-weight:700;margin:12px 0 5px}
+.card input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;background:var(--bg);color:var(--ink)}
+.card .btn{width:100%;margin-top:16px;border:0;background:var(--brand);color:#fff;border-radius:10px;padding:12px;font:inherit;font-weight:700;cursor:pointer}
+.card .btn:disabled{opacity:.6}
+.card .msg2{margin-top:10px;font-size:13px}
+.card .msg2.err{color:var(--bad)}
+.card .msg2.ok{color:var(--ok)}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">K</div>
+  <div><h1>KAI</h1><small>Trợ lí tra cứu chính sách Karofi &amp; Livotec</small></div>
+  <div class="right">
+    <span class="badge" id="who"></span>
+    <button type="button" class="linkbtn hide" id="btnLogin">Đăng nhập</button>
+    <button type="button" class="linkbtn hide" id="btnLogout">Đăng xuất</button>
+  </div>
+</header>
+
+<main>
+  <div id="scrChat">
+    <div class="intro">
+      Hỏi KAI về <b>chính sách bán hàng, khuyến mại, bảng giá, chương trình đầu tư hình ảnh</b> của Karofi/Livotec.
+      KAI chỉ trả lời dựa trên tài liệu chính sách đã được cung cấp — nếu không có trong tài liệu, KAI sẽ nói rõ là chưa có thông tin thay vì đoán bừa.
+    </div>
+    <div id="chat"></div>
+    <div class="composer">
+      <div class="row">
+        <textarea id="q" rows="1" placeholder="Nhập câu hỏi, ví dụ: Chiết khấu thương mại cho NPP gia dụng 2026 là bao nhiêu?"></textarea>
+        <button type="button" id="send">Gửi</button>
+      </div>
+      <div class="quota" id="quota"></div>
+    </div>
+  </div>
+
+  <div id="scrLogin" class="card hide">
+    <h2>Đăng nhập bằng mã nhân viên</h2>
+    <p>Dùng đúng mã nhân viên và email đã đăng ký trong hệ thống để hỏi được tới 30 câu/ngày.</p>
+    <label for="lCode">Mã nhân viên</label>
+    <input id="lCode" autocomplete="off" placeholder="Ví dụ: T100300057">
+    <label for="lEmail">Email</label>
+    <input id="lEmail" type="email" autocomplete="off" placeholder="email@công ty">
+    <label for="lName">Họ tên (để quản trị viên nhận ra nếu cần duyệt)</label>
+    <input id="lName" autocomplete="off" placeholder="Họ và tên">
+    <button type="button" class="btn" id="lSubmit">Đăng nhập</button>
+    <div class="msg2" id="lMsg"></div>
+    <button type="button" class="linkbtn" id="lBack" style="margin-top:6px">← Quay lại hỏi</button>
+  </div>
+</main>
+
+<script>
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+async function api(payload){
+  var r = await fetch('/api/kai', { method:'POST', headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: JSON.stringify(payload) });
+  var j = null; try { j = await r.json(); } catch(e){}
+  return { status:r.status, j: j || {} };
+}
+
+var STATE = { loggedIn:false, used:0, limit:3, pending:false };
+
+function show(which){
+  $('scrChat').classList.toggle('hide', which !== 'chat');
+  $('scrLogin').classList.toggle('hide', which !== 'login');
+}
+
+function renderWho(){
+  $('who').textContent = STATE.loggedIn ? (STATE.used + '/' + STATE.limit + ' câu hôm nay') : (STATE.used + '/' + STATE.limit + ' câu dùng thử');
+  $('btnLogin').classList.toggle('hide', STATE.loggedIn);
+  $('btnLogout').classList.toggle('hide', !STATE.loggedIn);
+  $('quota').innerHTML = STATE.loggedIn
+    ? 'Đã hỏi <b>'+STATE.used+'</b> / '+STATE.limit+' câu hôm nay.'
+    : 'Dùng thử <b>'+STATE.used+'</b> / '+STATE.limit+' câu. <button type="button" class="linkbtn" onclick="show(\'login\')" style="padding:0">Đăng nhập</button> để hỏi được tới 30 câu/ngày.';
+}
+
+async function refreshMe(){
+  var r = await api({ op:'me' });
+  if (r.j.ok){ STATE.loggedIn = !!r.j.loggedIn; STATE.used = r.j.used||0; STATE.limit = r.j.limit||3; renderWho(); }
+}
+
+function addMsg(kind, text){
+  var d = document.createElement('div');
+  d.className = 'msg ' + kind;
+  d.textContent = text;
+  $('chat').appendChild(d);
+  d.scrollIntoView({behavior:'smooth', block:'end'});
+  return d;
+}
+
+async function sendQuestion(){
+  var ta = $('q'), text = ta.value.trim();
+  if (!text) return;
+  ta.value = ''; ta.style.height = 'auto';
+  addMsg('me', text);
+  var thinking = addMsg('think', 'KAI đang tra cứu…');
+  $('send').disabled = true;
+  var r = await api({ op:'ask', question:text });
+  thinking.remove();
+  $('send').disabled = false;
+  if (r.j.ok){
+    addMsg('bot', r.j.answer || '(không có nội dung)');
+    STATE.used = r.j.used || STATE.used; STATE.limit = r.j.limit || STATE.limit; renderWho();
+  } else {
+    addMsg('bot err', r.j.error || 'Có lỗi xảy ra, thử lại sau.');
+    if (r.j.quotaExceeded){ STATE.used = r.j.used; STATE.limit = r.j.limit; renderWho(); }
+  }
+}
+
+$('send').addEventListener('click', sendQuestion);
+$('q').addEventListener('keydown', function(e){ if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendQuestion(); } });
+$('q').addEventListener('input', function(){ this.style.height='auto'; this.style.height = Math.min(120, this.scrollHeight) + 'px'; });
+
+$('btnLogin').addEventListener('click', function(){ show('login'); });
+$('lBack').addEventListener('click', function(){ show('chat'); msg2(''); });
+function msg2(text, cls){ $('lMsg').innerHTML = text ? '<span class="'+(cls||'err')+'">'+esc(text)+'</span>' : ''; }
+
+$('lSubmit').addEventListener('click', async function(){
+  var code = $('lCode').value.trim(), email = $('lEmail').value.trim(), name = $('lName').value.trim();
+  if (!code || !email){ msg2('Nhập đủ mã nhân viên và email.'); return; }
+  var btn = this; btn.disabled = true; msg2('');
+  var r = await api({ op:'login', code:code, email:email, name:name });
+  btn.disabled = false;
+  if (!r.j.ok){ msg2(r.j.error || 'Không kết nối được máy chủ, thử lại.'); return; }
+  if (r.j.matched){
+    await refreshMe();
+    show('chat');
+    addMsg('bot', 'Xin chào ' + (r.j.name || '') + '! Bạn đã đăng nhập, hỏi được tới 30 câu/ngày.');
+  } else if (r.j.pending){
+    msg2('Mã nhân viên/email này chưa khớp danh sách — đã gửi yêu cầu, chờ quản trị viên duyệt. Trong lúc chờ bạn vẫn dùng được lượt hỏi thử.', 'ok');
+  }
+});
+
+$('btnLogout').addEventListener('click', async function(){
+  await api({ op:'logout' });
+  STATE.loggedIn = false;
+  await refreshMe();
+  show('chat');
+});
+
+refreshMe();
+</script>
+</body>
+</html>

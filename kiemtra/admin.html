@@ -1692,7 +1692,13 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         </div>
         <button class="btn" style="margin-top:14px" onclick="saveSettings()">Lưu cài đặt</button>
       </div>
-          <div class="card" id="aiCheckCard">
+          <div class="card" id="kaiCard">
+        <h1>KAI — Yêu cầu truy cập trợ lí chính sách <span class="small" id="kaiCount"></span></h1>
+        <p class="small">Trợ lí KAI (tại <code>kh.io.vn/ai</code>) cho nhân viên tra cứu chính sách Karofi/Livotec. Khi mã nhân viên + email ai đó nhập không khớp danh sách Hồ sơ học tập, yêu cầu sẽ hiện ở đây để bạn duyệt.</p>
+        <button class="btn ghost sm" type="button" onclick="loadKaiPending()">Tải lại</button>
+        <div id="kaiList"></div>
+      </div>
+      <div class="card" id="aiCheckCard">
         <h1>Công cụ: kiểm tra AI của lời khuyên</h1>
         <p class="small">Lời khuyên sau khi nộp bài và chẩn đoán hành vi dùng AI nếu có; nếu AI chưa cấu hình, trả lời chậm hoặc sai định dạng thì tự dùng bản dự phòng theo luật. Bấm để chạy thử đúng đường AI đó và biết lý do.</p>
         <button class="btn" type="button" id="btnAiCheck" onclick="runAiCheck()">Kiểm tra ngay</button>
@@ -2025,6 +2031,7 @@ function switchTab(t){
   if (location.hash !== h) history.replaceState(null, '', h);
   if (t === 'candidates' && prevTab !== 'candidates') resetCandFilters(); if (t === 'candidates' && prevTab !== 'candidates') candView('list'); // vào tab Thí sinh: luôn hiện đủ danh sách, không giữ bộ lọc lần trước
   if (t === 'notify') loadNotify();
+  if (t === 'settings' && prevTab !== 'settings') loadKaiPending();
   if (t === 'audit') { loadAudit(); loadFaceRejections(); }
   if (t === 'managerview' && $('mvFrame').src === 'about:blank') $('mvFrame').src = '/kiemtra/quanli.html';
   if (inWs) renderExHead();
@@ -2555,6 +2562,25 @@ $('exPractice').addEventListener('change', function(){
 });
 
 /* ---------- Kiểm tra AI ---------- */
+async function loadKaiPending(){
+  $('kaiList').innerHTML = '<p class="small">Đang tải…</p>';
+  var res; try { res = await api('POST', '/api/kai', { op:'pending' }); } catch(e){ res = null; }
+  if (!res || !res.j.ok){ $('kaiList').innerHTML = '<div class="msg err">'+esc((res && res.j.error) || 'Không tải được.')+'</div>'; return; }
+  var list = res.j.list || [];
+  $('kaiCount').textContent = list.length ? '(' + list.length + ' chờ duyệt)' : '';
+  if (!list.length){ $('kaiList').innerHTML = '<p class="small">Không có yêu cầu nào đang chờ.</p>'; return; }
+  $('kaiList').innerHTML = list.map(function(r){
+    return '<div class="kai-row" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)">'+
+      '<div><b>'+esc(r.name||'(chưa rõ tên)')+'</b><br><small class="small">Mã '+esc(r.code)+' · '+esc(r.email)+'</small></div>'+
+      '<div style="white-space:nowrap"><button class="btn sm" type="button" onclick="kaiDecide(\''+esc(r.id)+'\',\'approve\',this)">Duyệt</button> <button class="btn dghost sm" type="button" onclick="kaiDecide(\''+esc(r.id)+'\',\'reject\',this)">Từ chối</button></div></div>';
+  }).join('');
+}
+async function kaiDecide(id, op, btn){
+  var row = btn.closest('.kai-row'); if (row) row.style.opacity = '.5';
+  var res; try { res = await api('POST', '/api/kai', { op:op, id:id }); } catch(e){ res = null; }
+  if (!res || !res.j.ok){ alert((res && res.j.error) || 'Không thực hiện được, thử lại.'); if (row) row.style.opacity = ''; return; }
+  loadKaiPending();
+}
 async function runAiCheck(){
   const b = $('btnAiCheck'); b.disabled = true; b.textContent = 'Đang kiểm tra…'; $('aiCheckOut').innerHTML = '';
   const { j } = await api('GET','/api/kt-admin?op=aiCheck');
