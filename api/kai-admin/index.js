@@ -83,10 +83,10 @@ module.exports = async function (context, req) {
       (appr || []).forEach((c) => { const k = code(c.code); info[k] = Object.assign({ approved: true }, info[k] || {}, { name: (info[k] && info[k].name) || c.name || "", email: (info[k] && info[k].email) || c.email || "" }); });
       const counts = {};
       await Promise.all(todayCodes.map(async (c) => { const v = await store.get("kai/usage/emp-" + c + "-" + today + ".json"); counts[c] = (v && v.count) || 0; }));
-      const all = new Set(todayCodes.concat(Object.keys(cfgK.blocked), Object.keys(cfgK.limits)));
+      const all = new Set(todayCodes.concat(Object.keys(cfgK.blocked), Object.keys(cfgK.limits), Object.keys(cfgK.unlimited)));
       const users = Array.from(all).map((c) => ({
         code: c, name: (info[c] || {}).name || "", email: (info[c] || {}).email || "", used: counts[c] || 0,
-        limit: cfgK.limits[c] || cfgK.defaultLimit, custom: !!cfgK.limits[c], blocked: !!cfgK.blocked[c]
+        limit: cfgK.limits[c] || cfgK.defaultLimit, custom: !!cfgK.limits[c], blocked: !!cfgK.blocked[c], unlimited: !!cfgK.unlimited[c]
       })).sort((a, z) => z.used - a.used);
       const days = Object.keys(perDay).sort().slice(-7).map((d) => ({ day: d, users: perDay[d].size }));
       const anon = (await store.list("kai/usage/anon-")).length;
@@ -113,6 +113,7 @@ module.exports = async function (context, req) {
         else if (Number.isFinite(n) && n >= 1 && n <= 500) cur.limits[c] = Math.round(n);
         else return reply(context, 400, { ok: false, error: "Hạn mức phải từ 1 đến 500 câu/ngày." });
       }
+      if (b.unlimited !== undefined) { if (b.unlimited) cur.unlimited[c] = true; else delete cur.unlimited[c]; }
       if (b.blocked !== undefined) { if (b.blocked) cur.blocked[c] = true; else delete cur.blocked[c]; }
       await kb.saveSettings(cur);
       return reply(context, 200, { ok: true });

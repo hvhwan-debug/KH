@@ -73,7 +73,8 @@ module.exports = async function (context, req) {
       if (id && id.kind === "emp") {
         const used = await usageCount("kai/usage/emp-" + id.code + "-" + vnDate() + ".json");
         const blocked = !!cfgK.blocked[id.code];
-        return reply(context, 200, { ok: true, loggedIn: true, name: id.name, used, limit: cfgK.limits[id.code] || cfgK.defaultLimit, blocked });
+        const unlimited = !!cfgK.unlimited[id.code];
+        return reply(context, 200, { ok: true, loggedIn: true, name: id.name, used, limit: cfgK.limits[id.code] || cfgK.defaultLimit, blocked, unlimited });
       }
       const headers = {};
       let anonId = id && id.kind === "anon" ? id.id : null;
@@ -116,11 +117,12 @@ module.exports = async function (context, req) {
       const headers = {};
       const cfgK = await kb.getSettings();
       if (cfgK.paused) return reply(context, 503, { ok: false, error: cfgK.pausedMsg || "KAI đang tạm dừng để bảo trì, vui lòng quay lại sau." });
-      let usageKey, limit;
+      let usageKey, limit, unlimited = false;
       if (id && id.kind === "emp") {
         if (cfgK.blocked[id.code]) return reply(context, 403, { ok: false, error: "Tài khoản của bạn đang bị tạm khoá sử dụng KAI. Vui lòng liên hệ quản trị viên." });
         usageKey = "kai/usage/emp-" + id.code + "-" + vnDate() + ".json";
         limit = cfgK.limits[id.code] || cfgK.defaultLimit;
+        unlimited = !!cfgK.unlimited[id.code];
       } else {
         let anonId = id && id.kind === "anon" ? id.id : null;
         if (!anonId) { anonId = newAnonId(); headers["Set-Cookie"] = kaiCookie(ANON_COOKIE, { id: anonId }, MAX_AGE); }
@@ -128,7 +130,7 @@ module.exports = async function (context, req) {
         limit = cfgK.anonLimit;
       }
       const used = await usageCount(usageKey);
-      if (used >= limit) {
+      if (!unlimited && used >= limit) {
         const msg = id && id.kind === "emp"
           ? "Bạn đã hỏi đủ " + limit + " câu hôm nay, quay lại vào ngày mai nhé."
           : "Bạn đã dùng hết " + limit + " câu hỏi thử miễn phí. Đăng nhập bằng mã nhân viên để hỏi thêm (hỏi được nhiều câu hơn mỗi ngày).";
@@ -174,7 +176,7 @@ module.exports = async function (context, req) {
         return reply(context, 502, { ok: false, error: "Trợ lí đang bận hoặc chưa sẵn sàng, thử lại sau." }, headers);
       }
       const newUsed = await usageInc(usageKey);
-      return reply(context, 200, { ok: true, answer, used: newUsed, limit }, headers);
+      return reply(context, 200, { ok: true, answer, used: newUsed, limit, unlimited }, headers);
     }
 
     return reply(context, 400, { ok: false, error: "Yêu cầu không hợp lệ." });

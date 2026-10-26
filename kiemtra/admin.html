@@ -1779,6 +1779,8 @@ button.rd-st:disabled{opacity:.55;cursor:default}
             <button class="btn" type="button" id="kuSetLimit">Lưu hạn mức</button>
             <button class="btn dghost" type="button" id="kuBlock">Khoá người này</button>
             <button class="btn ghost" type="button" id="kuUnblock">Mở khoá</button>
+            <button class="btn ghost" type="button" id="kuUnlim">Không giới hạn lượt</button>
+            <button class="btn ghost" type="button" id="kuLimOff">Bỏ không giới hạn</button>
           </div>
           <div id="kuMsg"></div>
           <div class="small" id="kuDays" style="margin-top:14px"></div>
@@ -2680,6 +2682,8 @@ function kaixOpen(){
     $('kuSetLimit').onclick = function(){ kaixUserSet({ limit: $('kuLimit').value.trim() === '' ? null : Number($('kuLimit').value) }, 'Đã lưu hạn mức.'); };
     $('kuBlock').onclick = function(){ if (confirm('Khoá mã ' + $('kuCode').value.trim() + ' khỏi KAI?')) kaixUserSet({ blocked:true }, 'Đã khoá.'); };
     $('kuUnblock').onclick = function(){ kaixUserSet({ blocked:false }, 'Đã mở khoá.'); };
+    $('kuUnlim').onclick = function(){ kaixUserSet({ unlimited:true, blocked:false }, 'Đã bật không giới hạn lượt hỏi.'); };
+    $('kuLimOff').onclick = function(){ kaixUserSet({ unlimited:false }, 'Đã bỏ không giới hạn, quay lại hạn mức thường.'); };
     $('kcSave').onclick = kaixSaveCfg;
   }
   kaixSub(KX.sub); kaixLoadDocs(); kaixLoadUsers(true); kaixLoadPending();
@@ -2739,10 +2743,10 @@ async function kaixLoadUsers(fillCfg){
   $('kuDay').textContent = '(' + j.today + ')';
   if (fillCfg !== false){ $('kcDefault').value = st.defaultLimit; $('kcAnon').value = st.anonLimit; $('kcPaused').checked = st.paused; $('kcMsg').value = st.pausedMsg || ''; }
   $('kuList').innerHTML = j.users.length ? j.users.map(function(u){
-    var pct = Math.min(100, Math.round(u.used / u.limit * 100));
+    var pct = u.unlimited ? 0 : Math.min(100, Math.round(u.used / u.limit * 100));
     return '<div class="kaix-row"><div style="min-width:0"><b>' + esc(u.name || '(chưa rõ tên)') + '</b> <span class="small">' + esc(u.code) + (u.email ? ' · ' + esc(u.email) : '') + '</span>' +
-      (u.blocked ? '<span class="kaix-tag bad">đã khoá</span>' : '') + (u.custom ? '<span class="kaix-tag">hạn mức riêng</span>' : '') +
-      '<div class="small"><b>' + u.used + '</b> / ' + u.limit + ' câu</div><div class="kaix-bar' + (pct >= 80 ? ' hot' : '') + '"><i style="width:' + pct + '%"></i></div></div>' +
+      (u.blocked ? '<span class="kaix-tag bad">đã khoá</span>' : '') + (u.unlimited ? '<span class="kaix-tag">không giới hạn</span>' : u.custom ? '<span class="kaix-tag">hạn mức riêng</span>' : '') +
+      '<div class="small"><b>' + u.used + '</b> ' + (u.unlimited ? 'câu (không giới hạn)' : '/ ' + u.limit + ' câu') + '</div>' + (u.unlimited ? '' : '<div class="kaix-bar' + (pct >= 80 ? ' hot' : '') + '"><i style="width:' + pct + '%"></i></div>') + '</div>' +
       '<div class="kaix-act"><button class="btn ghost sm" type="button" onclick="kaixPick(\'' + esc(u.code) + '\',' + (u.custom ? u.limit : 'null') + ')">Đặt hạn mức</button>' +
       '<button class="btn ghost sm" type="button" onclick="kaixReset(\'' + esc(u.code) + '\')">Đặt lại lượt</button>' +
       '<button class="btn ' + (u.blocked ? 'ghost' : 'dghost') + ' sm" type="button" onclick="kaixBlock(\'' + esc(u.code) + '\',' + (!u.blocked) + ')">' + (u.blocked ? 'Mở khoá' : 'Khoá') + '</button></div></div>';

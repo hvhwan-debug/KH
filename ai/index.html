@@ -171,7 +171,7 @@ async function api(payload){
   return { status:r.status, j: j || {} };
 }
 
-var STATE = { loggedIn:false, used:0, limit:3, pending:false };
+var STATE = { loggedIn:false, used:0, limit:3, pending:false, unlimited:false };
 
 function show(which){
   $('scrChat').classList.toggle('hide', which !== 'chat');
@@ -179,17 +179,19 @@ function show(which){
 }
 
 function renderWho(){
-  $('who').textContent = STATE.loggedIn ? (STATE.used + '/' + STATE.limit + ' câu hôm nay') : (STATE.used + '/' + STATE.limit + ' câu dùng thử');
+  $('who').textContent = STATE.loggedIn && STATE.unlimited ? 'Không giới hạn' : STATE.loggedIn ? (STATE.used + '/' + STATE.limit + ' câu hôm nay') : (STATE.used + '/' + STATE.limit + ' câu dùng thử');
   $('btnLogin').classList.toggle('hide', STATE.loggedIn);
   $('btnLogout').classList.toggle('hide', !STATE.loggedIn);
-  $('quota').innerHTML = STATE.loggedIn
+  $('quota').innerHTML = STATE.loggedIn && STATE.unlimited
+    ? 'Đã hỏi <b>'+STATE.used+'</b> câu hôm nay · không giới hạn lượt hỏi.'
+    : STATE.loggedIn
     ? 'Đã hỏi <b>'+STATE.used+'</b> / '+STATE.limit+' câu hôm nay.'
     : 'Dùng thử <b>'+STATE.used+'</b> / '+STATE.limit+' câu. <button type="button" class="linkbtn" onclick="show(\'login\')" style="padding:0">Đăng nhập</button> để hỏi được nhiều câu hơn mỗi ngày.';
 }
 
 async function refreshMe(){
   var r = await api({ op:'me' });
-  if (r.j.ok){ STATE.loggedIn = !!r.j.loggedIn; STATE.used = r.j.used||0; STATE.limit = r.j.limit||3; renderWho(); }
+  if (r.j.ok){ STATE.loggedIn = !!r.j.loggedIn; STATE.used = r.j.used||0; STATE.limit = r.j.limit||3; STATE.unlimited = !!r.j.unlimited; renderWho(); }
 }
 
 // ---- Định dạng đơn giản: **đậm**, `mã`, gạch đầu dòng "- "/"* ", danh sách số "1. " ----
@@ -271,7 +273,7 @@ async function sendQuestion(){
   $('send').disabled = false;
   if (r.j.ok){
     addMsg('bot', r.j.answer || '(không có nội dung)');
-    STATE.used = r.j.used || STATE.used; STATE.limit = r.j.limit || STATE.limit; renderWho();
+    STATE.used = r.j.used || STATE.used; STATE.limit = r.j.limit || STATE.limit; STATE.unlimited = !!r.j.unlimited; renderWho();
   } else {
     addMsg('bot err', r.j.error || 'Có lỗi xảy ra, thử lại sau.');
     if (r.j.quotaExceeded){ STATE.used = r.j.used; STATE.limit = r.j.limit; renderWho(); }
@@ -307,7 +309,7 @@ $('lSubmit').addEventListener('click', async function(){
   if (r.j.matched){
     await refreshMe();
     show('chat');
-    addMsg('bot', 'Xin chào ' + (r.j.name || '') + '! Bạn đã đăng nhập, hỏi được tới ' + STATE.limit + ' câu/ngày.');
+    addMsg('bot', 'Xin chào ' + (r.j.name || '') + '! Bạn đã đăng nhập, ' + (STATE.unlimited ? 'không giới hạn lượt hỏi.' : 'hỏi được tới ' + STATE.limit + ' câu/ngày.'));
   } else if (r.j.pending){
     msg2('Mã nhân viên/email này chưa khớp danh sách — đã gửi yêu cầu, chờ quản trị viên duyệt. Trong lúc chờ bạn vẫn dùng được lượt hỏi thử.', 'ok');
   }

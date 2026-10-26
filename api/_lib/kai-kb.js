@@ -842,7 +842,8 @@ async function getSections() {
   return cache.sections;
 }
 
-const DEFAULT_SETTINGS = { defaultLimit: 30, anonLimit: 3, paused: false, pausedMsg: "", blocked: {}, limits: {} };
+// unlimited: mã nhân viên không bị giới hạn lượt hỏi. Mặc định chỉ có mã "1" (tài khoản hoan@wvn.vn); chỉnh được trong trang quản trị.
+const DEFAULT_SETTINGS = { defaultLimit: 30, anonLimit: 3, paused: false, pausedMsg: "", blocked: {}, limits: {}, unlimited: { "1": true } };
 async function getSettings() {
   const s = (await store.get(SETTINGS_KEY)) || {};
   const num = (v, d, lo, hi) => { v = Number(v); return Number.isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : d; };
@@ -851,7 +852,8 @@ async function getSettings() {
     anonLimit: num(s.anonLimit, DEFAULT_SETTINGS.anonLimit, 0, 50),
     paused: !!s.paused, pausedMsg: String(s.pausedMsg || "").slice(0, 300),
     blocked: s.blocked && typeof s.blocked === "object" ? s.blocked : {},
-    limits: s.limits && typeof s.limits === "object" ? s.limits : {}
+    limits: s.limits && typeof s.limits === "object" ? s.limits : {},
+    unlimited: s.unlimited && typeof s.unlimited === "object" ? s.unlimited : DEFAULT_SETTINGS.unlimited
   };
 }
 async function saveSettings(s) { await store.put(SETTINGS_KEY, s); }
