@@ -88,18 +88,34 @@ module.exports = async function (context, req) {
     }
 
     // ---------- Người dùng & cài đặt ----------
-    if (op === "questionLog") {
+    if (op === "questionLog" || op === "questionsOf") {
       const log = (await store.get("kai/log.json")) || [];
-      const since = Date.now() - 30 * 24 * 3600 * 1000;
-      const recent30 = log.filter((x) => x.ts >= since);
+      const days = Number(b.days) > 0 ? Number(b.days) : (op === "questionLog" ? 30 : 0);   // 0 = tất cả
+      const since = days ? Date.now() - days * 24 * 3600 * 1000 : 0;
+      const [cands, appr] = await Promise.all([quiz.getCandidates(), store.get("kai/approved.json")]);
+      const info = {};
+      (appr || []).forEach((c) => { info[code(c.code)] = { name: c.name || "", email: c.email || "" }; });
+      (cands || []).forEach((c) => { info[code(c.code)] = { name: c.name || "", email: c.email || "" }; });
+      const keyOf = (x) => x.code ? code(x.code) : (x.anon ? "anon:" + x.anon : "");   // "" = khách cũ chưa có mã ẩn danh
+      const inRange = log.filter((x) => x.ts >= since);
+      if (op === "questionsOf") {
+        const key = String(b.key || ""), qs = String(b.q || "").trim().toLowerCase();
+        let items = inRange.filter((x) => keyOf(x) === key);
+        if (qs) items = items.filter((x) => String(x.question || "").toLowerCase().indexOf(qs) >= 0);
+        const first = inRange.find((x) => keyOf(x) === key) || {};
+        const inf = info[key] || {};
+        const guest = !key || key.indexOf("anon:") === 0;
+        return reply(context, 200, { ok: true, person: { key, guest, code: guest ? "" : key, name: inf.name || first.name || "", email: inf.email || "" },
+          total: items.length, items: items.slice(0, 500).map((x) => ({ ts: x.ts, question: x.question })) });
+      }
       const byEmp = {};
-      recent30.forEach((x) => {
-        const key = x.code || "·khách (chưa đăng nhập)·";
-        if (!byEmp[key]) byEmp[key] = { code: x.code || "", name: x.name || "", count: 0, last: 0 };
+      inRange.forEach((x) => {
+        const key = keyOf(x);
+        if (!byEmp[key]) { const inf = info[key] || {}; byEmp[key] = { key, code: x.code ? code(x.code) : "", name: inf.name || x.name || "", email: inf.email || "", guest: !x.code, count: 0, last: 0 }; }
         byEmp[key].count++; byEmp[key].last = Math.max(byEmp[key].last, x.ts);
       });
       const people = Object.keys(byEmp).map((k) => byEmp[k]).sort((a, z) => z.count - a.count);
-      return reply(context, 200, { ok: true, total: log.length, total30: recent30.length, people, recent: log.slice(0, 100) });
+      return reply(context, 200, { ok: true, total: log.length, total30: inRange.length, days, people, recent: log.slice(0, 100) });
     }
     if (op === "usage") {
       const [cfgK, names, cands, appr] = await Promise.all([kb.getSettings(), store.list("kai/usage/emp-"), quiz.getCandidates(), store.get("kai/approved.json")]);

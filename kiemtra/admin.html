@@ -1806,7 +1806,11 @@ button.rd-st:disabled{opacity:.55;cursor:default}
             <button class="btn ghost sm" type="button" onclick="kaixLoadQlog()">Tải lại</button>
           </div>
           <p class="small" style="margin:6px 0 10px">Xem thói quen và nhu cầu thực tế của nhân viên qua những câu họ hỏi KAI (30 ngày gần nhất).</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><span class="small">Khoảng thời gian:</span>
+            <select id="kqDays" onchange="kaixLoadQlog()"><option value="7">7 ngày</option><option value="30" selected>30 ngày</option><option value="90">90 ngày</option><option value="0">Tất cả</option></select>
+            <span class="small">· Bấm vào một dòng để xem chi tiết từng câu người đó đã hỏi.</span></div>
           <div id="kqPeople"></div>
+          <div id="kqDetail" class="hide" style="margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:12px"></div>
           <hr style="margin:16px 0;border:0;border-top:1px solid var(--line)">
           <h2 style="margin:0 0 8px;font-size:16px">Câu hỏi gần đây</h2>
           <div id="kqRecent"></div>
@@ -2817,15 +2821,36 @@ async function kaixImportUrlClick(){
 function fmtVn(ms){ return ms ? new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' }) : ''; }
 async function kaixLoadQlog(){
   $('kqPeople').innerHTML = '<p class="small">Đang tải…</p>'; $('kqRecent').innerHTML = '';
-  var j = await kaixApi({ op:'questionLog' });
+  var j = await kaixApi({ op:'questionLog', days:Number($('kqDays').value) });
   if (!j.ok){ $('kqPeople').innerHTML = '<div class="msg err">' + esc(j.error) + '</div>'; return; }
-  $('kqSum').textContent = '(' + j.total30 + ' câu trong 30 ngày · ' + j.total + ' câu từ trước tới nay)';
-  $('kqPeople').innerHTML = (j.people && j.people.length) ? '<table class="stk" style="width:100%"><thead><tr><th>Họ tên</th><th>Mã NV</th><th style="text-align:right">Số câu</th><th>Hỏi gần nhất</th></tr></thead><tbody>' +
-    j.people.map(function(p){ return '<tr><td>' + esc(p.name || '') + '</td><td>' + esc(p.code || '(khách, chưa đăng nhập)') + '</td><td style="text-align:right"><b>' + p.count + '</b></td><td class="small">' + esc(fmtVn(p.last)) + '</td></tr>'; }).join('') +
+  $('kqSum').textContent = '(' + j.total30 + ' câu trong ' + (j.days ? j.days + ' ngày' : 'toàn bộ thời gian') + ' · ' + j.total + ' câu đang lưu)'; $('kqDetail').classList.add('hide');
+  $('kqPeople').innerHTML = (j.people && j.people.length) ? '<table class="stk" style="width:100%"><thead><tr><th>Họ tên</th><th>Mã NV</th><th>Email</th><th style="text-align:right">Số câu</th><th>Hỏi gần nhất</th></tr></thead><tbody>' +
+    j.people.map(function(p){ return '<tr style="cursor:pointer" title="Xem chi tiết" data-key="' + esc(p.key) + '" onclick="kaixQDetail(this.getAttribute(\'data-key\'))"><td><b>' + esc(p.name || (p.guest ? 'Khách' : '(chưa rõ tên)')) + '</b></td><td>' + esc(p.code || (p.guest ? '(chưa đăng nhập' + (p.key ? ' · ' + p.key.slice(5) : '') + ')' : '')) + '</td><td class="small">' + esc(p.email || '') + '</td><td style="text-align:right"><b>' + p.count + '</b></td><td class="small">' + esc(fmtVn(p.last)) + '</td></tr>'; }).join('') +
     '</tbody></table>' : '<p class="small">Chưa có dữ liệu.</p>';
   $('kqRecent').innerHTML = (j.recent && j.recent.length) ? j.recent.map(function(r){
     return '<div style="padding:7px 0;border-bottom:1px solid var(--line)"><b>' + esc(r.name || 'Khách') + '</b>' + (r.code ? ' <span class="small">(' + esc(r.code) + ')</span>' : '') + ' <span class="small">· ' + esc(fmtVn(r.ts)) + '</span><br>' + esc(r.question) + '</div>';
   }).join('') : '<p class="small">Chưa có câu hỏi nào.</p>';
+}
+
+var KXQ = { key:'', data:null };
+async function kaixQDetail(key, keepSearch){
+  KXQ.key = key; var box = $('kqDetail'); box.classList.remove('hide');
+  if (!keepSearch) box.innerHTML = '<p class="small">Đang tải…</p>';
+  var q = keepSearch && $('kqdQ') ? $('kqdQ').value.trim() : '';
+  var j = await kaixApi({ op:'questionsOf', key:key, q:q, days:Number($('kqDays').value) });
+  if (!j.ok){ box.innerHTML = '<div class="msg err">' + esc(j.error) + '</div>'; return; }
+  KXQ.data = j; var p = j.person;
+  box.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between"><div><b style="font-size:15px">' + esc(p.name || (p.guest ? 'Khách chưa đăng nhập' : '(chưa rõ tên)')) + '</b> <span class="small">' + esc(p.code || '') + (p.email ? ' · ' + esc(p.email) : '') + '</span><div class="small">' + j.total + ' câu' + (q ? ' khớp "' + esc(q) + '"' : '') + (j.total > 500 ? ' (hiển thị 500 câu mới nhất)' : '') + '</div></div>' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap"><input id="kqdQ" type="text" placeholder="Tìm trong câu hỏi…" value="' + esc(q) + '" style="min-width:160px" onkeydown="if(event.key===\'Enter\')kaixQDetail(KXQ.key,true)"><button class="btn ghost sm" type="button" onclick="kaixQDetail(KXQ.key,true)">Tìm</button><button class="btn ghost sm" type="button" onclick="kaixQCsv()">Tải CSV</button><button class="btn ghost sm" type="button" onclick="$(\'kqDetail\').classList.add(\'hide\')">Đóng</button></div></div>' +
+    '<div style="margin-top:8px;max-height:420px;overflow:auto">' + (j.items.length ? j.items.map(function(r){ return '<div style="padding:7px 0;border-bottom:1px solid var(--line)"><span class="small">' + esc(fmtVn(r.ts)) + '</span><br>' + esc(r.question) + '</div>'; }).join('') : '<p class="small">Không có câu hỏi nào.</p>') + '</div>';
+  box.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+function kaixQCsv(){
+  var j = KXQ.data; if (!j || !j.items.length) return;
+  var q = function(v){ return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; };
+  var rows = [['Họ tên','Mã NV','Email','Thời gian','Câu hỏi'].map(q).join(',')].concat(j.items.map(function(r){ return [j.person.name, j.person.code, j.person.email, fmtVn(r.ts), r.question].map(q).join(','); }));
+  var blob = new Blob(['\ufeff' + rows.join('\r\n')], { type:'text/csv;charset=utf-8' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'kai-cau-hoi-' + (j.person.code || 'khach') + '.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
 
 async function kaixLoadUsers(fillCfg){

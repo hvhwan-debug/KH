@@ -244,7 +244,7 @@ module.exports = async function (context, req) {
       const newUsed = await usageInc(usageKey);
       try {
         const log = (await store.get("kai/log.json")) || [];
-        log.unshift({ code: id && id.kind === "emp" ? id.code : "", name: id && id.kind === "emp" ? id.name : "", question: question.slice(0, 300), ts: Date.now() });
+        log.unshift({ code: id && id.kind === "emp" ? id.code : "", name: id && id.kind === "emp" ? id.name : "", anon: id && id.kind === "anon" ? String(id.id).slice(0, 6) : "", question: question.slice(0, 300), ts: Date.now() });
         await store.put("kai/log.json", log.slice(0, 3000));
       } catch (e) { context.log.error("kai log", e && e.message); }
       return reply(context, 200, { ok: true, answer, sources, basis, used: newUsed, limit, unlimited }, headers);
