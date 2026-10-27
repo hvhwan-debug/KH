@@ -162,7 +162,7 @@ function nin(o,k,ph,extra){return h('input',Object.assign({type:'number',value:(
 function fld(label,node){return h('div',null,h('label',{class:'f'},label),node)}
 
 function openEditor(sv,isNew,count){
-  E={S:clone(sv),isNew:isNew,count:count||0,saved:!isNew};
+  E={S:clone(sv),isNew:isNew,count:count||0,saved:!isNew,tab:'q'};
   if(!E.S.identity)E.S.identity=E.S.askIdentity?'emp':'none';
   if(E.S.showProgress===undefined)E.S.showProgress=true;
   $('results').hidden=true;$('editor').hidden=false;drawEditor();
@@ -177,32 +177,37 @@ function drawEditor(){
   box.appendChild(h('div',{class:'grid2'},
     fld('Mã khảo sát (chữ thường, số, gạch ngang; dùng trong link)',code),
     fld('Tên khảo sát',tin(S,'title','Tên người trả lời sẽ thấy',200))));
-  box.appendChild(fld('Mô tả ngắn (tuỳ chọn)',tarea(S,'description','Giới thiệu mục đích, thời gian làm',3)));
-  box.appendChild(fld('Lời cảm ơn sau khi gửi (tuỳ chọn)',tin(S,'thanks','Cảm ơn bạn đã hoàn thành khảo sát.',500)));
-  var ident=sel(S,'identity',[['none','Ẩn danh, không hỏi tên'],['name','Hỏi họ tên'],['emp','Hỏi mã nhân viên + họ tên (mỗi mã chỉ gửi 1 lần)'],['roster','Nhân sự được gán: xác thực mã NV + email trong Hồ sơ học tập']],drawAud);
-  box.appendChild(fld('Thông tin người trả lời',ident));
-  box.appendChild(h('div',{id:'aud'}));
+  // Tab: Câu hỏi (mở sẵn) · Cài đặt · Nhân sự tham gia (chỉ khi chọn "Nhân sự được gán")
+  box.appendChild(h('div',{class:'tabs',id:'etabs',role:'tablist'}));
+  var paneS=h('div',{id:'paneS',hidden:true}),paneA=h('div',{id:'paneA',hidden:true}),paneQ=h('div',{id:'paneQ'});
+  paneS.appendChild(fld('Mô tả ngắn (tuỳ chọn)',tarea(S,'description','Giới thiệu mục đích, thời gian làm',3)));
+  paneS.appendChild(fld('Lời cảm ơn sau khi gửi (tuỳ chọn)',tin(S,'thanks','Cảm ơn bạn đã hoàn thành khảo sát.',500)));
+  var ident=sel(S,'identity',[['none','Ẩn danh, không hỏi tên'],['name','Hỏi họ tên'],['emp','Hỏi mã nhân viên + họ tên (mỗi mã chỉ gửi 1 lần)'],['roster','Nhân sự được gán: xác thực mã NV + email trong Hồ sơ học tập']],function(){
+    if(S.identity==='roster'){E.tab='a'}else if(E.tab==='a'){E.tab='s'}
+    drawAud();drawTabs()});
+  paneS.appendChild(fld('Thông tin người trả lời',ident));
+  paneS.appendChild(h('p',{class:'note',id:'rosterNote'},''));
   var oa=h('input',{type:'datetime-local',value:toLocal(S.openAt),onchange:function(){S.openAt=this.value?Date.parse(this.value):0}});
   var ca=h('input',{type:'datetime-local',value:toLocal(S.closeAt),onchange:function(){S.closeAt=this.value?Date.parse(this.value):0}});
   var mr=h('input',{type:'number',min:0,value:S.maxResponses||'',placeholder:'0 = không giới hạn',onchange:function(){S.maxResponses=Math.max(0,Math.floor(Number(this.value)||0))}});
-  box.appendChild(h('div',{class:'row'},fld('Mở lúc (trống = mở ngay)',oa),fld('Đóng lúc (trống = không tự đóng)',ca),fld('Số phiếu tối đa',mr)));
+  paneS.appendChild(h('div',{class:'row'},fld('Mở lúc (trống = mở ngay)',oa),fld('Đóng lúc (trống = không tự đóng)',ca),fld('Số phiếu tối đa',mr)));
   if(!S.flow)S.flow='auto';
-  box.appendChild(fld('Cách hiển thị câu hỏi cho người trả lời',sel(S,'flow',[['auto','Tự động: từng câu một trên điện thoại, theo trang trên máy tính (khuyên dùng)'],['step','Luôn từng câu một'],['page','Luôn theo trang (nhiều câu cùng lúc)']])));
-  box.appendChild(h('div',{class:'row'},cb(S,'open','Đang mở nhận trả lời'),cb(S,'showProgress','Hiện thanh tiến độ')));
-
-  box.appendChild(h('h3',null,'Câu hỏi'));
-  box.appendChild(h('p',{class:'note'},'Mỗi "Tiêu đề trang" bắt đầu một trang mới. Mở mục "Logic" của từng câu để đặt điều kiện hiện câu hoặc kết thúc khảo sát sớm.'));
-  box.appendChild(h('div',{id:'qs'}));
+  paneS.appendChild(fld('Cách hiển thị câu hỏi cho người trả lời',sel(S,'flow',[['auto','Tự động: từng câu một trên điện thoại, theo trang trên máy tính (khuyên dùng)'],['step','Luôn từng câu một'],['page','Luôn theo trang (nhiều câu cùng lúc)']])));
+  paneS.appendChild(h('div',{class:'row'},cb(S,'open','Đang mở nhận trả lời'),cb(S,'showProgress','Hiện thanh tiến độ')));
+  paneA.appendChild(h('div',{id:'aud'}));
+  paneQ.appendChild(h('div',{class:'warn',style:'background:var(--soft)'},h('strong',null,'Bấm vào chữ của từng câu để sửa. '),'Dùng ↑ ↓ để đổi thứ tự, ⧉ để nhân đôi, ✕ để xoá, chọn "Bắt buộc" nếu cần. Mở mục "Logic" để đặt điều kiện hiện câu. Mỗi "Tiêu đề trang" bắt đầu một trang mới.'));
+  paneQ.appendChild(h('div',{id:'qs'}));
   var addSel=h('select',{id:'addType',style:'width:auto'});TYPES.forEach(function(t){addSel.appendChild(h('option',{value:t[0]},t[1]))});
-  box.appendChild(h('div',{class:'row',style:'margin-top:10px;justify-content:flex-start'},addSel,
-    h('button',{class:'nf',onclick:function(){var t=addSel.value;E.S.questions.push(Object.assign({id:newId(),type:t,text:'',help:'',required:false},defaults(t)));drawQs();var c=$('qs').lastChild;if(c)c.scrollIntoView({behavior:'smooth',block:'center'})}},'＋ Thêm')));
+  paneQ.appendChild(h('div',{class:'row',style:'margin-top:10px;justify-content:flex-start'},addSel,
+    h('button',{class:'nf',onclick:function(){var t=addSel.value;E.S.questions.push(Object.assign({id:newId(),type:t,text:'',help:'',required:false},defaults(t)));drawQs();var c=$('qs').lastChild;if(c)c.scrollIntoView({behavior:'smooth',block:'center'})}},'＋ Thêm câu hỏi')));
+  box.appendChild(paneS);box.appendChild(paneA);box.appendChild(paneQ);
   var msg=h('span',{id:'savemsg',role:'status'});
   box.appendChild(h('div',{class:'savebar'},h('div',{class:'row',style:'justify-content:flex-start;align-items:center'},
     h('button',{class:'p nf',onclick:save},'Lưu khảo sát'),
     h('button',{class:'nf',onclick:previewDraft},'Xem thử bản đang soạn'),
     h('button',{class:'nf',id:'pvSaved',hidden:!E.saved,onclick:function(){openLink(E.S.code,true)}},'Xem bản đã lưu'),
     h('button',{class:'nf',onclick:function(){if(isDirty()&&!confirm('Có thay đổi chưa lưu. Đóng và bỏ các thay đổi này?'))return;$('editor').hidden=true}},'Đóng'),msg)));
-  drawQs();drawAud();
+  drawQs();drawAud();drawTabs();
 }
 
 
@@ -290,6 +295,18 @@ function refreshAud(){
   if(rows.length>max)list.appendChild(h('p',{class:'note'},'Hiện '+max+'/'+rows.length+' người. Hãy lọc để xem thêm.'));
 }
 
+
+function drawTabs(){
+  var bar=$('etabs');if(!bar||!E)return;clear(bar);
+  var roster=E.S.identity==='roster',nq=E.S.questions.filter(function(q){return q.type!=='section'}).length;
+  if(!E.tab||(E.tab==='a'&&!roster))E.tab='q';
+  var defs=[['q','Câu hỏi ('+nq+')'],['s','Cài đặt']].concat(roster?[['a','Nhân sự tham gia']]:[]);
+  defs.forEach(function(d){bar.appendChild(h('button',{class:E.tab===d[0]?'on':'',role:'tab','aria-selected':E.tab===d[0]?'true':'false',onclick:function(){E.tab=d[0];drawTabs();var e=$('etabs');if(e&&e.scrollIntoView)e.scrollIntoView({block:'nearest'})}},d[1]))});
+  var m={q:$('paneQ'),s:$('paneS'),a:$('paneA')};
+  Object.keys(m).forEach(function(k){if(m[k])m[k].hidden=(k!==E.tab)});
+  var rn=$('rosterNote');if(rn)rn.textContent=roster?'Đã bật gán nhân sự. Mở tab "Nhân sự tham gia" để chọn người được mời.':'';
+}
+
 /* gỡ điều kiện trỏ tới câu không còn đứng trước */
 function prune(){
   var pruned=0,ids=[];
@@ -307,6 +324,7 @@ function drawQs(){
   var n=prune(),c=clear($('qs'));
   if(n)c.appendChild(h('div',{class:'warn'},'Đã gỡ '+n+' điều kiện logic vì câu được tham chiếu không còn đứng trước câu đó.'));
   E.S.questions.forEach(function(q,i){c.appendChild(qCard(q,i))});
+  drawTabs();
 }
 function qCard(q,i){
   var Q=E.S.questions,sec=q.type==='section';
