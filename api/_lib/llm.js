@@ -65,6 +65,12 @@ async function chat(messages, opt) {
   throw lastErr || Object.assign(new Error("failed"), { status: 502 });
 }
 function mock(o) {
+  if (o.task === "ks_draft") return JSON.stringify({ title: "Khảo sát mẫu (AI giả lập)", description: "Mô tả do AI giả lập soạn.", questions: [
+    { id: "q1", type: "nps", text: "Bạn có sẵn lòng giới thiệu chương trình này không?", required: true },
+    { id: "q2", type: "text", text: "Điều gì khiến bạn chưa sẵn sàng giới thiệu?", multiline: true, showIf: { mode: "all", rules: [{ q: "q1", op: "lte", v: 6 }] } },
+    { id: "q3", type: "multi", text: "Bạn muốn đào tạo thêm nội dung nào?", options: ["Sản phẩm", "Bán hàng", "Chính sách"], max: 2 }] });
+  if (o.task === "ks_review") return JSON.stringify({ tong_quan: "Bộ câu hỏi nhìn chung ổn (giả lập).", ghi_chu: [{ cau: 1, loai: "dan_dat", van_de: "Câu hỏi có thể dẫn dắt người trả lời.", goi_y: "Viết trung lập hơn.", viet_lai: "Bạn đánh giá thế nào về chương trình?" }] });
+  if (o.task === "ks_analyze") return JSON.stringify({ tom_tat: ["Mức hài lòng nhìn chung khá (giả lập)."], diem_manh: ["Nội dung dễ hiểu"], van_de: ["Thời lượng chưa phù hợp"], chu_de: [{ ten: "Thời lượng", muc_do: "vừa", mo_ta: "Nhiều ý kiến về thời lượng.", trich_dan: [] }], de_xuat: [{ viec: "Rút ngắn mỗi buổi", ly_do: "Nhiều phản hồi về thời lượng", uu_tien: "cao" }], luu_y: "Mẫu nhỏ, kết quả chỉ mang tính tham khảo (giả lập)." });
   if (o.task === "brief") return "- Võ Đăng Khoa: gọi ngay để gỡ vướng đại lý nợ.\n- Huỳnh Quốc Nam: nhắc gửi bù 3 ngày báo cáo.\n- Lê Anh Tuấn: tụt tiến độ, cùng rà 5 đại lý lớn.\nNhận định chung: nhóm đang chậm so với mốc, cần tập trung vào người tụt tiến độ.";
   if (o.task === "analyze") {
     const ids = o.ids || [], ci = ["khan", "chu_y", "chu_y", "thong_tin", "thong_tin", "thong_tin"];
