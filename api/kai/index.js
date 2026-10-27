@@ -222,7 +222,7 @@ module.exports = async function (context, req) {
         } catch (e) {
           lastErr = e;
           if (e && e.status === 429 && i < attempts.length - 1) await sleepMs(1500 + Math.floor(Math.random() * 1000));   // quá tải: đợi một chút rồi thử lại với ngữ cảnh gọn hơn
-          context.log.error("kai ask lần " + (i + 1), e && e.message, e && e.status, "promptChars:", sys.length + a.h.reduce((n, m) => n + m.content.length, 0));
+          context.log.error("kai ask lần " + (i + 1), e && e.provider, e && e.message, e && e.status, "promptChars:", sys.length + a.h.reduce((n, m) => n + m.content.length, 0));
         }
       }
       if (!answer) {

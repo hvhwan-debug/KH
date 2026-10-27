@@ -30,7 +30,15 @@ async function post(url, headers, body, ms) {
 function providers(opt) {
   const list = [];
   const ep = (process.env.AZURE_OPENAI_ENDPOINT || "").replace(/\/+$/, ""), key = process.env.AZURE_OPENAI_KEY, dep = process.env.AZURE_OPENAI_DEPLOYMENT;
-  if (ep && key && dep) list.push({ name: "azure", url: ep + "/chat/completions", headers: { "api-key": key, Authorization: "Bearer " + key }, base: { model: dep }, extra: opt.json ? { response_format: { type: "json_object" } } : {} });
+  if (ep && key && dep) {
+    // gpt-5*, o1/o3/o4*: mô hình suy luận -> không nhận max_tokens (phải là max_completion_tokens), không đổi temperature,
+    // và token "suy nghĩ" tính vào giới hạn đầu ra nên cần chừa chỗ + hạ mức suy luận để trả lời nhanh, ít tốn hạn mức.
+    const reasoning = /^(gpt-5|o[134])/i.test(dep);
+    list.push({ name: "azure", url: ep + "/chat/completions", headers: { "api-key": key, Authorization: "Bearer " + key },
+      base: Object.assign({ model: dep }, reasoning ? { reasoning_effort: process.env.AZURE_REASONING_EFFORT || "low" } : {}),
+      tokenParam: reasoning ? "max_completion_tokens" : "max_tokens", tokenMul: reasoning ? 2.5 : 1, noTemp: reasoning,
+      extra: opt.json ? { response_format: { type: "json_object" } } : {} });
+  }
   const ok = process.env.OPENAI_API_KEY;
   if (ok) {
     const oModel = process.env.OPENAI_MODEL || "gpt-4o-mini";
@@ -43,6 +51,12 @@ function providers(opt) {
       extra: Object.assign(opt.json ? { response_format: { type: "json_object" } } : {}, reasoning ? { include_reasoning: false } : {}) });
   }
   return list;
+}
+function mkBody(P, messages, temperature, max_tokens, withExtra) {
+  const b = { messages };
+  if (!P.noTemp) b.temperature = temperature;
+  b[P.tokenParam || "max_tokens"] = Math.min(4000, Math.round(max_tokens * (P.tokenMul || 1)));
+  return Object.assign(b, P.base, withExtra ? P.extra : {});
 }
 async function chat(messages, opt) {
   opt = opt || {};
@@ -59,14 +73,15 @@ async function chat(messages, opt) {
       if (left < 600) break;
       // Nguồn đầu (khi còn nguồn sau) chỉ dùng tối đa 60% thời gian còn lại, phần còn lại để dành cho nguồn dự phòng
       const budget = isLast ? left : Math.max(800, Math.floor(left * 0.6));
-      const body = Object.assign({ messages, temperature, max_tokens }, P.base, P.extra);
+      const body = mkBody(P, messages, temperature, max_tokens, true);
       try {
         return await post(P.url, P.headers, body, budget);
       } catch (e) {
-        lastErr = e;
+        lastErr = e; e.provider = P.name;
+        console.warn("[llm] " + P.name + " lỗi " + (e.status || e.message));   // ghi rõ nhà cung cấp nào lỗi, mã gì (xem trong Log của Azure)
         if (e.status === 400 && Object.keys(P.extra).length) { // tuỳ chọn không được hỗ trợ: gửi lại ngay, bỏ tuỳ chọn
           P.extra = {};
-          try { return await post(P.url, P.headers, Object.assign({ messages, temperature, max_tokens }, P.base), Math.max(600, deadline - Date.now() - (isLast ? 0 : 1500))); } catch (e2) { lastErr = e2; }
+          try { return await post(P.url, P.headers, mkBody(P, messages, temperature, max_tokens, false), Math.max(600, deadline - Date.now() - (isLast ? 0 : 1500))); } catch (e2) { lastErr = e2; e2.provider = P.name; console.warn("[llm] " + P.name + " lỗi (gửi lại không kèm tuỳ chọn) " + (e2.status || e2.message)); }
         }
         const retryable = !e.status || e.status === 429 || e.status >= 500;
         if (!(isLast && retryable && attempt < 2)) break;
