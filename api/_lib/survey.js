@@ -15,7 +15,10 @@
 //   number   số (min, max, số nguyên)
 //   date     ngày YYYY-MM-DD
 // Logic: showIf (hiện câu khi thoả điều kiện) và endIf (kết thúc khảo sát sau câu này khi thoả điều kiện).
+const crypto = require("crypto");
 const store = require("./store");
+const quiz = require("./quiz");
+const PROV = require("./provinces");
 
 const CODE_RE = /^[a-z0-9-]{2,40}$/;
 const ID_RE = /^[a-z0-9_]{1,20}$/;
@@ -254,10 +257,71 @@ function cleanAnswers(qs, answers, others) {
   return { answers: outA, others: outO };
 }
 
+
+// ---------- Gán nhân sự tham gia (chế độ danh tính "roster") ----------
+// Nhân sự lấy từ "Hồ sơ học tập" (quiz.getCandidates): mã NV, email, quản lí, chức danh, nhóm ngành, miền, tỉnh/thành, trạng thái nghỉ việc.
+// audience = { managers, titles, segments, regions, provinces, codes, exclude }
+//   - các nhóm managers/titles/segments/regions/provinces: THOẢ TẤT CẢ các nhóm đã chọn (trong một nhóm chỉ cần khớp một giá trị)
+//   - codes: thêm riêng từng người (kể cả không thuộc nhóm); exclude: loại riêng từng người
+//   - không chọn gì (và codes rỗng) = mọi nhân viên đang làm việc
+// Nhân viên đã nghỉ việc luôn bị loại. Nhóm được lưu theo khoá đã chuẩn hoá nên nhân viên mới vào đúng nhóm tự được gán.
+const lc = (v) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().toLowerCase();
+function uniq(list, max, fn) {
+  const seen = new Set(), out = [];
+  (Array.isArray(list) ? list : []).forEach((x) => { const v = fn(x); if (v && !seen.has(v)) { seen.add(v); out.push(v); } });
+  return out.slice(0, max);
+}
+function candKeys(c) {
+  c = c || {};
+  return {
+    nc: quiz.normCode(c.code), mk: quiz.normPerson(c.manager), tk: lc(quiz.titleOf(c)),
+    seg: quiz.normSegment(c.segment), rg: quiz.normRegion(c.region), pk: lc(PROV.canonProvince(c.province) || c.province)
+  };
+}
+function cleanAudience(a) {
+  a = a && typeof a === "object" ? a : {};
+  return {
+    managers: uniq(a.managers, 300, (x) => quiz.normPerson(x)),
+    titles: uniq(a.titles, 100, lc),
+    segments: uniq(a.segments, 3, (x) => (["both", "gia_dung", "may_loc"].includes(x) ? x : "")),
+    regions: uniq(a.regions, 2, (x) => (["bac", "nam"].includes(x) ? x : "")),
+    provinces: uniq(a.provinces, 70, lc),
+    codes: uniq(a.codes, 20000, (x) => quiz.normCode(x)),
+    exclude: uniq(a.exclude, 20000, (x) => quiz.normCode(x))
+  };
+}
+function inAudience(a, c) {
+  if (!c || quiz.isLeft(c)) return false;
+  if (!a) return true;
+  const k = candKeys(c);
+  if ((a.exclude || []).includes(k.nc)) return false;
+  const dims = [["managers", k.mk], ["titles", k.tk], ["segments", k.seg], ["regions", k.rg], ["provinces", k.pk]].filter((d) => a[d[0]] && a[d[0]].length);
+  const hasCodes = a.codes && a.codes.length;
+  if (!dims.length && !hasCodes) return true;
+  if (hasCodes && a.codes.includes(k.nc)) return true;
+  return dims.length > 0 && dims.every((d) => a[d[0]].includes(d[1]));
+}
+async function identify(codeIn, emailIn) {
+  const code = quiz.normCode(codeIn), email = quiz.normEmail(emailIn);
+  if (!code || !email) return null;
+  const list = await quiz.getCandidates();
+  return list.find((c) => quiz.normCode(c.code) === code && quiz.normEmail(c.email) === email) || null;
+}
+// Mã phiếu của một nhân viên: ổn định theo mã NV (mỗi người một phiếu)
+function respId(code) {
+  const nc = quiz.normCode(code), safe = nc.replace(/[^a-z0-9._-]/g, "_").slice(0, 40);
+  return safe === nc ? safe : safe + "-" + crypto.createHash("sha1").update(nc).digest("hex").slice(0, 6);
+}
+function metaOf(c) {
+  const k = candKeys(c);
+  return { manager: str(c.manager, 100), title: str(quiz.titleOf(c), 50), segment: k.seg, region: k.rg, province: str(c.province, 60) };
+}
+
 async function getSurvey(code) { return validCode(code) ? store.get(surveyKey(code)) : null; }
 async function countResponses(code) { return (await store.list(respPrefix(code))).length; }
 
 module.exports = {
   validCode, surveyKey, respPrefix, state, cleanQuestions, cleanAnswers, getSurvey, countResponses,
-  visibility, evalCond, AnsErr, str, TYPES
+  visibility, evalCond, AnsErr, str, TYPES,
+  cleanAudience, inAudience, candKeys, identify, respId, metaOf
 };

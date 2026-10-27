@@ -25,6 +25,8 @@ function fmtDur(ms){if(!ms)return '—';var s=Math.round(ms/1000);return s<60?s+
 function fmtTime(ms){return ms?new Date(ms).toLocaleString('vi-VN'):''}
 function toLocal(ms){if(!ms)return '';var d=new Date(ms);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
 function clone(o){return JSON.parse(JSON.stringify(o))}
+/* bỏ dấu tiếng Việt + chữ thường để lọc "cuong" ra "Cường" */
+function fold(t){return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'d').toLowerCase()}
 
 function api(op,params,body){
   var url='/api/ks-admin?op='+op+(params?'&'+params:'');
@@ -62,6 +64,18 @@ function retype(q,type){
 
 /* ---------- mẫu có sẵn ---------- */
 var TEMPLATES=[
+{name:'Nhu cầu đào tạo (gán nhân sự theo hồ sơ)',title:'Khảo sát nhu cầu đào tạo',description:'Giúp bộ phận đào tạo xây dựng kế hoạch phù hợp với bạn. Mất khoảng 5 phút.',identity:'roster',audience:{},questions:[
+ {id:'q1',type:'section',text:'Nội dung bạn cần đào tạo',help:'Chọn những nội dung giúp ích nhiều nhất cho công việc hiện tại.'},
+ {id:'q2',type:'multi',text:'Bạn muốn được đào tạo về nội dung nào? (tối đa 3)',options:['Kiến thức sản phẩm mới','Kỹ năng bán hàng và thuyết phục','Trưng bày, tiếp cận điểm bán','Chính sách, chương trình bán hàng','Sử dụng công cụ, ứng dụng làm việc','Giao tiếp và xử lý từ chối'],allowOther:true,min:1,max:3,required:true},
+ {id:'q3',type:'ranking',text:'Sắp xếp theo mức cần thiết (trên cùng là cần nhất)',options:['Kiến thức sản phẩm','Kỹ năng bán hàng','Quản lý điểm bán','Chính sách và quy trình'],required:true},
+ {id:'q4',type:'matrix',text:'Bạn tự đánh giá mức thành thạo hiện tại',required:true,rows:['Kiến thức sản phẩm','Kỹ năng bán hàng','Chăm sóc và xử lý khiếu nại','Sử dụng công cụ, ứng dụng'],cols:['Cần cải thiện nhiều','Cơ bản','Tốt','Rất tốt']},
+ {id:'q5',type:'section',text:'Hình thức và thời gian'},
+ {id:'q6',type:'single',text:'Hình thức đào tạo bạn mong muốn',required:true,options:['Trực tiếp tại khu vực','Tập trung tại văn phòng','Trực tuyến (video call)','Video, tài liệu tự học'],display:'radio'},
+ {id:'q7',type:'multi',text:'Thời điểm bạn thuận tiện tham gia',options:['Sáng các ngày trong tuần','Chiều các ngày trong tuần','Tối','Cuối tuần'],min:1,max:0,required:true},
+ {id:'q8',type:'number',text:'Số giờ mỗi tháng bạn có thể dành cho đào tạo',min:0,max:100,integer:true,unit:'giờ'},
+ {id:'q9',type:'yesno',text:'Trong 6 tháng qua bạn có tham gia khoá đào tạo nào không?',required:true},
+ {id:'q10',type:'text',text:'Khoá nào hữu ích nhất với bạn? Vì sao?',multiline:true,maxLen:1000,showIf:{mode:'all',rules:[{q:'q9',op:'eq',v:0}]}},
+ {id:'q11',type:'text',text:'Đề xuất khác cho chương trình đào tạo',multiline:true,maxLen:1000}]},
 {name:'Hài lòng khách hàng (CSAT + NPS)',title:'Khảo sát mức độ hài lòng',description:'Cảm ơn bạn đã dành 2 phút góp ý để chúng tôi phục vụ tốt hơn.',identity:'none',questions:[
  {id:'q1',type:'rating',text:'Nhìn chung bạn hài lòng đến mức nào?',required:true,max:5,low:'Rất không hài lòng',high:'Rất hài lòng'},
  {id:'q2',type:'matrix',text:'Bạn đánh giá thế nào về từng khía cạnh sau?',required:true,rows:['Chất lượng sản phẩm','Giá cả','Giao hàng','Hỗ trợ sau bán'],cols:['Kém','Trung bình','Tốt','Rất tốt']},
@@ -95,7 +109,7 @@ var TEMPLATES=[
 TEMPLATES.forEach(function(t,i){$('tpl').appendChild(h('option',{value:i},t.name))});
 $('tpl').addEventListener('change',function(){
   var v=this.value;this.value='';if(v==='')return;var t=TEMPLATES[+v];
-  openEditor({code:'',title:t.title,description:t.description||'',thanks:'',identity:t.identity,open:true,openAt:0,closeAt:0,maxResponses:0,showProgress:true,questions:clone(t.questions)},true,0);
+  openEditor({code:'',title:t.title,description:t.description||'',thanks:'',identity:t.identity,audience:t.audience?clone(t.audience):null,open:true,openAt:0,closeAt:0,maxResponses:0,showProgress:true,questions:clone(t.questions)},true,0);
 });
 
 /* ---------- danh sách ---------- */
@@ -164,8 +178,9 @@ function drawEditor(){
     fld('Tên khảo sát',tin(S,'title','Tên người trả lời sẽ thấy',200))));
   box.appendChild(fld('Mô tả ngắn (tuỳ chọn)',tarea(S,'description','Giới thiệu mục đích, thời gian làm',3)));
   box.appendChild(fld('Lời cảm ơn sau khi gửi (tuỳ chọn)',tin(S,'thanks','Cảm ơn bạn đã hoàn thành khảo sát.',500)));
-  var ident=sel(S,'identity',[['none','Ẩn danh, không hỏi tên'],['name','Hỏi họ tên'],['emp','Hỏi mã nhân viên + họ tên (mỗi mã chỉ gửi 1 lần)']]);
+  var ident=sel(S,'identity',[['none','Ẩn danh, không hỏi tên'],['name','Hỏi họ tên'],['emp','Hỏi mã nhân viên + họ tên (mỗi mã chỉ gửi 1 lần)'],['roster','Nhân sự được gán: xác thực mã NV + email trong Hồ sơ học tập']],drawAud);
   box.appendChild(fld('Thông tin người trả lời',ident));
+  box.appendChild(h('div',{id:'aud'}));
   var oa=h('input',{type:'datetime-local',value:toLocal(S.openAt),onchange:function(){S.openAt=this.value?Date.parse(this.value):0}});
   var ca=h('input',{type:'datetime-local',value:toLocal(S.closeAt),onchange:function(){S.closeAt=this.value?Date.parse(this.value):0}});
   var mr=h('input',{type:'number',min:0,value:S.maxResponses||'',placeholder:'0 = không giới hạn',onchange:function(){S.maxResponses=Math.max(0,Math.floor(Number(this.value)||0))}});
@@ -183,7 +198,92 @@ function drawEditor(){
     h('button',{class:'p nf',onclick:save},'Lưu khảo sát'),
     h('button',{class:'nf',onclick:function(){if(!E.saved){alert('Hãy lưu khảo sát trước khi xem thử.');return}openLink(E.S.code,true)}},'Xem thử'),
     h('button',{class:'nf',onclick:function(){$('editor').hidden=true}},'Đóng'),msg));
-  drawQs();
+  drawQs();drawAud();
+}
+
+
+/* ---------- gán nhân sự tham gia (theo Hồ sơ học tập) ---------- */
+var ROSTER=null,SEG={both:'Cả hai ngành',gia_dung:'Gia dụng',may_loc:'Máy lọc nước'},RG={bac:'Miền Bắc',nam:'Miền Nam'};
+var DIMS=[['managers','mk','Theo quản lí'],['titles','tk','Theo chức danh'],['segments','seg','Theo nhóm ngành'],['regions','rg','Theo miền'],['provinces','pk','Theo tỉnh/thành']];
+function audOf(){var a=E.S.audience;if(!a||typeof a!=='object')a=E.S.audience={};
+  ['managers','titles','segments','regions','provinces','codes','exclude'].forEach(function(k){if(!Array.isArray(a[k]))a[k]=[]});return a}
+function activeDims(a){return DIMS.filter(function(d){return a[d[0]].length})}
+function ruleMatch(c){var a=audOf(),dims=activeDims(a);if(!dims.length)return !a.codes.length;
+  return dims.every(function(d){return a[d[0]].indexOf(c[d[1]])>=0})}
+function isMember(c){if(c.left)return false;var a=audOf();if(a.exclude.indexOf(c.nc)>=0)return false;
+  if(a.codes.indexOf(c.nc)>=0)return true;return ruleMatch(c)}
+function dropFrom(arr,v){var i=arr.indexOf(v);if(i>=0)arr.splice(i,1)}
+function setMember(c,want){var a=audOf();if(c.left)return;
+  if(want){dropFrom(a.exclude,c.nc);if(!ruleMatch(c)&&a.codes.indexOf(c.nc)<0)a.codes.push(c.nc)}
+  else{dropFrom(a.codes,c.nc);if(ruleMatch(c)&&a.exclude.indexOf(c.nc)<0)a.exclude.push(c.nc)}}
+function facetLabel(dim,key,row){return dim==='seg'?(SEG[key]||key):dim==='rg'?(RG[key]||key):dim==='mk'?(row.manager||'(chưa có quản lí)'):dim==='pk'?(row.province||'(chưa có tỉnh)'):key}
+var audFilter='';
+function drawAud(){
+  var box=$('aud');if(!box)return;clear(box);
+  if(!E||E.S.identity!=='roster')return;
+  var a=audOf();
+  box.appendChild(h('div',{class:'qc',style:'background:var(--soft)'},h('strong',null,'Nhân sự tham gia'),
+    h('p',{class:'note',style:'margin:4px 0 0'},'Chỉ nhân sự trong Hồ sơ học tập đúng đối tượng mới mở được phiếu (xác thực bằng mã nhân viên + email). Nhân viên đã nghỉ việc tự bị loại. Không chọn nhóm nào = mọi nhân viên đang làm việc. Nhóm được lưu theo điều kiện nên người mới vào đúng nhóm sẽ tự được gán.')));
+  var inner=box.firstChild;
+  if(!ROSTER){inner.appendChild(h('p',{class:'note'},'Đang tải danh sách nhân sự…'));
+    api('roster').then(function(j){ROSTER=j.rows;drawAud()}).catch(function(e){clear(inner).appendChild(h('p',{class:'bad'},'Không tải được danh sách nhân sự: '+e.message))});return}
+  var active=ROSTER.filter(function(c){return !c.left});
+  inner.appendChild(h('div',{id:'audSum',style:'margin:10px 0;font-size:1.05rem'}));
+  inner.appendChild(h('div',{class:'note'},'Chọn nhanh theo nhóm (trong một nhóm chỉ cần khớp một mục; giữa các nhóm phải khớp tất cả):'));
+  DIMS.forEach(function(d){
+    var map={},order=[];active.forEach(function(c){var k=c[d[1]];if(k===''||k===undefined)return;if(!map[k]){map[k]={n:0,row:c};order.push(k)}map[k].n++});
+    if(!order.length)return;
+    order.sort(function(x,y){return map[y].n-map[x].n||String(facetLabel(d[1],x,map[x].row)).localeCompare(facetLabel(d[1],y,map[y].row))});
+    var det=h('details',{open:a[d[0]].length>0},h('summary',{class:'note',style:'cursor:pointer;margin:6px 0'},d[2]+(a[d[0]].length?'  ('+a[d[0]].length+' đã chọn)':'')));
+    var wrap=h('div',{style:'display:flex;flex-wrap:wrap;gap:4px 14px;margin:4px 0 8px'});
+    order.forEach(function(k){
+      wrap.appendChild(h('label',{class:'chk',style:'margin:2px 0'},h('input',{type:'checkbox',checked:a[d[0]].indexOf(k)>=0,onchange:function(){
+        if(this.checked){if(a[d[0]].indexOf(k)<0)a[d[0]].push(k)}else dropFrom(a[d[0]],k);
+        det.firstChild.textContent=d[2]+(a[d[0]].length?'  ('+a[d[0]].length+' đã chọn)':'');refreshAud()}}),facetLabel(d[1],k,map[k].row)+' ('+map[k].n+')'));
+    });
+    det.appendChild(wrap);inner.appendChild(det);
+  });
+  // theo từng người
+  inner.appendChild(h('h3',{style:'margin:12px 0 4px'},'Chọn / bỏ từng người'));
+  var fi=h('input',{type:'text',placeholder:'Lọc theo mã, họ tên, quản lí, chức danh…','aria-label':'Lọc nhân sự',value:audFilter,oninput:function(){audFilter=this.value;refreshAud()}});
+  inner.appendChild(h('div',{class:'row'},fi,
+    h('button',{class:'nf',onclick:function(){shown().forEach(function(c){setMember(c,true)});refreshAud()}},'Chọn tất cả đang hiện'),
+    h('button',{class:'nf',onclick:function(){shown().forEach(function(c){setMember(c,false)});refreshAud()}},'Bỏ chọn đang hiện')));
+  inner.appendChild(h('div',{id:'audList',class:'scroll',style:'margin-top:8px;max-height:320px;overflow:auto'}));
+  // dán danh sách mã
+  var ta=h('textarea',{placeholder:'Mỗi dòng một mã nhân viên (hoặc cách nhau dấu phẩy)',rows:3,'aria-label':'Dán mã nhân viên'});
+  var pm=h('div',{class:'note'});
+  inner.appendChild(h('div',{style:'margin-top:10px'},h('label',{class:'f'},'Thêm nhanh bằng danh sách mã nhân viên'),ta,
+    h('div',{class:'row',style:'margin-top:6px;align-items:center'},h('button',{class:'nf',onclick:function(){
+      var by={};ROSTER.forEach(function(c){by[c.nc]=c});var miss=[],added=0;
+      ta.value.split(/[\n,;\t]+/).map(function(x){return x.trim().toLowerCase()}).filter(Boolean).forEach(function(c){
+        var r=by[c];if(!r||r.left){miss.push(c);return}if(!isMember(r)){setMember(r,true);added++}});
+      pm.className=miss.length?'note bad':'note ok';pm.textContent='Đã thêm '+added+' người.'+(miss.length?' Không tìm thấy hoặc đã nghỉ việc: '+miss.slice(0,20).join(', ')+(miss.length>20?'…':''):'');
+      if(!miss.length)ta.value='';refreshAud()}},'Thêm vào danh sách'),pm)));
+  refreshAud();
+}
+function shown(){
+  var f=fold(audFilter.trim());
+  return ROSTER.filter(function(c){return !c.left&&(!f||fold(c.code+' '+c.name+' '+c.manager+' '+c.title).indexOf(f)>=0)});
+}
+function drawSum(){
+  var el=$('audSum');if(!el)return;
+  var active=ROSTER.filter(function(c){return !c.left}),n=active.filter(isMember).length,a=audOf(),sum=clear(el);
+  sum.appendChild(h('span',null,'Đang gán '));sum.appendChild(h('strong',{class:n?'ok':'bad'},String(n)));
+  sum.appendChild(h('span',null,' / '+active.length+' nhân viên đang làm việc'));
+  if(!n)sum.appendChild(h('div',{class:'warn'},'Chưa có ai được gán: không ai mở được khảo sát. Hãy chọn nhóm hoặc thêm người.'));
+  sum.appendChild(h('div',{class:'note'},(activeDims(a).length||a.codes.length||a.exclude.length)?'Đã thêm riêng '+a.codes.length+' người, loại riêng '+a.exclude.length+' người.':'Chưa giới hạn: mọi nhân viên đang làm việc đều được mời.'));
+}
+function refreshAud(){
+  if(!$('audSum'))return;drawSum();
+  var list=clear($('audList')),rows=shown(),max=100,tb=h('tbody');
+  rows.slice(0,max).forEach(function(c){
+    tb.appendChild(h('tr',null,h('td',null,h('input',{type:'checkbox','aria-label':'Gán '+c.name,checked:isMember(c),onchange:function(){setMember(c,this.checked);drawSum()}})),
+      h('td',null,c.code),h('td',null,c.name),h('td',null,c.manager),h('td',null,c.title)));
+  });
+  if(!rows.length)tb.appendChild(h('tr',null,h('td',{colspan:5,class:'note'},'Không có nhân viên nào khớp.')));
+  list.appendChild(h('table',null,h('thead',null,h('tr',null,h('th'),h('th',null,'Mã NV'),h('th',null,'Họ tên'),h('th',null,'Quản lí'),h('th',null,'Chức danh'))),tb));
+  if(rows.length>max)list.appendChild(h('p',{class:'note'},'Hiện '+max+'/'+rows.length+' người. Hãy lọc để xem thêm.'));
 }
 
 /* gỡ điều kiện trỏ tới câu không còn đứng trước */
@@ -318,7 +418,7 @@ function logicBlock(q,i,key,title){
 
 /* ---------- lưu ---------- */
 function payload(){
-  var S=clone(E.S);
+  var S=clone(E.S);if(S.identity!=='roster')S.audience=null;
   S.questions.forEach(function(q){
     ['options','rows','cols'].forEach(function(k){if(q[k])q[k]=q[k].map(function(x){return String(x).trim()}).filter(Boolean)});
     if(q.type==='text')q.multiline=!!q.multiline;
@@ -342,7 +442,7 @@ var R=null;
 function showResults(code){
   $('editor').hidden=true;var box=clear($('results'));$('results').hidden=false;box.appendChild(h('p',{class:'note'},'Đang tải kết quả…'));
   Promise.all([api('get','code='+encodeURIComponent(code)),api('results','code='+encodeURIComponent(code))]).then(function(r){
-    R={S:r[0].survey,rows:r[1].rows,tab:'sum',open:{},filter:''};drawResults();$('results').scrollIntoView({behavior:'smooth'});
+    R={S:r[0].survey,rows:r[1].rows,staff:r[1].staff||null,tab:'sum',open:{},filter:'',pf:''};drawResults();$('results').scrollIntoView({behavior:'smooth'});
   }).catch(function(e){clear(box).appendChild(h('p',{class:'bad'},e.message))});
 }
 function ansText(q,a,other){
@@ -370,12 +470,14 @@ function drawResults(){
     h('button',{class:'nf',onclick:function(){$('results').hidden=true}},'Đóng')));
   box.appendChild(h('div',{class:'kpis'},
     kpi(rows.length+(S.maxResponses?' / '+S.maxResponses:''),'Số phiếu'),
+    R.staff?kpi(R.staff.filter(function(x){return x.done}).length+'/'+R.staff.length+' ('+pct(R.staff.filter(function(x){return x.done}).length,R.staff.length)+'%)','Đã trả lời / được gán'):null,
     kpi(fmtDur(avg),'Thời gian làm trung bình'),
     kpi(rows.length?fmtTime(rows[rows.length-1].submittedAt):'—','Phiếu gần nhất')));
   var tabs=h('div',{class:'tabs'});
-  [['sum','Tổng hợp theo câu hỏi'],['rows','Từng phiếu ('+rows.length+')']].forEach(function(t){
+  [['sum','Tổng hợp theo câu hỏi'],['rows','Từng phiếu ('+rows.length+')']].concat(R.staff?[['prog','Tiến độ theo nhân sự ('+R.staff.filter(function(x){return !x.done}).length+' chưa trả lời)']]:[]).forEach(function(t){
     tabs.appendChild(h('button',{class:R.tab===t[0]?'on':'',onclick:function(){R.tab=t[0];drawResults()}},t[1]))});
   box.appendChild(tabs);
+  if(R.tab==='prog'&&R.staff){box.appendChild(progress());return}
   if(!rows.length){box.appendChild(h('p',{class:'note'},'Chưa có ai trả lời.'));return}
   box.appendChild(R.tab==='sum'?summary():responses());
 }
@@ -444,29 +546,66 @@ function summary(){
   return wrap;
 }
 
+
+function groupBars(title,keyFn,labelEmpty){
+  var g={},order=[];R.staff.forEach(function(x){var k=keyFn(x)||labelEmpty;if(!g[k]){g[k]={n:0,d:0};order.push(k)}g[k].n++;if(x.done)g[k].d++});
+  order.sort(function(a,b){return pct(g[a].d,g[a].n)-pct(g[b].d,g[b].n)||g[b].n-g[a].n});
+  var wrap=h('div',null,h('h3',{style:'margin:14px 0 4px'},title));
+  order.forEach(function(k){wrap.appendChild(h('div',{class:'bar'},h('span',{class:'l'},k),h('div',{class:'t'},h('i',{style:'width:'+pct(g[k].d,g[k].n)+'%'})),h('span',{class:'v'},g[k].d+'/'+g[k].n+' ('+pct(g[k].d,g[k].n)+'%)')))});
+  return wrap;
+}
+function progress(){
+  var wrap=h('div');
+  wrap.appendChild(groupBars('Tỷ lệ trả lời theo quản lí (thấp nhất lên đầu)',function(x){return x.manager},'(chưa có quản lí)'));
+  wrap.appendChild(groupBars('Tỷ lệ trả lời theo chức danh',function(x){return x.title},'(chưa có chức danh)'));
+  var pend=R.staff.filter(function(x){return !x.done});
+  wrap.appendChild(h('h3',{style:'margin:16px 0 4px'},'Chưa trả lời ('+pend.length+')'));
+  if(!pend.length){wrap.appendChild(h('p',{class:'ok'},'Tất cả nhân sự được gán đã trả lời.'));return wrap}
+  var fi=h('input',{type:'text',placeholder:'Lọc theo mã, họ tên, quản lí…','aria-label':'Lọc người chưa trả lời',value:R.pf,oninput:function(){R.pf=this.value;fill()}});
+  var tb=h('tbody');
+  function match(x){var f=fold(R.pf.trim());return !f||fold(x.code+' '+x.name+' '+x.manager+' '+x.title).indexOf(f)>=0}
+  function fill(){clear(tb);var list=pend.filter(match);
+    list.slice(0,300).forEach(function(x){tb.appendChild(h('tr',null,h('td',null,x.code),h('td',null,x.name),h('td',null,x.manager),h('td',null,x.title),h('td',null,x.phone)))});
+    if(!list.length)tb.appendChild(h('tr',null,h('td',{colspan:5,class:'note'},'Không có ai khớp.')));
+    if(list.length>300)tb.appendChild(h('tr',null,h('td',{colspan:5,class:'note'},'Hiện 300/'+list.length+'. Hãy lọc hoặc tải CSV để xem đủ.')))}
+  wrap.appendChild(h('div',{class:'row'},fi,h('button',{class:'nf',onclick:function(){exportPending(pend.filter(match))}},'Tải danh sách chưa trả lời (CSV)')));
+  wrap.appendChild(h('div',{class:'scroll',style:'margin-top:8px'},h('table',null,h('thead',null,h('tr',null,h('th',null,'Mã NV'),h('th',null,'Họ tên'),h('th',null,'Quản lí'),h('th',null,'Chức danh'),h('th',null,'SĐT / Zalo'))),tb)));
+  fill();return wrap;
+}
+function csvCell(v){v=String(v==null?'':v);if(/^[=+\-@\t\r]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'}
+function download(name,lines){
+  var blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  var u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);
+}
+function exportPending(list){
+  var out=[['Mã NV','Họ tên','Quản lí','Chức danh','SĐT / Zalo'].map(csvCell).join(',')];
+  list.forEach(function(x){out.push([x.code,x.name,x.manager,x.title,x.phone].map(csvCell).join(','))});
+  download('chua-tra-loi-'+R.S.code+'.csv',out);
+}
+
 function responses(){
   var S=R.S,wrap=h('div');
   var inp=h('input',{type:'text',placeholder:'Tìm theo họ tên hoặc mã nhân viên…','aria-label':'Tìm phiếu',value:R.filter,oninput:function(){R.filter=this.value;fillRows()}});
-  var tb=h('tbody'),ident=S.identity&&S.identity!=='none';
+  var tb=h('tbody'),ident=S.identity&&S.identity!=='none',ro=S.identity==='roster',nc=(ident?5:3)+(ro?2:0);
   function fillRows(){
-    clear(tb);var f=R.filter.trim().toLowerCase();
+    clear(tb);var f=fold(R.filter.trim());
     R.rows.slice().reverse().forEach(function(r){
-      if(f&&(String(r.name||'').toLowerCase().indexOf(f)<0&&String(r.empId||'').toLowerCase().indexOf(f)<0))return;
+      if(f&&(fold(r.name).indexOf(f)<0&&fold(r.empId).indexOf(f)<0&&fold(r.nc).indexOf(f)<0))return;
       var open=!!R.open[r.id];
-      tb.appendChild(h('tr',null,h('td',null,fmtTime(r.submittedAt)),ident?h('td',null,r.empId||''):null,ident?h('td',null,r.name||''):null,h('td',null,fmtDur(r.ms)),
+      tb.appendChild(h('tr',null,h('td',null,fmtTime(r.submittedAt)),ident?h('td',null,r.nc||r.empId||''):null,ident?h('td',null,r.name||''):null,ro?h('td',null,(r.meta&&r.meta.manager)||''):null,ro?h('td',null,(r.meta&&r.meta.title)||''):null,h('td',null,fmtDur(r.ms)),
         h('td',null,h('button',{class:'sm',onclick:function(){R.open[r.id]=!open;fillRows()}},open?'Ẩn':'Xem'),' ',
           h('button',{class:'sm d',onclick:function(){if(confirm('Xoá phiếu này? Không thể khôi phục.'))api('delresp',null,{code:S.code,id:r.id}).then(function(){R.rows=R.rows.filter(function(x){return x.id!==r.id});drawResults()}).catch(function(e){alert(e.message)})}},'Xoá'))));
       if(open){
         var d=h('div');
         S.questions.forEach(function(q,i){if(q.type==='section')return;var a=r.answers&&r.answers[q.id];
           d.appendChild(h('p',{style:'margin:4px 0'},h('strong',null,(i+1)+'. '+q.text+': '),a===undefined||a===null?h('span',{class:'note'},'(bỏ trống / không hiển thị)'):ansText(q,a,r.others&&r.others[q.id])))});
-        tb.appendChild(h('tr',null,h('td',{colspan:ident?5:3,style:'background:var(--soft)'},d)));
+        tb.appendChild(h('tr',null,h('td',{colspan:nc,style:'background:var(--soft)'},d)));
       }
     });
-    if(!tb.firstChild)tb.appendChild(h('tr',null,h('td',{colspan:5,class:'note'},'Không có phiếu nào khớp.')));
+    if(!tb.firstChild)tb.appendChild(h('tr',null,h('td',{colspan:nc,class:'note'},'Không có phiếu nào khớp.')));
   }
   wrap.appendChild(inp);
-  wrap.appendChild(h('div',{class:'scroll',style:'margin-top:8px'},h('table',null,h('thead',null,h('tr',null,h('th',null,'Thời gian'),ident?h('th',null,'Mã NV'):null,ident?h('th',null,'Họ tên'):null,h('th',null,'Thời gian làm'),h('th'))),tb)));
+  wrap.appendChild(h('div',{class:'scroll',style:'margin-top:8px'},h('table',null,h('thead',null,h('tr',null,h('th',null,'Thời gian'),ident?h('th',null,'Mã NV'):null,ident?h('th',null,'Họ tên'):null,ro?h('th',null,'Quản lí'):null,ro?h('th',null,'Chức danh'):null,h('th',null,'Thời gian làm'),h('th'))),tb)));
   fillRows();return wrap;
 }
 
@@ -474,7 +613,7 @@ function responses(){
 function exportCsv(){
   var S=R.S;
   function cell(v){v=String(v==null?'':v);if(/^[=+\-@\t\r]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'}
-  var head=['Thời gian','Mã NV','Họ tên','Thời gian làm (giây)'],cols=[];
+  var ro=S.identity==='roster',head=['Thời gian','Mã NV','Họ tên','Thời gian làm (giây)'].concat(ro?['Quản lí','Chức danh','Nhóm ngành','Miền','Tỉnh/thành']:[]),cols=[];
   S.questions.forEach(function(q,i){
     if(q.type==='section')return;
     if(q.type==='matrix')q.rows.forEach(function(r,ri){head.push('C'+(i+1)+'. '+q.text+' — '+r);cols.push({q:q,ri:ri})});
@@ -482,7 +621,7 @@ function exportCsv(){
   });
   var out=[head.map(cell).join(',')];
   R.rows.forEach(function(r){
-    var line=[new Date(r.submittedAt).toLocaleString('vi-VN'),r.empId||'',r.name||'',r.ms?Math.round(r.ms/1000):''];
+    var mt=r.meta||{},line=[new Date(r.submittedAt).toLocaleString('vi-VN'),r.nc||r.empId||'',r.name||'',r.ms?Math.round(r.ms/1000):''].concat(ro?[mt.manager||'',mt.title||'',SEG[mt.segment]||'',RG[mt.region]||'',mt.province||'']:[]);
     cols.forEach(function(c){
       var a=r.answers&&r.answers[c.q.id];
       if(a===undefined||a===null){line.push('');return}

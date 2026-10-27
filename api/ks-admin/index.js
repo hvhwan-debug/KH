@@ -4,6 +4,7 @@
 const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
 const { isAdmin } = require("../_lib/config");
 const store = require("../_lib/store");
+const quiz = require("../_lib/quiz");
 const ks = require("../_lib/survey");
 
 const posInt = (v, max) => { const n = Math.floor(Number(v)); return Number.isFinite(n) && n > 0 ? Math.min(n, max) : 0; };
@@ -37,6 +38,13 @@ module.exports = async function (context, req) {
       return reply(context, 200, { ok: true, survey: s });
     }
 
+    // Danh sách nhân sự từ Hồ sơ học tập để gán người tham gia (kèm khoá đã chuẩn hoá để giao diện lọc giống máy chủ)
+    if (op === "roster" && !post) {
+      const list = await quiz.getCandidates();
+      const rows = list.map((c) => Object.assign({ code: String(c.code || ""), name: c.name || "", manager: c.manager || "", title: quiz.titleOf(c), province: c.province || "", left: !!quiz.isLeft(c) }, ks.candKeys(c)));
+      return reply(context, 200, { ok: true, rows });
+    }
+
     if (op === "results" && !post) {
       if (!ks.validCode(code)) return reply(context, 400, { ok: false, error: "Mã không hợp lệ." });
       const prefix = ks.respPrefix(code), names = await store.list(prefix);
@@ -46,7 +54,16 @@ module.exports = async function (context, req) {
         part.forEach((x, k) => { if (x) rows.push(Object.assign({ id: names[i + k].slice(prefix.length).replace(/\.json$/, "") }, x)); });
       }
       rows.sort((a, b) => a.submittedAt - b.submittedAt);
-      return reply(context, 200, { ok: true, rows });
+      const out = { ok: true, rows };
+      const sv = await ks.getSurvey(code);
+      if (sv && sv.identity === "roster") { // tiến độ theo nhân sự được gán
+        const done = new Set(rows.map((r) => r.nc).filter(Boolean));
+        out.staff = (await quiz.getCandidates()).filter((c) => ks.inAudience(sv.audience, c)).map((c) => {
+          const k = ks.candKeys(c);
+          return { code: String(c.code || ""), name: c.name || "", manager: c.manager || "", title: quiz.titleOf(c), phone: c.phone || "", done: done.has(k.nc) };
+        });
+      }
+      return reply(context, 200, out);
     }
 
     if (op === "save" && post) {
@@ -57,11 +74,12 @@ module.exports = async function (context, req) {
       try { questions = ks.cleanQuestions(q.questions); } catch (e) { return reply(context, 400, { ok: false, error: e.message }); }
       const openAt = ts(q.openAt), closeAt = ts(q.closeAt);
       if (openAt && closeAt && closeAt <= openAt) return reply(context, 400, { ok: false, error: "Giờ đóng phải sau giờ mở." });
+      const identity = ["none", "name", "emp", "roster"].includes(q.identity) ? q.identity : "none";
       const old = await ks.getSurvey(code);
       const s = {
         code, title, questions,
         description: ks.str(q.description, 2000), thanks: ks.str(q.thanks, 500),
-        identity: ["none", "name", "emp"].includes(q.identity) ? q.identity : "none",
+        identity, audience: identity === "roster" ? ks.cleanAudience(q.audience) : null,
         showProgress: q.showProgress !== false, open: q.open !== false,
         openAt, closeAt, maxResponses: posInt(q.maxResponses, 1000000),
         createdAt: old ? old.createdAt : Date.now(), updatedAt: Date.now(), updatedBy: u.email
