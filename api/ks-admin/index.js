@@ -75,7 +75,7 @@ module.exports = async function (context, req) {
         code: ks.validCode(code) ? code : "xem-thu", title: ks.str(q.title, 200) || "(chưa đặt tên)",
         description: ks.str(q.description, 2000), thanks: ks.str(q.thanks, 500),
         identity: ["none", "name", "emp", "roster"].includes(q.identity) ? q.identity : "none",
-        showProgress: q.showProgress !== false, questions
+        showProgress: q.showProgress !== false, flow: ["auto", "page", "step"].includes(q.flow) ? q.flow : "auto", questions
       } });
     }
 
@@ -95,7 +95,7 @@ module.exports = async function (context, req) {
         code, title, questions,
         description: ks.str(q.description, 2000), thanks: ks.str(q.thanks, 500),
         identity, audience: identity === "roster" ? ks.cleanAudience(q.audience) : null,
-        showProgress: q.showProgress !== false, open: q.open !== false,
+        showProgress: q.showProgress !== false, flow: ["auto", "page", "step"].includes(q.flow) ? q.flow : "auto", open: q.open !== false,
         openAt, closeAt, maxResponses: posInt(q.maxResponses, 1000000),
         createdAt: old ? old.createdAt : Date.now(), updatedAt: Date.now(), updatedBy: u.email
       };
