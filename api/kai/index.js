@@ -208,7 +208,7 @@ module.exports = async function (context, req) {
       }
       if (!answer) {
         const st = lastErr && lastErr.status;
-        const msg = st === 429 ? "KAI đang quá tải, vui lòng thử lại sau ít giây." : st === 503 ? "KAI chưa được cấu hình AI, vui lòng báo quản trị viên." : "Trợ lí đang bận hoặc chưa sẵn sàng, thử lại sau.";
+        const msg = st === 429 ? "Mọi người đang hỏi KAI khá dồn dập nên tạm thời vượt giới hạn của bên cung cấp AI — vui lòng đợi khoảng 30-60 giây rồi hỏi lại nhé (bấm \"Sửa & gửi lại\" dưới câu hỏi của bạn cho nhanh)." : st === 503 ? "KAI chưa được cấu hình AI, vui lòng báo quản trị viên." : "Trợ lí đang bận hoặc chưa sẵn sàng, thử lại sau.";
         return reply(context, 502, { ok: false, error: msg }, headers);
       }
       // Ngoài phạm vi: bỏ toàn bộ nội dung mô hình viết, chỉ trả câu từ chối cố định (không để lộ câu trả lời một phần).
