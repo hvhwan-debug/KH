@@ -103,6 +103,29 @@ main{flex:1;display:flex;flex-direction:column;max-width:760px;margin:0 auto;wid
 .srcs ul{margin:4px 0 0;padding-left:1.2em}
 .srcs li{margin:2px 0}
 .srcs.gen{font-style:italic}
+.kcard{font-family:var(--sans);font-size:14px;line-height:1.5}
+.kcard .ksum{font-size:15.5px;margin:0 0 10px}
+.kcard .kprog{border-top:1px solid var(--line);padding:10px 0}
+.kcard .kprog:first-of-type{border-top:0;padding-top:0}
+.kcard .khead{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px}
+.kcard .kbadge{font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;background:var(--brand-soft);color:var(--brand-deep)}
+.kcard .kbadge.dang{background:var(--ok-soft);color:var(--ok)}
+.kcard .kbadge.het{background:var(--line);color:var(--muted)}
+.kcard .kbadge.sap{background:var(--amber-soft);color:var(--ink)}
+.kcard .kname{font-weight:600}
+.kcard .kper{font-size:12.5px;color:var(--muted)}
+.kcard .kfigs{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:0 0 8px}
+.kcard .kfig{background:var(--brand-soft);border-radius:10px;padding:9px 11px}
+.kcard .kfig .l{font-size:12px;color:var(--muted)}
+.kcard .kfig .v{font-size:22px;font-weight:700;color:var(--brand-deep);line-height:1.2}
+.kcard .kfig .s{font-size:12px;color:var(--muted)}
+.kcard details{border-top:1px solid var(--line);padding:6px 0}
+.kcard summary{cursor:pointer;font-size:13.5px}
+.kcard details table{width:100%;font-size:13px;margin-top:6px;border-collapse:collapse}
+.kcard details td{padding:3px 0;border:0;white-space:normal}
+.kcard details td:last-child{text-align:right;font-weight:600}
+.kcard details p{margin:6px 0 0;font-size:13px;color:var(--muted)}
+.kcard .knote{font-size:13px;color:var(--muted);margin:2px 0 6px}
 .tstamp{font-size:11px;color:var(--muted);margin:4px 2px 0 14px;display:flex;align-items:center;gap:8px}
 .editbtn{border:0;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:600;cursor:pointer;padding:2px 0;text-decoration:underline;text-underline-offset:2px}
 .editbtn:hover{color:var(--brand)}
@@ -232,7 +255,7 @@ function splitTableRow(line){
   return t.split('|').map(function(c){ return c.trim(); });
 }
 function isPipeRow(line){ var t = (line || '').trim(); return t.charAt(0) === '|' && t.length > 2 && t.indexOf('|', 1) > 0 && splitTableRow(t).length >= 2; }
-function mdToHtml(raw){
+function mdBasic(raw){
   var lines = esc(raw).split('\n'), html = '', ul = false, ol = false;
   function closeLists(){ if (ul){ html += '</ul>'; ul = false; } if (ol){ html += '</ol>'; ol = false; } }
   for (var i = 0; i < lines.length; i++){
@@ -259,6 +282,50 @@ function mdToHtml(raw){
   }
   closeLists();
   return html || '<p></p>';
+}
+
+// ---- Thẻ trả lời (chính sách / chương trình): AI viết khối [[THE]] ... [[/THE]] gồm các dòng @ketluan, @ct, @so, @gap, @dong ----
+// Không đúng cú pháp thì rơi về văn xuôi + bảng như cũ, nên không bao giờ làm hỏng câu trả lời.
+function cardToHtml(txt){
+  var sum = '', progs = [], cur = null;
+  function fresh(){ cur = { st:'', name:'', period:'', figs:[], dets:[], notes:[] }; progs.push(cur); }
+  String(txt).split('\n').forEach(function(l){
+    l = l.trim(); var m = /^@(\w+)\s*(.*)$/.exec(l); if (!m) return;
+    var k = m[1].toLowerCase(), a = m[2].split('|').map(function(x){ return x.trim(); });
+    if (k === 'ketluan'){ sum = m[2]; return; }
+    if (k === 'ct'){ fresh(); cur.st = (a[0] || '').toLowerCase(); cur.name = a[1] || ''; cur.period = a[2] || ''; return; }
+    if (!cur) fresh();
+    if (k === 'so') cur.figs.push({ v:a[0] || '', l:a[1] || '', s:a[2] || '' });
+    else if (k === 'gap') cur.dets.push({ t:a[0] || '', b:a.slice(1).join(' | ') });
+    else if (k === 'dong') cur.notes.push(m[2]);
+  });
+  if (!progs.length && !sum) return '';
+  var LBL = { dang:'Đang áp dụng', het:'Đã kết thúc', sap:'Sắp áp dụng' };
+  var q = function(t){ return inlineMd(esc(t)); };
+  function detHtml(d){
+    var parts = d.b.split(';').map(function(x){ return x.trim(); }).filter(Boolean);
+    var rows = parts.length >= 2 && parts.every(function(x){ return x.indexOf(':') > 0; });
+    var body = rows ? '<table>' + parts.map(function(x){ var i = x.indexOf(':'); return '<tr><td>' + q(x.slice(0, i)) + '</td><td>' + q(x.slice(i + 1).trim()) + '</td></tr>'; }).join('') + '</table>' : '<p>' + q(d.b) + '</p>';
+    return '<details><summary>' + q(d.t) + '</summary>' + body + '</details>';
+  }
+  var html = '<div class="kcard">' + (sum ? '<p class="ksum">' + q(sum) + '</p>' : '');
+  progs.forEach(function(pr){
+    var badge = LBL[pr.st] ? '<span class="kbadge ' + pr.st + '">' + LBL[pr.st] + '</span>' : '';
+    var head = '<div class="khead">' + badge + (pr.name ? '<span class="kname">' + q(pr.name) + '</span>' : '') + (pr.period ? '<span class="kper">' + q(pr.period) + '</span>' : '') + '</div>';
+    var inner = (pr.figs.length ? '<div class="kfigs">' + pr.figs.map(function(f){ return '<div class="kfig"><div class="l">' + q(f.l) + '</div><div class="v">' + q(f.v) + '</div>' + (f.s ? '<div class="s">' + q(f.s) + '</div>' : '') + '</div>'; }).join('') + '</div>' : '') +
+      pr.notes.map(function(n){ return '<div class="knote">' + q(n) + '</div>'; }).join('') + pr.dets.map(detHtml).join('');
+    if (pr.st === 'het') html += '<div class="kprog"><details><summary>' + badge + ' <span class="kname">' + q(pr.name) + '</span> <span class="kper">' + q(pr.period) + '</span></summary>' + inner + '</details></div>';
+    else html += '<div class="kprog">' + head + inner + '</div>';
+  });
+  return html + '</div>';
+}
+function mdToHtml(raw){
+  raw = String(raw || '');
+  var m = /\[\[THE\]\]([\s\S]*?)(?:\[\[\/THE\]\]|$)/.exec(raw);
+  if (!m) return mdBasic(raw);
+  var pre = raw.slice(0, m.index), post = raw.slice(m.index + m[0].length), card = cardToHtml(m[1]);
+  if (!card) return mdBasic(pre + '\n' + m[1].replace(/^@\w+\s*/gm, '') + '\n' + post);
+  return (pre.trim() ? mdBasic(pre) : '') + card + (post.trim() ? mdBasic(post) : '');
 }
 
 // ---- Lịch sử trò chuyện: lưu trên trình duyệt này, tự hiện lại khi mở lại trang ----
