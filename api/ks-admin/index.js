@@ -66,6 +66,19 @@ module.exports = async function (context, req) {
       return reply(context, 200, out);
     }
 
+    // Xem thử bản ĐANG SOẠN (chưa lưu): chạy đúng bước làm sạch/kiểm tra như khi lưu nhưng không ghi gì.
+    // Nhờ vậy xem thử luôn khớp với cái sẽ được lưu, và lỗi (nếu có) báo ngay tại nút Xem thử.
+    if (op === "preview" && post) {
+      let questions;
+      try { questions = ks.cleanQuestions(q.questions); } catch (e) { return reply(context, 400, { ok: false, error: e.message }); }
+      return reply(context, 200, { ok: true, survey: {
+        code: ks.validCode(code) ? code : "xem-thu", title: ks.str(q.title, 200) || "(chưa đặt tên)",
+        description: ks.str(q.description, 2000), thanks: ks.str(q.thanks, 500),
+        identity: ["none", "name", "emp", "roster"].includes(q.identity) ? q.identity : "none",
+        showProgress: q.showProgress !== false, questions
+      } });
+    }
+
     if (op === "save" && post) {
       if (!ks.validCode(code)) return reply(context, 400, { ok: false, error: "Mã khảo sát chỉ gồm chữ thường, số, gạch ngang (2–40 ký tự)." });
       const title = ks.str(q.title, 200);
@@ -76,6 +89,8 @@ module.exports = async function (context, req) {
       if (openAt && closeAt && closeAt <= openAt) return reply(context, 400, { ok: false, error: "Giờ đóng phải sau giờ mở." });
       const identity = ["none", "name", "emp", "roster"].includes(q.identity) ? q.identity : "none";
       const old = await ks.getSurvey(code);
+      // Khảo sát MỚI không được ghi đè lên khảo sát đã có cùng mã (tránh vô tình mất nội dung cũ)
+      if (q.create && old) return reply(context, 409, { ok: false, error: "Mã \"" + code + "\" đã có khảo sát khác dùng. Hãy đặt mã khác, hoặc mở khảo sát đó bằng nút Sửa." });
       const s = {
         code, title, questions,
         description: ks.str(q.description, 2000), thanks: ks.str(q.thanks, 500),

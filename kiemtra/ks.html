@@ -97,7 +97,17 @@ button[disabled]{opacity:.6;cursor:wait}
     qs.forEach(function(q){var own=!ended&&(!q.showIf||evalCond(q.showIf,eff));if(q.type==='section')pageHidden=!own;var v=own&&!pageHidden;vis.push(v);
       if(v&&q.type!=='section'){if(ans[q.id]!==undefined)eff[q.id]=ans[q.id];if(q.endIf&&evalCond(q.endIf,eff))ended=true}});return vis}
 
+  /* ---------- xem thử bản đang soạn (từ trang quản trị, chưa cần lưu) ---------- */
+  var QP=new URLSearchParams(location.search);
+  function startDraft(){
+    var dr=null;try{dr=JSON.parse(localStorage.getItem(QP.get('k')||'')||'null')}catch(e){}
+    if(!dr||!dr.S){msg('Không tìm thấy bản xem thử (có thể đã hết hạn). Hãy bấm "Xem thử" lại từ trang quản trị.','Không có bản xem thử');return}
+    S=Object.assign({ok:true,state:'open',preview:true,draft:true},dr.S);qs=S.questions||[];preview=true;
+    try{init()}catch(e){msg('Bản đang soạn có lỗi nên chưa hiển thị được: '+e.message,'Lỗi bản xem thử')}
+  }
+
   /* ---------- tải phiếu ---------- */
+  function load(){
   fetch('/api/ks-info?code='+encodeURIComponent(C)+(preview?'&preview=1':''),{headers:HDR,credentials:'same-origin'})
   .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})
   .then(function(x){
@@ -108,6 +118,7 @@ button[disabled]{opacity:.6;cursor:wait}
     if(j.state==='notyet'){msg('Khảo sát sẽ mở lúc '+new Date(j.openAt).toLocaleString('vi-VN')+'.',j.title);return}
     S=j;qs=j.questions;preview=!!j.preview;init();
   }).catch(function(){msg('Không kết nối được máy chủ. Hãy tải lại trang.','Lỗi kết nối')});
+  }
 
   /* ---------- nháp tự lưu ---------- */
   function dk(){return 'ksd:'+C+(gateInfo?':'+gateInfo.id:'')}
@@ -146,12 +157,12 @@ button[disabled]{opacity:.6;cursor:wait}
   }
   function startForm(){
     document.title=S.title;
-    var d=loadDraft();
+    var d=preview?null:loadDraft();
     // chia trang: mỗi "section" bắt đầu một trang mới
     pages=[];var g=null;
     qs.forEach(function(q,i){if(q.type==='section'||!g){g={idx:[]};pages.push(g)}g.idx.push(i)});
     var h='';
-    if(preview)h+='<div class="prev"><strong>Xem thử.</strong> Chỉ quản trị viên thấy chế độ này, phiếu sẽ không được gửi.</div>';
+    if(preview)h+='<div class="prev">'+(S.draft?'<strong>Xem thử bản đang soạn</strong> (gồm cả phần chưa lưu). Phiếu sẽ không được gửi.':'<strong>Xem thử bản đã lưu.</strong> Chỉ quản trị viên thấy chế độ này, phiếu sẽ không được gửi.')+'</div>';
     h+='<h1>'+esc(S.title)+'</h1>';
     if(S.description)h+='<p class="desc">'+esc(S.description)+'</p>';
     if(gateInfo&&gateInfo.name)h+='<p class="help" style="margin:0 0 12px">Bạn đang trả lời với tư cách <strong>'+esc(gateInfo.name)+'</strong> (mã '+esc(gateInfo.id)+').</p>';
@@ -362,6 +373,7 @@ button[disabled]{opacity:.6;cursor:wait}
       else{err.textContent=x.j.error||'Gửi không thành công.';btn.disabled=false;btn.textContent='Gửi khảo sát'}
     }).catch(function(){err.textContent='Mất kết nối. Hãy thử gửi lại, câu trả lời của bạn vẫn được giữ.';btn.disabled=false;btn.textContent='Gửi khảo sát'});
   }
+  if(QP.get('preview')==='draft')startDraft();else load();
 })();
 </script>
 </body>

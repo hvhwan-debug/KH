@@ -166,11 +166,12 @@ function openEditor(sv,isNew,count){
   if(!E.S.identity)E.S.identity=E.S.askIdentity?'emp':'none';
   if(E.S.showProgress===undefined)E.S.showProgress=true;
   $('results').hidden=true;$('editor').hidden=false;drawEditor();
+  E.base=JSON.stringify(payload());updateDirty();
   $('editor').scrollIntoView({behavior:'smooth'});
 }
 function drawEditor(){
   var S=E.S,box=clear($('editor'));
-  box.appendChild(h('h2',null,E.isNew?'Tạo khảo sát':'Sửa khảo sát'));
+  box.appendChild(h('h2',null,E.isNew?'Tạo khảo sát':'Sửa khảo sát',h('span',{class:'dirty',id:'dirty',hidden:true},'Có thay đổi chưa lưu')));
   if(!E.isNew&&E.count>0)box.appendChild(h('div',{class:'warn'},'Khảo sát này đã có '+E.count+' phiếu. Đổi thứ tự, loại câu hỏi hoặc số lượng đáp án có thể làm kết quả cũ hiển thị lệch. Chỉ sửa chữ, thêm câu mới hoặc đổi cài đặt thì an toàn.'));
   var code=h('input',{type:'text',value:S.code,disabled:!E.isNew,maxlength:40,placeholder:'vd: hai-long-q4',oninput:function(){S.code=this.value.trim().toLowerCase()}});
   box.appendChild(h('div',{class:'grid2'},
@@ -194,10 +195,11 @@ function drawEditor(){
   box.appendChild(h('div',{class:'row',style:'margin-top:10px;justify-content:flex-start'},addSel,
     h('button',{class:'nf',onclick:function(){var t=addSel.value;E.S.questions.push(Object.assign({id:newId(),type:t,text:'',help:'',required:false},defaults(t)));drawQs();var c=$('qs').lastChild;if(c)c.scrollIntoView({behavior:'smooth',block:'center'})}},'＋ Thêm')));
   var msg=h('span',{id:'savemsg',role:'status'});
-  box.appendChild(h('div',{class:'row',style:'margin-top:18px;justify-content:flex-start;align-items:center'},
+  box.appendChild(h('div',{class:'savebar'},h('div',{class:'row',style:'justify-content:flex-start;align-items:center'},
     h('button',{class:'p nf',onclick:save},'Lưu khảo sát'),
-    h('button',{class:'nf',onclick:function(){if(!E.saved){alert('Hãy lưu khảo sát trước khi xem thử.');return}openLink(E.S.code,true)}},'Xem thử'),
-    h('button',{class:'nf',onclick:function(){$('editor').hidden=true}},'Đóng'),msg));
+    h('button',{class:'nf',onclick:previewDraft},'Xem thử bản đang soạn'),
+    h('button',{class:'nf',id:'pvSaved',hidden:!E.saved,onclick:function(){openLink(E.S.code,true)}},'Xem bản đã lưu'),
+    h('button',{class:'nf',onclick:function(){if(isDirty()&&!confirm('Có thay đổi chưa lưu. Đóng và bỏ các thay đổi này?'))return;$('editor').hidden=true}},'Đóng'),msg)));
   drawQs();drawAud();
 }
 
@@ -425,16 +427,35 @@ function payload(){
   });
   return S;
 }
+function isDirty(){return !!E&&!$('editor').hidden&&E.base!==JSON.stringify(payload())}
+function updateDirty(){var d=$('dirty');if(d)d.hidden=!isDirty()}
+['input','change','click'].forEach(function(ev){$('editor').addEventListener(ev,function(){setTimeout(updateDirty,0)})});
+window.addEventListener('beforeunload',function(e){if(isDirty()){e.preventDefault();e.returnValue=''}});
+function say(cls,txt){var m=$('savemsg');if(!m)return;m.className=cls;m.textContent=txt}
 function save(){
-  var m=$('savemsg');m.className='note';m.textContent='Đang lưu…';
-  var S=payload();
+  say('note','Đang lưu…');
+  var S=payload();S.create=E.isNew;
   api('save',null,S).then(function(j){
-    E.isNew=false;E.saved=true;var cd=document.querySelector('#editor input[type=text]');
-    m.className='ok';m.textContent='Đã lưu. Link: '+origin()+j.link;
+    E.isNew=false;E.saved=true;E.base=JSON.stringify(payload());E.S.code=S.code;
+    say('ok','Đã lưu. Link: '+origin()+j.link);updateDirty();
     var inp=document.querySelector('#editor .grid2 input');if(inp)inp.disabled=true;
-    $('editor').querySelector('h2').textContent='Sửa khảo sát';
+    var pv=$('pvSaved');if(pv)pv.hidden=false;
+    var h2=$('editor').querySelector('h2');if(h2&&h2.firstChild)h2.firstChild.textContent='Sửa khảo sát';
     refresh();
-  }).catch(function(e){m.className='bad';m.textContent=e.message});
+  }).catch(function(e){say('bad','Chưa lưu được: '+e.message);var m=$('savemsg');if(m&&m.scrollIntoView)m.scrollIntoView({block:'nearest'})});
+}
+/* Xem thử đúng bản ĐANG SOẠN (kể cả phần chưa lưu): máy chủ làm sạch + kiểm tra như khi lưu rồi trả về bản sẽ được lưu */
+function previewDraft(){
+  say('note','Đang chuẩn bị bản xem thử…');
+  api('preview',null,payload()).then(function(j){
+    var key='ksprev:'+Date.now();
+    try{
+      localStorage.setItem(key,JSON.stringify({S:j.survey}));
+      Object.keys(localStorage).forEach(function(k){if(k.indexOf('ksprev:')===0&&Date.now()-Number(k.slice(7))>3600000)localStorage.removeItem(k)});
+    }catch(e){if(!localStorage.getItem(key)){say('bad','Trình duyệt đang chặn lưu trữ nên không mở được bản xem thử.');return}}
+    say('note',isDirty()?'Đang xem bản chưa lưu. Bấm "Lưu khảo sát" để áp dụng.':'');
+    window.open('/kiemtra/ks='+encodeURIComponent(j.survey.code)+'?preview=draft&k='+encodeURIComponent(key),'_blank','noopener');
+  }).catch(function(e){say('bad','Chưa xem thử được: '+e.message);var m=$('savemsg');if(m&&m.scrollIntoView)m.scrollIntoView({block:'nearest'})});
 }
 
 /* ---------- kết quả ---------- */
