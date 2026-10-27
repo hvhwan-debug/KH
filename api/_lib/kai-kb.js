@@ -5,10 +5,11 @@ const STATIC_SECTIONS = [
   { title: `Bảng giá sản phẩm Livotec (giá thuần đại lý, VNĐ)`, text: `# Bảng giá sản phẩm Livotec (giá thuần đại lý, VNĐ)
 Lưu ý: đây là "Giá thuần đại lý" — giá bán cho Đại lý, chưa tính các chương trình khuyến mại/chiết khấu riêng (xem thêm các thông báo CTKM khác nếu có).
 
-## BÌNH NƯỚC NÓNG
-Đặc điểm chung dòng gián tiếp: Công nghệ IPUS giữ nước nóng lâu đến 48 giờ; Thanh đốt Titan Incoloy 840 tiết kiệm 30% điện năng, bảo hành vĩnh viễn; Thanh magie XMAS Mg+ lớn làm mềm nước, bảo vệ tóc da; ELCB tiêu chuẩn châu Âu an toàn gấp 5 lần; nhiệt độ ổn định tối đa 78°C.
+## BÌNH NƯỚC NÓNG GIÁN TIẾP (có bình chứa nước, mã bắt đầu bằng LWH-)
+PHÂN LOẠI QUAN TRỌNG: tất cả các model "Livotec LWH-..." dưới đây đều thuộc dòng BÌNH NƯỚC NÓNG GIÁN TIẾP (loại có bình chứa nước, làm nóng rồi trữ sẵn — khác với bình trực tiếp/tức thời không có bình chứa). Nếu khách/nhân viên hỏi "bình gián tiếp có mã nào, giá bao nhiêu" thì chính là toàn bộ danh sách LWH- này.
+Đặc điểm chung: Công nghệ IPUS giữ nước nóng lâu đến 48 giờ; Thanh đốt Titan Incoloy 840 tiết kiệm 30% điện năng, bảo hành vĩnh viễn; Thanh magie XMAS Mg+ lớn làm mềm nước, bảo vệ tóc da; ELCB tiêu chuẩn châu Âu an toàn gấp 5 lần; nhiệt độ ổn định tối đa 78°C.
 
-| Model | Dung tích | Giá thuần đại lý |
+| Model (bình gián tiếp) | Dung tích | Giá thuần đại lý |
 |---|---|---|
 | Livotec LWH-I20A25 | 20L | 2.641.000 |
 | Livotec LWH-I30A25 | 30L | 3.078.000 |
@@ -24,6 +25,9 @@ Lưu ý: đây là "Giá thuần đại lý" — giá bán cho Đại lý, chưa
 | Livotec LWH-V20A26S (LED Display) | 20L | 2.864.000 |
 
 Dòng B26/V26S/I26S thêm: Thanh đốt SUS316L bền bỉ, Thanh magie AZ63B cỡ lớn, Hệ thống 5 cấp an toàn, LED Display theo dõi nhiệt độ (bản A26S).
+
+## BÌNH NƯỚC NÓNG TRỰC TIẾP (không có bình chứa, làm nóng tức thời, mã bắt đầu bằng KBO-)
+PHÂN LOẠI QUAN TRỌNG: model "Karofi KBO-I400" (xem chi tiết giá và ưu đãi ở tài liệu "TB78a — Chương trình khuyến mại ưu đãi đặc biệt trực tiếp cho Bình nước nóng") là dòng BÌNH NƯỚC NÓNG TRỰC TIẾP của nhãn Karofi. Nếu được hỏi về bình trực tiếp, đây là model duy nhất có trong tài liệu hiện có.
 
 ## BẾP TỪ
 | Model | Loại | Mô tả ngắn | Giá thuần đại lý |
@@ -149,7 +153,7 @@ Ghi chú: Giá trên là bảng giá thuần đại lý tham khảo; các chươ
 
 Định dạng: Mã model — Giá ĐL thường — Giá ĐL theo CTKM — Điều kiện tặng hàng
 
-## Bình nước nóng
+## Bình nước nóng (các model LWH- dưới đây đều là dòng GIÁN TIẾP, có bình chứa nước)
 - LWH-I20A25: 2.882.000 → 2.348.000 — Mua 4 tặng 1
 - LWH-I30A25: 3.307.000 → 2.624.000 — Mua 4 tặng 1
 - LWH-V15A25: 2.423.000 → 2.154.000 — Mua 4 tặng 1
