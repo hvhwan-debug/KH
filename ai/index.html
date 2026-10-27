@@ -72,11 +72,23 @@ main{flex:1;display:flex;flex-direction:column;max-width:760px;margin:0 auto;wid
 .msg li{margin:.25em 0}
 .msg.bot b{font-weight:600;background:linear-gradient(transparent 62%,var(--amber-soft) 62%)}
 .msg code{font-family:ui-monospace,Consolas,monospace;background:var(--brand-soft);padding:1px 6px;border-radius:5px;font-size:.88em}
+.msg blockquote{margin:4px 0 8px;padding:4px 0 4px 10px;border-left:3px solid var(--brand);color:var(--muted)}
 .msg .tbl-wrap{overflow-x:auto;margin:6px 0 10px;-webkit-overflow-scrolling:touch}
 .msg table{border-collapse:collapse;width:100%;min-width:max-content;font-size:13px}
 .msg table th,.msg table td{border:1px solid var(--line);padding:6px 10px;text-align:left;white-space:nowrap}
 .msg table th{background:rgba(127,127,127,.1);font-weight:800}
 .msg table tr:nth-child(even) td{background:rgba(127,127,127,.05)}
+/* Di động: bảng chuyển thành từng thẻ xếp dọc "nhãn / giá trị" thay vì phải cuộn ngang mới đọc hết */
+@media(max-width:640px){
+  .msg .tbl-wrap{overflow-x:visible}
+  .msg table,.msg table thead,.msg table tbody,.msg table tr,.msg table th,.msg table td{display:block}
+  .msg table thead{display:none}
+  .msg table{border:0;width:100%}
+  .msg table tr{border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:8px}
+  .msg table td{border:0;border-bottom:1px solid var(--line);padding:5px 0;white-space:normal;background:none!important}
+  .msg table td:last-child{border-bottom:0}
+  .msg table td::before{content:attr(data-label);display:block;font-weight:700;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;margin-bottom:1px}
+}
 .bcol{display:flex;flex-direction:column;min-width:0;flex:1}
 .bubble-row.me .bcol{align-items:flex-end;flex:0 1 auto}
 .dots{display:inline-flex;gap:5px;padding:8px 0 8px 14px}
@@ -220,14 +232,17 @@ function mdToHtml(raw){
       closeLists();
       var header = splitTableRow(line), rows = [], j = i + 2;
       while (j < lines.length && lines[j].indexOf('|') >= 0 && lines[j].trim()){ rows.push(splitTableRow(lines[j])); j++; }
+      // data-label trên mỗi ô = đúng tiêu đề cột của nó, để trên di động chuyển thành thẻ xếp dọc "nhãn: giá trị" thay vì phải cuộn ngang.
+      var attr = function(s){ return s.replace(/"/g, '&quot;'); };
       html += '<div class="tbl-wrap"><table><thead><tr>' + header.map(function(h){ return '<th>' + inlineMd(h) + '</th>'; }).join('') + '</tr></thead><tbody>' +
-        rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + inlineMd(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+        rows.map(function(r){ return '<tr>' + r.map(function(c, ci){ return '<td data-label="' + attr(header[ci] || '') + '">' + inlineMd(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
       i = j - 1;
       continue;
     }
-    var mUl = /^[-*]\s+(.*)/.exec(line), mOl = /^\d+[.)]\s+(.*)/.exec(line);
+    var mUl = /^[-*]\s+(.*)/.exec(line), mOl = /^\d+[.)]\s+(.*)/.exec(line), mBq = /^&gt;\s?(.*)/.exec(line);
     if (mUl){ if (!ul){ closeLists(); html += '<ul>'; ul = true; } html += '<li>'+inlineMd(mUl[1])+'</li>'; }
     else if (mOl){ if (!ol){ closeLists(); html += '<ol>'; ol = true; } html += '<li>'+inlineMd(mOl[1])+'</li>'; }
+    else if (mBq){ closeLists(); if (mBq[1].trim()) html += '<blockquote>'+inlineMd(mBq[1])+'</blockquote>'; }
     else { closeLists(); if (line.trim()) html += '<p>'+inlineMd(line)+'</p>'; }
   }
   closeLists();
