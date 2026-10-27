@@ -7,7 +7,7 @@
    DocRead.importFiles(files,opt)            nhập một hoặc nhiều file (xem bên dưới) */
 (function(root){
 'use strict';
-var DocRead={pdfBase:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/'};
+var DocRead={pdfBase:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/',ocrBase:'/kiemtra/vendor/ocr/',ocrMaxPages:30,ocrWidth:1654};
 var MAX_FILE=25*1024*1024, MAX_CHARS=2000000;
 
 function fail(msg,code){var e=new Error(msg);e.userMessage=msg;e.code=code||'x';return e}
@@ -152,7 +152,76 @@ async function readPptx(z){
   return out.join('\n\n');
 }
 
-/* ---------- PDF (có chữ) ---------- */
+
+/* ---------- OCR cho bản scan / ảnh chụp (Tesseract.js chạy ngay trên trình duyệt, ảnh không gửi đi đâu) ---------- */
+var OCR_MIN_WORD_CONF=35, ocrChain=Promise.resolve();
+function loadScript(src){
+  return new Promise(function(ok,no){var sc=document.createElement('script');sc.src=src;sc.onload=ok;sc.onerror=function(){no(fail('Không tải được bộ nhận dạng chữ (OCR). Hãy tải lại trang rồi thử lại.','ocrload'))};document.head.appendChild(sc)});
+}
+async function newOcrWorker(){
+  if(!root.Tesseract)await loadScript(DocRead.ocrBase+'tesseract.min.js');
+  var base=DocRead.ocrBase;
+  try{return await root.Tesseract.createWorker('vie',1,{workerPath:base+'worker.min.js',corePath:base.replace(/\/$/,''),langPath:base,gzip:false,workerBlobURL:false})}
+  catch(e){throw fail('Không khởi động được bộ nhận dạng chữ (OCR).','ocrinit')}
+}
+function checkAbort(opt){if(opt&&opt.signal&&opt.signal.aborted)throw fail('Đã dừng nhận dạng chữ.','abort')}
+function progress(opt,t){if(opt&&opt.onProgress)opt.onProgress(t)}
+// Mỗi lần chỉ một bộ OCR chạy (nặng máy); luôn giải phóng bộ nhớ khi xong hoặc khi dừng
+function withOcr(opt,fn){
+  var run=ocrChain.then(async function(){
+    var worker;
+    try{progress(opt,'Đang tải bộ nhận dạng chữ (lần đầu có thể mất vài giây)…');checkAbort(opt);worker=await newOcrWorker();checkAbort(opt);return await fn(worker)}
+    finally{if(worker)try{await worker.terminate()}catch(e){}}
+  });
+  ocrChain=run.catch(function(){});return run;
+}
+// Nhận dạng một canvas: bỏ các từ có độ tin cậy thấp (thường là nhiễu, vết bẩn) và dòng gần như rỗng
+async function ocrCanvas(worker,canvas){
+  var r=await worker.recognize(canvas,{},{text:true,blocks:true}),paras=[];
+  (r.data.blocks||[]).forEach(function(b){(b.paragraphs||[]).forEach(function(p){
+    var lines=[];
+    (p.lines||[]).forEach(function(l){
+      var ws=(l.words||[]).filter(function(w){return w.confidence>=OCR_MIN_WORD_CONF&&String(w.text).trim()}).map(function(w){return String(w.text).trim()}),t=ws.join(' ');
+      if((t.match(/[\p{L}\p{N}]/gu)||[]).length>=2)lines.push(t);
+    });
+    if(lines.length)paras.push(lines.join('\n'));
+  })});
+  return {text:paras.join('\n\n'),conf:r.data.confidence||0};
+}
+function blankCanvas(w,h){var c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);return c}
+var avg=function(a){return a.length?a.reduce(function(s,x){return s+x},0)/a.length:0};
+// Trang PDF dạng ảnh: vẽ ở ~200 dpi (phóng to hơn làm OCR kém đi) rồi nhận dạng
+async function ocrPdfPages(doc,nums,opt){
+  var cap=Math.min(nums.length,DocRead.ocrMaxPages||30),texts={},confs=[];
+  await withOcr(opt,async function(worker){
+    for(var i=0;i<cap;i++){
+      checkAbort(opt);progress(opt,'Đang nhận dạng chữ trang '+(i+1)+'/'+cap+(nums.length>cap?' (chỉ '+cap+' trang đầu)':'')+'…');
+      var page=await doc.getPage(nums[i]),v1=page.getViewport({scale:1}),sc=Math.max(1,Math.min(3.5,(DocRead.ocrWidth||1654)/v1.width)),vp=page.getViewport({scale:sc}),c=blankCanvas(vp.width,vp.height);
+      await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+      var r=await ocrCanvas(worker,c);c.width=c.height=1;
+      texts[nums[i]]=r.text;if(r.text)confs.push(r.conf);
+    }
+  });
+  return {texts:texts,conf:avg(confs),done:cap,total:nums.length};
+}
+// Ảnh chụp/scan (png, jpg, webp)
+async function ocrImageFile(file,opt){
+  var bmp;
+  try{bmp=await createImageBitmap(file)}catch(e){throw fail('Không đọc được ảnh này (định dạng lạ hoặc file hỏng). Hãy dùng ảnh .png hoặc .jpg.','img')}
+  var w=bmp.width,h=bmp.height,mx=Math.max(w,h),sc=1;
+  if(mx>2600)sc=2600/mx;else if(mx<1000)sc=Math.min(2,1400/mx);
+  var c=blankCanvas(w*sc,h*sc);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);if(bmp.close)bmp.close();
+  var res;
+  await withOcr(opt,async function(worker){checkAbort(opt);progress(opt,'Đang nhận dạng chữ trong ảnh…');res=await ocrCanvas(worker,c)});
+  c.width=c.height=1;return res;
+}
+function ocrWarn(conf,done,total){
+  var w='Chữ được nhận dạng tự động từ ảnh scan (OCR) nên có thể sai dấu, thiếu hoặc nhầm chữ'+(conf&&conf<60?' (chất lượng scan thấp, độ tin cậy khoảng '+Math.round(conf)+'%)':'')+'. Hãy đọc lại và sửa trước khi lưu.';
+  if(total&&done<total)w+=' Chỉ nhận dạng '+done+'/'+total+' trang đầu.';
+  return w;
+}
+
+/* ---------- PDF ---------- */
 var pdfP=null;
 function loadPdfJs(){
   if(root.pdfjsLib)return Promise.resolve(root.pdfjsLib);
@@ -198,16 +267,22 @@ function pageText(items){
   });
   return out;
 }
-async function readPdf(buf){
+async function readPdf(buf,opt){
   var lib=await loadPdfJs(),doc;
   try{doc=await lib.getDocument({data:new Uint8Array(buf)}).promise}
   catch(e){if(e&&e.name==='PasswordException')throw fail('File PDF có đặt mật khẩu, chưa đọc được.','pw');throw fail('Không đọc được file PDF (có thể bị hỏng).','pdf')}
-  var out=[],chars=0,pages=Math.min(doc.numPages,400);
+  var pages=Math.min(doc.numPages,400),texts={},chars=0,weak=[];
   for(var p=1;p<=pages&&chars<MAX_CHARS;p++){
     var s=clean(pageText((await (await doc.getPage(p)).getTextContent()).items));
-    chars+=s.length;if(s)out.push(s);
+    texts[p]=s;chars+=s.length;if(s.length<25)weak.push(p);   // trang gần như không có chữ = trang scan
   }
-  return {text:out.join('\n\n'),pages:doc.numPages};
+  var ocr=null;
+  if(weak.length&&!(opt&&opt.ocr===false)){
+    ocr=await ocrPdfPages(doc,weak,opt);
+    Object.keys(ocr.texts).forEach(function(k){texts[k]=ocr.texts[k]});
+  }
+  var out=[];for(var q=1;q<=pages;q++)if(texts[q])out.push(texts[q]);
+  return {text:out.join('\n\n'),pages:doc.numPages,ocr:ocr,skipped:(opt&&opt.ocr===false)?weak.length:0};
 }
 
 // PDF tiếng Việt có chữ bị mất dấu/lộn thứ tự thường để lại nhiều "từ" chỉ có một phụ âm (vd. "s n ph m")
@@ -222,24 +297,31 @@ function htmlToText(h){
   return new DOMParser().parseFromString('<body>'+s+'</body>','text/html').body.textContent;
 }
 var LEGACY={doc:'Word cũ (.doc)',xls:'Excel cũ (.xls)',ppt:'PowerPoint cũ (.ppt)',rtf:'.rtf',odt:'.odt'};
-DocRead.read=async function(file){
+DocRead.read=async function(file,opt){
+  opt=opt||{};
   if(!file)throw fail('Chưa chọn file.');
   var e=ext(file.name);
   if(LEGACY[e])throw fail('File '+LEGACY[e]+' chưa đọc được. Hãy mở file bằng Word/Excel/PowerPoint và Lưu thành '+(e==='xls'?'.xlsx':e==='ppt'?'.pptx':'.docx')+' hoặc PDF rồi chọn lại.','legacy');
-  if(['txt','md','csv','json','html','htm','docx','xlsx','pptx','pdf'].indexOf(e)<0)throw fail('Chưa hỗ trợ định dạng ".'+(e||'?')+'". Dùng Word (.docx), Excel (.xlsx), PowerPoint (.pptx), PDF, .txt, .md, .csv hoặc dán nội dung.','type');
+  if(['txt','md','csv','json','html','htm','docx','xlsx','pptx','pdf','png','jpg','jpeg','webp'].indexOf(e)<0)throw fail('Chưa hỗ trợ định dạng ".'+(e||'?')+'". Dùng Word (.docx), Excel (.xlsx), PowerPoint (.pptx), PDF, ảnh .png/.jpg, .txt, .md, .csv hoặc dán nội dung.','type');
   if(file.size>MAX_FILE)throw fail('File quá lớn (tối đa '+Math.round(MAX_FILE/1048576)+' MB).','size');
-  var text='',kind=e,pages;
+  var text='',kind=e,pages,ocr=null,skipped=0;
   if(e==='txt'||e==='md'||e==='csv'||e==='json')text=await file.text();
   else if(e==='html'||e==='htm')text=htmlToText(await file.text());
-  else{
+  else if(e==='png'||e==='jpg'||e==='jpeg'||e==='webp'){
+    if(opt.ocr===false)throw fail('Đây là ảnh nên cần nhận dạng chữ (OCR). Hãy chọn RIÊNG file này (chỉ chọn 1 file) để xem lại chữ nhận dạng trước khi lưu.','ocroff');
+    var im=await ocrImageFile(file,opt);text=im.text;ocr={conf:im.conf,done:1,total:1};
+  }else{
     var buf=await file.arrayBuffer();
-    if(e==='pdf'){var r=await readPdf(buf);text=r.text;pages=r.pages}
+    if(e==='pdf'){var r=await readPdf(buf,opt);text=r.text;pages=r.pages;ocr=r.ocr;skipped=r.skipped||0}
     else{var z=await unzip(buf);text=e==='docx'?await readDocx(z):e==='xlsx'?await readXlsx(z):await readPptx(z)}
   }
   text=clean(text).slice(0,MAX_CHARS);
-  if(text.length<20)throw fail(e==='pdf'?'Không thấy chữ trong file PDF này (có thể là bản scan/ảnh). Hãy dùng bản PDF có chữ, hoặc dán nội dung.':'Không đọc được chữ nào từ file này.','empty');
-  var warn=e==='pdf'&&suspicious(text)?'Chữ trong PDF này có thể bị mất dấu hoặc lộn thứ tự (do cách tạo file). Hãy kiểm tra kỹ nội dung, hoặc dùng file Word / bản PDF khác.':'';
-  return {title:baseName(file.name),text:text,kind:kind,pages:pages,warn:warn};
+  if(text.length<20&&skipped)throw fail('Đây là bản scan (PDF dạng ảnh) nên cần nhận dạng chữ (OCR). Hãy chọn RIÊNG file này (chỉ chọn 1 file) để xem lại chữ nhận dạng trước khi lưu.','scan');
+  if(text.length<20)throw fail(ocr?'Đã thử nhận dạng chữ (OCR) nhưng không đọc được chữ nào. Ảnh có thể quá mờ, quá nhỏ hoặc không có chữ in. Hãy dùng bản scan rõ hơn hoặc dán nội dung.':(e==='pdf'?'Không thấy chữ trong file PDF này.':'Không đọc được chữ nào từ file này.'),'empty');
+  var warn=ocr?ocrWarn(ocr.conf,ocr.done,ocr.total)
+    :skipped?'Có '+skipped+' trang là ảnh scan chưa được nhận dạng chữ nên bị bỏ qua. Chọn riêng file này để nhận dạng đủ.'
+    :(e==='pdf'&&suspicious(text)?'Chữ trong PDF này có thể bị mất dấu hoặc lộn thứ tự (do cách tạo file). Hãy kiểm tra kỹ nội dung, hoặc dùng file Word / bản PDF khác.':'');
+  return {title:baseName(file.name),text:text,kind:kind,pages:pages,warn:warn,ocr:!!ocr};
 };
 
 /* ---------- tách văn bản dài ---------- */
@@ -264,14 +346,17 @@ DocRead.splitText=function(text,max){
 /* ---------- nhập một hoặc nhiều file ----------
    opt.fill(title,text,note)  điền vào form để người dùng xem lại (khi chọn đúng 1 file)
    opt.save(title,text)       -> Promise<{ok,error}>  lưu ngay (khi chọn nhiều file, hoặc tách phần)
-   opt.msg(text,kind)         hiện thông báo ('ok' hoặc lỗi);  opt.max (mặc định 60000), opt.part (mặc định 55000) */
+   opt.msg(text,kind)         hiện thông báo (kind: 'ok' | 'busy' = đang xử lý | '' = lỗi/cảnh báo)
+   opt.onCancel(fn)           nhận hàm dừng (để hiện nút Dừng khi OCR);  opt.max (mặc định 60000), opt.part (mặc định 55000) */
 DocRead.importFiles=async function(files,opt){
   files=[].slice.call(files||[]);if(!files.length)return [];
-  var max=opt.max||60000,part=opt.part||55000,report=[];
+  var max=opt.max||60000,part=opt.part||55000,report=[],ac=typeof AbortController!=='undefined'?new AbortController():null;
+  if(opt.onCancel&&ac)opt.onCancel(function(){ac.abort()});
+  function ropt(label){return {ocr:files.length>1?false:opt.ocr,signal:ac&&ac.signal,onProgress:function(t){opt.msg((label?label+'\n':'')+t,'busy')}}}
   if(files.length===1){
     try{
-      opt.msg('Đang đọc “'+files[0].name+'”…','');
-      var d=await DocRead.read(files[0]),n=DocRead.splitText(d.text,part).length;
+      opt.msg('Đang đọc “'+files[0].name+'”…','busy');
+      var d=await DocRead.read(files[0],ropt('')),n=DocRead.splitText(d.text,part).length;
       opt.fill(d.title,d.text,d.text.length>max?'Nội dung dài '+d.text.length.toLocaleString('vi-VN')+' ký tự nên sẽ tự tách thành '+n+' tài liệu khi lưu.':'');
       opt.msg('Đã đọc “'+files[0].name+'” ('+d.text.length.toLocaleString('vi-VN')+' ký tự'+(d.pages?', '+d.pages+' trang':'')+'). Kiểm tra nội dung rồi bấm Lưu tài liệu.'+(d.text.length>max?' Nội dung dài nên sẽ tự tách thành '+n+' tài liệu.':'')+(d.warn?'\n⚠ '+d.warn:''),d.warn?'':'ok');
       return [{name:files[0].name,ok:true}];
@@ -279,9 +364,9 @@ DocRead.importFiles=async function(files,opt){
   }
   var okN=0,lines=[];
   for(var i=0;i<files.length;i++){
-    var f=files[i];opt.msg('Đang xử lý '+(i+1)+'/'+files.length+': '+f.name+'…','');
+    var f=files[i];var lab='Đang xử lý '+(i+1)+'/'+files.length+': '+f.name;opt.msg(lab+'…','busy');
     try{
-      var r=await DocRead.read(f),ps=DocRead.splitText(r.text,part),saved=0,err='';
+      var r=await DocRead.read(f,ropt(lab)),ps=DocRead.splitText(r.text,part),saved=0,err='';
       for(var k=0;k<ps.length;k++){
         var res=await opt.save(ps.length>1?r.title+' (phần '+(k+1)+'/'+ps.length+')':r.title,ps[k]);
         if(!res||!res.ok){err=(res&&res.error)||'Không lưu được.';break}saved++;
@@ -289,7 +374,7 @@ DocRead.importFiles=async function(files,opt){
       if(err)lines.push('✗ '+f.name+': '+err+(saved?' (đã lưu '+saved+'/'+ps.length+' phần)':''));
       else{okN++;lines.push('✓ '+f.name+(ps.length>1?' ('+ps.length+' phần)':'')+(r.warn?' ⚠ '+r.warn:''))}
       report.push({name:f.name,ok:!err,error:err});
-    }catch(e){lines.push('✗ '+f.name+': '+(e.userMessage||'không đọc được.'));report.push({name:f.name,ok:false,error:e.userMessage})}
+    }catch(e){lines.push('✗ '+f.name+': '+(e.userMessage||'không đọc được.'));report.push({name:f.name,ok:false,error:e.userMessage});if(e&&e.code==='abort'){for(var j=i+1;j<files.length;j++)lines.push('– '+files[j].name+': bỏ qua do đã dừng.');break}}
   }
   opt.msg('Đã lưu '+okN+'/'+files.length+' file.\n'+lines.join('\n'),okN===files.length?'ok':'');
   return report;
