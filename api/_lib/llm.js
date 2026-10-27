@@ -1,4 +1,6 @@
-// Gọi mô hình ngôn ngữ (Azure OpenAI trước, Groq dự phòng) từ phía máy chủ. Không trả tên mô hình / lỗi gốc ra ngoài.
+// Gọi mô hình ngôn ngữ (Azure OpenAI trước, rồi OpenAI trực tiếp, Groq dự phòng cuối) từ phía máy chủ. Không trả tên mô hình / lỗi gốc ra ngoài.
+// Bật OpenAI: thêm biến môi trường OPENAI_API_KEY (và tuỳ chọn OPENAI_MODEL, mặc định "gpt-4o-mini") trong cấu hình Azure Function App.
+// Muốn dùng hẳn OpenAI thay Groq (đỡ bị giới hạn tốc độ khi hỏi dồn dập): thêm OPENAI_API_KEY và xoá/để trống GROQ_API_KEY.
 // Độ ổn định:
 //  - CÓ HẠN CHÓT TỔNG (opt.timeoutMs, mặc định 25 giây) và HẠN CHÓT RIÊNG cho từng nhà cung cấp: Azure chậm (không lỗi)
 //    không còn chiếm hết thời gian; Groq luôn còn phần thời gian của mình. Yêu cầu quá hạn bị HUỶ thật (AbortController).
@@ -24,6 +26,11 @@ function providers(opt) {
   const list = [];
   const ep = (process.env.AZURE_OPENAI_ENDPOINT || "").replace(/\/+$/, ""), key = process.env.AZURE_OPENAI_KEY, dep = process.env.AZURE_OPENAI_DEPLOYMENT;
   if (ep && key && dep) list.push({ name: "azure", url: ep + "/chat/completions", headers: { "api-key": key, Authorization: "Bearer " + key }, base: { model: dep }, extra: opt.json ? { response_format: { type: "json_object" } } : {} });
+  const ok = process.env.OPENAI_API_KEY;
+  if (ok) {
+    const oModel = process.env.OPENAI_MODEL || "gpt-4o-mini";
+    list.push({ name: "openai", url: "https://api.openai.com/v1/chat/completions", headers: { Authorization: "Bearer " + ok }, base: { model: oModel }, extra: opt.json ? { response_format: { type: "json_object" } } : {} });
+  }
   const gk = process.env.GROQ_API_KEY;
   if (gk) {
     const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b", reasoning = /gpt-oss|qwen|deepseek|r1/i.test(model);
