@@ -26,7 +26,7 @@ module.exports = async function (context, req) {
     }
     return reply(context, 200, {
       ok: true, state: "open", preview, code, title: s.title, description: s.description || "", thanks: s.thanks || "",
-      identity: s.identity || (s.askIdentity ? "emp" : "none"), showProgress: s.showProgress !== false,
+      identity: s.identity || (s.askIdentity ? "emp" : "none"), showProgress: s.showProgress !== false, flow: s.flow || "auto",
       questions: s.questions
     });
   } catch (e) {

@@ -109,7 +109,7 @@ var TEMPLATES=[
 TEMPLATES.forEach(function(t,i){$('tpl').appendChild(h('option',{value:i},t.name))});
 $('tpl').addEventListener('change',function(){
   var v=this.value;this.value='';if(v==='')return;var t=TEMPLATES[+v];
-  openEditor({code:'',title:t.title,description:t.description||'',thanks:'',identity:t.identity,audience:t.audience?clone(t.audience):null,open:true,openAt:0,closeAt:0,maxResponses:0,showProgress:true,questions:clone(t.questions)},true,0);
+  openEditor({code:'',title:t.title,description:t.description||'',thanks:'',identity:t.identity,flow:'auto',audience:t.audience?clone(t.audience):null,open:true,openAt:0,closeAt:0,maxResponses:0,showProgress:true,questions:clone(t.questions)},true,0);
 });
 
 /* ---------- danh sách ---------- */
@@ -186,7 +186,9 @@ function drawEditor(){
   var ca=h('input',{type:'datetime-local',value:toLocal(S.closeAt),onchange:function(){S.closeAt=this.value?Date.parse(this.value):0}});
   var mr=h('input',{type:'number',min:0,value:S.maxResponses||'',placeholder:'0 = không giới hạn',onchange:function(){S.maxResponses=Math.max(0,Math.floor(Number(this.value)||0))}});
   box.appendChild(h('div',{class:'row'},fld('Mở lúc (trống = mở ngay)',oa),fld('Đóng lúc (trống = không tự đóng)',ca),fld('Số phiếu tối đa',mr)));
-  box.appendChild(h('div',{class:'row'},cb(S,'open','Đang mở nhận trả lời'),cb(S,'showProgress','Hiện thanh tiến độ khi có nhiều trang')));
+  if(!S.flow)S.flow='auto';
+  box.appendChild(fld('Cách hiển thị câu hỏi cho người trả lời',sel(S,'flow',[['auto','Tự động: từng câu một trên điện thoại, theo trang trên máy tính (khuyên dùng)'],['step','Luôn từng câu một'],['page','Luôn theo trang (nhiều câu cùng lúc)']])));
+  box.appendChild(h('div',{class:'row'},cb(S,'open','Đang mở nhận trả lời'),cb(S,'showProgress','Hiện thanh tiến độ')));
 
   box.appendChild(h('h3',null,'Câu hỏi'));
   box.appendChild(h('p',{class:'note'},'Mỗi "Tiêu đề trang" bắt đầu một trang mới. Mở mục "Logic" của từng câu để đặt điều kiện hiện câu hoặc kết thúc khảo sát sớm.'));
