@@ -790,7 +790,9 @@ function validOn(text, today) { // today: Date theo giờ Việt Nam (các trư�
 }
 const ASKS_NOW = /(tháng này|hiện (nay|tại)|đang áp dụng|đang chạy|mới nhất|bây giờ|hôm nay|tuần này|còn hiệu lực|còn áp dụng)/i;
 
-function pickRelevant(question, maxChars, sections, today) {
+function pickRelevant(question, maxChars, sections, today) { return pickRelevantEx(question, maxChars, sections, today).text; }
+// Như pickRelevant nhưng trả thêm danh sách tiêu đề các mục THỰC SỰ được đưa cho mô hình (dùng để hiển thị "căn cứ" cho người hỏi).
+function pickRelevantEx(question, maxChars, sections, today) {
   maxChars = maxChars || 14000;
   const KAI_SECTIONS = sections && sections.length ? sections : STATIC_SECTIONS;
   const qTokens = tokenize(question).filter((w) => !STOP.has(w));
@@ -804,7 +806,7 @@ function pickRelevant(question, maxChars, sections, today) {
     return { sec, score };
   });
   scored.sort((a, b) => b.score - a.score);
-  const picked = [], seen = new Set();
+  const picked = [], titles = [], seen = new Set();
   let total = 0;
   const priceSec = KAI_SECTIONS.find((s) => /bang gia/i.test(stripDiacritics(s.title)));
   const ordered = [];
@@ -817,10 +819,10 @@ function pickRelevant(question, maxChars, sections, today) {
     if (total + sec.text.length > maxChars && picked.length) continue; // mục này không vừa: thử mục nhỏ hơn phía sau thay vì dừng hẳn
     // Mục đầu tiên quá dài so với ngân sách (vd. chế độ dự phòng ngữ cảnh gọn): cắt bớt để prompt thật sự ngắn lại.
     const text = !picked.length && sec.text.length > maxChars * 1.5 ? sec.text.slice(0, Math.floor(maxChars * 1.5)) + "\n[...đã rút gọn]" : sec.text;
-    picked.push(text); seen.add(sec.title); total += text.length;
+    picked.push(text); titles.push(sec.title); seen.add(sec.title); total += text.length;
     if (total >= maxChars) break;
   }
-  return picked.join("\n\n---\n\n");
+  return { text: picked.join("\n\n---\n\n"), titles };
 }
 
 
@@ -831,6 +833,21 @@ const SETTINGS_KEY = "kai/settings.json";
 const CHUNK = 3000; // ký tự mỗi mục khi cắt tài liệu dài, để chỉ gửi phần liên quan tới câu hỏi
 
 // Cắt văn bản dài theo tiêu đề (# ...) rồi theo đoạn, mỗi mục tối đa ~CHUNK ký tự.
+function normTitle(t) { return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().replace(/\s+/g, " ").trim(); }
+function parseSources(answer, usedTitles) {
+  answer = String(answer || "");
+  const m = answer.match(/\[NGUON:([^\]]*)\]/i);
+  const clean = answer.replace(/\s*\[NGUON:[^\]]*\]\s*/ig, "\n").trim();
+  const raw = m ? m[1].trim() : "";
+  if (raw && /kien thuc chung/.test(normTitle(raw))) return { answer: clean, basis: "general", sources: [] };
+  const used = usedTitles || [], out = [];
+  raw.split("|").map((x) => normTitle(x)).filter(Boolean).forEach((n) => {
+    const hit = used.find((t) => { const u = normTitle(t); return u === n || u.indexOf(n) >= 0 || n.indexOf(u) >= 0; });
+    if (hit && out.indexOf(hit) < 0) out.push(hit);   // tiêu đề không có trong số mục đã gửi => bỏ (không để mô hình bịa nguồn)
+  });
+  if (out.length) return { answer: clean, basis: "doc", sources: out };
+  return { answer: clean, basis: "doc_approx", sources: used.slice(0, 3) };   // mô hình không ghi nguồn: nêu các mục đã tra cứu, đánh dấu là gần đúng
+}
 function chunkText(title, text) {
   const paras = String(text || "").replace(/\r/g, "").split(/\n{2,}/);
   const out = []; let cur = "";
@@ -897,4 +914,4 @@ function extractTitleFromHtml(html) {
   return m ? extractTextFromHtml(m[1]).trim() : "";
 }
 
-module.exports = { KAI_SECTIONS: STATIC_SECTIONS, STATIC_SECTIONS, pickRelevant, validOn, validityOf, chunkText, getDocs, saveDocs, getSections, getSettings, saveSettings, extractTextFromHtml, extractTitleFromHtml };
+module.exports = { KAI_SECTIONS: STATIC_SECTIONS, STATIC_SECTIONS, pickRelevant, pickRelevantEx, parseSources, validOn, validityOf, chunkText, getDocs, saveDocs, getSections, getSettings, saveSettings, extractTextFromHtml, extractTitleFromHtml };

@@ -173,6 +173,8 @@ module.exports = async function (context, req) {
       const contactLine = managerName ? ("liên hệ " + managerName + " (quản lí trực tiếp của bạn) hoặc Mr. Lâm Anh") : "liên hệ quản lí hoặc Mr. Lâm Anh";
       const normQ = (t) => String(t || "").toLowerCase().replace(/\s+/g, " ").trim();
       const cacheKey = crypto.createHash("sha1").update([normQ(question), normQ(lastUser && lastUser.content), normQ(lastBot && lastBot.content).slice(0, 200), managerName, todayStr].join("|")).digest("hex");
+      let usedTitles = [];   // tiêu đề các mục tài liệu thực sự gửi cho mô hình ở lần gọi gần nhất
+      const pickDocs = (n) => { const pk = kb.pickRelevantEx(searchText, n, sections, vnNow); usedTitles = pk.titles; return pk.text; };
       const buildSys = (docChars) => "Bạn là KAI, trợ lí nội bộ của Karofi/Livotec dành cho nhân viên kinh doanh. Giọng văn thân thiện, tự nhiên như một đồng nghiệp giàu kinh nghiệm, xưng \"mình\", gọi người hỏi là \"bạn\", bằng tiếng Việt, ngắn gọn, rõ ràng.\n\n" +
         "KIẾN THỨC NỀN LUÔN ĐÚNG (ghi nhớ sẵn, dùng được kể cả khi đoạn TÀI LIỆU trích dẫn bên dưới không nhắc tới): tất cả model bình nước nóng mã bắt đầu bằng \"LWH-\" (ví dụ LWH-I20A25, LWH-V20B26...) đều là dòng BÌNH NƯỚC NÓNG GIÁN TIẾP (có bình chứa nước). Model \"Karofi KBO-I400\" là dòng BÌNH NƯỚC NÓNG TRỰC TIẾP (không có bình chứa). Khi được hỏi về \"bình gián tiếp\", hãy hiểu đó chính là các model LWH- và tìm giá của đúng các model đó trong TÀI LIỆU, KHÔNG được kết luận \"không có thông tin\" chỉ vì đoạn trích không ghi chữ \"gián tiếp\".\n\n" +
         "PHÂN BIỆT CÁC LOẠI GIÁ (TUYỆT ĐỐI không nhầm lẫn, không tự suy ra loại giá này từ loại giá khác): \"Giá thuần đại lý\"/\"giá NPP\"/\"giá ĐL\" là giá BÁN SỈ cho Đại lý/Nhà phân phối, KHÔNG PHẢI giá người tiêu dùng cuối phải trả. \"Giá bán lẻ\"/\"giá trên web\"/\"giá niêm yết cho khách hàng\" là giá hiển thị công khai trên website livotec.com, thường CAO HƠN giá thuần đại lý và là một con số HOÀN TOÀN KHÁC, không được tính/suy đoán/làm tròn từ giá đại lý. Nếu TÀI LIỆU chỉ có giá thuần đại lý mà người dùng hỏi giá bán lẻ (hoặc ngược lại), phải nói rõ \"tài liệu hiện chỉ có giá [loại đang có], chưa có giá [loại được hỏi]\" — TUYỆT ĐỐI không gọi nhầm giá đại lý là giá bán lẻ hay ngược lại.\n\n" +
@@ -205,11 +207,13 @@ module.exports = async function (context, req) {
         "- Hiểu ý theo ngữ cảnh gần nhất và trả lời luôn. Chỉ hỏi lại một câu ngắn khi thật sự không đoán được; không bắt người dùng nói lại.\n" +
         "- Khi tài liệu không có đúng phần được hỏi, nói rõ cụ thể thiếu gì (ví dụ: \"tài liệu chỉ nói công ty cung cấp kệ trưng bày, không nói có thu phí hay không\") và nêu phần liên quan đã có, thay vì từ chối chung chung.\n" +
         "- Giữ giọng nhất quán, đoạn văn liền ý, không dùng biểu tượng cảm xúc trừ khi người dùng dùng trước.\n\n" +
+        "NGUỒN (bắt buộc): ở DÒNG CUỐI CÙNG của mỗi câu trả lời, viết đúng một dòng riêng dạng [NGUON: tiêu đề mục 1 | tiêu đề mục 2] liệt kê tiêu đề (dòng bắt đầu bằng \"# \" trong TÀI LIỆU) của những mục bạn THỰC SỰ dùng làm căn cứ, chép đúng nguyên văn tiêu đề. Nếu câu trả lời chỉ dựa vào kiến thức bán hàng chung, không dùng mục tài liệu nào, viết [NGUON: kien thuc chung]. Tuyệt đối không bịa tiêu đề không có trong TÀI LIỆU. Không giải thích dòng này.\n\n" +
         "Trình bày: ưu tiên câu ngắn, dùng gạch đầu dòng khi có nhiều ý, in đậm số liệu quan trọng. Khi liệt kê từ 3 model/sản phẩm có giá trở lên, LUÔN trình bày bằng BẢNG markdown (dòng tiêu đề, dòng | --- | --- | phân cách, rồi các dòng dữ liệu), ví dụ cột: Model | Dung tích hoặc Loại | Giá — không liệt kê rời từng model bằng gạch đầu dòng vì khó so sánh.\n\n" +
-        "TÀI LIỆU:\n" + kb.pickRelevant(searchText, docChars, sections, vnNow);
+        "TÀI LIỆU:\n" + pickDocs(docChars);
 
-      let answer = cacheGet(cacheKey);
-      const fromCache = !!answer;
+      const cached = cacheGet(cacheKey);
+      let answer = cached ? cached.answer : null, sources = cached ? cached.sources : [], basis = cached ? cached.basis : "none";
+      const fromCache = !!cached;
       const attempts = [
         { docChars: 7000, h: hist, max: 800, ms: 22000 },
         { docChars: 3500, h: hist.slice(-2), max: 600, ms: 14000 } // dự phòng: ngữ cảnh gọn hơn nếu lần đầu lỗi (quá dài / quá tải)
@@ -230,18 +234,20 @@ module.exports = async function (context, req) {
         const msg = st === 429 ? "Mọi người đang hỏi KAI khá dồn dập nên tạm thời vượt giới hạn của bên cung cấp AI — vui lòng đợi khoảng 30-60 giây rồi hỏi lại nhé (bấm \"Sửa & gửi lại\" dưới câu hỏi của bạn cho nhanh)." : st === 503 ? "KAI chưa được cấu hình AI, vui lòng báo quản trị viên." : "Trợ lí đang bận hoặc chưa sẵn sàng, thử lại sau.";
         return reply(context, 502, { ok: false, error: msg }, headers);
       }
+      if (!fromCache) { const ps = kb.parseSources(answer, usedTitles); answer = ps.answer; sources = ps.sources; basis = ps.basis; }
       // Ngoài phạm vi: bỏ toàn bộ nội dung mô hình viết, chỉ trả câu từ chối cố định (không để lộ câu trả lời một phần).
       if (/\[NGOAI_PHAM_VI\]/i.test(answer)) {
         answer = "Mình chỉ hỗ trợ các nội dung về sản phẩm, chính sách và bán hàng của Karofi/Livotec. Bạn hỏi mình về chính sách, bảng giá, khuyến mại hoặc cách tư vấn khách hàng nhé.";
+        sources = []; basis = "none";
       }
-      if (!fromCache) cacheSet(cacheKey, answer);
+      if (!fromCache) cacheSet(cacheKey, { answer, sources, basis });
       const newUsed = await usageInc(usageKey);
       try {
         const log = (await store.get("kai/log.json")) || [];
         log.unshift({ code: id && id.kind === "emp" ? id.code : "", name: id && id.kind === "emp" ? id.name : "", question: question.slice(0, 300), ts: Date.now() });
         await store.put("kai/log.json", log.slice(0, 3000));
       } catch (e) { context.log.error("kai log", e && e.message); }
-      return reply(context, 200, { ok: true, answer, used: newUsed, limit, unlimited }, headers);
+      return reply(context, 200, { ok: true, answer, sources, basis, used: newUsed, limit, unlimited }, headers);
     }
 
     return reply(context, 400, { ok: false, error: "Yêu cầu không hợp lệ." });
