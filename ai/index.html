@@ -72,6 +72,11 @@ main{flex:1;display:flex;flex-direction:column;max-width:760px;margin:0 auto;wid
 .msg li{margin:.25em 0}
 .msg.bot b{font-weight:600;background:linear-gradient(transparent 62%,var(--amber-soft) 62%)}
 .msg code{font-family:ui-monospace,Consolas,monospace;background:var(--brand-soft);padding:1px 6px;border-radius:5px;font-size:.88em}
+.msg .tbl-wrap{overflow-x:auto;margin:6px 0 10px;-webkit-overflow-scrolling:touch}
+.msg table{border-collapse:collapse;width:100%;min-width:max-content;font-size:13px}
+.msg table th,.msg table td{border:1px solid var(--line);padding:6px 10px;text-align:left;white-space:nowrap}
+.msg table th{background:rgba(127,127,127,.1);font-weight:800}
+.msg table tr:nth-child(even) td{background:rgba(127,127,127,.05)}
 .bcol{display:flex;flex-direction:column;min-width:0;flex:1}
 .bubble-row.me .bcol{align-items:flex-end;flex:0 1 auto}
 .dots{display:inline-flex;gap:5px;padding:8px 0 8px 14px}
@@ -194,17 +199,35 @@ async function refreshMe(){
   if (r.j.ok){ STATE.loggedIn = !!r.j.loggedIn; STATE.used = r.j.used||0; STATE.limit = r.j.limit||3; STATE.unlimited = !!r.j.unlimited; renderWho(); }
 }
 
-// ---- Định dạng đơn giản: **đậm**, `mã`, gạch đầu dòng "- "/"* ", danh sách số "1. " ----
+// ---- Định dạng đơn giản: **đậm**, `mã`, gạch đầu dòng "- "/"* ", danh sách số "1. ", bảng "| A | B |" ----
 function inlineMd(s){ return s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>'); }
+function isTableSep(line){ return /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?\s*$/.test(line); }
+function splitTableRow(line){
+  var t = line.trim();
+  if (t.charAt(0) === '|') t = t.slice(1);
+  if (t.charAt(t.length - 1) === '|') t = t.slice(0, -1);
+  return t.split('|').map(function(c){ return c.trim(); });
+}
 function mdToHtml(raw){
   var lines = esc(raw).split('\n'), html = '', ul = false, ol = false;
   function closeLists(){ if (ul){ html += '</ul>'; ul = false; } if (ol){ html += '</ol>'; ol = false; } }
-  lines.forEach(function(line){
+  for (var i = 0; i < lines.length; i++){
+    var line = lines[i];
+    // Bảng markdown: dòng tiêu đề có "|", ngay sau là dòng gạch ngang phân cách kiểu |---|---|
+    if (line.indexOf('|') >= 0 && i + 1 < lines.length && isTableSep(lines[i + 1])){
+      closeLists();
+      var header = splitTableRow(line), rows = [], j = i + 2;
+      while (j < lines.length && lines[j].indexOf('|') >= 0 && lines[j].trim()){ rows.push(splitTableRow(lines[j])); j++; }
+      html += '<div class="tbl-wrap"><table><thead><tr>' + header.map(function(h){ return '<th>' + inlineMd(h) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + inlineMd(c) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+      i = j - 1;
+      continue;
+    }
     var mUl = /^[-*]\s+(.*)/.exec(line), mOl = /^\d+[.)]\s+(.*)/.exec(line);
     if (mUl){ if (!ul){ closeLists(); html += '<ul>'; ul = true; } html += '<li>'+inlineMd(mUl[1])+'</li>'; }
     else if (mOl){ if (!ol){ closeLists(); html += '<ol>'; ol = true; } html += '<li>'+inlineMd(mOl[1])+'</li>'; }
     else { closeLists(); if (line.trim()) html += '<p>'+inlineMd(line)+'</p>'; }
-  });
+  }
   closeLists();
   return html || '<p></p>';
 }
