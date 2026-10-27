@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Phiếu khảo sát</title>
+<link rel="icon" href="/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1d2a33;--mute:#5b6b76;--paper:#f4f6f5;--card:#fff;--line:#d9e0e3;--accent:#0f766e;--accent-ink:#fff;--err:#b42318}
+@media (prefers-color-scheme:dark){:root{--ink:#e8eef0;--mute:#9db0b9;--paper:#12191d;--card:#1a242a;--line:#2d3b43;--accent:#2dd4bf;--accent-ink:#06211e;--err:#ff8a80}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 "Be Vietnam Pro",system-ui,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:720px;margin:0 auto;padding:24px 16px 64px}
+header.brand{display:flex;align-items:center;gap:10px;margin-bottom:20px;color:var(--mute);font-size:14px}
+header.brand img{height:28px}
+h1{font-size:1.6rem;line-height:1.25;margin:0 0 6px}
+.desc{color:var(--mute);margin:0 0 20px;white-space:pre-line}
+.q{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:12px}
+.q.bad{border-color:var(--err)}
+.q legend,.q .qt{font-weight:600;margin-bottom:10px;display:block;padding:0}
+.req{color:var(--err);margin-left:4px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:8px 0;cursor:pointer}
+.opt input{margin-top:5px;accent-color:var(--accent)}
+input[type=text],textarea{width:100%;font:inherit;color:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+textarea{min-height:96px;resize:vertical}
+input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rate{display:flex;gap:8px;flex-wrap:wrap}
+.rate label{position:relative}
+.rate input{position:absolute;opacity:0}
+.rate span{display:grid;place-items:center;width:46px;height:46px;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-weight:600}
+.rate input:checked+span{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.rate input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.scale{display:flex;justify-content:space-between;color:var(--mute);font-size:13px;margin-top:6px}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.who{grid-template-columns:1fr}}
+.who label{font-size:14px;color:var(--mute);display:block;margin-bottom:4px}
+button.go{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;font:inherit;font-weight:600;padding:12px 22px;cursor:pointer}
+button.go[disabled]{opacity:.6;cursor:wait}
+.msg{padding:28px 20px;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:10px}
+.err{color:var(--err);margin:10px 0}
+</style>
+</head>
+<body>
+<main>
+  <header class="brand"><img src="/kiemtra/logo-mark.png" alt="" onerror="this.remove()"><span>Hệ thống kiểm tra đánh giá trực tuyến</span></header>
+  <div id="app"><div class="msg">Đang tải phiếu khảo sát…</div></div>
+</main>
+<script>
+(function(){
+  var app=document.getElementById('app'), survey=null;
+  function code(){
+    var m=location.pathname.match(/ks=([^\/?#]+)/i);
+    if(m)return decodeURIComponent(m[1]).toLowerCase();
+    var q=new URLSearchParams(location.search).get('ks');
+    return q?q.toLowerCase():'';
+  }
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function msg(t,h){app.innerHTML='<div class="msg">'+(h?'<h1>'+esc(h)+'</h1>':'')+'<p>'+esc(t)+'</p></div>'}
+
+  var c=code();
+  if(!c){msg('Liên kết thiếu mã khảo sát. Dạng đúng: /kiemtra/ks=mã-khảo-sát','Không tìm thấy phiếu');return}
+  document.title='Khảo sát ' + c;
+
+  fetch('/api/ks-info?code='+encodeURIComponent(c),{headers:{'X-Requested-With':'livotec'}}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})
+  .then(function(x){
+    if(!x.ok){msg(x.j.error||'Không tìm thấy phiếu khảo sát này.','Không tìm thấy phiếu');return}
+    if(x.j.closed){msg('Khảo sát này đã đóng, cảm ơn bạn đã quan tâm.',x.j.title);return}
+    survey=x.j; render();
+  }).catch(function(){msg('Không kết nối được máy chủ. Hãy tải lại trang.','Lỗi kết nối')});
+
+  function render(){
+    document.title=survey.title;
+    var h='<h1>'+esc(survey.title)+'</h1>';
+    if(survey.description)h+='<p class="desc">'+esc(survey.description)+'</p>';
+    h+='<form id="f" novalidate>';
+    if(survey.askIdentity){
+      h+='<div class="q" id="who"><span class="qt">Thông tin người trả lời<span class="req">*</span></span><div class="who">'
+       +'<div><label for="empId">Mã nhân viên</label><input type="text" id="empId" autocomplete="off"></div>'
+       +'<div><label for="empName">Họ tên</label><input type="text" id="empName" autocomplete="name"></div></div></div>';
+    }
+    survey.questions.forEach(function(q,i){
+      h+='<fieldset class="q" id="q'+i+'" style="margin-inline:0"><legend>'+esc(q.text)+(q.required?'<span class="req" aria-label="bắt buộc">*</span>':'')+'</legend>';
+      if(q.type==='single'||q.type==='multi'){
+        var t=q.type==='single'?'radio':'checkbox';
+        (q.options||[]).forEach(function(o,k){h+='<label class="opt"><input type="'+t+'" name="q'+i+'" value="'+k+'"><span>'+esc(o)+'</span></label>'});
+      }else if(q.type==='rating'){
+        h+='<div class="rate">';
+        for(var n=1;n<=5;n++)h+='<label><input type="radio" name="q'+i+'" value="'+n+'"><span>'+n+'</span></label>';
+        h+='</div><div class="scale"><span>'+esc(q.low||'Rất không hài lòng')+'</span><span>'+esc(q.high||'Rất hài lòng')+'</span></div>';
+      }else{
+        h+='<textarea name="q'+i+'" maxlength="1000"></textarea>';
+      }
+      h+='</fieldset>';
+    });
+    h+='<div class="err" id="err" role="alert"></div><button class="go" id="send" type="submit">Gửi khảo sát</button></form>';
+    app.innerHTML=h;
+    document.getElementById('f').addEventListener('submit',submit);
+  }
+
+  function collect(){
+    var answers=[], ok=true, first=null;
+    survey.questions.forEach(function(q,i){
+      var box=document.getElementById('q'+i), v;
+      if(q.type==='multi'){v=[].map.call(box.querySelectorAll('input:checked'),function(e){return +e.value})}
+      else if(q.type==='text'){v=box.querySelector('textarea').value.trim()}
+      else{var e=box.querySelector('input:checked');v=e?+e.value:null}
+      var empty=v===null||v===''||(Array.isArray(v)&&!v.length);
+      var bad=q.required&&empty;
+      box.classList.toggle('bad',bad);
+      if(bad){ok=false;first=first||box}
+      answers.push(empty?null:v);
+    });
+    var id='',nm='';
+    if(survey.askIdentity){
+      id=document.getElementById('empId').value.trim();nm=document.getElementById('empName').value.trim();
+      var wb=document.getElementById('who');wb.classList.toggle('bad',!id||!nm);
+      if(!id||!nm){ok=false;first=first||wb}
+    }
+    return{ok:ok,first:first,answers:answers,empId:id,name:nm};
+  }
+
+  function submit(ev){
+    ev.preventDefault();
+    var err=document.getElementById('err'),btn=document.getElementById('send');err.textContent='';
+    var d=collect();
+    if(!d.ok){err.textContent='Vui lòng trả lời các câu bắt buộc (viền đỏ).';d.first&&d.first.scrollIntoView({behavior:'smooth',block:'center'});return}
+    btn.disabled=true;btn.textContent='Đang gửi…';
+    fetch('/api/ks-submit',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'livotec'},
+      body:JSON.stringify({code:c,answers:d.answers,empId:d.empId,name:d.name})})
+    .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})
+    .then(function(x){
+      if(x.ok){msg(survey.thanks||'Cảm ơn bạn đã hoàn thành khảo sát.','Đã gửi')}
+      else{err.textContent=x.j.error||'Gửi không thành công.';btn.disabled=false;btn.textContent='Gửi khảo sát'}
+    }).catch(function(){err.textContent='Mất kết nối. Hãy thử gửi lại.';btn.disabled=false;btn.textContent='Gửi khảo sát'});
+  }
+})();
+</script>
+</body>
+</html>
