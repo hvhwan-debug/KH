@@ -1740,6 +1740,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <div class="kaix-sub" id="kaixSub">
           <button type="button" data-k="docs" class="on">Tài liệu</button>
           <button type="button" data-k="users">Người dùng</button>
+          <button type="button" data-k="qlog">Câu hỏi</button>
           <button type="button" data-k="pending">Cấp quyền <span id="kaixPendN"></span></button>
           <button type="button" data-k="cfg">Cài đặt chung</button>
         </div>
@@ -1754,6 +1755,10 @@ button.rd-st:disabled{opacity:.55;cursor:default}
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
               <input type="file" id="kdFile" multiple accept=".docx,.xlsx,.pptx,.pdf,.png,.jpg,.jpeg,.txt,.md,.csv" style="width:auto;max-width:100%" aria-describedby="kdFileHint">
               <label class="chk" style="margin:0"><input type="checkbox" id="kdOn" checked> Cho KAI dùng tài liệu này</label>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <input type="url" id="kdUrl" placeholder="https://livotec.com/... (dán link rồi bấm Lấy nội dung)" style="flex:1;min-width:220px">
+              <button class="btn ghost sm" type="button" id="kdUrlBtn">Lấy nội dung từ URL</button>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn" type="button" id="kdSave">Lưu tài liệu</button>
@@ -1792,6 +1797,19 @@ button.rd-st:disabled{opacity:.55;cursor:default}
           </div>
           <div id="kuMsg"></div>
           <div class="small" id="kuDays" style="margin-top:14px"></div>
+        </div>
+
+        <!-- Câu hỏi: ai hỏi gì, bao nhiêu câu -->
+        <div class="kaix-sec hide" data-k="qlog">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+            <h2 style="margin:0;font-size:16px">Ai hỏi bao nhiêu câu <span class="small" id="kqSum"></span></h2>
+            <button class="btn ghost sm" type="button" onclick="kaixLoadQlog()">Tải lại</button>
+          </div>
+          <p class="small" style="margin:6px 0 10px">Xem thói quen và nhu cầu thực tế của nhân viên qua những câu họ hỏi KAI (30 ngày gần nhất).</p>
+          <div id="kqPeople"></div>
+          <hr style="margin:16px 0;border:0;border-top:1px solid var(--line)">
+          <h2 style="margin:0 0 8px;font-size:16px">Câu hỏi gần đây</h2>
+          <div id="kqRecent"></div>
         </div>
 
         <!-- Chờ duyệt + đã duyệt -->
@@ -2697,6 +2715,7 @@ function kaixOpen(){
     $('kdSave').onclick = kaixSaveDoc; $('kdClear').onclick = kaixClearDoc;
     $('kdText').addEventListener('input', kaixCount);
     $('kdFile').addEventListener('change', kaixReadFile);
+    $('kdUrlBtn').onclick = kaixImportUrlClick;
     kaixDropInit();
     $('kdStop').onclick = function(){ if (KX.stop) KX.stop(); };
     $('kuSetLimit').onclick = function(){ kaixUserSet({ limit: $('kuLimit').value.trim() === '' ? null : Number($('kuLimit').value) }, 'Đã lưu hạn mức.'); };
@@ -2707,7 +2726,7 @@ function kaixOpen(){
     $('kcSave').onclick = kaixSaveCfg;
     $('kaAddBtn').onclick = kaixAddApproved;
   }
-  kaixSub(KX.sub); kaixLoadDocs(); kaixLoadUsers(true); kaixLoadPending();
+  kaixSub(KX.sub); kaixLoadDocs(); kaixLoadUsers(true); kaixLoadPending(); kaixLoadQlog();
 }
 function kaixSub(k){
   KX.sub = k;
@@ -2784,6 +2803,30 @@ async function kaixEditDoc(id){
 }
 async function kaixToggleDoc(id, on){ var j = await kaixApi({ op:'docToggle', id:id, enabled:on }); if (!j.ok) alert(j.error); kaixLoadDocs(); }
 async function kaixDelDoc(id){ if (!confirm('Xoá tài liệu này? KAI sẽ không còn dùng nó nữa.')) return; var j = await kaixApi({ op:'docDelete', id:id }); if (!j.ok) alert(j.error); if (KX.docEdit === id) kaixClearDoc(); kaixLoadDocs(); }
+async function kaixImportUrlClick(){
+  var url = $('kdUrl').value.trim();
+  if (!url){ msg('kdMsg', 'Dán địa chỉ URL vào ô bên trên trước.'); return; }
+  var btn = $('kdUrlBtn'), label = btn.textContent; btn.disabled = true; btn.textContent = 'Đang tải…';
+  var j = await kaixApi({ op:'docImportUrl', url:url });
+  btn.disabled = false; btn.textContent = label;
+  if (!j.ok){ msg('kdMsg', j.error); return; }
+  KX.docEdit = null; $('kdTitle').value = j.title; $('kdText').value = j.text; $('kdOn').checked = true; $('kdSave').textContent = 'Lưu tài liệu';
+  kaixCount(); msg('kdMsg', 'Đã lấy nội dung từ ' + esc(j.url) + ' — xem lại rồi bấm "Lưu tài liệu".', 'ok');
+  $('kdTitle').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+function fmtVn(ms){ return ms ? new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' }) : ''; }
+async function kaixLoadQlog(){
+  $('kqPeople').innerHTML = '<p class="small">Đang tải…</p>'; $('kqRecent').innerHTML = '';
+  var j = await kaixApi({ op:'questionLog' });
+  if (!j.ok){ $('kqPeople').innerHTML = '<div class="msg err">' + esc(j.error) + '</div>'; return; }
+  $('kqSum').textContent = '(' + j.total30 + ' câu trong 30 ngày · ' + j.total + ' câu từ trước tới nay)';
+  $('kqPeople').innerHTML = (j.people && j.people.length) ? '<table class="stk" style="width:100%"><thead><tr><th>Họ tên</th><th>Mã NV</th><th style="text-align:right">Số câu</th><th>Hỏi gần nhất</th></tr></thead><tbody>' +
+    j.people.map(function(p){ return '<tr><td>' + esc(p.name || '') + '</td><td>' + esc(p.code || '(khách, chưa đăng nhập)') + '</td><td style="text-align:right"><b>' + p.count + '</b></td><td class="small">' + esc(fmtVn(p.last)) + '</td></tr>'; }).join('') +
+    '</tbody></table>' : '<p class="small">Chưa có dữ liệu.</p>';
+  $('kqRecent').innerHTML = (j.recent && j.recent.length) ? j.recent.map(function(r){
+    return '<div style="padding:7px 0;border-bottom:1px solid var(--line)"><b>' + esc(r.name || 'Khách') + '</b>' + (r.code ? ' <span class="small">(' + esc(r.code) + ')</span>' : '') + ' <span class="small">· ' + esc(fmtVn(r.ts)) + '</span><br>' + esc(r.question) + '</div>';
+  }).join('') : '<p class="small">Chưa có câu hỏi nào.</p>';
+}
 
 async function kaixLoadUsers(fillCfg){
   var j = await kaixApi({ op:'usage' });

@@ -877,4 +877,20 @@ async function getSettings() {
 }
 async function saveSettings(s) { await store.put(SETTINGS_KEY, s); }
 
-module.exports = { KAI_SECTIONS: STATIC_SECTIONS, STATIC_SECTIONS, pickRelevant, validOn, validityOf, chunkText, getDocs, saveDocs, getSections, getSettings, saveSettings };
+// Tách chữ thô từ HTML (bỏ script/style/thẻ), dùng khi admin nhập tài liệu từ một URL (ví dụ một trang trên livotec.com).
+function extractTextFromHtml(html) {
+  let t = String(html || "");
+  t = t.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ");
+  t = t.replace(/<(br|\/p|\/div|\/li|\/h[1-6]|\/tr)\s*\/?>(?!\n)/gi, "\n");
+  t = t.replace(/<li[^>]*>/gi, "\n- ");
+  t = t.replace(/<[^>]+>/g, " ");
+  t = t.replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/&quot;/gi, '"').replace(/&#39;/gi, "'").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">");
+  t = t.replace(/[ \t]+/g, " ").replace(/\n[ \t]+/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  return t;
+}
+function extractTitleFromHtml(html) {
+  const m = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(String(html || ""));
+  return m ? extractTextFromHtml(m[1]).trim() : "";
+}
+
+module.exports = { KAI_SECTIONS: STATIC_SECTIONS, STATIC_SECTIONS, pickRelevant, validOn, validityOf, chunkText, getDocs, saveDocs, getSections, getSettings, saveSettings, extractTextFromHtml, extractTitleFromHtml };

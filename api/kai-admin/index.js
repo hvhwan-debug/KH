@@ -59,6 +59,25 @@ module.exports = async function (context, req) {
       await kb.saveDocs(docs);
       return reply(context, 200, { ok: true, id: d.id, chunks: kb.chunkText(title, text).length });
     }
+    if (op === "docImportUrl") {
+      const url = String(b.url || "").trim();
+      if (!/^https?:\/\//i.test(url)) return reply(context, 400, { ok: false, error: "Nhập đúng địa chỉ URL (bắt đầu bằng http:// hoặc https://)." });
+      let html;
+      try {
+        const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 12000);
+        let r;
+        try { r = await fetch(url, { signal: ac.signal, headers: { "User-Agent": "Mozilla/5.0 (compatible; KAI-bot/1.0)" } }); }
+        finally { clearTimeout(t); }
+        if (!r.ok) return reply(context, 502, { ok: false, error: "Không tải được trang (HTTP " + r.status + ")." });
+        html = await r.text();
+      } catch (e) {
+        return reply(context, 502, { ok: false, error: "Không tải được trang này, kiểm tra lại URL hoặc thử lại sau." });
+      }
+      const title = (kb.extractTitleFromHtml ? kb.extractTitleFromHtml(html) : "") || url;
+      const text = (kb.extractTextFromHtml ? kb.extractTextFromHtml(html) : "").slice(0, MAX_TEXT);
+      if (!text) return reply(context, 502, { ok: false, error: "Không đọc được nội dung chữ từ trang này." });
+      return reply(context, 200, { ok: true, title, text, url });
+    }
     if (op === "docToggle" || op === "docDelete") {
       const docs = await kb.getDocs();
       const i = docs.findIndex((x) => x.id === String(b.id || ""));
@@ -69,6 +88,19 @@ module.exports = async function (context, req) {
     }
 
     // ---------- Người dùng & cài đặt ----------
+    if (op === "questionLog") {
+      const log = (await store.get("kai/log.json")) || [];
+      const since = Date.now() - 30 * 24 * 3600 * 1000;
+      const recent30 = log.filter((x) => x.ts >= since);
+      const byEmp = {};
+      recent30.forEach((x) => {
+        const key = x.code || "·khách (chưa đăng nhập)·";
+        if (!byEmp[key]) byEmp[key] = { code: x.code || "", name: x.name || "", count: 0, last: 0 };
+        byEmp[key].count++; byEmp[key].last = Math.max(byEmp[key].last, x.ts);
+      });
+      const people = Object.keys(byEmp).map((k) => byEmp[k]).sort((a, z) => z.count - a.count);
+      return reply(context, 200, { ok: true, total: log.length, total30: recent30.length, people, recent: log.slice(0, 100) });
+    }
     if (op === "usage") {
       const [cfgK, names, cands, appr] = await Promise.all([kb.getSettings(), store.list("kai/usage/emp-"), quiz.getCandidates(), store.get("kai/approved.json")]);
       const today = vnDate();

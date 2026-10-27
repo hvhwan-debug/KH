@@ -215,6 +215,11 @@ module.exports = async function (context, req) {
         answer = "Mình chỉ hỗ trợ các nội dung về sản phẩm, chính sách và bán hàng của Karofi/Livotec. Bạn hỏi mình về chính sách, bảng giá, khuyến mại hoặc cách tư vấn khách hàng nhé.";
       }
       const newUsed = await usageInc(usageKey);
+      try {
+        const log = (await store.get("kai/log.json")) || [];
+        log.unshift({ code: id && id.kind === "emp" ? id.code : "", name: id && id.kind === "emp" ? id.name : "", question: question.slice(0, 300), ts: Date.now() });
+        await store.put("kai/log.json", log.slice(0, 3000));
+      } catch (e) { context.log.error("kai log", e && e.message); }
       return reply(context, 200, { ok: true, answer, used: newUsed, limit, unlimited }, headers);
     }
 
