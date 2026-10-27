@@ -455,6 +455,13 @@ button:focus-visible{outline:3px solid #9CC4F2;outline-offset:2px}
     $('prog').hidden=!(S.showProgress&&many);
     $('progT').textContent=many?(flow==='step'?'Câu ':'Phần ')+(pos+1)+'/'+vp.length:'';
     $('progB').style.width=many?Math.round((pos+1)*100/vp.length)+'%':'0';
+    setTimeout(checkBlockedQ,60);
+  }
+  // Tiện ích chặn quảng cáo có thể ẩn câu hỏi theo tên lớp: báo rõ thay vì để người trả lời thấy trang trống
+  function checkBlockedQ(){
+    if(!pages[cur])return;var vis=visibility(),bad=false;
+    pages[cur].idx.forEach(function(i){var q=qs[i];if(q.type==='section'||!vis[i])return;var b=box(i);if(b&&!b.hidden&&getComputedStyle(b).display==='none')bad=true});
+    var er=$('err');if(bad&&er)er.textContent='Trình duyệt hoặc tiện ích chặn quảng cáo đang ẩn câu hỏi. Hãy tắt chặn quảng cáo cho trang này rồi tải lại.';
   }
   function nextPage(){var vp=visPages(visibility()),pos=vp.indexOf(cur);return pos>=0&&pos<vp.length-1?vp[pos+1]:-1}
   function back(){var vp=visPages(visibility()),pos=vp.indexOf(cur);if(pos>0){cur=vp[pos-1];refresh();window.scrollTo({top:0,behavior:'smooth'})}}

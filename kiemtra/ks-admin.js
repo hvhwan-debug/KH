@@ -218,7 +218,7 @@ function drawEditor(){
 var AI={open:false,busy:false,prompt:'',count:'8',logic:true,draft:null,review:null,msg:'',err:false,panelEl:null,outEl:null};
 var KIND={dan_dat:'Dẫn dắt',hai_y:'Hai ý trong một câu',mo_ho:'Mơ hồ',lua_chon:'Lựa chọn',trung:'Trùng ý',qua_dai:'Quá dài',nhay_cam:'Nhạy cảm',thieu_cau:'Thiếu câu',khac:'Lưu ý'};
 function aiCard(){
-  var card=h('div',{class:'qc',id:'aiCard',style:'background:var(--soft);margin-top:0;border-style:solid'});
+  var card=h('div',{class:'qcard',id:'aiCard',style:'background:var(--soft);margin-top:0;border-style:solid'});
   card.appendChild(h('div',{class:'qh'},h('strong',null,'✦ Trợ lý AI'),h('span',{class:'sp'}),
     h('button',{class:'sm',onclick:function(){AI.open=!AI.open;drawAiPanel()}},'Soạn câu hỏi bằng AI'),
     h('button',{class:'sm',id:'aiRevBtn',onclick:aiReview},'Rà soát câu hỏi')));
@@ -331,7 +331,7 @@ function drawAud(){
   var box=$('aud');if(!box)return;clear(box);
   if(!E||E.S.identity!=='roster')return;
   var a=audOf();
-  box.appendChild(h('div',{class:'qc',style:'background:var(--soft)'},h('strong',null,'Nhân sự tham gia'),
+  box.appendChild(h('div',{class:'qcard',style:'background:var(--soft)'},h('strong',null,'Nhân sự tham gia'),
     h('p',{class:'note',style:'margin:4px 0 0'},'Chỉ nhân sự trong Hồ sơ học tập đúng đối tượng mới mở được phiếu (xác thực bằng mã nhân viên + email). Nhân viên đã nghỉ việc tự bị loại. Không chọn nhóm nào = mọi nhân viên đang làm việc. Nhóm được lưu theo điều kiện nên người mới vào đúng nhóm sẽ tự được gán.')));
   var inner=box.firstChild;
   if(!ROSTER){inner.appendChild(h('p',{class:'note'},'Đang tải danh sách nhân sự…'));
@@ -423,12 +423,32 @@ function prune(){
 function drawQs(){
   var n=prune(),c=clear($('qs'));
   if(n)c.appendChild(h('div',{class:'warn'},'Đã gỡ '+n+' điều kiện logic vì câu được tham chiếu không còn đứng trước câu đó.'));
-  E.S.questions.forEach(function(q,i){c.appendChild(qCard(q,i))});
+  E.S.questions.forEach(function(q,i){
+    var node;
+    try{node=qCard(q,i)}catch(e){
+      if(window.console)console.error(e);
+      node=h('div',{class:'qcard'},h('strong',null,(i+1)+'. Câu này không hiển thị được'),h('div',{class:'bad'},String(e&&e.message||e)),
+        h('button',{class:'sm d',onclick:function(){E.S.questions.splice(i,1);drawQs()}},'Xoá câu này'));
+    }
+    c.appendChild(node);
+  });
   drawTabs();
+  setTimeout(checkBlocked,60);
+}
+// Tiện ích chặn quảng cáo (nhất là bộ lọc tiếng Việt) có thể ẩn phần tử theo tên lớp: báo rõ thay vì để trình soạn trống
+function checkBlocked(){
+  var c=$('qs');if(!c||!E)return;
+  var old=$('blockedNote');if(old)old.remove();
+  var first=c.querySelector('.qcard');
+  if(first&&getComputedStyle(first).display==='none'&&E.S.questions.length){
+    c.parentNode.insertBefore(h('div',{id:'blockedNote',class:'warn',style:'background:var(--err-soft,#FBE3E0);color:var(--err)'},
+      h('strong',null,'Trình duyệt hoặc tiện ích chặn quảng cáo đang ẩn các câu hỏi. '),
+      'Hãy tắt chặn quảng cáo cho kh.io.vn (biểu tượng khiên trên thanh địa chỉ), rồi tải lại trang. Các câu hỏi vẫn còn nguyên, chỉ bị ẩn khỏi màn hình.'),c);
+  }
 }
 function qCard(q,i){
   var Q=E.S.questions,sec=q.type==='section';
-  var card=h('div',{class:'qc'+(sec?' sec':'')});
+  var card=h('div',{class:'qcard'+(sec?' sec':'')});
   var ts=h('select',{'aria-label':'Loại câu hỏi',onchange:function(){Q[i]=retype(q,this.value);drawQs()}});
   TYPES.forEach(function(t){ts.appendChild(h('option',{value:t[0]},t[1]))});ts.value=q.type;
   card.appendChild(h('div',{class:'qh'},h('span',{class:'no'},(i+1)+'.'),ts,h('span',{class:'sp'}),
