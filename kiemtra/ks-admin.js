@@ -130,7 +130,7 @@ function renderList(items){
       h('div',{class:'meta'},h('strong',null,s.title),stateBadge(s.state),
         h('div',{class:'note'},s.count+' phiếu'+(s.max?' / tối đa '+s.max:'')),
         h('div',{class:'link'},link)),
-      h('div',{class:'row nf',style:'flex:0 0 auto'},cp,
+      h('div',{class:'acts'},cp,
         h('button',{class:'sm',onclick:function(){openLink(s.code,true)}},'Xem thử'),
         h('button',{class:'sm',onclick:function(){showResults(s.code)}},'Kết quả'),
         h('button',{class:'sm',onclick:function(){loadSurvey(s.code,function(sv){openEditor(sv,false,s.count)})}},'Sửa'),
@@ -163,6 +163,7 @@ function fld(label,node){return h('div',null,h('label',{class:'f'},label),node)}
 
 function openEditor(sv,isNew,count){
   E={S:clone(sv),isNew:isNew,count:count||0,saved:!isNew,tab:'q'};
+  AI.draft=null;AI.review=null;AI.msg='';AI.err=false;
   if(!E.S.identity)E.S.identity=E.S.askIdentity?'emp':'none';
   if(E.S.showProgress===undefined)E.S.showProgress=true;
   $('results').hidden=true;$('editor').hidden=false;drawEditor();
@@ -195,6 +196,7 @@ function drawEditor(){
   paneS.appendChild(fld('Cách hiển thị câu hỏi cho người trả lời',sel(S,'flow',[['auto','Tự động: từng câu một trên điện thoại, theo trang trên máy tính (khuyên dùng)'],['step','Luôn từng câu một'],['page','Luôn theo trang (nhiều câu cùng lúc)']])));
   paneS.appendChild(h('div',{class:'row'},cb(S,'open','Đang mở nhận trả lời'),cb(S,'showProgress','Hiện thanh tiến độ')));
   paneA.appendChild(h('div',{id:'aud'}));
+  paneQ.appendChild(aiCard());
   paneQ.appendChild(h('div',{class:'warn',style:'background:var(--soft)'},h('strong',null,'Bấm vào chữ của từng câu để sửa. '),'Dùng ↑ ↓ để đổi thứ tự, ⧉ để nhân đôi, ✕ để xoá, chọn "Bắt buộc" nếu cần. Mở mục "Logic" để đặt điều kiện hiện câu. Mỗi "Tiêu đề trang" bắt đầu một trang mới.'));
   paneQ.appendChild(h('div',{id:'qs'}));
   var addSel=h('select',{id:'addType',style:'width:auto'});TYPES.forEach(function(t){addSel.appendChild(h('option',{value:t[0]},t[1]))});
@@ -210,6 +212,104 @@ function drawEditor(){
   drawQs();drawAud();drawTabs();
 }
 
+
+
+/* ---------- Trợ lý AI trong trình soạn: soạn câu hỏi, rà soát ---------- */
+var AI={open:false,busy:false,prompt:'',count:'8',logic:true,draft:null,review:null,msg:'',err:false,panelEl:null,outEl:null};
+var KIND={dan_dat:'Dẫn dắt',hai_y:'Hai ý trong một câu',mo_ho:'Mơ hồ',lua_chon:'Lựa chọn',trung:'Trùng ý',qua_dai:'Quá dài',nhay_cam:'Nhạy cảm',thieu_cau:'Thiếu câu',khac:'Lưu ý'};
+function aiCard(){
+  var card=h('div',{class:'qc',id:'aiCard',style:'background:var(--soft);margin-top:0;border-style:solid'});
+  card.appendChild(h('div',{class:'qh'},h('strong',null,'✦ Trợ lý AI'),h('span',{class:'sp'}),
+    h('button',{class:'sm',onclick:function(){AI.open=!AI.open;drawAiPanel()}},'Soạn câu hỏi bằng AI'),
+    h('button',{class:'sm',id:'aiRevBtn',onclick:aiReview},'Rà soát câu hỏi')));
+  card.appendChild(h('p',{class:'note',style:'margin:0'},'AI chỉ đề xuất. Bạn xem, sửa rồi mới lưu; không có gì được tự động lưu.'));
+  AI.panelEl=h('div');AI.outEl=h('div');card.appendChild(AI.panelEl);card.appendChild(AI.outEl);
+  drawAiPanel();drawAiOut();
+  return card;
+}
+function aiSay(txt,err){AI.msg=txt;AI.err=!!err;var m=$('aiMsg');if(m){m.textContent=txt;m.className=err?'bad':'note'}}
+function drawAiPanel(){
+  var el=AI.panelEl;if(!el)return;clear(el);if(!AI.open)return;
+  var ta=h('textarea',{rows:3,placeholder:'Mô tả mục tiêu khảo sát và đối tượng. Ví dụ: Khảo sát nhu cầu đào tạo cho ASM miền Bắc, tập trung kỹ năng bán hàng và hình thức học phù hợp.','aria-label':'Mô tả khảo sát',oninput:function(){AI.prompt=this.value}});ta.value=AI.prompt;
+  var cs=h('select',{style:'width:auto','aria-label':'Số câu hỏi',onchange:function(){AI.count=this.value}});
+  [5,8,10,15,20].forEach(function(n){cs.appendChild(h('option',{value:n},n+' câu hỏi'))});cs.value=AI.count;
+  el.appendChild(h('div',{style:'margin-top:10px'},ta,
+    h('div',{class:'row',style:'margin-top:8px;align-items:center;justify-content:flex-start'},cs,
+      h('label',{class:'chk nf',style:'margin:0'},h('input',{type:'checkbox',checked:AI.logic,onchange:function(){AI.logic=this.checked}}),'Cho AI đặt điều kiện hiện câu'),
+      h('button',{class:'p nf',id:'aiGo',disabled:AI.busy,onclick:aiDraft},AI.busy?'Đang soạn…':'Soạn')),
+    h('div',{id:'aiMsg',class:AI.err?'bad':'note',style:'margin-top:6px'},AI.msg)));
+}
+function aiDraft(){
+  if(AI.busy)return;
+  if(AI.prompt.trim().length<8){aiSay('Hãy mô tả mục tiêu khảo sát (ít nhất vài chữ).',true);return}
+  AI.busy=true;AI.draft=null;drawAiPanel();aiSay('AI đang soạn, thường mất 15–40 giây…');drawAiOut();
+  api('ai_draft',null,{prompt:AI.prompt,count:Number(AI.count),logic:AI.logic}).then(function(j){
+    AI.busy=false;AI.draft=j;AI.review=null;drawAiPanel();aiSay('');drawAiOut();
+  }).catch(function(e){AI.busy=false;drawAiPanel();aiSay(e.message,true)});
+}
+function typeName(t){return TNAME[t]||t}
+function drawAiOut(){
+  var el=AI.outEl;if(!el)return;clear(el);
+  if(AI.draft){
+    var d=AI.draft,nq=d.questions.filter(function(q){return q.type!=='section'}).length;
+    var list=h('div',{style:'max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--card);margin:8px 0'});
+    d.questions.forEach(function(q,i){list.appendChild(h('div',{style:'margin:4px 0;font-size:14px'+(q.type==='section'?';font-weight:700':'')},(i+1)+'. ',h('span',{class:'note'},q.type==='section'?'[Trang] ':'['+typeName(q.type)+'] '),q.text,q.showIf?h('span',{class:'note'},'  ↳ có điều kiện hiện'):null))});
+    el.appendChild(h('div',{style:'margin-top:10px'},h('strong',null,'AI đã soạn '+nq+' câu hỏi'+(d.title?' — "'+d.title+'"':'')),list,
+      h('div',{class:'row',style:'justify-content:flex-start'},
+        h('button',{class:'p nf',onclick:aiReplace},'Thay toàn bộ câu hỏi hiện tại'),
+        h('button',{class:'nf',onclick:aiAppend},'Thêm vào cuối'),
+        h('button',{class:'nf',onclick:function(){AI.draft=null;drawAiOut()}},'Bỏ bản này'))));
+  }
+  if(AI.review){
+    var r=AI.review,box=h('div',{style:'margin-top:10px'},h('strong',null,'Kết quả rà soát'));
+    if(r.tong_quan)box.appendChild(h('p',{style:'margin:4px 0 8px'},r.tong_quan));
+    if(!r.ghi_chu.length)box.appendChild(h('p',{class:'ok'},'AI không thấy vấn đề đáng kể.'));
+    r.ghi_chu.forEach(function(n){
+      var q=n.cau?E.S.questions[n.cau-1]:null;
+      var item=h('div',{style:'border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;background:var(--card)'},
+        h('div',null,h('span',{class:'badge'},KIND[n.loai]||'Lưu ý'),' ',h('strong',null,n.cau?'Câu '+n.cau:'Chung'),q&&q.text?h('span',{class:'note'},' — '+trunc(q.text,60)):null),
+        n.van_de?h('div',{style:'margin-top:4px'},n.van_de):null,
+        n.goi_y?h('div',{class:'note',style:'margin-top:2px'},'Gợi ý: '+n.goi_y):null);
+      if(n.viet_lai&&q){
+        var use=h('button',{class:'sm',onclick:function(){q.text=n.viet_lai;n.viet_lai='';drawQs();updateDirty();drawAiOut()}},'Dùng câu này');
+        item.appendChild(h('div',{style:'margin-top:6px'},h('span',{class:'note'},'Viết lại: '),'"'+n.viet_lai+'" ',use));
+      }
+      box.appendChild(item);
+    });
+    box.appendChild(h('button',{class:'sm',onclick:function(){AI.review=null;drawAiOut()}},'Đóng'));
+    el.appendChild(box);
+  }
+}
+function hasContent(){return E.S.questions.some(function(q){return String(q.text||'').trim()})}
+function aiReplace(){
+  var d=AI.draft;if(!d)return;
+  if(hasContent()&&!confirm('Thay toàn bộ câu hỏi hiện tại bằng bản AI vừa soạn? (Có thể hoàn tác bằng cách đóng và không lưu.)'))return;
+  E.S.questions=clone(d.questions);
+  if(!String(E.S.title||'').trim())E.S.title=d.title||'';
+  if(!String(E.S.description||'').trim())E.S.description=d.description||'';
+  AI.draft=null;E.tab='q';drawEditor();updateDirty();
+}
+function aiAppend(){
+  var d=AI.draft;if(!d)return;
+  var map={};
+  clone(d.questions).forEach(function(q){
+    var old=q.id;q.id=newId();map[old]=q.id;
+    ['showIf','endIf'].forEach(function(k){if(q[k]){q[k].rules.forEach(function(r){r.q=map[r.q]||r.q});q[k].rules=q[k].rules.filter(function(r){return Object.keys(map).some(function(o){return map[o]===r.q})});if(!q[k].rules.length)delete q[k]}});
+    E.S.questions.push(q);
+  });
+  AI.draft=null;drawQs();drawAiOut();updateDirty();
+  var c=$('qs');if(c&&c.lastChild&&c.lastChild.scrollIntoView)c.lastChild.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function aiReview(){
+  if(AI.busy)return;
+  if(!hasContent()){AI.open=true;drawAiPanel();aiSay('Hãy soạn ít nhất một câu hỏi trước khi rà soát.',true);return}
+  var b=$('aiRevBtn');AI.busy=true;if(b){b.disabled=true;b.textContent='Đang rà soát…'}
+  AI.review=null;AI.draft=null;drawAiOut();
+  api('ai_review',null,{title:E.S.title,description:E.S.description,questions:payload().questions}).then(function(j){
+    AI.busy=false;AI.review=j;var b2=$('aiRevBtn');if(b2){b2.disabled=false;b2.textContent='Rà soát câu hỏi'}drawAiOut();
+  }).catch(function(e){AI.busy=false;var b2=$('aiRevBtn');if(b2){b2.disabled=false;b2.textContent='Rà soát câu hỏi'}
+    AI.open=true;drawAiPanel();aiSay(e.message,true)});
+}
 
 /* ---------- gán nhân sự tham gia (theo Hồ sơ học tập) ---------- */
 var ROSTER=null,SEG={both:'Cả hai ngành',gia_dung:'Gia dụng',may_loc:'Máy lọc nước'},RG={bac:'Miền Bắc',nam:'Miền Nam'};
@@ -483,7 +583,7 @@ var R=null;
 function showResults(code){
   $('editor').hidden=true;var box=clear($('results'));$('results').hidden=false;box.appendChild(h('p',{class:'note'},'Đang tải kết quả…'));
   Promise.all([api('get','code='+encodeURIComponent(code)),api('results','code='+encodeURIComponent(code))]).then(function(r){
-    R={S:r[0].survey,rows:r[1].rows,staff:r[1].staff||null,tab:'sum',open:{},filter:'',pf:''};drawResults();$('results').scrollIntoView({behavior:'smooth'});
+    R={S:r[0].survey,rows:r[1].rows,staff:r[1].staff||null,tab:'sum',open:{},filter:'',pf:'',ai:undefined,aiBusy:false,aiMsg:'',aiErr:false};drawResults();$('results').scrollIntoView({behavior:'smooth'});
   }).catch(function(e){clear(box).appendChild(h('p',{class:'bad'},e.message))});
 }
 function ansText(q,a,other){
@@ -515,10 +615,11 @@ function drawResults(){
     kpi(fmtDur(avg),'Thời gian làm trung bình'),
     kpi(rows.length?fmtTime(rows[rows.length-1].submittedAt):'—','Phiếu gần nhất')));
   var tabs=h('div',{class:'tabs'});
-  [['sum','Tổng hợp theo câu hỏi'],['rows','Từng phiếu ('+rows.length+')']].concat(R.staff?[['prog','Tiến độ theo nhân sự ('+R.staff.filter(function(x){return !x.done}).length+' chưa trả lời)']]:[]).forEach(function(t){
+  [['sum','Tổng hợp theo câu hỏi'],['rows','Từng phiếu ('+rows.length+')']].concat(R.staff?[['prog','Tiến độ theo nhân sự ('+R.staff.filter(function(x){return !x.done}).length+' chưa trả lời)']]:[]).concat([['ai','✦ Phân tích AI']]).forEach(function(t){
     tabs.appendChild(h('button',{class:R.tab===t[0]?'on':'',onclick:function(){R.tab=t[0];drawResults()}},t[1]))});
   box.appendChild(tabs);
   if(R.tab==='prog'&&R.staff){box.appendChild(progress());return}
+  if(R.tab==='ai'){box.appendChild(aiResults());return}
   if(!rows.length){box.appendChild(h('p',{class:'note'},'Chưa có ai trả lời.'));return}
   box.appendChild(R.tab==='sum'?summary():responses());
 }
@@ -648,6 +749,67 @@ function responses(){
   wrap.appendChild(inp);
   wrap.appendChild(h('div',{class:'scroll',style:'margin-top:8px'},h('table',null,h('thead',null,h('tr',null,h('th',null,'Thời gian'),ident?h('th',null,'Mã NV'):null,ident?h('th',null,'Họ tên'):null,ro?h('th',null,'Quản lí'):null,ro?h('th',null,'Chức danh'):null,h('th',null,'Thời gian làm'),h('th'))),tb)));
   fillRows();return wrap;
+}
+
+
+/* ---------- phân tích kết quả bằng AI ---------- */
+var LV={nhieu:'Nhiều',vua:'Vừa',it:'Ít'},PR={cao:'Ưu tiên cao',trung_binh:'Ưu tiên vừa',thap:'Ưu tiên thấp'};
+function aiResults(){
+  var wrap=h('div');
+  if(R.ai===undefined){
+    wrap.appendChild(h('p',{class:'note'},'Đang tải…'));
+    api('ai_get','code='+encodeURIComponent(R.S.code)).then(function(j){R.ai=j.ai||null;drawResults()}).catch(function(e){R.ai=null;R.aiMsg=e.message;R.aiErr=true;drawResults()});
+    return wrap;
+  }
+  var rows=R.rows.length,can=rows>=3&&!R.aiBusy;
+  wrap.appendChild(h('div',{class:'warn',style:'background:var(--soft)'},
+    'AI tóm tắt số liệu, rút chủ đề từ câu trả lời tự do và đề xuất việc cần làm. ',h('strong',null,'Quyền riêng tư: '),
+    'chỉ gửi số liệu tổng hợp và câu trả lời tự do đã xoá email, số điện thoại, đường link. Không gửi tên hay mã nhân viên. Hãy đối chiếu với số liệu thật trước khi dùng.'));
+  var msg=h('span',{class:R.aiErr?'bad':'note',role:'status'},R.aiMsg||(rows<3?'Cần ít nhất 3 phiếu để phân tích.':''));
+  wrap.appendChild(h('div',{class:'row',style:'align-items:center;justify-content:flex-start;margin:8px 0'},
+    h('button',{class:'p nf',disabled:!can,onclick:runAnalyze},R.aiBusy?'AI đang phân tích…':(R.ai?'Phân tích lại':'Phân tích bằng AI')),
+    R.ai?h('button',{class:'nf',onclick:function(){copyReport()}},'Sao chép báo cáo'):null,msg));
+  if(!R.ai)return wrap;
+  var a=R.ai,res=a.result,stale=a.n!==rows;
+  wrap.appendChild(h('div',{class:'note'},'Phân tích lúc '+fmtTime(a.at)+', dựa trên '+a.n+' phiếu.',stale?h('span',{class:'badge wait'},'Đã có '+(rows-a.n>0?(rows-a.n)+' phiếu mới':'thay đổi')+', hãy phân tích lại'):null,a.n<30?h('span',{class:'badge wait'},'Mẫu nhỏ, chỉ mang tính tham khảo'):null));
+  function sec(title,items,cls){
+    if(!items||!items.length)return;
+    var ul=h('ul',{style:'margin:4px 0 0;padding-left:20px'});items.forEach(function(t){ul.appendChild(h('li',{style:'margin:3px 0'},t))});
+    wrap.appendChild(h('div',{class:'rq'},h('h4',null,title),ul));
+  }
+  sec('Tóm tắt',res.tom_tat);sec('Điểm mạnh',res.diem_manh);sec('Vấn đề cần chú ý',res.van_de);
+  if(res.chu_de.length){
+    var cw=h('div',{class:'rq'},h('h4',null,'Chủ đề từ câu trả lời'));
+    res.chu_de.forEach(function(c){
+      cw.appendChild(h('div',{style:'margin:8px 0;padding:8px 10px;border:1px solid var(--line);border-radius:8px'},
+        h('strong',null,c.ten),h('span',{class:'badge'},LV[c.muc_do]||'Vừa'),c.mo_ta?h('div',{style:'margin-top:3px'},c.mo_ta):null,
+        c.trich_dan.map(function(q){return h('div',{class:'note',style:'margin-top:3px'},'“'+q+'”')})));
+    });
+    wrap.appendChild(cw);
+  }
+  if(res.de_xuat.length){
+    var dw=h('div',{class:'rq'},h('h4',null,'Đề xuất hành động'));
+    res.de_xuat.forEach(function(d){dw.appendChild(h('div',{style:'margin:8px 0;padding:8px 10px;border:1px solid var(--line);border-radius:8px'},
+      h('strong',null,d.viec),h('span',{class:d.uu_tien==='cao'?'badge wait':'badge off'},PR[d.uu_tien]||''),d.ly_do?h('div',{class:'note',style:'margin-top:3px'},d.ly_do):null))});
+    wrap.appendChild(dw);
+  }
+  if(res.luu_y)wrap.appendChild(h('div',{class:'note',style:'margin-top:8px'},'Lưu ý về độ tin cậy: '+res.luu_y));
+  return wrap;
+}
+function runAnalyze(){
+  if(R.aiBusy)return;R.aiBusy=true;R.aiErr=false;R.aiMsg='AI đang phân tích, thường mất 20–40 giây…';drawResults();
+  api('ai_analyze',null,{code:R.S.code}).then(function(j){R.ai=j.ai;R.aiBusy=false;R.aiMsg='';drawResults()})
+  .catch(function(e){R.aiBusy=false;R.aiErr=true;R.aiMsg=e.message;drawResults()});
+}
+function copyReport(){
+  var a=R.ai,r=a.result,L=['PHÂN TÍCH KHẢO SÁT: '+R.S.title,'('+a.n+' phiếu, '+fmtTime(a.at)+')',''];
+  function sec(t,items){if(items&&items.length){L.push(t.toUpperCase());items.forEach(function(x){L.push('- '+x)});L.push('')}}
+  sec('Tóm tắt',r.tom_tat);sec('Điểm mạnh',r.diem_manh);sec('Vấn đề cần chú ý',r.van_de);
+  if(r.chu_de.length){L.push('CHỦ ĐỀ TỪ CÂU TRẢ LỜI');r.chu_de.forEach(function(c){L.push('- '+c.ten+' ('+(LV[c.muc_do]||'')+'): '+c.mo_ta)});L.push('')}
+  if(r.de_xuat.length){L.push('ĐỀ XUẤT HÀNH ĐỘNG');r.de_xuat.forEach(function(d){L.push('- ['+(PR[d.uu_tien]||'')+'] '+d.viec+(d.ly_do?' — '+d.ly_do:''))});L.push('')}
+  if(r.luu_y)L.push('Lưu ý: '+r.luu_y);
+  var txt=L.join('\n');
+  (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){R.aiMsg='Đã sao chép báo cáo.';R.aiErr=false;drawResults()}).catch(function(){R.aiMsg='Trình duyệt không cho sao chép tự động.';R.aiErr=true;drawResults()});
 }
 
 /* ---------- CSV ---------- */

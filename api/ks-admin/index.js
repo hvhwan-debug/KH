@@ -6,9 +6,21 @@ const { isAdmin } = require("../_lib/config");
 const store = require("../_lib/store");
 const quiz = require("../_lib/quiz");
 const ks = require("../_lib/survey");
+const ksai = require("../_lib/ksai");
 
 const posInt = (v, max) => { const n = Math.floor(Number(v)); return Number.isFinite(n) && n > 0 ? Math.min(n, max) : 0; };
 const ts = (v) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : 0; };
+
+
+async function loadRows(code) {
+  const prefix = ks.respPrefix(code), names = await store.list(prefix), rows = [];
+  for (let i = 0; i < names.length; i += 25) {
+    const part = await Promise.all(names.slice(i, i + 25).map((n) => store.get(n).catch(() => null)));
+    part.forEach((x, k) => { if (x) rows.push(Object.assign({ id: names[i + k].slice(prefix.length).replace(/\.json$/, "") }, x)); });
+  }
+  rows.sort((a, b) => a.submittedAt - b.submittedAt);
+  return rows;
+}
 
 module.exports = async function (context, req) {
   try {
@@ -47,13 +59,7 @@ module.exports = async function (context, req) {
 
     if (op === "results" && !post) {
       if (!ks.validCode(code)) return reply(context, 400, { ok: false, error: "Mã không hợp lệ." });
-      const prefix = ks.respPrefix(code), names = await store.list(prefix);
-      const rows = [];
-      for (let i = 0; i < names.length; i += 25) {
-        const part = await Promise.all(names.slice(i, i + 25).map((n) => store.get(n).catch(() => null)));
-        part.forEach((x, k) => { if (x) rows.push(Object.assign({ id: names[i + k].slice(prefix.length).replace(/\.json$/, "") }, x)); });
-      }
-      rows.sort((a, b) => a.submittedAt - b.submittedAt);
+      const rows = await loadRows(code);
       const out = { ok: true, rows };
       const sv = await ks.getSurvey(code);
       if (sv && sv.identity === "roster") { // tiến độ theo nhân sự được gán
@@ -64,6 +70,30 @@ module.exports = async function (context, req) {
         });
       }
       return reply(context, 200, out);
+    }
+
+    // ---------- AI (chỉ quản trị viên) ----------
+    if (op === "ai_get" && !post) {
+      if (!ks.validCode(code)) return reply(context, 400, { ok: false, error: "Mã không hợp lệ." });
+      return reply(context, 200, { ok: true, ai: await store.get("ks/ai/" + code + ".json"), n: await ks.countResponses(code) });
+    }
+    if (op === "ai_draft" && post) {
+      const r = await ksai.draft({ prompt: q.prompt, count: q.count, audience: q.audience, logic: q.logic });
+      return r.error ? reply(context, 422, { ok: false, error: r.error }) : reply(context, 200, Object.assign({ ok: true }, r));
+    }
+    if (op === "ai_review" && post) {
+      const r = await ksai.review({ title: q.title, description: q.description, questions: q.questions });
+      return r.error ? reply(context, 422, { ok: false, error: r.error }) : reply(context, 200, Object.assign({ ok: true }, r));
+    }
+    if (op === "ai_analyze" && post) {
+      if (!ks.validCode(code)) return reply(context, 400, { ok: false, error: "Mã không hợp lệ." });
+      const sv = await ks.getSurvey(code);
+      if (!sv) return reply(context, 404, { ok: false, error: "Không có khảo sát này." });
+      const r = await ksai.analyze(sv, await loadRows(code));
+      if (r.error) return reply(context, 422, { ok: false, error: r.error });
+      const ai = { at: Date.now(), n: r.n, by: u.email, result: r.result };
+      await store.put("ks/ai/" + code + ".json", ai);
+      return reply(context, 200, { ok: true, ai, n: r.n });
     }
 
     // Xem thử bản ĐANG SOẠN (chưa lưu): chạy đúng bước làm sạch/kiểm tra như khi lưu nhưng không ghi gì.
