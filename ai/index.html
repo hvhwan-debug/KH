@@ -74,8 +74,9 @@ main{flex:1;display:flex;flex-direction:column;max-width:760px;margin:0 auto;wid
 .msg code{font-family:ui-monospace,Consolas,monospace;background:var(--brand-soft);padding:1px 6px;border-radius:5px;font-size:.88em}
 .msg blockquote{margin:4px 0 8px;padding:4px 0 4px 10px;border-left:3px solid var(--brand);color:var(--muted)}
 .msg .tbl-wrap{overflow-x:auto;margin:6px 0 10px;-webkit-overflow-scrolling:touch}
-.msg table{border-collapse:collapse;width:100%;min-width:max-content;font-size:13px}
-.msg table th,.msg table td{border:1px solid var(--line);padding:6px 10px;text-align:left;white-space:nowrap}
+.msg table{border-collapse:collapse;width:100%;font-size:13px}
+.msg table th,.msg table td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top;white-space:normal;word-break:break-word;min-width:84px;max-width:340px}
+.msg table th{white-space:nowrap}
 .msg table th{background:rgba(127,127,127,.1);font-weight:800}
 .msg table tr:nth-child(even) td{background:rgba(127,127,127,.05)}
 /* Di động: bảng chuyển thành từng thẻ xếp dọc "nhãn / giá trị" thay vì phải cuộn ngang mới đọc hết */
@@ -222,7 +223,7 @@ async function refreshMe(){
 }
 
 // ---- Định dạng đơn giản: **đậm**, `mã`, gạch đầu dòng "- "/"* ", danh sách số "1. ", bảng "| A | B |" ----
-function inlineMd(s){ return s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>'); }
+function inlineMd(s){ return s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>').replace(/&lt;br\s*\/?&gt;/gi, '<br>'); }
 function isTableSep(line){ return /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?\s*$/.test(line); }
 function splitTableRow(line){
   var t = line.trim();
@@ -230,15 +231,18 @@ function splitTableRow(line){
   if (t.charAt(t.length - 1) === '|') t = t.slice(0, -1);
   return t.split('|').map(function(c){ return c.trim(); });
 }
+function isPipeRow(line){ var t = (line || '').trim(); return t.charAt(0) === '|' && t.length > 2 && t.indexOf('|', 1) > 0 && splitTableRow(t).length >= 2; }
 function mdToHtml(raw){
   var lines = esc(raw).split('\n'), html = '', ul = false, ol = false;
   function closeLists(){ if (ul){ html += '</ul>'; ul = false; } if (ol){ html += '</ol>'; ol = false; } }
   for (var i = 0; i < lines.length; i++){
     var line = lines[i];
     // Bảng markdown: dòng tiêu đề có "|", ngay sau là dòng gạch ngang phân cách kiểu |---|---|
-    if (line.indexOf('|') >= 0 && i + 1 < lines.length && isTableSep(lines[i + 1])){
+    var hasSep = line.indexOf('|') >= 0 && i + 1 < lines.length && isTableSep(lines[i + 1]);
+    var noSep = !hasSep && isPipeRow(line) && i + 1 < lines.length && isPipeRow(lines[i + 1]) && !isTableSep(lines[i + 1]);   // thiếu dòng |---|: vẫn coi dòng đầu là tiêu đề
+    if (hasSep || noSep){
       closeLists();
-      var header = splitTableRow(line), rows = [], j = i + 2;
+      var header = splitTableRow(line), rows = [], j = hasSep ? i + 2 : i + 1;
       while (j < lines.length && lines[j].indexOf('|') >= 0 && lines[j].trim()){ rows.push(splitTableRow(lines[j])); j++; }
       // data-label trên mỗi ô = đúng tiêu đề cột của nó, để trên di động chuyển thành thẻ xếp dọc "nhãn: giá trị" thay vì phải cuộn ngang.
       var attr = function(s){ return s.replace(/"/g, '&quot;'); };
