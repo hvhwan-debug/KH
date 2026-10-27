@@ -1748,19 +1748,20 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <div class="kaix-sec" data-k="docs">
           <div class="kaix-form">
             <div><label for="kdTitle">Tiêu đề tài liệu</label><input id="kdTitle" maxlength="150" placeholder="Ví dụ: Chính sách đổi trả tháng 11/2026"></div>
-            <div><label for="kdText">Nội dung (dán văn bản vào đây, hoặc chọn file Word, Excel, PowerPoint, PDF, .txt, .md, .csv bên dưới)</label>
+            <div><label for="kdText">Nội dung (dán văn bản vào đây, hoặc chọn file Word, Excel, PowerPoint, PDF, ảnh scan, .txt, .md, .csv bên dưới)</label>
               <textarea id="kdText" class="kaix-doc-text" placeholder="Dán nội dung chính sách… Dùng dòng bắt đầu bằng # để đặt tiêu đề từng phần, KAI sẽ tìm đúng phần liên quan khi trả lời."></textarea>
               <div class="small" id="kdCount" style="margin-top:4px"></div></div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-              <input type="file" id="kdFile" multiple accept=".docx,.xlsx,.pptx,.pdf,.txt,.md,.csv" style="width:auto;max-width:100%" aria-describedby="kdFileHint">
+              <input type="file" id="kdFile" multiple accept=".docx,.xlsx,.pptx,.pdf,.png,.jpg,.jpeg,.txt,.md,.csv" style="width:auto;max-width:100%" aria-describedby="kdFileHint">
               <label class="chk" style="margin:0"><input type="checkbox" id="kdOn" checked> Cho KAI dùng tài liệu này</label>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn" type="button" id="kdSave">Lưu tài liệu</button>
               <button class="btn ghost" type="button" id="kdClear">Soạn mới</button>
             </div>
-            <div id="kdDrop" class="kaix-drop" tabindex="0" role="button" aria-label="Kéo thả file vào đây, hoặc bấm để chọn file">Kéo thả file vào đây <span class="small">(Word, Excel, PowerPoint, PDF, .txt…) — không cần mở hộp chọn file. Cũng có thể bấm vào textarea rồi Ctrl+V để dán file đã sao chép.</span></div>
-            <div class="small" id="kdFileHint">Chọn 1 file để xem lại nội dung trước khi lưu, hoặc chọn nhiều file cùng lúc để thêm hàng loạt. File dài sẽ tự tách thành nhiều tài liệu. File được đọc ngay trên máy bạn (PDF cần kết nối mạng để tải bộ đọc).</div>
+            <div id="kdDrop" class="kaix-drop" tabindex="0" role="button" aria-label="Kéo thả file vào đây, hoặc bấm để chọn file">Kéo thả file vào đây <span class="small">(Word, Excel, PowerPoint, PDF, ảnh scan, .txt…) — không cần mở hộp chọn file. Cũng có thể bấm vào textarea rồi Ctrl+V để dán file đã sao chép.</span></div>
+            <div class="small" id="kdFileHint">Chọn 1 file để xem lại nội dung trước khi lưu, hoặc chọn nhiều file cùng lúc để thêm hàng loạt. File dài sẽ tự tách thành nhiều tài liệu. File được đọc ngay trên máy bạn (PDF cần kết nối mạng để tải bộ đọc). Bản scan và ảnh chụp tài liệu được nhận dạng chữ (OCR) tự động, mất vài giây mỗi trang và có thể sai dấu nên hãy đọc lại trước khi lưu; khi chọn nhiều file, bản scan sẽ bị bỏ qua và cần chọn riêng.</div>
+            <div style="margin-top:6px"><button class="btn ghost hide" type="button" id="kdStop">Dừng nhận dạng chữ</button></div>
             <div id="kdMsg"></div>
           </div>
           <hr style="margin:18px 0;border:0;border-top:1px solid var(--line)">
@@ -2697,6 +2698,7 @@ function kaixOpen(){
     $('kdText').addEventListener('input', kaixCount);
     $('kdFile').addEventListener('change', kaixReadFile);
     kaixDropInit();
+    $('kdStop').onclick = function(){ if (KX.stop) KX.stop(); };
     $('kuSetLimit').onclick = function(){ kaixUserSet({ limit: $('kuLimit').value.trim() === '' ? null : Number($('kuLimit').value) }, 'Đã lưu hạn mức.'); };
     $('kuBlock').onclick = function(){ if (confirm('Khoá mã ' + $('kuCode').value.trim() + ' khỏi KAI?')) kaixUserSet({ blocked:true }, 'Đã khoá.'); };
     $('kuUnblock').onclick = function(){ kaixUserSet({ blocked:false }, 'Đã mở khoá.'); };
@@ -2720,8 +2722,9 @@ function kaixImport(files){
     max: 60000, part: 55000,
     fill: function(title, text, note){ $('kdText').value = text; if (!$('kdTitle').value.trim()) $('kdTitle').value = title; kaixCount(); },
     save: function(title, text){ return kaixApi({ op:'docSave', title:title, text:text, enabled:$('kdOn').checked }); },
-    msg: function(t, kind){ msg('kdMsg', t, kind === 'ok' ? 'ok' : (/^Đang/.test(t) || t.indexOf('⚠') >= 0 ? 'warn' : 'err')); }
-  }).then(function(rep){ if (rep.length > 1) kaixLoadDocs(); });
+    onCancel: function(fn){ KX.stop = fn; },
+    msg: function(t, kind){ var busy = kind === 'busy'; msg('kdMsg', t, kind === 'ok' ? 'ok' : (busy || t.indexOf('⚠') >= 0 ? 'warn' : 'err')); $('kdStop').classList.toggle('hide', !busy); }
+  }).then(function(rep){ $('kdStop').classList.add('hide'); KX.stop = null; if (rep.length > 1) kaixLoadDocs(); });
 }
 function kaixReadFile(){ var f = [].slice.call(this.files || []); this.value = ''; kaixImport(f); }
 // Kéo thả / dán file: không cần mở hộp thoại chọn file của hệ điều hành
