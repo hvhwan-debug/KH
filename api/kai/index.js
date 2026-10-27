@@ -157,6 +157,13 @@ module.exports = async function (context, req) {
       const sections = await kb.getSections();
       const vnNow = new Date(Date.now() + 7 * 3600 * 1000);
       const todayStr = String(vnNow.getUTCDate()).padStart(2, "0") + "/" + String(vnNow.getUTCMonth() + 1).padStart(2, "0") + "/" + vnNow.getUTCFullYear();
+      // Nếu đã đăng nhập, tra đúng tên Quản lí của người này (cột "Quản lí" trong Hồ sơ học tập) để nhắc liên hệ đúng người, thay vì chữ "quản lí" chung chung.
+      let managerName = "";
+      if (id && id.kind === "emp") {
+        const myInfo = (await quiz.getCandidates()).find((c) => quiz.normCode(c.code) === id.code);
+        managerName = (myInfo && myInfo.manager) ? String(myInfo.manager).trim() : "";
+      }
+      const contactLine = managerName ? ("liên hệ " + managerName + " (quản lí trực tiếp của bạn) hoặc Mr. Lâm Anh") : "liên hệ quản lí hoặc Mr. Lâm Anh";
       const buildSys = (docChars) => "Bạn là KAI, trợ lí nội bộ của Karofi/Livotec dành cho nhân viên kinh doanh. Giọng văn thân thiện, tự nhiên như một đồng nghiệp giàu kinh nghiệm, xưng \"mình\", gọi người hỏi là \"bạn\", bằng tiếng Việt, ngắn gọn, rõ ràng.\n\n" +
         "KIẾN THỨC NỀN LUÔN ĐÚNG (ghi nhớ sẵn, dùng được kể cả khi đoạn TÀI LIỆU trích dẫn bên dưới không nhắc tới): tất cả model bình nước nóng mã bắt đầu bằng \"LWH-\" (ví dụ LWH-I20A25, LWH-V20B26...) đều là dòng BÌNH NƯỚC NÓNG GIÁN TIẾP (có bình chứa nước). Model \"Karofi KBO-I400\" là dòng BÌNH NƯỚC NÓNG TRỰC TIẾP (không có bình chứa). Khi được hỏi về \"bình gián tiếp\", hãy hiểu đó chính là các model LWH- và tìm giá của đúng các model đó trong TÀI LIỆU, KHÔNG được kết luận \"không có thông tin\" chỉ vì đoạn trích không ghi chữ \"gián tiếp\".\n\n" +
         "THỜI GIAN: Hôm nay là ngày " + todayStr + " (giờ Việt Nam). Khi người dùng hỏi \"tháng này\", \"hiện nay\", \"đang áp dụng\", \"mới nhất\"... hãy đối chiếu mục \"Thời gian áp dụng\" của từng chính sách/chương trình trong TÀI LIỆU với ngày hôm nay: " +
@@ -170,7 +177,7 @@ module.exports = async function (context, req) {
         "1) HỎI VỀ CHÍNH SÁCH / SỐ LIỆU (khuyến mại, chiết khấu, bảng giá, điều kiện, mốc thời gian, thông số sản phẩm, chương trình đầu tư hình ảnh...): " +
         "CHỈ dựa trên đúng nội dung phần TÀI LIỆU bên dưới. Có thể trích nguyên số liệu, điều kiện, mốc thời gian và nêu mã thông báo nếu có. " +
         "Tuyệt đối không bịa hoặc suy đoán số liệu, điều kiện, tên sản phẩm không có trong tài liệu. " +
-        "Nếu tài liệu không có hoặc không đủ rõ, nói thẳng là chưa có thông tin này trong tài liệu, rồi kết thúc bằng đúng câu: \"Nếu cần thêm thông tin, vui lòng liên hệ quản lí hoặc Mr. Lâm Anh để được hỗ trợ.\" (không gợi ý liên hệ phòng ban hay người nào khác); nhưng nếu vẫn giúp được phần nào (ví dụ giải thích cách hiểu, cách áp dụng phần đã có) thì giúp luôn thay vì chỉ từ chối.\n\n" +
+        "Nếu tài liệu không có hoặc không đủ rõ, nói thẳng là chưa có thông tin này trong tài liệu, rồi kết thúc bằng đúng câu: \"Nếu cần thêm thông tin, vui lòng " + contactLine + " để được hỗ trợ.\" (không gợi ý liên hệ phòng ban hay người nào khác); nhưng nếu vẫn giúp được phần nào (ví dụ giải thích cách hiểu, cách áp dụng phần đã có) thì giúp luôn thay vì chỉ từ chối.\n\n" +
         "2) HỎI VỀ KỸ NĂNG BÁN HÀNG / TƯ VẤN / CÁCH LÀM (cách giới thiệu sản phẩm, thuyết phục khách, xử lý từ chối, so sánh, mở đầu cuộc nói chuyện, chốt đơn, chăm sóc khách, giải thích dễ hiểu...): " +
         "trả lời linh hoạt, nhẹ nhàng, thực tế bằng kiến thức bán hàng chung, có thể đưa ví dụ câu nói mẫu và các bước ngắn gọn. " +
         "Khi có thể, gắn với điểm mạnh sản phẩm hoặc chính sách có trong TÀI LIỆU để lời tư vấn sát thực tế. " +
