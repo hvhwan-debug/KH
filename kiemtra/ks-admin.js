@@ -224,6 +224,10 @@ function aiCard(){
     h('button',{class:'sm',id:'aiRevBtn',onclick:aiReview},'Rà soát câu hỏi')));
   card.appendChild(h('p',{class:'note',style:'margin:0'},'AI chỉ đề xuất. Bạn xem, sửa rồi mới lưu; không có gì được tự động lưu.'));
   AI.panelEl=h('div');AI.outEl=h('div');card.appendChild(AI.panelEl);card.appendChild(AI.outEl);
+  // Kéo thả tài liệu vào hộp này: không cần mở hộp thoại chọn file của hệ điều hành
+  ['dragenter','dragover'].forEach(function(ev){card.addEventListener(ev,function(e){if(e.dataTransfer&&[].indexOf.call(e.dataTransfer.types||[],'Files')>=0){e.preventDefault();card.style.outline='2px dashed var(--accent)'}})});
+  ['dragleave','drop'].forEach(function(ev){card.addEventListener(ev,function(){card.style.outline=''})});
+  card.addEventListener('drop',function(e){var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(!f)return;e.preventDefault();AI.open=true;drawAiPanel();aiAttach(f)});
   drawAiPanel();drawAiOut();
   return card;
 }
@@ -233,13 +237,13 @@ function drawAiPanel(){
   var ta=h('textarea',{rows:3,placeholder:'Mô tả mục tiêu khảo sát và đối tượng. Ví dụ: Khảo sát nhu cầu đào tạo cho ASM miền Bắc, tập trung kỹ năng bán hàng và hình thức học phù hợp.','aria-label':'Mô tả khảo sát',oninput:function(){AI.prompt=this.value}});ta.value=AI.prompt;
   var cs=h('select',{style:'width:auto','aria-label':'Số câu hỏi',onchange:function(){AI.count=this.value}});
   [5,8,10,15,20].forEach(function(n){cs.appendChild(h('option',{value:n},n+' câu hỏi'))});cs.value=AI.count;
-  var fi=h('input',{type:'file',id:'aiFile',accept:'.txt,.md,.csv,.html,.htm,.docx,.xlsx,.pptx,.pdf,.doc,.xls,.ppt',style:'display:none',onchange:function(){var f=this.files&&this.files[0];this.value='';if(f)aiAttach(f)}});
+  var fi=h('input',{type:'file',id:'aiFile',accept:'.docx,.xlsx,.pptx,.pdf,.txt,.md,.csv',style:'display:none',onchange:function(){var f=this.files&&this.files[0];this.value='';if(f)aiAttach(f)}});
   var chip=AI.doc?h('span',{class:'badge',style:'margin-left:0'},'📎 '+AI.doc.name+' · '+AI.doc.text.length.toLocaleString('vi-VN')+' ký tự'+(AI.doc.text.length>14000?' (chỉ dùng khoảng 14.000 ký tự đầu)':''),
     h('button',{class:'sm','aria-label':'Gỡ tài liệu',style:'margin-left:6px;padding:0 6px',onclick:function(){AI.doc=null;drawAiPanel()}},'✕')):null;
   el.appendChild(h('div',{style:'margin-top:10px'},ta,
     h('div',{class:'row',style:'margin-top:8px;align-items:center;justify-content:flex-start'},
       h('button',{class:'nf',onclick:function(){fi.click()}},'📎 Đính kèm tài liệu'),fi,chip,
-      h('span',{class:'note nf',style:'flex:1 1 220px'},'Word, PDF, Excel, PowerPoint… AI chỉ dùng làm căn cứ nội dung; email, số điện thoại trong tài liệu bị xoá trước khi gửi.')),
+      h('span',{class:'note nf',style:'flex:1 1 220px'},'Hoặc kéo thả file vào hộp này. Word, PDF, Excel, PowerPoint… AI chỉ dùng làm căn cứ nội dung; email, số điện thoại trong tài liệu bị xoá trước khi gửi.')),
     h('div',{class:'row',style:'margin-top:8px;align-items:center;justify-content:flex-start'},cs,
       h('label',{class:'chk nf',style:'margin:0'},h('input',{type:'checkbox',checked:AI.logic,onchange:function(){AI.logic=this.checked}}),'Cho AI đặt điều kiện hiện câu'),
       h('button',{class:'p nf',id:'aiGo',disabled:AI.busy,onclick:aiDraft},AI.busy?'Đang soạn…':'Soạn')),
