@@ -258,6 +258,7 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
 .msg.err{background:var(--bad-soft);color:var(--bad)}
 .msg.ok{background:var(--ok-soft);color:var(--ok)}
 .msg.warn{background:#FBEBC8;color:#8A5500}
+#kdMsg .msg{white-space:pre-line}
 .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700}
 .badge.y{background:var(--ok-soft);color:var(--ok)}
 .badge.n{background:var(--bad-soft);color:var(--bad)}
@@ -1038,6 +1039,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
 <script src="/kiemtra/mailtpl.js?v=1"></script>
 <script src="/kiemtra/hrimport.js?v=5"></script>
 <script src="/kiemtra/hrsync.js?v=1"></script>
+<script src="/kiemtra/docread.js?v=1"></script>
 <script src="/kiemtra/notify.js?v=14"></script>
 </head>
 <body>
@@ -1744,17 +1746,18 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <div class="kaix-sec" data-k="docs">
           <div class="kaix-form">
             <div><label for="kdTitle">Tiêu đề tài liệu</label><input id="kdTitle" maxlength="150" placeholder="Ví dụ: Chính sách đổi trả tháng 11/2026"></div>
-            <div><label for="kdText">Nội dung (dán văn bản vào đây, hoặc chọn file .txt / .md / .csv bên dưới)</label>
+            <div><label for="kdText">Nội dung (dán văn bản vào đây, hoặc chọn file Word, Excel, PowerPoint, PDF, .txt, .md, .csv bên dưới)</label>
               <textarea id="kdText" class="kaix-doc-text" placeholder="Dán nội dung chính sách… Dùng dòng bắt đầu bằng # để đặt tiêu đề từng phần, KAI sẽ tìm đúng phần liên quan khi trả lời."></textarea>
               <div class="small" id="kdCount" style="margin-top:4px"></div></div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-              <input type="file" id="kdFile" accept=".txt,.md,.csv,.json,text/plain" style="width:auto;max-width:100%">
+              <input type="file" id="kdFile" multiple accept=".txt,.md,.csv,.json,.html,.htm,.docx,.xlsx,.pptx,.pdf,.doc,.xls,.ppt" style="width:auto;max-width:100%" aria-describedby="kdFileHint">
               <label class="chk" style="margin:0"><input type="checkbox" id="kdOn" checked> Cho KAI dùng tài liệu này</label>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn" type="button" id="kdSave">Lưu tài liệu</button>
               <button class="btn ghost" type="button" id="kdClear">Soạn mới</button>
             </div>
+            <div class="small" id="kdFileHint">Chọn 1 file để xem lại nội dung trước khi lưu, hoặc chọn nhiều file cùng lúc để thêm hàng loạt. File dài sẽ tự tách thành nhiều tài liệu. File được đọc ngay trên máy bạn (PDF cần kết nối mạng để tải bộ đọc).</div>
             <div id="kdMsg"></div>
           </div>
           <hr style="margin:18px 0;border:0;border-top:1px solid var(--line)">
@@ -2705,19 +2708,34 @@ function kaixSub(k){
   document.querySelectorAll('#kaixSub button').forEach(function(b){ b.classList.toggle('on', b.dataset.k === k); });
   document.querySelectorAll('.kaix-sec').forEach(function(el){ el.classList.toggle('hide', el.dataset.k !== k); });
 }
-function kaixCount(){ var n = $('kdText').value.length; $('kdCount').innerHTML = n ? '<b>' + n.toLocaleString('vi-VN') + '</b> / 60.000 ký tự' + (n > 60000 ? ' <span style="color:var(--bad)">— quá dài, hãy tách thành nhiều tài liệu</span>' : '') : ''; }
+function kaixCount(){ var n = $('kdText').value.length; $('kdCount').innerHTML = n ? '<b>' + n.toLocaleString('vi-VN') + '</b> / 60.000 ký tự' + (n > 60000 ? (KX.docEdit ? ' <span style="color:var(--bad)">— quá dài, hãy tách thành nhiều tài liệu</span>' : ' <span style="color:var(--warn)">— dài hơn 60.000 ký tự nên sẽ tự tách thành nhiều tài liệu khi lưu</span>') : '') : ''; }
 function kaixReadFile(){
-  var f = this.files && this.files[0]; if (!f) return;
-  if (f.size > 400000){ msg('kdMsg', 'File quá lớn (tối đa khoảng 400 KB văn bản). Hãy tách nhỏ.'); this.value = ''; return; }
-  var rd = new FileReader();
-  rd.onload = function(){ $('kdText').value = String(rd.result || ''); if (!$('kdTitle').value.trim()) $('kdTitle').value = f.name.replace(/\.[^.]+$/, ''); kaixCount(); msg('kdMsg', 'Đã đọc file “' + f.name + '”. Kiểm tra nội dung rồi bấm Lưu tài liệu.', 'ok'); };
-  rd.onerror = function(){ msg('kdMsg', 'Không đọc được file.'); };
-  rd.readAsText(f, 'utf-8'); this.value = '';
+  var files = [].slice.call(this.files || []); this.value = '';
+  if (!files.length) return;
+  DocRead.importFiles(files, {
+    max: 60000, part: 55000,
+    fill: function(title, text, note){ $('kdText').value = text; if (!$('kdTitle').value.trim()) $('kdTitle').value = title; kaixCount(); },
+    save: function(title, text){ return kaixApi({ op:'docSave', title:title, text:text, enabled:$('kdOn').checked }); },
+    msg: function(t, kind){ msg('kdMsg', t, kind === 'ok' ? 'ok' : (/^Đang/.test(t) || t.indexOf('⚠') >= 0 ? 'warn' : 'err')); }
+  }).then(function(rep){ if (rep.length > 1) kaixLoadDocs(); });
 }
 function kaixClearDoc(){ KX.docEdit = null; $('kdTitle').value = ''; $('kdText').value = ''; $('kdOn').checked = true; $('kdSave').textContent = 'Lưu tài liệu'; msg('kdMsg', ''); kaixCount(); }
 async function kaixSaveDoc(){
   var btn = $('kdSave'); btn.disabled = true; msg('kdMsg', '');
-  var j = await kaixApi({ op:'docSave', id:KX.docEdit || undefined, title:$('kdTitle').value, text:$('kdText').value, enabled:$('kdOn').checked });
+  var title = $('kdTitle').value, text = $('kdText').value, on = $('kdOn').checked;
+  // Nội dung dài hơn giới hạn: tự tách thành nhiều tài liệu (chỉ khi tạo mới, không áp dụng khi đang sửa một tài liệu)
+  var parts = (!KX.docEdit && text.length > 60000) ? DocRead.splitText(text.replace(/\r/g, '').trim(), 55000) : null;
+  if (parts && parts.length > 1){
+    var saved = 0, chunks = 0;
+    for (var i = 0; i < parts.length; i++){
+      var r = await kaixApi({ op:'docSave', title:title.trim() + ' (phần ' + (i + 1) + '/' + parts.length + ')', text:parts[i], enabled:on });
+      if (!r.ok){ btn.disabled = false; msg('kdMsg', 'Đã lưu ' + saved + '/' + parts.length + ' phần. Lỗi ở phần ' + (i + 1) + ': ' + r.error); kaixLoadDocs(); return; }
+      saved++; chunks += r.chunks || 0;
+    }
+    btn.disabled = false; kaixClearDoc();
+    msg('kdMsg', 'Đã lưu ' + parts.length + ' tài liệu (' + chunks + ' phần nhỏ). KAI sẽ dùng sau tối đa 30 giây.', 'ok'); kaixLoadDocs(); return;
+  }
+  var j = await kaixApi({ op:'docSave', id:KX.docEdit || undefined, title:title, text:text, enabled:on });
   btn.disabled = false;
   if (!j.ok){ msg('kdMsg', j.error); return; }
   msg('kdMsg', 'Đã lưu. KAI sẽ dùng tài liệu này sau tối đa 30 giây (' + j.chunks + ' phần).', 'ok');

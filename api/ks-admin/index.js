@@ -78,7 +78,7 @@ module.exports = async function (context, req) {
       return reply(context, 200, { ok: true, ai: await store.get("ks/ai/" + code + ".json"), n: await ks.countResponses(code) });
     }
     if (op === "ai_draft" && post) {
-      const r = await ksai.draft({ prompt: q.prompt, count: q.count, audience: q.audience, logic: q.logic });
+      const r = await ksai.draft({ prompt: q.prompt, count: q.count, audience: q.audience, logic: q.logic, doc: q.doc });
       return r.error ? reply(context, 422, { ok: false, error: r.error }) : reply(context, 200, Object.assign({ ok: true }, r));
     }
     if (op === "ai_review" && post) {

@@ -163,7 +163,7 @@ function fld(label,node){return h('div',null,h('label',{class:'f'},label),node)}
 
 function openEditor(sv,isNew,count){
   E={S:clone(sv),isNew:isNew,count:count||0,saved:!isNew,tab:'q'};
-  AI.draft=null;AI.review=null;AI.msg='';AI.err=false;
+  AI.draft=null;AI.review=null;AI.doc=null;AI.msg='';AI.err=false;
   if(!E.S.identity)E.S.identity=E.S.askIdentity?'emp':'none';
   if(E.S.showProgress===undefined)E.S.showProgress=true;
   $('results').hidden=true;$('editor').hidden=false;drawEditor();
@@ -215,7 +215,7 @@ function drawEditor(){
 
 
 /* ---------- Trợ lý AI trong trình soạn: soạn câu hỏi, rà soát ---------- */
-var AI={open:false,busy:false,prompt:'',count:'8',logic:true,draft:null,review:null,msg:'',err:false,panelEl:null,outEl:null};
+var AI={open:false,busy:false,prompt:'',count:'8',logic:true,draft:null,review:null,doc:null,msg:'',err:false,panelEl:null,outEl:null};
 var KIND={dan_dat:'Dẫn dắt',hai_y:'Hai ý trong một câu',mo_ho:'Mơ hồ',lua_chon:'Lựa chọn',trung:'Trùng ý',qua_dai:'Quá dài',nhay_cam:'Nhạy cảm',thieu_cau:'Thiếu câu',khac:'Lưu ý'};
 function aiCard(){
   var card=h('div',{class:'qcard',id:'aiCard',style:'background:var(--soft);margin-top:0;border-style:solid'});
@@ -233,17 +233,28 @@ function drawAiPanel(){
   var ta=h('textarea',{rows:3,placeholder:'Mô tả mục tiêu khảo sát và đối tượng. Ví dụ: Khảo sát nhu cầu đào tạo cho ASM miền Bắc, tập trung kỹ năng bán hàng và hình thức học phù hợp.','aria-label':'Mô tả khảo sát',oninput:function(){AI.prompt=this.value}});ta.value=AI.prompt;
   var cs=h('select',{style:'width:auto','aria-label':'Số câu hỏi',onchange:function(){AI.count=this.value}});
   [5,8,10,15,20].forEach(function(n){cs.appendChild(h('option',{value:n},n+' câu hỏi'))});cs.value=AI.count;
+  var fi=h('input',{type:'file',id:'aiFile',accept:'.txt,.md,.csv,.html,.htm,.docx,.xlsx,.pptx,.pdf,.doc,.xls,.ppt',style:'display:none',onchange:function(){var f=this.files&&this.files[0];this.value='';if(f)aiAttach(f)}});
+  var chip=AI.doc?h('span',{class:'badge',style:'margin-left:0'},'📎 '+AI.doc.name+' · '+AI.doc.text.length.toLocaleString('vi-VN')+' ký tự'+(AI.doc.text.length>14000?' (chỉ dùng khoảng 14.000 ký tự đầu)':''),
+    h('button',{class:'sm','aria-label':'Gỡ tài liệu',style:'margin-left:6px;padding:0 6px',onclick:function(){AI.doc=null;drawAiPanel()}},'✕')):null;
   el.appendChild(h('div',{style:'margin-top:10px'},ta,
+    h('div',{class:'row',style:'margin-top:8px;align-items:center;justify-content:flex-start'},
+      h('button',{class:'nf',onclick:function(){fi.click()}},'📎 Đính kèm tài liệu'),fi,chip,
+      h('span',{class:'note nf',style:'flex:1 1 220px'},'Word, PDF, Excel, PowerPoint… AI chỉ dùng làm căn cứ nội dung; email, số điện thoại trong tài liệu bị xoá trước khi gửi.')),
     h('div',{class:'row',style:'margin-top:8px;align-items:center;justify-content:flex-start'},cs,
       h('label',{class:'chk nf',style:'margin:0'},h('input',{type:'checkbox',checked:AI.logic,onchange:function(){AI.logic=this.checked}}),'Cho AI đặt điều kiện hiện câu'),
       h('button',{class:'p nf',id:'aiGo',disabled:AI.busy,onclick:aiDraft},AI.busy?'Đang soạn…':'Soạn')),
     h('div',{id:'aiMsg',class:AI.err?'bad':'note',style:'margin-top:6px'},AI.msg)));
 }
+function aiAttach(file){
+  aiSay('Đang đọc “'+file.name+'”…');
+  DocRead.read(file).then(function(d){AI.doc={name:file.name,text:d.text};drawAiPanel();aiSay(d.warn?'⚠ '+d.warn:'',!!d.warn)})
+  .catch(function(e){aiSay(e.userMessage||'Không đọc được file này.',true)});
+}
 function aiDraft(){
   if(AI.busy)return;
-  if(AI.prompt.trim().length<8){aiSay('Hãy mô tả mục tiêu khảo sát (ít nhất vài chữ).',true);return}
+  if(AI.prompt.trim().length<8&&!AI.doc){aiSay('Hãy mô tả mục tiêu khảo sát (ít nhất vài chữ) hoặc đính kèm tài liệu.',true);return}
   AI.busy=true;AI.draft=null;drawAiPanel();aiSay('AI đang soạn, thường mất 15–40 giây…');drawAiOut();
-  api('ai_draft',null,{prompt:AI.prompt,count:Number(AI.count),logic:AI.logic}).then(function(j){
+  api('ai_draft',null,{prompt:AI.prompt,count:Number(AI.count),logic:AI.logic,doc:AI.doc?AI.doc.text.slice(0,30000):''}).then(function(j){
     AI.busy=false;AI.draft=j;AI.review=null;drawAiPanel();aiSay('');drawAiOut();
   }).catch(function(e){AI.busy=false;drawAiPanel();aiSay(e.message,true)});
 }
