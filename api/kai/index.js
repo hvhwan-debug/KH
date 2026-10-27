@@ -14,6 +14,13 @@ const { isAdmin } = require("../_lib/config");
 const llm = require("../_lib/llm");
 const kb = require("../_lib/kai-kb");
 
+// Bộ nhớ đệm câu trả lời (trong bộ nhớ của máy chủ, 10 phút): nhiều người hỏi cùng một câu thì chỉ gọi AI một lần,
+// giảm mạnh số lần chạm giới hạn tốc độ (429) của nhà cung cấp AI.
+const ANS_CACHE = new Map(), ANS_TTL = 10 * 60 * 1000, ANS_MAX = 300;
+const cacheGet = (k) => { const v = ANS_CACHE.get(k); if (!v) return null; if (Date.now() - v.t > ANS_TTL) { ANS_CACHE.delete(k); return null; } return v.a; };
+const cacheSet = (k, a) => { if (ANS_CACHE.size >= ANS_MAX) ANS_CACHE.delete(ANS_CACHE.keys().next().value); ANS_CACHE.set(k, { a, t: Date.now() }); };
+const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
+
 // Hạn mức mặc định (30 câu/ngày, 3 câu dùng thử) có thể đổi trong trang quản trị > Trợ lí KAI (kai/settings.json).
 const COOKIE_NAME = "kai_id";
 const ANON_COOKIE = "kai_anon";
@@ -164,6 +171,8 @@ module.exports = async function (context, req) {
         managerName = (myInfo && myInfo.manager) ? String(myInfo.manager).trim() : "";
       }
       const contactLine = managerName ? ("liên hệ " + managerName + " (quản lí trực tiếp của bạn) hoặc Mr. Lâm Anh") : "liên hệ quản lí hoặc Mr. Lâm Anh";
+      const normQ = (t) => String(t || "").toLowerCase().replace(/\s+/g, " ").trim();
+      const cacheKey = crypto.createHash("sha1").update([normQ(question), normQ(lastUser && lastUser.content), normQ(lastBot && lastBot.content).slice(0, 200), managerName, todayStr].join("|")).digest("hex");
       const buildSys = (docChars) => "Bạn là KAI, trợ lí nội bộ của Karofi/Livotec dành cho nhân viên kinh doanh. Giọng văn thân thiện, tự nhiên như một đồng nghiệp giàu kinh nghiệm, xưng \"mình\", gọi người hỏi là \"bạn\", bằng tiếng Việt, ngắn gọn, rõ ràng.\n\n" +
         "KIẾN THỨC NỀN LUÔN ĐÚNG (ghi nhớ sẵn, dùng được kể cả khi đoạn TÀI LIỆU trích dẫn bên dưới không nhắc tới): tất cả model bình nước nóng mã bắt đầu bằng \"LWH-\" (ví dụ LWH-I20A25, LWH-V20B26...) đều là dòng BÌNH NƯỚC NÓNG GIÁN TIẾP (có bình chứa nước). Model \"Karofi KBO-I400\" là dòng BÌNH NƯỚC NÓNG TRỰC TIẾP (không có bình chứa). Khi được hỏi về \"bình gián tiếp\", hãy hiểu đó chính là các model LWH- và tìm giá của đúng các model đó trong TÀI LIỆU, KHÔNG được kết luận \"không có thông tin\" chỉ vì đoạn trích không ghi chữ \"gián tiếp\".\n\n" +
         "PHÂN BIỆT CÁC LOẠI GIÁ (TUYỆT ĐỐI không nhầm lẫn, không tự suy ra loại giá này từ loại giá khác): \"Giá thuần đại lý\"/\"giá NPP\"/\"giá ĐL\" là giá BÁN SỈ cho Đại lý/Nhà phân phối, KHÔNG PHẢI giá người tiêu dùng cuối phải trả. \"Giá bán lẻ\"/\"giá trên web\"/\"giá niêm yết cho khách hàng\" là giá hiển thị công khai trên website livotec.com, thường CAO HƠN giá thuần đại lý và là một con số HOÀN TOÀN KHÁC, không được tính/suy đoán/làm tròn từ giá đại lý. Nếu TÀI LIỆU chỉ có giá thuần đại lý mà người dùng hỏi giá bán lẻ (hoặc ngược lại), phải nói rõ \"tài liệu hiện chỉ có giá [loại đang có], chưa có giá [loại được hỏi]\" — TUYỆT ĐỐI không gọi nhầm giá đại lý là giá bán lẻ hay ngược lại.\n\n" +
@@ -199,7 +208,8 @@ module.exports = async function (context, req) {
         "Trình bày: ưu tiên câu ngắn, dùng gạch đầu dòng khi có nhiều ý, in đậm số liệu quan trọng. Khi liệt kê từ 3 model/sản phẩm có giá trở lên, LUÔN trình bày bằng BẢNG markdown (dòng tiêu đề, dòng | --- | --- | phân cách, rồi các dòng dữ liệu), ví dụ cột: Model | Dung tích hoặc Loại | Giá — không liệt kê rời từng model bằng gạch đầu dòng vì khó so sánh.\n\n" +
         "TÀI LIỆU:\n" + kb.pickRelevant(searchText, docChars, sections, vnNow);
 
-      let answer;
+      let answer = cacheGet(cacheKey);
+      const fromCache = !!answer;
       const attempts = [
         { docChars: 7000, h: hist, max: 800, ms: 22000 },
         { docChars: 3500, h: hist.slice(-2), max: 600, ms: 14000 } // dự phòng: ngữ cảnh gọn hơn nếu lần đầu lỗi (quá dài / quá tải)
@@ -211,6 +221,7 @@ module.exports = async function (context, req) {
           answer = await llm.chat([{ role: "system", content: sys }].concat(a.h, [{ role: "user", content: question }]), { temperature: 0.4, max_tokens: a.max, timeoutMs: a.ms });
         } catch (e) {
           lastErr = e;
+          if (e && e.status === 429 && i < attempts.length - 1) await sleepMs(1500 + Math.floor(Math.random() * 1000));   // quá tải: đợi một chút rồi thử lại với ngữ cảnh gọn hơn
           context.log.error("kai ask lần " + (i + 1), e && e.message, e && e.status, "promptChars:", sys.length + a.h.reduce((n, m) => n + m.content.length, 0));
         }
       }
@@ -223,6 +234,7 @@ module.exports = async function (context, req) {
       if (/\[NGOAI_PHAM_VI\]/i.test(answer)) {
         answer = "Mình chỉ hỗ trợ các nội dung về sản phẩm, chính sách và bán hàng của Karofi/Livotec. Bạn hỏi mình về chính sách, bảng giá, khuyến mại hoặc cách tư vấn khách hàng nhé.";
       }
+      if (!fromCache) cacheSet(cacheKey, answer);
       const newUsed = await usageInc(usageKey);
       try {
         const log = (await store.get("kai/log.json")) || [];

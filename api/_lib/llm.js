@@ -13,7 +13,12 @@ async function post(url, headers, body, ms) {
   const ac = new AbortController(); const t = setTimeout(() => ac.abort(), Math.max(200, ms));
   try {
     const r = await fetch(url, { method: "POST", signal: ac.signal, headers: Object.assign({ "Content-Type": "application/json" }, headers), body: JSON.stringify(body) });
-    if (!r.ok) { const e = new Error("upstream " + r.status); e.status = r.status; throw e; }
+    if (!r.ok) {
+      const e = new Error("upstream " + r.status); e.status = r.status;
+      const ra = Number(r.headers && r.headers.get && r.headers.get("retry-after"));   // giây; nhà cung cấp báo nên chờ bao lâu
+      if (ra > 0 && isFinite(ra)) e.retryAfterMs = Math.min(ra * 1000, 8000);
+      throw e;
+    }
     const txt = contentOf(await r.json());
     if (!txt) { const e = new Error("empty"); e.status = 502; throw e; }
     return txt;
@@ -49,7 +54,7 @@ async function chat(messages, opt) {
   let lastErr = null;
   for (let i = 0; i < list.length; i++) {
     const P = list[i], isLast = i === list.length - 1;
-    for (let attempt = 0; attempt < (isLast ? 2 : 1); attempt++) {
+    for (let attempt = 0; attempt < (isLast ? 3 : 1); attempt++) {
       const left = deadline - Date.now();
       if (left < 600) break;
       // Nguồn đầu (khi còn nguồn sau) chỉ dùng tối đa 60% thời gian còn lại, phần còn lại để dành cho nguồn dự phòng
@@ -64,8 +69,12 @@ async function chat(messages, opt) {
           try { return await post(P.url, P.headers, Object.assign({ messages, temperature, max_tokens }, P.base), Math.max(600, deadline - Date.now() - (isLast ? 0 : 1500))); } catch (e2) { lastErr = e2; }
         }
         const retryable = !e.status || e.status === 429 || e.status >= 500;
-        if (!(isLast && retryable && attempt === 0)) break;
-        await sleep(Math.min(1200, 300 + Math.floor(Math.random() * 500), Math.max(0, deadline - Date.now() - 1000)));
+        if (!(isLast && retryable && attempt < 2)) break;
+        // 429: chờ theo Retry-After (hoặc lùi dần 1.2s, 2.4s + ngẫu nhiên); lỗi khác: chờ ngắn như cũ
+        const wait = e.status === 429 ? (e.retryAfterMs || 1200 * (attempt + 1)) + Math.floor(Math.random() * 400) : 300 + Math.floor(Math.random() * 500);
+        const room = deadline - Date.now() - 1000;
+        if (room < 300) break;
+        await sleep(Math.min(wait, room));
       }
     }
   }
