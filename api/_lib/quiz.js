@@ -491,6 +491,15 @@ function testCandidate(t) {
   return { code: t.code, email: t.email, name: t.name || "Tài khoản thử nghiệm", manager: "", phone: t.phone || "", segment: normSegment(t.segment), title: normTitle(t.title) || DEFAULT_TITLE,
     province: t.province || "", region: normRegion(t.region), lastAttemptId: t.lastAttemptId || "", test: true };
 }
+// Tài khoản thử nghiệm khớp MỘT trong hai (mã hoặc email) nhưng lệch cái còn lại: để báo rõ cho người kiểm thử
+async function testNearMiss(code, email) {
+  const k = normCode(code), e = normEmail(email);
+  for (const t of await getTestAccounts()) {
+    if (k && normCode(t.code) === k) return { by: "code", email: t.email };
+    if (e && normEmail(t.email) === e) return { by: "email", code: t.code };
+  }
+  return null;
+}
 async function findTestByCode(code) {
   const k = normCode(code); if (!k) return null;
   const t = (await getTestAccounts()).find((x) => normCode(x.code) === k);
@@ -1142,7 +1151,7 @@ module.exports = {
   patchIndex, failCount, clearFails,
   runMigrations, managerCanon, properCaseName, normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, betterResult, attemptsSummary, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
   getQuestions, saveQuestions,
-  getCandidates, saveCandidates, getTestAccounts, saveTestAccounts, findTestAccount, findTestByCode, updateTestAccount, recordTestAttempt, testAttemptByProof,
+  getCandidates, saveCandidates, getTestAccounts, saveTestAccounts, findTestAccount, findTestByCode, testNearMiss, updateTestAccount, recordTestAttempt, testAttemptByProof,
   getSettings, saveSettings,
   getAttempt, putAttempt, saveIndex, activeForPeriod,
   getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary, fmtVN,

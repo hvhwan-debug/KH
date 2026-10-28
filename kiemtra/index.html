@@ -1442,6 +1442,11 @@ $('btnReqSend').addEventListener('click', async function(){
   btn.disabled = false; btn.textContent = label;
   if (!res){ msg('reqMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
   if (!res.j.ok){ msg('reqMsg', res.j.error || 'Không gửi được yêu cầu.'); return; }
+  if (res.j.applied){ // tài khoản thử nghiệm: đã sửa ngay, không chờ duyệt
+    $('reqBox').classList.add('hide'); $('btnReqOpen').classList.remove('hide');
+    $('reqState').innerHTML = '<div class="msg ok">Đã cập nhật ngay (tài khoản thử nghiệm, không cần chờ duyệt). Thông tin mới sẽ hiện ở lần xác thực tiếp theo.</div>';
+    return;
+  }
   ST.pending = true;
   $('reqBox').classList.add('hide'); $('btnReqOpen').classList.remove('hide');
   $('reqState').innerHTML = '<div class="msg ok">Đã gửi yêu cầu điều chỉnh. Quản trị viên sẽ xem xét và cập nhật nếu thông tin đúng. Bạn vẫn có thể làm bài ngay.</div>';

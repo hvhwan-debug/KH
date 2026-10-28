@@ -17,7 +17,8 @@ module.exports = async function (context, req) {
     const code = quiz.normCode(b.code), email = quiz.normEmail(b.email);
     if (!code || !email) return reply(context, 400, { ok: false, error: "Thiếu thông tin thí sinh." });
     const candidates = await quiz.getCandidates();
-    const found = candidates.find((c) => quiz.normCode(c.code) === code && quiz.normEmail(c.email) === email);
+    const testAcc = await quiz.findTestAccount(code, email);
+    const found = testAcc || candidates.find((c) => quiz.normCode(c.code) === code && quiz.normEmail(c.email) === email);
     if (!found) { quiz.noteFail(req); return reply(context, 404, { ok: false, error: "Không tìm thấy thí sinh." }); }
 
     const inp = b.changes && typeof b.changes === "object" ? b.changes : {};
@@ -71,6 +72,13 @@ module.exports = async function (context, req) {
     const note = clean(b.note, 500);
     if (!Object.keys(changes).length && !note) return reply(context, 400, { ok: false, error: "Bạn chưa thay đổi thông tin nào. Hãy sửa ô cần chỉnh hoặc ghi chú nội dung cần điều chỉnh." });
 
+    // Tài khoản thử nghiệm: áp dụng ngay vào tài khoản (không tạo yêu cầu chờ duyệt, không lẫn với yêu cầu của thí sinh thật)
+    if (testAcc) {
+      const patch = {};
+      ["name", "email", "phone", "province", "region", "segment", "title"].forEach((k) => { if (changes[k]) patch[k] = changes[k].to; });
+      if (Object.keys(patch).length) await quiz.updateTestAccount(found.code, patch);
+      return reply(context, 200, { ok: true, applied: true, test: true });
+    }
     const list = await cr.getAll();
     const rest = list.filter((r) => !(r.status === "pending" && quiz.normCode(r.code) === code)); // yêu cầu mới thay yêu cầu đang chờ cũ
     rest.unshift({ id: cr.newId(), code: found.code, name: cur.name, status: "pending", at: Date.now(), changes, note });
