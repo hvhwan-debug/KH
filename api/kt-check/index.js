@@ -62,21 +62,32 @@ module.exports = async function (context, req) {
     }
     const candidates = await quiz.getCandidates();
     const found = (await quiz.findTestAccount(code, email)) || candidates.find((c) => quiz.normCode(c.code) === code && quiz.normEmail(c.email) === email);
-    if (found && needFace) {
+    // Kết quả xác thực khuôn mặt (trả về cho thí sinh để biết rõ bước nào đạt, bước nào chưa)
+    let face = null;
+    if (needFace) {
       const fm = require("../_lib/facematch");
-      const refs = [];
-      const rows = (await quiz.getIndex()).filter((r) => quiz.normCode(r.code) === code && !(r.faceId && r.faceId.s === "mismatch")).sort((a, c) => (c.startedAt || 0) - (a.startedAt || 0)).slice(0, 5);
-      for (const r of rows) { if (refs.length >= 3) break; const a = await quiz.getAttempt(r.id); if (a && a.photo) refs.push({ photo: a.photo, desc: a.faceDesc, save: async (d) => { a.faceDesc = d; await quiz.putAttempt(a); } }); }
-      let bad = "";
-      if (refs.length) {
-        const cmp = await fm.compare(selfie, refs);
-        if (cmp.code === "noface" || cmp.code === "multi" || cmp.code === "badimg") bad = cmp.message;
-        else if (cmp.code === "mismatch") bad = "Khuôn mặt không khớp với ảnh các lần kiểm tra trước của mã nhân viên này.";
-      } else {
-        try { const d = await fm.describe(selfie); if (d.n !== 1) bad = d.n ? "Ảnh có nhiều hơn một người. Chỉ người làm bài được có mặt trong ảnh." : "Không thấy rõ khuôn mặt. Hãy nhìn thẳng camera, đủ sáng rồi chụp lại."; } catch (e) { /* máy chủ không đối chiếu được: dựa vào bước kiểm tra ảnh ở trên */ }
+      let me = null;
+      try { me = await fm.describe(selfie); } catch (e) { me = null; } // máy chủ không đối chiếu được: dựa vào bước kiểm tra ảnh ở trên
+      if (me && me.n !== 1) { quiz.noteFail(req); return reply(context, 403, { ok: false, needFace: true, error: me.n ? "Ảnh có nhiều hơn một người. Chỉ người làm bài được có mặt trong ảnh, hãy chụp lại." : "Không thấy rõ khuôn mặt. Hãy nhìn thẳng camera, đủ sáng rồi chụp lại." }); }
+      face = { ok: true, live: true, matched: null };
+      if (found && me && me.desc) {
+        // Mã NV đã có ảnh các lần kiểm tra trước: khuôn mặt phải khớp
+        const rows = (await quiz.getIndex()).filter((r) => quiz.normCode(r.code) === code && !(r.faceId && r.faceId.s === "mismatch")).sort((a, c) => (c.startedAt || 0) - (a.startedAt || 0)).slice(0, 5);
+        let best = Infinity, used = 0;
+        for (const r of rows) {
+          if (used >= 3) break;
+          const a = await quiz.getAttempt(r.id); if (!a || !a.photo) continue;
+          let d = Array.isArray(a.faceDesc) && a.faceDesc.length === 128 ? a.faceDesc : null;
+          if (!d) { try { const x = await fm.describe(a.photo); d = x.n >= 1 ? x.desc : null; if (d) { a.faceDesc = d; await quiz.putAttempt(a); } } catch (e) { d = null; } }
+          if (!d) continue;
+          used++; best = Math.min(best, fm.dist(me.desc, d));
+        }
+        if (used) {
+          if (best > fm.MATCH_MAX) { quiz.noteFail(req); return reply(context, 403, { ok: false, needFace: true, error: "Khuôn mặt không khớp với ảnh các lần kiểm tra trước của mã nhân viên này." }); }
+          face.matched = true;
+        }
       }
-      if (bad) { quiz.noteFail(req); return reply(context, 403, { ok: false, needFace: true, error: bad }); }
-      quiz.clearFails(req); hintClear(req); // đã xác thực được: xoá số lần sai
+      if (found) { quiz.clearFails(req); hintClear(req); } // đã xác thực được: xoá số lần sai
     }
     if (!found) {
       quiz.noteFail(req);
@@ -89,7 +100,7 @@ module.exports = async function (context, req) {
       if (near) return reply(context, 404, { ok: false, faceNext: needFaceFor(req), error: near.by === "code"
         ? "[Chỉ quản trị viên thấy] Mã \"" + b.code + "\" là tài khoản thử nghiệm nhưng email chưa khớp. Email đã đăng ký: " + near.email + "."
         : "[Chỉ quản trị viên thấy] Email này là của tài khoản thử nghiệm nhưng mã chưa khớp. Mã đã đăng ký: " + near.code + "." });
-      return reply(context, 404, { ok: false, faceNext: needFaceFor(req), error: "Không tìm thấy thông tin khớp với mã nhân viên và email đã nhập. Kiểm tra lại hoặc liên hệ quản trị viên." + (needFaceFor(req) && !needFace ? " Lần thử tiếp theo cần xác thực khuôn mặt." : "") });
+      return reply(context, 404, { ok: false, face, faceNext: needFaceFor(req), error: "Không tìm thấy thông tin khớp với mã nhân viên và email đã nhập. Kiểm tra lại hoặc liên hệ quản trị viên." + (needFaceFor(req) && !needFace ? " Lần thử tiếp theo cần xác thực khuôn mặt." : "") });
     }
 
     // Thí sinh vừa chọn tỉnh/thành + miền ở màn xác nhận: lưu NGAY vào hồ sơ (chỉ khi hồ sơ còn thiếu),

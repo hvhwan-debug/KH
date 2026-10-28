@@ -104,6 +104,13 @@ button,input{font:inherit;color:inherit}
 .reqbox .field{margin-bottom:12px}
 .field label{display:block;font-size:13px;font-weight:700;margin-bottom:7px}
 .inwrap{position:relative}
+.msg.fsteps{display:flex;flex-direction:column;gap:10px;text-align:left}
+.fsteps .fs{display:flex;gap:10px;align-items:flex-start}
+.fsteps .fs b{flex:0 0 22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;color:#fff;margin-top:1px}
+.fsteps .fs.ok b{background:#2E8B57}.fsteps .fs.bad b{background:#C0392B}
+.fsteps .fs span{min-width:0;color:inherit;line-height:1.5}.fsteps .fs strong{display:block;color:var(--ink)}
+.fsteps .fs.ok span{color:#2C5A43}
+.fsteps p{margin:0;padding-top:8px;border-top:1px solid rgba(192,57,43,.15);font-size:12.5px;color:var(--muted)}
 .ehint{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;border-radius:10px;background:#EEF4FD;color:#3A5373;font-size:13px;line-height:1.4}
 .ehint b{color:#0B3F94;font-weight:700;letter-spacing:.02em;font-variant-numeric:tabular-nums}
 .ehint svg{flex:0 0 auto;width:15px;height:15px;color:#2F6FD6}
@@ -1271,6 +1278,14 @@ $('scrCheck').addEventListener('submit', async function(e){
   var hadSelfie = !!FG.selfie; FG.selfie = '';
   if (!j.ok && j.needFace){ faceGateOpen(hadSelfie ? j.error : ''); return; } // lần thứ 3 trở đi: phải xác thực khuôn mặt
   faceGateClose();
+  if (!j.ok && j.face && j.face.ok){
+    // Đã chụp khuôn mặt: báo rõ từng bước — khuôn mặt đạt, thông tin đăng nhập chưa khớp
+    $('checkMsg').innerHTML = '<div class="msg err fsteps">' +
+      '<div class="fs ok"><b>✓</b><span><strong>Khuôn mặt: đã xác thực</strong>Ảnh có đúng một người, chụp trực tiếp qua camera.</span></div>' +
+      '<div class="fs bad"><b>✕</b><span><strong>Thông tin đăng nhập: chưa khớp</strong>' + esc(j.error || 'Không tìm thấy thông tin khớp với mã nhân viên và email đã nhập.') + '</span></div>' +
+      '<p>Kiểm tra lại mã nhân viên và email rồi bấm Tiếp tục. Mỗi lần thử sau vẫn cần chụp lại khuôn mặt cho tới khi nhập đúng.</p></div>';
+    return;
+  }
   if (!j.ok){ msg('checkMsg', j.error || 'Có lỗi xảy ra, thử lại sau.'); return; }
   ST.cand = { code:j.candidate.code, name:j.candidate.name, email:j.candidate.email, manager:j.candidate.manager, phone:j.candidate.phone || '', segment:j.candidate.segment || 'both', title:j.candidate.title || 'PC', province:j.candidate.province || '', region:j.candidate.region || '', needRegion:!!j.candidate.needRegion, test:!!j.candidate.test, inCode:code, inEmail:email };
   ST.phoneNew = ''; ST.rgNew = null; ST.pending = !!j.pendingRequest;
