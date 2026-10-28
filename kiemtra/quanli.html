@@ -236,7 +236,11 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .ph img{width:100%;height:100%;object-fit:cover;display:block}
 #ovImg .dlg{max-width:520px;text-align:center}
 #ovImg img{width:100%;border-radius:14px;display:block;background:#0B1B1F}
-#ovImg .sub{margin:10px 0 0}
+#ovImg .sub{margin:12px 0 0;display:flex;flex-direction:column;align-items:center;gap:8px}
+#ovImg h2{margin-bottom:12px}
+.im-meta{font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.im-face{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12.5px;font-weight:700;background:#EEF1F4;color:#4A5565;cursor:help}
+.im-face.ok{background:#E2F2E9;color:#1E6B42}.im-face.warn{background:#FDF0DA;color:#8A5500}.im-face.bad{background:#FBE3E0;color:#9E2A20}
 @media print{body.pp #ovImg{display:none!important}body.pp .ph{width:120px;border:1px solid #ccc}}
 /* thiết bị */
 .dev{display:flex;align-items:center;gap:5px;margin-top:3px;font-size:12px;color:var(--muted);white-space:nowrap;max-width:230px}
@@ -1556,6 +1560,7 @@ $('ovProf').addEventListener('click', function(ev){
 
 /* ---------- Ảnh xác nhận chụp lúc làm bài ---------- */
 var PHOTO = {};
+var FACE_S = { ok:['ok','✓ AI xác nhận khuôn mặt'], unclear:['warn','Khuôn mặt chưa rõ nét'], client_ok:['warn','Khuôn mặt chưa được AI xác minh'], unverified:['bad','Chưa xác minh khuôn mặt'] };
 var FACE_L = { ok:'AI xác nhận có đúng 1 khuôn mặt', unclear:'AI thấy 1 khuôn mặt nhưng chưa rõ nét', client_ok:'Nhận diện được khuôn mặt trên máy thí sinh (AI máy chủ chưa xác minh)', unverified:'Chưa xác minh được khuôn mặt' };
 // sel: { id: mã bài làm } hoặc { period: 'YYYY-MM' }. Ảnh là minh chứng của ĐÚNG MỘT bài/kỳ, không lấy ảnh kỳ khác bù vào.
 function photoSel(e, sel){ return sel || (e.result && e.result.id ? { id: e.result.id } : { period: CURP }); }
@@ -1582,8 +1587,11 @@ async function fillPhoto(id, e, sel){
     var tag = document.createElement('span'); tag.className = 'ph-tag'; tag.textContent = perL(per);
     b.appendChild(im); el.appendChild(b); el.appendChild(tag);
     b.addEventListener('click', function(){
-      $('iTitle').textContent = 'Ảnh xác nhận kỳ ' + perL(per) + ': ' + (e.name || e.code); $('iImg').src = d.photo; $('iImg').alt = im.alt;
-      $('iSub').textContent = 'Mã nhân viên ' + e.code + ' · Chụp ngay trước khi bắt đầu bài kiểm tra kỳ ' + perL(per) + (d.takenAt ? ', lúc ' + fmt(d.takenAt) : '') + '. Ảnh chỉ là minh chứng cho kỳ này.' + (d.face && FACE_L[d.face] ? ' Kiểm tra khuôn mặt: ' + FACE_L[d.face] + '.' : '');
+      $('iTitle').textContent = e.name || e.code; $('iImg').src = d.photo; $('iImg').alt = im.alt;
+      // Gọn: 1 dòng thông tin (mã NV · kỳ · giờ chụp) + 1 nhãn khuôn mặt; câu giải thích đầy đủ để ở tooltip
+      var fc = d.face && FACE_S[d.face];
+      $('iSub').innerHTML = '<span class="im-meta">' + esc(e.code) + ' · Kỳ ' + esc(perL(per)) + (d.takenAt ? ' · ' + esc(fmt(d.takenAt)) : '') + '</span>' +
+        (fc ? '<span class="im-face ' + fc[0] + '" title="' + esc(FACE_L[d.face]) + '">' + esc(fc[1]) + '</span>' : '');
       $('ovImg').classList.remove('hide');
     });
   } else {
