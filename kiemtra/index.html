@@ -1853,7 +1853,6 @@ function renderResult(r, already){
   renderAdvice(r.advice);
   shareMsg('');
   show('result');
-  scheduleNudge();
   if (ps === true && !already) confetti();
   var arc = $('resArc');
   arc.style.strokeDashoffset = '326.73';
@@ -2093,8 +2092,9 @@ $('btnSave').addEventListener('click', async function(){
 });
 
 /* ---------- Nhắc chia sẻ kết quả thay vì chụp màn hình ---------- */
-// Nhân viên quen chụp màn hình (thường bị cắt thiếu mã minh chứng/QR). Hiện popup một lần khi có kết quả,
-// hiện lại khi phát hiện phím chụp màn hình (máy tính), và luôn có thanh chia sẻ cố định khi nút chính đã cuộn khuất.
+// Nhân viên quen chụp màn hình (thường bị cắt thiếu mã minh chứng/QR). Popup CHỈ hiện khi phát hiện người dùng chụp màn hình
+// (phím PrintScreen / Ctrl-Cmd+Shift+S,3,4,5 / Win+Shift+S trên máy tính); không tự bật khi vừa có kết quả.
+// Luôn có thanh chia sẻ cố định khi nút chính đã cuộn khuất.
 var nudgeShown = false, nudgeBack = null, nudgeTimer = null;
 function resultOn(){ return !$('scrResult').classList.contains('hide'); }
 function nudgeOpen(title){
@@ -2107,12 +2107,6 @@ function nudgeOpen(title){
 function nudgeClose(){
   $('nudgeBg').classList.remove('on'); $('nudgeBg').setAttribute('aria-hidden', 'true');
   try { if (nudgeBack && nudgeBack.focus) nudgeBack.focus({ preventScroll:true }); } catch(e){}
-}
-function scheduleNudge(){
-  if (nudgeShown) return;
-  nudgeShown = true;
-  clearTimeout(nudgeTimer);
-  nudgeTimer = setTimeout(function(){ nudgeOpen(); }, 1200); // để họ kịp nhìn thấy điểm của mình trước
 }
 $('nudgeGo').addEventListener('click', function(){ nudgeClose(); $('btnZalo').click(); });
 $('nudgeSave').addEventListener('click', function(){ nudgeClose(); $('btnSave').click(); });
@@ -2130,6 +2124,12 @@ function shotKeyOnResult(e){
     nudgeOpen('Bạn vừa chụp màn hình?');
 }
 document.addEventListener('keyup', shotKeyOnResult);
+// Win+Shift+S (Snipping Tool): hệ điều hành giữ phím, trình duyệt thường chỉ thấy Win/Shift được nhấn rồi cửa sổ mất focus.
+// Nếu vừa nhấn Win + Shift ngay trước khi mất focus ở màn kết quả, hiện popup khi người dùng quay lại trang.
+var lastWin = 0, lastShift = 0, shotPending = false;
+document.addEventListener('keydown', function(e){ if (e.key === 'Meta' || e.key === 'OS') lastWin = Date.now(); else if (e.key === 'Shift') lastShift = Date.now(); else if (e.shiftKey && e.metaKey && String(e.key).toLowerCase() === 's') shotPending = true; });
+window.addEventListener('blur', function(){ var t = Date.now(); if (resultOn() && ((lastWin && t - lastWin < 1500 && lastShift && t - lastShift < 1500) || shotPending)) shotPending = true; });
+window.addEventListener('focus', function(){ if (!shotPending) return; shotPending = false; setTimeout(function(){ nudgeOpen('Bạn vừa chụp màn hình?'); }, 300); });
 document.addEventListener('keydown', function(e){ if (e.key === 'PrintScreen') shotKeyOnResult(e); });
 // Thanh chia sẻ cố định: chỉ hiện khi đang ở màn kết quả và nút Zalo chính đã cuộn ra khỏi tầm nhìn
 if ('IntersectionObserver' in window){
