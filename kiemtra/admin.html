@@ -280,6 +280,7 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
 .opt-row:has(.qc:checked) input[type=text]{border-color:#2E9E5B;background:#F2FBF5}
 .small{font-size:12.5px;color:var(--muted)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+#qAddOptBtn.hide + #qShufBtn{display:none}
 .qmeta3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
 .qmeta3>div>label{margin-top:0}
 @media(max-width:760px){.qmeta3{grid-template-columns:1fr}}
@@ -1417,7 +1418,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <div id="qOptsWrap">
           <label id="qOptsLabel">Các phương án trả lời (bấm ô “✓ Đúng” ở đầu dòng để chọn đáp án đúng)</label>
           <div id="qOptsEdit"></div>
-          <button class="btn ghost sm" id="qAddOptBtn" onclick="addOptRow()">+ Thêm phương án</button>
+          <button class="btn ghost sm" id="qAddOptBtn" onclick="addOptRow()">+ Thêm phương án</button> <button class="btn ghost sm" id="qShufBtn" type="button" onclick="shuffleOptRows()" title="Xáo ngẫu nhiên vị trí các phương án; dấu ✓ Đúng đi theo đúng phương án">🔀 Đảo phương án</button>
         </div>
         <div id="qFillWrap" class="hide">
           <label>Các đáp án được chấp nhận (mỗi dòng một đáp án)</label>
@@ -3158,6 +3159,19 @@ function addOptRow(checked, value){
   row.innerHTML = '<label class="opt-ok" title="Đánh dấu đáp án đúng"><input type="'+(multi?'checkbox':'radio')+'" class="qc" name="qCorrect" value="'+n+'" '+(checked?'checked':'')+'><span>✓ Đúng</span></label><input type="text" placeholder="Phương án '+(n+1)+'"'+(locked?' readonly':'')+'>';
   if (value != null) row.querySelector('input[type=text]').value = value;
   $('qOptsEdit').appendChild(row);
+}
+// Đảo ngẫu nhiên vị trí các phương án (dấu "Đúng" đi theo nội dung từng phương án).
+function shuffleOptRows(){
+  if (qUIType() === 'tf') return;
+  const rows = Array.from(document.querySelectorAll('#qOptsEdit .opt-row')).map(r => [r.querySelector('.qc').checked, r.querySelector('input[type=text]').value]);
+  if (rows.length < 2) return;
+  const before = JSON.stringify(rows);
+  let a = rows.slice(), tries = 0;
+  do {
+    for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  } while (JSON.stringify(a) === before && ++tries < 10);
+  $('qOptsEdit').innerHTML = '';
+  a.forEach(r => addOptRow(r[0], r[1]));
 }
 // Đổi loại câu hỏi: dựng lại vùng đáp án, giữ lại nội dung các phương án đã gõ.
 function onQTypeChange(){
