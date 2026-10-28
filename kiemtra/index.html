@@ -186,6 +186,8 @@ button,input{font:inherit;color:inherit}
 .msg{font-size:13.5px;line-height:1.55;border-radius:14px;padding:12px 15px;margin:14px 0 0}
 .photo-box{position:relative;width:100%;max-width:360px;margin:0 auto;aspect-ratio:4/3;background:#0B1B1F;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .photo-box video,.photo-box img{width:100%;height:100%;object-fit:cover;display:block}
+/* Camera trước: lật ngang khung xem như soi gương (nghiêng trái thấy nghiêng trái). Ảnh lưu vẫn là ảnh thật, không lật */
+.photo-box.mirror video,.photo-box.mirror img{transform:scaleX(-1)}
 /* Khung tròn hướng dẫn đặt khuôn mặt vào giữa (chỉ hiện khi camera đang mở) */
 .face-guide{position:absolute;inset:0;pointer-events:none}
 /* Chờ camera mở: nền chuyển màu nhẹ + vòng quay quanh biểu tượng máy ảnh, để không tưởng là lỗi màn hình đen */
@@ -1500,6 +1502,8 @@ async function photoInit(){
   try {
     PH.stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:480}, height:{ideal:360} }, audio:false });
     v.srcObject = PH.stream;
+    var tk = PH.stream.getVideoTracks()[0], fm = tk && tk.getSettings ? (tk.getSettings().facingMode || '') : '';
+    box.classList.toggle('mirror', fm !== 'environment'); // webcam máy tính thường không báo facingMode → coi là camera trước
     try { await v.play(); } catch(e2){}
     ready();
   } catch(e){
