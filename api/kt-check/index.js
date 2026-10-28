@@ -81,10 +81,14 @@ module.exports = async function (context, req) {
     if (!found) {
       quiz.noteFail(req);
       // Tài khoản thử nghiệm (quản trị viên tự tạo): nói rõ phần nào bị lệch để người kiểm thử sửa nhanh
-      const near = await quiz.testNearMiss(code, email);
+      // CHỈ báo chi tiết khi trình duyệt đang đăng nhập quản trị viên (người kiểm thử). Người lạ chỉ nhận thông báo chung,
+      // không bao giờ lộ email/mã đã đăng ký.
+      let adminHere = false;
+      try { const u = require("../_lib/session").userFromReq(req); adminHere = !!(u && u.email && require("../_lib/config").isAdmin(u.email)); } catch (e) { adminHere = false; }
+      const near = adminHere ? await quiz.testNearMiss(code, email) : null;
       if (near) return reply(context, 404, { ok: false, faceNext: needFaceFor(req), error: near.by === "code"
-        ? "Mã \"" + b.code + "\" là tài khoản thử nghiệm nhưng email chưa khớp. Email đã đăng ký: " + near.email + "."
-        : "Email này là của tài khoản thử nghiệm nhưng mã chưa khớp. Mã đã đăng ký: " + near.code + "." });
+        ? "[Chỉ quản trị viên thấy] Mã \"" + b.code + "\" là tài khoản thử nghiệm nhưng email chưa khớp. Email đã đăng ký: " + near.email + "."
+        : "[Chỉ quản trị viên thấy] Email này là của tài khoản thử nghiệm nhưng mã chưa khớp. Mã đã đăng ký: " + near.code + "." });
       return reply(context, 404, { ok: false, faceNext: needFaceFor(req), error: "Không tìm thấy thông tin khớp với mã nhân viên và email đã nhập. Kiểm tra lại hoặc liên hệ quản trị viên." + (needFaceFor(req) && !needFace ? " Lần thử tiếp theo cần xác thực khuôn mặt." : "") });
     }
 
