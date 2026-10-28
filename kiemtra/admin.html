@@ -1720,7 +1720,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
       </div>
       <div class="card" id="segPlanCard">
         <h1>Phân bổ câu hỏi mặc định theo nhóm ngành</h1>
-        <p class="small"><b>Đề mới tạo sẽ chép sẵn phân bổ này</b> (sửa riêng được trong “Cài đặt đề”). Mỗi nhóm thí sinh nhận đúng số câu của từng danh mục. Tên danh mục phải <b>trùng với ô "Phân loại"</b> của câu hỏi (không phân biệt hoa thường). Nhóm nào để trống thì dùng cách chia cũ ở trên (Tổng số câu + số câu Gia dụng cố định). Nếu một đề thi có "Cấu trúc đề" riêng thì cấu trúc đó được ưu tiên. <b>PC Miền Bắc / PC Miền Nam</b>: PC đã chọn miền sẽ nhận đề theo khung của miền mình (ưu tiên hơn nhóm ngành); câu hỏi gắn tag “Miền Bắc”/“Miền Nam” (hoặc danh mục có chữ “Miền Bắc”/“Miền Nam”) chỉ phát cho đúng miền, câu không gắn miền dùng chung.</p>
+        <p class="small"><b>Đề mới tạo sẽ chép sẵn phân bổ này</b> (sửa riêng được trong “Cài đặt đề”). Mỗi nhóm thí sinh nhận đúng số câu của từng danh mục. Tên danh mục phải <b>trùng với ô "Phân loại"</b> của câu hỏi (không phân biệt hoa thường). Nhóm nào để trống thì dùng cách chia cũ ở trên (Tổng số câu + số câu Gia dụng cố định). Nếu một đề thi có "Cấu trúc đề" riêng thì cấu trúc đó được ưu tiên. <b>Miền Bắc / Miền Nam</b>: áp dụng cho MỌI chức danh (PC, SR...) — hễ đã chọn miền thì nhận đề theo khung của miền mình (ưu tiên hơn nhóm ngành); câu hỏi gắn tag “Miền Bắc”/“Miền Nam” (hoặc danh mục có chữ “Miền Bắc”/“Miền Nam”) chỉ phát cho đúng miền, câu không gắn miền dùng chung.</p>
         <div class="spg" id="spWrap"></div>
         <datalist id="catList"></datalist>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
@@ -4424,7 +4424,7 @@ async function xlTemplate(){
 /* ---------- Phân bổ câu hỏi theo nhóm ngành ---------- */
 // Dùng chung cho tab Cài đặt (phân bổ chung) và form đề thi (phân bổ riêng của từng đề). Mỗi khung là một .spg có data-bank = mã kỳ/đề để đếm câu.
 let SEGPLANS = {};
-const SP_SEGS = [['both','Bán cả 2 ngành'],['may_loc','Chỉ bán máy lọc nước'],['gia_dung','Chỉ bán gia dụng'],['mien_bac','PC Miền Bắc'],['mien_nam','PC Miền Nam']];
+const SP_SEGS = [['both','Bán cả 2 ngành'],['may_loc','Chỉ bán máy lọc nước'],['gia_dung','Chỉ bán gia dụng'],['mien_bac','Miền Bắc (mọi chức danh)'],['mien_nam','Miền Nam (mọi chức danh)']];
 const SP_TEMPLATE = {
   // Từ 10/2026 ngưng dùng câu kỹ năng bán hàng máy lọc (chưa đảm bảo chất lượng): phần đó thay bằng câu Máy lọc nước
   both: [['Thương hiệu',5],['Gia dụng',10],['Máy lọc nước',20],['Kỹ năng bán hàng gia dụng',5]],
@@ -4459,7 +4459,7 @@ function spRowHTML(seg, r){
   return '<div class="sprow" data-seg="'+seg+'"><input type="text" list="catList" placeholder="Danh mục" value="'+esc(r.category||'')+'" oninput="spRefresh(this)"><input type="text" inputmode="numeric" placeholder="Số câu" value="'+(r.count||'')+'" oninput="spRefresh(this)"><button class="x" type="button" title="Bỏ dòng" onclick="const g=this.closest(\'.spg\');this.parentNode.remove();spRefresh(g)">×</button><div class="have"></div></div>';
 }
 function spRender(root, plans){
-  root.innerHTML = SP_SEGS.map(([k,l]) => '<div class="spbox" data-box="'+k+'"><h3>'+l+'</h3><div class="tot"></div>'+(k.indexOf('mien_') === 0 ? '<p class="rgnote"><b>Thường để trống:</b> PC '+l.replace('PC ','')+' vẫn nhận đúng câu của miền mình theo phân bổ nhóm ngành ở trên. Chỉ điền khi miền này cần cấu trúc đề khác; khi điền, khung này thay thế phân bổ nhóm ngành cho mọi PC của miền (kể cả PC bán gia dụng).</p>' : '')+'<div class="rows">'+
+  root.innerHTML = SP_SEGS.map(([k,l]) => '<div class="spbox" data-box="'+k+'"><h3>'+l+'</h3><div class="tot"></div>'+(k.indexOf('mien_') === 0 ? '<p class="rgnote"><b>Thường để trống:</b> Nhân viên (bất kỳ chức danh nào) thuộc '+(k==='mien_bac'?'Miền Bắc':'Miền Nam')+' vẫn nhận đúng câu của miền mình theo phân bổ nhóm ngành ở trên. Chỉ điền khi miền này cần cấu trúc đề khác; khi điền, khung này thay thế phân bổ nhóm ngành cho mọi nhân viên của miền (kể cả người bán gia dụng).</p>' : '')+'<div class="rows">'+
     ((plans || {})[k] || []).map(r => spRowHTML(k, r)).join('') + '</div><button class="btn ghost sm" type="button" style="margin-top:8px" onclick="spAdd(this,\''+k+'\')">＋ Thêm danh mục</button></div>').join('');
   spRefresh(root);
 }
