@@ -47,7 +47,7 @@ async function sendEmails({ items, subject, kind, allowed }) {
       try {
         const it = jb.it;
         const cta = it && it.cta && /^https?:\/\//i.test(String(it.cta.url || "")) ? { label: clean(it.cta.label, 40) || "Mở liên kết", url: String(it.cta.url).slice(0, 500) } : null;
-        const sent = await mail.send({ to: jb.c.email, subject: subj, html: tpl.build({ text: jb.text, tone: k, cta }), text: cta ? jb.text + "\n" + cta.url : jb.text });
+        const sent = await mail.send({ fromName: mail.KT_NAME, to: jb.c.email, subject: subj, html: tpl.build({ text: jb.text, tone: k, cta }), text: cta ? jb.text + "\n" + cta.url : jb.text });
         if (sent === false) { stop = true; res.ok = false; res.error = "Chưa cấu hình SMTP trên máy chủ, email chưa được gửi."; res.failed.push({ code: jb.code, error: "chưa cấu hình SMTP" }); continue; }
         res.sent++; log[jb.key] = Date.now(); dirty = true;
       } catch (e) { res.failed.push({ code: jb.code, error: String((e && e.message) || "lỗi gửi").slice(0, 120) }); }

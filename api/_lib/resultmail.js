@@ -8,7 +8,7 @@ async function send(attempt, settings, advice) {
   // Người đã nghỉ việc: không gửi (trả false = bỏ qua, không phải lỗi)
   try { const quiz = require("./quiz"), k = quiz.normCode(attempt.code); const c = (await quiz.getCandidates()).find((x) => quiz.normCode(x.code) === k); if (c && quiz.isLeft(c)) return false; } catch (e) { /* không tra được hồ sơ thì giữ hành vi cũ */ }
   const m = build(attempt, settings, advice);
-  const sent = await mail.send({ to: attempt.email, subject: m.subject, html: m.html, text: m.text });
+  const sent = await mail.send({ fromName: mail.KT_NAME, to: attempt.email, subject: m.subject, html: m.html, text: m.text });
   if (sent === false) throw new Error("Chưa cấu hình SMTP trên máy chủ, email không được gửi");
   return true;
 }

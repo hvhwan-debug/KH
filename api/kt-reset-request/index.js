@@ -43,7 +43,7 @@ module.exports = async function (context, req) {
         cta: "Đặt mật khẩu mới",
         ctaUrl: link
       });
-      await mail.send({ to: ud.email || email, subject: "Đặt lại mật khẩu — Quản lí nhân viên", html: L.html, text: L.text });
+      await mail.send({ fromName: mail.KT_NAME, to: ud.email || email, subject: "Đặt lại mật khẩu — Quản lí nhân viên", html: L.html, text: L.text });
     }
     return reply(context, 200, generic);
   } catch (e) {

@@ -36,7 +36,7 @@ async function inviteManager(email, name, opts) {
     ctaUrl: link
   });
   try {
-    await mail.send({ to: ud.email || email, subject: needSet ? "Tài khoản quản lí của bạn — đặt mật khẩu" : "Bạn đã được cấp quyền quản lí", html: L.html, text: L.text });
+    await mail.send({ fromName: mail.KT_NAME, to: ud.email || email, subject: needSet ? "Tài khoản quản lí của bạn — đặt mật khẩu" : "Bạn đã được cấp quyền quản lí", html: L.html, text: L.text });
   } catch (e) {
     return { created, mailed: false, reason: "Gửi email thất bại: " + String((e && e.message) || e).slice(0, 120) };
   }
