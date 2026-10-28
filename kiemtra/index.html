@@ -522,6 +522,9 @@ body.introbg .hero .feats .fi{width:67px;height:67px;border-radius:18px;backgrou
 body.introbg .hero .feats .fi svg{width:30px;height:30px}
 body.introbg .hero .feats b{display:block;font-size:16px;margin:0 0 5px;color:var(--ink)}
 body.introbg .hero .feats span:not(.fi){display:block;font-size:14px;line-height:1.55;color:#496386}
+/* Không có tên đề: bỏ hẳn cột giới thiệu, biểu mẫu nằm giữa */
+.stage.nohero>.hero{display:none!important}
+body.introbg .stage.nohero{grid-template-columns:minmax(0,640px);justify-content:center}
 /* biểu mẫu (giữa) */
 body.introbg .stage>main{display:flex;flex-direction:column;gap:18px;width:100%;max-width:560px;justify-self:center;min-width:0}
 body[data-scr="confirm"].introbg .stage>main{max-width:640px}
@@ -792,19 +795,12 @@ body.introbg .btn.go:active{transform:scale(.99)}
     <div><h2><span class="wl">Chào mừng bạn đến với</span> <span id="examTitle">Hệ thống kiểm tra trực tuyến</span><span class="ex">!</span></h2></div>
   </header>
 
-  <div class="stage">
+  <div class="stage nohero">
     <aside class="hero" aria-label="Giới thiệu">
       <div>
-        <span class="eyebrow"><i></i>Nền tảng kiểm tra trực tuyến</span>
         <h3>HỆ THỐNG<br><span>KIỂM TRA</span><br><span>TRỰC TUYẾN</span></h3>
-        <p class="hsub">Nền tảng tổ chức kiểm tra, đánh giá kiến thức và năng lực nhân sự một cách nhanh chóng, minh bạch và hiệu quả.</p>
         <p class="mline" id="mLine"></p>
       </div>
-      <ul class="feats">
-        <li><span class="fi" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.2" fill="currentColor"/><path d="M3.8 21.5c0-4.6 3.7-7.4 8.2-7.4s8.2 2.8 8.2 7.4z" fill="currentColor"/></svg></span><div><b>Truy cập nhanh chóng</b><span>Tham gia bài kiểm tra bằng mã nhân viên và email công ty, không cần đăng nhập tài khoản.</span></div></li>
-        <li><span class="fi" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 6.6V12l3.6 2.3" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><b>Kiểm soát thời gian minh bạch</b><span>Thời gian làm bài được ghi nhận tự động trên hệ thống, bảo đảm tính nhất quán trong quá trình kiểm tra.</span></div></li>
-        <li><span class="fi" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 12a8.2 8.2 0 0 1-14 5.8M3.8 12a8.2 8.2 0 0 1 14-5.8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M18.6 2.4v4.9h-4.9M5.4 21.6v-4.9h4.9" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><b>Lưu tiến độ làm bài</b><span>Tiếp tục làm bài từ vị trí đã dừng khi tải lại trang hoặc kết nối bị gián đoạn, theo cơ chế lưu bài của hệ thống.</span></div></li>
-      </ul>
       <div class="art" aria-hidden="true">
         <svg width="54" height="54" viewBox="0 0 54 54"><circle cx="27" cy="27" r="22" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="6"/><circle cx="27" cy="27" r="22" fill="none" stroke="#7FE3F2" stroke-width="6" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="40" transform="rotate(-90 27 27)"/><path d="m18 28 6 6 12-13" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <div class="lines"><i></i><i></i><i class="on"></i></div>
@@ -2392,7 +2388,7 @@ async function loadInfo(){
   noteServerTime(r);
   if (!r.ok || !r.exam) return;
   INFO = r.exam;
-  if (INFO.title){ $('examTitle').textContent = INFO.title; var hh = document.querySelector('.hero h3'); if (hh){ hh.textContent = INFO.title; hh.classList.add('long'); } }
+  if (INFO.title){ $('examTitle').textContent = INFO.title; var hh = document.querySelector('.hero h3'); if (hh){ hh.textContent = INFO.title; hh.classList.add('long'); var sg = document.querySelector('.stage'); if (sg) sg.classList.remove('nohero'); } }
   if (!ST.exam){ ST.exam = { title: INFO.title, practice: INFO.practice }; applyPractice(); }
   SCHED_KEY = ''; renderSched();
   clearInterval(schedT);
