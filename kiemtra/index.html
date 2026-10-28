@@ -620,6 +620,10 @@ body.introbg .foot{text-align:center;font-size:11px;color:#7186a5;margin:0;paddi
 .lp-box ol{margin:0 0 14px;padding-left:20px;font-size:14px;line-height:1.65;color:var(--muted)}
 .lp-box ol li{margin-bottom:6px}
 .lp-box p{margin:0 0 12px;font-size:14px;line-height:1.65;color:var(--muted)}
+.fg-box{text-align:center}
+.fg-box .fg-cam{margin:4px auto 12px;max-width:320px}
+.fg-box #fgMsg:not(:empty){margin:0 0 12px;padding:9px 12px;border-radius:10px;background:#FBE3E0;color:#9E2A20;font-size:13.5px;line-height:1.5;text-align:left}
+.lp-box button.fg-cancel{margin-top:8px;background:none;color:var(--muted);height:40px;font-weight:700}
 .loc-box{text-align:center}
 .loc-ic{width:58px;height:58px;margin:0 auto 12px;border-radius:18px;display:grid;place-items:center;background:#E6F0FC;color:#0869df}
 .loc-box.bad .loc-ic{background:#FBEBC8;color:#8A5500}
@@ -855,6 +859,14 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
   </nav>
   <div class="lp-practice" id="lpPractice"><span class="lp-pdot"></span><span>Đề thi thử</span></div>
 </header>
+<div class="lp-dlg hide" id="faceGate" role="dialog" aria-modal="true" aria-labelledby="fgT"><div class="lp-box fg-box">
+  <h3 id="fgT">Xác thực khuôn mặt</h3>
+  <p id="fgSub">Bạn đã nhập sai nhiều lần. Để tiếp tục, hãy chụp ảnh khuôn mặt của chính bạn.</p>
+  <div class="photo-box mirror fg-cam"><video id="fgVideo" autoplay playsinline muted></video><div class="face-guide" aria-hidden="true"><div class="ring"></div></div></div>
+  <div id="fgMsg" role="alert"></div>
+  <button type="button" id="fgShot">Chụp và tiếp tục</button>
+  <button type="button" id="fgCancel" class="fg-cancel">Huỷ</button>
+</div></div>
 <div class="lp-dlg hide" id="locDlg" role="dialog" aria-modal="true" aria-labelledby="locDlgT"><div class="lp-box loc-box">
   <div class="loc-ic" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.6"/></svg></div>
   <h3 id="locDlgT">Cho phép truy cập vị trí</h3>
@@ -1209,6 +1221,32 @@ function show(name){
 }
 
 /* ---------- Bước 1: kiểm tra thông tin ---------- */
+/* ---------- Chống dò: nhập sai từ 2 lần thì phải xác thực khuôn mặt ---------- */
+var FG = { stream:null, selfie:'' };
+async function faceGateOpen(err){
+  $('fgMsg').textContent = err || '';
+  $('faceGate').classList.remove('hide');
+  var b = $('fgShot'); b.disabled = false; b.textContent = 'Chụp và tiếp tục';
+  if (FG.stream) return;
+  try {
+    FG.stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:480}, height:{ideal:360} }, audio:false });
+    $('fgVideo').srcObject = FG.stream; try { await $('fgVideo').play(); } catch(e){}
+  } catch(e){ $('fgMsg').textContent = 'Không mở được camera. Hãy cho phép quyền camera trên trình duyệt rồi thử lại.'; }
+}
+function faceGateClose(){
+  $('faceGate').classList.add('hide');
+  if (FG.stream){ FG.stream.getTracks().forEach(function(t){ t.stop(); }); FG.stream = null; }
+}
+$('fgCancel').addEventListener('click', function(){ faceGateClose(); msg('checkMsg', 'Cần xác thực khuôn mặt để tiếp tục.', 'warn'); });
+$('fgShot').addEventListener('click', function(){
+  var v = $('fgVideo');
+  if (!v.videoWidth){ $('fgMsg').textContent = 'Camera chưa sẵn sàng, đợi một chút rồi bấm lại.'; return; }
+  var c = document.createElement('canvas'), w = Math.min(480, v.videoWidth), h = Math.round(w * v.videoHeight / v.videoWidth);
+  c.width = w; c.height = h; c.getContext('2d').drawImage(v, 0, 0, w, h); // ảnh gửi đi đúng chiều thật, không lật
+  FG.selfie = c.toDataURL('image/jpeg', 0.75);
+  this.disabled = true; this.textContent = 'Đang xác thực…'; $('fgMsg').textContent = '';
+  var f = $('scrCheck'); if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', { cancelable:true }));
+});
 $('scrCheck').addEventListener('submit', async function(e){
   e.preventDefault();
   var code = $('inCode').value.trim(), email = $('inEmail').value.trim();
@@ -1220,12 +1258,15 @@ $('scrCheck').addEventListener('submit', async function(e){
   if (!/^\S+@\S+\.\S+$/.test(email)){ msg('checkMsg','Email chưa đúng định dạng.'); $('inEmail').setAttribute('aria-invalid','true'); $('inEmail').focus(); return; }
   var btn = $('btnCheck'); btn.disabled = true; btn.textContent = 'Đang kiểm tra…';
   var res;
-  try { res = await api('/api/kt-check', { code:code, email:email, examId:EXAM_ID }); }
+  try { res = await api('/api/kt-check', { code:code, email:email, examId:EXAM_ID, selfie: FG.selfie || undefined }); }
   catch(err){ res = null; }
   btn.disabled = false; btn.textContent = 'Tiếp tục';
-  if (!res){ msg('checkMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
+  if (!res){ FG.selfie = ''; $('fgShot').disabled = false; $('fgShot').textContent = 'Chụp và tiếp tục'; msg('checkMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
   var j = res.j;
   noteServerTime(j);
+  var hadSelfie = !!FG.selfie; FG.selfie = '';
+  if (!j.ok && j.needFace){ faceGateOpen(hadSelfie ? j.error : ''); return; } // lần thứ 3 trở đi: phải xác thực khuôn mặt
+  faceGateClose();
   if (!j.ok){ msg('checkMsg', j.error || 'Có lỗi xảy ra, thử lại sau.'); return; }
   ST.cand = { code:j.candidate.code, name:j.candidate.name, email:j.candidate.email, manager:j.candidate.manager, phone:j.candidate.phone || '', segment:j.candidate.segment || 'both', title:j.candidate.title || 'PC', province:j.candidate.province || '', region:j.candidate.region || '', needRegion:!!j.candidate.needRegion, test:!!j.candidate.test, inCode:code, inEmail:email };
   ST.phoneNew = ''; ST.rgNew = null; ST.pending = !!j.pendingRequest;

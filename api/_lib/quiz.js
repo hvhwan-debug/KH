@@ -1128,13 +1128,18 @@ function tooManyFails(req, max, windowMs) {
   if (_fails.size > 5000) { for (const [key, v] of _fails) if (!v.length || now - v[v.length - 1] > windowMs) _fails.delete(key); }
   return list.length >= max;
 }
+function failCount(req, windowMs) {
+  const k = ipOf(req), now = Date.now();
+  return (_fails.get(k) || []).filter((t) => now - t < (windowMs || 10 * 60 * 1000)).length;
+}
+function clearFails(req) { _fails.delete(ipOf(req)); }
 function noteFail(req) {
   const k = ipOf(req), list = _fails.get(k) || [];
   list.push(Date.now()); _fails.set(k, list);
 }
 
 module.exports = {
-  patchIndex,
+  patchIndex, failCount, clearFails,
   runMigrations, managerCanon, properCaseName, normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, betterResult, attemptsSummary, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
   getQuestions, saveQuestions,
   getCandidates, saveCandidates, getTestAccounts, saveTestAccounts, findTestAccount, findTestByCode, updateTestAccount, recordTestAttempt, testAttemptByProof,
