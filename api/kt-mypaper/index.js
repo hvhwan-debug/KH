@@ -3,7 +3,7 @@
 // SAU KHI đã đóng (có "Thời gian đóng" và đã qua) - tránh lộ đề/đáp án cho người khác khi kỳ thi còn mở.
 const _http = require("../_lib/http");
 const { guardConfigured, requireAjax } = _http;
-const reply = (ctx, status, body) => _http.reply(ctx, status, require("../_lib/profile").stripProfile(body)); // không bao giờ trả hồ sơ nhân sự ra ngoài kt-admin
+const __reply = (ctx, status, body) => _http.reply(ctx, status, require("../_lib/profile").stripProfile(body)); // không bao giờ trả hồ sơ nhân sự ra ngoài kt-admin
 const quiz = require("../_lib/quiz");
 const { cleanText, cleanList } = require("../_lib/cleantext");
 const { userFromReq } = require("../_lib/session");
@@ -29,6 +29,7 @@ async function logView(req, attempt, result, why, detail) {
 }
 
 module.exports = async function (context, req) {
+  const reply = require("../_lib/entrylog").wrap(req, "paper", __reply); // lỗi / lần vào không được -> nhật ký
   try {
     if (guardConfigured(context)) return;
     if (req.method !== "POST") return reply(context, 405, { ok: false, error: "Phương thức không hợp lệ." });

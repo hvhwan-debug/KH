@@ -1,5 +1,5 @@
 // Công khai: chấm điểm bài làm và gửi email kết quả tự động cho thí sinh.
-const { reply, guardConfigured, requireAjax } = require("../_lib/http");
+const { reply: __reply, guardConfigured, requireAjax } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
 const device = require("../_lib/device");
 const resultmail = require("../_lib/resultmail");
@@ -7,6 +7,7 @@ const advicelib = require("../_lib/advice");
 const finalize = require("../_lib/finalize");
 
 module.exports = async function (context, req) {
+  const reply = require("../_lib/entrylog").wrap(req, "submit", __reply); // lỗi / lần vào không được -> nhật ký
   try {
     if (guardConfigured(context)) return;
     if (req.method !== "POST") return reply(context, 405, { ok: false, error: "Phương thức không hợp lệ." });

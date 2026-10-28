@@ -2,7 +2,7 @@
 // Trả về: thông tin thí sinh, thể lệ bài thi, và trạng thái (chưa làm / đang làm dở / đã hoàn thành).
 const _http = require("../_lib/http");
 const { guardConfigured, requireAjax } = _http;
-const reply = (ctx, status, body) => _http.reply(ctx, status, require("../_lib/profile").stripProfile(body)); // không bao giờ trả hồ sơ nhân sự ra ngoài kt-admin
+const __reply = (ctx, status, body) => _http.reply(ctx, status, require("../_lib/profile").stripProfile(body)); // không bao giờ trả hồ sơ nhân sự ra ngoài kt-admin
 const quiz = require("../_lib/quiz");
 const advicelib = require("../_lib/advice");
 
@@ -26,6 +26,7 @@ const needFaceFor = (req) => quiz.failCount(req, 10 * 60 * 1000) >= 2 || hintMis
 function hintMiss(req) { const k = hintKey(req), list = _hint.get(k) || []; list.push(Date.now()); _hint.set(k, list); }
 
 module.exports = async function (context, req) {
+  const reply = require("../_lib/entrylog").wrap(req, "check", __reply, (b, st, r) => !!(r.body && r.body.hint) && st !== 429); // lỗi / lần vào không được -> nhật ký
   try {
     if (guardConfigured(context)) return;
     if (req.method !== "POST") return reply(context, 405, { ok: false, error: "Phương thức không hợp lệ." });

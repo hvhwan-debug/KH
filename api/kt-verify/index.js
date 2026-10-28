@@ -1,9 +1,10 @@
 // Công khai: xem kết quả đã xác thực bằng mã trong QR trên thẻ kết quả.
 // Chỉ trả những thông tin có sẵn trên thẻ (không có email, không có đáp án từng câu).
-const { reply, guardConfigured } = require("../_lib/http");
+const { reply: __reply, guardConfigured } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
 
 module.exports = async function (context, req) {
+  const reply = require("../_lib/entrylog").wrap(req, "verify", __reply); // lỗi / lần vào không được -> nhật ký
   try {
     if (guardConfigured(context)) return;
     if (quiz.tooManyFails(req, 20, 10 * 60 * 1000)) {

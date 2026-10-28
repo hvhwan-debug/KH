@@ -1,5 +1,5 @@
 // Công khai: thí sinh đã nộp bài bấm "Gửi lại email xác nhận". Chỉ gửi tới email đã đăng ký của chính thí sinh đó.
-const { reply, guardConfigured, requireAjax } = require("../_lib/http");
+const { reply: __reply, guardConfigured, requireAjax } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
 const resultmail = require("../_lib/resultmail");
 const advicelib = require("../_lib/advice");
@@ -14,6 +14,7 @@ function maskEmail(e) {
 }
 
 module.exports = async function (context, req) {
+  const reply = require("../_lib/entrylog").wrap(req, "resend", __reply); // lỗi / lần vào không được -> nhật ký
   try {
     if (guardConfigured(context)) return;
     if (req.method !== "POST") return reply(context, 405, { ok: false, error: "Phương thức không hợp lệ." });

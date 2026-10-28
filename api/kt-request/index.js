@@ -1,6 +1,6 @@
 // Công khai: thí sinh (đã xác thực bằng mã NV + email) gửi yêu cầu điều chỉnh thông tin cá nhân.
 // Dữ liệu CHƯA được cập nhật: quản trị viên xem và xác nhận ở trang quản trị.
-const { reply, guardConfigured, requireAjax } = require("../_lib/http");
+const { reply: __reply, guardConfigured, requireAjax } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
 const cr = require("../_lib/changereq");
 const { normPhone, normName } = require("../_lib/phone");
@@ -8,6 +8,7 @@ const { normPhone, normName } = require("../_lib/phone");
 const clean = (v, n) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, n);
 
 module.exports = async function (context, req) {
+  const reply = require("../_lib/entrylog").wrap(req, "request", __reply); // lỗi / lần vào không được -> nhật ký
   try {
     if (guardConfigured(context)) return;
     if (req.method !== "POST") return reply(context, 405, { ok: false, error: "Phương thức không hợp lệ." });

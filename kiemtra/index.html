@@ -1214,8 +1214,22 @@ async function emailHintFetch(){
   c.addEventListener('input', function(){ clearTimeout(EH.t); var v = c.value.trim().toUpperCase(); if (v !== EH.last){ emailHintShow(v, ''); } EH.t = setTimeout(emailHintFetch, 650); });
   c.addEventListener('blur', function(){ clearTimeout(EH.t); emailHintFetch(); });
 })();
+/* Gửi sự cố phía trình duyệt về nhật ký lỗi của quản trị (camera, vị trí, mạng, lỗi JS). Không chặn, không báo lỗi nếu gửi hỏng. */
+var CLOG_SEEN = {};
+function clog(kind, msg, detail){
+  try {
+    var key = kind + '|' + msg; if (CLOG_SEEN[key]) return; CLOG_SEEN[key] = 1; // mỗi sự cố chỉ gửi một lần mỗi lượt mở trang
+    var ic = document.getElementById('inCode'), ie = document.getElementById('inEmail');
+    fetch('/api/kt-log', { method:'POST', keepalive:true, headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin',
+      body: JSON.stringify({ kind:kind, msg:String(msg||'').slice(0,300), detail:String(detail||'').slice(0,300), code: ic ? ic.value.trim() : '', email: ie ? ie.value.trim() : '', exam: typeof EXAM_ID !== 'undefined' ? EXAM_ID : '' }) }).catch(function(){});
+  } catch(e){}
+}
+window.addEventListener('error', function(ev){ if (ev && ev.message) clog('js', ev.message, (ev.filename || '').split('/').pop() + ':' + (ev.lineno || '') + ' · ' + navigator.userAgent.slice(0, 120)); });
+window.addEventListener('unhandledrejection', function(ev){ var r = ev && ev.reason; clog('js', 'Promise: ' + (r && r.message ? r.message : String(r)), navigator.userAgent.slice(0, 120)); });
 async function api(path, body){
-  var r = await fetch(path, { method:'POST', headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: JSON.stringify(body||{}) });
+  var r;
+  try { r = await fetch(path, { method:'POST', headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: JSON.stringify(body||{}) }); }
+  catch(e){ clog('network', 'Không kết nối được máy chủ', path + ' · ' + (navigator.onLine ? 'trình duyệt báo có mạng' : 'trình duyệt báo mất mạng')); throw e; }
   var j = null; try { j = await r.json(); } catch(e){}
   return { s:r.status, j:j||{} };
 }
@@ -1267,7 +1281,7 @@ async function faceGateOpen(err){
   try {
     FG.stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:480}, height:{ideal:360} }, audio:false });
     $('fgVideo').srcObject = FG.stream; try { await $('fgVideo').play(); } catch(e){}
-  } catch(e){ $('fgMsg').textContent = 'Không mở được camera. Hãy cho phép quyền camera trên trình duyệt rồi thử lại.'; }
+  } catch(e){ clog('camera', 'Không mở được camera (xác thực khuôn mặt)', (e && (e.name + ': ' + e.message)) || ''); $('fgMsg').textContent = 'Không mở được camera. Hãy cho phép quyền camera trên trình duyệt rồi thử lại.'; }
 }
 function faceGateClose(){
   $('faceGate').classList.add('hide'); fgScan(false);
@@ -1526,7 +1540,7 @@ function getPos(opts){
     try {
       navigator.geolocation.getCurrentPosition(function(pos){
         DEV.loc = { lat:pos.coords.latitude, lng:pos.coords.longitude, acc:Math.round(pos.coords.accuracy||0) }; DEV.locErr = ''; done(true);
-      }, function(err){ if (!DEV.loc) DEV.locErr = err && err.code === 1 ? 'denied' : (err && err.code === 3 ? 'timeout' : 'unavailable'); done(false); }, opts);
+      }, function(err){ if (!DEV.loc) DEV.locErr = err && err.code === 1 ? 'denied' : (err && err.code === 3 ? 'timeout' : 'unavailable'); clog('location', ({ denied:'Chặn quyền vị trí', timeout:'Lấy vị trí quá thời gian', unavailable:'Không lấy được vị trí' })[DEV.locErr] || 'Lỗi vị trí', err && err.message); done(false); }, opts);
     } catch(e){ if (!DEV.loc) DEV.locErr = 'unavailable'; done(false); }
   });
 }
@@ -1659,6 +1673,7 @@ async function photoInit(){
     try { await v.play(); } catch(e2){}
     ready();
   } catch(e){
+    clog('camera', 'Không mở được camera (bước chụp ảnh xác nhận)', (e && (e.name + ': ' + e.message)) || '');
     clearTimeout(slow); box.classList.remove('opening');
     msg('photoMsg','Không mở được camera (có thể bạn chưa cho phép quyền camera, hoặc thiết bị không có camera). Hãy cho phép quyền camera trên trình duyệt rồi thử lại.', 'err');
   }

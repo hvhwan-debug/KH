@@ -1,9 +1,10 @@
 // Công khai: ghi câu trả lời cho câu hiện tại và nhận câu kế tiếp.
 // Idempotent: gửi trùng / gửi câu đã quá hạn không làm hỏng bài; máy chủ luôn trả về trạng thái đúng hiện tại.
-const { reply, guardConfigured, requireAjax } = require("../_lib/http");
+const { reply: __reply, guardConfigured, requireAjax } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
 
 module.exports = async function (context, req) {
+  const reply = require("../_lib/entrylog").wrap(req, "answer", __reply); // lỗi / lần vào không được -> nhật ký
   try {
     if (guardConfigured(context)) return;
     if (req.method !== "POST") return reply(context, 405, { ok: false, error: "Phương thức không hợp lệ." });

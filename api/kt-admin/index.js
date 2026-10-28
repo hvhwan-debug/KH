@@ -286,6 +286,18 @@ const handler = async function (context, req) {
         return reply(context, 200, { ok: true, q: raw, total: hit.length, rows });
       }
       // Nhật ký xem điểm / xem lại đề. id = chỉ một bài làm; không có id = các lượt gần nhất (lọc theo loại, vai trò, từ khoá)
+      // Nhật ký lỗi & lần vào không được của thí sinh (lọc theo nơi xảy ra, loại, từ khoá)
+      if (op === "entrylog") {
+        const area = String(req.query.area || ""), kind = String(req.query.kind || "");
+        const norm = (x) => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").toLowerCase();
+        const q = norm(String(req.query.q || "").trim().slice(0, 80));
+        let list = (await require("../_lib/entrylog").read()).slice().reverse();
+        const since = Date.now() - 24 * 3600 * 1000, last24 = list.filter((x) => x.at >= since).reduce((a, x) => a + (x.n || 1), 0);
+        if (area) list = list.filter((v) => v.area === area);
+        if (kind) list = list.filter((v) => v.kind === kind);
+        if (q) list = list.filter((v) => norm([v.code, v.email, v.msg, v.detail, v.ip, v.dev, v.exam].join(" ")).indexOf(q) >= 0);
+        return reply(context, 200, { ok: true, total: list.length, last24, items: list.slice(0, 400) });
+      }
       if (op === "access") {
         const id = String((req.query && req.query.id) || ""), kind = String(req.query.kind || ""), role = String(req.query.role || "");
         const norm = (x) => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").toLowerCase();

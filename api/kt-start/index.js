@@ -1,11 +1,12 @@
 // Công khai: bắt đầu (hoặc LÀM TIẾP) bài kiểm tra. Mỗi thí sinh chỉ có một bài đang dở tại một thời điểm.
 // Đề được trộn riêng cho từng thí sinh; máy chủ chỉ gửi MỘT câu hỏi mỗi lần và tự tính giờ từng câu.
-const { reply, guardConfigured, requireAjax } = require("../_lib/http");
+const { reply: __reply, guardConfigured, requireAjax } = require("../_lib/http");
 const quiz = require("../_lib/quiz");
 const device = require("../_lib/device");
 const now0 = () => Date.now();
 
 module.exports = async function (context, req) {
+  const reply = require("../_lib/entrylog").wrap(req, "start", __reply); // lỗi / lần vào không được -> nhật ký
   try {
     if (guardConfigured(context)) return;
     if (req.method !== "POST") return reply(context, 405, { ok: false, error: "Phương thức không hợp lệ." });

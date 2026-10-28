@@ -434,6 +434,8 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
 #candList .tag-tv{background:#FFF4D6;color:#8A5A00}
 #candList .tag-left{background:#FBE3E0;color:#9E2A20}
 .candmail{display:none}
+.el-k{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;font-weight:700;margin-right:4px;background:#EEF1F4;color:#5B6676;white-space:nowrap}
+.el-k.w{background:#FDF0DA;color:#8A5500}.el-k.b{background:#FBE3E0;color:#9E2A20}
 .lk-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0}
 .lk-bar input{flex:1 1 320px;margin:0}
 .lk-list{display:flex;flex-direction:column;gap:8px}
@@ -1964,6 +1966,17 @@ button.rd-st:disabled{opacity:.55;cursor:default}
 <!-- Nhật ký thao tác -->
     <div id="tab-audit" class="tabpane hide">
       <div class="card">
+        <div class="dash-h"><h1>Lỗi và lần vào không được <span class="small" id="elSum24"></span></h1><p class="small">Ghi tự động mỗi khi thí sinh nhập sai mã/email, vào đề đã đóng hoặc chưa mở, không thuộc đối tượng, bị yêu cầu hoặc trượt xác thực khuôn mặt, bị khoá vì thử nhiều, gặp lỗi máy chủ; cùng các sự cố trên trình duyệt (không mở được camera, chặn vị trí, mất mạng, lỗi trang). Cùng máy, cùng lỗi trong 10 phút được gộp một dòng.</p></div>
+        <div class="aufil">
+          <select id="elArea" aria-label="Nơi xảy ra"><option value="">Mọi bước</option><option value="check">Xác thực thí sinh</option><option value="start">Bắt đầu làm bài</option><option value="answer">Trả lời câu hỏi</option><option value="submit">Nộp bài</option><option value="verify">Tra cứu / xác thực kết quả</option><option value="paper">Xem lại đề</option><option value="request">Yêu cầu điều chỉnh</option><option value="resend">Gửi lại email</option><option value="client">Trên trình duyệt</option></select>
+          <select id="elKind" aria-label="Loại lỗi"><option value="">Mọi loại</option><option value="notfound">Sai mã / email</option><option value="denied">Bị từ chối (đề đóng, không thuộc đối tượng…)</option><option value="face">Khuôn mặt</option><option value="locked">Bị khoá do thử nhiều</option><option value="invalid">Thiếu / sai dữ liệu</option><option value="server">Lỗi máy chủ</option><option value="camera">Camera</option><option value="location">Vị trí</option><option value="network">Mất kết nối</option><option value="js">Lỗi trang</option></select>
+          <input type="search" id="elQ" placeholder="Tìm mã NV, email, IP, nội dung…" aria-label="Tìm trong nhật ký lỗi">
+          <button class="btn ghost sm" type="button" onclick="loadEntryLog()">↻ Tải lại</button>
+        </div>
+        <div class="ausum" id="elSum"></div>
+        <div style="overflow-x:auto"><table class="dt autab"><thead><tr><th>Thời điểm</th><th>Ở bước</th><th>Lỗi</th><th>Đã nhập</th><th>IP / thiết bị</th></tr></thead><tbody id="elList"></tbody></table></div>
+      </div>
+      <div class="card">
         <div class="dash-h"><h1>Ảnh xác nhận bị từ chối</h1><p class="small">Ghi lại mọi lần ảnh xác nhận bị hệ thống/AI từ chối trước khi vào làm bài (không thấy mặt, nhiều người, hoặc nghi chụp lại từ màn hình/ảnh in). Mã nào bị từ chối nhiều lần liên tiếp đáng để xem kỹ hơn. Chỉ lưu 500 lần gần nhất.</p></div>
         <table style="margin-top:10px"><thead><tr><th>Thời điểm</th><th>Mã nhân viên</th><th>Lý do bị từ chối</th><th>Chi tiết AI</th></tr></thead><tbody id="frList"></tbody></table>
       </div>
@@ -2272,7 +2285,7 @@ function switchTab(t){
   if (t === 'lookup' && prevTab !== 'lookup') { lkSearch(); lkLog(); }
   if (t === 'kai') kaixOpen();
   if (t === 'kai' && prevTab !== 'kai') loadKaiPending();
-  if (t === 'audit') { loadAudit(); loadFaceRejections(); }
+  if (t === 'audit') { loadAudit(); loadFaceRejections(); loadEntryLog(); }
   if (t === 'managerview' && $('mvFrame').src === 'about:blank') $('mvFrame').src = '/kiemtra/quanli.html';
   if (inWs) renderExHead();
   if ((t === 'results' || t === 'analysis') && CUR_EXAM){ $('resPeriod').innerHTML = '<option value="'+esc(CUR_EXAM)+'"></option>'; $('resPeriod').value = CUR_EXAM; closeResDetail(); loadResults(); }
@@ -4768,6 +4781,29 @@ function exportPick(btn, kind, msgId){
   setTimeout(() => { document.addEventListener('click', close, true); document.addEventListener('keydown', esc1, true); });
   m.addEventListener('click', ev => { const b = ev.target.closest('button[data-m]'); if (!b) return; close(); kind === 'drive' ? exportResultsDrive(btn, msgId, b.dataset.m) : exportResultsXlsx(b.dataset.m); });
 }
+/* ---------- Nhật ký lỗi & lần vào không được ---------- */
+const EL_AREA = { check:'Xác thực thí sinh', start:'Bắt đầu làm bài', answer:'Trả lời câu hỏi', submit:'Nộp bài', verify:'Tra cứu kết quả', paper:'Xem lại đề', request:'Yêu cầu điều chỉnh', resend:'Gửi lại email', client:'Trên trình duyệt' };
+const EL_KIND = { notfound:['Sai mã / email','w'], denied:['Bị từ chối','w'], face:['Khuôn mặt','w'], locked:['Bị khoá','b'], invalid:['Thiếu / sai dữ liệu','n'], server:['Lỗi máy chủ','b'], camera:['Camera','w'], location:['Vị trí','w'], network:['Mất kết nối','w'], js:['Lỗi trang','b'], other:['Khác','n'] };
+let EL_T = null;
+async function loadEntryLog(){
+  const qs = 'op=entrylog&area=' + encodeURIComponent($('elArea').value) + '&kind=' + encodeURIComponent($('elKind').value) + '&q=' + encodeURIComponent($('elQ').value.trim());
+  const { j } = await api('GET', '/api/kt-admin?' + qs);
+  const items = (j && j.ok && j.items) || [];
+  $('elSum24').textContent = j && j.ok && j.last24 ? '· ' + j.last24 + ' lượt trong 24 giờ qua' : '';
+  $('elSum').textContent = j && j.ok ? (j.total ? j.total + ' dòng' + (j.total > items.length ? ', hiện ' + items.length + ' dòng gần nhất' : '') : '') : 'Không tải được nhật ký lỗi.';
+  $('elList').innerHTML = items.map(v => {
+    const k = EL_KIND[v.kind] || [v.kind, 'n'];
+    return '<tr><td style="white-space:nowrap">' + lkTime(v.at) + (v.n > 1 ? '<br><small class="small">' + v.n + ' lần</small>' : '') + '</td>' +
+      '<td>' + esc(EL_AREA[v.area] || v.area) + (v.exam ? '<br><small class="small">Đề ' + esc(v.exam) + '</small>' : '') + '</td>' +
+      '<td><span class="el-k ' + k[1] + '">' + esc(k[0]) + '</span> ' + esc(v.msg) + (v.detail ? '<br><small class="small">' + esc(v.detail) + '</small>' : '') + '</td>' +
+      '<td>' + (v.code ? '<b>' + esc(v.code) + '</b>' : '<span class="small">–</span>') + (v.email ? '<br><small class="small">' + esc(v.email) + '</small>' : '') + '</td>' +
+      '<td class="small">' + esc(v.ip || '') + (v.dev ? '<br>' + esc(v.dev) : '') + '</td></tr>';
+  }).join('') || '<tr><td colspan="5" class="small">Chưa có lỗi nào' + ($('elArea').value || $('elKind').value || $('elQ').value ? ' khớp bộ lọc' : '') + '.</td></tr>';
+}
+(function elBind(){ if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', elBind); return; }
+  ['elArea','elKind'].forEach(id => { const el = $(id); if (el) el.addEventListener('change', loadEntryLog); });
+  const q = $('elQ'); if (q) q.addEventListener('input', () => { clearTimeout(EL_T); EL_T = setTimeout(loadEntryLog, 300); });
+})();
 /* ---------- Tra cứu bài kiểm tra + nhật ký xem điểm / xem lại đề ---------- */
 const AL_KIND = { score:'Xem điểm', paper:'Xem lại đề, bài làm', photo:'Xem ảnh xác nhận' };
 const AL_ROLE = { public:'Người có liên kết', candidate:'Thí sinh', manager:'Quản lí', admin:'Quản trị viên' };
