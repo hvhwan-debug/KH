@@ -434,6 +434,10 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
 #candList .tag-tv{background:#FFF4D6;color:#8A5A00}
 #candList .tag-left{background:#FBE3E0;color:#9E2A20}
 .candmail{display:none}
+.xp-menu{position:absolute;z-index:1000;min-width:280px;max-width:calc(100vw - 16px);background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 34px rgba(16,40,80,.16);padding:6px}
+.xp-menu button{display:block;width:100%;border:0;background:none;text-align:left;padding:10px 12px;border-radius:10px;font:inherit;color:var(--ink);cursor:pointer}
+.xp-menu button:hover,.xp-menu button:focus-visible{background:#EEF4FC;outline:none}
+.xp-menu b{display:block;font-size:14px}.xp-menu small{display:block;margin-top:2px;font-size:12px;color:var(--muted);line-height:1.4}
 .prov-link,.cflt{border:0;background:none;padding:0;margin:0;font:inherit;font-weight:inherit;color:inherit;text-align:left;cursor:pointer;text-decoration:none}
 .cflt:hover,.cflt:focus-visible{color:var(--brand)}
 .cflt-chip{border:0;font:inherit;font-size:12.5px;cursor:pointer}.cflt-chip.ttlchip{font-weight:700}.cflt-chip:hover{filter:brightness(.95)}
@@ -1974,8 +1978,8 @@ button.rd-st:disabled{opacity:.55;cursor:default}
             <select id="resPeriod" class="hide" onchange="loadResults()"></select>
             <input type="search" id="resSearch" placeholder="Tìm mã NV, tên, quản lí…" oninput="filterResults()" aria-label="Tìm kết quả">
             <select id="resSort" class="rt-sortsel" onchange="resSortSel(this.value)" aria-label="Sắp xếp kết quả"><option value="time:desc">Mới nộp nhất</option><option value="score:desc">Điểm cao → thấp</option><option value="score:asc">Điểm thấp → cao</option><option value="name:asc">Tên A → Z</option><option value="time:asc">Nộp sớm nhất</option></select>
-            <button class="btn ghost sm" style="white-space:nowrap" onclick="exportResultsXlsx()">⬇ Xuất Excel</button>
-            <button class="btn ghost sm" style="white-space:nowrap" type="button" onclick="exportResultsDrive(this,'driveMsg')" title="Lưu file kết quả + tổng quan lên Google Drive">☁ Lưu vào Drive</button>
+            <button class="btn ghost sm" style="white-space:nowrap" type="button" aria-haspopup="menu" onclick="exportPick(this,'xlsx')">⬇ Xuất Excel ▾</button>
+            <button class="btn ghost sm" style="white-space:nowrap" type="button" aria-haspopup="menu" onclick="exportPick(this,'drive','driveMsg')" title="Lưu file kết quả lên Google Drive">☁ Lưu vào Drive ▾</button>
           </div>
         </div>
         <div id="driveMsg"></div>
@@ -1992,7 +1996,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
 
     <div id="tab-analysis" class="tabpane hide">
       <div class="card" id="anaCard">
-        <div class="dash-h"><h1>Phân tích kết quả</h1><p class="small" id="anaSub">Tính theo bài nộp gần nhất của mỗi nhân viên.</p><button class="btn ghost sm" type="button" onclick="exportResultsDrive(this,'driveMsgDash')" title="Lưu kết quả + tổng quan lên Google Drive">☁ Lưu vào Drive</button> <button class="btn sm" type="button" id="btnCohortIns" onclick="openCohortInsight()" title="Phân tích hành vi làm bài của cả nhóm, chẩn đoán nguyên nhân và đề xuất khắc phục">Chẩn đoán cả nhóm</button></div>
+        <div class="dash-h"><h1>Phân tích kết quả</h1><p class="small" id="anaSub">Tính theo bài nộp gần nhất của mỗi nhân viên.</p><button class="btn ghost sm" type="button" aria-haspopup="menu" onclick="exportPick(this,'drive','driveMsgDash')" title="Lưu kết quả + tổng quan lên Google Drive">☁ Lưu vào Drive ▾</button> <button class="btn sm" type="button" id="btnCohortIns" onclick="openCohortInsight()" title="Phân tích hành vi làm bài của cả nhóm, chẩn đoán nguyên nhân và đề xuất khắc phục">Chẩn đoán cả nhóm</button></div>
         <div id="driveMsgDash"></div>
         <div id="insBoxWrap" class="hide" style="margin-bottom:14px"><div id="insBox"></div></div>
         <div class="dgrid">
@@ -4569,7 +4573,7 @@ function probNote(p, r){
   return t;
 }
 // Dựng file Excel (kết quả + trang Tổng quan) trong trình duyệt; dùng chung cho tải về máy và lưu lên Drive.
-async function buildResultsXlsx(){
+async function buildResultsXlsx(mode){
   let E; try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel, kiểm tra kết nối mạng.'); return null; }
   const selPeriod = $('resPeriod').value;
   const { j } = await api('GET','/api/kt-admin?op=results'+(selPeriod?'&period='+encodeURIComponent(selPeriod):''));
@@ -4640,6 +4644,7 @@ async function buildResultsXlsx(){
   results.filter(r => r.status === 'submitted').forEach(r => { const k = (r.period||'') + '|' + String(r.code||'').toLowerCase(); tries[k] = (tries[k]||0) + 1; if (better(r, bestBy[k])) bestBy[k] = r; });
   const bestIds = new Set(Object.values(bestBy).map(r => r.id));
   const official = Object.keys(bestBy).map(k => Object.assign({}, bestBy[k], { _tries: tries[k] })).sort((a, b) => (b.submittedAt||0) - (a.submittedAt||0));
+  if (mode === 'short'){ shortSheets(wb, official, selPeriod); return { buf: await wb.xlsx.writeBuffer(), selPeriod, count: official.length, hasDash: false }; }
   makeSheet('Kết quả (điểm cao nhất)', official, true);
   if (results.length > official.length) makeSheet('Tất cả lần làm', results.map(r => Object.assign({}, r, { _best: bestIds.has(r.id) })), false);
   if (DASH){ // trang Tổng quan (theo kỳ đang xem ở dashboard)
@@ -4663,28 +4668,88 @@ async function buildResultsXlsx(){
 
   return { buf: await wb.xlsx.writeBuffer(), selPeriod, count: results.length, hasDash: !!DASH };
 }
-async function exportResultsXlsx(){
-  const o = await buildResultsXlsx(); if (!o) return;
+/* ----- Bản rút gọn: bảng "ĐIỂM TUÂN THỦ HỌC TẬP …" — STT, Mã NV, Họ tên, Quản lí, Điểm kiểm tra, Điểm tuân thủ ----- */
+function shortHeading(list, pid){
+  const e = examById(pid || CUR_EXAM) || {}, full = e.id ? exTitleOf(e) : '';
+  const cut = full.lastIndexOf(' | '), chan = cut > 0 ? full.slice(cut + 3).trim() : '';
+  // Tháng: lấy từ tên đề ("Tháng 10/2026"), rồi mã kỳ (2026-10 / 202610…), cuối cùng là tháng nộp bài nhiều nhất
+  let mm = '', m = /th[aá]ng\s*(\d{1,2})\s*[\/\-.]\s*(\d{4})/i.exec(full);
+  if (m) mm = ('0' + m[1]).slice(-2) + '/' + m[2];
+  else if ((m = /^(\d{4})-?(\d{2})/.exec(pid || ''))) mm = m[2] + '/' + m[1];
+  else { const c = {}; list.forEach(r => { if (!r.submittedAt) return; const d = new Date(r.submittedAt + 7 * 3600e3), k = ('0' + (d.getUTCMonth() + 1)).slice(-2) + '/' + d.getUTCFullYear(); c[k] = (c[k] || 0) + 1; }); mm = Object.keys(c).sort((a, b) => c[b] - c[a])[0] || ''; }
+  const titles = Array.from(new Set(list.map(r => String(r.title || 'PC').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'vi'));
+  const who = titles.map(t => /[a-z]$/i.test(t) ? t + 's' : t).join(', ') || 'PCs';
+  const U = x => x.toLocaleUpperCase('vi-VN'); // viết hoa cả dòng, riêng chữ "s" số nhiều giữ thường (PCs)
+  return U('Điểm tuân thủ học tập ') + who.split(', ').map(w => /s$/.test(w) && w.length > 1 ? U(w.slice(0, -1)) + 's' : U(w)).join(', ') + U((mm ? ' tháng ' + mm : '') + (chan ? ' | Kênh ' + chan : ''));
+}
+function shortSheets(wb, official, selPeriod){
+  // Mỗi kỳ/đề một sheet (khi xuất "Tất cả các kỳ" sẽ có nhiều sheet)
+  const groups = new Map();
+  official.forEach(r => { const k = r.period || selPeriod || ''; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); });
+  if (!groups.size) groups.set(selPeriod || '', []);
+  const used = {};
+  groups.forEach((list, pid) => {
+    list.sort((a, b) => String(a.manager || '~').localeCompare(String(b.manager || '~'), 'vi') || String(a.name || '').localeCompare(String(b.name || ''), 'vi'));
+    let nm = ('Điểm tuân thủ' + (groups.size > 1 && pid ? ' ' + pid : '')).replace(/[\\\/?*\[\]:]/g, '-').slice(0, 31);
+    if (used[nm]) nm = nm.slice(0, 28) + ' ' + (++used[nm]); else used[nm] = 1;
+    const ws = wb.addWorksheet(nm, { views:[{ state:'frozen', ySplit:2, showGridLines:false }], pageSetup:{ paperSize:9, orientation:'portrait', fitToPage:true, fitToWidth:1, fitToHeight:0, printTitlesRow:'2:2' } });
+    ws.columns = [{ width:7 }, { width:16 }, { width:28 }, { width:24 }, { width:16 }, { width:16 }];
+    const bd = { style:'thin', color:{ argb:'FF9AA9B5' } }, box = { top:bd, left:bd, bottom:bd, right:bd };
+    ws.mergeCells('A1:F1');
+    const t = ws.getCell('A1'); t.value = shortHeading(list, pid);
+    t.font = { bold:true, size:14, color:{ argb:'FF1B2A3A' } }; t.alignment = { horizontal:'center', vertical:'middle', wrapText:true };
+    t.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFEFF3F8' } }; ws.getRow(1).height = 42;
+    const h = ws.addRow(['STT', 'Mã nhân viên', 'Họ tên', 'Quản lí', 'Điểm kiểm tra', 'Điểm tuân thủ']); h.height = 30;
+    h.eachCell(c => { c.font = { bold:true, color:{ argb:'FFFFFFFF' } }; c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF33788A' } }; c.alignment = { horizontal:'center', vertical:'middle', wrapText:true }; c.border = box; });
+    list.forEach((r, i) => {
+      const cp = r.compliancePoints != null ? (r.probation ? tvPoints(r.score, r.total, r.compliancePoints) : r.compliancePoints) : '';
+      const pct = r.pct != null ? Math.round(r.pct) : (r.total ? Math.round(r.score / r.total * 100) : '');
+      const row = ws.addRow([i + 1, r.code || '', r.name || '', r.manager || '', pct, cp]); row.height = 20;
+      row.eachCell({ includeEmpty:true }, (c, n) => { c.border = box; c.alignment = { vertical:'middle', horizontal: n === 1 || n >= 5 ? 'center' : 'left' }; });
+      if (cp === 0) row.getCell(6).font = { bold:true, color:{ argb:'FFB3261E' } }; // 0 điểm: cần đào tạo lại
+    });
+  });
+}
+// Nút Xuất Excel / Lưu vào Drive: hỏi bản đầy đủ hay bản rút gọn điểm tuân thủ
+function exportPick(btn, kind, msgId){
+  let m = document.getElementById('xpMenu');
+  if (m && m.dataset.for === kind + (msgId || '')){ m.remove(); return; }
+  if (m) m.remove();
+  m = document.createElement('div'); m.id = 'xpMenu'; m.className = 'xp-menu'; m.setAttribute('role', 'menu'); m.dataset.for = kind + (msgId || '');
+  m.innerHTML = '<button type="button" role="menuitem" data-m="full"><b>Bản đầy đủ</b><small>Mọi cột, tất cả lần làm và trang Tổng quan</small></button>' +
+    '<button type="button" role="menuitem" data-m="short"><b>Bản rút gọn điểm tuân thủ</b><small>STT, mã NV, họ tên, quản lí, điểm kiểm tra, điểm tuân thủ</small></button>';
+  document.body.appendChild(m);
+  const r = btn.getBoundingClientRect(), w = m.offsetWidth;
+  m.style.top = (r.bottom + window.scrollY + 6) + 'px';
+  m.style.left = Math.max(8, Math.min(r.right + window.scrollX - w, window.scrollX + document.documentElement.clientWidth - w - 8)) + 'px';
+  m.querySelector('button').focus();
+  const close = (ev) => { if (ev && (m.contains(ev.target) || ev.target === btn)) return; m.remove(); document.removeEventListener('click', close, true); document.removeEventListener('keydown', esc1, true); };
+  const esc1 = (ev) => { if (ev.key === 'Escape'){ close(); btn.focus(); } };
+  setTimeout(() => { document.addEventListener('click', close, true); document.addEventListener('keydown', esc1, true); });
+  m.addEventListener('click', ev => { const b = ev.target.closest('button[data-m]'); if (!b) return; close(); kind === 'drive' ? exportResultsDrive(btn, msgId, b.dataset.m) : exportResultsXlsx(b.dataset.m); });
+}
+async function exportResultsXlsx(mode){
+  const o = await buildResultsXlsx(mode); if (!o) return;
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([o.buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
-  a.download = 'ket-qua-kiem-tra-' + new Date().toISOString().slice(0,10) + '.xlsx';
-  logEv('exportExcel', { period: o.selPeriod || 'tất cả các kỳ', count: o.count });
+  a.download = (mode === 'short' ? 'diem-tuan-thu-' : 'ket-qua-kiem-tra-') + (o.selPeriod ? o.selPeriod + '-' : '') + new Date().toISOString().slice(0,10) + '.xlsx';
+  logEv('exportExcel', { period: o.selPeriod || 'tất cả các kỳ', count: o.count, mode: mode || 'full' });
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
 }
 // Lưu cùng file đó lên Google Drive (thư mục cấu hình ở máy chủ), đổi thành Google Sheets để mở ngay trên Drive.
-async function exportResultsDrive(btn, msgId){
+async function exportResultsDrive(btn, msgId, mode){
   const box = $(msgId || 'driveMsg'), lbl = btn ? btn.textContent : '';
   if (btn){ btn.disabled = true; btn.textContent = 'Đang lưu vào Drive…'; }
   box.innerHTML = '<div class="msg info">Đang chuẩn bị file và tải lên Drive, vui lòng chờ…</div>';
   try {
     const st = (await api('GET', '/api/kt-admin?op=driveStatus')).j || {};
     if (!st.configured){ driveNeedConnect(box, st); return; }
-    const o = await buildResultsXlsx();
+    const o = await buildResultsXlsx(mode);
     if (!o){ box.innerHTML = ''; return; }
     const bytes = new Uint8Array(o.buf); let bin = '';
     for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-    const name = 'Kết quả kiểm tra ' + (o.selPeriod ? perLabel(o.selPeriod) + ' ' : '') + new Date().toISOString().slice(0, 10);
+    const name = (mode === 'short' ? 'Điểm tuân thủ ' : 'Kết quả kiểm tra ') + (o.selPeriod ? perLabel(o.selPeriod) + ' ' : '') + new Date().toISOString().slice(0, 10);
     const { j } = await api('POST', '/api/kt-admin', { op:'driveUpload', name, dataBase64: btoa(bin), convert: true });
     if (!j.ok){
       if (j.needConnect || /kết nối lại|cấp quyền lại/i.test(j.error || '')){ driveNeedConnect(box, { oauthAvailable: true }, j.needConnect ? '' : j.error); return; }
