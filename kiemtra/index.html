@@ -104,6 +104,10 @@ button,input{font:inherit;color:inherit}
 .reqbox .field{margin-bottom:12px}
 .field label{display:block;font-size:13px;font-weight:700;margin-bottom:7px}
 .inwrap{position:relative}
+.ehint{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;border-radius:10px;background:#EEF4FD;color:#3A5373;font-size:13px;line-height:1.4}
+.ehint b{color:#0B3F94;font-weight:700;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.ehint svg{flex:0 0 auto;width:15px;height:15px;color:#2F6FD6}
+.ehint.hide{display:none}
 .inwrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;transition:color .15s}
 .inwrap:focus-within svg{color:var(--brand)}
 .field input{width:100%;border:1.5px solid var(--line);border-radius:14px;padding:14px 14px 14px 46px;font-size:16px;background:#FAFCFC;transition:border-color .15s,box-shadow .15s,background .15s}
@@ -933,6 +937,7 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
       <div class="field">
         <label for="inEmail">Email</label>
         <div class="inwrap"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2.5"/><path d="m22 6.5-10 7L2 6.5"/></svg><input id="inEmail" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="ten@congty.vn" required></div>
+        <div class="ehint hide" id="emailHint" aria-live="polite"></div>
       </div>
       <button class="btn go" id="btnCheck" type="submit">Tiếp tục</button>
       <div id="checkMsg" role="alert"></div>
@@ -1148,6 +1153,32 @@ var DEV = (function(){
   try { if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues)
           navigator.userAgentData.getHighEntropyValues(['model','platformVersion']).then(function(v){ d.model = v.model || ''; d.platformVersion = v.platformVersion || ''; }).catch(function(){}); } catch(e){}
   return d;
+})();
+/* Gợi ý email: nhập đúng mã nhân viên thì hiện email đã đăng ký dạng che (chỉ 1 ký tự đầu + tên miền) */
+var EH = { t:null, last:'', cache:{} };
+function emailHintShow(code, hint){
+  var el = $('emailHint'); if (!el) return;
+  if ($('inCode').value.trim().toUpperCase() !== code) return; // đã gõ mã khác trong lúc chờ
+  if (!hint){ el.classList.add('hide'); el.innerHTML = ''; return; }
+  el.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>Email đã đăng ký với mã này: <b>' + esc(hint) + '</b></span>';
+  el.classList.remove('hide');
+}
+async function emailHintFetch(){
+  var code = $('inCode').value.trim().toUpperCase();
+  if (code === EH.last) return; EH.last = code;
+  if (code.length < 6){ emailHintShow(code, ''); return; }
+  if (code in EH.cache){ emailHintShow(code, EH.cache[code]); return; }
+  var r; try { r = await api('/api/kt-check', { hint:true, code:code }); } catch(e){ return; }
+  if (r.s === 429) return;
+  EH.cache[code] = r.j && r.j.ok ? r.j.hint : '';
+  emailHintShow(code, EH.cache[code]);
+}
+(function ehBind(){
+  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', ehBind); return; }
+  var c = $('inCode'); if (!c) return;
+  if (c.value.trim()) setTimeout(emailHintFetch, 800); // mã đã điền sẵn (trình duyệt tự điền / lần trước)
+  c.addEventListener('input', function(){ clearTimeout(EH.t); var v = c.value.trim().toUpperCase(); if (v !== EH.last){ emailHintShow(v, ''); } EH.t = setTimeout(emailHintFetch, 650); });
+  c.addEventListener('blur', function(){ clearTimeout(EH.t); emailHintFetch(); });
 })();
 async function api(path, body){
   var r = await fetch(path, { method:'POST', headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: JSON.stringify(body||{}) });

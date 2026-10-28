@@ -6,6 +6,21 @@ const reply = (ctx, status, body) => _http.reply(ctx, status, require("../_lib/p
 const quiz = require("../_lib/quiz");
 const advicelib = require("../_lib/advice");
 
+// "hoan@wvn.vn" -> "h•••@wvn.vn": luôn 3 dấu chấm, không lộ độ dài phần trước @
+function maskEmail(e) {
+  const s = String(e || "").trim().toLowerCase(), at = s.lastIndexOf("@");
+  if (at < 1) return "";
+  return s.charAt(0) + "\u2022\u2022\u2022" + s.slice(at);
+}
+const _hint = new Map();
+function hintKey(req) { const h = (req && req.headers) || {}; return String(h["x-forwarded-for"] || h["x-azure-clientip"] || "").split(",")[0].trim().split(":")[0] || "unknown"; }
+function hintBlocked(req) {
+  const k = hintKey(req), now = Date.now(), list = (_hint.get(k) || []).filter((t) => now - t < 10 * 60 * 1000);
+  _hint.set(k, list); if (_hint.size > 5000) _hint.clear();
+  return list.length >= 15;
+}
+function hintMiss(req) { const k = hintKey(req), list = _hint.get(k) || []; list.push(Date.now()); _hint.set(k, list); }
+
 module.exports = async function (context, req) {
   try {
     if (guardConfigured(context)) return;
@@ -16,6 +31,16 @@ module.exports = async function (context, req) {
     }
     const b = req.body || {};
     const code = quiz.normCode(b.code);
+    // Gợi ý email: nhập đúng mã NV thì trả về email đã che (chỉ lộ 1 ký tự đầu + tên miền), giúp thí sinh nhớ dùng email nào.
+    // Giới hạn riêng số lần hỏi mã không tồn tại theo IP để không dò được danh sách mã nhân viên.
+    if (b.hint) {
+      if (hintBlocked(req)) return reply(context, 429, { ok: false });
+      if (!code || code.length < 4) return reply(context, 400, { ok: false });
+      await quiz.runMigrations(context.log);
+      const c = (await quiz.findTestByCode(code)) || (await quiz.getCandidates()).find((x) => quiz.normCode(x.code) === code);
+      if (!c || !c.email || c.left) { hintMiss(req); return reply(context, 404, { ok: false }); }
+      return reply(context, 200, { ok: true, hint: maskEmail(c.email) });
+    }
     const email = quiz.normEmail(b.email);
     if (!code || !email) return reply(context, 400, { ok: false, error: "Nhập đầy đủ mã nhân viên và email." });
 
