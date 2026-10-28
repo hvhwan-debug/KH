@@ -1211,9 +1211,9 @@ function renderConfirm(){
   $('rulesBox').style.gridTemplateColumns = 'repeat(' + (rl.length === 4 ? 2 : rl.length) + ',minmax(0,1fr))';
   $('rulesBox').innerHTML = rl.join('');
   $('notesBox').innerHTML = (c.test ? '<li><b>Tài khoản thử nghiệm</b>: không giới hạn lượt làm, kết quả <b>không được lưu</b> vào báo cáo hay dữ liệu xuất.</li>' : '') + (AT ? '<li>Bạn đã làm bài này <b>' + AT.used + ' lần</b>. Kết quả chính thức là <b>lần có điểm cao nhất</b>, làm lại không bị mất điểm cũ.</li>' : '') +
-    '<li>Mỗi câu có thời gian riêng. Hết giờ, hệ thống tự chuyển sang câu kế tiếp và <b>không thể quay lại</b>.</li>'+
-    '<li>Nếu lỡ thoát hoặc tải lại trang, bạn làm tiếp đúng câu đang dở nhưng <b>đồng hồ vẫn chạy</b>.</li>'+
-    '<li>Mỗi câu chỉ chọn một đáp án. Kết quả được chấm và gửi về email ngay sau khi nộp.</li>';
+    '<li>Thời gian làm bài được quy định riêng cho từng câu hỏi. Khi hết thời gian, hệ thống tự động chuyển sang câu tiếp theo và <b>không cho phép quay lại</b> câu đã hoàn thành.</li>'+
+    '<li>Trường hợp thoát khỏi bài thi hoặc tải lại trang, bạn có thể tiếp tục từ câu hỏi đang thực hiện. <b>Thời gian làm bài vẫn tiếp tục được tính</b> trong quá trình này.</li>'+
+    '<li>Mỗi câu hỏi chỉ được chọn <b>một đáp án</b>. Sau khi nộp bài, hệ thống tự động chấm điểm và gửi kết quả về email của bạn.</li>';
   if (ST.inProgress){
     $('resumeMsg').innerHTML = '<div class="msg info">Bạn có một bài đang làm dở (đã xong '+ST.inProgress.answered+'/'+ST.inProgress.total+' câu). Bấm tiếp tục để làm tiếp.</div>';
     $('btnStart').textContent = 'Tiếp tục làm bài';
