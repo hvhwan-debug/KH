@@ -239,6 +239,7 @@ const handler = async function (context, req) {
         return reply(context, 200, { ok: true, viewers, managers });
       }
       if (op === "candidates") return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; o.title = quiz.titleOf(c); const prob = require("../_lib/probation"); o.joinDate = prob.joinDateOf(c.code, c.joinDate); o.probation = prob.probationOf(c.code, undefined, o.joinDate); return o; }) });
+      if (op === "driveStatus") return reply(context, 200, Object.assign({ ok: true }, await require("../_lib/gdrive").status()));
       if (op === "testAccounts") return reply(context, 200, { ok: true, accounts: await quiz.getTestAccounts() });
       if (op === "changeRequests") return reply(context, 200, { ok: true, requests: (await require("../_lib/changereq").getAll()).filter((r) => r.status === "pending") });
       if (op === "notifyData") {
@@ -868,6 +869,20 @@ const handler = async function (context, req) {
     }
 
     // Tài khoản thử nghiệm: thi không giới hạn, KHÔNG ghi vào kết quả / dashboard / xuất dữ liệu (xem quiz.findTestAccount).
+    // Lưu file (Excel kết quả + tổng quan) lên Google Drive; file được dựng ở trình duyệt của quản trị, máy chủ chỉ chuyển lên Drive.
+    if (op === "driveUpload") {
+      const gd = require("../_lib/gdrive");
+      if (!gd.configured()) return reply(context, 503, { ok: false, error: (await gd.status()).error });
+      const buf = Buffer.from(String(b.dataBase64 || ""), "base64");
+      if (!buf.length) return reply(context, 400, { ok: false, error: "Không có dữ liệu để lưu." });
+      if (buf.length > 20 * 1024 * 1024) return reply(context, 413, { ok: false, error: "File quá lớn (tối đa 20 MB)." });
+      const name = String(b.name || "ket-qua-kiem-tra").replace(/[\\/:*?"<>|\r\n]+/g, " ").trim().slice(0, 120) || "ket-qua-kiem-tra";
+      try {
+        const f = await gd.upload({ name, buffer: buf, mime: gd.XLSX_MIME, convert: b.convert !== false });
+        return reply(context, 200, { ok: true, id: f.id, name: f.name, link: f.link });
+      } catch (e) { return reply(context, 502, { ok: false, error: String(e && e.message || e).slice(0, 300) }); }
+    }
+
     if (op === "saveTestAccounts") {
       const raw = Array.isArray(b.accounts) ? b.accounts : [];
       if (raw.length > 20) return reply(context, 400, { ok: false, error: "Tối đa 20 tài khoản thử nghiệm." });

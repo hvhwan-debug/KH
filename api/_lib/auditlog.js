@@ -74,7 +74,7 @@ const A = {
 };
 // Sự kiện phía trình duyệt (không đi qua API dữ liệu) được phép ghi
 const EVENTS = {
-  exportExcel: "Tải file Excel", exportCsv: "Tải file CSV", printPaper: "In / lưu PDF bài làm",
+  exportExcel: "Tải file Excel", exportDrive: "Lưu file lên Google Drive", exportCsv: "Tải file CSV", printPaper: "In / lưu PDF bài làm",
   aiProfile: "Dùng AI phân tích hồ sơ nhân viên", aiAsk: "Hỏi trợ lí AI tìm dữ liệu", copyList: "Sao chép danh sách chưa làm bài"
 };
 

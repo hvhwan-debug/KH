@@ -1976,8 +1976,10 @@ button.rd-st:disabled{opacity:.55;cursor:default}
             <input type="search" id="resSearch" placeholder="Tìm mã NV, tên, quản lí…" oninput="filterResults()" aria-label="Tìm kết quả">
             <select id="resSort" class="rt-sortsel" onchange="resSortSel(this.value)" aria-label="Sắp xếp kết quả"><option value="time:desc">Mới nộp nhất</option><option value="score:desc">Điểm cao → thấp</option><option value="score:asc">Điểm thấp → cao</option><option value="name:asc">Tên A → Z</option><option value="time:asc">Nộp sớm nhất</option></select>
             <button class="btn ghost sm" style="white-space:nowrap" onclick="exportResultsXlsx()">⬇ Xuất Excel</button>
+            <button class="btn ghost sm" style="white-space:nowrap" type="button" onclick="exportResultsDrive(this,'driveMsg')" title="Lưu file kết quả + tổng quan lên Google Drive">☁ Lưu vào Drive</button>
           </div>
         </div>
+        <div id="driveMsg"></div>
         <div class="rt-wrap"><table class="rt" id="resTable"><thead><tr><th class="rt-who"><button type="button" data-rs="name" onclick="resSortBy('name')">Thí sinh <span class="ar">▲▼</span></button></th><th class="rt-res"><button type="button" data-rs="score" onclick="resSortBy('score')">Kết quả <span class="ar">▲▼</span></button></th><th class="rt-chips">Tuân thủ · Cảnh báo</th><th class="rt-time"><button type="button" data-rs="time" onclick="resSortBy('time')">Nộp lúc <span class="ar">▲▼</span></button></th><th class="rt-act"></th></tr></thead><tbody id="resList"></tbody></table></div>
         <div class="panel hide" style="margin-top:14px"><details class="nd" id="dashNd"><summary id="dashNdSum">Chưa làm bài</summary><div class="ndg" id="dashNdList"></div></details></div>
       </div>
@@ -1991,7 +1993,8 @@ button.rd-st:disabled{opacity:.55;cursor:default}
 
     <div id="tab-analysis" class="tabpane hide">
       <div class="card" id="anaCard">
-        <div class="dash-h"><h1>Phân tích kết quả</h1><p class="small" id="anaSub">Tính theo bài nộp gần nhất của mỗi nhân viên.</p><button class="btn sm" type="button" id="btnCohortIns" onclick="openCohortInsight()" title="Phân tích hành vi làm bài của cả nhóm, chẩn đoán nguyên nhân và đề xuất khắc phục">Chẩn đoán cả nhóm</button></div>
+        <div class="dash-h"><h1>Phân tích kết quả</h1><p class="small" id="anaSub">Tính theo bài nộp gần nhất của mỗi nhân viên.</p><button class="btn ghost sm" type="button" onclick="exportResultsDrive(this,'driveMsgDash')" title="Lưu kết quả + tổng quan lên Google Drive">☁ Lưu vào Drive</button> <button class="btn sm" type="button" id="btnCohortIns" onclick="openCohortInsight()" title="Phân tích hành vi làm bài của cả nhóm, chẩn đoán nguyên nhân và đề xuất khắc phục">Chẩn đoán cả nhóm</button></div>
+        <div id="driveMsgDash"></div>
         <div id="insBoxWrap" class="hide" style="margin-bottom:14px"><div id="insBox"></div></div>
         <div class="dgrid">
           <div class="panel"><h2>Phân bố điểm tuân thủ</h2><div id="dashBands"></div></div>
@@ -4532,11 +4535,12 @@ function probNote(p, r){
   }
   return t;
 }
-async function exportResultsXlsx(){
-  let E; try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel, kiểm tra kết nối mạng.'); return; }
+// Dựng file Excel (kết quả + trang Tổng quan) trong trình duyệt; dùng chung cho tải về máy và lưu lên Drive.
+async function buildResultsXlsx(){
+  let E; try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel, kiểm tra kết nối mạng.'); return null; }
   const selPeriod = $('resPeriod').value;
   const { j } = await api('GET','/api/kt-admin?op=results'+(selPeriod?'&period='+encodeURIComponent(selPeriod):''));
-  if (!j.ok){ alert(j.error||'Không lấy được dữ liệu kết quả.'); return; }
+  if (!j.ok){ alert(j.error||'Không lấy được dữ liệu kết quả.'); return null; }
   const results = (j.results||[]).slice().sort((a,b)=>(b.submittedAt||0)-(a.submittedAt||0));
   const segLabel = { both:'Cả hai', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };
 
@@ -4624,13 +4628,36 @@ async function exportResultsXlsx(){
     DASH.notDone.forEach(c => o.addRow([c.name, c.code, c.manager]));
   }
 
-  const buf = await wb.xlsx.writeBuffer();
+  return { buf: await wb.xlsx.writeBuffer(), selPeriod, count: results.length, hasDash: !!DASH };
+}
+async function exportResultsXlsx(){
+  const o = await buildResultsXlsx(); if (!o) return;
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  a.href = URL.createObjectURL(new Blob([o.buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
   a.download = 'ket-qua-kiem-tra-' + new Date().toISOString().slice(0,10) + '.xlsx';
-  logEv('exportExcel', { period: selPeriod || 'tất cả các kỳ', count: results.length });
+  logEv('exportExcel', { period: o.selPeriod || 'tất cả các kỳ', count: o.count });
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+// Lưu cùng file đó lên Google Drive (thư mục cấu hình ở máy chủ), đổi thành Google Sheets để mở ngay trên Drive.
+async function exportResultsDrive(btn, msgId){
+  const box = $(msgId || 'driveMsg'), lbl = btn ? btn.textContent : '';
+  if (btn){ btn.disabled = true; btn.textContent = 'Đang lưu vào Drive…'; }
+  box.innerHTML = '<div class="msg info">Đang chuẩn bị file và tải lên Drive, vui lòng chờ…</div>';
+  try {
+    const o = await buildResultsXlsx();
+    if (!o){ box.innerHTML = ''; return; }
+    const bytes = new Uint8Array(o.buf); let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    const name = 'Kết quả kiểm tra ' + (o.selPeriod ? perLabel(o.selPeriod) + ' ' : '') + new Date().toISOString().slice(0, 10);
+    const { j } = await api('POST', '/api/kt-admin', { op:'driveUpload', name, dataBase64: btoa(bin), convert: true });
+    if (!j.ok){ box.innerHTML = '<div class="msg err">' + esc(j.error || 'Không lưu được lên Drive.') + '</div>'; return; }
+    logEv('exportDrive', { period: o.selPeriod || 'tất cả các kỳ', count: o.count });
+    const ok = /^https:\/\//.test(j.link || '');
+    box.innerHTML = '<div class="msg ok">Đã lưu vào Drive: <b>' + esc(j.name || name) + '</b>' + (ok ? ' · <a href="' + esc(j.link) + '" target="_blank" rel="noopener">Mở file</a>' : '') + '</div>';
+  } catch (e) {
+    box.innerHTML = '<div class="msg err">Không lưu được lên Drive, thử lại sau.</div>';
+  } finally { if (btn){ btn.disabled = false; btn.textContent = lbl; } }
 }
 
 /* ---------- Tài khoản quản lí ---------- */
