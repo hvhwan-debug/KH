@@ -51,6 +51,8 @@ const REJ_MAX = 500; // chỉ giữ gần đây nhất, tránh phình to mãi
 // Ghi lại các lần bị TỪ CHỐI (kể cả chưa tạo được bài làm) để quản trị viên thấy ai đang cố tình nhiều lần.
 async function logRejection(code, period, status, reason) {
   try {
+    const ta = (await store.get("kt/testaccounts.json")) || [];
+    if (ta.some((x) => String(x.code || "").trim().toLowerCase() === String(code || "").trim().toLowerCase())) return; // tài khoản thử nghiệm: không ghi nhật ký
     const list = (await store.get(REJ_KEY)) || [];
     list.push({ at: Date.now(), code: String(code || "").trim().slice(0, 50), period: String(period || ""), status, reason: String(reason || "").slice(0, 160) });
     await store.put(REJ_KEY, list.slice(-REJ_MAX));

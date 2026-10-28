@@ -19,7 +19,7 @@ module.exports = async function (context, req) {
       if (m) {
         const want = "KT-" + m[1];
         const hit = (await quiz.getIndex()).filter((x) => x.status === "submitted" && String(x.proof || quiz.proofCode(x.id)).toUpperCase() === want);
-        if (hit.length === 1) id = hit[0].id; else codeBad = true;
+        if (hit.length === 1) id = hit[0].id; else if (!hit.length && (id = await quiz.testAttemptByProof(want))) { /* bài của tài khoản thử nghiệm */ } else codeBad = true;
       } else codeBad = true;
     }
     const attempt = id ? await quiz.getAttempt(id) : null;

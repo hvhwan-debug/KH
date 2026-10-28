@@ -50,7 +50,7 @@ module.exports = async function (context, req) {
     }
 
     const settings = await quiz.getExamSettings(attempt.period || "");
-    if (!master && (!settings.closeAt || Date.now() <= settings.closeAt)) {
+    if (!master && !attempt.test && (!settings.closeAt || Date.now() <= settings.closeAt)) {
       return reply(context, 403, { ok: false, error: "Đề chỉ xem lại được sau khi bài kiểm tra đã kết thúc" + (settings.closeAt ? " (dự kiến " + quiz.fmtVN(settings.closeAt) + ")" : "") + "." });
     }
     let paper = Array.isArray(attempt.paper) ? attempt.paper : [];
@@ -65,7 +65,7 @@ module.exports = async function (context, req) {
     // (2) bước xác thực: đối chiếu khuôn mặt với ảnh đã lưu của chủ bài. Số điện thoại mới chỉ được lưu SAU KHI khuôn mặt khớp.
     if (!master) {
       const cands = await quiz.getCandidates();
-      const prof = cands.find((c) => quiz.normCode(c.code) === quiz.normCode(attempt.code));
+      const prof = attempt.test ? await quiz.findTestByCode(attempt.code) : cands.find((c) => quiz.normCode(c.code) === quiz.normCode(attempt.code));
       const onFile = prof ? normPhone(prof.phone) : "";
       // Ảnh đã lưu của chủ hồ sơ: ảnh của bài này trước, rồi các bài khác cùng mã nhân viên (mới nhất trước).
       // Dấu vân khuôn mặt của ảnh đã lưu được tính một lần rồi ghi vào bài làm (faceDesc) để lần sau xem nhanh hơn.
@@ -98,7 +98,7 @@ module.exports = async function (context, req) {
         await logView(req, attempt, "denied", "face:" + cmp.code, cmp.distance != null ? "khoảng cách " + cmp.distance.toFixed(3) + " (ngưỡng " + cmp.threshold + ")" : "");
         return reply(context, cmp.code === "unavailable" ? 503 : 403, { ok: false, error: cmp.message });
       }
-      if (prof && !onFile) { prof.phone = phone; await quiz.saveCandidates(cands); } // hồ sơ chưa có số: lưu số vừa nhập sau khi khuôn mặt khớp
+      if (prof && !onFile) { prof.phone = phone; if (attempt.test) await quiz.updateTestAccount(attempt.code, { phone }); else await quiz.saveCandidates(cands); } // hồ sơ chưa có số: lưu số vừa nhập sau khi khuôn mặt khớp
       await logView(req, attempt, "ok", "face:ok", "khoảng cách " + cmp.distance.toFixed(3) + " (ngưỡng " + cmp.threshold + ")");
     } else if (b.step === "check") {
       return reply(context, 200, { ok: true, needPhone: false });

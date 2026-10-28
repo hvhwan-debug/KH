@@ -484,9 +484,34 @@ async function findTestAccount(code, email) {
   const k = normCode(code), e = normEmail(email);
   if (!k || !e) return null;
   const t = (await getTestAccounts()).find((x) => normCode(x.code) === k && normEmail(x.email) === e);
-  if (!t) return null;
-  return { code: t.code, email: t.email, name: t.name || "Tài khoản thử nghiệm", manager: "", phone: "", segment: normSegment(t.segment), title: normTitle(t.title) || DEFAULT_TITLE,
-    province: "", region: normRegion(t.region) || "bac", test: true };
+  return t ? testCandidate(t) : null;
+}
+// Hồ sơ đầy đủ như thí sinh thường (số điện thoại, tỉnh/miền được lưu lại ngay trong tài khoản thử nghiệm).
+function testCandidate(t) {
+  return { code: t.code, email: t.email, name: t.name || "Tài khoản thử nghiệm", manager: "", phone: t.phone || "", segment: normSegment(t.segment), title: normTitle(t.title) || DEFAULT_TITLE,
+    province: t.province || "", region: normRegion(t.region), lastAttemptId: t.lastAttemptId || "", test: true };
+}
+async function findTestByCode(code) {
+  const k = normCode(code); if (!k) return null;
+  const t = (await getTestAccounts()).find((x) => normCode(x.code) === k);
+  return t ? testCandidate(t) : null;
+}
+async function updateTestAccount(code, patch) {
+  const list = await getTestAccounts(), k = normCode(code), i = list.findIndex((x) => normCode(x.code) === k);
+  if (i < 0) return false;
+  list[i] = Object.assign({}, list[i], patch); await saveTestAccounts(list); return true;
+}
+// Ghi nhớ bài thử gần nhất (để gửi lại email / xem lại bài / tra mã minh chứng) mà KHÔNG đưa vào danh sách kết quả.
+async function recordTestAttempt(attempt) {
+  const list = await getTestAccounts(), k = normCode(attempt.code), i = list.findIndex((x) => normCode(x.code) === k);
+  if (i < 0) return false;
+  const at = (list[i].attempts || []).filter((x) => x.id !== attempt.id).concat([{ id: attempt.id, proof: proofCode(attempt.id), at: attempt.submittedAt || Date.now() }]).slice(-20);
+  list[i] = Object.assign({}, list[i], { lastAttemptId: attempt.id, attempts: at }); await saveTestAccounts(list); return true;
+}
+async function testAttemptByProof(proof) {
+  const want = String(proof || "").toUpperCase();
+  for (const t of await getTestAccounts()) { const h = (t.attempts || []).find((x) => String(x.proof || "").toUpperCase() === want); if (h) return h.id; }
+  return null;
 }
 async function saveCandidates(list) { await store.put(C_KEY, list); }
 
@@ -1102,7 +1127,7 @@ function noteFail(req) {
 module.exports = {
   runMigrations, managerCanon, properCaseName, normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, betterResult, attemptsSummary, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
   getQuestions, saveQuestions,
-  getCandidates, saveCandidates, getTestAccounts, saveTestAccounts, findTestAccount,
+  getCandidates, saveCandidates, getTestAccounts, saveTestAccounts, findTestAccount, findTestByCode, updateTestAccount, recordTestAttempt, testAttemptByProof,
   getSettings, saveSettings,
   getAttempt, putAttempt, saveIndex, activeForPeriod,
   getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary, fmtVN,

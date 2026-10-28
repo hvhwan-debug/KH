@@ -36,6 +36,7 @@ async function finalizeAttempt(context, attempt, opts) {
     attempt.wrong = wrongN;
     attempt.blank = sc.blank;
     await quiz.putAttempt(attempt);
+    if (attempt.test) { try { await quiz.recordTestAttempt(attempt); } catch (e) { (context.log.warn || context.log)("kt-submit test record", e && e.message); } }
 
     if (!attempt.test) await quiz.upsertIndex({
       id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "", segment: attempt.segment || "", period: attempt.period || "",

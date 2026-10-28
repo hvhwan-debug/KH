@@ -29,14 +29,13 @@ module.exports = async function (context, req) {
 
     // Thí sinh vừa chọn tỉnh/thành + miền ở màn xác nhận: lưu NGAY vào hồ sơ (chỉ khi hồ sơ còn thiếu),
     // để lần sau vào không phải chọn lại kể cả khi chưa bắt đầu làm bài.
-    if (b.saveRegion && found.test) return reply(context, 200, { ok: true, province: "", region: quiz.normRegion(found.region) });
     if (b.saveRegion) {
       const PROV = require("../_lib/provinces");
       const pv = PROV.canonProvince(b.province), rg = quiz.normRegion(b.region);
       if (!pv || !rg) return reply(context, 400, { ok: false, error: !pv ? "Vui lòng chọn tỉnh/thành bạn đang làm việc." : "Vui lòng chọn miền bán hàng (Miền Bắc hoặc Miền Nam)." });
       if (!(PROV.canonProvince(found.province) && quiz.normRegion(found.region))) {
         found.province = pv; found.region = rg; found.regionSetAt = Date.now();
-        await quiz.saveCandidates(candidates);
+        if (found.test) await quiz.updateTestAccount(found.code, { province: pv, region: rg }); else await quiz.saveCandidates(candidates);
       }
       return reply(context, 200, { ok: true, province: found.province, region: quiz.normRegion(found.region) });
     }
@@ -52,7 +51,7 @@ module.exports = async function (context, req) {
     const candidate = { code: found.code, name: found.name, email: found.email, manager: found.manager || "", phone: require("../_lib/phone").normPhone(found.phone), segment: quiz.normSegment(found.segment), title: quiz.titleOf(found),
       province: require("../_lib/provinces").canonProvince(found.province) || "", region: quiz.normRegion(found.region) };
     // PC chưa có tỉnh/miền: phải chọn ở màn xác nhận trước khi làm bài (miền quyết định bộ đề sản phẩm)
-    candidate.needRegion = !found.test && quiz.needsRegion(found) && !(candidate.province && candidate.region);
+    candidate.needRegion = quiz.needsRegion(found) && !(candidate.province && candidate.region);
     candidate.test = !!found.test;
     const pendingRequest = (await require("../_lib/changereq").getAll()).some((r) => r.status === "pending" && quiz.normCode(r.code) === code);
     // Khung thời gian mở/đóng + đối tượng được thi (chỉ áp dụng cho đề thi có cấu hình các mục này)

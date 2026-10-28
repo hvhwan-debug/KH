@@ -871,7 +871,8 @@ const handler = async function (context, req) {
     if (op === "saveTestAccounts") {
       const raw = Array.isArray(b.accounts) ? b.accounts : [];
       if (raw.length > 20) return reply(context, 400, { ok: false, error: "Tối đa 20 tài khoản thử nghiệm." });
-      const cands = await quiz.getCandidates(), out = [], seen = new Set();
+      const cands = await quiz.getCandidates(), out = [], seen = new Set(), prev = {};
+      (await quiz.getTestAccounts()).forEach((t) => { prev[quiz.normCode(t.code)] = t; });
       for (const r of raw) {
         const code = String(r && r.code || "").trim(), email = String(r && r.email || "").trim().toLowerCase();
         if (!code && !email) continue;
@@ -882,7 +883,9 @@ const handler = async function (context, req) {
         if (cands.some((c) => quiz.normCode(c.code) === quiz.normCode(code) || quiz.normEmail(c.email) === email)) {
           return reply(context, 400, { ok: false, error: "Mã hoặc email \"" + code + " / " + email + "\" đang là của một thí sinh thật trong danh sách. Hãy dùng mã và email khác, hoặc xoá thí sinh đó trước." });
         }
-        out.push({ code, email, name: String(r.name || "").trim().slice(0, 80) || "Tài khoản thử nghiệm", segment: quiz.normSegment(r.segment), region: quiz.normRegion(r.region) || "bac" });
+        const old = prev[quiz.normCode(code)] || {};
+        // Giữ lại số điện thoại / tỉnh / bài thử gần nhất đã có; đổi email thì vẫn giữ (cùng một tài khoản theo mã).
+        out.push(Object.assign({}, old, { code, email, name: String(r.name || "").trim().slice(0, 80) || "Tài khoản thử nghiệm", segment: quiz.normSegment(r.segment), region: quiz.normRegion(r.region) || old.region || "" }));
       }
       await quiz.saveTestAccounts(out);
       return reply(context, 200, { ok: true, accounts: out });

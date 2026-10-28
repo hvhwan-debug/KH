@@ -1660,7 +1660,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
       </div>
       <details class="card" id="taCard">
         <summary style="cursor:pointer;font-weight:700">🧪 Tài khoản thử nghiệm <span class="small" id="taSum"></span></summary>
-        <p class="small" style="margin:8px 0 10px">Dùng để quản trị tự làm thử đề: <b>không giới hạn số lượt</b>, vào được cả khi đề chưa mở / đã đóng / ngoài danh sách được thi, và <b>không lưu</b> vào kết quả, dashboard hay file xuất dữ liệu. Đăng nhập ở trang làm bài như thí sinh bằng mã + email bên dưới. Mã và email không được trùng thí sinh thật.</p>
+        <p class="small" style="margin:8px 0 10px">Dùng để quản trị tự làm thử đề: <b>không giới hạn số lượt</b>, vào được cả khi đề chưa mở / đã đóng / ngoài danh sách được thi, và <b>không lưu</b> vào kết quả, dashboard hay file xuất dữ liệu. Đăng nhập ở trang làm bài như thí sinh bằng mã + email bên dưới và đi đủ các bước như bình thường (số điện thoại, chọn tỉnh/miền, chụp ảnh, nhận email, xem lại bài…); thông tin nhập được ghi nhớ cho lần sau. Mã và email không được trùng thí sinh thật.</p>
         <div id="taRows"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
           <button class="btn ghost sm" type="button" onclick="taAdd()">+ Thêm tài khoản</button>
@@ -3718,7 +3718,7 @@ function taRow(a){
   a = a || {};
   return '<div class="ta-row"><input type="text" placeholder="Mã NV" value="' + esc(a.code || '') + '"><input type="text" placeholder="Email" value="' + esc(a.email || '') + '"><input type="text" placeholder="Tên (tuỳ chọn)" value="' + esc(a.name || '') + '">' +
     '<select aria-label="Ngành"><option value="both"' + (a.segment === 'both' || !a.segment ? ' selected' : '') + '>Cả hai ngành</option><option value="gia_dung"' + (a.segment === 'gia_dung' ? ' selected' : '') + '>Gia dụng</option><option value="may_loc"' + (a.segment === 'may_loc' ? ' selected' : '') + '>Máy lọc nước</option></select>' +
-    '<select aria-label="Miền"><option value="bac"' + (a.region !== 'nam' ? ' selected' : '') + '>Miền Bắc</option><option value="nam"' + (a.region === 'nam' ? ' selected' : '') + '>Miền Nam</option></select>' +
+    '<select aria-label="Miền"><option value=""' + (!a.region ? ' selected' : '') + '>Miền: tự chọn</option><option value="bac"' + (a.region === 'bac' ? ' selected' : '') + '>Miền Bắc</option><option value="nam"' + (a.region === 'nam' ? ' selected' : '') + '>Miền Nam</option></select>' +
     '<button class="btn dghost sm" type="button" onclick="this.parentNode.remove()" aria-label="Xoá dòng">✕</button></div>';
 }
 function taRender(list){

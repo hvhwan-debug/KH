@@ -25,12 +25,12 @@ module.exports = async function (context, req) {
     const code = quiz.normCode(b.code), email = quiz.normEmail(b.email);
     if (!code || !email) return reply(context, 400, { ok: false, error: "Thiếu thông tin thí sinh." });
 
-    const found = (await quiz.getCandidates()).find((c) => quiz.normCode(c.code) === code && quiz.normEmail(c.email) === email);
+    const found = (await quiz.findTestAccount(code, email)) || (await quiz.getCandidates()).find((c) => quiz.normCode(c.code) === code && quiz.normEmail(c.email) === email);
     if (!found) { quiz.noteFail(req); return reply(context, 404, { ok: false, error: "Không tìm thấy thí sinh." }); }
 
     // Bài nộp MỚI NHẤT của thí sinh (trước đây lấy bài đầu tiên tìm thấy nên có thể gửi nhầm kỳ cũ)
-    const prior = (await quiz.getIndex()).filter((a) => quiz.normCode(a.code) === code && a.status === "submitted").sort((x, y) => (y.submittedAt || 0) - (x.submittedAt || 0))[0];
-    const attempt = prior && (await quiz.getAttempt(prior.id));
+    const prior = found.test ? null : (await quiz.getIndex()).filter((a) => quiz.normCode(a.code) === code && a.status === "submitted").sort((x, y) => (y.submittedAt || 0) - (x.submittedAt || 0))[0];
+    const attempt = found.test ? (found.lastAttemptId ? await quiz.getAttempt(found.lastAttemptId) : null) : (prior && (await quiz.getAttempt(prior.id))); // tài khoản thử nghiệm: bài gần nhất, không nằm trong danh sách kết quả
     if (!attempt || attempt.status !== "submitted") return reply(context, 404, { ok: false, error: "Chưa có bài làm đã nộp để gửi lại kết quả." });
 
     const now = Date.now();
@@ -45,7 +45,7 @@ module.exports = async function (context, req) {
 
     const settings = await quiz.getExamSettings(attempt.period || ""); // cài đặt của ĐÚNG đề thí sinh đã làm (tiêu đề, thi thử...)
     // Email chỉ gồm điểm và lời khuyên (không kèm bản sao câu hỏi). Bài cũ chưa có lời khuyên thì dựng theo luật từ bản sao bài làm.
-    const pv = quiz.previousResult(await quiz.getIndex(), attempt.code, attempt.period, attempt.id);
+    const pv = found.test ? null : quiz.previousResult(await quiz.getIndex(), attempt.code, attempt.period, attempt.id);
     const advice = advicelib.ensureAnalysis(attempt.advice || advicelib.rulesAdvice(advicelib.facts(attempt, settings, pv)), attempt, settings, pv);
 
     attempt.email = found.email; // gửi tới email hiện tại (có thể đã được quản lí chỉnh sửa)
@@ -55,7 +55,7 @@ module.exports = async function (context, req) {
 
     attempt.mailSends = sends + 1; attempt.mailLastAt = now; attempt.mailOk = mailOk;
     await quiz.putAttempt(attempt);
-    await quiz.upsertIndex(Object.assign({}, prior, { mailOk }));
+    if (!found.test) await quiz.upsertIndex(Object.assign({}, prior, { mailOk }));
 
     if (!mailOk) return reply(context, 502, { ok: false, error: "Hệ thống chưa gửi được email. Vui lòng thử lại sau ít phút hoặc liên hệ quản trị viên." });
     return reply(context, 200, {

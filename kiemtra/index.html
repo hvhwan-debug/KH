@@ -1127,7 +1127,7 @@ function renderConfirm(){
     (c.region ? '<div><dt>Miền bán hàng</dt><dd>'+esc(REGION_LABEL[c.region]||c.region)+'</dd></div>' : '');
   $('reqBox').classList.add('hide'); $('btnReqOpen').classList.remove('hide'); msg('reqMsg','');
   $('reqState').innerHTML = ST.pending ? '<div class="msg info">Yêu cầu điều chỉnh thông tin của bạn đang chờ quản trị viên xác nhận. Bạn vẫn có thể làm bài.</div>' : '';
-  $('phoneBox').classList.toggle('hide', !!c.phone || !!c.test);
+  $('phoneBox').classList.toggle('hide', !!c.phone);
   if (!c.phone){ $('inPhone').value = ST.phoneNew || ''; msg('phoneMsg',''); }
   var askRg = c.needRegion; // hồ sơ thiếu tỉnh/miền thì luôn bắt chọn, kể cả khi làm tiếp bài dở
   $('regionBox').classList.toggle('hide', !askRg);
@@ -1279,7 +1279,7 @@ $('btnReqSend').addEventListener('click', async function(){
 });
 
 $('btnStart').addEventListener('click', async function(){
-  if (!ST.cand.phone && !ST.cand.test){
+  if (!ST.cand.phone){
     var p = normPhoneVN($('inPhone').value);
     $('inPhone').setAttribute('aria-invalid', p ? 'false' : 'true');
     if (!p){ msg('phoneMsg', $('inPhone').value.trim() ? 'Số điện thoại chưa đúng (cần 10 số, bắt đầu bằng 0).' : 'Vui lòng nhập số điện thoại hoặc Zalo trước khi làm bài.'); $('inPhone').focus(); return; }
