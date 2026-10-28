@@ -813,7 +813,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 .pg-row.done .pg-dot{background:#2E8B57}.pg-row.none .pg-dot{background:#C0392B}
 @keyframes pgPulse{70%{box-shadow:0 0 0 7px rgba(224,138,0,0)}100%{box-shadow:0 0 0 0 rgba(224,138,0,0)}}
 @media(prefers-reduced-motion:reduce){.pg-row.doing .pg-dot{animation:none}}
-.pg-who{min-width:0}.pg-who b{display:block;font-size:14.5px}.pg-who small{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-who{min-width:0}.pg-who b,.pg-who .pg-nm{display:block;font-size:14.5px}.pg-nm,.rt-nm{color:inherit;font-weight:inherit}.pg-nm:hover,.rt-nm:hover{color:var(--brand-deep);text-decoration:underline}.pg-who small{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pg-who small span+span::before{content:' · '}
 .pg-tel{display:inline-flex;align-items:center;gap:6px;color:var(--brand-deep,#0B3F94);font-weight:600;text-decoration:none;font-variant-numeric:tabular-nums}
 .pg-st{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;text-align:center;background:#EEF1F4;color:#5B6676}
@@ -4892,7 +4892,7 @@ function renderProgress(){
       info = '<a class="pg-tel" href="tel:' + esc(String(x.phone).replace(/[^0-9+]/g, '')) + '" aria-label="Gọi ' + esc(x.name || x.code) + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>' + esc(x.phone) + '</a>';
     } else info = '<small class="pg-sub' + (x.phone ? '' : ' pg-nop') + '"' + (x.phone ? '' : ' title="Chưa có số điện thoại"') + '>' + (x.phone ? esc(x.phone) : '—') + '</small>';
     return '<div class="pg-row ' + x.status + '"><span class="pg-dot" aria-hidden="true"></span>' +
-      '<div class="pg-who"><b>' + esc(x.name || x.code) + '</b><small><span class="pg-code">' + esc(x.code) + '</span>' + (x.manager ? '<span class="pg-mgr">' + esc(x.manager) + '</span>' : '') + (x.province ? '<span class="pg-prov">' + esc(x.province) + '</span>' : '') + (x.region ? '<span class="pg-reg">' + (x.region === 'bac' ? 'Miền Bắc' : 'Miền Nam') + '</span>' : '') + '</small></div>' +
+      '<div class="pg-who"><button type="button" class="candnm pg-nm" title="Xem hồ sơ học tập" onclick="openCandProfile(\'' + esc(x.code) + '\')">' + esc(x.name || x.code) + '</button><small><span class="pg-code">' + esc(x.code) + '</span>' + (x.manager ? '<span class="pg-mgr">' + esc(x.manager) + '</span>' : '') + (x.province ? '<span class="pg-prov">' + esc(x.province) + '</span>' : '') + (x.region ? '<span class="pg-reg">' + (x.region === 'bac' ? 'Miền Bắc' : 'Miền Nam') + '</span>' : '') + '</small></div>' +
       '<span class="pg-st">' + PG_LBL[x.status] + (x.done && x.status === 'done' && x.done.auto ? '<span class="pg-auto" title="Hết giờ, hệ thống tự thu bài">tự thu</span>' : '') + '</span><div class="pg-info">' + info + '</div></div>';
   }).join('') + (MOB && L.length > PG_SHOW ? '<button type="button" class="btn ghost pg-more" onclick="pgMore()">Hiện thêm ' + Math.min(20, L.length - PG_SHOW) + ' người · còn ' + (L.length - PG_SHOW) + '</button>' : '') || '<div class="pg-empty">Không có thí sinh nào ở mục này.</div>';
 }
@@ -5004,11 +5004,11 @@ function resRow(r, o){
   const d = new Date(r.submittedAt), okD = !isNaN(d.getTime());
   const tags = (r.probation ? '<span class="tag tag-tv" aria-label="Thử việc" title="Thử việc từ ' + esc(r.probation.from) + ' đến hết ' + esc(r.probation.until) + '">TV</span>' : '') + (r.practice ? '<span class="tag tag-w">Thi thử</span>' : '') + (r.regradedAt ? '<span class="tag" title="Đã được chấm lại theo đáp án mới">Đã chấm lại</span>' : '');
   const badge = r.passed == null ? '' : '<span class="badge ' + (r.passed ? 'y' : 'n') + '">' + (r.passed ? 'Đạt' : 'Chưa đạt') + '</span>';
-  const nm = esc(r.name || r.code);
+  const nm = esc(r.name || r.code), nmBtn = '<button type="button" class="candnm rt-nm" title="Xem hồ sơ học tập" onclick="openCandProfile(\'' + esc(r.code) + '\')">' + nm + '</button>';
   const gAttr = o.g != null ? ' data-g="' + o.g + '"' : '';
   const who = o.sub
     ? '<td class="rt-who"><div class="who sub"><span class="sn">Lần ' + o.n + '</span>' + (o.official ? '<span class="offtag">★ Chính thức</span>' : '<span class="small" style="color:var(--muted)">không tính</span>') + '</div></td>'
-    : '<td class="rt-who"><div class="who"><span class="av" style="background:' + pal[0] + ';color:' + pal[1] + '" aria-hidden="true">' + esc(resInitials(r.name || r.code)) + '</span><div style="min-width:0"><b>' + nm + tags + '</b><small><i>' + esc(r.code) + '</i>' + (r.title ? ' · ' + esc(r.title) : '') + (r.manager ? ' · ' + esc(r.manager) : '') + '</small></div></div></td>';
+    : '<td class="rt-who"><div class="who"><span class="av" style="background:' + pal[0] + ';color:' + pal[1] + '" aria-hidden="true">' + esc(resInitials(r.name || r.code)) + '</span><div style="min-width:0"><b>' + nmBtn + tags + '</b><small><i>' + esc(r.code) + '</i>' + (r.title ? ' · ' + esc(r.title) : '') + (r.manager ? ' · ' + esc(r.manager) : '') + '</small></div></div></td>';
   const triesBtn = o.tries > 1 ? '<button type="button" class="tries-t" aria-expanded="' + (o.open ? 'true' : 'false') + '" onclick="resToggle(event,' + o.g + ')" title="Xem từng lần làm">' + o.tries + ' lần làm<span class="tr-best"> · cao nhất</span> <span class="cv">▾</span></button>' : '';
   return '<tr class="' + (o.sub ? 'rt-sub' + (o.official ? ' off' : '') + (o.open ? '' : ' hide') : 'rt-main') + '"' + gAttr + ' onclick="rtRow(event,\'' + esc(r.id) + '\')" title="Bấm để xem chi tiết bài làm">' +
     who +
