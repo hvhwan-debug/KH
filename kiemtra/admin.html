@@ -109,6 +109,9 @@ body{margin:0;font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(-
 .pg-pulse i{display:block;min-width:6px;border-radius:99px;transition:flex .5s ease}
 .pg-pulse .done{background:linear-gradient(90deg,#3FA36B,#2E8B57)}.pg-pulse .doing{background:#E08A00}.pg-pulse .none{background:linear-gradient(90deg,#D4584A,#C0392B)}
 .pg-pulse+.pg-tabs{margin-top:12px}
+.pg-doinghd{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#A56300;margin:2px 0 6px}
+.pg-row.doing{border-color:#F0D49A;background:#FFFBF2}
+.pg-row .pg-nop{opacity:.55}
 @media(max-width:1100px){#dashKpis{grid-template-columns:repeat(2,minmax(0,1fr))}#dashKpis .k-ring,#dashKpis .k-score{grid-column:1/-1}}
 @media(max-width:600px){#dashKpis .kpi{padding:14px}#dashKpis .k-time .v{font-size:22px}#dashKpis .k-ring .ring{width:88px;height:88px}#dashKpis .k-ring .v{font-size:32px}.exh-top h1{font-size:21px}}
 @media(prefers-reduced-motion:reduce){#dashKpis .k-ring .prg,.exhead .badge.y::before{animation:none}}
@@ -797,11 +800,13 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 .pg-tab b{font-variant-numeric:tabular-nums}
 .pg-tab i{width:9px;height:9px;border-radius:50%;background:#9AA6B6}
 .pg-tab.doing i{background:#E08A00}.pg-tab.done i{background:#2E8B57}.pg-tab.none i{background:#C0392B}.pg-tab.all i{display:none}
+.pg-tab.link{border-style:dashed}.pg-tab.link:hover{border-color:var(--brand)}
+.pg-pulse i{cursor:pointer}
 .pg-tab.on{border-color:var(--brand);background:var(--brand-soft,#E6F0FC);color:var(--brand-deep,#0B3F94)}
 .pg-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 #pgUpd{margin-left:auto}
 .pg-tools input{flex:1 1 220px;min-width:0;margin:0}.pg-tools select{flex:0 1 220px;margin:0}
-.pg-list{display:flex;flex-direction:column;gap:6px;max-height:560px;overflow-y:auto;padding-right:2px}
+.pg-list{display:flex;flex-direction:column;gap:6px;padding-right:0}
 .pg-row{display:grid;grid-template-columns:12px minmax(0,1.3fr) 92px minmax(0,1.2fr);align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#fff}
 .pg-dot{width:10px;height:10px;border-radius:50%;background:#9AA6B6}
 .pg-row.doing .pg-dot{background:#E08A00;box-shadow:0 0 0 0 rgba(224,138,0,.5);animation:pgPulse 1.8s infinite}
@@ -827,7 +832,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
    - khi đã lọc một trạng thái thì bỏ nhãn trạng thái lặp lại ở từng dòng (chấm màu đã đủ nghĩa)
    - danh sách chảy theo trang, không còn khung cuộn lồng trong trang */
 @media(max-width:640px){
-  .pg-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:12px 0 10px}
+  .pg-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:12px 0 10px}
   .pg-tab{position:relative;flex-direction:column;justify-content:center;gap:2px;min-height:54px;padding:8px 2px 7px;border-radius:12px;font-size:12px;line-height:1.2;text-align:center;white-space:nowrap}
   .pg-tab b{order:-1;font-size:19px;line-height:1.1}
   .pg-tab i{position:absolute;top:7px;right:7px;width:7px;height:7px}
@@ -1960,15 +1965,15 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <div class="pg-pulse" id="pgPulse" aria-hidden="true"></div>
         <div class="pg-tabs" role="tablist" id="pgTabs"></div>
         <div class="pg-tools">
-          <input type="search" id="pgSearch" placeholder="Tìm tên, mã NV, quản lí, tỉnh…" oninput="renderProgress()" aria-label="Tìm thí sinh">
-          <select id="pgMgr" onchange="renderProgress()" aria-label="Lọc theo quản lí"></select>
+          <input type="search" id="pgSearch" placeholder="Tìm tên, mã NV, quản lí, tỉnh…" oninput="renderProgress();filterResults()" aria-label="Tìm thí sinh (lọc cả bảng Bài đã nộp bên dưới)">
+          <select id="pgMgr" onchange="renderProgress();filterResults()" aria-label="Lọc theo quản lí (lọc cả bảng Bài đã nộp bên dưới)"></select>
           <button class="btn ghost sm pg-rf" type="button" onclick="loadProgress()" aria-label="Làm mới" title="Làm mới"><span aria-hidden="true">↻</span><span class="pg-rtxt"> Làm mới</span></button>
           <button class="btn ghost sm" type="button" id="pgCopy" onclick="pgCopy()">Sao chép danh sách</button>
           <span class="small" id="pgUpd"></span>
         </div>
         <div class="pg-list" id="pgList"></div>
       </div>
-      <div class="card">
+      <div class="card" id="resCard">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h1 style="margin:0">Bài đã nộp (<span id="resCount">0</span>)<small class="rc-sub" id="resCountSub"></small></h1>
           <div class="rt-tools" style="display:flex;gap:8px;align-items:center">
@@ -4794,15 +4799,19 @@ const perLabel = (p) => /^\d{4}-\d{2}$/.test(p||'') ? 'tháng ' + p.slice(5) + '
 const pctTxt = (v) => v == null ? '–' : (Math.round(v*10)/10).toString().replace('.', ',') + '%';
 const durTxt = (s) => { if (s == null) return '–'; const m = Math.floor(s/60), x = s%60; return m + ' phút ' + (x<10?'0':'') + x + ' giây'; };
 /* ---------- Tình trạng làm bài: Đã làm / Đang làm / Chưa làm ---------- */
-let PG = null, PG_F = 'all', PG_P = '', PG_T = null;
-const PG_LBL = { all:'Tất cả', doing:'Đang làm', done:'Đã làm', none:'Chưa làm' };
+let PG = null, PG_F = 'doing', PG_P = '', PG_T = null, PG_INIT = null;
+const PG_LBL = { all:'Tất cả', doing:'Đang làm', done:'Đã nộp', none:'Chưa làm' };
 const TOUCH = !!(window.matchMedia && matchMedia('(hover:none)').matches);
-let PG_SHOW = 20, PG_KEY = '';
+let PG_SHOW = 10, PG_KEY = '';
 async function loadProgress(sel){
   if (sel !== undefined) PG_P = /^[a-z0-9][a-z0-9-]{0,39}$/i.test(sel || '') ? sel : '';
   const { j } = await api('GET', '/api/kt-admin?op=progress' + (PG_P ? '&period=' + encodeURIComponent(PG_P) : ''));
-  if (!j || !j.ok){ $('pgCard').classList.add('hide'); return; }
+  if (!j || !j.ok){ $('pgCard').classList.add('hide'); if ($('resSearch')) $('resSearch').classList.remove('hide'); return; }
   PG = j; $('pgCard').classList.remove('hide');
+  if ($('resSearch')) $('resSearch').classList.add('hide'); // một ô tìm kiếm chung ở khung theo dõi, lọc cả bảng Bài đã nộp
+  // Mở đúng tab cần chú ý: có người đang làm thì xem họ trước, không thì xem ai chưa làm
+  const c0 = j.count || {};
+  if (PG_INIT !== PG_P || (PG_F === 'doing' && !c0.doing)){ PG_F = c0.doing ? 'doing' : 'none'; PG_INIT = PG_P; }
   const t = new Date(j.serverNow + 7 * 3600 * 1000), p = n => (n < 10 ? '0' : '') + n;
   $('pgUpd').textContent = 'Cập nhật ' + p(t.getUTCHours()) + ':' + p(t.getUTCMinutes()) + ':' + p(t.getUTCSeconds()) + (j.count.doing ? ' · tự làm mới mỗi 30 giây' : '');
   const mv = $('pgMgr').value, mgrs = Array.from(new Set(j.list.map(x => x.manager || ''))).sort((a, b) => a.localeCompare(b, 'vi'));
@@ -4813,7 +4822,10 @@ async function loadProgress(sel){
   // Có người đang làm: tự làm mới khi khung còn hiển thị
   if (j.count.doing) PG_T = setTimeout(() => { if ($('pgCard').offsetParent) loadProgress(); }, 30000);
 }
-function pgSetF(f){ PG_F = f; renderProgress(); }
+function pgSetF(f){
+  if (f === 'done'){ const c = $('resCard'); if (c) c.scrollIntoView({ behavior:'smooth', block:'start' }); return; } // người đã nộp xem ở bảng Bài đã nộp bên dưới, không lặp lại ở đây
+  PG_F = f; renderProgress();
+}
 function pgRows(){
   const q = spNorm($('pgSearch').value || ''), m = $('pgMgr').value || '*';
   return PG.list.filter(x => (m === '*' || (x.manager || '') === m) && (!q || spNorm([x.name, x.code, x.manager, x.province, x.phone].join(' ')).indexOf(q) >= 0));
@@ -4821,29 +4833,29 @@ function pgRows(){
 function renderProgress(){
   if (!PG) return;
   const base = pgRows(), cnt = { all: base.length, doing: 0, done: 0, none: 0 }; base.forEach(x => cnt[x.status]++);
-  const pl = $('pgPulse'); if (pl) pl.innerHTML = ['done','doing','none'].filter(k => cnt[k]).map(k => '<i class="' + k + '" style="flex:' + cnt[k] + '" title="' + PG_LBL[k] + ' ' + cnt[k] + '"></i>').join('');
-  $('pgTabs').innerHTML = ['all','doing','done','none'].map(k => '<button type="button" role="tab" class="pg-tab ' + k + (PG_F === k ? ' on' : '') + '" aria-selected="' + (PG_F === k) + '" onclick="pgSetF(\'' + k + '\')"><i></i>' + PG_LBL[k] + ' <b>' + cnt[k] + '</b></button>').join('');
+  const pl = $('pgPulse'); if (pl) pl.innerHTML = ['done','doing','none'].filter(k => cnt[k]).map(k => '<i class="' + k + '" style="flex:' + cnt[k] + '" title="' + PG_LBL[k] + ' ' + cnt[k] + '" onclick="pgSetF(\'' + k + '\')"></i>').join('');
+  $('pgTabs').innerHTML = ['doing','none','done'].map(k => '<button type="button" role="tab" class="pg-tab ' + k + (k === 'done' ? ' link' : '') + (PG_F === k ? ' on' : '') + '" aria-selected="' + (PG_F === k) + '" onclick="pgSetF(\'' + k + '\')"' + (k === 'done' ? ' title="Xem ở bảng Bài đã nộp bên dưới"' : '') + '><i></i>' + PG_LBL[k] + (k === 'done' ? ' ↓' : '') + ' <b>' + cnt[k] + '</b></button>').join('');
   const fm = ms => { const d = new Date(ms + 7 * 3600 * 1000), p = n => (n < 10 ? '0' : '') + n; return p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ' ' + p(d.getUTCDate()) + '/' + p(d.getUTCMonth() + 1); };
   const ORD = { doing:0, none:1, done:2 };
-  const L = base.filter(x => PG_F === 'all' || x.status === PG_F).sort((a, b) => (ORD[a.status] - ORD[b.status]) || String(a.name).localeCompare(String(b.name), 'vi'));
+  const L = base.filter(x => x.status === PG_F).sort((a, b) => PG_F === 'doing' ? (((a.doing && a.doing.endsAt) || 1e15) - ((b.doing && b.doing.endsAt) || 1e15)) || String(a.name).localeCompare(String(b.name), 'vi') : String(a.manager || '~').localeCompare(String(b.manager || '~'), 'vi') || String(a.name).localeCompare(String(b.name), 'vi')); // đang làm: sắp hết giờ trước; chưa làm: gom theo quản lí
   $('pgCopy').classList.toggle('hide', PG_F !== 'none' || !L.length);
   $('pgList').dataset.f = PG_F;
   // Điện thoại: hiện 20 người một lần, bấm "Hiện thêm" để xem tiếp (không dùng khung cuộn lồng trong trang)
-  const MOB = !!(window.matchMedia && matchMedia('(max-width:640px)').matches), pgKey = PG_F + '|' + ($('pgSearch').value || '') + '|' + ($('pgMgr').value || '*');
-  if (pgKey !== PG_KEY){ PG_KEY = pgKey; PG_SHOW = 20; }
+  const MOB = true, pgKey = PG_F + '|' + ($('pgSearch').value || '') + '|' + ($('pgMgr').value || '*');
+  if (pgKey !== PG_KEY){ PG_KEY = pgKey; PG_SHOW = 10; }
   const LV = MOB ? L.slice(0, PG_SHOW) : L;
   $('pgList').innerHTML = LV.map(x => {
     let info = '';
     if (x.status === 'doing'){
       const d = x.doing, w = d.total ? Math.round(d.answered / d.total * 100) : 0;
-      info = '<div class="pg-prog"><span class="pg-bar"><i style="width:' + w + '%"></i></span><span>' + (d.finished ? 'Đã hết câu, chưa nộp' : 'Câu ' + d.answered + '/' + d.total) + ' · bắt đầu ' + fm(d.startedAt) + (d.endsAt && !d.finished ? ' · hết giờ ' + fm(d.endsAt) : '') + '</span></div>' +
+      info = '<div class="pg-prog"><span class="pg-bar"><i style="width:' + w + '%"></i></span><span>' + (d.finished ? 'Đã hết câu, chưa nộp' : 'Câu ' + d.answered + '/' + d.total) + ' · bắt đầu ' + fm(d.startedAt) + (d.endsAt && !d.finished ? ' · hết giờ ' + fm(d.endsAt) + (PG && PG.serverNow ? ' · còn ' + Math.max(0, Math.ceil((d.endsAt - PG.serverNow) / 60000)) + ' phút' : '') : '') + '</span></div>' +
         (x.done ? '<small class="pg-sub">Đang làm lại · điểm cao nhất hiện có ' + x.done.score + '/' + x.done.total + '</small>' : '');
     } else if (x.status === 'done'){
       const d = x.done;
       info = '<button type="button" class="pg-score" onclick="viewResult(\'' + esc(d.id) + '\')" title="Xem bài làm"><b>' + d.score + '/' + d.total + '</b> ' + d.pct + '%' + (d.tries > 1 ? ' · ' + d.tries + ' lần' : '') + '</button><small class="pg-sub">nộp ' + fm(d.submittedAt) + '</small>';
     } else if (x.phone && TOUCH){
       info = '<a class="pg-tel" href="tel:' + esc(String(x.phone).replace(/[^0-9+]/g, '')) + '" aria-label="Gọi ' + esc(x.name || x.code) + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>' + esc(x.phone) + '</a>';
-    } else info = '<small class="pg-sub' + (x.phone ? '' : ' pg-nop') + '">' + (x.phone ? esc(x.phone) : 'Chưa có số điện thoại') + '</small>';
+    } else info = '<small class="pg-sub' + (x.phone ? '' : ' pg-nop') + '"' + (x.phone ? '' : ' title="Chưa có số điện thoại"') + '>' + (x.phone ? esc(x.phone) : '—') + '</small>';
     return '<div class="pg-row ' + x.status + '"><span class="pg-dot" aria-hidden="true"></span>' +
       '<div class="pg-who"><b>' + esc(x.name || x.code) + '</b><small><span class="pg-code">' + esc(x.code) + '</span>' + (x.manager ? '<span class="pg-mgr">' + esc(x.manager) + '</span>' : '') + (x.province ? '<span class="pg-prov">' + esc(x.province) + '</span>' : '') + (x.region ? '<span class="pg-reg">' + (x.region === 'bac' ? 'Miền Bắc' : 'Miền Nam') + '</span>' : '') + '</small></div>' +
       '<span class="pg-st">' + PG_LBL[x.status] + (x.done && x.status === 'done' && x.done.auto ? '<span class="pg-auto" title="Hết giờ, hệ thống tự thu bài">tự thu</span>' : '') + '</span><div class="pg-info">' + info + '</div></div>';
@@ -5017,9 +5029,12 @@ function rtCopy(btn){
   if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, () => prompt('Sao chép mã:', t)); else prompt('Sao chép mã:', t);
 }
 function filterResults(){
-  const q = (($('resSearch') || {}).value || '').trim().toLowerCase();
+  // Khi khung theo dõi đang hiện, ô tìm kiếm + bộ lọc quản lí ở đó lọc luôn bảng này (một nơi lọc chung)
+  const shared = $('pgCard') && !$('pgCard').classList.contains('hide');
+  const q = ((shared ? ($('pgSearch') || {}).value : ($('resSearch') || {}).value) || '').trim().toLowerCase();
+  const mg = shared && $('pgMgr') && $('pgMgr').value !== '*' ? String($('pgMgr').value).toLowerCase() : '';
   const vis = {};
-  document.querySelectorAll('#resList tr:not(.rt-sub)').forEach(tr => { const ok = !q || tr.textContent.toLowerCase().indexOf(q) >= 0; tr.style.display = ok ? '' : 'none'; if (tr.dataset.g != null) vis[tr.dataset.g] = ok; });
+  document.querySelectorAll('#resList tr:not(.rt-sub)').forEach(tr => { const tx = tr.textContent.toLowerCase(), ok = (!q || tx.indexOf(q) >= 0) && (!mg || tx.indexOf(mg) >= 0); tr.style.display = ok ? '' : 'none'; if (tr.dataset.g != null) vis[tr.dataset.g] = ok; });
   document.querySelectorAll('#resList tr.rt-sub').forEach(tr => { tr.style.display = vis[tr.dataset.g] ? '' : 'none'; });
 }
 async function resetAttempt(code, period){
