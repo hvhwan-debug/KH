@@ -271,6 +271,14 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
 .opt-row:has(.qc:checked) input[type=text]{border-color:#2E9E5B;background:#F2FBF5}
 .small{font-size:12.5px;color:var(--muted)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.qmeta3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+.qmeta3>div>label{margin-top:0}
+@media(max-width:760px){.qmeta3{grid-template-columns:1fr}}
+.qmore{margin-top:12px;border:1.5px solid var(--line);border-radius:10px;padding:0 12px 12px;background:#fff}
+.qmore>summary{cursor:pointer;padding:10px 0 2px;font-weight:700;font-size:13px;color:var(--brand-deep)}
+.qmore>summary .small{font-weight:500;margin-left:6px}
+.qmore:not([open]){padding-bottom:6px}
+
 @media(max-width:640px){.grid2{grid-template-columns:1fr}}
 /* dashboard đánh giá */
 .dash-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
@@ -1382,23 +1390,16 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <input type="hidden" id="qEditId">
         <label>Nội dung câu hỏi</label>
         <textarea id="qText" placeholder="Nhập nội dung câu hỏi…"></textarea>
-        <label>Loại câu hỏi</label>
-        <select id="qType" onchange="onQTypeChange()" aria-label="Loại câu hỏi">
+        <div class="qmeta3">
+          <div><label>Loại câu hỏi</label><select id="qType" onchange="onQTypeChange()" aria-label="Loại câu hỏi">
           <option value="single">Một đáp án đúng</option>
           <option value="multi">Nhiều đáp án đúng (phải chọn đúng và đủ)</option>
           <option value="tf">Đúng / Sai</option>
           <option value="fill">Điền vào chỗ trống</option>
-        </select>
-        <label>Phân loại (tuỳ chọn)</label>
-        <input type="text" id="qCategory" list="catList" placeholder="VD: Nghiệp vụ, An toàn lao động...">
-        <div class="grid2">
-          <div><label>Ngân hàng</label><select id="qBank" aria-label="Ngân hàng của câu hỏi"></select></div>
-          <div><label>Độ khó</label><select id="qDifficulty"><option value="">Không phân loại</option><option value="easy">Dễ</option><option value="medium">Trung bình</option><option value="hard">Khó</option></select></div>
-          <div><label>Thẻ (cách nhau dấu phẩy, tuỳ chọn)</label><input type="text" id="qTags" placeholder="Vd: pccc, bếp từ"></div>
+        </select></div>
           <div><label>Thuộc kỳ</label><select id="qPeriod" aria-label="Kỳ của câu hỏi"></select></div>
+          <div><label>Ngân hàng</label><select id="qBank" aria-label="Ngân hàng của câu hỏi"></select></div>
         </div>
-        <label>Giải thích đáp án (tuỳ chọn)</label>
-        <textarea id="qExplain" style="min-height:56px" placeholder="Hiển thị cho quản trị viên khi xem lại câu hỏi"></textarea>
         <div id="qOptsWrap">
           <label id="qOptsLabel">Các phương án trả lời (bấm ô “✓ Đúng” ở đầu dòng để chọn đáp án đúng)</label>
           <div id="qOptsEdit"></div>
@@ -1409,6 +1410,16 @@ button.rd-st:disabled{opacity:.55;cursor:default}
           <textarea id="qAccepted" style="min-height:70px" placeholder="220&#10;220 V"></textarea>
           <p class="small">Hệ thống bỏ qua chữ hoa/thường, khoảng trắng thừa và dấu câu ở hai đầu; 1,5 và 1.5 coi là như nhau. Chữ có dấu tiếng Việt vẫn phải đúng dấu, nên hãy thêm cả cách viết không dấu nếu muốn chấp nhận.</p>
         </div>
+        <label>Giải thích đáp án (tuỳ chọn)</label>
+        <textarea id="qExplain" style="min-height:56px" placeholder="Hiển thị cho quản trị viên khi xem lại câu hỏi"></textarea>
+        <details class="qmore" id="qMoreBox">
+          <summary>Phân loại, độ khó, thẻ <span class="small" id="qMoreSum"></span></summary>
+          <div class="qmeta3">
+            <div><label>Phân loại</label><input type="text" id="qCategory" list="catList" placeholder="VD: Nghiệp vụ, An toàn lao động..."></div>
+            <div><label>Độ khó</label><select id="qDifficulty"><option value="">Không phân loại</option><option value="easy">Dễ</option><option value="medium">Trung bình</option><option value="hard">Khó</option></select></div>
+            <div><label>Thẻ (cách nhau dấu phẩy)</label><input type="text" id="qTags" placeholder="Vd: pccc, bếp từ"></div>
+          </div>
+        </details>
         <p class="small" style="margin:12px 0 0">Khi sửa một câu đã có, các bài thí sinh đã nộp có câu này sẽ được <b>tự chấm lại</b> theo đáp án mới (điểm, kết quả, bản sao bài làm). Câu mới thêm thì không ảnh hưởng bài cũ.</p>
         <div style="margin-top:10px;display:flex;gap:8px">
           <button class="btn" onclick="saveQuestion()">Lưu câu hỏi</button>
@@ -3154,6 +3165,16 @@ function onQTypeChange(){
     addOptRow(c || (t === 'single' && i === 0 && !checked.some(Boolean)), texts[i]);
   }
 }
+function qMoreSync(open){
+  const parts = [], c = $('qCategory').value.trim(), d = $('qDifficulty'), t = $('qTags').value.trim();
+  if (c) parts.push(c);
+  if (d.value) parts.push(d.selectedOptions[0].textContent);
+  if (t) parts.push('thẻ: ' + t);
+  $('qMoreSum').textContent = parts.length ? '· ' + parts.join(' · ') : '· (tuỳ chọn, chưa nhập)';
+  if (open !== undefined) $('qMoreBox').open = open;
+}
+$('qMoreBox').addEventListener('input', () => qMoreSync());
+$('qMoreBox').addEventListener('change', () => qMoreSync());
 function clearQForm(){
   $('qRegradeBtn').classList.add('hide');
   $('qEditId').value=''; $('qText').value=''; $('qCategory').value='';
@@ -3163,6 +3184,7 @@ function clearQForm(){
   $('qOptsEdit').innerHTML=''; $('qFormTitle').textContent='Thêm câu hỏi mới vào ' + qPerLabel(QP || '').toLowerCase();
   if ($('qPeriod').options.length) $('qPeriod').value = QP || '';
   for (let i=0;i<4;i++) addOptRow(i===0);
+  qMoreSync(false);
   msg('qMsg','');
 }
 let QP = null, QMETA = {}, QLIST = [], QLIM = 50;
@@ -3422,6 +3444,7 @@ function editQuestion(id){
   $('qOptsLabel').textContent = t === 'multi' ? 'Các phương án trả lời (tick ô “✓ Đúng” của TẤT CẢ đáp án đúng)' : 'Các phương án trả lời (bấm ô “✓ Đúng” ở đầu dòng để chọn đáp án đúng)';
   if (t === 'fill') $('qAccepted').value = (q.accepted || []).join('\n');
   else (q.options || []).forEach((o,i) => addOptRow(t === 'multi' ? (q.correctIndexes || []).indexOf(i) >= 0 : i === q.correctIndex, o));
+  qMoreSync(!!(q.category || q.difficulty || (q.tags || []).length));
   window.scrollTo({top:0,behavior:'smooth'});
 }
 async function toggleQuestion(id){
