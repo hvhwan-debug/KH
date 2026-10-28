@@ -1718,7 +1718,8 @@ button.rd-st:disabled{opacity:.55;cursor:default}
 
     <!-- Cài đặt -->
     <div id="tab-settings" class="tabpane hide">
-      <div class="card">
+      <!-- Đề mặc định: đã có nút "Đặt làm đề mặc định" ở đầu trang mỗi đề, liên kết đã có ở "Liên kết nhanh" -> ẩn, giữ lại để mã JS vẫn chạy -->
+      <div class="card hide">
         <h1>Đề mặc định</h1>
         <p class="small">Chỉ dùng làm đề mặc định trong trang quản trị và thống kê. Thí sinh <b>không</b> còn vào thẳng đề này: họ vào bằng link riêng của từng đề (<code>/kiemtra/?exam=&lt;mã đề&gt;</code>) hoặc mở <code>/kiemtra/</code> rồi nhập <b>mã đề</b>. Mã đề và link riêng nằm ở trang của từng đề.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
@@ -1798,23 +1799,18 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         </div>
         <button class="btn" style="margin-top:14px" onclick="saveSettings()">Lưu cài đặt</button>
       </div>
-          <div class="card" id="kaiCard">
+        </div>
+
+
+    <!-- Trợ lí KAI: tài liệu + người dùng -->
+    <div id="tab-kai" class="tabpane hide">
+      <div class="card" id="kaiCard">
         <h1>KAI — Yêu cầu truy cập trợ lí chính sách <span class="small" id="kaiCount"></span></h1>
         <p class="small">Trợ lí KAI (tại <code>kh.io.vn/ai</code>) cho nhân viên tra cứu chính sách Karofi/Livotec. Khi mã nhân viên + email ai đó nhập không khớp danh sách Hồ sơ học tập, yêu cầu sẽ hiện ở đây để bạn duyệt.</p>
         <button class="btn ghost sm" type="button" onclick="loadKaiPending()">Tải lại</button>
         <div id="kaiList"></div>
       </div>
-      <div class="card" id="aiCheckCard">
-        <h1>Công cụ: kiểm tra AI của lời khuyên</h1>
-        <p class="small">Lời khuyên sau khi nộp bài và chẩn đoán hành vi dùng AI nếu có; nếu AI chưa cấu hình, trả lời chậm hoặc sai định dạng thì tự dùng bản dự phòng theo luật. Bấm để chạy thử đúng đường AI đó và biết lý do.</p>
-        <button class="btn" type="button" id="btnAiCheck" onclick="runAiCheck()">Kiểm tra ngay</button>
-        <div id="aiCheckOut"></div>
-      </div>
-    </div>
 
-
-    <!-- Trợ lí KAI: tài liệu + người dùng -->
-    <div id="tab-kai" class="tabpane hide">
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h1 style="margin:0">Trợ lí KAI</h1>
@@ -1984,6 +1980,12 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         </div>
         <div class="ausum" id="auSum"></div>
         <div style="overflow-x:auto"><table class="dt autab"><thead><tr><th>Giờ</th><th>Người thực hiện</th><th>Thao tác</th><th>Chi tiết</th><th>IP / thiết bị</th></tr></thead><tbody id="auList"></tbody></table></div>
+      </div>
+      <div class="card" id="aiCheckCard">
+        <h1>Công cụ: kiểm tra AI của lời khuyên</h1>
+        <p class="small">Lời khuyên sau khi nộp bài và chẩn đoán hành vi dùng AI nếu có; nếu AI chưa cấu hình, trả lời chậm hoặc sai định dạng thì tự dùng bản dự phòng theo luật. Bấm để chạy thử đúng đường AI đó và biết lý do.</p>
+        <button class="btn" type="button" id="btnAiCheck" onclick="runAiCheck()">Kiểm tra ngay</button>
+        <div id="aiCheckOut"></div>
       </div>
     </div>
 
@@ -2269,7 +2271,7 @@ function switchTab(t){
   if (t === 'notify') loadNotify();
   if (t === 'lookup' && prevTab !== 'lookup') { lkSearch(); lkLog(); }
   if (t === 'kai') kaixOpen();
-  if (t === 'settings' && prevTab !== 'settings') loadKaiPending();
+  if (t === 'kai' && prevTab !== 'kai') loadKaiPending();
   if (t === 'audit') { loadAudit(); loadFaceRejections(); }
   if (t === 'managerview' && $('mvFrame').src === 'about:blank') $('mvFrame').src = '/kiemtra/quanli.html';
   if (inWs) renderExHead();
