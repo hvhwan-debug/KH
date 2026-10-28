@@ -265,6 +265,10 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
 .opt-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
 .opt-row input[type=text]{flex:1}
 .opt-row input[type=radio],.opt-row input[type=checkbox]{width:18px;height:18px;flex:0 0 auto}
+.opt-ok{display:inline-flex;align-items:center;gap:6px;margin:0;padding:7px 11px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--muted);font-size:12.5px;font-weight:700;white-space:nowrap;cursor:pointer;flex:0 0 auto;user-select:none}
+.opt-ok:hover{border-color:#2E9E5B}
+.opt-ok:has(input:checked){background:#E3F6EA;border-color:#2E9E5B;color:#1B7A43}
+.opt-row:has(.qc:checked) input[type=text]{border-color:#2E9E5B;background:#F2FBF5}
 .small{font-size:12.5px;color:var(--muted)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:640px){.grid2{grid-template-columns:1fr}}
@@ -1396,7 +1400,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <label>Giải thích đáp án (tuỳ chọn)</label>
         <textarea id="qExplain" style="min-height:56px" placeholder="Hiển thị cho quản trị viên khi xem lại câu hỏi"></textarea>
         <div id="qOptsWrap">
-          <label id="qOptsLabel">Các phương án trả lời (chọn nút tròn cho đáp án đúng)</label>
+          <label id="qOptsLabel">Các phương án trả lời (bấm ô “✓ Đúng” ở đầu dòng để chọn đáp án đúng)</label>
           <div id="qOptsEdit"></div>
           <button class="btn ghost sm" id="qAddOptBtn" onclick="addOptRow()">+ Thêm phương án</button>
         </div>
@@ -3121,7 +3125,7 @@ function addOptRow(checked, value){
   const multi = qUIType() === 'multi', locked = qUIType() === 'tf';
   const row = document.createElement('div');
   row.className = 'opt-row';
-  row.innerHTML = '<input type="'+(multi?'checkbox':'radio')+'" class="qc" name="qCorrect" value="'+n+'" '+(checked?'checked':'')+'><input type="text" placeholder="Phương án '+(n+1)+'"'+(locked?' readonly':'')+'>';
+  row.innerHTML = '<label class="opt-ok" title="Đánh dấu đáp án đúng"><input type="'+(multi?'checkbox':'radio')+'" class="qc" name="qCorrect" value="'+n+'" '+(checked?'checked':'')+'><span>✓ Đúng</span></label><input type="text" placeholder="Phương án '+(n+1)+'"'+(locked?' readonly':'')+'>';
   if (value != null) row.querySelector('input[type=text]').value = value;
   $('qOptsEdit').appendChild(row);
 }
@@ -3134,7 +3138,7 @@ function onQTypeChange(){
   $('qOptsWrap').classList.toggle('hide', t === 'fill');
   $('qFillWrap').classList.toggle('hide', t !== 'fill');
   $('qAddOptBtn').classList.toggle('hide', t === 'tf');
-  $('qOptsLabel').textContent = t === 'multi' ? 'Các phương án trả lời (tick các ô vuông của TẤT CẢ đáp án đúng)' : 'Các phương án trả lời (chọn nút tròn cho đáp án đúng)';
+  $('qOptsLabel').textContent = t === 'multi' ? 'Các phương án trả lời (tick ô “✓ Đúng” của TẤT CẢ đáp án đúng)' : 'Các phương án trả lời (bấm ô “✓ Đúng” ở đầu dòng để chọn đáp án đúng)';
   if (t === 'fill') return;
   $('qOptsEdit').innerHTML = '';
   if (t === 'tf'){
@@ -3155,7 +3159,7 @@ function clearQForm(){
   $('qEditId').value=''; $('qText').value=''; $('qCategory').value='';
   $('qDifficulty').value=''; $('qTags').value=''; $('qExplain').value=''; if ($('qBank').options.length) $('qBank').value = $('qBank').dataset.last || 'default';
   $('qType').value='single'; $('qAccepted').value=''; $('qOptsWrap').classList.remove('hide'); $('qFillWrap').classList.add('hide'); $('qAddOptBtn').classList.remove('hide');
-  $('qOptsLabel').textContent='Các phương án trả lời (chọn nút tròn cho đáp án đúng)';
+  $('qOptsLabel').textContent='Các phương án trả lời (bấm ô “✓ Đúng” ở đầu dòng để chọn đáp án đúng)';
   $('qOptsEdit').innerHTML=''; $('qFormTitle').textContent='Thêm câu hỏi mới vào ' + qPerLabel(QP || '').toLowerCase();
   if ($('qPeriod').options.length) $('qPeriod').value = QP || '';
   for (let i=0;i<4;i++) addOptRow(i===0);
@@ -3415,7 +3419,7 @@ function editQuestion(id){
   const t = qUIType();
   $('qOptsWrap').classList.toggle('hide', t === 'fill'); $('qFillWrap').classList.toggle('hide', t !== 'fill');
   $('qAddOptBtn').classList.toggle('hide', t === 'tf');
-  $('qOptsLabel').textContent = t === 'multi' ? 'Các phương án trả lời (tick các ô vuông của TẤT CẢ đáp án đúng)' : 'Các phương án trả lời (chọn nút tròn cho đáp án đúng)';
+  $('qOptsLabel').textContent = t === 'multi' ? 'Các phương án trả lời (tick ô “✓ Đúng” của TẤT CẢ đáp án đúng)' : 'Các phương án trả lời (bấm ô “✓ Đúng” ở đầu dòng để chọn đáp án đúng)';
   if (t === 'fill') $('qAccepted').value = (q.accepted || []).join('\n');
   else (q.options || []).forEach((o,i) => addOptRow(t === 'multi' ? (q.correctIndexes || []).indexOf(i) >= 0 : i === q.correctIndex, o));
   window.scrollTo({top:0,behavior:'smooth'});
