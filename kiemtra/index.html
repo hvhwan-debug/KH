@@ -364,6 +364,10 @@ button,input{font:inherit;color:inherit}
 .stats span{display:block;font-size:12px;color:var(--muted);margin-top:3px}
 .stats .wide{grid-column:1/-1}
 .foot{text-align:center;font-size:12px;color:var(--muted);line-height:1.7;margin-top:auto;padding-top:6px}
+/* Chân trang: luôn căn giữa đúng tâm trang; hẹp thì xuống 2 dòng gọn gàng (mỗi dòng một ý, bỏ dấu chấm giữa) */
+.foot{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;column-gap:8px;row-gap:0;width:100%;box-sizing:border-box;text-align:center}
+.foot span{white-space:nowrap}
+@media(max-width:560px){.foot .fsep{display:none}.foot span:not(.fsep){flex:0 0 100%}}
 /* Màn kết quả dạng thẻ trực quan */
 .card.res{padding:0;text-align:left}
 .card.res::before{display:none}
@@ -1106,7 +1110,7 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
   </main>
   </div>
 
-  <footer class="foot">Nền tảng kiểm tra trực tuyến · Mọi thắc mắc liên hệ quản trị viên phụ trách</footer>
+  <footer class="foot"><span>Nền tảng kiểm tra trực tuyến</span><span class="fsep" aria-hidden="true">·</span><span>Mọi thắc mắc liên hệ quản trị viên phụ trách</span></footer>
 </div>
 
 <div id="wm" aria-hidden="true"></div>
