@@ -869,10 +869,18 @@ const handler = async function (context, req) {
     }
 
     // Tài khoản thử nghiệm: thi không giới hạn, KHÔNG ghi vào kết quả / dashboard / xuất dữ liệu (xem quiz.findTestAccount).
+    // Kết nối Drive bằng đăng nhập Google của quản trị: trả về địa chỉ trang "Cho phép" của Google
+    if (op === "driveConnectUrl") {
+      const gd = require("../_lib/gdrive");
+      if (!gd.oauthClient()) return reply(context, 503, { ok: false, error: (await gd.status()).error });
+      const state = require("../_lib/session").sign({ k: "gdrive", email: String(u.email).toLowerCase(), n: require("crypto").randomBytes(8).toString("hex"), exp: Date.now() + 10 * 60 * 1000 });
+      return reply(context, 200, { ok: true, url: gd.authUrl(state) });
+    }
+    if (op === "driveDisconnect") { await require("../_lib/gdrive").disconnect(); return reply(context, 200, { ok: true }); }
     // Lưu file (Excel kết quả + tổng quan) lên Google Drive; file được dựng ở trình duyệt của quản trị, máy chủ chỉ chuyển lên Drive.
     if (op === "driveUpload") {
       const gd = require("../_lib/gdrive");
-      if (!gd.configured()) return reply(context, 503, { ok: false, error: (await gd.status()).error });
+      if (!(await gd.ready())) return reply(context, 503, { ok: false, needConnect: !!gd.oauthClient(), error: (await gd.status()).error });
       const buf = Buffer.from(String(b.dataBase64 || ""), "base64");
       if (!buf.length) return reply(context, 400, { ok: false, error: "Không có dữ liệu để lưu." });
       if (buf.length > 20 * 1024 * 1024) return reply(context, 413, { ok: false, error: "File quá lớn (tối đa 20 MB)." });

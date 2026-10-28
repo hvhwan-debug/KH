@@ -3746,6 +3746,34 @@ async function taSave(){
   if (!j.ok){ msg('taMsg', j.error || 'Không lưu được.', 'err'); return; }
   taRender(j.accounts); msg('taMsg', 'Đã lưu ' + j.accounts.length + ' tài khoản thử nghiệm.', 'ok');
 }
+// ----- Kết nối Google Drive bằng đăng nhập Google (hiện cửa sổ "Cho phép" của Google) -----
+function driveNeedConnect(box, st, why){
+  box.innerHTML = st && st.oauthAvailable
+    ? '<div class="msg warn">' + (why ? esc(why) + '<br>' : '') + 'Chưa kết nối Google Drive. Bấm nút bên dưới, chọn tài khoản Google rồi bấm “Cho phép”; chỉ cần làm một lần.<br><button class="btn sm" type="button" style="margin-top:8px" onclick="driveConnect(this)">Kết nối Google Drive</button></div>'
+    : '<div class="msg err">' + esc((st && st.error) || 'Chưa cấu hình Google Drive trên máy chủ.') + '</div>';
+}
+async function driveConnect(btn){
+  if (btn){ btn.disabled = true; btn.textContent = 'Đang mở Google…'; }
+  const { j } = await api('POST', '/api/kt-admin', { op:'driveConnectUrl' });
+  if (j && j.ok && /^https:\/\/accounts\.google\.com\//.test(j.url || '')){ location.href = j.url; return; }
+  if (btn){ btn.disabled = false; btn.textContent = 'Kết nối Google Drive'; }
+  alert((j && j.error) || 'Không mở được trang kết nối Google.');
+}
+async function driveDisconnect(ev){
+  if (ev) ev.preventDefault();
+  if (!confirm('Ngắt kết nối Google Drive? Các file đã lưu vẫn còn trên Drive.')) return;
+  const { j } = await api('POST', '/api/kt-admin', { op:'driveDisconnect' });
+  const box = $('driveMsg'); if (box) box.innerHTML = j && j.ok ? '<div class="msg info">Đã ngắt kết nối Google Drive.</div>' : '<div class="msg err">Không ngắt kết nối được.</div>';
+}
+// Google chuyển về trang này kèm ?drive=ok|cancel|denied|state|fail sau khi cấp quyền
+(function(){
+  try {
+    const u = new URL(location.href), f = u.searchParams.get('drive'); if (!f) return;
+    u.searchParams.delete('drive'); history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
+    const M = { ok:['ok','Đã kết nối Google Drive. Bấm “Lưu vào Drive” để lưu file kết quả.'], cancel:['info','Bạn đã hủy việc cấp quyền Google Drive.'], denied:['err','Chỉ quản trị viên đang đăng nhập mới kết nối được Google Drive.'], state:['err','Phiên kết nối đã hết hạn, hãy bấm kết nối lại.'], fail:['err','Không kết nối được Google Drive, hãy thử lại.'] }[f];
+    const box = $('driveMsg'); if (M && box) box.innerHTML = '<div class="msg ' + M[0] + '">' + esc(M[1]) + '</div>';
+  } catch (e) {}
+})();
 async function loadCandidates(){
   const { j } = await api('GET','/api/kt-admin?op=candidates');
   if (!j.ok) return;
@@ -4650,16 +4678,22 @@ async function exportResultsDrive(btn, msgId){
   if (btn){ btn.disabled = true; btn.textContent = 'Đang lưu vào Drive…'; }
   box.innerHTML = '<div class="msg info">Đang chuẩn bị file và tải lên Drive, vui lòng chờ…</div>';
   try {
+    const st = (await api('GET', '/api/kt-admin?op=driveStatus')).j || {};
+    if (!st.configured){ driveNeedConnect(box, st); return; }
     const o = await buildResultsXlsx();
     if (!o){ box.innerHTML = ''; return; }
     const bytes = new Uint8Array(o.buf); let bin = '';
     for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
     const name = 'Kết quả kiểm tra ' + (o.selPeriod ? perLabel(o.selPeriod) + ' ' : '') + new Date().toISOString().slice(0, 10);
     const { j } = await api('POST', '/api/kt-admin', { op:'driveUpload', name, dataBase64: btoa(bin), convert: true });
-    if (!j.ok){ box.innerHTML = '<div class="msg err">' + esc(j.error || 'Không lưu được lên Drive.') + '</div>'; return; }
+    if (!j.ok){
+      if (j.needConnect || /kết nối lại|cấp quyền lại/i.test(j.error || '')){ driveNeedConnect(box, { oauthAvailable: true }, j.needConnect ? '' : j.error); return; }
+      box.innerHTML = '<div class="msg err">' + esc(j.error || 'Không lưu được lên Drive.') + '</div>'; return;
+    }
     logEv('exportDrive', { period: o.selPeriod || 'tất cả các kỳ', count: o.count });
     const ok = /^https:\/\//.test(j.link || '');
-    box.innerHTML = '<div class="msg ok">Đã lưu vào Drive: <b>' + esc(j.name || name) + '</b>' + (ok ? ' · <a href="' + esc(j.link) + '" target="_blank" rel="noopener">Mở file</a>' : '') + '</div>';
+    box.innerHTML = '<div class="msg ok">Đã lưu vào Drive' + (st.mode === 'oauth' && st.account ? ' của <b>' + esc(st.account) + '</b>' : '') + ': <b>' + esc(j.name || name) + '</b>' + (ok ? ' · <a href="' + esc(j.link) + '" target="_blank" rel="noopener">Mở file</a>' : '') +
+      (st.mode === 'oauth' ? '<br><small>Thư mục: Kết quả kiểm tra · <a href="#" onclick="driveDisconnect(event)">Ngắt kết nối Drive</a></small>' : '') + '</div>';
   } catch (e) {
     box.innerHTML = '<div class="msg err">Không lưu được lên Drive, thử lại sau.</div>';
   } finally { if (btn){ btn.disabled = false; btn.textContent = lbl; } }
