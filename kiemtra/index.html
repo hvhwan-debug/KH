@@ -566,6 +566,11 @@ body.introbg .foot{text-align:center;font-size:11px;color:#7186a5;margin:0;paddi
 .lp-box ol{margin:0 0 14px;padding-left:20px;font-size:14px;line-height:1.65;color:var(--muted)}
 .lp-box ol li{margin-bottom:6px}
 .lp-box p{margin:0 0 12px;font-size:14px;line-height:1.65;color:var(--muted)}
+.loc-box{text-align:center}
+.loc-ic{width:58px;height:58px;margin:0 auto 12px;border-radius:18px;display:grid;place-items:center;background:#E6F0FC;color:#0869df}
+.loc-box.bad .loc-ic{background:#FBEBC8;color:#8A5500}
+.loc-box ol{text-align:left}
+.loc-box button:disabled{opacity:.6;cursor:default}
 .lp-box button{width:100%;height:46px;border:0;border-radius:12px;background:linear-gradient(100deg,#0869df,#08b9d4);color:#fff;font:inherit;font-weight:800;cursor:pointer}
 /* hiệu ứng xuất hiện */
 @keyframes lpUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
@@ -793,6 +798,12 @@ body.introbg .btn.go:active{transform:scale(.99)}
   </nav>
   <div class="lp-practice" id="lpPractice"><span class="lp-pdot"></span><span>Đề thi thử</span></div>
 </header>
+<div class="lp-dlg hide" id="locDlg" role="dialog" aria-modal="true" aria-labelledby="locDlgT"><div class="lp-box loc-box">
+  <div class="loc-ic" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.6"/></svg></div>
+  <h3 id="locDlgT">Cho phép truy cập vị trí</h3>
+  <div id="locDlgB"></div>
+  <button type="button" id="locDlgGo">Cho phép vị trí</button>
+</div></div>
 <div class="lp-dlg hide" id="lpDlg" role="dialog" aria-modal="true" aria-labelledby="lpDlgT"><div class="lp-box"><h3 id="lpDlgT"></h3><div id="lpDlgB"></div><button type="button" id="lpDlgX">Đã hiểu</button></div></div>
 <div class="wrap intro" id="app">
   <header class="top">
@@ -1332,7 +1343,7 @@ $('btnStart').addEventListener('click', async function(){
   photoInit();
 });
 
-/* ---------- Vị trí (xin quyền ở bước chụp ảnh; không bắt buộc, nhưng quản lí sẽ thấy nếu bị chặn) ---------- */
+/* ---------- Vị trí (bắt buộc: xin quyền bằng hộp thoại ở bước chụp ảnh, không có vị trí thì không bắt đầu được) ---------- */
 var LOC = { p:null };
 function getPos(opts){
   return new Promise(function(done){
@@ -1347,21 +1358,60 @@ function askLocation(){
   if (!('geolocation' in navigator)){ DEV.locErr = 'unsupported'; renderLoc(); return Promise.resolve(false); }
   if (DEV.loc){ renderLoc(); return Promise.resolve(true); }
   if (LOC.p) return LOC.p;
-  DEV.locErr = 'pending'; renderLoc();
+  DEV.locErr = 'pending'; renderLoc(); if (!$('locDlg').classList.contains('hide')) locDlgRender();
   LOC.p = getPos({ enableHighAccuracy:true, timeout:15000, maximumAge:60000 }).then(function(ok){ LOC.p = null; renderLoc(); return ok; });
   return LOC.p;
 }
+/* Vị trí là BẮT BUỘC: hộp thoại xin quyền hiện mỗi lần vào bước chụp ảnh / bắt đầu làm bài cho tới khi lấy được vị trí */
+var LOCG = { wait:null };
+function locHelp(){
+  var ua = navigator.userAgent || '';
+  if (/iPhone|iPad|iPod/i.test(ua)) return '<ol><li>Mở <b>Cài đặt</b> → <b>Quyền riêng tư & Bảo mật</b> → <b>Dịch vụ định vị</b>: bật lên.</li><li>Trong danh sách đó chọn <b>Safari</b> (hoặc Chrome) → <b>Khi dùng ứng dụng</b>.</li><li>Quay lại trang này, bấm <b>Thử lại</b>.</li></ol>';
+  if (/Android/i.test(ua)) return '<ol><li>Kéo thanh thông báo xuống, bật <b>Vị trí</b> (GPS).</li><li>Bấm biểu tượng ổ khoá cạnh địa chỉ trang → <b>Quyền</b> → <b>Vị trí</b> → <b>Cho phép</b>.</li><li>Bấm <b>Thử lại</b>.</li></ol>';
+  return '<ol><li>Bấm biểu tượng ổ khoá cạnh địa chỉ trang.</li><li>Ở mục <b>Vị trí</b>, chọn <b>Cho phép</b>.</li><li>Bấm <b>Thử lại</b>.</li></ol>';
+}
+function locDlgRender(){
+  var e = DEV.locErr, box = document.querySelector('#locDlg .loc-box'), b = $('locDlgB'), go = $('locDlgGo');
+  box.classList.toggle('bad', e === 'denied' || e === 'unavailable' || e === 'timeout' || e === 'unsupported');
+  go.disabled = e === 'pending'; go.classList.remove('hide');
+  if (e === 'pending'){ $('locDlgT').textContent = 'Đang lấy vị trí…'; b.innerHTML = '<p>Nếu trình duyệt hiện thông báo hỏi quyền, hãy bấm <b>Cho phép</b>.</p>'; go.textContent = 'Đang lấy vị trí…'; }
+  else if (e === 'denied'){ $('locDlgT').textContent = 'Quyền vị trí đang bị chặn'; b.innerHTML = '<p>Bài kiểm tra cần vị trí của bạn. Hãy mở lại quyền vị trí:</p>' + locHelp(); go.textContent = 'Thử lại'; }
+  else if (e === 'unsupported'){ $('locDlgT').textContent = 'Không lấy được vị trí'; b.innerHTML = '<p>Trình duyệt này không hỗ trợ vị trí. Hãy mở trang bằng <b>Chrome</b> hoặc <b>Safari</b>.</p>'; go.classList.add('hide'); }
+  else if (e === 'unavailable' || e === 'timeout'){ $('locDlgT').textContent = 'Chưa lấy được vị trí'; b.innerHTML = '<p>Hãy bật <b>Định vị / GPS</b> trên máy, ra chỗ thoáng hoặc bật Wi‑Fi, rồi thử lại.</p>' + locHelp(); go.textContent = 'Thử lại'; }
+  else { $('locDlgT').textContent = 'Cho phép truy cập vị trí'; b.innerHTML = '<p>Bài kiểm tra ghi nhận vị trí lúc bạn làm bài. Bấm nút bên dưới, sau đó chọn <b>Cho phép</b> khi trình duyệt hỏi.</p>'; go.textContent = 'Cho phép vị trí'; }
+}
+// Trả về Promise, xong khi đã có vị trí (hộp thoại tự đóng)
+function requireLocation(){
+  if (DEV.loc) return Promise.resolve(true);
+  if (LOCG.wait) return LOCG.wait.p;
+  var w = {}; w.p = new Promise(function(r){ w.r = r; }); LOCG.wait = w;
+  if (!('geolocation' in navigator)) DEV.locErr = 'unsupported';
+  else if (DEV.locErr === 'pending') DEV.locErr = '';
+  locDlgRender(); $('locDlg').classList.remove('hide'); $('locDlgGo').focus();
+  // Đã cho phép từ trước: lấy luôn, không bắt bấm thêm
+  try { if (navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name:'geolocation' }).then(function(st){ if (st.state === 'granted' && !DEV.loc) locTry(); }).catch(function(){}); } catch(e){}
+  return w.p;
+}
+function locTry(){
+  LOC.p = null; DEV.locErr = ''; locDlgRender();
+  askLocation().then(function(ok){
+    if (ok && DEV.loc){ $('locDlg').classList.add('hide'); var w = LOCG.wait; LOCG.wait = null; if (w) w.r(true); }
+    else locDlgRender();
+  });
+  locDlgRender();
+}
+$('locDlgGo').addEventListener('click', locTry);
 function renderLoc(){
   var el = $('locLine'); if (!el) return;
   var e = DEV.locErr, h;
   if (DEV.loc){ el.className = 'locline ok'; h = '<span class="i" aria-hidden="true">📍</span><div>Đã lấy vị trí (sai số khoảng ' + (DEV.loc.acc||0) + ' m).</div>'; }
   else if (e === 'pending'){ el.className = 'locline'; h = '<span class="i" aria-hidden="true">📍</span><div>Đang lấy vị trí… Nếu trình duyệt hỏi, hãy bấm <b>Cho phép</b>.</div>'; }
-  else if (e === 'denied'){ el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Bạn đã chặn quyền vị trí. Bạn vẫn làm bài được, nhưng quản lí sẽ thấy bài làm <b>không có vị trí</b>. Để bật lại: bấm biểu tượng ổ khoá cạnh địa chỉ trang → Vị trí → Cho phép, rồi bấm thử lại.<button type="button" id="locRetry">Thử lại</button></div>'; }
+  else if (e === 'denied'){ el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Bạn đã chặn quyền vị trí. Cần cho phép vị trí mới bắt đầu làm bài được. Để bật lại: bấm biểu tượng ổ khoá cạnh địa chỉ trang → Vị trí → Cho phép, rồi bấm thử lại.<button type="button" id="locRetry">Thử lại</button></div>'; }
   else if (e === 'unsupported'){ el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Trình duyệt này không hỗ trợ lấy vị trí. Nếu đang mở trong Zalo/Facebook, hãy chọn “Mở bằng trình duyệt” (Chrome/Safari).</div>'; }
-  else { el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Chưa lấy được vị trí (hãy bật GPS/Dịch vụ định vị của máy). Bạn vẫn làm bài được.<button type="button" id="locRetry">Thử lại</button></div>'; }
+  else { el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Chưa lấy được vị trí. Hãy bật GPS/Dịch vụ định vị của máy, cần có vị trí mới bắt đầu làm bài được.<button type="button" id="locRetry">Thử lại</button></div>'; }
   el.innerHTML = h;
 }
-document.addEventListener('click', function(ev){ if (ev.target && ev.target.id === 'locRetry'){ LOC.p = null; DEV.locErr = ''; askLocation(); } });
+document.addEventListener('click', function(ev){ if (ev.target && ev.target.id === 'locRetry'){ requireLocation(); locTry(); } });
 
 /* ---------- AI kiểm tra khuôn mặt ngay trên máy (ảnh không gửi đi đâu ở bước này) ---------- */
 var FACE = { p:null };
@@ -1415,7 +1465,7 @@ var FACE_MSG = {
 /* ---------- Bước 2b: chụp ảnh xác nhận ---------- */
 var PH = { stream:null, dataUrl:'' };
 async function photoInit(){
-  PH.dataUrl = ''; PH.face = null; askLocation(); loadFaceAI().catch(function(){}); // tải sẵn bộ nhận diện trong lúc mở camera
+  PH.dataUrl = ''; PH.face = null; DEV.loc = null; renderLoc(); requireLocation(); loadFaceAI().catch(function(){}); // tải sẵn bộ nhận diện trong lúc mở camera
   $('pvVideo').classList.remove('hide'); $('pvImg').classList.add('hide'); $('faceGuide').classList.remove('hide');
   $('btnCapture').classList.remove('hide'); $('btnPhotoOk').classList.add('hide'); $('btnPhotoRetry').classList.add('hide');
   msg('photoMsg','');
@@ -1452,9 +1502,9 @@ $('btnPhotoBack').addEventListener('click', function(){ photoStop(); show('confi
 
 $('btnPhotoOk').addEventListener('click', async function(){
   var btn = $('btnPhotoOk'), label = btn.textContent;
+  if (!DEV.loc){ msg('photoMsg', 'Cần cho phép vị trí trước khi bắt đầu làm bài.'); await requireLocation(); }
   btn.disabled = true; btn.textContent = 'Đang kiểm tra ảnh và chuẩn bị đề…'; msg('photoMsg','');
   var res;
-  if (LOC.p) await Promise.race([LOC.p, new Promise(function(r){ setTimeout(r, 6000); })]);
   try { res = await api('/api/kt-start', { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, face: PH.face, device: DEV, examId:EXAM_ID, phone: ST.cand.phone || ST.phoneNew || '', province: (ST.rgNew && ST.rgNew.province) || '', region: (ST.rgNew && ST.rgNew.region) || '' }); } catch(e){ res = null; }
   btn.disabled = false; btn.textContent = label;
   if (!res){ msg('photoMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
