@@ -638,6 +638,7 @@ html{-webkit-text-size-adjust:100%}
 /* ===================== Bảng "Bài đã nộp" ===================== */
 .rt-wrap{margin-top:16px}
 .qtxt{cursor:pointer}
+.qno{width:44px;text-align:center;color:var(--muted);font-weight:700;font-size:13px;white-space:nowrap}
 .qtxt:hover{color:var(--brand-deep);text-decoration:underline;text-underline-offset:3px}
 .qp-q{font-size:17px;font-weight:700;line-height:1.55;color:var(--ink);overflow-wrap:anywhere}
 .qp-opt{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin-top:8px;border:1.5px solid var(--line);border-radius:12px;font-size:14.5px;line-height:1.5}
@@ -1496,7 +1497,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <div class="qstat" id="qStatBar"></div>
         <div id="qBackupBar"></div>
         <div id="qDelMsg"></div>
-        <table class="stk"><thead><tr><th>Câu hỏi</th><th>Danh mục</th><th>Trạng thái</th><th></th></tr></thead><tbody id="qList"></tbody></table>
+        <table class="stk"><thead><tr><th class="qno">STT</th><th>Câu hỏi</th><th>Danh mục</th><th>Trạng thái</th><th></th></tr></thead><tbody id="qList"></tbody></table>
         <div style="text-align:center;margin-top:10px"><button class="btn ghost sm hide" id="qMore" type="button" onclick="QLIM+=100;renderQList()"></button></div>
       </div>
     </div>
@@ -3281,10 +3282,10 @@ function renderQList(){
   const V = F.slice(0, QLIM);
   QPREV_IDS = V.map(q => q.id);
   $('qShown').textContent = F.length === L.length ? '' : 'Đang lọc: ' + F.length + ' câu';
-  $('qList').innerHTML = V.map(q =>
-    '<tr><td class="qtxt" onclick="qPreview(\'' + q.id + '\')" title="Bấm để xem câu hỏi và đáp án">' + esc(q.text.slice(0,110)) + (q.text.length > 110 ? '…' : '') + '</td><td class="small">' + esc(q.category || '') + '</td><td>' + qStatusCell(q) + '</td>' +
+  $('qList').innerHTML = V.map((q, i) =>
+    '<tr><td class="qno">' + (i + 1) + '</td><td class="qtxt" onclick="qPreview(\'' + q.id + '\')" title="Bấm để xem câu hỏi và đáp án">' + esc(q.text.slice(0,110)) + (q.text.length > 110 ? '…' : '') + '</td><td class="small">' + esc(q.category || '') + '</td><td>' + qStatusCell(q) + '</td>' +
     '<td style="white-space:nowrap;text-align:right"><button class="btn ghost sm" onclick="editQuestion(\'' + q.id + '\')">Sửa</button> <button class="btn ghost sm" onclick="toggleQuestion(\'' + q.id + '\')">' + (q.active !== false ? 'Ẩn' : 'Hiện') + '</button> <button class="btn dghost sm" onclick="deleteQuestion(\'' + q.id + '\')">Xoá</button></td></tr>'
-  ).join('') || '<tr><td colspan="4" class="small">' + (L.length ? 'Không có câu nào khớp bộ lọc.' : 'Đề này chưa có câu hỏi. Bấm “📥 Nhập từ file Excel” hoặc chép từ đề khác ở trên.') + '</td></tr>';
+  ).join('') || '<tr><td colspan="5" class="small">' + (L.length ? 'Không có câu nào khớp bộ lọc.' : 'Đề này chưa có câu hỏi. Bấm “📥 Nhập từ file Excel” hoặc chép từ đề khác ở trên.') + '</td></tr>';
   $('qMore').classList.toggle('hide', F.length <= QLIM);
   $('qMore').textContent = 'Xem thêm (còn ' + Math.max(0, F.length - QLIM) + ' câu)';
   if (CUR_EXAM) $('ehQ').textContent = qCountOf({ id: CUR_EXAM }); renderExGrid();
