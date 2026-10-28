@@ -1693,16 +1693,8 @@ button.rd-st:disabled{opacity:.55;cursor:default}
       <div class="card">
         <h1>Giá trị mặc định cho mọi đề</h1>
         <p class="small" style="margin-top:-4px">Đề nào để trống ô tương ứng trong “Cài đặt đề” sẽ dùng giá trị ở đây.</p>
+        <p class="small" style="margin-top:-6px">Tên bài kiểm tra và tên rút gọn khi chia sẻ Zalo đặt riêng cho từng đề, trong mục “Cài đặt đề” của đề đó — không còn đặt chung ở đây nữa.</p>
         <div class="grid2">
-          <div>
-            <label>Tên bài kiểm tra mặc định (dùng cho đề chưa đặt tên riêng)</label>
-            <input type="text" id="setTitle">
-          </div>
-          <div>
-            <label>Tên rút gọn khi chia sẻ qua Zalo (dòng đầu của tin nhắn)</label>
-            <input type="text" id="setShareTitle" placeholder="PCs - KTTĐK 10/2026">
-            <div class="small">Tin nhắn chia sẻ gồm 4 dòng: tên rút gọn này, HỌ TÊN IN HOA, ĐIỂM: số câu đúng/tổng, và dòng “Link kết quả: …” (cùng link với mã QR trên ảnh). Để trống sẽ dùng tên bài kiểm tra.</div>
-          </div>
           <div>
             <label>Tổng số câu hỏi mỗi đề</label>
             <input type="text" inputmode="numeric" id="setCount">
@@ -4288,7 +4280,7 @@ async function loadSettings(){
   if (!j.ok) return;
   const s = j.settings;
   CUR_PERIOD = s.examPeriod || ''; SETCACHE = s; fillSetPeriod();
-  $('setTitle').value = s.examTitle; $('setShareTitle').value = s.shareTitle || ''; $('setCount').value = s.questionCount;
+  $('setCount').value = s.questionCount;
   $('setBothGD').value = s.bothGiaDungCount;
   $('setSeconds').value = s.secondsPerQuestion; $('setPass').value = s.passScore; $('setPassOn').checked = !!s.passEnabled; $('setPass').disabled = !s.passEnabled;
   $('setRetake').checked = !!s.allowRetake;
@@ -4306,7 +4298,7 @@ async function saveSettings(){
   }
 
   const { j } = await api('POST','/api/kt-admin', {
-    op:'saveSettings', examPeriod: period, examTitle: $('setTitle').value, shareTitle: $('setShareTitle').value, questionCount: $('setCount').value, bothGiaDungCount: $('setBothGD').value,
+    op:'saveSettings', examPeriod: period, questionCount: $('setCount').value, bothGiaDungCount: $('setBothGD').value,
     secondsPerQuestion: $('setSeconds').value, passEnabled: $('setPassOn').checked, passScore: $('setPass').value, allowRetake: $('setRetake').checked,
     complianceEnabled: $('setComplianceOn').checked, complianceHighMin: $('setCHigh').value,
     complianceMidMin: $('setCMid').value, complianceLowMin: $('setCLow').value,
