@@ -20,7 +20,9 @@ const band = (p) => (p >= 80 ? C.ok : p >= 60 ? C.warn : C.bad);
 // Tên đề thi dùng làm tiêu đề: tránh lặp "THI THỬ" khi tên đề đã có sẵn chữ đó
 function displayTitle(settings) {
   const t = oneLine(settings.examTitle || "Bài kiểm tra", 150);
-  return { title: t, practice: !!settings.practice, hasTag: /thi\s*thử/i.test(t) };
+  // "Tên đề | GT": phần sau dấu | là kênh, hiện thành nhãn riêng thay vì dính vào tên
+  const cut = t.lastIndexOf(" | "), main = cut > 0 ? t.slice(0, cut).trim() : t, chan = cut > 0 ? t.slice(cut + 3).trim().slice(0, 20) : "";
+  return { title: t, main, chan, practice: !!settings.practice, hasTag: /thi\s*thử/i.test(t) };
 }
 
 // Thanh nhiều đoạn (đúng / sai / bỏ trống) bằng ô bảng
@@ -48,12 +50,14 @@ function model(attempt, settings, advice) {
   const t = displayTitle(settings), ps = quiz.passState(attempt.pct, settings), a = advice || {}, an = a.analysis || null;
   const total = attempt.total || 0, wrong = attempt.wrong != null ? attempt.wrong : Math.max(0, total - (attempt.score || 0) - (attempt.blank || 0)), blank = attempt.blank || 0;
   const dur = attempt.submittedAt && attempt.startedAt ? Math.round((attempt.submittedAt - attempt.startedAt) / 1000) : null;
-  const name = oneLine(attempt.name || "bạn", 80);
+  let name = oneLine(attempt.name || "bạn", 80);
+  if (name === name.toLocaleUpperCase("vi-VN") && /\p{L}{2}/u.test(name)) name = name.toLocaleLowerCase("vi-VN").replace(/(^|\s)(\p{L})/gu, (x, a, b) => a + b.toLocaleUpperCase("vi-VN")); // "TEST HỆ THỐNG" → "Test Hệ Thống"
   const status = t.practice ? "THI THỬ" + (ps === null ? "" : ps ? " · ĐẠT" : " · CHƯA ĐẠT") : ps === null ? "ĐÃ HOÀN THÀNH" : ps ? "ĐẠT" : "CHƯA ĐẠT";
   const color = t.practice ? C.warn : ps === false ? C.bad : ps === true ? C.ok : C.brand;
   const subject = (t.practice && !t.hasTag ? "[THI THỬ] " : "") + "Kết quả " + t.title + ": " + attempt.pct + "% (" + attempt.score + "/" + total + " câu đúng)";
-  const intro = "Hệ thống đã ghi nhận bài làm của bạn cho " + t.title + " vào lúc " + vn(attempt.submittedAt) + ". Dưới đây là kết quả, phần phân tích và những gợi ý giúp bạn cải thiện ở lần kiểm tra tiếp theo.";
-  return { t, ps, a, an, total, wrong, blank, dur, name, status, color, subject, intro, url: verifyLink(attempt), proof: quiz.proofCode(attempt.id) };
+  const intro = "Bài làm của bạn đã được ghi nhận. Dưới đây là kết quả và một vài gợi ý để lần sau làm tốt hơn.";
+  const when = vn(attempt.submittedAt), whenShort = when.replace(/^(\d{2}:\d{2}):\d{2}\s*/, "$1 · ");
+  return { t, ps, a, an, total, wrong, blank, dur, name, status, color, subject, intro, when, whenShort, url: verifyLink(attempt), proof: quiz.proofCode(attempt.id) };
 }
 
 function build(attempt, settings, advice) {
@@ -61,24 +65,24 @@ function build(attempt, settings, advice) {
   const compliance = attempt.compliancePoints;
   const pre = attempt.pct + "% · " + attempt.score + "/" + m.total + " câu đúng" + (t.practice ? " · Bài thi thử, không phải thi chính thức" : "") + ". " + (a.headline || "Xem phân tích và lời khuyên của bạn.");
 
-  // ---- Đầu thư
+  // ---- Đầu thư: dòng thương hiệu nhỏ → tên đề lớn → nhãn kênh + thời điểm nộp (không lặp chữ)
+  const chip = (txt, strong) => '<td style="padding:0 8px 8px 0"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td bgcolor="#1C6F7C" style="background:#1C6F7C;background:rgba(255,255,255,' + (strong ? ".2" : ".12") + ');border:1px solid rgba(255,255,255,' + (strong ? ".4" : ".22") + ');border-radius:99px;padding:5px 12px;font-family:' + FONT + ';font-size:12.5px;line-height:1.4;font-weight:' + (strong ? 800 : 500) + ';color:#ffffff;white-space:nowrap;letter-spacing:' + (strong ? ".04em" : "0") + '">' + txt + "</td></tr></table></td>";
   const head =
-    '<tr><td class="hd" align="left" bgcolor="' + C.deep + '" style="background:' + C.deep + ';background:linear-gradient(135deg,' + C.dark + ' 0%,' + C.brand + ' 100%);padding:26px 32px 28px">' +
+    '<tr><td class="hd" align="left" bgcolor="' + C.deep + '" style="background:' + C.deep + ';background:linear-gradient(140deg,' + C.dark + ' 0%,' + C.deep + ' 45%,' + C.brand + ' 100%);padding:22px 32px 26px">' +
     '<table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
-    '<td width="44" height="44" align="center" valign="middle" bgcolor="#2C8794" style="width:44px;height:44px;border-radius:13px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);font-family:' + FONT + ';font-size:16px;font-weight:800;color:#ffffff;letter-spacing:.02em">KT</td>' +
-    '<td valign="middle" style="padding-left:12px;font-family:' + FONT + '"><div style="font-size:14px;font-weight:700;color:#ffffff;line-height:1.3">Nền tảng kiểm tra trực tuyến</div>' +
-    '<div style="font-size:12px;color:#BFE3E8;line-height:1.4;margin-top:2px">Thông báo kết quả bài kiểm tra</div></td></tr></table>' +
-    '<div style="font-family:' + FONT + ';font-size:11.5px;font-weight:700;letter-spacing:.16em;color:#9FD6DE;margin:24px 0 8px">KẾT QUẢ BÀI KIỂM TRA</div>' +
-    '<div class="ttl" style="font-family:' + FONT + ';font-size:23px;line-height:1.35;font-weight:800;color:#ffffff;letter-spacing:-.01em">' + esc(t.title) + "</div>" +
-    (t.practice
-      ? '<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr><td bgcolor="#1F6E7A" style="background:#1F6E7A;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:6px 15px 6px 12px;font-family:' + FONT + ';font-size:12.5px;line-height:1.4;color:#E6F4F6;white-space:nowrap">' +
-        '<span style="color:#F6C85F;font-size:11px">&#9679;</span>&nbsp; <b style="color:#FFD98A;letter-spacing:.06em">THI THỬ</b> <span style="color:#9FD6DE">&nbsp;·&nbsp;</span> Không phải thi chính thức</td></tr></table>'
-      : "") + "</td></tr>";
+    '<td width="26" height="26" align="center" valign="middle" bgcolor="#2C8794" style="width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.18);font-family:' + FONT + ';font-size:10.5px;font-weight:800;color:#ffffff">KT</td>' +
+    '<td valign="middle" style="padding-left:9px;font-family:' + FONT + ';font-size:12.5px;font-weight:600;color:#BFE3E8;letter-spacing:.01em">Hệ thống kiểm tra trực tuyến</td></tr></table>' +
+    '<div class="ttl" style="font-family:' + FONT + ';font-size:24px;line-height:1.3;font-weight:800;color:#ffffff;letter-spacing:-.015em;margin:20px 0 14px">' + esc(t.main) + "</div>" +
+    '<table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
+    (t.chan ? chip("Kênh " + esc(t.chan), true) : "") +
+    (t.practice ? chip('<span style="color:#FFD98A">&#9679;</span>&nbsp; Thi thử', true) : "") +
+    chip("Nộp lúc " + esc(m.whenShort)) +
+    "</tr></table></td></tr>";
 
   // ---- Lời chào + giới thiệu
   const hello =
-    '<div style="font-family:' + FONT + ';font-size:17px;font-weight:700;color:' + C.ink + ';margin:0 0 8px">Kính gửi ' + esc(m.name) + ",</div>" +
-    '<div style="font-family:' + FONT + ';font-size:14.5px;line-height:1.75;color:' + C.body + '">' + esc(m.intro) + "</div>";
+    '<div style="font-family:' + FONT + ';font-size:17px;font-weight:700;color:' + C.ink + ';margin:0 0 6px">Chào ' + esc(m.name) + ",</div>" +
+    '<div style="font-family:' + FONT + ';font-size:14.5px;line-height:1.7;color:' + C.body + '">' + esc(m.intro) + "</div>";
 
   // ---- Khối điểm chính: điểm lớn + nhãn trạng thái + thanh đúng/sai/bỏ trống + dải chỉ số + (thi thử) dòng lưu ý, gộp trong MỘT thẻ
   const passLine = m.ps === null ? "" : (m.ps ? "Đạt yêu cầu" : "Chưa đạt yêu cầu") + (settings.passScore ? " · ngưỡng " + settings.passScore + "%" : "") + (t.practice ? " (nếu thi thật)" : "");
@@ -97,7 +101,7 @@ function build(attempt, settings, advice) {
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' +
     '<td class="hs" valign="bottom" style="font-family:' + FONT + '"><div class="big" style="font-size:54px;line-height:1;font-weight:800;letter-spacing:-.03em;color:' + numColor + '">' + esc(attempt.pct) + '<span style="font-size:26px;font-weight:700">%</span></div>' +
     '<div style="font-size:13px;color:' + C.muted + ';margin-top:7px">Tỉ lệ trả lời đúng</div></td>' +
-    '<td class="hb" valign="bottom" align="right" style="font-family:' + FONT + ';padding-bottom:2px"><span style="display:inline-block;padding:6px 13px;border-radius:99px;background:' + pill.bg + ';color:' + pill.c + ';font-size:12px;font-weight:800;letter-spacing:.06em;white-space:nowrap">' + pill.t + "</span>" +
+    '<td class="hb" valign="bottom" align="right" style="font-family:' + FONT + ';padding-bottom:2px"><span class="pill" style="display:inline-block;padding:6px 13px;border-radius:99px;background:' + pill.bg + ';color:' + pill.c + ';font-size:12px;font-weight:800;letter-spacing:.06em;white-space:nowrap">' + pill.t + "</span>" +
     (passLine ? '<div style="font-size:12px;color:' + C.muted + ';margin-top:7px;white-space:nowrap">' + esc(passLine) + "</div>" : "") + "</td></tr></table>" +
     '<div style="height:16px;line-height:16px;font-size:0">&nbsp;</div>' +
     segBar([{ v: attempt.score || 0, c: C.ok }, { v: m.wrong, c: C.bad }, { v: m.blank, c: "#AEBDC1" }], 8) +
@@ -187,7 +191,7 @@ function build(attempt, settings, advice) {
   const html =
     '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="x-apple-disable-message-reformatting">' +
     '<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>' + esc(m.subject) + "</title>" +
-    "<style>@media only screen and (max-width:540px){.wrap{padding:12px 8px!important}.hd{padding:22px 20px 24px!important}.bd{padding:26px 18px 24px!important}.ft{padding:18px!important}.ttl{font-size:20px!important}.big{font-size:46px!important}.hs,.hb{display:block!important;width:100%!important;text-align:left!important}.hb{padding-top:12px!important}}</style></head>" +
+    "<style>@media only screen and (max-width:540px){.wrap{padding:12px 8px!important}.hd{padding:22px 20px 24px!important}.bd{padding:26px 18px 24px!important}.ft{padding:18px!important}.ttl{font-size:20px!important}.big{font-size:44px!important}.pill{font-size:11px!important;padding:5px 10px!important}}</style></head>" +
     '<body style="margin:0;padding:0;background:' + C.page + ';-webkit-text-size-adjust:100%">' +
     '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:' + C.page + '">' + esc(pre) + "&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>" +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' + C.page + '"><tr><td class="wrap" align="center" style="padding:28px 16px">' +
@@ -224,7 +228,7 @@ function harden(html) {
 // Bản chữ thuần: đọc được trên mọi ứng dụng thư, cùng nội dung và cùng thứ tự với bản HTML
 function textOf(attempt, settings, m) {
   const t = m.t, a = m.a, an = m.an, compliance = attempt.compliancePoints, L = [];
-  L.push("KẾT QUẢ BÀI KIỂM TRA", t.title + (t.practice ? "  [THI THỬ - KHÔNG PHẢI THI CHÍNH THỨC]" : ""), "", "Kính gửi " + m.name + ",", "", m.intro, "");
+  L.push("KẾT QUẢ BÀI KIỂM TRA", t.main + (t.chan ? " · Kênh " + t.chan : "") + (t.practice ? "  [THI THỬ - KHÔNG PHẢI THI CHÍNH THỨC]" : ""), "Nộp lúc " + m.whenShort, "", "Chào " + m.name + ",", "", m.intro, "");
   L.push("KẾT QUẢ", "- Tỉ lệ trả lời đúng: " + attempt.pct + "% (" + attempt.score + "/" + m.total + " câu)", "- Đúng " + (attempt.score || 0) + " · Sai " + m.wrong + " · Bỏ trống " + m.blank);
   if (m.ps !== null) L.push("- Kết quả: " + (m.ps ? "ĐẠT" : "CHƯA ĐẠT") + (settings.passScore ? " (ngưỡng " + settings.passScore + "%)" : ""));
   if (compliance != null) L.push("- " + (t.practice ? "Điểm tuân thủ (nếu thi thật): " : "Điểm tuân thủ học tập: ") + compliance + " điểm");
