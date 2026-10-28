@@ -164,6 +164,22 @@ button,input{font:inherit;color:inherit}
 .sched .st{display:block;flex:1 1 auto;min-width:0;font-size:14px;font-weight:700;color:var(--ink);line-height:1.4}
 .sched .sd{display:block;flex:1 0 100%;font-size:12px;color:var(--muted);line-height:1.45}
 .sched .cd{display:inline-block;margin:0;font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;background:rgba(255,255,255,.75);border:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cdown{flex:1 0 100%;display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap}
+.cdown .cdl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+.cdown .u{display:inline-flex;flex-direction:column;align-items:center;min-width:54px;padding:6px 8px 5px;border-radius:11px;background:rgba(255,255,255,.88);border:1px solid var(--line);box-shadow:0 1px 0 rgba(10,37,82,.04)}
+.cdown .u b{font-size:21px;line-height:1.1;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;display:block}
+.cdown .u i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-top:1px}
+.cdown em{font-style:normal;font-weight:800;font-size:18px;color:var(--muted);opacity:.55;margin:0 -1px 10px;animation:cdBlink 1s steps(1) infinite}
+.cdown .u b.tk{animation:cdTick .38s cubic-bezier(.2,.8,.2,1)}
+.cdown.warn .u b{color:var(--warn)}.cdown.warn .u{border-color:#F1DFB6}
+.cdown.bad .u b{color:var(--bad)}.cdown.bad .u{border-color:#F3D3CF;background:#FFF6F5}
+.sched.on .cdown:not(.warn):not(.bad) .u b{color:var(--ok)}
+.sched.up .cdown .u b{color:var(--warn)}
+@keyframes cdTick{0%{transform:translateY(-38%);opacity:.15}100%{transform:none;opacity:1}}
+@keyframes cdBlink{0%,49%{opacity:.6}50%,100%{opacity:.15}}
+@media(prefers-reduced-motion:reduce){.cdown .u b.tk,.cdown em{animation:none}}
+@media(max-width:420px){.cdown .u{min-width:46px;padding:5px 6px 4px}.cdown .u b{font-size:18px}}
+@media(max-height:700px){.cdown{margin-top:4px}.cdown .u{padding:3px 7px 2px}.cdown .u b{font-size:17px}.cdown .cdl{display:none}}
 .sched.up{background:#FFF9EC;border-color:#F1DFB6}.sched.up .sl{color:var(--warn)}.sched.up .si{color:var(--warn)}.sched.up .cd{color:var(--warn);border-color:#F1DFB6}
 .sched.on{background:#F1F9F5;border-color:#CDE8D9}.sched.on .sl{color:var(--ok)}.sched.on .si{color:var(--ok)}.sched.on .cd{color:var(--ok);border-color:#CDE8D9}
 .sched.off{background:#FDF3F2;border-color:#F3D3CF}.sched.off .sl{color:var(--bad)}.sched.off .si{color:var(--bad)}
@@ -844,7 +860,7 @@ body.introbg .btn.go:active{transform:scale(.99)}
       <img class="brandfull" src="/kiemtra/logo.png" alt="Hệ thống kiểm tra trực tuyến">
       <h1 tabindex="-1">Xác thực thí sinh</h1>
       <p class="lead"><span class="lg">Vui lòng nhập mã nhân viên và email công ty để tiếp tục.</span><span class="sm">Nhập thông tin để tiếp tục.</span></p>
-      <div class="sched hide" id="sched" role="status" aria-live="polite"></div>
+      <div class="sched hide" id="sched"></div>
       <div class="field">
         <label for="inCode">Mã nhân viên</label>
         <div class="inwrap"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="2"/><path d="M6 16c.6-1.8 2-2.6 3-2.6s2.4.8 3 2.6M14 9h4M14 13h4"/></svg><input id="inCode" name="code" type="text" inputmode="text" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="Ví dụ: T00100123" required></div>
@@ -2312,6 +2328,21 @@ function fmtLeft(ms){
   if (h) return h + ' giờ ' + m + ' phút';
   return m + ' phút ' + (ss < 10 ? '0' : '') + ss + ' giây';
 }
+function p2(n){ return (n < 10 ? '0' : '') + n; }
+function cdParts(ms){ var t = Math.max(0, Math.floor(ms / 1000)); return { d: Math.floor(t / 86400), h: Math.floor(t % 86400 / 3600), m: Math.floor(t % 3600 / 60), s: t % 60, total: t }; }
+// Đồng hồ đếm ngược: dựng khung một lần, mỗi giây chỉ đổi số (số nào đổi thì có hiệu ứng nhảy nhẹ)
+function cdHtml(c){
+  var u = function(k, v, l){ return '<span class="u" data-k="' + k + '"><b>' + v + '</b><i>' + l + '</i></span>'; };
+  return '<div class="cdown" aria-hidden="true"><span class="cdl">Còn lại</span>' + (c.d ? u('d', c.d, 'ngày') + '<em>:</em>' : '') + u('h', p2(c.h), 'giờ') + '<em>:</em>' + u('m', p2(c.m), 'phút') + '<em>:</em>' + u('s', p2(c.s), 'giây') + '</div>' +
+    '<span class="sr" data-sr="1">Còn ' + fmtLeft(c.total * 1000) + '</span>';
+}
+function cdTick(box, c){
+  var set = function(k, v){ var b = box.querySelector('.u[data-k="' + k + '"] b'); if (b && b.textContent !== v){ b.textContent = v; b.classList.remove('tk'); void b.offsetWidth; b.classList.add('tk'); } };
+  set('d', String(c.d)); set('h', p2(c.h)); set('m', p2(c.m)); set('s', p2(c.s));
+  var cd = box.querySelector('.cdown'); if (cd) cd.className = 'cdown' + (c.total < 300 ? ' bad' : (c.total < 3600 ? ' warn' : ''));
+  var sr = box.querySelector('[data-sr]'); if (sr && c.s === 0) sr.textContent = 'Còn ' + fmtLeft(c.total * 1000);
+}
+var SCHED_KEY = '';
 var IC_CAL = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>';
 var IC_CLK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
 var IC_LCK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>';
@@ -2319,13 +2350,14 @@ function renderSched(){
   var box = $('sched'), x = INFO, btn = $('btnCheck');
   if (!x || (!x.openAt && !x.closeAt)){ box.classList.add('hide'); return; }
   if (!BTN_CHECK_LABEL) BTN_CHECK_LABEL = btn.textContent;
-  var now = sysNow(), st, html;
+  var now = sysNow(), st, html, cdp = null;
   if (x.openAt && now < x.openAt){
+    cdp = cdParts(x.openAt - now);
     st = 'up';
     html = '<span class="si">' + IC_CAL + '</span><div class="sx"><span class="sl"><i></i>Chưa đến giờ mở đề</span>' +
       '<span class="st">Mở lúc ' + fmtWhen(x.openAt) + '</span>' +
       (x.closeAt ? '<span class="sd">Đóng lúc ' + fmtWhen(x.closeAt) + '</span>' : '') +
-      '<span class="cd">Còn ' + fmtLeft(x.openAt - now) + '</span></div>';
+      cdHtml(cdp) + '</div>';
   } else if (x.closeAt && now > x.closeAt){
     st = 'off';
     html = '<span class="si">' + IC_LCK + '</span><div class="sx"><span class="sl"><i></i>Đề đã đóng</span>' +
@@ -2334,12 +2366,16 @@ function renderSched(){
       '<span class="sd">Nếu cần làm bài, hãy liên hệ quản trị viên phụ trách.</span></div>';
   } else {
     st = 'on';
+    if (x.closeAt) cdp = cdParts(x.closeAt - now);
     html = '<span class="si">' + IC_CLK + '</span><div class="sx"><span class="sl"><i></i>Đang mở</span>' +
       (x.closeAt ? '<span class="st">Đóng lúc ' + fmtWhen(x.closeAt) + '</span>' : '<span class="st">Bạn có thể vào làm bài ngay</span>') +
       (x.openAt ? '<span class="sd">Mở từ ' + fmtWhen(x.openAt) + '</span>' : '') +
-      (x.closeAt ? '<span class="cd">Còn ' + fmtLeft(x.closeAt - now) + '</span>' : '') + '</div>';
+      (x.closeAt ? cdHtml(cdp) : '') + '</div>';
   }
-  box.className = 'sched ' + st; box.innerHTML = html;
+  // Chỉ dựng lại khung khi đổi trạng thái (mở/đóng) hoặc ô "ngày" xuất hiện/biến mất; còn lại mỗi giây chỉ cập nhật số
+  var key = st + '|' + (cdp && cdp.d ? 'd' : '');
+  if (key !== SCHED_KEY){ SCHED_KEY = key; box.className = 'sched ' + st; box.innerHTML = html; }
+  if (cdp) cdTick(box, cdp);
   // Chưa mở: khoá nút Tiếp tục, tự mở khoá đúng giờ (theo giờ máy chủ). Đã đóng: máy chủ vẫn là nơi quyết định cuối cùng.
   var lock = st === 'up';
   if (btn.dataset.sched !== st){
@@ -2358,7 +2394,7 @@ async function loadInfo(){
   INFO = r.exam;
   if (INFO.title){ $('examTitle').textContent = INFO.title; var hh = document.querySelector('.hero h3'); if (hh){ hh.textContent = INFO.title; hh.classList.add('long'); } }
   if (!ST.exam){ ST.exam = { title: INFO.title, practice: INFO.practice }; applyPractice(); }
-  renderSched();
+  SCHED_KEY = ''; renderSched();
   clearInterval(schedT);
   if (INFO.openAt || INFO.closeAt) schedT = setInterval(renderSched, 1000);
 }
