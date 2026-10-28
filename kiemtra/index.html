@@ -633,6 +633,17 @@ body.introbg .foot{text-align:center;font-size:11px;color:#7186a5;margin:0;paddi
 .lp-box p{margin:0 0 12px;font-size:14px;line-height:1.65;color:var(--muted)}
 .fg-box{text-align:center}
 .fg-box .fg-cam{margin:4px auto 12px;max-width:320px}
+.fg-cam.scanning .face-guide{opacity:0;transition:opacity .3s}
+.fg-cam.scanning .ring2{display:block}
+.fg-step{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:none;align-items:center;gap:8px;padding:6px 12px;border-radius:99px;background:rgba(8,24,52,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;font-size:12.5px;font-weight:600;white-space:nowrap}
+.fg-cam.scanning .fg-step{display:inline-flex}
+.fg-step::before{content:'';width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:#7FE3F2;animation:cwSpin .8s linear infinite}
+.fg-step span{animation:fgFade .35s ease}
+@keyframes fgFade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.lp-box button#fgShot.busy{position:relative;color:transparent}
+.lp-box button#fgShot.busy::after{content:attr(data-busy);position:absolute;inset:0;display:grid;place-items:center;color:#fff;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent) -200% 0/50% 100% no-repeat;animation:fgShine 1.4s ease-in-out infinite}
+@keyframes fgShine{to{background-position:300% 0}}
+@media(prefers-reduced-motion:reduce){.fg-step::before,.lp-box button#fgShot.busy::after{animation:none}}
 .fg-box #fgMsg:not(:empty){margin:0 0 12px;padding:9px 12px;border-radius:10px;background:#FBE3E0;color:#9E2A20;font-size:13.5px;line-height:1.5;text-align:left}
 .lp-box button.fg-cancel{margin-top:8px;background:none;color:var(--muted);height:40px;font-weight:700}
 .loc-box{text-align:center}
@@ -873,7 +884,7 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
 <div class="lp-dlg hide" id="faceGate" role="dialog" aria-modal="true" aria-labelledby="fgT"><div class="lp-box fg-box">
   <h3 id="fgT">Xác thực khuôn mặt</h3>
   <p id="fgSub">Bạn đã nhập sai nhiều lần. Để tiếp tục, hãy chụp ảnh khuôn mặt của chính bạn.</p>
-  <div class="photo-box mirror fg-cam"><video id="fgVideo" autoplay playsinline muted></video><div class="face-guide" aria-hidden="true"><div class="ring"></div></div></div>
+  <div class="photo-box mirror fg-cam"><video id="fgVideo" autoplay playsinline muted></video><img id="fgImg" class="hide" alt=""><div class="face-guide" aria-hidden="true"><div class="ring"></div></div><div class="cam-scan" aria-hidden="true"><i></i></div><div class="fg-step" id="fgStep" aria-live="polite"></div></div>
   <div id="fgMsg" role="alert"></div>
   <button type="button" id="fgShot">Chụp và tiếp tục</button>
   <button type="button" id="fgCancel" class="fg-cancel">Huỷ</button>
@@ -1233,11 +1244,25 @@ function show(name){
 
 /* ---------- Bước 1: kiểm tra thông tin ---------- */
 /* ---------- Chống dò: nhập sai từ 2 lần thì phải xác thực khuôn mặt ---------- */
-var FG = { stream:null, selfie:'' };
+var FG = { stream:null, selfie:'', t:null };
+var FG_STEPS = ['Đang kiểm tra khuôn mặt…', 'Đang xác minh ảnh chụp trực tiếp…', 'Đang đối chiếu thông tin…', 'Sắp xong…'];
+function fgScan(on){
+  var cam = document.querySelector('#faceGate .fg-cam'), b = $('fgShot'), st = $('fgStep');
+  clearInterval(FG.t);
+  if (on){
+    $('fgImg').src = FG.selfie; $('fgImg').classList.remove('hide'); $('fgVideo').classList.add('hide');
+    cam.classList.add('scanning'); b.disabled = true; b.classList.add('busy'); b.dataset.busy = 'Đang xác thực…';
+    var i = 0; st.innerHTML = '<span>' + FG_STEPS[0] + '</span>';
+    FG.t = setInterval(function(){ i = Math.min(i + 1, FG_STEPS.length - 1); st.innerHTML = '<span>' + FG_STEPS[i] + '</span>'; }, 1600);
+  } else {
+    $('fgImg').classList.add('hide'); $('fgVideo').classList.remove('hide');
+    cam.classList.remove('scanning'); b.disabled = false; b.classList.remove('busy'); b.textContent = 'Chụp và tiếp tục'; st.innerHTML = '';
+  }
+}
 async function faceGateOpen(err){
   $('fgMsg').textContent = err || '';
   $('faceGate').classList.remove('hide');
-  var b = $('fgShot'); b.disabled = false; b.textContent = 'Chụp và tiếp tục';
+  fgScan(false);
   if (FG.stream) return;
   try {
     FG.stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:480}, height:{ideal:360} }, audio:false });
@@ -1245,7 +1270,7 @@ async function faceGateOpen(err){
   } catch(e){ $('fgMsg').textContent = 'Không mở được camera. Hãy cho phép quyền camera trên trình duyệt rồi thử lại.'; }
 }
 function faceGateClose(){
-  $('faceGate').classList.add('hide');
+  $('faceGate').classList.add('hide'); fgScan(false);
   if (FG.stream){ FG.stream.getTracks().forEach(function(t){ t.stop(); }); FG.stream = null; }
 }
 $('fgCancel').addEventListener('click', function(){ faceGateClose(); msg('checkMsg', 'Cần xác thực khuôn mặt để tiếp tục.', 'warn'); });
@@ -1255,7 +1280,7 @@ $('fgShot').addEventListener('click', function(){
   var c = document.createElement('canvas'), w = Math.min(480, v.videoWidth), h = Math.round(w * v.videoHeight / v.videoWidth);
   c.width = w; c.height = h; c.getContext('2d').drawImage(v, 0, 0, w, h); // ảnh gửi đi đúng chiều thật, không lật
   FG.selfie = c.toDataURL('image/jpeg', 0.75);
-  this.disabled = true; this.textContent = 'Đang xác thực…'; $('fgMsg').textContent = '';
+  $('fgMsg').textContent = ''; fgScan(true); // giữ nguyên khung hình vừa chụp + vệt quét + các bước đang làm
   var f = $('scrCheck'); if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', { cancelable:true }));
 });
 $('scrCheck').addEventListener('submit', async function(e){
@@ -1272,7 +1297,7 @@ $('scrCheck').addEventListener('submit', async function(e){
   try { res = await api('/api/kt-check', { code:code, email:email, examId:EXAM_ID, selfie: FG.selfie || undefined }); }
   catch(err){ res = null; }
   btn.disabled = false; btn.textContent = 'Tiếp tục';
-  if (!res){ FG.selfie = ''; $('fgShot').disabled = false; $('fgShot').textContent = 'Chụp và tiếp tục'; msg('checkMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
+  if (!res){ FG.selfie = ''; fgScan(false); msg('checkMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
   var j = res.j;
   noteServerTime(j);
   var hadSelfie = !!FG.selfie; FG.selfie = '';
