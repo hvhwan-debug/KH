@@ -227,6 +227,16 @@ button,input{font:inherit;color:inherit}
 .seg i{height:6px;border-radius:4px;background:var(--line);transition:background .25s}
 .seg i.d{background:var(--brand)}
 .seg i.c{background:linear-gradient(90deg,var(--accent),var(--violet))}
+.grade{display:flex;flex-direction:column;align-items:center;gap:16px;padding:26px 0 12px;text-align:center}
+.grade .ring{width:60px;height:60px;border-radius:50%;border:5px solid var(--brand-soft);border-top-color:var(--brand);border-right-color:var(--accent);animation:gspin .9s linear infinite}
+.grade .gmsg{font-size:14.5px;font-weight:600;color:var(--brand-deep);min-height:22px;transition:opacity .25s}
+.grade .gbar{width:min(320px,80%);height:6px;border-radius:6px;background:var(--line);overflow:hidden;position:relative}
+.grade .gbar::after{content:'';position:absolute;inset:0 auto 0 0;width:40%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--violet));animation:gbar 1.4s ease-in-out infinite}
+.grade .gnote{font-size:12.5px;color:var(--muted);margin:0}
+#scrQuiz.grading .keys,#scrQuiz.grading .qprog{display:none}
+@keyframes gspin{to{transform:rotate(360deg)}}
+@keyframes gbar{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
+@media(prefers-reduced-motion:reduce){.grade .ring{animation-duration:2.4s}.grade .gbar::after{animation-duration:3s}}
 .qprog{margin:-12px 0 18px;font-size:13px}
 .qprog>summary{cursor:pointer;color:var(--brand-deep);font-weight:600;padding:4px 0;list-style:none}
 .qprog>summary::-webkit-details-marker{display:none}
@@ -1585,21 +1595,32 @@ function fatal(text){
 }
 
 /* ---------- Nộp bài ---------- */
+var GRADE_MSGS = ['Đang chấm điểm bài làm của bạn…', 'Đang đối chiếu đáp án…', 'Đang soạn lời khuyên cho bạn…', 'Sắp xong rồi, vui lòng chờ thêm chút…'], gradeTimer = null;
+function startGradeAnim(){
+  var i = 0;
+  $('scrQuiz').classList.add('grading');
+  $('qOpts').innerHTML = '<div class="grade" role="status" aria-live="polite"><div class="ring" aria-hidden="true"></div><div class="gmsg" id="gMsg">' + GRADE_MSGS[0] + '</div><div class="gbar" aria-hidden="true"></div><p class="gnote">Vui lòng không đóng hoặc tải lại trang.</p></div>';
+  clearInterval(gradeTimer);
+  gradeTimer = setInterval(function(){ var m = $('gMsg'); if (!m){ clearInterval(gradeTimer); return; } i = Math.min(i + 1, GRADE_MSGS.length - 1); m.textContent = GRADE_MSGS[i]; }, 2600);
+}
+function stopGradeAnim(){ clearInterval(gradeTimer); gradeTimer = null; $('scrQuiz').classList.remove('grading'); }
 async function finish(){
   ST.quizOn = true; ST.busy = true; clearInterval(ST.timer);
   $('qText').textContent = 'Đang chấm điểm và soạn lời khuyên cho bạn…';
   $('qOpts').innerHTML = ''; $('btnNext').classList.add('hide'); $('qTimer').classList.add('hide');
+  startGradeAnim();
   if (DEV.loc && 'geolocation' in navigator) await Promise.race([getPos({ enableHighAccuracy:true, timeout:3000, maximumAge:30000 }), new Promise(function(r){ setTimeout(r, 3500); })]);
   var out = null, tries = 0;
   while (!out){
     try {
       var r = await api('/api/kt-submit', { attemptId:ST.attemptId, device: DEV });
       if (r.j && r.j.ok){ out = r.j; break; }
-      if (r.s >= 400 && r.s < 500 && r.s !== 408 && r.s !== 429){ return fatal(r.j && r.j.error); }
+      if (r.s >= 400 && r.s < 500 && r.s !== 408 && r.s !== 429){ stopGradeAnim(); return fatal(r.j && r.j.error); }
       throw new Error('retry');
     } catch(e){ tries++; setNet(true); await sleep(Math.min(4000, 600 * tries)); }
   }
   setNet(false);
+  stopGradeAnim();
   noteServerTime(out);
   ST.quizOn = false;
   $('btnNext').classList.remove('hide'); $('qTimer').classList.remove('hide');
