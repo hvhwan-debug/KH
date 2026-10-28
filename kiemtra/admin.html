@@ -832,7 +832,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
    - khi đã lọc một trạng thái thì bỏ nhãn trạng thái lặp lại ở từng dòng (chấm màu đã đủ nghĩa)
    - danh sách chảy theo trang, không còn khung cuộn lồng trong trang */
 @media(max-width:640px){
-  .pg-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:12px 0 10px}
+  .pg-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:12px 0 10px}
   .pg-tab{position:relative;flex-direction:column;justify-content:center;gap:2px;min-height:54px;padding:8px 2px 7px;border-radius:12px;font-size:12px;line-height:1.2;text-align:center;white-space:nowrap}
   .pg-tab b{order:-1;font-size:19px;line-height:1.1}
   .pg-tab i{position:absolute;top:7px;right:7px;width:7px;height:7px}
@@ -4863,7 +4863,8 @@ function renderProgress(){
   if (!PG) return;
   const base = pgRows(), cnt = { all: base.length, doing: 0, done: 0, none: 0 }; base.forEach(x => cnt[x.status]++);
   const pl = $('pgPulse'); if (pl) pl.innerHTML = '';
-  $('pgTabs').innerHTML = ['doing','done','none'].map(k => '<button type="button" role="tab" class="pg-tab ' + k + (PG_F === k ? ' on' : '') + '" aria-selected="' + (PG_F === k) + '" onclick="pgSetF(\'' + k + '\')"><i></i>' + PG_LBL[k] + ' <b>' + cnt[k] + '</b></button>').join('');
+  $('pgTabs').innerHTML = ['all','doing','done','none'].map(k => '<button type="button" role="tab" class="pg-tab ' + k + (PG_F === k ? ' on' : '') + '" aria-selected="' + (PG_F === k) + '" onclick="pgSetF(\'' + k + '\')"><i></i>' + PG_LBL[k] + ' <b>' + cnt[k] + '</b></button>').join('');
+  // Tab Tất cả: mọi thí sinh trong một danh sách (đang làm → hoàn thành → chưa làm)
   // Tab Hoàn thành: dùng luôn bảng kết quả đầy đủ (điểm, cảnh báo, xem bài, xuất Excel); hai tab kia dùng danh sách gọn
   const isDone = PG_F === 'done';
   $('pgList').classList.toggle('hide', isDone);
@@ -4871,7 +4872,7 @@ function renderProgress(){
   if (isDone){ $('pgCopy').classList.add('hide'); return; }
   const fm = ms => { const d = new Date(ms + 7 * 3600 * 1000), p = n => (n < 10 ? '0' : '') + n; return p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ' ' + p(d.getUTCDate()) + '/' + p(d.getUTCMonth() + 1); };
   const ORD = { doing:0, none:1, done:2 };
-  const L = base.filter(x => x.status === PG_F).sort((a, b) => PG_F === 'doing' ? (((a.doing && a.doing.endsAt) || 1e15) - ((b.doing && b.doing.endsAt) || 1e15)) || String(a.name).localeCompare(String(b.name), 'vi') : String(a.manager || '~').localeCompare(String(b.manager || '~'), 'vi') || String(a.name).localeCompare(String(b.name), 'vi')); // đang làm: sắp hết giờ trước; chưa làm: gom theo quản lí
+  const L = (PG_F === 'all' ? base.slice() : base.filter(x => x.status === PG_F)).sort((a, b) => PG_F === 'all' ? (ORD[a.status] - ORD[b.status]) || String(a.name).localeCompare(String(b.name), 'vi') : PG_F === 'doing' ? (((a.doing && a.doing.endsAt) || 1e15) - ((b.doing && b.doing.endsAt) || 1e15)) || String(a.name).localeCompare(String(b.name), 'vi') : String(a.manager || '~').localeCompare(String(b.manager || '~'), 'vi') || String(a.name).localeCompare(String(b.name), 'vi')); // đang làm: sắp hết giờ trước; chưa làm: gom theo quản lí
   $('pgCopy').classList.toggle('hide', PG_F !== 'none' || !L.length);
   $('pgList').dataset.f = PG_F;
   // Điện thoại: hiện 20 người một lần, bấm "Hiện thêm" để xem tiếp (không dùng khung cuộn lồng trong trang)
