@@ -24,7 +24,7 @@ module.exports = async function (context, req) {
         passScore: quiz.passScoreOf(st), submittedAt: attempt.submittedAt, serverNow: Date.now(),
         startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), verify: quiz.verifyToken(attempt.id),
         durationSec: Math.round(((attempt.submittedAt || 0) - (attempt.startedAt || 0)) / 1000),
-        attempts: quiz.attemptsSummary(await quiz.getIndex(), attempt.code, attempt.period || "", st, attempt.id)
+        attempts: attempt.test ? null : quiz.attemptsSummary(await quiz.getIndex(), attempt.code, attempt.period || "", st, attempt.id)
       });
     }
 
@@ -36,7 +36,7 @@ module.exports = async function (context, req) {
       passScore: quiz.passScoreOf(settings), submittedAt: attempt.submittedAt, serverNow: Date.now(),
       startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), verify: quiz.verifyToken(attempt.id),
       durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000),
-      attempts: await (async () => { try { return quiz.attemptsSummary(await quiz.getIndex(), attempt.code, attempt.period || "", settings, attempt.id); } catch (e) { return null; } })()
+      attempts: attempt.test ? null : await (async () => { try { return quiz.attemptsSummary(await quiz.getIndex(), attempt.code, attempt.period || "", settings, attempt.id); } catch (e) { return null; } })()
     });
   } catch (e) {
     context.log.error("kt-submit", e && e.message);

@@ -1103,7 +1103,7 @@ $('scrCheck').addEventListener('submit', async function(e){
   var j = res.j;
   noteServerTime(j);
   if (!j.ok){ msg('checkMsg', j.error || 'Có lỗi xảy ra, thử lại sau.'); return; }
-  ST.cand = { code:j.candidate.code, name:j.candidate.name, email:j.candidate.email, manager:j.candidate.manager, phone:j.candidate.phone || '', segment:j.candidate.segment || 'both', title:j.candidate.title || 'PC', province:j.candidate.province || '', region:j.candidate.region || '', needRegion:!!j.candidate.needRegion, inCode:code, inEmail:email };
+  ST.cand = { code:j.candidate.code, name:j.candidate.name, email:j.candidate.email, manager:j.candidate.manager, phone:j.candidate.phone || '', segment:j.candidate.segment || 'both', title:j.candidate.title || 'PC', province:j.candidate.province || '', region:j.candidate.region || '', needRegion:!!j.candidate.needRegion, test:!!j.candidate.test, inCode:code, inEmail:email };
   ST.phoneNew = ''; ST.rgNew = null; ST.pending = !!j.pendingRequest;
   ST.exam = j.exam || {};
   applyPractice();
@@ -1127,7 +1127,7 @@ function renderConfirm(){
     (c.region ? '<div><dt>Miền bán hàng</dt><dd>'+esc(REGION_LABEL[c.region]||c.region)+'</dd></div>' : '');
   $('reqBox').classList.add('hide'); $('btnReqOpen').classList.remove('hide'); msg('reqMsg','');
   $('reqState').innerHTML = ST.pending ? '<div class="msg info">Yêu cầu điều chỉnh thông tin của bạn đang chờ quản trị viên xác nhận. Bạn vẫn có thể làm bài.</div>' : '';
-  $('phoneBox').classList.toggle('hide', !!c.phone);
+  $('phoneBox').classList.toggle('hide', !!c.phone || !!c.test);
   if (!c.phone){ $('inPhone').value = ST.phoneNew || ''; msg('phoneMsg',''); }
   var askRg = c.needRegion; // hồ sơ thiếu tỉnh/miền thì luôn bắt chọn, kể cả khi làm tiếp bài dở
   $('regionBox').classList.toggle('hide', !askRg);
@@ -1148,7 +1148,7 @@ function renderConfirm(){
   }
   $('rulesBox').style.gridTemplateColumns = 'repeat(' + (rl.length === 4 ? 2 : rl.length) + ',minmax(0,1fr))';
   $('rulesBox').innerHTML = rl.join('');
-  $('notesBox').innerHTML = (AT ? '<li>Bạn đã làm bài này <b>' + AT.used + ' lần</b>. Kết quả chính thức là <b>lần có điểm cao nhất</b>, làm lại không bị mất điểm cũ.</li>' : '') +
+  $('notesBox').innerHTML = (c.test ? '<li><b>Tài khoản thử nghiệm</b>: không giới hạn lượt làm, kết quả <b>không được lưu</b> vào báo cáo hay dữ liệu xuất.</li>' : '') + (AT ? '<li>Bạn đã làm bài này <b>' + AT.used + ' lần</b>. Kết quả chính thức là <b>lần có điểm cao nhất</b>, làm lại không bị mất điểm cũ.</li>' : '') +
     '<li>Mỗi câu có thời gian riêng. Hết giờ, hệ thống tự chuyển sang câu kế tiếp và <b>không thể quay lại</b>.</li>'+
     '<li>Nếu lỡ thoát hoặc tải lại trang, bạn làm tiếp đúng câu đang dở nhưng <b>đồng hồ vẫn chạy</b>.</li>'+
     '<li>Mỗi câu chỉ chọn một đáp án. Kết quả được chấm và gửi về email ngay sau khi nộp.</li>';
@@ -1279,7 +1279,7 @@ $('btnReqSend').addEventListener('click', async function(){
 });
 
 $('btnStart').addEventListener('click', async function(){
-  if (!ST.cand.phone){
+  if (!ST.cand.phone && !ST.cand.test){
     var p = normPhoneVN($('inPhone').value);
     $('inPhone').setAttribute('aria-invalid', p ? 'false' : 'true');
     if (!p){ msg('phoneMsg', $('inPhone').value.trim() ? 'Số điện thoại chưa đúng (cần 10 số, bắt đầu bằng 0).' : 'Vui lòng nhập số điện thoại hoặc Zalo trước khi làm bài.'); $('inPhone').focus(); return; }

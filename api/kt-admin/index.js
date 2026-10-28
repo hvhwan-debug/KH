@@ -239,6 +239,7 @@ const handler = async function (context, req) {
         return reply(context, 200, { ok: true, viewers, managers });
       }
       if (op === "candidates") return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; o.title = quiz.titleOf(c); const prob = require("../_lib/probation"); o.joinDate = prob.joinDateOf(c.code, c.joinDate); o.probation = prob.probationOf(c.code, undefined, o.joinDate); return o; }) });
+      if (op === "testAccounts") return reply(context, 200, { ok: true, accounts: await quiz.getTestAccounts() });
       if (op === "changeRequests") return reply(context, 200, { ok: true, requests: (await require("../_lib/changereq").getAll()).filter((r) => r.status === "pending") });
       if (op === "notifyData") {
         // Dữ liệu cho màn Gửi thông báo: thí sinh thuộc đối tượng của đề, đã làm / chưa làm, số điện thoại, liên kết kết quả
@@ -864,6 +865,27 @@ const handler = async function (context, req) {
       list[i] = next;
       await quiz.saveCandidates(list);
       return reply(context, 200, { ok: true, left, leftAt: next.leftAt || 0 });
+    }
+
+    // Tài khoản thử nghiệm: thi không giới hạn, KHÔNG ghi vào kết quả / dashboard / xuất dữ liệu (xem quiz.findTestAccount).
+    if (op === "saveTestAccounts") {
+      const raw = Array.isArray(b.accounts) ? b.accounts : [];
+      if (raw.length > 20) return reply(context, 400, { ok: false, error: "Tối đa 20 tài khoản thử nghiệm." });
+      const cands = await quiz.getCandidates(), out = [], seen = new Set();
+      for (const r of raw) {
+        const code = String(r && r.code || "").trim(), email = String(r && r.email || "").trim().toLowerCase();
+        if (!code && !email) continue;
+        if (!code || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return reply(context, 400, { ok: false, error: "Mỗi tài khoản cần mã và email hợp lệ." });
+        if (seen.has(quiz.normCode(code))) return reply(context, 400, { ok: false, error: "Mã \"" + code + "\" bị trùng trong danh sách." });
+        seen.add(quiz.normCode(code));
+        // Không cho trùng người thật: tài khoản thử nghiệm được ưu tiên khi đăng nhập nên sẽ làm bài của người đó không được ghi nhận.
+        if (cands.some((c) => quiz.normCode(c.code) === quiz.normCode(code) || quiz.normEmail(c.email) === email)) {
+          return reply(context, 400, { ok: false, error: "Mã hoặc email \"" + code + " / " + email + "\" đang là của một thí sinh thật trong danh sách. Hãy dùng mã và email khác, hoặc xoá thí sinh đó trước." });
+        }
+        out.push({ code, email, name: String(r.name || "").trim().slice(0, 80) || "Tài khoản thử nghiệm", segment: quiz.normSegment(r.segment), region: quiz.normRegion(r.region) || "bac" });
+      }
+      await quiz.saveTestAccounts(out);
+      return reply(context, 200, { ok: true, accounts: out });
     }
 
     if (op === "deleteCandidate") {

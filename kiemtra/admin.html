@@ -281,6 +281,8 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
 .small{font-size:12.5px;color:var(--muted)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 #qAddOptBtn.hide + #qShufBtn{display:none}
+.ta-row{display:grid;grid-template-columns:90px minmax(0,1.6fr) minmax(0,1.2fr) 120px 110px auto;gap:6px;margin-bottom:6px;align-items:center}
+@media(max-width:760px){.ta-row{grid-template-columns:1fr 1fr}}
 .qmeta3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
 .qmeta3>div>label{margin-top:0}
 @media(max-width:760px){.qmeta3{grid-template-columns:1fr}}
@@ -1656,6 +1658,16 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         </div>
         <div id="stBody"></div>
       </div>
+      <details class="card" id="taCard">
+        <summary style="cursor:pointer;font-weight:700">🧪 Tài khoản thử nghiệm <span class="small" id="taSum"></span></summary>
+        <p class="small" style="margin:8px 0 10px">Dùng để quản trị tự làm thử đề: <b>không giới hạn số lượt</b>, vào được cả khi đề chưa mở / đã đóng / ngoài danh sách được thi, và <b>không lưu</b> vào kết quả, dashboard hay file xuất dữ liệu. Đăng nhập ở trang làm bài như thí sinh bằng mã + email bên dưới. Mã và email không được trùng thí sinh thật.</p>
+        <div id="taRows"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <button class="btn ghost sm" type="button" onclick="taAdd()">+ Thêm tài khoản</button>
+          <button class="btn sm" type="button" onclick="taSave()">Lưu</button>
+        </div>
+        <div id="taMsg"></div>
+      </details>
     </div>
 
     <!-- Cài đặt -->
@@ -2340,7 +2352,7 @@ function copyText(t, btn){
 }
 function cancelExamForm(){ if (EX_NEW){ EX_NEW = false; switchTab('exams'); } else switchTab('results'); }
 
-function loadAll(){ loadBanks(); loadExams(); loadQuestions(); loadCandidates(); loadSettings(); loadResults(); loadViewers(); }
+function loadAll(){ loadBanks(); loadExams(); loadQuestions(); loadCandidates(); loadSettings(); loadResults(); loadViewers(); loadTestAccounts(); }
 
 /* ---------- Nhiều đề thi độc lập ---------- */
 let EXAMS = [];
@@ -3700,6 +3712,31 @@ async function loadNotify(){
   if (!j.ok){ $('ntMount').innerHTML = '<div class="msg err">' + esc(j.error || 'Không tải được dữ liệu.') + '</div>'; return; }
   KTNotify.mount($('ntMount'), { recipients: j.recipients, exam: j.exam, origin: location.origin,
     sendEmail: async (items, subject, kind) => (await api('POST', '/api/kt-admin', { op: 'notifyEmail', subject, items, kind })).j });
+}
+// ----- Tài khoản thử nghiệm (thi không giới hạn, không lưu kết quả) -----
+function taRow(a){
+  a = a || {};
+  return '<div class="ta-row"><input type="text" placeholder="Mã NV" value="' + esc(a.code || '') + '"><input type="text" placeholder="Email" value="' + esc(a.email || '') + '"><input type="text" placeholder="Tên (tuỳ chọn)" value="' + esc(a.name || '') + '">' +
+    '<select aria-label="Ngành"><option value="both"' + (a.segment === 'both' || !a.segment ? ' selected' : '') + '>Cả hai ngành</option><option value="gia_dung"' + (a.segment === 'gia_dung' ? ' selected' : '') + '>Gia dụng</option><option value="may_loc"' + (a.segment === 'may_loc' ? ' selected' : '') + '>Máy lọc nước</option></select>' +
+    '<select aria-label="Miền"><option value="bac"' + (a.region !== 'nam' ? ' selected' : '') + '>Miền Bắc</option><option value="nam"' + (a.region === 'nam' ? ' selected' : '') + '>Miền Nam</option></select>' +
+    '<button class="btn dghost sm" type="button" onclick="this.parentNode.remove()" aria-label="Xoá dòng">✕</button></div>';
+}
+function taRender(list){
+  $('taRows').innerHTML = (list || []).map(taRow).join('');
+  $('taSum').textContent = list && list.length ? '· ' + list.length + ' tài khoản' : '· chưa có';
+}
+function taAdd(){ $('taRows').insertAdjacentHTML('beforeend', taRow()); $('taCard').open = true; }
+async function loadTestAccounts(){
+  try { const { j } = await api('GET', '/api/kt-admin?op=testAccounts'); if (j.ok) taRender(j.accounts); } catch (e) { /* không chặn trang */ }
+}
+async function taSave(){
+  const accounts = Array.from(document.querySelectorAll('#taRows .ta-row')).map(r => {
+    const i = r.querySelectorAll('input'), sel = r.querySelectorAll('select');
+    return { code: i[0].value.trim(), email: i[1].value.trim(), name: i[2].value.trim(), segment: sel[0].value, region: sel[1].value };
+  }).filter(a => a.code || a.email);
+  const { j } = await api('POST', '/api/kt-admin', { op: 'saveTestAccounts', accounts });
+  if (!j.ok){ msg('taMsg', j.error || 'Không lưu được.', 'err'); return; }
+  taRender(j.accounts); msg('taMsg', 'Đã lưu ' + j.accounts.length + ' tài khoản thử nghiệm.', 'ok');
 }
 async function loadCandidates(){
   const { j } = await api('GET','/api/kt-admin?op=candidates');

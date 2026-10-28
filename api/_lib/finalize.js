@@ -37,7 +37,7 @@ async function finalizeAttempt(context, attempt, opts) {
     attempt.blank = sc.blank;
     await quiz.putAttempt(attempt);
 
-    await quiz.upsertIndex({
+    if (!attempt.test) await quiz.upsertIndex({
       id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "", segment: attempt.segment || "", period: attempt.period || "",
       score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
       submittedAt: attempt.submittedAt, status: "submitted", auto: !!auto, practice: !!settings.practice, flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief, face: attempt.faceCheck ? attempt.faceCheck.status : null
@@ -71,7 +71,7 @@ async function finalizeAttempt(context, attempt, opts) {
     try {
       attempt.mailOk = mailOk;
       await quiz.putAttempt(attempt);
-      await quiz.upsertIndex({
+      if (!attempt.test) await quiz.upsertIndex({
         id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "", segment: attempt.segment || "", period: attempt.period || "",
         score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
         submittedAt: attempt.submittedAt, status: "submitted", auto: !!auto, practice: !!settings.practice, flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief, face: attempt.faceCheck ? attempt.faceCheck.status : null, mailOk, aiStatus: (advice && advice.aiStatus) || null

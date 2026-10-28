@@ -21,7 +21,7 @@ module.exports = async function (context, req) {
 
     await quiz.runMigrations(context.log);
     const candidates = await quiz.getCandidates();
-    const found = candidates.find((c) => quiz.normCode(c.code) === code && quiz.normEmail(c.email) === email);
+    const found = (await quiz.findTestAccount(code, email)) || candidates.find((c) => quiz.normCode(c.code) === code && quiz.normEmail(c.email) === email);
     if (!found) {
       quiz.noteFail(req);
       return reply(context, 404, { ok: false, error: "Không tìm thấy thông tin khớp với mã nhân viên và email đã nhập. Kiểm tra lại hoặc liên hệ quản trị viên." });
@@ -29,6 +29,7 @@ module.exports = async function (context, req) {
 
     // Thí sinh vừa chọn tỉnh/thành + miền ở màn xác nhận: lưu NGAY vào hồ sơ (chỉ khi hồ sơ còn thiếu),
     // để lần sau vào không phải chọn lại kể cả khi chưa bắt đầu làm bài.
+    if (b.saveRegion && found.test) return reply(context, 200, { ok: true, province: "", region: quiz.normRegion(found.region) });
     if (b.saveRegion) {
       const PROV = require("../_lib/provinces");
       const pv = PROV.canonProvince(b.province), rg = quiz.normRegion(b.region);
@@ -51,10 +52,11 @@ module.exports = async function (context, req) {
     const candidate = { code: found.code, name: found.name, email: found.email, manager: found.manager || "", phone: require("../_lib/phone").normPhone(found.phone), segment: quiz.normSegment(found.segment), title: quiz.titleOf(found),
       province: require("../_lib/provinces").canonProvince(found.province) || "", region: quiz.normRegion(found.region) };
     // PC chưa có tỉnh/miền: phải chọn ở màn xác nhận trước khi làm bài (miền quyết định bộ đề sản phẩm)
-    candidate.needRegion = quiz.needsRegion(found) && !(candidate.province && candidate.region);
+    candidate.needRegion = !found.test && quiz.needsRegion(found) && !(candidate.province && candidate.region);
+    candidate.test = !!found.test;
     const pendingRequest = (await require("../_lib/changereq").getAll()).some((r) => r.status === "pending" && quiz.normCode(r.code) === code);
     // Khung thời gian mở/đóng + đối tượng được thi (chỉ áp dụng cho đề thi có cấu hình các mục này)
-    const denied = quiz.examAccessError(settings, found, Date.now());
+    const denied = found.test ? null : quiz.examAccessError(settings, found, Date.now());
     if (denied) return reply(context, 403, { ok: false, error: denied });
     const exam = {
       id: examId,
@@ -64,11 +66,11 @@ module.exports = async function (context, req) {
       secondsPerQuestion: Math.max(10, settings.secondsPerQuestion || 60),
       passScore: quiz.passScoreOf(settings),
       practice: !!settings.practice,
-      maxAttempts: quiz.attemptLimit(settings) === Infinity ? 0 : quiz.attemptLimit(settings) // 0 = không giới hạn
+      maxAttempts: found.test || quiz.attemptLimit(settings) === Infinity ? 0 : quiz.attemptLimit(settings) // 0 = không giới hạn
     };
     const idxAll = await quiz.getIndex();
-    const subs = quiz.submittedOf(idxAll, code, settings.examPeriod);
-    const limit = quiz.attemptLimit(settings);
+    const subs = found.test ? [] : quiz.submittedOf(idxAll, code, settings.examPeriod); // tài khoản thử nghiệm: không có lịch sử, không giới hạn lượt
+    const limit = found.test ? Infinity : quiz.attemptLimit(settings);
 
     const active0 = await quiz.activeForPeriod(found.code, settings.examPeriod);
     if (subs.length >= limit && !active0) {

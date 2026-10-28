@@ -22,7 +22,7 @@ module.exports = async function (context, req) {
     if (photo && (!photo.startsWith("data:image/") || photo.length > 350000)) photo = "";
 
     const candidates = await quiz.getCandidates();
-    const found = candidates.find((c) => quiz.normCode(c.code) === code && quiz.normEmail(c.email) === email);
+    const found = (await quiz.findTestAccount(code, email)) || candidates.find((c) => quiz.normCode(c.code) === code && quiz.normEmail(c.email) === email);
     if (!found) { quiz.noteFail(req); return reply(context, 404, { ok: false, error: "Không tìm thấy thí sinh." }); }
 
     const defaultSettings = await quiz.getSettings();
@@ -35,12 +35,12 @@ module.exports = async function (context, req) {
     const settings = await quiz.getExamSettings(examId);
     // Bài đang dở vẫn được làm tiếp kể cả khi đã quá giờ đóng đề; chỉ chặn khi bắt đầu bài mới.
     const hasActive = !!(await quiz.activeForPeriod(found.code, settings.examPeriod));
-    if (!hasActive) {
+    if (!hasActive && !found.test) {
       const denied = quiz.examAccessError(settings, found, Date.now());
       if (denied) return reply(context, 403, { ok: false, error: denied });
     }
     // Hết lượt làm (bài đang dở vẫn được làm tiếp)
-    const limit = quiz.attemptLimit(settings);
+    const limit = found.test ? Infinity : quiz.attemptLimit(settings);
     if (!hasActive && limit !== Infinity) {
       const used = quiz.submittedOf(await quiz.getIndex(), code, settings.examPeriod).length;
       if (used >= limit) return reply(context, 409, { ok: false, error: limit > 1 ? "Bạn đã dùng hết " + limit + " lượt làm bài kiểm tra này." : "Bạn đã hoàn thành bài kiểm tra này rồi." });
@@ -48,7 +48,7 @@ module.exports = async function (context, req) {
 
     // Bắt buộc có số điện thoại / Zalo: chưa có trong hồ sơ thì phải nhập (và được lưu lại vào hồ sơ thí sinh)
     const { normPhone } = require("../_lib/phone");
-    if (!normPhone(found.phone)) {
+    if (!found.test && !normPhone(found.phone)) {
       const np = normPhone(b.phone);
       if (!np) return reply(context, 400, { ok: false, needPhone: true, error: "Vui lòng nhập số điện thoại hoặc Zalo của bạn (10 số, ví dụ 0912345678)." });
       found.phone = np;
@@ -58,7 +58,7 @@ module.exports = async function (context, req) {
     // Thí sinh phải chọn tỉnh/thành + miền (Bắc/Nam) trước khi vào bài: miền quyết định bộ đề sản phẩm. Lưu vào hồ sơ thí sinh.
     // Áp dụng cả khi làm tiếp bài dở (hồ sơ phải đủ thông tin); bài dở vẫn giữ nguyên các câu đã được phát.
     const PROV = require("../_lib/provinces");
-    if (quiz.needsRegion(found) && !(PROV.canonProvince(found.province) && quiz.normRegion(found.region))) {
+    if (!found.test && quiz.needsRegion(found) && !(PROV.canonProvince(found.province) && quiz.normRegion(found.region))) {
       const pv = PROV.canonProvince(b.province), rg = quiz.normRegion(b.region);
       if (!pv) return reply(context, 400, { ok: false, needRegion: true, error: "Vui lòng chọn tỉnh/thành bạn đang làm việc." });
       if (!rg) return reply(context, 400, { ok: false, needRegion: true, error: "Vui lòng chọn miền (Miền Bắc hoặc Miền Nam) để nhận đúng đề sản phẩm." });
@@ -81,7 +81,7 @@ module.exports = async function (context, req) {
       if (!photo) return reply(context, 400, { ok: false, error: "Cần chụp ảnh xác nhận trước khi bắt đầu làm bài." });
       // AI kiểm tra ảnh có đúng một khuôn mặt người; không đạt -> không cho vào làm bài
       var faceCheck = null;
-      if (process.env.FACE_CHECK !== "off") {
+      if (process.env.FACE_CHECK !== "off" && !found.test) {
         const fc = await require("../_lib/facecheck").verify(photo, b.face, found.code, settings.examPeriod);
         faceCheck = fc.record;
         if (!fc.allow) return reply(context, 422, { ok: false, faceRejected: true, error: fc.message });
@@ -105,6 +105,7 @@ module.exports = async function (context, req) {
         cursor: 0, qStartedAt: now,
         status: "in_progress"
       };
+      if (found.test) attempt.test = true; // tài khoản thử nghiệm: bài này không ghi vào kết quả / dashboard / xuất dữ liệu
     } else {
       quiz.syncAttempt(attempt, now);
     }

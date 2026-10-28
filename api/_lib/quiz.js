@@ -421,7 +421,7 @@ async function countInProgress() {
     try {
       const p = await store.get(name);
       const a = p && p.attemptId ? await getAttempt(p.attemptId) : null;
-      if (a && a.status === "in_progress") { const c = Object.assign({}, a); syncAttempt(c, Date.now()); if (c.cursor < c.questionIds.length) n++; }
+      if (a && a.status === "in_progress" && !a.test) { const c = Object.assign({}, a); syncAttempt(c, Date.now()); if (c.cursor < c.questionIds.length) n++; }
     } catch (e) { /* bỏ qua mục lỗi */ }
   }
   return n;
@@ -473,6 +473,21 @@ async function getQuestions() { return ((await store.get(Q_KEY)) || []).map(clea
 async function saveQuestions(list) { await store.put(Q_KEY, list); }
 
 async function getCandidates() { return (await store.get(C_KEY)) || []; }
+
+// ---------- Tài khoản THỬ NGHIỆM ----------
+// Dành cho quản trị thử đề: không giới hạn lượt, không bị khung giờ/đối tượng chặn, KHÔNG ghi vào kết quả / dashboard / xuất dữ liệu.
+// Lưu riêng, không nằm trong danh sách thí sinh nên không lọt vào bất kỳ thống kê nào.
+const TA_KEY = "kt/testaccounts.json";
+async function getTestAccounts() { const l = await store.get(TA_KEY); return Array.isArray(l) ? l : []; }
+async function saveTestAccounts(list) { await store.put(TA_KEY, list); }
+async function findTestAccount(code, email) {
+  const k = normCode(code), e = normEmail(email);
+  if (!k || !e) return null;
+  const t = (await getTestAccounts()).find((x) => normCode(x.code) === k && normEmail(x.email) === e);
+  if (!t) return null;
+  return { code: t.code, email: t.email, name: t.name || "Tài khoản thử nghiệm", manager: "", phone: "", segment: normSegment(t.segment), title: normTitle(t.title) || DEFAULT_TITLE,
+    province: "", region: normRegion(t.region) || "bac", test: true };
+}
 async function saveCandidates(list) { await store.put(C_KEY, list); }
 
 async function getSettings() {
@@ -1087,7 +1102,7 @@ function noteFail(req) {
 module.exports = {
   runMigrations, managerCanon, properCaseName, normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, betterResult, attemptsSummary, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
   getQuestions, saveQuestions,
-  getCandidates, saveCandidates,
+  getCandidates, saveCandidates, getTestAccounts, saveTestAccounts, findTestAccount,
   getSettings, saveSettings,
   getAttempt, putAttempt, saveIndex, activeForPeriod,
   getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary, fmtVN,
