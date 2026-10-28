@@ -2843,8 +2843,12 @@ async function kaixSaveDoc(){
 async function kaixLoadDocs(){
   var j = await kaixApi({ op:'docList' });
   if (!j.ok){ $('kdList').innerHTML = '<div class="msg err">' + esc(j.error) + '</div>'; return; }
-  $('kdN').textContent = '(' + j.docs.length + '/' + j.limits.maxDocs + ')';
-  $('kdBuiltin').innerHTML = j.builtin.map(function(x){ return '<div>• ' + esc(x.title) + ' <span class="small">(' + x.chars.toLocaleString('vi-VN') + ' ký tự)</span></div>'; }).join('') + '<p class="small" style="margin-top:8px">Muốn sửa các mục này, cần chỉnh trong mã nguồn (api/_lib/kai-kb.js) hoặc soạn lại thành tài liệu mới ở trên.</p>';
+  $('kdN').textContent = '(' + j.docs.length + '/' + j.limits.maxDocs + ' — cộng ' + j.builtin.length + ' mục có sẵn trong mã nguồn bên dưới = ' + (j.docs.length + j.builtin.length) + ' nguồn kiến thức KAI đang dùng)';
+  $('kdBuiltin').innerHTML = j.builtin.map(function(x){
+    return '<details style="margin:6px 0;border:1px solid var(--line);border-radius:10px;padding:8px 10px">' +
+      '<summary style="cursor:pointer;font-weight:600">' + esc(x.title) + ' <span class="small">(' + x.chars.toLocaleString('vi-VN') + ' ký tự — bấm để xem nội dung)</span></summary>' +
+      '<pre style="white-space:pre-wrap;word-break:break-word;font:inherit;margin:8px 0 0;max-height:360px;overflow:auto;background:var(--bg);border-radius:8px;padding:8px 10px">' + esc(x.text) + '</pre></details>';
+  }).join('') + '<p class="small" style="margin-top:8px">Đây là kiến thức có sẵn trong mã nguồn (xem được, không sửa được ở đây). Muốn sửa, cần chỉnh trong mã nguồn (api/_lib/kai-kb.js) hoặc soạn lại nội dung tương tự thành tài liệu mới ở trên (tài liệu mới sẽ ưu tiên hơn khi trả lời).</p>';
   if (!j.docs.length){ $('kdList').innerHTML = '<p class="small">Chưa có tài liệu nào được thêm ở đây.</p>'; return; }
   var f = function(ms){ return ms ? new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' }) : ''; };
   $('kdList').innerHTML = j.docs.map(function(d){

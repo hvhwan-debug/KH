@@ -31,7 +31,7 @@ module.exports = async function (context, req) {
       return reply(context, 200, {
         ok: true,
         docs: docs.map((d) => ({ id: d.id, title: d.title, enabled: d.enabled !== false, chars: (d.text || "").length, chunks: kb.chunkText(d.title, d.text).length, updatedAt: d.updatedAt, updatedBy: d.updatedBy || "" })),
-        builtin: kb.STATIC_SECTIONS.map((x) => ({ title: x.title, chars: x.text.length })),
+        builtin: kb.STATIC_SECTIONS.map((x) => ({ title: x.title, chars: x.text.length, text: x.text })),
         limits: { maxDocs: MAX_DOCS, maxText: MAX_TEXT }
       });
     }
