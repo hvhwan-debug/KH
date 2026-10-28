@@ -183,6 +183,34 @@ button,input{font:inherit;color:inherit}
 .sched.up{background:#FFF9EC;border-color:#F1DFB6}.sched.up .sl{color:var(--warn)}.sched.up .si{color:var(--warn)}.sched.up .cd{color:var(--warn);border-color:#F1DFB6}
 .sched.on{background:#F1F9F5;border-color:#CDE8D9}.sched.on .sl{color:var(--ok)}.sched.on .si{color:var(--ok)}.sched.on .cd{color:var(--ok);border-color:#CDE8D9}
 .sched.off{background:#FDF3F2;border-color:#F3D3CF}.sched.off .sl{color:var(--bad)}.sched.off .si{color:var(--bad)}
+/* Khung giờ mở đề, bản "sang": nền xanh đêm, chữ số lớn nét mảnh, điểm nhấn vàng champagne, thanh thời gian đã trôi */
+.sched.lux{position:relative;overflow:hidden;display:block;padding:18px 20px 16px;border:0;border-radius:20px;color:#EAF0FA;
+  background:radial-gradient(120% 140% at 100% 0%,rgba(232,199,122,.16),transparent 55%),radial-gradient(90% 120% at 0% 100%,rgba(70,130,255,.22),transparent 60%),linear-gradient(150deg,#0A1B38 0%,#10295A 55%,#0D2249 100%);
+  box-shadow:0 18px 38px -18px rgba(8,24,60,.65),inset 0 0 0 1px rgba(255,255,255,.07)}
+.sched.lux::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.07),transparent 38%)}
+.sched.lux .sx{display:block;position:relative;z-index:1}
+.sched.lux .shd{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap}
+.sched.lux .sl{flex:0 0 auto;display:inline-flex;gap:7px;padding:4px 11px 4px 9px;border-radius:99px;font-size:11.5px;font-weight:700;letter-spacing:.02em;text-transform:none;color:#BFF1D3;background:rgba(80,200,140,.14);box-shadow:inset 0 0 0 1px rgba(120,220,165,.28)}
+.sched.lux .sl i{width:7px;height:7px;background:#5FE0A0;animation:lxPulse 2s ease-out infinite}
+.sched.lux.up .sl{color:#F6E2B0;background:rgba(232,199,122,.14);box-shadow:inset 0 0 0 1px rgba(232,199,122,.32)}.sched.lux.up .sl i{background:#E8C77A;animation:none}
+.sched.lux .st{flex:0 1 auto;font-size:13px;font-weight:600;color:rgba(234,240,250,.8);letter-spacing:.01em;line-height:1.4}
+.sched.lux .sd{display:block;margin-top:10px;font-size:12px;color:rgba(234,240,250,.6)}
+.sched.lux .cdown{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:18px 0 0;flex-wrap:nowrap}
+.sched.lux .cdl{order:2;font-size:12px;font-weight:600;letter-spacing:.02em;text-transform:none;color:rgba(234,240,250,.55);margin:0 0 6px;white-space:nowrap}
+.sched.lux .cdu{display:flex;align-items:stretch}
+.sched.lux .u{min-width:0;padding:0 16px;border:0;background:none;box-shadow:none;border-radius:0;align-items:flex-start}
+.sched.lux .u:first-child{padding-left:0}
+.sched.lux .u b{font-size:38px;line-height:1;font-weight:300;letter-spacing:-.02em;color:#fff!important;font-variant-numeric:tabular-nums lining-nums}
+.sched.lux .u i{margin-top:7px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:none;color:rgba(232,199,122,.92)}
+.sched.lux .cdown em{display:block;align-self:stretch;width:1px;margin:2px 0;background:linear-gradient(180deg,transparent,rgba(255,255,255,.24),transparent);opacity:1;animation:none}
+.sched.lux .cdown.warn .u i{color:#F5B65B}.sched.lux .cdown.bad .u i{color:#FF8A7A}.sched.lux .cdown.bad .u b{color:#FFD2CB!important}
+.sched.lux .sp{position:relative;height:3px;margin-top:16px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+.sched.lux .sp i{position:absolute;left:0;top:0;bottom:0;border-radius:inherit;background:linear-gradient(90deg,#8FB8FF,#E8C77A);transition:width 1s linear}
+.sched.lux:has(.cdown.bad) .sp i{background:linear-gradient(90deg,#F5B65B,#FF8A7A)}
+@keyframes lxPulse{0%{box-shadow:0 0 0 0 rgba(95,224,160,.55)}100%{box-shadow:0 0 0 9px rgba(95,224,160,0)}}
+@media(prefers-reduced-motion:reduce){.sched.lux .sl i,.sched.lux .sp i{animation:none;transition:none}}
+@media(max-width:420px){.sched.lux{padding:15px 16px 14px;border-radius:18px}.sched.lux .u{padding:0 11px}.sched.lux .u b{font-size:29px}.sched.lux .cdl{display:none}.sched.lux .cdown{margin-top:14px}}
+@media(max-height:700px){.sched.lux .u b{font-size:27px}.sched.lux .cdown{margin-top:10px}.sched.lux .sp{margin-top:10px}}
 .msg{font-size:13.5px;line-height:1.55;border-radius:14px;padding:12px 15px;margin:14px 0 0}
 .photo-box{position:relative;width:100%;max-width:360px;margin:0 auto;aspect-ratio:4/3;background:#0B1B1F;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .photo-box video,.photo-box img{width:100%;height:100%;object-fit:cover;display:block}
@@ -808,6 +836,9 @@ body.introbg .btn.go:active{transform:scale(.99)}
   body.exam .qfoot{position:sticky;bottom:0;z-index:3;margin:auto -16px 0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(to top,#fff 76%,rgba(255,255,255,0))}
   body.exam .qfoot .btn{margin-top:0!important;min-height:52px}
 }
+/* Khung giờ bản sang: giữ khoảng đệm và cỡ chữ riêng, không bị các quy tắc thu gọn màn hình thấp ở trên ghi đè */
+body.introbg .sched.lux{padding:clamp(12px,2vh,18px) clamp(14px,4vw,20px) clamp(11px,1.8vh,16px);gap:0}
+body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size:11.5px}
 </style>
 </head>
 <body class="introbg" data-scr="check">
@@ -2420,9 +2451,9 @@ function fmtLeft(ms){
 function p2(n){ return (n < 10 ? '0' : '') + n; }
 function cdParts(ms){ var t = Math.max(0, Math.floor(ms / 1000)); return { d: Math.floor(t / 86400), h: Math.floor(t % 86400 / 3600), m: Math.floor(t % 3600 / 60), s: t % 60, total: t }; }
 // Đồng hồ đếm ngược: dựng khung một lần, mỗi giây chỉ đổi số (số nào đổi thì có hiệu ứng nhảy nhẹ)
-function cdHtml(c){
+function cdHtml(c, lbl){
   var u = function(k, v, l){ return '<span class="u" data-k="' + k + '"><b>' + v + '</b><i>' + l + '</i></span>'; };
-  return '<div class="cdown" aria-hidden="true"><span class="cdl">Còn lại</span>' + (c.d ? u('d', c.d, 'ngày') + '<em>:</em>' : '') + u('h', p2(c.h), 'giờ') + '<em>:</em>' + u('m', p2(c.m), 'phút') + '<em>:</em>' + u('s', p2(c.s), 'giây') + '</div>' +
+  return '<div class="cdown" aria-hidden="true"><span class="cdl">' + (lbl || 'Còn lại') + '</span><span class="cdu">' + (c.d ? u('d', c.d, 'ngày') + '<em></em>' : '') + u('h', p2(c.h), 'giờ') + '<em></em>' + u('m', p2(c.m), 'phút') + '<em></em>' + u('s', p2(c.s), 'giây') + '</span></div>' +
     '<span class="sr" data-sr="1">Còn ' + fmtLeft(c.total * 1000) + '</span>';
 }
 function cdTick(box, c){
@@ -2443,10 +2474,8 @@ function renderSched(){
   if (x.openAt && now < x.openAt){
     cdp = cdParts(x.openAt - now);
     st = 'up';
-    html = '<span class="si">' + IC_CAL + '</span><div class="sx"><span class="sl"><i></i>Chưa đến giờ mở đề</span>' +
-      '<span class="st">Mở lúc ' + fmtWhen(x.openAt) + '</span>' +
-      (x.closeAt ? '<span class="sd">Đóng lúc ' + fmtWhen(x.closeAt) + '</span>' : '') +
-      cdHtml(cdp) + '</div>';
+    html = '<div class="sx"><div class="shd"><span class="sl"><i></i>Sắp mở</span><span class="st">Mở lúc ' + fmtWhen(x.openAt) + '</span></div>' +
+      cdHtml(cdp, 'Mở sau') + (x.closeAt ? '<span class="sd">Đóng lúc ' + fmtWhen(x.closeAt) + '</span>' : '') + '</div>';
   } else if (x.closeAt && now > x.closeAt){
     st = 'off';
     html = '<span class="si">' + IC_LCK + '</span><div class="sx"><span class="sl"><i></i>Đề đã đóng</span>' +
@@ -2456,15 +2485,17 @@ function renderSched(){
   } else {
     st = 'on';
     if (x.closeAt) cdp = cdParts(x.closeAt - now);
-    html = '<span class="si">' + IC_CLK + '</span><div class="sx"><span class="sl"><i></i>Đang mở</span>' +
-      (x.closeAt ? '<span class="st">Đóng lúc ' + fmtWhen(x.closeAt) + '</span>' : '<span class="st">Bạn có thể vào làm bài ngay</span>') +
-      (x.openAt ? '<span class="sd">Mở từ ' + fmtWhen(x.openAt) + '</span>' : '') +
-      (x.closeAt ? cdHtml(cdp) : '') + '</div>';
+    html = '<div class="sx"><div class="shd"><span class="sl"><i></i>Đang mở</span>' +
+      (x.closeAt ? '<span class="st">Đóng lúc ' + fmtWhen(x.closeAt) + '</span>' : '<span class="st">Bạn có thể vào làm bài ngay</span>') + '</div>' +
+      (x.closeAt ? cdHtml(cdp, 'Còn lại') : '') +
+      (x.openAt && x.closeAt ? '<div class="sp" aria-hidden="true"><i></i></div>' : '') + '</div>';
   }
   // Chỉ dựng lại khung khi đổi trạng thái (mở/đóng) hoặc ô "ngày" xuất hiện/biến mất; còn lại mỗi giây chỉ cập nhật số
   var key = st + '|' + (cdp && cdp.d ? 'd' : '');
-  if (key !== SCHED_KEY){ SCHED_KEY = key; box.className = 'sched ' + st; box.innerHTML = html; }
+  if (key !== SCHED_KEY){ SCHED_KEY = key; box.className = 'sched ' + st + (st !== 'off' ? ' lux' : ''); box.innerHTML = html; }
   if (cdp) cdTick(box, cdp);
+  // Thanh thời gian đã trôi qua của cả khung mở đề
+  var spb = box.querySelector('.sp i'); if (spb && x.openAt && x.closeAt) spb.style.width = Math.max(0, Math.min(100, (now - x.openAt) / (x.closeAt - x.openAt) * 100)).toFixed(2) + '%';
   // Chưa mở: khoá nút Tiếp tục, tự mở khoá đúng giờ (theo giờ máy chủ). Đã đóng: máy chủ vẫn là nơi quyết định cuối cùng.
   var lock = st === 'up';
   if (btn.dataset.sched !== st){
