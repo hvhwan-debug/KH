@@ -31,6 +31,7 @@ module.exports = async function (context, req) {
     const settings = await quiz.getExamSettings(attempt.period || "");
     // Cờ thi thử lưu cùng bài làm lúc nộp; bài cũ chưa có cờ thì theo cấu hình hiện tại của đề.
     const practice = attempt.practice != null ? !!attempt.practice : !!settings.practice;
+    await require("../_lib/accesslog").write(req, { kind: "score", role: "public", attempt, via: byCode ? "Tra bằng mã " + quiz.proofCode(attempt.id) : "Liên kết / mã QR kết quả" });
     return reply(context, 200, {
       ok: true, serverNow: Date.now(),
       result: {

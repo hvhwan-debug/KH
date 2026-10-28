@@ -121,6 +121,7 @@ const handler = async function (context, req) {
         }
         if (!paper.length) return reply(context, 404, { ok: false, error: "Không còn bản sao bài làm này (câu hỏi đã bị xoá khỏi ngân hàng đề trước khi bài được lưu bản sao)." });
         let timing = null; try { timing = require("../_lib/timestats").attemptSummary(attempt); } catch (e) { timing = null; }
+        await require("../_lib/accesslog").write(req, { kind: "paper", role: viewer.isAdmin ? "admin" : "manager", attempt, by: viewer.email, byName: viewer.name, via: "Trang quản lí" });
         return reply(context, 200, { ok: true, employee: { code: c.code, name: c.name || "" }, summary: summaryOf(entry, settings, !!viewer.isAdmin), paper, source, partial, timing, photo: typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "", serverNow: Date.now() });
       }
       if (op === "profile") {
@@ -187,6 +188,7 @@ const handler = async function (context, req) {
         let attempt = entry && (await quiz.getAttempt(entry.id));
         if (!attempt && !wantId) { const act = await quiz.getActive(c.code); if (act && (act.period || "") === wantP) attempt = act; }
         const photo = attempt && typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "";
+        if (photo && attempt.status === "submitted") await require("../_lib/accesslog").write(req, { kind: "photo", role: viewer.isAdmin ? "admin" : "manager", attempt, by: viewer.email, byName: viewer.name, via: "Trang quản lí" });
         const devices = !viewer.isAdmin ? [] : attempt ? (Array.isArray(attempt.devices) ? attempt.devices : (attempt.device ? [attempt.device] : [])) : [];
         return reply(context, 200, { ok: true, photo, takenAt: (attempt && attempt.startedAt) || null, face: attempt && attempt.faceCheck ? attempt.faceCheck.status : null, faceId: attempt && attempt.faceId ? { s: attempt.faceId.s, d: attempt.faceId.d, t: attempt.faceId.t, n: attempt.faceId.n } : null, period: attempt ? (attempt.period || "") : wantP, inProgress: !!(attempt && attempt.status === "in_progress"),
           devices: !viewer.isAdmin ? undefined : devices.map((d) => ({ type: d.type, os: d.os, browser: d.browser, model: modelName(d.model, d.screen) || d.model, ip: d.ip, screen: d.screen, tz: d.tz, lang: d.lang, stage: d.stage, at: d.at, ua: d.ua, loc: d.loc || null, locErr: d.locErr || "" })) });

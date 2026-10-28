@@ -24,6 +24,7 @@ async function logView(req, attempt, result, why, detail) {
   try {
     await auditlog.write({ area: "verify", role: "candidate", by: String(attempt.code || "").toLowerCase(), name: attempt.name || "", op: "viewPaper", label: "Thí sinh xem lại đề (đối chiếu khuôn mặt)",
       kind: result === "ok" ? "read" : "denied", status: result === "ok" ? 200 : 403, ok: result === "ok", details: { attempt: attempt.id, result: why, note: detail || "" }, ip: device.ipOf(req) });
+    await require("../_lib/accesslog").write(req, { kind: "paper", role: "candidate", attempt, by: attempt.code, byName: attempt.name, ok: result === "ok", via: "Trang xem lại đề (quét khuôn mặt)", note: result === "ok" ? "" : ({ "face:mismatch": "Khuôn mặt không khớp", "face:noref": "Chưa có ảnh gốc", live: "Ảnh không chụp trực tiếp" }[why] || why) });
   } catch (e) { /* không chặn luồng chính */ }
 }
 
@@ -105,6 +106,7 @@ module.exports = async function (context, req) {
     }
 
     if (master) {
+      await require("../_lib/accesslog").write(req, { kind: "paper", role: "admin", attempt, by: adminU.email, byName: adminU.name, via: "Xem đề như thí sinh" });
       await auditlog.write({ area: "admin", role: "admin", by: String(adminU.email).toLowerCase(), name: adminU.name || "", op: "viewPaper", label: "Xem đề như thí sinh", kind: "read", status: 200, ok: true,
         details: { code: attempt.code, name: attempt.name, attempt: attempt.id }, ip: device.ipOf(req) });
     }

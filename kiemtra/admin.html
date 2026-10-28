@@ -434,6 +434,23 @@ table.tm-t th:first-child,table.tm-t td:first-child{text-align:left;white-space:
 #candList .tag-tv{background:#FFF4D6;color:#8A5A00}
 #candList .tag-left{background:#FBE3E0;color:#9E2A20}
 .candmail{display:none}
+.lk-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0}
+.lk-bar input{flex:1 1 320px;margin:0}
+.lk-list{display:flex;flex-direction:column;gap:8px}
+.lk-row{border:1px solid var(--line);border-radius:14px;background:#fff}
+.lk-head{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.4fr) 92px minmax(0,1fr);gap:12px;align-items:center;width:100%;border:0;background:none;padding:12px 14px;font:inherit;color:inherit;text-align:left;cursor:pointer;border-radius:14px}
+.lk-head:hover{background:#F6F9FC}
+.lk-head b{display:block;font-size:14.5px}.lk-head small{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lk-sc{font-variant-numeric:tabular-nums;font-weight:800;font-size:15px}.lk-sc small{font-weight:500}
+.lk-v{font-size:12px;color:var(--muted)}.lk-v i{font-style:normal;display:inline-block;margin-right:8px;white-space:nowrap}
+.lk-tag{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:99px;font-size:11px;font-weight:700;vertical-align:middle;background:#EEF1F4;color:#5B6676}
+.lk-tag.bad{background:#FBE3E0;color:#9E2A20}.lk-tag.warn{background:#FDF0DA;color:#8A5500}
+.lk-body{border-top:1px solid var(--line);padding:12px 14px 14px}
+.lk-acts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.lk-empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+.al-who b{display:block}.al-who small,.al-att small{display:block;color:var(--muted);font-size:12px}
+.al-no{color:var(--bad);font-weight:700}
+@media(max-width:760px){.lk-head{grid-template-columns:minmax(0,1fr) auto}.lk-head>.lk-ex,.lk-head>.lk-v{grid-column:1/-1}}
 .xp-menu{position:absolute;z-index:1000;min-width:280px;max-width:calc(100vw - 16px);background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 34px rgba(16,40,80,.16);padding:6px}
 .xp-menu button{display:block;width:100%;border:0;background:none;text-align:left;padding:10px 12px;border-radius:10px;font:inherit;color:var(--ink);cursor:pointer}
 .xp-menu button:hover,.xp-menu button:focus-visible{background:#EEF4FC;outline:none}
@@ -621,10 +638,10 @@ html{-webkit-text-size-adjust:100%}
   .topbar .dot{width:34px;height:34px;border-radius:10px;font-size:13px;background:linear-gradient(135deg,#2AB5D7,#07428F)}
   .topbar b{flex:1;min-width:0;font-size:16px}
   .ibtn{width:40px;height:40px;flex:0 0 auto;display:grid;place-items:center;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--brand-deep);cursor:pointer}
-  .bottombar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:50;padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+  .bottombar{display:grid;grid-template-columns:repeat(6,1fr);position:fixed;left:0;right:0;bottom:0;z-index:50;padding:6px 6px calc(6px + env(safe-area-inset-bottom));
     background:rgba(255,255,255,.94);backdrop-filter:saturate(1.5) blur(16px);border-top:1px solid var(--line);box-shadow:0 -12px 32px -20px rgba(10,37,82,.45)}
   .bb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:54px;border:0;background:none;color:var(--muted);font:inherit;font-size:11.5px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
-  .bb .icw{display:grid;place-items:center;width:58px;height:30px;border-radius:15px;transition:background .2s,transform .15s}
+  .bb .icw{display:grid;place-items:center;width:min(52px,100%);height:30px;border-radius:15px;transition:background .2s,transform .15s}
   .bb .ic{width:22px;height:22px}
   .bb:active .icw{transform:scale(.94)}
   .bb.on{color:var(--brand-deep)}
@@ -1149,6 +1166,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
       <div class="nv-grp">Vận hành</div>
       <button type="button" class="nv" data-nav="exams" onclick="switchTab('exams')" title="Đề thi"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg><span class="nv-l">Đề thi</span><span class="nv-cnt hide" id="nvExams"></span></button>
       <button type="button" class="nv" data-nav="candidates" onclick="switchTab('candidates')" title="Hồ sơ học tập"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg><span class="nv-l">Hồ sơ học tập</span><span class="nv-cnt hide" id="nvCand"></span></button>
+      <button type="button" class="nv" data-nav="lookup" onclick="switchTab('lookup')" title="Tra cứu bài kiểm tra và lịch sử xem điểm"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><span class="nv-l">Tra cứu</span></button>
       <button type="button" class="nv" data-nav="notify" onclick="switchTab('notify')" title="Gửi thông báo và thư mời"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg><span class="nv-l">Thông báo, thư mời</span></button>
       <button type="button" class="nv" data-nav="managerview" onclick="switchTab('managerview')" title="Quản lí"><svg class="ic" aria-hidden="true"><use href="#i-mgr"/></svg><span class="nv-l">Quản lí</span></button>
       <button type="button" class="nv" data-nav="kai" onclick="switchTab('kai')" title="Trợ lí KAI: tài liệu và người dùng"><svg class="ic" aria-hidden="true"><use href="#i-help"/></svg><span class="nv-l">Trợ lí KAI</span></button>
@@ -1526,6 +1544,23 @@ button.rd-st:disabled{opacity:.55;cursor:default}
       </div>
     </div>
 
+    <div id="tab-lookup" class="tabpane hide">
+      <div class="card">
+        <div class="dash-h"><h1>Tra cứu bài kiểm tra</h1><p class="small">Tìm trên mọi đề theo tên, mã nhân viên, email, số điện thoại, quản lí, tên đề hoặc mã minh chứng KT-…</p></div>
+        <div class="lk-bar"><input type="search" id="lkQ" placeholder="Ví dụ: Nguyễn Văn A, T030000441, 0912…, KT-JTESBU5V" aria-label="Tìm bài kiểm tra" autocomplete="off"><span class="small" id="lkCount"></span></div>
+        <div class="lk-list" id="lkList"></div>
+      </div>
+      <div class="card">
+        <div class="dash-h"><h1>Ai đã xem điểm, xem lại đề</h1><p class="small">Ghi lại mỗi lần mở trang xác thực kết quả, xem lại đề, xem bài làm hoặc ảnh xác nhận. Mở lại cùng bài trong 10 phút được gộp thành một dòng.</p></div>
+        <div class="aufil">
+          <select id="alKind" aria-label="Loại"><option value="">Mọi loại</option><option value="score">Xem điểm</option><option value="paper">Xem lại đề, bài làm</option><option value="photo">Xem ảnh xác nhận</option></select>
+          <select id="alRole" aria-label="Người xem"><option value="">Mọi người xem</option><option value="public">Người có liên kết</option><option value="candidate">Thí sinh</option><option value="manager">Quản lí</option><option value="admin">Quản trị viên</option></select>
+          <input type="search" id="alQ" placeholder="Tìm thí sinh, người xem, IP…" aria-label="Tìm trong nhật ký xem">
+        </div>
+        <div class="ausum" id="alSum"></div>
+        <div style="overflow-x:auto"><table class="dt autab"><thead><tr><th>Thời điểm</th><th>Bài làm</th><th>Xem gì</th><th>Người xem</th><th>IP / thiết bị</th></tr></thead><tbody id="alList"></tbody></table></div>
+      </div>
+    </div>
     <div id="tab-notify" class="tabpane hide">
       <div class="card">
         <h1>Gửi thông báo và thư mời</h1>
@@ -2041,6 +2076,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
   <nav class="bottombar" aria-label="Mục chính">
     <button type="button" class="bb" data-nav="exams" onclick="switchTab('exams')"><span class="icw"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg></span><span class="bl">Đề thi</span></button>
     <button type="button" class="bb" data-nav="candidates" onclick="switchTab('candidates')"><span class="icw"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg></span><span class="bl">Thí sinh</span></button>
+    <button type="button" class="bb" data-nav="lookup" onclick="switchTab('lookup')"><span class="icw"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></span><span class="bl">Tra cứu</span></button>
     <button type="button" class="bb" data-nav="managerview" onclick="switchTab('managerview')"><span class="icw"><svg class="ic" aria-hidden="true"><use href="#i-mgr"/></svg></span><span class="bl">Quản lí</span></button>
     <button type="button" class="bb" data-nav="kai" onclick="switchTab('kai')"><span class="icw"><svg class="ic" aria-hidden="true"><use href="#i-help"/></svg></span><span class="bl">KAI</span></button>
     <button type="button" class="bb" data-nav="sys" onclick="switchTab('settings')"><span class="icw"><svg class="ic" aria-hidden="true"><use href="#i-set"/></svg></span><span class="bl">Cài đặt</span></button>
@@ -2202,7 +2238,7 @@ $('auXlsx').addEventListener('click', async function(){
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   logEv('exportExcel', { period: 'nhật ký ' + $('auDay').value });
 });
-const TABS = ['exams','candidates','managerview','notify','kai','results','analysis','questions','examset','settings','viewers','banks','audit'];
+const TABS = ['exams','lookup','candidates','managerview','notify','kai','results','analysis','questions','examset','settings','viewers','banks','audit'];
 const WS = ['results','analysis','questions','examset'], SYS = ['settings','viewers','banks','audit'];
 let CUR_EXAM = null, EX_NEW = false, EX_DEFAULT = '';
 // Địa chỉ dạng #exams, #candidates, #settings… hoặc #results/<mã đề>, #questions/<mã đề>, #examset/<mã đề>
@@ -2220,7 +2256,7 @@ function switchTab(t){
   const inWs = WS.indexOf(t) >= 0, inSys = SYS.indexOf(t) >= 0;
   const navKey = inWs ? 'exams' : inSys ? 'sys' : t;
   document.querySelectorAll('[data-nav]').forEach(b => { const on = b.dataset.nav === navKey; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-  const tb = $('tbTitle'); if (tb) tb.textContent = inWs ? 'Đề thi' : inSys ? 'Cài đặt' : ({ exams:'Đề thi', candidates:'Thí sinh', notify:'Thông báo, thư mời', managerview:'Quản lí', kai:'Trợ lí KAI' })[t] || 'Quản trị bài kiểm tra';
+  const tb = $('tbTitle'); if (tb) tb.textContent = inWs ? 'Đề thi' : inSys ? 'Cài đặt' : ({ exams:'Đề thi', lookup:'Tra cứu', candidates:'Thí sinh', notify:'Thông báo, thư mời', managerview:'Quản lí', kai:'Trợ lí KAI' })[t] || 'Quản trị bài kiểm tra';
   document.querySelectorAll('.sysnav').forEach(el => el.classList.toggle('hide', !inSys));
   $('exHead').classList.toggle('hide', !inWs);
   $('exNav').classList.toggle('hide', EX_NEW);
@@ -2231,6 +2267,7 @@ function switchTab(t){
   if (location.hash !== h) history.replaceState(null, '', h);
   if (t === 'candidates' && prevTab !== 'candidates') resetCandFilters(); if (t === 'candidates' && prevTab !== 'candidates') candView('list'); // vào tab Thí sinh: luôn hiện đủ danh sách, không giữ bộ lọc lần trước
   if (t === 'notify') loadNotify();
+  if (t === 'lookup' && prevTab !== 'lookup') { lkSearch(); lkLog(); }
   if (t === 'kai') kaixOpen();
   if (t === 'settings' && prevTab !== 'settings') loadKaiPending();
   if (t === 'audit') { loadAudit(); loadFaceRejections(); }
@@ -4729,6 +4766,63 @@ function exportPick(btn, kind, msgId){
   setTimeout(() => { document.addEventListener('click', close, true); document.addEventListener('keydown', esc1, true); });
   m.addEventListener('click', ev => { const b = ev.target.closest('button[data-m]'); if (!b) return; close(); kind === 'drive' ? exportResultsDrive(btn, msgId, b.dataset.m) : exportResultsXlsx(b.dataset.m); });
 }
+/* ---------- Tra cứu bài kiểm tra + nhật ký xem điểm / xem lại đề ---------- */
+const AL_KIND = { score:'Xem điểm', paper:'Xem lại đề, bài làm', photo:'Xem ảnh xác nhận' };
+const AL_ROLE = { public:'Người có liên kết', candidate:'Thí sinh', manager:'Quản lí', admin:'Quản trị viên' };
+const lkTime = ms => ms ? new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' }) : '–';
+let LK_T = null, LK_ROWS = [];
+async function lkSearch(){
+  const q = $('lkQ').value.trim();
+  const { j } = await api('GET', '/api/kt-admin?op=lookup&q=' + encodeURIComponent(q));
+  if (!j || !j.ok){ $('lkList').innerHTML = '<div class="lk-empty">' + esc((j && j.error) || 'Không tra cứu được, thử lại sau.') + '</div>'; return; }
+  LK_ROWS = j.rows || [];
+  $('lkCount').textContent = j.total ? (j.total > LK_ROWS.length ? 'Hiện ' + LK_ROWS.length + '/' + j.total + ' bài, gõ cụ thể hơn để thu hẹp' : j.total + ' bài') : '';
+  $('lkList').innerHTML = LK_ROWS.map((r, i) => {
+    const v = r.views || {}, sub = r.status === 'submitted';
+    const tags = (r.practice ? '<span class="lk-tag warn">Thi thử</span>' : '') + (!sub ? '<span class="lk-tag warn">Đang làm</span>' : '') + (r.faceId && r.faceId.s === 'mismatch' ? '<span class="lk-tag bad">Khác người các lần trước</span>' : '');
+    const vv = [v.score ? '<i>👁 ' + v.score + ' lượt xem điểm</i>' : '', v.paper ? '<i>📄 ' + v.paper + ' lượt xem lại đề</i>' : '', v.photo ? '<i>📷 ' + v.photo + ' lượt xem ảnh</i>' : ''].join('') || '<i>Chưa ai xem</i>';
+    return '<div class="lk-row" data-i="' + i + '"><button type="button" class="lk-head" aria-expanded="false" onclick="lkOpen(' + i + ',this)">' +
+      '<span><b>' + esc(r.name || r.code) + tags + '</b><small>' + esc(r.code) + (r.manager ? ' · ' + esc(r.manager) : '') + '</small></span>' +
+      '<span class="lk-ex"><b style="font-weight:600">' + esc(r.examTitle) + '</b><small>' + (sub ? 'Nộp ' + lkTime(r.submittedAt) : 'Bắt đầu ' + lkTime(r.startedAt)) + ' · ' + esc(r.proof) + '</small></span>' +
+      '<span class="lk-sc">' + (sub ? r.score + '/' + r.total + ' <small>' + r.pct + '%</small>' : '–') + '</span>' +
+      '<span class="lk-v">' + vv + '</span></button><div class="lk-body hide"></div></div>';
+  }).join('') || '<div class="lk-empty">' + (q ? 'Không tìm thấy bài kiểm tra nào khớp “' + esc(q) + '”.' : 'Chưa có bài kiểm tra nào.') + '</div>';
+}
+async function lkOpen(i, btn){
+  const r = LK_ROWS[i], box = btn.nextElementSibling, open = box.classList.contains('hide');
+  box.classList.toggle('hide', !open); btn.setAttribute('aria-expanded', String(open));
+  if (!open) return;
+  box.innerHTML = '<div class="lk-acts">' + (r.status === 'submitted' ? '<button class="btn sm" type="button" onclick="lkView(' + i + ')">Xem bài làm</button>' : '') +
+    (r.period ? '<button class="btn ghost sm" type="button" onclick="openExam(\'' + esc(r.period) + '\',\'results\')">Mở kết quả của đề</button>' : '') +
+    '<button class="btn ghost sm" type="button" onclick="openCandProfile(\'' + esc(r.code) + '\')">Hồ sơ học tập</button></div><div class="small">Đang tải lịch sử xem…</div>';
+  const { j } = await api('GET', '/api/kt-admin?op=access&id=' + encodeURIComponent(r.id));
+  const items = (j && j.ok && j.items) || [];
+  box.querySelector('.small').outerHTML = items.length
+    ? '<div style="overflow-x:auto"><table class="dt autab"><thead><tr><th>Thời điểm</th><th>Xem gì</th><th>Người xem</th><th>IP / thiết bị</th></tr></thead><tbody>' + items.map(v => alRow(v, true)).join('') + '</tbody></table></div>'
+    : '<div class="lk-empty">Chưa có ai xem điểm hay xem lại đề của bài này.</div>';
+}
+function lkView(i){ const r = LK_ROWS[i]; if (r.period) openExam(r.period, 'results'); setTimeout(() => viewResult(r.id), 250); }
+function alRow(v, noAtt){
+  const who = v.role === 'public' ? '<b>Người có liên kết</b><small>Không đăng nhập · ' + esc(v.via || '') + '</small>'
+    : '<b>' + esc(v.byName || v.by || '') + '</b><small>' + esc(AL_ROLE[v.role] || v.role) + (v.by && v.byName && v.by !== String(v.byName).toLowerCase() ? ' · ' + esc(v.by) : '') + (v.via ? ' · ' + esc(v.via) : '') + '</small>';
+  return '<tr><td style="white-space:nowrap">' + lkTime(v.at) + (v.n > 1 ? '<br><small class="small">' + v.n + ' lần</small>' : '') + '</td>' +
+    (noAtt ? '' : '<td class="al-att"><b>' + esc(v.name || v.code) + '</b><small>' + esc(v.code) + (v.period ? ' · ' + esc(v.period) : '') + '</small></td>') +
+    '<td>' + esc(AL_KIND[v.kind] || v.kind) + (v.ok === false ? '<br><span class="al-no">Bị từ chối' + (v.note ? ': ' + esc(v.note) : '') + '</span>' : '') + '</td>' +
+    '<td class="al-who">' + who + '</td><td class="small">' + esc(v.ip || '') + (v.dev ? '<br>' + esc(v.dev) : '') + '</td></tr>';
+}
+let AL_T = null;
+async function lkLog(){
+  const qs = 'op=access&kind=' + encodeURIComponent($('alKind').value) + '&role=' + encodeURIComponent($('alRole').value) + '&q=' + encodeURIComponent($('alQ').value.trim());
+  const { j } = await api('GET', '/api/kt-admin?' + qs);
+  const items = (j && j.ok && j.items) || [];
+  $('alSum').textContent = j && j.ok ? (j.total ? j.total + ' lượt' + (j.total > items.length ? ', hiện ' + items.length + ' lượt gần nhất' : '') : '') : '';
+  $('alList').innerHTML = items.map(v => alRow(v)).join('') || '<tr><td colspan="5" class="small">Chưa có lượt xem nào' + (qs.indexOf('kind=&role=&q=') < 0 ? ' khớp bộ lọc' : '') + '.</td></tr>';
+}
+(function lkBind(){ if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', lkBind); return; }
+  const q = $('lkQ'); if (q) q.addEventListener('input', () => { clearTimeout(LK_T); LK_T = setTimeout(lkSearch, 300); });
+  ['alKind','alRole'].forEach(id => { const el = $(id); if (el) el.addEventListener('change', lkLog); });
+  const aq = $('alQ'); if (aq) aq.addEventListener('input', () => { clearTimeout(AL_T); AL_T = setTimeout(lkLog, 300); });
+})();
 // Đối chiếu khuôn mặt giữa các lần kiểm tra cho các bài chưa đối chiếu (gọi lặp tới khi xong)
 async function faceScanRun(btn){
   const box = $('driveMsg'), lbl = btn.textContent, period = $('resPeriod').value || '';

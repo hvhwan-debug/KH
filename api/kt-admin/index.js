@@ -265,6 +265,38 @@ const handler = async function (context, req) {
         return reply(context, 200, { ok: true, rejections: list });
       }
       if (op === "exams") return reply(context, 200, { ok: true, exams: await quiz.listExamsSummary(), currentPeriod: (await quiz.getSettings()).examPeriod, maxQuestions: quiz.MAX_QUESTION_COUNT });
+      // Tra cứu bài kiểm tra trên MỌI đề: theo tên, mã NV, email, số điện thoại hoặc mã minh chứng KT-…; kèm số lượt đã xem
+      if (op === "lookup") {
+        const raw = String((req.query && req.query.q) || "").trim().slice(0, 80);
+        const norm = (x) => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
+        const q = norm(raw), qd = raw.replace(/\D/g, "");
+        const candBy = {}; (await quiz.getCandidates()).forEach((c) => { candBy[quiz.normCode(c.code)] = c; });
+        const titles = {}; (await quiz.getExams()).forEach((e) => { titles[e.id] = String(e.examTitle || e.title || e.id); });
+        const views = {}; (await require("../_lib/accesslog").read()).forEach((v) => { const k = v.id; if (!k) return; const o = views[k] || (views[k] = { score: 0, paper: 0, photo: 0, last: 0 }); o[v.kind] = (o[v.kind] || 0) + (v.n || 1); o.last = Math.max(o.last, v.at); });
+        const all = await quiz.getIndex();
+        const hit = all.filter((r) => {
+          if (!raw) return true;
+          const c = candBy[quiz.normCode(r.code)] || {};
+          const hay = norm([r.name, r.code, r.email, r.manager, r.proof || quiz.proofCode(r.id), c.phone, titles[r.period] || r.period].join(" "));
+          return hay.indexOf(q) >= 0 || (qd.length >= 6 && String(c.phone || "").replace(/\D/g, "").indexOf(qd) >= 0);
+        }).sort((a, b) => (b.submittedAt || b.startedAt || 0) - (a.submittedAt || a.startedAt || 0));
+        const rows = hit.slice(0, 200).map((r) => ({ id: r.id, code: r.code, name: r.name, manager: r.manager || "", period: r.period || "", examTitle: titles[r.period] || r.period || "",
+          status: r.status, score: r.score, total: r.total, pct: r.pct, compliancePoints: r.compliancePoints, submittedAt: r.submittedAt, startedAt: r.startedAt, practice: !!r.practice,
+          proof: r.proof || quiz.proofCode(r.id), flags: r.flags || null, faceId: r.faceId ? { s: r.faceId.s, d: r.faceId.d } : null, views: views[r.id] || null }));
+        return reply(context, 200, { ok: true, q: raw, total: hit.length, rows });
+      }
+      // Nhật ký xem điểm / xem lại đề. id = chỉ một bài làm; không có id = các lượt gần nhất (lọc theo loại, vai trò, từ khoá)
+      if (op === "access") {
+        const id = String((req.query && req.query.id) || ""), kind = String(req.query.kind || ""), role = String(req.query.role || "");
+        const norm = (x) => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").toLowerCase();
+        const q = norm(String(req.query.q || "").trim().slice(0, 80));
+        let list = (await require("../_lib/accesslog").read()).slice().reverse();
+        if (id) list = list.filter((v) => v.id === id);
+        if (kind) list = list.filter((v) => v.kind === kind);
+        if (role) list = list.filter((v) => v.role === role);
+        if (q) list = list.filter((v) => norm([v.name, v.code, v.by, v.byName, v.ip, v.via, v.note].join(" ")).indexOf(q) >= 0);
+        return reply(context, 200, { ok: true, total: list.length, items: list.slice(0, id ? 500 : 300) });
+      }
       if (op === "results") {
         const st = await quiz.getSettings();
         const all = await quiz.getIndex();
@@ -391,6 +423,7 @@ const handler = async function (context, req) {
       if (op === "result") {
         const a = await quiz.getAttempt(String(req.query.id || ""));
         if (!a) return reply(context, 404, { ok: false, error: "Không tìm thấy." });
+        await require("../_lib/accesslog").write(req, { kind: "paper", role: "admin", attempt: a, by: u.email, byName: u.name, via: "Trang quản trị" });
         const allQ = await quiz.getQuestions();
         const byId = {}; allQ.forEach((q) => { byId[q.id] = q; });
         const detail = a.questionIds.map((qid) => {
