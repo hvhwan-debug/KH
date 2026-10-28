@@ -262,6 +262,15 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
 .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700}
 .badge.y{background:var(--ok-soft);color:var(--ok)}
 .badge.n{background:var(--bad-soft);color:var(--bad)}
+.badge.w{background:#FFF1D6;color:#8A5200}
+.qnav{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.qnav-r{display:inline-flex;align-items:center;gap:8px}
+.qstat{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}
+.qstat button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer}
+.qstat button b{color:#16323a}
+.qstat button.on{border-color:var(--brand);background:#E6F4F4;color:var(--brand-deep)}
+.qstat button.bad b{color:var(--bad)}
+.qst-sub{display:block;margin-top:3px;font-size:11.5px;color:var(--muted);white-space:normal}
 .opt-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
 .opt-row input[type=text]{flex:1}
 .opt-row input[type=radio],.opt-row input[type=checkbox]{width:18px;height:18px;flex:0 0 auto}
@@ -1387,6 +1396,10 @@ button.rd-st:disabled{opacity:.55;cursor:default}
       <div class="card hide" id="qFormCard">
         <button class="xclose" type="button" onclick="qPanel(null)" aria-label="Đóng">×</button>
         <h1 id="qFormTitle">Thêm câu hỏi mới</h1>
+        <div class="qnav hide" id="qNav">
+          <button class="btn ghost sm" type="button" onclick="qFormBack()">← Quay lại danh sách</button>
+          <span class="qnav-r"><button class="btn ghost sm" type="button" id="qNavPrev" onclick="qFormGo(-1)">‹ Câu trước</button><span class="small" id="qNavPos"></span><button class="btn ghost sm" type="button" id="qNavNext" onclick="qFormGo(1)">Câu sau ›</button></span>
+        </div>
         <input type="hidden" id="qEditId">
         <label>Nội dung câu hỏi</label>
         <textarea id="qText" placeholder="Nhập nội dung câu hỏi…"></textarea>
@@ -1474,8 +1487,13 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <div class="qfilter">
           <input type="search" id="qSearch" placeholder="Tìm nội dung câu hỏi…" oninput="QLIM=50;renderQList()" aria-label="Tìm câu hỏi">
           <select id="qCatF" onchange="QLIM=50;renderQList()" aria-label="Lọc danh mục"></select>
+          <select id="qStatF" onchange="QLIM=50;renderQList()" aria-label="Lọc trạng thái">
+            <option value="*">Mọi trạng thái</option><option value="on">Đang dùng</option><option value="off">Đã ẩn</option>
+            <option value="err">⚠ Cần sửa (thiếu đáp án…)</option><option value="noexp">Thiếu giải thích</option><option value="nocat">Chưa phân loại</option>
+          </select>
           <span class="small" id="qShown"></span>
         </div>
+        <div class="qstat" id="qStatBar"></div>
         <div id="qBackupBar"></div>
         <div id="qDelMsg"></div>
         <table class="stk"><thead><tr><th>Câu hỏi</th><th>Danh mục</th><th>Trạng thái</th><th></th></tr></thead><tbody id="qList"></tbody></table>
@@ -3175,6 +3193,71 @@ function qMoreSync(open){
 }
 $('qMoreBox').addEventListener('input', () => qMoreSync());
 $('qMoreBox').addEventListener('change', () => qMoreSync());
+// ----- Trạng thái từng câu hỏi: đủ để ra đề chưa, còn thiếu gì -----
+function qIssues(q){
+  const errs = [], warns = [], type = q.type || 'single';
+  if (!String(q.text || '').trim()) errs.push('Thiếu nội dung câu hỏi');
+  if (type === 'fill'){
+    if (!(q.accepted || []).some(a => String(a).trim())) errs.push('Chưa có đáp án chấp nhận');
+  } else {
+    const opts = q.options || [], filled = opts.filter(o => String(o).trim()).length;
+    if (filled < 2) errs.push('Dưới 2 phương án');
+    if (opts.some(o => !String(o).trim())) errs.push('Có phương án bỏ trống');
+    if (type === 'multi'){ if (!(q.correctIndexes || []).length) errs.push('Chưa chọn đáp án đúng'); }
+    else if (!(Number.isInteger(q.correctIndex) && q.correctIndex >= 0 && q.correctIndex < opts.length)) errs.push('Chưa chọn đáp án đúng');
+  }
+  if (!String(q.explanation || '').trim()) warns.push('Thiếu giải thích');
+  if (!String(q.category || '').trim()) warns.push('Chưa phân loại');
+  return { errs, warns };
+}
+function qStatPass(q, f){
+  if (!f || f === '*') return true;
+  if (f === 'on') return q.active !== false;
+  if (f === 'off') return q.active === false;
+  const it = qIssues(q);
+  if (f === 'err') return it.errs.length > 0;
+  if (f === 'noexp') return !String(q.explanation || '').trim();
+  if (f === 'nocat') return !String(q.category || '').trim();
+  return true;
+}
+function qStatusCell(q){
+  const it = qIssues(q);
+  let h = q.active !== false ? '<span class="badge y">Đang dùng</span>' : '<span class="badge n">Đã ẩn</span>';
+  if (it.errs.length) h += ' <span class="badge n" title="' + esc(it.errs.join('; ')) + '">⚠ Cần sửa</span><span class="qst-sub" style="color:var(--bad)">' + esc(it.errs.join(' · ')) + '</span>';
+  else h += ' <span class="badge y" title="Đủ nội dung và đáp án đúng">✓ Đủ</span>';
+  if (it.warns.length) h += '<span class="qst-sub">' + esc(it.warns.join(' · ')) + '</span>';
+  return h;
+}
+function qStatBarRender(L){
+  const n = f => L.filter(q => qStatPass(q, f)).length, cur = $('qStatF').value;
+  const defs = [['*','Tất cả'],['on','Đang dùng'],['off','Đã ẩn'],['err','⚠ Cần sửa'],['noexp','Thiếu giải thích'],['nocat','Chưa phân loại']];
+  $('qStatBar').innerHTML = defs.map(([k,l]) => '<button type="button" class="' + (k === cur ? 'on ' : '') + (k === 'err' && n('err') ? 'bad' : '') + '" onclick="$(\'qStatF\').value=\'' + k + '\';QLIM=50;renderQList()">' + l + ' <b>' + (k === '*' ? L.length : n(k)) + '</b></button>').join('');
+}
+// ----- Form sửa: quay lại danh sách / câu trước / câu sau (hỏi lại nếu đang có thay đổi chưa lưu) -----
+let QSNAP = '';
+function qSnapNow(){
+  return JSON.stringify([$('qText').value, $('qType').value, $('qPeriod').value, $('qBank').value, $('qCategory').value, $('qDifficulty').value, $('qTags').value, $('qExplain').value, $('qAccepted').value,
+    Array.from(document.querySelectorAll('#qOptsEdit .opt-row')).map(r => [r.querySelector('input[type=text]').value, r.querySelector('.qc').checked])]);
+}
+function qSnap(){ QSNAP = qSnapNow(); }
+function qDirtyOk(){ return qSnapNow() === QSNAP || confirm('Câu hỏi này có thay đổi chưa lưu. Bỏ thay đổi và tiếp tục?'); }
+function qNavSync(id){
+  const i = id ? QPREV_IDS.indexOf(id) : -1;
+  $('qNav').classList.toggle('hide', !id);
+  $('qNavPos').textContent = i >= 0 ? 'Câu ' + (i + 1) + '/' + QPREV_IDS.length : '';
+  $('qNavPrev').disabled = i <= 0; $('qNavNext').disabled = i < 0 || i >= QPREV_IDS.length - 1;
+}
+function qFormBack(){
+  if (!qDirtyOk()) return;
+  const x = document.querySelector('#qFormCard > .xclose'); if (x) x.click(); else qPanel(null);
+  clearQForm();
+}
+function qFormGo(d){
+  const cur = $('qEditId').value, i = QPREV_IDS.indexOf(cur), n = i + d;
+  if (i < 0 || n < 0 || n >= QPREV_IDS.length) return;
+  if (!qDirtyOk()) return;
+  editQuestion(QPREV_IDS[n]);
+}
 function clearQForm(){
   $('qRegradeBtn').classList.add('hide');
   $('qEditId').value=''; $('qText').value=''; $('qCategory').value='';
@@ -3184,7 +3267,7 @@ function clearQForm(){
   $('qOptsEdit').innerHTML=''; $('qFormTitle').textContent='Thêm câu hỏi mới vào ' + qPerLabel(QP || '').toLowerCase();
   if ($('qPeriod').options.length) $('qPeriod').value = QP || '';
   for (let i=0;i<4;i++) addOptRow(i===0);
-  qMoreSync(false);
+  qMoreSync(false); qNavSync(null); qSnap();
   msg('qMsg','');
 }
 let QP = null, QMETA = {}, QLIST = [], QLIM = 50;
@@ -3193,12 +3276,13 @@ function renderQList(){
   const cats = Array.from(new Set(L.map(q => q.category || ''))).sort();
   $('qCatF').innerHTML = '<option value="*">Mọi danh mục (' + L.length + ')</option>' + cats.map(c => '<option value="' + esc(c) + '">' + esc(c || '(chưa có danh mục)') + ' (' + L.filter(q => (q.category||'') === c).length + ')</option>').join('');
   $('qCatF').value = cats.indexOf(cf) >= 0 ? cf : '*';
-  const F = L.filter(q => ($('qCatF').value === '*' || (q.category||'') === $('qCatF').value) && (!q0 || spNorm(q.text).indexOf(q0) >= 0));
+  const F = L.filter(q => ($('qCatF').value === '*' || (q.category||'') === $('qCatF').value) && (!q0 || spNorm(q.text).indexOf(q0) >= 0) && qStatPass(q, $('qStatF').value));
+  qStatBarRender(L);
   const V = F.slice(0, QLIM);
   QPREV_IDS = V.map(q => q.id);
   $('qShown').textContent = F.length === L.length ? '' : 'Đang lọc: ' + F.length + ' câu';
   $('qList').innerHTML = V.map(q =>
-    '<tr><td class="qtxt" onclick="qPreview(\'' + q.id + '\')" title="Bấm để xem câu hỏi và đáp án">' + esc(q.text.slice(0,110)) + (q.text.length > 110 ? '…' : '') + '</td><td class="small">' + esc(q.category || '') + '</td><td>' + (q.active !== false ? '<span class="badge y">Đang dùng</span>' : '<span class="badge n">Đã ẩn</span>') + '</td>' +
+    '<tr><td class="qtxt" onclick="qPreview(\'' + q.id + '\')" title="Bấm để xem câu hỏi và đáp án">' + esc(q.text.slice(0,110)) + (q.text.length > 110 ? '…' : '') + '</td><td class="small">' + esc(q.category || '') + '</td><td>' + qStatusCell(q) + '</td>' +
     '<td style="white-space:nowrap;text-align:right"><button class="btn ghost sm" onclick="editQuestion(\'' + q.id + '\')">Sửa</button> <button class="btn ghost sm" onclick="toggleQuestion(\'' + q.id + '\')">' + (q.active !== false ? 'Ẩn' : 'Hiện') + '</button> <button class="btn dghost sm" onclick="deleteQuestion(\'' + q.id + '\')">Xoá</button></td></tr>'
   ).join('') || '<tr><td colspan="4" class="small">' + (L.length ? 'Không có câu nào khớp bộ lọc.' : 'Đề này chưa có câu hỏi. Bấm “📥 Nhập từ file Excel” hoặc chép từ đề khác ở trên.') + '</td></tr>';
   $('qMore').classList.toggle('hide', F.length <= QLIM);
@@ -3444,7 +3528,7 @@ function editQuestion(id){
   $('qOptsLabel').textContent = t === 'multi' ? 'Các phương án trả lời (tick ô “✓ Đúng” của TẤT CẢ đáp án đúng)' : 'Các phương án trả lời (bấm ô “✓ Đúng” ở đầu dòng để chọn đáp án đúng)';
   if (t === 'fill') $('qAccepted').value = (q.accepted || []).join('\n');
   else (q.options || []).forEach((o,i) => addOptRow(t === 'multi' ? (q.correctIndexes || []).indexOf(i) >= 0 : i === q.correctIndex, o));
-  qMoreSync(!!(q.category || q.difficulty || (q.tags || []).length));
+  qMoreSync(!!(q.category || q.difficulty || (q.tags || []).length)); qNavSync(id); qSnap();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 async function toggleQuestion(id){

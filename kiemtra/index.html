@@ -227,6 +227,18 @@ button,input{font:inherit;color:inherit}
 .seg i{height:6px;border-radius:4px;background:var(--line);transition:background .25s}
 .seg i.d{background:var(--brand)}
 .seg i.c{background:linear-gradient(90deg,var(--accent),var(--violet))}
+.qprog{margin:-12px 0 18px;font-size:13px}
+.qprog>summary{cursor:pointer;color:var(--brand-deep);font-weight:600;padding:4px 0;list-style:none}
+.qprog>summary::-webkit-details-marker{display:none}
+.qprog>summary::before{content:'▸ ';color:var(--muted)}
+.qprog[open]>summary::before{content:'▾ '}
+.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:6px;margin:8px 0}
+.qgrid .g{height:34px;border-radius:9px;display:grid;place-items:center;font-size:12.5px;font-weight:700;background:#fff;border:1.5px solid var(--line);color:var(--muted)}
+.qgrid .g.d,.qlegend .g.d{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.qgrid .g.c,.qlegend .g.c{background:#fff;border-color:var(--brand);color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.qlegend{display:flex;flex-wrap:wrap;gap:4px 14px;margin:4px 0 0;color:var(--muted);font-size:12px}
+.qlegend span{display:inline-flex;align-items:center;gap:5px}
+.qlegend .g{display:inline-block;width:12px;height:12px;border-radius:4px;background:#fff;border:1.5px solid var(--line)}
 .card h1.qtext{font-size:19px;font-weight:700;line-height:1.55;margin:0 0 20px;letter-spacing:0}
 .opts{display:flex;flex-direction:column;gap:11px}
 .opt{position:relative;display:flex;align-items:flex-start;gap:14px;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:14px 48px 14px 14px;min-height:58px;cursor:pointer;transition:border-color .15s,background .15s,transform .15s,box-shadow .15s}
@@ -922,6 +934,12 @@ body.introbg .btn.go:active{transform:scale(.99)}
         </div>
       </div>
       <div class="seg" id="seg" aria-hidden="true"></div>
+      <details class="qprog" id="qProg">
+        <summary>Xem tiến độ các câu</summary>
+        <div class="qgrid" id="qGrid" role="list"></div>
+        <p class="qlegend"><span><i class="g d"></i> Đã qua</span><span><i class="g c"></i> Đang làm</span><span><i class="g"></i> Chưa tới</span></p>
+        <p class="qlegend" style="margin-top:2px">Mỗi câu có đồng hồ riêng; câu đã qua không thể quay lại.</p>
+      </details>
       <h1 class="qtext" id="qText" tabindex="-1"></h1>
       <div class="opts" id="qOpts" role="radiogroup" aria-labelledby="qText"></div>
       <div class="qfoot"><button class="btn go" id="btnNext" type="button" style="margin-top:18px" disabled>Câu tiếp theo</button></div>
@@ -1437,6 +1455,14 @@ function buildSeg(total){
 function paintSeg(){
   var items = $('seg').children;
   for (var i=0;i<items.length;i++) items[i].className = i < ST.index ? 'd' : (i === ST.index ? 'c' : '');
+  var gr = $('qGrid');
+  if (gr){
+    if (gr.children.length !== ST.total){ var h = ''; for (var k=0;k<ST.total;k++) h += '<span class="g" role="listitem">'+(k+1)+'</span>'; gr.innerHTML = h; }
+    for (var j=0;j<gr.children.length;j++){
+      gr.children[j].className = 'g' + (j < ST.index ? ' d' : (j === ST.index ? ' c' : ''));
+      gr.children[j].setAttribute('aria-label', 'Câu '+(j+1)+': '+(j < ST.index ? 'đã qua' : (j === ST.index ? 'đang làm' : 'chưa tới')));
+    }
+  }
 }
 
 function loadQuestion(s){
