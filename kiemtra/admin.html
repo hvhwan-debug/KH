@@ -1954,7 +1954,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <div class="kpis" id="dashKpis"></div>
       </div>
       <div id="pgCard">
-        <div class="pg-pulse" id="pgPulse" aria-hidden="true"></div>
+        <div class="pg-pulse hide" id="pgPulse" aria-hidden="true"></div>
         <div class="pg-tabs" role="tablist" id="pgTabs"></div>
         <div class="pg-tools">
           <input type="search" id="pgSearch" placeholder="Tìm tên, mã NV, quản lí, tỉnh…" oninput="renderProgress();filterResults()" aria-label="Tìm thí sinh (lọc cả bảng Bài đã nộp bên dưới)">
@@ -4830,13 +4830,13 @@ const pctTxt = (v) => v == null ? '–' : (Math.round(v*10)/10).toString().repla
 const durTxt = (s) => { if (s == null) return '–'; const m = Math.floor(s/60), x = s%60; return m + ' phút ' + (x<10?'0':'') + x + ' giây'; };
 /* ---------- Tình trạng làm bài: Đã làm / Đang làm / Chưa làm ---------- */
 let PG = null, PG_F = 'doing', PG_P = '', PG_T = null, PG_INIT = null;
-const PG_LBL = { all:'Tất cả', doing:'Đang làm', done:'Đã nộp', none:'Chưa làm' };
+const PG_LBL = { all:'Tất cả', doing:'Đang làm', done:'Hoàn thành', none:'Chưa làm' };
 const TOUCH = !!(window.matchMedia && matchMedia('(hover:none)').matches);
 let PG_SHOW = 10, PG_KEY = '';
 async function loadProgress(sel){
   if (sel !== undefined) PG_P = /^[a-z0-9][a-z0-9-]{0,39}$/i.test(sel || '') ? sel : '';
   const { j } = await api('GET', '/api/kt-admin?op=progress' + (PG_P ? '&period=' + encodeURIComponent(PG_P) : ''));
-  if (!j || !j.ok){ $('pgCard').classList.add('hide'); if ($('resSearch')) $('resSearch').classList.remove('hide'); return; }
+  if (!j || !j.ok){ $('pgCard').classList.add('hide'); if ($('resCard')) $('resCard').classList.remove('hide'); if ($('resSearch')) $('resSearch').classList.remove('hide'); return; }
   PG = j; $('pgCard').classList.remove('hide');
   if ($('resSearch')) $('resSearch').classList.add('hide'); // một ô tìm kiếm chung ở khung theo dõi, lọc cả bảng Bài đã nộp
   // Mở đúng tab cần chú ý: có người đang làm thì xem họ trước, không thì xem ai chưa làm
@@ -4853,8 +4853,7 @@ async function loadProgress(sel){
   if (j.count.doing) PG_T = setTimeout(() => { if ($('pgCard').offsetParent) loadProgress(); }, 30000);
 }
 function pgSetF(f){
-  if (f === 'done'){ const c = $('resCard'); if (c) c.scrollIntoView({ behavior:'smooth', block:'start' }); return; } // người đã nộp xem ở bảng Bài đã nộp bên dưới, không lặp lại ở đây
-  PG_F = f; renderProgress();
+  PG_F = f; renderProgress(); // 3 tab: Đang làm / Hoàn thành / Chưa làm — mỗi lúc chỉ hiện đúng một danh sách
 }
 function pgRows(){
   const q = spNorm($('pgSearch').value || ''), m = $('pgMgr').value || '*';
@@ -4863,8 +4862,13 @@ function pgRows(){
 function renderProgress(){
   if (!PG) return;
   const base = pgRows(), cnt = { all: base.length, doing: 0, done: 0, none: 0 }; base.forEach(x => cnt[x.status]++);
-  const pl = $('pgPulse'); if (pl) pl.innerHTML = ['done','doing','none'].filter(k => cnt[k]).map(k => '<i class="' + k + '" style="flex:' + cnt[k] + '" title="' + PG_LBL[k] + ' ' + cnt[k] + '" onclick="pgSetF(\'' + k + '\')"></i>').join('');
-  $('pgTabs').innerHTML = ['doing','none','done'].map(k => '<button type="button" role="tab" class="pg-tab ' + k + (k === 'done' ? ' link' : '') + (PG_F === k ? ' on' : '') + '" aria-selected="' + (PG_F === k) + '" onclick="pgSetF(\'' + k + '\')"' + (k === 'done' ? ' title="Xem ở bảng Bài đã nộp bên dưới"' : '') + '><i></i>' + PG_LBL[k] + (k === 'done' ? ' ↓' : '') + ' <b>' + cnt[k] + '</b></button>').join('');
+  const pl = $('pgPulse'); if (pl) pl.innerHTML = '';
+  $('pgTabs').innerHTML = ['doing','done','none'].map(k => '<button type="button" role="tab" class="pg-tab ' + k + (PG_F === k ? ' on' : '') + '" aria-selected="' + (PG_F === k) + '" onclick="pgSetF(\'' + k + '\')"><i></i>' + PG_LBL[k] + ' <b>' + cnt[k] + '</b></button>').join('');
+  // Tab Hoàn thành: dùng luôn bảng kết quả đầy đủ (điểm, cảnh báo, xem bài, xuất Excel); hai tab kia dùng danh sách gọn
+  const isDone = PG_F === 'done';
+  $('pgList').classList.toggle('hide', isDone);
+  if ($('resCard')) $('resCard').classList.toggle('hide', !isDone);
+  if (isDone){ $('pgCopy').classList.add('hide'); return; }
   const fm = ms => { const d = new Date(ms + 7 * 3600 * 1000), p = n => (n < 10 ? '0' : '') + n; return p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ' ' + p(d.getUTCDate()) + '/' + p(d.getUTCMonth() + 1); };
   const ORD = { doing:0, none:1, done:2 };
   const L = base.filter(x => x.status === PG_F).sort((a, b) => PG_F === 'doing' ? (((a.doing && a.doing.endsAt) || 1e15) - ((b.doing && b.doing.endsAt) || 1e15)) || String(a.name).localeCompare(String(b.name), 'vi') : String(a.manager || '~').localeCompare(String(b.manager || '~'), 'vi') || String(a.name).localeCompare(String(b.name), 'vi')); // đang làm: sắp hết giờ trước; chưa làm: gom theo quản lí
