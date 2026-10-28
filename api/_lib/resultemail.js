@@ -159,6 +159,7 @@ function build(attempt, settings, advice) {
         '<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + C.deep + ';margin:0 0 4px">Cách bạn đã làm bài</div>' +
         '<div style="font-size:14.5px;line-height:1.7;color:' + C.ink + '">' + esc(portrait) + "</div></td></tr></table>" : "") +
       (strengths ? sub("Điểm mạnh") + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + strengths + "</table>" : "") +
+      ((a.topics || []).length ? sub("Chủ đề nên ôn lại") + '<ul style="margin:0 0 6px;padding-left:20px;font-family:' + FONT + ';font-size:14px;line-height:1.7;color:' + C.body + '">' + a.topics.map((x) => "<li>" + esc(x) + "</li>").join("") + "</ul>" : "") +
       (acts ? sub("Việc nên làm") + acts : "") +
       (a.goal ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#FFF8E8" style="border-collapse:separate;background:#FFF8E8;border:1px solid #F1DFB6;border-radius:12px;margin:6px 0 8px"><tr><td style="padding:12px 14px;font-family:' + FONT + ';font-size:14px;line-height:1.6;color:#5E3D00">' +
         '<b style="color:#8A5500">&#127919; Mục tiêu lần tới.</b> ' + esc(String(a.goal).replace(/^Lần tới:\s*/i, "")) + "</td></tr></table>" : "") +
@@ -244,6 +245,7 @@ function textOf(attempt, settings, m) {
     if (a.headline) L.push(a.headline);
     if (a.portrait || a.summary) L.push("Cách bạn đã làm bài: " + (a.portrait || a.summary));
     (a.strengths || []).forEach((x) => L.push("* Điểm mạnh: " + x));
+    (a.topics || []).forEach((x) => L.push("- Chủ đề nên ôn lại: " + x));
     (a.actions || []).forEach((x, i) => L.push((i + 1) + ". " + x));
     if (a.goal) L.push("Mục tiêu " + String(a.goal).charAt(0).toLowerCase() + String(a.goal).slice(1));
   }

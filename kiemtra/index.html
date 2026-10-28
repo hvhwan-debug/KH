@@ -1740,6 +1740,7 @@ function renderAdvice(a){
     '<h3>' + esc(a.headline) + '</h3>' +
     (portrait ? '<div class="portrait"><span class="pl">Nhìn lại bài làm của bạn</span>' + esc(portrait) + '</div>' : '') +
     (a.strengths && a.strengths.length ? '<span class="sub">Điều bạn làm tốt</span><ul class="str">' + a.strengths.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') +
+    (a.topics && a.topics.length ? '<span class="sub">Chủ đề nên ôn lại</span><ul class="topics">' + a.topics.map(function(x){ var i = x.indexOf(':'); return '<li>' + (i > 0 && i < 70 ? '<b>' + esc(x.slice(0, i)) + '</b>:' + esc(x.slice(i + 1)) : esc(x)) + '</li>'; }).join('') + '</ul>' : '') +
     '<span class="sub">Gợi ý cho lần tới</span><ul>' + a.actions.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' +
     (a.goal ? '<div class="goal"><span aria-hidden="true">🎯</span><div><b>Mục tiêu nhỏ cho lần tới:</b> ' + esc(String(a.goal).replace(/^Lần tới:\s*/i, '')) + '</div></div>' : '');
   box.classList.remove('hide');

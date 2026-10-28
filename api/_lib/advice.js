@@ -57,8 +57,10 @@ function facts(attempt, settings, prev, ctx) {
   // Chân dung làm bài (thống kê thuần): nhịp độ, phong độ, mảng, so với đồng nghiệp, lịch sử. Lỗi thì bỏ qua.
   let ins = null;
   try { ins = require("./insight").build(attempt, settings, ctx || {}); } catch (e) { ins = null; }
+  // Các câu sai / bỏ trống kèm thẻ chủ đề (từ ngân hàng câu hỏi) để lời khuyên chỉ ra ĐÚNG chủ đề cần ôn. Chỉ dùng để biết chủ đề, không đưa ra ngoài.
+  const wrongQs = (ctx && Array.isArray(ctx.wrong) ? ctx.wrong : []).slice(0, 12).map((w) => ({ n: w.n, category: clip(w.category, 60), tags: (Array.isArray(w.tags) ? w.tags : []).map((t) => clip(t, 40)).filter(Boolean).slice(0, 4), text: clip(w.text, 200) }));
   return {
-    beh, insight: ins, firstName: ins ? ins.firstName : "",
+    beh, insight: ins, firstName: ins ? ins.firstName : "", wrongQs,
     total, correct, wrong: attempt.wrong != null ? attempt.wrong : Math.max(0, total - correct - (attempt.blank || 0)), blank: attempt.blank || 0,
     pct: attempt.pct != null ? attempt.pct : (total ? Math.round(correct / total * 100) : 0),
     timeouts, categories: cats,
@@ -101,6 +103,14 @@ function ensureAnalysis(adv, attempt, settings, prev) {
 
 // ---- Bản dựa trên luật ----
 // Thứ tự ưu tiên: (1) điều quan trọng nhất của bài này, (2) mảng cần ôn (gộp, không lặp mẫu câu), (3) cách làm bài, (4) mốc điểm, (5) bước tiếp theo.
+// Chủ đề cần ôn theo THẺ của các câu sai/bỏ trống (không tiết lộ đáp án hay nội dung câu hỏi). ADVICE_TOPICS=off để tắt.
+function topicsByTags(f) {
+  if (process.env.ADVICE_TOPICS === "off") return [];
+  const m = {};
+  (f.wrongQs || []).forEach((q) => (q.tags || []).forEach((t) => { const k = t.toLowerCase(), x = (m[k] = m[k] || { name: t, n: 0 }); x.n++; }));
+  return Object.keys(m).map((k) => m[k]).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, 4)
+    .map((x) => x.name + ": có " + x.n + " câu sai hoặc bỏ trống, nên đọc lại tài liệu phần này rồi thử tự giải thích lại bằng lời của mình.");
+}
 function rulesAdvice(f) {
   const p = f.pct, b = f.beh || {}, rnd = b.random || null;
   const headline = rnd ? "Kết quả này chưa phản ánh đúng sức của bạn"
@@ -157,7 +167,7 @@ function rulesAdvice(f) {
   }
   return { source: "rules", headline: (f.firstName && !rnd ? f.firstName + ", " + headline.charAt(0).toLowerCase() + headline.slice(1) : headline), summary: parts.join(" "),
     portrait: ins ? require("./insight").portraitText(ins, f) : "", traits: [],
-    strengths: strengths.slice(0, 2), goal: goalOf(f),
+    strengths: strengths.slice(0, 2), goal: goalOf(f), topics: rnd ? [] : topicsByTags(f),
     actions: actions.slice(0, MAX_ACTIONS - 1).concat([closing]), analysis: analysisOf(f) };
 }
 // Mục tiêu đo được cho lần tới (dùng cho cả bản luật và để đối chiếu bản AI)
@@ -197,8 +207,9 @@ function buildPrompt(f) {
     "(7) Nếu la_bai_thi_thu là true: nhắc ngắn gọn đây không phải thi chính thức. " +
     "(8) Trường nhung_quan_sat_noi_bat là các dữ kiện đã được kiểm chứng, KHÔNG phải câu để chép lại: hãy tự rút ra ý nghĩa và viết bằng lời của bạn. " +
     "(9) Nếu có ho_so_cong_viec: chỉ dùng làm bối cảnh để giọng điệu và ví dụ hợp với vị trí, khu vực, thâm niên của họ; không suy diễn thêm về con người họ, không nêu trình độ học vấn, không so sánh với ai. " +
+    "(10) Trường cac_cau_can_on_lai là các câu bạn này làm sai hoặc bỏ trống (kèm mảng, thẻ chủ đề và nội dung câu hỏi) CHỈ để bạn biết họ yếu ở CHỦ ĐỀ nào. Hãy viết mục topics: 2-4 chủ đề kiến thức CỤ THỂ nên ôn lại, gọi tên bằng 2-8 từ (ví dụ tên dòng sản phẩm, công nghệ, nhóm kiến thức; ưu tiên dùng tên trong the_chu_de), mỗi mục kèm một gợi ý cách ôn thực tế. TUYỆT ĐỐI không chép nguyên câu hỏi, không nêu phương án nào đúng hay sai, không nêu thông số hay con số cụ thể, không nêu đáp án; chỉ nói CHỦ ĐỀ. Chủ đề phải suy ra từ dữ liệu, không bịa. Nếu không có cac_cau_can_on_lai thì để topics là mảng rỗng. " +
     "Chỉ trả về DUY NHẤT một đối tượng JSON hợp lệ, đúng dạng: " +
-    '{"headline":"tối đa 60 ký tự, một câu nhận định gọn về bài làm này","portrait":"2-3 câu liền mạch nhìn lại cách người này làm bài, mỗi câu gắn với một điều cụ thể đã quan sát","strengths":["1-2 điểm mạnh, nêu rõ bằng chứng"],"actions":["2-3 việc nên làm trong thời gian tới, mỗi việc 1-2 câu, nói rõ làm gì và vì sao"],"goal":"một mục tiêu đo được cho lần tới, bắt đầu bằng \\"Lần tới:\\""}';
+    '{"headline":"tối đa 60 ký tự, một câu nhận định gọn về bài làm này","portrait":"2-3 câu liền mạch nhìn lại cách người này làm bài, mỗi câu gắn với một điều cụ thể đã quan sát","strengths":["1-2 điểm mạnh, nêu rõ bằng chứng"],"actions":["2-3 việc nên làm trong thời gian tới, mỗi việc 1-2 câu, nói rõ làm gì và vì sao"],"topics":["tên chủ đề cần ôn: gợi ý cách ôn, không có con số"],"goal":"một mục tiêu đo được cho lần tới, bắt đầu bằng \\"Lần tới:\\""}';
   const ins = f.insight || {};
   const data = {
     ten_goi: f.firstName || null,
@@ -226,7 +237,8 @@ function buildPrompt(f) {
       giay_moi_cau_cua_ban: ins.peers.mySecPerQ, giay_moi_cau_trung_binh: ins.peers.avgSecPerQ, nhanh_hon_phan_tram_so_nguoi: ins.peers.fasterThanPct,
       trong_nhom: ins.peers.team ? { so_nguoi: ins.peers.team.size, hang: ins.peers.team.rank, trung_binh_nhom_phan_tram: ins.peers.team.avgPct } : null } : null,
     lich_su: ins.history ? { cac_ky_truoc: ins.history.previous.map((h) => ({ ky: h.period, ty_le_phan_tram: h.pct })), thay_doi_so_voi_ky_gan_nhat: ins.history.deltaFromLast, so_ky_tang_lien_tiep: ins.history.consecutiveImprovements, ket_qua_tot_nhat_tu_truoc: ins.history.personalBest } : (f.prev ? { cac_ky_truoc: [{ ky: f.prev.period, ty_le_phan_tram: f.prev.pct }], thay_doi_so_voi_ky_gan_nhat: f.pct - f.prev.pct } : null),
-    muc_tieu_goi_y: goalOf(f)
+    muc_tieu_goi_y: goalOf(f),
+    cac_cau_can_on_lai: process.env.ADVICE_TOPICS === "off" || (f.beh && f.beh.random) ? [] : (f.wrongQs || []).map((q) => ({ cau_so: q.n, mang: q.category, the_chu_de: q.tags, noi_dung_cau_hoi: q.text }))
   };
   return { messages: [{ role: "system", content: sys }, { role: "user", content: "Dữ liệu bài làm (JSON):\n" + JSON.stringify(data) }], data };
 }
@@ -259,8 +271,16 @@ function parseAi(text) {
   const headline = plain(o && o.headline, 90), portrait = plain(o && (o.portrait || o.summary), 520), goal = plain(o && o.goal, 200);
   const list = (v, n, m) => (Array.isArray(v) ? v : []).map((x) => plain(x, n)).filter((x) => x.length >= 8 && !GENERIC.test(x)).slice(0, m);
   const actions = list(o && o.actions, 220, MAX_ACTIONS), strengths = list(o && o.strengths, 180, 2);
+  const topics = process.env.ADVICE_TOPICS === "off" ? [] : list(o && o.topics, 200, 4).filter((x) => !/\d/.test(x)); // chủ đề không chứa con số (tránh lộ thông số / đáp án)
   if (!headline || !portrait || actions.length < 2) return null; // thiếu ý: bỏ, dùng bản luật
-  return { source: "ai", headline, summary: portrait, portrait, strengths, actions, goal: /^lần tới/i.test(goal) ? goal : (goal ? "Lần tới: " + goal.charAt(0).toLowerCase() + goal.slice(1) : "") };
+  return { source: "ai", headline, summary: portrait, portrait, strengths, actions, topics, goal: /^lần tới/i.test(goal) ? goal : (goal ? "Lần tới: " + goal.charAt(0).toLowerCase() + goal.slice(1) : "") };
+}
+// Chủ đề có chứa nguyên một cụm >= 6 từ liên tiếp của câu hỏi thì coi là chép đề
+function copiesQuestion(topic, qs) {
+  const w = (x) => String(x || "").toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter(Boolean);
+  const t = w(topic);
+  if (t.length < 6) return false;
+  return (qs || []).some((q) => { const qq = " " + w(q.text).join(" ") + " "; for (let i = 0; i + 6 <= t.length; i++) if (qq.indexOf(" " + t.slice(i, i + 6).join(" ") + " ") >= 0) return true; return false; });
 }
 function withTimeout(promise, ms) {
   let t; const to = new Promise((_, rej) => { t = setTimeout(() => rej(new Error("timeout")), ms); });
@@ -297,6 +317,9 @@ async function build(attempt, settings, prev, opt) {
   const useAI = !(opt && opt.ai === false);
   const r = useAI ? await aiAdvice(f, opt && opt.timeoutMs) : { advice: null, status: "skipped" };
   const out = r.advice || rules;
+  // Chủ đề cần ôn: bỏ mục nào chép lại cụm từ dài của câu hỏi (rò đề); AI không có chủ đề hợp lệ thì dùng chủ đề theo thẻ
+  out.topics = (out.topics || []).filter((t) => !copiesQuestion(t, f.wrongQs));
+  if (!out.topics.length) out.topics = rules.topics || [];
   out.analysis = rules.analysis; // phần số liệu luôn lấy từ bản luật (AI chỉ viết lại lời văn)
   out.traits = [];               // không còn nhãn đặc điểm viết sẵn: toàn bộ lời nhận xét do AI (hoặc bản dự phòng) viết
   if (!out.goal) out.goal = rules.goal;

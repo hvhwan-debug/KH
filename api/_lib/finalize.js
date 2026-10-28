@@ -53,8 +53,10 @@ async function finalizeAttempt(context, attempt, opts) {
         .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0))[0];
       let prevAttempt = null;
       if (prevRow) { try { prevAttempt = await quiz.getAttempt(prevRow.id); } catch (e) { prevAttempt = null; } }
+      // Các câu sai/bỏ trống kèm thẻ chủ đề để lời khuyên chỉ đúng chủ đề cần ôn (không lộ đáp án)
+      const wrong = (attempt.paper || []).filter((r) => !r.ok).map((r) => { const q = byId[(attempt.questionIds || [])[r.n - 1]] || {}; return { n: r.n, category: r.category || q.category || "", tags: Array.isArray(q.tags) ? q.tags : String(q.tags || "").split(",").map((x) => x.trim()).filter(Boolean), text: q.text || r.text || "" }; });
       const profile = await require("./profile").forCode(attempt.code); // hồ sơ công việc (nếu đã nhập) để lời khuyên đúng vị trí / thâm niên
-      advice = await advicelib.build(attempt, settings, quiz.previousResult(idxAll, attempt.code, attempt.period, attempt.id), { ctx: { index: idxAll, prevAttempt, profile } });
+      advice = await advicelib.build(attempt, settings, quiz.previousResult(idxAll, attempt.code, attempt.period, attempt.id), { ctx: { index: idxAll, prevAttempt, profile, wrong } });
     } catch (e) {
       (context.log.warn || context.log)("kt-submit advice", e && e.message);
       advice = advicelib.rulesAdvice(advicelib.facts(attempt, settings, null));
