@@ -761,6 +761,15 @@ async function putAttempt(a) { await store.put("kt/attempt/" + a.id + ".json", a
 
 async function getIndex() { return (await store.get(IDX_KEY)) || []; }
 async function saveIndex(list) { await store.put(IDX_KEY, list); }
+// Sửa vài trường của một dòng trong bảng kết quả (đọc-sửa-ghi nguyên tử, giữ nguyên các trường khác)
+async function patchIndex(id, fields) {
+  await store.update(IDX_KEY, (cur) => {
+    const list = Array.isArray(cur) ? cur : [];
+    const i = list.findIndex((x) => x.id === id);
+    if (i >= 0) list[i] = Object.assign({}, list[i], fields);
+    return list;
+  });
+}
 async function upsertIndex(entry) {
   // Nhiều thí sinh nộp bài cùng lúc: phải đọc-sửa-ghi nguyên tử, nếu không bài nộp của người này sẽ ghi đè mất bài của người kia.
   await store.update(IDX_KEY, (cur) => {
@@ -1125,6 +1134,7 @@ function noteFail(req) {
 }
 
 module.exports = {
+  patchIndex,
   runMigrations, managerCanon, properCaseName, normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, betterResult, attemptsSummary, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
   getQuestions, saveQuestions,
   getCandidates, saveCandidates, getTestAccounts, saveTestAccounts, findTestAccount, findTestByCode, updateTestAccount, recordTestAttempt, testAttemptByProof,

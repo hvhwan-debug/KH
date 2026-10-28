@@ -18,6 +18,9 @@ module.exports = async function (context, req) {
 
     let swept = 0;
     try { swept = await require("../_lib/finalize").sweepOverdue(context, { max: 50 }); } catch (e) { context.log.error("cron sweep", e && e.message); }
+    // Đối chiếu khuôn mặt các bài chưa đối chiếu (bài cũ, hoặc bài mà lúc nộp chưa kịp đối chiếu xong)
+    let faceScan = null;
+    try { faceScan = await require("../_lib/faceid").scan({ ms: 15000 }); } catch (e) { context.log.error("cron faceid", e && e.message); }
     const names = await store.list("user/");
     let users = 0, sent = 0, failed = 0;
     for (const name of names) {
@@ -46,7 +49,7 @@ module.exports = async function (context, req) {
         context.log.error("cron user", name, e && e.message);
       }
     }
-    return reply(context, 200, { ok: true, users, sent, failed, swept });
+    return reply(context, 200, { ok: true, users, sent, failed, swept, faceScan });
   } catch (e) {
     context.log.error("cron", e && e.message);
     return reply(context, 500, { ok: false });

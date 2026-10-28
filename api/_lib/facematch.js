@@ -97,9 +97,9 @@ async function compare(selfie, refs) {
     if (!d) continue;
     used++; best = Math.min(best, dist(me.desc, d));
   }
-  if (!used) return { ok: false, code: "noref", message: "Hồ sơ chưa có ảnh khuôn mặt đã lưu dùng được để đối chiếu. Vui lòng liên hệ quản trị viên." };
-  if (best <= MATCH_MAX) return { ok: true, distance: best, threshold: MATCH_MAX };
-  return { ok: false, code: "mismatch", distance: best, threshold: MATCH_MAX, message: "Khuôn mặt không khớp với ảnh đã lưu của chủ bài làm này." };
+  if (!used) return { ok: false, code: "noref", desc: me.desc, used: 0, message: "Hồ sơ chưa có ảnh khuôn mặt đã lưu dùng được để đối chiếu. Vui lòng liên hệ quản trị viên." };
+  if (best <= MATCH_MAX) return { ok: true, distance: best, threshold: MATCH_MAX, desc: me.desc, used };
+  return { ok: false, code: "mismatch", distance: best, threshold: MATCH_MAX, desc: me.desc, used, message: "Khuôn mặt không khớp với ảnh đã lưu của chủ bài làm này." };
 }
 
 module.exports = { compare, describe, dist, MATCH_MAX, _boot: boot, _decode: decodeJpeg };

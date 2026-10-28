@@ -1980,6 +1980,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
             <select id="resSort" class="rt-sortsel" onchange="resSortSel(this.value)" aria-label="Sắp xếp kết quả"><option value="time:desc">Mới nộp nhất</option><option value="score:desc">Điểm cao → thấp</option><option value="score:asc">Điểm thấp → cao</option><option value="name:asc">Tên A → Z</option><option value="time:asc">Nộp sớm nhất</option></select>
             <button class="btn ghost sm" style="white-space:nowrap" type="button" aria-haspopup="menu" onclick="exportPick(this,'xlsx')">⬇ Xuất Excel ▾</button>
             <button class="btn ghost sm" style="white-space:nowrap" type="button" aria-haspopup="menu" onclick="exportPick(this,'drive','driveMsg')" title="Lưu file kết quả lên Google Drive">☁ Lưu vào Drive ▾</button>
+            <button class="btn ghost sm" style="white-space:nowrap" type="button" id="faceScanBtn" onclick="faceScanRun(this)" title="AI so ảnh xác nhận của mỗi bài với các lần kiểm tra trước của cùng nhân viên">🧑 Đối chiếu khuôn mặt</button>
           </div>
         </div>
         <div id="driveMsg"></div>
@@ -4728,6 +4729,23 @@ function exportPick(btn, kind, msgId){
   setTimeout(() => { document.addEventListener('click', close, true); document.addEventListener('keydown', esc1, true); });
   m.addEventListener('click', ev => { const b = ev.target.closest('button[data-m]'); if (!b) return; close(); kind === 'drive' ? exportResultsDrive(btn, msgId, b.dataset.m) : exportResultsXlsx(b.dataset.m); });
 }
+// Đối chiếu khuôn mặt giữa các lần kiểm tra cho các bài chưa đối chiếu (gọi lặp tới khi xong)
+async function faceScanRun(btn){
+  const box = $('driveMsg'), lbl = btn.textContent, period = $('resPeriod').value || '';
+  btn.disabled = true; let done = 0, mm = 0;
+  try {
+    for (let i = 0; i < 60; i++){
+      btn.textContent = 'Đang đối chiếu… ' + (done ? done + ' bài' : '');
+      box.innerHTML = '<div class="msg info">AI đang so ảnh xác nhận với các lần kiểm tra trước, mỗi bài mất vài giây. Có thể để trang chạy, không cần chờ.</div>';
+      const { j } = await api('POST', '/api/kt-admin', { op:'faceScan', period });
+      if (!j || !j.ok){ box.innerHTML = '<div class="msg err">' + esc((j && j.error) || 'Không đối chiếu được, thử lại sau.') + '</div>'; return; }
+      done += j.done; mm += j.mismatch;
+      if (!j.left || !j.done) break;
+    }
+    box.innerHTML = '<div class="msg ' + (mm ? 'err' : 'ok') + '">' + (done ? 'Đã đối chiếu <b>' + done + '</b> bài' : 'Mọi bài đều đã được đối chiếu') + (mm ? ' · <b>' + mm + '</b> bài có khuôn mặt khác các lần trước (nhãn đỏ trong bảng)' : done ? ', không phát hiện khác người' : '') + '.</div>';
+    loadResults();
+  } finally { btn.disabled = false; btn.textContent = lbl; }
+}
 async function exportResultsXlsx(mode){
   const o = await buildResultsXlsx(mode); if (!o) return;
   const a = document.createElement('a');
@@ -4816,10 +4834,11 @@ async function deleteViewerAcc(email){
 
 /* ---------- Kết quả ---------- */
 function flagText(r){
-  const f = r && r.flags; if (!f) return '';
+  const f = (r && r.flags) || {};
   const a = [];
   if (f.shot) a.push('Chụp màn hình ' + f.shot + ' lần');
   if (f.blur) a.push('Rời trang ' + f.blur + ' lần');
+  if (r.faceId && r.faceId.s === 'mismatch') a.push('Khuôn mặt khác các lần trước' + (r.faceId.d != null ? ' (độ khác ' + r.faceId.d + ')' : ''));
   return a.join(', ');
 }
 /* ---------- Banner hero ---------- */
@@ -5069,7 +5088,10 @@ function resRow(r, o){
   if (r.compliancePoints != null) chips.push('<span class="ch ch-n" title="Điểm tuân thủ học tập">' + IC_SH + esc(r.compliancePoints) + ' điểm</span>');
   if (f.shot) chips.push('<span class="ch ch-d" title="Số lần phát hiện chụp màn hình">Chụp màn hình ×' + esc(f.shot) + '</span>');
   if (f.blur) chips.push('<span class="ch ' + (f.blur >= 20 ? 'ch-d' : 'ch-w') + '" title="Số lần rời khỏi trang làm bài">Rời trang ×' + esc(f.blur) + '</span>');
-  if (!f.shot && !f.blur) chips.push('<span class="ch ch-ok">✓ Không cảnh báo</span>');
+  const fid = r.faceId || null, fdt = fid && fid.d != null ? ' (độ khác ' + fid.d + ', ngưỡng ' + fid.t + ')' : '';
+  if (fid && fid.s === 'mismatch') chips.push('<span class="ch ch-d" title="AI đối chiếu ảnh xác nhận với ' + (fid.n || 'các') + ' lần kiểm tra trước của nhân viên này và thấy không giống' + esc(fdt) + '. Mở ảnh để xem lại.">Khác người các lần trước</span>');
+  else if (fid && fid.s === 'noface') chips.push('<span class="ch ch-w" title="Ảnh xác nhận không đủ rõ để AI đối chiếu khuôn mặt">Ảnh chưa đối chiếu được</span>');
+  if (!f.shot && !f.blur && !(fid && (fid.s === 'mismatch' || fid.s === 'noface'))) chips.push('<span class="ch ch-ok"' + (fid && fid.s === 'match' ? ' title="Khuôn mặt khớp với các lần kiểm tra trước' + esc(fdt) + '"' : '') + '>✓ Không cảnh báo</span>');
   const d = new Date(r.submittedAt), okD = !isNaN(d.getTime());
   const tags = (r.probation ? '<span class="tag tag-tv" aria-label="Thử việc" title="Thử việc từ ' + esc(r.probation.from) + ' đến hết ' + esc(r.probation.until) + '">TV</span>' : '') + (r.practice ? '<span class="tag tag-w">Thi thử</span>' : '') + (r.regradedAt ? '<span class="tag" title="Đã được chấm lại theo đáp án mới">Đã chấm lại</span>' : '');
   const badge = r.passed == null ? '' : '<span class="badge ' + (r.passed ? 'y' : 'n') + '">' + (r.passed ? 'Đạt' : 'Chưa đạt') + '</span>';

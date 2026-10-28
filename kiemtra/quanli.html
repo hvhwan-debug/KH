@@ -236,7 +236,8 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .ph img{width:100%;height:100%;object-fit:cover;display:block}
 #ovImg .dlg{max-width:520px;text-align:center}
 #ovImg img{width:100%;border-radius:14px;display:block;background:#0B1B1F}
-#ovImg .sub{margin:12px 0 0;display:flex;flex-direction:column;align-items:center;gap:8px}
+#ovImg .sub{margin:12px 0 0;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px}
+#ovImg .sub .im-meta{flex:0 0 100%;text-align:center}
 #ovImg h2{margin-bottom:12px}
 .im-meta{font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .im-face{display:inline-block;padding:4px 12px;border-radius:999px;font-size:12.5px;font-weight:700;background:#EEF1F4;color:#4A5565;cursor:help}
@@ -1560,6 +1561,8 @@ $('ovProf').addEventListener('click', function(ev){
 
 /* ---------- Ảnh xác nhận chụp lúc làm bài ---------- */
 var PHOTO = {};
+// Đối chiếu với ảnh các lần kiểm tra trước của cùng nhân viên (AI nhận diện khuôn mặt trên máy chủ)
+var FID_S = { match:['ok','✓ Khớp các lần trước','AI so với ảnh các lần kiểm tra trước: cùng một người.'], mismatch:['bad','⚠ Khác người các lần trước','AI so với ảnh các lần kiểm tra trước: không giống, nên kiểm tra lại.'], first:['','Ảnh gốc (lần đầu)','Chưa có ảnh lần trước để so; ảnh này dùng làm ảnh gốc cho các lần sau.'], noface:['warn','Chưa đối chiếu được','Ảnh không đủ rõ để AI đối chiếu khuôn mặt.'] };
 var FACE_S = { ok:['ok','✓ AI xác nhận khuôn mặt'], unclear:['warn','Khuôn mặt chưa rõ nét'], client_ok:['warn','Khuôn mặt chưa được AI xác minh'], unverified:['bad','Chưa xác minh khuôn mặt'] };
 var FACE_L = { ok:'AI xác nhận có đúng 1 khuôn mặt', unclear:'AI thấy 1 khuôn mặt nhưng chưa rõ nét', client_ok:'Nhận diện được khuôn mặt trên máy thí sinh (AI máy chủ chưa xác minh)', unverified:'Chưa xác minh được khuôn mặt' };
 // sel: { id: mã bài làm } hoặc { period: 'YYYY-MM' }. Ảnh là minh chứng của ĐÚNG MỘT bài/kỳ, không lấy ảnh kỳ khác bù vào.
@@ -1591,7 +1594,8 @@ async function fillPhoto(id, e, sel){
       // Gọn: 1 dòng thông tin (mã NV · kỳ · giờ chụp) + 1 nhãn khuôn mặt; câu giải thích đầy đủ để ở tooltip
       var fc = d.face && FACE_S[d.face];
       $('iSub').innerHTML = '<span class="im-meta">' + esc(e.code) + ' · Kỳ ' + esc(perL(per)) + (d.takenAt ? ' · ' + esc(fmt(d.takenAt)) : '') + '</span>' +
-        (fc ? '<span class="im-face ' + fc[0] + '" title="' + esc(FACE_L[d.face]) + '">' + esc(fc[1]) + '</span>' : '');
+        (fc ? '<span class="im-face ' + fc[0] + '" title="' + esc(FACE_L[d.face]) + '">' + esc(fc[1]) + '</span>' : '') +
+        (d.faceId && FID_S[d.faceId.s] ? '<span class="im-face ' + FID_S[d.faceId.s][0] + '" title="' + esc(FID_S[d.faceId.s][2] + (d.faceId.d != null ? ' Độ khác ' + d.faceId.d + ' (ngưỡng ' + d.faceId.t + ', càng nhỏ càng giống).' : '')) + '">' + esc(FID_S[d.faceId.s][1]) + '</span>' : '');
       $('ovImg').classList.remove('hide');
     });
   } else {

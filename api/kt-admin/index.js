@@ -786,6 +786,13 @@ const handler = async function (context, req) {
       return reply(context, 200, { ok: true, updated, notFound, invalid });
     }
 
+    if (op === "faceScan") {
+      // Đối chiếu khuôn mặt giữa các lần kiểm tra cho các bài chưa đối chiếu. Mỗi lần gọi chạy tối đa ~20 giây;
+      // giao diện gọi lặp lại tới khi left = 0.
+      const period = typeof b.period === "string" && quiz.validPeriod(b.period) ? b.period : "";
+      const r = await require("../_lib/faceid").scan({ period, ms: 20000 });
+      return reply(context, 200, Object.assign({ ok: true }, r));
+    }
     if (op === "assignPeriod") {
       // Gắn kỳ cho các bài đã nộp nhưng chưa có kỳ (nộp trước khi có tính năng kỳ). Sau khi gắn,
       // thí sinh không làm lại được trong kỳ đó (trừ khi quản trị viên bấm "Làm lại").

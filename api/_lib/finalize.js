@@ -36,12 +36,15 @@ async function finalizeAttempt(context, attempt, opts) {
     attempt.wrong = wrongN;
     attempt.blank = sc.blank;
     await quiz.putAttempt(attempt);
+    // Đối chiếu khuôn mặt với các lần kiểm tra trước của cùng nhân viên: chạy SONG SONG với bước soạn lời khuyên + gửi mail
+    // để thí sinh không phải chờ thêm. Không chặn, chỉ ghi để quản trị viên xem. Quá 15 giây thì để lượt quét nền làm sau.
+    const facePending = (!attempt.test && !attempt.faceId && attempt.photo) ? require("./faceid").checkWithin(attempt, 15000).catch(() => null) : Promise.resolve(null);
     if (attempt.test) { try { await quiz.recordTestAttempt(attempt); } catch (e) { (context.log.warn || context.log)("kt-submit test record", e && e.message); } }
 
     if (!attempt.test) await quiz.upsertIndex({
       id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "", segment: attempt.segment || "", period: attempt.period || "",
       score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
-      submittedAt: attempt.submittedAt, status: "submitted", auto: !!auto, practice: !!settings.practice, flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief, face: attempt.faceCheck ? attempt.faceCheck.status : null
+      submittedAt: attempt.submittedAt, status: "submitted", auto: !!auto, practice: !!settings.practice, flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief, face: attempt.faceCheck ? attempt.faceCheck.status : null, faceId: attempt.faceId || null
     });
 
     // Lời khuyên cải thiện (AI nếu kịp, không thì theo luật). Điểm đã được lưu ở trên nên lỗi ở bước này không ảnh hưởng kết quả.
@@ -71,13 +74,14 @@ async function finalizeAttempt(context, attempt, opts) {
       context.log.error("kt-submit mail", e && e.message);
     }
     // Ghi lại việc gửi email có thành công không, để giao diện báo đúng sự thật (không luôn nói "đã gửi").
+    try { const rec = await facePending; if (rec) attempt.faceId = rec; } catch (e) { (context.log.warn || context.log)("faceid", e && e.message); }
     try {
       attempt.mailOk = mailOk;
       await quiz.putAttempt(attempt);
       if (!attempt.test) await quiz.upsertIndex({
         id: attempt.id, code: attempt.code, name: attempt.name, email: attempt.email, manager: attempt.manager || "", segment: attempt.segment || "", period: attempt.period || "",
         score: correct, total, pct, passed, scoreOutOf10: attempt.scoreOutOf10, compliancePoints: compliance,
-        submittedAt: attempt.submittedAt, status: "submitted", auto: !!auto, practice: !!settings.practice, flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief, face: attempt.faceCheck ? attempt.faceCheck.status : null, mailOk, aiStatus: (advice && advice.aiStatus) || null
+        submittedAt: attempt.submittedAt, status: "submitted", auto: !!auto, practice: !!settings.practice, flags: attempt.flags || null, startedAt: attempt.startedAt, wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id), durationSec: Math.round((attempt.submittedAt - (attempt.startedAt || attempt.submittedAt)) / 1000), device: devBrief, face: attempt.faceCheck ? attempt.faceCheck.status : null, faceId: attempt.faceId || null, mailOk, aiStatus: (advice && advice.aiStatus) || null
       });
     } catch (e) {
       context.log.error("kt-submit mailOk", e && e.message);
