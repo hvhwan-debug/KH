@@ -5358,36 +5358,53 @@ async function exportBehaviorXlsx(){
   const hasBeh = A.some(a => a.questions.some(q => q.beh));
 
   // ---- Đặc trưng từng lượt làm ----
+  // Thời gian RA QUYẾT ĐỊNH của một câu:
+  //  - Bài làm có ghi chi tiết trong câu (q.beh): dùng lúc chọn đáp án lần đầu (firstMs), kể cả khi chọn xong rồi để đồng hồ tự nộp.
+  //  - Bài làm cũ: chỉ có lúc máy chủ nhận đáp án. Câu nhận sát giới hạn (≥ giới hạn − 1 giây) là ĐỒNG HỒ TỰ NỘP đáp án đang chọn:
+  //    không biết đã chọn từ giây thứ mấy nên KHÔNG đưa vào thống kê tốc độ.
+  //  - Câu 1 của bài làm cũ tính từ lúc bắt đầu bài (gồm cả bước chuẩn bị): không đưa vào thống kê tốc độ.
+  const decOf = (q, L) => {
+    if (q.state === 'timeout' || q.state === 'blank') return { dec:null, why: q.state === 'timeout' ? 'Hết giờ, chưa chọn' : 'Đồng hồ tự nộp khi chưa chọn' };
+    if (q.beh && q.beh.firstMs != null) return { dec: Math.round(q.beh.firstMs / 100) / 10, why: q.beh.timedOut ? 'Chọn ở giây ' + Math.round(q.beh.firstMs / 1000) + ', để đồng hồ tự nộp' : '' };
+    if (q.sec == null) return { dec:null, why:'' };
+    if (!q.beh && q.pos === 1) return { dec:null, why:'Câu đầu: thời gian gồm cả bước chuẩn bị', q1:true };
+    if (!q.beh && q.sec >= L - 1) return { dec:null, why:'Đồng hồ tự nộp đáp án đang chọn (không rõ chọn lúc nào)', wait:true };
+    return { dec:q.sec, why:'' };
+  };
   const P = A.map(a => {
-    const L = a.limit || 60, Q = a.questions, n = Q.length;
-    const T = Q.filter(q => q.sec != null && q.state !== 'timeout' && q.state !== 'blank');
-    const secs = T.map(q => q.sec), fr = q => q.sec / L;
-    const vf = T.filter(q => fr(q) < 0.15), fa = T.filter(q => fr(q) >= 0.15 && fr(q) < 0.35), md = T.filter(q => fr(q) >= 0.35 && fr(q) < 0.6), sl = T.filter(q => fr(q) >= 0.6);
+    const L = a.limit || 60, Q = a.questions, n = Q.length, FAST = L / 6; // bấm nhanh = dưới 1/6 thời gian (10 giây khi giới hạn 60 giây)
+    Q.forEach(q => { const d = decOf(q, L); q._dec = d.dec; q._why = d.why; q._wait = !!d.wait || !!(q.beh && q.beh.timedOut && q.state !== 'blank'); q._q1 = !!d.q1; });
+    const T = Q.filter(q => q._dec != null), secs = T.map(q => q._dec);
     const acc = l => l.length ? l.filter(q => q.ok).length / l.length : null;
-    const to = Q.filter(q => q.state === 'timeout').length, bl = Q.filter(q => q.state === 'blank').length;
-    const half = Math.ceil(n / 2), h1 = T.filter(q => q.pos <= half).map(q => q.sec), h2 = T.filter(q => q.pos > half).map(q => q.sec);
-    const to1 = Q.filter(q => q.state === 'timeout' && q.pos <= half).length, to2 = to - to1;
+    const rush = T.filter(q => q._dec < FAST), mid = T.filter(q => q._dec >= FAST && q._dec < L / 2), slow = T.filter(q => q._dec >= L / 2);
+    const wait = Q.filter(q => q._wait), to = Q.filter(q => q.state === 'timeout').length, bl = Q.filter(q => q.state === 'blank').length;
+    const half = Math.ceil(n / 2), h1 = T.filter(q => q.pos <= half).map(q => q._dec), h2 = T.filter(q => q.pos > half).map(q => q._dec);
+    const r1n = rush.filter(q => q.pos <= half).length, r2n = rush.length - r1n;
     const B = Q.filter(q => q.beh);
     const changes = B.length ? B.reduce((s, q) => s + (q.beh.changes || 0), 0) : null;
-    const qBlur = B.length ? B.reduce((s, q) => s + (q.beh.blur || 0), 0) : null;
     const away = B.length ? B.reduce((s, q) => s + (q.beh.awayMs || 0), 0) / 1000 : null;
-    const firsts = B.map(q => q.beh.firstMs).filter(v => v != null).map(v => v / 1000);
     const blurQs = B.filter(q => q.beh.blur > 0).map(q => q.pos);
-    const total = secs.reduce((x, y) => x + y, 0) + to * L;
-    const mF = secs.length ? med(secs) / L : null, m = mean(secs), sd = sdv(secs), cv = m ? (sd || 0) / m : null;
+    const total = (a.submittedAt && a.startedAt) ? (a.submittedAt - a.startedAt) / 1000 : Q.reduce((s, q) => s + (q.sec || (q.state === 'timeout' ? L : 0)), 0);
+    const mdn = secs.length ? med(secs) : null, mF = mdn != null ? mdn / L : null, m = mean(secs), sd = sdv(secs), cv = m ? (sd || 0) / m : null;
     const pct = a.pct || 0, blur = (a.flags && a.flags.blur) || 0;
-    const fastest = T.slice().sort((x, y) => x.sec - y.sec)[0], slowest = T.slice().sort((x, y) => y.sec - x.sec)[0];
-    // Kiểu làm bài (có thể nhiều nhãn); chỉ là gợi ý từ dữ liệu, không phải kết luận
+    const fastest = T.slice().sort((x, y) => x._dec - y._dec)[0], slowest = T.slice().sort((x, y) => y._dec - x._dec)[0];
     const tags = [], notes = [];
-    if (T.length >= 5 && vf.length >= 0.3 * T.length && (acc(vf) || 0) < 0.6){ tags.push('Đoán vội'); notes.push(vf.length + ' câu trả lời rất nhanh nhưng chỉ đúng ' + Math.round((acc(vf) || 0) * 100) + '%'); }
-    if (mF != null && mF < 0.25 && pct >= 85){ tags.push('Nhanh & chắc'); notes.push('Trung vị ' + Math.round(mF * 100) + '% thời gian/câu, đúng ' + pct + '%'); }
-    if (mF != null && mF >= 0.45 && pct >= 75){ tags.push('Suy nghĩ kỹ'); notes.push('Dùng nhiều thời gian nhưng kết quả tốt'); }
-    if ((mF != null && mF >= 0.45 && pct < 60) || to >= 3){ tags.push('Chật vật'); notes.push((to ? to + ' câu hết giờ; ' : '') + 'chậm và đúng ít → cần học lại nội dung'); }
-    if ((h1.length >= 3 && h2.length >= 3 && mean(h2) >= 1.4 * mean(h1)) || to2 - to1 >= 2){ tags.push('Tụt nhịp cuối bài'); notes.push('Nửa sau chậm hơn hoặc hết giờ nhiều hơn nửa đầu (mất tập trung / mệt)'); }
+    if (wait.length >= 5){ tags.push('Để đồng hồ tự chuyển câu'); notes.push(wait.length + ' câu không bấm "Câu tiếp theo", để đồng hồ tự nộp' + (B.length ? '' : ' (dữ liệu cũ: không biết đã chọn từ giây thứ mấy)')); }
+    if (rush.length >= 5){
+      const where = r2n >= 2 * r1n ? ' ở cuối bài' : r1n >= 2 * r2n ? ' ở đầu bài' : '', ra = acc(rush);
+      tags.push((ra < 0.7 ? 'Bấm vội, sai nhiều' : 'Bấm nhanh') + where); notes.push(rush.length + ' câu chọn trong dưới ' + Math.round(FAST) + ' giây' + where + ', đúng ' + Math.round(ra * 100) + '%' + (ra < 0.7 ? ' → vội và sai nhiều' : ' → các câu này nắm chắc'));
+    }
+    if (to + bl >= 3){ tags.push('Bỏ lỡ câu'); notes.push((to + bl) + ' câu hết giờ / bỏ trống'); }
+    if (h1.length >= 3 && h2.length >= 3 && mean(h2) >= 1.4 * mean(h1)){ tags.push('Tụt nhịp cuối bài'); notes.push('Nửa sau chọn chậm hơn nửa đầu ' + Math.round((mean(h2) / mean(h1) - 1) * 100) + '%'); }
     if (changes != null && n && changes >= 0.3 * n){ tags.push('Hay đổi đáp án'); notes.push(changes + ' lần đổi đáp án → thiếu chắc chắn'); }
     if (blur >= 5){ tags.push('Cần xác minh rời trang'); notes.push('Rời trang ' + blur + ' lần' + (blurQs.length ? ' (ở câu ' + blurQs.slice(0, 8).join(', ') + ')' : '') + (pct >= 85 ? ', điểm cao' : '')); }
-    if (!tags.length) tags.push(cv != null && cv < 0.45 ? 'Nhịp đều' : 'Bình thường');
-    return { a, L, n, T, secs, vf, fa, md, sl, acc, to, bl, h1, h2, changes, qBlur, away, firsts, total, mF, m, sd, cv, pct, blur, fastest, slowest, tags, notes };
+    if (pct < 75){ const sa = acc(slow); tags.push('Hổng kiến thức'); notes.push('Đúng ' + pct + '% (dưới 75%)' + (sa != null && slow.length >= 3 && sa < 0.7 ? '; dành nhiều thời gian vẫn sai nhiều → thiếu kiến thức, không phải do vội' : '')); }
+    if (!tags.length){
+      if (mF != null && mF < 0.25 && pct >= 85){ tags.push('Nhanh & chắc'); notes.push('Trung vị ' + Math.round(mdn) + ' giây/câu, đúng ' + pct + '%'); }
+      else if (cv != null && cv < 0.45) tags.push('Nhịp đều, đạt chuẩn');
+      else tags.push(pct >= 85 ? 'Làm tốt' : 'Đạt chuẩn');
+    }
+    return { a, L, n, FAST, T, secs, rush, mid, slow, wait, acc, to, bl, h1, h2, changes, away, total, mdn, mF, m, sd, cv, pct, blur, fastest, slowest, tags, notes };
   });
 
   // ---- Kiểu dáng ----
@@ -5408,23 +5425,22 @@ async function exportBehaviorXlsx(){
   // ===== Sheet 1: Hồ sơ hành vi =====
   const s1 = wb.addWorksheet('Hồ sơ hành vi', { views:[{ state:'frozen', xSplit:3, ySplit:3, showGridLines:false }], pageSetup:Object.assign({ printTitlesRow:'3:3' }, page) });
   const H1 = [['STT',5],['Mã NV',12],['Họ và tên',22],['Quản lí',18],['Lần làm',7],['Lần cao nhất',8],['Bắt đầu',15],['Nộp bài',15],['Số câu đúng',8],['Tỉ lệ đúng',8],
-    ['Tổng thời gian (phút)',9],['TB giây/câu',8],['Trung vị giây/câu',8],['Độ lệch chuẩn (giây)',8],['Hệ số biến thiên',8],['Giới hạn/câu (giây)',8],
-    ['Câu nhanh nhất',11],['Câu chậm nhất',11],['Rất nhanh (<15%)',8],['Nhanh (15–35%)',8],['Vừa (35–60%)',8],['Chậm (≥60%)',8],['Hết giờ',7],['Bỏ trống',7],
-    ['Đúng khi rất nhanh',8],['Đúng khi chậm',8],['TB nửa đầu (giây)',8],['TB nửa sau (giây)',8],['Lần chọn đầu TB (giây)',8],['Số lần đổi đáp án',8],
+    ['Tổng thời gian (phút)',9],['TB giây chọn/câu',8],['Trung vị giây chọn/câu',8],['Độ lệch chuẩn (giây)',8],['Hệ số biến thiên',8],['Giới hạn/câu (giây)',8],
+    ['Câu chọn nhanh nhất',11],['Câu chọn chậm nhất',11],['Số câu tính được tốc độ',8],['Bấm nhanh (<10s)',8],['Vừa (10–30s)',8],['Lâu (≥30s)',8],['Đồng hồ tự nộp',8],['Hết giờ / bỏ trống',8],
+    ['Đúng khi <10s',8],['Đúng khi 10–30s',8],['Đúng khi ≥30s',8],['TB nửa đầu (giây)',8],['TB nửa sau (giây)',8],['Số lần đổi đáp án',8],
     ['Rời trang (tổng)',8],['Thời gian rời trang (giây)',9],['Chụp màn hình',8],['Thiết bị',22],['Số thiết bị/IP',7],['Kiểu làm bài',22],['Nhận xét từ dữ liệu',60]];
   s1.columns = H1.map(h => ({ width:h[1] }));
-  titleBlock(s1, 'AK', 'HỒ SƠ HÀNH VI LÀM BÀI – MỖI LƯỢT LÀM MỘT DÒNG', sub + ' Tốc độ tính theo phần trăm thời gian cho phép mỗi câu. "Kiểu làm bài" là gợi ý từ dữ liệu, không phải kết luận gian lận.');
+  titleBlock(s1, 'AK', 'HỒ SƠ HÀNH VI LÀM BÀI – MỖI LƯỢT LÀM MỘT DÒNG', sub + ' Tốc độ = thời gian RA QUYẾT ĐỊNH, không tính câu đồng hồ tự nộp và câu 1 của bài làm cũ (xem sheet Giải thích). "Kiểu làm bài" là gợi ý từ dữ liệu, không phải kết luận gian lận.');
   headRow(s1.addRow(H1.map(h => h[0])));
   P.forEach((p, i) => {
     const a = p.a, r = s1.addRow([i + 1, a.code, a.name, a.manager, a.nth, a.best ? 'Có' : '', xlDate(a.startedAt), xlDate(a.submittedAt), a.score + '/' + a.total, (a.pct || 0) / 100,
-      p.total / 60, p.m, p.secs.length ? med(p.secs) : null, p.sd, p.cv, p.L,
-      p.fastest ? 'Câu ' + p.fastest.pos + ' (' + p.fastest.sec + 's)' : '', p.slowest ? 'Câu ' + p.slowest.pos + ' (' + p.slowest.sec + 's)' : '',
-      p.vf.length, p.fa.length, p.md.length, p.sl.length, p.to, p.bl, p.acc(p.vf), p.acc(p.sl), mean(p.h1), mean(p.h2),
-      p.firsts.length ? mean(p.firsts) : null, p.changes, (a.flags && a.flags.blur) || 0, p.away, (a.flags && a.flags.shot) || 0, a.device || '', a.devices || '', p.tags.join(' · '), p.notes.join('; ')]);
+      p.total / 60, p.m, p.mdn, p.sd, p.cv, p.L,
+      p.fastest ? 'Câu ' + p.fastest.pos + ' (' + p.fastest._dec + 's)' : '', p.slowest ? 'Câu ' + p.slowest.pos + ' (' + p.slowest._dec + 's)' : '',
+      p.T.length, p.rush.length, p.mid.length, p.slow.length, p.wait.length, p.to + p.bl, p.acc(p.rush), p.acc(p.mid), p.acc(p.slow), mean(p.h1), mean(p.h2), p.changes, (a.flags && a.flags.blur) || 0, p.away, (a.flags && a.flags.shot) || 0, a.device || '', a.devices || '', p.tags.join(' · '), p.notes.join('; ')]);
     cellFmt(r, [1,5,6,7,8,9,10,11,12,13,14,15,16,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,35], i % 2 === 1); r.height = 30;
     r.getCell(7).numFmt = r.getCell(8).numFmt = 'dd/mm hh:mm'; r.getCell(10).numFmt = '0%'; r.getCell(11).numFmt = '0.0';
-    [12,13,14,27,28,29].forEach(k => { r.getCell(k).numFmt = '0.0'; }); r.getCell(15).numFmt = '0.00'; r.getCell(25).numFmt = r.getCell(26).numFmt = '0%'; r.getCell(32).numFmt = '0';
-    const tg = r.getCell(36); tg.font = { name:FONT, size:10, bold:true, color:{ argb: /Đoán|Chật|xác minh|Tụt/.test(p.tags.join()) ? 'FFB3261E' : /Nhanh & chắc|Suy nghĩ|Nhịp đều/.test(p.tags.join()) ? 'FF1E7F4F' : C.ink } };
+    [12,13,14,28,29].forEach(k => { r.getCell(k).numFmt = '0.0'; }); r.getCell(15).numFmt = '0.00'; [25,26,27].forEach(k => { r.getCell(k).numFmt = '0%'; }); r.getCell(32).numFmt = '0';
+    const tg = r.getCell(36); tg.font = { name:FONT, size:10, bold:true, color:{ argb: /vội|Hổng|xác minh|Tụt|Bỏ lỡ|đồng hồ/.test(p.tags.join()) ? 'FFB3261E' : /Nhanh & chắc|Nhịp đều|Làm tốt|Đạt chuẩn/.test(p.tags.join()) ? 'FF1E7F4F' : C.ink } };
   });
   const e1 = 3 + P.length;
   s1.autoFilter = { from:{ row:3, column:1 }, to:{ row:e1, column:H1.length } };
@@ -5438,22 +5454,25 @@ async function exportBehaviorXlsx(){
   const s2 = wb.addWorksheet('Bản đồ thời gian', { views:[{ state:'frozen', xSplit:4, ySplit:3, showGridLines:false }], pageSetup:page });
   s2.columns = [{ width:5 }, { width:22 }, { width:18 }, { width:8 }].concat(Array.from({ length:maxN }, () => ({ width:5.5 }))).concat([{ width:8 }, { width:8 }]);
   const lastCol2 = s2.getColumn(4 + maxN + 2).letter;
-  titleBlock(s2, lastCol2, 'BẢN ĐỒ THỜI GIAN LÀM TỪNG CÂU (GIÂY)', sub + ' Mỗi ô = số giây làm câu đó. Màu: xanh = nhanh → đỏ = chậm (theo giới hạn ' + Lmain + ' giây). Chữ ĐỎ ĐẬM = trả lời sai · HG = hết giờ · BT = bỏ trống. Câu đánh số theo thứ tự hiện ra với từng người (đề trộn câu).');
-  headRow(s2.addRow(['STT', 'Họ và tên', 'Quản lí', 'Đúng'].concat(Array.from({ length:maxN }, (_, k) => 'C' + (k + 1))).concat(['TB giây', 'Hết giờ'])));
+  titleBlock(s2, lastCol2, 'BẢN ĐỒ THỜI GIAN LÀM TỪNG CÂU (GIÂY)', sub + ' Mỗi ô = số giây đến lúc CHỌN đáp án. Màu: xanh = nhanh → đỏ = lâu (theo giới hạn ' + Lmain + ' giây). Chữ ĐỎ ĐẬM = sai · ĐH (nền tím) = không bấm tiếp, đồng hồ tự nộp đáp án đang chọn · HG = hết giờ · BT = bỏ trống · chữ nghiêng xám ở câu 1 = gồm thời gian chuẩn bị. Câu đánh số theo thứ tự hiện ra với từng người (đề trộn câu).');
+  headRow(s2.addRow(['STT', 'Họ và tên', 'Quản lí', 'Đúng'].concat(Array.from({ length:maxN }, (_, k) => 'C' + (k + 1))).concat(['TB giây chọn', 'HG + BT'])));
   P.forEach((p, i) => {
     const byPos = {}; p.a.questions.forEach(q => { byPos[q.pos] = q; });
     const vals = [i + 1, p.a.name + (p.a.nth > 1 ? ' (lần ' + p.a.nth + ')' : ''), p.a.manager, (p.a.pct || 0) / 100];
-    for (let k = 1; k <= maxN; k++){ const q = byPos[k]; vals.push(!q ? null : q.state === 'timeout' ? 'HG' : q.state === 'blank' ? 'BT' : q.sec); }
-    vals.push(p.m, p.to);
+    for (let k = 1; k <= maxN; k++){ const q = byPos[k]; vals.push(!q ? null : q.state === 'timeout' ? 'HG' : q.state === 'blank' ? 'BT' : q._wait && q._dec == null ? 'ĐH' : q._dec != null ? q._dec : q.sec); }
+    vals.push(p.m, p.to + p.bl);
     const r = s2.addRow(vals); r.height = 18;
     r.eachCell({ includeEmpty:true }, (c, k) => {
       c.border = box; c.alignment = { horizontal: k === 2 || k === 3 ? 'left' : 'center', vertical:'middle' }; c.font = { name:FONT, size:9, color:{ argb:C.ink } };
       if (k > 4 && k <= 4 + maxN){ const q = byPos[k - 4]; if (!q) return;
         if (q.state === 'timeout' || q.state === 'blank'){ c.fill = fill('FFD9D9D9'); c.font = { name:FONT, size:9, bold:true, color:{ argb:'FF424242' } }; }
+        else if (q._wait && q._dec == null){ c.fill = fill('FFE1D5F0'); c.font = { name:FONT, size:9, bold:true, color:{ argb: q.ok ? 'FF4A2C7A' : 'FFB3261E' } }; }
+        else if (q._q1){ c.font = { name:FONT, size:9, italic:true, color:{ argb: q.ok ? 'FF9E9E9E' : 'FFE57373' } }; }
         else if (!q.ok) c.font = { name:FONT, size:9, bold:true, color:{ argb:'FFB3261E' } };
         c.numFmt = '0';
         const nt = []; if (q.beh && q.beh.changes) nt.push('Đổi đáp án ' + q.beh.changes + ' lần'); if (q.beh && q.beh.blur) nt.push('Rời trang ' + q.beh.blur + ' lần (' + Math.round((q.beh.awayMs || 0) / 1000) + 's)');
         if (q.beh && q.beh.firstMs != null) nt.push('Chọn lần đầu sau ' + Math.round(q.beh.firstMs / 100) / 10 + 's');
+        if (q._why) nt.unshift(q._why + (q.sec != null ? ' (máy chủ nhận sau ' + q.sec + 's)' : ''));
         if (nt.length || q.cat) c.note = { texts:[{ text:(q.cat ? q.cat + '\n' : '') + nt.join('\n') }] };
         if (q.beh && q.beh.blur) c.border = { top:{ style:'medium', color:{ argb:'FF9A6200' } }, left:{ style:'medium', color:{ argb:'FF9A6200' } }, bottom:{ style:'medium', color:{ argb:'FF9A6200' } }, right:{ style:'medium', color:{ argb:'FF9A6200' } } };
       }
@@ -5468,7 +5487,7 @@ async function exportBehaviorXlsx(){
   // ===== Sheet 3: Chi tiết từng câu (dạng dài) =====
   const s3 = wb.addWorksheet('Chi tiết từng câu', { views:[{ state:'frozen', xSplit:3, ySplit:3, showGridLines:false }], pageSetup:Object.assign({ printTitlesRow:'3:3' }, page) });
   const H3 = [['Mã NV',12],['Họ và tên',22],['Quản lí',18],['Lần làm',7],['Lần cao nhất',8],['Thứ tự câu',7],['Mã câu',12],['Mảng kiến thức',18],['Nội dung câu hỏi',50],['Loại',8],
-    ['Kết quả',9],['Đáp án đã chọn',30],['Đáp án đúng',30],['Câu hiện lúc',15],['Trả lời lúc',15],['Thời gian (giây)',9],['Giới hạn (giây)',8],['% thời gian dùng',9],['Tốc độ',10],
+    ['Kết quả',9],['Đáp án đã chọn',30],['Đáp án đúng',30],['Câu hiện lúc',15],['Trả lời lúc',15],['Máy chủ nhận sau (giây)',9],['Giới hạn (giây)',8],['Thời gian chọn (giây)',9],['Tốc độ',12],
     ['Chọn lần đầu sau (giây)',9],['Số lần đổi đáp án',8],['Rời trang trong câu (lần)',8],['Thời gian rời trang (giây)',9],['Dấu hiệu chụp màn hình',8]];
   s3.columns = H3.map(h => ({ width:h[1] }));
   titleBlock(s3, 'X', 'CHI TIẾT TỪNG CÂU CỦA TỪNG NGƯỜI', sub + ' Mỗi dòng = một câu của một lượt làm. Dùng bộ lọc hoặc PivotTable để phân tích. Các cột hành vi trong câu (lần chọn đầu, đổi đáp án, rời trang) chỉ có với bài làm sau khi hệ thống bắt đầu ghi chi tiết.');
@@ -5476,23 +5495,23 @@ async function exportBehaviorXlsx(){
   const TY = { single:'1 đáp án', multi:'Nhiều đáp án', fill:'Điền' };
   let k3 = 0;
   P.forEach(p => p.a.questions.forEach(q => {
-    const f = q.sec != null ? q.sec / p.L : null, b = q.beh || {};
+    const b = q.beh || {};
     const r = s3.addRow([p.a.code, p.a.name, p.a.manager, p.a.nth, p.a.best ? 'Có' : '', q.pos, q.qid, q.cat, q.text, TY[q.type] || q.type, STATE[q.state], q.chosen, q.answer,
-      xlDate(q.shownAt), xlDate(q.answeredAt), q.sec, p.L, f, q.state === 'timeout' ? 'Hết giờ' : SPEED(f),
+      xlDate(q.shownAt), xlDate(q.answeredAt), q.sec, p.L, q._dec, q.state === 'timeout' ? 'Hết giờ' : q.state === 'blank' ? 'Bỏ trống' : q._wait && q._dec == null ? 'Đồng hồ tự nộp' : q._q1 ? 'Câu đầu (không tính)' : q._dec == null ? '' : q._dec < p.FAST ? 'Bấm nhanh' : q._dec < p.L / 2 ? 'Vừa' : 'Lâu',
       b.firstMs != null ? Math.round(b.firstMs / 100) / 10 : null, b.changes != null ? b.changes : null, b.blur != null ? b.blur : null, b.awayMs != null ? Math.round(b.awayMs / 100) / 10 : null, b.shot != null ? b.shot : null]);
     cellFmt(r, [4,5,6,10,11,14,15,16,17,18,19,20,21,22,23,24], k3 % 2 === 1); r.height = 30; k3++;
-    r.getCell(14).numFmt = r.getCell(15).numFmt = 'dd/mm hh:mm:ss'; r.getCell(18).numFmt = '0%';
+    r.getCell(14).numFmt = r.getCell(15).numFmt = 'dd/mm hh:mm:ss'; r.getCell(18).numFmt = '0.0';
     const rc = r.getCell(11); rc.font = { name:FONT, size:10, bold:true, color:{ argb: q.state === 'ok' ? 'FF1E7F4F' : q.state === 'wrong' ? 'FFB3261E' : 'FF616161' } };
   }));
   const e3 = 3 + k3;
   s3.autoFilter = { from:{ row:3, column:1 }, to:{ row:e3, column:H3.length } };
-  s3.addConditionalFormatting({ ref:'P4:P' + e3, rules:[{ type:'dataBar', minLength:0, maxLength:100, cfvo:[{ type:'num', value:0 }, { type:'num', value:Lmain }], color:{ argb:'FF6E9BD8' }, gradient:false }] });
+  s3.addConditionalFormatting({ ref:'R4:R' + e3, rules:[{ type:'dataBar', minLength:0, maxLength:100, cfvo:[{ type:'num', value:0 }, { type:'num', value:Lmain }], color:{ argb:'FF6E9BD8' }, gradient:false }] });
 
   // ===== Sheet 4: Theo câu hỏi =====
   const Q = {}; P.forEach(p => p.a.questions.forEach(q => {
     const o = (Q[q.qid] = Q[q.qid] || { qid:q.qid, cat:q.cat, text:q.text, pos:[], n:0, ok:0, to:0, bl:0, secs:[], okS:[], badS:[], ch:0, chN:0, blur:0, bN:0, L:p.L });
     o.n++; o.pos.push(q.pos); if (q.ok) o.ok++; if (q.state === 'timeout') o.to++; if (q.state === 'blank') o.bl++;
-    if (q.sec != null && q.state !== 'timeout' && q.state !== 'blank'){ o.secs.push(q.sec); (q.ok ? o.okS : o.badS).push(q.sec); }
+    if (q._dec != null){ o.secs.push(q._dec); (q.ok ? o.okS : o.badS).push(q._dec); }
     if (q.beh){ o.chN++; if (q.beh.changes) o.ch++; o.bN++; o.blur += q.beh.blur || 0; }
   }));
   const QL = Object.values(Q).sort((x, y) => (x.ok / x.n) - (y.ok / y.n));
@@ -5522,16 +5541,17 @@ async function exportBehaviorXlsx(){
   s5.columns = [{ width:30 }, { width:95 }];
   titleBlock(s5, 'B', 'CÁCH ĐỌC DỮ LIỆU HÀNH VI', sub);
   headRow(s5.addRow(['Chỉ số', 'Ý nghĩa / cách tính']));
-  [['Thời gian một câu', 'Từ lúc câu hiện ra (máy chủ ghi) đến lúc máy chủ nhận câu trả lời; đã gồm độ trễ mạng nhỏ. Câu hết giờ không tính vào trung bình.'],
-   ['Tốc độ', 'Theo % thời gian cho phép mỗi câu: Rất nhanh < 15% · Nhanh 15–35% · Vừa 35–60% · Chậm ≥ 60%.'],
-   ['Hệ số biến thiên', 'Độ lệch chuẩn / trung bình thời gian mỗi câu. Thấp (< 0,45) = nhịp làm bài đều; cao = lúc rất nhanh lúc rất chậm.'],
-   ['Đúng khi rất nhanh / khi chậm', 'Tỉ lệ đúng trong các câu trả lời rất nhanh, và trong các câu trả lời chậm. Rất nhanh mà đúng ít = có dấu hiệu đoán.'],
-   ['TB nửa đầu / nửa sau', 'So sánh tốc độ đầu và cuối bài để thấy mệt hoặc mất tập trung.'],
-   ['Lần chọn đầu', 'Sau bao nhiêu giây người học bấm chọn đáp án đầu tiên (thời gian đọc và quyết định).'],
-   ['Số lần đổi đáp án', 'Số lần chọn lại sang đáp án khác trước khi bấm tiếp. Nhiều = thiếu chắc chắn.'],
-   ['Rời trang', 'Số lần chuyển sang ứng dụng / tab khác hoặc khoá màn hình khi đang làm. Là tín hiệu cần xác minh, KHÔNG phải bằng chứng gian lận (có thể do cuộc gọi, thông báo).'],
-   ['Kiểu làm bài', 'Đoán vội · Nhanh & chắc · Suy nghĩ kỹ · Chật vật · Tụt nhịp cuối bài · Hay đổi đáp án · Cần xác minh rời trang · Nhịp đều · Bình thường. Là gợi ý tự động từ dữ liệu, cần người quản lí xem xét.'],
-   ['Dữ liệu chi tiết trong câu', hasBeh ? 'Có với một phần bài làm (bài làm sau khi hệ thống bắt đầu ghi lần chọn đầu, đổi đáp án, rời trang theo từng câu). Ô trống = bài làm cũ chưa có dữ liệu này.' : 'Các bài làm của đề này được nộp trước khi hệ thống ghi chi tiết trong từng câu, nên chỉ có thời gian và kết quả từng câu; cột lần chọn đầu, đổi đáp án, rời trang theo câu sẽ có từ các đề sau.'],
+  [['Thời gian chọn (ra quyết định)', 'Số giây từ lúc câu hiện ra đến lúc chọn đáp án. Bài làm có ghi chi tiết: lấy đúng lúc bấm chọn lần đầu. Bài làm cũ: chỉ có lúc máy chủ nhận đáp án, nên dùng thời điểm đó nhưng loại 2 trường hợp không phản ánh suy nghĩ (dưới đây).'],
+   ['Đồng hồ tự nộp (ĐH)', 'Người làm đã chọn đáp án nhưng không bấm "Câu tiếp theo"; hết giờ đồng hồ tự nộp đáp án đang chọn, máy chủ nhận ở khoảng giây 60–63. Với bài làm cũ không biết người đó đã chọn từ giây thứ mấy, nên KHÔNG tính là "suy nghĩ lâu" và không đưa vào thống kê tốc độ. Nhiều câu ĐH = thói quen chờ đồng hồ hoặc làm không tập trung.'],
+   ['Câu 1 của bài làm cũ', 'Tính từ lúc bắt đầu bài, có thể gồm bước chuẩn bị (camera, đọc hướng dẫn), nên không đưa vào thống kê tốc độ.'],
+   ['Bấm nhanh / Vừa / Lâu', 'Bấm nhanh: chọn trong dưới 1/6 thời gian cho phép (10 giây với câu 60 giây) · Vừa: đến nửa thời gian · Lâu: từ nửa thời gian trở lên.'],
+   ['Đúng khi <10s / 10–30s / ≥30s', 'Tỉ lệ đúng trong từng nhóm tốc độ. Bấm nhanh mà đúng ít = vội/đoán. Lâu mà vẫn sai = thiếu kiến thức thật, không phải do vội.'],
+   ['Hệ số biến thiên', 'Độ lệch chuẩn / trung bình thời gian chọn. Thấp = nhịp đều. Chỉ là mô tả nhịp, KHÔNG nói lên đúng sai.'],
+   ['Kiểu làm bài', 'Để đồng hồ tự chuyển câu (≥5 câu ĐH) · Bấm vội, sai nhiều / Bấm nhanh ở đầu/cuối bài (≥5 câu dưới 10 giây; tách theo tỉ lệ đúng dưới hay từ 70%) · Bỏ lỡ câu (≥3 câu hết giờ/bỏ trống) · Tụt nhịp cuối bài · Hay đổi đáp án · Cần xác minh rời trang (≥5 lần) · Hổng kiến thức (dưới 75%). Chỉ khi không có nhãn nào ở trên mới xét: Nhanh & chắc (nhanh và ≥85%) · Nhịp đều, đạt chuẩn · Làm tốt (≥85%) · Đạt chuẩn.'],
+   ['TB nửa đầu / nửa sau', 'So sánh tốc độ chọn ở đầu và cuối bài để thấy mệt hoặc mất tập trung.'],
+   ['Số lần đổi đáp án', 'Số lần chọn lại sang đáp án khác trước khi nộp câu. Nhiều = thiếu chắc chắn.'],
+   ['Rời trang', 'Số lần chuyển sang ứng dụng / tab khác hoặc khoá màn hình khi đang làm. Là tín hiệu cần xác minh, KHÔNG phải bằng chứng gian lận.'],
+   ['Dữ liệu chi tiết trong câu', hasBeh ? 'Có với một phần bài làm (lần chọn đầu, đổi đáp án, rời trang theo từng câu). Ô trống = bài làm cũ chưa có dữ liệu này.' : 'Các bài làm của đề này nộp trước khi hệ thống ghi chi tiết trong từng câu: chỉ có thời điểm máy chủ nhận đáp án, nên các câu ĐH không biết thời gian chọn thật. Từ các đề sau sẽ có đủ.'],
    ['Phạm vi', 'Mọi lượt làm đã nộp (cột "Lần cao nhất" đánh dấu lượt tính điểm chính thức). ' + filt + '.']]
    .forEach((x, i) => { const r = s5.addRow(x); cellFmt(r, [], i % 2 === 1); r.getCell(1).font = { name:FONT, size:10, bold:true, color:{ argb:C.navy } }; r.height = 34; });
 
