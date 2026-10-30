@@ -868,6 +868,7 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
   .pg-tools .pg-rf{width:44px;padding:0;font-size:18px}
   .pg-rtxt{display:none}
   #pgCopy{grid-column:1/-1;background:var(--brand);border-color:var(--brand);color:#fff}
+  .pg-tools .pg-xl{grid-column:1/-1}
   #pgUpd{grid-column:1/-1;text-align:center;margin-top:2px;margin-left:0}
   .pg-list{max-height:none;overflow:visible;padding-right:0}
   .pg-row{padding:10px 12px;gap:6px 10px}
@@ -2017,6 +2018,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
           <select id="pgMgr" onchange="renderProgress();filterResults()" aria-label="Lọc theo quản lí (lọc cả bảng Bài đã nộp bên dưới)"></select>
           <button class="btn ghost sm pg-rf" type="button" onclick="loadProgress()" aria-label="Làm mới" title="Làm mới"><span aria-hidden="true">↻</span><span class="pg-rtxt"> Làm mới</span></button>
           <button class="btn ghost sm" type="button" id="pgCopy" onclick="pgCopy()">Sao chép danh sách</button>
+          <button class="btn ghost sm pg-xl" type="button" id="pgXlsx" aria-haspopup="menu" onclick="exportPick(this,'xlsx')" title="Xuất Excel: tổng hợp, danh sách đầy đủ, người cần nhắc, người dưới chuẩn">⬇ Xuất Excel ▾</button>
           <span class="small" id="pgUpd"></span>
         </div>
         <div class="pg-list" id="pgList"></div>
@@ -4769,7 +4771,8 @@ function exportPick(btn, kind, msgId){
   if (m && m.dataset.for === kind + (msgId || '')){ m.remove(); return; }
   if (m) m.remove();
   m = document.createElement('div'); m.id = 'xpMenu'; m.className = 'xp-menu'; m.setAttribute('role', 'menu'); m.dataset.for = kind + (msgId || '');
-  m.innerHTML = '<button type="button" role="menuitem" data-m="full"><b>Bản đầy đủ</b><small>Mọi cột, tất cả lần làm và trang Tổng quan</small></button>' +
+  m.innerHTML = (kind === 'xlsx' && PG ? '<button type="button" role="menuitem" data-m="progress"><b>Bảng theo dõi làm bài</b><small>Tổng hợp, danh sách mọi thí sinh (kể cả chưa làm), người cần nhắc, người dưới chuẩn</small></button>' : '') +
+    '<button type="button" role="menuitem" data-m="full"><b>Bản đầy đủ</b><small>Mọi cột, tất cả lần làm và trang Tổng quan</small></button>' +
     '<button type="button" role="menuitem" data-m="short"><b>Bản rút gọn điểm tuân thủ</b><small>STT, mã NV, họ tên, quản lí, điểm kiểm tra, điểm tuân thủ</small></button>';
   document.body.appendChild(m);
   const r = btn.getBoundingClientRect(), w = m.offsetWidth;
@@ -4779,7 +4782,7 @@ function exportPick(btn, kind, msgId){
   const close = (ev) => { if (ev && (m.contains(ev.target) || ev.target === btn)) return; m.remove(); document.removeEventListener('click', close, true); document.removeEventListener('keydown', esc1, true); };
   const esc1 = (ev) => { if (ev.key === 'Escape'){ close(); btn.focus(); } };
   setTimeout(() => { document.addEventListener('click', close, true); document.addEventListener('keydown', esc1, true); });
-  m.addEventListener('click', ev => { const b = ev.target.closest('button[data-m]'); if (!b) return; close(); kind === 'drive' ? exportResultsDrive(btn, msgId, b.dataset.m) : exportResultsXlsx(b.dataset.m); });
+  m.addEventListener('click', ev => { const b = ev.target.closest('button[data-m]'); if (!b) return; close(); b.dataset.m === 'progress' ? exportProgressXlsx() : kind === 'drive' ? exportResultsDrive(btn, msgId, b.dataset.m) : exportResultsXlsx(b.dataset.m); });
 }
 /* ---------- Nhật ký lỗi & lần vào không được ---------- */
 const EL_AREA = { check:'Xác thực thí sinh', start:'Bắt đầu làm bài', answer:'Trả lời câu hỏi', submit:'Nộp bài', verify:'Tra cứu kết quả', paper:'Xem lại đề', request:'Yêu cầu điều chỉnh', resend:'Gửi lại email', client:'Trên trình duyệt' };
@@ -5130,6 +5133,198 @@ function pgCopy(){
   ).join('\n').trim();
   const done = () => { const b = $('pgCopy'), o = b.textContent; b.textContent = 'Đã chép ' + L.length + ' người ✓'; setTimeout(() => { b.textContent = o; }, 1500); };
   if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, () => prompt('Sao chép danh sách:', t)); else prompt('Sao chép danh sách:', t);
+}
+/* ---------- Xuất Excel bảng theo dõi làm bài (mọi thí sinh, kể cả chưa làm) ----------
+   4 sheet: Tổng hợp · Danh sách thí sinh · Cần nhắc làm bài · Dưới chuẩn
+   Theo đúng bộ lọc tìm kiếm + quản lí đang chọn; điểm lấy lần cao nhất của mỗi người. */
+async function exportProgressXlsx(){
+  if (!PG){ alert('Chưa có dữ liệu theo dõi, bấm Làm mới rồi thử lại.'); return; }
+  let E; try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel, kiểm tra kết nối mạng.'); return; }
+  const period = PG.period || '';
+  // Bổ sung chức danh, điểm tuân thủ, thử việc, cảnh báo từ danh sách bài nộp (khớp theo mã bài)
+  const byId = {};
+  try { const { j } = await api('GET', '/api/kt-admin?op=results' + (period ? '&period=' + encodeURIComponent(period) : '')); ((j && j.results) || []).forEach(r => { byId[r.id] = r; }); } catch(e){}
+  const rows = pgRows();
+  if (!rows.length){ alert('Không có thí sinh nào khớp bộ lọc hiện tại.'); return; }
+
+  const ex = examById(period), exTitle = (ex && exTitleOf(ex)) || PG.title || period;
+  const mgrF = $('pgMgr').value, qF = ($('pgSearch').value || '').trim();
+  const filt = [mgrF && mgrF !== '*' ? 'Quản lí: ' + (mgrF || '(chưa có quản lí)') : '', qF ? 'Tìm: “' + qF + '”' : ''].filter(Boolean).join(' · ') || 'Toàn bộ thí sinh của đề';
+  const vnNow = new Date(Date.now() + 7 * 3600e3), p2 = n => (n < 10 ? '0' : '') + n;
+  const nowTxt = p2(vnNow.getUTCHours()) + ':' + p2(vnNow.getUTCMinutes()) + ' ngày ' + p2(vnNow.getUTCDate()) + '/' + p2(vnNow.getUTCMonth() + 1) + '/' + vnNow.getUTCFullYear();
+  const xlDate = ms => ms ? new Date(ms + 7 * 3600e3) : null; // ExcelJS ghi theo UTC → cộng 7 giờ để hiện giờ Việt Nam
+
+  // Chuẩn hoá dữ liệu mỗi người
+  const ST = { none:'Chưa làm', doing:'Đang làm', done:'Hoàn thành' }, ORD = { none:0, doing:1, done:2 };
+  const D = rows.map(x => {
+    const d = x.done, r = d ? (byId[d.id] || {}) : {};
+    const pct = d ? (d.pct != null ? d.pct : (d.total ? d.score / d.total * 100 : null)) : null;
+    const cp = d && r.compliancePoints != null ? (r.probation ? tvPoints(d.score, d.total, r.compliancePoints) : r.compliancePoints) : null;
+    const notes = [];
+    if (x.status === 'doing') notes.push(x.doing.finished ? 'Đã hết câu, chưa nộp' : 'Đang làm câu ' + x.doing.answered + '/' + x.doing.total);
+    if (x.status === 'doing' && d) notes.push('đang làm lại, điểm cao nhất hiện có ' + d.score + '/' + d.total);
+    if (d && d.auto) notes.push('Hết giờ, hệ thống tự thu bài');
+    if (r.probation) notes.push(probNote(r.probation, r));
+    const fl = d ? flagText(r) : ''; if (fl) notes.push('Cảnh báo: ' + fl);
+    return { x, d, st: x.status, code: x.code || '', name: x.name || '', title: r.title || '', mgr: x.manager || '', prov: x.province || '',
+      reg: x.region === 'bac' ? 'Miền Bắc' : x.region ? 'Miền Nam' : '', phone: x.phone ? String(x.phone) : '',
+      score: d ? d.score : null, total: d ? d.total : null, pct, cp, tries: d ? (d.tries || 1) : null, at: d ? d.submittedAt : null, note: notes.join('; ') };
+  }).sort((a, b) => ORD[a.st] - ORD[b.st] || a.mgr.localeCompare(b.mgr, 'vi') || a.name.localeCompare(b.name, 'vi'));
+
+  // ---- Bảng màu & kiểu dùng chung ----
+  const C = { navy:'FF1F3B73', head:'FF2B4C8C', ink:'FF1B2A3A', mute:'FF5B6B80', band:'FFF5F8FC', line:'FFC9D3E0', sub:'FFE8EEF7',
+    st: { done:['FFE6F4EA','FF1E7F4F'], doing:['FFFFF4E0','FF9A6200'], none:['FFFDECEA','FFB3261E'] } };
+  const thin = { style:'thin', color:{ argb:C.line } }, box = { top:thin, left:thin, bottom:thin, right:thin };
+  const fill = argb => ({ type:'pattern', pattern:'solid', fgColor:{ argb } });
+  const FONT = 'Arial';
+  const headRow = (row) => { row.height = 34; row.eachCell(c => { c.font = { name:FONT, bold:true, color:{ argb:'FFFFFFFF' } }; c.fill = fill(C.head); c.alignment = { horizontal:'center', vertical:'middle', wrapText:true }; c.border = box; }); };
+  const titleBlock = (ws, lastCol, title, sub) => {
+    ws.mergeCells('A1:' + lastCol + '1'); ws.mergeCells('A2:' + lastCol + '2');
+    const t = ws.getCell('A1'); t.value = title; t.font = { name:FONT, bold:true, size:15, color:{ argb:'FFFFFFFF' } }; t.fill = fill(C.navy); t.alignment = { horizontal:'left', vertical:'middle', indent:1 }; ws.getRow(1).height = 34;
+    const s = ws.getCell('A2'); s.value = sub; s.font = { name:FONT, italic:true, size:10, color:{ argb:C.mute } }; s.alignment = { horizontal:'left', vertical:'middle', indent:1, wrapText:true }; ws.getRow(2).height = 30;
+  };
+  const page = (land) => ({ paperSize:9, orientation: land ? 'landscape' : 'portrait', fitToPage:true, fitToWidth:1, fitToHeight:0, margins:{ left:0.4, right:0.4, top:0.5, bottom:0.5, header:0.3, footer:0.3 } });
+  const footer = { oddFooter:'&L&8' + exTitle.replace(/&/g, '&&') + '&R&8Trang &P/&N' };
+
+  const wb = new E.Workbook(); wb.creator = 'Hệ thống kiểm tra'; wb.created = new Date();
+  const LS = 'Danh sách thí sinh';
+  const ov = wb.addWorksheet('Tổng hợp', { views:[{ showGridLines:false }], pageSetup: page(false), headerFooter: footer }); // sheet đầu tiên
+
+  // ================= Sheet 2 (dựng trước để Tổng hợp tham chiếu công thức) =================
+  const ls = wb.addWorksheet(LS, { views:[{ state:'frozen', xSplit:3, ySplit:3, showGridLines:false }], pageSetup: Object.assign(page(true), { printTitlesRow:'3:3' }), headerFooter: footer });
+  const cols = [['STT',6],['Mã NV',13],['Họ và tên',26],['Chức danh',11],['Quản lí',22],['Tỉnh/TP',14],['Miền',10],['Điện thoại',13],['Trạng thái',12],['Số câu đúng',9],['Tổng số câu',9],['Tỉ lệ đúng',10],['Điểm tuân thủ',10],['Số lần làm',8],['Thời điểm nộp',16],['Ghi chú',48]];
+  ls.columns = cols.map(c => ({ width:c[1] }));
+  titleBlock(ls, 'P', 'DANH SÁCH THÍ SINH – ' + exTitle.toLocaleUpperCase('vi-VN'), 'Mã đề: ' + period + ' · Phạm vi: ' + filt + ' · Xuất lúc ' + nowTxt + ' · Điểm tính theo lần cao nhất của mỗi người. Sắp xếp: Chưa làm → Đang làm → Hoàn thành, trong mỗi nhóm theo quản lí và họ tên.');
+  headRow(ls.addRow(cols.map(c => c[0])));
+  const R0 = 4;
+  D.forEach((v, i) => {
+    const row = ls.addRow([i + 1, v.code, v.name, v.title, v.mgr, v.prov, v.reg, v.phone, ST[v.st], v.score, v.total, v.pct != null ? v.pct / 100 : null, v.cp, v.tries, xlDate(v.at), v.note]);
+    row.height = 19;
+    row.eachCell({ includeEmpty:true }, (c, n) => {
+      c.font = { name:FONT, size:10, color:{ argb:C.ink } }; c.border = box;
+      c.alignment = { vertical:'middle', horizontal: n === 1 || (n >= 7 && n <= 15) ? 'center' : 'left', wrapText: n === 16 };
+      if (i % 2) c.fill = fill(C.band);
+    });
+    row.getCell(8).numFmt = '@'; row.getCell(12).numFmt = '0.0%'; row.getCell(15).numFmt = 'dd/mm/yyyy hh:mm';
+    const s = row.getCell(9); s.fill = fill(C.st[v.st][0]); s.font = { name:FONT, size:10, bold:true, color:{ argb:C.st[v.st][1] } };
+    if (v.cp === 0){ const c = row.getCell(13); c.font = { name:FONT, size:10, bold:true, color:{ argb:'FFB3261E' } }; c.fill = fill('FFFDECEA'); }
+  });
+  const RN = R0 + D.length - 1;
+  ls.autoFilter = { from:{ row:3, column:1 }, to:{ row:RN, column:16 } };
+  if (D.some(v => v.pct != null)) ls.addConditionalFormatting({ ref:'L' + R0 + ':L' + RN, rules:[{ type:'dataBar', minLength:0, maxLength:100, cfvo:[{ type:'num', value:0 }, { type:'num', value:1 }], color:{ argb:'FF6E9BD8' }, gradient:false }] });
+  const rng = col => "'" + LS + "'!$" + col + '$' + R0 + ':$' + col + '$' + RN;
+
+  // ================= Sheet 1: Tổng hợp =================
+  ov.columns = [{ width:30 }, { width:12 }, { width:12 }, { width:12 }, { width:12 }, { width:14 }, { width:12 }, { width:12 }];
+  titleBlock(ov, 'H', 'BÁO CÁO TÌNH HÌNH LÀM BÀI KIỂM TRA', exTitle + ' (mã đề ' + period + ')\nPhạm vi: ' + filt + ' · Xuất lúc ' + nowTxt);
+  ov.getRow(2).height = 36;
+  const sec = (txt) => { ov.addRow([]); const r = ov.addRow([txt]); r.getCell(1).font = { name:FONT, bold:true, size:12, color:{ argb:C.navy } }; r.height = 22; ov.mergeCells('A' + r.number + ':H' + r.number); r.getCell(1).border = { bottom:{ style:'medium', color:{ argb:C.navy } } }; };
+  const cell = (c, o) => { c.font = Object.assign({ name:FONT, size:10, color:{ argb:C.ink } }, o && o.font); c.border = box; c.alignment = Object.assign({ vertical:'middle' }, o && o.al); if (o && o.fmt) c.numFmt = o.fmt; if (o && o.fill) c.fill = fill(o.fill); };
+  const F = (formula, result) => ({ formula, result });
+
+  // 1. Chỉ số chung — công thức trỏ về sheet danh sách, đổi dữ liệu là tự tính lại
+  const nAll = D.length, nDone = D.filter(v => v.st === 'done').length, nDoing = D.filter(v => v.st === 'doing').length, nNone = nAll - nDone - nDoing;
+  const P = D.filter(v => v.pct != null).map(v => v.pct / 100).sort((a, b) => a - b);
+  const avg = P.length ? P.reduce((a, b) => a + b, 0) / P.length : null;
+  const med = P.length ? (P.length % 2 ? P[(P.length - 1) / 2] : (P[P.length / 2 - 1] + P[P.length / 2]) / 2) : null;
+  const sd = P.length > 1 ? Math.sqrt(P.reduce((a, b) => a + (b - avg) * (b - avg), 0) / (P.length - 1)) : null;
+  const hasCp = D.some(v => v.cp != null), nWeak = D.filter(v => v.cp === 0).length;
+    sec('1. Chỉ số chung');
+  const kh = ov.addRow(['Chỉ số', 'Giá trị', 'Ghi chú']); ov.mergeCells('C' + kh.number + ':H' + kh.number); headRow(kh);
+  const K = [
+    ['Tổng số thí sinh', F('COUNTA(' + rng('B') + ')', nAll), '0', 'Thuộc đối tượng của đề, theo phạm vi lọc'],
+    ['Đã hoàn thành', F('COUNTIF(' + rng('I') + ',"Hoàn thành")', nDone), '0', 'Đã nộp ít nhất một lần'],
+    ['Đang làm', F('COUNTIF(' + rng('I') + ',"Đang làm")', nDoing), '0', 'Tại thời điểm xuất file'],
+    ['Chưa làm', F('COUNTIF(' + rng('I') + ',"Chưa làm")', nNone), '0', 'Xem sheet “Cần nhắc làm bài”'],
+    ['Tỉ lệ hoàn thành', F('IFERROR(B' + (kh.number + 2) + '/B' + (kh.number + 1) + ',0)', nAll ? nDone / nAll : 0), '0.0%', 'Đã hoàn thành / Tổng số thí sinh'],
+    ['Tỉ lệ đúng trung bình', F('IFERROR(AVERAGE(' + rng('L') + '),"–")', avg == null ? '–' : avg), '0.0%', 'Trung bình cộng trên người đã nộp'],
+    ['Trung vị', F('IFERROR(MEDIAN(' + rng('L') + '),"–")', med == null ? '–' : med), '0.0%', 'Một nửa số người đạt từ mức này trở lên'],
+    ['Thấp nhất', F('IF(COUNT(' + rng('L') + ')=0,"–",MIN(' + rng('L') + '))', P.length ? P[0] : '–'), '0.0%', ''],
+    ['Cao nhất', F('IF(COUNT(' + rng('L') + ')=0,"–",MAX(' + rng('L') + '))', P.length ? P[P.length - 1] : '–'), '0.0%', ''],
+    ['Độ lệch chuẩn', F('IFERROR(STDEV(' + rng('L') + '),"–")', sd == null ? '–' : sd), '0.0%', 'Càng nhỏ, kết quả giữa các thí sinh càng đồng đều']
+  ].concat(hasCp ? [['Dưới chuẩn (0 điểm tuân thủ)', F('COUNTIF(' + rng('M') + ',0)', nWeak), '0', 'Cần đào tạo lại – xem sheet “Dưới chuẩn”']] : []);
+  K.forEach((k, i) => {
+    const r = ov.addRow([k[0], k[1], k[3]]); ov.mergeCells('C' + r.number + ':H' + r.number); r.height = 20;
+    cell(r.getCell(1), { font:{ bold:true }, fill: i % 2 ? C.band : null });
+    cell(r.getCell(2), { font:{ bold:true, size:11, color:{ argb: k[0].startsWith('Dưới chuẩn') && nWeak ? 'FFB3261E' : C.navy } }, al:{ horizontal:'center' }, fmt:k[2], fill: i % 2 ? C.band : null });
+    cell(r.getCell(3), { font:{ italic:true, color:{ argb:C.mute } }, fill: i % 2 ? C.band : null });
+  });
+
+  // 2. Phân bố tỉ lệ đúng theo khoảng 10%
+  if (P.length){
+    sec('2. Phân bố tỉ lệ đúng (người đã nộp)');
+    const ph = ov.addRow(['Khoảng tỉ lệ đúng', 'Số người', 'Tỉ trọng', 'Biểu đồ']); ov.mergeCells('D' + ph.number + ':H' + ph.number); headRow(ph);
+    const bins = [[0, .5, 'Dưới 50%'], [.5, .6, '50% – dưới 60%'], [.6, .7, '60% – dưới 70%'], [.7, .8, '70% – dưới 80%'], [.8, .9, '80% – dưới 90%'], [.9, 1.0001, 'Từ 90% trở lên']];
+    const bStart = ph.number + 1;
+    bins.forEach((b, i) => {
+      const n = P.filter(p => p >= b[0] && p < b[1]).length;
+      const fml = 'COUNTIFS(' + rng('L') + ',">=' + b[0] + '",' + rng('L') + ',"<' + b[1] + '")';
+      const r = ov.addRow([b[2], F(fml, n), F('IFERROR(B' + (bStart + i) + '/SUM($B$' + bStart + ':$B$' + (bStart + bins.length - 1) + '),0)', n / P.length), F('REPT("█",ROUND(C' + (bStart + i) + '*40,0))', '█'.repeat(Math.round(n / P.length * 40)))]);
+      ov.mergeCells('D' + r.number + ':H' + r.number); r.height = 19;
+      cell(r.getCell(1), { fill: i % 2 ? C.band : null }); cell(r.getCell(2), { al:{ horizontal:'center' }, fill: i % 2 ? C.band : null });
+      cell(r.getCell(3), { al:{ horizontal:'center' }, fmt:'0.0%', fill: i % 2 ? C.band : null }); cell(r.getCell(4), { font:{ color:{ argb: i < 1 ? 'FFB3261E' : 'FF6E9BD8' } }, fill: i % 2 ? C.band : null });
+    });
+  }
+
+  // 3. Theo quản lí — xếp tỉ lệ hoàn thành thấp lên đầu để ưu tiên nhắc
+  sec((P.length ? '3' : '2') + '. Theo quản lí (tỉ lệ hoàn thành thấp xếp trước)');
+  const mh = ov.addRow(['Quản lí', 'Số thí sinh', 'Hoàn thành', 'Đang làm', 'Chưa làm', 'Tỉ lệ hoàn thành', 'Đúng TB', 'Dưới chuẩn']); headRow(mh);
+  const G = new Map(); D.forEach(v => { const k = v.mgr || '(chưa có quản lí)'; if (!G.has(k)) G.set(k, []); G.get(k).push(v); });
+  const M = [...G.entries()].map(([m, L]) => { const pp = L.filter(v => v.pct != null).map(v => v.pct / 100); return { m, n:L.length, done:L.filter(v => v.st === 'done').length, doing:L.filter(v => v.st === 'doing').length, none:L.filter(v => v.st === 'none').length, avg: pp.length ? pp.reduce((a, b) => a + b, 0) / pp.length : null, weak:L.filter(v => v.cp === 0).length }; })
+    .sort((a, b) => a.done / a.n - b.done / b.n || b.none - a.none || a.m.localeCompare(b.m, 'vi'));
+  const mStart = mh.number + 1;
+  M.forEach((g, i) => {
+    const rn = mStart + i, r = ov.addRow([g.m, g.n, g.done, g.doing, g.none, F('IFERROR(C' + rn + '/B' + rn + ',0)', g.done / g.n), g.avg == null ? '–' : g.avg, hasCp ? g.weak : '–']); r.height = 19;
+    r.eachCell({ includeEmpty:true }, (c, n) => cell(c, { al:{ horizontal: n === 1 ? 'left' : 'center' }, fill: i % 2 ? C.band : null, fmt: n === 6 || n === 7 ? '0.0%' : null }));
+    if (g.none) r.getCell(5).font = { name:FONT, size:10, bold:true, color:{ argb:'FFB3261E' } };
+    if (g.weak) r.getCell(8).font = { name:FONT, size:10, bold:true, color:{ argb:'FFB3261E' } };
+  });
+  const mEnd = mStart + M.length - 1, tr = ov.addRow(['Tổng cộng', F('SUM(B' + mStart + ':B' + mEnd + ')', nAll), F('SUM(C' + mStart + ':C' + mEnd + ')', nDone), F('SUM(D' + mStart + ':D' + mEnd + ')', nDoing), F('SUM(E' + mStart + ':E' + mEnd + ')', nNone), F('IFERROR(C' + (mEnd + 1) + '/B' + (mEnd + 1) + ',0)', nAll ? nDone / nAll : 0), avg == null ? '–' : avg, hasCp ? F('SUM(H' + mStart + ':H' + mEnd + ')', nWeak) : '–']);
+  tr.eachCell({ includeEmpty:true }, (c, n) => cell(c, { font:{ bold:true }, fill:C.sub, al:{ horizontal: n === 1 ? 'left' : 'center' }, fmt: n === 6 || n === 7 ? '0.0%' : null }));
+  ov.addConditionalFormatting({ ref:'F' + mStart + ':F' + mEnd, rules:[{ type:'colorScale', cfvo:[{ type:'num', value:0 }, { type:'num', value:0.5 }, { type:'num', value:1 }], color:[{ argb:'FFF4C7C3' }, { argb:'FFFFF2CC' }, { argb:'FFC9E7D3' }] }] });
+  ov.addRow([]);
+  const nt = ov.addRow(['Ghi chú: Tỉ lệ đúng và điểm tuân thủ tính theo lần làm có điểm cao nhất của mỗi người. Các ô số liệu ở sheet này là công thức trỏ về sheet “' + LS + '”, nên khi sửa dữ liệu ở sheet đó, số liệu ở đây tự tính lại.']);
+  ov.mergeCells('A' + nt.number + ':H' + nt.number); nt.height = 32; nt.getCell(1).font = { name:FONT, italic:true, size:9, color:{ argb:C.mute } }; nt.getCell(1).alignment = { wrapText:true, vertical:'top' };
+
+  // ================= Sheet 3: Cần nhắc làm bài (gom theo quản lí) =================
+  const todo = D.filter(v => v.st !== 'done');
+  const rs = wb.addWorksheet('Cần nhắc làm bài', { views:[{ state:'frozen', ySplit:3, showGridLines:false }], pageSetup: Object.assign(page(false), { printTitlesRow:'3:3' }), headerFooter: footer });
+  rs.columns = [{ width:6 }, { width:13 }, { width:26 }, { width:14 }, { width:13 }, { width:12 }, { width:30 }];
+  titleBlock(rs, 'G', 'DANH SÁCH CẦN NHẮC LÀM BÀI (' + todo.length + ' người)', 'Gồm người chưa làm và đang làm dở, gom theo quản lí (quản lí nhiều người chưa làm xếp trước). Xuất lúc ' + nowTxt + '.');
+  headRow(rs.addRow(['STT', 'Mã NV', 'Họ và tên', 'Tỉnh/TP', 'Điện thoại', 'Trạng thái', 'Ghi chú']));
+  const TG = new Map(); todo.forEach(v => { const k = v.mgr || '(chưa có quản lí)'; if (!TG.has(k)) TG.set(k, []); TG.get(k).push(v); });
+  [...TG.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'vi')).forEach(([m, L]) => {
+    const g = rs.addRow(['Quản lí: ' + m + ' – ' + L.length + ' người']); rs.mergeCells('A' + g.number + ':G' + g.number); g.height = 20;
+    g.getCell(1).font = { name:FONT, bold:true, color:{ argb:C.navy } }; g.getCell(1).fill = fill(C.sub); g.getCell(1).border = box;
+    L.sort((a, b) => ORD[a.st] - ORD[b.st] || a.name.localeCompare(b.name, 'vi')).forEach((v, i) => {
+      const r = rs.addRow([i + 1, v.code, v.name, v.prov, v.phone, ST[v.st], v.note]); r.height = 19;
+      r.eachCell({ includeEmpty:true }, (c, n) => cell(c, { al:{ horizontal: n === 1 || n === 6 ? 'center' : 'left', wrapText: n === 7 } }));
+      r.getCell(5).numFmt = '@'; r.getCell(6).fill = fill(C.st[v.st][0]); r.getCell(6).font = { name:FONT, size:10, bold:true, color:{ argb:C.st[v.st][1] } };
+    });
+  });
+  if (!todo.length){ const r = rs.addRow(['Tất cả thí sinh trong phạm vi đã hoàn thành bài.']); rs.mergeCells('A' + r.number + ':G' + r.number); r.getCell(1).font = { name:FONT, italic:true, color:{ argb:'FF1E7F4F' } }; }
+
+  // ================= Sheet 4: Dưới chuẩn =================
+  if (hasCp){
+    const weak = D.filter(v => v.cp === 0).sort((a, b) => a.pct - b.pct || a.name.localeCompare(b.name, 'vi'));
+    const wsW = wb.addWorksheet('Dưới chuẩn', { views:[{ state:'frozen', ySplit:3, showGridLines:false }], pageSetup: Object.assign(page(false), { printTitlesRow:'3:3' }), headerFooter: footer });
+    wsW.columns = [{ width:6 }, { width:13 }, { width:26 }, { width:22 }, { width:10 }, { width:10 }, { width:16 }, { width:30 }];
+    titleBlock(wsW, 'H', 'DANH SÁCH DƯỚI CHUẨN – CẦN ĐÀO TẠO LẠI (' + weak.length + ' người)', 'Người có 0 điểm tuân thủ ở lần làm cao nhất, xếp theo tỉ lệ đúng từ thấp đến cao. Xuất lúc ' + nowTxt + '.');
+    headRow(wsW.addRow(['STT', 'Mã NV', 'Họ và tên', 'Quản lí', 'Số câu đúng', 'Tỉ lệ đúng', 'Thời điểm nộp', 'Ghi chú']));
+    weak.forEach((v, i) => {
+      const r = wsW.addRow([i + 1, v.code, v.name, v.mgr, v.score + '/' + v.total, v.pct / 100, xlDate(v.at), v.note]); r.height = 19;
+      r.eachCell({ includeEmpty:true }, (c, n) => cell(c, { al:{ horizontal: n === 1 || (n >= 5 && n <= 7) ? 'center' : 'left', wrapText: n === 8 }, fill: i % 2 ? C.band : null }));
+      r.getCell(6).numFmt = '0.0%'; r.getCell(6).font = { name:FONT, size:10, bold:true, color:{ argb:'FFB3261E' } }; r.getCell(7).numFmt = 'dd/mm/yyyy hh:mm';
+    });
+    if (!weak.length){ const r = wsW.addRow(['Không có ai dưới chuẩn.']); wsW.mergeCells('A' + r.number + ':H' + r.number); r.getCell(1).font = { name:FONT, italic:true, color:{ argb:'FF1E7F4F' } }; }
+  }
+
+  const buf = await wb.xlsx.writeBuffer(), a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  a.download = 'theo-doi-lam-bai-' + (period ? period + '-' : '') + vnNow.toISOString().slice(0, 10) + '.xlsx';
+  logEv('exportExcel', { period: period || 'kỳ hiện tại', count: D.length, mode: 'progress' });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
 async function loadDashboard(sel){
   const want = /^[a-z0-9][a-z0-9-]{0,39}$/i.test(sel||'') ? sel : ''; // cả mã tháng (2026-10) lẫn mã đề tự đặt (thi-thu)
