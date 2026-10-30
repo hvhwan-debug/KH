@@ -34,7 +34,14 @@ module.exports = async function (context, req) {
     if (attempt.cursor < attempt.questionIds.length && attempt.questionIds[attempt.cursor] === questionId) {
       const order = attempt.orders[questionId] || [];
       const type = quiz.qType(byId[questionId]);
-      const rec = { answeredAt: now };
+      const rec = { answeredAt: now, shownAt: attempt.qStartedAt || null }; // shownAt: lúc câu này hiện ra (máy chủ tính) -> thời gian làm câu chính xác
+      // Hành vi trong câu do trình duyệt đo (chỉ để phân tích, không ảnh hưởng chấm điểm): lần chọn đầu, số lần đổi đáp án,
+      // số lần / thời gian rời trang, số lần có dấu hiệu chụp màn hình trong lúc làm câu này.
+      if (b.beh && typeof b.beh === "object") {
+        const n = (v, max) => (Number.isFinite(v) && v >= 0 ? Math.min(max, Math.round(v)) : null);
+        const S = (attempt.secondsPerQuestion || 60) * 1000 + 5000;
+        rec.beh = { firstMs: n(b.beh.firstMs, S), changes: n(b.beh.changes, 99), blur: n(b.beh.blur, 99), awayMs: n(b.beh.awayMs, S), shot: n(b.beh.shot, 99), timedOut: b.beh.timedOut === true };
+      }
       if (type === "fill") {
         rec.text = typeof b.text === "string" ? b.text.slice(0, 200) : "";
         rec.answerIndex = -1;

@@ -1760,6 +1760,7 @@ function paintSeg(){
 function loadQuestion(s){
   ST.q = s.question; ST.index = s.index; ST.total = s.total; ST.secs = s.secondsPerQuestion || ST.secs;
   ST.selected = -1; ST.sel = []; ST.text = ''; ST.busy = false;
+  qbReset();
   if ($('seg').children.length !== ST.total) buildSeg(ST.total);
   paintSeg();
   $('qCount').innerHTML = 'Câu <b>'+(ST.index+1)+'</b>/'+ST.total;
@@ -1770,7 +1771,7 @@ function loadQuestion(s){
   $('qOpts').setAttribute('role', qt === 'multi' ? 'group' : (qt === 'fill' ? 'group' : 'radiogroup'));
   if (qt === 'fill'){
     $('qOpts').innerHTML = '<p class="qhint">Nhập câu trả lời của bạn</p><input type="text" class="fillin" id="fillIn" maxlength="200" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ đáp án…" aria-labelledby="qText">';
-    $('fillIn').addEventListener('input', function(){ ST.text = this.value; $('btnNext').disabled = !hasAnswer(); });
+    $('fillIn').addEventListener('input', function(){ if (QB && QB.first == null) QB.first = performance.now() - QB.t0; ST.text = this.value; $('btnNext').disabled = !hasAnswer(); });
   } else {
     $('qOpts').innerHTML = (qt === 'multi' ? '<p class="qhint">Chọn TẤT CẢ đáp án đúng</p>' : '') + ST.q.options.map(function(o,i){
       return '<button type="button" class="opt" role="'+(qt === 'multi' ? 'checkbox' : 'radio')+'" aria-checked="false" data-i="'+i+'"><span class="k">'+letters.charAt(i)+'</span><span class="x">'+esc(o)+'</span></button>';
@@ -1783,6 +1784,15 @@ function loadQuestion(s){
   var fi = $('fillIn'); if (fi) fi.focus({preventScroll:true}); else $('qText').focus({preventScroll:true});
 }
 
+// Hành vi trong từng câu (chỉ để phân tích, không ảnh hưởng điểm): lần chọn đầu sau bao lâu, số lần đổi đáp án,
+// số lần / thời gian rời trang, số lần có dấu hiệu chụp màn hình trong câu này. Gửi kèm câu trả lời.
+var QB = null;
+function qbReset(){ QB = { t0: performance.now(), first: null, changes: 0, blur: 0, away: 0, awayT: null, shot: 0 }; }
+function qbSnap(timedOut){
+  if (!QB) return null;
+  var now = performance.now();
+  return { firstMs: QB.first == null ? null : Math.round(QB.first), changes: QB.changes, blur: QB.blur, awayMs: Math.round(QB.away + (QB.awayT ? now - QB.awayT : 0)), shot: QB.shot, timedOut: !!timedOut };
+}
 // Có câu trả lời hợp lệ để bấm "Câu tiếp theo" chưa (tuỳ loại câu).
 function hasAnswer(){
   var t = (ST.q && ST.q.type) || 'single';
@@ -1800,6 +1810,7 @@ function answerPayload(){
 function choose(i){
   if (ST.busy || i < 0 || i >= ST.q.options.length) return;
   var t = ST.q.type || 'single';
+  if (QB){ if (QB.first == null) QB.first = performance.now() - QB.t0; else if (t === 'multi' || i !== ST.selected) QB.changes++; }
   if (t === 'multi'){
     var at = ST.sel.indexOf(i); if (at >= 0) ST.sel.splice(at, 1); else ST.sel.push(i);
     document.querySelectorAll('#qOpts .opt').forEach(function(b){ b.setAttribute('aria-checked', ST.sel.indexOf(+b.dataset.i) >= 0 ? 'true' : 'false'); });
@@ -1840,7 +1851,7 @@ function tick(){
   $('qTimer').className = 'timer' + (band ? ' '+band : '');
   if (band === 'bad' && lastBand !== 'bad') $('announce').textContent = 'Còn ' + secs + ' giây';
   lastBand = band;
-  if (left <= 0 && !ST.busy){ clearInterval(ST.timer); commit(hasAnswer() ? answerPayload() : { answerIndex: -1 }); }
+  if (left <= 0 && !ST.busy){ clearInterval(ST.timer); commit(hasAnswer() ? answerPayload() : { answerIndex: -1 }, true); }
 }
 document.addEventListener('visibilitychange', function(){ if (ST.quizOn && !document.hidden && !ST.busy) tick(); });
 window.addEventListener('beforeunload', function(e){ if (ST.quizOn){ e.preventDefault(); e.returnValue = ''; } });
@@ -1848,15 +1859,16 @@ window.addEventListener('beforeunload', function(e){ if (ST.quizOn){ e.preventDe
 function setNet(on){ $('net').classList.toggle('hide', !on); }
 
 // Gửi câu trả lời; mất mạng thì tự thử lại đến khi được (máy chủ vẫn tính giờ). Nhận câu kế tiếp từ máy chủ.
-async function commit(payload){
+async function commit(payload, timedOut){
   if (ST.busy) return;
   ST.busy = true; clearInterval(ST.timer);
+  var beh = qbSnap(timedOut); // chốt số liệu hành vi một lần, gửi lại y nguyên nếu phải thử lại do mất mạng
   $('qOpts').setAttribute('aria-disabled','true');
   $('btnNext').disabled = true; $('btnNext').textContent = 'Đang lưu…';
   var q = ST.q, tries = 0, out = null;
   while (!out){
     try {
-      var r = await api('/api/kt-answer', Object.assign({ attemptId:ST.attemptId, questionId:q.id, flags:ST.flags }, payload));
+      var r = await api('/api/kt-answer', Object.assign({ attemptId:ST.attemptId, questionId:q.id, flags:ST.flags, beh:beh }, payload));
       if (r.j && r.j.ok){ out = r.j; break; }
       if (r.s >= 400 && r.s < 500 && r.s !== 408 && r.s !== 429){ setNet(false); return fatal(r.j && r.j.error); }
       throw new Error('retry');
@@ -2443,11 +2455,11 @@ function shieldOff(){
   if (Date.now() < holdUntil || away || document.hidden) return;
   $('shield').classList.remove('on');
 }
-function goAway(){ if (!ST.quizOn) return; if (!away){ away = true; ST.flags.blur++; } shieldOn(AWAY_MSG); }
-function comeBack(){ away = false; shieldOff(); }
+function goAway(){ if (!ST.quizOn) return; if (!away){ away = true; ST.flags.blur++; if (QB){ QB.blur++; QB.awayT = performance.now(); } } shieldOn(AWAY_MSG); }
+function comeBack(){ if (QB && QB.awayT){ QB.away += performance.now() - QB.awayT; QB.awayT = null; } away = false; shieldOff(); }
 function shotAttempt(why){
   if (!ST.quizOn) return;
-  ST.flags.shot++;
+  ST.flags.shot++; if (QB) QB.shot++;
   shieldOn(why || 'Không được chụp hoặc sao chép nội dung bài thi.', 2500);
   try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(' ').catch(function(){}); } catch(e){}
 }

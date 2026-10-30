@@ -174,6 +174,47 @@ const handler = async function (context, req) {
         const ai = {}; rows.forEach((x) => { const k = x.aiStatus || "unknown"; ai[k] = (ai[k] || 0) + 1; });
         return reply(context, 200, { ok: true, exam: examId, capped: rows.length >= 500, summary: r.summary, items: r.items, timing, ai });
       }
+      // Dữ liệu HÀNH VI làm bài từng câu của từng người (để xuất Excel): thời gian mỗi câu, đúng/sai/hết giờ,
+      // và (với bài làm sau khi trang thi ghi thêm) lần chọn đầu, số lần đổi đáp án, rời trang trong từng câu.
+      if (op === "behavior") {
+        const period = String((req.query && req.query.period) || "");
+        const rows = (await quiz.getIndex()).filter((r) => r.status === "submitted" && (r.period || "") === period)
+          .sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0)).slice(0, 800);
+        const byId = {}; (await quiz.getQuestions()).forEach((q) => { byId[q.id] = q; });
+        const candBy = {}; (await quiz.getCandidates()).forEach((c) => { candBy[quiz.normCode(c.code)] = c; });
+        const best = {}; rows.forEach((r) => { const k = quiz.normCode(r.code); if (quiz.betterResult(r, best[k])) best[k] = r; });
+        const bestIds = new Set(Object.values(best).map((r) => r.id)), nth = {};
+        const out = [];
+        for (let i = 0; i < rows.length; i += 25) {
+          const chunk = await Promise.all(rows.slice(i, i + 25).map((r) => quiz.getAttempt(r.id).catch(() => null)));
+          chunk.forEach((a, j) => {
+            if (!a || a.status !== "submitted") return;
+            const r = rows[i + j], k = quiz.normCode(a.code), c = candBy[k] || {};
+            nth[k] = (nth[k] || 0) + 1;
+            const S = Math.max(10, a.secondsPerQuestion || 60);
+            const paper = a.paper && a.paper.length ? a.paper : quiz.buildPaper(a, byId);
+            const pm = {}; paper.forEach((p) => { pm[p.n] = p; });
+            let prevT = a.startedAt || null;
+            const qs = (a.questionIds || []).map((qid, idx) => {
+              const ans = (a.answers || {})[qid] || null, p = pm[idx + 1] || {}, q = byId[qid] || {};
+              const auto = !!(ans && ans.auto), at = ans ? ans.answeredAt || null : null;
+              const shown = ans && ans.shownAt ? ans.shownAt : prevT;
+              let ms = null;
+              if (ans && !auto && at && shown) ms = Math.max(0, Math.min(S * 1000 + 3000, at - shown));
+              if (at) prevT = at;
+              const blank = !ans || auto || p.chosen === -1 || p.chosenText == null;
+              return { pos: idx + 1, qid, cat: p.category || q.category || "", text: String(p.text || q.text || "").slice(0, 300), type: p.type || quiz.qType(q),
+                state: auto ? "timeout" : blank ? "blank" : p.ok ? "ok" : "wrong", ok: !!p.ok,
+                chosen: p.chosenText == null ? "" : String(p.chosenText).slice(0, 200), answer: p.answerText == null ? "" : String(p.answerText).slice(0, 200),
+                shownAt: shown || null, answeredAt: at, sec: ms == null ? null : Math.round(ms / 100) / 10, beh: ans && ans.beh ? ans.beh : null };
+            });
+            out.push({ id: a.id, code: a.code, name: a.name || c.name || "", manager: c.manager || a.manager || "", title: c ? quiz.titleOf(c) : "",
+              province: c.province || "", nth: nth[k], best: bestIds.has(a.id), startedAt: a.startedAt || null, submittedAt: a.submittedAt || null,
+              limit: S, score: a.score, total: a.total, pct: a.pct, auto: !!a.auto, flags: a.flags || {}, device: a.device ? [a.device.type, a.device.os, a.device.browser].filter(Boolean).join(" · ").slice(0, 80) : "", devices: Array.isArray(a.devices) ? a.devices.length : (a.device ? 1 : 0), questions: qs });
+          });
+        }
+        return reply(context, 200, { ok: true, period, attempts: out, capped: rows.length >= 800 });
+      }
       // Kiểm tra AI của lời khuyên: chạy THẬT đường AI trên số liệu mẫu để biết vì sao lời khuyên có thể đang dùng bản dự phòng.
       // Chỉ trả về trạng thái (không lộ khóa hay tên nhà cung cấp).
       if (op === "aiCheck") {
