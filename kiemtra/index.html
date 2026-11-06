@@ -1575,7 +1575,7 @@ function locDlgRender(){
   box.classList.toggle('bad', e === 'denied' || e === 'unavailable' || e === 'timeout' || e === 'unsupported');
   go.disabled = e === 'pending'; go.classList.remove('hide');
   if (e === 'pending'){ $('locDlgT').textContent = 'Đang lấy vị trí…'; b.innerHTML = '<p>Nếu trình duyệt hiện thông báo hỏi quyền, hãy bấm <b>Cho phép</b>.</p>'; go.textContent = 'Đang lấy vị trí…'; }
-  else if (e === 'denied'){ $('locDlgT').textContent = 'Quyền vị trí đang bị chặn'; b.innerHTML = '<p>Bài kiểm tra cần vị trí của bạn. Hãy mở lại quyền vị trí:</p>' + locHelp(); go.textContent = 'Thử lại'; }
+  else if (e === 'denied'){ $('locDlgT').textContent = 'Quyền vị trí đang bị chặn'; b.innerHTML = '<p>Không bắt buộc, nhưng nếu muốn bật lại:</p>' + locHelp(); go.textContent = 'Thử lại'; }
   else if (e === 'unsupported'){ $('locDlgT').textContent = 'Không lấy được vị trí'; b.innerHTML = '<p>Trình duyệt này không hỗ trợ vị trí. Hãy mở trang bằng <b>Chrome</b> hoặc <b>Safari</b>.</p>'; go.classList.add('hide'); }
   else if (e === 'unavailable' || e === 'timeout'){ $('locDlgT').textContent = 'Chưa lấy được vị trí'; b.innerHTML = '<p>Hãy bật <b>Định vị / GPS</b> trên máy, ra chỗ thoáng hoặc bật Wi‑Fi, rồi thử lại.</p>' + locHelp(); go.textContent = 'Thử lại'; }
   else { $('locDlgT').textContent = 'Cho phép truy cập vị trí'; b.innerHTML = '<p>Bài kiểm tra ghi nhận vị trí lúc bạn làm bài. Bấm nút bên dưới, sau đó chọn <b>Cho phép</b> khi trình duyệt hỏi.</p>'; go.textContent = 'Cho phép vị trí'; }
@@ -1606,9 +1606,9 @@ function renderLoc(){
   var e = DEV.locErr, h;
   if (DEV.loc){ el.className = 'locline ok'; h = '<span class="i" aria-hidden="true">📍</span><div>Đã lấy vị trí (sai số khoảng ' + (DEV.loc.acc||0) + ' m).</div>'; }
   else if (e === 'pending'){ el.className = 'locline'; h = '<span class="i" aria-hidden="true">📍</span><div>Đang lấy vị trí… Nếu trình duyệt hỏi, hãy bấm <b>Cho phép</b>.</div>'; }
-  else if (e === 'denied'){ el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Bạn đã chặn quyền vị trí. Cần cho phép vị trí mới bắt đầu làm bài được. Để bật lại: bấm biểu tượng ổ khoá cạnh địa chỉ trang → Vị trí → Cho phép, rồi bấm thử lại.<button type="button" id="locRetry">Thử lại</button></div>'; }
-  else if (e === 'unsupported'){ el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Trình duyệt này không hỗ trợ lấy vị trí. Nếu đang mở trong Zalo/Facebook, hãy chọn “Mở bằng trình duyệt” (Chrome/Safari).</div>'; }
-  else { el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Chưa lấy được vị trí. Hãy bật GPS/Dịch vụ định vị của máy, cần có vị trí mới bắt đầu làm bài được.<button type="button" id="locRetry">Thử lại</button></div>'; }
+  else if (e === 'denied'){ el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Bạn đã chặn quyền vị trí. Không bắt buộc — bạn vẫn làm bài bình thường được. Muốn bật lại: bấm biểu tượng ổ khoá cạnh địa chỉ trang → Vị trí → Cho phép, rồi bấm thử lại.<button type="button" id="locRetry">Thử lại</button></div>'; }
+  else if (e === 'unsupported'){ el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Trình duyệt này không hỗ trợ lấy vị trí. Không bắt buộc — bạn vẫn làm bài bình thường được.</div>'; }
+  else { el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Chưa lấy được vị trí. Không bắt buộc — bạn vẫn làm bài bình thường được. Muốn thử lại, bật GPS/Dịch vụ định vị rồi bấm nút.<button type="button" id="locRetry">Thử lại</button></div>'; }
   el.innerHTML = h;
 }
 document.addEventListener('click', function(ev){ if (ev.target && ev.target.id === 'locRetry'){ requireLocation(); locTry(); } });
@@ -1665,7 +1665,7 @@ var FACE_MSG = {
 /* ---------- Bước 2b: chụp ảnh xác nhận ---------- */
 var PH = { stream:null, dataUrl:'' };
 async function photoInit(){
-  PH.dataUrl = ''; PH.face = null; DEV.loc = null; renderLoc(); requireLocation(); loadFaceAI().catch(function(){}); // tải sẵn bộ nhận diện trong lúc mở camera
+  PH.dataUrl = ''; PH.face = null; DEV.loc = null; renderLoc(); askLocation(); loadFaceAI().catch(function(){}); // tải sẵn bộ nhận diện trong lúc mở camera; vị trí không bắt buộc, chỉ xin thử
   $('pvVideo').classList.remove('hide'); $('pvImg').classList.add('hide'); $('faceGuide').classList.remove('hide');
   $('btnCapture').classList.remove('hide'); $('btnPhotoOk').classList.add('hide'); $('btnPhotoRetry').classList.add('hide');
   msg('photoMsg','');
@@ -1717,7 +1717,6 @@ $('btnPhotoBack').addEventListener('click', function(){ photoStop(); show('confi
 
 $('btnPhotoOk').addEventListener('click', async function(){
   var btn = $('btnPhotoOk'), label = btn.textContent;
-  if (!DEV.loc){ msg('photoMsg', 'Cần cho phép vị trí trước khi bắt đầu làm bài.'); await requireLocation(); }
   btn.disabled = true; btn.textContent = 'Đang kiểm tra ảnh và chuẩn bị đề…'; msg('photoMsg','');
   var res;
   try { res = await api('/api/kt-start', { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, face: PH.face, device: DEV, examId:EXAM_ID, phone: ST.cand.phone || ST.phoneNew || '', province: (ST.rgNew && ST.rgNew.province) || '', region: (ST.rgNew && ST.rgNew.region) || '' }); } catch(e){ res = null; }
