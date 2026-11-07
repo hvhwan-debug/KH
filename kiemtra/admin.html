@@ -217,6 +217,7 @@ textarea{resize:vertical;min-height:80px}
 .btn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:10px;padding:10px 16px;font:inherit;font-weight:700;font-size:13.5px;cursor:pointer;background:var(--brand);color:#fff}
 .btn.ghost{background:#fff;color:var(--brand-deep);border:1.5px solid var(--line)}
 .btn.sm{padding:6px 11px;font-size:12.5px}
+.quickpick{display:flex;gap:6px;flex-wrap:wrap}
 .btn.danger{background:var(--bad)}
 .btn:disabled{opacity:.5;cursor:default}
 .tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
@@ -1262,9 +1263,28 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <h2 class="exsec">2. Thời gian làm bài</h2>
         <div class="grid2">
           <div><label>Mở đề lúc (trống = mở ngay)</label><input type="datetime-local" id="exOpen"></div>
-          <div><label>Đóng đề lúc (trống = không đóng)</label><input type="datetime-local" id="exClose"></div>
-          <div><label>Thời gian tối đa mỗi câu (giây)</label><input type="text" inputmode="numeric" id="exSeconds" placeholder="trống = theo Cài đặt mặc định"></div>
-          <div><label>Số lượt làm mỗi người</label><input type="text" inputmode="numeric" id="exAttempts" maxlength="2" placeholder="trống = 1 lượt"><p class="small" style="margin:4px 0 0">Muốn cho thêm 1 lượt thì đặt 2. Người đã làm sẽ được làm tiếp đến hết lượt. Kết quả chính thức (tổng quan, xuất Excel) lấy <b>lần điểm cao nhất</b>.</p></div>
+          <div><label>Đóng đề lúc (trống = không đóng)</label><input type="datetime-local" id="exClose">
+            <div class="quickpick" style="margin-top:6px">
+              <button type="button" class="btn ghost sm" onclick="exCloseQuick(1)">+1 ngày</button>
+              <button type="button" class="btn ghost sm" onclick="exCloseQuick(3)">+3 ngày</button>
+              <button type="button" class="btn ghost sm" onclick="exCloseQuick(7)">+1 tuần</button>
+            </div>
+          </div>
+          <div><label>Thời gian tối đa mỗi câu (giây)</label><input type="text" inputmode="numeric" id="exSeconds" placeholder="trống = theo Cài đặt mặc định">
+            <div class="quickpick" style="margin-top:6px">
+              <button type="button" class="btn ghost sm" onclick="$('exSeconds').value=30">30s</button>
+              <button type="button" class="btn ghost sm" onclick="$('exSeconds').value=45">45s</button>
+              <button type="button" class="btn ghost sm" onclick="$('exSeconds').value=60">60s</button>
+              <button type="button" class="btn ghost sm" onclick="$('exSeconds').value=90">90s</button>
+            </div>
+          </div>
+          <div><label>Số lượt làm mỗi người</label><input type="text" inputmode="numeric" id="exAttempts" maxlength="2" placeholder="trống = 1 lượt">
+            <div class="quickpick" style="margin-top:6px">
+              <button type="button" class="btn ghost sm" onclick="$('exAttempts').value=1">1 lượt</button>
+              <button type="button" class="btn ghost sm" onclick="$('exAttempts').value=2">2 lượt</button>
+              <button type="button" class="btn ghost sm" onclick="$('exAttempts').value=3">3 lượt</button>
+            </div>
+            <p class="small" style="margin:4px 0 0">Muốn cho thêm 1 lượt thì đặt 2. Người đã làm sẽ được làm tiếp đến hết lượt. Kết quả chính thức (tổng quan, xuất Excel) lấy <b>lần điểm cao nhất</b>.</p></div>
           <div><label>&nbsp;</label><label class="chk"><input type="checkbox" id="exRetake" onchange="$('exAttempts').disabled=this.checked"> Cho phép thí sinh làm lại không giới hạn</label></div>
         </div>
 
@@ -2796,6 +2816,11 @@ async function previewBp(){
 const pad2 = (n) => String(n).padStart(2, '0');
 function msToLocal(ms){ if (!ms) return ''; const d = new Date(+ms); return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())+'T'+pad2(d.getHours())+':'+pad2(d.getMinutes()); }
 function localToMs(v){ if (!v) return 0; const t = new Date(v).getTime(); return isNaN(t) ? 0 : t; }
+// Đặt "Đóng đề lúc" = N ngày sau "Mở đề lúc" (trống thì tính từ bây giờ), giữ nguyên giờ:phút của ô mở.
+function exCloseQuick(days){
+  const baseMs = localToMs($('exOpen').value) || Date.now();
+  $('exClose').value = msToLocal(baseMs + days * 86400000);
+}
 function examWindowText(e){
   const f = (ms) => new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
   const seg = ((e.segments || []).length ? ' · ' + e.segments.map(s => ({gia_dung:'Gia dụng',may_loc:'Máy lọc',both:'Cả hai'}[s]||s)).join('/') : '') + ((e.codes || []).length ? ' · gán ' + e.codes.length + ' NV' : '');
