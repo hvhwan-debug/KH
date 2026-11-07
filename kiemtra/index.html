@@ -1715,9 +1715,12 @@ $('btnCapture').addEventListener('click', async function(){
   $('pvImg').classList.remove('hide'); $('pvVideo').classList.add('hide'); $('faceGuide').classList.add('hide');
   $('btnCapture').classList.add('hide'); $('btnPhotoOk').classList.add('hide'); $('btnPhotoRetry').classList.add('hide');
   photoStop();
-  msg('photoMsg', 'Đang kiểm tra khuôn mặt trong ảnh…', 'info');
   var pbox = document.querySelector('#scrPhoto .photo-box'); pbox.classList.remove('opening'); pbox.classList.add('scanning');
+  var PV_STEPS = ['Đang nhận ảnh…', 'Đang đối chiếu khuôn mặt…', 'Đang xác minh…'], pvi = 0;
+  msg('photoMsg', PV_STEPS[0], 'info');
+  var pvT = setInterval(function(){ pvi = Math.min(pvi + 1, PV_STEPS.length - 1); msg('photoMsg', PV_STEPS[pvi], 'info'); }, 900);
   var r; try { r = await checkFace(c); } catch(e){ r = { status:'unavailable', faces:null }; }
+  clearInterval(pvT);
   pbox.classList.remove('scanning');
   if ((r.status === 'ok' || r.status === 'small') && r.box){
     var fc = cropToFace(c, r.box);
