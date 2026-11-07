@@ -555,7 +555,9 @@ async function getExamSettings(examId) {
   // Cấu trúc đề + khung thời gian + đối tượng: chỉ có ở đề thi đã đăng ký (không kế thừa từ cài đặt chung).
   effective.blueprint = ex && ex.blueprint ? ex.blueprint : null;
   // Phân bổ câu theo nhóm ngành: đề có phân bổ riêng thì dùng của đề, không thì theo cài đặt chung.
-  // Đề đánh dấu "dùng chung" (sharedUniform): bỏ qua hẳn phân bổ theo nhóm ngành/miền (cả chung lẫn riêng), luôn chia đều cho mọi thí sinh.
+  // Đề đánh dấu "dùng chung" (sharedUniform): bỏ qua hẳn phân bổ theo nhóm ngành/miền (cả chung lẫn riêng, kể cả cách
+  // lọc danh mục kiểu cũ trong planExam), luôn rút đều từ toàn bộ ngân hàng câu hỏi của kỳ/mã đề này cho mọi thí sinh.
+  effective.sharedUniform = !!(ex && ex.sharedUniform);
   if (ex && ex.sharedUniform) effective.segmentPlans = {};
   else if (ex && ex.segmentPlans && Object.keys(ex.segmentPlans).length) effective.segmentPlans = ex.segmentPlans;
   effective.openAt = ex && ex.openAt ? ex.openAt : 0;
@@ -854,6 +856,16 @@ function planExam(all, settings, segment, region) {
   const bank = bankFor(all, settings.examPeriod);
   const active = bank.list;
   source = bank.source + (bank.from ? ":" + bank.from : "");
+  // Đề "dùng chung": không lọc theo danh mục ứng với nhóm ngành của từng người nữa, rút ngẫu nhiên đều từ TOÀN BỘ
+  // ngân hàng câu hỏi của kỳ/mã đề này (ngân hàng của mỗi mã đề/kỳ thi vẫn tách riêng như cũ, chỉ bỏ phân biệt theo người).
+  if (settings.sharedUniform) {
+    pool = active.length;
+    if (!active.length) error = "Ngân hàng đề kỳ này chưa có câu hỏi.";
+    picked = shuffle(active).slice(0, Math.min(target, active.length));
+    parts.push({ label: "Dùng chung (mọi danh mục)", want: target, got: picked.length });
+    picked = picked.slice(0, target);
+    return { picked, target, mode: "segment", short: Math.max(0, target - picked.length), pool, source, parts, error };
+  }
   const seg = normSegment(segment);
   const wantCategory = CATEGORY_BY_SEGMENT[seg];
   if (!active.length) error = "Ngân hàng đề kỳ này chưa có câu hỏi.";
