@@ -2058,7 +2058,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
             <select id="resSort" class="rt-sortsel" onchange="resSortSel(this.value)" aria-label="Sắp xếp kết quả"><option value="time:desc">Mới nộp nhất</option><option value="score:desc">Điểm cao → thấp</option><option value="score:asc">Điểm thấp → cao</option><option value="name:asc">Tên A → Z</option><option value="time:asc">Nộp sớm nhất</option></select>
             <button class="btn ghost sm" style="white-space:nowrap" type="button" aria-haspopup="menu" onclick="exportPick(this,'xlsx')">⬇ Xuất Excel ▾</button>
             <button class="btn ghost sm" style="white-space:nowrap" type="button" aria-haspopup="menu" onclick="exportPick(this,'drive','driveMsg')" title="Lưu file kết quả lên Google Drive">☁ Lưu vào Drive ▾</button>
-            <button class="btn ghost sm" style="white-space:nowrap" type="button" id="faceScanBtn" onclick="faceScanRun(this)" title="AI so ảnh xác nhận của mỗi bài với các lần kiểm tra trước của cùng nhân viên">🧑 Đối chiếu khuôn mặt</button>
+            <button class="btn ghost sm" style="white-space:nowrap" type="button" id="faceScanBtn" onclick="faceScanRun(this)" title="Hệ thống đã tự động đối chiếu ở nền mỗi khi mở trang này; bấm nút này để quét ngay lập tức toàn bộ bài chưa đối chiếu, không cần chờ.">🧑 Đối chiếu khuôn mặt ngay</button>
           </div>
         </div>
         <div id="driveMsg"></div>
@@ -5674,6 +5674,29 @@ async function loadResults(){
   $('resPeriod').innerHTML = '<option value="">Tất cả các kỳ</option>' + (j.periods||[]).map((p,i) => '<option value="'+esc(p)+'" '+(p===selBefore?'selected':'')+'>'+esc(opts[i])+'</option>').join('');
   RESULTS = j.results || [];
   renderResults();
+  faceScanAuto(selBefore);
+}
+// Tự động đối chiếu khuôn mặt ở nền mỗi khi mở/tải lại trang Kết quả, không cần bấm nút thủ công.
+// Gọi từng đợt tới khi hết bài cần đối chiếu, rồi âm thầm làm mới danh sách để cập nhật nhãn cảnh báo.
+// Im lặng nếu lỗi (cron nền hoặc lượt tải trang sau sẽ tự thử lại); tự giới hạn tần suất để không gọi dồn dập.
+let FACE_AUTO = { running:false, at:0 };
+async function faceScanAuto(period){
+  if (FACE_AUTO.running || Date.now() - FACE_AUTO.at < 20000) return;
+  FACE_AUTO.running = true; FACE_AUTO.at = Date.now();
+  try {
+    let any = false;
+    for (let i = 0; i < 10; i++){
+      const { j } = await api('POST', '/api/kt-admin', { op:'faceScan', period: period || '' });
+      if (!j || !j.ok) break;
+      if (j.done) any = true;
+      if (!j.left || !j.done) break;
+    }
+    if (any){
+      const { j } = await api('GET','/api/kt-admin?op=results'+(period?'&period='+encodeURIComponent(period):''));
+      if (j && j.ok){ RESULTS = j.results || []; renderResults(); }
+    }
+  } catch (e) { /* im lặng, cron nền hoặc lượt tải trang sau sẽ tự thử lại */ }
+  finally { FACE_AUTO.running = false; }
 }
 // ----- Bảng "Bài đã nộp": hàng gọn (avatar, thanh điểm, chip cảnh báo, nút biểu tượng), sắp xếp theo cột -----
 let RESULTS = [], RES_SORT = { k:'time', d:-1 };
