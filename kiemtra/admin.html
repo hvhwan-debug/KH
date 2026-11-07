@@ -1305,10 +1305,16 @@ button.rd-st:disabled{opacity:.55;cursor:default}
             <button class="btn ghost sm" type="button" onclick="previewPlan()">Kiểm tra đủ câu chưa</button>
           </div>
           <div id="exSpMode" style="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;font-size:14px">
+            <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="radio" name="exSpMode" value="none" onchange="exSpModeChanged()"> Dùng chung (không phân biệt nhóm ngành/miền)</label>
             <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="radio" name="exSpMode" value="global" checked onchange="exSpModeChanged()"> Theo phân bổ chung (tab Cài đặt)</label>
             <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="radio" name="exSpMode" value="own" onchange="exSpModeChanged()"> Phân bổ riêng cho đề này</label>
           </div>
           <div id="exSpOwn" class="hide"><div class="spg" id="exSp" oninput="exQSummary();$('planPreview').innerHTML=''" onclick="setTimeout(exQSummary,0)"></div></div>
+          <div id="exSpNone" class="hide" style="margin-top:8px;padding:10px 12px;border-radius:10px;background:#F3F7FF;border:1.5px solid #D6E3FA">
+            <label style="margin:0">Tổng số câu hỏi mỗi đề (mọi nhân viên nhận giống nhau)</label>
+            <input type="text" inputmode="numeric" id="exCountQuick" oninput="$('exCount').value=this.value;exQSummary()" style="margin-top:6px">
+            <p class="small" style="margin:6px 0 0">Mọi nhân viên (bất kể nhóm ngành, miền) đều nhận cùng số câu và rút chung một ngân hàng câu hỏi của đề này. Không cần cài phân bổ theo nhóm ngành/miền nữa.</p>
+          </div>
           <div id="exQSrc" class="small" style="margin-top:8px"></div>
           <div id="planPreview"></div>
         </div>
@@ -2449,7 +2455,7 @@ async function loadExams(){
   $('exList').innerHTML = EXAMS.map(e =>
     '<tr><td><code>'+esc(e.id)+'</code>'+(e.id===j.currentPeriod?' <span class="badge y">Mặc định</span>':'')+'</td>'+
     '<td>'+esc(e.title||e.id)+(e.practice?' <span class="badge" style="background:#FDEBC8;color:#8A5200">Thi thử</span>':'')+'<div class="small"><a href="/kiemtra/?exam='+encodeURIComponent(e.id)+'" target="_blank" rel="noopener">link thi</a> · '+(e.bankCount ? e.bankCount+' câu hỏi riêng' : '<span style="color:var(--warn)">chưa có câu hỏi riêng</span>')+'</div></td>'+
-    '<td class="small">'+((+e.questionCount > MAXQ || bpTotalOf(e.blueprint) > MAXQ || (bpTotalOf(e.blueprint) && e.questionCount && bpTotalOf(e.blueprint) !== +e.questionCount)) ? '<span class="badge n">⚠ Cần sửa số câu</span> ' : '')+(bpTotalOf(e.blueprint) ? '<span class="badge y">Theo quy tắc</span> '+bpTotalOf(e.blueprint)+' câu / '+e.blueprint.rules.length+' quy tắc' : (spHas(e.segmentPlans) ? 'Phân bổ riêng: '+SP_SEGS.filter(([k]) => e.segmentPlans[k] && e.segmentPlans[k].length).map(([k,l]) => l.replace('Chỉ bán ','').replace('Bán ','')+' '+e.segmentPlans[k].reduce((n,r) => n + r.count, 0)+' câu').join(' · ') : spHas(SEGPLANS) ? 'Theo phân bổ chung (Cài đặt)' : 'Theo nhóm ngành · '+(e.questionCount ? e.questionCount+' câu/đề' : 'theo cài đặt chung')))+'</td>'+
+    '<td class="small">'+((+e.questionCount > MAXQ || bpTotalOf(e.blueprint) > MAXQ || (bpTotalOf(e.blueprint) && e.questionCount && bpTotalOf(e.blueprint) !== +e.questionCount)) ? '<span class="badge n">⚠ Cần sửa số câu</span> ' : '')+(bpTotalOf(e.blueprint) ? '<span class="badge y">Theo quy tắc</span> '+bpTotalOf(e.blueprint)+' câu / '+e.blueprint.rules.length+' quy tắc' : e.sharedUniform ? '<span class="badge y">Dùng chung</span> '+(e.questionCount ? e.questionCount+' câu/đề' : 'theo cài đặt chung')+' · không phân biệt nhóm ngành/miền' : (spHas(e.segmentPlans) ? 'Phân bổ riêng: '+SP_SEGS.filter(([k]) => e.segmentPlans[k] && e.segmentPlans[k].length).map(([k,l]) => l.replace('Chỉ bán ','').replace('Bán ','')+' '+e.segmentPlans[k].reduce((n,r) => n + r.count, 0)+' câu').join(' · ') : spHas(SEGPLANS) ? 'Theo phân bổ chung (Cài đặt)' : 'Theo nhóm ngành · '+(e.questionCount ? e.questionCount+' câu/đề' : 'theo cài đặt chung')))+'</td>'+
     '<td class="small">'+esc(examWindowText(e))+'</td><td>'+(e.resultCount||0)+'</td>'+
     '<td class="small">'+examStatusText(e, j.currentPeriod)+'</td>'+
     '<td style="white-space:nowrap">'+
@@ -2470,24 +2476,30 @@ function exQSummary(){
   if (BP_RULES.length){ const t = BP_RULES.reduce((n,r) => n + (+r.count||0), 0); box.innerHTML = 'Theo <b>cấu trúc đề riêng</b> (Tuỳ chọn nâng cao): ' + t + ' câu cho mọi thí sinh.'; return; }
   const bk = bankOfPeriod($('exEditingId').value || $('exId').value.trim());
   const note = bk.note ? '<div style="color:var(--warn);margin-top:4px">⚠ Ngân hàng: ' + esc(bk.note) + '. Thêm câu cho đề này ở tab Câu hỏi (nút "Câu hỏi" trong danh sách đề).</div>' : '';
+  if (exSpShared()){ const cnt = $('exCount').value.trim(); box.innerHTML = 'Theo <b>dùng chung</b>: ' + (cnt ? cnt + ' câu' : 'theo Cài đặt mặc định') + ' cho MỌI thí sinh, không phân biệt nhóm ngành hay miền.' + note; return; }
   if (own){ const P = spRead($('exSp')); box.innerHTML = 'Theo <b>phân bổ riêng của đề này</b>: ' + (SP_SEGS.filter(([k]) => P[k] && P[k].length).map(([k,l]) => l + ' <b>' + P[k].reduce((n,r) => n + r.count, 0) + ' câu</b>').join(' · ') || 'chưa nhập dòng nào') + note; return; }
   const segs = SP_SEGS.filter(([k]) => SEGPLANS[k] && SEGPLANS[k].length);
   const old = ($('exCount').value.trim() ? 'tổng ' + $('exCount').value.trim() + ' câu' : 'tổng số câu theo Cài đặt') + ' (cách chia cũ)';
   box.innerHTML = segs.length ? 'Theo <b>Phân bổ nhóm ngành</b> ở tab Cài đặt: ' + segs.map(([k,l]) => l + ' <b>' + SEGPLANS[k].reduce((n,r) => n + r.count, 0) + ' câu</b>').join(' · ') +
     (segs.filter(([k]) => k.indexOf('mien_') < 0).length < 3 ? ' · nhóm còn lại: ' + old : '') + note : old + '. Muốn chia theo danh mục cho từng nhóm ngành, chọn "Phân bổ riêng cho đề này" hoặc chỉnh ở tab Cài đặt.' + note;
 }
-const exSpOwn = () => { const r = document.querySelector('input[name=exSpMode]:checked'); return !!r && r.value === 'own'; };
-function exSpSet(own, plans){
-  document.querySelector('input[name=exSpMode][value=' + (own ? 'own' : 'global') + ']').checked = true;
-  $('exSpOwn').classList.toggle('hide', !own);
+const exSpMode = () => { const r = document.querySelector('input[name=exSpMode]:checked'); return r ? r.value : 'global'; };
+const exSpOwn = () => exSpMode() === 'own';
+const exSpShared = () => exSpMode() === 'none'; // "Dùng chung": bỏ qua phân bổ nhóm ngành/miền, mọi thí sinh nhận cùng đề
+function exSpSet(mode, plans){
+  document.querySelector('input[name=exSpMode][value=' + mode + ']').checked = true;
+  $('exSpOwn').classList.toggle('hide', mode !== 'own');
+  $('exSpNone').classList.toggle('hide', mode !== 'none');
+  $('exCountQuick').value = $('exCount').value;
   $('exSp').dataset.bank = $('exEditingId').value || $('exId').value.trim();
-  if (own) spRender($('exSp'), plans || {});
+  if (mode === 'own') spRender($('exSp'), plans || {});
   exQSummary();
 }
 function exSpModeChanged(){
-  const own = exSpOwn();
+  const mode = exSpMode();
   // Chuyển sang phân bổ riêng: chép sẵn phân bổ chung để sửa cho nhanh
-  exSpSet(own, own ? (spHas(spRead($('exSp'))) ? spRead($('exSp')) : JSON.parse(JSON.stringify(spHas(SEGPLANS) ? SEGPLANS : {}))) : null);
+  exSpSet(mode, mode === 'own' ? (spHas(spRead($('exSp'))) ? spRead($('exSp')) : JSON.parse(JSON.stringify(spHas(SEGPLANS) ? SEGPLANS : {}))) : null);
+  if (mode === 'none') $('exCountQuick').focus();
   $('planPreview').innerHTML = '';
 }
 /* ---------- Gán nhân viên theo từng đề (lưu vào exam.codes; ô #exCodes là nơi giữ danh sách) ---------- */
@@ -2578,7 +2590,7 @@ function clearExamForm(){
   $('exRetake').checked=false; $('exAttempts').value=''; $('exAttempts').disabled=false; $('exPractice').checked=false; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
   $('exDesc').value=''; asgLoad([]); $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
   BP_RULES = []; renderBpRules(); $('bpPreview').innerHTML=''; $('bpTotal').textContent='';
-  msg('exMsg',''); $('exAdv').open = false; exSpSet(false);
+  msg('exMsg',''); $('exAdv').open = false; exSpSet('global');
   $('exPassOn').checked = !!SETCACHE.passEnabled; $('exRetake').checked = !!SETCACHE.allowRetake; $('exAttempts').disabled = $('exRetake').checked; $('exComplianceOn').checked = !!SETCACHE.complianceEnabled;
   $('exId').oninput = () => { $('exSp').dataset.bank = $('exId').value.trim(); spRefresh($('exSp')); exQSummary(); };
 }
@@ -2587,7 +2599,7 @@ function openNewExam(){
   clearExamForm();
   $('examFormTitle').textContent = 'Tạo đề thi mới';
   // Đề mới: mặc định phân bổ riêng, điền sẵn theo phân bổ chung (nếu đã cài) hoặc mẫu chuẩn 5/10/15/5/5 và 5/25/10
-  exSpSet(true, JSON.parse(JSON.stringify(spHas(SEGPLANS) ? SEGPLANS : spTemplatePlans())));
+  exSpSet('own', JSON.parse(JSON.stringify(spHas(SEGPLANS) ? SEGPLANS : spTemplatePlans())));
   $('examFormCard').classList.remove('hide');
   previewPlan();
   $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
@@ -2608,13 +2620,13 @@ function editExam(id){
   BP_RULES = e.blueprint && e.blueprint.rules ? e.blueprint.rules.map(r => Object.assign({}, r)) : []; renderBpRules();
   $('examFormTitle').textContent = 'Cài đặt đề';
   $('exAdv').open = !!(BP_RULES.length || e.questionCount || e.bothGiaDungCount || (e.segments||[]).length);
-  exSpSet(spHas(e.segmentPlans), e.segmentPlans); previewPlan();
+  exSpSet(e.sharedUniform ? 'none' : (spHas(e.segmentPlans) ? 'own' : 'global'), e.segmentPlans); previewPlan();
   $('examFormCard').classList.remove('hide');
   $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function examDraft(){
   return { id: $('exEditingId').value || $('exId').value.trim(), questionCount: $('exCount').value.trim(), bothGiaDungCount: $('exBothGD').value.trim(),
-    segmentPlans: exSpOwn() ? spRead($('exSp')) : null,
+    segmentPlans: exSpOwn() ? spRead($('exSp')) : null, sharedUniform: exSpShared(),
     blueprint: BP_RULES.length ? { rules: BP_RULES.map(r => ({ bankId:r.bankId, category:r.category||'', difficulty:r.difficulty||'', tag:r.tag||'', count:+r.count||0 })) } : null };
 }
 async function fetchPlan(){
@@ -2658,7 +2670,7 @@ async function saveExam(){
     description: $('exDesc').value.trim(), codes: ASG.mode === 'pick' ? $('exCodes').value : '',
     openAt: localToMs($('exOpen').value), closeAt: localToMs($('exClose').value),
     segments: Array.from(document.querySelectorAll('.exSeg:checked')).map(c => c.value),
-    segmentPlans: exSpOwn() ? spRead($('exSp')) : null,
+    segmentPlans: exSpOwn() ? spRead($('exSp')) : null, sharedUniform: exSpShared(),
     blueprint: BP_RULES.length ? { rules: BP_RULES.map(r => ({ bankId:r.bankId, category:r.category||'', difficulty:r.difficulty||'', tag:r.tag||'', count:+r.count||0 })) } : null
   };
   if (!exam.id){ msg('exMsg','Nhập mã đề thi.'); return; }

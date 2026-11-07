@@ -554,8 +554,10 @@ async function getExamSettings(examId) {
   if (ex && !ex.examTitle && ex.title && String(ex.title).trim() !== ex.id) effective.examTitle = String(ex.title).trim();
   // Cấu trúc đề + khung thời gian + đối tượng: chỉ có ở đề thi đã đăng ký (không kế thừa từ cài đặt chung).
   effective.blueprint = ex && ex.blueprint ? ex.blueprint : null;
-  // Phân bổ câu theo nhóm ngành: đề có phân bổ riêng thì dùng của đề, không thì theo cài đặt chung
-  if (ex && ex.segmentPlans && Object.keys(ex.segmentPlans).length) effective.segmentPlans = ex.segmentPlans;
+  // Phân bổ câu theo nhóm ngành: đề có phân bổ riêng thì dùng của đề, không thì theo cài đặt chung.
+  // Đề đánh dấu "dùng chung" (sharedUniform): bỏ qua hẳn phân bổ theo nhóm ngành/miền (cả chung lẫn riêng), luôn chia đều cho mọi thí sinh.
+  if (ex && ex.sharedUniform) effective.segmentPlans = {};
+  else if (ex && ex.segmentPlans && Object.keys(ex.segmentPlans).length) effective.segmentPlans = ex.segmentPlans;
   effective.openAt = ex && ex.openAt ? ex.openAt : 0;
   effective.closeAt = ex && ex.closeAt ? ex.closeAt : 0;
   effective.segments = ex && Array.isArray(ex.segments) ? ex.segments : [];
@@ -609,6 +611,7 @@ async function upsertExam(data) {
     if (sp.error) return { ok: false, error: sp.error };
     entry.segmentPlans = Object.keys(sp).length ? sp : null; // null = theo cài đặt chung
   }
+  if (data && data.sharedUniform !== undefined) entry.sharedUniform = !!data.sharedUniform; // true = dùng chung, bỏ qua phân bổ nhóm ngành/miền
   if (data && data.openAt !== undefined) entry.openAt = Math.max(0, Number(data.openAt) || 0);
   if (data && data.closeAt !== undefined) entry.closeAt = Math.max(0, Number(data.closeAt) || 0);
   if (entry.openAt && entry.closeAt && entry.closeAt <= entry.openAt) return { ok: false, error: "Thời gian đóng phải sau thời gian mở." };
