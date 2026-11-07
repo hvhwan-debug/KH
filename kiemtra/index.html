@@ -1652,8 +1652,21 @@ async function checkFace(canvas){
   if (!det.length || det[0].score < 0.5) return { status: isDark(canvas) ? 'dark' : 'noface', faces:0 };
   if (det.length > 1) return { status:'multi', faces:det.length };
   var w = det[0].box.width / canvas.width, sc2 = Math.round(det[0].score * 100) / 100;
-  if (w < 0.15) return { status:'small', faces:1, score:sc2, width:Math.round(w*100)/100 };
-  return { status:'ok', faces:1, score:sc2, width:Math.round(w*100)/100 };
+  var bx = { x:det[0].box.x, y:det[0].box.y, width:det[0].box.width, height:det[0].box.height };
+  if (w < 0.15) return { status:'small', faces:1, score:sc2, width:Math.round(w*100)/100, box:bx };
+  return { status:'ok', faces:1, score:sc2, width:Math.round(w*100)/100, box:bx };
+}
+// Cắt canvas lại quanh khuôn mặt (có thêm viền quanh) thay vì giữ cả khung hình; trả về canvas crop, hoặc canvas gốc nếu không có box.
+function cropToFace(canvas, box){
+  if (!box) return canvas;
+  var padX = box.width * 0.7, padTop = box.height * 0.8, padBot = box.height * 1.1;
+  var sx = Math.max(0, box.x - padX), sy = Math.max(0, box.y - padTop);
+  var ex = Math.min(canvas.width, box.x + box.width + padX), ey = Math.min(canvas.height, box.y + box.height + padBot);
+  var sw = ex - sx, sh = ey - sy;
+  if (!(sw > 0 && sh > 0)) return canvas;
+  var cc = document.createElement('canvas'); cc.width = Math.round(sw); cc.height = Math.round(sh);
+  cc.getContext('2d').drawImage(canvas, sx, sy, sw, sh, 0, 0, cc.width, cc.height);
+  return cc;
 }
 var FACE_MSG = {
   noface: 'Không thấy rõ khuôn mặt trong ảnh. Hãy nhìn thẳng vào camera, để cả khuôn mặt trong khung rồi chụp lại.',
@@ -1706,6 +1719,11 @@ $('btnCapture').addEventListener('click', async function(){
   var pbox = document.querySelector('#scrPhoto .photo-box'); pbox.classList.remove('opening'); pbox.classList.add('scanning');
   var r; try { r = await checkFace(c); } catch(e){ r = { status:'unavailable', faces:null }; }
   pbox.classList.remove('scanning');
+  if ((r.status === 'ok' || r.status === 'small') && r.box){
+    var fc = cropToFace(c, r.box);
+    PH.dataUrl = fc.toDataURL('image/jpeg', 0.8);
+    $('pvImg').src = PH.dataUrl;
+  }
   PH.face = r;
   $('btnPhotoRetry').classList.remove('hide');
   if (r.status === 'ok'){ msg('photoMsg', '✓ Đã nhận diện được khuôn mặt.', 'ok'); $('btnPhotoOk').classList.remove('hide'); }
