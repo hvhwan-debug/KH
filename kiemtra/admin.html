@@ -4665,16 +4665,16 @@ function probNote(p, r){
   return t;
 }
 // Dựng file Excel (kết quả + trang Tổng quan) trong trình duyệt; dùng chung cho tải về máy và lưu lên Drive.
-async function buildResultsXlsx(mode){
-  let E; try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel, kiểm tra kết nối mạng.'); return null; }
+async function buildResultsXlsx(mode, sharedWb, sharedE){
+  let E = sharedE; if (!E) { try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel, kiểm tra kết nối mạng.'); return null; } }
   const selPeriod = $('resPeriod').value;
   const { j } = await api('GET','/api/kt-admin?op=results'+(selPeriod?'&period='+encodeURIComponent(selPeriod):''));
   if (!j.ok){ alert(j.error||'Không lấy được dữ liệu kết quả.'); return null; }
   const results = (j.results||[]).slice().sort((a,b)=>(b.submittedAt||0)-(a.submittedAt||0));
   const segLabel = { both:'Cả hai', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };
 
-  const wb = new E.Workbook();
-  wb.creator = 'Hệ thống kiểm tra'; wb.created = new Date();
+  const wb = sharedWb || new E.Workbook();
+  if (!sharedWb) { wb.creator = 'Hệ thống kiểm tra'; wb.created = new Date(); }
   // Sheet: mỗi dòng một bài. withCount = thêm cột "Số lần làm" (sheet chính)
   const makeSheet = (name, list, withCount) => {
   const ws = wb.addWorksheet(name, { views:[{ state:'frozen', ySplit:1 }] });
@@ -4736,9 +4736,10 @@ async function buildResultsXlsx(mode){
   results.filter(r => r.status === 'submitted').forEach(r => { const k = (r.period||'') + '|' + String(r.code||'').toLowerCase(); tries[k] = (tries[k]||0) + 1; if (better(r, bestBy[k])) bestBy[k] = r; });
   const bestIds = new Set(Object.values(bestBy).map(r => r.id));
   const official = Object.keys(bestBy).map(k => Object.assign({}, bestBy[k], { _tries: tries[k] })).sort((a, b) => (b.submittedAt||0) - (a.submittedAt||0));
-  if (mode === 'short'){ shortSheets(wb, official, selPeriod); return { buf: await wb.xlsx.writeBuffer(), selPeriod, count: official.length, hasDash: false }; }
+  if (mode === 'short'){ shortSheets(wb, official, selPeriod); return { buf: sharedWb ? null : await wb.xlsx.writeBuffer(), selPeriod, count: official.length, hasDash: false }; }
   makeSheet('Kết quả (điểm cao nhất)', official, true);
   if (results.length > official.length) makeSheet('Tất cả lần làm', results.map(r => Object.assign({}, r, { _best: bestIds.has(r.id) })), false);
+  if (mode === 'all') shortSheets(wb, official, selPeriod); // gộp thêm sheet "Điểm tuân thủ" vào cùng file đầy đủ
   if (DASH){ // trang Tổng quan (theo kỳ đang xem ở dashboard)
     const o = wb.addWorksheet('Tổng quan ' + DASH.period, { views:[{ showGridLines:false }] });
     o.columns = [{ width:34 }, { width:12 }, { width:12 }, { width:14 }, { width:14 }];
@@ -4758,7 +4759,7 @@ async function buildResultsXlsx(mode){
     DASH.notDone.forEach(c => o.addRow([c.name, c.code, c.manager]));
   }
 
-  return { buf: await wb.xlsx.writeBuffer(), selPeriod, count: results.length, hasDash: !!DASH };
+  return { buf: sharedWb ? null : await wb.xlsx.writeBuffer(), selPeriod, count: results.length, hasDash: !!DASH };
 }
 /* ----- Bản rút gọn: bảng "ĐIỂM TUÂN THỦ HỌC TẬP …" — STT, Mã NV, Họ tên, Quản lí, Điểm kiểm tra, Điểm tuân thủ ----- */
 function shortHeading(list, pid){
@@ -4808,7 +4809,8 @@ function exportPick(btn, kind, msgId){
   if (m && m.dataset.for === kind + (msgId || '')){ m.remove(); return; }
   if (m) m.remove();
   m = document.createElement('div'); m.id = 'xpMenu'; m.className = 'xp-menu'; m.setAttribute('role', 'menu'); m.dataset.for = kind + (msgId || '');
-  m.innerHTML = (kind === 'xlsx' && PG ? '<button type="button" role="menuitem" data-m="progress"><b>Bảng theo dõi làm bài</b><small>Tổng hợp, danh sách mọi thí sinh (kể cả chưa làm), người cần nhắc, người dưới chuẩn</small></button>' : '') +
+  m.innerHTML = (kind === 'xlsx' ? '<button type="button" role="menuitem" data-m="all"><b>Xuất tất cả (1 file)</b><small>Gộp đủ cả 4 nhóm bên dưới vào một file Excel nhiều sheet</small></button>' : '') +
+    (kind === 'xlsx' && PG ? '<button type="button" role="menuitem" data-m="progress"><b>Bảng theo dõi làm bài</b><small>Tổng hợp, danh sách mọi thí sinh (kể cả chưa làm), người cần nhắc, người dưới chuẩn</small></button>' : '') +
     (kind === 'xlsx' ? '<button type="button" role="menuitem" data-m="behavior"><b>Dữ liệu hành vi làm bài</b><small>Thời gian từng câu của từng người, nhanh/chậm, đúng/sai, hết giờ, đổi đáp án, rời trang</small></button>' : '') +
     '<button type="button" role="menuitem" data-m="full"><b>Bản đầy đủ</b><small>Mọi cột, tất cả lần làm và trang Tổng quan</small></button>' +
     '<button type="button" role="menuitem" data-m="short"><b>Bản rút gọn điểm tuân thủ</b><small>STT, mã NV, họ tên, quản lí, điểm kiểm tra, điểm tuân thủ</small></button>';
@@ -4820,7 +4822,7 @@ function exportPick(btn, kind, msgId){
   const close = (ev) => { if (ev && (m.contains(ev.target) || ev.target === btn)) return; m.remove(); document.removeEventListener('click', close, true); document.removeEventListener('keydown', esc1, true); };
   const esc1 = (ev) => { if (ev.key === 'Escape'){ close(); btn.focus(); } };
   setTimeout(() => { document.addEventListener('click', close, true); document.addEventListener('keydown', esc1, true); });
-  m.addEventListener('click', ev => { const b = ev.target.closest('button[data-m]'); if (!b) return; close(); b.dataset.m === 'progress' ? exportProgressXlsx() : b.dataset.m === 'behavior' ? exportBehaviorXlsx() : kind === 'drive' ? exportResultsDrive(btn, msgId, b.dataset.m) : exportResultsXlsx(b.dataset.m); });
+  m.addEventListener('click', ev => { const b = ev.target.closest('button[data-m]'); if (!b) return; close(); b.dataset.m === 'all' ? exportAllXlsx() : b.dataset.m === 'progress' ? exportProgressXlsx() : b.dataset.m === 'behavior' ? exportBehaviorXlsx() : kind === 'drive' ? exportResultsDrive(btn, msgId, b.dataset.m) : exportResultsXlsx(b.dataset.m); });
 }
 /* ---------- Nhật ký lỗi & lần vào không được ---------- */
 const EL_AREA = { check:'Xác thực thí sinh', start:'Bắt đầu làm bài', answer:'Trả lời câu hỏi', submit:'Nộp bài', verify:'Tra cứu kết quả', paper:'Xem lại đề', request:'Yêu cầu điều chỉnh', resend:'Gửi lại email', client:'Trên trình duyệt' };
@@ -4953,6 +4955,22 @@ async function exportResultsDrive(btn, msgId, mode){
   } catch (e) {
     box.innerHTML = '<div class="msg err">Không lưu được lên Drive, thử lại sau.</div>';
   } finally { if (btn){ btn.disabled = false; btn.textContent = lbl; } }
+}
+// Xuất TẤT CẢ vào một file duy nhất: gộp sheet của cả 4 nhóm (theo dõi làm bài, hành vi làm bài, kết quả đầy đủ + Tổng quan, điểm tuân thủ).
+async function exportAllXlsx(){
+  let E; try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel, kiểm tra kết nối mạng.'); return; }
+  const wb = new E.Workbook(); wb.creator = 'Hệ thống kiểm tra'; wb.created = new Date();
+  const selPeriod = $('resPeriod').value;
+  if (PG) { try { await exportProgressXlsx(wb, E, true); } catch (e) { /* bỏ qua nhóm này nếu lỗi, vẫn xuất các nhóm còn lại */ } }
+  try { await exportBehaviorXlsx(wb, E, true); } catch (e) { /* bỏ qua nhóm này nếu lỗi */ }
+  const o = await buildResultsXlsx('all', wb, E);
+  if (!o) return;
+  const buf = await wb.xlsx.writeBuffer(), a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  a.download = 'bao-cao-day-du-' + (selPeriod ? selPeriod + '-' : '') + new Date().toISOString().slice(0,10) + '.xlsx';
+  logEv('exportExcel', { period: selPeriod || 'tất cả các kỳ', count: o.count, mode: 'all' });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
 
 /* ---------- Tài khoản quản lí ---------- */
@@ -5175,9 +5193,9 @@ function pgCopy(){
 /* ---------- Xuất Excel bảng theo dõi làm bài (mọi thí sinh, kể cả chưa làm) ----------
    4 sheet: Tổng hợp · Danh sách thí sinh · Cần nhắc làm bài · Dưới chuẩn
    Theo đúng bộ lọc tìm kiếm + quản lí đang chọn; điểm lấy lần cao nhất của mỗi người. */
-async function exportProgressXlsx(){
-  if (!PG){ alert('Chưa có dữ liệu theo dõi, bấm Làm mới rồi thử lại.'); return; }
-  let E; try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel, kiểm tra kết nối mạng.'); return; }
+async function exportProgressXlsx(sharedWb, sharedE, silent){
+  if (!PG){ if (!silent) alert('Chưa có dữ liệu theo dõi, bấm Làm mới rồi thử lại.'); return; }
+  let E = sharedE; if (!E) { try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel, kiểm tra kết nối mạng.'); return; } }
   const period = PG.period || '';
   // Bổ sung chức danh, điểm tuân thủ, thử việc, cảnh báo từ danh sách bài nộp (khớp theo mã bài)
   const byId = {};
@@ -5224,7 +5242,7 @@ async function exportProgressXlsx(){
   const page = (land) => ({ paperSize:9, orientation: land ? 'landscape' : 'portrait', fitToPage:true, fitToWidth:1, fitToHeight:0, margins:{ left:0.4, right:0.4, top:0.5, bottom:0.5, header:0.3, footer:0.3 } });
   const footer = { oddFooter:'&L&8' + exTitle.replace(/&/g, '&&') + '&R&8Trang &P/&N' };
 
-  const wb = new E.Workbook(); wb.creator = 'Hệ thống kiểm tra'; wb.created = new Date();
+  const wb = sharedWb || new E.Workbook(); if (!sharedWb) { wb.creator = 'Hệ thống kiểm tra'; wb.created = new Date(); }
   const LS = 'Danh sách thí sinh';
   const ov = wb.addWorksheet('Tổng hợp', { views:[{ showGridLines:false }], pageSetup: page(false), headerFooter: footer }); // sheet đầu tiên
 
@@ -5357,6 +5375,7 @@ async function exportProgressXlsx(){
     if (!weak.length){ const r = wsW.addRow(['Không có ai dưới chuẩn.']); wsW.mergeCells('A' + r.number + ':H' + r.number); r.getCell(1).font = { name:FONT, italic:true, color:{ argb:'FF1E7F4F' } }; }
   }
 
+  if (silent) return;
   const buf = await wb.xlsx.writeBuffer(), a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
   a.download = 'theo-doi-lam-bai-' + (period ? period + '-' : '') + vnNow.toISOString().slice(0, 10) + '.xlsx';
@@ -5367,12 +5386,12 @@ async function exportProgressXlsx(){
 /* ---------- Xuất Excel dữ liệu HÀNH VI làm bài từng câu của từng người ----------
    5 sheet: Hồ sơ hành vi (mỗi lượt làm 1 dòng) · Bản đồ thời gian (người × câu) · Chi tiết từng câu (dạng dài, lọc/pivot được)
    · Theo câu hỏi · Giải thích chỉ số. Theo đúng bộ lọc tìm kiếm + quản lí đang chọn ở khung theo dõi. */
-async function exportBehaviorXlsx(){
-  let E; try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel, kiểm tra kết nối mạng.'); return; }
+async function exportBehaviorXlsx(sharedWb, sharedE, silent){
+  let E = sharedE; if (!E) { try { E = await loadExcelJS(); } catch(e){ alert('Không tải được thư viện Excel, kiểm tra kết nối mạng.'); return; } }
   const period = (PG && PG.period) || $('resPeriod').value || CUR_EXAM || '';
-  if (!period){ alert('Hãy mở một đề thi trước.'); return; }
+  if (!period){ if (!silent) alert('Hãy mở một đề thi trước.'); return; }
   const { j } = await api('GET', '/api/kt-admin?op=behavior&period=' + encodeURIComponent(period));
-  if (!j || !j.ok){ alert((j && j.error) || 'Không lấy được dữ liệu hành vi.'); return; }
+  if (!j || !j.ok){ if (!silent) alert((j && j.error) || 'Không lấy được dữ liệu hành vi.'); return; }
   let A = j.attempts || [];
   let filt = 'Toàn bộ bài đã nộp của đề';
   if (PG && PG.period === period){
@@ -5380,7 +5399,7 @@ async function exportBehaviorXlsx(){
     const mgrF = $('pgMgr').value, qF = ($('pgSearch').value || '').trim();
     if ((mgrF && mgrF !== '*') || qF){ A = A.filter(a => keep.has(String(a.code || '').toLowerCase())); filt = [mgrF && mgrF !== '*' ? 'Quản lí: ' + (mgrF || '(chưa có)') : '', qF ? 'Tìm: “' + qF + '”' : ''].filter(Boolean).join(' · '); }
   }
-  if (!A.length){ alert('Chưa có bài nộp nào trong phạm vi đang lọc.'); return; }
+  if (!A.length){ if (!silent) alert('Chưa có bài nộp nào trong phạm vi đang lọc.'); return; }
   A.sort((x, y) => String(x.manager || '~').localeCompare(String(y.manager || '~'), 'vi') || String(x.name).localeCompare(String(y.name), 'vi') || x.nth - y.nth);
 
   const ex = examById(period), exTitle = (ex && exTitleOf(ex)) || (PG && PG.title) || period;
@@ -5456,7 +5475,7 @@ async function exportBehaviorXlsx(){
   };
   const cellFmt = (row, centerCols, band) => row.eachCell({ includeEmpty:true }, (c, k) => { c.font = { name:FONT, size:10, color:{ argb:C.ink } }; c.border = box; c.alignment = { vertical:'middle', horizontal: centerCols.indexOf(k) >= 0 ? 'center' : 'left', wrapText:true }; if (band) c.fill = fill(C.band); });
   const sub = 'Đề ' + exTitle + ' (mã ' + period + ') · Phạm vi: ' + filt + ' · Xuất lúc ' + nowTxt + '.';
-  const wb = new E.Workbook(); wb.creator = 'Hệ thống kiểm tra'; wb.created = new Date();
+  const wb = sharedWb || new E.Workbook(); if (!sharedWb) { wb.creator = 'Hệ thống kiểm tra'; wb.created = new Date(); }
   const page = { paperSize:9, orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0 };
 
   // ===== Sheet 1: Hồ sơ hành vi =====
@@ -5592,6 +5611,7 @@ async function exportBehaviorXlsx(){
    ['Phạm vi', 'Mọi lượt làm đã nộp (cột "Lần cao nhất" đánh dấu lượt tính điểm chính thức). ' + filt + '.']]
    .forEach((x, i) => { const r = s5.addRow(x); cellFmt(r, [], i % 2 === 1); r.getCell(1).font = { name:FONT, size:10, bold:true, color:{ argb:C.navy } }; r.height = 34; });
 
+  if (silent) return;
   const buf = await wb.xlsx.writeBuffer(), a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
   a.download = 'hanh-vi-lam-bai-' + period + '-' + vnNow.toISOString().slice(0, 10) + '.xlsx';
