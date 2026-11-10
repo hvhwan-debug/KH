@@ -1092,6 +1092,39 @@ button.rd-st:disabled{opacity:.55;cursor:default}
 .kaix-tag.off{background:#EEF1F4;color:var(--muted)}.kaix-tag.bad{background:var(--bad-soft);color:var(--bad)}
 .kaix-act{display:flex;gap:6px;flex-wrap:wrap}
 .kaix-bar{height:6px;border-radius:6px;background:var(--line);overflow:hidden;width:90px;margin-top:4px}.kaix-bar i{display:block;height:100%;background:var(--brand)}.kaix-bar.hot i{background:#E8A22B}
+/* ===== Thiết lập đề: chia bước, thanh tóm tắt cố định, kiểm tra tức thì ===== */
+.exsteps{display:flex;gap:6px;margin:14px 0 4px;padding:5px;background:#F1F5FB;border:1px solid var(--line);border-radius:14px;overflow-x:auto;scrollbar-width:none}
+.exsteps::-webkit-scrollbar{display:none}
+.exsteps button{flex:1 1 0;min-width:max-content;display:flex;align-items:center;justify-content:center;gap:8px;border:0;background:transparent;border-radius:10px;padding:9px 12px;font:inherit;font-size:13.5px;font-weight:700;color:var(--muted);cursor:pointer;transition:background .15s,color .15s,box-shadow .15s}
+.exsteps button i{font-style:normal;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#fff;border:1.5px solid var(--line);font-size:12px;color:var(--brand-deep)}
+.exsteps button:hover{color:var(--brand-deep)}
+.exsteps button.on{background:#fff;color:var(--brand-deep);box-shadow:0 2px 8px -2px rgba(10,63,148,.25)}
+.exsteps button.on i{background:var(--brand);border-color:var(--brand);color:#fff}
+.exsteps button em{display:none;font-style:normal;min-width:18px;height:18px;padding:0 5px;border-radius:9px;font-size:11px;line-height:18px;text-align:center;color:#fff}
+.exsteps button em.bad{display:inline-block;background:var(--bad)}
+.exsteps button em.warn{display:inline-block;background:#D68F1E}
+.exstep{display:none}
+.exstep.on{display:block;animation:exin .18s ease-out}
+@keyframes exin{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.exstep>.exsec:first-child{border-top:0;margin-top:14px;padding-top:0}
+.exstep .exsec{display:flex;align-items:center;gap:8px}
+.exstep .exsec::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--brand);flex:0 0 auto}
+.excheck{margin:10px 0 0;display:grid;gap:6px}
+.excheck button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:1px solid var(--bad-soft);background:#FFF7F6;color:var(--bad);border-radius:10px;padding:7px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.excheck button.warn{border-color:#F0D58A;background:#FFF9E8;color:var(--warn)}
+.excheck button b{margin-left:auto;font-size:12px;text-decoration:underline;white-space:nowrap}
+.exbar{position:sticky;bottom:10px;z-index:7;margin-top:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 28px -12px rgba(10,37,82,.35)}
+.exsum{flex:1 1 260px;display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.exchip{padding:4px 10px;border-radius:999px;background:#EAF1FD;color:var(--brand-deep);font-size:12.5px;font-weight:700;white-space:nowrap}
+.exchip.p{background:var(--warn-soft);color:var(--warn)}
+.exchip.bad{background:var(--bad-soft);color:var(--bad)}
+.exbtns{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.exbtns .btn{width:auto}
+#examFormCard .grid2>*{min-width:0}
+#examFormCard .dt24{max-width:100%}
+#examFormCard .dt24 input{min-width:0}
+#examFormCard input:disabled{background:#F1F4F8;color:#8696B0;cursor:not-allowed}
+@media(max-width:640px){.exsteps button{padding:8px 10px;font-size:12.5px}.exbtns{width:100%}.exbtns .btn{flex:1}.exbar{bottom:6px}}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -1255,9 +1288,18 @@ button.rd-st:disabled{opacity:.55;cursor:default}
       <div class="card" id="examFormCard">
         <h1 id="examFormTitle">Tạo đề thi mới</h1>
         <input type="hidden" id="exEditingId">
-        <p class="small" style="margin-top:0">Ô nào để trống sẽ dùng giá trị ở <b>Cài đặt → Cài đặt mặc định</b>.</p>
+        <p class="small" style="margin-top:0">Ô để trống sẽ dùng giá trị mặc định (hiện mờ trong ô, chỉnh ở <b>Cài đặt → Cài đặt mặc định</b>). Chỉ cần điền khi đề này khác mặc định.</p>
 
-        <h2 class="exsec">1. Thông tin đề</h2>
+        <nav class="exsteps" id="exSteps" aria-label="Các bước thiết lập đề">
+<button type="button" data-step="1" class="on" onclick="exGoStep(1)"><i>1</i><span>Thông tin &amp; thời gian</span><em></em></button>
+<button type="button" data-step="2" onclick="exGoStep(2)"><i>2</i><span>Chấm điểm</span><em></em></button>
+<button type="button" data-step="3" onclick="exGoStep(3)"><i>3</i><span>Câu hỏi</span><em></em></button>
+<button type="button" data-step="4" onclick="exGoStep(4)"><i>4</i><span>Đối tượng</span><em></em></button>
+<button type="button" data-step="5" onclick="exGoStep(5)"><i>5</i><span>Nâng cao</span><em></em></button>
+</nav>
+<div id="exCheck" class="excheck hide" role="status"></div>
+<div class="exstep on" data-step="1">
+<h2 class="exsec">Thông tin đề</h2>
         <div class="grid2">
           <div><label>Mã đề thi (chữ thường, số, gạch ngang; dùng trong link)</label><input type="text" id="exId" placeholder="vd: 2026-11 hoặc thi-thu-pc"></div>
           <div><label>Tên đề thi (thí sinh thấy)</label><input type="text" id="exTitle" placeholder="vd: Kiểm tra kiến thức PC tháng 11"></div>
@@ -1266,7 +1308,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         </div>
         <label style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;padding:10px 12px;border-radius:10px;background:#FFF6E0;border:1.5px solid #F0D58A;color:#6B4A00"><input type="checkbox" id="exPractice" style="width:18px;height:18px;margin-top:2px"> <span><b>Đề thi thử (không phải thi chính thức)</b><br><span class="small" style="color:#6B4A00">Thí sinh thấy dải chữ "THI THỬ" ở mọi màn hình; phiếu kết quả, ảnh chia sẻ và email đều ghi rõ "Thi thử, không phải thi chính thức". Điểm tuân thủ học tập <b>vẫn được quy đổi bình thường</b> (ghi là "nếu thi thật") để thí sinh hình dung điểm của mình.</span></span></label>
 
-        <h2 class="exsec">2. Thời gian làm bài</h2>
+        <h2 class="exsec">Thời gian làm bài</h2>
         <div class="grid2">
           <div><label>Mở đề lúc (trống = mở ngay)</label><input type="datetime-local" id="exOpen"></div>
           <div><label>Đóng đề lúc (trống = không đóng)</label><input type="datetime-local" id="exClose">
@@ -1294,7 +1336,9 @@ button.rd-st:disabled{opacity:.55;cursor:default}
           <div><label>&nbsp;</label><label class="chk"><input type="checkbox" id="exRetake" onchange="$('exAttempts').disabled=this.checked"> Cho phép thí sinh làm lại không giới hạn</label></div>
         </div>
 
-        <h2 class="exsec">3. Chấm điểm</h2>
+        </div>
+<div class="exstep" data-step="2">
+<h2 class="exsec">Chấm điểm</h2>
         <div class="grid2">
           <div><label>Điểm đạt (% số câu đúng)</label><input type="text" inputmode="numeric" id="exPass" placeholder="trống = theo Cài đặt mặc định">
             <label class="chk" style="margin-top:8px"><input type="checkbox" id="exPassOn"> Đề này có ngưỡng Đạt / Chưa đạt</label></div>
@@ -1304,7 +1348,9 @@ button.rd-st:disabled{opacity:.55;cursor:default}
           <div><label>Điểm ≥ mốc này → 10 điểm tuân thủ</label><input type="text" inputmode="decimal" id="exCLow" placeholder="trống = theo Cài đặt mặc định"></div>
         </div>
 
-        <h2 class="exsec">4. Câu hỏi</h2>
+        </div>
+<div class="exstep" data-step="3">
+<h2 class="exsec">Câu hỏi mỗi thí sinh nhận</h2>
         <div class="exq" id="exQBox" style="margin-top:0">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
             <b>Số câu mỗi thí sinh nhận</b>
@@ -1325,8 +1371,10 @@ button.rd-st:disabled{opacity:.55;cursor:default}
           <div id="planPreview"></div>
         </div>
 
-        <div class="asg" id="asg">
-          <h2 class="exh" style="margin-top:18px">5. Gán nhân viên làm đề này</h2>
+        </div>
+<div class="exstep" data-step="4">
+<div class="asg" id="asg">
+<h2 class="exsec">Gán nhân viên làm đề này</h2>
           <label style="display:flex;align-items:flex-start;gap:8px;margin:6px 0 10px;font-size:14px"><input type="checkbox" id="exInviteOff" style="width:18px;height:18px;margin-top:2px"> <span>Không tự động gửi email mời làm bài <span class="small">(mặc định: ai mới được gán vào đề này sẽ tự nhận email mời, không cần quản trị viên gửi tay)</span></span></label>
           <div id="exInviteStat" class="small" style="margin-bottom:10px"></div>
           <div class="asg-mode" role="radiogroup" aria-label="Đối tượng làm đề">
@@ -1366,8 +1414,10 @@ button.rd-st:disabled{opacity:.55;cursor:default}
           <p class="small" id="asgHint" style="margin:6px 0 0">Mặc định mọi nhân viên (theo nhóm ngành đã chọn) đều làm được đề. Chọn "Chỉ những nhân viên được chọn" để giới hạn theo từng người.</p>
         </div>
 
-        <details class="exadv" id="exAdv">
-          <summary>6. Tuỳ chọn nâng cao <span class="small">(giới hạn đối tượng thi, cấu trúc đề riêng, cách chia số câu kiểu cũ)</span></summary>
+        </div>
+<div class="exstep" data-step="5">
+<details class="exadv" id="exAdv">
+<summary>Tuỳ chọn nâng cao <span class="small">(giới hạn đối tượng thi, cấu trúc đề riêng, cách chia số câu kiểu cũ)</span></summary>
           <h2 class="exh" style="margin-top:4px">Đối tượng thi</h2>
           <label>Nhóm thí sinh được thi (không tick = tất cả)</label>
         <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:14px">
@@ -1391,11 +1441,17 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <div id="bpTotal" class="small" style="margin-top:8px"></div>
         <div id="bpPreview"></div>
         </details>
-        <div style="margin-top:16px;display:flex;gap:8px">
-          <button class="btn" onclick="saveExam()">Lưu đề thi</button>
-          <button class="btn ghost" onclick="cancelExamForm()">Huỷ</button>
-        </div>
-        <div id="exMsg"></div>
+</div>
+<div id="exMsg"></div>
+<div class="exbar" id="exBar">
+<div class="exsum" id="exSum" aria-live="polite"></div>
+<div class="exbtns">
+<button class="btn ghost" type="button" id="exPrev" onclick="exGoStep(EX_STEP-1)">‹ Quay lại</button>
+<button class="btn ghost" type="button" id="exNext" onclick="exGoStep(EX_STEP+1)">Tiếp ›</button>
+<button class="btn" type="button" onclick="saveExam()">Lưu đề thi</button>
+<button class="btn ghost" type="button" onclick="cancelExamForm()">Huỷ</button>
+</div>
+</div>
       </div>
     </div>
 
@@ -2632,7 +2688,7 @@ function openNewExam(){
   $('examFormTitle').textContent = 'Tạo đề thi mới';
   // Đề mới: mặc định phân bổ riêng, điền sẵn theo phân bổ chung (nếu đã cài) hoặc mẫu chuẩn 5/10/15/5/5 và 5/25/10
   exSpSet('own', JSON.parse(JSON.stringify(spHas(SEGPLANS) ? SEGPLANS : spTemplatePlans())));
-  $('examFormCard').classList.remove('hide');
+  $('examFormCard').classList.remove('hide'); exGoStep(1); exRefreshNow();
   previewPlan();
   $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -2655,7 +2711,7 @@ function editExam(id){
   $('examFormTitle').textContent = 'Cài đặt đề';
   $('exAdv').open = !!(BP_RULES.length || e.questionCount || e.bothGiaDungCount || (e.segments||[]).length);
   exSpSet(e.sharedUniform ? 'none' : (spHas(e.segmentPlans) ? 'own' : 'global'), e.segmentPlans); previewPlan();
-  $('examFormCard').classList.remove('hide');
+  $('examFormCard').classList.remove('hide'); exGoStep(1); exRefreshNow();
   $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function examDraft(){
@@ -2684,9 +2740,10 @@ function renderPlan(j){
 async function previewPlan(){ $('planPreview').innerHTML = '<div class="small" style="margin-top:8px">Đang kiểm tra…</div>'; renderPlan(await fetchPlan()); }
 async function saveExam(){
   const tt = $('exTitle').value.trim(), prac = $('exPractice').checked;
-  if (!tt){ msg('exMsg','Nhập tên đề thi (thí sinh thấy tên này trên đề và phiếu kết quả).'); $('exTitle').focus(); return; }
+  if (!tt){ exGoStep(1); msg('exMsg','Nhập tên đề thi (thí sinh thấy tên này trên đề và phiếu kết quả).'); $('exTitle').focus(); return; }
+const bad0 = exIssues(); for (let st = 1; st <= EX_STEPS; st++){ const e0 = bad0[st].find(x => x.t === 'err'); if (e0){ exGoStep(st); msg('exMsg', e0.m); return; } }
   if (/thi\s*thử/i.test(tt) && !prac && !confirm('Tên đề có chữ "thi thử" nhưng chưa tick "Đề thi thử".\n\nNếu đây là đề thi THẬT, hãy bỏ chữ "thi thử" khỏi tên (thí sinh sẽ thấy tên này trên phiếu kết quả).\n\nVẫn lưu như hiện tại?')) return;
-  if (ASG.mode === 'pick' && !ASG.set.size){ msg('exMsg','Bạn chọn "Chỉ những nhân viên được chọn" nhưng chưa tick ai. Hãy chọn ít nhất 1 nhân viên hoặc đổi sang "Tất cả nhân viên".'); $('asg').scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  if (ASG.mode === 'pick' && !ASG.set.size){ msg('exMsg','Bạn chọn "Chỉ những nhân viên được chọn" nhưng chưa tick ai. Hãy chọn ít nhất 1 nhân viên hoặc đổi sang "Tất cả nhân viên".'); exGoStep(4); $('asg').scrollIntoView({behavior:'smooth',block:'center'}); return; }
   // Kiểm tra phân bổ đề trước khi lưu: sai cấu hình -> chặn; thiếu câu -> hỏi lại
   const pj = await fetchPlan();
   if (pj && pj.ok){
@@ -2707,7 +2764,7 @@ async function saveExam(){
     segmentPlans: exSpOwn() ? spRead($('exSp')) : null, sharedUniform: exSpShared(), inviteOff: $('exInviteOff').checked,
     blueprint: BP_RULES.length ? { rules: BP_RULES.map(r => ({ bankId:r.bankId, category:r.category||'', difficulty:r.difficulty||'', tag:r.tag||'', count:+r.count||0 })) } : null
   };
-  if (!exam.id){ msg('exMsg','Nhập mã đề thi.'); return; }
+  if (!exam.id){ exGoStep(1); msg('exMsg','Nhập mã đề thi.'); return; }
   const { j } = await api('POST','/api/kt-admin', { op:'saveExam', exam });
   if (!j.ok){ msg('exMsg', j.error, 'err'); return; }
   EXAMS = j.exams;
@@ -2863,6 +2920,85 @@ const pad2 = (n) => String(n).padStart(2, '0');
 function msToLocal(ms){ if (!ms) return ''; const d = new Date(+ms); return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())+'T'+pad2(d.getHours())+':'+pad2(d.getMinutes()); }
 function localToMs(v){ if (!v) return 0; const t = new Date(v).getTime(); return isNaN(t) ? 0 : t; }
 // Đặt "Đóng đề lúc" = N ngày sau "Mở đề lúc" (trống thì tính từ bây giờ), giữ nguyên giờ:phút của ô mở.
+/* ---------- Thiết lập đề: chia bước, tóm tắt trực tiếp, hiện giá trị mặc định, kiểm tra tức thì ---------- */
+let EX_STEP = 1;
+const EX_STEPS = 5;
+function exGoStep(n){
+n = Math.max(1, Math.min(EX_STEPS, n | 0)); EX_STEP = n;
+document.querySelectorAll('#examFormCard .exstep').forEach(p => p.classList.toggle('on', +p.dataset.step === n));
+document.querySelectorAll('#exSteps button').forEach(b => { const on = +b.dataset.step === n; b.classList.toggle('on', on); b.setAttribute('aria-current', on ? 'step' : 'false'); });
+$('exPrev').disabled = n === 1; $('exNext').disabled = n === EX_STEPS;
+}
+function exIssues(){
+const out = { 1:[], 2:[], 3:[], 4:[], 5:[] }, add = (st, t, m) => out[st].push({ t, m });
+const id = ($('exEditingId').value || $('exId').value).trim();
+if (!$('exTitle').value.trim()) add(1, 'err', 'Chưa nhập tên đề thi.');
+if (!id) add(1, 'err', 'Chưa nhập mã đề.');
+else if (!$('exEditingId').value && /[^a-z0-9-]/.test(id)) add(1, 'warn', 'Mã đề chỉ nên gồm chữ thường, số và gạch ngang.');
+const o = localToMs($('exOpen').value), c = localToMs($('exClose').value);
+if (o && c && c <= o) add(1, 'err', 'Giờ đóng đề phải sau giờ mở đề.');
+else if (c && c < Date.now()) add(1, 'warn', 'Giờ đóng đề đã qua, thí sinh sẽ không vào làm được.');
+const sec = $('exSeconds').value.trim();
+if (sec && !(+sec >= 5 && +sec <= 600)) add(1, 'warn', 'Thời gian mỗi câu nên trong khoảng 5 đến 600 giây.');
+if (!$('exRetake').checked){ const a = $('exAttempts').value.trim(); if (a && !(+a >= 1)) add(1, 'warn', 'Số lượt làm phải từ 1 trở lên.'); }
+if ($('exPassOn').checked){ const p = $('exPass').value.trim(); if (p && !(+p >= 1 && +p <= 100)) add(2, 'err', 'Điểm đạt phải từ 1 đến 100%.'); }
+if ($('exComplianceOn').checked){
+const pick = (el, k) => { const v = parseFloat(String($(el).value).replace(',', '.')); return isFinite(v) ? v : (+SETCACHE[k] || 0); };
+const h = pick('exCHigh', 'complianceHighMin'), m = pick('exCMid', 'complianceMidMin'), l = pick('exCLow', 'complianceLowMin');
+if ((h && m && h < m) || (m && l && m < l) || (h && l && h < l)) add(2, 'err', 'Các mốc điểm tuân thủ phải giảm dần: mốc 20 điểm ≥ mốc 15 điểm ≥ mốc 10 điểm.');
+if ([h, m, l].some(v => v > 10)) add(2, 'warn', 'Mốc điểm tuân thủ tính theo thang 10 (ví dụ 9 nghĩa là đúng từ 90% số câu).');
+}
+if (BP_RULES.length){ if (!BP_RULES.reduce((n, r) => n + (+r.count || 0), 0)) add(3, 'warn', 'Cấu trúc đề riêng chưa có số câu nào.'); }
+else if (exSpOwn()){ if (!spHas(spRead($('exSp')))) add(3, 'warn', 'Phân bổ riêng chưa có dòng nào: nhập số câu cho từng nhóm.'); }
+else if (exSpShared()){ const n = $('exCount').value.trim(); if (n && !(+n >= 1)) add(3, 'warn', 'Tổng số câu phải từ 1 trở lên.'); }
+if (ASG.mode === 'pick' && !ASG.set.size) add(4, 'err', 'Đã chọn "Chỉ những nhân viên được chọn" nhưng chưa tick ai.');
+if (ASG.mode === 'exclude' && !ASG.set.size) add(4, 'warn', 'Chưa chọn ai để loại trừ, kết quả giống "Tất cả nhân viên".');
+return out;
+}
+function exDefaults(){
+const s = SETCACHE || {}, ph = (id, v, u) => { if (v != null && v !== '') $(id).placeholder = 'Mặc định: ' + v + (u || ''); };
+ph('exSeconds', s.secondsPerQuestion, ' giây'); ph('exPass', s.passScore, '%');
+ph('exCHigh', s.complianceHighMin); ph('exCMid', s.complianceMidMin); ph('exCLow', s.complianceLowMin);
+$('exAttempts').placeholder = 'Mặc định: 1 lượt';
+$('exPass').disabled = !$('exPassOn').checked;
+['exCHigh', 'exCMid', 'exCLow'].forEach(id => { $(id).disabled = !$('exComplianceOn').checked; });
+}
+function exSummaryChips(bad){
+const fmt = (ms) => new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit' });
+const o = localToMs($('exOpen').value), c = localToMs($('exClose').value), ch = [];
+if ($('exPractice').checked) ch.push(['Thi thử', 'p']);
+if (BP_RULES.length) ch.push([BP_RULES.reduce((n, r) => n + (+r.count || 0), 0) + ' câu (cấu trúc riêng)']);
+else if (exSpShared()) ch.push([($('exCount').value.trim() || 'Số câu mặc định') + (/^\d+$/.test($('exCount').value.trim()) ? ' câu' : '') + ' cho mọi người']);
+else ch.push([exSpOwn() ? 'Phân bổ câu riêng' : 'Phân bổ câu chung']);
+const sec = $('exSeconds').value.trim() || SETCACHE.secondsPerQuestion; if (sec) ch.push([sec + ' giây/câu']);
+ch.push([$('exRetake').checked ? 'Làm lại không giới hạn' : ($('exAttempts').value.trim() || 1) + ' lượt']);
+ch.push([$('exPassOn').checked ? 'Đạt từ ' + ($('exPass').value.trim() || SETCACHE.passScore || '?') + '%' : 'Không có ngưỡng đạt']);
+ch.push([o || c ? (o ? 'Mở ' + fmt(o) : 'Mở ngay') + ' · ' + (c ? 'đóng ' + fmt(c) : 'không đóng') : 'Mở ngay, không đóng']);
+ch.push([ASG.mode === 'pick' ? ASG.set.size + ' nhân viên được chọn' : ASG.mode === 'exclude' ? 'Tất cả trừ ' + ASG.set.size + ' người' : 'Tất cả nhân viên']);
+if (bad) ch.unshift([bad + ' lỗi cần sửa', 'bad']);
+return ch;
+}
+function exRefreshNow(){
+const card = $('examFormCard'); if (!card || card.classList.contains('hide')) return;
+try {
+exDefaults();
+const iss = exIssues(); let errs = 0; const list = [];
+for (let st = 1; st <= EX_STEPS; st++){
+const e = iss[st].filter(x => x.t === 'err').length, w = iss[st].length - e; errs += e;
+const em = document.querySelector('#exSteps button[data-step="' + st + '"] em');
+em.className = e ? 'bad' : w ? 'warn' : ''; em.textContent = e || w || '';
+iss[st].forEach(x => list.push({ st, t: x.t, m: x.m }));
+}
+list.sort((a, b) => (a.t === 'err' ? 0 : 1) - (b.t === 'err' ? 0 : 1));
+const box = $('exCheck');
+box.classList.toggle('hide', !list.length);
+box.innerHTML = list.map(x => '<button type="button" class="' + (x.t === 'err' ? '' : 'warn') + '" onclick="exGoStep(' + x.st + ')"><span>' + (x.t === 'err' ? '✕' : '⚠') + '</span><span>' + esc(x.m) + '</span><b>Bước ' + x.st + '</b></button>').join('');
+$('exSum').innerHTML = exSummaryChips(errs).map(c => '<span class="exchip' + (c[1] ? ' ' + c[1] : '') + '">' + esc(c[0]) + '</span>').join('');
+} catch (e) { /* lỗi giao diện phụ không được làm hỏng form lưu đề */ }
+}
+let exRaf = 0;
+function exRefresh(){ cancelAnimationFrame(exRaf); exRaf = requestAnimationFrame(exRefreshNow); }
+(function(){ const card = $('examFormCard'); if (card) ['input', 'change', 'click'].forEach(ev => card.addEventListener(ev, exRefresh)); })();
 function exCloseQuick(days){
   const baseMs = localToMs($('exOpen').value) || Date.now();
   $('exClose').value = msToLocal(baseMs + days * 86400000);
@@ -4441,7 +4577,7 @@ async function loadSettings(){
   const { j } = await api('GET','/api/kt-admin?op=settings');
   if (!j.ok) return;
   const s = j.settings;
-  CUR_PERIOD = s.examPeriod || ''; SETCACHE = s; fillSetPeriod();
+  CUR_PERIOD = s.examPeriod || ''; SETCACHE = s; fillSetPeriod(); exRefresh();
   $('setCount').value = s.questionCount;
   $('setBothGD').value = s.bothGiaDungCount;
   $('setSeconds').value = s.secondsPerQuestion; $('setPass').value = s.passScore; $('setPassOn').checked = !!s.passEnabled; $('setPass').disabled = !s.passEnabled;
