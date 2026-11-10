@@ -1237,11 +1237,17 @@ button.rd-st:disabled{opacity:.55;cursor:default}
             <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h1 style="margin:0">Danh sách đề thi</h1>
-          <button class="btn" onclick="openNewExam()">＋ Tạo đề thi mới</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div role="group" aria-label="Kiểu hiển thị" style="display:flex;gap:4px">
+              <button type="button" id="exViewCard" class="btn sm" onclick="exSetView('card')" title="Xem dạng thẻ">▦ Thẻ</button>
+              <button type="button" id="exViewList" class="btn ghost sm" onclick="exSetView('list')" title="Xem dạng danh sách">☰ Danh sách</button>
+            </div>
+            <button class="btn" onclick="openNewExam()">＋ Tạo đề thi mới</button>
+          </div>
         </div>
         <p class="small" style="margin:6px 0 0">Bấm vào một đề để xem kết quả, quản lý câu hỏi và cài đặt của đề đó.</p>
         <div class="exgrid" id="exGrid"></div>
-        <table class="hide"><tbody id="exList"></tbody></table>
+        <table class="hide" id="exListTable"><thead><tr><th>Mã đề</th><th>Tên đề</th><th>Phân bổ câu hỏi</th><th>Thời gian</th><th>Bài đã nộp</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="exList"></tbody></table>
       </div>
     </div>
 
@@ -2468,6 +2474,18 @@ async function loadExams(){
       (e.id!==j.currentPeriod?'<button class="btn dghost sm" onclick="deleteExamUI(\''+esc(e.id)+'\')">Xoá</button>':'')+
     '</td></tr>'
   ).join('') || '<tr><td colspan="7" class="small">Chưa có đề thi nào, bấm "+ Tạo đề thi mới" để bắt đầu.</td></tr>';
+  let savedView = 'card'; try { savedView = localStorage.getItem('exView') || 'card'; } catch (e) { /* bỏ qua */ }
+  exSetView(savedView);
+}
+// Chuyển đổi hiển thị danh sách đề: dạng thẻ (card) hoặc dạng danh sách (bảng), nhớ lựa chọn cho lần sau.
+function exSetView(v){
+  v = v === 'list' ? 'list' : 'card';
+  try { localStorage.setItem('exView', v); } catch (e) { /* bỏ qua nếu trình duyệt chặn lưu */ }
+  if ($('exGrid')) $('exGrid').classList.toggle('hide', v !== 'card');
+  if ($('exListTable')) $('exListTable').classList.toggle('hide', v !== 'list');
+  const card = $('exViewCard'), list = $('exViewList');
+  if (card) { card.classList.toggle('ghost', v !== 'card'); card.setAttribute('aria-pressed', String(v === 'card')); }
+  if (list) { list.classList.toggle('ghost', v !== 'list'); list.setAttribute('aria-pressed', String(v === 'list')); }
 }
 function openExamQuestions(id){ openExam(id, 'questions'); }
 // Dòng tóm tắt "số câu mỗi thí sinh nhận" của đề đang soạn
