@@ -109,7 +109,7 @@ function topicsByTags(f) {
   const m = {};
   (f.wrongQs || []).forEach((q) => (q.tags || []).forEach((t) => { const k = t.toLowerCase(), x = (m[k] = m[k] || { name: t, n: 0 }); x.n++; }));
   return Object.keys(m).map((k) => m[k]).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, 4)
-    .map((x) => x.name + ": có " + x.n + " câu sai hoặc bỏ trống, nên đọc lại tài liệu phần này rồi thử tự giải thích lại bằng lời của mình.");
+    .map((x) => x.name + ": " + x.n + " câu cần ôn lại.");
 }
 function rulesAdvice(f) {
   const p = f.pct, b = f.beh || {}, rnd = b.random || null;
@@ -143,7 +143,7 @@ function rulesAdvice(f) {
       const c = f.weak[0];
       actions.push("Mảng \"" + c.name + "\" mới đúng " + c.ok + "/" + c.n + " câu, đây là chỗ nên ôn trước. Bạn đọc lại tài liệu, ghi ra 3-5 ý chính rồi thử trả lời lại mà không nhìn.");
     } else if (f.wrong === 1) actions.push("Bạn chỉ sai đúng 1 câu, nhiều khả năng do đọc đề hơi vội. Lần sau thử đọc hết các phương án rồi hãy chọn.");
-    else if (f.wrong > 1) actions.push("Các câu sai nằm rải rác, không có mảng nào yếu rõ rệt, nên điểm mất đi nhiều khả năng do chọn hơi vội. Lần sau thử đọc kỹ đề và đủ các phương án trước khi chọn.");
+    else if (f.wrong > 1) actions.push("Các câu sai nằm rải rác, nhiều khả năng do chọn hơi vội. Lần sau đọc đủ các phương án trước khi chọn.");
     if (b.rush) {
       // Chỉ so sánh với câu đúng khi tốc độ thật sự khác nhau (nếu câu đúng cũng nhanh như vậy thì so sánh chẳng có nghĩa)
       const cmp = b.rightMedSec != null && b.fastWrongSec != null && b.rightMedSec >= b.fastWrongSec * 1.5;
@@ -191,6 +191,7 @@ function buildPrompt(f) {
   const sys =
     "Bạn là chuyên viên đào tạo bán hàng giàu kinh nghiệm, vừa xem nhân viên (điện máy gia dụng, máy lọc nước) làm bài kiểm tra và giờ viết nhận xét riêng cho họ. " +
     "Mục tiêu: người đọc cảm thấy được một người thật, hiểu việc, nhận xét một cách tử tế, rõ ràng và có ích. " +
+    "CÔ ĐỌNG: ngắn gọn, mỗi ý chỉ nói một lần, bỏ câu đệm, mỗi mục không quá hai câu. " +
     "CÁCH VIẾT: tiếng Việt tự nhiên, chuyên nghiệp mà gần gũi, xưng \"bạn\", như một người quản lí tốt nói chuyện trực tiếp. " +
     "Dùng từ ngữ thông dụng ở nơi làm việc. Không dùng ẩn dụ, thành ngữ, từ lóng hay cách nói văn vẻ, không dùng thuật ngữ thống kê; cái gì cũng nói thẳng bằng từ bình thường. " +
     "Mỗi người một cách diễn đạt riêng: không dùng khuôn câu chung, không lặp cấu trúc giữa các mục, không lặp lại cùng một ý. " +
@@ -209,7 +210,7 @@ function buildPrompt(f) {
     "(9) Nếu có ho_so_cong_viec: chỉ dùng làm bối cảnh để giọng điệu và ví dụ hợp với vị trí, khu vực, thâm niên của họ; không suy diễn thêm về con người họ, không nêu trình độ học vấn, không so sánh với ai. " +
     "(10) Trường cac_cau_can_on_lai là các câu bạn này làm sai hoặc bỏ trống (kèm mảng, thẻ chủ đề và nội dung câu hỏi) CHỈ để bạn biết họ yếu ở CHỦ ĐỀ nào. Hãy viết mục topics: 2-4 chủ đề kiến thức CỤ THỂ nên ôn lại, gọi tên bằng 2-8 từ (ví dụ tên dòng sản phẩm, công nghệ, nhóm kiến thức; ưu tiên dùng tên trong the_chu_de), mỗi mục kèm một gợi ý cách ôn thực tế. TUYỆT ĐỐI không chép nguyên câu hỏi, không nêu phương án nào đúng hay sai, không nêu thông số hay con số cụ thể, không nêu đáp án; chỉ nói CHỦ ĐỀ. Chủ đề phải suy ra từ dữ liệu, không bịa. Nếu không có cac_cau_can_on_lai thì để topics là mảng rỗng. " +
     "Chỉ trả về DUY NHẤT một đối tượng JSON hợp lệ, đúng dạng: " +
-    '{"headline":"tối đa 60 ký tự, một câu nhận định gọn về bài làm này","portrait":"2-3 câu liền mạch nhìn lại cách người này làm bài, mỗi câu gắn với một điều cụ thể đã quan sát","strengths":["1-2 điểm mạnh, nêu rõ bằng chứng"],"actions":["2-3 việc nên làm trong thời gian tới, mỗi việc 1-2 câu, nói rõ làm gì và vì sao"],"topics":["tên chủ đề cần ôn: gợi ý cách ôn, không có con số"],"goal":"một mục tiêu đo được cho lần tới, bắt đầu bằng \\"Lần tới:\\""}';
+    '{"headline":"tối đa 60 ký tự, một câu nhận định gọn về bài làm này","portrait":"tối đa 2 câu, khoảng 40 từ: điều quan sát nổi bật nhất và ý nghĩa của nó với việc bán hàng","strengths":["1-2 điểm mạnh, nêu rõ bằng chứng"],"actions":["2 việc nên làm tiếp, mỗi việc một câu ngắn, nói rõ làm gì và vì sao"],"topics":["tên chủ đề cần ôn: một cụm ngắn gợi ý cách ôn, không có con số"],"goal":"một mục tiêu đo được cho lần tới, bắt đầu bằng \\"Lần tới:\\""}';
   const ins = f.insight || {};
   const data = {
     ten_goi: f.firstName || null,

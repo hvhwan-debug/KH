@@ -156,12 +156,12 @@ function portraitText(ins, f) {
   if (f && f.beh && f.beh.random) return "Bài làm của bạn diễn ra rất nhanh" + (ins.speed.medianSec != null ? " (thường chỉ khoảng " + vn(ins.speed.medianSec) + " giây mỗi câu)" : "") + " và kết quả gần mức chọn ngẫu nhiên, nên đây chưa phải thước đo đúng về bạn.";
   const s = t.slice(0, 2).map((x) => x.say + ".");
   if (s.length < 2 && ins.streak) s.push("Đoạn bạn làm tốt nhất là từ câu " + ins.streak.fromQ + " đến câu " + ins.streak.toQ + ", " + ins.streak.length + " câu đúng liên tiếp.");
-  if (ins.peers && s.length < 3) {
+  if (ins.peers && s.length < 2) {
     const p = ins.peers;
     s.push(p.diffFromAvg >= 0 ? "So với " + p.count + " người cùng làm đề, bạn đang cao hơn " + p.betterThanPct + "% số người (mức trung bình chung là " + p.avgPct + "%)."
       : "Kỳ này bạn thấp hơn mức trung bình chung của " + p.count + " người cùng làm đề (" + p.avgPct + "%) khoảng " + Math.abs(p.diffFromAvg) + " điểm %, vẫn còn chỗ để tăng thêm.");
   }
-  return s.slice(0, 3).join(" ");
+  return s.slice(0, 2).join(" ");
 }
 function cap(x) { return x ? x.charAt(0).toUpperCase() + x.slice(1) : x; }
 
