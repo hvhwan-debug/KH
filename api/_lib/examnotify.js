@@ -24,7 +24,7 @@ async function run(opts) {
     if (!eligible.length) continue;
     const title = exam.examTitle || exam.title || exam.id;
     const link = cfg().appUrl + "/kiemtra/?exam=" + encodeURIComponent(exam.id);
-    const text = "Bạn vừa được gán làm bài kiểm tra \u201c" + title + "\u201d. Hãy vào làm bài sớm" + (exam.closeAt ? ", trước khi đề đóng (" + quiz.fmtVN(exam.closeAt) + ")" : "") + ".";
+    const text = "BẠN CÓ BÀI KIỂM TRA MỚI\nBạn vừa được gán làm bài kiểm tra \u201c" + title + "\u201d." + (exam.closeAt ? " Hạn hoàn thành: " + quiz.fmtVN(exam.closeAt) + "." : "");
     const items = eligible.slice(0, MAX_PER_RUN).map((c) => ({ code: c.code, text, cta: { label: "Vào làm bài", url: link } }));
     const r = await notify.sendEmails({ items, subject: "Bạn có bài kiểm tra mới: " + title, kind: "invite" });
     if (!r.body) continue;

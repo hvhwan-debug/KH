@@ -159,9 +159,7 @@ function build(attempt, settings, advice) {
       '<td style="padding:20px 20px 12px;font-family:' + FONT + '">' +
       (a.source === "ai" ? '<div style="margin:0 0 8px"><span style="display:inline-block;background:#DDF0F3;color:' + C.deep + ';font-size:10.5px;font-weight:800;letter-spacing:.08em;padding:3px 10px;border-radius:99px">GỢI Ý BỞI AI</span></div>' : "") +
       (a.headline ? '<div style="font-size:17px;font-weight:800;line-height:1.4;color:' + C.ink + ';margin:0 0 10px">' + esc(a.headline) + "</div>" : "") +
-      (portrait ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="border-collapse:separate;background:#ffffff;border:1px solid #D3E9ED;border-radius:12px"><tr><td style="padding:12px 14px;font-family:' + FONT + '">' +
-        '<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + C.deep + ';margin:0 0 4px">Cách bạn đã làm bài</div>' +
-        '<div style="font-size:14.5px;line-height:1.7;color:' + C.ink + '">' + esc(portrait) + "</div></td></tr></table>" : "") +
+      (portrait ? sub("Cách bạn đã làm bài") + '<div style="font-family:' + FONT + ';font-size:14.5px;line-height:1.7;color:' + C.ink + ';margin:0 0 4px">' + esc(portrait) + "</div>" : "") +
       (strengths ? sub("Điểm mạnh") + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + strengths + "</table>" : "") +
       ((a.topics || []).length ? sub("Chủ đề nên ôn lại") + '<ul style="margin:0 0 6px;padding-left:20px;font-family:' + FONT + ';font-size:14px;line-height:1.7;color:' + C.body + '">' + a.topics.map((x) => "<li>" + esc(x) + "</li>").join("") + "</ul>" : "") +
       (acts ? sub("Việc nên làm") + acts : "") +

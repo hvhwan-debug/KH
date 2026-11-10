@@ -62,6 +62,9 @@
     if (invite && raw.length && CAPS.test(raw[0].trim()) && raw[0].trim().length <= 80) { title = raw.shift().trim(); while (raw.length && !raw[0].trim()) raw.shift(); }
     var plain = raw.join('\n');
 
+    var titleUp = title.trim().toLocaleUpperCase('vi'), eyeUp = T.eye.trim().toLocaleUpperCase('vi');
+    var showEye = titleUp !== eyeUp && titleUp.indexOf(eyeUp) !== 0; // ẩn nhãn nhỏ nếu nó chỉ lặp lại (hoặc là phần đầu của) tiêu đề ngay dưới
+
     var cta = opts.cta && /^https?:\/\//i.test(opts.cta.url || '') ? opts.cta : null;
     if (!cta && !invite) { var u = firstUrl(plain); if (u) cta = { label: T.btn, url: u }; }
 
@@ -71,8 +74,8 @@
         '<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>' +
           (invite ? '' : '<td style="width:48px;height:48px;background:rgba(255,255,255,.2);border-radius:14px;text-align:center;font-size:24px;line-height:48px" width="48">' + T.icon + '</td><td style="width:14px">&nbsp;</td>') +
           '<td style="color:#fff;vertical-align:middle">' +
-            '<div style="font-size:11px;letter-spacing:1.6px;font-weight:700;opacity:.85">' + esc(T.eye) + '</div>' +
-            '<div style="font-size:' + (invite ? 18 : 21) + 'px;line-height:1.3;font-weight:800;margin-top:3px">' + esc(title) + '</div>' +
+            (showEye ? '<div style="font-size:11px;letter-spacing:1.6px;font-weight:700;opacity:.85">' + esc(T.eye) + '</div>' : '') +
+            '<div style="font-size:' + (invite ? 18 : 21) + 'px;line-height:1.3;font-weight:800;margin-top:' + (showEye ? '3px' : '0') + '">' + esc(title) + '</div>' +
           '</td></tr></table>' +
       '</td></tr></table>';
 
