@@ -543,7 +543,8 @@ body.rs .stage{margin-top:6px}
 body.has-sticky #scrResult{padding-bottom:84px}
 /* Bảo vệ nội dung đề */
 body.exam,body.exam *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-#wm{position:fixed;inset:0;z-index:50;pointer-events:none;opacity:.075;display:none;background-repeat:repeat}
+#wm{position:fixed;inset:0;z-index:50;pointer-events:none;opacity:.09;display:none;background-repeat:repeat}
+body.exam input,body.exam textarea{-webkit-user-select:text;user-select:text}
 body.exam #wm{display:block}
 #shield{position:fixed;inset:0;z-index:9999;background:#000;color:#fff;display:none;align-items:center;justify-content:center;text-align:center;padding:28px;font-size:16px;font-weight:600;line-height:1.6}
 #shield.on{display:flex}
@@ -1779,7 +1780,7 @@ function paintSeg(){
 
 function loadQuestion(s){
   ST.q = s.question; ST.index = s.index; ST.total = s.total; ST.secs = s.secondsPerQuestion || ST.secs;
-  ST.selected = -1; ST.sel = []; ST.text = ''; ST.busy = false; disarmSubmit(); noteServerTime(s);
+  ST.selected = -1; ST.sel = []; ST.text = ''; ST.busy = false; disarmSubmit(); noteServerTime(s); wmSet();
   qbReset();
   if ($('seg').children.length !== ST.total) buildSeg(ST.total);
   paintSeg();
@@ -2503,10 +2504,11 @@ if ('IntersectionObserver' in window){
 var holdUntil = 0, holdTimer = null, away = false;
 var AWAY_MSG = 'Nội dung bài thi đã được ẩn. Hãy quay lại cửa sổ bài thi để tiếp tục. Đồng hồ vẫn đang chạy.';
 function wmSet(){
-  var c = ST.cand || {};
-  var t = esc([c.name, c.code, c.email].filter(Boolean).join(' · '));
-  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="380" height="180"><text x="24" y="116" transform="rotate(-22 24 116)" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#000">' + t + '</text></svg>';
-  $('wm').style.backgroundImage = 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
+var c = ST.cand || {};
+var hm = new Date(sysNow()).toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit' });
+var t = esc([c.name, c.code, c.email].filter(Boolean).join(' · ') + (ST.total ? ' · câu ' + (ST.index + 1) + ' · ' + hm : ''));
+var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="520" height="190"><text x="24" y="120" transform="rotate(-22 24 120)" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#000">' + t + '</text></svg>';
+$('wm').style.backgroundImage = 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
 }
 function shieldOn(text, holdMs){
   if (!ST.quizOn) return;
@@ -2538,6 +2540,12 @@ document.addEventListener('keydown', function(e){
   if (mod && (low === 'p' || low === 's' || low === 'u')) { e.preventDefault(); if (low === 'p') shotAttempt('Không được in nội dung bài thi.'); }
 });
 window.addEventListener('beforeprint', function(){ shotAttempt('Không được in nội dung bài thi.'); });
+// Che trước khi chụp: ảnh chụp bằng phím tắt hệ điều hành được lấy ngay khi bấm phím cuối, nên phải đen màn hình từ lúc vừa giữ phím Windows / Cmd+Shift.
+var IS_MAC = /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent || '');
+document.addEventListener('keydown', function(e){
+if (!ST.quizOn) return;
+if (((e.key === 'Meta' || e.key === 'OS') && !IS_MAC) || (e.metaKey && e.shiftKey)) shieldOn('Không được chụp hoặc sao chép nội dung bài thi.', 1500);
+}, true);
 ['contextmenu','copy','cut','dragstart','selectstart'].forEach(function(t){
   document.addEventListener(t, function(e){ if (ST.quizOn && !(e.target && e.target.tagName === 'INPUT')) e.preventDefault(); });
 });
