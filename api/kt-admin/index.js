@@ -1002,7 +1002,9 @@ const handler = async function (context, req) {
         }
         const old = prev[quiz.normCode(code)] || {};
         // Giữ lại số điện thoại / tỉnh / bài thử gần nhất đã có; đổi email thì vẫn giữ (cùng một tài khoản theo mã).
-        out.push(Object.assign({}, old, { code, email, name: String(r.name || "").trim().slice(0, 80) || "Tài khoản thử nghiệm", segment: quiz.normSegment(r.segment), region: quiz.normRegion(r.region) || old.region || "" }));
+        out.push(Object.assign({}, old, { code, email, name: String(r.name || "").trim().slice(0, 80) || "Tài khoản thử nghiệm",
+          manager: String(r.manager || "").trim().slice(0, 80), title: quiz.normTitle(r.title) || "", phone: String(r.phone || "").trim().slice(0, 30),
+          segment: quiz.normSegment(r.segment), region: quiz.normRegion(r.region) || old.region || "" }));
       }
       await quiz.saveTestAccounts(out);
       return reply(context, 200, { ok: true, accounts: out });
