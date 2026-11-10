@@ -559,16 +559,22 @@ const handler = async function (context, req) {
       const incoming = Array.isArray(b.questions) ? b.questions : [];
       const list = await quiz.getQuestions();
       const per = typeof b.period === "string" && quiz.validPeriod(b.period) ? b.period : (await quiz.getSettings()).examPeriod;
-      let added = 0, skipped = 0;
+      // Chống nhập trùng (lỡ bấm nhập 2 lần, mở 2 tab...): bỏ qua câu có nội dung giống hệt câu đã có trong CÙNG kỳ này,
+      // kể cả trùng ngay trong chính danh sách đang nhập.
+      const seen = new Set(list.filter((q) => (q.period || "") === per).map((q) => quiz.normText(q.text)));
+      let added = 0, skipped = 0, dup = 0;
       incoming.forEach((q) => {
         const nq = quiz.normalizeQuestionInput(q);
         if (nq.error) { skipped++; return; }
+        const key = quiz.normText(nq.fields.text);
+        if (seen.has(key)) { dup++; return; }
+        seen.add(key);
         list.push(Object.assign({ id: quiz.genId(), category: String(q.category || "").trim().slice(0, 100), active: true, period: per }, nq.fields,
           quiz.cleanQuestionMeta(Object.assign({}, q, b.bankId !== undefined && q.bankId === undefined ? { bankId: b.bankId } : {}))));
         added++;
       });
       await quiz.saveQuestions(list);
-      return reply(context, 200, { ok: true, questions: list, added, skipped });
+      return reply(context, 200, { ok: true, questions: list, added, skipped, dup });
     }
 
     if (op === "deleteQuestion") {

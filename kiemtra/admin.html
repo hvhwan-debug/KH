@@ -3760,7 +3760,7 @@ async function addQuestionsBulk(){
   try {
     const { j } = await api('POST','/api/kt-admin', { op:'addQuestions', questions, period: QP || '', bankId: $('qBank').value || 'default' });
     if (!j.ok){ msg('qBulkMsg', j.error, 'err'); return; }
-    msg('qBulkMsg', 'Đã thêm '+j.added+' câu hỏi'+(j.skipped?', bỏ qua '+j.skipped+' câu thiếu dữ liệu':'')+'.', 'ok');
+    msg('qBulkMsg', 'Đã thêm '+j.added+' câu hỏi'+(j.skipped?', bỏ qua '+j.skipped+' câu thiếu dữ liệu':'')+(j.dup?', bỏ qua '+j.dup+' câu trùng nội dung với câu đã có':'')+'.', 'ok');
     $('qBulkText').value='';
     QUESTIONS = j.questions;
     loadQuestions();
