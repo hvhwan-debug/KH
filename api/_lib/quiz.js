@@ -564,6 +564,7 @@ async function getExamSettings(examId) {
   effective.closeAt = ex && ex.closeAt ? ex.closeAt : 0;
   effective.segments = ex && Array.isArray(ex.segments) ? ex.segments : [];
   effective.codes = ex && Array.isArray(ex.codes) ? ex.codes : []; // danh sách mã nhân viên được thi (rỗng = không giới hạn theo mã)
+  effective.codesExclude = !!(ex && ex.codesExclude); // true = danh sách trên là người bị LOẠI TRỪ, không phải người được chọn
   effective.description = ex && ex.description ? ex.description : "";
   // Đề thi thử: chấm và quy đổi điểm tuân thủ NHƯ BÌNH THƯỜNG (để thí sinh hình dung điểm nếu thi thật),
   // nhưng mọi màn hình, ảnh kết quả và email đều ghi rõ "THI THỬ - không phải thi chính thức".
@@ -622,6 +623,7 @@ async function upsertExam(data) {
     const raw = Array.isArray(data.codes) ? data.codes : String(data.codes || "").split(/[\s,;]+/);
     entry.codes = raw.map(normCode).filter(Boolean).filter((v, k, a) => a.indexOf(v) === k).slice(0, 5000);
   }
+  if (data && data.codesExclude !== undefined) entry.codesExclude = !!data.codesExclude;
   if (data && data.segments !== undefined) entry.segments = (Array.isArray(data.segments) ? data.segments : []).map(normSegment).filter((v, k, a) => a.indexOf(v) === k);
   if (i >= 0) exams[i] = Object.assign({}, exams[i], entry); else exams.push(entry);
   await saveExams(exams);
@@ -737,7 +739,11 @@ function inAudience(settings, candidate) {
   if (isLeft(candidate)) return false;
   const segs = settings && settings.segments || [], codes = settings && settings.codes || [];
   if (segs.length && segs.indexOf(normSegment(candidate && candidate.segment)) < 0) return false;
-  if (codes.length && codes.indexOf(normCode(candidate && candidate.code)) < 0) return false;
+  if (codes.length) {
+    const inList = codes.indexOf(normCode(candidate && candidate.code)) >= 0;
+    // codesExclude=true: danh sách là người bị LOẠI TRỪ (mọi người khác vẫn được); mặc định: danh sách là người ĐƯỢC CHỌN.
+    if (settings && settings.codesExclude ? inList : !inList) return false;
+  }
   return true;
 }
 function examAccessError(settings, candidate, now) {
@@ -745,8 +751,9 @@ function examAccessError(settings, candidate, now) {
   if (isLeft(candidate)) return "Tài khoản này đã được đánh dấu nghỉ việc nên không thể làm bài. Nếu có nhầm lẫn, hãy liên hệ quản trị viên.";
   if (settings.openAt && t < settings.openAt) return "Bài kiểm tra chưa mở. Thời gian mở: " + fmtVN(settings.openAt) + ".";
   if (settings.closeAt && t > settings.closeAt) return "Bài kiểm tra đã đóng từ " + fmtVN(settings.closeAt) + ".";
-  if (settings.codes && settings.codes.length && settings.codes.indexOf(normCode(candidate && candidate.code)) < 0) {
-    return "Bạn không nằm trong danh sách được thi bài kiểm tra này.";
+  if (settings.codes && settings.codes.length) {
+    const inList = settings.codes.indexOf(normCode(candidate && candidate.code)) >= 0;
+    if (settings.codesExclude ? inList : !inList) return "Bạn không nằm trong danh sách được thi bài kiểm tra này.";
   }
   if (!inAudience(settings, candidate)) return "Bài kiểm tra này không dành cho nhóm của bạn.";
   return "";

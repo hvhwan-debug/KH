@@ -1332,7 +1332,9 @@ button.rd-st:disabled{opacity:.55;cursor:default}
           <div class="asg-mode" role="radiogroup" aria-label="Đối tượng làm đề">
             <label><input type="radio" name="asgMode" value="all" checked onchange="asgSetMode('all')"> Tất cả nhân viên</label>
             <label><input type="radio" name="asgMode" value="pick" onchange="asgSetMode('pick')"> Chỉ những nhân viên được chọn</label>
+            <label><input type="radio" name="asgMode" value="exclude" onchange="asgSetMode('exclude')"> Tất cả trừ một số người</label>
           </div>
+          <p class="small hide" id="asgModeNote" style="margin:6px 0 10px"></p>
           <div id="asgPick" class="hide">
             <div class="asg-quick">
               <div class="asg-qh"><b>Chọn nhanh cả nhóm</b>
@@ -2399,7 +2401,7 @@ function renderExHead(){
   $('ehMeta').innerHTML =
     '<button type="button" class="exh-chip exh-btn" title="Bấm để sao chép mã đề" onclick="copyText(\'' + esc(e.id) + '\', this.querySelector(\'code\'))">' + exIc('key') + '<span>Mã đề</span> <code>' + esc(e.id) + '</code></button>' +
     '<span class="exh-chip ' + w.cls + '" title="' + esc(examWindowText(e)) + '">' + exIc('cal') + '<b>' + esc(w.text) + '</b>' + (w.sub ? '<em>' + esc(w.sub) + '</em>' : '') + '</span>' +
-    '<span class="exh-chip">' + exIc('users') + (nCodes ? 'Gán <b>' + nCodes + '</b> NV' : 'Mọi nhân viên thuộc nhóm ngành') + '</span>' +
+    '<span class="exh-chip">' + exIc('users') + (nCodes ? (e.codesExclude ? 'Tất cả trừ <b>' + nCodes + '</b> NV' : 'Gán <b>' + nCodes + '</b> NV') : 'Mọi nhân viên thuộc nhóm ngành') + '</span>' +
     (segs.length ? '<span class="exh-chip">' + exIc('layers') + esc(segs.join(' / ')) + '</span>' : '') +
     '<span class="exh-br"></span><div class="exh-link">' + exIc('link') + '<a href="' + esc(link) + '" target="_blank" rel="noopener" title="Mở trang thí sinh">' + esc(link.replace(/^https?:\/\//, '')) + '</a><button class="btn ghost sm" type="button" onclick="copyText(\'' + esc(link) + '\', this)">Sao chép</button></div>';
   $('ehQ').textContent = qCountOf(e);
@@ -2535,9 +2537,9 @@ const ASG_DIM = {
   title:   { key: c => c.title || 'PC', label: k => k },
   segment: { key: c => ({ gia_dung:'gia_dung', may_loc:'may_loc' }[c.segment] || 'both'), label: k => ASG_SEG[k] || k }
 };
-function asgLoad(codes){
+function asgLoad(codes, exclude){
   ASG.set = new Set((codes || []).map(asgKey).filter(Boolean));
-  ASG.mode = ASG.set.size ? 'pick' : 'all';
+  ASG.mode = ASG.set.size ? (exclude ? 'exclude' : 'pick') : 'all';
   asgSync(); ['asgQ','asgMgr','asgTitle','asgSeg'].forEach(id => { const e = $(id); if (e) e.value = id === 'asgQ' ? '' : '*'; }); asgRender();
 }
 function asgSync(){ $('exCodes').value = Array.from(ASG.set).join('\n'); }
@@ -2553,7 +2555,8 @@ function asgCount(){
   let orphan = 0; ASG.set.forEach(k => { if (!known.has(k)) orphan++; });
   const leftSet = new Set(CANDIDATES.filter(c => c.left).map(c => asgKey(c.code))), nAct = CANDIDATES.filter(c => !c.left).length;
   let leftN = 0; ASG.set.forEach(k => { if (leftSet.has(k)) leftN++; });
-  $('asgCount').innerHTML = 'Đã gán <b>' + (ASG.set.size - leftN) + '</b> nhân viên' + (nAct ? ' / ' + nAct + ' đang làm việc' : '') +
+  const verb = ASG.mode === 'exclude' ? 'Đã loại trừ' : 'Đã gán';
+  $('asgCount').innerHTML = verb + ' <b>' + (ASG.set.size - leftN) + '</b> nhân viên' + (nAct ? ' / ' + nAct + ' đang làm việc' : '') +
     (leftN ? ' · <span style="color:var(--muted)">' + leftN + ' người đã nghỉ việc (không được gán)</span>' : '') +
     (orphan ? ' · <span style="color:var(--bad)">' + orphan + ' mã chưa có trong danh sách thí sinh</span>' : '');
 }
@@ -2588,9 +2591,13 @@ function asgFillSel(id, dim, allLabel){
 }
 function asgRender(keepText){
   document.querySelectorAll('input[name=asgMode]').forEach(r => { r.checked = r.value === ASG.mode; });
-  const pick = ASG.mode === 'pick';
+  const pick = ASG.mode !== 'all', exclude = ASG.mode === 'exclude';
   $('asgPick').classList.toggle('hide', !pick);
   $('asgHint').classList.toggle('hide', pick);
+  $('asgModeNote').classList.toggle('hide', !pick);
+  if (pick) $('asgModeNote').textContent = exclude
+    ? 'Tick chọn những người KHÔNG được làm đề này; mọi người còn lại vẫn được gán bình thường.'
+    : 'Tick chọn đúng những người được gán làm đề này; người không được tick sẽ không làm được đề.';
   if (!pick) return;
   asgFillSel('asgMgr', 'manager', 'Mọi quản lí'); asgFillSel('asgTitle', 'title', 'Mọi chức danh'); asgFillSel('asgSeg', 'segment', 'Mọi nhóm ngành');
   asgQuickRender();
@@ -2640,7 +2647,7 @@ function editExam(id){
   const dflt = (k) => e[k] != null ? !!e[k] : !!SETCACHE[k];
   $('exRetake').checked = dflt('allowRetake'); $('exAttempts').value = e.maxAttempts > 1 ? e.maxAttempts : ''; $('exAttempts').disabled = $('exRetake').checked; $('exPractice').checked = !!e.practice; $('exComplianceOn').checked = dflt('complianceEnabled');
   $('exCHigh').value = e.complianceHighMin || ''; $('exCMid').value = e.complianceMidMin || ''; $('exCLow').value = e.complianceLowMin || '';
-  $('exDesc').value = e.description || ''; asgLoad(e.codes || []); $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
+  $('exDesc').value = e.description || ''; asgLoad(e.codes || [], e.codesExclude); $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
   document.querySelectorAll('.exSeg').forEach(c => c.checked = (e.segments || []).indexOf(c.value) >= 0);
   $('exInviteOff').checked = !!e.inviteOff;
   $('exInviteStat').textContent = (e.invitedCodes || []).length ? 'Đã tự động gửi email mời cho ' + e.invitedCodes.length + ' người được gán vào đề này.' : (e.inviteOff ? '' : 'Chưa có ai được gửi email mời (sẽ tự gửi khi lưu, nếu có người đủ điều kiện và có email).');
@@ -2694,7 +2701,7 @@ async function saveExam(){
     questionCount: $('exCount').value, bothGiaDungCount: $('exBothGD').value, secondsPerQuestion: $('exSeconds').value,
     passEnabled: $('exPassOn').checked, passScore: $('exPass').value, allowRetake: $('exRetake').checked, maxAttempts: $('exAttempts').value.trim(), practice: $('exPractice').checked,
     complianceEnabled: $('exComplianceOn').checked, complianceHighMin: $('exCHigh').value, complianceMidMin: $('exCMid').value, complianceLowMin: $('exCLow').value,
-    description: $('exDesc').value.trim(), codes: ASG.mode === 'pick' ? $('exCodes').value : '',
+    description: $('exDesc').value.trim(), codes: ASG.mode !== 'all' ? $('exCodes').value : '', codesExclude: ASG.mode === 'exclude',
     openAt: localToMs($('exOpen').value), closeAt: localToMs($('exClose').value),
     segments: Array.from(document.querySelectorAll('.exSeg:checked')).map(c => c.value),
     segmentPlans: exSpOwn() ? spRead($('exSp')) : null, sharedUniform: exSpShared(), inviteOff: $('exInviteOff').checked,
@@ -2862,7 +2869,7 @@ function exCloseQuick(days){
 }
 function examWindowText(e){
   const f = (ms) => new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
-  const seg = ((e.segments || []).length ? ' · ' + e.segments.map(s => ({gia_dung:'Gia dụng',may_loc:'Máy lọc',both:'Cả hai'}[s]||s)).join('/') : '') + ((e.codes || []).length ? ' · gán ' + e.codes.length + ' NV' : '');
+  const seg = ((e.segments || []).length ? ' · ' + e.segments.map(s => ({gia_dung:'Gia dụng',may_loc:'Máy lọc',both:'Cả hai'}[s]||s)).join('/') : '') + ((e.codes || []).length ? (e.codesExclude ? ' · trừ ' + e.codes.length + ' NV' : ' · gán ' + e.codes.length + ' NV') : '');
   if (e.openAt && e.closeAt) return f(e.openAt) + ' → ' + f(e.closeAt) + seg;
   if (e.openAt) return 'Từ ' + f(e.openAt) + seg;
   if (e.closeAt) return 'Đến ' + f(e.closeAt) + seg;
