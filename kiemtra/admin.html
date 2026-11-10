@@ -1455,6 +1455,10 @@ button.rd-st:disabled{opacity:.55;cursor:default}
           <span class="small">Chép toàn bộ câu hỏi từ đề</span><select id="qCopyFrom" aria-label="Đề nguồn"></select><span class="small">sang đề này</span>
           <button class="btn ghost sm" type="button" onclick="copyQuestions()">⧉ Sao chép</button>
         </div>
+        <div class="qtools hide" id="qDeleteCatBox">
+          <span class="small">Xoá toàn bộ câu danh mục</span><select id="qDelCat" aria-label="Danh mục cần xoá"></select>
+          <button class="btn dghost sm" type="button" onclick="deleteCategoryQuestions()">🗑 Xoá hàng loạt</button>
+        </div>
         <div id="qPerMsg"></div>
       </div>
       <div class="card qbar">
@@ -3517,6 +3521,13 @@ function renderQuestions(){
     } else {
       $('qRenameBox').classList.add('hide');
     }
+    // Công cụ xoá hàng loạt theo danh mục: dùng khi nhập nhầm trùng lặp hoặc sai danh mục, dọn sạch để nhập lại.
+    if (haveCats.length){
+      $('qDeleteCatBox').classList.remove('hide');
+      $('qDelCat').innerHTML = haveCats.map(c => { const n = L.filter(q => (q.category || '') === c).length; return '<option value="'+esc(c)+'">'+esc(c)+' ('+n+' câu)</option>'; }).join('');
+    } else {
+      $('qDeleteCatBox').classList.add('hide');
+    }
   })();
   // Danh sách
   $('qListTitle').textContent = 'Câu hỏi của đề';
@@ -3526,6 +3537,17 @@ function renderQuestions(){
   QLIST = L; renderQList();
   $('qPeriod').innerHTML = pers.map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + (p === cur ? ' (hiện tại)' : '') + '</option>').join('') + (un.length ? '<option value="">Chưa gắn kỳ</option>' : '');
   $('qPeriod').value = QP;
+}
+async function deleteCategoryQuestions(){
+  const cat = $('qDelCat').value; if (!cat) return;
+  const n = QUESTIONS.filter(q => (q.period || '') === QP && (q.category || '') === cat).length;
+  if (!n) return;
+  if (!confirm('Xoá toàn bộ ' + n + ' câu hỏi danh mục "' + cat + '" trong ' + qPerLabel(QP) + '? Không thể hoàn tác.')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'deleteQuestionsByCategory', period: QP, category: cat });
+  if (!j.ok){ msg('qPerMsg', j.error, 'err'); return; }
+  QUESTIONS = j.questions;
+  msg('qPerMsg', 'Đã xoá ' + j.deleted + ' câu hỏi danh mục "' + cat + '".', 'ok');
+  renderQuestions();
 }
 async function renameCategory(){
   const from = $('qRenFrom').value, to = $('qRenTo').value;

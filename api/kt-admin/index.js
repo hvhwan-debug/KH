@@ -578,6 +578,19 @@ const handler = async function (context, req) {
       return reply(context, 200, { ok: true, questions: list });
     }
 
+    // Xoá hàng loạt toàn bộ câu hỏi của MỘT danh mục trong MỘT kỳ — dùng để dọn câu nhập trùng/sai danh mục.
+    if (op === "deleteQuestionsByCategory") {
+      const period = typeof b.period === "string" ? b.period : "";
+      const category = String(b.category || "").trim();
+      if (!category) return reply(context, 400, { ok: false, error: "Thiếu danh mục cần xoá." });
+      let list = await quiz.getQuestions();
+      const before = list.length;
+      list = list.filter((q) => !((q.period || "") === period && (q.category || "") === category));
+      const deleted = before - list.length;
+      await quiz.saveQuestions(list);
+      return reply(context, 200, { ok: true, questions: list, deleted });
+    }
+
     // Xoá TẤT CẢ câu hỏi: bắt buộc xác nhận bằng cụm chữ + số lượng đang thấy; tự sao lưu trước khi xoá.
     if (op === "deleteAllQuestions") {
       // Theo kỳ: chỉ xoá câu hỏi của kỳ được chọn (period); các kỳ khác giữ nguyên
