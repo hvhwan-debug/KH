@@ -914,9 +914,6 @@ function cleanSegmentPlans(sp) {
     if (total > MAX_QUESTION_COUNT) return { error: "Phân bổ cho nhóm " + ({ both: "bán cả 2 ngành", may_loc: "chỉ bán máy lọc", gia_dung: "chỉ bán gia dụng", mien_bac: "Miền Bắc", mien_nam: "Miền Nam" }[seg]) + " cộng ra " + total + " câu, vượt giới hạn " + MAX_QUESTION_COUNT + " câu mỗi đề." };
     if (clean.length) out[seg] = clean;
   }
-  // Đang ngưng câu kỹ năng: dòng kỹ năng (trừ gia dụng) tự chuyển sang "Máy lọc nước" khi lưu/xem trước,
-  // để form cũ còn dòng kỹ năng có bấm Lưu cũng không đưa câu kỹ năng trở lại đề.
-  if (noSkillDone) return plansWithoutSkill(out, "Máy lọc nước").sp;
   return out;
 }
 // Nhân viên (bất kỳ chức danh nào) đã chọn miền: ưu tiên phân bổ của miền ("mien_bac"/"mien_nam"); miền đó chưa phân bổ thì theo nhóm ngành như cũ.
