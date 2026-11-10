@@ -51,9 +51,9 @@ var TEMPLATES = [
     text:'{tieu_de}\nThân gửi : {ten},\n{noi_dung}\n\n* Thời gian: {thoi_gian}\n* Địa điểm / Đường dẫn: {dia_diem}\n\nVui lòng xác nhận tham dự trước {han_xn}.\nLiên hệ xác nhận: {lien_he}\nTrân trọng.' },
   { id:'inviteTrain', group:'Thư mời', name:'Mời tham dự đào tạo', filter:'all', allAudience:true, kind:'invite', fields:TRAIN_FIELDS, cta:'train',
     subject:'Thư mời tham dự đào tạo: {ten_khoa}',
-    text:'THƯ MỜI THAM DỰ ĐÀO TẠO\nThân gửi: {ten},\nĐào tạo Kinh doanh trân trọng mời Anh/Chị tham dự khoá đào tạo sau:\n\n1. THÔNG TIN CHƯƠNG TRÌNH\n\n* Tên khóa đào tạo: {ten_khoa}\n* Thời gian: {thoi_gian}\n* Hình thức: {hinh_thuc}\n* Địa điểm / Đường dẫn tham dự: {dia_diem}\n* Giảng viên / Đơn vị tổ chức: {giang_vien}\n* Nội dung chính: {noi_dung}\n\n2. LƯU Ý\n\n* Tham dự đầy đủ, đúng giờ; nếu học trực tuyến, kiểm tra thiết bị và đường truyền trước giờ học.\n* Có thể cần hoàn thành bài kiểm tra hoặc khảo sát sau đào tạo theo thông báo của Ban Tổ chức.\n* Nếu không thể tham dự, vui lòng báo sớm cho {lien_he}.\n\nVui lòng xác nhận tham dự trước {han_xn} với {lien_he}.\n\nTrân trọng,\nĐào tạo kinh doanh | GT' }
+    text:'THƯ MỜI THAM DỰ ĐÀO TẠO\nThân gửi: {ten},\nĐào tạo Kinh doanh trân trọng mời {xung_ho} tham dự khoá đào tạo sau:\n\n1. THÔNG TIN CHƯƠNG TRÌNH\n\n* Tên khóa đào tạo: {ten_khoa}\n* Thời gian: {thoi_gian}\n* Hình thức: {hinh_thuc}\n* Địa điểm / Đường dẫn tham dự: {dia_diem}\n* Giảng viên / Đơn vị tổ chức: {giang_vien}\n* Nội dung chính: {noi_dung}\n\n2. LƯU Ý\n\n* Tham dự đầy đủ, đúng giờ; nếu học trực tuyến, kiểm tra thiết bị và đường truyền trước giờ học.\n* Có thể cần hoàn thành bài kiểm tra hoặc khảo sát sau đào tạo theo thông báo của Ban Tổ chức.\n* Nếu không thể tham dự, vui lòng báo sớm cho {lien_he}.\n\nVui lòng xác nhận tham dự trước {han_xn} với {lien_he}.\n\nTrân trọng,\nĐào tạo kinh doanh | GT' }
 ];
-var VARS = [['ten','Tên'],['ma_nv','Mã NV'],['ten_de','Tên đề'],['link','Link làm bài'],['mo','Giờ mở'],['han','Hạn làm bài'],['diem','Số câu đúng'],['tong','Tổng số câu'],['phan_tram','Phần trăm'],['link_ket_qua','Link kết quả'],['quan_li','Quản lí'],['ho_tro','Câu hỗ trợ']];
+var VARS = [['ten','Tên'],['ma_nv','Mã NV'],['ten_de','Tên đề'],['link','Link làm bài'],['mo','Giờ mở'],['han','Hạn làm bài'],['diem','Số câu đúng'],['tong','Tổng số câu'],['phan_tram','Phần trăm'],['link_ket_qua','Link kết quả'],['quan_li','Quản lí'],['ho_tro','Câu hỗ trợ'],['xung_ho','Xưng hô (Anh/Chị)']];
 var CHANNELS = [['zalo','Zalo'],['sms','Tin nhắn SMS'],['email','Email'],['png','Ảnh PNG'],['pdf','Xuất PDF']];
 
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -78,10 +78,31 @@ function eventVars(v, base){
     noi_dung: v.noi_dung || '', han_xn: h ? h.t + ' ngày ' + h.d : (tr ? 'thời hạn do Ban Tổ chức thông báo' : ''), lien_he: v.lien_he || (tr ? 'Ban Tổ chức' : ''), ghi_chu: v.ghi_chu || '',
     tieu_de: String(v.tieu_de || '').trim().toLocaleUpperCase('vi'), lien_ket: v.lien_ket || '', nut: v.nut || '' };
 }
+// Cách xưng hô theo tên: "Anh" / "Chị"; không chắc thì giữ "Anh/Chị" (xưng sai còn tệ hơn xưng chung).
+// Hệ thống KHÔNG lưu giới tính nhân viên, nên chỉ suy ra từ tên đệm và tên gọi quen thuộc trong tiếng Việt.
+function honorific(fullName) {
+  var set = function (s, w, o) { s.split(/\s+/).forEach(function (k) { if (k) o[k] = w; }); return o; };
+  var MID_M = set("hữu đức quốc đình công trọng thế duy bá mạnh", 2, set("văn", 3, {}));          // tên đệm đặc trưng nam
+  var MID_F = set("thu kim thùy thuỳ diễm bích mỹ", 3, set("thị", 3, {}));                         // tên đệm đặc trưng nữ
+  var GIV_M = set("hùng dũng tuấn cường hải long nam phong sơn thắng trung quang vinh đạt huy kiên lâm bình thành toàn việt đông tùng hậu lộc phúc quân thịnh tiến đức hưng trường khoa khôi hiếu nghĩa nhân phát sang tài thiện thuận tín trí tuyên vũ vương duy dương đại đăng hào hiển lợi mạnh phước quốc thái thạch toản tuân vĩnh văn kỳ kiệt khải", 2, {});
+  var GIV_F = set("hương lan linh hoa mai ngọc phương thảo trang thủy thuỷ hằng hạnh hiền nhung oanh quyên vân yến dung loan liên lệ ly my nga nguyệt nhi như phượng thu thúy thuý thư trâm trinh tuyết uyên yên chi châu diệp diễm duyên điệp hân huệ huyền kiều mỹ ngân nhàn quỳnh sen thơm tiên trà vy ánh bích cúc đào hường khuê lụa mận mơ nương phụng quế thắm thơ tố trúc", 2, {});
+  var raw = String(fullName == null ? "" : fullName).normalize("NFC").toLowerCase().replace(/[^a-zà-ỹđ\s]/g, " ").replace(/\s+/g, " ").trim();
+  var t = raw ? raw.split(" ") : [];
+  if (t.length < 2) return "Anh/Chị";
+  var last = t.length - 1, m = 0, f = 0;
+  for (var i = 1; i <= last; i++) {                              // bỏ họ (từ đầu tiên)
+    var k = t[i];
+    if (i === last) { m += GIV_M[k] || 0; f += GIV_F[k] || 0; }   // tên gọi: tính đủ
+    else { m += Math.max(MID_M[k] || 0, (GIV_M[k] || 0) * 0.25); f += Math.max(MID_F[k] || 0, (GIV_F[k] || 0) * 0.25); } // tên đệm
+  }
+  if (m - f >= 1.5) return "Anh";
+  if (f - m >= 1.5) return "Chị";
+  return "Anh/Chị";
+}
 function render(tpl, r, ex, origin, extra, optional){
   var NONE = 'theo thông báo của quản lý';
   var vals = {
-    ten: r.name || r.code, ma_nv: r.code, ten_de: (ex && ex.title) || '', quan_li: r.manager || '',
+    ten: r.name || r.code, ma_nv: r.code, ten_de: (ex && ex.title) || '', quan_li: r.manager || '', xung_ho: honorific(r.name),
 ho_tro: 'Nếu cần hỗ trợ, liên hệ ĐTKD Kênh GT' + (String(r.manager || '').replace(/\s+/g, ' ').trim() ? ' hoặc Quản lí: ' + String(r.manager).replace(/\s+/g, ' ').trim().slice(0, 80) : '') + ' để được hỗ trợ.',
     link: ex && ex.id ? origin + '/kiemtra/?exam=' + encodeURIComponent(ex.id) : origin + '/kiemtra/',
     mo: fmt(ex && ex.openAt) || NONE, han: fmt(ex && ex.closeAt) || NONE, mo_tuy: fmt(ex && ex.openAt), han_tuy: fmt(ex && ex.closeAt),
@@ -309,7 +330,7 @@ function posterBody(v, ms){
       '<div class="hero-row">'+
         '<div class="intro">'+
           '<p><b>Kính gửi '+esc(ms.name)+',</b></p>'+
-          '<p>Nhằm nâng cao kiến thức và năng lực ứng dụng vào công việc thực tế, kính mời Anh/Chị tham gia chương trình đào tạo theo thông tin bên dưới.</p>'+
+          '<p>Nhằm nâng cao kiến thức và năng lực ứng dụng vào công việc thực tế, kính mời '+esc(ms.hon||'Anh/Chị')+' tham gia chương trình đào tạo theo thông tin bên dưới.</p>'+
           '<p>Hãy cùng học hỏi, thực hành và chuyển hóa kiến thức thành kết quả!</p>'+
         '</div>'+
         '<div class="character"><div class="avatar">'+v.avatar+'</div><div class="character-caption">CÙNG HỌC<br>CÙNG BỨT PHÁ!</div></div>'+
@@ -325,7 +346,7 @@ function posterBody(v, ms){
       '<div class="info"><div class="info-icon">🎯</div><div><small>NỘI DUNG</small><b>'+esc(ms.noidung)+'</b></div></div>'+
       '<div class="info"><div class="info-icon">👤</div><div><small>GIẢNG VIÊN / ĐƠN VỊ</small><b>'+esc(ms.giangvien)+'</b></div></div>'+
     '</div>'+
-    '<div class="footer-cta"><div class="chat-icon">💬</div><div><strong>Hẹn gặp Anh/Chị tại chương trình!</strong><p>Vui lòng xác nhận tham dự trước '+esc(ms.hanxn)+'. Liên hệ: '+esc(ms.lienhe)+'.</p></div><span class="spark">✦</span></div>'+
+    '<div class="footer-cta"><div class="chat-icon">💬</div><div><strong>Hẹn gặp '+esc(ms.hon||'Anh/Chị')+' tại chương trình!</strong><p>Vui lòng xác nhận tham dự trước '+esc(ms.hanxn)+'. Liên hệ: '+esc(ms.lienhe)+'.</p></div><span class="spark">✦</span></div>'+
     '<div class="poster-foot"><span>HỌC ĐỂ ỨNG DỤNG · ỨNG DỤNG ĐỂ TĂNG TRƯỞNG</span><span>ĐÀO TẠO KINH DOANH</span></div>'+
   '</section>';
 }
@@ -369,7 +390,7 @@ function posterBody2(v, ms){
       '<div><span>02</span><b>Tự tin hơn</b><small>Kỹ năng ứng dụng</small></div>'+
       '<div><span>03</span><b>Hiệu quả hơn</b><small>Kết quả công việc</small></div>'+
     '</div>'+
-    '<footer><p>Hẹn gặp Anh/Chị tại chương trình!</p><div><b>ĐÀO TẠO KINH DOANH</b><small>Liên hệ: '+esc(ms.lienhe)+'</small></div></footer>'+
+    '<footer><p>Hẹn gặp '+esc(ms.hon||'Anh/Chị')+' tại chương trình!</p><div><b>ĐÀO TẠO KINH DOANH</b><small>Liên hệ: '+esc(ms.lienhe)+'</small></div></footer>'+
   '</section>';
 }
 var h2cP = null;
@@ -522,7 +543,7 @@ function mount(root, cfg){
     var cta = ctaFor(r), qr = cta ? await qrDataUrl(cta.url) : null;
     return {
       brand:'KAROFI | LIVOTEC', brandSub:'ĐÀO TẠO KINH DOANH',
-      name: r.name || r.code, title: ev.ten_khoa || 'CHƯƠNG TRÌNH ĐÀO TẠO',
+      name: r.name || r.code, hon: honorific(r.name), title: ev.ten_khoa || 'CHƯƠNG TRÌNH ĐÀO TẠO',
       subpill: sub || 'Nâng cao năng lực · Áp dụng ngay vào công việc',
       agenda: agenda,
       thoigian: ev.thoi_gian || 'Theo thông báo của Ban Tổ chức',

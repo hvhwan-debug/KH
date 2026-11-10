@@ -3,6 +3,7 @@
 // KIỂM TRA, HƯỚNG DẪN THỰC HIỆN, đoạn ý nghĩa kết quả, lời nhắc và chữ ký đơn vị).
 // Thiết kế: Modern Corporate / Premium EdTech / Minimalist — xanh dương chủ đạo, nền trắng/xám nhạt, card rõ ràng.
 const { supportLine } = require("./supportline");
+const { honorific } = require("./honorific");
 const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 const FONT = "'Be Vietnam Pro','Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
@@ -28,8 +29,8 @@ function properName(name) {
   return n;
 }
 
-const DEFAULT_NOTE = "Kết quả bài kiểm tra là cơ sở để đánh giá mức độ nắm bắt kiến thức sản phẩm, đồng thời giúp mỗi Anh/Chị chủ động nhận diện và củng cố những nội dung cần cải thiện trong quá trình tư vấn, bán hàng.";
-const DEFAULT_CLOSING = "Đề nghị Anh/Chị nghiêm túc thực hiện và hoàn thành đúng thời hạn.";
+const defaultNote = (h) => "Kết quả bài kiểm tra là cơ sở để đánh giá mức độ nắm bắt kiến thức sản phẩm, đồng thời giúp mỗi " + h + " chủ động nhận diện và củng cố những nội dung cần cải thiện trong quá trình tư vấn, bán hàng.";
+const defaultClosing = (h) => "Đề nghị " + h + " nghiêm túc thực hiện và hoàn thành đúng thời hạn.";
 
 // opts: { name, org, title, audience, format, deadlineMs, ctaUrl, note, closing, manager }
 function build(opts) {
@@ -41,8 +42,10 @@ function build(opts) {
   const audience = opts.audience ? String(opts.audience).trim() : "";
   const format = opts.format || "Trắc nghiệm trực tuyến";
   const deadline = opts.deadlineMs ? vnDeadline(opts.deadlineMs) : "";
-  const note = opts.note || DEFAULT_NOTE;
-  const closing = opts.closing || DEFAULT_CLOSING;
+  // Xưng hô theo tên: Anh / Chị; không chắc thì giữ "Anh/Chị" (opts.honorific cho phép chỉ định tay)
+  const hon = ["Anh", "Chị", "Anh/Chị"].indexOf(opts.honorific) >= 0 ? opts.honorific : honorific(opts.name);
+  const note = opts.note || defaultNote(hon);
+  const closing = opts.closing || defaultClosing(hon);
   const ctaUrl = /^https?:\/\//i.test(opts.ctaUrl || "") ? opts.ctaUrl : "#";
   const support = supportLine(opts.manager);
 
@@ -64,8 +67,8 @@ function build(opts) {
   // ---- Khu vực 2a: Lời chào + câu thông báo ----
   const greetBlock =
     '<tr><td style="padding:26px 32px 0;font-family:' + FONT + '">' +
-    '<div style="font-size:14.5px;line-height:1.75;color:' + C.body + '">Chào Anh/Chị' + (name ? ' <b style="color:' + C.ink + '">' + esc(name) + '</b>' : '') + ',</div>' +
-    '<div style="font-size:14.5px;line-height:1.75;color:' + C.body + ';margin-top:8px">' + esc(org) + ' thông báo Anh/Chị đã được giao bài kiểm tra: <b style="color:' + C.ink + '">\u201c' + esc(title) + '\u201d</b>.</div>' +
+    '<div style="font-size:14.5px;line-height:1.75;color:' + C.body + '">Chào ' + hon + (name ? ' <b style="color:' + C.ink + '">' + esc(name) + '</b>' : '') + ',</div>' +
+    '<div style="font-size:14.5px;line-height:1.75;color:' + C.body + ';margin-top:8px">' + esc(org) + ' thông báo ' + hon + ' đã được giao bài kiểm tra: <b style="color:' + C.ink + '">\u201c' + esc(title) + '\u201d</b>.</div>' +
     '</td></tr>';
 
   // ---- Khu vực 2b: THÔNG TIN BÀI KIỂM TRA — danh sách nhãn/giá trị, dòng hạn hoàn thành được nhấn mạnh ----
@@ -82,7 +85,7 @@ function build(opts) {
   const cta =
     '<tr><td style="padding:24px 32px 0;font-family:' + FONT + '">' +
     '<div style="font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:' + C.muted + ';margin:0 0 8px">Hướng dẫn thực hiện</div>' +
-    '<div style="font-size:14px;line-height:1.75;color:' + C.body + '">Anh/Chị vui lòng nhấn nút bên dưới để truy cập hệ thống và hoàn thành bài kiểm tra trước thời hạn quy định.</div>' +
+    '<div style="font-size:14px;line-height:1.75;color:' + C.body + '">' + hon + ' vui lòng nhấn nút bên dưới để truy cập hệ thống và hoàn thành bài kiểm tra trước thời hạn quy định.</div>' +
     '</td></tr>' +
     '<tr><td align="center" style="padding:20px 32px 6px;font-family:' + FONT + '">' +
     '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td align="center" bgcolor="' + C.brand + '" style="border-radius:12px;background:' + C.brand + ';background-image:linear-gradient(120deg,' + C.brand + ',' + C.brand2 + ')">' +
@@ -128,11 +131,11 @@ function build(opts) {
     deadline ? "- Thời hạn hoàn thành: " + deadline : ""
   ].filter((x) => x !== "");
   const text = [
-    "Chào Anh/Chị" + (name ? " " + name : "") + ",",
-    org + " thông báo Anh/Chị đã được giao bài kiểm tra: \u201c" + title + "\u201d.", "",
+    "Chào " + hon + (name ? " " + name : "") + ",",
+    org + " thông báo " + hon + " đã được giao bài kiểm tra: \u201c" + title + "\u201d.", "",
     "THÔNG TIN BÀI KIỂM TRA", ...textRows, "",
     "HƯỚNG DẪN THỰC HIỆN",
-    "Anh/Chị vui lòng nhấn vào liên kết bên dưới để truy cập hệ thống và hoàn thành bài kiểm tra trước thời hạn quy định.",
+    hon + " vui lòng nhấn vào liên kết bên dưới để truy cập hệ thống và hoàn thành bài kiểm tra trước thời hạn quy định.",
     ctaUrl, "",
     note, closing, "",
     support, "",
