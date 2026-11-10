@@ -522,6 +522,7 @@ const handler = async function (context, req) {
     if (op === "saveQuestion") {
       const list = await quiz.getQuestions();
       const q = b.question || {};
+      if (q.image && !quiz.validImageUrl(String(q.image).trim())) return reply(context, 400, { ok: false, error: "Link hình phải bắt đầu bằng https:// và không chứa khoảng trắng." });
       const nq = quiz.normalizeQuestionInput(q);
       if (nq.error) return reply(context, 400, { ok: false, error: nq.error });
       const base = Object.assign({ category: String(q.category || "").slice(0, 100) }, nq.fields);

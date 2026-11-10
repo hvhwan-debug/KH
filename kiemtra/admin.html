@@ -1535,6 +1535,9 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <input type="hidden" id="qEditId">
         <label>Nội dung câu hỏi</label>
         <textarea id="qText" placeholder="Nhập nội dung câu hỏi…"></textarea>
+<label style="margin-top:10px">Hình minh hoạ (tuỳ chọn)</label>
+<input type="text" id="qImage" inputmode="url" autocomplete="off" placeholder="Dán link hình bắt đầu bằng https://… (jpg, png, webp)" oninput="qImgPreview()">
+<div id="qImgPrev" class="small" style="margin-top:6px"></div>
         <div class="qmeta3">
           <div><label>Loại câu hỏi</label><select id="qType" onchange="onQTypeChange()" aria-label="Loại câu hỏi">
           <option value="single">Một đáp án đúng</option>
@@ -3535,7 +3538,7 @@ function qStatBarRender(L){
 // ----- Form sửa: quay lại danh sách / câu trước / câu sau (hỏi lại nếu đang có thay đổi chưa lưu) -----
 let QSNAP = '';
 function qSnapNow(){
-  return JSON.stringify([$('qText').value, $('qType').value, $('qPeriod').value, $('qBank').value, $('qCategory').value, $('qDifficulty').value, $('qTags').value, $('qExplain').value, $('qAccepted').value,
+  return JSON.stringify([$('qText').value, $('qImage').value, $('qType').value, $('qPeriod').value, $('qBank').value, $('qCategory').value, $('qDifficulty').value, $('qTags').value, $('qExplain').value, $('qAccepted').value,
     Array.from(document.querySelectorAll('#qOptsEdit .opt-row')).map(r => [r.querySelector('input[type=text]').value, r.querySelector('.qc').checked])]);
 }
 function qSnap(){ QSNAP = qSnapNow(); }
@@ -3557,10 +3560,19 @@ function qFormGo(d){
   if (!qDirtyOk()) return;
   editQuestion(QPREV_IDS[n]);
 }
+// Xem trước hình minh hoạ ngay khi dán link; báo sớm nếu link sai dạng hoặc hình không mở được
+function qImgPreview(){
+  const box = $('qImgPrev'), u = $('qImage').value.trim();
+  if (!u){ box.innerHTML = ''; return; }
+  if (!/^https:\/\/[^\s"'<>]{4,490}$/.test(u)){ box.innerHTML = '<span style="color:var(--bad)">Link phải bắt đầu bằng https:// và không chứa khoảng trắng.</span>'; return; }
+  box.innerHTML = '<img alt="Xem trước hình" referrerpolicy="no-referrer" style="max-width:100%;max-height:160px;object-fit:contain;border-radius:10px;border:1px solid var(--line)">';
+  const im = box.firstChild; im.onerror = () => { box.innerHTML = '<span style="color:var(--warn)">Chưa mở được hình từ link này. Hãy kiểm tra link là ảnh trực tiếp (kết thúc .jpg, .png, .webp…) và được chia sẻ công khai.</span>'; };
+  im.src = u;
+}
 function clearQForm(){
   $('qRegradeBtn').classList.add('hide');
   $('qEditId').value=''; $('qText').value=''; $('qCategory').value='';
-  $('qDifficulty').value=''; $('qTags').value=''; $('qExplain').value=''; if ($('qBank').options.length) $('qBank').value = $('qBank').dataset.last || 'default';
+  $('qDifficulty').value=''; $('qTags').value=''; $('qExplain').value=''; $('qImage').value=''; qImgPreview(); if ($('qBank').options.length) $('qBank').value = $('qBank').dataset.last || 'default';
   $('qType').value='single'; $('qAccepted').value=''; $('qOptsWrap').classList.remove('hide'); $('qFillWrap').classList.add('hide'); $('qAddOptBtn').classList.remove('hide');
   $('qOptsLabel').textContent='Các phương án trả lời (bấm ô “✓ Đúng” ở đầu dòng để chọn đáp án đúng)';
   $('qOptsEdit').innerHTML=''; $('qFormTitle').textContent='Thêm câu hỏi mới vào ' + qPerLabel(QP || '').toLowerCase();
@@ -3812,7 +3824,7 @@ function qPrevRender(){
     }).join('');
   }
   $('qPrevBody').innerHTML = '<div class="small" style="color:var(--muted);margin-bottom:8px">Câu ' + (QPREV_I + 1) + ' / ' + QPREV_IDS.length + '</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">' + meta + '</div>' +
-    '<div class="qp-q">' + esc(q.text) + '</div>' + ans +
+    '<div class="qp-q">' + esc(q.text) + '</div>' + (q.image ? '<img src="' + esc(q.image) + '" alt="Hình minh hoạ" referrerpolicy="no-referrer" style="max-width:100%;max-height:240px;object-fit:contain;border-radius:10px;border:1px solid var(--line);margin:6px 0">' : '') + ans +
     (q.explanation ? '<div class="qp-ex"><b>Giải thích</b><div>' + esc(q.explanation) + '</div></div>' : '');
   $('qpPrev').disabled = QPREV_I <= 0; $('qpNext').disabled = QPREV_I >= QPREV_IDS.length - 1;
   const box = document.querySelector('#qPrevBg .modal-box'); if (box) box.scrollTop = 0;
@@ -3835,7 +3847,7 @@ function editQuestion(id){
   $('qRegradeBtn').classList.remove('hide');
   $('qEditId').value = q.id; $('qText').value = q.text; $('qCategory').value = q.category||'';
   $('qFormTitle').textContent = 'Sửa câu hỏi'; $('qPeriod').value = q.period || '';
-  $('qBank').value = q.bankId || 'default'; $('qDifficulty').value = q.difficulty || ''; $('qTags').value = (q.tags || []).join(', '); $('qExplain').value = q.explanation || '';
+  $('qBank').value = q.bankId || 'default'; $('qDifficulty').value = q.difficulty || ''; $('qTags').value = (q.tags || []).join(', '); $('qExplain').value = q.explanation || ''; $('qImage').value = q.image || ''; qImgPreview();
   const isTF = (q.type || 'single') === 'single' && (q.options || []).length === 2 && q.options[0] === 'Đúng' && q.options[1] === 'Sai';
   $('qType').value = isTF ? 'tf' : (q.type || 'single');
   $('qOptsEdit').innerHTML='';
@@ -3940,7 +3952,7 @@ async function saveQuestion(){
   const options = Array.from(document.querySelectorAll('#qOptsEdit .opt-row')).map(r => r.querySelector('input[type=text]').value.trim());
   const marks = Array.from(document.querySelectorAll('#qOptsEdit .opt-row')).map(r => r.querySelector('.qc').checked);
   const question = { id: $('qEditId').value||undefined, text: $('qText').value.trim(), category: $('qCategory').value.trim(), period: $('qPeriod').value || (QP || ''),
-    bankId: $('qBank').value || 'default', difficulty: $('qDifficulty').value, tags: $('qTags').value, explanation: $('qExplain').value };
+    bankId: $('qBank').value || 'default', difficulty: $('qDifficulty').value, tags: $('qTags').value, explanation: $('qExplain').value, image: $('qImage').value.trim() };
   if (ui === 'fill'){ question.type = 'fill'; question.accepted = $('qAccepted').value; }
   else {
     // Bỏ phương án trống nhưng giữ đúng vị trí của đáp án được đánh dấu

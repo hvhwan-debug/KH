@@ -670,7 +670,8 @@ function validBankId(id) { return /^[a-z0-9][a-z0-9-]{0,39}$/i.test(String(id ||
 function slugify(s) {
   return normPerson(s).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 30) || "bank";
 }
-// Làm sạch các trường mở rộng của câu hỏi (ngân hàng, độ khó, thẻ, giải thích).
+const validImageUrl = (u) => /^https:\/\/[^\s"'<>]{4,490}$/.test(String(u || ""));
+// Làm sạch các trường mở rộng của câu hỏi (ngân hàng, độ khó, thẻ, giải thích, hình).
 function cleanQuestionMeta(q, prev) {
   const out = {};
   const p = prev || {};
@@ -683,6 +684,9 @@ function cleanQuestionMeta(q, prev) {
   out.tags = tags.map((x) => String(x || "").trim().slice(0, 40)).filter(Boolean).filter((v, k, a) => a.indexOf(v) === k).slice(0, 12);
   const e = q.explanation !== undefined ? q.explanation : p.explanation;
   out.explanation = String(e || "").trim().slice(0, 1000);
+  // Hình minh hoạ: chỉ nhận link https (không chứa khoảng trắng / dấu nháy / ngoặc nhọn); sai thì bỏ
+  const im = String(q.image !== undefined ? q.image : p.image || "").trim();
+  out.image = validImageUrl(im) ? im : "";
   return out;
 }
 
@@ -1127,18 +1131,20 @@ function clientState(a, byId, now) {
   const n = a.questionIds.length, S = a.secondsPerQuestion * 1000;
   let changed = false;
   while (a.cursor < n && !byId[a.questionIds[a.cursor]]) { // câu đã bị xoá khỏi ngân hàng giữa chừng: bỏ qua
-    a.answers[a.questionIds[a.cursor]] = { answerIndex: -1, auto: true, answeredAt: now };
+    a.answers[a.questionIds[a.cursor]] = { answerIndex: -1, auto: true, gone: true, answeredAt: now };
     a.cursor++; a.qStartedAt = now; changed = true;
   }
-  if (a.cursor >= n) return { state: { done: true, total: n }, changed };
+  // Số câu hệ thống tự tính bỏ trống vì quá giờ (không tính câu bị xoá khỏi ngân hàng) + giờ máy chủ để trang đối chiếu đồng hồ
+  const autoCount = Object.keys(a.answers || {}).filter((k) => a.answers[k] && a.answers[k].auto && !a.answers[k].gone).length;
+  if (a.cursor >= n) return { state: { done: true, total: n, autoCount, serverNow: now }, changed };
   const qid = a.questionIds[a.cursor], q = byId[qid];
   const order = a.orders[qid] || (q.options || []).map((_, i) => i);
   return {
     state: {
-      done: false, index: a.cursor, total: n,
+      done: false, index: a.cursor, total: n, autoCount, serverNow: now,
       remainingMs: Math.max(0, a.qStartedAt + S - now),
       secondsPerQuestion: a.secondsPerQuestion,
-      question: { id: qid, type: qType(q), text: q.text, options: order.map((i) => q.options[i]) }
+      question: { id: qid, type: qType(q), text: q.text, image: validImageUrl(q.image) ? q.image : "", options: order.map((i) => q.options[i]) }
     },
     changed
   };
@@ -1167,7 +1173,7 @@ function noteFail(req) {
   list.push(Date.now()); _fails.set(k, list);
 }
 
-module.exports = {
+module.exports = { validImageUrl,
   patchIndex, failCount, clearFails,
   runMigrations, managerCanon, properCaseName, normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, betterResult, attemptsSummary, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
   getQuestions, saveQuestions,
