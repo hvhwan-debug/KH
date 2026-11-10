@@ -5232,12 +5232,23 @@ function renderProgress(){
     } else if (x.phone && TOUCH){
       info = '<a class="pg-tel" href="tel:' + esc(String(x.phone).replace(/[^0-9+]/g, '')) + '" aria-label="Gọi ' + esc(x.name || x.code) + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>' + esc(x.phone) + '</a>';
     } else info = '<small class="pg-sub' + (x.phone ? '' : ' pg-nop') + '"' + (x.phone ? '' : ' title="Chưa có số điện thoại"') + '>' + (x.phone ? esc(x.phone) : '—') + '</small>';
+    const rm = x.status !== 'done' ? '<button type="button" class="btn ghost sm pg-rm" style="margin-left:8px" onclick="removeFromExamUI(\'' + esc(x.code) + '\',\'' + esc((x.name || x.code).replace(/'/g, "\\'")) + '\')" title="Loại người này khỏi đề — các đề khác không bị ảnh hưởng">Loại khỏi đề</button>' : '';
     return '<div class="pg-row ' + x.status + '"><span class="pg-dot" aria-hidden="true"></span>' +
       '<div class="pg-who"><button type="button" class="candnm pg-nm" title="Xem hồ sơ học tập" onclick="openCandProfile(\'' + esc(x.code) + '\')">' + esc(x.name || x.code) + '</button><small><span class="pg-code">' + esc(x.code) + '</span>' + (x.manager ? '<span class="pg-mgr">' + esc(x.manager) + '</span>' : '') + (x.province ? '<span class="pg-prov">' + esc(x.province) + '</span>' : '') + (x.region ? '<span class="pg-reg">' + (x.region === 'bac' ? 'Miền Bắc' : 'Miền Nam') + '</span>' : '') + '</small></div>' +
-      '<span class="pg-st">' + PG_LBL[x.status] + (x.done && x.status === 'done' && x.done.auto ? '<span class="pg-auto" title="Hết giờ, hệ thống tự thu bài">tự thu</span>' : '') + '</span><div class="pg-info">' + info + '</div></div>';
+      '<span class="pg-st">' + PG_LBL[x.status] + (x.done && x.status === 'done' && x.done.auto ? '<span class="pg-auto" title="Hết giờ, hệ thống tự thu bài">tự thu</span>' : '') + '</span><div class="pg-info">' + info + rm + '</div></div>';
   }).join('') + (MOB && L.length > PG_SHOW ? '<button type="button" class="btn ghost pg-more" onclick="pgMore()">Hiện thêm ' + Math.min(20, L.length - PG_SHOW) + ' người · còn ' + (L.length - PG_SHOW) + '</button>' : '') || '<div class="pg-empty">Không có thí sinh nào ở mục này.</div>';
 }
 function pgMore(){ PG_SHOW += 20; renderProgress(); }
+// Loại nhanh 1 người khỏi đề đang xem, ngay từ danh sách theo dõi làm bài — không cần vào Cài đặt đề.
+async function removeFromExamUI(code, name){
+  const period = (PG && PG.period) || CUR_EXAM || '';
+  if (!period) return;
+  if (!confirm('Loại "' + name + '" khỏi đề này? Họ sẽ không làm được bài kiểm tra này nữa (các đề khác không bị ảnh hưởng).')) return;
+  const { j } = await api('POST','/api/kt-admin', { op:'removeFromExam', examId: period, code });
+  if (!j.ok){ alert(j.error || 'Không loại được, thử lại.'); return; }
+  EXAMS = j.exams || EXAMS.map(e => e.id === period ? j.exam : e);
+  loadProgress(period);
+}
 function pgCopy(){
   const L = pgRows().filter(x => x.status === 'none');
   // Gom theo quản lí, đánh số, có tổng số; không kèm mã NV và số điện thoại

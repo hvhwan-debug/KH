@@ -584,6 +584,25 @@ const handler = async function (context, req) {
       return reply(context, 200, { ok: true, questions: list });
     }
 
+    // Loại NHANH một người khỏi một đề cụ thể, tự nhận biết đề đang ở chế độ nào để xử lý đúng cách:
+    // - "Tất cả nhân viên" (chưa có danh sách) -> tự chuyển sang "Tất cả trừ một số người" với đúng người này.
+    // - "Tất cả trừ một số người" -> thêm người này vào danh sách loại trừ.
+    // - "Chỉ những nhân viên được chọn" -> bỏ người này khỏi danh sách được chọn.
+    if (op === "removeFromExam") {
+      const id = String(b.examId || "").trim(), code = quiz.normCode(b.code);
+      if (!id || !code) return reply(context, 400, { ok: false, error: "Thiếu mã đề hoặc mã nhân viên." });
+      const exams = await quiz.getExams();
+      const ex = exams.find((e) => e.id === id);
+      if (!ex) return reply(context, 400, { ok: false, error: "Không tìm thấy đề." });
+      let codes = Array.isArray(ex.codes) ? ex.codes.map(quiz.normCode).filter(Boolean) : [];
+      if (!codes.length) { ex.codesExclude = true; codes = [code]; }
+      else if (ex.codesExclude) { if (codes.indexOf(code) < 0) codes.push(code); }
+      else { codes = codes.filter((c) => c !== code); }
+      ex.codes = codes;
+      await quiz.saveExams(exams);
+      return reply(context, 200, { ok: true, exam: ex });
+    }
+
     // Xoá hàng loạt toàn bộ câu hỏi của MỘT danh mục trong MỘT kỳ — dùng để dọn câu nhập trùng/sai danh mục.
     if (op === "deleteQuestionsByCategory") {
       const period = typeof b.period === "string" ? b.period : "";
