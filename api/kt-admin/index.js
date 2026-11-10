@@ -1045,6 +1045,8 @@ const handler = async function (context, req) {
     if (op === "saveExam") {
       const r = await quiz.upsertExam(b.exam || b);
       if (!r.ok) return reply(context, 400, r);
+      // Người mới được gán vào đề (mã NV mới thêm, mở rộng đối tượng…) nhận email mời ngay, không cần chờ cron.
+      try { await require("../_lib/examnotify").run({ examId: r.exam.id }); } catch (e) { context.log.error("saveExam examnotify", e && e.message); }
       return reply(context, 200, { ok: true, exam: r.exam, exams: await quiz.listExamsSummary() });
     }
 

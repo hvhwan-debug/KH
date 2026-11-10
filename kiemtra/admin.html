@@ -1321,6 +1321,8 @@ button.rd-st:disabled{opacity:.55;cursor:default}
 
         <div class="asg" id="asg">
           <h2 class="exh" style="margin-top:18px">5. Gán nhân viên làm đề này</h2>
+          <label style="display:flex;align-items:flex-start;gap:8px;margin:6px 0 10px;font-size:14px"><input type="checkbox" id="exInviteOff" style="width:18px;height:18px;margin-top:2px"> <span>Không tự động gửi email mời làm bài <span class="small">(mặc định: ai mới được gán vào đề này sẽ tự nhận email mời, không cần quản trị viên gửi tay)</span></span></label>
+          <div id="exInviteStat" class="small" style="margin-bottom:10px"></div>
           <div class="asg-mode" role="radiogroup" aria-label="Đối tượng làm đề">
             <label><input type="radio" name="asgMode" value="all" checked onchange="asgSetMode('all')"> Tất cả nhân viên</label>
             <label><input type="radio" name="asgMode" value="pick" onchange="asgSetMode('pick')"> Chỉ những nhân viên được chọn</label>
@@ -2589,6 +2591,7 @@ function clearExamForm(){
   $('exCount').value=''; $('exBothGD').value=''; $('exSeconds').value=''; $('exPass').value=''; $('exPassOn').checked=false;
   $('exRetake').checked=false; $('exAttempts').value=''; $('exAttempts').disabled=false; $('exPractice').checked=false; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
   $('exDesc').value=''; asgLoad([]); $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
+  $('exInviteOff').checked = false; $('exInviteStat').textContent = '';
   BP_RULES = []; renderBpRules(); $('bpPreview').innerHTML=''; $('bpTotal').textContent='';
   msg('exMsg',''); $('exAdv').open = false; exSpSet('global');
   $('exPassOn').checked = !!SETCACHE.passEnabled; $('exRetake').checked = !!SETCACHE.allowRetake; $('exAttempts').disabled = $('exRetake').checked; $('exComplianceOn').checked = !!SETCACHE.complianceEnabled;
@@ -2617,6 +2620,8 @@ function editExam(id){
   $('exCHigh').value = e.complianceHighMin || ''; $('exCMid').value = e.complianceMidMin || ''; $('exCLow').value = e.complianceLowMin || '';
   $('exDesc').value = e.description || ''; asgLoad(e.codes || []); $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
   document.querySelectorAll('.exSeg').forEach(c => c.checked = (e.segments || []).indexOf(c.value) >= 0);
+  $('exInviteOff').checked = !!e.inviteOff;
+  $('exInviteStat').textContent = (e.invitedCodes || []).length ? 'Đã tự động gửi email mời cho ' + e.invitedCodes.length + ' người được gán vào đề này.' : (e.inviteOff ? '' : 'Chưa có ai được gửi email mời (sẽ tự gửi khi lưu, nếu có người đủ điều kiện và có email).');
   BP_RULES = e.blueprint && e.blueprint.rules ? e.blueprint.rules.map(r => Object.assign({}, r)) : []; renderBpRules();
   $('examFormTitle').textContent = 'Cài đặt đề';
   $('exAdv').open = !!(BP_RULES.length || e.questionCount || e.bothGiaDungCount || (e.segments||[]).length);
@@ -2670,7 +2675,7 @@ async function saveExam(){
     description: $('exDesc').value.trim(), codes: ASG.mode === 'pick' ? $('exCodes').value : '',
     openAt: localToMs($('exOpen').value), closeAt: localToMs($('exClose').value),
     segments: Array.from(document.querySelectorAll('.exSeg:checked')).map(c => c.value),
-    segmentPlans: exSpOwn() ? spRead($('exSp')) : null, sharedUniform: exSpShared(),
+    segmentPlans: exSpOwn() ? spRead($('exSp')) : null, sharedUniform: exSpShared(), inviteOff: $('exInviteOff').checked,
     blueprint: BP_RULES.length ? { rules: BP_RULES.map(r => ({ bankId:r.bankId, category:r.category||'', difficulty:r.difficulty||'', tag:r.tag||'', count:+r.count||0 })) } : null
   };
   if (!exam.id){ msg('exMsg','Nhập mã đề thi.'); return; }

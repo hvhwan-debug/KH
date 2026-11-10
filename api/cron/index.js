@@ -21,6 +21,9 @@ module.exports = async function (context, req) {
     // Đối chiếu khuôn mặt các bài chưa đối chiếu (bài cũ, hoặc bài mà lúc nộp chưa kịp đối chiếu xong)
     let faceScan = null;
     try { faceScan = await require("../_lib/faceid").scan({ ms: 15000 }); } catch (e) { context.log.error("cron faceid", e && e.message); }
+    // Mời làm bài qua email cho nhân viên mới được gán vào đề (mã NV thêm sau, đối tượng mở rộng, người mới có email…)
+    let examInvite = null;
+    try { examInvite = await require("../_lib/examnotify").run(); } catch (e) { context.log.error("cron examnotify", e && e.message); }
     const names = await store.list("user/");
     let users = 0, sent = 0, failed = 0;
     for (const name of names) {
@@ -49,7 +52,7 @@ module.exports = async function (context, req) {
         context.log.error("cron user", name, e && e.message);
       }
     }
-    return reply(context, 200, { ok: true, users, sent, failed, swept, faceScan });
+    return reply(context, 200, { ok: true, users, sent, failed, swept, faceScan, examInvite });
   } catch (e) {
     context.log.error("cron", e && e.message);
     return reply(context, 500, { ok: false });

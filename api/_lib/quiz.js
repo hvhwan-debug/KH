@@ -614,6 +614,7 @@ async function upsertExam(data) {
     entry.segmentPlans = Object.keys(sp).length ? sp : null; // null = theo cài đặt chung
   }
   if (data && data.sharedUniform !== undefined) entry.sharedUniform = !!data.sharedUniform; // true = dùng chung, bỏ qua phân bổ nhóm ngành/miền
+  if (data && data.inviteOff !== undefined) entry.inviteOff = !!data.inviteOff; // true = tắt tự động gửi email mời khi có người mới được gán
   if (data && data.openAt !== undefined) entry.openAt = Math.max(0, Number(data.openAt) || 0);
   if (data && data.closeAt !== undefined) entry.closeAt = Math.max(0, Number(data.closeAt) || 0);
   if (entry.openAt && entry.closeAt && entry.closeAt <= entry.openAt) return { ok: false, error: "Thời gian đóng phải sau thời gian mở." };
@@ -624,7 +625,7 @@ async function upsertExam(data) {
   if (data && data.segments !== undefined) entry.segments = (Array.isArray(data.segments) ? data.segments : []).map(normSegment).filter((v, k, a) => a.indexOf(v) === k);
   if (i >= 0) exams[i] = Object.assign({}, exams[i], entry); else exams.push(entry);
   await saveExams(exams);
-  return { ok: true, exam: entry };
+  return { ok: true, exam: entry, created: i < 0 };
 }
 async function deleteExam(id) {
   const exams = await getExams();
