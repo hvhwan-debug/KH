@@ -3723,7 +3723,10 @@ function loadQuestionsFile(ev){
   reader.onload = () => {
     $('qBulkText').value = String(reader.result || '');
     ev.target.value = ''; // cho phep chon lai cung file lan sau neu can
-    addQuestionsBulk();
+    // CHỈ nạp ra để xem lại — không tự nhập. Bấm "Nhập vào ngân hàng đề" mới thực sự ghi vào hệ thống,
+    // tránh nhập trùng khi lỡ chọn file 2 lần.
+    let n = 0; try { const arr = JSON.parse($('qBulkText').value); n = Array.isArray(arr) ? arr.length : 0; } catch (e) { /* để addQuestionsBulk tự báo lỗi JSON khi bấm nhập */ }
+    msg('qBulkMsg', 'Đã tải xong file (' + n + ' câu). Kiểm tra lại rồi bấm "Nhập vào ngân hàng đề" để ghi vào hệ thống.', 'ok');
   };
   reader.onerror = () => { msg('qBulkMsg','Không đọc được file, thử lại.'); };
   reader.readAsText(file, 'utf-8');
@@ -3743,19 +3746,25 @@ async function genQuestionsAI(){
   ).join('') + '</ol>';
   $('qBulkText').scrollIntoView({behavior:'smooth',block:'center'});
 }
+let QBULK_BUSY = false;
 async function addQuestionsBulk(){
+  if (QBULK_BUSY) return; // chặn bấm liên tiếp gây nhập trùng
   const raw = $('qBulkText').value.trim();
   if (!raw){ msg('qBulkMsg','Dán nội dung JSON trước.'); return; }
   let questions;
   try { questions = JSON.parse(raw); if (!Array.isArray(questions)) throw new Error('not array'); }
   catch(e){ msg('qBulkMsg','JSON không hợp lệ — kiểm tra lại định dạng.'); return; }
   if (!QP && !confirm('Đang chọn "Chưa gắn kỳ". Nhập các câu này mà không gắn kỳ nào?')) return;
-  const { j } = await api('POST','/api/kt-admin', { op:'addQuestions', questions, period: QP || '', bankId: $('qBank').value || 'default' });
-  if (!j.ok){ msg('qBulkMsg', j.error, 'err'); return; }
-  msg('qBulkMsg', 'Đã thêm '+j.added+' câu hỏi'+(j.skipped?', bỏ qua '+j.skipped+' câu thiếu dữ liệu':'')+'.', 'ok');
-  $('qBulkText').value='';
-  QUESTIONS = j.questions;
-  loadQuestions();
+  QBULK_BUSY = true;
+  const btns = document.querySelectorAll('#qBulkCard button'); btns.forEach(b => b.disabled = true);
+  try {
+    const { j } = await api('POST','/api/kt-admin', { op:'addQuestions', questions, period: QP || '', bankId: $('qBank').value || 'default' });
+    if (!j.ok){ msg('qBulkMsg', j.error, 'err'); return; }
+    msg('qBulkMsg', 'Đã thêm '+j.added+' câu hỏi'+(j.skipped?', bỏ qua '+j.skipped+' câu thiếu dữ liệu':'')+'.', 'ok');
+    $('qBulkText').value='';
+    QUESTIONS = j.questions;
+    loadQuestions();
+  } finally { QBULK_BUSY = false; btns.forEach(b => b.disabled = false); }
 }
 // Tóm tắt kết quả tự chấm lại các bài đã nộp có một câu hỏi (g = regrade từ máy chủ)
 function regradeNote(g, head){
