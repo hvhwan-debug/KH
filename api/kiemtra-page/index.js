@@ -2,13 +2,12 @@
 // theo ĐÚNG đề đang mở (lấy từ ?exam=<mã đề>), để khi dán link vào Zalo/Facebook/Messenger... phần xem trước hiện
 // tên đề + trạng thái (đang mở/sắp mở/đã đóng) + giờ mở hoặc đóng, thay vì chỉ hiện tên ứng dụng chung chung.
 // Nội dung trang (HTML/JS) giữ y nguyên như file tĩnh kiemtra/index.html — chỉ thêm vài dòng <meta> vào <head>.
-const fs = require("fs");
-const path = require("path");
+// QUAN TRỌNG: hàm API và site tĩnh được triển khai ở HAI nơi khác nhau trong Azure Static Web Apps (không chung ổ
+// đĩa), nên phải lấy trang tĩnh qua HTTP (fetch chính /kiemtra/index.html đã deploy), không được đọc file cục bộ.
 const { reply } = require("../_lib/http");
 const { cfg } = require("../_lib/config");
 const quiz = require("../_lib/quiz");
 
-const PAGE_PATH = path.join(__dirname, "..", "..", "kiemtra", "index.html");
 const DEFAULT_TITLE = "Hệ thống kiểm tra đánh giá trực tuyến";
 const DEFAULT_DESC = "Nền tảng kiểm tra trực tuyến. Nhập mã nhân viên và email để làm bài.";
 
@@ -25,11 +24,19 @@ function statusLine(settings, now) {
 }
 
 module.exports = async function (context, req) {
+  const base = cfg().appUrl;
   let html;
   try {
-    html = fs.readFileSync(PAGE_PATH, "utf8");
+    const ac = new AbortController(); const timer = setTimeout(() => ac.abort(), 8000);
+    const r = await fetch(base + "/kiemtra/index.html", { signal: ac.signal });
+    clearTimeout(timer);
+    if (!r.ok) throw new Error("status " + r.status);
+    html = await r.text();
   } catch (e) {
-    return reply(context, 500, { ok: false, error: "Không đọc được trang." });
+    context.log.error("kiemtra-page fetch static", e && e.message);
+    // Lấy trang tĩnh thất bại (mạng, timeout…): CHUYỂN HƯỚNG sang trang thật thay vì chặn người làm bài lại.
+    context.res = { status: 302, headers: { Location: "/kiemtra/index.html" + (req.originalUrl && req.originalUrl.indexOf("?") >= 0 ? req.originalUrl.slice(req.originalUrl.indexOf("?")) : "") } };
+    return;
   }
 
   let title = DEFAULT_TITLE, desc = DEFAULT_DESC;
@@ -44,7 +51,6 @@ module.exports = async function (context, req) {
     context.log.error("kiemtra-page meta", e && e.message); // lỗi tra cứu thì vẫn trả trang, chỉ dùng tiêu đề/mô tả mặc định
   }
 
-  const base = cfg().appUrl;
   const metaTags =
     '<meta property="og:title" content="' + esc(title) + '">' +
     '<meta property="og:description" content="' + esc(desc) + '">' +
