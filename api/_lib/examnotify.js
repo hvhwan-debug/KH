@@ -49,4 +49,54 @@ async function run(opts) {
   if (examsTouched) await quiz.saveExams(exams);
   return { sent, exams: examsTouched };
 }
-module.exports = { run };
+
+// Gửi LẠI thư mời (thủ công, do quản trị viên bấm): chỉ người thuộc đối tượng, có email và CHƯA nộp bài của đề này.
+// Thư có dòng "thay thế thông báo trước, bỏ qua email cũ". Mã NV đã được gửi lại lưu ở exam.resentCodes nên bấm lại không gửi trùng;
+// fresh = true để bắt đầu đợt gửi lại mới. dry = true chỉ đếm, không gửi.
+async function resend(examId, opts) {
+  opts = opts || {};
+  const t0 = Date.now();
+  const exams = await quiz.getExams();
+  const exam = exams.find((e) => e.id === examId);
+  if (!exam) return { ok: false, error: "Không tìm thấy đề thi." };
+  const settings = await quiz.getExamSettings(exam.id);
+  const cands = await quiz.getCandidates();
+  const doneSet = new Set((await quiz.getIndex()).filter((a) => a.status === "submitted" && (a.period || "") === settings.examPeriod).map((a) => quiz.normCode(a.code)));
+  const resent = new Set(opts.fresh ? [] : (exam.resentCodes || []).map(quiz.normCode));
+  const inAud = cands.filter((c) => quiz.inAudience(settings, c));
+  const notDone = inAud.filter((c) => !doneSet.has(quiz.normCode(c.code)));
+  const pending = notDone.filter((c) => c.email && !resent.has(quiz.normCode(c.code)));
+  const stats = {
+    audience: inAud.length, done: inAud.length - notDone.length,
+    noEmail: notDone.filter((c) => !c.email).length,
+    alreadyResent: notDone.filter((c) => c.email && resent.has(quiz.normCode(c.code))).length,
+    pending: pending.length
+  };
+  const title = exam.examTitle || exam.title || exam.id;
+  if (opts.dry) return { ok: true, dry: true, stats, title };
+  if (!opts.confirm) return { ok: false, error: "Cần xác nhận trước khi gửi." };
+  if (!pending.length) return { ok: true, sent: 0, remaining: 0, stats, title };
+  const link = cfg().appUrl + "/kiemtra/?exam=" + encodeURIComponent(exam.id);
+  const list = pending.slice(0, MAX_PER_RUN);
+  const done = [];
+  let idx = 0, stopped = false, noSmtp = false;
+  async function worker() {
+    while (idx < list.length && !stopped) {
+      if (Date.now() - t0 > TIME_BUDGET) return;
+      const c = list[idx++];
+      try {
+        const msg = assignmail.build({ name: c.name, title, audience: exam.description || "", deadlineMs: exam.closeAt || 0, ctaUrl: link, manager: c.manager || "", replaces: true });
+        const ok = await mail.send({ fromName: mail.KT_NAME, to: c.email, subject: msg.subject, html: msg.html, text: msg.text });
+        if (ok === false) { stopped = true; noSmtp = true; return; }
+        done.push(quiz.normCode(c.code));
+      } catch (e) { /* lỗi riêng người này: bấm gửi tiếp sẽ thử lại */ }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(CONC, list.length) }, worker));
+  if (noSmtp && !done.length) return { ok: false, error: "Chưa cấu hình gửi email (SMTP), chưa gửi được thư nào." };
+  exam.resentCodes = Array.from(new Set([...(opts.fresh ? [] : (exam.resentCodes || [])), ...done]));
+  exam.resentAt = Date.now();
+  await quiz.saveExams(exams);
+  return { ok: true, sent: done.length, remaining: pending.length - done.length, stats, title };
+}
+module.exports = { run, resend };

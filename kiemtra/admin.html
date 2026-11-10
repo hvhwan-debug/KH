@@ -1377,6 +1377,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
 <h2 class="exsec">Gán nhân viên làm đề này</h2>
           <label style="display:flex;align-items:flex-start;gap:8px;margin:6px 0 10px;font-size:14px"><input type="checkbox" id="exInviteOff" style="width:18px;height:18px;margin-top:2px"> <span>Không tự động gửi email mời làm bài <span class="small">(mặc định: ai mới được gán vào đề này sẽ tự nhận email mời, không cần quản trị viên gửi tay)</span></span></label>
           <div id="exInviteStat" class="small" style="margin-bottom:10px"></div>
+<div id="exResend" style="margin-bottom:12px"></div>
           <div class="asg-mode" role="radiogroup" aria-label="Đối tượng làm đề">
             <label><input type="radio" name="asgMode" value="all" checked onchange="asgSetMode('all')"> Tất cả nhân viên</label>
             <label><input type="radio" name="asgMode" value="pick" onchange="asgSetMode('pick')"> Chỉ những nhân viên được chọn</label>
@@ -2679,7 +2680,7 @@ function clearExamForm(){
   $('exCount').value=''; $('exBothGD').value=''; $('exSeconds').value=''; $('exPass').value=''; $('exPassOn').checked=false;
   $('exRetake').checked=false; $('exAttempts').value=''; $('exAttempts').disabled=false; $('exPractice').checked=false; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
   $('exDesc').value=''; asgLoad([]); $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
-  $('exInviteOff').checked = false; $('exInviteStat').textContent = '';
+  $('exInviteOff').checked = false; $('exInviteStat').textContent = ''; exResendReset(false);
   BP_RULES = []; renderBpRules(); $('bpPreview').innerHTML=''; $('bpTotal').textContent='';
   msg('exMsg',''); $('exAdv').open = false; exSpSet('global');
   $('exPassOn').checked = !!SETCACHE.passEnabled; $('exRetake').checked = !!SETCACHE.allowRetake; $('exAttempts').disabled = $('exRetake').checked; $('exComplianceOn').checked = !!SETCACHE.complianceEnabled;
@@ -2711,7 +2712,7 @@ function editExam(id){
   $('exInviteOff').checked = !!e.inviteOff;
   $('exInviteStat').textContent = (e.invitedCodes || []).length ? 'Đã tự động gửi email mời cho ' + e.invitedCodes.length + ' người được gán vào đề này.' : (e.inviteOff ? '' : 'Chưa có ai được gửi email mời (sẽ tự gửi khi lưu, nếu có người đủ điều kiện và có email).');
   BP_RULES = e.blueprint && e.blueprint.rules ? e.blueprint.rules.map(r => Object.assign({}, r)) : []; renderBpRules();
-  $('examFormTitle').textContent = 'Cài đặt đề';
+  $('examFormTitle').textContent = 'Cài đặt đề'; exResendReset(true);
   $('exAdv').open = !!(BP_RULES.length || e.questionCount || e.bothGiaDungCount || (e.segments||[]).length);
   exSpSet(e.sharedUniform ? 'none' : (spHas(e.segmentPlans) ? 'own' : 'global'), e.segmentPlans); previewPlan();
   $('examFormCard').classList.remove('hide'); exGoStep(1); exRefreshNow();
@@ -3002,6 +3003,35 @@ $('exSum').innerHTML = exSummaryChips(errs).map(c => '<span class="exchip' + (c[
 let exRaf = 0;
 function exRefresh(){ cancelAnimationFrame(exRaf); exRaf = requestAnimationFrame(exRefreshNow); }
 (function(){ const card = $('examFormCard'); if (card) ['input', 'change', 'click'].forEach(ev => card.addEventListener(ev, exRefresh)); })();
+/* ---------- Gửi lại thư mời cho người chưa làm bài (xem trước → xác nhận → gửi) ---------- */
+function exResendReset(show){
+  $('exResend').innerHTML = show ? '<button type="button" class="btn ghost sm" onclick="resendPreview(false)">Gửi lại thư mời cho người chưa làm bài…</button> <span class="small">Chỉ gửi cho người thuộc đối tượng, có email và chưa nộp bài. Sẽ xem trước số người trước khi gửi.</span>' : '';
+}
+async function resendPreview(fresh){
+  const id = $('exEditingId').value, box = $('exResend');
+  if (!id){ return; }
+  box.innerHTML = '<span class="small">Đang kiểm tra…</span>';
+  const { j } = await api('POST','/api/kt-admin', { op:'resendInvites', examId:id, dry:true, fresh:!!fresh });
+  if (!j || !j.ok){ box.innerHTML = '<div class="msg err">' + esc((j && j.error) || 'Không kiểm tra được.') + '</div>'; return; }
+  const t = j.stats;
+  box.innerHTML = '<div style="border:1.5px solid #F0D58A;background:#FFF9E8;border-radius:12px;padding:12px 14px">' +
+    '<b>Sẽ gửi lại cho ' + t.pending + ' người</b> (đề “' + esc(j.title) + '”)' +
+    '<div class="small" style="margin-top:6px">Trong đối tượng: ' + t.audience + ' người · đã làm bài (không gửi): ' + t.done + ' · thiếu email (không gửi): ' + t.noEmail + (t.alreadyResent ? ' · đã gửi lại trước đó (không gửi trùng): ' + t.alreadyResent : '') + '.</div>' +
+    '<div class="small" style="margin-top:4px">Thư có tiêu đề “[Cập nhật]” và dòng báo bỏ qua email cũ. Email đã gửi trước đó không thu hồi được.</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
+    '<button type="button" class="btn sm" ' + (t.pending ? '' : 'disabled') + ' onclick="resendSend(' + (fresh ? 'true' : 'false') + ')">Gửi cho ' + t.pending + ' người</button>' +
+    '<button type="button" class="btn ghost sm" onclick="exResendReset(true)">Huỷ</button>' +
+    (t.alreadyResent && !fresh ? '<button type="button" class="btn ghost sm" onclick="resendPreview(true)">Bắt đầu đợt gửi lại mới (gửi cả người đã nhận thư gửi lại)</button>' : '') +
+    '</div></div>';
+}
+async function resendSend(fresh){
+  const id = $('exEditingId').value, box = $('exResend');
+  if (!confirm('Gửi lại thư mời cho những người chưa làm bài của đề này?\n\nEmail đã gửi đi không thu hồi được.')) return;
+  box.innerHTML = '<span class="small">Đang gửi, vui lòng không đóng trang…</span>';
+  const { j } = await api('POST','/api/kt-admin', { op:'resendInvites', examId:id, confirm:true, fresh:!!fresh });
+  if (!j || !j.ok){ box.innerHTML = '<div class="msg err">' + esc((j && j.error) || 'Không gửi được.') + '</div>'; return; }
+  box.innerHTML = '<div class="msg ok">Đã gửi ' + j.sent + ' thư.' + (j.remaining ? ' Còn ' + j.remaining + ' người chưa gửi (do giới hạn mỗi lượt), bấm "Gửi lại thư mời…" lần nữa để gửi tiếp.' : ' Đã gửi hết.') + '</div> <button type="button" class="btn ghost sm" onclick="exResendReset(true)">Đóng</button>';
+}
 function exCloseQuick(days){
   const baseMs = localToMs($('exOpen').value) || Date.now();
   $('exClose').value = msToLocal(baseMs + days * 86400000);

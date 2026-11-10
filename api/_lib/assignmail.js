@@ -32,13 +32,14 @@ function properName(name) {
 const defaultNote = (h) => "Kết quả bài kiểm tra là cơ sở để đánh giá mức độ nắm bắt kiến thức sản phẩm, đồng thời giúp mỗi " + h + " chủ động nhận diện và củng cố những nội dung cần cải thiện trong quá trình tư vấn, bán hàng.";
 const defaultClosing = (h) => "Đề nghị " + h + " nghiêm túc thực hiện và hoàn thành đúng thời hạn.";
 
-// opts: { name, org, title, audience, format, deadlineMs, ctaUrl, note, closing, manager }
+// opts: { name, org, title, audience, format, deadlineMs, ctaUrl, note, closing, manager, replaces }
+// replaces = true: thư gửi lại, thay thế thông báo đã gửi trước đó (có dòng báo bỏ qua thư cũ, tiêu đề có [Cập nhật])
 function build(opts) {
   opts = opts || {};
   const name = properName(opts.name);
   const org = opts.org || "Đào tạo Kinh doanh";
   const title = String(opts.title || "Bài kiểm tra").trim();
-  const subject = "Bạn có bài kiểm tra mới: " + title;
+  const subject = (opts.replaces ? "[Cập nhật] " : "") + "Bạn có bài kiểm tra mới: " + title;
   const audience = opts.audience ? String(opts.audience).trim() : "";
   const format = opts.format || "Trắc nghiệm trực tuyến";
   const deadline = opts.deadlineMs ? vnDeadline(opts.deadlineMs) : "";
@@ -48,6 +49,7 @@ function build(opts) {
   const closing = opts.closing || defaultClosing(hon);
   const ctaUrl = /^https?:\/\//i.test(opts.ctaUrl || "") ? opts.ctaUrl : "#";
   const support = supportLine(opts.manager);
+  const replaceNote = opts.replaces ? "Email này thay thế thông báo đã gửi trước đó. Vui lòng dùng thông tin trong email này và bỏ qua email cũ." : "";
 
   const row = (label, value, strong) => !value ? "" :
     '<tr><td style="padding:9px 0;' + (strong ? "border-top:1px solid " + C.line + ";" : "") + 'font-family:' + FONT + ';font-size:13.5px;color:' + C.muted + ';width:150px;vertical-align:top">' + esc(label) + '</td>' +
@@ -70,6 +72,10 @@ function build(opts) {
     '<div style="font-size:14.5px;line-height:1.75;color:' + C.body + '">Chào ' + hon + (name ? ' <b style="color:' + C.ink + '">' + esc(name) + '</b>' : '') + ',</div>' +
     '<div style="font-size:14.5px;line-height:1.75;color:' + C.body + ';margin-top:8px">' + esc(org) + ' thông báo ' + hon + ' đã được giao bài kiểm tra: <b style="color:' + C.ink + '">\u201c' + esc(title) + '\u201d</b>.</div>' +
     '</td></tr>';
+
+  const replaceBlock = replaceNote
+    ? '<tr><td style="padding:14px 32px 0;font-family:' + FONT + '"><div style="font-size:13px;line-height:1.65;color:#7A4B00;background:#FFF6E0;border:1px solid #F0D58A;border-radius:10px;padding:10px 14px">' + esc(replaceNote) + '</div></td></tr>'
+    : '';
 
   // ---- Khu vực 2b: THÔNG TIN BÀI KIỂM TRA — danh sách nhãn/giá trị, dòng hạn hoàn thành được nhấn mạnh ----
   const infoRows = row("Đối tượng", audience) + row("Nội dung", title) + row("Hình thức", format) + row("Thời hạn hoàn thành", deadline, true);
@@ -123,7 +129,7 @@ function build(opts) {
     '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:' + C.page + '">' + esc(title) + (deadline ? " · Hạn " + esc(deadline) : "") + '&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' + C.page + '"><tr><td class="wrap" align="center" style="padding:30px 16px">' +
     '<table role="presentation" width="580" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;background:#ffffff;border:1px solid ' + C.line + ';border-radius:20px;border-collapse:separate;overflow:hidden;box-shadow:0 20px 44px -26px rgba(10,31,68,.35)">' +
-    head + greetBlock + infoBlock + cta + supportBlock + closingBlock + footer +
+    head + greetBlock + replaceBlock + infoBlock + cta + supportBlock + closingBlock + footer +
     '</table></td></tr></table></body></html>';
 
   const textRows = [
@@ -132,7 +138,7 @@ function build(opts) {
   ].filter((x) => x !== "");
   const text = [
     "Chào " + hon + (name ? " " + name : "") + ",",
-    org + " thông báo " + hon + " đã được giao bài kiểm tra: \u201c" + title + "\u201d.", "",
+    org + " thông báo " + hon + " đã được giao bài kiểm tra: \u201c" + title + "\u201d.", ...(replaceNote ? [replaceNote] : []), "",
     "THÔNG TIN BÀI KIỂM TRA", ...textRows, "",
     "HƯỚNG DẪN THỰC HIỆN",
     hon + " vui lòng nhấn vào liên kết bên dưới để truy cập hệ thống và hoàn thành bài kiểm tra trước thời hạn quy định.",
