@@ -35,17 +35,17 @@ var CUSTOM_FIELDS = [
 var TEST_FIELDS = [ { k:'ghi_chu', label:'Lưu ý thêm (không bắt buộc)', type:'textarea', w:true, ph:'Ví dụ: Làm bài ở nơi yên tĩnh, dùng điện thoại hoặc máy tính có camera.' } ];
 var TEMPLATES = [
   { id:'remind', group:'Thông báo', name:'Nhắc làm bài', filter:'todo', subject:'Nhắc làm bài kiểm tra: {ten_de}',
-    text:'Chào {ten}, bạn chưa hoàn thành bài kiểm tra “{ten_de}”. Hạn làm bài: {han}.\nVui lòng truy cập {link} và nhập mã nhân viên, email công ty để làm bài.\nCảm ơn bạn.' },
+    text:'Chào {ten}, bạn chưa hoàn thành bài kiểm tra “{ten_de}”. Hạn làm bài: {han}.\nVui lòng truy cập {link} và nhập mã nhân viên, email công ty để làm bài.\n{ho_tro}\nCảm ơn bạn.' },
   { id:'open', group:'Thông báo', name:'Sắp mở đề', filter:'todo', subject:'Bài kiểm tra “{ten_de}” sắp mở',
-    text:'Chào {ten}, bài kiểm tra “{ten_de}” sẽ mở lúc {mo}.\nBạn truy cập {link} và nhập mã nhân viên, email công ty để làm bài.\nChúc bạn hoàn thành tốt.' },
+    text:'Chào {ten}, bài kiểm tra “{ten_de}” sẽ mở lúc {mo}.\nBạn truy cập {link} và nhập mã nhân viên, email công ty để làm bài.\n{ho_tro}\nChúc bạn hoàn thành tốt.' },
   { id:'close', group:'Thông báo', name:'Sắp đóng đề', filter:'todo', subject:'Bài kiểm tra “{ten_de}” sắp đóng',
-    text:'Chào {ten}, bài kiểm tra “{ten_de}” sẽ đóng lúc {han} và bạn chưa hoàn thành bài.\nVui lòng làm bài sớm tại {link}.\nCảm ơn bạn.' },
+    text:'Chào {ten}, bài kiểm tra “{ten_de}” sẽ đóng lúc {han} và bạn chưa hoàn thành bài.\nVui lòng làm bài sớm tại {link}.\n{ho_tro}\nCảm ơn bạn.' },
   { id:'result', group:'Thông báo', name:'Thông báo kết quả', filter:'done', subject:'Kết quả bài kiểm tra: {ten_de}',
-    text:'Chào {ten}, bạn đã hoàn thành bài kiểm tra “{ten_de}” với kết quả {diem}/{tong} câu đúng ({phan_tram}).\nXem kết quả đã xác thực tại: {link_ket_qua}' },
+    text:'Chào {ten}, bạn đã hoàn thành bài kiểm tra “{ten_de}” với kết quả {diem}/{tong} câu đúng ({phan_tram}).\nXem kết quả đã xác thực tại: {link_ket_qua}\n{ho_tro}' },
   { id:'custom', group:'Thông báo', name:'Tự soạn', filter:'all', subject:'Thông báo về bài kiểm tra: {ten_de}', text:'Chào {ten},\n' },
   { id:'inviteTest', group:'Thư mời', name:'Mời làm bài kiểm tra', filter:'todo', kind:'invite', fields:TEST_FIELDS, cta:'test',
     subject:'Thư mời làm bài kiểm tra: {ten_de}',
-    text:'MỜI LÀM BÀI KIỂM TRA\nChào {ten}, bạn được mời tham gia bài kiểm tra “{ten_de}”.\n- Thời gian mở đề: {mo_tuy}\n- Hạn hoàn thành: {han_tuy}\n- Đường dẫn làm bài: {link}\nNhập mã nhân viên và email công ty để vào bài; bài làm được lưu và chấm tự động.\n{ghi_chu}\nTrân trọng.' },
+    text:'MỜI LÀM BÀI KIỂM TRA\nChào {ten}, bạn được mời tham gia bài kiểm tra “{ten_de}”.\n- Thời gian mở đề: {mo_tuy}\n- Hạn hoàn thành: {han_tuy}\n- Đường dẫn làm bài: {link}\nNhập mã nhân viên và email công ty để vào bài; bài làm được lưu và chấm tự động.\n{ghi_chu}\n{ho_tro}\nTrân trọng.' },
   { id:'inviteCustom', group:'Thư mời', name:'Thư mời tuỳ chọn', filter:'all', allAudience:true, kind:'invite', fields:CUSTOM_FIELDS, cta:'custom',
     subject:'{tieu_de}',
     text:'{tieu_de}\nThân gửi : {ten},\n{noi_dung}\n\n* Thời gian: {thoi_gian}\n* Địa điểm / Đường dẫn: {dia_diem}\n\nVui lòng xác nhận tham dự trước {han_xn}.\nLiên hệ xác nhận: {lien_he}\nTrân trọng.' },
@@ -53,7 +53,7 @@ var TEMPLATES = [
     subject:'Thư mời tham dự đào tạo: {ten_khoa}',
     text:'THƯ MỜI THAM DỰ ĐÀO TẠO\nThân gửi: {ten},\nĐào tạo Kinh doanh trân trọng mời Anh/Chị tham dự khoá đào tạo sau:\n\n1. THÔNG TIN CHƯƠNG TRÌNH\n\n* Tên khóa đào tạo: {ten_khoa}\n* Thời gian: {thoi_gian}\n* Hình thức: {hinh_thuc}\n* Địa điểm / Đường dẫn tham dự: {dia_diem}\n* Giảng viên / Đơn vị tổ chức: {giang_vien}\n* Nội dung chính: {noi_dung}\n\n2. LƯU Ý\n\n* Tham dự đầy đủ, đúng giờ; nếu học trực tuyến, kiểm tra thiết bị và đường truyền trước giờ học.\n* Có thể cần hoàn thành bài kiểm tra hoặc khảo sát sau đào tạo theo thông báo của Ban Tổ chức.\n* Nếu không thể tham dự, vui lòng báo sớm cho {lien_he}.\n\nVui lòng xác nhận tham dự trước {han_xn} với {lien_he}.\n\nTrân trọng,\nĐào tạo kinh doanh | GT' }
 ];
-var VARS = [['ten','Tên'],['ma_nv','Mã NV'],['ten_de','Tên đề'],['link','Link làm bài'],['mo','Giờ mở'],['han','Hạn làm bài'],['diem','Số câu đúng'],['tong','Tổng số câu'],['phan_tram','Phần trăm'],['link_ket_qua','Link kết quả'],['quan_li','Quản lí']];
+var VARS = [['ten','Tên'],['ma_nv','Mã NV'],['ten_de','Tên đề'],['link','Link làm bài'],['mo','Giờ mở'],['han','Hạn làm bài'],['diem','Số câu đúng'],['tong','Tổng số câu'],['phan_tram','Phần trăm'],['link_ket_qua','Link kết quả'],['quan_li','Quản lí'],['ho_tro','Câu hỗ trợ']];
 var CHANNELS = [['zalo','Zalo'],['sms','Tin nhắn SMS'],['email','Email'],['png','Ảnh PNG'],['pdf','Xuất PDF']];
 
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -82,6 +82,7 @@ function render(tpl, r, ex, origin, extra, optional){
   var NONE = 'theo thông báo của quản lý';
   var vals = {
     ten: r.name || r.code, ma_nv: r.code, ten_de: (ex && ex.title) || '', quan_li: r.manager || '',
+ho_tro: 'Nếu cần hỗ trợ, liên hệ ĐTKD Kênh GT' + (String(r.manager || '').replace(/\s+/g, ' ').trim() ? ' hoặc Quản lí: ' + String(r.manager).replace(/\s+/g, ' ').trim().slice(0, 80) : '') + ' để được hỗ trợ.',
     link: ex && ex.id ? origin + '/kiemtra/?exam=' + encodeURIComponent(ex.id) : origin + '/kiemtra/',
     mo: fmt(ex && ex.openAt) || NONE, han: fmt(ex && ex.closeAt) || NONE, mo_tuy: fmt(ex && ex.openAt), han_tuy: fmt(ex && ex.closeAt),
     diem: r.result ? r.result.score : '', tong: r.result ? r.result.total : '', phan_tram: r.result ? r.result.pct + '%' : '',

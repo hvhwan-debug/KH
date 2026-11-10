@@ -11,6 +11,7 @@ const C = {
   ok: "#17794A", bad: "#B3261E", warn: "#D68F1E", amber: "#8A5200", amberBg: "#FFF6E2", amberLine: "#EBCB84", track: "#E6EEF1"
 };
 const FONT = "'Be Vietnam Pro','Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
+const { supportLine } = require("./supportline");
 const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const oneLine = (s, n) => String(s == null ? "" : s).replace(/[\r\n\u0000-\u001f]+/g, " ").trim().slice(0, n || 200);
 const vn = (ms) => new Date(ms).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", second: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
@@ -184,6 +185,7 @@ function build(attempt, settings, advice) {
     "</table></td></tr></table></td></tr>";
 
   const sign =
+    sectionGap + '<tr><td style="font-family:' + FONT + ';font-size:14px;line-height:1.7;color:' + C.body + '"><div style="border-left:3px solid ' + C.brand + ';background:' + C.soft + ';border-radius:0 10px 10px 0;padding:11px 14px">' + esc(supportLine(attempt.manager)) + '</div></td></tr>' +
     sectionGap + '<tr><td style="font-family:' + FONT + ';font-size:14.5px;line-height:1.75;color:' + C.body + '">Chúc bạn học tập và làm việc hiệu quả.<br><br>Trân trọng,<br><b style="color:' + C.ink + '">Hệ thống kiểm tra trực tuyến</b></td></tr>';
 
   const html =
@@ -252,7 +254,7 @@ function textOf(attempt, settings, m) {
     if (a.goal) L.push("Mục tiêu " + String(a.goal).charAt(0).toLowerCase() + String(a.goal).slice(1));
   }
   L.push("", "XÁC THỰC KẾT QUẢ", m.url, "Mã minh chứng: " + m.proof, "", "BIÊN NHẬN NỘP BÀI", "Họ và tên: " + oneLine(attempt.name, 80), "Mã nhân viên: " + oneLine(attempt.code, 40), "Quản lí: " + (oneLine(attempt.manager, 80) || "(chưa rõ)"),
-    "Nộp bài lúc: " + vn(attempt.submittedAt), "", "Chúc bạn học tập và làm việc hiệu quả.", "", "Trân trọng,", "Hệ thống kiểm tra trực tuyến", "", "--",
+    "Nộp bài lúc: " + vn(attempt.submittedAt), "", supportLine(attempt.manager), "", "Chúc bạn học tập và làm việc hiệu quả.", "", "Trân trọng,", "Hệ thống kiểm tra trực tuyến", "", "--",
     "Email tự động từ hệ thống kiểm tra, vui lòng không trả lời trực tiếp. Có thắc mắc về kết quả, hãy liên hệ quản lí trực tiếp hoặc quản trị viên phụ trách. Email chứa thông tin cá nhân, vui lòng không chuyển tiếp.");
   return L.join("\n");
 }

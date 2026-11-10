@@ -2,6 +2,7 @@
 // Nội dung theo đúng văn phong công văn nội bộ (trang trọng, có lời chào riêng từng người, mục THÔNG TIN BÀI
 // KIỂM TRA, HƯỚNG DẪN THỰC HIỆN, đoạn ý nghĩa kết quả, lời nhắc và chữ ký đơn vị).
 // Thiết kế: Modern Corporate / Premium EdTech / Minimalist — xanh dương chủ đạo, nền trắng/xám nhạt, card rõ ràng.
+const { supportLine } = require("./supportline");
 const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 const FONT = "'Be Vietnam Pro','Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
@@ -30,7 +31,7 @@ function properName(name) {
 const DEFAULT_NOTE = "Kết quả bài kiểm tra là cơ sở để đánh giá mức độ nắm bắt kiến thức sản phẩm, đồng thời giúp mỗi Anh/Chị chủ động nhận diện và củng cố những nội dung cần cải thiện trong quá trình tư vấn, bán hàng.";
 const DEFAULT_CLOSING = "Đề nghị Anh/Chị nghiêm túc thực hiện và hoàn thành đúng thời hạn.";
 
-// opts: { name, org, title, audience, format, deadlineMs, ctaUrl, note, closing }
+// opts: { name, org, title, audience, format, deadlineMs, ctaUrl, note, closing, manager }
 function build(opts) {
   opts = opts || {};
   const name = properName(opts.name);
@@ -43,6 +44,7 @@ function build(opts) {
   const note = opts.note || DEFAULT_NOTE;
   const closing = opts.closing || DEFAULT_CLOSING;
   const ctaUrl = /^https?:\/\//i.test(opts.ctaUrl || "") ? opts.ctaUrl : "#";
+  const support = supportLine(opts.manager);
 
   const row = (label, value, strong) => !value ? "" :
     '<tr><td style="padding:9px 0;' + (strong ? "border-top:1px solid " + C.line + ";" : "") + 'font-family:' + FONT + ';font-size:13.5px;color:' + C.muted + ';width:150px;vertical-align:top">' + esc(label) + '</td>' +
@@ -88,6 +90,12 @@ function build(opts) {
     '</td></tr></table>' +
     '</td></tr>';
 
+  // ---- Hỗ trợ: liên hệ ĐTKD Kênh GT hoặc quản lí trực tiếp ----
+  const supportBlock =
+    '<tr><td style="padding:20px 32px 0;font-family:' + FONT + '">' +
+    '<div style="border-left:3px solid ' + C.brand + ';background:' + C.soft + ';border-radius:0 10px 10px 0;padding:11px 14px;font-size:13.5px;line-height:1.7;color:' + C.body + '">' + esc(support) + '</div>' +
+    '</td></tr>';
+
   // ---- Khu vực 2c/4: ý nghĩa kết quả + lời nhắc + chữ ký ----
   const closingBlock =
     '<tr><td style="padding:22px 32px 0;font-family:' + FONT + '">' +
@@ -112,7 +120,7 @@ function build(opts) {
     '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:' + C.page + '">' + esc(title) + (deadline ? " · Hạn " + esc(deadline) : "") + '&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' + C.page + '"><tr><td class="wrap" align="center" style="padding:30px 16px">' +
     '<table role="presentation" width="580" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;background:#ffffff;border:1px solid ' + C.line + ';border-radius:20px;border-collapse:separate;overflow:hidden;box-shadow:0 20px 44px -26px rgba(10,31,68,.35)">' +
-    head + greetBlock + infoBlock + cta + closingBlock + footer +
+    head + greetBlock + infoBlock + cta + supportBlock + closingBlock + footer +
     '</table></td></tr></table></body></html>';
 
   const textRows = [
@@ -127,6 +135,7 @@ function build(opts) {
     "Anh/Chị vui lòng nhấn vào liên kết bên dưới để truy cập hệ thống và hoàn thành bài kiểm tra trước thời hạn quy định.",
     ctaUrl, "",
     note, closing, "",
+    support, "",
     "Trân trọng,", org, "",
     "--", "Hệ thống Kiểm tra & Đánh giá Trực tuyến", "Đây là email được gửi tự động. Vui lòng không trả lời email này."
   ].filter((x) => x !== undefined).join("\n");

@@ -36,7 +36,7 @@ async function run(opts) {
         if (Date.now() - t0 > TIME_BUDGET) return;
         const c = list[idx++];
         try {
-          const msg = assignmail.build({ name: c.name, title, audience: exam.description || "", deadlineMs: exam.closeAt || 0, ctaUrl: link });
+          const msg = assignmail.build({ name: c.name, title, audience: exam.description || "", deadlineMs: exam.closeAt || 0, ctaUrl: link, manager: c.manager || "" });
           const ok = await mail.send({ fromName: mail.KT_NAME, to: c.email, subject: msg.subject, html: msg.html, text: msg.text });
           if (ok === false) { stopped = true; return; } // chưa cấu hình SMTP: dừng hẳn, không thử tiếp người khác
           done.push(quiz.normCode(c.code)); sent++;
