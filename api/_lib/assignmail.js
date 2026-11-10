@@ -34,7 +34,7 @@ const DEFAULT_CLOSING = "Đề nghị Anh/Chị nghiêm túc thực hiện và h
 function build(opts) {
   opts = opts || {};
   const name = properName(opts.name);
-  const org = opts.org || "Phòng Đào tạo Kinh doanh";
+  const org = opts.org || "Đào tạo Kinh doanh";
   const title = String(opts.title || "Bài kiểm tra").trim();
   const subject = "Bạn có bài kiểm tra mới: " + title;
   const audience = opts.audience ? String(opts.audience).trim() : "";
