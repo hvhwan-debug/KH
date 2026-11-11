@@ -78,7 +78,7 @@ function build(opts) {
     : '';
 
   // ---- Khu vực 2b: THÔNG TIN BÀI KIỂM TRA — danh sách nhãn/giá trị, dòng hạn hoàn thành được nhấn mạnh ----
-  const infoRows = row("Đối tượng", audience) + row("Nội dung", title) + row("Hình thức", format) + row("Thời hạn hoàn thành", deadline, true);
+  const infoRows = row("Đối tượng", audience) + row("Hình thức", format) + row("Thời hạn hoàn thành", deadline, true);
   const infoBlock = (audience || title || format || deadline)
     ? '<tr><td style="padding:22px 32px 0;font-family:' + FONT + '">' +
       '<div style="font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:' + C.muted + ';margin:0 0 8px">Thông tin bài kiểm tra</div>' +
@@ -133,7 +133,7 @@ function build(opts) {
     '</table></td></tr></table></body></html>';
 
   const textRows = [
-    audience ? "- Đối tượng: " + audience : "", "- Nội dung: " + title, "- Hình thức: " + format,
+    audience ? "- Đối tượng: " + audience : "", "- Hình thức: " + format,
     deadline ? "- Thời hạn hoàn thành: " + deadline : ""
   ].filter((x) => x !== "");
   const text = [
