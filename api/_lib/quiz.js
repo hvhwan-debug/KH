@@ -564,7 +564,8 @@ async function getExamSettings(examId) {
   effective.closeAt = ex && ex.closeAt ? ex.closeAt : 0;
   effective.segments = ex && Array.isArray(ex.segments) ? ex.segments : [];
   effective.codes = ex && Array.isArray(ex.codes) ? ex.codes : []; // danh sách mã nhân viên được thi (rỗng = không giới hạn theo mã)
-  effective.codesExclude = !!(ex && ex.codesExclude); // true = danh sách trên là người bị LOẠI TRỪ, không phải người được chọn
+  effective.codesExclude = !!(ex && ex.codesExclude); // suy luận cho đề cũ chưa có asgMode (xem asgModeOf)
+  effective.asgMode = (ex && ex.asgMode) || "";
   effective.description = ex && ex.description ? ex.description : "";
   // Đề thi thử: chấm và quy đổi điểm tuân thủ NHƯ BÌNH THƯỜNG (để thí sinh hình dung điểm nếu thi thật),
   // nhưng mọi màn hình, ảnh kết quả và email đều ghi rõ "THI THỬ - không phải thi chính thức".
@@ -624,6 +625,7 @@ async function upsertExam(data) {
     entry.codes = raw.map(normCode).filter(Boolean).filter((v, k, a) => a.indexOf(v) === k).slice(0, 5000);
   }
   if (data && data.codesExclude !== undefined) entry.codesExclude = !!data.codesExclude;
+  if (data && data.asgMode !== undefined) entry.asgMode = ["all", "pick", "exclude"].indexOf(data.asgMode) >= 0 ? data.asgMode : "";
   if (data && data.segments !== undefined) entry.segments = (Array.isArray(data.segments) ? data.segments : []).map(normSegment).filter((v, k, a) => a.indexOf(v) === k);
   if (i >= 0) exams[i] = Object.assign({}, exams[i], entry); else exams.push(entry);
   await saveExams(exams);
@@ -739,15 +741,25 @@ function buildFromBlueprint(all, blueprint) {
 // tính "ai chưa làm" ở bảng tổng quan, để người không thuộc đối tượng không bị tính là "chưa làm".
 // Nhân viên đã nghỉ việc (quản trị viên đánh dấu ở hồ sơ): không gán đề, không tính vào "chưa làm", không được vào thi, không nhận thông báo.
 function isLeft(c) { return !!(c && c.left); }
+// Chế độ gán người cho đề: "pick" (chỉ người trong codes), "exclude" (mọi người TRỪ người trong codes), "all" (mọi người, bỏ qua codes).
+// Đề cũ chưa có asgMode (tạo trước khi có 3 chế độ) thì suy ra từ codes/codesExclude như trước, để không đổi hành vi đề cũ.
+function asgModeOf(settings) {
+  const m = settings && settings.asgMode;
+  if (m === "pick" || m === "exclude" || m === "all") return m;
+  const codes = (settings && settings.codes) || [];
+  if (!codes.length) return "all";
+  return settings && settings.codesExclude ? "exclude" : "pick";
+}
 function inAudience(settings, candidate) {
   if (isLeft(candidate)) return false;
-  const segs = settings && settings.segments || [], codes = settings && settings.codes || [];
+  const segs = (settings && settings.segments) || [], codes = (settings && settings.codes) || [];
   if (segs.length && segs.indexOf(normSegment(candidate && candidate.segment)) < 0) return false;
-  if (codes.length) {
-    const inList = codes.indexOf(normCode(candidate && candidate.code)) >= 0;
-    // codesExclude=true: danh sách là người bị LOẠI TRỪ (mọi người khác vẫn được); mặc định: danh sách là người ĐƯỢC CHỌN.
-    if (settings && settings.codesExclude ? inList : !inList) return false;
-  }
+  const mode = asgModeOf(settings);
+  if (mode === "all") return true;
+  const inList = codes.indexOf(normCode(candidate && candidate.code)) >= 0;
+  // pick: chỉ người CÓ trong danh sách mới được thi (danh sách rỗng = KHÔNG AI được thi).
+  // exclude: mọi người được thi, TRỪ người có trong danh sách (danh sách rỗng = mọi người vẫn được thi).
+  if (mode === "pick" ? !inList : inList) return false;
   return true;
 }
 function examAccessError(settings, candidate, now) {
@@ -755,9 +767,10 @@ function examAccessError(settings, candidate, now) {
   if (isLeft(candidate)) return "Tài khoản này đã được đánh dấu nghỉ việc nên không thể làm bài. Nếu có nhầm lẫn, hãy liên hệ quản trị viên.";
   if (settings.openAt && t < settings.openAt) return "Bài kiểm tra chưa mở. Thời gian mở: " + fmtVN(settings.openAt) + ".";
   if (settings.closeAt && t > settings.closeAt) return "Bài kiểm tra đã đóng từ " + fmtVN(settings.closeAt) + ".";
-  if (settings.codes && settings.codes.length) {
-    const inList = settings.codes.indexOf(normCode(candidate && candidate.code)) >= 0;
-    if (settings.codesExclude ? inList : !inList) return "Bạn không nằm trong danh sách được thi bài kiểm tra này.";
+  const asgMode = asgModeOf(settings);
+  if (asgMode !== "all") {
+    const inList = ((settings.codes) || []).indexOf(normCode(candidate && candidate.code)) >= 0;
+    if (asgMode === "pick" ? !inList : inList) return "Bạn không nằm trong danh sách được thi bài kiểm tra này.";
   }
   if (!inAudience(settings, candidate)) return "Bài kiểm tra này không dành cho nhóm của bạn.";
   return "";
@@ -1182,7 +1195,7 @@ module.exports = { validImageUrl,
   getAttempt, putAttempt, saveIndex, activeForPeriod,
   getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary, fmtVN,
   getBanks, saveBanks, bankOf, validBankId, slugify, cleanQuestionMeta, DEFAULT_BANK, DIFFICULTIES,
-  isLeft, cleanBlueprint, buildFromBlueprint, blueprintTotal, planExam, targetCount, cleanSegmentPlans, segPlanFor, countFor, validateCounts, MAX_QUESTION_COUNT, examAccessError, inAudience, examKnown, scoreAttempt, summarize, patchIndex, previousResult, loadAttempts,
+  isLeft, cleanBlueprint, buildFromBlueprint, blueprintTotal, planExam, targetCount, cleanSegmentPlans, segPlanFor, countFor, validateCounts, MAX_QUESTION_COUNT, examAccessError, inAudience, asgModeOf, examKnown, scoreAttempt, summarize, patchIndex, previousResult, loadAttempts,
   TYPES, qType, normText, normalizeQuestionInput, gradeAnswer,
   getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,

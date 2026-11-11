@@ -595,10 +595,11 @@ const handler = async function (context, req) {
       const exams = await quiz.getExams();
       const ex = exams.find((e) => e.id === id);
       if (!ex) return reply(context, 400, { ok: false, error: "Không tìm thấy đề." });
+      const mode = quiz.asgModeOf(ex);
       let codes = Array.isArray(ex.codes) ? ex.codes.map(quiz.normCode).filter(Boolean) : [];
-      if (!codes.length) { ex.codesExclude = true; codes = [code]; }
-      else if (ex.codesExclude) { if (codes.indexOf(code) < 0) codes.push(code); }
-      else { codes = codes.filter((c) => c !== code); }
+      if (mode === "all") { ex.asgMode = "exclude"; ex.codesExclude = true; codes = [code]; }
+      else if (mode === "exclude") { ex.asgMode = "exclude"; if (codes.indexOf(code) < 0) codes.push(code); }
+      else { ex.asgMode = "pick"; ex.codesExclude = false; codes = codes.filter((c) => c !== code); } // rỗng sau khi lọc = KHÔNG AI được thi, không phải mọi người
       ex.codes = codes;
       await quiz.saveExams(exams);
       return reply(context, 200, { ok: true, exam: ex });
