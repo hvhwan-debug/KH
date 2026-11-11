@@ -1087,8 +1087,10 @@ const handler = async function (context, req) {
     if (op === "saveExam") {
       const r = await quiz.upsertExam(b.exam || b);
       if (!r.ok) return reply(context, 400, r);
-      // Người mới được gán vào đề (mã NV mới thêm, mở rộng đối tượng…) nhận email mời ngay, không cần chờ cron.
-      try { await require("../_lib/examnotify").run({ examId: r.exam.id }); } catch (e) { context.log.error("saveExam examnotify", e && e.message); }
+      // ĐÃ TẮT (sự cố 11/2026: một lỗi khác khiến đề bị gán nhầm cho toàn bộ nhân viên, và vì bước này tự động
+      // gửi email ngay khi lưu đề nên đã gửi nhầm cho tất cả mọi người). Giờ chỉ gửi mời qua nút "Gửi lại thư mời"
+      // ở trang quản trị (có xem trước số người + xác nhận trước khi gửi), không tự động gửi nữa.
+      // try { await require("../_lib/examnotify").run({ examId: r.exam.id }); } catch (e) { context.log.error("saveExam examnotify", e && e.message); }
       return reply(context, 200, { ok: true, exam: r.exam, exams: await quiz.listExamsSummary() });
     }
 

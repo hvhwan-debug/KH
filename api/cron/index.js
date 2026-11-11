@@ -23,7 +23,10 @@ module.exports = async function (context, req) {
     try { faceScan = await require("../_lib/faceid").scan({ ms: 15000 }); } catch (e) { context.log.error("cron faceid", e && e.message); }
     // Mời làm bài qua email cho nhân viên mới được gán vào đề (mã NV thêm sau, đối tượng mở rộng, người mới có email…)
     let examInvite = null;
-    try { examInvite = await require("../_lib/examnotify").run(); } catch (e) { context.log.error("cron examnotify", e && e.message); }
+    // ĐÃ TẮT (sự cố 11/2026: gửi nhầm email mời cho toàn bộ nhân viên do một lỗi khác làm đề bị gán nhầm cho tất
+    // cả mọi người). Mời làm bài giờ chỉ gửi thủ công qua nút "Gửi lại thư mời" ở trang quản trị (có xem trước +
+    // xác nhận trước khi gửi).
+    // try { examInvite = await require("../_lib/examnotify").run(); } catch (e) { context.log.error("cron examnotify", e && e.message); }
     const names = await store.list("user/");
     let users = 0, sent = 0, failed = 0;
     for (const name of names) {
