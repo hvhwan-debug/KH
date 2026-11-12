@@ -60,6 +60,16 @@ async function renderPng(attempt, settings, now) {
   drawer.draw(cv.getContext("2d"), 1080, H, d);
   return cv.encode("png");
 }
+// Ảnh QR (PNG, nền trắng có viền yên tĩnh) của liên kết xác thực, đính kèm nội tuyến (cid) trong email để QR hiện ngay trong thư
+function verifyUrl(attempt) { return String(cfg().appUrl || "https://kh.io.vn").replace(/\/+$/, "") + "/kiemtra/ketqua.html?t=" + encodeURIComponent(quiz.verifyToken(attempt.id)); }
+async function qrPng(attempt) {
+  load();
+  const m = qrMatrix(verifyUrl(attempt)); if (!m) throw new Error("Không dựng được mã QR");
+  const n = m.length, cell = Math.max(3, Math.floor(264 / (n + 8))), size = cell * (n + 8), cv = lib.createCanvas(size, size), c = cv.getContext("2d");
+  c.fillStyle = "#ffffff"; c.fillRect(0, 0, size, size); c.fillStyle = "#0A2552";
+  for (let r = 0; r < n; r++) for (let q = 0; q < n; q++) if (m[r][q]) c.fillRect((q + 4) * cell, (r + 4) * cell, cell, cell);
+  return cv.encode("png");
+}
 const fileName = (attempt) => "the-ket-qua-" + String(attempt.code || "kiem-tra").replace(/[^A-Za-z0-9_-]+/g, "") + ".png";
 
-module.exports = { renderPng, cardData, fileName };
+module.exports = { renderPng, qrPng, cardData, fileName, verifyUrl };
