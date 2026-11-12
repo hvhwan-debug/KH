@@ -245,6 +245,8 @@ var TOK = new URLSearchParams(location.search).get('t');
 var KCODE = new URLSearchParams(location.search).get('c'); // mã minh chứng KT-… (tra cứu không cần liên kết có chữ ký)
 $('paperToggle').addEventListener('click', function(){
   $('paperToggle').classList.add('hide');
+  // Đề chưa kết thúc: bấm nút mới hiện thông báo (và giờ quay lại), chưa mở ô đăng nhập xem đề
+  if ($('paperBox').dataset.locked === '1'){ $('paperLocked').classList.remove('hide'); return; }
   $('paperForm').classList.remove('hide');
   $('pCode').focus();
 });
@@ -438,7 +440,7 @@ $('paperAdmin').addEventListener('click', adminView);
   off = (j.serverNow || Date.now()) - Date.now();
   var r = j.result, ps = (r.passed === true || r.passed === false) ? r.passed : null, pct = r.pct == null ? 0 : r.pct;
   var prac = !!r.practice;
-  // Đề chưa kết thúc: không hiện nút / ô đăng nhập xem lại đề, chỉ hiện một câu thông báo; tự mở khi tới giờ đóng đề (theo giờ máy chủ)
+  // Đề chưa kết thúc: nút xem lại vẫn hiện, bấm vào mới hiện thông báo (không mở ô đăng nhập); tự mở khi tới giờ đóng đề (theo giờ máy chủ)
   (function paperLock(){
     if (r.closeAt){
       var when = new Date(r.closeAt).toLocaleString('vi-VN', { timeZone:ZONE, hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' }).replace(/^(\d{2}:\d{2}),?\s*/, '$1 ');
@@ -446,9 +448,11 @@ $('paperAdmin').addEventListener('click', adminView);
     }
     function apply(){
       var open = r.paperOpen !== false || (r.closeAt && Date.now() + off > r.closeAt);
-      $('paperLocked').classList.toggle('hide', open);
-      if (open){ if ($('paperForm').classList.contains('hide') && $('paperView').classList.contains('hide')) $('paperToggle').classList.remove('hide'); }
-      else { $('paperToggle').classList.add('hide'); $('paperForm').classList.add('hide'); }
+      $('paperBox').dataset.locked = open ? '' : '1';
+      if (open){
+        $('paperLocked').classList.add('hide');
+        if ($('paperForm').classList.contains('hide') && $('paperView').classList.contains('hide')) $('paperToggle').classList.remove('hide');
+      } else $('paperForm').classList.add('hide'); // nút xem lại vẫn hiện; thông báo chỉ hiện sau khi bấm nút
       return open;
     }
     if (!apply() && r.closeAt){ var wait = r.closeAt - (Date.now() + off) + 500; if (wait > 0 && wait < 2147483000) setTimeout(apply, wait); }
