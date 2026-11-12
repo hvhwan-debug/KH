@@ -62,8 +62,8 @@ function model(attempt, settings, advice) {
 }
 
 // opts.card = true: email có đính kèm ảnh thẻ kết quả; opts.qrCid = mã cid của ảnh QR đính kèm nội tuyến (không có thì bỏ ô QR).
-// Giao diện theo mẫu email_ket_qua_M25_theo_mau_mobile.html: hero xanh có vòng điểm, dải chỉ số, nhận xét AI, điểm mạnh / cần củng cố,
-// gợi ý hành động, nút xem kết quả + QR; có CSS riêng cho điện thoại (<= 600px).
+// Cấu trúc theo mẫu email_ket_qua_M25_outlook_mobile_optimized: chỉ dùng bảng + kiểu nội tuyến + màu phẳng (không chuyển màu, đổ bóng, hình tròn)
+// để hiển thị đúng cả trong Outlook máy tính; có CSS riêng cho điện thoại (<= 600px).
 const TF = "Arial,Helvetica,sans-serif";
 function build(attempt, settings, advice, opts) {
   opts = opts || {};
@@ -72,47 +72,59 @@ function build(attempt, settings, advice, opts) {
   const compliance = attempt.compliancePoints;
   const pre = attempt.pct + "% · " + attempt.score + "/" + m.total + " câu đúng" + (t.practice ? " · Bài thi thử, không phải thi chính thức" : "") + ". " + (a.headline || "Xem phân tích và lời khuyên của bạn.");
   const who = oneLine(attempt.name, 80) ? m.name : oneLine(attempt.code, 40);
-  const pctN = Math.max(0, Math.min(100, Number(attempt.pct) || 0));
+  const pctN = Math.max(0, Math.min(100, Number(attempt.pct) || 0)), total = m.total || 0, score = attempt.score || 0;
 
-  // ---- Nhãn trạng thái (góc phải đầu thư) + màu vòng điểm theo mốc điểm (đỏ < 60, vàng 60-70, xanh dương 70-90, xanh lá >= 90)
-  const st = t.practice ? { bd: "#ffd98a", bg: "#8a5a00", ic: "!" } : m.ps === false ? { bd: "#ff9e8a", bg: "#a8392b", ic: "!" } : { bd: "#49e6b3", bg: "#087d70", ic: "&#10003;" };
-  const ring = pctN >= 90 ? ["#3de77d", "#45f59b66"] : pctN >= 70 ? ["#5db2ff", "#5db2ff66"] : pctN >= 60 ? ["#f5b84a", "#f5b84a66"] : ["#ff7a5c", "#ff7a5c66"];
-  const grad = "background:#063b70;background-image:linear-gradient(135deg,#062e59,#006ca5 72%,#0798c5);";
+  // ---- Màu nhãn trạng thái + màu số điểm (mốc: >= 90 xanh lá, 70-89 xanh dương, 60-69 vàng, < 60 đỏ)
+  const stColor = t.practice ? "#b7791f" : m.ps === false ? "#c0392b" : m.ps === true ? "#1e8e5a" : "#2a7fc9";
+  const scColor = pctN >= 90 ? "#1e9e63" : pctN >= 70 ? "#2a7fc9" : pctN >= 60 ? "#d68f1e" : "#c8423a";
+  const pad = (top, bottom, extra) => 'class="pad" style="padding:' + top + "px 28px " + bottom + "px;background:#ffffff;" + (extra || "") + '"';
 
-  // ---- HERO
-  const hero =
-    '<tr><td style="padding:0;' + grad + '"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
-    '<tr><td class="hero-top mobile-pad" style="padding:29px 30px 12px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' +
-    '<td valign="top"><div style="font-family:' + TF + ';font-size:11px;line-height:17px;letter-spacing:2px;font-weight:bold;color:#bdeeff;">KẾT QUẢ BÀI KIỂM TRA' + (t.chan ? " · KÊNH " + esc(String(t.chan).toUpperCase()) : "") + '</div>' +
-    '<div class="hero-title" style="font-family:' + TF + ';font-size:25px;line-height:32px;font-weight:bold;color:#fff;padding-top:5px;">' + esc(t.main) + "</div></td>" +
-    '<td align="right" valign="top" style="padding-left:10px;"><div style="display:inline-block;border:1px solid ' + st.bd + ';border-radius:20px;background:' + st.bg + ';padding:8px 10px;font-family:' + TF + ';color:#fff;font-size:11px;line-height:15px;font-weight:bold;white-space:nowrap;">' + st.ic + " " + esc(m.status) + "</div></td>" +
-    "</tr></table></td></tr>" +
-    '<tr><td class="hero-main mobile-pad" style="padding:8px 30px 28px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="hero-grid"><tr>' +
-    '<td width="38%" align="center" valign="middle" style="padding:12px 10px 10px 0;">' +
-    '<div class="score-ring" style="width:168px;height:168px;margin:0 auto;border:11px solid ' + ring[0] + ';border-radius:100%;box-shadow:0 0 22px ' + ring[1] + ';">' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;height:100%;"><tr><td align="center" valign="middle" style="height:168px;font-family:' + TF + ';color:#fff;"><div class="score-number" style="font-size:54px;line-height:60px;font-weight:bold;">' + esc(attempt.pct) + '%</div>' +
-    '<div style="font-size:16px;line-height:23px;color:#e1f8ff;">Tỉ lệ đúng</div></td></tr></table></div></td>' +
-    '<td class="identity" width="62%" valign="middle" style="padding:10px 0 10px 15px;font-family:' + TF + ';color:#fff;">' +
-    '<div class="identity-name" style="font-size:28px;line-height:35px;font-weight:bold;">' + esc(who) + "</div>" +
-    '<div style="font-size:14px;line-height:25px;color:#d8efff;padding-top:7px;">&#9823; &nbsp;Mã NV: ' + esc(oneLine(attempt.code, 40)) + "</div>" +
-    (oneLine(attempt.manager, 80) ? '<div style="font-size:14px;line-height:25px;color:#d8efff;">&#9823; &nbsp;Quản lí: ' + esc(oneLine(attempt.manager, 80)) + "</div>" : "") +
-    '<div style="padding-top:13px;"><span style="font-size:43px;line-height:50px;font-weight:bold;">' + esc(attempt.score || 0) + "/" + esc(m.total) + '</span> <span style="font-size:15px;font-weight:bold;color:#e2f5ff;">câu đúng</span></div>' +
-    '<div style="margin-top:8px;">' + segBar([{ v: attempt.score || 0, c: "#31df75" }, { v: m.wrong, c: "#ff6b5e" }, { v: m.blank, c: "#9db8d3" }], 10) + "</div>" +
-    '<div style="font-size:13px;line-height:22px;color:#d8efff;padding-top:7px;">Sai: ' + esc(m.wrong) + " &nbsp;·&nbsp; Bỏ trống: " + esc(m.blank) + "</div>" +
-    "</td></tr></table></td></tr></table></td></tr>" +
-    (t.practice ? '<tr><td class="mobile-pad" style="padding:12px 22px 0;background:#fff;"><div style="font-family:' + TF + ';font-size:12.5px;line-height:19px;color:#6B4A00;background:#FFF6E2;border:1px solid #EBCB84;border-radius:12px;padding:10px 14px;"><b>Bài thi thử, không phải kỳ kiểm tra chính thức.</b> ' + (compliance != null ? "Điểm tuân thủ chỉ để bạn hình dung nếu thi thật, không được ghi nhận." : "Kết quả không được ghi nhận chính thức.") + "</div></td></tr>" : "");
+  // ---- Đầu thư
+  const header =
+    '<tr><td class="pad" bgcolor="#123b65" style="padding:24px 28px 21px;background:#123b65;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
+    '<td valign="top"><div style="font-family:' + TF + ';font-size:11px;line-height:16px;letter-spacing:1.8px;font-weight:bold;color:#a9d9f2;">KẾT QUẢ BÀI KIỂM TRA' + (t.chan ? " · KÊNH " + esc(String(t.chan).toUpperCase()) : "") + "</div>" +
+    '<div class="top-title" style="font-family:' + TF + ';font-size:25px;line-height:32px;font-weight:bold;color:#ffffff;padding-top:6px;">' + esc(t.main) + "</div></td>" +
+    '<td align="right" valign="top" style="padding-left:8px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="' + stColor + '" style="background:' + stColor + ';border-radius:18px;padding:8px 10px;font-family:' + TF + ';color:#ffffff;font-size:11px;line-height:15px;font-weight:bold;white-space:nowrap;">' + esc(m.status) + "</td></tr></table></td>" +
+    "</tr></table></td></tr>";
 
-  // ---- Dải chỉ số
-  const wp = m.whenShort.split(" · "), whenT = (m.when.split(" ")[0] || ""), whenD = (m.when.split(" ")[1] || "");
-  const cells = [];
-  if (compliance != null) cells.push({ ic: "&#127941;", icc: "#f0b000", v: compliance + " điểm", vc: "#9a5b08", l: t.practice ? "Tuân thủ nếu thi thật" : "(tối đa 20)" });
-  cells.push({ ic: "&#9678;", icc: "#0878d1", v: (attempt.score || 0) + "/" + m.total, l: "câu đúng" });
-  if (m.dur != null) cells.push({ ic: "&#9719;", icc: "#0878d1", v: clock(m.dur), l: "Thời gian làm bài" });
-  cells.push({ ic: "&#9638;", icc: "#0878d1", v: whenT, l: "Nộp ngày " + whenD });
+  const practiceNote = t.practice
+    ? '<tr><td ' + pad(16, 0) + '><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#fff6e2" style="background:#fff6e2;border:1px solid #ebcb84;border-radius:9px;"><tr><td style="padding:10px 14px;font-family:' + TF + ';font-size:12px;line-height:19px;color:#6b4a00;"><b>Bài thi thử, không phải kỳ kiểm tra chính thức.</b> ' +
+      (compliance != null ? "Điểm tuân thủ chỉ để bạn hình dung nếu thi thật, không được ghi nhận." : "Kết quả không được ghi nhận chính thức.") + "</td></tr></table></td></tr>"
+    : "";
+
+  // ---- Tóm tắt kết quả: tỉ lệ đúng (trái) | người làm bài + thanh đúng / sai / bỏ trống (phải)
+  const segs = [[score, "#28b77a"], [m.wrong, "#e9786b"], [m.blank, "#b9c6d2"]].filter((x) => x[0] > 0 && total > 0);
+  const bar = segs.length
+    ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:5px;background:#e8eef3;"><tr>' +
+      segs.map((x) => '<td width="' + Math.max(1, Math.round(x[0] / total * 100)) + '%" bgcolor="' + x[1] + '" height="9" style="height:9px;background:' + x[1] + ';font-size:1px;line-height:1px;">&nbsp;</td>').join("") + "</tr></table>"
+    : "";
+  const summary =
+    '<tr><td ' + pad(22, 20) + '><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="score-layout"><tr>' +
+    '<td class="score-col" width="34%" align="center" valign="middle" style="padding:4px 14px 4px 0;border-right:1px solid #e3ebf2;font-family:' + TF + ';">' +
+    '<div style="font-size:10px;line-height:15px;letter-spacing:1px;color:#71849a;font-weight:bold;">TỈ LỆ TRẢ LỜI ĐÚNG</div>' +
+    '<div class="score-number" style="font-size:48px;line-height:54px;font-weight:bold;color:' + scColor + ';">' + esc(attempt.pct) + '%</div>' +
+    '<div style="font-size:12px;line-height:18px;color:#667b91;">' + esc(score) + "/" + esc(total) + " câu đúng</div></td>" +
+    '<td class="score-col" width="66%" valign="middle" style="padding:4px 0 4px 20px;font-family:' + TF + ';">' +
+    '<div class="person-name" style="font-size:23px;line-height:29px;font-weight:bold;color:#173b60;">' + esc(who) + "</div>" +
+    '<div style="font-size:13px;line-height:21px;color:#5e748a;padding-top:5px;">Mã NV: ' + esc(oneLine(attempt.code, 40)) + "</div>" +
+    (oneLine(attempt.manager, 80) ? '<div style="font-size:13px;line-height:21px;color:#5e748a;">Quản lý: ' + esc(oneLine(attempt.manager, 80)) + "</div>" : "") +
+    '<div style="font-size:12px;line-height:18px;color:#60758a;padding-top:10px;">KẾT QUẢ BÀI LÀM</div>' + bar +
+    '<div style="font-size:12px;line-height:19px;color:#657b90;padding-top:5px;">Đúng: ' + esc(score) + " &nbsp;·&nbsp; Sai: " + esc(m.wrong) + " &nbsp;·&nbsp; Bỏ trống: " + esc(m.blank) + "</div>" +
+    "</td></tr></table></td></tr>";
+
+  // ---- Dải chỉ số: điểm tuân thủ (không có thì hiện số câu đúng) · thời gian làm bài · thời điểm nộp
+  const whenT = m.when.split(" ")[0] || "", whenD = m.when.split(" ")[1] || "";
+  const cells = [compliance != null
+    ? { k: t.practice ? "TUÂN THỦ (NẾU THI THẬT)" : "ĐIỂM TUÂN THỦ", v: compliance + "/20", s: "" }
+    : { k: "SỐ CÂU ĐÚNG", v: score + "/" + total, s: "" }];
+  if (m.dur != null) cells.push({ k: "THỜI GIAN", v: clock(m.dur), s: "" });
+  cells.push({ k: "THỜI ĐIỂM NỘP", v: whenT, s: whenD, small: true });
+  const mw = Math.floor(10000 / cells.length) / 100;
   const metrics =
-    '<tr><td class="mobile-pad" style="padding:17px 22px 0;background:#fff;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f9fcff;border-radius:17px;border:1px solid #e5eff7;border-collapse:separate;"><tr class="metric-wrap">' +
-    cells.map((c, i) => '<td class="metric-cell" width="' + Math.floor(100 / cells.length) + '%" align="center" style="padding:15px 5px;' + (i < cells.length - 1 ? "border-right:1px solid #dce8f2;" : "") + 'font-family:' + TF + ';">' +
-      '<div style="font-size:24px;line-height:29px;color:' + c.icc + ';">' + c.ic + '</div><div style="font-size:22px;line-height:28px;font-weight:bold;color:' + (c.vc || "#123b68") + ';">' + esc(c.v) + '</div><div style="font-size:12px;line-height:18px;color:#526b85;">' + esc(c.l) + "</div></td>").join("") +
+    '<tr><td ' + pad(0, 20) + '><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f5f8fb" style="background:#f5f8fb;border:1px solid #e5edf4;border-radius:10px;"><tr>' +
+    cells.map((c, i) => '<td class="metric" width="' + mw + '%" align="center" style="padding:12px 5px;' + (i < cells.length - 1 ? "border-right:1px solid #e1e9f0;" : "") + 'font-family:' + TF + ';">' +
+      '<div style="font-size:10px;line-height:15px;color:#75899d;">' + esc(c.k) + '</div><strong style="display:block;font-size:' + (c.small ? 15 : 20) + 'px;line-height:26px;color:#173b60;">' + esc(c.v) + "</strong>" +
+      (c.s ? '<span style="font-size:11px;line-height:16px;color:#75899d;">' + esc(c.s) + "</span>" : "") + "</td>").join("") +
     "</tr></table></td></tr>";
 
   // ---- Phân tích theo mảng + chỉ số phụ
@@ -120,14 +132,14 @@ function build(attempt, settings, advice, opts) {
   if (an) {
     cats = "";
     if (an.random != null) {
-      cats = '<div style="font-family:' + FONT + ';font-size:13px;line-height:1.7;color:#6B4A00;background:' + C.amberBg + ';border:1px solid #F0DDB0;border-radius:12px;padding:11px 14px">Kết quả gần bằng mức chọn bừa (khoảng ' + esc(an.random) + '%) nên chưa phản ánh kiến thức theo từng mảng. Hãy làm lại nghiêm túc để có phân tích chính xác.</div>';
+      cats = '<div style="font-family:' + TF + ';font-size:13px;line-height:1.7;color:#6B4A00;background:' + C.amberBg + ';border:1px solid #F0DDB0;border-radius:12px;padding:11px 14px">Kết quả gần bằng mức chọn bừa (khoảng ' + esc(an.random) + '%) nên chưa phản ánh kiến thức theo từng mảng. Hãy làm lại nghiêm túc để có phân tích chính xác.</div>';
     } else if ((an.categories || []).length) {
-      cats = '<div style="font-family:' + FONT + ';font-size:13px;font-weight:700;color:' + C.ink + ';margin:0 0 12px">Kết quả theo mảng kiến thức <span style="font-weight:500;color:' + C.muted + '">· mảng yếu nhất ở trên</span></div>' +
+      cats = '<div style="font-family:' + TF + ';font-size:13px;font-weight:700;color:' + C.ink + ';margin:0 0 12px">Kết quả theo mảng kiến thức <span style="font-weight:500;color:' + C.muted + '">· mảng yếu nhất ở trên</span></div>' +
         an.categories.map((c) =>
-          '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 13px"><tr><td style="font-family:' + FONT + ';font-size:13.5px;font-weight:600;color:' + C.ink + '">' + esc(oneLine(c.name, 60)) + "</td>" +
-          '<td align="right" width="96" style="width:96px;font-family:' + FONT + ';font-size:12.5px;color:' + C.muted + ';white-space:nowrap"><b style="color:' + C.ink + '">' + esc(c.ok) + "/" + esc(c.n) + "</b> · " + esc(c.pct) + "%</td></tr>" +
+          '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 13px"><tr><td style="font-family:' + TF + ';font-size:13.5px;font-weight:600;color:' + C.ink + '">' + esc(oneLine(c.name, 60)) + "</td>" +
+          '<td align="right" width="96" style="width:96px;font-family:' + TF + ';font-size:12.5px;color:' + C.muted + ';white-space:nowrap"><b style="color:' + C.ink + '">' + esc(c.ok) + "/" + esc(c.n) + "</b> · " + esc(c.pct) + "%</td></tr>" +
           '<tr><td colspan="2" style="padding-top:6px">' + oneBar(c.pct, band(c.pct), 8) + "</td></tr></table>").join("") +
-        '<div style="font-family:' + FONT + ';font-size:11.5px;color:' + C.muted + '"><span style="color:' + C.ok + '">&#9679;</span> từ 80% &nbsp; <span style="color:' + C.warn + '">&#9679;</span> 60 đến 79% &nbsp; <span style="color:' + C.bad + '">&#9679;</span> dưới 60%</div>';
+        '<div style="font-family:' + TF + ';font-size:11.5px;color:' + C.muted + '"><span style="color:' + C.ok + '">&#9679;</span> từ 80% &nbsp; <span style="color:' + C.warn + '">&#9679;</span> 60 đến 79% &nbsp; <span style="color:' + C.bad + '">&#9679;</span> dưới 60%</div>';
     }
     const facts = [];
     if (an.avgSec != null && an.limitSec) facts.push({ k: "Tốc độ làm bài trung bình", v: an.avgSec + " giây/câu", s: "Giới hạn " + an.limitSec + " giây mỗi câu" });
@@ -136,70 +148,65 @@ function build(attempt, settings, advice, opts) {
     if (an.nextBand && an.total) facts.push({ k: "Mốc tuân thủ kế tiếp", v: an.nextBand.points + " điểm", s: "Cần đúng " + an.nextBand.needCorrect + "/" + an.total + " câu (thiếu " + an.nextBand.gap + ")" });
     // chỉ số phụ: các dòng có đường kẻ mảnh (nhãn + chú thích bên trái, số bên phải), không lồng thêm hộp
     grid = facts.map((f, i) =>
-      '<tr><td valign="middle" style="padding:11px 0;' + (i ? "border-top:1px solid #EAF1F3;" : "") + 'font-family:' + FONT + '"><div style="font-size:13px;font-weight:600;color:' + C.ink + '">' + esc(f.k) + '</div><div style="font-size:12px;color:' + C.muted + ';margin-top:2px">' + esc(f.s) + "</div></td>" +
-      '<td align="right" valign="middle" style="padding:11px 0 11px 12px;' + (i ? "border-top:1px solid #EAF1F3;" : "") + 'font-family:' + FONT + ';font-size:16px;font-weight:800;color:' + (f.c || C.ink) + ';white-space:nowrap">' + esc(f.v) + "</td></tr>").join("");
+      '<tr><td valign="middle" style="padding:11px 0;' + (i ? "border-top:1px solid #EAF1F3;" : "") + 'font-family:' + TF + '"><div style="font-size:13px;font-weight:600;color:' + C.ink + '">' + esc(f.k) + '</div><div style="font-size:12px;color:' + C.muted + ';margin-top:2px">' + esc(f.s) + "</div></td>" +
+      '<td align="right" valign="middle" style="padding:11px 0 11px 12px;' + (i ? "border-top:1px solid #EAF1F3;" : "") + 'font-family:' + TF + ';font-size:16px;font-weight:800;color:' + (f.c || C.ink) + ';white-space:nowrap">' + esc(f.v) + "</td></tr>").join("");
   }
 
   const analysis = (cats || grid)
-    ? '<tr><td class="mobile-pad" style="padding:14px 22px 0;background:#fff;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f9fcff;border-radius:17px;border:1px solid #e5eff7;border-collapse:separate;"><tr><td style="padding:16px 18px 8px;font-family:' + FONT + ';"><div style="font-size:16px;line-height:23px;font-weight:bold;color:#104b91;margin:0 0 12px;">&#9648; &nbsp;Phân tích kết quả</div>' + cats +
-      (grid ? (cats ? '<div style="height:12px;line-height:12px;font-size:0;border-bottom:1px solid #e5eff7;">&nbsp;</div><div style="height:4px;line-height:4px;font-size:0;">&nbsp;</div>' : "") + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + grid + "</table>" : "") + "</td></tr></table></td></tr>"
+    ? '<tr><td ' + pad(0, 14) + '><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f5f8fb" style="background:#f5f8fb;border:1px solid #e5edf4;border-radius:10px;"><tr><td style="padding:14px 16px 6px;font-family:' + TF + ';"><div style="font-size:14px;line-height:21px;font-weight:bold;color:#173b60;margin:0 0 10px;">Phân tích kết quả</div>' + cats +
+      (grid ? (cats ? '<div style="height:10px;line-height:10px;font-size:0;border-bottom:1px solid #e1e9f0;">&nbsp;</div>' : "") + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' + grid + "</table>" : "") + "</td></tr></table></td></tr>"
     : "";
 
-  // ---- Nhận xét AI + điểm mạnh / nội dung nên củng cố + gợi ý hành động
+  // ---- Nhận xét AI + điểm mạnh / nội dung cần củng cố + gợi ý hành động
   const portrait = a.portrait || a.summary || "";
   const overviewTxt = [a.headline ? "<b>" + esc(a.headline) + "</b>" : "", portrait ? esc(portrait) : ""].filter(Boolean).join("<br>");
   const overview = overviewTxt
-    ? '<tr><td class="mobile-pad" style="padding:14px 22px 0;background:#fff;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3efff;border-radius:17px;border-collapse:separate;"><tr>' +
-      '<td width="105" align="center" valign="middle" style="padding:15px 8px;"><div style="width:78px;height:78px;border-radius:50%;background:#e0d9ff;color:#5a43d6;font-family:' + TF + ';font-size:39px;line-height:78px;text-align:center;">&#10022;</div></td>' +
-      '<td valign="middle" style="padding:15px 15px 15px 0;font-family:' + TF + ';"><div style="font-size:19px;line-height:26px;font-weight:bold;color:#593bd1;">' + (a.source === "ai" ? "Nhận xét từ AI" : "Nhận xét dành cho bạn") + '</div>' +
-      '<div class="ai-intro" style="font-size:14px;line-height:22px;color:#263b5b;padding-top:6px;">' + overviewTxt + "</div></td></tr></table></td></tr>"
+    ? '<tr><td ' + pad(0, 14) + '><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f1f6fc" style="background:#f1f6fc;border-left:4px solid #3685bd;border-radius:9px;"><tr><td style="padding:16px 17px;font-family:' + TF + ';">' +
+      '<div class="ai-heading" style="font-size:18px;line-height:24px;font-weight:bold;color:#174c78;">' + (a.source === "ai" ? "Nhận xét từ AI" : "Nhận xét dành cho bạn") + '</div><div style="font-size:13px;line-height:21px;color:#405a72;padding-top:7px;">' + overviewTxt + "</div></td></tr></table></td></tr>"
     : "";
-  const lines = (arr, mark, color) => arr.map((x) => '<div style="padding:0 0 5px 16px;text-indent:-16px;"><span style="color:' + color + ';">' + mark + "</span>&nbsp; " + esc(x) + "</div>").join("");
-  const strengths = (a.strengths || []).length ? lines(a.strengths, "&#10003;", "#168a35") : "", topics = (a.topics || []).length ? lines(a.topics, "&#8226;", "#a85d08") : "";
-  const boxS = strengths ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="ai-card" style="background:#eaf9ed;border-radius:15px;border-collapse:separate;"><tr><td style="padding:15px;font-family:' + TF + ';"><div style="font-size:15px;line-height:22px;font-weight:bold;color:#168a35;">&#128077; Điểm mạnh</div><div style="font-size:13px;line-height:21px;color:#173e2a;padding-top:8px;">' + strengths + "</div></td></tr></table>" : "";
-  const boxT = topics ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="ai-card" style="background:#fff4df;border-radius:15px;border-collapse:separate;"><tr><td style="padding:15px;font-family:' + TF + ';"><div style="font-size:15px;line-height:22px;font-weight:bold;color:#a85d08;">&#9678; Nội dung nên củng cố</div><div style="font-size:13px;line-height:21px;color:#5d4527;padding-top:8px;">' + topics + "</div></td></tr></table>" : "";
-  const cols = boxS && boxT
-    ? '<tr><td class="mobile-pad" style="padding:14px 22px 0;background:#fff;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="ai-columns"><tr><td width="50%" valign="top" style="padding-right:6px;">' + boxS + '</td><td width="50%" valign="top" style="padding-left:6px;">' + boxT + "</td></tr></table></td></tr>"
-    : (boxS || boxT ? '<tr><td class="mobile-pad" style="padding:14px 22px 0;background:#fff;">' + (boxS || boxT) + "</td></tr>" : "");
-  const acts = (a.actions || []).map((x, i) => '<div style="padding:0 0 6px 20px;text-indent:-20px;"><b style="color:#104b91;">' + (i + 1) + ".</b>&nbsp; " + esc(x) + "</div>").join("");
-  const goal = a.goal ? '<div style="padding-top:6px;"><b style="color:#8a5500;">&#127919; Mục tiêu lần tới.</b> ' + esc(String(a.goal).replace(/^Lần tới:\s*/i, "")) + "</div>" : "";
-  const steps = (acts || goal)
-    ? '<tr><td class="mobile-pad" style="padding:14px 22px 0;background:#fff;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eaf5ff;border-radius:16px;border-collapse:separate;"><tr><td style="padding:16px 18px;font-family:' + TF + ';">' +
-      '<div style="font-size:16px;line-height:23px;font-weight:bold;color:#104b91;">&#9648; &nbsp;Gợi ý hành động tiếp theo</div><div class="action-content" style="font-size:13px;line-height:22px;color:#173b63;padding-top:8px;">' + acts + goal + "</div></td></tr></table></td></tr>"
+  const items = (arr, mark) => arr.map((x) => '<div style="padding:0 0 4px 14px;text-indent:-14px;">' + mark + "&nbsp; " + esc(x) + "</div>").join("");
+  const box = (bg, hc, tc, title, body) => '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' + bg + '" style="background:' + bg + ';border-radius:9px;"><tr><td style="padding:13px 14px;font-family:' + TF + ';">' +
+    '<div style="font-size:13px;line-height:19px;font-weight:bold;color:' + hc + ';">' + title + '</div><div style="font-size:12px;line-height:20px;color:' + tc + ';padding-top:6px;">' + body + "</div></td></tr></table>";
+  const bS = (a.strengths || []).length ? box("#eff8f2", "#237447", "#3e5e4a", "ĐIỂM MẠNH", items(a.strengths, "&#8226;")) : "";
+  const bT = (a.topics || []).length ? box("#fff7eb", "#95600e", "#695638", "NỘI DUNG CẦN CỦNG CỐ", items(a.topics, "&#8226;")) : "";
+  const two = bS && bT
+    ? '<tr><td ' + pad(0, 14) + '><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="ai-two" width="50%" valign="top" style="padding-right:6px;">' + bS + '</td><td class="ai-two" width="50%" valign="top" style="padding-left:6px;">' + bT + "</td></tr></table></td></tr>"
+    : (bS || bT ? "<tr><td " + pad(0, 14) + ">" + (bS || bT) + "</td></tr>" : "");
+  const acts = (a.actions || []).map((x, i) => '<div style="padding:0 0 4px 18px;text-indent:-18px;"><b style="color:#173b60;">' + (i + 1) + ".</b>&nbsp; " + esc(x) + "</div>").join("");
+  const goal = a.goal ? '<div style="padding-top:4px;"><b style="color:#8a5500;">Mục tiêu lần tới.</b> ' + esc(String(a.goal).replace(/^Lần tới:\s*/i, "")) + "</div>" : "";
+  const next = (acts || goal)
+    ? '<tr><td ' + pad(0, 19) + '><div style="font-family:' + TF + ';font-size:14px;line-height:21px;font-weight:bold;color:#173b60;">Gợi ý hành động tiếp theo</div><div style="font-family:' + TF + ';font-size:13px;line-height:21px;color:#526a80;padding-top:5px;">' + acts + goal + "</div></td></tr>"
     : "";
 
-  // ---- Nút xem kết quả + QR + liên hệ hỗ trợ
-  const foot =
-    '<tr><td class="mobile-pad" style="padding:20px 22px 26px;background:#fff;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="bottom-cols"><tr>' +
-    '<td valign="middle" align="center" style="padding:5px;font-family:' + TF + ';"><a class="cta" href="' + esc(m.url) + '" target="_blank" style="display:inline-block;background:#075eaa;background-image:linear-gradient(90deg,#07539b,#087dc0);border-radius:28px;padding:14px 22px;color:#fff;text-decoration:none;font-size:15px;line-height:20px;font-weight:bold;">Xem kết quả chi tiết &nbsp;&#8250;</a>' +
-    '<div style="font-size:11px;line-height:18px;color:#648099;padding-top:9px;">Đã xác thực lúc ' + esc(vn(Date.now())) + " · Mã minh chứng <b>" + esc(m.proof) + "</b></div>" +
-    (cardNote ? '<div style="font-size:11px;line-height:18px;color:#648099;">Thẻ kết quả (ảnh PNG) được đính kèm theo email này.</div>' : "") + "</td>" +
-    (qrCid ? '<td width="170" align="center" valign="middle" class="qr-cell" style="border-left:1px solid #d8e7f3;padding:5px;font-family:' + TF + ';"><a href="' + esc(m.url) + '" target="_blank"><img src="cid:' + qrCid + '" width="88" height="88" alt="Quét QR xem bản gốc" style="display:block;width:88px;height:88px;margin:0 auto;"></a>' +
-      '<div style="font-size:12px;line-height:18px;color:#123b68;padding-top:5px;">Quét QR xem bản gốc<br>kết quả</div></td>' : "") +
+  // ---- Xác thực + QR + liên hệ hỗ trợ
+  const verify =
+    '<tr><td class="pad" style="padding:15px 28px 20px;background:#f8fafc;border-top:1px solid #e5edf4;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
+    '<td valign="middle" style="padding-right:12px;font-family:' + TF + ';"><div style="font-size:12px;line-height:19px;font-weight:bold;color:#26734f;">&#10003; Đã xác thực bởi hệ thống lúc ' + esc(vn(Date.now())) + "</div>" +
+    '<div style="font-size:11px;line-height:17px;color:#718397;padding-top:4px;">Mã minh chứng: <b>' + esc(m.proof) + "</b>" + (a.source === "ai" ? " · Nhận xét AI được tổng hợp từ dữ liệu bài kiểm tra." : "") + (cardNote ? " Thẻ kết quả (ảnh PNG) được đính kèm theo email này." : "") + "</div>" +
+    '<div style="padding-top:8px;"><a href="' + esc(m.url) + '" target="_blank" style="font-size:13px;line-height:19px;font-weight:bold;color:#086db5;text-decoration:none;">Xem kết quả chi tiết &#8594;</a></div></td>' +
+    (qrCid ? '<td width="86" align="center" valign="middle" style="font-family:' + TF + ';"><a href="' + esc(m.url) + '" target="_blank"><img class="footer-qr" src="cid:' + qrCid + '" width="76" height="76" alt="QR xem kết quả" style="display:block;margin:0 auto;width:76px;height:76px;border:1px solid #dbe5ed;"></a>' +
+      '<div style="font-size:10px;line-height:15px;color:#718397;padding-top:4px;">Quét QR xem bản gốc</div></td>' : "") +
     "</tr></table>" +
-    '<div style="font-family:' + TF + ';font-size:12.5px;line-height:20px;color:#526b85;border-left:3px solid #087dc0;background:#f3f9ff;border-radius:0 10px 10px 0;padding:10px 14px;margin-top:16px;">' + esc(supportLine(attempt.manager)) + "</div></td></tr>" +
-    '<tr><td align="center" style="padding:13px 18px;background:#063b70;font-family:' + TF + ';color:#c5e4f6;font-size:10px;line-height:17px;">Email tự động từ hệ thống kiểm tra · Vui lòng không trả lời email này.<br>Email chứa thông tin cá nhân của bạn, vui lòng không chuyển tiếp cho người khác.</td></tr>';
+    '<div style="font-family:' + TF + ';font-size:12px;line-height:19px;color:#526b85;border-top:1px solid #e5edf4;margin-top:12px;padding-top:10px;">' + esc(supportLine(attempt.manager)) + "</div></td></tr>" +
+    '<tr><td align="center" bgcolor="#123b65" style="padding:12px 18px;background:#123b65;font-family:' + TF + ';color:#c7dcec;font-size:10px;line-height:16px;">Email tự động từ hệ thống kiểm tra · Vui lòng không trả lời email này.<br>Email chứa thông tin cá nhân của bạn, vui lòng không chuyển tiếp cho người khác.</td></tr>';
 
   const css =
-    "body{margin:0!important;padding:0!important;background:#edf2f7}table{border-collapse:collapse}img{border:0;outline:none;text-decoration:none}" +
-    "@media only screen and (max-width:600px){.outer-pad{padding:0!important}.wrap{width:100%!important;max-width:100%!important;border-radius:0!important}.mobile-pad{padding-left:17px!important;padding-right:17px!important}" +
-    ".hero-title{font-size:22px!important;line-height:28px!important}.hero-top{padding:24px 20px 18px!important}.hero-main{padding:8px 18px 25px!important}" +
-    ".hero-grid,.hero-grid tbody,.hero-grid tr,.hero-grid td{display:block!important;width:100%!important}.hero-grid td{text-align:center!important;padding:8px 0!important}" +
-    ".score-ring{width:128px!important;height:128px!important;margin:0 auto!important}.score-ring td{height:128px!important}.score-number{font-size:44px!important;line-height:50px!important}" +
-    ".identity{text-align:center!important}.identity-name{font-size:25px!important;line-height:31px!important}" +
-    ".metric-cell{display:inline-block!important;width:48%!important;box-sizing:border-box!important;border:0!important;padding:12px 4px!important}.metric-wrap{font-size:0!important}" +
-    ".ai-intro{font-size:13px!important;line-height:21px!important}.ai-columns,.ai-columns tbody,.ai-columns tr,.ai-columns td{display:block!important;width:100%!important}.ai-columns td{padding:0 0 10px!important}" +
-    ".ai-card{padding:15px!important}.action-content{font-size:13px!important;line-height:21px!important}" +
-    ".bottom-cols,.bottom-cols tbody,.bottom-cols tr,.bottom-cols td{display:block!important;width:100%!important;text-align:center!important}.qr-cell{padding-top:18px!important;border-left:0!important}.cta{display:inline-block!important}}";
+    "body{margin:0!important;padding:0!important;background:#f1f5f9;-webkit-text-size-adjust:100%}table{border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt}img{border:0}a{color:#086db5}" +
+    ".shell{width:100%;max-width:640px}.pad{padding-left:28px;padding-right:28px}.score-layout{width:100%}.score-number{font-size:48px;line-height:52px}.metric{width:" + mw + "%}.ai-two{width:50%}" +
+    "@media screen and (max-width:600px){.outer{padding:0!important}.shell{width:100%!important;max-width:100%!important;border-radius:0!important}.pad{padding-left:18px!important;padding-right:18px!important}" +
+    ".top-title{font-size:21px!important;line-height:27px!important}.score-layout,.score-layout>tbody,.score-layout>tbody>tr,.score-layout>tbody>tr>td{display:block!important;width:100%!important}" +
+    ".score-col{text-align:center!important;padding:7px 0!important;border-right:0!important}.score-number{font-size:42px!important;line-height:46px!important}.person-name{font-size:21px!important;line-height:27px!important}" +
+    ".metric{width:" + mw + "%!important}.metric strong{font-size:18px!important}.metric span{font-size:11px!important}" +
+    ".ai-two{display:block!important;width:100%!important;padding:0 0 9px!important}.ai-heading{font-size:17px!important}.footer-qr{width:78px!important}}";
 
   const html =
     '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="x-apple-disable-message-reformatting">' +
     '<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>' + esc(m.subject) + "</title><style>" + css + "</style></head>" +
-    '<body style="margin:0;padding:0;background:#edf2f7;font-family:' + TF + ';color:#102f59;-webkit-text-size-adjust:100%">' +
-    '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:#edf2f7">' + esc(pre) + "&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>" +
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#edf2f7;"><tr><td align="center" class="outer-pad" style="padding:22px 10px;">' +
-    '<table role="presentation" width="680" cellpadding="0" cellspacing="0" border="0" class="wrap" style="width:100%;max-width:680px;text-align:left;background:#fff;border-radius:20px;border-collapse:separate;overflow:hidden;box-shadow:0 10px 32px rgba(12,48,82,.13);">' +
-    hero + metrics + analysis + overview + cols + steps + foot +
+    '<body style="margin:0;padding:0;background:#f1f5f9;font-family:' + TF + ';color:#17324f;-webkit-text-size-adjust:100%">' +
+    '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:#f1f5f9">' + esc(pre) + "&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>" +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f1f5f9" style="width:100%;background:#f1f5f9;"><tr><td align="center" class="outer" style="padding:22px 10px;">' +
+    '<table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" class="shell" style="width:100%;max-width:640px;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;border-collapse:separate;overflow:hidden;text-align:left;">' +
+    header + practiceNote + summary + metrics + analysis + overview + two + next + verify +
     "</table></td></tr></table></body></html>";
 
   return { subject: m.subject, html: harden(html), text: textOf(attempt, settings, m, cardNote) };
