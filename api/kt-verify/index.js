@@ -37,7 +37,7 @@ module.exports = async function (context, req) {
       ok: true, serverNow: Date.now(),
       result: {
         title: attempt.examTitle || settings.examTitle || "Bài kiểm tra", practice,
-        name: attempt.name || "", code: attempt.code || "",
+        name: attempt.name || "", code: attempt.code || "", manager: attempt.manager || "", // quản lí: có sẵn trên thẻ kết quả
         score: attempt.score, total: attempt.total, pct: attempt.pct, passed: quiz.passState(attempt.pct, settings),
         compliancePoints: attempt.compliancePoints, passScore: quiz.passScoreOf(settings),
         wrong: attempt.wrong, blank: attempt.blank,

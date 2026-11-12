@@ -86,6 +86,73 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .ring.p .prg{stroke:url(#gP)}
 .stats div.ref{border:1.5px dashed #E8CF99;background:linear-gradient(180deg,#FFFDF7,#FFF7E8)}.stats div.ref b{color:#8A5200}
 .state{padding:44px 24px;text-align:center;color:var(--muted);font-size:15px;line-height:1.7}
+
+/* ===== Giấy chứng nhận kết quả (mẫu thiết kế mới): chỉ bật khi đã xác thực xong (body.cert-on) ===== */
+body.cert-on{background:#082c55}
+body.cert-on::before{background:radial-gradient(900px 520px at 50% -8%,rgba(40,170,255,.38),transparent 65%),radial-gradient(700px 420px at 100% 100%,rgba(30,120,230,.3),transparent 60%)}
+body.cert-on .wrap{max-width:1160px}
+body.cert-on .top b{color:#fff}body.cert-on .top span{color:#BFE6FF}
+body.cert-on .card{background:none;border:0;box-shadow:none;border-radius:0;overflow:visible}
+body.cert-on .card.pr::before,body.cert-on .card.pr::after{display:none}
+body.cert-on .vbar{border-radius:20px;margin-bottom:14px}
+.cert{position:relative;width:100%;margin:0 auto;overflow:hidden;border:2px solid #35c7f2;border-radius:38px;color:#fff;background:linear-gradient(145deg,#063565 0%,#005c9c 57%,#087fc3 100%);box-shadow:0 24px 65px #001b3c88}
+.ct-top{position:relative;padding:48px 6% 46px;min-height:560px;background:radial-gradient(ellipse at 90% 10%,#1ba6db66,transparent 30%),linear-gradient(135deg,#06315f,#0068a7 75%,#079bd2);overflow:hidden}
+.ct-top::after{content:"";position:absolute;right:-10%;top:52%;width:75%;height:180px;transform:rotate(-13deg);border-top:24px solid #40d8ff55;border-bottom:14px solid #1ba9ed44;border-radius:50%;pointer-events:none}
+.ct-kick{font-size:clamp(13px,1.7vw,18px);letter-spacing:.17em;font-weight:600;color:#c9eaff;margin:0 0 10px;padding-left:16px;position:relative}
+.ct-kick::before{content:"";position:absolute;left:0;top:-2px;bottom:-2px;width:5px;border-radius:3px;background:linear-gradient(180deg,#8fe3ff,#2ba8ff)}
+.ct-title{font-size:clamp(22px,3.2vw,40px);line-height:1.2;margin:0 0 22px;font-weight:800;max-width:calc(100% - 230px)}
+.ct-status{display:inline-flex;align-items:center;gap:12px;border:2px solid #7CF2A2;border-radius:30px;padding:9px 22px 9px 12px;background:linear-gradient(90deg,#28c97a66,#1aa66d38);font-size:clamp(14px,1.7vw,19px);font-weight:800;letter-spacing:.02em}
+.ct-status b{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#2FCB79;color:#fff;font-size:16px;line-height:1}
+.ct-status i{font-style:normal;font-weight:600;font-size:.84em;opacity:.92;padding-left:12px;border-left:2px solid rgba(255,255,255,.45)}
+.ct-status.s-n{border-color:#FFA592;background:linear-gradient(90deg,#ff785f61,#e6503c38)}.ct-status.s-n b{background:#F0603F}
+.ct-status.s-p{border-color:#FFD98A;background:linear-gradient(90deg,#f6c85f57,#f0a93a33)}.ct-status.s-p b{background:#F0A93A}
+.ct-trophy{position:absolute;right:5%;top:112px;width:clamp(120px,18vw,225px);height:auto;overflow:visible;filter:drop-shadow(0 12px 14px #001b4b88);pointer-events:none;z-index:1}
+.ct-result{display:grid;grid-template-columns:34% 1fr;gap:5%;align-items:center;margin-top:36px;position:relative;z-index:2}
+.ct-ring{position:relative;width:min(100%,330px);aspect-ratio:1;margin:auto}
+.ct-ring svg{width:100%;height:100%;display:block;overflow:visible}
+.ct-ring .in{fill:#0a295b66}.ct-ring .trk{stroke:#082e7a73}
+.ct-ring .prg{transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(0 0 9px var(--glow,#6eff6e))}
+.ct-ring.t-g .prg{stroke:url(#ctG);--glow:#6eff6ebf}.ct-ring.t-b .prg{stroke:url(#ctB);--glow:#5aaaffb3}.ct-ring.t-y .prg{stroke:url(#ctY);--glow:#ffc850b3}.ct-ring.t-r .prg{stroke:url(#ctR);--glow:#ff6e50b3}
+.ct-ring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.ct-ring .c strong{font-size:clamp(50px,7vw,88px);line-height:1;font-weight:800;letter-spacing:-.02em}.ct-ring .c span{font-size:clamp(15px,1.8vw,22px);margin-top:10px;color:#e1f8ff}
+.ct-ok{position:absolute;right:13%;top:2%;width:21%;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;color:#1D7A35;border:3px solid #ffffffd9;box-shadow:0 0 16px #78ff788c;background:linear-gradient(135deg,#E8FFA8,#6FE24F)}
+.ct-ring.t-b .ct-ok{color:#15509E;background:linear-gradient(135deg,#D6EEFF,#5AA9F5);box-shadow:0 0 16px #5aaaffa6}
+.ct-ok svg{width:62%;height:62%}
+.ct-person{min-width:0;padding-left:5%;border-left:2px solid #ffffff3d}
+.ct-person h2{font-size:clamp(28px,3.9vw,46px);line-height:1.15;margin:0 0 12px;font-weight:800;overflow-wrap:anywhere;max-width:calc(100% - 200px)}
+.ct-person p{font-size:clamp(15px,1.8vw,22px);margin:8px 0;color:#e3f2ff;display:flex;align-items:center;gap:12px}.ct-person p:empty{display:none}
+.ct-person p svg{flex:0 0 auto;width:1.15em;height:1.15em;color:#8FD6FF}
+.ct-score{display:flex;align-items:baseline;gap:16px;margin-top:22px;flex-wrap:wrap}.ct-score strong{font-size:clamp(46px,6vw,68px);line-height:1;font-weight:800}.ct-score span{font-size:clamp(17px,2vw,24px);font-weight:600;color:#e9f7ff}
+.ct-progress{display:flex;height:18px;border-radius:20px;overflow:hidden;background:#04226480;margin:16px 0 10px;box-shadow:0 0 0 1px #ffffff2e}
+.ct-progress i{display:block;height:100%;background:var(--c)}.ct-progress i.g{background:linear-gradient(90deg,#9BFF4F,#22D84A);box-shadow:0 0 14px #7dff5099}
+.ct-small{font-size:clamp(14px,1.7vw,20px);color:#e1f1ff}.ct-small u{text-decoration:none;display:inline-block;width:2px;height:1em;background:#ffffff80;margin:0 14px;vertical-align:-2px}
+.ct-bottom{position:relative;padding:40px 5% 128px;background:linear-gradient(180deg,#fff,#EAF3FF);color:var(--ink);border-radius:36px 36px 0 0;margin-top:-34px;z-index:3}
+.ct-metrics{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));padding:6px 0 30px;border-bottom:1.5px solid #d7e3f4;margin-right:190px}
+.ct-m{padding:6px 18px;border-right:1.5px solid #d7e3f4;text-align:center}.ct-m:last-child{border-right:0}
+.ct-m svg{width:clamp(32px,4vw,44px);height:auto;color:#1B6FE8;margin-bottom:10px}
+.ct-m strong{display:block;font-size:clamp(24px,3.4vw,40px);line-height:1.15;font-weight:800;margin-bottom:6px;color:#0A2552}.ct-m.gold strong{color:#A35F0B}
+.ct-m span{font-size:clamp(13px,1.6vw,19px);color:#5a6e90}
+.ct-verify{display:flex;align-items:center;gap:12px;margin-top:28px;padding:10px 18px 10px 12px;border-radius:30px;background:linear-gradient(90deg,#E1F4E8,#EEF4FB);box-shadow:0 4px 14px #0a3c8c1f;color:#0A2552;font-size:clamp(14px,1.9vw,23px);font-weight:700;margin-right:190px}
+.ct-check{flex:0 0 auto;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;color:#fff;background:linear-gradient(135deg,#2BBE5E,#12923F)}.ct-check svg{width:66%;height:66%}
+.ct-note{font-size:clamp(14px,1.7vw,20px);color:#2B3F66;margin:18px 0 12px;margin-right:190px}
+.ct-link{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:clamp(14px,1.7vw,20px);color:#0A63C4;font-weight:700;margin-right:190px}.ct-link svg{width:1.3em;height:1.3em;flex:0 0 auto}
+.ct-qr{position:absolute;right:5%;bottom:128px;width:clamp(120px,15vw,168px);aspect-ratio:1;padding:10px;background:#fff;border:2px solid #d2e0f2;border-radius:22px;box-shadow:0 10px 24px #0a3c8c38;display:grid;place-items:center}.ct-qr svg{width:100%;height:100%;display:block}
+.ct-wave{position:absolute;left:0;right:0;bottom:0;height:104px;z-index:4;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 104' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0' x2='1'%3E%3Cstop offset='0' stop-color='%234AA2F8'/%3E%3Cstop offset='1' stop-color='%230A4DB5'/%3E%3C/linearGradient%3E%3ClinearGradient id='g' x1='0' x2='1'%3E%3Cstop offset='0' stop-color='%23F6C968' stop-opacity='0'/%3E%3Cstop offset='.4' stop-color='%23F6C968'/%3E%3Cstop offset='.75' stop-color='%23FFE7A6'/%3E%3Cstop offset='1' stop-color='%23FFE7A6' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 46C260 0 520 92 800 42C940 18 1080 6 1200 0V104H0Z' fill='url(%23a)'/%3E%3Cpath d='M0 78C300 38 640 108 1200 44V104H0Z' fill='%23063282' fill-opacity='.55'/%3E%3Cpath d='M0 74C300 34 640 104 1200 40' fill='none' stroke='url(%23g)' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E") center bottom/100% 100% no-repeat}
+.cert.pr .ct-bottom::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='170'%3E%3Ctext x='130' y='91' text-anchor='middle' transform='rotate%28-24 130 85%29' font-family='Arial%2CHelvetica%2Csans-serif' font-size='17' font-weight='800' letter-spacing='4' fill='%23C98A1B' fill-opacity='0.11'%3ETHI TH%E1%BB%AC%3C/text%3E%3C/svg%3E")}
+.extra{max-width:660px;margin:16px auto 0;background:#fff;border:1px solid rgba(216,226,240,.9);border-radius:24px;padding:6px 22px 22px;box-shadow:0 24px 50px -28px rgba(0,20,60,.6);text-align:left}
+body.cert-on .foot{display:none}
+@media(max-width:700px){
+  body.cert-on .wrap{padding-left:10px;padding-right:10px}
+  .cert{border-radius:24px}.ct-top{padding:28px 6% 40px;min-height:0}.ct-title{max-width:calc(100% - 100px);margin-bottom:16px}.ct-person h2{max-width:none}
+  .ct-trophy{width:92px;right:5%;top:22px}
+  .ct-result{grid-template-columns:1fr;gap:22px;margin-top:26px}.ct-ring{width:min(72%,230px)}
+  .ct-person{text-align:center;padding-left:0;border-left:0}.ct-person p{justify-content:center}.ct-score{justify-content:center}
+  .ct-bottom{padding:26px 6% 96px;margin-top:-30px}.ct-wave{height:82px}
+  .ct-metrics{margin-right:0;grid-template-columns:1fr;gap:6px;padding-bottom:16px}.ct-m{border-right:0;border-bottom:1.5px solid #e1eaf5;padding:12px 6px}.ct-m:last-child{border-bottom:0}
+  .ct-verify,.ct-note,.ct-link{margin-right:0;text-align:center;justify-content:center}
+  .ct-qr{position:relative;right:auto;bottom:auto;margin:22px auto 0;width:140px}
+}
+@media print{body.cert-on{background:#fff}body.cert-on::before,body.cert-on .top,.extra{display:none}.cert{box-shadow:none;break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 .hide{display:none!important}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 
@@ -146,17 +213,46 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
     <div class="state" id="state">Đang xác thực kết quả…</div>
     <div class="hide" id="okView">
       <div class="vbar" id="vbar"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z" fill="currentColor"/><path d="m8.2 12.3 2.6 2.6 5-5.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Kết quả này đã được hệ thống xác thực</span></div>
-      <div class="head"><b id="vTitle"></b><small>Nền tảng kiểm tra trực tuyến</small></div>
-      <div class="body">
-        <div id="vBadge"></div>
-        <div class="person"><span class="av" id="vAv" aria-hidden="true"></span><div><b id="vName"></b><span id="vCode"></span></div></div>
-        <div class="ring" id="vRing"><svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="gP" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5C25E"/><stop offset="1" stop-color="#D68F1E"/></linearGradient><linearGradient id="gY" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12B5C9"/><stop offset="1" stop-color="#17794A"/></linearGradient><linearGradient id="gN" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B3261E"/></linearGradient><linearGradient id="gT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12B5C9"/><stop offset="1" stop-color="#0A63C4"/></linearGradient></defs><circle class="trk" cx="60" cy="60" r="52" fill="none" stroke-width="10"/><circle class="prg" id="vArc" cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73"/></svg><div class="c"><b id="vPct">0%</b><span>Tỉ lệ đúng</span></div></div>
-        <p class="thr" id="vThr"></p>
-        <div class="stats" id="vStats"></div>
-        <div class="bk hide" id="vBk"></div>
+      <div class="cert" id="cert">
+        <section class="ct-top">
+          <div class="ct-kick">KẾT QUẢ BÀI KIỂM TRA</div>
+          <h1 class="ct-title" id="vTitle"></h1>
+          <div id="vBadge"></div>
+          <svg class="ct-trophy" viewBox="-135 -80 270 270" aria-hidden="true"><defs><radialGradient id="tpGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffe28c" stop-opacity=".5"/><stop offset="1" stop-color="#ffe28c" stop-opacity="0"/></radialGradient><linearGradient id="tpGold" x1="-60" y1="0" x2="60" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFEFA8"/><stop offset=".35" stop-color="#F7C21F"/><stop offset=".7" stop-color="#D99100"/><stop offset="1" stop-color="#FFD45A"/></linearGradient><linearGradient id="tpHL" x1="-100" y1="0" x2="-50" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#F3B21A"/><stop offset="1" stop-color="#FFE08A"/></linearGradient><linearGradient id="tpHR" x1="50" y1="0" x2="100" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFE08A"/><stop offset="1" stop-color="#E3A10E"/></linearGradient><linearGradient id="tpB1" x1="-110" y1="0" x2="110" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#1E63D6"/><stop offset=".5" stop-color="#59B0FF"/><stop offset="1" stop-color="#0F46AE"/></linearGradient><linearGradient id="tpB2" x1="-112" y1="0" x2="112" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#5FB4FF"/><stop offset=".5" stop-color="#A9DBFF"/><stop offset="1" stop-color="#3E8CF0"/></linearGradient><linearGradient id="tpB3" x1="-64" y1="0" x2="64" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#6DBBFF"/><stop offset="1" stop-color="#2D79EA"/></linearGradient></defs><circle cx="0" cy="30" r="150" fill="url(#tpGlow)"/><ellipse cx="0" cy="158" rx="112" ry="24" fill="url(#tpB1)" /><rect x="-112" y="140" width="224" height="18" fill="url(#tpB1)"/><ellipse cx="0" cy="140" rx="112" ry="24" fill="url(#tpB2)" /><rect x="-64" y="118" width="128" height="16" fill="#1550C4"/><ellipse cx="0" cy="118" rx="64" ry="14" fill="url(#tpB3)" /><path d="M-14 52L14 52L20 96L-20 96Z" fill="url(#tpGold)"/><rect x="-46" y="94" width="92" height="24" rx="8" fill="url(#tpGold)"/><rect x="-46" y="106" width="92" height="3" fill="#B97A00"/><path d="M-54 -44C-104 -50 -102 14 -44 18" fill="none" stroke="url(#tpHL)" stroke-width="11" stroke-linecap="round"/><path d="M54 -44C104 -50 102 14 44 18" fill="none" stroke="url(#tpHR)" stroke-width="11" stroke-linecap="round"/><path d="M-62 -60C-66 -4 -38 42 -14 54L14 54C38 42 66 -4 62 -60Z" fill="url(#tpGold)"/><ellipse cx="0" cy="-60" rx="62" ry="13" fill="#FFE58F" /><ellipse cx="0" cy="-58" rx="52" ry="8" fill="#B87800" /><path d="M-46 -46C-48 -8 -34 22 -22 34L-30 30C-48 10 -54 -20 -52 -44Z" fill="#fff" fill-opacity=".38"/><polygon points="0.0,-36.0 5.3,-21.3 20.9,-20.8 8.6,-11.2 12.9,3.8 0.0,-5.0 -12.9,3.8 -8.6,-11.2 -20.9,-20.8 -5.3,-21.3" fill="#FFF4BF" stroke="#D79A00" stroke-width="2"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(-86.0 118.0) rotate(2.9)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(-95.0 116.0) rotate(100.3)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(-94.2 99.2) rotate(-1.1)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(-103.2 97.2) rotate(96.3)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(-101.1 80.5) rotate(-5.0)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(-110.1 78.5) rotate(92.4)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(-105.6 61.8) rotate(-9.0)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(-114.6 59.8) rotate(88.5)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(-106.9 43.0) rotate(-12.9)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(-115.9 41.0) rotate(84.5)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(-104.6 24.2) rotate(-16.8)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(-113.6 22.2) rotate(80.6)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(-98.9 5.5) rotate(-20.8)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(-107.9 3.5) rotate(76.6)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(-90.4 -13.2) rotate(-24.7)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(-99.4 -15.2) rotate(72.7)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(-80.1 -32.0) rotate(-28.6)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(-89.1 -34.0) rotate(68.8)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(86.0 118.0) rotate(-2.9)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(95.0 116.0) rotate(-100.3)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(94.2 99.2) rotate(1.1)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(103.2 97.2) rotate(-96.3)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(101.1 80.5) rotate(5.0)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(110.1 78.5) rotate(-92.4)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(105.6 61.8) rotate(9.0)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(114.6 59.8) rotate(-88.5)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(106.9 43.0) rotate(12.9)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(115.9 41.0) rotate(-84.5)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(104.6 24.2) rotate(16.8)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(113.6 22.2) rotate(-80.6)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(98.9 5.5) rotate(20.8)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(107.9 3.5) rotate(-76.6)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(90.4 -13.2) rotate(24.7)"/><ellipse rx="14" ry="6" fill="#F7C948" transform="translate(99.4 -15.2) rotate(-72.7)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(80.1 -32.0) rotate(28.6)"/><ellipse rx="14" ry="6" fill="#FFE08A" transform="translate(89.1 -34.0) rotate(-68.8)"/></svg>
+          <div class="ct-result">
+            <div class="ct-ring t-g" id="vRing">
+              <svg viewBox="0 0 160 160" aria-hidden="true"><defs>
+                <linearGradient id="ctG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D4FF7A"/><stop offset="1" stop-color="#25D84B"/></linearGradient>
+                <linearGradient id="ctB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#BDE3FF"/><stop offset="1" stop-color="#3A8BF0"/></linearGradient>
+                <linearGradient id="ctY" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE7A8"/><stop offset="1" stop-color="#F0A93A"/></linearGradient>
+                <linearGradient id="ctR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC2B5"/><stop offset="1" stop-color="#F0603F"/></linearGradient></defs>
+                <circle class="in" cx="80" cy="80" r="71"/><circle class="trk" cx="80" cy="80" r="71" fill="none" stroke-width="13"/>
+                <circle class="prg" id="vArc" cx="80" cy="80" r="71" fill="none" stroke-width="13" stroke-linecap="round" stroke-dasharray="446.11" stroke-dashoffset="446.11" transform="rotate(-90 80 80)"/></svg>
+              <div class="c"><strong id="vPct">0%</strong><span>tỉ lệ đúng</span></div>
+              <span class="ct-ok hide" id="vOk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 12.5 3.6 3.6 7.4-8.2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            </div>
+            <div class="ct-person">
+              <h2 id="vName"></h2>
+              <p id="vCode"></p>
+              <p id="vMgr"></p>
+              <div class="ct-score"><strong id="vScore"></strong><span>câu đúng</span></div>
+              <div class="ct-progress hide" id="vBk" aria-hidden="true"></div>
+              <div class="ct-small hide" id="vSai"></div>
+            </div>
+          </div>
+        </section>
+        <section class="ct-bottom">
+          <div class="ct-metrics" id="vStats"></div>
+          <div class="ct-verify"><span class="ct-check"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 12.5 3.6 3.6 7.4-8.2" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Đã xác thực bởi hệ thống lúc <b id="vSys"></b></span></div>
+          <p class="ct-note">Người gửi xác nhận đã xem và đồng ý với kết quả bài kiểm tra.</p>
+          <div class="ct-link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Quét QR để xem bản gốc &nbsp;·&nbsp; <span id="vHost"></span></div>
+          <div class="ct-qr hide" id="vQr" role="img" aria-label="Mã QR xác thực"></div>
+        </section>
+        <div class="ct-wave" aria-hidden="true"></div>
+      </div>
+      <div class="extra">
         <dl class="kv" id="vRows"></dl>
         <div class="proof"><svg width="38" height="38" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z" fill="#17794A"/><path d="m8.2 12.3 2.6 2.6 5-5.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><div><small>MÃ MINH CHỨNG</small><b id="vProof"></b><span>Mã này khớp với dữ liệu bài làm trên hệ thống.</span></div></div>
-
         <div class="paperbox" id="paperBox">
           <p class="pnote hide" id="paperLocked" style="margin-top:0">Chỉ xem lại được <b>sau khi bài kiểm tra kết thúc</b>.</p>
           <button type="button" class="btn-outline" id="paperToggle">Xem lại đề đã làm</button>
@@ -170,7 +266,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
           <div class="hide" id="paperView"></div>
         </div>
       </div>
-      <div class="foot">Xác thực bởi hệ thống lúc <b id="vSys"></b></div>
     </div>
   </main>
 </div>
@@ -462,33 +557,67 @@ $('paperAdmin').addEventListener('click', adminView);
   $('card').classList.toggle('pr', prac);
   var vb = $('vbar'); vb.classList.toggle('pr', prac);
   if (prac) vb.innerHTML = '<span class="pi" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B7791F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.2L5.2 18a2 2 0 0 0 1.8 3h10a2 2 0 0 0 1.8-3L14 9.2V3M7.6 14.5h8.8"/></svg></span><div><b>Kết quả thi thử</b><small>Không phải thi chính thức. Điểm tuân thủ chỉ để hình dung nếu thi thật.</small></div>';
+  // ---- Giấy chứng nhận (mẫu thiết kế mới)
+  document.body.classList.add('cert-on');
+  $('cert').classList.toggle('pr', prac);
+  $('vbar').classList.toggle('hide', !prac); // kết quả chính thức: dòng "đã xác thực" nằm ngay trong giấy; thi thử vẫn hiện khung báo
+  var IC = {
+    person: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.5" r="4" fill="currentColor"/><path d="M4 21c0-4.6 3.6-7.5 8-7.5s8 2.9 8 7.5z" fill="currentColor"/></svg>',
+    group: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6" fill="currentColor"/><path d="M5.5 20c0-3.9 2.9-6.4 6.5-6.4s6.5 2.5 6.5 6.4z" fill="currentColor"/><circle cx="4.6" cy="9.6" r="2.4" fill="currentColor" opacity=".7"/><circle cx="19.4" cy="9.6" r="2.4" fill="currentColor" opacity=".7"/></svg>',
+    target: '<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="22" cy="26" r="16"/><circle cx="22" cy="26" r="9"/><circle cx="22" cy="26" r="2.6" fill="currentColor"/><path d="M22 26 40 8M40 8v9M40 8h-9"/></svg>',
+    clock: '<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="25" r="18"/><path d="M24 13v12l8 5"/></svg>',
+    cal: '<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="9" width="36" height="33" rx="5"/><path d="M6 19h36M15 4v9M33 4v9"/><path d="M14 27h4M22 27h4M30 27h4M14 34h4M22 34h4" stroke-width="3.8"/></svg>'
+  };
   $('vTitle').textContent = r.title;
-  $('vName').textContent = r.name || r.code; $('vCode').textContent = r.code ? 'Mã nhân viên: ' + r.code : ''; $('vAv').textContent = initials(r.name || r.code);
-  var I_Y = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path d="m7.5 12.5 3 3 6-7"/></svg>';
-  var I_N = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path d="m9 9 6 6M15 9l-6 6"/></svg>';
-  $('vBadge').innerHTML = '<span class="badge '+(prac?'p':ps===null?'d':ps?'y':'n')+'">'+(prac?'THI THỬ'+(ps===null?'':ps?' · ĐẠT':' · CHƯA ĐẠT'):ps===null?I_Y+'ĐÃ HOÀN THÀNH':ps?I_Y+'ĐẠT':I_N+'CHƯA ĐẠT')+'</span>';
-  $('vRing').className = 'ring ' + (prac?'p':ps===null?'d':ps?'y':'n'); $('vPct').textContent = pct + '%';
-  $('vThr').textContent = (ps !== null && r.passScore) ? 'Ngưỡng đạt: ' + r.passScore + '%' : '';
-  var tl = [{v:(r.score!=null?r.score:'–')+'/'+(r.total!=null?r.total:'–'),l:'Số câu đúng'}];
-  if (r.compliancePoints != null) tl.push({v:r.compliancePoints+' điểm',l: prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ học tập', ref: prac});
-  if (r.durationSec != null) tl.push({v:clock(r.durationSec),l:'Thời gian hoàn thành'});
-  $('vStats').className = 'stats c' + tl.length;
-  $('vStats').innerHTML = tl.map(function(x){ return '<div'+(x.ref?' class="ref"':'')+'><b>'+esc(x.v)+'</b><span>'+x.l+'</span></div>'; }).join('');
+  var kind = prac ? 's-p' : ps === null ? 's-d' : ps ? 's-y' : 's-n', mark = (prac || ps === false) ? '!' : '✓';
+  var pillTxt = prac ? 'THI THỬ' + (ps === null ? '' : ps ? ' · ĐẠT' : ' · CHƯA ĐẠT') : ps === null ? 'ĐÃ HOÀN THÀNH' : ps ? 'ĐẠT' : 'CHƯA ĐẠT';
+  $('vBadge').innerHTML = '<span class="ct-status ' + kind + '"><b>' + mark + '</b>' + esc(pillTxt) + ((ps !== null && r.passScore) ? '<i>Ngưỡng đạt ' + esc(r.passScore) + '%</i>' : '') + '</span>';
+  // Màu vòng theo mốc điểm (giống thẻ ảnh và email): >= 90% xanh lá, 70-90% xanh dương, 60-70% vàng, dưới 60% đỏ
+  var tier = pct >= 90 ? 'g' : pct >= 70 ? 'b' : pct >= 60 ? 'y' : 'r';
+  $('vRing').className = 'ct-ring t-' + tier; $('vPct').textContent = pct + '%';
+  $('vOk').classList.toggle('hide', !(tier === 'g' || tier === 'b'));
+  $('vName').textContent = r.name || r.code;
+  $('vCode').innerHTML = r.code ? IC.person + '<span>Mã NV: ' + esc(r.code) + '</span>' : '';
+  $('vMgr').innerHTML = r.manager ? IC.group + '<span>Quản lí: ' + esc(r.manager) + '</span>' : '';
+  $('vScore').textContent = (r.score != null ? r.score : '–') + '/' + (r.total != null ? r.total : '–');
   if (r.wrong != null && r.blank != null && r.total){
-    var seg = [{n:r.score||0,c:'#17794A',l:'Đúng'},{n:r.wrong,c:'#B3261E',l:'Sai'},{n:r.blank,c:'#AEB6C1',l:'Bỏ trống'}];
-    $('vBk').innerHTML = '<div class="bar" aria-hidden="true">'+seg.map(function(g){ return g.n>0?'<i style="--c:'+g.c+';width:'+(g.n/r.total*100)+'%"></i>':''; }).join('')+'</div><div class="lg">'+seg.map(function(g){ return '<span style="--c:'+g.c+'">'+g.l+' <b>'+g.n+'</b></span>'; }).join('')+'</div>';
-    $('vBk').classList.remove('hide');
+    var seg = [{ n: r.score || 0, k: 'g' }, { n: r.wrong, c: '#FF6B5E' }, { n: r.blank, c: 'rgba(255,255,255,.5)' }];
+    $('vBk').innerHTML = seg.map(function(g){ return g.n > 0 ? '<i class="' + (g.k || '') + '" style="' + (g.c ? '--c:' + g.c + ';' : '') + 'width:' + (g.n / r.total * 100) + '%"></i>' : ''; }).join('');
+    $('vSai').innerHTML = 'Sai: ' + esc(r.wrong) + '<u></u>Bỏ trống: ' + esc(r.blank);
+    $('vBk').classList.remove('hide'); $('vSai').classList.remove('hide');
   }
+  // chỉ số phụ: điểm tuân thủ (nếu có) · thời gian làm bài · giờ nộp
+  var ms = [];
+  if (r.compliancePoints != null) ms.push({ ic: IC.target, v: r.compliancePoints + ' điểm', l: prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ', gold: true });
+  if (r.durationSec != null) ms.push({ ic: IC.clock, v: clock(r.durationSec), l: 'Thời gian làm bài' });
+  if (r.submittedAt){ var sp = full(r.submittedAt).split(' '); ms.push({ ic: IC.cal, v: sp[0], l: 'Nộp bài: ' + (sp[1] || '') }); }
+  $('vStats').style.setProperty('--n', Math.max(1, ms.length));
+  $('vStats').innerHTML = ms.map(function(x){ return '<div class="ct-m' + (x.gold ? ' gold' : '') + '">' + x.ic + '<strong>' + esc(x.v) + '</strong><span>' + esc(x.l) + '</span></div>'; }).join('');
+  $('vHost').textContent = location.host + '/kiemtra';
   var rows = '';
   if (r.startedAt) rows += '<div><dt>Bắt đầu lúc</dt><dd>'+full(r.startedAt)+'</dd></div>';
   if (r.submittedAt) rows += '<div><dt>Nộp bài lúc</dt><dd>'+full(r.submittedAt)+'</dd></div>';
   if (r.durationSec != null) rows += '<div><dt>Thời gian hoàn thành</dt><dd>'+dur(r.durationSec)+'</dd></div>';
-  $('vRows').innerHTML = rows; $('vProof').textContent = r.proof;
+  $('vRows').innerHTML = rows; $('vRows').classList.toggle('hide', !rows); $('vProof').textContent = r.proof;
   $('vSys').textContent = full(Date.now() + off);
   setInterval(function(){ $('vSys').textContent = full(Date.now() + off); }, 1000);
   $('state').classList.add('hide'); $('okView').classList.remove('hide');
   var arc = $('vArc');
-  requestAnimationFrame(function(){ requestAnimationFrame(function(){ arc.style.strokeDashoffset = String(326.73 * (1 - Math.max(0, Math.min(100, pct)) / 100)); }); });
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ arc.style.strokeDashoffset = String(446.11 * (1 - Math.max(0, Math.min(100, pct)) / 100)); }); });
+  // Mã QR của chính liên kết xác thực này (dựng bằng thư viện QR nạp khi cần; lỗi thì ẩn ô QR, không ảnh hưởng nội dung khác)
+  (function(){
+    var url = location.origin + '/kiemtra/ketqua.html?' + (TOK ? 't=' + encodeURIComponent(TOK) : 'c=' + encodeURIComponent(KCODE));
+    function paint(){
+      try {
+        var q = qrcode(0, 'M'); q.addData(url); q.make(); var n = q.getModuleCount(), d = '';
+        for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) if (q.isDark(y, x)) d += 'M' + (x + 4) + ' ' + (y + 4) + 'h1v1h-1z';
+        $('vQr').innerHTML = '<svg viewBox="0 0 ' + (n + 8) + ' ' + (n + 8) + '" shape-rendering="crispEdges" aria-hidden="true"><rect width="100%" height="100%" fill="#fff"/><path fill="#0A2552" d="' + d + '"/></svg>';
+        $('vQr').classList.remove('hide');
+      } catch(e){ $('vQr').classList.add('hide'); }
+    }
+    if (typeof qrcode !== 'undefined') return paint();
+    var sc = document.createElement('script'); sc.src = '/kiemtra/vendor/export/qr-make.js?v=1'; sc.onload = paint; sc.onerror = function(){}; document.head.appendChild(sc);
+  })();
 })();
 })();
 </script>
