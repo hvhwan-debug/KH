@@ -8,11 +8,12 @@
   var BRAND = '#0869df', BRAND2 = '#08b9d4', INK = '#102e5b', DEEP = '#0b3f94', MUTED = '#7186a5';
   var GRAD = 'background:' + BRAND + ';background-image:linear-gradient(100deg,' + BRAND + ',' + BRAND2 + ');';
   var FONT = "font-family:'Segoe UI',Roboto,Arial,sans-serif;";
+  var CALLOUT_MARK = '\u0001CALLOUT';
   var CAPS = /^[\p{Lu}\d][\p{Lu}\d \t,.\-–:\/|()]*$/u;
 
   // tone: kiểu thư. Mỗi kiểu có nhãn nhỏ, tiêu đề, biểu tượng, màu nhấn, chữ trên nút tự sinh.
   var TONES = {
-    remind: { eye: 'NHẮC NHỞ',   title: 'Nhắc làm bài kiểm tra', icon: '⏰', color: '#C77700', soft: '#FFF4DE', btn: 'Làm bài ngay',      when: 'Hạn làm bài' },
+    remind: { eye: 'NHẮC NHỞ',   title: 'Nhắc làm bài kiểm tra', icon: '⏰', color: '#C77700', soft: '#FFF4DE', btn: 'Làm bài ngay',      when: 'Hạn hoàn thành' },
     open:   { eye: 'SẮP MỞ ĐỀ',  title: 'Bài kiểm tra sắp mở',   icon: '🗓', color: BRAND,     soft: '#E8F2FF', btn: 'Vào trang làm bài', when: 'Mở đề lúc' },
     close:  { eye: 'SẮP ĐÓNG ĐỀ', title: 'Bài kiểm tra sắp đóng', icon: '⏳', color: '#C0392B', soft: '#FDECEA', btn: 'Làm bài ngay',      when: 'Đóng đề lúc' },
     result: { eye: 'KẾT QUẢ',    title: 'Kết quả bài kiểm tra',  icon: '🏆', color: '#1E8A52', soft: '#E6F5EC', btn: 'Xem kết quả',       when: '' },
@@ -29,6 +30,7 @@
   function when(text, tone) {
     var m;
     if (tone === 'remind' && (m = /Hạn (?:làm bài|hoàn thành)\s*:\s*([^\n]*?\d{4})/i.exec(text))) return m[1].trim();
+    if (tone === 'remind' && (m = /kết thúc vào lúc\s+([^\n]*?\d{4})/i.exec(text))) return m[1].trim();
     if (tone === 'open' && (m = /mở lúc\s+([^\n]*?\d{4})/i.exec(text))) return m[1].trim();
     if (tone === 'close' && (m = /đóng lúc\s+([^\n]*?\d{4})/i.exec(text))) return m[1].trim();
     return '';
@@ -38,9 +40,10 @@
     return m ? { n: m[1], t: m[2], p: m[3].replace(/\s+/g, '') } : null;
   }
 
-  function lines(raw, invite) {
+  function lines(raw, invite, calloutHtml) {
     return raw.map(function (l) {
       var t = l.trim();
+      if (t === CALLOUT_MARK) return calloutHtml || '';
       if (!t) return '<div style="height:8px;line-height:8px">&nbsp;</div>';
       if (/^\d+\.\s+[\p{Lu}\d \t,.\-–:\/|()]+$/u.test(t)) return '<div style="margin:16px 0 4px;padding-left:10px;border-left:4px solid ' + BRAND2 + ';font-weight:800;color:' + DEEP + ';font-size:15px">' + esc(t) + '</div>';
       if (/^[*\-•]\s+/.test(t)) {
@@ -79,9 +82,11 @@
           '</td></tr></table>' +
       '</td></tr></table>';
 
-    var callout = '', w = when(plain, tone);
+    var callout = '', w = when(plain, tone), inline = false;
+    // Mẫu nhắc mới: câu "Bài kiểm tra sẽ kết thúc vào lúc …" được thay bằng khung nổi bật tại đúng vị trí (không lặp giờ đóng 2 lần)
+    if (w && tone === 'remind') raw.forEach(function (l, i) { if (!inline && /^Bài kiểm tra sẽ kết thúc vào lúc\s+[^\n]*?\d{4}\.?$/i.test(l.trim())) { raw[i] = CALLOUT_MARK; inline = true; } });
     if (w) callout = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 4px"><tr><td style="background:' + T.soft + ';border-left:5px solid ' + T.color + ';border-radius:10px;padding:12px 16px;' + FONT + '">' +
-      '<div style="font-size:11px;letter-spacing:1px;font-weight:700;color:' + T.color + '">' + esc(T.when.toUpperCase()) + '</div>' +
+      '<div style="font-size:11px;letter-spacing:1px;font-weight:700;color:' + T.color + '">' + esc((inline ? 'Bài kiểm tra kết thúc lúc' : T.when).toUpperCase()) + '</div>' +
       '<div style="font-size:19px;font-weight:800;color:' + INK + ';margin-top:2px">' + esc(w) + '</div></td></tr></table>';
 
     var card = '', sc = tone === 'result' ? score(plain) : null;
@@ -91,7 +96,7 @@
 
     var button = cta ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 4px"><tr><td bgcolor="' + BRAND + '" style="' + GRAD + 'border-radius:12px"><a href="' + esc(cta.url) + '" style="display:inline-block;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 28px;border-radius:12px;' + FONT + '">' + esc(cta.label || T.btn) + '</a></td></tr></table>' : '';
 
-    var body = '<div style="padding:22px 24px 8px 24px;font-size:15px;line-height:1.7;color:' + INK + ';' + FONT + '">' + lines(raw, invite) + callout + card + button + '</div>';
+    var body = '<div style="padding:22px 24px 8px 24px;font-size:15px;line-height:1.7;color:' + INK + ';' + FONT + '">' + lines(raw, invite, callout) + (inline ? '' : callout) + card + button + '</div>';
     var foot = '<div style="padding:14px 24px 20px 24px;' + FONT + '"><div style="border-top:1px solid #e1ecf8;padding-top:12px;font-size:12px;line-height:1.6;color:' + MUTED + '">Hệ thống kiểm tra đánh giá trực tuyến<br>Đây là email tự động, vui lòng không trả lời thư này.</div></div>';
 
     return '<div style="background:#f1f5fb;padding:20px 10px;' + FONT + '"><div style="max-width:600px;margin:0 auto;background:#fff;border:1px solid #d6e6f9;border-radius:16px;overflow:hidden">' + head + body + foot + '</div></div>';

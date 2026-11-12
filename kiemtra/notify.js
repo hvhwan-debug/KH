@@ -35,7 +35,7 @@ var CUSTOM_FIELDS = [
 var TEST_FIELDS = [ { k:'ghi_chu', label:'Lưu ý thêm (không bắt buộc)', type:'textarea', w:true, ph:'Ví dụ: Làm bài ở nơi yên tĩnh, dùng điện thoại hoặc máy tính có camera.' } ];
 var TEMPLATES = [
   { id:'remind', group:'Thông báo', name:'Nhắc làm bài', filter:'todo', subject:'Nhắc làm bài kiểm tra: {ten_de}',
-    text:'Chào {ten}, bạn chưa hoàn thành bài kiểm tra “{ten_de}”. Hạn làm bài: {han}.\nVui lòng truy cập {link} và nhập mã nhân viên, email công ty để làm bài.\n{ho_tro}\nCảm ơn bạn.' },
+    text:'Thân gửi: {ten},\n{xung_ho} hiện có bài kiểm tra “{ten_de}” chưa hoàn thành.\nBài kiểm tra sẽ kết thúc vào lúc {han_ngay}.\n{xung_ho} vui lòng lưu ý thời hạn trên và hoàn thành bài kiểm tra trước khi hệ thống đóng bài.\nĐường dẫn làm bài: {link}\n{ho_tro}\nTrân trọng!' },
   { id:'open', group:'Thông báo', name:'Sắp mở đề', filter:'todo', subject:'Bài kiểm tra “{ten_de}” sắp mở',
     text:'Chào {ten}, bài kiểm tra “{ten_de}” sẽ mở lúc {mo}.\nBạn truy cập {link} và nhập mã nhân viên, email công ty để làm bài.\n{ho_tro}\nChúc bạn hoàn thành tốt.' },
   { id:'close', group:'Thông báo', name:'Sắp đóng đề', filter:'todo', subject:'Bài kiểm tra “{ten_de}” sắp đóng',
@@ -53,7 +53,7 @@ var TEMPLATES = [
     subject:'Thư mời tham dự đào tạo: {ten_khoa}',
     text:'THƯ MỜI THAM DỰ ĐÀO TẠO\nThân gửi: {ten},\nĐào tạo Kinh doanh trân trọng mời {xung_ho} tham dự khoá đào tạo sau:\n\n1. THÔNG TIN CHƯƠNG TRÌNH\n\n* Tên khóa đào tạo: {ten_khoa}\n* Thời gian: {thoi_gian}\n* Hình thức: {hinh_thuc}\n* Địa điểm / Đường dẫn tham dự: {dia_diem}\n* Giảng viên / Đơn vị tổ chức: {giang_vien}\n* Nội dung chính: {noi_dung}\n\n2. LƯU Ý\n\n* Tham dự đầy đủ, đúng giờ; nếu học trực tuyến, kiểm tra thiết bị và đường truyền trước giờ học.\n* Có thể cần hoàn thành bài kiểm tra hoặc khảo sát sau đào tạo theo thông báo của Ban Tổ chức.\n* Nếu không thể tham dự, vui lòng báo sớm cho {lien_he}.\n\nVui lòng xác nhận tham dự trước {han_xn} với {lien_he}.\n\nTrân trọng,\nĐào tạo kinh doanh | GT' }
 ];
-var VARS = [['ten','Tên'],['ma_nv','Mã NV'],['ten_de','Tên đề'],['link','Link làm bài'],['mo','Giờ mở'],['han','Hạn làm bài'],['diem','Số câu đúng'],['tong','Tổng số câu'],['phan_tram','Phần trăm'],['link_ket_qua','Link kết quả'],['quan_li','Quản lí'],['ho_tro','Câu hỗ trợ'],['xung_ho','Xưng hô (Anh/Chị)']];
+var VARS = [['ten','Tên'],['ma_nv','Mã NV'],['ten_de','Tên đề'],['link','Link làm bài'],['mo','Giờ mở'],['han','Hạn làm bài'],['han_ngay','Hạn (giờ ngày …)'],['diem','Số câu đúng'],['tong','Tổng số câu'],['phan_tram','Phần trăm'],['link_ket_qua','Link kết quả'],['quan_li','Quản lí'],['ho_tro','Câu hỗ trợ'],['xung_ho','Xưng hô (Anh/Chị)']];
 var CHANNELS = [['zalo','Zalo'],['sms','Tin nhắn SMS'],['email','Email'],['png','Ảnh PNG'],['pdf','Xuất PDF']];
 
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -467,6 +467,7 @@ function css(){
   '.nt-prev{margin-top:12px;border:1px dashed #9fc7ff;background:#F4F9FF;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--k)}'+
   '.nt-prev small{display:block;color:var(--m);font-weight:700;margin-bottom:4px}'+
   '.nt-prev.mail{white-space:normal;padding:8px 6px;background:#EEF3FA;border-style:solid}.nt-prev.mail small{padding:0 8px 6px}'+
+  '.nt-prev.mail table{display:table;width:auto;max-width:none;overflow:visible;font-size:inherit;border-collapse:separate;border-spacing:0}.nt-prev.mail table[width="100%"]{width:100%}.nt-prev.mail th,.nt-prev.mail td{padding:0;border:0;white-space:normal;background-clip:padding-box}'+
   '.nt-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}'+
   '.nt-f{border:1.5px solid var(--l);background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:700;color:var(--m);cursor:pointer}'+
   '.nt-f.on{background:var(--c);border-color:var(--c);color:#fff}'+
