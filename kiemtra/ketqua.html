@@ -440,6 +440,10 @@ $('paperAdmin').addEventListener('click', adminView);
   var prac = !!r.practice;
   // Đề chưa kết thúc: không hiện nút / ô đăng nhập xem lại đề, chỉ hiện một câu thông báo; tự mở khi tới giờ đóng đề (theo giờ máy chủ)
   (function paperLock(){
+    if (r.closeAt){
+      var when = new Date(r.closeAt).toLocaleString('vi-VN', { timeZone:ZONE, hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' }).replace(/^(\d{2}:\d{2}),?\s*/, '$1 ');
+      $('paperLocked').innerHTML = 'Chỉ xem lại được <b>sau khi bài kiểm tra kết thúc</b>.<br>Vui lòng quay lại lúc: <b>' + esc(when) + '</b>';
+    }
     function apply(){
       var open = r.paperOpen !== false || (r.closeAt && Date.now() + off > r.closeAt);
       $('paperLocked').classList.toggle('hide', open);
