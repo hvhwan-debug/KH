@@ -1140,9 +1140,9 @@ const handler = async function (context, req) {
       return reply(context, 200, { ok: true, candidates: list, requests: all.filter((r) => r.status === "pending") });
     }
 
-    if (op === "notifyEmail") {
-      const r = await require("../_lib/notify").sendEmails({ items: b.items, subject: b.subject, kind: b.kind });
-      return reply(context, r.status, r.body);
+    { // Gửi thông báo: gửi email, lịch sử nhắc, báo cáo đợt, gửi thử, mẫu dùng chung (xem _lib/notifyops.js)
+      const nr = await require("../_lib/notifyops").handle(op, b, { email: u.email, name: u.name || "Quản trị viên", isAdmin: true, allowed: null });
+      if (nr) return reply(context, nr.status, nr.body);
     }
 
     if (op === "resendInvites") { // gửi lại thư mời cho người chưa làm bài (xem trước bằng dry, gửi thật cần confirm)

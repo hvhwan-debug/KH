@@ -105,7 +105,7 @@ function render(tpl, r, ex, origin, extra, optional){
     ten: r.name || r.code, ma_nv: r.code, ten_de: (ex && ex.title) || '', quan_li: r.manager || '', xung_ho: honorific(r.name),
 ho_tro: 'Nếu cần hỗ trợ, liên hệ ĐTKD Kênh GT' + (String(r.manager || '').replace(/\s+/g, ' ').trim() ? ' hoặc Quản lí: ' + String(r.manager).replace(/\s+/g, ' ').trim().slice(0, 80) : '') + ' để được hỗ trợ.',
     link: ex && ex.id ? origin + '/kiemtra/?exam=' + encodeURIComponent(ex.id) : origin + '/kiemtra/',
-    mo: fmt(ex && ex.openAt) || NONE, han: fmt(ex && ex.closeAt) || NONE, mo_tuy: fmt(ex && ex.openAt), han_tuy: fmt(ex && ex.closeAt),
+    mo: fmt(ex && ex.openAt) || NONE, han: fmt(ex && ex.closeAt) || NONE, han_ngay: (fmt(ex && ex.closeAt) || NONE).replace(/^(\d{2}:\d{2}) /, '$1 ngày '), mo_tuy: fmt(ex && ex.openAt), han_tuy: fmt(ex && ex.closeAt),
     diem: r.result ? r.result.score : '', tong: r.result ? r.result.total : '', phan_tram: r.result ? r.result.pct + '%' : '',
     link_ket_qua: r.result && r.result.verify ? origin + '/kiemtra/ketqua.html?t=' + encodeURIComponent(r.result.verify) : ''
   };
@@ -493,44 +493,82 @@ function css(){
   '.nt-fields textarea{min-height:64px;resize:vertical}'+
   '.nt-req{color:#B3261E}'+
   '.nt-imgbox{margin-top:12px;border:1px solid var(--l);border-radius:12px;padding:8px 10px;background:#fff;text-align:center}.nt-imgbox small{display:block;text-align:left;font-weight:700;color:var(--m)}.nt-imgbox img{max-width:100%;display:block;margin:8px auto 2px;border-radius:8px;box-shadow:0 6px 20px rgba(16,46,91,.15)}'+
-  '.nt-msg{font-size:13px;margin-top:8px;padding:8px 12px;border-radius:10px}.nt-msg.ok{background:#DDF1E6;color:#17794A}.nt-msg.er{background:#FBE3E0;color:#B3261E}';
+  '.nt-msg{font-size:13px;margin-top:8px;padding:8px 12px;border-radius:10px}.nt-msg.ok{background:#DDF1E6;color:#17794A}.nt-msg.er{background:#FBE3E0;color:#B3261E}'+
+  '.nt-steps{display:flex;gap:6px;list-style:none;margin:0 0 14px;padding:0}.nt-steps li{flex:1 1 0;min-width:0}'+
+  '.nt-steps button{width:100%;display:flex;align-items:center;gap:8px;border:1.5px solid var(--l);background:#fff;border-radius:12px;padding:8px 10px;font:inherit;font-size:13px;font-weight:700;color:var(--m);cursor:default}'+
+  '.nt-steps li.done button{cursor:pointer;color:#17794A;border-color:#BFE3CE;background:#F2FAF5}.nt-steps li.on button{border-color:var(--c);background:#E6F0FC;color:#0B3F94}'+
+  '.nt-steps i{flex:none;width:22px;height:22px;border-radius:50%;background:#B8C6DC;color:#fff;font-style:normal;display:grid;place-items:center;font-size:12px}.nt-steps li.on i{background:var(--c)}.nt-steps li.done i{background:#17794A}'+
+  '.nt-steps span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:560px){.nt-steps span{display:none}.nt-steps li.on span{display:inline}.nt-steps li.on{flex:2.4 1 0}.nt-steps button{padding:8px 6px;justify-content:center}}'+
+  '.nt-sugg{display:flex;gap:12px;align-items:center;border:1.5px solid #cfe3fb;background:#F4F9FF;border-radius:14px;padding:12px 14px;margin-bottom:12px}.nt-sugg.warn{border-color:#F0D58A;background:#FFF9E8}.nt-sugg.urgent{border-color:#F0B3AE;background:#FDECEA}'+
+  '.nt-sugg .ic{font-size:24px}.nt-sugg .tx{flex:1;min-width:0}.nt-sugg .tx b{display:block;font-size:14px;color:var(--k)}.nt-sugg .tx span{display:block;font-size:13px;color:var(--m);margin-top:2px}.nt-sugg .on{font-size:12.5px;font-weight:700;color:#17794A;white-space:nowrap}'+
+  '.nt-sum{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--m);margin:2px 0 8px}.nt-sum b{color:var(--k)}.nt-sum .w,.nt-sum .w b{color:#B3261E}'+
+  '.nt-all{display:flex;gap:8px;align-items:center;font-size:13px;font-weight:700;margin:0 0 8px}.nt-row.hold{background:#FFF9E8}'+
+  '.nt-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}.nt-tags:empty{display:none}'+
+  '.nt-hist{display:inline-block;background:#EEF3FA;color:#3B5B8C;border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700}.nt-cap{display:inline-block;background:#FFF1CC;color:#8A5A00;border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700}'+
+  '.nt-star{color:#C77700;font-weight:700;font-size:12px}.nt-h{margin:0 0 10px;font-size:14px;color:var(--k)}'+
+  '.nt-chk{list-style:none;margin:0;padding:0;display:grid;gap:6px}.nt-chk li{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;line-height:1.5;color:var(--k)}'+
+  '.nt-chk i{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:800;color:#fff;margin-top:1px}'+
+  '.nt-chk .ok i{background:#17794A}.nt-chk .warn i{background:#C77700}.nt-chk .err i{background:#B3261E}.nt-chk .err span{color:#B3261E;font-weight:700}'+
+  '.nt-pvbar{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--k)}.nt-pvbar button{border:1.5px solid var(--l);background:#fff;border-radius:10px;width:34px;height:30px;font-size:18px;cursor:pointer;color:#0B3F94}'+
+  '.nt-nav{display:flex;justify-content:space-between;gap:10px;margin-top:14px}'+
+  '.nt-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:8px}.nt-cards div{border:1px solid var(--l);border-radius:12px;padding:10px;text-align:center;background:#F8FBFF}.nt-cards b{display:block;font-size:22px;color:var(--k)}.nt-cards span{font-size:12px;color:var(--m)}'+
+  '.nt-prog{height:8px;border-radius:99px;background:#E3EAF5;margin-top:10px;overflow:hidden}.nt-prog.hide{display:none}.nt-prog i{display:block;height:100%;width:0;background:linear-gradient(100deg,#0869df,#08b9d4);transition:width .3s}'+
+  '.nt-report{margin-top:12px;border:1.5px solid var(--l);border-radius:16px;padding:14px;background:#fff}.nt-report.ok{border-color:#BFE3CE;background:#F7FCF9}.nt-report.er{border-color:#F0B3AE;background:#FFF8F7}'+
+  '.nt-hbox{margin-top:12px;border:1px solid var(--l);border-radius:12px;padding:8px 12px;background:#fff;font-size:13px}.nt-hbox summary{cursor:pointer;font-weight:700;color:var(--k)}'+
+  '.nt-b{padding:8px 0;border-top:1px solid var(--l);line-height:1.55;color:var(--k)}.nt-b small{color:var(--m)}.nt-b .pr{display:block;color:#B3261E}';
   document.head.appendChild(s);
 }
 function mount(root, cfg){
   css();
   var all = cfg.recipients || [];
   var origin = cfg.origin || location.origin, ex = cfg.exam || {};
-  var S = { tpl:'remind', text:'', subj:'', subjEdited:false, vars:{}, channel:'zalo', filter:'todo', q:'', sel:{}, sent:{}, err:{} };
+  var S = { tpl:'remind', text:'', subj:'', subjEdited:false, subjLit:'', vars:{}, channel:'email', filter:'todo', q:'', sel:{}, sent:{}, err:{}, step:1, hist:{}, cap:null, batches:[], shared:[], canEditShared:false, touched:false, pv:0, sugg:null, report:null, sending:false, manBatch:'', logq:{}, logt:0 };
   var LS = 'ktNotifyTpl';
+  // Gọi máy chủ (lịch sử nhắc, báo cáo đợt, gửi thử, mẫu dùng chung). Không có cfg.call hoặc lỗi mạng thì trả null: giao diện vẫn dùng được như cũ.
+  function callOp(op, body){ try { return cfg.call ? Promise.resolve(cfg.call(op, body || {})).catch(function(){ return null; }) : Promise.resolve(null); } catch(e){ return Promise.resolve(null); } }
+  function eid(){ return ex && ex.id ? String(ex.id) : ''; }
+  function newId(){ return 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function myList(){ try { var a = JSON.parse(localStorage.getItem(LS) || '[]'); return Array.isArray(a) ? a : []; } catch(e){ return []; } }
   function myPut(a){ try { localStorage.setItem(LS, JSON.stringify(a.slice(0, 30))); return true; } catch(e){ return false; } }
-  function myTpl(m){
+  function saved(m, prefix, group, mine){
     var b = TEMPLATES.filter(function(t){ return t.id === m.base; })[0] || TEMPLATES[0];
-    return { id:'my:' + m.id, group:'Mẫu của tôi', name:m.name, filter:b.filter, kind:b.kind, allAudience:b.allAudience, fields:b.fields, cta:b.cta, subject:m.subject, text:m.text, vars:m.vars || {}, base:b.id, mine:true };
+    return { id:prefix + m.id, group:group, name:m.name, filter:b.filter, kind:b.kind, allAudience:b.allAudience, fields:b.fields, cta:b.cta, subject:m.subject, text:m.text, vars:m.vars || {}, base:b.id, mine:!!mine, shared:!mine, by:m.byName || '' };
   }
-  function allTpl(){ return TEMPLATES.concat(myList().map(myTpl)); }
+  function allTpl(){ return TEMPLATES.concat(S.shared.map(function(m){ return saved(m, 'sh:', 'Mẫu dùng chung', false); })).concat(myList().map(function(m){ return saved(m, 'my:', 'Mẫu của tôi', true); })); }
   function tplOf(id){ return allTpl().filter(function(t){ return t.id === id; })[0] || TEMPLATES[0]; }
   function baseId(){ var t = tplOf(S.tpl); return t.base || t.id; }
   function fieldsOf(){ return tplOf(S.tpl).fields || []; }
   function optionalKeys(){ var t = tplOf(S.tpl), b = baseId(); return (t.fields || []).filter(function(f){ return !f.req && !f.keep; }).map(function(f){ return f.k; }).concat(b === 'inviteTrain' || b === 'inviteCustom' ? ['thoi_gian'] : []).concat(b === 'inviteTest' ? ['mo_tuy','han_tuy'] : []); }
   function setTpl(id){
-    var t = tplOf(id); S.tpl = id; S.text = t.text; S.subj = t.subject; S.subjEdited = false; S.filter = t.filter; S.vars = {};
+    var t = tplOf(id); S.tpl = id; S.text = t.text; S.subj = t.subject; S.subjEdited = false; S.vars = {};
     (t.fields || []).forEach(function(f){ if (f.def) S.vars[f.k] = f.def; });
     Object.keys(t.vars || {}).forEach(function(k){ S.vars[k] = t.vars[k]; });
     if (baseId() === 'inviteTrain') S.vars.kieu_mau = POSTER_OPTS[0];
-    selVisible();
+    if (!S.touched){ S.filter = t.filter; selVisible(); } else pruneSel(); // đã tự chọn đối tượng ở bước 1 thì đổi mẫu không làm mất lựa chọn
   }
+  function pruneSel(){ var ok = {}; visible().forEach(function(r){ ok[r.code] = 1; }); Object.keys(S.sel).forEach(function(k){ if (!ok[k]) delete S.sel[k]; }); }
   function pool(){ var t = tplOf(S.tpl); return t.allAudience ? all : all.filter(function(r){ return r.eligible !== false; }); }
+  function histOf(r){ return S.hist[String(r.code).trim().toLowerCase()] || null; }
+  // Lý do tạm hoãn gửi email cho người này (cùng quy tắc với máy chủ: tối đa N thư/ngày, cách nhau tối thiểu M giờ; thông báo kết quả được miễn)
+  function capOf(r){
+    var h = histOf(r), c = S.cap; if (!h || !c || toneFor() === 'result') return '';
+    if (h.today >= c.perDay) return 'đã nhắc ' + h.today + ' lần hôm nay';
+    if (h.lastNudge && Date.now() - h.lastNudge < c.gapHours * 3600000) return 'vừa nhắc lúc ' + fmt(h.lastNudge).slice(0, 5);
+    return '';
+  }
   function visible(){
     var q = S.q.trim().toLowerCase();
     return pool().filter(function(r){
       if (S.filter === 'todo' && r.status === 'done') return false;
       if (S.filter === 'done' && r.status !== 'done') return false;
       if (S.filter === 'nophone' && r.phone) return false;
+      if (S.filter === 'new' && histOf(r)) return false;
+      if (S.filter === 'nudged' && !histOf(r)) return false;
       return !q || (r.name + ' ' + r.code + ' ' + (r.phone || '') + ' ' + (r.manager || '')).toLowerCase().indexOf(q) >= 0;
     });
   }
   function selVisible(){ S.sel = {}; visible().forEach(function(r){ S.sel[r.code] = true; }); }
+  function selRows(){ return visible().filter(function(r){ return S.sel[r.code]; }); }
   function xvars(){ return eventVars(S.vars, baseId()); }
   function msgFor(r){ return render(S.text, r, ex, origin, xvars(), optionalKeys()); }
   function posterVariantIdx(){ // -1 = không dùng mẫu minh hoạ; 1..10 = mẫu 3D cartoon; 11..20 = mẫu chuyên nghiệp
@@ -575,7 +613,6 @@ function mount(root, cfg){
     if (t.cta === 'train' && /^https?:\/\//i.test(String(S.vars.dia_diem || '').trim())) return { label:'Tham gia trực tuyến', url: String(S.vars.dia_diem).trim() };
     return null;
   }
-  function count(f){ return pool().filter(function(r){ return f === 'all' ? true : f === 'todo' ? r.status !== 'done' : f === 'done' ? r.status === 'done' : !r.phone; }).length; }
   function fieldsHtml(){
     var fl = fieldsOf(); if (!fl.length) return '';
     var t = tplOf(S.tpl);
@@ -587,81 +624,248 @@ function mount(root, cfg){
       return '<div class="ff'+(f.w?' w':'')+'"><label for="'+id+'">'+esc(f.label)+(f.req?' <span class="nt-req">*</span>':'')+'</label>'+ctl+'</div>';
     }).join('')+'</div></div>';
   }
-  function draw(){
-    var vis = visible(), first = vis.filter(function(r){ return S.sel[r.code]; })[0] || vis[0];
-    var nsel = vis.filter(function(r){ return S.sel[r.code]; }).length;
-    var nmail = vis.filter(function(r){ return S.sel[r.code] && r.email; }).length;
-    var t = tplOf(S.tpl), groups = {};
+  /* ---------- Gợi ý thông minh theo tình trạng đề ---------- */
+  function leftText(ms){ var m = Math.max(1, Math.floor(ms / 60000)), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60), mi = m % 60; return d ? d + ' ngày' + (h ? ' ' + h + ' giờ' : '') : h ? h + ' giờ' + (mi ? ' ' + mi + ' phút' : '') : mi + ' phút'; }
+  function suggest(){
+    var now = Date.now(), o = ex.openAt || 0, c = ex.closeAt || 0;
+    var el = all.filter(function(r){ return r.eligible !== false; });
+    var todo = el.filter(function(r){ return r.status !== 'done'; }).length, done = el.length - todo;
+    if (c && now > c) return { tpl:'result', filter:'done', level:'info', icon:'🏁', title:'Gửi kết quả cho ' + done + ' người đã làm', why:'Đề đã đóng lúc ' + fmt(c) + ', không còn nhắc làm bài.' };
+    if (o && now < o) return { tpl:'open', filter:'todo', level:'info', icon:'📅', title:'Thông báo sắp mở đề cho ' + todo + ' người', why:'Đề mở sau ' + leftText(o - now) + ' (lúc ' + fmt(o) + ').' };
+    if (c){ var left = c - now; return { tpl:'remind', filter:'todo', level: left <= 3 * 3600000 ? 'urgent' : left <= 24 * 3600000 ? 'warn' : 'info', icon: left <= 24 * 3600000 ? '⏰' : '🔔', title:'Nhắc ' + todo + ' người chưa làm bài', why:'Đề đóng lúc ' + fmt(c) + ' (còn ' + leftText(left) + ').' + (left <= 24 * 3600000 ? ' Nên nhắc ngay.' : '') }; }
+    return { tpl:'remind', filter:'todo', level:'info', icon:'🔔', title:'Nhắc ' + todo + ' người chưa làm bài', why:'Đề đang mở và chưa đặt giờ đóng nên thư nhắc không có thời hạn cụ thể.' };
+  }
+  function applySugg(){
+    var g = S.sugg; if (!g) return;
+    S.touched = false; setTpl(g.tpl); S.filter = g.filter; selVisible();
+    if (S.channel === 'email') visible().forEach(function(r){ if (capOf(r)) delete S.sel[r.code]; }); // người vừa được nhắc thì bỏ chọn sẵn
+    S.pv = 0;
+  }
+  function chName(c){ return { email:'Email', zalo:'Zalo', sms:'SMS', png:'Ảnh PNG', pdf:'PDF' }[c] || c; }
+  function uniq(a){ return a.filter(function(x, i){ return a.indexOf(x) === i; }); }
+  function pvPerson(){ var l = selRows(); if (!l.length) l = visible(); if (S.pv >= l.length) S.pv = 0; return l[S.pv] || null; }
+  function curSubj(r){ return S.subjEdited ? S.subjLit : subjFor(r); }
+
+  /* ---------- Kiểm tra trước khi gửi (bước 3) ---------- */
+  function review(){
+    var rows = selRows(), mailable = rows.filter(function(r){ return r.email; }), isMail = S.channel === 'email', it = [], errs = 0, kind = baseId(), now = Date.now();
+    function add(lv, t){ it.push({ lv:lv, t:t }); if (lv === 'err') errs++; }
+    var first = rows[0] || null, sample = first ? msgFor(first) : '';
+    rows.length ? add('ok', 'Người nhận: ' + rows.length + ' người.') : add('err', 'Chưa chọn người nhận (quay lại bước Đối tượng).');
+    var mi = missing(); if (mi.length) add('err', 'Chưa nhập: ' + mi.join(', ') + '.');
+    if (!String(S.text).trim()) add('err', 'Nội dung đang trống.');
+    var left = uniq(sample.match(/\{\w+\}/g) || []); if (left.length) add('err', 'Còn biến chưa được thay: ' + left.join(', ') + '.');
+    var capped = [], send = 0;
+    if (isMail){
+      var sj = String(curSubj(first)).trim(); sj ? add('ok', 'Tiêu đề: “' + sj + '”.') : add('err', 'Chưa có tiêu đề email.');
+      if (rows.length - mailable.length) add('warn', (rows.length - mailable.length) + ' người chưa có email nên sẽ bị bỏ qua.');
+      capped = mailable.filter(function(r){ return capOf(r); }); send = mailable.length - capped.length;
+      if (capped.length) add('warn', capped.length + ' người được tạm hoãn do giới hạn tần suất' + (S.cap ? ' (tối đa ' + S.cap.perDay + ' thư/ngày, cách nhau ' + S.cap.gapHours + ' giờ)' : '') + ': ' + capped.slice(0, 4).map(function(r){ return r.name || r.code; }).join(', ') + (capped.length > 4 ? '…' : '') + '.');
+      if (rows.length && !send) add('err', 'Không còn ai có thể nhận email ở đợt này.');
+    } else if (S.channel === 'zalo' || S.channel === 'sms'){
+      var np = rows.filter(function(r){ return !r.phone; }).length; if (np) add('warn', np + ' người chưa có số điện thoại nên không gửi được.');
+    }
+    if ((kind === 'remind' || kind === 'close') && ex.closeAt && now > ex.closeAt) add('warn', 'Đề đã đóng lúc ' + fmt(ex.closeAt) + ' nhưng mẫu đang là nhắc làm bài.');
+    if (kind === 'open' && ex.openAt && now > ex.openAt) add('warn', 'Đề đã mở từ ' + fmt(ex.openAt) + ', thông báo “sắp mở” có thể không còn phù hợp.');
+    if (kind === 'remind' || kind === 'close' || kind === 'open'){ var nd = rows.filter(function(r){ return r.status === 'done'; }).length; if (nd) add('warn', nd + ' người đã làm bài vẫn nằm trong danh sách nhận.'); }
+    if (kind === 'result'){ var nn = rows.filter(function(r){ return r.status !== 'done'; }).length; if (nn) add('warn', nn + ' người chưa làm bài nên chưa có kết quả để báo.'); }
+    if ((kind === 'remind' || kind === 'close') && !ex.closeAt) add('warn', 'Đề chưa đặt giờ đóng: câu về thời hạn sẽ ghi “theo thông báo của quản lý”.');
+    return { it:it, errs:errs, rows:rows, mailable:mailable, capped:capped, send:send };
+  }
+
+  /* ---------- Dựng giao diện từng bước ---------- */
+  var STEPS = ['Đối tượng', 'Nội dung', 'Kiểm tra', 'Gửi'];
+  function stepper(){
+    return '<ol class="nt-steps">' + STEPS.map(function(n, i){ var k = i + 1;
+      return '<li class="' + (k === S.step ? 'on' : k < S.step ? 'done' : '') + '"><button type="button" data-step="' + k + '"' + (k > S.step ? ' disabled' : '') + '><i>' + (k < S.step ? '✓' : k) + '</i><span>' + n + '</span></button></li>'; }).join('') + '</ol>';
+  }
+  function banner(){
+    var g = S.sugg; if (!g) return '';
+    var on = S.tpl === g.tpl && S.filter === g.filter;
+    return '<div class="nt-sugg ' + g.level + '"><div class="ic">' + g.icon + '</div><div class="tx"><b>Gợi ý: ' + esc(g.title) + '</b><span>' + esc(g.why) + '</span></div>' + (on ? '<span class="on">Đang áp dụng</span>' : '<button type="button" class="nt-act" id="ntSugg">Áp dụng gợi ý</button>') + '</div>';
+  }
+  function histBadge(r){ var h = histOf(r); if (!h) return ''; var f = fmt(h.last); return '<span class="nt-hist" title="Lần gần nhất: ' + esc(f) + ' · ' + esc(chName(h.ch)) + '">Đã nhắc ' + h.n + ' lần · ' + esc(f.slice(0, 5) + ' ' + f.slice(6, 11)) + '</span>'; }
+  function rowSimple(r){
+    var cap = S.channel === 'email' ? capOf(r) : '', miss = S.channel === 'email' ? (r.email ? '' : 'Thiếu email') : (S.channel === 'zalo' || S.channel === 'sms') ? (r.phone ? '' : 'Thiếu SĐT') : '';
+    return '<div class="nt-row' + (cap ? ' hold' : '') + '"><input type="checkbox" data-sel="' + esc(r.code) + '"' + (S.sel[r.code] ? ' checked' : '') + ' aria-label="Chọn ' + esc(r.name || r.code) + '"><div><b>' + esc(r.name || r.code) + '</b><small>' + esc(r.code) + (r.manager ? ' · ' + esc(r.manager) : '') + ' · ' + (r.status === 'done' ? 'Đã làm' : 'Chưa làm') + '</small>' +
+      '<span class="nt-tags">' + (miss ? '<span class="nt-no">' + miss + '</span>' : '') + histBadge(r) + (cap ? '<span class="nt-cap">Tạm hoãn: ' + esc(cap) + '</span>' : '') + '</span></div><div></div></div>';
+  }
+  function step1(){
+    var vis = visible(), rows = selRows(), nsel = rows.length, nmail = rows.filter(function(r){ return r.email; }).length, ncap = S.channel === 'email' ? rows.filter(function(r){ return r.email && capOf(r); }).length : 0;
+    var fl = [['todo','Chưa làm'],['done','Đã làm'],['all','Tất cả'],['new','Chưa được nhắc'],['nudged','Đã được nhắc'],['nophone','Thiếu SĐT']];
+    return banner() + '<div class="nt-box"><label class="nl">Gửi qua</label><div class="nt-seg">' + CHANNELS.map(function(c){ return '<button type="button" data-ch="' + c[0] + '" class="' + (c[0] === S.channel ? 'on' : '') + '">' + c[1] + '</button>'; }).join('') + '</div>' +
+      '<label class="nl">Đối tượng</label><div class="nt-bar">' + fl.map(function(f){ return '<button type="button" class="nt-f' + (S.filter === f[0] ? ' on' : '') + '" data-f="' + f[0] + '">' + f[1] + ' (' + count(f[0]) + ')</button>'; }).join('') +
+      '<input type="search" id="ntQ" placeholder="Tìm tên, mã NV, SĐT…" value="' + esc(S.q) + '"></div>' +
+      '<div class="nt-sum"><span><b>' + nsel + '</b> đã chọn</span>' + (S.channel === 'email' ? '<span>có email <b>' + nmail + '</b></span>' + (nsel - nmail ? '<span class="w">thiếu email <b>' + (nsel - nmail) + '</b></span>' : '') + (ncap ? '<span class="w">tạm hoãn do tần suất <b>' + ncap + '</b></span>' : '') : '') + '</div>' +
+      '<label class="nt-all"><input type="checkbox" id="ntAll"' + (vis.length && nsel === vis.length ? ' checked' : '') + '> Chọn tất cả (' + nsel + '/' + vis.length + ')</label>' +
+      '<div class="nt-rows">' + (vis.length ? vis.map(rowSimple).join('') : '<div style="padding:18px;text-align:center" class="nt-hint">Không có ai trong bộ lọc này.</div>') + '</div></div>';
+  }
+  function step2(){
+    var t = tplOf(S.tpl), groups = {}, first = pvPerson();
     allTpl().forEach(function(x){ (groups[x.group] = groups[x.group] || []).push(x); });
     var chips = VARS.concat((t.fields || []).map(function(f){ return [f.k, f.label.replace(/ \(.*\)$/,'')]; }));
-    var mi = missing();
-    root.innerHTML = '<div class="nt"><div class="nt-grid">'+
-      '<div class="nt-box"><label class="nl" for="ntTpl">Mẫu</label><select id="ntTpl">'+Object.keys(groups).map(function(g){ return '<optgroup label="'+esc(g)+'">'+groups[g].map(function(x){ return '<option value="'+x.id+'"'+(x.id===S.tpl?' selected':'')+'>'+esc(x.name)+'</option>'; }).join('')+'</optgroup>'; }).join('')+'</select>'+
-      fieldsHtml()+
-      '<label class="nl" for="ntText">Nội dung</label><textarea id="ntText">'+esc(S.text)+'</textarea>'+
-      '<div class="nt-chips" style="margin-bottom:2px"><button type="button" class="nt-chip" id="ntSave" title="Lưu nội dung và thông tin đang nhập thành mẫu dùng lại (lưu trong trình duyệt này)">+ Lưu thành mẫu của tôi</button>'+(t.mine ? '<button type="button" class="nt-chip" id="ntDel" style="background:#FBE3E0;color:#B3261E">Xoá mẫu này</button>' : '')+'</div>'+
-      '<div class="nt-chips" aria-label="Chèn thông tin tự động">'+chips.map(function(v){ return '<button type="button" class="nt-chip" data-v="'+v[0]+'" title="Chèn {'+v[0]+'}">'+esc(v[1])+'</button>'; }).join('')+'</div>'+
-      '<label class="nl">Kênh gửi</label><div class="nt-seg">'+CHANNELS.map(function(c){ return '<button type="button" data-ch="'+c[0]+'" class="'+(c[0]===S.channel?'on':'')+'">'+c[1]+'</button>'; }).join('')+'</div>'+
-      (baseId() === 'inviteTrain' && (S.channel === 'png' || S.channel === 'pdf') ? '<label class="nl" for="ntPoster">Mẫu minh hoạ (poster) — chỉ dùng cho Ảnh PNG / Xuất PDF</label><select id="ntPoster">'+POSTER_OPTS.map(function(o){ return '<option'+(o === (S.vars.kieu_mau || POSTER_OPTS[0]) ? ' selected' : '')+'>'+esc(o)+'</option>'; }).join('')+'</select><p class="nt-hint" style="margin:4px 0 0">Chọn “Không dùng” để xuất khung thư chữ đơn giản như trước; Mẫu 1–10 là phong cách 3D cartoon, Mẫu 11–20 là phong cách chuyên nghiệp — hệ thống tự điền tên và thông tin cho từng người.</p>' : '')+
-      (S.channel === 'email' ? '<label class="nl" for="ntSubj">Tiêu đề email</label><input type="text" id="ntSubj" value="'+esc(subjFor(first))+'">' : '')+
-      '<div class="nt-prev" id="ntPrev"></div>'+((S.channel==='png'||S.channel==='pdf') ? '<div class="nt-imgbox"><small>Ảnh sẽ xuất</small><img id="ntImg" alt="Xem trước ảnh thư mời"></div>' : '')+
-      '<p class="nt-hint" style="margin:10px 0 0">'+(S.channel==='png' ? 'Xuất thư thành ảnh PNG để gửi qua Zalo, Messenger hoặc in. Mỗi người một ảnh có ghi sẵn tên. Bấm “Sao chép” rồi dán thẳng vào khung chat, hoặc “Tải ảnh” để lưu.' : S.channel==='pdf' ? 'Xuất thư mời thành file PDF (khổ A4) để in hoặc gửi đính kèm. Bấm “Tải PDF” ở từng người, hoặc “Tải PDF gộp” để tải một file nhiều trang cho tất cả người đã chọn.' : S.channel==='zalo' ? 'Bấm “Mở Zalo” ở từng người: nội dung được sao chép sẵn, bạn chỉ cần dán (Cmd/Ctrl+V) rồi gửi.' : S.channel==='sms' ? 'Bấm “Soạn SMS” ở từng người: ứng dụng tin nhắn mở sẵn với nội dung và số điện thoại.' : (t.kind === 'invite' ? 'Hệ thống gửi email thư mời có khung riêng'+(t.cta ? ' và nút bấm' : '')+' tới email đã lưu của những người được chọn.' : 'Hệ thống gửi email trực tiếp tới email đã lưu của những người được chọn.'))+((S.channel==='png'||S.channel==='pdf') && posterVariantIdx() >= 0 ? ' Đang dùng mẫu minh hoạ (poster) đã chọn ở trên — mỗi người một ảnh/PDF riêng, tự điền tên và thông tin khoá học.' : '')+((S.channel==='png'||S.channel==='pdf') && posterVariantIdx() < 0 && t.cta && first && ctaFor(first) ? ' Có đường link nên hệ thống tự sinh mã QR thật của link đó để quét trực tiếp.' : '')+'</p></div>'+
-      '<div class="nt-box"><div class="nt-bar">'+
-        [['todo','Chưa làm'],['done','Đã làm'],['all','Tất cả'],['nophone','Thiếu SĐT']].map(function(f){ return '<button type="button" class="nt-f'+(S.filter===f[0]?' on':'')+'" data-f="'+f[0]+'">'+f[1]+' ('+count(f[0])+')</button>'; }).join('')+
-        '<input type="search" id="ntQ" placeholder="Tìm tên, mã NV, SĐT…" value="'+esc(S.q)+'"></div>'+
-      '<label style="display:flex;gap:8px;align-items:center;font-size:13px;font-weight:700;margin:0 0 8px"><input type="checkbox" id="ntAll"'+(vis.length && nsel === vis.length ? ' checked' : '')+'> Chọn tất cả ('+nsel+'/'+vis.length+')</label>'+
-      '<div class="nt-rows">'+(vis.length ? vis.map(function(r){ return rowHtml(r); }).join('') : '<div style="padding:18px;text-align:center" class="nt-hint">Không có ai trong bộ lọc này.</div>')+'</div>'+
-      '<div class="nt-foot">'+(S.channel==='email' ? '<button type="button" class="nt-go" id="ntSend"'+(nmail?'':' disabled')+'>Gửi email cho '+nmail+' người</button>'+(nmail < nsel ? '<span class="nt-hint">'+(nsel-nmail)+' người đã chọn chưa có email nên sẽ bị bỏ qua.</span>' : '') : (S.channel==='png' ? '<button type="button" class="nt-go" id="ntZip"'+(nsel?'':' disabled')+'>Tải '+nsel+' ảnh (.zip)</button>' : (S.channel==='pdf' ? '<button type="button" class="nt-go" id="ntPdfAll"'+(nsel?'':' disabled')+'>Tải PDF gộp ('+nsel+' trang)</button>' : '<span class="nt-hint">Bấm nút ở từng dòng để gửi. Dòng đã mở sẽ được tô xanh.</span>')))+'</div><div id="ntRes"></div></div>'+
-    '</div></div>';
+    var sug = S.sugg && S.sugg.tpl === baseId() ? ' <span class="nt-star">★ phù hợp với tình trạng đề</span>' : '';
+    return '<div class="nt-box"><label class="nl" for="ntTpl">Mẫu' + sug + '</label><select id="ntTpl">' + Object.keys(groups).map(function(g){ return '<optgroup label="' + esc(g) + '">' + groups[g].map(function(x){ return '<option value="' + x.id + '"' + (x.id === S.tpl ? ' selected' : '') + '>' + (S.sugg && x.id === S.sugg.tpl ? '★ ' : '') + esc(x.name) + '</option>'; }).join('') + '</optgroup>'; }).join('') + '</select>' +
+      fieldsHtml() +
+      '<label class="nl" for="ntText">Nội dung</label><textarea id="ntText">' + esc(S.text) + '</textarea>' +
+      '<div class="nt-chips" aria-label="Chèn thông tin tự động">' + chips.map(function(v){ return '<button type="button" class="nt-chip" data-v="' + v[0] + '" title="Chèn {' + v[0] + '}">' + esc(v[1]) + '</button>'; }).join('') + '</div>' +
+      '<div class="nt-chips"><button type="button" class="nt-chip" id="ntSave" title="Lưu thành mẫu dùng lại (chỉ trên trình duyệt này)">+ Lưu thành mẫu của tôi</button>' + (S.canEditShared ? '<button type="button" class="nt-chip" id="ntSaveShared" title="Lưu lên máy chủ để mọi người cùng dùng">+ Lưu thành mẫu dùng chung</button>' : '') +
+      (t.mine ? '<button type="button" class="nt-chip" id="ntDel" style="background:#FBE3E0;color:#B3261E">Xoá mẫu này</button>' : '') + (t.shared && S.canEditShared ? '<button type="button" class="nt-chip" id="ntDelShared" style="background:#FBE3E0;color:#B3261E">Xoá mẫu dùng chung</button>' : '') + '</div>' +
+      (baseId() === 'inviteTrain' && (S.channel === 'png' || S.channel === 'pdf') ? '<label class="nl" for="ntPoster">Mẫu minh hoạ (poster) — chỉ dùng cho Ảnh PNG / Xuất PDF</label><select id="ntPoster">' + POSTER_OPTS.map(function(o){ return '<option' + (o === (S.vars.kieu_mau || POSTER_OPTS[0]) ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>' : '') +
+      (S.channel === 'email' ? '<label class="nl" for="ntSubj">Tiêu đề email</label><input type="text" id="ntSubj" value="' + esc(curSubj(first)) + '">' : '') + '</div>';
+  }
+  function step3(){
+    var rv = review(), first = pvPerson(), rows = rv.rows, n = rows.length;
+    var list = '<ul class="nt-chk">' + rv.it.map(function(x){ return '<li class="' + x.lv + '"><i>' + (x.lv === 'ok' ? '✓' : x.lv === 'warn' ? '!' : '✕') + '</i><span>' + esc(x.t) + '</span></li>'; }).join('') + '</ul>';
+    return '<div class="nt-grid"><div class="nt-box"><h4 class="nt-h">Kiểm tra trước khi gửi</h4>' + list +
+      (S.channel === 'email' ? '<div class="nt-foot"><button type="button" class="nt-act" id="ntTest">Gửi thử cho tôi</button><span class="nt-hint">Gửi 1 thư thử đúng khung như thật tới email đăng nhập của bạn, không ghi vào lịch sử nhắc.</span></div>' : '') + '</div>' +
+      '<div class="nt-box"><div class="nt-pvbar"><button type="button" id="ntPvPrev" aria-label="Người trước">‹</button><span id="ntPvLbl"></span><button type="button" id="ntPvNext" aria-label="Người sau">›</button></div>' +
+      '<div class="nt-prev" id="ntPrev"></div>' + ((S.channel === 'png' || S.channel === 'pdf') ? '<div class="nt-imgbox"><small>Ảnh sẽ xuất</small><img id="ntImg" alt="Xem trước ảnh thư mời"></div>' : '') + '</div></div>';
+  }
+  function reportHtml(){
+    var r = S.report; if (!r) return '';
+    var ok = !r.fatal && !r.failed.length && !r.left;
+    return '<div class="nt-report ' + (ok ? 'ok' : 'er') + '"><h4 class="nt-h">Báo cáo đợt gửi</h4><div class="nt-cards"><div><b>' + r.sent + '</b><span>đã gửi</span></div><div><b>' + r.failed.length + '</b><span>lỗi</span></div><div><b>' + r.skipped + '</b><span>bỏ qua</span></div><div><b>' + r.dup + '</b><span>đã nhận trước đó</span></div><div><b>' + r.capped + '</b><span>tạm hoãn</span></div><div><b>' + r.left + '</b><span>chưa gửi</span></div></div>' +
+      (r.fatal ? '<p class="nt-hint">' + esc(r.fatal) + '</p>' : '') + (r.failed.length ? '<p class="nt-hint">' + esc(r.failed.slice(0, 5).map(function(f){ return f.code + ': ' + f.error; }).join(' · ')) + '</p>' : '') +
+      (r.left ? '<p class="nt-hint">Bấm “Gửi” lần nữa để gửi tiếp những người còn lại; người đã nhận sẽ không bị gửi trùng.</p>' : '') + '</div>';
+  }
+  function batchesHtml(){
+    if (!S.batches.length) return '';
+    return '<details class="nt-hbox"><summary>Lịch sử các đợt gửi gần đây (' + S.batches.length + ')</summary>' + S.batches.map(function(b){
+      var pr = (b.problems || []).length ? '<small class="pr">' + esc(b.problems.slice(0, 6).map(function(p){ return (p.name || p.code) + ': ' + (p.reason || p.status); }).join(' · ')) + '</small>' : '';
+      return '<div class="nt-b"><b>' + esc(fmt(b.at)) + '</b> · ' + esc(chName(b.ch)) + (b.subject ? ' · ' + esc(b.subject) : '') + '<br>' + b.sent + ' đã gửi' + (b.failed ? ', ' + b.failed + ' lỗi' : '') + (b.skipped ? ', ' + b.skipped + ' bỏ qua' : '') + (b.capped ? ', ' + b.capped + ' tạm hoãn' : '') + (b.dup ? ', ' + b.dup + ' đã nhận trước' : '') + ' <small>bởi ' + esc(b.byName || b.by || '') + '</small>' + pr + '</div>'; }).join('') + '</details>';
+  }
+  function rowHtml(r){
+    var act = '';
+    if (S.channel === 'zalo') act = '<button type="button" class="nt-act' + (r.phone ? '' : ' dis') + '" data-zalo="' + esc(r.code) + '">' + (S.sent[r.code] ? 'Mở lại Zalo' : 'Mở Zalo') + '</button>';
+    else if (S.channel === 'sms') act = '<a class="nt-act' + (r.phone ? '' : ' dis') + '" data-sms="' + esc(r.code) + '" href="' + (r.phone ? 'sms:' + r.phone + '?&body=' + encodeURIComponent(msgFor(r)) : '#') + '">Soạn SMS</a>';
+    else act = S.err[r.code] ? '<span class="nt-st er">' + esc(S.err[r.code]) + '</span>' : (S.sent[r.code] ? '<span class="nt-st ok">Đã gửi</span>' : (r.email ? '' : '<span class="nt-no">Chưa có email</span>'));
+    var contact = S.channel === 'email' ? (r.email || '') : (r.phone || '');
+    if (S.channel === 'png') act = '<button type="button" class="nt-act" data-png="' + esc(r.code) + '">Tải ảnh</button> <button type="button" class="nt-act" data-pngcopy="' + esc(r.code) + '">Sao chép</button>';
+    if (S.channel === 'pdf') act = '<button type="button" class="nt-act" data-pdf="' + esc(r.code) + '">Tải PDF</button>';
+    return '<div class="nt-row' + (S.sent[r.code] ? ' sent' : '') + '"><span></span><div><b>' + esc(r.name || r.code) + '</b><small>' + esc(r.code) + (r.manager ? ' · ' + esc(r.manager) : '') + ((S.channel === 'png' || S.channel === 'pdf') ? '' : ' · ' + (contact ? esc(contact) : '<span class="nt-no">' + (S.channel === 'email' ? 'Chưa có email' : 'Chưa có SĐT') + '</span>')) + '</small><span class="nt-tags">' + histBadge(r) + '</span></div><div>' + act + '</div></div>';
+  }
+  function step4(){
+    var rv = review(), n = rv.rows.length, t = tplOf(S.tpl);
+    if (S.channel === 'email'){
+      var skip = n - rv.mailable.length;
+      return '<div class="nt-box"><h4 class="nt-h">Sẵn sàng gửi</h4><div class="nt-cards"><div><b>' + rv.send + '</b><span>sẽ gửi</span></div><div><b>' + skip + '</b><span>thiếu email</span></div><div><b>' + rv.capped.length + '</b><span>tạm hoãn</span></div></div>' +
+        '<p class="nt-hint" style="margin:10px 0 0">Tiêu đề: <b>' + esc(curSubj(pvPerson())) + '</b></p>' +
+        '<div class="nt-foot"><button type="button" class="nt-go" id="ntSend"' + (rv.send && !rv.errs && !S.sending ? '' : ' disabled') + '>Gửi email cho ' + rv.send + ' người</button></div>' +
+        '<div class="nt-prog hide" id="ntProg"><i></i></div>' +
+        (rv.errs ? '<div class="nt-msg er">Còn lỗi cần sửa ở bước Kiểm tra: ' + esc(rv.it.filter(function(x){ return x.lv === 'err'; })[0].t) + '</div>' : '') + '</div>' + reportHtml() + batchesHtml();
+    }
+    var bulk = S.channel === 'png' ? '<button type="button" class="nt-go" id="ntZip"' + (n ? '' : ' disabled') + '>Tải ' + n + ' ảnh (.zip)</button>' : S.channel === 'pdf' ? '<button type="button" class="nt-go" id="ntPdfAll"' + (n ? '' : ' disabled') + '>Tải PDF gộp (' + n + ' trang)</button>' : '<span class="nt-hint">Bấm nút ở từng dòng để gửi. Dòng đã mở sẽ được tô xanh và ghi vào lịch sử nhắc.</span>';
+    var hint = S.channel === 'png' ? 'Mỗi người một ảnh có ghi sẵn tên. Bấm “Sao chép” rồi dán vào khung chat, hoặc “Tải ảnh” để lưu.' : S.channel === 'pdf' ? 'Bấm “Tải PDF” ở từng người, hoặc “Tải PDF gộp” để tải một file nhiều trang.' : S.channel === 'zalo' ? 'Bấm “Mở Zalo”: nội dung được sao chép sẵn, bạn chỉ cần dán (Ctrl/Cmd+V) rồi gửi.' : 'Bấm “Soạn SMS”: ứng dụng tin nhắn mở sẵn với nội dung và số điện thoại.';
+    return '<div class="nt-box"><h4 class="nt-h">Gửi qua ' + esc(chName(S.channel)) + ' (' + n + ' người)</h4><p class="nt-hint" style="margin:0 0 10px">' + hint + '</p><div class="nt-rows">' + (n ? rv.rows.map(rowHtml).join('') : '<div style="padding:18px;text-align:center" class="nt-hint">Chưa chọn ai.</div>') + '</div><div class="nt-foot">' + bulk + '</div></div>' + batchesHtml();
+  }
+  function nav(){
+    return '<div class="nt-nav">' + (S.step > 1 ? '<button type="button" class="nt-act" id="ntBack">← ' + STEPS[S.step - 2] + '</button>' : '<span></span>') + (S.step < 4 ? '<button type="button" class="nt-go" id="ntNext">Tiếp tục: ' + STEPS[S.step] + ' →</button>' : '<span></span>') + '</div>';
+  }
+  function draw(){
+    var sc = root.querySelector('.nt-rows'), top = sc ? sc.scrollTop : 0;
+    var body = S.step === 1 ? step1() : S.step === 2 ? step2() : S.step === 3 ? step3() : step4();
+    root.innerHTML = '<div class="nt">' + stepper() + body + nav() + '<div id="ntRes"></div></div>';
+    var sc2 = root.querySelector('.nt-rows'); if (sc2) sc2.scrollTop = top;
     if (window.KTDt24) window.KTDt24.upgrade(root);
     refresh();
     wire();
   }
-  function rowHtml(r){
-    var act = '';
-    if (S.channel === 'zalo') act = '<button type="button" class="nt-act'+(r.phone?'':' dis')+'" data-zalo="'+esc(r.code)+'">'+(S.sent[r.code]?'Mở lại Zalo':'Mở Zalo')+'</button>';
-    else if (S.channel === 'sms') act = '<a class="nt-act'+(r.phone?'':' dis')+'" data-sms="'+esc(r.code)+'" href="'+(r.phone ? 'sms:'+r.phone+'?&body='+encodeURIComponent(msgFor(r)) : '#')+'">Soạn SMS</a>';
-    else act = S.err[r.code] ? '<span class="nt-st er">'+esc(S.err[r.code])+'</span>' : (S.sent[r.code] ? '<span class="nt-st ok">Đã gửi</span>' : (r.email ? '' : '<span class="nt-no">Chưa có email</span>'));
-    var contact = S.channel === 'email' ? (r.email || '') : (r.phone || '');
-    if (S.channel === 'png') act = '<button type="button" class="nt-act" data-png="'+esc(r.code)+'">Tải ảnh</button> <button type="button" class="nt-act" data-pngcopy="'+esc(r.code)+'">Sao chép</button>';
-    if (S.channel === 'pdf') act = '<button type="button" class="nt-act" data-pdf="'+esc(r.code)+'">Tải PDF</button>';
-    return '<div class="nt-row'+(S.sent[r.code]?' sent':'')+'"><input type="checkbox" data-sel="'+esc(r.code)+'"'+(S.sel[r.code]?' checked':'')+' aria-label="Chọn '+esc(r.name||r.code)+'"><div><b>'+esc(r.name||r.code)+'</b><small>'+esc(r.code)+(r.manager?' · '+esc(r.manager):'')+((S.channel==='png'||S.channel==='pdf') ? '' : ' · '+(contact ? esc(contact) : '<span class="nt-no">'+(S.channel==='email'?'Chưa có email':'Chưa có SĐT')+'</span>'))+' · '+(r.status==='done'?'Đã làm':'Chưa làm')+'</small></div><div>'+act+'</div></div>';
-  }
+  function count(f){ return pool().filter(function(r){ return f === 'all' ? true : f === 'todo' ? r.status !== 'done' : f === 'done' ? r.status === 'done' : f === 'nophone' ? !r.phone : f === 'new' ? !histOf(r) : !!histOf(r); }).length; }
   function byCode(code){ return all.filter(function(r){ return r.code === code; })[0]; }
   function copy(t){ return (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(t) : Promise.reject()).catch(function(){ window.prompt('Sao chép nội dung:', t); }); }
   function warn(){ var m = missing(); if (!m.length) return false; var r = root.querySelector('#ntRes'); if (r) r.innerHTML = '<div class="nt-msg er">Vui lòng nhập: '+esc(m.join(', '))+'.</div>'; return true; }
+  /* ---------- Điều hướng + ghi nhận ---------- */
+  function showMsg(t, cls){ var r = root.querySelector('#ntRes'); if (r) r.innerHTML = '<div class="nt-msg ' + (cls || 'er') + '">' + esc(t) + '</div>'; }
+  function stepError(k){
+    if (k === 1) return selRows().length ? '' : 'Chọn ít nhất một người nhận.';
+    if (k === 2){ var m = missing(); if (m.length) return 'Vui lòng nhập: ' + m.join(', ') + '.'; if (!String(S.text).trim()) return 'Nội dung đang trống.'; if (S.channel === 'email' && !String(curSubj(pvPerson())).trim()) return 'Nhập tiêu đề email.'; return ''; }
+    if (k === 3){ var e = review().it.filter(function(x){ return x.lv === 'err'; })[0]; return e ? e.t : ''; }
+    return '';
+  }
+  function goto(k){
+    S.step = k;
+    if (k === 4){ S.report = null; S.manBatch = ''; callOp('notifyBatches', { examId: eid() }).then(function(j){ if (j && j.ok){ S.batches = j.batches || []; if (S.step === 4 && !S.sending) draw(); } }); }
+    draw(); try { root.scrollIntoView({ block:'start' }); } catch(e){}
+  }
+  function reloadHist(){ return callOp('notifyHistory', { examId: eid() }).then(function(j){ if (j && j.ok){ S.hist = j.hist || {}; S.cap = j.cap || S.cap; } return j; }); }
+  function reloadShared(){ return callOp('notifyTplList', {}).then(function(j){ if (j && j.ok){ S.shared = j.templates || []; S.canEditShared = !!j.canEdit; } return j; }); }
+  // Gửi thủ công qua Zalo / SMS / PNG / PDF: gom lại rồi ghi vào lịch sử nhắc (để mọi kênh đều có dấu vết, không nhắc trùng)
+  function logSent(r, ch){
+    if (!r || !eid()) return;
+    if (!S.manBatch) S.manBatch = newId();
+    (S.logq[ch] = S.logq[ch] || []).push(r.code);
+    clearTimeout(S.logt); S.logt = setTimeout(flushLog, 1200);
+  }
+  function flushLog(){
+    Object.keys(S.logq).forEach(function(ch){
+      var codes = S.logq[ch]; if (!codes || !codes.length) return; S.logq[ch] = [];
+      callOp('notifyLog', { examId: eid(), examTitle: ex.title || '', ch: ch, kind: toneFor(), batchId: S.manBatch + ch, subject: subjFor(pvPerson()), codes: codes }).then(reloadHist);
+    });
+  }
   function wire(){
     var q = function(s){ return root.querySelector(s); }, qa = function(s){ return [].slice.call(root.querySelectorAll(s)); };
-    q('#ntTpl').addEventListener('change', function(e){ setTpl(e.target.value); draw(); });
-    q('#ntText').addEventListener('input', function(e){ S.text = e.target.value; refresh(); });
+    var on = function(s, ev, fn){ var el = q(s); if (el) el.addEventListener(ev, fn); return el; };
+    qa('[data-step]').forEach(function(b){ b.addEventListener('click', function(){ var k = +b.dataset.step; if (k < S.step) goto(k); }); });
+    on('#ntBack', 'click', function(){ goto(S.step - 1); });
+    on('#ntNext', 'click', function(){ var e = stepError(S.step); if (e){ showMsg(e); return; } goto(S.step + 1); });
+    on('#ntSugg', 'click', function(){ applySugg(); draw(); });
+    // Bước 1: đối tượng
+    qa('[data-ch]').forEach(function(b){ b.addEventListener('click', function(){ S.channel = b.dataset.ch; if (S.sugg && !S.touched) applySugg(); draw(); }); });
+    qa('[data-f]').forEach(function(b){ b.addEventListener('click', function(){ S.touched = true; S.filter = b.dataset.f; selVisible(); draw(); }); });
+    on('#ntQ', 'input', function(e){ S.q = e.target.value; S.touched = true; selVisible(); var pos = e.target.selectionStart; draw(); var n = q('#ntQ'); if (n){ n.focus(); try { n.setSelectionRange(pos, pos); } catch(_){} } });
+    on('#ntAll', 'change', function(e){ S.touched = true; S.sel = {}; if (e.target.checked) visible().forEach(function(r){ S.sel[r.code] = true; }); draw(); });
+    qa('[data-sel]').forEach(function(c){ c.addEventListener('change', function(){ S.touched = true; if (c.checked) S.sel[c.dataset.sel] = true; else delete S.sel[c.dataset.sel]; draw(); }); });
+    // Bước 2: nội dung
+    on('#ntTpl', 'change', function(e){ setTpl(e.target.value); draw(); });
+    on('#ntText', 'input', function(e){ S.text = e.target.value; refresh(); });
     qa('[data-fk]').forEach(function(el){ var h = function(){ S.vars[el.dataset.fk] = el.value; refresh(); }; el.addEventListener('input', h); el.addEventListener('change', h); });
-    qa('.nt-chip').forEach(function(b){ b.addEventListener('click', function(){ var t = q('#ntText'), v = '{'+b.dataset.v+'}', a = t.selectionStart || t.value.length, z = t.selectionEnd || a; t.value = t.value.slice(0,a)+v+t.value.slice(z); S.text = t.value; t.focus(); t.selectionStart = t.selectionEnd = a+v.length; refresh(); }); });
-    qa('[data-ch]').forEach(function(b){ b.addEventListener('click', function(){ S.channel = b.dataset.ch; draw(); }); });
-    var ps = q('#ntPoster'); if (ps) ps.addEventListener('change', function(){ S.vars.kieu_mau = ps.value; draw(); });
-    qa('[data-f]').forEach(function(b){ b.addEventListener('click', function(){ S.filter = b.dataset.f; selVisible(); draw(); }); });
-    q('#ntQ').addEventListener('input', function(e){ S.q = e.target.value; selVisible(); var pos = e.target.selectionStart; draw(); var n = q('#ntQ'); n.focus(); try { n.setSelectionRange(pos,pos); } catch(_){} });
-    q('#ntAll').addEventListener('change', function(e){ S.sel = {}; if (e.target.checked) visible().forEach(function(r){ S.sel[r.code] = true; }); draw(); });
-    qa('[data-sel]').forEach(function(c){ c.addEventListener('change', function(){ if (c.checked) S.sel[c.dataset.sel] = true; else delete S.sel[c.dataset.sel]; draw(); }); });
-    var sj = q('#ntSubj'); if (sj) sj.addEventListener('input', function(){ S.subjEdited = true; });
-    q('#ntSave').addEventListener('click', function(){
+    qa('.nt-chip[data-v]').forEach(function(b){ b.addEventListener('click', function(){ var t = q('#ntText'); if (!t) return; var v = '{' + b.dataset.v + '}', a = t.selectionStart || t.value.length, z = t.selectionEnd || a; t.value = t.value.slice(0, a) + v + t.value.slice(z); S.text = t.value; t.focus(); t.selectionStart = t.selectionEnd = a + v.length; refresh(); }); });
+    var ps = on('#ntPoster', 'change', function(){ S.vars.kieu_mau = ps.value; draw(); });
+    on('#ntSubj', 'input', function(e){ S.subjEdited = true; S.subjLit = e.target.value; });
+    on('#ntSave', 'click', function(){
       var cur = tplOf(S.tpl), def = cur.mine ? cur.name : cur.name + ' (của tôi)';
       var name = window.prompt('Đặt tên cho mẫu của bạn:', def); if (name === null) return; name = name.trim().slice(0, 60); if (!name) return;
       var list = myList(), id = 'm' + Date.now().toString(36), at = cur.mine ? list.map(function(m){ return 'my:' + m.id; }).indexOf(cur.id) : -1;
       var rec = { id: at >= 0 && list[at].name === name ? list[at].id : id, name: name, base: baseId(), text: S.text, subject: S.subj, vars: JSON.parse(JSON.stringify(S.vars)) };
       var i = list.map(function(m){ return m.id; }).indexOf(rec.id); if (i >= 0) list[i] = rec; else list.unshift(rec);
-      if (!myPut(list)){ q('#ntRes').innerHTML = '<div class="nt-msg er">Trình duyệt không cho lưu mẫu (đang ở chế độ riêng tư?).</div>'; return; }
-      var keepVars = S.vars, keepText = S.text, keepSubj = S.subj; S.tpl = 'my:' + rec.id; S.vars = keepVars; S.text = keepText; S.subj = keepSubj; draw();
-      q('#ntRes').innerHTML = '<div class="nt-msg ok">Đã lưu mẫu “' + esc(name) + '”. Mẫu nằm trong nhóm Mẫu của tôi (chỉ dùng được trên trình duyệt này).</div>';
+      if (!myPut(list)){ showMsg('Trình duyệt không cho lưu mẫu (đang ở chế độ riêng tư?).'); return; }
+      var kv = S.vars, kt = S.text, ks = S.subj; S.tpl = 'my:' + rec.id; S.vars = kv; S.text = kt; S.subj = ks; draw();
+      showMsg('Đã lưu mẫu “' + name + '” (chỉ dùng được trên trình duyệt này).', 'ok');
     });
-    var dl = q('#ntDel');
-    if (dl) dl.addEventListener('click', function(){
+    on('#ntSaveShared', 'click', function(){
+      var cur = tplOf(S.tpl), def = cur.shared || cur.mine ? cur.name.replace(/ \(của tôi\)$/, '') : cur.name + ' (chung)';
+      var name = window.prompt('Đặt tên cho mẫu dùng chung (mọi người cùng thấy):', def); if (name === null) return; name = name.trim().slice(0, 60); if (!name) return;
+      callOp('notifyTplSave', { template: { id: cur.shared ? cur.id.slice(3) : '', name: name, base: baseId(), text: S.text, subject: S.subj, vars: JSON.parse(JSON.stringify(S.vars)) } }).then(function(j){
+        if (!j || !j.ok){ showMsg((j && j.error) || 'Không lưu được mẫu dùng chung.'); return; }
+        reloadShared().then(function(){ var kv = S.vars, kt = S.text, ks = S.subj; S.tpl = 'sh:' + j.template.id; S.vars = kv; S.text = kt; S.subj = ks; draw(); showMsg('Đã lưu mẫu dùng chung “' + name + '”.', 'ok'); });
+      });
+    });
+    on('#ntDel', 'click', function(){
       var cur = tplOf(S.tpl); if (!window.confirm('Xoá mẫu “' + cur.name + '”?')) return;
       myPut(myList().filter(function(m){ return 'my:' + m.id !== cur.id; })); setTpl(cur.base || 'remind'); draw();
     });
-    qa('[data-zalo]').forEach(function(b){ b.addEventListener('click', function(){ if (warn()) return; var r = byCode(b.dataset.zalo); if (!r || !r.phone) return; copy(msgFor(r)).then(function(){ S.sent[r.code] = true; window.open('https://zalo.me/'+r.phone, '_blank', 'noopener'); var row = b.closest('.nt-row'); if (row) row.classList.add('sent'); b.textContent = 'Mở lại Zalo'; }); }); });
-    qa('[data-sms]').forEach(function(a){ a.addEventListener('click', function(e){ if (warn()){ e.preventDefault(); return; } S.sent[a.dataset.sms] = true; var row = a.closest('.nt-row'); if (row) row.classList.add('sent'); }); });
+    on('#ntDelShared', 'click', function(){
+      var cur = tplOf(S.tpl); if (!window.confirm('Xoá mẫu dùng chung “' + cur.name + '” khỏi máy chủ? Mọi người sẽ không còn thấy mẫu này.')) return;
+      callOp('notifyTplDel', { id: cur.id.slice(3) }).then(function(j){ if (!j || !j.ok){ showMsg((j && j.error) || 'Không xoá được.'); return; } reloadShared().then(function(){ setTpl(cur.base || 'remind'); draw(); }); });
+    });
+    // Bước 3: kiểm tra
+    on('#ntPvPrev', 'click', function(){ var n = selRows().length; if (n){ S.pv = (S.pv - 1 + n) % n; refresh(); } });
+    on('#ntPvNext', 'click', function(){ var n = selRows().length; if (n){ S.pv = (S.pv + 1) % n; refresh(); } });
+    var tb = on('#ntTest', 'click', function(){
+      var r = pvPerson(); if (!r){ showMsg('Chưa có người để xem thử.'); return; }
+      if (!cfg.call){ showMsg('Chức năng gửi thử chưa sẵn sàng ở màn hình này.'); return; }
+      tb.disabled = true; var t0 = tb.textContent; tb.textContent = 'Đang gửi thử…';
+      callOp('notifyTest', { subject: curSubj(r), text: msgFor(r), kind: toneFor(), cta: ctaFor(r) }).then(function(j){
+        tb.disabled = false; tb.textContent = t0;
+        j && j.ok ? showMsg('Đã gửi thử tới ' + j.to + '. Hãy mở hộp thư của bạn để kiểm tra giao diện.', 'ok') : showMsg((j && j.error) || 'Không gửi thử được.');
+      });
+    });
+    // Bước 4: gửi
+    qa('[data-zalo]').forEach(function(b){ b.addEventListener('click', function(){ if (warn()) return; var r = byCode(b.dataset.zalo); if (!r || !r.phone) return; copy(msgFor(r)).then(function(){ S.sent[r.code] = true; logSent(r, 'zalo'); window.open('https://zalo.me/'+r.phone, '_blank', 'noopener'); var row = b.closest('.nt-row'); if (row) row.classList.add('sent'); b.textContent = 'Mở lại Zalo'; }); }); });
+    qa('[data-sms]').forEach(function(a){ a.addEventListener('click', function(e){ if (warn()){ e.preventDefault(); return; } S.sent[a.dataset.sms] = true; logSent(byCode(a.dataset.sms), 'sms'); var row = a.closest('.nt-row'); if (row) row.classList.add('sent'); }); });
     function fname(r){ return slug(r.code + '-' + (r.name || '')) + '.png'; }
-    function mark(r, el){ S.sent[r.code] = true; var row = el.closest('.nt-row'); if (row) row.classList.add('sent'); }
+    function mark(r, el){ S.sent[r.code] = true; logSent(r, S.channel); var row = el.closest('.nt-row'); if (row) row.classList.add('sent'); }
     qa('[data-png]').forEach(function(b){ b.addEventListener('click', async function(){
       if (warn()) return; var r = byCode(b.dataset.png); if (!r) return;
       var t0 = b.textContent; b.disabled = true; b.textContent = 'Đang tạo…';
@@ -708,7 +912,7 @@ function mount(root, cfg){
         var items = [];
         for (var pi = 0; pi < rows.length; pi++){ pdfAll.textContent = 'Đang tạo ' + (pi + 1) + '/' + rows.length + '…'; items.push(await pdfItemFor(rows[pi])); }
         var blob = await renderPdf(items);
-        rows.forEach(function(r){ S.sent[r.code] = true; });
+        rows.forEach(function(r){ S.sent[r.code] = true; logSent(r, 'pdf'); });
         saveBlob(blob, 'thu-moi-' + slug(tplOf(S.tpl).name) + '.pdf');
         q('#ntRes').innerHTML = '<div class="nt-msg ok">Đã tạo PDF gồm ' + rows.length + ' trang.</div>';
       } catch(e){ q('#ntRes').innerHTML = '<div class="nt-msg er">Không tạo được file PDF (cần kết nối mạng để tải thư viện). Bạn có thể tải từng PDF.</div>'; }
@@ -716,45 +920,42 @@ function mount(root, cfg){
     });
     var send = q('#ntSend');
     if (send) send.addEventListener('click', async function(){
-      if (warn()) return;
-      var rows = visible().filter(function(r){ return S.sel[r.code] && r.email; });
-      if (!rows.length){ q('#ntRes').innerHTML = '<div class="nt-msg er">Chưa chọn ai có email.</div>'; return; }
-      var subj = (q('#ntSubj') || {}).value || '';
-      if (!subj.trim()){ q('#ntRes').innerHTML = '<div class="nt-msg er">Nhập tiêu đề email.</div>'; return; }
-      if (!confirm('Gửi email cho ' + rows.length + ' người đã chọn?')) return;
-      send.disabled = true; q('#ntRes').innerHTML = '';
-      var kind = toneFor(), label0 = send.textContent;
+      if (S.sending) return;
+      var rv = review(); if (rv.errs){ showMsg(rv.it.filter(function(x){ return x.lv === 'err'; })[0].t); return; }
+      var rows = rv.mailable.filter(function(r){ return !capOf(r); });
+      if (!rows.length){ showMsg('Không còn ai có thể nhận email ở đợt này.'); return; }
+      var subj = String(curSubj(pvPerson())).trim(); if (!subj){ showMsg('Nhập tiêu đề email.'); return; }
+      if (!confirm('Gửi email “' + subj + '” cho ' + rows.length + ' người?' + (rv.capped.length ? '\n\n' + rv.capped.length + ' người đang tạm hoãn do giới hạn tần suất sẽ KHÔNG được gửi.' : '') + '\n\nEmail đã gửi đi không thu hồi được.')) return;
+      S.sending = true; S.report = null; send.disabled = true; var prog = q('#ntProg'), bar = prog && prog.querySelector('i'); if (prog) prog.classList.remove('hide');
+      var kind = toneFor(), label0 = send.textContent, batchId = newId();
       // Gửi theo từng đợt nhỏ (máy chủ ngắt mỗi yêu cầu sau ~45 giây). Người máy chủ chưa kịp gửi được đưa vào đợt sau.
       var queue = rows.map(function(r){ var it = { code:r.code, text: msgFor(r) }, c = ctaFor(r); if (c) it.cta = c; return it; });
-      var tot = { sent:0, failed:[], skipped:[], dup:[] }, fatal = '', done = 0, guard = 0, BATCH = 12;
-      while (queue.length && !fatal && guard++ < 60){
-        send.textContent = 'Đang gửi… ' + done + '/' + rows.length;
+      var tot = { sent:0, failed:[], skipped:0, dup:0, capped:rv.capped.length, left:0, fatal:'' }, done = 0, guard = 0, BATCH = 12, total = rows.length;
+      while (queue.length && !tot.fatal && guard++ < 60){
+        send.textContent = 'Đang gửi… ' + done + '/' + total; if (bar) bar.style.width = Math.round(done / total * 100) + '%';
         var part = queue.splice(0, BATCH), j = null;
-        try { j = await cfg.sendEmail(part, subj, kind); } catch(e){ j = null; }
-        if (!j || (j.sent == null && !j.error)){ fatal = 'Mất kết nối với máy chủ giữa chừng. Bấm gửi lại: những người đã nhận sẽ không bị gửi trùng.'; queue = part.concat(queue); break; }
-        if (j.error && !j.sent && !(j.pending||[]).length && !(j.failed||[]).length){ fatal = j.error; break; }
-        tot.sent += j.sent || 0; tot.failed = tot.failed.concat(j.failed || []); tot.skipped = tot.skipped.concat(j.skipped || []); tot.dup = tot.dup.concat(j.dup || []);
-        var bad = {}; (j.failed || []).forEach(function(f){ bad[f.code] = f.error || 'Lỗi'; }); (j.skipped || []).forEach(function(f){ bad[f.code] = f.reason || 'Bỏ qua'; });
+        try { j = cfg.call ? await callOp('notifyEmail', { examId: eid(), examTitle: ex.title || '', batchId: batchId, subject: subj, kind: kind, items: part }) : await cfg.sendEmail(part, subj, kind); } catch(e){ j = null; }
+        if (!j || (j.sent == null && !j.error)){ tot.fatal = 'Mất kết nối với máy chủ giữa chừng. Bấm gửi lại: những người đã nhận sẽ không bị gửi trùng.'; queue = part.concat(queue); break; }
+        if (j.error && !j.sent && !(j.pending || []).length && !(j.failed || []).length){ tot.fatal = j.error; queue = part.concat(queue); break; }
+        tot.sent += j.sent || 0; tot.failed = tot.failed.concat(j.failed || []); tot.skipped += (j.skipped || []).length; tot.dup += (j.dup || []).length; tot.capped += (j.capped || []).length;
+        var bad = {}; (j.failed || []).forEach(function(f){ bad[f.code] = f.error || 'Lỗi'; }); (j.skipped || []).forEach(function(f){ bad[f.code] = f.reason || 'Bỏ qua'; }); (j.capped || []).forEach(function(f){ bad[f.code] = f.reason || 'Tạm hoãn'; });
         var pend = {}; (j.pending || []).forEach(function(c){ pend[c] = 1; });
-        part.forEach(function(it){ if (bad[it.code]) S.err[it.code] = bad[it.code]; else if (!pend[it.code]) { S.sent[it.code] = true; delete S.err[it.code]; done++; } });
-        if (j.error) fatal = j.error;
+        part.forEach(function(it){ if (bad[it.code]) S.err[it.code] = bad[it.code]; else if (!pend[it.code]){ S.sent[it.code] = true; delete S.err[it.code]; done++; } });
+        if (j.error) tot.fatal = j.error;
         queue = part.filter(function(it){ return pend[it.code]; }).concat(queue);
-        draw(); send = q('#ntSend') || send; send.disabled = true;
       }
-      send.disabled = false; send.textContent = label0;
-      var left = queue.length, okAll = !fatal && !tot.failed.length && !left;
-      var m = 'Đã gửi ' + tot.sent + ' email' + (tot.dup.length ? ', ' + tot.dup.length + ' người đã nhận thư này trước đó nên không gửi lại' : '') +
-        (tot.failed.length ? ', lỗi ' + tot.failed.length : '') + (tot.skipped.length ? ', bỏ qua ' + tot.skipped.length : '') + (left ? ', còn ' + left + ' người chưa gửi' : '') + '.';
-      q('#ntRes').innerHTML = '<div class="nt-msg ' + (okAll ? 'ok' : 'er') + '">' + esc(m) + (fatal ? '<br>' + esc(fatal) : '') +
-        (tot.failed.length ? '<br><small>' + esc(tot.failed.slice(0, 3).map(function(f){ return f.code + ': ' + f.error; }).join(' · ')) + '</small>' : '') + '</div>';
+      tot.left = queue.length; S.sending = false; S.report = tot;
+      await reloadHist(); var bj = await callOp('notifyBatches', { examId: eid() }); if (bj && bj.ok) S.batches = bj.batches || [];
+      draw();
     });
   }
   function refresh(){ // cập nhật xem trước, tiêu đề email và liên kết SMS khi đang gõ, không vẽ lại cả khung (giữ con trỏ)
-    var vis = visible(), first = vis.filter(function(r){ return S.sel[r.code]; })[0] || vis[0], mi = missing();
+    var vis = visible(), first = pvPerson(), mi = missing();
     var p = root.querySelector('#ntPrev');
     var asMail = !!(p && first && S.channel === 'email' && window.KTMail);
     if (p) p.classList.toggle('mail', asMail);
-    if (p) p.innerHTML = '<small>Xem trước'+(S.channel === 'email' ? ' email' : '')+(first ? ' (cho '+esc(first.name||first.code)+')' : '')+'</small>'+(first ? (asMail ? KTMail.build({ text: msgFor(first), tone: toneFor(), cta: ctaFor(first) }) : esc(msgFor(first))) : 'Chưa có người nhận trong danh sách.')+(mi.length ? '<span class="nt-req" style="display:block;margin-top:6px;font-weight:700">Cần nhập: '+esc(mi.join(', '))+'</span>' : '');
+    var lbl = root.querySelector('#ntPvLbl'); if (lbl){ var nn = selRows().length; lbl.innerHTML = first ? 'Xem trước cho <b>' + esc(first.name || first.code) + '</b>' + (nn ? ' (' + (S.pv + 1) + '/' + nn + ')' : '') : 'Chưa có người nhận'; }
+    if (p) p.innerHTML = '<small>Xem trước' + (S.channel === 'email' ? ' email' : '') + '</small>' + (first ? (asMail ? KTMail.build({ text: msgFor(first), tone: toneFor(), cta: ctaFor(first) }) : esc(msgFor(first))) : 'Chưa có người nhận trong danh sách.') + (mi.length ? '<span class="nt-req" style="display:block;margin-top:6px;font-weight:700">Cần nhập: ' + esc(mi.join(', ')) + '</span>' : '');
     var sj = root.querySelector('#ntSubj'); if (sj && !S.subjEdited) sj.value = subjFor(first);
     var im = root.querySelector('#ntImg');
     if (im && first){ clearTimeout(S.pt); var snap = S.text + JSON.stringify(S.vars) + first.code; S.pt = setTimeout(async function(){
@@ -768,7 +969,10 @@ function mount(root, cfg){
     }, 350); }
     [].forEach.call(root.querySelectorAll('[data-sms]'), function(a){ var r = byCode(a.dataset.sms); if (r && r.phone) a.href = 'sms:'+r.phone+'?&body='+encodeURIComponent(msgFor(r)); });
   }
-  setTpl('remind'); draw();
+  // Mở màn hình: chọn sẵn mẫu + đối tượng theo tình trạng đề; nạp lịch sử nhắc và mẫu dùng chung từ máy chủ (không có thì dùng như cũ)
+  S.sugg = suggest(); setTpl(S.sugg.tpl); draw();
+  reloadHist().then(function(j){ if (j && j.ok && !S.touched && !S.sending){ applySugg(); if (S.step === 1) draw(); } else if (j && j.ok && S.step === 1 && !S.sending) draw(); });
+  reloadShared();
 }
 window.KTNotify = { mount: mount, _paint: paintLetter };
 })();

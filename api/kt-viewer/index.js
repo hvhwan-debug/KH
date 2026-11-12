@@ -281,10 +281,9 @@ const handler = async function (context, req) {
 
     // Soạn câu hỏi bằng AI (nháp, chưa lưu) và đưa vào ngân hàng đề - quản lí dùng được, không cần xem/duyệt
     // toàn bộ ngân hàng đề sẵn có (chỉ thấy đúng những câu mình vừa soạn, để xét duyệt trước khi lưu).
-    if (op === "notifyEmail") {
-      // Quản lí chỉ gửi được cho nhân viên thuộc phạm vi của mình
-      const r = await require("../_lib/notify").sendEmails({ items: b.items, subject: b.subject, kind: b.kind, allowed: (c) => quiz.inScope(viewer, c) });
-      return reply(context, r.status, r.body);
+    { // Gửi thông báo (xem _lib/notifyops.js). Quản lí chỉ thao tác được với nhân viên thuộc phạm vi của mình
+      const nr = await require("../_lib/notifyops").handle(op, b, { email: viewer.email, name: viewer.name || viewer.email, isAdmin: !!viewer.isAdmin, allowed: (c) => quiz.inScope(viewer, c) });
+      if (nr) return reply(context, nr.status, nr.body);
     }
 
     if (op === "genQuestions") {

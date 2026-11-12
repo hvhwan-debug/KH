@@ -4096,7 +4096,8 @@ async function loadNotify(){
   const { j } = await api('GET', '/api/kt-admin?op=notifyData&exam=' + encodeURIComponent(id));
   if (!j.ok){ $('ntMount').innerHTML = '<div class="msg err">' + esc(j.error || 'Không tải được dữ liệu.') + '</div>'; return; }
   KTNotify.mount($('ntMount'), { recipients: j.recipients, exam: j.exam, origin: location.origin,
-    sendEmail: async (items, subject, kind) => (await api('POST', '/api/kt-admin', { op: 'notifyEmail', subject, items, kind })).j });
+    call: async (op, body) => (await api('POST', '/api/kt-admin', Object.assign({ op }, body))).j,
+    sendEmail: async (items, subject, kind) => (await api('POST', '/api/kt-admin', { op: 'notifyEmail', examId: id, subject, items, kind })).j });
 }
 // ----- Tài khoản thử nghiệm (thi không giới hạn, không lưu kết quả) -----
 function taRow(a){

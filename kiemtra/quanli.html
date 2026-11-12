@@ -1695,7 +1695,8 @@ document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') ['ov
 $('notifyBtn').addEventListener('click', function(){
   $('ovNotify').classList.remove('hide');
   KTNotify.mount($('ntMount'), { recipients: EMP, exam: EXAM, origin: location.origin,
-    sendEmail: async function(items, subject, kind){ var r = await api('POST', '/api/kt-viewer', { op: 'notifyEmail', subject: subject, items: items, kind: kind }); return r.j; } });
+    call: async function(op, body){ var r = await api('POST', '/api/kt-viewer', Object.assign({ op: op }, body)); return r.j; },
+    sendEmail: async function(items, subject, kind){ var r = await api('POST', '/api/kt-viewer', { op: 'notifyEmail', examId: EXAM && EXAM.id, subject: subject, items: items, kind: kind }); return r.j; } });
 });
 
 /* ---------- Tải Excel (có định dạng; dự phòng CSV) ---------- */
