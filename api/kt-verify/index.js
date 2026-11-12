@@ -43,7 +43,10 @@ module.exports = async function (context, req) {
         wrong: attempt.wrong, blank: attempt.blank,
         startedAt: attempt.startedAt, submittedAt: attempt.submittedAt,
         durationSec: Math.round(((attempt.submittedAt || 0) - (attempt.startedAt || attempt.submittedAt || 0)) / 1000),
-        proof: quiz.proofCode(attempt.id)
+        proof: quiz.proofCode(attempt.id),
+        // Xem lại đề chỉ mở sau khi đề đóng (cùng điều kiện với api/kt-mypaper; bài tài khoản thử nghiệm không bị giới hạn)
+        closeAt: settings.closeAt || 0,
+        paperOpen: !!attempt.test || (!!settings.closeAt && Date.now() > settings.closeAt)
       }
     });
   } catch (e) {

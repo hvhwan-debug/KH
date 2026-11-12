@@ -158,10 +158,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
         <div class="proof"><svg width="38" height="38" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z" fill="#17794A"/><path d="m8.2 12.3 2.6 2.6 5-5.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><div><small>MÃ MINH CHỨNG</small><b id="vProof"></b><span>Mã này khớp với dữ liệu bài làm trên hệ thống.</span></div></div>
 
         <div class="paperbox" id="paperBox">
+          <p class="pnote hide" id="paperLocked" style="margin-top:0">Chỉ xem lại được <b>sau khi bài kiểm tra kết thúc</b>.</p>
           <button type="button" class="btn-outline" id="paperToggle">Xem lại đề đã làm</button>
           <button type="button" class="btn-outline solid hide" id="paperAdmin" style="margin-top:8px">Xem đề (quản trị viên)</button>
           <div class="hide" id="paperForm">
-            <p class="pnote">Chỉ xem lại được <b>sau khi bài kiểm tra kết thúc</b>.</p>
             <input type="text" id="pCode" placeholder="Mã nhân viên" autocomplete="off">
             <input type="text" id="pEmail" placeholder="Email" autocomplete="off">
             <button type="button" class="btn-outline solid" id="paperGo">Tiếp tục</button>
@@ -438,6 +438,17 @@ $('paperAdmin').addEventListener('click', adminView);
   off = (j.serverNow || Date.now()) - Date.now();
   var r = j.result, ps = (r.passed === true || r.passed === false) ? r.passed : null, pct = r.pct == null ? 0 : r.pct;
   var prac = !!r.practice;
+  // Đề chưa kết thúc: không hiện nút / ô đăng nhập xem lại đề, chỉ hiện một câu thông báo; tự mở khi tới giờ đóng đề (theo giờ máy chủ)
+  (function paperLock(){
+    function apply(){
+      var open = r.paperOpen !== false || (r.closeAt && Date.now() + off > r.closeAt);
+      $('paperLocked').classList.toggle('hide', open);
+      if (open){ if ($('paperForm').classList.contains('hide') && $('paperView').classList.contains('hide')) $('paperToggle').classList.remove('hide'); }
+      else { $('paperToggle').classList.add('hide'); $('paperForm').classList.add('hide'); }
+      return open;
+    }
+    if (!apply() && r.closeAt){ var wait = r.closeAt - (Date.now() + off) + 500; if (wait > 0 && wait < 2147483000) setTimeout(apply, wait); }
+  })();
   if (!VBAR_OFFICIAL) VBAR_OFFICIAL = $('vbar').innerHTML;
   document.title = (prac ? '[THI THỬ] ' : '') + 'Xác thực kết quả - ' + r.name;
   $('card').classList.toggle('pr', prac);
