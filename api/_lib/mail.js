@@ -14,10 +14,10 @@ function fromOf(from, name) {
   return address ? { name: String(name).replace(/["<>\r\n]/g, " ").trim(), address } : from;
 }
 
-async function send({ to, subject, html, text, headers, fromName }) {
+async function send({ to, subject, html, text, headers, fromName, attachments }) {
   const c = cfg();
   if (c.mailMode === "memory") {
-    (global.__mailbox = global.__mailbox || []).push({ to, subject, html, text, headers, from: fromOf(c.smtp.from, fromName), at: Date.now() });
+    (global.__mailbox = global.__mailbox || []).push({ to, subject, html, text, headers, attachments, from: fromOf(c.smtp.from, fromName), at: Date.now() });
     return true;
   }
   if (!c.smtp.host) return false; // chưa cấu hình SMTP: email tự động là tuỳ chọn, bỏ qua thay vì báo lỗi (trả về false để nơi gọi biết là CHƯA gửi)
@@ -31,7 +31,7 @@ async function send({ to, subject, html, text, headers, fromName }) {
       auth: c.smtp.user ? { user: c.smtp.user, pass: c.smtp.pass } : undefined
     });
   }
-  await transport.sendMail({ from: fromOf(c.smtp.from, fromName), to, subject, html, text, headers });
+  await transport.sendMail({ from: fromOf(c.smtp.from, fromName), to, subject, html, text, headers, attachments });
   return true;
 }
 

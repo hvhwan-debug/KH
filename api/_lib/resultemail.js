@@ -61,7 +61,9 @@ function model(attempt, settings, advice) {
   return { t, ps, a, an, total, wrong, blank, dur, name, status, color, subject, intro, when, whenShort, url: verifyLink(attempt), proof: quiz.proofCode(attempt.id) };
 }
 
-function build(attempt, settings, advice) {
+// opts.card = true: email có đính kèm ảnh thẻ kết quả (thêm một dòng báo cho người nhận)
+function build(attempt, settings, advice, opts) {
+  const cardNote = !!(opts && opts.card);
   const m = model(attempt, settings, advice), t = m.t, a = m.a, an = m.an;
   const compliance = attempt.compliancePoints;
   const pre = attempt.pct + "% · " + attempt.score + "/" + m.total + " câu đúng" + (t.practice ? " · Bài thi thử, không phải thi chính thức" : "") + ". " + (a.headline || "Xem phân tích và lời khuyên của bạn.");
@@ -174,7 +176,7 @@ function build(attempt, settings, advice) {
     sectionGap + "<tr><td align=\"center\">" +
     '<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto"><tr><td align="center" bgcolor="' + C.brand + '" style="border-radius:12px;background:' + C.brand + ';background:linear-gradient(135deg,#0AA3A0,' + C.brand + ')">' +
     '<a href="' + esc(m.url) + '" target="_blank" style="display:inline-block;padding:14px 30px;font-family:' + FONT + ';font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px">Xem xác thực kết quả</a></td></tr></table>' +
-    '<div style="font-family:' + FONT + ';font-size:12px;line-height:1.6;color:' + C.muted + ';margin-top:10px">Dùng để người có thẩm quyền đối chiếu kết quả với dữ liệu trên hệ thống.</div></td></tr>';
+    '<div style="font-family:' + FONT + ';font-size:12px;line-height:1.6;color:' + C.muted + ';margin-top:10px">Dùng để người có thẩm quyền đối chiếu kết quả với dữ liệu trên hệ thống.' + (cardNote ? '<br>Thẻ kết quả (ảnh PNG) được đính kèm theo email này để bạn lưu hoặc chia sẻ.' : '') + '</div></td></tr>';
   const row = (k, v, mono) => '<tr><td style="padding:10px 0;border-top:1px solid #E8F0F2;font-family:' + FONT + ';font-size:13px;color:' + C.muted + '">' + esc(k) + '</td><td align="right" style="padding:10px 0;border-top:1px solid #E8F0F2;font-family:' + (mono ? "Consolas,'SF Mono',Menlo,monospace" : FONT) + ';font-size:' + (mono ? "14px" : "13px") + ';font-weight:700;color:' + C.ink + ';' + (mono ? "letter-spacing:.08em" : "") + '">' + esc(v) + "</td></tr>";
   const receipt =
     sectionGap + "<tr><td>" + eyebrow("Biên nhận nộp bài") +
@@ -208,7 +210,7 @@ function build(attempt, settings, advice) {
     '<span style="color:#8A9DA1">Email chứa thông tin cá nhân của bạn, vui lòng không chuyển tiếp cho người khác.</span></td></tr>' +
     "</table></td></tr></table></body></html>";
 
-  return { subject: m.subject, html: harden(html), text: textOf(attempt, settings, m) };
+  return { subject: m.subject, html: harden(html), text: textOf(attempt, settings, m, cardNote) };
 }
 
 // Gia cố cho mọi ứng dụng thư: mọi <table>/<td> có thuộc tính width (hoặc align) đều được khai báo THÊM bằng CSS
@@ -226,7 +228,7 @@ function harden(html) {
 }
 
 // Bản chữ thuần: đọc được trên mọi ứng dụng thư, cùng nội dung và cùng thứ tự với bản HTML
-function textOf(attempt, settings, m) {
+function textOf(attempt, settings, m, cardNote) {
   const t = m.t, a = m.a, an = m.an, compliance = attempt.compliancePoints, L = [];
   L.push("KẾT QUẢ BÀI KIỂM TRA", t.main + (t.chan ? " · Kênh " + t.chan : "") + (t.practice ? "  [THI THỬ - KHÔNG PHẢI THI CHÍNH THỨC]" : ""), "Nộp lúc " + m.whenShort, "", "Chào " + m.name + ",", "", m.intro, "");
   L.push("KẾT QUẢ", "- Tỉ lệ trả lời đúng: " + attempt.pct + "% (" + attempt.score + "/" + m.total + " câu)", "- Đúng " + (attempt.score || 0) + " · Sai " + m.wrong + " · Bỏ trống " + m.blank);
@@ -253,7 +255,7 @@ function textOf(attempt, settings, m) {
     (a.actions || []).forEach((x, i) => L.push((i + 1) + ". " + x));
     if (a.goal) L.push("Mục tiêu " + String(a.goal).charAt(0).toLowerCase() + String(a.goal).slice(1));
   }
-  L.push("", "XÁC THỰC KẾT QUẢ", m.url, "Mã minh chứng: " + m.proof, "", "BIÊN NHẬN NỘP BÀI", "Họ và tên: " + oneLine(attempt.name, 80), "Mã nhân viên: " + oneLine(attempt.code, 40), "Quản lí: " + (oneLine(attempt.manager, 80) || "(chưa rõ)"),
+  L.push("", "XÁC THỰC KẾT QUẢ", m.url, "Mã minh chứng: " + m.proof, ...(cardNote ? ["Thẻ kết quả (ảnh PNG) được đính kèm theo email này."] : []), "", "BIÊN NHẬN NỘP BÀI", "Họ và tên: " + oneLine(attempt.name, 80), "Mã nhân viên: " + oneLine(attempt.code, 40), "Quản lí: " + (oneLine(attempt.manager, 80) || "(chưa rõ)"),
     "Nộp bài lúc: " + vn(attempt.submittedAt), "", supportLine(attempt.manager), "", "Chúc bạn học tập và làm việc hiệu quả.", "", "Trân trọng,", "Hệ thống kiểm tra trực tuyến", "", "--",
     "Email tự động từ hệ thống kiểm tra, vui lòng không trả lời trực tiếp. Có thắc mắc về kết quả, hãy liên hệ quản lí trực tiếp hoặc quản trị viên phụ trách. Email chứa thông tin cá nhân, vui lòng không chuyển tiếp.");
   return L.join("\n");
