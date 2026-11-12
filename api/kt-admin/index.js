@@ -1150,6 +1150,11 @@ const handler = async function (context, req) {
       return reply(context, r.ok ? 200 : 400, r);
     }
 
+    if (op === "remindExam") { // nhắc làm bài cho người chưa nộp (xem trước bằng dry, gửi thật cần confirm) — chỉ thủ công
+      const r = await require("../_lib/examnotify").remind(String(b.examId || "").trim(), { dry: b.dry === true, confirm: b.confirm === true, fresh: b.fresh === true });
+      return reply(context, r.ok ? 200 : 400, r);
+    }
+
     if (op === "setDefaultExam") {
       const id = String(b.id || "").trim();
       if (!quiz.validPeriod(id) || !id) return reply(context, 400, { ok: false, error: "Mã đề thi không hợp lệ." });

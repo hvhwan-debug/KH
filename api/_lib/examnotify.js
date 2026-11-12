@@ -99,4 +99,63 @@ async function resend(examId, opts) {
   await quiz.saveExams(exams);
   return { ok: true, sent: done.length, remaining: pending.length - done.length, stats, title };
 }
-module.exports = { run, resend };
+
+// NHẮC LÀM BÀI (thủ công, do quản trị viên bấm): gửi cho người thuộc đối tượng, có email và CHƯA nộp bài của đề này.
+// - Giờ đóng bài lấy từ closeAt THỰC TẾ của đề (cài đặt đề). Đề chưa đặt giờ đóng, đã đóng, hoặc là đề thi thử: không cho gửi.
+// - Không gửi trùng: mã NV đã nhắc lưu ở exam.remindedCodes, gắn với đúng giờ đóng hiện tại (exam.remindedFor);
+//   nếu quản trị viên dời giờ đóng thì đợt nhắc mới tự bắt đầu lại. fresh = true để chủ động nhắc lại từ đầu.
+// - dry = true chỉ đếm + trả về thời gian còn lại, không gửi. Gửi thật cần confirm = true. KHÔNG gọi từ cron.
+async function remind(examId, opts) {
+  opts = opts || {};
+  const t0 = Date.now();
+  const exams = await quiz.getExams();
+  const exam = exams.find((e) => e.id === examId);
+  if (!exam) return { ok: false, error: "Không tìm thấy đề thi." };
+  if (exam.practice) return { ok: false, error: "Đề thi thử không cần nhắc làm bài." };
+  const settings = await quiz.getExamSettings(exam.id);
+  const closeAt = Number(settings.closeAt || exam.closeAt || 0);
+  if (!closeAt) return { ok: false, error: "Đề này chưa đặt giờ đóng bài nên chưa thể nhắc theo thời hạn. Hãy đặt \"Đóng lúc\" trong cài đặt đề." };
+  if (closeAt <= Date.now()) return { ok: false, error: "Đề này đã đóng, không gửi nhắc nữa." };
+  const cands = await quiz.getCandidates();
+  const doneSet = new Set((await quiz.getIndex()).filter((a) => a.status === "submitted" && (a.period || "") === settings.examPeriod).map((a) => quiz.normCode(a.code)));
+  const sameDeadline = Number(exam.remindedFor || 0) === closeAt;
+  const reminded = new Set(opts.fresh || !sameDeadline ? [] : (exam.remindedCodes || []).map(quiz.normCode));
+  const inAud = cands.filter((c) => quiz.inAudience(settings, c));
+  const notDone = inAud.filter((c) => !doneSet.has(quiz.normCode(c.code)));
+  const pending = notDone.filter((c) => c.email && !reminded.has(quiz.normCode(c.code)));
+  const stats = {
+    audience: inAud.length, done: inAud.length - notDone.length,
+    noEmail: notDone.filter((c) => !c.email).length,
+    alreadyReminded: notDone.filter((c) => c.email && reminded.has(quiz.normCode(c.code))).length,
+    pending: pending.length
+  };
+  const title = exam.examTitle || exam.title || exam.id;
+  const info = { title, closeAt, msLeft: closeAt - Date.now(), lastRemindAt: exam.remindedAt || 0 };
+  if (opts.dry) return Object.assign({ ok: true, dry: true, stats }, info);
+  if (!opts.confirm) return { ok: false, error: "Cần xác nhận trước khi gửi." };
+  if (!pending.length) return Object.assign({ ok: true, sent: 0, remaining: 0, stats }, info);
+  const link = cfg().appUrl + "/kiemtra/?exam=" + encodeURIComponent(exam.id);
+  const list = pending.slice(0, MAX_PER_RUN);
+  const done = [];
+  let idx = 0, stopped = false, noSmtp = false;
+  async function worker() {
+    while (idx < list.length && !stopped) {
+      if (Date.now() - t0 > TIME_BUDGET) return;
+      const c = list[idx++];
+      try {
+        const msg = require("./remindmail").build({ name: c.name, title, closeAtMs: closeAt, ctaUrl: link });
+        const ok = await mail.send({ fromName: mail.KT_NAME, to: c.email, subject: msg.subject, html: msg.html, text: msg.text });
+        if (ok === false) { stopped = true; noSmtp = true; return; }
+        done.push(quiz.normCode(c.code));
+      } catch (e) { /* lỗi riêng người này: bấm gửi tiếp sẽ thử lại */ }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(CONC, list.length) }, worker));
+  if (noSmtp && !done.length) return { ok: false, error: "Chưa cấu hình gửi email (SMTP), chưa gửi được thư nào." };
+  exam.remindedFor = closeAt;
+  exam.remindedCodes = Array.from(new Set([...(opts.fresh || !sameDeadline ? [] : (exam.remindedCodes || [])), ...done]));
+  exam.remindedAt = Date.now();
+  await quiz.saveExams(exams);
+  return Object.assign({ ok: true, sent: done.length, remaining: pending.length - done.length, stats }, info);
+}
+module.exports = { run, resend, remind };

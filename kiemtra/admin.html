@@ -1378,6 +1378,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
           <label style="display:flex;align-items:flex-start;gap:8px;margin:6px 0 10px;font-size:14px"><input type="checkbox" id="exInviteOff" style="width:18px;height:18px;margin-top:2px"> <span>Không tự động gửi email mời làm bài <span class="small">(mặc định: ai mới được gán vào đề này sẽ tự nhận email mời, không cần quản trị viên gửi tay)</span></span></label>
           <div id="exInviteStat" class="small" style="margin-bottom:10px"></div>
 <div id="exResend" style="margin-bottom:12px"></div>
+<div id="exRemind" style="margin-bottom:12px"></div>
           <div class="asg-mode" role="radiogroup" aria-label="Đối tượng làm đề">
             <label><input type="radio" name="asgMode" value="all" checked onchange="asgSetMode('all')"> Tất cả nhân viên</label>
             <label><input type="radio" name="asgMode" value="pick" onchange="asgSetMode('pick')"> Chỉ những nhân viên được chọn</label>
@@ -3005,6 +3006,7 @@ function exRefresh(){ cancelAnimationFrame(exRaf); exRaf = requestAnimationFrame
 (function(){ const card = $('examFormCard'); if (card) ['input', 'change', 'click'].forEach(ev => card.addEventListener(ev, exRefresh)); })();
 /* ---------- Gửi lại thư mời cho người chưa làm bài (xem trước → xác nhận → gửi) ---------- */
 function exResendReset(show){
+  exRemindReset(show);
   $('exResend').innerHTML = show ? '<button type="button" class="btn ghost sm" onclick="resendPreview(false)">Gửi lại thư mời cho người chưa làm bài…</button> <span class="small">Chỉ gửi cho người thuộc đối tượng, có email và chưa nộp bài. Sẽ xem trước số người trước khi gửi.</span>' : '';
 }
 async function resendPreview(fresh){
@@ -3031,6 +3033,48 @@ async function resendSend(fresh){
   const { j } = await api('POST','/api/kt-admin', { op:'resendInvites', examId:id, confirm:true, fresh:!!fresh });
   if (!j || !j.ok){ box.innerHTML = '<div class="msg err">' + esc((j && j.error) || 'Không gửi được.') + '</div>'; return; }
   box.innerHTML = '<div class="msg ok">Đã gửi ' + j.sent + ' thư.' + (j.remaining ? ' Còn ' + j.remaining + ' người chưa gửi (do giới hạn mỗi lượt), bấm "Gửi lại thư mời…" lần nữa để gửi tiếp.' : ' Đã gửi hết.') + '</div> <button type="button" class="btn ghost sm" onclick="exResendReset(true)">Đóng</button>';
+}
+/* ---------- Nhắc làm bài cho người chưa nộp (xem trước + đếm ngược theo giờ đóng thực tế → xác nhận → gửi) ---------- */
+let exRemindTimer = 0;
+function exRemindReset(show){
+  clearInterval(exRemindTimer);
+  const b = $('exRemind'); if (!b) return;
+  b.innerHTML = show ? '<button type="button" class="btn ghost sm" onclick="remindPreview(false)">Nhắc làm bài cho người chưa nộp…</button> <span class="small">Chỉ gửi cho người thuộc đối tượng, có email, chưa nộp bài; chỉ khi đề đã đặt giờ đóng và chưa đóng. Có xem trước trước khi gửi.</span>' : '';
+}
+function remindLeft(ms){
+  if (ms <= 0) return 'đã đóng';
+  const s = Math.floor(ms / 1000), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+  return (d ? d + ' ngày ' : '') + String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(x).padStart(2,'0');
+}
+async function remindPreview(fresh){
+  const id = $('exEditingId').value, box = $('exRemind');
+  if (!id) return;
+  clearInterval(exRemindTimer);
+  box.innerHTML = '<span class="small">Đang kiểm tra…</span>';
+  const { j } = await api('POST','/api/kt-admin', { op:'remindExam', examId:id, dry:true, fresh:!!fresh });
+  if (!j || !j.ok){ box.innerHTML = '<div class="msg err">' + esc((j && j.error) || 'Không kiểm tra được.') + '</div> <button type="button" class="btn ghost sm" onclick="exRemindReset(true)">Đóng</button>'; return; }
+  const t = j.stats;
+  box.innerHTML = '<div style="border:1.5px solid #F0D58A;background:#FFF9E8;border-radius:12px;padding:12px 14px">' +
+    '<b>Sẽ nhắc ' + t.pending + ' người</b> (đề “' + esc(j.title) + '”)' +
+    '<div class="small" style="margin-top:6px">Đề đóng lúc <b>' + esc(new Date(j.closeAt).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' })) + '</b> · còn lại <b id="exRemindCd"></b></div>' +
+    '<div class="small" style="margin-top:6px">Trong đối tượng: ' + t.audience + ' người · đã nộp bài (không nhắc): ' + t.done + ' · thiếu email (không nhắc): ' + t.noEmail + (t.alreadyReminded ? ' · đã được nhắc cho đúng hạn đóng này (không gửi trùng): ' + t.alreadyReminded : '') + '.' + (j.lastRemindAt ? ' Lần nhắc gần nhất: ' + esc(new Date(j.lastRemindAt).toLocaleString('vi-VN')) + '.' : '') + '</div>' +
+    '<div class="small" style="margin-top:4px">Email đã gửi không thu hồi được.</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
+    '<button type="button" class="btn sm" ' + (t.pending ? '' : 'disabled') + ' onclick="remindSend(' + (fresh ? 'true' : 'false') + ')">Gửi nhắc cho ' + t.pending + ' người</button>' +
+    '<button type="button" class="btn ghost sm" onclick="exRemindReset(true)">Huỷ</button>' +
+    (t.alreadyReminded && !fresh ? '<button type="button" class="btn ghost sm" onclick="remindPreview(true)">Nhắc lại từ đầu (cả người đã được nhắc)</button>' : '') +
+    '</div></div>';
+  const tick = () => { const e = $('exRemindCd'); if (!e){ clearInterval(exRemindTimer); return; } e.textContent = remindLeft(j.closeAt - Date.now()); };
+  tick(); exRemindTimer = setInterval(tick, 1000);
+}
+async function remindSend(fresh){
+  const id = $('exEditingId').value, box = $('exRemind');
+  if (!confirm('Gửi email nhắc làm bài cho những người chưa nộp bài của đề này?\n\nEmail đã gửi đi không thu hồi được.')) return;
+  clearInterval(exRemindTimer);
+  box.innerHTML = '<span class="small">Đang gửi, vui lòng không đóng trang…</span>';
+  const { j } = await api('POST','/api/kt-admin', { op:'remindExam', examId:id, confirm:true, fresh:!!fresh });
+  if (!j || !j.ok){ box.innerHTML = '<div class="msg err">' + esc((j && j.error) || 'Không gửi được.') + '</div> <button type="button" class="btn ghost sm" onclick="exRemindReset(true)">Đóng</button>'; return; }
+  box.innerHTML = '<div class="msg ok">Đã gửi ' + j.sent + ' thư nhắc.' + (j.remaining ? ' Còn ' + j.remaining + ' người chưa gửi (do giới hạn mỗi lượt), bấm "Nhắc làm bài…" lần nữa để gửi tiếp.' : ' Đã gửi hết.') + '</div> <button type="button" class="btn ghost sm" onclick="exRemindReset(true)">Đóng</button>';
 }
 function exCloseQuick(days){
   const baseMs = localToMs($('exOpen').value) || Date.now();
