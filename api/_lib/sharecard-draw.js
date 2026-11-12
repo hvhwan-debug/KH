@@ -92,7 +92,7 @@ function drawShareCard(ctx, W, H, d){
       ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI*2); ctx.fillStyle = lg(x - rx, y - ry, x + rx, y + ry, top); ctx.fill();
       ctx.strokeStyle = 'rgba(190,235,255,.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI*2); ctx.stroke();
     }
-    ctx.fillStyle = rg(0, 150, 0, 150, [[0, 'rgba(90,190,255,.5)'], [1, 'rgba(90,190,255,0)']]); ctx.fillRect(-170, 90, 340, 130);
+    ctx.save(); ctx.translate(0, 150); ctx.scale(1, .42); ctx.fillStyle = rg(0, 0, 0, 170, [[0, 'rgba(90,190,255,.5)'], [1, 'rgba(90,190,255,0)']]); ctx.fillRect(-190, -190, 380, 380); ctx.restore();
     cyl(-34, 150, 124, 22, 24, [[0, '#5AB2FF'], [.5, '#B8E4FF'], [1, '#2F86EA']], [[0, '#0D3F9E'], [.4, '#2E7FE8'], [.75, '#1A56C4'], [1, '#0A2F80']]);
     cyl(0, 124, 98, 18, 22, [[0, '#6DBBFF'], [.5, '#D2EFFF'], [1, '#3B8DF0']], [[0, '#0F46AE'], [.4, '#3C8CF0'], [.75, '#1D5BCB'], [1, '#0A3590']]);
     ctx.fillStyle = rg(0, 118, 0, 90, [[0, 'rgba(255,255,255,.55)'], [1, 'rgba(255,255,255,0)']]); ctx.beginPath(); ctx.ellipse(0, 122, 80, 12, 0, 0, Math.PI*2); ctx.fill();
