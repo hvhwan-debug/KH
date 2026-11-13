@@ -137,7 +137,7 @@ body.cert-on .vbar{border-radius:20px;margin-bottom:14px}
 .ct-check{flex:0 0 auto;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;color:#fff;background:linear-gradient(135deg,#2BBE5E,#12923F)}.ct-check svg{width:66%;height:66%}
 .ct-wave{position:absolute;left:0;right:0;bottom:0;height:84px;z-index:4;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 104' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0' x2='1'%3E%3Cstop offset='0' stop-color='%234AA2F8'/%3E%3Cstop offset='1' stop-color='%230A4DB5'/%3E%3C/linearGradient%3E%3ClinearGradient id='g' x1='0' x2='1'%3E%3Cstop offset='0' stop-color='%23F6C968' stop-opacity='0'/%3E%3Cstop offset='.4' stop-color='%23F6C968'/%3E%3Cstop offset='.75' stop-color='%23FFE7A6'/%3E%3Cstop offset='1' stop-color='%23FFE7A6' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 46C260 0 520 92 800 42C940 18 1080 6 1200 0V104H0Z' fill='url(%23a)'/%3E%3Cpath d='M0 78C300 38 640 108 1200 44V104H0Z' fill='%23063282' fill-opacity='.55'/%3E%3Cpath d='M0 74C300 34 640 104 1200 40' fill='none' stroke='url(%23g)' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E") center bottom/100% 100% no-repeat}
 .cert.pr .ct-bottom::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='170'%3E%3Ctext x='130' y='91' text-anchor='middle' transform='rotate%28-24 130 85%29' font-family='Arial%2CHelvetica%2Csans-serif' font-size='17' font-weight='800' letter-spacing='4' fill='%23C98A1B' fill-opacity='0.11'%3ETHI TH%E1%BB%AC%3C/text%3E%3C/svg%3E")}
-.extra{margin:16px auto 0;background:#fff;border:1px solid rgba(216,226,240,.9);border-radius:24px;padding:22px;box-shadow:0 24px 50px -28px rgba(0,20,60,.6);text-align:left;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 22px;align-items:start}
+.extra{margin:20px 0 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px;align-items:start;text-align:left}
 .extra .kv,.extra .proof,.extra .paperbox{margin:0}.extra .paperbox{grid-column:1/-1}.extra .kv.hide+.proof{grid-column:1/-1}
 body.cert-on .foot{display:none}
 @media(max-width:700px){
@@ -153,7 +153,7 @@ body.cert-on .foot{display:none}
   .ct-bottom{padding:22px 5% 86px;margin-top:-30px}.ct-wave{height:72px}
   .ct-metrics{margin-right:0;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:0;padding-bottom:16px}.ct-m{border-right:1.5px solid #e1eaf5;border-bottom:0;padding:4px 4px}.ct-m:last-child{border-right:0}
   .ct-m svg{width:26px;margin-bottom:6px}.ct-m strong{font-size:clamp(15px,4.6vw,19px);margin-bottom:3px}.ct-m span{font-size:11px;line-height:1.3;display:block}
-  .extra{grid-template-columns:1fr;padding:16px}
+  .extra{grid-template-columns:1fr;margin-top:16px}
   .ct-verify{text-align:center;justify-content:center}
 }
 @media print{body.cert-on{background:#fff}body.cert-on::before,body.cert-on .top,.extra{display:none}.cert{box-shadow:none;break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
@@ -248,10 +248,7 @@ body.cert-on .foot{display:none}
         <section class="ct-bottom">
           <div class="ct-metrics" id="vStats"></div>
           <div class="ct-verify"><span class="ct-check"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 12.5 3.6 3.6 7.4-8.2" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Đã xác thực bởi hệ thống lúc <b id="vSys"></b></span></div>
-        </section>
-        <div class="ct-wave" aria-hidden="true"></div>
-      </div>
-      <div class="extra">
+          <div class="extra">
         <dl class="kv" id="vRows"></dl>
         <div class="proof"><svg width="38" height="38" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z" fill="#17794A"/><path d="m8.2 12.3 2.6 2.6 5-5.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><div><small>MÃ MINH CHỨNG</small><b id="vProof"></b><span>Mã này khớp với dữ liệu bài làm trên hệ thống.</span></div></div>
         <div class="paperbox" id="paperBox">
@@ -266,6 +263,9 @@ body.cert-on .foot{display:none}
           </div>
           <div class="hide" id="paperView"></div>
         </div>
+      </div>
+        </section>
+        <div class="ct-wave" aria-hidden="true"></div>
       </div>
     </div>
   </main>
