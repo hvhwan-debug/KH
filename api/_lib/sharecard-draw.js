@@ -66,65 +66,84 @@ function drawShareCard(ctx, W, H, d){
   function icTimer(x, y, s, col){ ctx.save(); ctx.strokeStyle = col; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = s*.09; ctx.beginPath(); ctx.arc(x, y + s*.06, s*.4, 0, Math.PI*2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x - s*.12, y - s*.46); ctx.lineTo(x + s*.12, y - s*.46); ctx.moveTo(x, y - s*.46); ctx.lineTo(x, y - s*.34); ctx.moveTo(x, y + s*.06); ctx.lineTo(x + s*.2, y - s*.12); ctx.stroke(); ctx.restore(); }
   function icCal(x, y, s, col){ ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineCap = 'round'; ctx.lineWidth = s*.08; rr(x - .44*s, y - .34*s, .88*s, .8*s, .12*s); ctx.stroke(); rr(x - .44*s, y - .34*s, .88*s, .24*s, .1*s); ctx.fill(); ctx.beginPath(); ctx.moveTo(x - .22*s, y - .5*s); ctx.lineTo(x - .22*s, y - .26*s); ctx.moveTo(x + .22*s, y - .5*s); ctx.lineTo(x + .22*s, y - .26*s); ctx.stroke(); for (var i = 0; i < 3; i++) for (var j = 0; j < 2; j++){ ctx.fillRect(x - .3*s + i*.24*s, y + .02*s + j*.22*s, .13*s, .13*s); } ctx.restore(); }
   function icLink(x, y, s, col){ ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = s*.1; ctx.lineCap = 'round'; ctx.translate(x, y); ctx.rotate(-Math.PI/4); rr(-.5*s, -.17*s, .62*s, .34*s, .17*s); ctx.stroke(); rr(-.12*s, -.17*s, .62*s, .34*s, .17*s); ctx.stroke(); ctx.restore(); }
-  // ---- chiếc cúp vàng 3D (vẽ bằng nét vẽ: thân cúp có bóng, quai uốn, ngôi sao nổi, cành nguyệt quế, bục xanh có ánh sáng).
-  // Gốc toạ độ ở giữa thân cúp; miệng cúp ≈ -70, chân đế ≈ +112, bục ≈ +150.
+  // ---- chiếc cúp vàng 3D (vẽ bằng nét vẽ). Gốc toạ độ ở giữa thân cúp; miệng cúp ≈ -72, chân đế ≈ +112, bục ≈ +158.
   function trophy(ox, oy, k){
     ctx.save(); ctx.translate(ox, oy); ctx.scale(k, k);
-    function gold(x0, x1){ return lg(x0, 0, x1, 0, [[0, '#9C5F00'], [.18, '#E9A817'], [.38, '#FFE27A'], [.5, '#FFF4B8'], [.68, '#F2B51E'], [.88, '#C98400'], [1, '#8E5400']]); }
-    function leaf(x, y, ang, len, wid, col){ ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.beginPath(); ctx.moveTo(0, 0); ctx.bezierCurveTo(len*.3, -wid, len*.75, -wid*.8, len, 0); ctx.bezierCurveTo(len*.75, wid*.8, len*.3, wid, 0, 0); ctx.fillStyle = lg(0, -wid, len, wid, [[0, '#FFF0A0'], [.5, col], [1, '#C98400']]); ctx.fill(); ctx.strokeStyle = 'rgba(150,90,0,.55)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(1, 0); ctx.lineTo(len*.86, 0); ctx.stroke(); ctx.restore(); }
-    function branch(x0, y0, cx1, cy1, cx2, cy2, x1, y1, n, sd, scaleL){
-      ctx.strokeStyle = 'rgba(214,150,20,.95)'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.bezierCurveTo(cx1, cy1, cx2, cy2, x1, y1); ctx.stroke();
-      for (var i = 1; i <= n; i++){
-        var t = i / (n + 1), u = 1 - t;
-        var px = u*u*u*x0 + 3*u*u*t*cx1 + 3*u*t*t*cx2 + t*t*t*x1, py = u*u*u*y0 + 3*u*u*t*cy1 + 3*u*t*t*cy2 + t*t*t*y1;
-        var dx = 3*u*u*(cx1 - x0) + 6*u*t*(cx2 - cx1) + 3*t*t*(x1 - cx2), dy = 3*u*u*(cy1 - y0) + 6*u*t*(cy2 - cy1) + 3*t*t*(y1 - cy2), ang = Math.atan2(dy, dx), L = (22 - 7*t) * scaleL;
-        leaf(px, py, ang - sd*0.78, L, 6.2, '#F6C23A'); leaf(px, py, ang + sd*0.78, L*.95, 6.2, '#EDAE22');
-      }
-      leaf(x1, y1, Math.atan2(y1 - cy2, x1 - cx2), 17*scaleL, 5.4, '#F6C23A');
+    function goldH(x0, x1){ return lg(x0, 0, x1, 0, [[0, '#6E3F00'], [.1, '#B87400'], [.22, '#EBA919'], [.36, '#FFE07A'], [.46, '#FFF6C4'], [.54, '#FFE27F'], [.68, '#E9A416'], [.86, '#B87500'], [1, '#6B3C00']]); }
+    function leaf(x, y, ang, len, wid, col){
+      ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.bezierCurveTo(len*.25, -wid*1.05, len*.72, -wid*.9, len, 0); ctx.bezierCurveTo(len*.72, wid*.9, len*.25, wid*1.05, 0, 0);
+      ctx.fillStyle = lg(0, -wid, len, wid, [[0, '#FFF3B0'], [.45, col], [1, '#B87400']]); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.bezierCurveTo(len*.3, -wid*.1, len*.7, -wid*.05, len, 0); ctx.bezierCurveTo(len*.7, wid*.3, len*.3, wid*.5, 0, 0); ctx.fillStyle = 'rgba(120,70,0,.28)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(255,248,200,.8)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(2, 0); ctx.lineTo(len*.88, 0); ctx.stroke(); ctx.restore();
     }
+    function branch(x0, y0, cx1, cy1, cx2, cy2, x1, y1, n, sd, sc){
+      ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(190,120,10,.95)'; ctx.lineWidth = 3.2; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.bezierCurveTo(cx1, cy1, cx2, cy2, x1, y1); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,235,150,.7)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y0 - 1); ctx.bezierCurveTo(cx1, cy1 - 1, cx2, cy2 - 1, x1, y1 - 1); ctx.stroke();
+      for (var i = 1; i <= n; i++){
+        var t = i / (n + 1), u = 1 - t, px = u*u*u*x0 + 3*u*u*t*cx1 + 3*u*t*t*cx2 + t*t*t*x1, py = u*u*u*y0 + 3*u*u*t*cy1 + 3*u*t*t*cy2 + t*t*t*y1;
+        var dx = 3*u*u*(cx1 - x0) + 6*u*t*(cx2 - cx1) + 3*t*t*(x1 - cx2), dy = 3*u*u*(cy1 - y0) + 6*u*t*(cy2 - cy1) + 3*t*t*(y1 - cy2), ang = Math.atan2(dy, dx), L = (30 - 10*t) * sc;
+        leaf(px, py, ang - sd*0.72, L, 8.4*sc, i % 2 ? '#F6C23A' : '#FFD35C'); leaf(px, py, ang + sd*0.72, L*.92, 8.2*sc, i % 2 ? '#EDAE22' : '#F8C940');
+      }
+      leaf(x1, y1, Math.atan2(y1 - cy2, x1 - cx2), 26*sc, 7.4*sc, '#FFD35C');
+    }
+    function sparkle(x, y, s, a){ ctx.save(); ctx.translate(x, y); ctx.fillStyle = rg(0, 0, 0, s*1.1, [[0, 'rgba(255,255,255,' + a + ')'], [1, 'rgba(255,255,255,0)']]); ctx.fillRect(-s*1.2, -s*1.2, s*2.4, s*2.4); ctx.fillStyle = 'rgba(255,255,255,' + Math.min(1, a + .1) + ')'; ctx.beginPath(); ctx.moveTo(0, -s); ctx.quadraticCurveTo(s*.12, -s*.12, s, 0); ctx.quadraticCurveTo(s*.12, s*.12, 0, s); ctx.quadraticCurveTo(-s*.12, s*.12, -s, 0); ctx.quadraticCurveTo(-s*.12, -s*.12, 0, -s); ctx.fill(); ctx.restore(); }
     // quầng sáng + tia nắng phía sau cúp
-    ctx.fillStyle = rg(0, -30, 0, 190, [[0, 'rgba(255,236,160,.6)'], [.5, 'rgba(255,214,120,.22)'], [1, 'rgba(255,214,120,0)']]); ctx.fillRect(-210, -210, 420, 420);
-    ctx.save(); ctx.translate(0, -40); for (var r = 0; r < 12; r++){ ctx.rotate(Math.PI/6); ctx.fillStyle = 'rgba(255,255,255,.09)'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-9, -170); ctx.lineTo(9, -170); ctx.closePath(); ctx.fill(); } ctx.restore();
-    // bục xanh hai bậc
+    ctx.fillStyle = rg(0, -30, 0, 200, [[0, 'rgba(255,236,160,.62)'], [.5, 'rgba(255,214,120,.22)'], [1, 'rgba(255,214,120,0)']]); ctx.fillRect(-220, -220, 440, 440);
+    ctx.save(); ctx.translate(0, -40); for (var r = 0; r < 8; r++){ ctx.rotate(Math.PI/4); ctx.fillStyle = 'rgba(255,255,255,.035)'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-7, -170); ctx.lineTo(7, -170); ctx.closePath(); ctx.fill(); } ctx.restore();
+    // bục xanh kính hai bậc
     function cyl(x, y, rx, ry, h, top, side){
       ctx.fillStyle = lg(x - rx, 0, x + rx, 0, side); ctx.beginPath(); ctx.ellipse(x, y + h, rx, ry, 0, 0, Math.PI*2); ctx.fill(); ctx.fillRect(x - rx, y, rx*2, h);
-      ctx.fillStyle = lg(x - rx, 0, x + rx, 0, side); ctx.beginPath(); ctx.ellipse(x, y + h, rx, ry, 0, 0, Math.PI); ctx.fill();
+      ctx.fillStyle = lg(0, y, 0, y + h + ry, [[0, 'rgba(255,255,255,.22)'], [.35, 'rgba(255,255,255,0)'], [1, 'rgba(0,20,70,.35)']]); ctx.fillRect(x - rx, y, rx*2, h); ctx.beginPath(); ctx.ellipse(x, y + h, rx, ry, 0, 0, Math.PI); ctx.fill();
       ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI*2); ctx.fillStyle = lg(x - rx, y - ry, x + rx, y + ry, top); ctx.fill();
-      ctx.strokeStyle = 'rgba(190,235,255,.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI*2); ctx.stroke();
+      ctx.save(); ctx.shadowColor = 'rgba(120,225,255,.9)'; ctx.shadowBlur = 12; ctx.strokeStyle = 'rgba(200,242,255,.95)'; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI*2); ctx.stroke(); ctx.restore();
     }
-    ctx.save(); ctx.translate(0, 150); ctx.scale(1, .42); ctx.fillStyle = rg(0, 0, 0, 170, [[0, 'rgba(90,190,255,.5)'], [1, 'rgba(90,190,255,0)']]); ctx.fillRect(-190, -190, 380, 380); ctx.restore();
-    cyl(-34, 150, 124, 22, 24, [[0, '#5AB2FF'], [.5, '#B8E4FF'], [1, '#2F86EA']], [[0, '#0D3F9E'], [.4, '#2E7FE8'], [.75, '#1A56C4'], [1, '#0A2F80']]);
-    cyl(0, 124, 98, 18, 22, [[0, '#6DBBFF'], [.5, '#D2EFFF'], [1, '#3B8DF0']], [[0, '#0F46AE'], [.4, '#3C8CF0'], [.75, '#1D5BCB'], [1, '#0A3590']]);
-    ctx.fillStyle = rg(0, 118, 0, 90, [[0, 'rgba(255,255,255,.55)'], [1, 'rgba(255,255,255,0)']]); ctx.beginPath(); ctx.ellipse(0, 122, 80, 12, 0, 0, Math.PI*2); ctx.fill();
-    // nguyệt quế hai bên (trái dài, phải ngắn như mẫu)
-    branch(-92, 104, -134, 76, -138, 10, -112, -52, 8, 1, 1);
-    branch(92, 106, 128, 90, 132, 40, 118, -8, 5, -1, .92);
-    // chân + đế cúp
-    ctx.fillStyle = gold(-48, 48); ctx.beginPath(); ctx.moveTo(-9, 62); ctx.bezierCurveTo(-9, 82, -26, 90, -46, 108); ctx.lineTo(46, 108); ctx.bezierCurveTo(26, 90, 9, 82, 9, 62); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = gold(-20, 20); ctx.beginPath(); ctx.ellipse(0, 64, 17, 8, 0, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.beginPath(); ctx.ellipse(-5, 62, 6, 2.6, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = gold(-56, 56); ctx.beginPath(); ctx.ellipse(0, 110, 56, 11, 0, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = lg(0, 100, 0, 112, [[0, '#FFEFA0'], [1, '#D99100']]); ctx.beginPath(); ctx.ellipse(0, 106, 46, 8, 0, 0, Math.PI*2); ctx.fill();
-    // quai cầm uốn cong (nét dày + đường sáng)
+    ctx.save(); ctx.translate(0, 160); ctx.scale(1, .4); ctx.fillStyle = rg(0, 0, 0, 190, [[0, 'rgba(90,200,255,.6)'], [1, 'rgba(90,200,255,0)']]); ctx.fillRect(-210, -210, 420, 420); ctx.restore();
+    cyl(0, 156, 136, 25, 26, [[0, '#4FA8FF'], [.5, '#C4EAFF'], [1, '#2A7FE8']], [[0, '#0A3A96'], [.18, '#2C7FEA'], [.42, '#7CC2FF'], [.62, '#2A74E0'], [.86, '#14489F'], [1, '#0A2C7A']]);
+    cyl(0, 128, 104, 19, 24, [[0, '#62B5FF'], [.5, '#E0F5FF'], [1, '#3A8CF0']], [[0, '#0C3F9E'], [.18, '#3487F0'], [.42, '#8DCBFF'], [.62, '#2C79E6'], [.86, '#164EA6'], [1, '#0A2F80']]);
+    // viền vàng quanh bậc trên + bóng đổ + phản chiếu của đế cúp
+    ctx.strokeStyle = 'rgba(255,214,110,.85)'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.ellipse(0, 150, 104, 19, 0, .08*Math.PI, .92*Math.PI); ctx.stroke();
+    ctx.fillStyle = 'rgba(0,28,92,.5)'; ctx.beginPath(); ctx.ellipse(0, 130, 66, 10, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = rg(0, 130, 0, 70, [[0, 'rgba(255,225,140,.55)'], [1, 'rgba(255,225,140,0)']]); ctx.beginPath(); ctx.ellipse(0, 130, 76, 12, 0, 0, Math.PI*2); ctx.fill();
+    // nguyệt quế hai bên (trái dài hơn, phải ngắn hơn)
+    branch(-86, 116, -132, 90, -146, 12, -116, -62, 7, 1, 1.12);
+    branch(86, 118, 132, 100, 142, 40, 120, -14, 5, -1, 1.04);
+    // đế + chân cúp
+    ctx.fillStyle = 'rgba(70,35,0,.55)'; ctx.beginPath(); ctx.ellipse(0, 118, 62, 11, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = goldH(-60, 60); ctx.beginPath(); ctx.ellipse(0, 112, 60, 12, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = goldH(-52, 52); ctx.beginPath(); ctx.moveTo(-9, 78); ctx.bezierCurveTo(-10, 94, -32, 100, -54, 110); ctx.lineTo(54, 110); ctx.bezierCurveTo(32, 100, 10, 94, 9, 78); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = lg(0, 78, 0, 112, [[0, 'rgba(255,255,255,.25)'], [1, 'rgba(90,40,0,.25)']]); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, 108, 52, 9, 0, 0, Math.PI*2); ctx.fillStyle = lg(0, 98, 0, 118, [[0, '#FFF1A8'], [1, '#C98400']]); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,250,215,.85)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.ellipse(0, 108, 50, 8, 0, Math.PI*1.05, Math.PI*1.95); ctx.stroke();
+    // núm tròn giữa chân
+    ctx.fillStyle = rg(-6, 62, 2, 22, [[0, '#FFF6C8'], [.5, '#E9A818'], [1, '#8E5400']]); ctx.beginPath(); ctx.ellipse(0, 66, 20, 11, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = goldH(-9, 9); ctx.beginPath(); ctx.moveTo(-15, 40); ctx.bezierCurveTo(-8, 52, -8, 58, -9, 62); ctx.lineTo(9, 62); ctx.bezierCurveTo(8, 58, 8, 52, 15, 40); ctx.closePath(); ctx.fill();
+    // quai cầm: dải vàng thon, uốn cong, có đường sáng + đầu cuộn
     [-1, 1].forEach(function(sd){
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      ctx.strokeStyle = lg(sd*40, -60, sd*104, 20, [[0, '#FFE27A'], [.5, '#E9A817'], [1, '#A86400']]); ctx.lineWidth = 8;
-      ctx.beginPath(); ctx.moveTo(sd*58, -62); ctx.bezierCurveTo(sd*96, -96, sd*118, -44, sd*88, -6); ctx.bezierCurveTo(sd*76, 8, sd*60, 6, sd*52, -4); ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,248,200,.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sd*60, -66); ctx.bezierCurveTo(sd*96, -98, sd*116, -46, sd*88, -10); ctx.stroke();
+      ctx.strokeStyle = '#7A4600'; ctx.lineWidth = 10.5; ctx.beginPath(); ctx.moveTo(sd*64, -64); ctx.bezierCurveTo(sd*98, -104, sd*124, -56, sd*96, -20); ctx.bezierCurveTo(sd*84, -4, sd*68, -6, sd*58, -18); ctx.stroke();
+      ctx.strokeStyle = lg(sd*50, -100, sd*120, 0, [[0, '#FFE680'], [.45, '#EBA919'], [1, '#B26A00']]); ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(sd*64, -64); ctx.bezierCurveTo(sd*98, -104, sd*124, -56, sd*96, -20); ctx.bezierCurveTo(sd*84, -4, sd*68, -6, sd*58, -18); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,250,210,.9)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sd*66, -68); ctx.bezierCurveTo(sd*98, -106, sd*122, -58, sd*97, -24); ctx.stroke();
+      ctx.fillStyle = '#E9A818'; ctx.beginPath(); ctx.arc(sd*58, -17, 5.5, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = 'rgba(255,245,190,.9)'; ctx.beginPath(); ctx.arc(sd*57, -19, 2, 0, Math.PI*2); ctx.fill();
     });
     // thân cúp
-    ctx.fillStyle = gold(-66, 66); ctx.beginPath(); ctx.moveTo(-64, -70); ctx.bezierCurveTo(-68, -28, -46, 14, -14, 42); ctx.lineTo(14, 42); ctx.bezierCurveTo(46, 14, 68, -28, 64, -70); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = 'rgba(120,60,0,.28)'; ctx.beginPath(); ctx.moveTo(40, -62); ctx.bezierCurveTo(48, -20, 34, 12, 12, 38); ctx.lineTo(20, 38); ctx.bezierCurveTo(44, 12, 60, -26, 56, -62); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.beginPath(); ctx.moveTo(-50, -56); ctx.bezierCurveTo(-52, -22, -38, 10, -22, 28); ctx.lineTo(-30, 24); ctx.bezierCurveTo(-46, 6, -58, -22, -56, -52); ctx.closePath(); ctx.fill();
-    // miệng cúp
-    ctx.beginPath(); ctx.ellipse(0, -70, 64, 14, 0, 0, Math.PI*2); ctx.fillStyle = lg(-64, 0, 64, 0, [[0, '#E9A817'], [.5, '#FFF0A0'], [1, '#C98400']]); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(0, -68, 55, 9.5, 0, 0, Math.PI*2); ctx.fillStyle = lg(0, -78, 0, -58, [[0, '#7A4500'], [1, '#C98400']]); ctx.fill();
-    ctx.strokeStyle = 'rgba(255,250,210,.9)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(0, -70, 63, 13, 0, Math.PI*1.05, Math.PI*1.95); ctx.stroke();
-    // ngôi sao nổi
-    ctx.save(); ctx.translate(0, -22);
-    function star(rO, rI){ ctx.beginPath(); for (var i = 0; i < 10; i++){ var ang = -Math.PI/2 + i*Math.PI/5, rad = i % 2 ? rI : rO; ctx.lineTo(Math.cos(ang)*rad, Math.sin(ang)*rad); } ctx.closePath(); }
-    ctx.shadowColor = 'rgba(120,60,0,.5)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3; star(25, 11); ctx.fillStyle = lg(-22, -22, 22, 22, [[0, '#FFF8CF'], [.5, '#FFD962'], [1, '#E0A012']]); ctx.fill(); ctx.restore();
-    ctx.save(); ctx.translate(0, -22); star(25, 11); ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(190,120,0,.8)'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
-    // tia sáng lấp lánh trên miệng cúp
-    ctx.save(); ctx.translate(-30, -78); ctx.fillStyle = rg(0, 0, 0, 30, [[0, 'rgba(255,255,255,.95)'], [1, 'rgba(255,255,255,0)']]); ctx.fillRect(-30, -30, 60, 60); ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.fillRect(-1.5, -26, 3, 52); ctx.fillRect(-26, -1.5, 52, 3); ctx.restore();
+    ctx.fillStyle = goldH(-74, 74); ctx.beginPath(); ctx.moveTo(-70, -72); ctx.bezierCurveTo(-80, -26, -56, 16, -16, 42); ctx.lineTo(16, 42); ctx.bezierCurveTo(56, 16, 80, -26, 70, -72); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = lg(0, -72, 0, 40, [[0, 'rgba(255,255,255,.2)'], [.55, 'rgba(255,255,255,0)'], [1, 'rgba(90,40,0,.4)']]); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.62)'; ctx.beginPath(); ctx.moveTo(-52, -60); ctx.bezierCurveTo(-56, -24, -42, 8, -24, 28); ctx.lineTo(-33, 24); ctx.bezierCurveTo(-48, 4, -61, -24, -58, -56); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.beginPath(); ctx.moveTo(46, -58); ctx.bezierCurveTo(50, -26, 40, 2, 26, 22); ctx.lineTo(32, 22); ctx.bezierCurveTo(46, 0, 56, -26, 52, -56); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(100,50,0,.3)'; ctx.beginPath(); ctx.moveTo(38, -64); ctx.bezierCurveTo(48, -22, 34, 12, 12, 38); ctx.lineTo(21, 38); ctx.bezierCurveTo(46, 12, 60, -26, 56, -64); ctx.closePath(); ctx.fill();
+    // miệng cúp: viền sáng + lòng cúp tối
+    ctx.beginPath(); ctx.ellipse(0, -72, 71, 16, 0, 0, Math.PI*2); ctx.fillStyle = goldH(-71, 71); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, -70, 62, 12, 0, 0, Math.PI*2); ctx.fillStyle = lg(0, -82, 0, -58, [[0, '#4A2700'], [.6, '#9A5C00'], [1, '#D9A020']]); ctx.fill();
+    ctx.fillStyle = 'rgba(255,230,140,.35)'; ctx.beginPath(); ctx.ellipse(0, -64, 40, 4, 0, 0, Math.PI); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,252,220,.95)'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.ellipse(0, -72, 70, 15, 0, Math.PI*1.04, Math.PI*1.96); ctx.stroke();
+    // ngôi sao nổi khối (lớp tối lệch xuống, lớp vàng, lớp sáng nhỏ)
+    function star(cx, cy, rO, rI){ ctx.beginPath(); for (var i = 0; i < 10; i++){ var an = -Math.PI/2 + i*Math.PI/5, rd = i % 2 ? rI : rO; ctx.lineTo(cx + Math.cos(an)*rd, cy + Math.sin(an)*rd); } ctx.closePath(); }
+    ctx.save(); ctx.lineJoin = 'round'; star(0, -22, 29, 13); ctx.fillStyle = '#9C5A00'; ctx.fill(); ctx.restore();
+    ctx.save(); ctx.lineJoin = 'round'; ctx.shadowColor = 'rgba(110,55,0,.55)'; ctx.shadowBlur = 7; ctx.shadowOffsetY = 3; star(0, -25, 28, 12.5); ctx.fillStyle = lg(-22, -50, 22, 4, [[0, '#FFF8D2'], [.5, '#FFD75E'], [1, '#E0A012']]); ctx.fill(); ctx.restore();
+    ctx.save(); ctx.lineJoin = 'round'; star(0, -25, 28, 12.5); ctx.strokeStyle = 'rgba(176,108,0,.9)'; ctx.lineWidth = 1.6; ctx.stroke(); star(-1, -26, 17, 7.5); ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.fill(); ctx.restore();
+    // lấp lánh
+    sparkle(-38, -86, 20, .95); sparkle(104, -92, 11, .85); sparkle(-112, -30, 9, .8); sparkle(78, -122, 8, .7);
     ctx.restore();
   }
   var neutral = d.passed !== true && d.passed !== false;
