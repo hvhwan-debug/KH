@@ -1605,7 +1605,7 @@ $('locDlgGo').addEventListener('click', locTry);
 function renderLoc(){
   var el = $('locLine'); if (!el) return;
   var e = DEV.locErr, h;
-  if (DEV.loc){ el.className = 'locline ok'; h = '<span class="i" aria-hidden="true">📍</span><div>Đã lấy vị trí (sai số khoảng ' + (DEV.loc.acc||0) + ' m).</div>'; }
+  if (DEV.loc){ el.innerHTML = ''; return; }
   else if (e === 'pending'){ el.className = 'locline'; h = '<span class="i" aria-hidden="true">📍</span><div>Đang lấy vị trí… Nếu trình duyệt hỏi, hãy bấm <b>Cho phép</b>.</div>'; }
   else if (e === 'denied'){ el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Bạn đã chặn quyền vị trí. Không bắt buộc — bạn vẫn làm bài bình thường được. Muốn bật lại: bấm biểu tượng ổ khoá cạnh địa chỉ trang → Vị trí → Cho phép, rồi bấm thử lại.<button type="button" id="locRetry">Thử lại</button></div>'; }
   else if (e === 'unsupported'){ el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Trình duyệt này không hỗ trợ lấy vị trí. Không bắt buộc — bạn vẫn làm bài bình thường được.</div>'; }
