@@ -247,6 +247,14 @@ textarea{resize:vertical;min-height:80px}
 .badge{white-space:nowrap}
 .qfilter{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 4px}
 .qfilter input{max-width:340px;margin:0}.qfilter select{max-width:260px;margin:0}
+.exf{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 2px}
+.exf input[type=search]{flex:1 1 190px;min-width:170px;width:auto;margin:0;padding:9px 12px 9px 36px;border-radius:999px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234F6486' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 13px 50%}
+.exf select{flex:0 0 auto;width:auto;max-width:100%;margin:0;padding:8px 30px 8px 12px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);background-color:#fff;cursor:pointer}
+.exf select.on{border-color:var(--brand);background-color:#E6F0FC;color:var(--brand-deep)}
+.exf-clear{width:auto;margin:0;font-size:13px;font-weight:700;color:var(--brand);background:none;border:0;padding:6px 8px;cursor:pointer;border-radius:8px}
+.exf-clear:hover{background:#E6F0FC}
+.exf-count{display:flex;align-items:center;gap:6px;margin:8px 2px 4px;font-size:12.5px;color:var(--muted)}
+@media(max-width:640px){.exf select{flex:0 0 calc(50% - 4px);width:calc(50% - 4px)}.exf input[type=search]{flex-basis:100%}}
 /* Di động: 2 ô lọc mỗi hàng thay vì xếp chồng cả cột dài — đỡ tốn chỗ, đỡ phải cuộn mới thấy danh sách. */
 @media(max-width:600px){
   .qfilter{gap:6px;margin:10px 0 2px}
@@ -1279,15 +1287,14 @@ button.rd-st:disabled{opacity:.55;cursor:default}
           </div>
         </div>
         <p class="small" style="margin:6px 0 0">Bấm vào một đề để xem kết quả, quản lý câu hỏi và cài đặt của đề đó.</p>
-        <div id="exFilter" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 4px">
-          <input type="search" id="exQ" placeholder="Tìm theo tên hoặc mã đề (gõ không dấu cũng được)" style="flex:1 1 240px;min-width:200px" oninput="exFilt.q=this.value;exRefilter()" aria-label="Tìm đề thi">
-          <select id="exFStatus" onchange="exFilt.status=this.value;exRefilter()" aria-label="Lọc theo trạng thái"><option value="">Mọi trạng thái</option><option value="open">Đang mở</option><option value="soon">Chưa mở</option><option value="closed">Đã đóng</option></select>
-          <select id="exFType" onchange="exFilt.type=this.value;exRefilter()" aria-label="Lọc theo loại đề"><option value="">Mọi loại đề</option><option value="official">Chính thức</option><option value="practice">Thi thử</option></select>
-          <select id="exFSurvey" onchange="exFilt.survey=this.value;exRefilter()" aria-label="Lọc theo khảo sát"><option value="">Khảo sát: tất cả</option><option value="yes">Có khảo sát</option><option value="no">Không có khảo sát</option></select>
-          <select id="exFSort" onchange="exFilt.sort=this.value;exRefilter()" aria-label="Sắp xếp"><option value="new">Mới tạo trước</option><option value="status">Đang mở trước</option><option value="subs">Nhiều bài nộp nhất</option><option value="name">Tên A → Z</option></select>
-          <button type="button" class="btn ghost sm" id="exFClear" onclick="exFiltClear()">Xoá lọc</button>
+        <div id="exFilter" class="exf">
+          <input type="search" id="exQ" autocomplete="off" placeholder="Tìm tên hoặc mã đề" oninput="exFilt.q=this.value;exRefilter()" aria-label="Tìm đề thi">
+          <select id="exFStatus" onchange="exFilt.status=this.value;exRefilter()" aria-label="Lọc theo trạng thái"><option value="">Trạng thái</option><option value="open">Đang mở</option><option value="soon">Chưa mở</option><option value="closed">Đã đóng</option></select>
+          <select id="exFType" onchange="exFilt.type=this.value;exRefilter()" aria-label="Lọc theo loại đề"><option value="">Loại đề</option><option value="official">Chính thức</option><option value="practice">Thi thử</option></select>
+          <select id="exFSurvey" onchange="exFilt.survey=this.value;exRefilter()" aria-label="Lọc theo khảo sát"><option value="">Khảo sát</option><option value="yes">Có khảo sát</option><option value="no">Không có khảo sát</option></select>
+          <select id="exFSort" onchange="exFilt.sort=this.value;exRefilter()" aria-label="Sắp xếp"><option value="new">Mới tạo trước</option><option value="status">Đang mở trước</option><option value="subs">Nhiều bài nộp</option><option value="name">Tên A → Z</option></select>
         </div>
-        <div class="small" id="exFCount" style="margin:2px 0 6px" aria-live="polite"></div>
+        <div class="exf-count"><span id="exFCount" aria-live="polite"></span><button type="button" class="exf-clear hide" id="exFClear" onclick="exFiltClear()">✕ Xoá lọc</button></div>
         <div class="exgrid" id="exGrid"></div>
         <table class="hide" id="exListTable"><thead><tr><th>Mã đề</th><th>Tên đề</th><th>Phân bổ câu hỏi</th><th>Thời gian</th><th>Bài đã nộp</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="exList"></tbody></table>
       </div>
@@ -2436,7 +2443,11 @@ function exFiltered(){
     name: (a, b) => String(exTitleOf(a)).localeCompare(String(exTitleOf(b)), 'vi') }[exFilt.sort];
   return cmp ? out.slice().sort(cmp) : out;
 }
-function exRefilter(){ renderExGrid(); exApplyListFilter(); }
+function exRefilter(){
+  [['exFStatus','status'],['exFType','type'],['exFSurvey','survey']].forEach(p => { if ($(p[0])) $(p[0]).classList.toggle('on', !!exFilt[p[1]]); });
+  if ($('exFSort')) $('exFSort').classList.toggle('on', exFilt.sort !== 'new');
+  renderExGrid(); exApplyListFilter();
+}
 function exFiltClear(){
   exFilt.q = exFilt.status = exFilt.type = exFilt.survey = ''; exFilt.sort = 'new';
   ['exQ','exFStatus','exFType','exFSurvey'].forEach(id => { if ($(id)) $(id).value = ''; }); if ($('exFSort')) $('exFSort').value = 'new';
