@@ -1279,6 +1279,15 @@ button.rd-st:disabled{opacity:.55;cursor:default}
           </div>
         </div>
         <p class="small" style="margin:6px 0 0">Bấm vào một đề để xem kết quả, quản lý câu hỏi và cài đặt của đề đó.</p>
+        <div id="exFilter" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 4px">
+          <input type="search" id="exQ" placeholder="Tìm theo tên hoặc mã đề (gõ không dấu cũng được)" style="flex:1 1 240px;min-width:200px" oninput="exFilt.q=this.value;exRefilter()" aria-label="Tìm đề thi">
+          <select id="exFStatus" onchange="exFilt.status=this.value;exRefilter()" aria-label="Lọc theo trạng thái"><option value="">Mọi trạng thái</option><option value="open">Đang mở</option><option value="soon">Chưa mở</option><option value="closed">Đã đóng</option></select>
+          <select id="exFType" onchange="exFilt.type=this.value;exRefilter()" aria-label="Lọc theo loại đề"><option value="">Mọi loại đề</option><option value="official">Chính thức</option><option value="practice">Thi thử</option></select>
+          <select id="exFSurvey" onchange="exFilt.survey=this.value;exRefilter()" aria-label="Lọc theo khảo sát"><option value="">Khảo sát: tất cả</option><option value="yes">Có khảo sát</option><option value="no">Không có khảo sát</option></select>
+          <select id="exFSort" onchange="exFilt.sort=this.value;exRefilter()" aria-label="Sắp xếp"><option value="new">Mới tạo trước</option><option value="status">Đang mở trước</option><option value="subs">Nhiều bài nộp nhất</option><option value="name">Tên A → Z</option></select>
+          <button type="button" class="btn ghost sm" id="exFClear" onclick="exFiltClear()">Xoá lọc</button>
+        </div>
+        <div class="small" id="exFCount" style="margin:2px 0 6px" aria-live="polite"></div>
         <div class="exgrid" id="exGrid"></div>
         <table class="hide" id="exListTable"><thead><tr><th>Mã đề</th><th>Tên đề</th><th>Phân bổ câu hỏi</th><th>Thời gian</th><th>Bài đã nộp</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="exList"></tbody></table>
       </div>
@@ -1305,6 +1314,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
           <div><label>Tên đề thi (thí sinh thấy)</label><input type="text" id="exTitle" placeholder="vd: Kiểm tra kiến thức PC tháng 11"></div>
           <div><label>Mô tả / thể lệ ngắn (tuỳ chọn)</label><input type="text" id="exDesc" placeholder="Vd: Kiểm tra kiến thức sản phẩm quý 4"></div>
           <div><label>Tên rút gọn khi chia sẻ Zalo (tuỳ chọn)</label><input type="text" id="exShareTitle" placeholder="trống = dùng tên đề"></div>
+          <div style="grid-column:1/-1"><label>Link khảo sát sau bài thi (tuỳ chọn)</label><input type="url" id="exSurveyUrl" placeholder="https://office.karofi.com/survey/start/..."><div class="small" style="margin-top:4px">Có link: sau khi nộp bài, thí sinh thấy cửa sổ mời làm khảo sát chương trình đào tạo. Để trống: không hiện.</div></div>
         </div>
         <label style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;padding:10px 12px;border-radius:10px;background:#FFF6E0;border:1.5px solid #F0D58A;color:#6B4A00"><input type="checkbox" id="exPractice" style="width:18px;height:18px;margin-top:2px"> <span><b>Đề thi thử (không phải thi chính thức)</b><br><span class="small" style="color:#6B4A00">Thí sinh thấy dải chữ "THI THỬ" ở mọi màn hình; phiếu kết quả, ảnh chia sẻ và email đều ghi rõ "Thi thử, không phải thi chính thức". Điểm tuân thủ học tập <b>vẫn được quy đổi bình thường</b> (ghi là "nếu thi thật") để thí sinh hình dung điểm của mình.</span></span></label>
 
@@ -2407,16 +2417,55 @@ function fillSetPeriod(){
   $('setPeriod').innerHTML = ids.map(id => { const e = examById(id); return '<option value="' + esc(id) + '">' + esc((e && e.title && e.title !== id ? e.title + ' · ' : '') + id) + '</option>'; }).join('');
   $('setPeriod').value = CUR_PERIOD;
 }
+// ---- Tìm kiếm / sàng lọc danh sách đề (chạy trên trình duyệt, áp dụng cho cả dạng thẻ và dạng danh sách) ----
+const exFilt = { q:'', status:'', type:'', survey:'', sort:'new' };
+function exNorm(s){ return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').trim(); }
+function exStatusKey(e){ const now = Date.now(); return e.openAt && now < e.openAt ? 'soon' : e.closeAt && now > e.closeAt ? 'closed' : 'open'; }
+function exFiltered(){
+  const words = exNorm(exFilt.q).split(/\s+/).filter(Boolean), rank = { open:0, soon:1, closed:2 };
+  const out = EXAMS.filter(e => {
+    const hay = exNorm((exTitleOf(e) || '') + ' ' + e.id);
+    return words.every(w => hay.indexOf(w) >= 0) &&
+      (!exFilt.status || exStatusKey(e) === exFilt.status) &&
+      (!exFilt.type || (exFilt.type === 'practice') === !!e.practice) &&
+      (!exFilt.survey || (exFilt.survey === 'yes') === !!e.surveyUrl);
+  });
+  const cmp = { new: null,
+    status: (a, b) => rank[exStatusKey(a)] - rank[exStatusKey(b)] || (b.openAt || b.createdAt || 0) - (a.openAt || a.createdAt || 0),
+    subs: (a, b) => (b.resultCount || 0) - (a.resultCount || 0),
+    name: (a, b) => String(exTitleOf(a)).localeCompare(String(exTitleOf(b)), 'vi') }[exFilt.sort];
+  return cmp ? out.slice().sort(cmp) : out;
+}
+function exRefilter(){ renderExGrid(); exApplyListFilter(); }
+function exFiltClear(){
+  exFilt.q = exFilt.status = exFilt.type = exFilt.survey = ''; exFilt.sort = 'new';
+  ['exQ','exFStatus','exFType','exFSurvey'].forEach(id => { if ($(id)) $(id).value = ''; }); if ($('exFSort')) $('exFSort').value = 'new';
+  exRefilter();
+}
+// Dạng danh sách (bảng): ẩn các dòng không khớp và sắp lại thứ tự theo kết quả lọc
+function exApplyListFilter(){
+  const tb = $('exList'); if (!tb) return;
+  const ids = exFiltered().map(e => e.id), rows = {};
+  Array.prototype.forEach.call(tb.querySelectorAll('tr[data-exid]'), tr => { rows[tr.dataset.exid] = tr; tr.classList.add('hide'); });
+  ids.forEach(id => { if (rows[id]){ rows[id].classList.remove('hide'); tb.appendChild(rows[id]); } });
+}
+function exUpdateCount(n){
+  const el = $('exFCount'); if (!el) return;
+  const on = !!(exFilt.q || exFilt.status || exFilt.type || exFilt.survey);
+  el.textContent = EXAMS.length ? ('Hiển thị ' + n + '/' + EXAMS.length + ' đề' + (on && !n ? ' · không có đề nào khớp bộ lọc' : '')) : '';
+  if ($('exFClear')) $('exFClear').classList.toggle('hide', !on && exFilt.sort === 'new');
+}
 function renderExGrid(){
   if (!$('exGrid')) return;
   if ($('setPeriod')) fillSetPeriod();
-  $('exGrid').innerHTML = EXAMS.map(e => {
+  const exShown = exFiltered(); exUpdateCount(exShown.length);
+  $('exGrid').innerHTML = exShown.map(e => {
     const plan = spHas(e.segmentPlans) ? 'Phân bổ riêng' : spHas(SEGPLANS) ? 'Phân bổ chung' : 'Chia theo nhóm ngành';
     return '<button type="button" class="excard" onclick="openExam(\'' + esc(e.id) + '\')"><div class="t">' + esc(exTitleOf(e)) + (!ownTitle(e) ? ' <span class="small" style="font-weight:500">(tên mặc định)</span>' : '') + '</div><div class="b">' + examBadges(e) + '</div>' +
       '<div class="st"><span><b>' + qCountOf(e) + '</b> câu hỏi</span><span><b>' + (e.resultCount || 0) + '</b> bài đã nộp</span></div>' +
       '<div class="small">' + esc(e.id) + ' · ' + plan + ' · ' + esc(examWindowText(e)) + '</div>' +
       (!qCountOf(e) ? '<div class="warn">⚠ Chưa có câu hỏi riêng</div>' : '') + '</button>';
-  }).join('') || '<div class="small" style="padding:20px 0">Chưa có đề thi nào. Bấm “＋ Tạo đề thi mới” để bắt đầu.</div>';
+  }).join('') || '<div class="small" style="padding:20px 0">' + (EXAMS.length ? 'Không có đề nào khớp bộ lọc. Bấm “Xoá lọc” để xem lại tất cả.' : 'Chưa có đề thi nào. Bấm “＋ Tạo đề thi mới” để bắt đầu.') + '</div>';
 }
 // Số câu hỏi riêng của một đề (đếm trực tiếp khi đã tải ngân hàng câu hỏi)
 function qCountOf(e){ return QUESTIONS && QUESTIONS.length ? QUESTIONS.filter(q => (q.period || '') === e.id).length : (e.bankCount || 0); }
@@ -2471,7 +2520,7 @@ function renderExHead(){
 }
 function examBadges(e){
   const now = Date.now(), st = e.openAt && now < e.openAt ? ['n','Chưa mở'] : e.closeAt && now > e.closeAt ? ['n','Đã đóng'] : ['y','Đang mở'];
-  return ' <span class="badge ' + st[0] + '">' + st[1] + '</span>' + (e.id === EX_DEFAULT ? ' <span class="badge" style="background:#E3F0FF;color:#1D4F91">Mặc định</span>' : '') + (e.practice ? ' <span class="badge" style="background:#FDEBC8;color:#8A5200">Thi thử</span>' : '');
+  return ' <span class="badge ' + st[0] + '">' + st[1] + '</span>' + (e.id === EX_DEFAULT ? ' <span class="badge" style="background:#E3F0FF;color:#1D4F91">Mặc định</span>' : '') + (e.practice ? ' <span class="badge" style="background:#FDEBC8;color:#8A5200">Thi thử</span>' : '') + (e.surveyUrl ? ' <span class="badge" style="background:#E4F5EA;color:#17653A">Có khảo sát</span>' : '');
 }
 // Bấm vào số điện thoại ở danh sách thí sinh: menu nhắn SMS / mở Zalo / gọi điện / sao chép số
 (function(){
@@ -2528,7 +2577,7 @@ async function loadExams(){
   renderExGrid();
   if (j.maxQuestions){ MAXQ = j.maxQuestions; if ($('maxQ')) $('maxQ').textContent = MAXQ; $('exCount').max = MAXQ; }
   $('exList').innerHTML = EXAMS.map(e =>
-    '<tr><td><code>'+esc(e.id)+'</code>'+(e.id===j.currentPeriod?' <span class="badge y">Mặc định</span>':'')+'</td>'+
+    '<tr data-exid="'+esc(e.id)+'"><td><code>'+esc(e.id)+'</code>'+(e.id===j.currentPeriod?' <span class="badge y">Mặc định</span>':'')+'</td>'+
     '<td>'+esc(e.title||e.id)+(e.practice?' <span class="badge" style="background:#FDEBC8;color:#8A5200">Thi thử</span>':'')+'<div class="small"><a href="/kiemtra/?exam='+encodeURIComponent(e.id)+'" target="_blank" rel="noopener">link thi</a> · '+(e.bankCount ? e.bankCount+' câu hỏi riêng' : '<span style="color:var(--warn)">chưa có câu hỏi riêng</span>')+'</div></td>'+
     '<td class="small">'+((+e.questionCount > MAXQ || bpTotalOf(e.blueprint) > MAXQ || (bpTotalOf(e.blueprint) && e.questionCount && bpTotalOf(e.blueprint) !== +e.questionCount)) ? '<span class="badge n">⚠ Cần sửa số câu</span> ' : '')+(bpTotalOf(e.blueprint) ? '<span class="badge y">Theo quy tắc</span> '+bpTotalOf(e.blueprint)+' câu / '+e.blueprint.rules.length+' quy tắc' : e.sharedUniform ? '<span class="badge y">Dùng chung</span> '+(e.questionCount ? e.questionCount+' câu/đề' : 'theo cài đặt chung')+' · không phân biệt nhóm ngành/miền' : (spHas(e.segmentPlans) ? 'Phân bổ riêng: '+SP_SEGS.filter(([k]) => e.segmentPlans[k] && e.segmentPlans[k].length).map(([k,l]) => l.replace('Chỉ bán ','').replace('Bán ','')+' '+e.segmentPlans[k].reduce((n,r) => n + r.count, 0)+' câu').join(' · ') : spHas(SEGPLANS) ? 'Theo phân bổ chung (Cài đặt)' : 'Theo nhóm ngành · '+(e.questionCount ? e.questionCount+' câu/đề' : 'theo cài đặt chung')))+'</td>'+
     '<td class="small">'+esc(examWindowText(e))+'</td><td>'+(e.resultCount||0)+'</td>'+
@@ -2541,6 +2590,7 @@ async function loadExams(){
       (e.id!==j.currentPeriod?'<button class="btn dghost sm" onclick="deleteExamUI(\''+esc(e.id)+'\')">Xoá</button>':'')+
     '</td></tr>'
   ).join('') || '<tr><td colspan="7" class="small">Chưa có đề thi nào, bấm "+ Tạo đề thi mới" để bắt đầu.</td></tr>';
+  exApplyListFilter();
   let savedView = 'card'; try { savedView = localStorage.getItem('exView') || 'card'; } catch (e) { /* bỏ qua */ }
   exSetView(savedView);
 }
@@ -2679,7 +2729,7 @@ function clearExamForm(){
   $('planPreview').innerHTML = ''; $('exCount').oninput = () => { updateBpTotal(); $('planPreview').innerHTML = ''; };
   $('exEditingId').value=''; $('exId').value=''; $('exId').disabled=false; $('exTitle').value=''; $('exShareTitle').value='';
   $('exCount').value=''; $('exBothGD').value=''; $('exSeconds').value=''; $('exPass').value=''; $('exPassOn').checked=false;
-  $('exRetake').checked=false; $('exAttempts').value=''; $('exAttempts').disabled=false; $('exPractice').checked=false; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
+  $('exRetake').checked=false; $('exAttempts').value=''; $('exAttempts').disabled=false; $('exPractice').checked=false; if ($('exSurveyUrl')) $('exSurveyUrl').value=''; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
   $('exDesc').value=''; asgLoad([]); $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
   $('exInviteOff').checked = false; $('exInviteStat').textContent = ''; exResendReset(false);
   BP_RULES = []; renderBpRules(); $('bpPreview').innerHTML=''; $('bpTotal').textContent='';
@@ -2708,7 +2758,7 @@ function editExam(id){
   const dflt = (k) => e[k] != null ? !!e[k] : !!SETCACHE[k];
   $('exRetake').checked = dflt('allowRetake'); $('exAttempts').value = e.maxAttempts > 1 ? e.maxAttempts : ''; $('exAttempts').disabled = $('exRetake').checked; $('exPractice').checked = !!e.practice; $('exComplianceOn').checked = dflt('complianceEnabled');
   $('exCHigh').value = e.complianceHighMin || ''; $('exCMid').value = e.complianceMidMin || ''; $('exCLow').value = e.complianceLowMin || '';
-  $('exDesc').value = e.description || ''; asgLoad(e.codes || [], e.codesExclude); $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
+  $('exDesc').value = e.description || ''; $('exSurveyUrl').value = e.surveyUrl || ''; asgLoad(e.codes || [], e.codesExclude); $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
   document.querySelectorAll('.exSeg').forEach(c => c.checked = (e.segments || []).indexOf(c.value) >= 0);
   $('exInviteOff').checked = !!e.inviteOff;
   $('exInviteStat').textContent = (e.invitedCodes || []).length ? 'Đã tự động gửi email mời cho ' + e.invitedCodes.length + ' người được gán vào đề này.' : (e.inviteOff ? '' : 'Chưa có ai được gửi email mời (sẽ tự gửi khi lưu, nếu có người đủ điều kiện và có email).');
@@ -2763,7 +2813,7 @@ const bad0 = exIssues(); for (let st = 1; st <= EX_STEPS; st++){ const e0 = bad0
     questionCount: $('exCount').value, bothGiaDungCount: $('exBothGD').value, secondsPerQuestion: $('exSeconds').value,
     passEnabled: $('exPassOn').checked, passScore: $('exPass').value, allowRetake: $('exRetake').checked, maxAttempts: $('exAttempts').value.trim(), practice: $('exPractice').checked,
     complianceEnabled: $('exComplianceOn').checked, complianceHighMin: $('exCHigh').value, complianceMidMin: $('exCMid').value, complianceLowMin: $('exCLow').value,
-    description: $('exDesc').value.trim(), codes: ASG.mode !== 'all' ? $('exCodes').value : '', codesExclude: ASG.mode === 'exclude',
+    description: $('exDesc').value.trim(), surveyUrl: $('exSurveyUrl').value.trim(), codes: ASG.mode !== 'all' ? $('exCodes').value : '', codesExclude: ASG.mode === 'exclude',
     openAt: localToMs($('exOpen').value), closeAt: localToMs($('exClose').value),
     segments: Array.from(document.querySelectorAll('.exSeg:checked')).map(c => c.value),
     segmentPlans: exSpOwn() ? spRead($('exSp')) : null, sharedUniform: exSpShared(), inviteOff: $('exInviteOff').checked,

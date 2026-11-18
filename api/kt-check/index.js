@@ -142,6 +142,7 @@ module.exports = async function (context, req) {
       secondsPerQuestion: Math.max(10, settings.secondsPerQuestion || 60),
       passScore: quiz.passScoreOf(settings),
       practice: !!settings.practice,
+      surveyUrl: settings.surveyUrl || "",
       maxAttempts: found.test || quiz.attemptLimit(settings) === Infinity ? 0 : quiz.attemptLimit(settings) // 0 = không giới hạn
     };
     const idxAll = await quiz.getIndex();
