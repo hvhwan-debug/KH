@@ -39,7 +39,7 @@ module.exports = async function (context, req) {
       // số lần / thời gian rời trang, số lần có dấu hiệu chụp màn hình trong lúc làm câu này.
       if (b.beh && typeof b.beh === "object") {
         const n = (v, max) => (Number.isFinite(v) && v >= 0 ? Math.min(max, Math.round(v)) : null);
-        const S = (attempt.secondsPerQuestion || 60) * 1000 + 5000;
+        const T = quiz.timeOf(attempt), S = (T.total ? T.totalMs : (attempt.secondsPerQuestion || 60) * 1000) + 5000;
         rec.beh = { firstMs: n(b.beh.firstMs, S), changes: n(b.beh.changes, 99), blur: n(b.beh.blur, 99), awayMs: n(b.beh.awayMs, S), shot: n(b.beh.shot, 99), timedOut: b.beh.timedOut === true };
       }
       if (type === "fill") {

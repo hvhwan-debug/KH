@@ -1074,6 +1074,8 @@ const handler = async function (context, req) {
         questionCount: Math.min(quiz.MAX_QUESTION_COUNT, Math.max(1, parseInt(b.questionCount, 10) || quiz.targetCount(cur))),
         bothGiaDungCount: Math.max(0, parseInt(b.bothGiaDungCount, 10) || 0),
         secondsPerQuestion: Math.max(10, parseInt(b.secondsPerQuestion, 10) || cur.secondsPerQuestion),
+        timeMode: b.timeMode === "total" ? "total" : "perQuestion",
+        totalMinutes: Math.min(300, Math.max(1, parseInt(b.totalMinutes, 10) || cur.totalMinutes || 30)),
         passEnabled: !!b.passEnabled,
         passScore: Math.min(100, Math.max(0, parseInt(b.passScore, 10) || 0)),
         allowRetake: !!b.allowRetake,

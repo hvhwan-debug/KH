@@ -1380,7 +1380,8 @@ function renderConfirm(){
     $('inProvinceQ').removeAttribute('aria-invalid'); $('inRegion').classList.remove('bad'); msg('regionMsg','');
   }
   var secs = x.secondsPerQuestion || 60, n = x.questionCount || 0;
-  var rl = ['<div><b>'+(n||'–')+'</b><span>Số câu hỏi</span></div>', '<div><b>'+secs+'s</b><span>Mỗi câu</span></div>'];
+  var timeBox = x.timeMode === 'total' ? '<div><b>'+(x.totalMinutes||30)+' phút</b><span>Cả bài</span></div>' : '<div><b>'+secs+'s</b><span>Mỗi câu</span></div>';
+  var rl = ['<div><b>'+(n||'–')+'</b><span>Số câu hỏi</span></div>', timeBox];
   if (x.passScore > 0) rl.push('<div><b>'+x.passScore+'%</b><span>Ngưỡng đạt</span></div>');
   // Đã làm, còn lượt: thêm ô "Lượt còn lại" và "Điểm cao nhất" ngay trong khung thống kê
   var AT = !ST.inProgress && ST.attempts && ST.attempts.used ? ST.attempts : null;
@@ -1787,7 +1788,7 @@ function paintSeg(){
 }
 
 function loadQuestion(s){
-  ST.q = s.question; ST.index = s.index; ST.total = s.total; ST.secs = s.secondsPerQuestion || ST.secs;
+  ST.q = s.question; ST.index = s.index; ST.total = s.total; ST.secs = s.secondsPerQuestion || ST.secs; ST.totalMode = s.timeMode === 'total'; ST.totalSecs = s.totalSec || 0;
   ST.selected = -1; ST.sel = []; ST.text = ''; ST.busy = false; disarmSubmit(); noteServerTime(s); wmSet();
   qbReset();
   if ($('seg').children.length !== ST.total) buildSeg(ST.total);
@@ -1914,10 +1915,12 @@ function startTimer(ms){
   tick();
   ST.timer = setInterval(tick, 200);
 }
+function fmtClock(s){ var h = Math.floor(s/3600), m = Math.floor((s%3600)/60), r = s%60, p = function(v){ return (v<10?'0':'')+v; }; return (h ? h+':'+p(m) : m) + ':' + p(r); }
 function tick(){
   var left = Math.max(0, Math.min(ST.endsAt - performance.now(), (ST.endsWall || Infinity) - Date.now()));
-  var total = ST.secs * 1000, secs = Math.ceil(left/1000), ratio = Math.min(1, left/total);
-  $('qSecs').textContent = secs + 's';
+  var total = (ST.totalMode ? ST.totalSecs : ST.secs) * 1000, secs = Math.ceil(left/1000), ratio = Math.min(1, left/total);
+  // Toàn bài: hiện mm:ss (hoặc h:mm:ss); từng câu: hiện số giây như cũ
+  $('qSecs').textContent = ST.totalMode ? fmtClock(secs) : secs + 's';
   $('qRing').style.strokeDashoffset = String(CIRC * (1 - ratio));
   var band = (secs <= 10 || ratio <= .16) ? 'bad' : (ratio <= .33 ? 'warn' : '');
   $('qTimer').className = 'timer' + (band ? ' '+band : '');

@@ -1335,7 +1335,22 @@ button.rd-st:disabled{opacity:.55;cursor:default}
               <button type="button" class="btn ghost sm" onclick="exCloseQuick(7)">+1 tuần</button>
             </div>
           </div>
-          <div><label>Thời gian tối đa mỗi câu (giây)</label><input type="text" inputmode="numeric" id="exSeconds" placeholder="trống = theo Cài đặt mặc định">
+          <div><label>Cách tính giờ</label>
+            <select id="exTimeMode" onchange="timeUi('ex')">
+              <option value="">Theo Cài đặt mặc định</option>
+              <option value="perQuestion">Theo thời gian từng câu</option>
+              <option value="total">Theo thời gian toàn bài</option>
+            </select>
+          </div>
+          <div id="exTotalWrap" style="display:none"><label>Thời gian cả bài (phút)</label><input type="text" inputmode="numeric" id="exTotalMin" placeholder="trống = theo Cài đặt mặc định">
+            <div class="quickpick" style="margin-top:6px">
+              <button type="button" class="btn ghost sm" onclick="$('exTotalMin').value=15">15 phút</button>
+              <button type="button" class="btn ghost sm" onclick="$('exTotalMin').value=30">30 phút</button>
+              <button type="button" class="btn ghost sm" onclick="$('exTotalMin').value=45">45 phút</button>
+              <button type="button" class="btn ghost sm" onclick="$('exTotalMin').value=60">60 phút</button>
+            </div>
+          </div>
+          <div id="exSecWrap"><label>Thời gian tối đa mỗi câu (giây)</label><input type="text" inputmode="numeric" id="exSeconds" placeholder="trống = theo Cài đặt mặc định">
             <div class="quickpick" style="margin-top:6px">
               <button type="button" class="btn ghost sm" onclick="$('exSeconds').value=30">30s</button>
               <button type="button" class="btn ghost sm" onclick="$('exSeconds').value=45">45s</button>
@@ -1867,8 +1882,19 @@ button.rd-st:disabled{opacity:.55;cursor:default}
             <input type="text" inputmode="numeric" id="setBothGD">
           </div>
           <div>
+            <label>Cách tính giờ</label>
+            <select id="setTimeMode" onchange="timeUi('set')">
+              <option value="perQuestion">Theo thời gian từng câu</option>
+              <option value="total">Theo thời gian toàn bài</option>
+            </select>
+          </div>
+          <div id="setSecWrap">
             <label>Thời gian tối đa mỗi câu (giây)</label>
             <input type="text" inputmode="numeric" id="setSeconds">
+          </div>
+          <div id="setTotalWrap" style="display:none">
+            <label>Thời gian cả bài (phút)</label>
+            <input type="text" inputmode="numeric" id="setTotalMin">
           </div>
           <div>
             <label>Điểm đạt (% số câu đúng)</label>
@@ -2772,6 +2798,7 @@ function editExam(id){
   $('exEditingId').value = id; $('exId').value = id; $('exId').disabled = true;
   $('exTitle').value = ownTitle(e) ? e.title : ''; $('exShareTitle').value = e.shareTitle || '';
   $('exCount').value = e.questionCount || ''; $('exBothGD').value = e.bothGiaDungCount || '';
+  $('exTimeMode').value = e.timeMode || ''; $('exTotalMin').value = e.totalMinutes || ''; timeUi('ex');
   $('exSeconds').value = e.secondsPerQuestion || ''; $('exPass').value = e.passScore || ''; $('exPassOn').checked = e.passEnabled != null ? !!e.passEnabled : !!SETCACHE.passEnabled;
   // Ô tick chưa đặt riêng cho đề thì hiện theo Cài đặt mặc định (tránh lưu nhầm thành 'tắt')
   const dflt = (k) => e[k] != null ? !!e[k] : !!SETCACHE[k];
@@ -2829,7 +2856,7 @@ const bad0 = exIssues(); for (let st = 1; st <= EX_STEPS; st++){ const e0 = bad0
   const exam = {
     id: $('exEditingId').value || $('exId').value.trim(),
     title: $('exTitle').value.trim(), shareTitle: $('exShareTitle').value.trim(),
-    questionCount: $('exCount').value, bothGiaDungCount: $('exBothGD').value, secondsPerQuestion: $('exSeconds').value,
+    questionCount: $('exCount').value, bothGiaDungCount: $('exBothGD').value, secondsPerQuestion: $('exSeconds').value, timeMode: $('exTimeMode').value, totalMinutes: $('exTotalMin').value,
     passEnabled: $('exPassOn').checked, passScore: $('exPass').value, allowRetake: $('exRetake').checked, maxAttempts: $('exAttempts').value.trim(), practice: $('exPractice').checked,
     complianceEnabled: $('exComplianceOn').checked, complianceHighMin: $('exCHigh').value, complianceMidMin: $('exCMid').value, complianceLowMin: $('exCLow').value,
     description: $('exDesc').value.trim(), surveyUrl: $('exSurveyUrl').value.trim(), codes: ASG.mode !== 'all' ? $('exCodes').value : '', codesExclude: ASG.mode === 'exclude',
@@ -3029,9 +3056,16 @@ if (ASG.mode === 'pick' && !ASG.set.size) add(4, 'err', 'Đã chọn "Chỉ nh�
 if (ASG.mode === 'exclude' && !ASG.set.size) add(4, 'warn', 'Chưa chọn ai để loại trừ, kết quả giống "Tất cả nhân viên".');
 return out;
 }
+// Hiện ô nhập phù hợp với cách tính giờ: từng câu (giây) hoặc toàn bài (phút). p = 'ex' (đề thi) | 'set' (cài đặt chung)
+function timeUi(p){
+  let m = $(p + 'TimeMode').value;
+  if (!m && p === 'ex') m = (typeof SETCACHE !== 'undefined' && SETCACHE && SETCACHE.timeMode) || 'perQuestion'; // trống = theo mặc định chung
+  $(p + 'SecWrap').style.display = m === 'total' ? 'none' : '';
+  $(p + 'TotalWrap').style.display = m === 'total' ? '' : 'none';
+}
 function exDefaults(){
 const s = SETCACHE || {}, ph = (id, v, u) => { if (v != null && v !== '') $(id).placeholder = 'Mặc định: ' + v + (u || ''); };
-ph('exSeconds', s.secondsPerQuestion, ' giây'); ph('exPass', s.passScore, '%');
+ph('exSeconds', s.secondsPerQuestion, ' giây'); ph('exTotalMin', s.totalMinutes, ' phút'); ph('exPass', s.passScore, '%');
 ph('exCHigh', s.complianceHighMin); ph('exCMid', s.complianceMidMin); ph('exCLow', s.complianceLowMin);
 $('exAttempts').placeholder = 'Mặc định: 1 lượt';
 $('exPass').disabled = !$('exPassOn').checked;
@@ -3044,7 +3078,9 @@ if ($('exPractice').checked) ch.push(['Thi thử', 'p']);
 if (BP_RULES.length) ch.push([BP_RULES.reduce((n, r) => n + (+r.count || 0), 0) + ' câu (cấu trúc riêng)']);
 else if (exSpShared()) ch.push([($('exCount').value.trim() || 'Số câu mặc định') + (/^\d+$/.test($('exCount').value.trim()) ? ' câu' : '') + ' cho mọi người']);
 else ch.push([exSpOwn() ? 'Phân bổ câu riêng' : 'Phân bổ câu chung']);
-const sec = $('exSeconds').value.trim() || SETCACHE.secondsPerQuestion; if (sec) ch.push([sec + ' giây/câu']);
+{ const tm = $('exTimeMode').value || SETCACHE.timeMode || 'perQuestion';
+  if (tm === 'total') ch.push([($('exTotalMin').value.trim() || SETCACHE.totalMinutes || 30) + ' phút cả bài']);
+  else { const sec = $('exSeconds').value.trim() || SETCACHE.secondsPerQuestion; if (sec) ch.push([sec + ' giây/câu']); } }
 ch.push([$('exRetake').checked ? 'Làm lại không giới hạn' : ($('exAttempts').value.trim() || 1) + ' lượt']);
 ch.push([$('exPassOn').checked ? 'Đạt từ ' + ($('exPass').value.trim() || SETCACHE.passScore || '?') + '%' : 'Không có ngưỡng đạt']);
 ch.push([o || c ? (o ? 'Mở ' + fmt(o) : 'Mở ngay') + ' · ' + (c ? 'đóng ' + fmt(c) : 'không đóng') : 'Mở ngay, không đóng']);
@@ -4736,6 +4772,7 @@ async function loadSettings(){
   CUR_PERIOD = s.examPeriod || ''; SETCACHE = s; fillSetPeriod(); exRefresh();
   $('setCount').value = s.questionCount;
   $('setBothGD').value = s.bothGiaDungCount;
+  $('setTimeMode').value = s.timeMode === 'total' ? 'total' : 'perQuestion'; $('setTotalMin').value = s.totalMinutes || 30; timeUi('set');
   $('setSeconds').value = s.secondsPerQuestion; $('setPass').value = s.passScore; $('setPassOn').checked = !!s.passEnabled; $('setPass').disabled = !s.passEnabled;
   $('setRetake').checked = !!s.allowRetake;
   $('setComplianceOn').checked = !!s.complianceEnabled;
@@ -4753,7 +4790,7 @@ async function saveSettings(){
 
   const { j } = await api('POST','/api/kt-admin', {
     op:'saveSettings', examPeriod: period, questionCount: $('setCount').value, bothGiaDungCount: $('setBothGD').value,
-    secondsPerQuestion: $('setSeconds').value, passEnabled: $('setPassOn').checked, passScore: $('setPass').value, allowRetake: $('setRetake').checked,
+    secondsPerQuestion: $('setSeconds').value, timeMode: $('setTimeMode').value, totalMinutes: $('setTotalMin').value, passEnabled: $('setPassOn').checked, passScore: $('setPass').value, allowRetake: $('setRetake').checked,
     complianceEnabled: $('setComplianceOn').checked, complianceHighMin: $('setCHigh').value,
     complianceMidMin: $('setCMid').value, complianceLowMin: $('setCLow').value,
     segmentPlans: readSegPlans()

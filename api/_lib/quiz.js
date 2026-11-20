@@ -19,6 +19,10 @@ const DEFAULT_SETTINGS = {
   // lay tu moi cau hoi KHONG thuoc "Gia dụng" (Máy lọc nước, Kiến thức khác... — tu dong gom moi category khac).
   bothGiaDungCount: 10,
   secondsPerQuestion: 60,
+  // Chế độ tính giờ: "perQuestion" = mỗi câu một đồng hồ riêng (secondsPerQuestion giây/câu);
+  // "total" = một đồng hồ chung cho cả bài (totalMinutes phút), hết giờ là thu bài.
+  timeMode: "perQuestion",
+  totalMinutes: 30,
   // Ngưỡng đạt chỉ áp dụng khi bật (passEnabled). Mặc định TẮT: bài không có ngưỡng thì không hiện Đạt/Chưa đạt.
   passEnabled: false,
   passScore: 70,
@@ -534,7 +538,7 @@ async function saveSettings(s) { await store.put(S_KEY, s); }
 // hoặc "thu-nghiem" cho một đề thử). Mỗi đề có cài đặt RIÊNG (số câu, thời gian/câu, ngưỡng đạt, điểm
 // tuân thủ...); đề nào không tự nêu cài đặt riêng thì dùng theo cài đặt chung (getSettings()) làm mặc định.
 const OVERRIDABLE_FIELDS = [
-  "examTitle", "shareTitle", "questionCount", "bothGiaDungCount", "secondsPerQuestion",
+  "examTitle", "shareTitle", "questionCount", "bothGiaDungCount", "secondsPerQuestion", "timeMode", "totalMinutes",
   "passEnabled", "passScore", "allowRetake", "maxAttempts",
   "complianceEnabled", "complianceHighMin", "complianceMidMin", "complianceLowMin"
 ];
@@ -601,10 +605,12 @@ async function upsertExam(data) {
   if (entry.questionCount !== undefined) entry.questionCount = toInt(entry.questionCount);
   if (entry.bothGiaDungCount !== undefined) entry.bothGiaDungCount = toInt(entry.bothGiaDungCount);
   if (entry.secondsPerQuestion !== undefined) { const sp = toInt(entry.secondsPerQuestion); if (!(sp >= 10 && sp <= 600)) return { ok: false, error: "Thời gian mỗi câu phải từ 10 đến 600 giây." }; entry.secondsPerQuestion = sp; }
+  if (entry.timeMode !== undefined) { entry.timeMode = entry.timeMode === "total" ? "total" : (entry.timeMode === "" ? undefined : "perQuestion"); if (entry.timeMode === undefined) delete entry.timeMode; }
+  if (entry.totalMinutes !== undefined) { const tm = toInt(entry.totalMinutes); if (!(tm >= 1 && tm <= 300)) return { ok: false, error: "Thời gian cả bài phải từ 1 đến 300 phút." }; entry.totalMinutes = tm; }
   if (entry.maxAttempts !== undefined) { const ma = toInt(entry.maxAttempts); if (!(ma >= 1 && ma <= 20)) return { ok: false, error: "Số lượt làm mỗi người phải từ 1 đến 20." }; entry.maxAttempts = ma; }
   if (entry.passScore !== undefined) { const ps = toInt(entry.passScore); if (!(ps >= 0 && ps <= 100)) return { ok: false, error: "Điểm đạt phải từ 0 đến 100%." }; entry.passScore = ps; }
   // Ô để trống = kế thừa cài đặt chung: xoá giá trị cũ đã lưu (trước đây để trống KHÔNG xoá được giá trị cũ)
-  if (data) ["questionCount", "bothGiaDungCount", "secondsPerQuestion", "passScore", "maxAttempts"].forEach((k) => { if (data[k] === "" && i >= 0) delete exams[i][k]; });
+  if (data) ["questionCount", "bothGiaDungCount", "secondsPerQuestion", "totalMinutes", "timeMode", "passScore", "maxAttempts"].forEach((k) => { if (data[k] === "" && i >= 0) delete exams[i][k]; });
   if (data && data.practice !== undefined) entry.practice = !!data.practice;
   if (data && data.surveyUrl !== undefined) {
     const su = String(data.surveyUrl || "").trim();
@@ -1135,11 +1141,42 @@ async function activeForPeriod(code, period) {
   return null;
 }
 
+// Cấu hình tính giờ của một bài làm: { total: bool, totalMs, perMs }.
+function timeOf(a) {
+  const n = (a.questionIds || []).length;
+  if (a.timeMode === "total" && a.totalSec > 0) return { total: true, totalMs: a.totalSec * 1000, perMs: Math.max(10, a.secondsPerQuestion || 60) * 1000, n };
+  return { total: false, totalMs: 0, perMs: Math.max(10, a.secondsPerQuestion || 60) * 1000, n };
+}
+// Cấu hình tính giờ từ cài đặt (dùng khi tạo bài làm mới): trả các trường lưu vào attempt.
+function timeFields(settings, questionCount) {
+  const per = Math.max(10, settings.secondsPerQuestion || 60);
+  if (settings.timeMode === "total") {
+    const totalSec = Math.min(300, Math.max(1, parseInt(settings.totalMinutes, 10) || 30)) * 60;
+    // secondsPerQuestion ở chế độ này chỉ là mức trung bình tham chiếu cho phần thống kê
+    return { timeMode: "total", totalSec, secondsPerQuestion: Math.max(10, Math.round(totalSec / Math.max(1, questionCount))) };
+  }
+  return { timeMode: "perQuestion", secondsPerQuestion: per };
+}
+
 // Đưa con trỏ câu hỏi về đúng hiện tại: câu nào đã quá hạn mà chưa trả lời thì tính là bỏ trống.
 // Trả về true nếu bài làm bị thay đổi (cần lưu lại).
 function syncAttempt(a, now) {
   const n = a.questionIds.length, S = a.secondsPerQuestion * 1000;
   let changed = false;
+  const T = timeOf(a);
+  if (T.total) { // một đồng hồ chung: hết giờ thì mọi câu chưa trả lời tính là bỏ trống
+    const endAt = (a.startedAt || now) + T.totalMs;
+    if (typeof a.cursor !== "number") { a.cursor = 0; a.qStartedAt = a.startedAt || now; changed = true; }
+    if (a.cursor < n && now > endAt + GRACE_MS) {
+      while (a.cursor < n) {
+        const qid = a.questionIds[a.cursor];
+        if (!a.answers[qid]) a.answers[qid] = { answerIndex: -1, auto: true, answeredAt: endAt };
+        a.cursor++; changed = true;
+      }
+      a.qStartedAt = endAt;
+    }
+    return changed;
+  }
   if (typeof a.cursor !== "number") { // bài làm tạo trước khi có cơ chế này
     let c = 0;
     while (c < n && a.answers[a.questionIds[c]]) c++;
@@ -1164,12 +1201,15 @@ function clientState(a, byId, now) {
   // Số câu hệ thống tự tính bỏ trống vì quá giờ (không tính câu bị xoá khỏi ngân hàng) + giờ máy chủ để trang đối chiếu đồng hồ
   const autoCount = Object.keys(a.answers || {}).filter((k) => a.answers[k] && a.answers[k].auto && !a.answers[k].gone).length;
   if (a.cursor >= n) return { state: { done: true, total: n, autoCount, serverNow: now }, changed };
+  const T = timeOf(a);
   const qid = a.questionIds[a.cursor], q = byId[qid];
   const order = a.orders[qid] || (q.options || []).map((_, i) => i);
   return {
     state: {
       done: false, index: a.cursor, total: n, autoCount, serverNow: now,
-      remainingMs: Math.max(0, a.qStartedAt + S - now),
+      remainingMs: T.total ? Math.max(0, (a.startedAt || now) + T.totalMs - now) : Math.max(0, a.qStartedAt + S - now),
+      timeMode: T.total ? "total" : "perQuestion",
+      totalSec: T.total ? Math.round(T.totalMs / 1000) : 0,
       secondsPerQuestion: a.secondsPerQuestion,
       question: { id: qid, type: qType(q), text: q.text, image: validImageUrl(q.image) ? q.image : "", options: order.map((i) => q.options[i]) }
     },
@@ -1213,5 +1253,5 @@ module.exports = { validImageUrl,
   TYPES, qType, normText, normalizeQuestionInput, gradeAnswer,
   getIndex, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,
-  buildPaper, getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, getActive, setActive, moveActive, syncAttempt, clientState, tooManyFails, noteFail
+  buildPaper, getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, timeOf, timeFields, getActive, setActive, moveActive, syncAttempt, clientState, tooManyFails, noteFail
 };

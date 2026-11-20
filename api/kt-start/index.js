@@ -106,6 +106,7 @@ module.exports = async function (context, req) {
         cursor: 0, qStartedAt: now,
         status: "in_progress"
       };
+      Object.assign(attempt, quiz.timeFields(settings, picked.length)); // chế độ tính giờ: theo từng câu / theo toàn bài
       if (found.test) attempt.test = true; // tài khoản thử nghiệm: bài này không ghi vào kết quả / dashboard / xuất dữ liệu
     } else {
       quiz.syncAttempt(attempt, now);

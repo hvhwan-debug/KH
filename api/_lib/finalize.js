@@ -95,6 +95,7 @@ const SWEEP_GRACE_MS = 60 * 1000; // chờ thêm 1 phút sau hạn để không 
 // Hạn chót của cả bài: câu hiện tại + các câu còn lại, mỗi câu secondsPerQuestion giây.
 function deadlineOf(a) {
   const n = (a.questionIds || []).length, S = (a.secondsPerQuestion || 0) * 1000;
+  if (a.timeMode === "total" && a.totalSec > 0) return (a.startedAt || 0) + a.totalSec * 1000 + quiz.GRACE_MS;
   if (typeof a.cursor !== "number") return (a.startedAt || 0) + n * S + quiz.GRACE_MS;
   return (a.qStartedAt || a.startedAt || 0) + Math.max(0, n - a.cursor) * S + quiz.GRACE_MS;
 }

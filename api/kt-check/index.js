@@ -140,6 +140,8 @@ module.exports = async function (context, req) {
       shareTitle: String(settings.shareTitle || "").trim() || settings.examTitle,
       questionCount: quiz.countFor(settings, found.segment, found.region),
       secondsPerQuestion: Math.max(10, settings.secondsPerQuestion || 60),
+      timeMode: settings.timeMode === "total" ? "total" : "perQuestion",
+      totalMinutes: Math.min(300, Math.max(1, parseInt(settings.totalMinutes, 10) || 30)),
       passScore: quiz.passScoreOf(settings),
       practice: !!settings.practice,
       surveyUrl: settings.surveyUrl || "",
