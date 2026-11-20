@@ -495,6 +495,16 @@ html{-webkit-text-size-adjust:100%}
 .logo img,.side-brand .dot img,.topbar .dot img{width:100%;height:100%;object-fit:contain;display:block}
 .brandfull{display:block;margin:0 auto 10px;width:auto;height:112px;max-width:70%;object-fit:contain}
 .trieschip{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;color:#0B3F94;background:#EEF4FC;border:1px solid #B7CDEB;white-space:nowrap;vertical-align:middle;cursor:help}
+
+/* Phân quyền: ảnh thí sinh luôn ẩn với tài khoản quản lí; các nút khác ẩn theo quyền được cấp */
+body.nophoto .ph,body.nophoto #ovImg{display:none!important}
+body.noedit [data-act="edit"],body.nodel [data-act="del"],body.nopaper [data-act="paper"]{display:none!important}
+.exrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 0;border-top:1px solid var(--line)}
+.exrow .grow{flex:1 1 220px;min-width:0}
+.exgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.exemp{max-height:170px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:8px;display:grid;gap:4px;font-size:13px}
+.exemp label{display:flex;align-items:center;gap:7px;font-weight:500;margin:0}
+.exemp input{width:auto;margin:0}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -576,6 +586,7 @@ html{-webkit-text-size-adjust:100%}
       <span class="sp"></span>
       <button class="btn ghost" id="aiToggle" type="button" aria-expanded="false" aria-controls="aiFind">✦ Hỏi trợ lí</button>
       <button class="btn ghost" id="aiQToggle" type="button" aria-expanded="false" aria-controls="aiQGen">✦ Soạn đề bằng AI</button>
+      <button class="btn ghost" id="examBtn" type="button">Quản lí đề của tôi</button>
       <button class="btn ghost" id="notifyBtn" type="button">Thông báo, thư mời</button>
       <button class="btn ghost" id="csvBtn" type="button">Tải Excel</button>
       <button class="btn" id="addBtn" type="button">+ Thêm nhân viên</button>
@@ -591,9 +602,31 @@ html{-webkit-text-size-adjust:100%}
       <div id="aiAns"></div>
     </div>
 
+    <div class="card ai-find hide" id="examPanel">
+      <div class="ai-find-h">Quản lí đề của tôi</div>
+      <p class="sub">Đề bạn tạo chỉ giao cho nhân viên trong phạm vi của bạn, và bạn chỉ sửa / xoá được đề do chính mình tạo. Ảnh thí sinh không hiển thị với tài khoản quản lí.</p>
+      <div id="exList"></div>
+      <div id="exQBox" class="hide" style="margin-top:10px"></div>
+      <h3 style="margin:16px 0 8px" id="exFormTitle">Tạo đề mới</h3>
+      <div class="exgrid">
+        <div class="field"><label for="exId">Mã đề (chữ, số, gạch ngang)</label><input id="exId" autocomplete="off" placeholder="vd: kt-thang-12"></div>
+        <div class="field"><label for="exTitle">Tên bài kiểm tra</label><input id="exTitle" autocomplete="off" placeholder="vd: Kiểm tra kiến thức tháng 12"></div>
+        <div class="field"><label for="exOpen">Mở lúc (tuỳ chọn)</label><input id="exOpen" type="datetime-local"></div>
+        <div class="field"><label for="exClose">Đóng lúc (tuỳ chọn)</label><input id="exClose" type="datetime-local"></div>
+        <div class="field"><label for="exCount">Số câu mỗi đề</label><input id="exCount" inputmode="numeric" placeholder="để trống = mặc định"></div>
+        <div class="field"><label for="exSecs">Giây mỗi câu</label><input id="exSecs" inputmode="numeric" placeholder="10–600"></div>
+        <div class="field"><label for="exPass">Điểm đạt (%)</label><input id="exPass" inputmode="numeric" placeholder="0–100"></div>
+        <div class="field"><label for="exMax">Số lượt làm tối đa</label><input id="exMax" inputmode="numeric" placeholder="1–20"></div>
+      </div>
+      <div class="field"><label>Giao cho nhân viên <button type="button" class="linkbtn" id="exAll">Chọn tất cả</button> · <button type="button" class="linkbtn" id="exNone">Bỏ chọn</button></label><div class="exemp" id="exEmp"></div></div>
+      <button class="btn" id="exSave" type="button">Lưu đề</button> <button class="btn ghost" id="exReset" type="button">Đề mới</button>
+      <div id="exMsg"></div>
+    </div>
+
     <div class="card ai-find hide" id="aiQGen">
       <div class="ai-find-h">✦ Soạn câu hỏi bằng AI</div>
-      <p class="sub">Mô tả chủ đề, AI soạn sẵn câu hỏi trắc nghiệm để bạn xem lại rồi mới đưa vào ngân hàng đề (không tự động lưu). Câu hỏi sẽ được thêm vào đề thi đang mở hiện tại.</p>
+      <p class="sub">Mô tả chủ đề, AI soạn sẵn câu hỏi trắc nghiệm để bạn xem lại rồi mới đưa vào ngân hàng đề (không tự động lưu). Câu hỏi sẽ được thêm vào đề do bạn tạo (chọn bên dưới).</p>
+      <div class="field"><label for="aiQExam">Thêm vào đề</label><select id="aiQExam"></select></div>
       <div class="field"><label for="aiQTopic">Chủ đề</label><input type="text" id="aiQTopic" placeholder="Vd: An toàn điện khi lắp đặt bếp từ"></div>
       <div class="field"><label for="aiQCategory">Danh mục (tuỳ chọn)</label><input type="text" id="aiQCategory" placeholder="Vd: Gia dụng"></div>
       <div class="field"><label for="aiQCount">Số câu</label><input type="text" inputmode="numeric" id="aiQCount" value="10" style="max-width:100px"></div>
@@ -801,7 +834,7 @@ async function boot(){
   var v = await api('GET','/api/kt-viewer?op=me');
   if (v.s === 401){ show('loginScreen'); return; }
   if (v.s === 403 || !v.j.ok){ $('deniedEmail').textContent = me.email || ''; show('deniedScreen'); return; }
-  VIEWER = v.j.viewer; off = (v.j.serverNow || Date.now()) - Date.now();
+  VIEWER = v.j.viewer; off = (v.j.serverNow || Date.now()) - Date.now(); applyPerms();
   $('meName').textContent = VIEWER.name || VIEWER.email;
   $('scopeTxt').textContent = 'Nhân viên của: ' + (VIEWER.scopes || []).join('; ');
   show('app'); await load();
@@ -1165,7 +1198,7 @@ $('aiQCommit').addEventListener('click', async function(){
   try { questions = JSON.parse($('aiQJson').value); if (!Array.isArray(questions)) throw new Error(); }
   catch(e){ msg('aiQMsg','JSON không hợp lệ, kiểm tra lại.'); return; }
   $('aiQCommit').disabled = true;
-  var r = await api('POST','/api/kt-viewer', { op:'addQuestions', questions:questions });
+  var r = await api('POST','/api/kt-viewer', { op:'addQuestions', questions:questions, period:$('aiQExam').value });
   $('aiQCommit').disabled = false;
   if (!r.j.ok){ msg('aiQMsg', r.j.error || 'Không thêm được.'); return; }
   msg('aiQMsg', 'Đã thêm '+r.j.added+' câu vào ngân hàng đề'+(r.j.skipped?', bỏ qua '+r.j.skipped+' câu thiếu dữ liệu':'')+'.', 'ok');
@@ -1576,6 +1609,7 @@ function loadPhoto(code, sel){
 }
 async function fillPhoto(id, e, sel){
   var el = $(id); if (!el) return;
+  if (!VIEWER || !VIEWER.canViewPhoto){ el.style.display = 'none'; return; } // quản lí không có quyền xem ảnh thí sinh
   sel = photoSel(e, sel);
   var tok = e.code + '|' + (sel.id || sel.period);
   el.className = el.className.replace(/\b(load|none)\b/g,'').trim() + ' load'; el.innerHTML = ''; el.dataset.code = tok;
@@ -1808,6 +1842,107 @@ $('csvBtn').addEventListener('click', async function(){
   try { await exportXLSX(rows); logEv('exportExcel', { period: CURP, count: rows.length }); }
   catch(e){ exportCSV(rows); logEv('exportCsv', { period: CURP, count: rows.length }); msg('listMsg','Không tạo được file Excel nên đã tải bản CSV thay thế.','warn'); }
   btn.disabled = false; btn.textContent = label;
+});
+
+/* ---------- Phân quyền & quản lí đề ---------- */
+function applyPerms(){
+  var P = (VIEWER && VIEWER.perms) || {};
+  var b = document.body.classList;
+  b.toggle('nophoto', !(VIEWER && VIEWER.canViewPhoto));
+  b.toggle('noedit', !P.editEmployees); b.toggle('nodel', !P.deleteEmployees); b.toggle('nopaper', !P.viewPaper);
+  var map = { btnTeamIns:'viewAi', aiQToggle:'manageExams', examBtn:'manageExams', notifyBtn:'notify', addBtn:'editEmployees', rPaper:'viewPaper' };
+  Object.keys(map).forEach(function(id){ var el = $(id); if (el && !P[map[id]]) el.classList.add('hide'); });
+}
+var MYEX = { exams: [], emps: [] };
+function exSlug(t){ return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,36); }
+function exLocal(ms){ return ms ? new Date(ms + 7*3600*1000).toISOString().slice(0,16) : ''; }
+function exMs(v){ if (!v) return 0; var t = Date.parse(v + ':00+07:00'); return isFinite(t) ? t : 0; }
+function exFillEmp(sel){
+  var set = sel ? {} : null; if (sel) sel.forEach(function(c){ set[String(c).toUpperCase()] = 1; });
+  $('exEmp').innerHTML = MYEX.emps.map(function(e){
+    var on = !set || set[String(e.code).toUpperCase()];
+    return '<label><input type="checkbox" value="' + esc(e.code) + '"' + (on ? ' checked' : '') + '> ' + esc(e.name || e.code) + ' <span class="small">(' + esc(e.code) + ')</span></label>';
+  }).join('') || '<span class="small">Chưa có nhân viên nào trong phạm vi.</span>';
+}
+function exReset(){
+  $('exFormTitle').textContent = 'Tạo đề mới';
+  ['exId','exTitle','exOpen','exClose','exCount','exSecs','exPass','exMax'].forEach(function(k){ $(k).value = ''; });
+  $('exId').disabled = false; exFillEmp(null); msg('exMsg','');
+}
+function exRender(){
+  $('exList').innerHTML = MYEX.exams.map(function(x){
+    return '<div class="exrow"><div class="grow"><b>' + esc(x.title || x.id) + '</b> <span class="small">· mã ' + esc(x.id) + ' · ' + (x.bankCount||0) + ' câu · ' + (x.resultCount||0) + ' bài nộp' + (x.openAt ? ' · mở ' + esc(fmt(x.openAt)) : '') + (x.closeAt ? ' · đóng ' + esc(fmt(x.closeAt)) : '') + '</span></div>' +
+      '<button class="btn ghost sm" data-ex="q" data-id="' + esc(x.id) + '">Câu hỏi</button><button class="btn ghost sm" data-ex="edit" data-id="' + esc(x.id) + '">Sửa</button><button class="btn dghost sm" data-ex="del" data-id="' + esc(x.id) + '">Xoá</button></div>';
+  }).join('') || '<p class="small">Bạn chưa tạo đề nào. Điền form bên dưới để tạo đề đầu tiên.</p>';
+  var cur = $('aiQExam').value;
+  $('aiQExam').innerHTML = MYEX.exams.map(function(x){ return '<option value="' + esc(x.id) + '">' + esc(x.title || x.id) + ' (' + esc(x.id) + ')</option>'; }).join('') || '<option value="">(Hãy tạo đề trước)</option>';
+  if (cur && MYEX.exams.some(function(x){ return x.id === cur; })) $('aiQExam').value = cur;
+}
+async function exLoad(){
+  var r = await api('GET','/api/kt-viewer?op=myExams');
+  if (!r.j.ok){ msg('exMsg', r.j.error || 'Không tải được danh sách đề.'); return; }
+  MYEX.exams = r.j.exams || []; MYEX.emps = r.j.employees || [];
+  exRender(); if (!$('exEmp').children.length) exFillEmp(null);
+}
+async function exQuestions(id){
+  var box = $('exQBox'); box.classList.remove('hide'); box.innerHTML = '<span class="small">Đang tải câu hỏi…</span>';
+  var r = await api('GET','/api/kt-viewer?op=examQuestions&period=' + encodeURIComponent(id));
+  if (!r.j.ok){ box.innerHTML = '<div class="msg err">' + esc(r.j.error || 'Không tải được.') + '</div>'; return; }
+  $('aiQExam').value = id;
+  var L = r.j.questions || [];
+  box.innerHTML = '<b>Câu hỏi của đề ' + esc(id) + ' (' + L.length + ')</b> <span class="small">· thêm câu bằng "✦ Soạn đề bằng AI" (chọn đúng đề)</span>' + (L.map(function(q, i){
+    return '<div class="exrow"><div class="grow">' + (i+1) + '. ' + esc(q.text) + '<div class="small">' + (q.options||[]).map(function(o, k){ return (k === q.correctIndex ? '✔ ' : '') + esc(o); }).join(' · ') + '</div></div><button class="btn dghost sm" data-ex="dq" data-id="' + esc(id) + '" data-q="' + esc(q.id) + '">Xoá</button></div>';
+  }).join('') || '<p class="small">Đề chưa có câu hỏi nào.</p>');
+}
+$('examBtn').addEventListener('click', function(){
+  var open = $('examPanel').classList.toggle('hide') === false;
+  if (open) exLoad();
+});
+$('exTitle').addEventListener('input', function(){ if (!$('exId').disabled && !$('exId').dataset.touched) $('exId').value = exSlug($('exTitle').value); });
+$('exId').addEventListener('input', function(){ $('exId').dataset.touched = '1'; });
+$('exAll').addEventListener('click', function(){ document.querySelectorAll('#exEmp input').forEach(function(i){ i.checked = true; }); });
+$('exNone').addEventListener('click', function(){ document.querySelectorAll('#exEmp input').forEach(function(i){ i.checked = false; }); });
+$('exReset').addEventListener('click', function(){ $('exId').dataset.touched = ''; exReset(); });
+$('exSave').addEventListener('click', async function(){
+  var d = { id: $('exId').value.trim(), title: $('exTitle').value.trim(), openAt: exMs($('exOpen').value), closeAt: exMs($('exClose').value) };
+  if (!d.id){ msg('exMsg','Nhập mã đề (hoặc nhập tên bài kiểm tra để tự tạo mã).'); return; }
+  [['exCount','questionCount'],['exSecs','secondsPerQuestion'],['exPass','passScore'],['exMax','maxAttempts']].forEach(function(p){ var v = $(p[0]).value.trim(); if (v) d[p[1]] = v; });
+  var picked = Array.prototype.map.call(document.querySelectorAll('#exEmp input:checked'), function(i){ return i.value; });
+  if (!picked.length){ msg('exMsg','Chọn ít nhất một nhân viên để giao đề.'); return; }
+  d.codes = picked;
+  $('exSave').disabled = true;
+  var r = await api('POST','/api/kt-viewer', { op:'saveMyExam', exam:d });
+  $('exSave').disabled = false;
+  if (!r.j.ok){ msg('exMsg', r.j.error || 'Không lưu được đề.'); return; }
+  MYEX.exams = r.j.exams || MYEX.exams; exRender();
+  msg('exMsg', (r.j.created ? 'Đã tạo đề ' : 'Đã cập nhật đề ') + r.j.exam.id + ' cho ' + picked.length + ' nhân viên. Thêm câu hỏi bằng "✦ Soạn đề bằng AI".', 'ok');
+  $('exId').disabled = true;
+});
+$('exList').addEventListener('click', async function(ev){
+  var b = ev.target.closest('[data-ex]'); if (!b) return;
+  var id = b.dataset.id, x = MYEX.exams.filter(function(e){ return e.id === id; })[0];
+  if (b.dataset.ex === 'q') return exQuestions(id);
+  if (b.dataset.ex === 'edit' && x){
+    $('exFormTitle').textContent = 'Sửa đề ' + id; $('exId').value = id; $('exId').disabled = true;
+    $('exTitle').value = x.title || ''; $('exOpen').value = exLocal(x.openAt); $('exClose').value = exLocal(x.closeAt);
+    $('exCount').value = x.questionCount != null ? x.questionCount : ''; $('exSecs').value = x.secondsPerQuestion != null ? x.secondsPerQuestion : '';
+    $('exPass').value = x.passScore != null ? x.passScore : ''; $('exMax').value = x.maxAttempts != null ? x.maxAttempts : '';
+    exFillEmp(x.codes || null); msg('exMsg',''); $('exTitle').scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+  if (b.dataset.ex === 'del'){
+    if (!confirm('Xoá đề "' + ((x && x.title) || id) + '" cùng toàn bộ câu hỏi của đề? Không thể hoàn tác.')) return;
+    var r = await api('POST','/api/kt-viewer', { op:'dropMyExam', id:id });
+    if (!r.j.ok){ msg('exMsg', r.j.error || 'Không xoá được đề.'); return; }
+    MYEX.exams = r.j.exams || []; exRender(); $('exQBox').classList.add('hide'); msg('exMsg','Đã xoá đề ' + id + '.','ok');
+  }
+});
+$('exQBox').addEventListener('click', async function(ev){
+  var b = ev.target.closest('[data-ex="dq"]'); if (!b) return;
+  if (!confirm('Xoá câu hỏi này khỏi đề?')) return;
+  var r = await api('POST','/api/kt-viewer', { op:'removeMyQuestion', id:b.dataset.id, qid:b.dataset.q });
+  if (!r.j.ok){ msg('exMsg', r.j.error || 'Không xoá được câu hỏi.'); return; }
+  exQuestions(b.dataset.id); exLoad();
 });
 
 boot();

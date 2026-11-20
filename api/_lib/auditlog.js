@@ -64,11 +64,14 @@ const A = {
     GET: {
       me: ["Mở trang quản lí", "read"], employees: ["Xem danh sách nhân viên", "read"], employee: ["Xem lịch sử sửa thông tin", "read"],
       paper: ["Xem bài làm", "read"], photo: ["Xem ảnh xác nhận", "read"], profile: ["Xem hồ sơ kiểm tra", "read"],
-      insight: ["Xem chẩn đoán hành vi học tập của nhân viên", "read"], teamInsight: ["Xem chẩn đoán hành vi cả nhóm", "read"]
+      insight: ["Xem chẩn đoán hành vi học tập của nhân viên", "read"], teamInsight: ["Xem chẩn đoán hành vi cả nhóm", "read"],
+      myExams: ["Xem danh sách đề của mình", "read"], examQuestions: ["Xem câu hỏi của đề mình tạo", "read"]
     },
     POST: {
       addEmployee: ["Thêm nhân viên", "change"], updateEmployee: ["Sửa thông tin nhân viên", "change"],
-      confirmEmployee: ["Xác nhận thông tin nhân viên", "change"], deleteEmployee: ["Xoá nhân viên", "change"], notifyEmail: ["Gửi thông báo qua email", "change"]
+      confirmEmployee: ["Xác nhận thông tin nhân viên", "change"], deleteEmployee: ["Xoá nhân viên", "change"], notifyEmail: ["Gửi thông báo qua email", "change"],
+      saveMyExam: ["Tạo / sửa đề của mình", "change"], dropMyExam: ["Xoá đề của mình", "change"], removeMyQuestion: ["Xoá câu hỏi khỏi đề của mình", "change"],
+      genQuestions: ["Soạn câu hỏi bằng AI", "export"], addQuestions: ["Thêm câu hỏi vào đề của mình", "change"]
     }
   }
 };
@@ -127,7 +130,7 @@ function details(area, op, q, b, res, pre) {
     case "deleteQuestion": d.id = b.id; d.question = pre.q; break;
     case "deleteAllQuestions": d.period = typeof b.period === "string" ? (b.period || "chưa gắn kỳ") : "mọi kỳ"; d.count = r.deleted != null ? r.deleted : pre.n; break;
     case "restoreQuestions": d.restored = r.restored; break;
-    case "saveViewer": d.email = s(b.email, 80); d.scopes = s(Array.isArray(b.scopes) ? b.scopes.join("; ") : b.scopes, 200); if (pre.viewer) d.before = s((pre.viewer.scopes || []).join("; "), 200); d.created = !!r.created; break;
+    case "saveViewer": d.email = s(b.email, 80); d.scopes = s(Array.isArray(b.scopes) ? b.scopes.join("; ") : b.scopes, 200); if (pre.viewer) d.before = s((pre.viewer.scopes || []).join("; "), 200); d.created = !!r.created; if (b.perms && typeof b.perms === "object") d.perms = s(Object.keys(b.perms).filter((k) => b.perms[k]).join(","), 200); break;
     case "setViewerPassword": d.email = s(b.email, 80); break; // KHÔNG ghi mật khẩu
     case "deleteViewer": d.email = s(b.email, 80); if (pre.viewer) d.scopes = s((pre.viewer.scopes || []).join("; "), 200); break;
     case "addCandidates": d.rows = Array.isArray(b.rows) && b.rows.length ? b.rows.length : (typeof b.text === "string" ? b.text.split("\n").filter(Boolean).length : undefined); d.added = r.added; d.updated = r.updated; break;

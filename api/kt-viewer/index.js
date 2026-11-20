@@ -10,6 +10,7 @@ const { cleanText } = require("../_lib/cleantext");
 const { probationOf, joinDateOf } = require("../_lib/probation");
 const { modelName, prettyLabel } = require("../_lib/devicename");
 const behavior = require("../_lib/behavior");
+const perms = require("../_lib/perms");
 
 const SEGMENT_INPUTS = ["both", "ca_hai", "gia_dung", "may_loc"]; // giá trị được chấp nhận; lưu dạng chuẩn: both | gia_dung | may_loc
 const AUDIT_MAX = 30;
@@ -21,14 +22,16 @@ const empView = (c) => ({
 });
 
 // admin = true: kèm thiết bị và vị trí (chỉ quản trị viên được xem, quản lí thường không nhận dữ liệu này)
-function summaryOf(r, settings, admin) {
+function summaryOf(r, settings, admin, ai) {
   return {
     id: r.id, period: r.period || "",
     score: r.score, total: r.total, pct: r.pct, compliancePoints: r.compliancePoints, passed: quiz.passState(r.pct, settings), practice: !!r.practice,
     submittedAt: r.submittedAt, startedAt: r.startedAt, durationSec: r.durationSec, wrong: r.wrong, blank: r.blank,
-    proof: quiz.proofCode(r.id), verify: quiz.verifyToken(r.id), flags: r.flags || null, mailOk: r.mailOk, device: admin ? (r.device ? Object.assign({}, r.device, { label: prettyLabel(r.device.label) }) : null) : undefined
+    proof: quiz.proofCode(r.id), verify: quiz.verifyToken(r.id), flags: ai === false ? undefined : (r.flags || null), mailOk: r.mailOk, device: admin ? (r.device ? Object.assign({}, r.device, { label: prettyLabel(r.device.label) }) : null) : undefined
   };
 }
+
+const ownsExam = (viewer, e) => !!(viewer && viewer.isAdmin) || (e && e.ownerEmail && quiz.normEmail(e.ownerEmail) === quiz.normEmail(viewer.email));
 
 const handler = async function (context, req) {
   try {
@@ -47,11 +50,14 @@ const handler = async function (context, req) {
     }
     if (!viewer) return reply(context, 403, { ok: false, error: "Tài khoản này chưa được cấp quyền quản lí. Hãy liên hệ quản trị viên." });
     const mine = (await quiz.getCandidates()).filter((c) => quiz.inScope(viewer, c));
+    const P = perms.permsOf(viewer);
+    const noPerm = (what) => reply(context, 403, { ok: false, error: "Tài khoản của bạn chưa được cấp quyền: " + what + ". Hãy liên hệ quản trị viên." });
 
     if (req.method === "GET") {
       const op = (req.query && req.query.op) || "";
-      if (op === "me") return reply(context, 200, { ok: true, viewer: { email: viewer.email, name: viewer.name || "", scopes: viewer.scopes || [], isAdmin: !!viewer.isAdmin }, serverNow: Date.now() });
+      if (op === "me") return reply(context, 200, { ok: true, viewer: { email: viewer.email, name: viewer.name || "", scopes: viewer.scopes || [], isAdmin: !!viewer.isAdmin, perms: P, canViewPhoto: perms.canViewPhoto(viewer) }, serverNow: Date.now() });
       if (op === "employees") {
+        if (!P.viewResults) return noPerm("xem nhân viên & kết quả");
         const settings = await quiz.getSettings();
         const idx = await quiz.getIndex();
         // Theo kỳ: mặc định kỳ hiện tại; "" = bài nộp trước khi có kỳ (chưa gắn kỳ)
@@ -80,13 +86,14 @@ const handler = async function (context, req) {
           // Nhiều lượt: kèm các lần làm (điểm từng lần, lần chính thức = cao nhất) để quản lí thấy đủ
           const tries = r ? subs.filter((a) => (a.period || "") === period && quiz.normCode(a.code) === quiz.normCode(c.code)).sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0))
             .map((a, i) => ({ n: i + 1, score: a.score, total: a.total, pct: a.pct, submittedAt: a.submittedAt, official: a.id === r.id })) : [];
-          return Object.assign(empView(c), { status, eligible: quiz.inAudience(exSt0, c), result: r ? Object.assign(summaryOf(r, settings, !!viewer.isAdmin), { tries }) : null });
+          return Object.assign(empView(c), { status, eligible: quiz.inAudience(exSt0, c), result: r ? Object.assign(summaryOf(r, settings, !!viewer.isAdmin, P.viewAi), { tries }) : null });
         }));
         return reply(context, 200, { ok: true, employees: list, exam: { id: period, title: exSt0.examTitle || period, openAt: exSt0.openAt || 0, closeAt: exSt0.closeAt || 0 }, period, periods, examTitles, currentPeriod: settings.examPeriod, serverNow: Date.now() });
       }
       // Chẩn đoán hành vi học tập của MỘT nhân viên trong phạm vi của quản lí (bằng chứng + nguyên nhân giả thuyết + việc nên làm).
       // Thiết bị / vị trí chỉ đưa vào phân tích khi người xem là quản trị viên (giống các màn hình khác).
       if (op === "insight") {
+        if (!P.viewAi) return noPerm("xem cảnh báo AI & lịch sử làm bài");
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
         if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
         const r = await behavior.forEmployee(c.code, { admin: !!viewer.isAdmin, ai: req.query.ai !== "0" });
@@ -95,6 +102,7 @@ const handler = async function (context, req) {
       }
       // Chẩn đoán cả nhóm (những nhân viên thuộc phạm vi của quản lí) cho một đề / kỳ.
       if (op === "teamInsight") {
+        if (!P.viewAi) return noPerm("xem cảnh báo AI & lịch sử làm bài");
         const st = await quiz.getSettings();
         const qp = req.query && typeof req.query.period === "string" ? req.query.period : "";
         const period = qp && quiz.validPeriod(qp) ? qp : st.examPeriod;
@@ -103,6 +111,7 @@ const handler = async function (context, req) {
         return reply(context, 200, Object.assign({ ok: true }, r));
       }
       if (op === "paper") {
+        if (!P.viewPaper) return noPerm("xem bài làm chi tiết");
         // Xem lại bản sao bài làm của nhân viên trong phạm vi của mình (chỉ đọc)
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
         if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
@@ -122,9 +131,10 @@ const handler = async function (context, req) {
         if (!paper.length) return reply(context, 404, { ok: false, error: "Không còn bản sao bài làm này (câu hỏi đã bị xoá khỏi ngân hàng đề trước khi bài được lưu bản sao)." });
         let timing = null; try { timing = require("../_lib/timestats").attemptSummary(attempt); } catch (e) { timing = null; }
         await require("../_lib/accesslog").write(req, { kind: "paper", role: viewer.isAdmin ? "admin" : "manager", attempt, by: viewer.email, byName: viewer.name, via: "Trang quản lí" });
-        return reply(context, 200, { ok: true, employee: { code: c.code, name: c.name || "" }, summary: summaryOf(entry, settings, !!viewer.isAdmin), paper, source, partial, timing, photo: typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "", serverNow: Date.now() });
+        return reply(context, 200, { ok: true, employee: { code: c.code, name: c.name || "" }, summary: summaryOf(entry, settings, !!viewer.isAdmin, P.viewAi), paper, source, partial, timing: P.viewAi ? timing : null, photo: viewer.isAdmin && typeof attempt.photo === "string" && attempt.photo.startsWith("data:image/") ? attempt.photo : "", serverNow: Date.now() });
       }
       if (op === "profile") {
+        if (!P.viewResults) return noPerm("xem nhân viên & kết quả");
         // Hồ sơ kiểm tra của MỘT nhân viên trong phạm vi: điểm từng kỳ (so với trung bình đội & thứ hạng),
         // kết quả theo mảng kiến thức, câu sai lặp lại. Không kèm thiết bị/vị trí.
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
@@ -142,7 +152,7 @@ const handler = async function (context, req) {
           const t = Object.values(team[a.period || ""] || {}); const ps = t.map((x) => x.pct || 0);
           const latestInPeriod = (team[a.period || ""] || {})[quiz.normCode(c.code)];
           return { id: a.id, period: a.period || "", score: a.score, total: a.total, pct: a.pct, passed: quiz.passState(a.pct, settings), practice: !!a.practice, compliancePoints: a.compliancePoints,
-            submittedAt: a.submittedAt, durationSec: a.durationSec, flags: a.flags || null, proof: quiz.proofCode(a.id), wrong: a.wrong, blank: a.blank,
+            submittedAt: a.submittedAt, durationSec: a.durationSec, flags: P.viewAi ? (a.flags || null) : undefined, proof: quiz.proofCode(a.id), wrong: a.wrong, blank: a.blank,
             latest: !!latestInPeriod && latestInPeriod.id === a.id,
             teamAvg: ps.length ? Math.round(ps.reduce((x, y) => x + y, 0) / ps.length * 10) / 10 : null, teamSize: ps.length,
             rank: ps.length ? 1 + ps.filter((v) => v > (a.pct || 0)).length : null, weak: (a.pct || 0) < lo };
@@ -174,6 +184,7 @@ const handler = async function (context, req) {
           hr: viewer.isAdmin && c.profile ? c.profile : undefined, hrEmpty: viewer.isAdmin && !c.profile });
       }
       if (op === "photo") {
+        if (!perms.canViewPhoto(viewer)) return reply(context, 403, { ok: false, error: "Ảnh thí sinh chỉ quản trị viên được xem. Tài khoản quản lí không có quyền này." });
         // Ảnh xác nhận khuôn mặt chụp ngay trước khi bắt đầu làm bài - minh chứng cho ĐÚNG MỘT kỳ, không dùng chéo sang kỳ khác.
         // Chọn theo: id (một bài cụ thể) > period (bài nộp gần nhất của kỳ, nếu chưa nộp thì bài đang làm của kỳ đó).
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
@@ -194,9 +205,24 @@ const handler = async function (context, req) {
           devices: !viewer.isAdmin ? undefined : devices.map((d) => ({ type: d.type, os: d.os, browser: d.browser, model: modelName(d.model, d.screen) || d.model, ip: d.ip, screen: d.screen, tz: d.tz, lang: d.lang, stage: d.stage, at: d.at, ua: d.ua, loc: d.loc || null, locErr: d.locErr || "" })) });
       }
       if (op === "employee") {
+        if (!P.viewResults) return noPerm("xem nhân viên & kết quả");
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
         if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
         return reply(context, 200, { ok: true, employee: empView(c), history: (c.audit || []).slice().reverse().slice(0, 20) });
+      }
+      if (op === "myExams") {
+        if (!P.manageExams) return noPerm("tạo & quản lí đề");
+        const inMine = {}; mine.forEach((x) => { inMine[quiz.normCode(x.code)] = 1; });
+        const list = (await quiz.listExamsSummary()).filter((e) => ownsExam(viewer, e));
+        return reply(context, 200, { ok: true, exams: list, employees: mine.map((c) => ({ code: c.code, name: c.name || "", manager: c.manager || "" })), maxQuestions: quiz.MAX_QUESTION_COUNT });
+      }
+      if (op === "examQuestions") {
+        if (!P.manageExams) return noPerm("tạo & quản lí đề");
+        const per = String((req.query && req.query.period) || "");
+        const ex = (await quiz.getExams()).find((e) => e.id === per);
+        if (!ex || !ownsExam(viewer, ex)) return reply(context, 403, { ok: false, error: "Đây không phải đề do bạn tạo." });
+        const qs = (await quiz.getQuestions()).filter((q) => (q.period || "") === per).map((q) => ({ id: q.id, text: q.text, options: q.options, correctIndex: q.correctIndex, category: q.category || "", active: q.active !== false }));
+        return reply(context, 200, { ok: true, period: per, questions: qs });
       }
       return reply(context, 400, { ok: false, error: "Thiếu tham số op." });
     }
@@ -211,6 +237,8 @@ const handler = async function (context, req) {
       return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
     }
     const who = { by: viewer.email, byName: viewer.name || viewer.email };
+    if (op === "addEmployee" || op === "updateEmployee" || op === "confirmEmployee") { if (!P.editEmployees) return noPerm("thêm / sửa / xác nhận nhân viên"); }
+    if (op === "deleteEmployee" && !P.deleteEmployees) return noPerm("xoá nhân viên");
 
     // Thêm nhân viên mới vào phạm vi của mình. Quản trị viên (scopes rỗng) phải tự nêu rõ quản lí phụ trách qua b.scope.
     if (op === "addEmployee") {
@@ -281,11 +309,13 @@ const handler = async function (context, req) {
 
     // Soạn câu hỏi bằng AI (nháp, chưa lưu) và đưa vào ngân hàng đề - quản lí dùng được, không cần xem/duyệt
     // toàn bộ ngân hàng đề sẵn có (chỉ thấy đúng những câu mình vừa soạn, để xét duyệt trước khi lưu).
+    { if (/notif|remind|invite|mail/i.test(op) && !P.notify) return noPerm("gửi thông báo cho nhân viên"); }
     { // Gửi thông báo (xem _lib/notifyops.js). Quản lí chỉ thao tác được với nhân viên thuộc phạm vi của mình
       const nr = await require("../_lib/notifyops").handle(op, b, { email: viewer.email, name: viewer.name || viewer.email, isAdmin: !!viewer.isAdmin, allowed: (c) => quiz.inScope(viewer, c) });
       if (nr) return reply(context, nr.status, nr.body);
     }
 
+    if ((op === "genQuestions" || op === "addQuestions") && !P.manageExams) return noPerm("tạo & quản lí đề");
     if (op === "genQuestions") {
       const r = await require("../_lib/examai").generateDraft(b.topic, b.count, b.category, (await quiz.getQuestions()).map((q) => q.text));
       return reply(context, 200, r);
@@ -294,7 +324,10 @@ const handler = async function (context, req) {
     if (op === "addQuestions") {
       const incoming = Array.isArray(b.questions) ? b.questions : [];
       const list = await quiz.getQuestions();
-      const per = typeof b.period === "string" && quiz.validPeriod(b.period) ? b.period : (await quiz.getSettings()).examPeriod;
+      const per = typeof b.period === "string" && quiz.validPeriod(b.period) ? b.period : "";
+      if (!per) return reply(context, 400, { ok: false, error: "Hãy chọn đề của bạn để thêm câu hỏi." });
+      const ex0 = (await quiz.getExams()).find((e) => e.id === per);
+      if (!viewer.isAdmin && !(ex0 && ownsExam(viewer, ex0))) return reply(context, 403, { ok: false, error: "Bạn chỉ thêm được câu hỏi vào đề do chính mình tạo." });
       let added = 0, skipped = 0;
       incoming.forEach((q) => {
         const text = cleanText(q.text).slice(0, 2000);
@@ -306,6 +339,43 @@ const handler = async function (context, req) {
       });
       await quiz.saveQuestions(list);
       return reply(context, 200, { ok: true, added, skipped, period: per });
+    }
+
+    if (op === "saveMyExam" || op === "dropMyExam" || op === "removeMyQuestion") {
+      if (!P.manageExams) return noPerm("tạo & quản lí đề");
+      const exams = await quiz.getExams();
+      const inMine = {}; mine.forEach((x) => { inMine[quiz.normCode(x.code)] = 1; });
+      if (op === "saveMyExam") {
+        const d = Object.assign({}, b.exam || b);
+        const id = String(d.id || "").trim();
+        const ex = exams.find((e) => e.id === id);
+        if (ex && !ownsExam(viewer, ex)) return reply(context, 403, { ok: false, error: "Mã đề này đã có và không phải do bạn tạo." });
+        // Đối tượng làm bài luôn bị giới hạn trong nhóm của mình: không bao giờ để trống = tất cả nhân viên
+        const wanted = (Array.isArray(d.codes) ? d.codes : String(d.codes || "").split(/[\s,;]+/)).map(quiz.normCode).filter(Boolean);
+        const codes = (wanted.length ? wanted : Object.keys(inMine)).filter((c) => viewer.isAdmin || inMine[c]);
+        if (!codes.length) return reply(context, 400, { ok: false, error: "Chưa có nhân viên nào trong phạm vi của bạn để giao đề." });
+        d.codes = codes; d.codesExclude = false; d.asgMode = "pick"; d.inviteOff = true;
+        const r = await quiz.upsertExam(d);
+        if (!r.ok) return reply(context, 400, r);
+        const all2 = await quiz.getExams(), k = all2.findIndex((e) => e.id === r.exam.id);
+        if (k >= 0 && !all2[k].ownerEmail) { all2[k].ownerEmail = viewer.email; all2[k].ownerName = viewer.name || viewer.email; await quiz.saveExams(all2); }
+        return reply(context, 200, { ok: true, exam: r.exam, created: !!r.created, exams: (await quiz.listExamsSummary()).filter((e) => ownsExam(viewer, e)) });
+      }
+      const id = String(b.id || b.period || "");
+      const ex = exams.find((e) => e.id === id);
+      if (!ex || !ownsExam(viewer, ex)) return reply(context, 403, { ok: false, error: "Đây không phải đề do bạn tạo." });
+      if (op === "dropMyExam") {
+        if (id === (await quiz.getSettings()).examPeriod) return reply(context, 400, { ok: false, error: "Không xoá được đề đang là đề mặc định của hệ thống." });
+        const sum = (await quiz.listExamsSummary()).find((e) => e.id === id);
+        if (sum && sum.resultCount > 0) return reply(context, 400, { ok: false, error: "Đề này đã có bài nộp nên không xoá được. Hãy liên hệ quản trị viên." });
+        await quiz.deleteExam(id);
+        return reply(context, 200, { ok: true, exams: (await quiz.listExamsSummary()).filter((e) => ownsExam(viewer, e)) });
+      }
+      const list = await quiz.getQuestions();
+      const left = list.filter((q) => !((q.period || "") === id && q.id === String(b.qid || "")));
+      if (left.length === list.length) return reply(context, 404, { ok: false, error: "Không tìm thấy câu hỏi trong đề của bạn." });
+      await quiz.saveQuestions(left);
+      return reply(context, 200, { ok: true });
     }
 
     if (/^delete|^remove|^clear/i.test(op)) return reply(context, 403, { ok: false, error: "Tài khoản quản lí không có quyền xoá. Hãy liên hệ quản trị viên." });

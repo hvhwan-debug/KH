@@ -8,6 +8,7 @@ const pwdlib = require("../_lib/pwd");
 const crypto = require("crypto");
 const { uidOf } = require("../_lib/session");
 const { inviteManager } = require("../_lib/invite");
+const permsLib = require("../_lib/perms");
 
 // ---------- Tự chấm lại khi SỬA câu hỏi trong ngân hàng ----------
 // Bài đã nộp lưu sẵn điểm + bản sao đề lúc nộp, nên trước đây sửa đáp án trong ngân hàng không làm các nơi đó đổi theo.
@@ -276,9 +277,9 @@ const handler = async function (context, req) {
       }
       if (op === "viewers") {
         const cands = await quiz.getCandidates();
-        const viewers = (await quiz.getViewers()).map((v) => Object.assign({}, v, { employees: cands.filter((c) => quiz.inScope(v, c)).length }));
+        const viewers = (await quiz.getViewers()).map((v) => Object.assign({}, v, { perms: permsLib.permsOf(v), legacyPerms: !v.perms, employees: cands.filter((c) => quiz.inScope(v, c)).length }));
         const managers = Array.from(new Set(cands.map((c) => String(c.manager || "").trim()).filter(Boolean))).sort();
-        return reply(context, 200, { ok: true, viewers, managers });
+        return reply(context, 200, { ok: true, viewers, managers, permKeys: permsLib.KEYS, permLabels: permsLib.LABELS, presets: permsLib.PRESETS });
       }
       if (op === "candidates") return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; o.title = quiz.titleOf(c); const prob = require("../_lib/probation"); o.joinDate = prob.joinDateOf(c.code, c.joinDate); o.probation = prob.probationOf(c.code, undefined, o.joinDate); return o; }) });
       if (op === "driveStatus") return reply(context, 200, Object.assign({ ok: true }, await require("../_lib/gdrive").status()));
@@ -802,14 +803,18 @@ const handler = async function (context, req) {
       const list = await quiz.getViewers();
       const name = String(b.name || "").trim().slice(0, 100);
       const k = list.findIndex((v) => quiz.normEmail(v.email) === email);
-      const entry = { email, name, scopes, addedAt: k >= 0 ? list[k].addedAt : Date.now(), addedBy: k >= 0 ? list[k].addedBy : u.email };
+      // Quyền chi tiết: nhận từ b.perms (chỉ các khoá hợp lệ). Không gửi = giữ nguyên quyền cũ; người mới mặc định theo mẫu "Quản lí".
+      // Không có quyền xem ảnh thí sinh trong danh mục này: ảnh chỉ quản trị viên xem được.
+      const perms = b.perms && typeof b.perms === "object" ? permsLib.clean(b.perms) : (k >= 0 ? list[k].perms : Object.assign({}, permsLib.PRESETS.manager));
+      const entry = { email, name, scopes, addedAt: k >= 0 ? list[k].addedAt : Date.now(), addedBy: k >= 0 ? list[k].addedBy : u.email, permsAt: Date.now(), permsBy: u.email };
+      if (perms) entry.perms = perms;
       if (k >= 0) list[k] = entry; else list.push(entry);
       await quiz.saveViewers(list);
       const cands = await quiz.getCandidates();
       // Cấp quyền lần đầu: tạo tài khoản (nếu chưa có) và gửi email kèm liên kết cho quản lí
       let invite = null;
       if (k < 0) { try { invite = await inviteManager(email, name); } catch (e) { invite = { mailed: false, reason: "Không tạo/gửi được lời mời: " + String((e && e.message) || e).slice(0, 120) }; } }
-      return reply(context, 200, { ok: true, viewer: Object.assign({}, entry, { employees: cands.filter((c) => quiz.inScope(entry, c)).length }), created: k < 0, invite });
+      return reply(context, 200, { ok: true, viewer: Object.assign({}, entry, { perms: permsLib.permsOf(entry), employees: cands.filter((c) => quiz.inScope(entry, c)).length }), created: k < 0, invite });
     }
 
     // Gửi lại email kèm liên kết đặt mật khẩu cho một quản lí đã được cấp quyền

@@ -2057,10 +2057,10 @@ button.rd-st:disabled{opacity:.55;cursor:default}
     <div id="tab-viewers" class="tabpane hide">
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <h1 style="margin:0">Tài khoản quản lí (chỉ xem)</h1>
+          <h1 style="margin:0">Tài khoản quản lí &amp; phân quyền</h1>
           <a class="btn ghost sm" href="/kiemtra/quanli.html" target="_blank" rel="noopener">↗ Mở trang Quản lí (xem với toàn quyền admin)</a>
         </div>
-        <p class="small">Quản lí đăng nhập tại <b>/kiemtra/quanli.html</b> bằng email + mật khẩu (trang quản lí không có đăng ký). Khi bạn cấp quyền lần đầu, hệ thống tự tạo tài khoản và gửi email kèm liên kết để quản lí tự đặt mật khẩu (hiệu lực 7 ngày); cần gửi lại thì bấm “Gửi lại link” ở danh sách. Quên mật khẩu thì quản lí bấm “Quên mật khẩu?” ngay trang đăng nhập. Họ chỉ thấy nhân viên có cột "Quản lí" trùng tên ở phạm vi bên dưới, xem được kết quả, sửa / xác nhận thông tin nhân viên của mình. <b>Không xoá được</b> kết quả hay nhân viên, không xem được câu hỏi và đáp án. Riêng <b>bạn (admin) bấm nút ở trên</b> là vào thẳng, tự động thấy toàn bộ nhân viên của mọi quản lí, không cần đăng nhập riêng.</p>
+        <p class="small">Quản lí đăng nhập tại <b>/kiemtra/quanli.html</b> bằng email + mật khẩu (trang quản lí không có đăng ký). Khi bạn cấp quyền lần đầu, hệ thống tự tạo tài khoản và gửi email kèm liên kết để quản lí tự đặt mật khẩu (hiệu lực 7 ngày); cần gửi lại thì bấm “Gửi lại link” ở danh sách. Quên mật khẩu thì quản lí bấm “Quên mật khẩu?” ngay trang đăng nhập. Họ chỉ thấy nhân viên có cột "Quản lí" trùng tên ở phạm vi bên dưới, làm được những việc bạn tích ở mục "Quyền" bên dưới. <b>Không bao giờ xem được ảnh thí sinh</b>, không xoá được kết quả bài làm, không xem được ngân hàng đề của người khác. Riêng <b>bạn (admin) bấm nút ở trên</b> là vào thẳng, tự động thấy toàn bộ nhân viên của mọi quản lí, không cần đăng nhập riêng.</p>
         <label>Email quản lí</label>
         <input type="text" id="vwEmail" placeholder="quanli@congty.vn">
         <label>Họ tên hiển thị</label>
@@ -2068,6 +2068,14 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         <label>Phạm vi: tên quản lí đúng như cột "Quản lí" trong danh sách thí sinh (nhiều tên, cách nhau dấu ;)</label>
         <input type="text" id="vwScopes" list="vwManagers" placeholder="Lê Thị Thanh Loan">
         <datalist id="vwManagers"></datalist>
+        <label style="margin-top:14px">Quyền của tài khoản quản lí này</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px">
+          <button type="button" class="btn ghost sm" onclick="vwPreset('viewer')">Mẫu: Chỉ xem</button>
+          <button type="button" class="btn ghost sm" onclick="vwPreset('manager')">Mẫu: Quản lí</button>
+          <button type="button" class="btn ghost sm" onclick="vwPreset('full')">Mẫu: Đầy đủ</button>
+        </div>
+        <div id="vwPerms" style="display:grid;gap:6px"></div>
+        <p class="small" style="margin-top:8px">🔒 <b>Ảnh thí sinh chụp khi làm bài luôn bị ẩn với tài khoản quản lí</b> (không có tuỳ chọn bật). Chỉ quản trị viên xem được ảnh. Quản lí vẫn xem được cảnh báo của AI và lịch sử làm bài nếu bạn bật quyền tương ứng. Bạn (admin) luôn có toàn quyền và xem được mọi thao tác của quản lí trong tab "Nhật ký thao tác".</p>
         <button class="btn" style="margin-top:12px" onclick="saveViewer()">Lưu tài khoản quản lí</button>
         <div id="vwMsg"></div>
         <hr style="margin:16px 0;border:0;border-top:1px solid var(--line)">
@@ -2078,7 +2086,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
       </div>
       <div class="card">
         <h1>Danh sách tài khoản quản lí (<span id="vwCount">0</span>)</h1>
-        <table class="stk"><thead><tr><th>Email</th><th>Họ tên</th><th>Phạm vi</th><th>Số NV</th><th></th></tr></thead><tbody id="vwList"></tbody></table>
+        <table class="stk"><thead><tr><th>Email</th><th>Họ tên</th><th>Phạm vi</th><th>Số NV</th><th>Quyền</th><th></th></tr></thead><tbody id="vwList"></tbody></table>
       </div>
     </div>
 
@@ -5320,33 +5328,45 @@ async function exportAllXlsx(){
 }
 
 /* ---------- Tài khoản quản lí ---------- */
-let VIEWERS = [];
+let VIEWERS = [], VW_KEYS = [], VW_LABELS = {}, VW_PRESETS = {};
+const VW_FALLBACK = { viewResults:'Xem nhân viên & kết quả', viewPaper:'Xem bài làm chi tiết', viewAi:'Xem cảnh báo AI & lịch sử làm bài', editEmployees:'Thêm / sửa / xác nhận nhân viên', deleteEmployees:'Xoá nhân viên', manageExams:'Tạo & quản lí đề của nhóm mình', notify:'Gửi thông báo cho nhân viên' };
+function vwRenderPerms(cur){
+  const keys = VW_KEYS.length ? VW_KEYS : Object.keys(VW_FALLBACK), lab = Object.keys(VW_LABELS).length ? VW_LABELS : VW_FALLBACK;
+  $('vwPerms').innerHTML = keys.map(k => '<label style="display:flex;align-items:center;gap:8px;margin:0;font-weight:500"><input type="checkbox" data-perm="'+k+'" '+((cur||{})[k]?'checked':'')+' style="width:auto;margin:0"> '+esc(lab[k]||k)+'</label>').join('');
+}
+function vwReadPerms(){ const o = {}; document.querySelectorAll('#vwPerms input[data-perm]').forEach(i => { o[i.getAttribute('data-perm')] = i.checked; }); return o; }
+function vwPreset(name){ vwRenderPerms((VW_PRESETS[name]) || {}); }
+function vwPermText(v){
+  const lab = Object.keys(VW_LABELS).length ? VW_LABELS : VW_FALLBACK, on = Object.keys(lab).filter(k => (v.perms||{})[k]);
+  return (on.length ? on.map(k => esc(lab[k])).join(', ') : 'Không có quyền nào') + ' · 🔒 không xem ảnh' + (v.legacyPerms ? ' (quyền mặc định của tài khoản cũ — bấm Sửa để chỉnh)' : '');
+}
 async function loadViewers(){
   const { j } = await api('GET','/api/kt-admin?op=viewers');
   if (!j.ok) return;
-  VIEWERS = j.viewers;
+  VIEWERS = j.viewers; VW_KEYS = j.permKeys || []; VW_LABELS = j.permLabels || {}; VW_PRESETS = j.presets || {};
+  if (!document.querySelector('#vwPerms input')) vwRenderPerms(VW_PRESETS.manager || {});
   $('vwManagers').innerHTML = (j.managers||[]).map(m => '<option value="'+esc(m).replace(/"/g,'&quot;')+'">').join('');
   $('vwCount').textContent = VIEWERS.length;
   $('vwList').innerHTML = VIEWERS.map(v =>
-    '<tr><td>'+esc(v.email)+'</td><td>'+esc(v.name||'')+'</td><td>'+esc((v.scopes||[]).join('; '))+'</td><td>'+v.employees+'</td>'+
+    '<tr><td>'+esc(v.email)+'</td><td>'+esc(v.name||'')+'</td><td>'+esc((v.scopes||[]).join('; '))+'</td><td>'+v.employees+'</td><td class="small">'+vwPermText(v)+'</td>'+
     '<td><button class="btn ghost sm" onclick="editViewer(\''+esc(v.email)+'\')">Sửa</button> <button class="btn ghost sm" onclick="resendInvite(\''+esc(v.email)+'\')" title="Gửi email kèm liên kết đặt mật khẩu">Gửi lại link</button> <button class="btn dghost sm" onclick="deleteViewerAcc(\''+esc(v.email)+'\')">Thu hồi</button></td></tr>'
-  ).join('') || '<tr><td colspan="5" class="small">Chưa có tài khoản quản lí nào.</td></tr>';
+  ).join('') || '<tr><td colspan="6" class="small">Chưa có tài khoản quản lí nào.</td></tr>';
 }
 function editViewer(email){
   const v = VIEWERS.find(x => x.email === email); if (!v) return;
-  $('vwEmail').value = v.email; $('vwName').value = v.name||''; $('vwScopes').value = (v.scopes||[]).join('; ');
+  $('vwEmail').value = v.email; $('vwName').value = v.name||''; $('vwScopes').value = (v.scopes||[]).join('; '); vwRenderPerms(v.perms||{});
   window.scrollTo({top:0,behavior:'smooth'});
 }
 async function saveViewer(){
   msg('vwMsg','');
-  const { j } = await api('POST','/api/kt-admin', { op:'saveViewer', email:$('vwEmail').value, name:$('vwName').value, scopes:$('vwScopes').value });
+  const { j } = await api('POST','/api/kt-admin', { op:'saveViewer', email:$('vwEmail').value, name:$('vwName').value, scopes:$('vwScopes').value, perms: vwReadPerms() });
   if (!j.ok){ msg('vwMsg', j.error || 'Không lưu được.'); return; }
   msg('vwMsg', (j.created?'Đã cấp quyền quản lí':'Đã cập nhật') + ' cho ' + j.viewer.email + ' (' + j.viewer.employees + ' nhân viên trong phạm vi).' + (j.viewer.employees ? '' : ' Lưu ý: chưa có thí sinh nào có cột "Quản lí" trùng tên này.'), j.viewer.employees ? 'ok' : 'warn');
   const inv = j.invite;
   if (inv) msg('vwMsg', $('vwMsg').textContent + ' ' + (inv.mailed
     ? (inv.linkType === 'set-password' ? 'Đã tạo tài khoản và gửi email kèm liên kết đặt mật khẩu tới ' : 'Đã gửi email thông báo quyền quản lí tới ') + j.viewer.email + '.'
     : 'Chưa gửi được email: ' + (inv.reason || 'không rõ lí do') + (inv.created ? ' (tài khoản đã được tạo, dùng "Đặt mật khẩu cho quản lí" để cấp mật khẩu).' : '')), inv.mailed ? 'ok' : 'warn');
-  $('vwEmail').value=''; $('vwName').value=''; $('vwScopes').value='';
+  $('vwEmail').value=''; $('vwName').value=''; $('vwScopes').value=''; vwRenderPerms(VW_PRESETS.manager || {});
   loadViewers();
 }
 async function resendInvite(email){
