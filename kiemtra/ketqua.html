@@ -590,9 +590,8 @@ $('paperAdmin').addEventListener('click', adminView);
   // chỉ số phụ: điểm tuân thủ (nếu có) · thời gian làm bài · giờ nộp
   var ms = [];
   if (r.compliancePoints != null) ms.push({ ic: IC.target, v: r.compliancePoints + ' điểm', l: prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ', gold: true });
-  if (r.durationSec != null) ms.push({ ic: IC.clock, v: clock(r.durationSec), l: 'Thời gian làm bài' });
-  if (r.submittedAt){ var sp = full(r.submittedAt).split(' '); ms.push({ ic: IC.cal, v: sp[0], l: 'Nộp bài: ' + (sp[1] || '') }); }
-  $('vStats').style.setProperty('--n', Math.max(1, ms.length));
+  // Giờ nộp và thời gian làm bài đã có trong bảng chi tiết bên dưới nên không lặp lại ở đây
+  $('vStats').style.setProperty('--n', Math.max(1, ms.length)); $('vStats').classList.toggle('hide', !ms.length);
   $('vStats').innerHTML = ms.map(function(x){ return '<div class="ct-m' + (x.gold ? ' gold' : '') + '">' + x.ic + '<strong>' + esc(x.v) + '</strong><span>' + esc(x.l) + '</span></div>'; }).join('');
   var rows = '';
   if (r.startedAt) rows += '<div><dt>Bắt đầu lúc</dt><dd>'+full(r.startedAt)+'</dd></div>';
