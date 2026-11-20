@@ -556,7 +556,7 @@ body.noedit [data-act="edit"],body.nodel [data-act="del"],body.nopaper [data-act
   <div id="app" class="hide">
     <header class="top">
       <div class="brand"><div class="logo" aria-hidden="true"><img src="/kiemtra/logo-mark.png" alt="" width="40" height="40"></div><div><b>Quản lí nhân viên</b><span id="scopeTxt"></span></div></div>
-      <div class="me"><span>Xin chào, <b id="meName"></b></span><button class="btn ghost sm" id="logoutBtn" type="button">Đăng xuất</button></div>
+      <div class="me"><span>Xin chào, <b id="meName"></b></span><button class="btn sm" id="examTop" type="button">+ Tạo đề</button><button class="btn ghost sm" id="logoutBtn" type="button">Đăng xuất</button></div>
     </header>
 
     <section class="khero" id="hero" aria-label="Tổng quan nhanh"></section>
@@ -1850,7 +1850,7 @@ function applyPerms(){
   var b = document.body.classList;
   b.toggle('nophoto', !(VIEWER && VIEWER.canViewPhoto));
   b.toggle('noedit', !P.editEmployees); b.toggle('nodel', !P.deleteEmployees); b.toggle('nopaper', !P.viewPaper);
-  var map = { btnTeamIns:'viewAi', aiQToggle:'manageExams', examBtn:'manageExams', notifyBtn:'notify', addBtn:'editEmployees', rPaper:'viewPaper' };
+  var map = { btnTeamIns:'viewAi', aiQToggle:'manageExams', examBtn:'manageExams', examTop:'manageExams', notifyBtn:'notify', addBtn:'editEmployees', rPaper:'viewPaper' };
   Object.keys(map).forEach(function(id){ var el = $(id); if (el && !P[map[id]]) el.classList.add('hide'); });
 }
 var MYEX = { exams: [], emps: [] };
@@ -1894,10 +1894,14 @@ async function exQuestions(id){
     return '<div class="exrow"><div class="grow">' + (i+1) + '. ' + esc(q.text) + '<div class="small">' + (q.options||[]).map(function(o, k){ return (k === q.correctIndex ? '✔ ' : '') + esc(o); }).join(' · ') + '</div></div><button class="btn dghost sm" data-ex="dq" data-id="' + esc(id) + '" data-q="' + esc(q.id) + '">Xoá</button></div>';
   }).join('') || '<p class="small">Đề chưa có câu hỏi nào.</p>');
 }
-$('examBtn').addEventListener('click', function(){
-  var open = $('examPanel').classList.toggle('hide') === false;
-  if (open) exLoad();
-});
+function exToggle(forceOpen){
+  var p = $('examPanel'), hidden = p.classList.contains('hide');
+  if (forceOpen && !hidden){ p.scrollIntoView({ behavior:'smooth', block:'start' }); return; }
+  var open = p.classList.toggle('hide') === false;
+  if (open){ exLoad(); p.scrollIntoView({ behavior:'smooth', block:'start' }); }
+}
+$('examBtn').addEventListener('click', function(){ exToggle(false); });
+$('examTop').addEventListener('click', function(){ exToggle(true); });
 $('exTitle').addEventListener('input', function(){ if (!$('exId').disabled && !$('exId').dataset.touched) $('exId').value = exSlug($('exTitle').value); });
 $('exId').addEventListener('input', function(){ $('exId').dataset.touched = '1'; });
 $('exAll').addEventListener('click', function(){ document.querySelectorAll('#exEmp input').forEach(function(i){ i.checked = true; }); });
