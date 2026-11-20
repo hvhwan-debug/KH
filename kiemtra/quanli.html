@@ -505,6 +505,19 @@ body.noedit [data-act="edit"],body.nodel [data-act="del"],body.nopaper [data-act
 .exemp{max-height:170px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:8px;display:grid;gap:4px;font-size:13px}
 .exemp label{display:flex;align-items:center;gap:7px;font-weight:500;margin:0}
 .exemp input{width:auto;margin:0}
+
+.tabnav{position:sticky;top:0;z-index:20;display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 14px;padding:6px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 14px #0a3c8c14}
+.tabnav button{all:unset;box-sizing:border-box;cursor:pointer;padding:9px 15px;border-radius:10px;font-weight:700;font-size:14px;color:#0A2552;white-space:nowrap}
+.tabnav button:hover{background:#EEF4FB}
+.tabnav button.on{background:#0A63C4;color:#fff}
+.tabnav button:focus-visible{outline:3px solid #7AA0D2}
+.tabx{display:none!important}
+html.pvonly .tabnav,html.embed .tabnav{display:none}
+#aiQToggle,#examBtn{display:none!important}
+@media print{.tabnav{display:none}}
+@media(max-width:640px){.tabnav{flex-wrap:nowrap;overflow-x:auto}}
+.btn.dghost{background:#fff;color:#B3261E;border:1px solid #E9B8B4;box-shadow:none}.btn.dghost:hover{background:#FCEDEC}
+#qmText{border:1px solid var(--line);border-radius:10px;padding:9px 11px;font:inherit;background:#FAFBFC}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -558,10 +571,17 @@ body.noedit [data-act="edit"],body.nodel [data-act="del"],body.nopaper [data-act
       <div class="brand"><div class="logo" aria-hidden="true"><img src="/kiemtra/logo-mark.png" alt="" width="40" height="40"></div><div><b>Quản lí nhân viên</b><span id="scopeTxt"></span></div></div>
       <div class="me"><span>Xin chào, <b id="meName"></b></span><button class="btn sm" id="examTop" type="button">+ Tạo đề</button><button class="btn ghost sm" id="logoutBtn" type="button">Đăng xuất</button></div>
     </header>
+    <nav class="tabnav" id="tabNav" aria-label="Menu chức năng">
+      <button type="button" data-go="home" class="on">Tổng quan</button>
+      <button type="button" data-go="staff">Nhân viên &amp; kết quả</button>
+      <button type="button" data-go="exam" data-perm="manageExams">Đề thi &amp; câu hỏi</button>
+      <button type="button" data-act2="team" data-perm="viewAi">Chẩn đoán AI</button>
+      <button type="button" data-act2="notify" data-perm="notify">Thông báo, thư mời</button>
+    </nav>
 
-    <section class="khero" id="hero" aria-label="Tổng quan nhanh"></section>
+    <section class="khero" data-tab="home" id="hero" aria-label="Tổng quan nhanh"></section>
 
-    <section class="card overview" aria-label="Tổng quan">
+    <section class="card overview" data-tab="home" aria-label="Tổng quan">
       <div>
         <div class="ov-head"><h1 class="perh">Tiến độ làm bài <select id="fPer" aria-label="Chọn kỳ kiểm tra"></select> <button class="btn ghost sm" id="btnTeamIns" type="button" title="Phân tích hành vi làm bài của cả nhóm, chẩn đoán nguyên nhân và đề xuất khắc phục">Chẩn đoán cả nhóm</button></h1><span class="big" id="ovDone"></span></div>
         <p class="pernote hide" id="perNote"></p>
@@ -572,7 +592,7 @@ body.noedit [data-act="edit"],body.nodel [data-act="del"],body.nopaper [data-act
     </section>
 
     <!-- Dashboard theo từng bài kiểm tra (đổi theo bài đang chọn ở ô "Tiến độ làm bài") -->
-    <section class="card dsh" id="dash" aria-label="Dashboard bài kiểm tra">
+    <section class="card dsh" data-tab="home" id="dash" aria-label="Dashboard bài kiểm tra">
       <div class="dsh-hd">
         <h2 id="dashTitle">Dashboard</h2>
         <button class="btn ghost sm" id="dashToggle" type="button" aria-expanded="true" aria-controls="dashBody">Thu gọn</button>
@@ -580,7 +600,7 @@ body.noedit [data-act="edit"],body.nodel [data-act="del"],body.nopaper [data-act
       <div id="dashBody"></div>
     </section>
 
-    <div class="toolbar">
+    <div class="toolbar" data-tab="staff">
       <label class="search"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="q" placeholder="Tìm theo tên, mã nhân viên hoặc email" aria-label="Tìm nhân viên"></label>
       <select id="fTitle" aria-label="Lọc theo chức danh"><option value="">Mọi chức danh</option></select>
       <span class="sp"></span>
@@ -592,7 +612,7 @@ body.noedit [data-act="edit"],body.nodel [data-act="del"],body.nopaper [data-act
       <button class="btn" id="addBtn" type="button">+ Thêm nhân viên</button>
     </div>
 
-    <div class="card ai-find hide" id="aiFind">
+    <div class="card ai-find hide" data-tab="staff" id="aiFind">
       <div class="ai-find-h">✦ Trợ lí tìm dữ liệu</div>
       <p class="sub">Hỏi bằng lời thường, ví dụ: “ai chưa làm bài”, “ai điểm thấp nhất”, “ai chưa xác nhận thông tin”.</p>
       <div class="ai-find-row">
@@ -602,7 +622,7 @@ body.noedit [data-act="edit"],body.nodel [data-act="del"],body.nopaper [data-act
       <div id="aiAns"></div>
     </div>
 
-    <div class="card ai-find hide" id="examPanel">
+    <div class="card ai-find hide" data-tab="exam" id="examPanel">
       <div class="ai-find-h">Quản lí đề của tôi</div>
       <p class="sub">Đề bạn tạo chỉ giao cho nhân viên trong phạm vi của bạn, và bạn chỉ sửa / xoá được đề do chính mình tạo. Ảnh thí sinh không hiển thị với tài khoản quản lí.</p>
       <div id="exList"></div>
@@ -623,7 +643,24 @@ body.noedit [data-act="edit"],body.nodel [data-act="del"],body.nopaper [data-act
       <div id="exMsg"></div>
     </div>
 
-    <div class="card ai-find hide" id="aiQGen">
+    <div class="card ai-find hide" data-tab="exam" id="qManual">
+      <div class="ai-find-h">Thêm câu hỏi thủ công</div>
+      <p class="sub">Nhập từng câu trắc nghiệm vào đề của bạn (cần ít nhất 2 phương án).</p>
+      <div class="field"><label for="qmExam">Thêm vào đề</label><select id="qmExam"></select></div>
+      <div class="field"><label for="qmText">Nội dung câu hỏi</label><textarea id="qmText" rows="2" style="width:100%"></textarea></div>
+      <div class="exgrid">
+        <div class="field"><label for="qmA">Phương án A</label><input id="qmA" class="qmo" autocomplete="off"></div>
+        <div class="field"><label for="qmB">Phương án B</label><input id="qmB" class="qmo" autocomplete="off"></div>
+        <div class="field"><label for="qmC">Phương án C</label><input id="qmC" class="qmo" autocomplete="off"></div>
+        <div class="field"><label for="qmD">Phương án D</label><input id="qmD" class="qmo" autocomplete="off"></div>
+        <div class="field"><label for="qmOk">Đáp án đúng</label><select id="qmOk"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></div>
+        <div class="field"><label for="qmCat">Danh mục (tuỳ chọn)</label><input id="qmCat" autocomplete="off"></div>
+      </div>
+      <button class="btn" id="qmAdd" type="button">Thêm câu hỏi</button>
+      <div id="qmMsg"></div>
+    </div>
+
+    <div class="card ai-find hide" data-tab="exam" id="aiQGen">
       <div class="ai-find-h">✦ Soạn câu hỏi bằng AI</div>
       <p class="sub">Mô tả chủ đề, AI soạn sẵn câu hỏi trắc nghiệm để bạn xem lại rồi mới đưa vào ngân hàng đề (không tự động lưu). Câu hỏi sẽ được thêm vào đề do bạn tạo (chọn bên dưới).</p>
       <div class="field"><label for="aiQExam">Thêm vào đề</label><select id="aiQExam"></select></div>
@@ -637,8 +674,8 @@ body.noedit [data-act="edit"],body.nodel [data-act="del"],body.nopaper [data-act
       <button class="btn hide" id="aiQCommit" type="button" style="margin-top:10px">Thêm vào ngân hàng đề</button>
     </div>
 
-    <div id="listMsg" role="status"></div>
-    <section class="card tcard">
+    <div id="listMsg" data-tab="staff" role="status"></div>
+    <section class="card tcard" data-tab="staff">
       <div class="thead-bar"><span id="countTxt"></span><button class="linkbtn hide" id="clearF" type="button">Xoá bộ lọc</button></div>
       <table class="emp-t">
         <thead><tr>
@@ -1852,6 +1889,8 @@ function applyPerms(){
   b.toggle('noedit', !P.editEmployees); b.toggle('nodel', !P.deleteEmployees); b.toggle('nopaper', !P.viewPaper);
   var map = { btnTeamIns:'viewAi', aiQToggle:'manageExams', examBtn:'manageExams', examTop:'manageExams', notifyBtn:'notify', addBtn:'editEmployees', rPaper:'viewPaper' };
   Object.keys(map).forEach(function(id){ var el = $(id); if (el && !P[map[id]]) el.classList.add('hide'); });
+  document.querySelectorAll('#tabNav [data-perm]').forEach(function(b){ if (!P[b.getAttribute('data-perm')]) b.classList.add('hide'); });
+  switchTab('home');
 }
 var MYEX = { exams: [], emps: [] };
 function exSlug(t){ return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,36); }
@@ -1872,8 +1911,10 @@ function exReset(){
 function exRender(){
   $('exList').innerHTML = MYEX.exams.map(function(x){
     return '<div class="exrow"><div class="grow"><b>' + esc(x.title || x.id) + '</b> <span class="small">· mã ' + esc(x.id) + ' · ' + (x.bankCount||0) + ' câu · ' + (x.resultCount||0) + ' bài nộp' + (x.openAt ? ' · mở ' + esc(fmt(x.openAt)) : '') + (x.closeAt ? ' · đóng ' + esc(fmt(x.closeAt)) : '') + '</span></div>' +
-      '<button class="btn ghost sm" data-ex="q" data-id="' + esc(x.id) + '">Câu hỏi</button><button class="btn ghost sm" data-ex="edit" data-id="' + esc(x.id) + '">Sửa</button><button class="btn dghost sm" data-ex="del" data-id="' + esc(x.id) + '">Xoá</button></div>';
+      '<button class="btn ghost sm" data-ex="res" data-id="' + esc(x.id) + '">Xem kết quả</button><button class="btn ghost sm" data-ex="q" data-id="' + esc(x.id) + '">Câu hỏi</button><button class="btn ghost sm" data-ex="edit" data-id="' + esc(x.id) + '">Sửa</button><button class="btn dghost sm" data-ex="del" data-id="' + esc(x.id) + '">Xoá</button></div>';
   }).join('') || '<p class="small">Bạn chưa tạo đề nào. Điền form bên dưới để tạo đề đầu tiên.</p>';
+  var curQ = $('qmExam').value; $('qmExam').innerHTML = MYEX.exams.map(function(x){ return '<option value="' + esc(x.id) + '">' + esc(x.title || x.id) + ' (' + esc(x.id) + ')</option>'; }).join('') || '<option value="">(Hãy tạo đề trước)</option>';
+  if (curQ && MYEX.exams.some(function(x){ return x.id === curQ; })) $('qmExam').value = curQ;
   var cur = $('aiQExam').value;
   $('aiQExam').innerHTML = MYEX.exams.map(function(x){ return '<option value="' + esc(x.id) + '">' + esc(x.title || x.id) + ' (' + esc(x.id) + ')</option>'; }).join('') || '<option value="">(Hãy tạo đề trước)</option>';
   if (cur && MYEX.exams.some(function(x){ return x.id === cur; })) $('aiQExam').value = cur;
@@ -1894,14 +1935,42 @@ async function exQuestions(id){
     return '<div class="exrow"><div class="grow">' + (i+1) + '. ' + esc(q.text) + '<div class="small">' + (q.options||[]).map(function(o, k){ return (k === q.correctIndex ? '✔ ' : '') + esc(o); }).join(' · ') + '</div></div><button class="btn dghost sm" data-ex="dq" data-id="' + esc(id) + '" data-q="' + esc(q.id) + '">Xoá</button></div>';
   }).join('') || '<p class="small">Đề chưa có câu hỏi nào.</p>');
 }
-function exToggle(forceOpen){
-  var p = $('examPanel'), hidden = p.classList.contains('hide');
-  if (forceOpen && !hidden){ p.scrollIntoView({ behavior:'smooth', block:'start' }); return; }
-  var open = p.classList.toggle('hide') === false;
-  if (open){ exLoad(); p.scrollIntoView({ behavior:'smooth', block:'start' }); }
+var TAB = 'home';
+function switchTab(name){
+  if (/\b(embed|pvonly)\b/.test(document.documentElement.className)) return; // nhúng trong trang khác / chỉ xem hồ sơ: giữ nguyên bố cục cũ
+  TAB = name;
+  document.querySelectorAll('[data-tab]').forEach(function(el){
+    var on = el.getAttribute('data-tab') === name;
+    el.classList.toggle('tabx', !on);
+    if (on && name === 'exam') el.classList.remove('hide'); // các khối của mục Đề thi luôn mở
+  });
+  document.querySelectorAll('#tabNav [data-go]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-go') === name); });
+  if (name === 'exam') exLoad();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-$('examBtn').addEventListener('click', function(){ exToggle(false); });
-$('examTop').addEventListener('click', function(){ exToggle(true); });
+$('tabNav').addEventListener('click', function(ev){
+  var b = ev.target.closest('button'); if (!b) return;
+  if (b.dataset.go) return switchTab(b.dataset.go);
+  if (b.dataset.act2 === 'team'){ switchTab('home'); $('btnTeamIns').click(); }
+  if (b.dataset.act2 === 'notify') $('notifyBtn').click();
+});
+$('examTop').addEventListener('click', function(){ switchTab('exam'); });
+$('qmAdd').addEventListener('click', async function(){
+  var text = $('qmText').value.trim(), per = $('qmExam').value;
+  if (!per){ msg('qmMsg','Hãy tạo đề trước rồi chọn đề để thêm câu hỏi.'); return; }
+  if (!text){ msg('qmMsg','Nhập nội dung câu hỏi.'); return; }
+  var opts = [], ok = Number($('qmOk').value), correct = -1;
+  Array.prototype.forEach.call(document.querySelectorAll('.qmo'), function(i, k){ var v = i.value.trim(); if (v){ if (k === ok) correct = opts.length; opts.push(v); } });
+  if (opts.length < 2){ msg('qmMsg','Cần ít nhất 2 phương án.'); return; }
+  if (correct < 0){ msg('qmMsg','Phương án được chọn là đáp án đúng đang để trống.'); return; }
+  $('qmAdd').disabled = true;
+  var r = await api('POST','/api/kt-viewer', { op:'addQuestions', period:per, questions:[{ text:text, options:opts, correctIndex:correct, category:$('qmCat').value.trim() }] });
+  $('qmAdd').disabled = false;
+  if (!r.j.ok || !r.j.added){ msg('qmMsg', r.j.error || 'Không thêm được câu hỏi.'); return; }
+  msg('qmMsg','Đã thêm câu hỏi vào đề ' + per + '.','ok');
+  $('qmText').value = ''; Array.prototype.forEach.call(document.querySelectorAll('.qmo'), function(i){ i.value = ''; });
+  exLoad(); if (!$('exQBox').classList.contains('hide')) exQuestions(per);
+});
 $('exTitle').addEventListener('input', function(){ if (!$('exId').disabled && !$('exId').dataset.touched) $('exId').value = exSlug($('exTitle').value); });
 $('exId').addEventListener('input', function(){ $('exId').dataset.touched = '1'; });
 $('exAll').addEventListener('click', function(){ document.querySelectorAll('#exEmp input').forEach(function(i){ i.checked = true; }); });
@@ -1925,7 +1994,12 @@ $('exSave').addEventListener('click', async function(){
 $('exList').addEventListener('click', async function(ev){
   var b = ev.target.closest('[data-ex]'); if (!b) return;
   var id = b.dataset.id, x = MYEX.exams.filter(function(e){ return e.id === id; })[0];
-  if (b.dataset.ex === 'q') return exQuestions(id);
+  if (b.dataset.ex === 'q'){ $('qmExam').value = id; return exQuestions(id); }
+  if (b.dataset.ex === 'res'){
+    var fp = $('fPer'), has = Array.prototype.some.call(fp.options, function(o){ return o.value === id; });
+    if (!has){ msg('exMsg','Đề này chưa có kết quả nào để xem.','warn'); return; }
+    fp.value = id; fp.dispatchEvent(new Event('change')); return switchTab('staff');
+  }
   if (b.dataset.ex === 'edit' && x){
     $('exFormTitle').textContent = 'Sửa đề ' + id; $('exId').value = id; $('exId').disabled = true;
     $('exTitle').value = x.title || ''; $('exOpen').value = exLocal(x.openAt); $('exClose').value = exLocal(x.closeAt);
