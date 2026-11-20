@@ -303,6 +303,10 @@ const handler = async function (context, req) {
         return reply(context, 200, { ok: true, exam: { id, title: exSt.examTitle || id, openAt: exSt.openAt || 0, closeAt: exSt.closeAt || 0 }, recipients });
       }
       if (op === "settings") return reply(context, 200, { ok: true, settings: await quiz.getSettings() });
+      if (op === "securityAlerts") { // cảnh báo có người cố xem lại bài của người khác (mới nhất trước)
+        const sa = require("../_lib/securityalert");
+        return reply(context, 200, { ok: true, alerts: (await sa.list()).slice().reverse() });
+      }
       if (op === "faceRejections") {
         const list = (await require("../_lib/facecheck").getRejections()).slice().reverse();
         return reply(context, 200, { ok: true, rejections: list });
@@ -1060,6 +1064,13 @@ const handler = async function (context, req) {
       list = list.filter((c) => quiz.normCode(c.code) !== quiz.normCode(b.code));
       await quiz.saveCandidates(list);
       return reply(context, 200, { ok: true, candidates: list });
+    }
+
+    if (op === "unlockPaper") { // mở khoá xem lại cho một bài làm (khi chính chủ bị nhận nhầm)
+      const aid = String(b.attemptId || "").trim().slice(0, 80);
+      if (!aid) return reply(context, 400, { ok: false, error: "Thiếu mã bài làm." });
+      const had = await require("../_lib/securityalert").unlock(aid);
+      return reply(context, 200, { ok: true, unlocked: had });
     }
 
     if (op === "saveSettings") {

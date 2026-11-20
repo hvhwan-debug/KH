@@ -1,0 +1,43 @@
+process.env.STORAGE_MODE = "memory"; process.env.MAIL_MODE = "memory"; process.env.ADMIN_EMAILS = "admin1@x.vn,admin2@x.vn"; process.env.SESSION_SECRET = "s".repeat(40); process.env.APP_URL = "https://t.vn"; process.env.ALLOWED_EMAIL_DOMAINS = "x.vn";
+const P = require("path").join(__dirname, "..", "api") + "/";
+const facematch = require(P + "_lib/facematch"), facecheck = require(P + "_lib/facecheck");
+let mode = "mismatch";
+facecheck.verify = async () => mode === "spoof" ? { allow: false, message: "Ảnh có dấu hiệu chụp lại.", record: { status: "spoof" } } : { allow: true, record: { status: "ok" } };
+facematch.compare = async () => mode === "ok" ? { ok: true, distance: 0.2, threshold: 0.55 } : { ok: false, code: "mismatch", distance: 0.91, threshold: 0.55, message: "Khuôn mặt không khớp với ảnh đã lưu của chủ bài làm này." };
+const quiz = require(P + "_lib/quiz"), handler = require(P + "kt-mypaper/index.js"), sa = require(P + "_lib/securityalert");
+const jpg = "data:image/jpeg;base64," + Buffer.from("fakejpeg").toString("base64");
+let pass = 0, fail = 0; const ok = (c, m) => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + m); };
+(async () => {
+  const att = { id: "att001", code: "PC01234", name: "NGUYỄN VĂN AN", email: "an@x.vn", manager: "Trần Bình", status: "submitted", pct: 80, score: 24, total: 30, photo: jpg, period: "", examTitle: "Kiểm tra 10/2026",
+    paper: [{ n: 1, text: "Câu 1", options: ["a", "b"], chosen: 0, correct: 0, ok: true }], questionIds: ["q1"], answers: {} };
+  await quiz.putAttempt(att);
+  quiz.getExamSettings = async () => ({ closeAt: Date.now() - 1000, examTitle: "Kiểm tra 10/2026" });
+  const call = async (body, ip) => { let out; const ctx = { log: Object.assign(() => {}, { error() {}, warn() {} }), res: null };
+    const req = { method: "POST", headers: { "x-requested-with": "livotec", "x-forwarded-for": ip || "1.1.1.1", "user-agent": "TestUA/1.0" }, body: Object.assign({ t: quiz.verifyToken(att.id), code: att.code, email: att.email }, body), query: {} };
+    await handler(ctx, req); return ctx.res; };
+  mailbox = () => global.__mailbox || [];
+
+  let r = await call({ photo: jpg, phone: "0901234567" }, "1.1.1.1");
+  ok(r.status === 403 && /báo cho quản trị viên/.test(r.body.error), "1) khuôn mặt lạ bị chặn + thông báo đã báo admin");
+  ok(mailbox().length === 1 && /admin1@x.vn/.test(mailbox()[0].to) && /admin2@x.vn/.test(mailbox()[0].to), "2) email cảnh báo gửi tới TẤT CẢ admin");
+  ok(mailbox()[0].attachments && mailbox()[0].attachments.length === 2, "3) email kèm 2 ảnh (gốc + người vừa quét)");
+  ok(!JSON.stringify(await sa.list()).includes("fakejpeg") && !JSON.stringify((await quiz.getAttempt(att.id))).includes("nguoi-vua"), "4) ảnh vừa quét KHÔNG được lưu trên máy chủ");
+  r = await call({ photo: jpg, phone: "0901234567" }, "2.2.2.2");
+  ok(r.status === 403 && !r.body.locked, "5) lần 2 vẫn chặn, chưa khoá");
+  ok(mailbox().length === 1, "6) không spam email (chống gửi dồn trong 10 phút)");
+  r = await call({ photo: jpg, phone: "0901234567" }, "3.3.3.3");
+  ok(r.status === 403 && r.body.locked === true, "7) lần 3 (đổi IP) -> khoá xem lại bài này");
+  ok(mailbox().length === 2 && /ĐÃ KHOÁ/.test(mailbox()[1].subject), "8) gửi email thứ 2 báo ĐÃ KHOÁ");
+  mode = "ok"; r = await call({ photo: jpg, phone: "0901234567" }, "4.4.4.4");
+  ok(r.status === 403 && r.body.locked === true, "9) khi đã khoá: ngay cả ảnh KHỚP + đúng mã/email vẫn bị chặn");
+  r = await call({ step: "check" }, "5.5.5.5");
+  ok(r.status === 403 && r.body.locked === true && !r.body.paper, "10) bước 'check' cũng bị chặn khi khoá, không lộ đề");
+  ok((await sa.list()).length === 3 && (await sa.list())[2].locked === true, "11) sổ cảnh báo ghi đủ 3 sự kiện");
+  ok(await sa.unlock(att.id), "12) admin mở khoá được");
+  r = await call({ photo: jpg, phone: "0901234567" }, "6.6.6.6");
+  ok(r.status === 200 && r.body.ok && r.body.paper.length === 1, "13) sau mở khoá, chính chủ (khuôn mặt khớp) xem được bài");
+  mode = "spoof"; const n0 = mailbox().length;
+  await sa.unlock(att.id); r = await call({ photo: jpg, phone: "0901234567" }, "7.7.7.7");
+  ok(r.status === 403 && mailbox().length === n0 + 1 && /chụp lại/.test(mailbox()[n0].subject), "14) ảnh chụp lại màn hình/ảnh in -> cũng báo admin");
+  console.log(`\n${pass} pass, ${fail} fail`); process.exit(fail ? 1 : 0);
+})().catch((e) => { console.error("ERR", e); process.exit(2); });

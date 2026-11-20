@@ -12,6 +12,7 @@ const auditlog = require("../_lib/auditlog");
 const device = require("../_lib/device");
 const facecheck = require("../_lib/facecheck");
 const facematch = require("../_lib/facematch");
+const secalert = require("../_lib/securityalert");
 const { normPhone } = require("../_lib/phone");
 
 // Quản trị viên đang đăng nhập (cookie phiên) được xem mọi bài mà không cần mã NV + email của chủ bài.
@@ -66,6 +67,12 @@ module.exports = async function (context, req) {
     // Người thường: (1) bước "check": đúng mã NV + email, kiểm tra hồ sơ đã có số điện thoại chưa (chưa có thì giao diện bắt điền);
     // (2) bước xác thực: đối chiếu khuôn mặt với ảnh đã lưu của chủ bài. Số điện thoại mới chỉ được lưu SAU KHI khuôn mặt khớp.
     if (!master) {
+      // Bài này đã bị khoá xem lại (nhiều lần quét khuôn mặt không khớp): chặn ngay, kể cả khi người xem nhập đúng mã NV + email.
+      const lk = await secalert.lockState(attempt.id);
+      if (lk.locked) {
+        await logView(req, attempt, "denied", "locked", "khoá đến " + quiz.fmtVN(lk.until));
+        return reply(context, 403, { ok: false, locked: true, error: "Việc xem lại bài làm này đang bị tạm khoá vì có nhiều lần xác thực khuôn mặt không khớp. Quản trị viên đã được báo. Vui lòng liên hệ quản lý hoặc quản trị viên để được hỗ trợ." });
+      }
       const cands = await quiz.getCandidates();
       const prof = attempt.test ? await quiz.findTestByCode(attempt.code) : cands.find((c) => quiz.normCode(c.code) === quiz.normCode(attempt.code));
       const onFile = prof ? normPhone(prof.phone) : "";
@@ -91,6 +98,11 @@ module.exports = async function (context, req) {
       if (!live.allow) {
         quiz.noteFail(req);
         await logView(req, attempt, "denied", "live", live.message);
+        // Dấu hiệu chụp lại từ màn hình / ảnh in = cố tình qua mặt hệ thống: báo quản trị viên. (Không thấy mặt / thiếu sáng chỉ là lỗi chụp, không báo.)
+        if (live.record && live.record.status === "spoof") {
+          const al = await secalert.alertPaperAccess(req, attempt, "spoof", { selfie, refPhoto: refs[0] && refs[0].photo, reason: live.message });
+          return reply(context, 403, { ok: false, locked: al.locked, error: live.message + " Sự việc đã được ghi nhận và báo cho quản trị viên." });
+        }
         return reply(context, 403, { ok: false, error: live.message });
       }
       // 2) Đối chiếu khuôn mặt bằng mô hình nhận diện chạy trên máy chủ: không chắc chắn thì KHÔNG cho xem
@@ -98,6 +110,12 @@ module.exports = async function (context, req) {
       if (!cmp.ok) {
         if (cmp.code !== "unavailable") quiz.noteFail(req);
         await logView(req, attempt, "denied", "face:" + cmp.code, cmp.distance != null ? "khoảng cách " + cmp.distance.toFixed(3) + " (ngưỡng " + cmp.threshold + ")" : "");
+        // Khuôn mặt KHÁC với ảnh đã lưu của chủ bài: đúng là "không phải người đã làm bài" -> báo quản trị viên (kèm ảnh đối chiếu) và khoá nếu lặp lại.
+        // Các lỗi kỹ thuật (không thấy mặt, ảnh hỏng, hệ thống bận) KHÔNG báo vì không phải người lạ.
+        if (cmp.code === "mismatch") {
+          const al = await secalert.alertPaperAccess(req, attempt, "mismatch", { selfie, refPhoto: refs[0] && refs[0].photo, distance: cmp.distance, threshold: cmp.threshold });
+          return reply(context, 403, { ok: false, locked: al.locked, error: cmp.message + " Sự việc đã được ghi nhận và báo cho quản trị viên." + (al.locked ? " Việc xem lại bài này đã bị tạm khoá." : "") });
+        }
         return reply(context, cmp.code === "unavailable" ? 503 : 403, { ok: false, error: cmp.message });
       }
       if (prof && !onFile) { prof.phone = phone; if (attempt.test) await quiz.updateTestAccount(attempt.code, { phone }); else await quiz.saveCandidates(cands); } // hồ sơ chưa có số: lưu số vừa nhập sau khi khuôn mặt khớp
