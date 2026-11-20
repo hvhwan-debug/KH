@@ -361,7 +361,8 @@ const handler = async function (context, req) {
         const r = await quiz.upsertExam(d);
         if (!r.ok) return reply(context, 400, r);
         const all2 = await quiz.getExams(), k = all2.findIndex((e) => e.id === r.exam.id);
-        if (k >= 0 && r.created && !all2[k].ownerEmail) { // chỉ gắn chủ đề lúc TẠO MỚI; sửa đề sẵn có không đổi chủ all2[k].ownerEmail = viewer.email; all2[k].ownerName = viewer.name || viewer.email; await quiz.saveExams(all2); }
+        /* chỉ gắn chủ đề lúc TẠO MỚI; sửa đề sẵn có không đổi chủ */
+        if (k >= 0 && r.created && !all2[k].ownerEmail) { all2[k].ownerEmail = viewer.email; all2[k].ownerName = viewer.name || viewer.email; await quiz.saveExams(all2); }
         return reply(context, 200, { ok: true, exam: r.exam, created: !!r.created, exams: (await quiz.listExamsSummary()).filter((e) => ownsExam(viewer, e)) });
       }
       const id = String(b.id || b.period || "");
