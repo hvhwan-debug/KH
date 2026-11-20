@@ -50,6 +50,9 @@ const handler = async function (context, req) {
     }
     if (!viewer) return reply(context, 403, { ok: false, error: "Tài khoản này chưa được cấp quyền quản lí. Hãy liên hệ quản trị viên." });
     const mine = (await quiz.getCandidates()).filter((c) => quiz.inScope(viewer, c));
+    const exOwner = {}; (await quiz.getExams()).forEach((e) => { if (e.ownerEmail) exOwner[e.id] = quiz.normEmail(e.ownerEmail); });
+    // Đề do một quản lí tạo (có ownerEmail) chỉ chính người tạo và quản trị viên được thấy; đề của quản trị viên thì quản lí xem kết quả nhân viên mình như cũ.
+    const periodOk = (p) => !!viewer.isAdmin || !exOwner[p || ""] || exOwner[p || ""] === quiz.normEmail(viewer.email);
     const P = perms.permsOf(viewer);
     const noPerm = (what) => reply(context, 403, { ok: false, error: "Tài khoản của bạn chưa được cấp quyền: " + what + ". Hãy liên hệ quản trị viên." });
 
@@ -62,12 +65,12 @@ const handler = async function (context, req) {
         const idx = await quiz.getIndex();
         // Theo kỳ: mặc định kỳ hiện tại; "" = bài nộp trước khi có kỳ (chưa gắn kỳ)
         const qp = req.query && typeof req.query.period === "string" ? req.query.period : null;
-        const period = qp !== null && quiz.validPeriod(qp) ? qp : settings.examPeriod; // nhận cả mã đề tự đặt
+        const period = qp !== null && quiz.validPeriod(qp) && periodOk(qp) ? qp : settings.examPeriod; // nhận cả mã đề tự đặt
         const inMine = {}; mine.forEach((x) => { inMine[quiz.normCode(x.code)] = 1; });
-        const subs = idx.filter((a) => a.status === "submitted" && inMine[quiz.normCode(a.code)]);
+        const subs = idx.filter((a) => a.status === "submitted" && inMine[quiz.normCode(a.code)] && periodOk(a.period));
         // Danh sách mã đề để chọn: mọi đề đã đăng kí (kể cả đề chưa ai nộp bài / đề tự đặt như "thi-thu") dành cho nhóm của mình,
         // cộng các kỳ đã có bài nộp và kỳ hiện tại. Trước đây chỉ liệt kê kỳ đã có bài nộp nên không chọn được đề khác.
-        const exams = await quiz.listExamsSummary();
+        const exams = (await quiz.listExamsSummary()).filter((e) => periodOk(e.id));
         const examFor = (e) => !Array.isArray(e.codes) || !e.codes.length || e.codes.some((c) => inMine[quiz.normCode(c)]);
         const examTitles = {}; exams.forEach((e) => { if (e.title && String(e.title).trim() !== e.id) examTitles[e.id] = String(e.title).trim(); });
         if (!examTitles[settings.examPeriod] && settings.examTitle) examTitles[settings.examPeriod] = String(settings.examTitle).trim(); // đề mặc định lấy tên bài kiểm tra trong cài đặt
@@ -96,7 +99,7 @@ const handler = async function (context, req) {
         if (!P.viewAi) return noPerm("xem cảnh báo AI & lịch sử làm bài");
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
         if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
-        const r = await behavior.forEmployee(c.code, { admin: !!viewer.isAdmin, ai: req.query.ai !== "0" });
+        const r = await behavior.forEmployee(c.code, { admin: !!viewer.isAdmin, ai: req.query.ai !== "0", okPeriod: periodOk });
         if (!r) return reply(context, 404, { ok: false, error: "Nhân viên chưa có bài đã nộp để phân tích." });
         return reply(context, 200, Object.assign({ ok: true, employee: { code: c.code, name: c.name || "" } }, r));
       }
@@ -105,7 +108,7 @@ const handler = async function (context, req) {
         if (!P.viewAi) return noPerm("xem cảnh báo AI & lịch sử làm bài");
         const st = await quiz.getSettings();
         const qp = req.query && typeof req.query.period === "string" ? req.query.period : "";
-        const period = qp && quiz.validPeriod(qp) ? qp : st.examPeriod;
+        const period = qp && quiz.validPeriod(qp) && periodOk(qp) ? qp : st.examPeriod;
         const exSt = await quiz.getExamSettings(period);
         const r = await behavior.forCohort(period, mine.filter((c) => quiz.inAudience(exSt, c)), { ai: req.query.ai !== "0" });
         return reply(context, 200, Object.assign({ ok: true }, r));
@@ -116,7 +119,7 @@ const handler = async function (context, req) {
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
         if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
         const settings = await quiz.getSettings();
-        const mineAll = (await quiz.getIndex()).filter((a) => a.status === "submitted" && quiz.normCode(a.code) === quiz.normCode(c.code))
+        const mineAll = (await quiz.getIndex()).filter((a) => a.status === "submitted" && quiz.normCode(a.code) === quiz.normCode(c.code) && periodOk(a.period))
           .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
         const wantId = String((req.query && req.query.id) || "");
         const entry = wantId ? mineAll.find((a) => a.id === wantId) : mineAll[0];
@@ -140,7 +143,7 @@ const handler = async function (context, req) {
         const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
         if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
         const settings = await quiz.getSettings();
-        const idx = (await quiz.getIndex()).filter((a) => a.status === "submitted");
+        const idx = (await quiz.getIndex()).filter((a) => a.status === "submitted" && periodOk(a.period));
         const inMine = {}; mine.forEach((x) => { inMine[quiz.normCode(x.code)] = 1; });
         // Bài nộp gần nhất của mỗi người trong phạm vi, theo từng kỳ -> trung bình đội & thứ hạng
         const team = {};
@@ -358,7 +361,7 @@ const handler = async function (context, req) {
         const r = await quiz.upsertExam(d);
         if (!r.ok) return reply(context, 400, r);
         const all2 = await quiz.getExams(), k = all2.findIndex((e) => e.id === r.exam.id);
-        if (k >= 0 && !all2[k].ownerEmail) { all2[k].ownerEmail = viewer.email; all2[k].ownerName = viewer.name || viewer.email; await quiz.saveExams(all2); }
+        if (k >= 0 && r.created && !all2[k].ownerEmail) { // chỉ gắn chủ đề lúc TẠO MỚI; sửa đề sẵn có không đổi chủ all2[k].ownerEmail = viewer.email; all2[k].ownerName = viewer.name || viewer.email; await quiz.saveExams(all2); }
         return reply(context, 200, { ok: true, exam: r.exam, created: !!r.created, exams: (await quiz.listExamsSummary()).filter((e) => ownsExam(viewer, e)) });
       }
       const id = String(b.id || b.period || "");
