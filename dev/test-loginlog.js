@@ -42,6 +42,9 @@ const PHOTO = "data:image/jpeg;base64," + Buffer.from("selfie").toString("base64
   ok(p1 && p1.lastPage === "history" && p1.face === 2, "NV1: lần gần nhất ở 'Tra cứu lịch sử', 2 lần bằng khuôn mặt");
   r = await call("admin", null, "GET", { op: "logins", method: "manual" }, true);
   ok(r.j.items.length === 1 && r.j.items[0].code === "NV2", "lọc theo cách đăng nhập");
+  r = await call("admin", null, "GET", { op: "candidates" }, true);
+  const c1 = r.j.candidates.find((c) => c.code === "NV1"), c2 = r.j.candidates.find((c) => c.code === "NV2");
+  ok(c1.lastLogin && c1.lastLogin.method === "face" && c1.lastLogin.page === "history" && c1.lastLogin.n === 2 && c2.lastLogin.method === "manual", "bảng hồ sơ: mỗi người có lần đăng nhập gần nhất + cách đăng nhập");
   r = await call("admin", null, "GET", { op: "logins" }, false);
   ok(r.s !== 200 || !r.j.ok, "không đăng nhập quản trị thì không xem được");
   console.log("\n" + pass + " đạt, " + fail + " lỗi"); process.exit(fail ? 1 : 0);

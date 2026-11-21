@@ -557,12 +557,14 @@ html{-webkit-text-size-adjust:100%}
   #candList td[data-label="SĐT / Zalo"],
   #candList td[data-label="Nhóm ngành"],
   #candList td[data-label="Tỉnh / Miền"],
-  #candList td[data-label="Ngày vào làm"]{display:none}
+  #candList td[data-label="Ngày vào làm"],
+  #candList td[data-label="Đăng nhập gần nhất"]{display:none}
   #candList tr.open td[data-label="Email"],
   #candList tr.open td[data-label="SĐT / Zalo"],
   #candList tr.open td[data-label="Nhóm ngành"],
   #candList tr.open td[data-label="Tỉnh / Miền"],
-  #candList tr.open td[data-label="Ngày vào làm"]{display:grid}
+  #candList tr.open td[data-label="Ngày vào làm"],
+  #candList tr.open td[data-label="Đăng nhập gần nhất"]{display:grid}
   #candList .tag{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.02em;vertical-align:middle;white-space:nowrap}
   #candList .tag-tv{background:#FFF4D6;color:#8A5A00}
   #candList .tag-left{background:#FBE3E0;color:#9E2A20}
@@ -1184,6 +1186,10 @@ table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-
 .lg-bar{display:flex;height:8px;border-radius:5px;overflow:hidden;background:#EEF1F4;min-width:120px;max-width:220px}
 .lg-bar i{display:block;height:100%}.lg-bar .face{background:#1E9E5A}.lg-bar .manual{background:#7C93B8}.lg-bar .manual_face{background:#E09B1A}
 .lg-tab td{vertical-align:top}
+
+.cand-lg{display:flex;flex-direction:column;align-items:flex-start;gap:3px;border:0;background:none;padding:0;font:inherit;font-size:12.5px;color:var(--ink);cursor:pointer;text-align:left;white-space:nowrap}
+.cand-lg:hover span{text-decoration:underline}
+.cand-lg .lg-m{font-size:11px;padding:1px 8px}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -1263,7 +1269,6 @@ table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-
       <button type="button" class="nv" data-nav="exams" onclick="switchTab('exams')" title="Đề thi"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg><span class="nv-l">Đề thi</span><span class="nv-cnt hide" id="nvExams"></span></button>
       <button type="button" class="nv" data-nav="candidates" onclick="switchTab('candidates')" title="Hồ sơ học tập"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg><span class="nv-l">Hồ sơ học tập</span><span class="nv-cnt hide" id="nvCand"></span></button>
       <button type="button" class="nv" data-nav="lookup" onclick="switchTab('lookup')" title="Tra cứu bài kiểm tra và lịch sử xem điểm"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><span class="nv-l">Tra cứu</span></button>
-      <button type="button" class="nv" data-nav="logins" onclick="switchTab('logins')" title="Lịch sử đăng nhập của nhân viên"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 16l4-4-4-4M14 12H4"/></svg><span class="nv-l">Lịch sử đăng nhập</span></button>
       <button type="button" class="nv" data-nav="notify" onclick="switchTab('notify')" title="Gửi thông báo và thư mời"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg><span class="nv-l">Thông báo, thư mời</span></button>
       <button type="button" class="nv" data-nav="managerview" onclick="switchTab('managerview')" title="Quản lí"><svg class="ic" aria-hidden="true"><use href="#i-mgr"/></svg><span class="nv-l">Quản lí</span></button>
       <button type="button" class="nv" data-nav="kai" onclick="switchTab('kai')" title="Trợ lí KAI: tài liệu và người dùng"><svg class="ic" aria-hidden="true"><use href="#i-help"/></svg><span class="nv-l">Trợ lí KAI</span></button>
@@ -1749,22 +1754,6 @@ table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-
         <div style="overflow-x:auto"><table class="dt autab"><thead><tr><th>Thời điểm</th><th>Bài làm</th><th>Xem gì</th><th>Người xem</th><th>IP / thiết bị</th></tr></thead><tbody id="alList"></tbody></table></div>
       </div>
     </div>
-    <div id="tab-logins" class="tabpane hide">
-      <div class="card">
-        <div class="dash-h"><h1>Lịch sử đăng nhập</h1><p class="small">Mỗi lần nhân viên vào hệ thống: lúc nào, bằng khuôn mặt hay nhập mã nhân viên + email, ở trang làm bài, tra cứu lịch sử hay xem lại đề, trên máy nào. Vào lại cùng cách, cùng trang, cùng mạng trong 10 phút được gộp một dòng.</p></div>
-        <div class="lg-stat" id="lgStat"></div>
-        <div class="aufil lg-fil">
-          <input type="search" id="lgQ" placeholder="Tìm tên, mã nhân viên, quản lí, IP…" aria-label="Tìm trong lịch sử đăng nhập">
-          <select id="lgMethod" aria-label="Cách đăng nhập"><option value="">Mọi cách đăng nhập</option><option value="face">Khuôn mặt</option><option value="manual">Mã NV + email</option><option value="manual_face">Mã NV + email, xác minh khuôn mặt</option></select>
-          <select id="lgPage" aria-label="Trang"><option value="">Mọi trang</option><option value="exam">Trang làm bài</option><option value="history">Tra cứu lịch sử</option><option value="paper">Xem lại đề</option></select>
-          <select id="lgDays" aria-label="Khoảng thời gian"><option value="1">24 giờ qua</option><option value="7" selected>7 ngày qua</option><option value="30">30 ngày qua</option><option value="0">Tất cả</option></select>
-        </div>
-        <div class="cand-views lg-views" role="tablist" aria-label="Cách xem"><button type="button" id="lgVP" class="on" role="tab" onclick="lgView('people')">Theo nhân viên</button><button type="button" id="lgVI" role="tab" onclick="lgView('items')">Từng lượt đăng nhập</button></div>
-        <div class="small" id="lgSum" style="margin:8px 0"></div>
-        <div style="overflow-x:auto"><table class="dt lg-tab" id="lgPeople"><thead><tr><th>Nhân viên</th><th>Lần gần nhất</th><th>Cách đăng nhập</th><th class="num">Số lượt</th></tr></thead><tbody id="lgPeopleB"></tbody></table>
-        <table class="dt lg-tab hide" id="lgItems"><thead><tr><th>Thời điểm</th><th>Nhân viên</th><th>Cách đăng nhập</th><th>Ở trang</th><th>IP / thiết bị</th></tr></thead><tbody id="lgItemsB"></tbody></table></div>
-      </div>
-    </div>
     <div id="tab-notify" class="tabpane hide">
       <div class="card">
         <h1>Gửi thông báo và thư mời</h1>
@@ -1775,7 +1764,7 @@ table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-
     </div>
 
     <div id="tab-candidates" class="tabpane hide">
-      <div class="cand-views" role="tablist" aria-label="Chế độ xem hồ sơ học tập"><button type="button" id="cvList" class="on" role="tab" onclick="candView('list')">Danh sách</button><button type="button" id="cvStats" role="tab" onclick="candView('stats')">Thống kê hồ sơ</button></div>
+      <div class="cand-views" role="tablist" aria-label="Chế độ xem hồ sơ học tập"><button type="button" id="cvList" class="on" role="tab" onclick="candView('list')">Danh sách</button><button type="button" id="cvStats" role="tab" onclick="candView('stats')">Thống kê hồ sơ</button><button type="button" id="cvLogins" role="tab" onclick="candView('logins')">Lịch sử đăng nhập</button></div>
       <div class="card hide" id="candReqCard" style="border-color:#F0C36A">
         <h1>Yêu cầu điều chỉnh thông tin (<span id="candReqCount">0</span>)</h1>
         <p class="small" style="margin-top:-4px">Thí sinh báo thông tin chưa đúng ở bước xác nhận trước khi làm bài. Chỉ khi bạn bấm <b>Xác nhận đúng</b> thì dữ liệu mới được cập nhật.</p>
@@ -1899,7 +1888,21 @@ table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-
           <span class="small" id="candShown"></span>
         </div>
         <div id="candProfBanner" class="cand-banner hide"></div>
-        <div class="stk-scroll"><table class="stk"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Chức danh</th><th>Email</th><th>SĐT / Zalo</th><th>Quản lí</th><th>Nhóm ngành</th><th>Tỉnh / Miền</th><th>Ngày vào làm</th><th></th></tr></thead><tbody id="candList"></tbody></table></div>
+        <div class="stk-scroll"><table class="stk"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Chức danh</th><th>Email</th><th>SĐT / Zalo</th><th>Quản lí</th><th>Nhóm ngành</th><th>Tỉnh / Miền</th><th>Ngày vào làm</th><th>Đăng nhập gần nhất</th><th></th></tr></thead><tbody id="candList"></tbody></table></div>
+      </div>
+      <div class="card hide" id="candLoginCard">
+        <div class="dash-h"><h1>Lịch sử đăng nhập</h1><p class="small">Mỗi lần nhân viên vào hệ thống: lúc nào, bằng khuôn mặt hay nhập mã nhân viên + email, ở trang làm bài, tra cứu lịch sử hay xem lại đề, trên máy nào. Vào lại cùng cách, cùng trang, cùng mạng trong 10 phút được gộp một dòng.</p></div>
+        <div class="lg-stat" id="lgStat"></div>
+        <div class="aufil lg-fil">
+          <input type="search" id="lgQ" placeholder="Tìm tên, mã nhân viên, quản lí, IP…" aria-label="Tìm trong lịch sử đăng nhập">
+          <select id="lgMethod" aria-label="Cách đăng nhập"><option value="">Mọi cách đăng nhập</option><option value="face">Khuôn mặt</option><option value="manual">Mã NV + email</option><option value="manual_face">Mã NV + email, xác minh khuôn mặt</option></select>
+          <select id="lgPage" aria-label="Trang"><option value="">Mọi trang</option><option value="exam">Trang làm bài</option><option value="history">Tra cứu lịch sử</option><option value="paper">Xem lại đề</option></select>
+          <select id="lgDays" aria-label="Khoảng thời gian"><option value="1">24 giờ qua</option><option value="7" selected>7 ngày qua</option><option value="30">30 ngày qua</option><option value="0">Tất cả</option></select>
+        </div>
+        <div class="cand-views lg-views" role="tablist" aria-label="Cách xem"><button type="button" id="lgVP" class="on" role="tab" onclick="lgView('people')">Theo nhân viên</button><button type="button" id="lgVI" role="tab" onclick="lgView('items')">Từng lượt đăng nhập</button></div>
+        <div class="small" id="lgSum" style="margin:8px 0"></div>
+        <div style="overflow-x:auto"><table class="dt lg-tab" id="lgPeople"><thead><tr><th>Nhân viên</th><th>Lần gần nhất</th><th>Cách đăng nhập</th><th class="num">Số lượt</th></tr></thead><tbody id="lgPeopleB"></tbody></table>
+        <table class="dt lg-tab hide" id="lgItems"><thead><tr><th>Thời điểm</th><th>Nhân viên</th><th>Cách đăng nhập</th><th>Ở trang</th><th>IP / thiết bị</th></tr></thead><tbody id="lgItemsB"></tbody></table></div>
       </div>
       <div class="card hide" id="candStatsCard">
         <div class="st-h"><h1 style="margin:0">Thống kê hồ sơ nhân sự</h1><span class="small" id="stNote"></span></div>
@@ -2479,7 +2482,7 @@ $('auXlsx').addEventListener('click', async function(){
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   logEv('exportExcel', { period: 'nhật ký ' + $('auDay').value });
 });
-const TABS = ['exams','lookup','logins','candidates','managerview','notify','kai','results','analysis','questions','examset','settings','viewers','banks','audit'];
+const TABS = ['exams','lookup','candidates','managerview','notify','kai','results','analysis','questions','examset','settings','viewers','banks','audit'];
 const WS = ['results','analysis','questions','examset'], SYS = ['settings','viewers','banks','audit'];
 let CUR_EXAM = null, EX_NEW = false, EX_DEFAULT = '';
 // Địa chỉ dạng #exams, #candidates, #settings… hoặc #results/<mã đề>, #questions/<mã đề>, #examset/<mã đề>
@@ -2490,6 +2493,7 @@ window.addEventListener('hashchange', () => {
   if (WS.indexOf(t) >= 0 && id && id !== CUR_EXAM) openExam(id, t); else switchTab(t);
 });
 function switchTab(t){
+  if (t === 'logins'){ switchTab('candidates'); candView('logins'); return; } // lịch sử đăng nhập nằm trong Hồ sơ học tập
   const prevTab = document.body.dataset.tab;
   if (TABS.indexOf(t) < 0) t = 'exams';
   if (WS.indexOf(t) >= 0 && !CUR_EXAM && !(t === 'examset' && EX_NEW)) t = 'exams';
@@ -2497,7 +2501,7 @@ function switchTab(t){
   const inWs = WS.indexOf(t) >= 0, inSys = SYS.indexOf(t) >= 0;
   const navKey = inWs ? 'exams' : inSys ? 'sys' : t;
   document.querySelectorAll('[data-nav]').forEach(b => { const on = b.dataset.nav === navKey; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-  const tb = $('tbTitle'); if (tb) tb.textContent = inWs ? 'Đề thi' : inSys ? 'Cài đặt' : ({ exams:'Đề thi', lookup:'Tra cứu', logins:'Lịch sử đăng nhập', candidates:'Thí sinh', notify:'Thông báo, thư mời', managerview:'Quản lí', kai:'Trợ lí KAI' })[t] || 'Quản trị bài kiểm tra';
+  const tb = $('tbTitle'); if (tb) tb.textContent = inWs ? 'Đề thi' : inSys ? 'Cài đặt' : ({ exams:'Đề thi', lookup:'Tra cứu', candidates:'Thí sinh', notify:'Thông báo, thư mời', managerview:'Quản lí', kai:'Trợ lí KAI' })[t] || 'Quản trị bài kiểm tra';
   document.querySelectorAll('.sysnav').forEach(el => el.classList.toggle('hide', !inSys));
   $('exHead').classList.toggle('hide', !inWs);
   $('exNav').classList.toggle('hide', EX_NEW);
@@ -2509,7 +2513,6 @@ function switchTab(t){
   if (t === 'candidates' && prevTab !== 'candidates') resetCandFilters(); if (t === 'candidates' && prevTab !== 'candidates') candView('list'); // vào tab Thí sinh: luôn hiện đủ danh sách, không giữ bộ lọc lần trước
   if (t === 'notify') loadNotify();
   if (t === 'lookup' && prevTab !== 'lookup') { lkSearch(); lkLog(); }
-  if (t === 'logins') loadLogins();
   if (t === 'kai') kaixOpen();
   if (t === 'kai' && prevTab !== 'kai') loadKaiPending();
   if (t === 'audit') { loadAudit(); loadFaceRejections(); loadEntryLog(); }
@@ -4441,11 +4444,14 @@ const stAvg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
 const stPct = v => v == null ? '–' : Math.round(v) + '%';
 function stScCls(v){ if (v == null) return ''; const ps = +(SETCACHE && SETCACHE.passScore) || 60; return v >= ps ? 'ok' : v >= ps - 15 ? 'mid' : 'bad'; }
 function candView(v){
-  const st = v === 'stats';
-  $('candListCard').classList.toggle('hide', st); $('candStatsCard').classList.toggle('hide', !st);
-  $('cvList').classList.toggle('on', !st); $('cvStats').classList.toggle('on', st);
-  if (st) candStatsOpen();
+  v = v === 'stats' || v === 'logins' ? v : 'list';
+  $('candListCard').classList.toggle('hide', v !== 'list'); $('candStatsCard').classList.toggle('hide', v !== 'stats'); $('candLoginCard').classList.toggle('hide', v !== 'logins');
+  $('cvList').classList.toggle('on', v === 'list'); $('cvStats').classList.toggle('on', v === 'stats'); $('cvLogins').classList.toggle('on', v === 'logins');
+  if (v === 'stats') candStatsOpen();
+  if (v === 'logins') loadLogins();
 }
+// Bấm ô "Đăng nhập gần nhất" của một người: mở lịch sử đăng nhập lọc đúng người đó, xem từng lượt
+function candLogins(code){ candView('logins'); $('lgQ').value = code; $('lgDays').value = '0'; lgView('items'); loadLogins(); window.scrollTo({ top: 0 }); }
 async function candStatsOpen(){
   $('stBody').innerHTML = '<div class="small" style="margin-top:12px">Đang tính…</div>';
   if (!ST_RES){ try { const { j } = await api('GET', '/api/kt-admin?op=results'); ST_RES = j && j.ok ? j : { results: [], periods: [], currentPeriod: '' }; } catch(e){ ST_RES = { results: [], periods: [], currentPeriod: '' }; } }
@@ -4540,10 +4546,17 @@ function renderCandidates(){
   const ef = $('candEmpF').value, L = CANDIDATES.filter(c => (ef === '*' || (ef === 'left') === !!c.left) && (rf === '*' || (c.region||'') === rf) && (mf === '*' || mgrNorm(c.manager) === mgrNorm(mf)) && (sf === '*' || (c.segment||'both') === sf) && (tf === '*' || (c.title||'PC') === tf) && (!q || spNorm([c.code, c.name, c.email, c.phone || '', c.title || 'PC', c.province || ''].join(' ')).indexOf(q) >= 0));
   $('candShown').textContent = L.length === CANDIDATES.length ? '' : 'Đang lọc: ' + L.length + ' người';
   $('candList').innerHTML = L.map(c =>
-    '<tr'+(c.left?' class="left"':'')+'><td>'+esc(c.code)+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button>'+(c.left?'<span class="tag tag-left" aria-label="Đã nghỉ việc" title="'+(c.leftAt?'Nghỉ việc từ '+new Date(c.leftAt).toLocaleDateString('vi-VN')+'. ':'')+'Không gán đề, không gửi thông báo">ĐNV</span>':'')+(c.probation&&!c.left?'<span class="tag tag-tv" aria-label="Thử việc" title="Thử việc từ '+esc(c.probation.from)+' đến hết '+esc(c.probation.until)+'">TV</span>':'')+'<small class="candmail" title="'+esc(c.email)+'">'+esc(c.email)+'</small>'+'</td><td><button type="button" class="ttlchip cflt-chip" title="Lọc theo chức danh này" onclick="candFilter(\'candTitleF\',\''+esc(c.title||'PC')+'\')">'+esc(c.title||'PC')+'</button></td><td>'+esc(c.email)+'</td><td>'+(c.phone?'<button type="button" class="phbtn" data-phone="'+esc(c.phone)+'" aria-haspopup="menu" title="Nhắn SMS, mở Zalo hoặc gọi điện">'+esc(c.phone)+'</button>':'<span class="badge n" title="Thí sinh sẽ phải tự điền khi vào làm bài">Chưa có</span>')+'</td><td>'+(c.manager?'<button type="button" class="cflt" title="Lọc theo quản lí này" onclick="candFilter(\'candMgrF\',\''+esc(c.manager)+'\')">'+esc(c.manager)+'</button>':'')+'</td><td>'+'<button type="button" class="cflt" title="'+esc(segLabel[c.segment]||'Cả hai')+' · bấm để lọc" onclick="candFilter(\'candSegF\',\''+esc((c.segment||'both'))+'\')">'+esc((segLabel[c.segment]||'Cả hai').split(' · ')[0])+'</button>'+'</td><td class="small">'+(c.province||c.region ? (c.province ? '<button type="button" class="cflt" title="Xem ai ở '+esc(c.province)+'" onclick="candSearchProvince(\''+esc(c.province)+'\')">'+esc(c.province)+'</button>' : '–')+'<br>'+'<button type="button" class="cflt" title="Lọc theo miền này" onclick="candFilter(\'candRgF\',\''+esc((c.region||''))+'\')">'+esc(RG_LABEL[c.region]||'Chưa chọn miền')+'</button>' : '<button type="button" class="badge n cflt-chip" title="Thí sinh bắt buộc tự chọn khi vào làm bài · bấm để xem ai chưa chọn miền" onclick="candFilter(\'candRgF\',\'\')">Chưa chọn</button>')+'</td><td class="small">'+(c.joinDate?esc(c.joinDate.split('-').reverse().join('/')):'–')+'</td><td style="white-space:nowrap"><button type="button" class="stk-more" onclick="candToggle(this)">Chi tiết ▾</button><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
-  ).join('') || '<tr><td colspan="10" class="small">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Bấm “＋ Thêm thí sinh”.') + '</td></tr>';
+    '<tr'+(c.left?' class="left"':'')+'><td>'+esc(c.code)+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button>'+(c.left?'<span class="tag tag-left" aria-label="Đã nghỉ việc" title="'+(c.leftAt?'Nghỉ việc từ '+new Date(c.leftAt).toLocaleDateString('vi-VN')+'. ':'')+'Không gán đề, không gửi thông báo">ĐNV</span>':'')+(c.probation&&!c.left?'<span class="tag tag-tv" aria-label="Thử việc" title="Thử việc từ '+esc(c.probation.from)+' đến hết '+esc(c.probation.until)+'">TV</span>':'')+'<small class="candmail" title="'+esc(c.email)+'">'+esc(c.email)+'</small>'+'</td><td><button type="button" class="ttlchip cflt-chip" title="Lọc theo chức danh này" onclick="candFilter(\'candTitleF\',\''+esc(c.title||'PC')+'\')">'+esc(c.title||'PC')+'</button></td><td>'+esc(c.email)+'</td><td>'+(c.phone?'<button type="button" class="phbtn" data-phone="'+esc(c.phone)+'" aria-haspopup="menu" title="Nhắn SMS, mở Zalo hoặc gọi điện">'+esc(c.phone)+'</button>':'<span class="badge n" title="Thí sinh sẽ phải tự điền khi vào làm bài">Chưa có</span>')+'</td><td>'+(c.manager?'<button type="button" class="cflt" title="Lọc theo quản lí này" onclick="candFilter(\'candMgrF\',\''+esc(c.manager)+'\')">'+esc(c.manager)+'</button>':'')+'</td><td>'+'<button type="button" class="cflt" title="'+esc(segLabel[c.segment]||'Cả hai')+' · bấm để lọc" onclick="candFilter(\'candSegF\',\''+esc((c.segment||'both'))+'\')">'+esc((segLabel[c.segment]||'Cả hai').split(' · ')[0])+'</button>'+'</td><td class="small">'+(c.province||c.region ? (c.province ? '<button type="button" class="cflt" title="Xem ai ở '+esc(c.province)+'" onclick="candSearchProvince(\''+esc(c.province)+'\')">'+esc(c.province)+'</button>' : '–')+'<br>'+'<button type="button" class="cflt" title="Lọc theo miền này" onclick="candFilter(\'candRgF\',\''+esc((c.region||''))+'\')">'+esc(RG_LABEL[c.region]||'Chưa chọn miền')+'</button>' : '<button type="button" class="badge n cflt-chip" title="Thí sinh bắt buộc tự chọn khi vào làm bài · bấm để xem ai chưa chọn miền" onclick="candFilter(\'candRgF\',\'\')">Chưa chọn</button>')+'</td><td class="small">'+(c.joinDate?esc(c.joinDate.split('-').reverse().join('/')):'–')+'</td><td>'+candLoginCell(c)+'</td><td style="white-space:nowrap"><button type="button" class="stk-more" onclick="candToggle(this)">Chi tiết ▾</button><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
+  ).join('') || '<tr><td colspan="11" class="small">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Bấm “＋ Thêm thí sinh”.') + '</td></tr>';
 }
 // Bấm vào chức danh / quản lí / ngành / miền trong bảng: lọc theo đúng giá trị đó; bấm lại lần nữa thì bỏ lọc
+// Ô "Đăng nhập gần nhất": bao lâu trước + cách đăng nhập; bấm để xem toàn bộ lịch sử của người đó
+function lgAgo(ms){ const m = Math.max(0, Math.round((Date.now() - ms) / 60000)); if (m < 1) return 'vừa xong'; if (m < 60) return m + ' phút trước'; const h = Math.floor(m / 60); if (h < 24) return h + ' giờ trước'; const d = Math.floor(h / 24); return d < 31 ? d + ' ngày trước' : new Date(ms).toLocaleDateString('vi-VN'); }
+function candLoginCell(c){
+  const L = c.lastLogin;
+  if (!L) return '<span class="small" style="color:var(--muted)">Chưa đăng nhập</span>';
+  return '<button type="button" class="cand-lg" title="' + esc(lkTime(L.at) + ' · ' + (LG_M[L.method] || '') + ' · ' + L.n + ' lượt · bấm để xem lịch sử') + '" onclick="candLogins(\'' + esc(c.code) + '\')"><span>' + esc(lgAgo(L.at)) + '</span>' + lgPill(L.method) + '</button>';
+}
 function candFilter(id, v){ const el = $(id); if (!el) return; el.value = el.value === v ? '*' : v; if (el.selectedIndex < 0) el.value = '*'; renderCandidates(); el.scrollIntoView({behavior:'smooth', block:'center'}); }
 function candSearchProvince(p){ $('candSearch').value = p; renderCandidates(); $('candSearch').scrollIntoView({behavior:'smooth', block:'center'}); $('candSearch').focus(); }
 function candToggle(btn){ var tr = btn.closest('tr'), open = tr.classList.toggle('open'); btn.textContent = open ? 'Thu gọn ▴' : 'Chi tiết ▾'; }
