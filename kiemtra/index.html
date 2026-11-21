@@ -1029,6 +1029,11 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
 @keyframes aiNudgeR{0%,100%{transform:translateX(0)}50%{transform:translateX(9px)}}
 @media(prefers-reduced-motion:reduce){.ai-arrow.l,.ai-arrow.r{animation:none}}
 @media(max-width:560px){.ai-say{font-size:13.5px;padding:7px 12px;bottom:44px}.ai-pills li{padding:4px 7px;font-size:9px}.ai-arrow{font-size:36px}}
+
+/* ===== Cảnh báo khác người so với các lần trước ===== */
+.idwarn{display:flex;align-items:flex-start;gap:10px;margin:0 0 14px;padding:10px 12px;border-radius:12px;background:#FFF2D6;color:#7A4B00;border:1px solid #F0D9A0;font-size:13px;line-height:1.5}
+.idwarn b{flex:0 0 auto;font-size:16px;line-height:1.3}.idwarn span{flex:1}
+.idwarn button{flex:0 0 auto;border:0;background:transparent;color:inherit;font-size:20px;line-height:1;cursor:pointer;padding:0 4px}
 </style>
 </head>
 <body class="introbg" data-scr="check">
@@ -1232,7 +1237,8 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
         <li>Phát hiện khuôn mặt</li>
         <li>Kiểm tra độ sáng và kích thước</li>
         <li>Xác nhận chỉ một người trong khung hình</li>
-        <li>AI kiểm tra ảnh chụp trực tiếp</li>
+        <li>Đối chiếu với ảnh các lần trước</li>
+        <li>AI xác minh người thật</li>
         <li>Chuẩn bị đề thi</li>
       </ol>
       <div class="locline" id="locLine" role="status"></div>
@@ -1245,6 +1251,7 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
 
     <!-- 3. Làm bài -->
     <section class="card hide" id="scrQuiz">
+      <div class="idwarn hide" id="idWarn" role="alert"><b aria-hidden="true">⚠</b><span>Khuôn mặt chưa khớp với ảnh đã lưu ở các lần làm bài trước của tài khoản này. Sự việc đã được ghi nhận và báo quản trị viên.</span><button type="button" id="idWarnX" aria-label="Đóng thông báo">×</button></div>
       <div class="qhead">
         <div class="qcount" id="qCount">Câu <b>1</b>/30</div>
         <div class="timer" id="qTimer" role="timer" aria-label="Thời gian còn lại của câu này">
@@ -1862,7 +1869,8 @@ var AI = { run:false, loop:null, box:null, built:false };
 function aiMode(){ // chữ trên màn quét theo chế độ: 'login' (đăng nhập bằng khuôn mặt) hoặc làm bài
   var L = PH.mode === 'login', k = document.querySelector('#scrPhoto .ai-k'), h = document.querySelector('#scrPhoto h1');
   k.textContent = L ? 'AI FACE LOGIN' : 'AI FACE VERIFY'; h.textContent = L ? 'Đăng nhập bằng khuôn mặt' : 'Xác thực khuôn mặt';
-  var li = $('aiSteps').children; li[3].textContent = L ? 'AI nhận diện danh tính' : 'AI xác minh người thật'; li[4].textContent = L ? 'Mở thông tin của bạn' : 'Chuẩn bị đề thi';
+  var li = $('aiSteps').children; // đăng nhập: 5 bước; làm bài: 6 bước (có đối chiếu với ảnh các lần trước)
+  li[3].textContent = L ? 'AI nhận diện danh tính' : 'Đối chiếu với ảnh các lần trước'; li[4].textContent = L ? 'Mở thông tin của bạn' : 'AI xác minh người thật'; li[5].textContent = 'Chuẩn bị đề thi'; li[5].style.display = L ? 'none' : '';
   $('btnCapture').textContent = L ? 'Quét khuôn mặt để đăng nhập' : 'Chụp và phân tích khuôn mặt';
   $('btnPhotoBack').textContent = L ? 'Nhập mã nhân viên và email' : 'Quay lại';
   $('locLine').style.display = L ? 'none' : '';
@@ -1948,7 +1956,7 @@ async function lvTick(){
 function aiScr(st){ $('scrPhoto').setAttribute('data-ai', st); }
 function aiChip(cls, text){ $('aiChip').className = 'ai-chip' + (cls ? ' ' + cls : ''); $('aiChipT').textContent = text; }
 function aiStep(i, st){ var li = $('aiSteps').children[i]; if (li) li.className = st || ''; }
-function aiStepsReset(){ for (var i = 0; i < 5; i++) aiStep(i, ''); }
+function aiStepsReset(){ for (var i = 0; i < 6; i++) aiStep(i, ''); }
 function aiDelay(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
 function aiBuildMesh(){
   if (AI.built) return; AI.built = true;
@@ -2022,19 +2030,29 @@ function aiFinal(r){
   else { aiScr('bad'); aiChip('bad', 'CHƯA ĐẠT YÊU CẦU'); }
   var s = $('scrPhoto'); s.classList.remove('flash'); void s.offsetWidth; s.classList.add('flash');
 }
-function aiVerifyStart(){ aiScr('verify'); aiChip('scan', 'AI ĐANG XÁC MINH'); aiStep(3, 'run'); }
-async function aiVerifyEnd(res){ // kết quả máy chủ (kt-start): kiểm tra chụp trực tiếp + dựng đề
-  if (!res){ aiStep(3, 'bad'); aiScr('bad'); aiChip('bad', 'MẤT KẾT NỐI'); return; }
-  if (res.j && res.j.ok){ aiStep(3, 'ok'); aiStep(4, 'ok'); aiScr('ok'); aiChip('ok', 'XÁC THỰC THÀNH CÔNG'); await aiDelay(650); return; }
-  if (res.j && res.j.faceRejected){ aiStep(3, 'bad'); aiScr('bad'); aiChip('bad', 'ẢNH BỊ TỪ CHỐI'); return; }
-  aiStep(3, ''); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN KHUÔN MẶT'); // lỗi khác (thiếu thông tin…): giữ nguyên kết quả nhận diện
+function aiVerifyStart(){ aiScr('verify'); aiChip('scan', 'AI ĐANG XÁC MINH'); aiStep(3, 'run'); aiStep(4, 'run'); }
+async function aiVerifyEnd(res){ // kết quả máy chủ (kt-start): đối chiếu với các lần trước + kiểm tra chụp trực tiếp + dựng đề
+  var j = res && res.j;
+  if (!res){ aiStep(3, ''); aiStep(4, 'bad'); aiScr('bad'); aiChip('bad', 'MẤT KẾT NỐI'); return; }
+  if (j && j.ok){
+    aiStep(4, 'ok'); aiStep(5, 'ok');
+    if (j.identity === 'mismatch'){ // khác người so với các lần trước: vẫn cho làm bài, nhưng báo rõ và đã báo quản trị viên
+      aiStep(3, 'bad'); aiScr('bad'); aiChip('bad', 'KHÁC NGƯỜI LẦN TRƯỚC'); ST.identityWarn = true;
+      msg('photoMsg', '⚠ Khuôn mặt chưa khớp với ảnh đã lưu của tài khoản này. Sự việc đã được ghi nhận và báo quản trị viên. Bạn vẫn có thể làm bài.', 'warn');
+      await aiDelay(2400); return;
+    }
+    aiStep(3, 'ok'); aiScr('ok'); aiChip('ok', 'XÁC THỰC THÀNH CÔNG'); await aiDelay(650); return;
+  }
+  if (j && j.identityMismatch){ aiStep(3, 'bad'); aiStep(4, ''); aiScr('bad'); aiChip('bad', 'KHÁC NGƯỜI LẦN TRƯỚC'); return; }
+  if (j && (j.liveFailed || j.faceRejected)){ aiStep(3, ''); aiStep(4, 'bad'); aiScr('bad'); aiChip('bad', j.liveFailed ? 'CHƯA ĐẠT THỬ THÁCH' : 'ẢNH BỊ TỪ CHỐI'); return; }
+  aiStep(3, ''); aiStep(4, ''); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN KHUÔN MẶT'); // lỗi khác (thiếu thông tin…): giữ nguyên kết quả nhận diện
 }
 async function photoInit(){
   PH.dataUrl = ''; PH.face = null; if (PH.mode !== 'login'){ DEV.loc = null; renderLoc(); askLocation(); } loadFaceAI().catch(function(){}); // tải sẵn bộ nhận diện trong lúc mở camera; vị trí không bắt buộc, chỉ xin thử
   $('pvVideo').classList.remove('hide'); $('pvImg').classList.add('hide'); $('faceGuide').classList.remove('hide');
   $('btnCapture').classList.remove('hide'); $('btnPhotoOk').classList.add('hide'); $('btnPhotoRetry').classList.add('hide');
   msg('photoMsg','');
-  aiTrackStop(); LV.started = false; LV.on = false; PH.live = null; $('scrPhoto').classList.remove('lv'); $('btnCapture').classList.remove('hide'); aiStepsReset(); aiScr('idle'); aiChip('', 'CAMERA ĐANG MỞ'); aiRead(0, null); aiMode();
+  aiTrackStop(); ST.identityWarn = false; LV.started = false; LV.on = false; PH.live = null; $('scrPhoto').classList.remove('lv'); $('btnCapture').classList.remove('hide'); aiStepsReset(); aiScr('idle'); aiChip('', 'CAMERA ĐANG MỞ'); aiRead(0, null); aiMode();
   var box = document.querySelector('#scrPhoto .photo-box'), v = $('pvVideo');
   box.classList.remove('scanning'); box.classList.add('opening'); $('camWaitT').textContent = 'Đang mở camera…';
   // Hết hiệu ứng chờ khi camera thật sự có hình (không chỉ khi có stream — nhiều máy còn đen thêm 1–2 giây)
@@ -2095,6 +2113,9 @@ $('btnCapture').addEventListener('click', async function(){
   c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
   await photoProcess(c);
 });
+var idWarnT = null;
+function idWarnShow(){ var w = $('idWarn'); clearTimeout(idWarnT); if (!ST.identityWarn){ w.classList.add('hide'); return; } ST.identityWarn = false; w.classList.remove('hide'); idWarnT = setTimeout(function(){ w.classList.add('hide'); }, 20000); }
+$('idWarnX').addEventListener('click', function(){ $('idWarn').classList.add('hide'); });
 $('btnPhotoRetry').addEventListener('click', function(){ photoInit(); });
 $('btnPhotoBack').addEventListener('click', function(){ photoStop(); if (PH.mode === 'login'){ PH.mode = 'exam'; msg('photoMsg',''); show('check'); setTimeout(function(){ $('inCode').focus(); }, 60); } else show('confirm'); });
 $('btnFaceLogin').addEventListener('click', function(){
@@ -2125,8 +2146,8 @@ $('btnPhotoOk').addEventListener('click', async function(){
   btn.disabled = true; btn.textContent = 'AI đang xác minh và chuẩn bị đề…'; msg('photoMsg',''); aiVerifyStart();
   var res;
   try { res = await api('/api/kt-start', { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, face: PH.face, live: PH.live, device: DEV, examId:EXAM_ID, phone: ST.cand.phone || ST.phoneNew || '', province: (ST.rgNew && ST.rgNew.province) || '', region: (ST.rgNew && ST.rgNew.region) || '' }); } catch(e){ res = null; }
+  await aiVerifyEnd(res); // giữ nút khoá trong lúc hiện kết quả, tránh bấm lần hai
   btn.disabled = false; btn.textContent = label;
-  await aiVerifyEnd(res);
   if (!res){ msg('photoMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
   if (!res.j.ok && res.j.needPhone){ photoStop(); show('confirm'); msg('phoneMsg', res.j.error); return; }
   if (!res.j.ok && res.j.needRegion){ photoStop(); ST.cand.needRegion = true; renderConfirm(); msg('regionMsg', res.j.error); return; }
@@ -2136,7 +2157,7 @@ $('btnPhotoOk').addEventListener('click', async function(){
   ST.attemptId = res.j.attemptId;
   if (res.j.examTitle) $('examTitle').textContent = res.j.examTitle;
   show('quiz');
-  wmSet();
+  wmSet(); idWarnShow();
   if (res.j.done) return finish();
   loadQuestion(res.j);
 });

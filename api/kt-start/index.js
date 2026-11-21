@@ -77,6 +77,7 @@ module.exports = async function (context, req) {
     let attempt = await quiz.activeForPeriod(found.code, settings.examPeriod); // bài dở của kỳ cũ không được làm tiếp
     let resumed = !!attempt;
 
+    let idStatus = null; // kết quả đối chiếu với các lần trước (chỉ khi tạo bài mới)
     // 2) Chưa có -> tạo đề mới. Bắt buộc có ảnh xác nhận trước khi tạo đề (không áp dụng khi làm tiếp bài đang dở).
     if (!attempt) {
       if (!photo) return reply(context, 400, { ok: false, error: "Cần chụp ảnh xác nhận trước khi bắt đầu làm bài." });
@@ -88,12 +89,19 @@ module.exports = async function (context, req) {
         if (!fc.allow) return reply(context, 422, { ok: false, faceRejected: true, error: fc.message });
       }
       // Thử thách sống: nhìn thẳng + quay trái + quay phải (chặn ảnh tĩnh / ảnh trên màn hình). FACE_LIVENESS = on | soft | off
+      let liveOk = true;
       const fl = require("../_lib/facelive");
       if (fl.mode() !== "off") {
         const lv = await fl.verify(b.live, photo);
         faceCheck = Object.assign({}, faceCheck || {}, { liveness: lv.evidence || { ok: false, code: lv.code } });
         if (!lv.ok && fl.mode() === "on") return reply(context, 422, { ok: false, faceRejected: true, liveFailed: true, error: lv.message });
+        liveOk = !!lv.ok;
       }
+      // Đối chiếu với các lần làm bài trước của chính tài khoản này: khác người thì ghi nhận + email cảnh báo (FACE_IDENTITY: warn | block | off)
+      const newId = quiz.genId();
+      const idr = await require("../_lib/startid").run({ req, photo, found, settings, attemptId: newId, now, enrolOk: liveOk });
+      idStatus = idr.status;
+      if (idr.block) return reply(context, 422, { ok: false, faceRejected: true, identityMismatch: true, error: "Khuôn mặt không khớp với ảnh đã lưu của tài khoản này. Sự việc đã được ghi nhận và báo quản trị viên. Hãy liên hệ quản lý hoặc quản trị viên." });
       const segment = quiz.normSegment(found.segment);
       // Phân bổ đề: dùng DUY NHẤT quiz.planExam (khống chế số câu, trần cứng, không bao giờ phát cả ngân hàng)
       const plan = quiz.planExam(allQuestions, settings, segment, found.region);
@@ -103,7 +111,7 @@ module.exports = async function (context, req) {
       const orders = {};
       picked.forEach((q) => { orders[q.id] = quiz.shuffle(q.options.map((_, i) => i)); }); // order[vị trí hiển thị] = chỉ số gốc
       attempt = {
-        id: quiz.genId(), code: found.code, name: found.name, email: found.email, phone: normPhone(found.phone), manager: found.manager || "", segment, province: found.province || "", region: quiz.normRegion(found.region),
+        id: newId, code: found.code, name: found.name, email: found.email, phone: normPhone(found.phone), manager: found.manager || "", segment, province: found.province || "", region: quiz.normRegion(found.region),
         period: settings.examPeriod,
         questionIds: picked.map((q) => q.id), orders,
         answers: {},
@@ -114,6 +122,8 @@ module.exports = async function (context, req) {
         status: "in_progress"
       };
       Object.assign(attempt, quiz.timeFields(settings, picked.length)); // chế độ tính giờ: theo từng câu / theo toàn bài
+      if (idr.rec) attempt.faceId = idr.rec; // đã đối chiếu ngay lúc bắt đầu: lúc nộp bài không đối chiếu lại
+      if (idr.faceDesc && !attempt.faceDesc) attempt.faceDesc = idr.faceDesc;
       if (found.test) attempt.test = true; // tài khoản thử nghiệm: bài này không ghi vào kết quả / dashboard / xuất dữ liệu
     } else {
       quiz.syncAttempt(attempt, now);
@@ -125,7 +135,7 @@ module.exports = async function (context, req) {
     await quiz.putAttempt(attempt);
     if (!resumed) await quiz.setActive(found.code, attempt.id);
 
-    return reply(context, 200, Object.assign({ ok: true, attemptId: attempt.id, resumed, examTitle: settings.examTitle }, cs.state));
+    return reply(context, 200, Object.assign({ ok: true, attemptId: attempt.id, resumed, examTitle: settings.examTitle, identity: idStatus || undefined }, cs.state));
   } catch (e) {
     context.log.error("kt-start", e && e.message);
     return reply(context, 500, { ok: false, error: "Có lỗi xảy ra, thử lại sau." });

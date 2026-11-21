@@ -51,3 +51,22 @@ Kết quả đo (góc quay, khoảng cách giữa các ảnh) được lưu tron
 - **Chưa chặn được:** video quay sẵn người đó đang quay đầu, hoặc người chuẩn bị sẵn nhiều ảnh các góc rồi đổi lần lượt, hoặc deepfake trực tiếp.
 - **Kiểm tra "cùng một người" giữa các góc chỉ là lớp rất yếu.** Mô hình nhận diện hiện dùng không phân biệt tốt các khuôn mặt khi đã quay nghiêng (thử thay người khác hẳn vào ảnh quay phải vẫn qua ở ngưỡng 0,75). Đừng dựa vào bước này để chống đổi người.
 - Muốn chắc hơn cần thêm lớp khác: AI kiểm tra chụp lại màn hình trên cả 3 ảnh, đối chiếu cả ảnh quay với ảnh đã lưu, hoặc kiểm tra trực tiếp khi cần chắc chắn.
+
+## Cảnh báo "người làm bài khác với các lần trước"
+Ngay lúc **bắt đầu làm bài** (`/api/kt-start`, tạo bài mới), hệ thống so khuôn mặt vừa chụp với ảnh các lần làm bài trước của **chính tài khoản đó** (`api/_lib/startid.js` + `faceid.check`, đối chiếu 1-1, ngưỡng `FACE_MATCH_MAX`, mặc định 0,55).
+
+Khi khuôn mặt **khác**:
+1. Gửi email cho `ADMIN_EMAILS` kèm **ảnh các lần trước** và **ảnh người vừa bắt đầu** để đối chiếu bằng mắt; tối đa 1 email / 10 phút cho mỗi mã nhân viên, các lần còn lại vẫn ghi vào sổ cảnh báo (`kt/security-alerts.json`, `kind: identity`).
+2. Bài làm được gắn `faceId.s = "mismatch"` ngay từ đầu, hiện nhãn **"Khuôn mặt khác các lần trước"** trong trang quản trị (lúc nộp bài không đối chiếu lại).
+3. Nhân viên thấy cảnh báo ở màn quét (bước "Đối chiếu với ảnh các lần trước" báo ✗) và một dòng thông báo ở đầu màn làm bài (tự ẩn sau 20 giây, có nút đóng).
+
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `FACE_IDENTITY` | `warn` | `warn` = cảnh báo, vẫn cho làm bài · `block` = chặn không cho bắt đầu làm bài (vẫn gửi email) · `off` = tắt |
+
+Không cảnh báo khi: chưa có ảnh trước (lần đầu của tài khoản đó, ảnh này thành ảnh gốc); tài khoản thử nghiệm; quá thời gian chờ 12 giây (lượt quét sau khi nộp bài sẽ đối chiếu như cũ); làm tiếp bài đang dở.
+
+### Giới hạn cần biết
+- **Ảnh gốc là ảnh của lần làm bài đầu tiên.** Nếu người làm hộ là người làm bài lần đầu thì các lần sau chính chủ mới bị báo "khác người". Quản trị viên nên kiểm tra ảnh gốc của các tài khoản quan trọng.
+- Có thể báo nhầm khi ánh sáng, kính, khẩu trang, kiểu tóc thay đổi nhiều. Vì vậy mặc định chỉ cảnh báo, không chặn; nên so ảnh bằng mắt trong email trước khi kết luận.
+- Ảnh chụp lúc làm bài (nay có thử thách quay mặt) là ảnh lưu làm minh chứng; ảnh vừa quét chỉ có trong email gửi quản trị viên cùng với ảnh các lần trước.

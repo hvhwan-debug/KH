@@ -27,10 +27,11 @@ async function refsFor(attempt, idx) {
 }
 
 // Đối chiếu một bài làm. Không ghi gì; trả về bản ghi để nơi gọi lưu.
-async function check(attempt, idx) {
+async function check(attempt, idx, opts) {
   const at = Date.now();
   if (!attempt || !attempt.photo) return { s: "nophoto", at };
   const refs = await refsFor(attempt, idx);
+  if (opts && opts.out) opts.out.refPhoto = refs[0] && refs[0].photo; // ảnh các lần trước (để đính kèm email cảnh báo, không lưu vào bài)
   const cmp = await facematch.compare(attempt.photo, refs);
   if (cmp.desc && !attempt.faceDesc) attempt.faceDesc = cmp.desc; // dấu vân của chính ảnh này, để lần sau so nhanh
   const s = cmp.ok ? "match" : (MAP[cmp.code] || "error");
@@ -38,15 +39,15 @@ async function check(attempt, idx) {
   if (cmp.distance != null) { rec.d = Math.round(cmp.distance * 1000) / 1000; rec.t = cmp.threshold; }
   if (cmp.used) { rec.n = cmp.used; rec.refs = refs.map((r) => r.id).slice(0, MAX_REFS); }
   // Bài được xác nhận là chính chủ (hoặc ảnh đầu tiên của người đó): đưa dấu vân vào thư viện đăng nhập bằng khuôn mặt
-  if (!attempt.test && attempt.faceDesc && (s === "match" || s === "first")) { try { await require("./facegallery").enrol(attempt.code, attempt.faceDesc, attempt.id); } catch (e) { /* không chặn */ } }
+  if (!attempt.test && attempt.faceDesc && (s === "match" || s === "first") && !(opts && opts.enrol === false)) { try { await require("./facegallery").enrol(attempt.code, attempt.faceDesc, attempt.id); } catch (e) { /* không chặn */ } }
   return rec;
 }
 
 // Có giới hạn thời gian: quá hạn thì trả null (bài sẽ được đối chiếu sau ở lượt quét nền)
-async function checkWithin(attempt, ms, idx) {
+async function checkWithin(attempt, ms, idx, opts) {
   let timer;
   try {
-    return await Promise.race([check(attempt, idx), new Promise((r) => { timer = setTimeout(() => r(null), ms); })]);
+    return await Promise.race([check(attempt, idx, opts), new Promise((r) => { timer = setTimeout(() => r(null), ms); })]);
   } catch (e) { return null; } finally { clearTimeout(timer); }
 }
 
