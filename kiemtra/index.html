@@ -555,6 +555,7 @@ body.exam,body.exam *{-webkit-user-select:none;user-select:none;-webkit-touch-ca
 #wm{position:fixed;inset:0;z-index:50;pointer-events:none;opacity:.09;display:none;background-repeat:repeat}
 body.exam input,body.exam textarea{-webkit-user-select:text;user-select:text}
 body.exam #wm{display:block}
+@media (pointer:coarse){body.exam #wm{opacity:.13}} /* điện thoại: không chặn được phím chụp của máy, nên dấu chìm đậm hơn để ảnh chụp luôn lộ người chụp */
 #shield{position:fixed;inset:0;z-index:9999;background:#000;color:#fff;display:none;align-items:center;justify-content:center;text-align:center;padding:28px;font-size:16px;font-weight:600;line-height:1.6}
 #shield.on{display:flex}
 #shield svg{display:block;margin:0 auto 14px;opacity:.9}
@@ -3184,12 +3185,17 @@ if ('IntersectionObserver' in window){
 
 /* ---------- Bảo vệ nội dung đề (hạn chế, không thể chặn tuyệt đối) ---------- */
 var holdUntil = 0, holdTimer = null, away = false;
+var IS_TOUCH = !!(window.matchMedia && matchMedia('(pointer:coarse)').matches) || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
 var AWAY_MSG = 'Nội dung bài thi đã được ẩn. Hãy quay lại cửa sổ bài thi để tiếp tục. Đồng hồ vẫn đang chạy.';
 function wmSet(){
 var c = ST.cand || {};
 var hm = new Date(sysNow()).toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit' });
 var t = esc([c.name, c.code, c.email].filter(Boolean).join(' · ') + (ST.total ? ' · câu ' + (ST.index + 1) + ' · ' + hm : ''));
 var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="520" height="190"><text x="24" y="120" transform="rotate(-22 24 120)" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#000">' + t + '</text></svg>';
+if (IS_TOUCH){ // điện thoại: ô nhỏ, 2 dòng để mỗi màn hình có nhiều dấu chìm đọc được (tên + mã NV, email + giờ)
+  var l1 = esc([c.name, c.code].filter(Boolean).join(' · ')), l2 = esc([c.email, ST.total ? 'câu ' + (ST.index + 1) + ' · ' + hm : hm].filter(Boolean).join(' · '));
+  svg = '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="170"><g transform="rotate(-24 20 120)" font-family="Arial,sans-serif" font-weight="700" fill="#000"><text x="20" y="112" font-size="13">' + l1 + '</text><text x="20" y="130" font-size="11">' + l2 + '</text></g></svg>';
+}
 $('wm').style.backgroundImage = 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
 }
 function shieldOn(text, holdMs){
@@ -3224,6 +3230,12 @@ document.addEventListener('keydown', function(e){
 window.addEventListener('beforeprint', function(){ shotAttempt('Không được in nội dung bài thi.'); });
 // Che trước khi chụp: ảnh chụp bằng phím tắt hệ điều hành được lấy ngay khi bấm phím cuối, nên phải đen màn hình từ lúc vừa giữ phím Windows / Cmd+Shift.
 var IS_MAC = /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent || '');
+// Điện thoại: nhiều máy Android chụp màn hình bằng cách vuốt 3 ngón tay (Xiaomi, OPPO, realme, vivo...). Thấy từ 3 ngón chạm cùng lúc thì
+// che đen ngay (thường kịp trước khi máy chụp) và ghi nhận như một lần chụp màn hình. Phím cứng (nguồn + giảm âm lượng) thì trình duyệt không nhận được.
+document.addEventListener('touchstart', function(e){ if (ST.quizOn && e.touches && e.touches.length >= 3) shotAttempt('Không được chụp màn hình bài thi.'); }, { capture:true, passive:true });
+// Rời trang trên điện thoại (thanh thông báo, chuyển ứng dụng, Circle to Search, trợ lý...): che ngay, cả khi trình duyệt chỉ báo pagehide/freeze
+window.addEventListener('pagehide', goAway);
+document.addEventListener('freeze', goAway);
 document.addEventListener('keydown', function(e){
 if (!ST.quizOn) return;
 if (((e.key === 'Meta' || e.key === 'OS') && !IS_MAC) || (e.metaKey && e.shiftKey)) shieldOn('Không được chụp hoặc sao chép nội dung bài thi.', 1500);
