@@ -2000,6 +2000,9 @@ function aiMode(){ // chữ trên màn quét theo chế độ: 'login' (đăng n
   li[3].textContent = L ? 'AI nhận diện danh tính' : 'Đối chiếu với ảnh các lần trước'; li[4].textContent = L ? 'Mở thông tin của bạn' : 'AI xác minh người thật'; li[5].textContent = 'Chuẩn bị đề thi'; li[5].style.display = L ? 'none' : '';
   $('btnCapture').textContent = L ? 'Quét khuôn mặt để đăng nhập' : 'Chụp và phân tích khuôn mặt';
   $('btnPhotoBack').textContent = L ? 'Nhập mã nhân viên và email' : 'Quay lại';
+  // Đăng nhập bằng khuôn mặt: ẩn nút nhập mã NV + email trong lúc quét, chỉ hiện khi nhận diện lỗi (hoặc quét quá lâu)
+  $('btnPhotoBack').classList.toggle('hide', L); clearTimeout(PH.backT);
+  if (L) PH.backT = setTimeout(function(){ if (PH.mode === 'login') $('btnPhotoBack').classList.remove('hide'); }, 45000);
   $('locLine').style.display = L ? 'none' : '';
 }
 
@@ -2198,6 +2201,7 @@ async function photoInit(){
     clog('camera', 'Không mở được camera (bước chụp ảnh xác nhận)', (e && (e.name + ': ' + e.message)) || '');
     clearTimeout(slow); box.classList.remove('opening'); aiChip('bad', 'KHÔNG MỞ ĐƯỢC CAMERA');
     msg('photoMsg','Không mở được camera (có thể bạn chưa cho phép quyền camera, hoặc thiết bị không có camera). Hãy cho phép quyền camera trên trình duyệt rồi thử lại.', 'err');
+    loginFailBack();
   }
 }
 function photoStop(){
@@ -2245,6 +2249,9 @@ var idWarnT = null;
 function idWarnShow(){ var w = $('idWarn'); clearTimeout(idWarnT); if (!ST.identityWarn){ w.classList.add('hide'); return; } ST.identityWarn = false; w.classList.remove('hide'); idWarnT = setTimeout(function(){ w.classList.add('hide'); }, 20000); }
 $('idWarnX').addEventListener('click', function(){ $('idWarn').classList.add('hide'); });
 $('btnPhotoRetry').addEventListener('click', function(){ photoInit(); });
+function loginFailBack(){ if (PH.mode === 'login'){ clearTimeout(PH.backT); $('btnPhotoBack').classList.remove('hide'); } }
+// Nút "Quét lại" hiện = có lỗi: lúc đó mới cho chọn nhập mã NV + email
+try { new MutationObserver(function(){ if (!$('btnPhotoRetry').classList.contains('hide')) loginFailBack(); }).observe($('btnPhotoRetry'), { attributes:true, attributeFilter:['class'] }); } catch (e) {}
 $('btnPhotoBack').addEventListener('click', function(){ photoStop(); if (PH.mode === 'login'){ PH.mode = 'exam'; msg('photoMsg',''); show('check'); setTimeout(function(){ $('inCode').focus(); }, 60); } else show('confirm'); });
 $('aiSnd').addEventListener('click', function(){ SND.on = !SND.on; try { localStorage.setItem('kt_snd', SND.on ? '1' : '0'); } catch (e) {} sndPaint(); if (SND.on){ sndUnlock(); setTimeout(sndReady, 80); } else { sndStopVoice(); sndScan(false); } });
 sndPaint();
@@ -2269,6 +2276,7 @@ async function doFaceLogin(){
   }
   aiStep(3, 'bad'); aiScr('bad'); aiChip('bad', j && j.notFound ? 'CHƯA CÓ DỮ LIỆU KHUÔN MẶT' : 'ĐĂNG NHẬP KHÔNG THÀNH CÔNG'); sndBad();
   msg('photoMsg', (j && j.error) || 'Không kết nối được máy chủ, vui lòng thử lại.', j && j.notFound ? 'warn' : 'err');
+  loginFailBack();
   $('btnPhotoRetry').classList.remove('hide');
   if (j && j.off) $('btnFaceLogin').classList.add('hide');
 }
