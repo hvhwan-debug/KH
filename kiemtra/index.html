@@ -584,6 +584,10 @@ body.introbg .lp-bar{display:flex;position:relative;z-index:5;height:76px;paddin
 .lp-brand{min-width:0}
 .lp-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lp-nav{display:flex;gap:4px}
+.lp-burger{display:none;place-items:center;flex:0 0 auto;width:44px;height:44px;margin-left:auto;padding:0;border:0;border-radius:12px;background:transparent;color:#29466e;cursor:pointer}
+.lp-burger:hover,.lp-bar.open .lp-burger{background:rgba(255,255,255,.85)}
+.lp-burger svg{width:24px;height:24px}
+.lp-burger .x{display:none}.lp-bar.open .lp-burger .x{display:block}.lp-bar.open .lp-burger .m{display:none}
 .lp-nav button{display:inline-flex;align-items:center;gap:8px;border:0;background:transparent;font:inherit;font-size:13px;font-weight:700;color:#29466e;padding:9px 12px;border-radius:10px;cursor:pointer;transition:background .15s}
 .lp-nav button:hover{background:rgba(255,255,255,.75)}
 .lp-nav a{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#29466e;padding:9px 12px;border-radius:10px;text-decoration:none;transition:background .15s;white-space:nowrap}
@@ -857,13 +861,15 @@ body.introbg .btn.go:active{transform:scale(.99)}
    3) Màn làm bài: bỏ thanh "các bước" (đã có số câu + thanh tiến độ), đáp án rộng hơn, nút "Câu tiếp theo" luôn dính đáy
       màn hình trong tầm ngón cái, không phải cuộn xuống tìm nút khi đang bị tính giờ. */
 @media(max-width:560px){
-  body.introbg .lp-nav{gap:2px;flex:0 0 auto}
-  body.introbg .lp-nav button{position:relative;width:44px;height:44px;padding:0;justify-content:center;gap:0;white-space:nowrap}
-  body.introbg .lp-nav button span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-  body.introbg .lp-nav a{position:relative;width:44px;height:44px;padding:0;justify-content:center;gap:0}
+  /* Menu gọn: nút ☰, bấm mới mở danh sách xổ xuống (Xác thực kết quả, Lịch sử làm bài, Hướng dẫn, Hỗ trợ) */
+  body.introbg .lp-burger{display:grid}
+  body.introbg .lp-nav{display:none;position:absolute;top:calc(100% + 6px);right:12px;z-index:50;flex-direction:column;gap:2px;min-width:230px;padding:6px;
+    background:#fff;border:1px solid rgba(41,70,110,.14);border-radius:16px;box-shadow:0 18px 40px -14px rgba(10,37,82,.4)}
+  body.introbg .lp-bar.open .lp-nav{display:flex}
   body.introbg .lp-nav>*+*::before{display:none}
-  body.introbg .lp-nav a span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-  body.introbg .lp-nav svg{width:22px;height:22px}
+  body.introbg .lp-nav a,body.introbg .lp-nav button{width:100%;justify-content:flex-start;gap:12px;padding:12px 14px;font-size:15px;font-weight:600;border-radius:11px;text-align:left}
+  body.introbg .lp-nav a:hover,body.introbg .lp-nav button:hover,body.introbg .lp-nav a:focus-visible,body.introbg .lp-nav button:focus-visible{background:#EEF4FB;outline:none}
+  body.introbg .lp-nav svg{width:20px;height:20px;flex:0 0 auto;color:#0A63C4}
   body.introbg .lp-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:13.5px;line-height:1.25}
   body.introbg .steps li{font-size:11.5px}
   body.introbg .foot{font-size:11.5px}
@@ -1077,7 +1083,8 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
 <div class="practice-bar hide" id="practiceBar" role="status"><span>ĐỀ THI THỬ</span></div>
 <header class="lp-bar">
   <div class="lp-brand"><span class="lp-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span class="lp-name">Hệ thống kiểm tra đánh giá trực tuyến</span></div>
-  <nav class="lp-nav" aria-label="Điều hướng">
+  <button type="button" class="lp-burger" id="lpBurger" aria-label="Mở menu" aria-expanded="false" aria-controls="lpNav"><svg class="m" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  <nav class="lp-nav" id="lpNav" aria-label="Điều hướng">
     <a href="/kiemtra/ketqua.html" title="Xác thực kết quả"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg><span>Xác thực kết quả</span></a>
     <a href="/kiemtra/tracuu.html" title="Lịch sử làm bài"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7.5V12l3 2"/></svg><span>Lịch sử làm bài</span></a>
     <button type="button" data-lp="guide" title="Hướng dẫn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>Hướng dẫn</span></button>
@@ -3383,6 +3390,15 @@ var LP_TXT = {
   guide: { t:'Hướng dẫn làm bài', b:'<ol><li>Nhập mã đề thi do bộ phận quản lý cung cấp, hoặc mở trực tiếp đường dẫn của đề.</li><li>Nhập mã nhân viên và email công ty để xác thực.</li><li>Kiểm tra lại thông tin, đọc thể lệ, chụp ảnh khuôn mặt và cho phép truy cập vị trí.</li><li>Mỗi câu có thời gian riêng, hết giờ hệ thống tự chuyển sang câu kế tiếp. Nếu lỡ thoát, mở lại đường dẫn để làm tiếp.</li><li>Kết quả hiển thị ngay sau khi nộp bài.</li></ol>' },
   support: { t:'Hỗ trợ', b:'<p>Mọi thắc mắc vui lòng liên hệ quản trị viên phụ trách.</p><p>Nếu không vào được bài, hãy mở đường dẫn bằng Chrome hoặc Safari (không mở trong Zalo hoặc Facebook) và cho phép trình duyệt sử dụng camera.</p>' }
 };
+// Menu ☰ trên điện thoại: bấm mở/đóng, chọn một mục hoặc bấm ra ngoài / phím Esc thì đóng
+(function(){
+  var bar = document.querySelector('.lp-bar'), bt = $('lpBurger'); if (!bar || !bt) return;
+  function set(on){ bar.classList.toggle('open', on); bt.setAttribute('aria-expanded', on ? 'true' : 'false'); bt.setAttribute('aria-label', on ? 'Đóng menu' : 'Mở menu'); if (on){ var f = $('lpNav').querySelector('a,button'); if (f) f.focus(); } }
+  bt.addEventListener('click', function(e){ e.stopPropagation(); set(!bar.classList.contains('open')); });
+  $('lpNav').addEventListener('click', function(e){ if (e.target.closest('a,button')) set(false); });
+  document.addEventListener('click', function(e){ if (bar.classList.contains('open') && !bar.contains(e.target)) set(false); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && bar.classList.contains('open')){ set(false); bt.focus(); } });
+})();
 document.querySelectorAll('[data-lp]').forEach(function(b){
   b.addEventListener('click', function(){ var x = LP_TXT[b.dataset.lp]; $('lpDlgT').textContent = x.t; $('lpDlgB').innerHTML = x.b; $('lpDlg').classList.remove('hide'); $('lpDlgX').focus(); });
 });
