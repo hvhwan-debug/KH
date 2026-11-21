@@ -261,9 +261,8 @@ body.cert-on .foot{display:none}
           <button type="button" class="btn-outline" id="paperToggle">Xem lại đề đã làm</button>
           <button type="button" class="btn-outline solid hide" id="paperAdmin" style="margin-top:8px">Xem đề (quản trị viên)</button>
           <div class="hide" id="paperForm">
-            <input type="text" id="pCode" placeholder="Mã nhân viên" autocomplete="off">
-            <input type="text" id="pEmail" placeholder="Email" autocomplete="off">
-            <button type="button" class="btn-outline solid" id="paperGo">Tiếp tục</button>
+            <p class="pnote" style="margin-top:0">Quét khuôn mặt để xác nhận bạn là người đã làm bài này, không cần nhập mã nhân viên hay email.</p>
+            <button type="button" class="btn-outline solid" id="paperGo">Quét khuôn mặt để xem lại đề</button>
             <div id="paperMsg"></div>
           </div>
           <div class="hide" id="paperView"></div>
@@ -350,10 +349,10 @@ $('paperToggle').addEventListener('click', function(){
   // Đề chưa kết thúc: bấm nút mới hiện thông báo (và giờ quay lại), chưa mở ô đăng nhập xem đề
   if ($('paperBox').dataset.locked === '1'){ $('paperLocked').classList.remove('hide'); return; }
   $('paperForm').classList.remove('hide');
-  $('pCode').focus();
+  startPaper(); // không nhập mã NV + email: đi thẳng sang quét khuôn mặt
 });
 
-/* ---------- Xem lại đề: (1) mã NV + email, (2) bổ sung SĐT nếu hồ sơ chưa có, (3) quét khuôn mặt ---------- */
+/* ---------- Xem lại đề: (1) bổ sung SĐT nếu hồ sơ chưa có, (2) quét khuôn mặt khớp ảnh đã lưu của chủ bài (không nhập mã NV + email) ---------- */
 function postPaper(body){
   return fetch('/api/kt-mypaper', { method:'POST', headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: JSON.stringify(Object.assign({ t: TOK }, body)) })
     .then(function(r){ return r.json(); }).catch(function(){ return null; });
@@ -384,12 +383,11 @@ function normPhoneVN(v){
 }
 var FLOW = { code:'', email:'', phone:'', needPhone:false };
 
-// Bước 1: mã nhân viên + email -> hệ thống kiểm tra hồ sơ (có số điện thoại chưa)
+// Bước 1: hệ thống kiểm tra bài (có ảnh để đối chiếu, hồ sơ có số điện thoại chưa) — liên kết/QR đã chỉ đúng bài
 async function startPaper(){
-  var code = $('pCode').value.trim(), email = $('pEmail').value.trim();
-  if (!code || !email){ pmsg('Vui lòng nhập mã nhân viên và email.'); return; }
+  var code = '', email = '';
   $('paperGo').disabled = true; pmsg('');
-  var j = await postPaper({ code: code, email: email, step: 'check' });
+  var j = await postPaper({ step: 'check' });
   $('paperGo').disabled = false;
   if (!j || !j.ok){ pmsg((j && j.error) || 'Không thể kết nối đến hệ thống. Vui lòng thử lại sau.'); return; }
   FLOW = { code: code, email: email, phone: '', needPhone: !!j.needPhone };
@@ -520,7 +518,6 @@ $('fmManual').addEventListener('click', function(){ if (!FM.busy && FM.stream) f
 $('fmClose').addEventListener('click', closeFace);
 document.addEventListener('keydown', function(e){ if (e.key === 'Escape'){ if (FM.open) closeFace(); else if (!$('phoneModal').classList.contains('hide')) closePhone(); } });
 $('paperGo').addEventListener('click', startPaper);
-$('pEmail').addEventListener('keydown', function(e){ if (e.key === 'Enter') startPaper(); });
 $('paperAdmin').addEventListener('click', adminView);
 // Quản trị viên đang đăng nhập: hiện nút xem thẳng, không cần nhập mã NV + email
 (async function(){

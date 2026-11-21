@@ -136,3 +136,12 @@ Nhân viên vừa **đăng nhập bằng khuôn mặt** thì bấm bắt đầu 
 | `FACE_PASS_TTL_MIN` | `15` | Số phút vé còn hiệu lực sau khi đăng nhập bằng khuôn mặt |
 
 Kiểm thử: `node dev/test-facepass.js`.
+
+## Tra cứu lịch sử và xem lại đề chỉ bằng khuôn mặt
+Không còn bước nhập mã nhân viên + email ở hai trang này:
+
+- **Tra cứu bài kiểm tra của tôi** (`/kiemtra/tracuu.html`): bấm "Quét khuôn mặt để tra cứu". `kt-history` nhận diện 1-N trong thư viện (`api/_lib/faceident.js`, cùng chuẩn đăng nhập bằng khuôn mặt) rồi **vẫn đối chiếu 1-1** với ảnh đã lưu của mã đó (khoá + báo quản trị viên như cũ). Không nhận diện được thì hiện nút "Nhập mã nhân viên và email" (đường dự phòng, giữ nguyên cách cũ).
+- **Xem lại đề** (`/kiemtra/ketqua.html?t=…`): liên kết/QR đã chỉ đúng một bài, nên bấm "Xem lại đề đã làm" là quét mặt luôn; `kt-mypaper` chỉ cho xem khi khuôn mặt khớp ảnh đã lưu của chủ bài.
+- `FACE_LOGIN=off` tắt nhận diện 1-N: trang tra cứu tự quay về nhập mã nhân viên + email.
+
+Kiểm thử: `node dev/test-faceonly.js`.

@@ -38,13 +38,23 @@ module.exports = async function (context, req) {
     if (quiz.tooManyFails(req, 8, 10 * 60 * 1000)) return reply(context, 429, { ok: false, error: "Bạn đã thử quá nhiều lần. Vui lòng đợi vài phút rồi thử lại." });
 
     const b = req.body || {};
-    const code = quiz.normCode(b.code), email = quiz.normEmail(b.email);
-    if (!code || !email) return reply(context, 400, { ok: false, error: "Vui lòng nhập mã nhân viên và email." });
+    let code = quiz.normCode(b.code), email = quiz.normEmail(b.email), byFace = null;
+    if (!code && !email && b.photo) {
+      // Chỉ quét khuôn mặt (không nhập mã NV + email): nhận diện 1-N trong thư viện, rồi vẫn đối chiếu 1-1 với ảnh đã lưu bên dưới
+      const fi = await require("../_lib/faceident").identify(b.photo, "tra-cuu-lich-su");
+      if (!fi.ok) {
+        if (fi.fail) quiz.noteFail(req);
+        try { await auditlog.write({ area: "verify", role: "candidate", by: "", op: "viewHistory", label: "Thí sinh tra cứu lịch sử bài kiểm tra (nhận diện khuôn mặt)", kind: "denied", status: fi.status, ok: false, details: { result: fi.why, note: fi.detail || "" }, ip: device.ipOf(req) }); } catch (e) { /* bỏ qua */ }
+        return reply(context, fi.status, fi.body);
+      }
+      code = quiz.normCode(fi.code); byFace = fi;
+    } else if (!code || !email) return reply(context, 400, { ok: false, needCode: true, error: "Vui lòng nhập mã nhân viên và email." });
 
     // Các bài ĐÃ NỘP của đúng mã nhân viên này (bài tài khoản thử nghiệm không nằm trong chỉ mục)
     const rows = (await quiz.getIndexAll()).filter((r) => r.status === "submitted" && quiz.normCode(r.code) === code)
       .sort((a, c) => (c.submittedAt || 0) - (a.submittedAt || 0));
-    if (!rows.length || !rows.some((r) => quiz.normEmail(r.email) === email)) {
+    if (byFace && !rows.length) return reply(context, 404, { ok: false, error: "Đã nhận diện được bạn nhưng bạn chưa có bài kiểm tra nào đã nộp." });
+    if (!rows.length || (!byFace && !rows.some((r) => quiz.normEmail(r.email) === email))) {
       quiz.noteFail(req);
       return reply(context, 403, { ok: false, error: NOT_FOUND }); // cùng một thông báo cho mọi trường hợp sai: không để dò mã nhân viên
     }
@@ -74,8 +84,8 @@ module.exports = async function (context, req) {
     const selfie = typeof b.photo === "string" ? b.photo : "";
     if (!selfie.startsWith("data:image/") || selfie.length > 350000) return reply(context, 400, { ok: false, error: "Cần quét khuôn mặt bằng camera để xác thực." });
 
-    // 1) Chụp trực tiếp, không phải chụp lại từ màn hình / ảnh in
-    const live = await facecheck.verify(selfie, null, code, "tra-cuu-lich-su");
+    // 1) Chụp trực tiếp, không phải chụp lại từ màn hình / ảnh in (đã kiểm tra khi nhận diện chỉ bằng khuôn mặt)
+    const live = byFace ? byFace.live : await facecheck.verify(selfie, null, code, "tra-cuu-lich-su");
     if (!live.allow) {
       quiz.noteFail(req);
       await logView(req, who, "denied", "live", live.message);
@@ -97,7 +107,7 @@ module.exports = async function (context, req) {
       }
       return reply(context, cmp.code === "unavailable" ? 503 : 403, { ok: false, error: cmp.message });
     }
-    await logView(req, who, "ok", "face:ok", "khoảng cách " + cmp.distance.toFixed(3) + " (ngưỡng " + cmp.threshold + ")");
+    await logView(req, who, "ok", byFace ? "face:ok (chỉ quét mặt)" : "face:ok", "khoảng cách " + cmp.distance.toFixed(3) + " (ngưỡng " + cmp.threshold + ")");
 
     // Khuôn mặt khớp: trả danh sách bài (không có email, ảnh, đáp án). Liên kết "t" mở trang kết quả chính thức của từng bài.
     const cache = {}; const best = {};

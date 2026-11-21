@@ -47,7 +47,9 @@ module.exports = async function (context, req) {
 
     const code = quiz.normCode(b.code), email = quiz.normEmail(b.email);
     const master = !!(adminU && b.admin === true);
-    if (!master && (!code || !email || quiz.normCode(attempt.code) !== code || quiz.normEmail(attempt.email) !== email)) {
+    // Không bắt nhập mã NV + email: link/QR đã chỉ đúng bài, quét khuôn mặt (bắt buộc, bên dưới) phải khớp ảnh đã lưu của chủ bài.
+    // Nếu giao diện cũ vẫn gửi mã NV + email thì vẫn phải khớp.
+    if (!master && (code || email) && (quiz.normCode(attempt.code) !== code || quiz.normEmail(attempt.email) !== email)) {
       quiz.noteFail(req);
       return reply(context, 403, { ok: false, error: "Mã nhân viên hoặc email không khớp với bài làm này." });
     }
