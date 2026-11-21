@@ -20,12 +20,12 @@ const OTHER = "data:image/jpeg;base64," + Buffer.from("anh-khac").toString("base
   await quiz.saveQuestions(qs);
   await quiz.saveCandidates([{ code: "NV1", name: "A", email: "a@x.vn", segment: "both", phone: "0912345678", province: "Hà Nội", region: "bac" }, { code: "NV2", name: "B", email: "b@x.vn", segment: "both", phone: "0912345679", province: "Hà Nội", region: "bac" }]);
   await quiz.saveSettings({ examTitle: "T", questionCount: 5, bothGiaDungCount: 2, secondsPerQuestion: 30, sharedUniform: true });
-  ok((await quiz.upsertExam({ id: "de-a", title: "Đề A", questionCount: 5, sharedUniform: true })).ok, "tạo đề A (mặc định bật bỏ quét lần hai)");
-  ok((await quiz.upsertExam({ id: "de-b", title: "Đề B", questionCount: 5, sharedUniform: true, faceLoginSkip: false })).ok, "tạo đề B (tắt)");
+  ok((await quiz.upsertExam({ id: "de-a", title: "Đề A", questionCount: 5, sharedUniform: true })).ok, "tạo đề A");
+  ok((await quiz.upsertExam({ id: "de-b", title: "Đề B", questionCount: 5, sharedUniform: true, faceLoginSkip: false })).ok, "tạo đề B (cố gửi faceLoginSkip:false)");
   for (const id of ["de-a", "de-b"]) { const q2 = qs.map((q) => Object.assign({}, q, { id: id + q.id, period: id })); await quiz.saveQuestions((await quiz.getQuestions()).concat(q2)); }
 
-  ok((await quiz.getExamSettings("de-a")).faceLoginSkip === true, "cài đặt đề A: faceLoginSkip = true");
-  ok((await quiz.getExamSettings("de-b")).faceLoginSkip === false, "cài đặt đề B: faceLoginSkip = false");
+  ok((await quiz.getExamSettings("de-a")).faceLoginSkip === true, "đề A: faceLoginSkip = true");
+  ok((await quiz.getExamSettings("de-b")).faceLoginSkip === true, "đề B vẫn bỏ quét lần hai: đây là cài đặt hệ thống, không theo đề");
   let r = await call("check", { code: "NV1", email: "a@x.vn", examId: "de-a" });
   ok(r.s === 200 && r.j.exam.faceLoginSkip === true, "kt-check trả faceLoginSkip cho giao diện");
 
@@ -37,8 +37,6 @@ const OTHER = "data:image/jpeg;base64," + Buffer.from("anh-khac").toString("base
 
   r = await call("start", { code: "NV2", email: "b@x.vn", examId: "de-a", photo: PHOTO, facePass: tok });
   ok(r.s === 409 && r.j.facePassRejected, "người khác dùng vé của NV1 -> từ chối, phải quét mặt");
-  r = await call("start", { code: "NV1", email: "a@x.vn", examId: "de-b", photo: PHOTO, facePass: tok });
-  ok(r.s === 409 && r.j.facePassRejected, "đề B tắt tuỳ chọn -> phải quét mặt lại");
   r = await call("start", { code: "NV1", email: "a@x.vn", examId: "de-a", photo: PHOTO, facePass: tok });
   ok(r.s === 200 && r.j.attemptId, "đề A + vé hợp lệ -> vào bài ngay, không quét lần hai");
   const att = await quiz.getAttempt(r.j.attemptId);

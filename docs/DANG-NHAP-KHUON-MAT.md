@@ -125,10 +125,10 @@ Nhân viên vừa **đăng nhập bằng khuôn mặt** thì bấm bắt đầu 
 
 1. `kt-facelogin` nhận diện thành công thì trả thêm `facePass`: vé ký HMAC (`api/_lib/facepass.js`) gắn với **mã nhân viên** và **dấu băm SHA-256 của đúng ảnh vừa quét**, hết hạn sau 15 phút.
 2. Giao diện giữ vé + ảnh đó; khi bấm bắt đầu, nếu đề bật tuỳ chọn và vé còn hạn, gửi `kt-start` với `facePass` + ảnh lúc đăng nhập.
-3. `kt-start` kiểm tra vé (đúng mã, đúng ảnh, chưa hết hạn, đề bật tuỳ chọn) rồi **bỏ qua** kiểm tra ảnh AI và thử thách quay mặt (đã làm lúc đăng nhập). Ảnh lúc đăng nhập được lưu làm ảnh xác nhận; bài ghi `faceCheck.by = "faceLogin"` (trang quản trị hiện "Đã xác minh khi đăng nhập bằng khuôn mặt"). Đối chiếu với các lần trước (`startid`) vẫn chạy nền như cũ.
-4. Vé sai / hết hạn / đề tắt tuỳ chọn → máy chủ trả `facePassRejected`, giao diện tự mở camera quét như bình thường.
+3. `kt-start` kiểm tra vé (đúng mã, đúng ảnh, chưa hết hạn) rồi **bỏ qua** kiểm tra ảnh AI và thử thách quay mặt (đã làm lúc đăng nhập). Ảnh lúc đăng nhập được lưu làm ảnh xác nhận; bài ghi `faceCheck.by = "faceLogin"` (trang quản trị hiện "Đã xác minh khi đăng nhập bằng khuôn mặt"). Đối chiếu với các lần trước (`startid`) vẫn chạy nền như cũ.
+4. Vé sai / hết hạn / `FACE_PASS=off` → máy chủ trả `facePassRejected`, giao diện tự mở camera quét như bình thường.
 
-**Cài đặt theo từng đề:** trang quản trị → Đề thi (`/kiemtra/admin#exams`) → sửa đề → ô **"Đã đăng nhập bằng khuôn mặt thì không quét mặt lần hai"** (mặc định bật, kể cả các đề cũ).
+**Cài đặt của hệ thống** (áp dụng cho mọi đề, không có ô tick trong form đề): bật mặc định; tắt trên toàn hệ thống bằng `FACE_PASS=off`.
 
 | Biến | Mặc định | Ý nghĩa |
 |---|---|---|

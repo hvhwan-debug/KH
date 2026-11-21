@@ -1782,7 +1782,7 @@ $('btnStart').addEventListener('click', async function(){
 // Vé đăng nhập bằng khuôn mặt giữ trong sessionStorage của tab: tải lại trang (F5) sau khi đăng nhập vẫn không phải quét lại
 function fpSet(v){ ST.fp = v; try { if (v) sessionStorage.setItem('kt_fp', JSON.stringify(v)); else sessionStorage.removeItem('kt_fp'); } catch (e) {} }
 try { var fp0 = JSON.parse(sessionStorage.getItem('kt_fp') || 'null'); if (fp0 && fp0.token && Date.now() - fp0.at < 14 * 60 * 1000) ST.fp = fp0; } catch (e) {}
-// Đã đăng nhập bằng khuôn mặt (đề bật faceLoginSkip): không quét mặt lần hai, dùng ảnh lúc đăng nhập làm ảnh xác nhận
+// Đã đăng nhập bằng khuôn mặt (cài đặt hệ thống): không quét mặt lần hai, dùng ảnh lúc đăng nhập làm ảnh xác nhận
 function facePassOk(){
   var f = ST.fp;
   if (!f || !f.token || !f.photo || !ST.exam || !ST.exam.faceLoginSkip || !ST.cand) return false;

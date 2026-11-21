@@ -80,7 +80,7 @@ module.exports = async function (context, req) {
     let idStatus = null; // kết quả đối chiếu với các lần trước (chỉ khi tạo bài mới)
     // 2) Chưa có -> tạo đề mới. Bắt buộc có ảnh xác nhận trước khi tạo đề (không áp dụng khi làm tiếp bài đang dở).
     if (!attempt) {
-      // Đã đăng nhập bằng khuôn mặt (có vé hợp lệ, đề bật faceLoginSkip): ảnh lúc đăng nhập là ảnh xác nhận, không quét lần hai.
+      // Đã đăng nhập bằng khuôn mặt (có vé hợp lệ, hệ thống bật FACE_PASS): ảnh lúc đăng nhập là ảnh xác nhận, không quét lần hai.
       // Vé không hợp lệ / hết hạn / đề tắt tuỳ chọn -> báo trình duyệt mở camera quét như bình thường.
       let fpass = null;
       if (b.facePass) {
