@@ -465,7 +465,7 @@ const view = (f) => ({ code: f.code, level: f.level, title: f.title, evidence: f
 
 async function forEmployee(code, ctx) {
   const quiz = require("./quiz");
-  const rows = (await quiz.getIndex()).filter((a) => a.status === "submitted" && quiz.normCode(a.code) === quiz.normCode(code) && (!ctx || !ctx.okPeriod || ctx.okPeriod(a.period || "")))
+  const rows = (ctx && ctx.all ? await quiz.getIndexAll() : await quiz.getIndex()).filter((a) => a.status === "submitted" && quiz.normCode(a.code) === quiz.normCode(code) && (!ctx || !ctx.okPeriod || ctx.okPeriod(a.period || "")))
     .sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0)).slice(-6);
   if (!rows.length) return null;
   const atts = await quiz.loadAttempts(rows), sc = {}, items = [];

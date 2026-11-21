@@ -54,6 +54,10 @@ const handler = async function (context, req) {
     // Đề do một quản lí tạo (có ownerEmail) chỉ chính người tạo và quản trị viên được thấy; đề của quản trị viên thì quản lí xem kết quả nhân viên mình như cũ.
     const periodOk = (p) => !!viewer.isAdmin || !exOwner[p || ""] || exOwner[p || ""] === quiz.normEmail(viewer.email);
     const P = perms.permsOf(viewer);
+    // Hồ sơ học tập như nhân viên bình thường: quản trị viên xem được cả TÀI KHOẢN THỬ NGHIỆM và các bài thử của họ (gắn nhãn test).
+    // Quản lí thường không thấy. Trung bình đội / thứ hạng / thống kê vẫn chỉ tính bài chính thức (quiz.getIndex đã loại bài thử).
+    const personOf = async (code) => mine.find((x) => quiz.normCode(x.code) === quiz.normCode(code)) || (viewer.isAdmin ? await quiz.findTestByCode(code) : null);
+    const idxOf = async () => (viewer.isAdmin ? await quiz.getIndexAll() : await quiz.getIndex());
     const noPerm = (what) => reply(context, 403, { ok: false, error: "Tài khoản của bạn chưa được cấp quyền: " + what + ". Hãy liên hệ quản trị viên." });
 
     if (req.method === "GET") {
@@ -97,9 +101,9 @@ const handler = async function (context, req) {
       // Thiết bị / vị trí chỉ đưa vào phân tích khi người xem là quản trị viên (giống các màn hình khác).
       if (op === "insight") {
         if (!P.viewAi) return noPerm("xem cảnh báo AI & lịch sử làm bài");
-        const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
+        const c = await personOf(req.query.code);
         if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
-        const r = await behavior.forEmployee(c.code, { admin: !!viewer.isAdmin, ai: req.query.ai !== "0", okPeriod: periodOk });
+        const r = await behavior.forEmployee(c.code, { admin: !!viewer.isAdmin, ai: req.query.ai !== "0", okPeriod: periodOk, all: !!viewer.isAdmin });
         if (!r) return reply(context, 404, { ok: false, error: "Nhân viên chưa có bài đã nộp để phân tích." });
         return reply(context, 200, Object.assign({ ok: true, employee: { code: c.code, name: c.name || "" } }, r));
       }
@@ -116,10 +120,10 @@ const handler = async function (context, req) {
       if (op === "paper") {
         if (!P.viewPaper) return noPerm("xem bài làm chi tiết");
         // Xem lại bản sao bài làm của nhân viên trong phạm vi của mình (chỉ đọc)
-        const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
+        const c = await personOf(req.query.code);
         if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
         const settings = await quiz.getSettings();
-        const mineAll = (await quiz.getIndex()).filter((a) => a.status === "submitted" && quiz.normCode(a.code) === quiz.normCode(c.code) && periodOk(a.period))
+        const mineAll = (await idxOf()).filter((a) => a.status === "submitted" && quiz.normCode(a.code) === quiz.normCode(c.code) && periodOk(a.period))
           .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
         const wantId = String((req.query && req.query.id) || "");
         const entry = wantId ? mineAll.find((a) => a.id === wantId) : mineAll[0];
@@ -140,23 +144,23 @@ const handler = async function (context, req) {
         if (!P.viewResults) return noPerm("xem nhân viên & kết quả");
         // Hồ sơ kiểm tra của MỘT nhân viên trong phạm vi: điểm từng kỳ (so với trung bình đội & thứ hạng),
         // kết quả theo mảng kiến thức, câu sai lặp lại. Không kèm thiết bị/vị trí.
-        const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
+        const c = await personOf(req.query.code);
         if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
         const settings = await quiz.getSettings();
-        const idx = (await quiz.getIndex()).filter((a) => a.status === "submitted" && periodOk(a.period));
+        const idx = (await quiz.getIndex()).filter((a) => a.status === "submitted" && periodOk(a.period)); // chỉ bài chính thức: dùng cho trung bình đội và thứ hạng
         const inMine = {}; mine.forEach((x) => { inMine[quiz.normCode(x.code)] = 1; });
         // Bài nộp gần nhất của mỗi người trong phạm vi, theo từng kỳ -> trung bình đội & thứ hạng
         const team = {};
         idx.forEach((a) => { const k = quiz.normCode(a.code); if (!inMine[k]) return; const p = a.period || "";
           const t = (team[p] = team[p] || {}); if (quiz.betterResult(a, t[k])) t[k] = a; });
-        const mineList = idx.filter((a) => quiz.normCode(a.code) === quiz.normCode(c.code)).sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0));
+        const mineList = (await idxOf()).filter((a) => a.status === "submitted" && periodOk(a.period) && quiz.normCode(a.code) === quiz.normCode(c.code)).sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0)); // gồm cả bài thử (quản trị viên)
         const lo = settings.complianceLowMin * 10;
         const history = mineList.map((a) => {
           const t = Object.values(team[a.period || ""] || {}); const ps = t.map((x) => x.pct || 0);
           const latestInPeriod = (team[a.period || ""] || {})[quiz.normCode(c.code)];
-          return { id: a.id, period: a.period || "", score: a.score, total: a.total, pct: a.pct, passed: quiz.passState(a.pct, settings), practice: !!a.practice, compliancePoints: a.compliancePoints,
+          return { id: a.id, period: a.period || "", score: a.score, total: a.total, pct: a.pct, passed: quiz.passState(a.pct, settings), practice: !!a.practice, test: a.test ? true : undefined, compliancePoints: a.compliancePoints,
             submittedAt: a.submittedAt, durationSec: a.durationSec, flags: P.viewAi ? (a.flags || null) : undefined, proof: quiz.proofCode(a.id), wrong: a.wrong, blank: a.blank,
-            latest: !!latestInPeriod && latestInPeriod.id === a.id,
+            latest: a.test ? true : (!!latestInPeriod && latestInPeriod.id === a.id),
             teamAvg: ps.length ? Math.round(ps.reduce((x, y) => x + y, 0) / ps.length * 10) / 10 : null, teamSize: ps.length,
             rank: ps.length ? 1 + ps.filter((v) => v > (a.pct || 0)).length : null, weak: (a.pct || 0) < lo };
         });
@@ -190,12 +194,12 @@ const handler = async function (context, req) {
         if (!perms.canViewPhoto(viewer)) return reply(context, 403, { ok: false, error: "Ảnh thí sinh chỉ quản trị viên được xem. Tài khoản quản lí không có quyền này." });
         // Ảnh xác nhận khuôn mặt chụp ngay trước khi bắt đầu làm bài - minh chứng cho ĐÚNG MỘT kỳ, không dùng chéo sang kỳ khác.
         // Chọn theo: id (một bài cụ thể) > period (bài nộp gần nhất của kỳ, nếu chưa nộp thì bài đang làm của kỳ đó).
-        const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
+        const c = await personOf(req.query.code);
         if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
         const st0 = await quiz.getSettings();
         const wantId = String((req.query && req.query.id) || "");
         const wantP = req.query && typeof req.query.period === "string" ? req.query.period : st0.examPeriod;
-        const subsC = (await quiz.getIndex()).filter((a) => a.status === "submitted" && quiz.normCode(a.code) === quiz.normCode(c.code))
+        const subsC = (await idxOf()).filter((a) => a.status === "submitted" && quiz.normCode(a.code) === quiz.normCode(c.code))
           .sort((a, b) => (b.submittedAt || 0) - (a.submittedAt || 0));
         const entry = wantId ? subsC.find((a) => a.id === wantId) : subsC.find((a) => (a.period || "") === wantP);
         if (wantId && !entry) return reply(context, 404, { ok: false, error: "Không tìm thấy bài làm này." });
@@ -209,7 +213,7 @@ const handler = async function (context, req) {
       }
       if (op === "employee") {
         if (!P.viewResults) return noPerm("xem nhân viên & kết quả");
-        const c = mine.find((x) => quiz.normCode(x.code) === quiz.normCode(req.query.code));
+        const c = await personOf(req.query.code);
         if (!c) return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
         return reply(context, 200, { ok: true, employee: empView(c), history: (c.audit || []).slice().reverse().slice(0, 20) });
       }

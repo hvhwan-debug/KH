@@ -180,8 +180,10 @@ module.exports = async function (context, req) {
       inProgress = { answered: Math.min(active.cursor, active.questionIds.length), total: active.questionIds.length };
     }
     // Đã làm nhưng còn lượt: báo số lượt đã dùng + kết quả lần gần nhất
-    let best = null; subs.forEach((a) => { if (quiz.betterResult(a, best)) best = a; });
-    const attempts = subs.length ? { used: subs.length, max: exam.maxAttempts, best: best ? { score: best.score, total: best.total, pct: best.pct, submittedAt: best.submittedAt } : null } : null;
+    // Tài khoản thử nghiệm: vẫn hiện số lần đã làm + kết quả cao nhất như nhân viên bình thường (chỉ để xem, không giới hạn lượt)
+    const own = found.test ? quiz.submittedOf(await quiz.getIndexAll(), code, settings.examPeriod) : subs;
+    let best = null; own.forEach((a) => { if (quiz.betterResult(a, best)) best = a; });
+    const attempts = own.length ? { used: own.length, max: exam.maxAttempts, best: best ? { score: best.score, total: best.total, pct: best.pct, submittedAt: best.submittedAt } : null } : null;
     return reply(context, 200, { ok: true, candidate, exam, pendingRequest, inProgress, attempts, examTitle: settings.examTitle, serverNow: Date.now() });
   } catch (e) {
     context.log.error("kt-check", e && e.message);

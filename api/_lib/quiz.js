@@ -390,10 +390,10 @@ async function ensureNoSkill() {
 }
 // Tóm tắt các lần làm của một thí sinh trong một đề (cho màn kết quả): mỗi lần điểm/tỉ lệ/thời gian,
 // đánh dấu lần CHÍNH THỨC (điểm cao nhất) và lần đang xem; kèm số lượt tối đa / còn lại (0 = không giới hạn).
-function attemptsSummary(idx, code, period, settings, currentId) {
+function attemptsSummary(idx, code, period, settings, currentId, unlimited) {
   const subs = submittedOf(idx, code, period);
   let best = null; subs.forEach((a) => { if (betterResult(a, best)) best = a; });
-  const lim = attemptLimit(settings), max = lim === Infinity ? 0 : lim;
+  const lim = unlimited ? Infinity : attemptLimit(settings), max = lim === Infinity ? 0 : lim; // unlimited: tài khoản thử nghiệm không bị giới hạn lượt
   return {
     max, left: max ? Math.max(0, max - subs.length) : null,
     list: subs.map((a, i) => ({ n: i + 1, score: a.score, total: a.total, pct: a.pct, submittedAt: a.submittedAt,
