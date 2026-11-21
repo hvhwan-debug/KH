@@ -21,6 +21,8 @@ module.exports = async function (context, req) {
     // Đối chiếu khuôn mặt các bài chưa đối chiếu (bài cũ, hoặc bài mà lúc nộp chưa kịp đối chiếu xong)
     let faceScan = null;
     try { faceScan = await require("../_lib/faceid").scan({ ms: 15000 }); } catch (e) { context.log.error("cron faceid", e && e.message); }
+    // Bổ sung thư viện khuôn mặt (đăng nhập bằng khuôn mặt) từ các bài cũ đã được đối chiếu
+    try { await require("../_lib/facegallery").backfill({ ms: 12000 }); } catch (e) { context.log.error("cron facegallery", e && e.message); }
     // Mời làm bài qua email cho nhân viên mới được gán vào đề (mã NV thêm sau, đối tượng mở rộng, người mới có email…)
     let examInvite = null;
     // ĐÃ TẮT (sự cố 11/2026: gửi nhầm email mời cho toàn bộ nhân viên do một lỗi khác làm đề bị gán nhầm cho tất

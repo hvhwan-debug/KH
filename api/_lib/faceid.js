@@ -37,6 +37,8 @@ async function check(attempt, idx) {
   const rec = { s, at };
   if (cmp.distance != null) { rec.d = Math.round(cmp.distance * 1000) / 1000; rec.t = cmp.threshold; }
   if (cmp.used) { rec.n = cmp.used; rec.refs = refs.map((r) => r.id).slice(0, MAX_REFS); }
+  // Bài được xác nhận là chính chủ (hoặc ảnh đầu tiên của người đó): đưa dấu vân vào thư viện đăng nhập bằng khuôn mặt
+  if (!attempt.test && attempt.faceDesc && (s === "match" || s === "first")) { try { await require("./facegallery").enrol(attempt.code, attempt.faceDesc, attempt.id); } catch (e) { /* không chặn */ } }
   return rec;
 }
 

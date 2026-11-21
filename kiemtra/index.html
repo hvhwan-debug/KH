@@ -996,6 +996,16 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
 @keyframes aiShine{0%,55%{left:-40%}100%{left:130%}}
 @media(max-width:560px){#scrPhoto{padding:20px 14px 18px}.ai-head{flex-wrap:wrap}.ai-chip{font-size:9.5px;padding:7px 10px}#scrPhoto h1{font-size:19px}.ai-steps li{padding:6px 10px;font-size:12px}.ai-hint{font-size:11.5px;bottom:30px}}
 @media(prefers-reduced-motion:reduce){#scrPhoto::after,.ai-e1,.ai-e2,.ai-sweep,.ai-chip i,.ai-mesh circle,#scrPhoto .btn.go::before{animation:none!important}}
+
+/* ===== Đăng nhập bằng khuôn mặt ===== */
+.fl-btn{position:relative;overflow:hidden;gap:12px;margin:8px 0 0;min-height:58px;background:linear-gradient(120deg,#071634,#0B2A63 55%,#0E4F8F);color:#fff;border:1px solid rgba(92,225,255,.5);box-shadow:0 0 0 1px rgba(0,0,0,.18),0 16px 32px -14px rgba(10,99,196,.85),0 0 28px -8px rgba(92,225,255,.5)}
+.fl-btn svg{flex:0 0 auto;width:24px;height:24px;color:#5CE1FF;filter:drop-shadow(0 0 6px rgba(92,225,255,.85))}
+.fl-btn .fl-ai{font:700 10px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-style:normal;letter-spacing:.14em;padding:4px 7px;border-radius:6px;background:rgba(92,225,255,.16);color:#7FE9FF;border:1px solid rgba(92,225,255,.4)}
+.fl-btn::before{content:"";position:absolute;top:0;bottom:0;left:-40%;width:30%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.3),transparent);transform:skewX(-20deg);animation:aiShine 3.2s ease-in-out infinite}
+.fl-btn:hover{filter:brightness(1.12)}
+.fl-or{display:flex;align-items:center;gap:12px;margin:16px 0 2px;color:var(--muted);font-size:12.5px}
+.fl-or::before,.fl-or::after{content:"";flex:1;height:1px;background:var(--line)}
+@media(prefers-reduced-motion:reduce){.fl-btn::before{animation:none}}
 </style>
 </head>
 <body class="introbg" data-scr="check">
@@ -1086,6 +1096,8 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
       <h1 tabindex="-1">Xác thực thí sinh</h1>
       <p class="lead"><span class="lg">Vui lòng nhập mã nhân viên và email công ty để tiếp tục.</span><span class="sm">Nhập thông tin để tiếp tục.</span></p>
       <div class="sched hide" id="sched"></div>
+      <button type="button" class="btn fl-btn" id="btnFaceLogin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1.5M15 10v1.5M12 10v3.5h-1M9 16c1.7 1.4 4.3 1.4 6 0"/></svg><span>Đăng nhập bằng khuôn mặt</span><em class="fl-ai">AI</em></button>
+      <div class="fl-or"><span>hoặc nhập mã nhân viên và email</span></div>
       <div class="field">
         <label for="inCode">Mã nhân viên</label>
         <div class="inwrap"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="2"/><path d="M6 16c.6-1.8 2-2.6 3-2.6s2.4.8 3 2.6M14 9h4M14 13h4"/></svg><input id="inCode" name="code" type="text" inputmode="text" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="Ví dụ: T00100123" required></div>
@@ -1677,7 +1689,7 @@ $('btnStart').addEventListener('click', async function(){
     if (!sv.j.ok){ msg('regionMsg', sv.j.error || 'Không lưu được thông tin, vui lòng thử lại.'); return; }
     ST.cand.province = sv.j.province; ST.cand.region = sv.j.region; ST.cand.needRegion = false;
   }
-  show('photo');
+  PH.mode = 'exam'; show('photo');
   photoInit();
 });
 
@@ -1818,6 +1830,14 @@ var PH = { stream:null, dataUrl:'' };
 
 /* ===== HUD AI: theo dõi khuôn mặt thời gian thực + các bước xác thực (bước chụp ảnh xác nhận) ===== */
 var AI = { run:false, loop:null, box:null, built:false };
+function aiMode(){ // chữ trên màn quét theo chế độ: 'login' (đăng nhập bằng khuôn mặt) hoặc làm bài
+  var L = PH.mode === 'login', k = document.querySelector('#scrPhoto .ai-k'), h = document.querySelector('#scrPhoto h1');
+  k.textContent = L ? 'AI FACE LOGIN' : 'AI FACE VERIFY'; h.textContent = L ? 'Đăng nhập bằng khuôn mặt' : 'Xác thực khuôn mặt';
+  var li = $('aiSteps').children; li[3].textContent = L ? 'AI nhận diện danh tính' : 'AI kiểm tra ảnh chụp trực tiếp'; li[4].textContent = L ? 'Mở thông tin của bạn' : 'Chuẩn bị đề thi';
+  $('btnCapture').textContent = L ? 'Quét khuôn mặt để đăng nhập' : 'Chụp và phân tích khuôn mặt';
+  $('btnPhotoBack').textContent = L ? 'Nhập mã nhân viên và email' : 'Quay lại';
+  $('locLine').style.display = L ? 'none' : '';
+}
 function aiScr(st){ $('scrPhoto').setAttribute('data-ai', st); }
 function aiChip(cls, text){ $('aiChip').className = 'ai-chip' + (cls ? ' ' + cls : ''); $('aiChipT').textContent = text; }
 function aiStep(i, st){ var li = $('aiSteps').children[i]; if (li) li.className = st || ''; }
@@ -1903,11 +1923,11 @@ async function aiVerifyEnd(res){ // kết quả máy chủ (kt-start): kiểm tr
   aiStep(3, ''); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN KHUÔN MẶT'); // lỗi khác (thiếu thông tin…): giữ nguyên kết quả nhận diện
 }
 async function photoInit(){
-  PH.dataUrl = ''; PH.face = null; DEV.loc = null; renderLoc(); askLocation(); loadFaceAI().catch(function(){}); // tải sẵn bộ nhận diện trong lúc mở camera; vị trí không bắt buộc, chỉ xin thử
+  PH.dataUrl = ''; PH.face = null; if (PH.mode !== 'login'){ DEV.loc = null; renderLoc(); askLocation(); } loadFaceAI().catch(function(){}); // tải sẵn bộ nhận diện trong lúc mở camera; vị trí không bắt buộc, chỉ xin thử
   $('pvVideo').classList.remove('hide'); $('pvImg').classList.add('hide'); $('faceGuide').classList.remove('hide');
   $('btnCapture').classList.remove('hide'); $('btnPhotoOk').classList.add('hide'); $('btnPhotoRetry').classList.add('hide');
   msg('photoMsg','');
-  aiTrackStop(); aiStepsReset(); aiScr('idle'); aiChip('', 'CAMERA ĐANG MỞ'); aiRead(0, null);
+  aiTrackStop(); aiStepsReset(); aiScr('idle'); aiChip('', 'CAMERA ĐANG MỞ'); aiRead(0, null); aiMode();
   var box = document.querySelector('#scrPhoto .photo-box'), v = $('pvVideo');
   box.classList.remove('scanning'); box.classList.add('opening'); $('camWaitT').textContent = 'Đang mở camera…';
   // Hết hiệu ứng chờ khi camera thật sự có hình (không chỉ khi có stream — nhiều máy còn đen thêm 1–2 giây)
@@ -1959,9 +1979,35 @@ $('btnCapture').addEventListener('click', async function(){
   if (r.status === 'ok'){ msg('photoMsg', '✓ Đã nhận diện được khuôn mặt.', 'ok'); $('btnPhotoOk').classList.remove('hide'); }
   else if (r.status === 'unavailable'){ msg('photoMsg', 'Không tải được bộ kiểm tra khuôn mặt trên máy này. Ảnh sẽ được kiểm tra khi bắt đầu làm bài.', 'warn'); $('btnPhotoOk').classList.remove('hide'); }
   else { msg('photoMsg', '⚠ ' + FACE_MSG[r.status], 'err'); }  // không cho bắt đầu, chỉ cho chụp lại
+  if (PH.mode === 'login'){ // đăng nhập: không cần bấm "Dùng ảnh này", đạt kiểm tra ở máy thì gửi nhận diện luôn
+    $('btnPhotoOk').classList.add('hide');
+    if (r.status === 'ok' || r.status === 'unavailable'){ msg('photoMsg', ''); $('btnPhotoRetry').classList.add('hide'); doFaceLogin(); }
+  }
 });
 $('btnPhotoRetry').addEventListener('click', function(){ photoInit(); });
-$('btnPhotoBack').addEventListener('click', function(){ photoStop(); show('confirm'); });
+$('btnPhotoBack').addEventListener('click', function(){ photoStop(); if (PH.mode === 'login'){ PH.mode = 'exam'; msg('photoMsg',''); show('check'); setTimeout(function(){ $('inCode').focus(); }, 60); } else show('confirm'); });
+$('btnFaceLogin').addEventListener('click', function(){
+  if ($('btnCheck').dataset.sched === 'up'){ msg('checkMsg', 'Bài kiểm tra chưa mở. Vui lòng quay lại đúng giờ mở đề.', 'warn'); return; }
+  msg('checkMsg', ''); PH.mode = 'login'; show('photo'); photoInit();
+});
+// Đăng nhập bằng khuôn mặt: máy chủ nhận diện, trả mã NV + email; rồi đi tiếp đúng đường nhập tay (kt-check) để hiện thông tin
+async function doFaceLogin(){
+  aiScr('verify'); aiChip('scan', 'AI ĐANG NHẬN DIỆN'); aiStep(3, 'run');
+  var res; try { res = await api('/api/kt-facelogin', { photo: PH.dataUrl, face: PH.face }); } catch (e) { res = null; }
+  var j = res && res.j;
+  if (j && j.ok){
+    aiStep(3, 'ok'); aiStep(4, 'run'); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN'); msg('photoMsg', '✓ Xin chào ' + (j.name || j.code) + '. Đang mở thông tin của bạn…', 'ok');
+    await aiDelay(900); aiStep(4, 'ok'); await aiDelay(450);
+    PH.mode = 'exam'; photoStop(); show('check');
+    $('inCode').value = j.code; $('inEmail').value = j.email; msg('photoMsg', '');
+    var f = $('scrCheck'); if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', { cancelable:true }));
+    return;
+  }
+  aiStep(3, 'bad'); aiScr('bad'); aiChip('bad', j && j.notFound ? 'CHƯA CÓ DỮ LIỆU KHUÔN MẶT' : 'ĐĂNG NHẬP KHÔNG THÀNH CÔNG');
+  msg('photoMsg', (j && j.error) || 'Không kết nối được máy chủ, vui lòng thử lại.', j && j.notFound ? 'warn' : 'err');
+  $('btnPhotoRetry').classList.remove('hide');
+  if (j && j.off) $('btnFaceLogin').classList.add('hide');
+}
 
 $('btnPhotoOk').addEventListener('click', async function(){
   var btn = $('btnPhotoOk'), label = btn.textContent;
