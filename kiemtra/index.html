@@ -1879,7 +1879,7 @@ var PH = { stream:null, dataUrl:'' };
 var AI = { run:false, loop:null, box:null, built:false, wasLocked:false };
 
 /* ===== Âm thanh cho màn quét khuôn mặt: tổng hợp bằng Web Audio (không cần tệp âm thanh) + giọng đọc tiếng Việt nếu thiết bị có ===== */
-var SND = { ctx:null, on:true, scanT:null, lastLock:0, voice:null };
+var SND = { ctx:null, on:true, scanT:null, lastLock:0, voice:null, offline:false, t0:0 };
 try { SND.on = localStorage.getItem('kt_snd') !== '0'; } catch (e) {}
 function sndCtx(){
   if (SND.ctx) return SND.ctx;
@@ -1888,33 +1888,58 @@ function sndCtx(){
 }
 function sndUnlock(){ var c = sndCtx(); if (c && c.state === 'suspended') { try { c.resume().catch(function(){}); } catch (e) {} } } // trình duyệt chỉ cho phát tiếng sau một thao tác của người dùng
 ['pointerdown', 'keydown', 'touchstart'].forEach(function(ev){ document.addEventListener(ev, sndUnlock, { passive:true, capture:true }); });
-function tone(f, at, dur, type, gain, f2){
-  var c = sndCtx(); if (!c || !SND.on || c.state !== 'running') return;
-  var t = c.currentTime + at, o = c.createOscillator(), g = c.createGain();
-  o.type = type || 'sine'; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
-  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain || .1, t + .012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + .03);
+function sndLive(c){ return !!c && SND.on && (c.state === 'running' || SND.offline); }
+// Chuỗi xử lý chung: tiếng -> nén nhẹ (không chói khi nhiều âm chồng) + vang dội (delay có lọc) để tiếng chuông "ngân" như thuỷ tinh
+function sndOut(c){
+  if (c.__o) return c.__o;
+  var master = c.createGain(); master.gain.value = 2.0;
+  var comp = c.createDynamicsCompressor(); comp.threshold.value = -20; comp.ratio.value = 3; comp.attack.value = .003; comp.release.value = .2;
+  var dly = c.createDelay(.5); dly.delayTime.value = .16;
+  var fb = c.createGain(); fb.gain.value = .28; var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 4800;
+  var wet = c.createGain(); wet.gain.value = .26;
+  master.connect(comp); master.connect(dly); dly.connect(lp); lp.connect(fb); fb.connect(dly); lp.connect(wet); wet.connect(comp); comp.connect(c.destination);
+  c.__o = master; return master;
 }
-function noise(at, dur, gain){ // tiếng "tách" của màn trập máy ảnh
-  var c = sndCtx(); if (!c || !SND.on || c.state !== 'running') return;
-  var n = Math.max(1, Math.floor(c.sampleRate * dur)), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
-  for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
-  var s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), t = c.currentTime + at;
-  f.type = 'bandpass'; f.frequency.value = 2400; s.buffer = b; g.gain.setValueAtTime(gain || .12, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  s.connect(f); f.connect(g); g.connect(c.destination); s.start(t);
+// "Ting" kiểu chuông thuỷ tinh: nốt chính + các hoạ âm lệch (2.76 / 5.4 / 8.93) tắt nhanh hơn, vào âm rất gắt rồi ngân dần. soft = bản êm, ít hoạ âm
+function bell(f, at, dur, gain, soft){
+  var c = sndCtx(); if (!sndLive(c)) return;
+  var t = c.currentTime + (SND.t0 || 0) + at, out = sndOut(c);
+  var P = soft ? [[1, 1, 1], [2, .12, .5]] : [[1, 1, 1], [2.76, .30, .55], [5.4, .12, .32], [8.93, .05, .2]]; // [tỉ lệ tần số, biên độ, tỉ lệ thời gian tắt]
+  P.forEach(function(p){
+    var fr = f * p[0]; if (fr > 12000) return;
+    var o = c.createOscillator(), g = c.createGain(), d = dur * p[2];
+    o.type = 'sine'; o.frequency.value = fr;
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime((gain || .06) * p[1], t + .004); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t + d + .03);
+  });
 }
-function sndBlip(i){ tone(620 + (i || 0) * 80, 0, .07, 'sine', .08); }            // một bước kiểm tra đạt
-function sndTick(n){ tone(560 + n * 150, 0, .06, 'sine', .07); }                   // đang giữ đúng tư thế
-function sndCue(){ tone(440, 0, .09, 'triangle', .09); tone(587, .1, .12, 'triangle', .09); } // có hướng dẫn mới
-function sndReady(){ tone(660, 0, .08, 'sine', .07); }
-function sndLock(){ var n = Date.now(); if (n - SND.lastLock < 1800) return; SND.lastLock = n; tone(520, 0, .08, 'sine', .08); tone(780, .09, .12, 'sine', .08); }
-function sndShutter(){ noise(0, .06, .13); tone(1300, 0, .04, 'square', .03); tone(880, .07, .14, 'sine', .08); }
-function sndOk(){ [523, 659, 784, 1047].forEach(function(f, k){ tone(f, k * .09, .2, 'sine', .1); }); }
-function sndBad(){ tone(220, 0, .16, 'square', .06); tone(196, .2, .22, 'square', .06); }
-function sndWarn(){ tone(392, 0, .14, 'triangle', .1); tone(330, .17, .22, 'triangle', .1); }
-function sndScan(on){ // tiếng quét lặp theo nhịp tia quét khi đang phân tích / xác minh
+function sndClick(at, gain){ // tiếng "tách" nhẹ của màn trập (nhiễu ngắn đã lọc trầm)
+  var c = sndCtx(); if (!sndLive(c)) return;
+  var n = Math.floor(c.sampleRate * .03), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
+  for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2);
+  var s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), t = c.currentTime + (SND.t0 || 0) + at;
+  f.type = 'highpass'; f.frequency.value = 3200; g.gain.value = gain || .08; s.buffer = b; s.connect(f); f.connect(g); g.connect(sndOut(c)); s.start(t);
+}
+var SND_PENTA = [1047, 1175, 1319, 1568, 1760, 2093]; // C6 D6 E6 G6 A6 C7: thang ngũ cung nghe sáng, không bao giờ lệch tông
+function sndBlip(i){ bell(SND_PENTA[(i || 0) % 6], 0, .45, .05); }                         // một bước kiểm tra đạt: ting cao dần theo bước
+function sndTick(n){ bell(1568 + n * 220, 0, .22, .035, true); }                           // đang giữ đúng tư thế: những chấm "tinh" nhỏ
+function sndCue(){ bell(1319, 0, .5, .06); bell(1760, .13, .6, .06); }                     // hướng dẫn mới: ting-ting
+function sndReady(){ bell(1319, 0, .55, .05); }
+function sndLock(){ var n = Date.now(); if (n - SND.lastLock < 1800) return; SND.lastLock = n; bell(1568, 0, .5, .055); bell(2093, .09, .7, .055); }
+function sndShutter(){ sndClick(0, .08); bell(2093, .03, .55, .05); }
+function sndOk(){ [1047, 1319, 1568, 2093].forEach(function(f, k){ bell(f, k * .08, .95, .065); }); bell(3136, .3, 1.1, .025); } // lấp lánh đi lên
+function sndBad(){ bell(392, 0, .55, .075, true); bell(294, .17, .8, .075, true); }        // hai nốt trầm êm đi xuống, không chói
+function sndWarn(){ bell(659, 0, .5, .07, true); bell(523, .17, .65, .07, true); }
+function sndScan(on){ // quét: một vệt sáng "vút" nhẹ rồi chấm "tinh", lặp theo nhịp tia quét
   clearInterval(SND.scanT); SND.scanT = null; if (!on) return;
-  var one = function(){ tone(280, 0, .5, 'sawtooth', .025, 1100); }; one(); SND.scanT = setInterval(one, 1150);
+  var one = function(){
+    var c = sndCtx(); if (!sndLive(c)) return;
+    var t = c.currentTime, o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(700, t); o.frequency.exponentialRampToValueAtTime(2600, t + .4);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(.018, t + .12); g.gain.exponentialRampToValueAtTime(0.0001, t + .42);
+    o.connect(g); g.connect(sndOut(c)); o.start(t); o.stop(t + .45); bell(3136, .38, .45, .02, true);
+  };
+  one(); SND.scanT = setInterval(one, 1150);
 }
 function sndPickVoice(){ try { SND.voice = (speechSynthesis.getVoices() || []).filter(function(v){ return /^vi/i.test(v.lang); })[0] || null; } catch (e) {} }
 try { if ('speechSynthesis' in window){ sndPickVoice(); speechSynthesis.onvoiceschanged = sndPickVoice; } } catch (e) {}

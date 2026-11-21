@@ -99,3 +99,9 @@ Màn quét (làm bài và đăng nhập bằng khuôn mặt) có âm thanh để
 - Trình duyệt chỉ cho phát tiếng sau một thao tác của người dùng; màn quét luôn mở sau khi bấm nút nên không bị chặn. iPhone để chế độ im lặng sẽ không nghe thấy.
 - Giọng đọc chỉ hoạt động khi thiết bị có sẵn giọng tiếng Việt (Chrome/Edge trên Windows thường có, một số điện thoại cần cài giọng); không có thì chỉ phát âm báo, **không đọc tiếng Việt bằng giọng nước ngoài**.
 - Không có âm thanh ở màn làm bài.
+
+### Kiểu âm thanh ("ting" công nghệ)
+- Mỗi tiếng là một **chuông thuỷ tinh** tổng hợp: nốt chính cộng các hoạ âm lệch (×2,76 / ×5,4 / ×8,93) vào âm rất gắt rồi ngân tắt dần; chỉ dùng sóng sin nên không có tiếng thô.
+- Các tiếng đi qua một bộ nén nhẹ (nhiều âm chồng nhau không chói) và một vang dội ngắn có lọc để tiếng "ngân" mượt.
+- Các bước kiểm tra đạt dùng thang ngũ cung (C6 D6 E6 G6 A6 C7) nên "ting" cao dần theo từng bước và luôn hợp tông. Tiếng lỗi/cảnh báo là hai nốt trầm êm đi xuống, không chói.
+- Muốn chỉnh: âm lượng chung ở `sndOut` (`master.gain.value`), nốt và độ ngân ở các hàm `snd*` trong `kiemtra/index.html`.
