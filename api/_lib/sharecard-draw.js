@@ -45,6 +45,7 @@ function scLayout(d){
   L.vpY = L.sepY + 34; L.vpH = 54; L.noteY = L.vpY + L.vpH + 38; L.linkY = L.noteY + 42;
   L.qrX = cx + cw - 44 - L.qrS; L.qrY = L.vpY - 2;
   var contentB = Math.max(L.linkY + 16, d.qr ? L.qrY + L.qrS + 8 : 0);
+  L.tagY = 0;                                                                // dòng giới thiệu nền tảng: chữ nhỏ trong dải sóng chân thẻ
   L.waveTop = contentB + 24; L.cardB = L.waveTop + 96; L.H = L.cardB + SC.M;
   L.cats = [];
   return L;
@@ -260,6 +261,8 @@ function drawShareCard(ctx, W, H, d){
     var n = d.qr.length, cell = Math.max(2, Math.floor((qs - 30) / n)), o = (qs - cell*n) / 2;
     ctx.fillStyle = INK; for (var qr = 0; qr < n; qr++) for (var qc = 0; qc < n; qc++) if (d.qr[qr][qc]) ctx.fillRect(qx + o + qc*cell, qy + o + qr*cell, cell, cell);
   }
+  // ---- dòng giới thiệu nền tảng: một dòng chữ nhỏ, mờ, giữa dải sóng xanh dưới cùng (dưới đường vàng)
+  txt('Nền tảng kiểm tra và đánh giá năng lực trực tuyến tích hợp AI dành cho đội ngũ Kinh doanh Kênh GT.', cx + cw / 2, cb - 13, 13, 500, 'rgba(255,255,255,.72)', 'center');
   // ---- thi thử: hoa văn chìm chỉ ở khung trắng, không phủ lên mã QR
   if (d.practice){
     ctx.save(); ctx.beginPath(); ctx.rect(cx, cut + 6, cw, L.waveTop - cut - 6);
