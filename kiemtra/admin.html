@@ -1190,6 +1190,16 @@ table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-
 .cand-lg{display:flex;flex-direction:column;align-items:flex-start;gap:3px;border:0;background:none;padding:0;font:inherit;font-size:12.5px;color:var(--ink);cursor:pointer;text-align:left;white-space:nowrap}
 .cand-lg:hover span{text-decoration:underline}
 .cand-lg .lg-m{font-size:11px;padding:1px 8px}
+
+.aiq-doc{margin-top:12px}
+.aiq-drop{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:6px;padding:10px 12px;border:1.5px dashed #B9CCE6;border-radius:12px;background:#F7FAFE}
+.aiq-drop.over{border-color:var(--brand);background:#EAF3FF}
+.aiq-drop select{margin:0;flex:1 1 220px;max-width:340px}
+#aiQDocs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.aiq-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:5px 6px 5px 10px;border-radius:999px;background:#EEF3FA;color:#28456F;font-size:12.5px}
+.aiq-chip b{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}.aiq-chip em{font-style:normal;color:var(--muted)}
+.aiq-chip button{border:0;background:#fff;border-radius:50%;width:22px;height:22px;line-height:1;cursor:pointer;color:var(--muted);font-size:15px}
+.aiq-chip.busy{padding-right:10px;color:var(--muted)}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -1670,11 +1680,22 @@ table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-
       <div class="card ai-find hide" id="qAiCard">
         <button class="xclose" type="button" onclick="qPanel(null)" aria-label="Đóng">×</button>
         <div class="ai-find-h">✦ Soạn câu hỏi bằng AI</div>
-        <p class="small">Mô tả chủ đề, AI soạn sẵn câu hỏi trắc nghiệm để bạn xem lại rồi mới đưa vào ngân hàng đề (không tự động lưu).</p>
+        <p class="small">Mô tả chủ đề hoặc gắn tài liệu đào tạo, AI soạn sẵn câu hỏi trắc nghiệm để bạn xem lại rồi mới đưa vào ngân hàng đề (không tự động lưu).</p>
         <div class="grid2" style="margin-top:8px">
           <div><label>Chủ đề</label><input type="text" id="aiQTopic" placeholder="Vd: An toàn điện khi lắp đặt bếp từ"></div>
           <div><label>Danh mục (tuỳ chọn)</label><input type="text" id="aiQCategory" list="catList" placeholder="Vd: Gia dụng"></div>
           <div><label>Số câu</label><input type="text" inputmode="numeric" id="aiQCount" value="10" style="max-width:100px"></div>
+        </div>
+        <div class="aiq-doc">
+          <label>Tài liệu tham khảo <span class="small" style="font-weight:500">(tuỳ chọn)</span></label>
+          <div class="aiq-drop" id="aiQDrop">
+            <button type="button" class="btn ghost sm" onclick="$('aiQFile').click()">📎 Gắn tài liệu…</button>
+            <span class="small">hoặc kéo thả file vào đây · PDF, Word, Excel, PowerPoint, TXT</span>
+            <select id="aiQKai" aria-label="Chọn tài liệu có sẵn của Trợ lí KAI" onfocus="aiqKaiList()" onchange="aiqKaiPick(this)"><option value="">Chọn tài liệu có sẵn của Trợ lí KAI…</option></select>
+            <input type="file" id="aiQFile" multiple accept=".pdf,.docx,.xlsx,.pptx,.txt,.md,.csv,.html" style="display:none" onchange="aiqFiles(this.files);this.value=''">
+          </div>
+          <div id="aiQDocs"></div>
+          <p class="small" id="aiQDocNote" style="margin:6px 0 0">Khi có tài liệu, AI <b>chỉ soạn câu hỏi dựa trên nội dung tài liệu</b> (số liệu, tên sản phẩm giữ đúng như tài liệu); ô Chủ đề thành trọng tâm cần hỏi và có thể để trống. File được đọc chữ ngay trên trình duyệt.</p>
         </div>
         <button class="btn" style="margin-top:12px" onclick="genQuestionsAI()" id="aiQBtn">Soạn bằng AI</button>
         <div id="aiQMsg"></div>
@@ -4184,18 +4205,63 @@ function loadQuestionsFile(ev){
   reader.onerror = () => { msg('qBulkMsg','Không đọc được file, thử lại.'); };
   reader.readAsText(file, 'utf-8');
 }
+/* ---- Tài liệu gắn kèm để AI soạn câu hỏi theo đúng nội dung tài liệu ---- */
+const AIQ = { docs: [], kai: null, reading: 0 };
+const AIQ_MAX = 150000; // khớp giới hạn máy chủ (examai.DOC_MAX)
+function aiqTotal(){ return AIQ.docs.reduce((n, d) => n + d.text.length, 0); }
+function aiqRender(){
+  const tot = aiqTotal();
+  $('aiQDocs').innerHTML = AIQ.docs.map((d, i) => '<span class="aiq-chip" title="' + esc(d.name) + '">📄 <b>' + esc(d.name) + '</b> <em>' + d.text.length.toLocaleString('vi-VN') + ' ký tự' + (d.warn ? ' · ⚠' : '') + '</em><button type="button" aria-label="Bỏ tài liệu ' + esc(d.name) + '" onclick="AIQ.docs.splice(' + i + ',1);aiqRender()">×</button></span>').join('') +
+    (AIQ.reading ? '<span class="aiq-chip busy">Đang đọc ' + AIQ.reading + ' file…</span>' : '') +
+    (tot > AIQ_MAX ? '<div class="small" style="color:var(--warn);margin-top:4px">Tổng ' + tot.toLocaleString('vi-VN') + ' ký tự, AI chỉ dùng ' + AIQ_MAX.toLocaleString('vi-VN') + ' ký tự đầu. Nên gắn đúng phần cần hỏi.</div>' : '');
+  $('aiQTopic').placeholder = AIQ.docs.length ? 'Trọng tâm cần hỏi (có thể để trống)' : 'Vd: An toàn điện khi lắp đặt bếp từ';
+  $('aiQBtn').textContent = AIQ.docs.length ? 'Soạn từ tài liệu bằng AI' : 'Soạn bằng AI';
+}
+async function aiqFiles(files){
+  files = [].slice.call(files || []); if (!files.length) return;
+  AIQ.reading += files.length; aiqRender(); msg('aiQMsg', '');
+  const errs = [];
+  for (const f of files){
+    try { const d = await DocRead.read(f); const text = String(d.text || '').trim(); if (text.length < 50) throw Object.assign(new Error(), { userMessage: 'không có chữ đọc được (ảnh chụp hoặc file trống)' }); AIQ.docs.push({ name: f.name, text, warn: d.warn || '' }); }
+    catch (e){ errs.push(f.name + ': ' + ((e && e.userMessage) || 'không đọc được')); }
+    AIQ.reading--; aiqRender();
+  }
+  if (errs.length) msg('aiQMsg', 'Không đọc được ' + errs.join('; '), 'err');
+}
+async function aiqKaiList(){
+  if (AIQ.kai) return; AIQ.kai = [];
+  const j = await kaixApi({ op:'docList' }); if (!j.ok) return;
+  AIQ.kai = j.docs || [];
+  $('aiQKai').innerHTML = '<option value="">Chọn tài liệu có sẵn của Trợ lí KAI…</option>' + AIQ.kai.map(d => '<option value="' + esc(d.id) + '">' + esc(d.title) + ' (' + (d.chars || 0).toLocaleString('vi-VN') + ' ký tự)</option>').join('');
+}
+async function aiqKaiPick(sel){
+  const id = sel.value; sel.value = ''; if (!id) return;
+  AIQ.reading++; aiqRender();
+  const j = await kaixApi({ op:'docGet', id }); AIQ.reading--;
+  if (j.ok && j.doc && j.doc.text) { if (!AIQ.docs.some(d => d.kai === id)) AIQ.docs.push({ name: j.doc.title || 'Tài liệu KAI', text: String(j.doc.text), kai: id }); }
+  else msg('aiQMsg', (j && j.error) || 'Không lấy được tài liệu.', 'err');
+  aiqRender();
+}
+(function aiqDropInit(){ if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', aiqDropInit); return; }
+  const z = $('aiQDrop'); if (!z) return;
+  ['dragenter','dragover'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.remove('over'); }));
+  z.addEventListener('drop', e => aiqFiles(e.dataTransfer && e.dataTransfer.files));
+})();
 async function genQuestionsAI(){
   const topic = $('aiQTopic').value.trim();
-  if (!topic){ msg('aiQMsg','Nhập chủ đề cần soạn.'); return; }
-  $('aiQBtn').disabled = true; $('aiQBtn').textContent = 'Đang soạn…';
+  if (AIQ.reading){ msg('aiQMsg','Đợi đọc xong tài liệu đã gắn.'); return; }
+  if (!topic && !AIQ.docs.length){ msg('aiQMsg','Nhập chủ đề cần soạn hoặc gắn tài liệu.'); return; }
+  const doc = AIQ.docs.length ? { name: AIQ.docs.map(d => d.name.replace(/\.[a-z0-9]+$/i, '')).join(', ').slice(0, 200), text: (AIQ.docs.length > 1 ? AIQ.docs.map(d => '### ' + d.name + '\n' + d.text).join('\n\n') : AIQ.docs[0].text).slice(0, AIQ_MAX) } : null;
+  $('aiQBtn').disabled = true; $('aiQBtn').textContent = doc ? 'AI đang đọc tài liệu và soạn…' : 'Đang soạn…';
   msg('aiQMsg',''); $('aiQPreview').innerHTML = '';
-  const { j } = await api('POST','/api/kt-admin', { op:'genQuestions', topic, count:$('aiQCount').value, category:$('aiQCategory').value.trim() });
-  $('aiQBtn').disabled = false; $('aiQBtn').textContent = 'Soạn bằng AI';
-  if (!j.ok){ msg('aiQMsg', j.error || 'Không soạn được, thử lại.', 'err'); return; }
-  msg('aiQMsg', 'Đã soạn '+j.questions.length+' câu — xem lại bên dưới, sửa trực tiếp trong ô JSON nếu cần, rồi bấm "Nhập vào ngân hàng đề".', 'ok');
+  const { j } = await api('POST','/api/kt-admin', { op:'genQuestions', topic, count:$('aiQCount').value, category:$('aiQCategory').value.trim(), doc });
+  $('aiQBtn').disabled = false; aiqRender();
+  if (!j || !j.ok){ msg('aiQMsg', (j && j.error) || 'Không soạn được, thử lại.', 'err'); return; }
+  msg('aiQMsg', 'Đã soạn '+j.questions.length+' câu' + (j.fromDoc ? ' từ tài liệu' + (j.docParts > 1 ? ' (tài liệu dài, chia ' + j.docParts + ' phần)' : '') + '. Mỗi câu ghi căn cứ trong tài liệu để bạn đối chiếu' : '') + ' — xem lại bên dưới, sửa trực tiếp trong ô JSON nếu cần, rồi bấm "Nhập vào ngân hàng đề".', 'ok');
   $('qBulkText').value = JSON.stringify(j.questions, null, 2);
   $('aiQPreview').innerHTML = '<ol style="margin:12px 0 0;padding-left:20px;line-height:1.7">' + j.questions.map(q =>
-    '<li><b>'+esc(q.text)+'</b><br>'+q.options.map((o,i) => '<span style="'+(i===q.correctIndex?'color:var(--ok);font-weight:700':'')+'">'+(i===q.correctIndex?'✓ ':'· ')+esc(o)+'</span>').join('<br>')+'</li>'
+    '<li><b>'+esc(q.text)+'</b><br>'+q.options.map((o,i) => '<span style="'+(i===q.correctIndex?'color:var(--ok);font-weight:700':'')+'">'+(i===q.correctIndex?'✓ ':'· ')+esc(o)+'</span>').join('<br>')+(q.explanation||q.explain ? '<div class="small" style="color:var(--muted);margin-top:2px">Căn cứ: '+esc(q.explanation||q.explain)+'</div>' : '')+'</li>'
   ).join('') + '</ol>';
   $('qBulkText').scrollIntoView({behavior:'smooth',block:'center'});
 }

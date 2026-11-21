@@ -582,7 +582,7 @@ const handler = async function (context, req) {
     }
 
     if (op === "genQuestions") {
-      const r = await require("../_lib/examai").generateDraft(b.topic, b.count, b.category, (await quiz.getQuestions()).map((q) => q.text));
+      const r = await require("../_lib/examai").generateDraft(b.topic, b.count, b.category, (await quiz.getQuestions()).map((q) => q.text), b.doc && typeof b.doc === "object" ? b.doc : null);
       return reply(context, 200, r);
     }
 
