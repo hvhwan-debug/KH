@@ -215,27 +215,54 @@ body.cert-on .foot{display:none}
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <style>
 body.au-lookup .top{display:none}
+body.th-wide .wrap{max-width:none;width:100%;align-items:flex-start}
+body.au-lookup.th-wide #card{width:min(1040px,100%);padding:0;margin:0 auto}
 .th-card{padding:24px 22px}
 .th-card h1{margin:0 0 6px;font-size:21px;font-weight:800;color:var(--ink)}
 .th-card .sub{margin:0 0 18px;font-size:14px;line-height:1.6;color:var(--muted)}
 .th-card label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px;color:var(--ink)}
 .th-card input{width:100%;border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;font:inherit;font-size:16px;background:#fff;color:var(--ink)}
 .th-card input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-soft)}
-.th-who{display:flex;align-items:center;gap:12px;padding:20px 22px;color:#fff;background:linear-gradient(135deg,#0A2A66 0%,#0A63C4 62%,#10A3C9 100%)}
-.th-who .av{background:rgba(255,255,255,.2)}.th-who b{display:block;font-size:17px}.th-who span{display:block;font-size:12.5px;opacity:.85}
-.th-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 22px;background:var(--ok-soft);color:var(--ok);font-size:13px;font-weight:700}
-.th-bar button{border:0;background:transparent;color:var(--ok);font:inherit;font-weight:800;text-decoration:underline;cursor:pointer;padding:4px}
-.th-list{padding:14px 16px 20px;display:grid;gap:12px}
-.th-item{border:1.5px solid var(--line);border-radius:18px;padding:14px 16px;background:#FAFCFC;text-align:left}
-.th-item h3{margin:0 0 8px;font-size:15px;line-height:1.4}
-.th-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.th-pct{font-size:28px;font-weight:800;color:var(--brand-deep);line-height:1}.th-pct small{font-size:12px;font-weight:600;color:var(--muted);margin-left:6px}
-.th-tag{display:inline-block;font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px}
+/* --- đầu trang kết quả: người dùng + 3 chỉ số tổng quan --- */
+.th-who{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:22px 26px;color:#fff;background:linear-gradient(135deg,#0A2A66 0%,#0A63C4 62%,#10A3C9 100%)}
+.th-id{display:flex;align-items:center;gap:14px;flex:1 1 260px;min-width:0}
+.th-who .av{flex:0 0 auto;width:54px;height:54px;font-size:18px;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.35)}
+.th-who b{display:block;font-size:19px;line-height:1.3}.th-who span{display:block;font-size:13px;opacity:.85;margin-top:2px}
+.th-stats{display:flex;gap:10px;flex:0 1 auto}
+.th-stat{min-width:104px;padding:10px 16px;border-radius:16px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);text-align:center}
+.th-stat strong{display:block;font-size:24px;font-weight:800;line-height:1.1}.th-stat em{display:block;font-style:normal;font-size:11.5px;opacity:.85;margin-top:3px}
+.th-vbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 26px;background:var(--ok-soft);color:var(--ok);font-size:13px;font-weight:700}
+.th-vbar span{display:inline-flex;align-items:center;gap:8px}
+.th-vbar button{border:0;background:transparent;color:var(--ok);font:inherit;font-weight:800;text-decoration:underline;cursor:pointer;padding:4px}
+/* --- danh sách bài: lưới thẻ --- */
+.th-list{padding:20px 22px 26px;display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px;background:linear-gradient(180deg,#fff,#F1F6FD)}
+.th-item{--st:var(--brand);position:relative;display:flex;flex-direction:column;gap:12px;padding:16px 18px 16px 22px;border:1px solid var(--line);border-radius:20px;background:#fff;text-align:left;box-shadow:0 10px 24px -20px rgba(10,37,82,.5);overflow:hidden}
+.th-item::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--st)}
+.th-item.y{--st:#22B35E}.th-item.n{--st:#F26B5B}.th-item.d{--st:#8FA3C0}
+.th-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.th-item h3{margin:0;font-size:14.5px;line-height:1.45;font-weight:700;color:var(--ink)}
+.th-tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;flex:0 0 auto}
+.th-tag{display:inline-block;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:999px;white-space:nowrap}
 .th-tag.y{background:var(--ok-soft);color:var(--ok)}.th-tag.n{background:var(--bad-soft);color:var(--bad)}.th-tag.d{background:var(--brand-soft);color:var(--brand-deep)}.th-tag.o{background:#FFF2D6;color:#8A5A00}
-.th-meta{margin:8px 0 0;font-size:12.5px;color:var(--muted);line-height:1.7}
-.th-link{display:inline-block;margin-top:10px;font-size:13px;font-weight:700;color:var(--brand);text-decoration:none}
-.th-empty{padding:26px 22px;text-align:center;color:var(--muted);font-size:14px}
+.th-main{display:flex;align-items:center;gap:14px}
+.th-pct{flex:0 0 auto;font-size:34px;font-weight:800;line-height:1;color:var(--st);letter-spacing:-.02em}.th-pct small{font-size:16px;margin-left:1px}
+.th-prog{flex:1;min-width:0}
+.th-seg{display:flex;height:10px;border-radius:8px;overflow:hidden;background:#E6EAF0;gap:2px}.th-seg i{display:block;height:100%}
+.th-seg .g{background:linear-gradient(90deg,#9BFF4F,#22D84A)}.th-seg .w{background:#FF6B5E}.th-seg .b{background:#C5CFDD}
+.th-prog p{margin:6px 0 0;font-size:12px;color:var(--muted)}
+.th-mini{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0}
+.th-mini div{padding:8px 4px;border-radius:12px;background:#F3F7FC;text-align:center}
+.th-mini dt{font-size:11px;color:var(--muted);font-weight:600}.th-mini dd{margin:2px 0 0;font-size:15px;font-weight:800;color:var(--ink)}
+.th-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:auto;padding-top:10px;border-top:1px dashed var(--line);font-size:12px;color:var(--muted)}
+.th-foot b{color:var(--brand-deep);letter-spacing:.03em}
+.th-link{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:800;color:var(--brand);text-decoration:none}
+.th-link:hover{text-decoration:underline}
+.th-empty{grid-column:1/-1;padding:26px 22px;text-align:center;color:var(--muted);font-size:14px}
 .th-lock{padding:26px 22px;text-align:center}.th-lock b{display:block;color:var(--bad);margin-bottom:8px}
+@media(max-width:640px){
+  .th-who{padding:18px 18px}.th-stats{width:100%}.th-stat{flex:1;min-width:0;padding:9px 6px}.th-stat strong{font-size:21px}
+  .th-vbar{padding:10px 18px}.th-list{padding:14px 12px 20px;grid-template-columns:1fr;gap:12px}
+}
 </style>
 </head>
 <body class="au-lookup">
@@ -256,8 +283,11 @@ body.au-lookup .top{display:none}
     </section>
 
     <section class="hide" id="listView" aria-live="polite">
-      <div class="th-who"><div class="av" id="wAv" aria-hidden="true"></div><div><b id="wName"></b><span id="wSub"></span></div></div>
-      <div class="th-bar"><span>Đã xác thực khuôn mặt</span><button type="button" id="tDone">Xong, ẩn kết quả</button></div>
+      <div class="th-who">
+        <div class="th-id"><div class="av" id="wAv" aria-hidden="true"></div><div><b id="wName"></b><span id="wSub"></span></div></div>
+        <div class="th-stats" id="wStats"></div>
+      </div>
+      <div class="th-vbar"><span><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z" fill="currentColor"/><path d="m8.2 12.3 2.6 2.6 5-5.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Đã xác thực khuôn mặt</span><button type="button" id="tDone">Xong, ẩn kết quả</button></div>
       <div class="th-list" id="thList"></div>
     </section>
 
@@ -300,21 +330,31 @@ function fmtDate(ms){
 function fmtClock(sec){ if (sec == null || sec < 0) return ''; var m = Math.floor(sec / 60), s = sec % 60; return m + ':' + (s < 10 ? '0' : '') + s; }
 function initials(n){ var p = String(n || '').trim().split(/\s+/); return ((p[p.length - 1] || '?').charAt(0) + (p.length > 1 ? p[0].charAt(0) : '')).toUpperCase(); }
 
-function show(which){ ['formView','listView','lockView'].forEach(function(v){ $(v).classList.toggle('hide', v !== which); }); window.scrollTo(0, 0); }
-function clearResult(){ $('thList').innerHTML = ''; $('wName').textContent = ''; $('wSub').textContent = ''; clearTimeout(idleT); }
+function show(which){ ['formView','listView','lockView'].forEach(function(v){ $(v).classList.toggle('hide', v !== which); }); document.body.classList.toggle('th-wide', which === 'listView'); window.scrollTo(0, 0); }
+function clearResult(){ $('thList').innerHTML = ''; $('wStats').innerHTML = ''; $('wName').textContent = ''; $('wSub').textContent = ''; clearTimeout(idleT); }
 function resetForm(){ clearResult(); FLOW.code = FLOW.email = ''; $('tEmail').value = ''; $('tMsg').innerHTML = ''; show('formView'); }
 function showLocked(msg){ clearResult(); $('lockMsg').textContent = msg || ''; show('lockView'); }
 
 function showList(j){
+  var L = j.list || [];
   $('wAv').textContent = initials(j.name); $('wName').textContent = j.name || j.code;
-  $('wSub').textContent = 'Mã NV: ' + j.code + (j.manager ? ' · Quản lí: ' + j.manager : '') + ' · ' + j.total + ' bài đã nộp';
-  var html = j.list.map(function(r){
+  $('wSub').textContent = 'Mã NV: ' + j.code + (j.manager ? ' · Quản lí: ' + j.manager : '');
+  // tổng quan: số bài đã nộp · kết quả chính thức cao nhất (không tính thi thử) · bài gần nhất
+  var real = L.filter(function(r){ return !r.practice; }), best = real.reduce(function(m, r){ return r.pct > m ? r.pct : m; }, -1);
+  var chips = [ [j.total, 'Bài đã nộp'], [best >= 0 ? best + '%' : '–', 'Cao nhất'], [L.length ? L[0].pct + '%' : '–', 'Gần nhất'] ];
+  $('wStats').innerHTML = chips.map(function(c){ return '<div class="th-stat"><strong>' + esc(c[0]) + '</strong><em>' + esc(c[1]) + '</em></div>'; }).join('');
+  var html = L.map(function(r){
+    var st = r.practice ? 'd' : r.passed === true ? 'y' : r.passed === false ? 'n' : '';
     var tag = r.practice ? '<span class="th-tag d">Thi thử</span>' : r.passed === true ? '<span class="th-tag y">Đạt</span>' : r.passed === false ? '<span class="th-tag n">Chưa đạt</span>' : '';
-    var off = r.official ? ' <span class="th-tag o">Kết quả chính thức</span>' : '';
-    var meta = [ r.score + '/' + r.total + ' câu đúng', r.wrong != null ? 'Sai: ' + r.wrong : '', r.blank != null ? 'Bỏ trống: ' + r.blank : '', r.durationSec != null ? 'Thời gian: ' + fmtClock(r.durationSec) : '' ].filter(Boolean).join(' · ');
-    return '<article class="th-item"><h3>' + esc(r.title) + '</h3><div class="th-row"><div class="th-pct">' + esc(r.pct) + '%<small>tỉ lệ đúng</small></div><div>' + tag + off + '</div></div>' +
-      '<p class="th-meta">' + esc(meta) + '<br>Nộp bài: ' + esc(fmtDate(r.submittedAt)) + ' · Mã minh chứng: <b>' + esc(r.proof) + '</b>' + (r.passScore ? '<br>Ngưỡng đạt: ' + esc(r.passScore) + '%' : '') + '</p>' +
-      '<a class="th-link" href="/kiemtra/ketqua.html?t=' + encodeURIComponent(r.t) + '">Xem thẻ kết quả' + (r.paperOpen ? ' và đề đã làm' : '') + ' →</a></article>';
+    var off = r.official ? '<span class="th-tag o">Chính thức</span>' : '';
+    var tot = r.total || 0, seg = function(n, c){ return n > 0 && tot ? '<i class="' + c + '" style="width:' + (n / tot * 100) + '%"></i>' : ''; };
+    var bar = r.wrong != null && r.blank != null ? seg(r.score || 0, 'g') + seg(r.wrong, 'w') + seg(r.blank, 'b') : '<i class="g" style="width:' + (r.pct || 0) + '%"></i>';
+    var mini = [ ['Đúng', (r.score != null ? r.score : '–') + '/' + tot], ['Sai', r.wrong != null ? r.wrong : '–'], ['Bỏ trống', r.blank != null ? r.blank : '–'], ['Thời gian', r.durationSec != null ? fmtClock(r.durationSec) : '–'] ];
+    return '<article class="th-item ' + st + '"><div class="th-top"><h3>' + esc(r.title) + '</h3><div class="th-tags">' + tag + off + '</div></div>' +
+      '<div class="th-main"><div class="th-pct">' + esc(r.pct) + '<small>%</small></div><div class="th-prog"><div class="th-seg">' + bar + '</div><p>' + (r.passScore ? 'Ngưỡng đạt ' + esc(r.passScore) + '%' : 'Tỉ lệ đúng') + '</p></div></div>' +
+      '<dl class="th-mini">' + mini.map(function(x){ return '<div><dt>' + x[0] + '</dt><dd>' + esc(x[1]) + '</dd></div>'; }).join('') + '</dl>' +
+      '<div class="th-foot"><span>' + esc(fmtDate(r.submittedAt)) + ' · <b>' + esc(r.proof) + '</b></span>' +
+      '<a class="th-link" href="/kiemtra/ketqua.html?t=' + encodeURIComponent(r.t) + '">Xem chi tiết' + (r.paperOpen ? ' và đề' : '') + ' →</a></div></article>';
   }).join('');
   $('thList').innerHTML = html || '<div class="th-empty">Chưa có bài kiểm tra nào.</div>';
   show('listView');
