@@ -144,6 +144,7 @@ module.exports = async function (context, req) {
       totalMinutes: Math.min(300, Math.max(1, parseInt(settings.totalMinutes, 10) || 30)),
       passScore: quiz.passScoreOf(settings),
       practice: !!settings.practice,
+      faceLoginSkip: !!settings.faceLoginSkip && require("../_lib/facepass").enabled(), // đã đăng nhập bằng khuôn mặt -> bỏ bước quét mặt lần hai
       surveyUrl: settings.surveyUrl || "",
       maxAttempts: found.test || quiz.attemptLimit(settings) === Infinity ? 0 : quiz.attemptLimit(settings) // 0 = không giới hạn
     };

@@ -574,6 +574,8 @@ async function getExamSettings(examId) {
   // Đề thi thử: chấm và quy đổi điểm tuân thủ NHƯ BÌNH THƯỜNG (để thí sinh hình dung điểm nếu thi thật),
   // nhưng mọi màn hình, ảnh kết quả và email đều ghi rõ "THI THỬ - không phải thi chính thức".
   effective.practice = !!(ex && ex.practice);
+  // Đã đăng nhập bằng khuôn mặt thì không phải xác minh khuôn mặt lần hai lúc bắt đầu làm bài (mặc định BẬT; chỉ tắt khi đề lưu false)
+  effective.faceLoginSkip = !(ex && ex.faceLoginSkip === false);
   // Link khảo sát chương trình đào tạo: thí sinh được mời làm sau khi nộp bài (trống = không hiện popup)
   effective.surveyUrl = ex && ex.surveyUrl ? String(ex.surveyUrl) : "";
   return effective;
@@ -612,6 +614,7 @@ async function upsertExam(data) {
   // Ô để trống = kế thừa cài đặt chung: xoá giá trị cũ đã lưu (trước đây để trống KHÔNG xoá được giá trị cũ)
   if (data) ["questionCount", "bothGiaDungCount", "secondsPerQuestion", "totalMinutes", "timeMode", "passScore", "maxAttempts"].forEach((k) => { if (data[k] === "" && i >= 0) delete exams[i][k]; });
   if (data && data.practice !== undefined) entry.practice = !!data.practice;
+  if (data && data.faceLoginSkip !== undefined) entry.faceLoginSkip = !!data.faceLoginSkip; // false = luôn quét mặt lại khi bắt đầu làm bài
   if (data && data.surveyUrl !== undefined) {
     const su = String(data.surveyUrl || "").trim();
     if (su) {

@@ -75,7 +75,9 @@ module.exports = async function (context, req) {
       return reply(context, 404, { ok: false, notFound: true, error: NOT_FOUND });
     }
     await log(req, c, true, "ok", "khoảng cách " + id.distance.toFixed(3) + (id.second != null ? " · người thứ hai " + id.second.toFixed(3) : "") + (aiOk ? "" : " · AI nhìn ảnh không trả lời, dựa vào thử thách quay mặt"));
-    return reply(context, 200, { ok: true, code: c.code, email: c.email, name: c.name || "" });
+    // Vé dùng ở bước bắt đầu làm bài: không phải quét mặt lần hai (nếu đề bật faceLoginSkip). Gắn với mã NV + đúng ảnh vừa quét.
+    const pass = require("../_lib/facepass").issue(c.code, photo, { distance: id.distance, second: id.second, ai: aiOk });
+    return reply(context, 200, { ok: true, code: c.code, email: c.email, name: c.name || "", facePass: pass || undefined });
   } catch (e) {
     context.log.error("kt-facelogin", e && e.message);
     return reply(context, 500, { ok: false, error: "Có lỗi xảy ra. Hãy nhập mã nhân viên và email để vào hệ thống." });

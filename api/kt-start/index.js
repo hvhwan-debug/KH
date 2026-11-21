@@ -80,10 +80,21 @@ module.exports = async function (context, req) {
     let idStatus = null; // kết quả đối chiếu với các lần trước (chỉ khi tạo bài mới)
     // 2) Chưa có -> tạo đề mới. Bắt buộc có ảnh xác nhận trước khi tạo đề (không áp dụng khi làm tiếp bài đang dở).
     if (!attempt) {
+      // Đã đăng nhập bằng khuôn mặt (có vé hợp lệ, đề bật faceLoginSkip): ảnh lúc đăng nhập là ảnh xác nhận, không quét lần hai.
+      // Vé không hợp lệ / hết hạn / đề tắt tuỳ chọn -> báo trình duyệt mở camera quét như bình thường.
+      let fpass = null;
+      if (b.facePass) {
+        const fp = settings.faceLoginSkip ? require("../_lib/facepass").verify(b.facePass, found.code, photo) : { ok: false, reason: "exam-off" };
+        if (!fp.ok) return reply(context, 409, { ok: false, facePassRejected: true, reason: fp.reason, error: fp.reason === "invalid" ? "Phiên đăng nhập bằng khuôn mặt đã hết hạn. Vui lòng quét khuôn mặt để bắt đầu làm bài." : "Vui lòng quét khuôn mặt để bắt đầu làm bài." });
+        fpass = fp;
+      }
       if (!photo) return reply(context, 400, { ok: false, error: "Cần chụp ảnh xác nhận trước khi bắt đầu làm bài." });
       // AI kiểm tra ảnh có đúng một khuôn mặt người; không đạt -> không cho vào làm bài
       var faceCheck = null;
-      if (process.env.FACE_CHECK !== "off") {
+      if (fpass) {
+        // Kiểm tra chụp trực tiếp + thử thách quay mặt + nhận diện 1-N đã đạt ở kt-facelogin cho ĐÚNG ảnh này (vé gắn dấu băm ảnh)
+        faceCheck = { status: "ok", by: "faceLogin", at: now0(), faceLogin: fpass.rec, liveness: { ok: true, via: "faceLogin" } };
+      } else if (process.env.FACE_CHECK !== "off") {
         const fc = await require("../_lib/facecheck").verify(photo, b.face, found.code, settings.examPeriod);
         faceCheck = fc.record;
         if (!fc.allow) return reply(context, 422, { ok: false, faceRejected: true, error: fc.message });
@@ -91,7 +102,7 @@ module.exports = async function (context, req) {
       // Thử thách sống: nhìn thẳng + quay trái + quay phải (chặn ảnh tĩnh / ảnh trên màn hình). FACE_LIVENESS = on | soft | off
       let liveOk = true;
       const fl = require("../_lib/facelive");
-      if (fl.mode() !== "off") {
+      if (!fpass && fl.mode() !== "off") {
         const lv = await fl.verify(b.live, photo);
         faceCheck = Object.assign({}, faceCheck || {}, { liveness: lv.evidence || { ok: false, code: lv.code } });
         if (!lv.ok && fl.mode() === "on") return reply(context, 422, { ok: false, faceRejected: true, liveFailed: true, error: lv.message });

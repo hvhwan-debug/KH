@@ -119,3 +119,20 @@ Xem và xử lý (quản trị viên, đang đăng nhập): mở `https://<tên-
 - Lý do từ chối từng lần quét nằm trong **nhật ký thao tác**, mục "Thí sinh tra cứu lịch sử bài kiểm tra (đối chiếu khuôn mặt)": `face:mismatch` (không khớp, kèm độ lệch), `locked` (bị khoá), `face:noref` (chưa có ảnh), `live` (ảnh nghi chụp lại màn hình).
 
 > Đã sửa một lỗi có sẵn: kết quả quét khuôn mặt chạy nền trước đây không bao giờ được ghi vào chỉ mục bài làm (hàm `patchIndex` bị khai báo hai lần, bản sau đè bản trước), nên mỗi lượt `/api/kt-facegallery?run=1` cứ xử lý lại những bài cũ nhất mà không tiến lên. Từ bản này, `scan.left` giảm dần qua các lượt; nhãn "Khuôn mặt khác các lần trước" trong trang quản trị cũng hiện đủ cho các bài quét nền.
+
+## Không quét mặt lần hai khi đã đăng nhập bằng khuôn mặt
+Nhân viên vừa **đăng nhập bằng khuôn mặt** thì bấm bắt đầu là vào bài ngay, không phải chụp/quay mặt lại ở bước "Xác thực khuôn mặt". Nhân viên nhập mã nhân viên + email vẫn quét mặt như cũ.
+
+1. `kt-facelogin` nhận diện thành công thì trả thêm `facePass`: vé ký HMAC (`api/_lib/facepass.js`) gắn với **mã nhân viên** và **dấu băm SHA-256 của đúng ảnh vừa quét**, hết hạn sau 15 phút.
+2. Giao diện giữ vé + ảnh đó; khi bấm bắt đầu, nếu đề bật tuỳ chọn và vé còn hạn, gửi `kt-start` với `facePass` + ảnh lúc đăng nhập.
+3. `kt-start` kiểm tra vé (đúng mã, đúng ảnh, chưa hết hạn, đề bật tuỳ chọn) rồi **bỏ qua** kiểm tra ảnh AI và thử thách quay mặt (đã làm lúc đăng nhập). Ảnh lúc đăng nhập được lưu làm ảnh xác nhận; bài ghi `faceCheck.by = "faceLogin"` (trang quản trị hiện "Đã xác minh khi đăng nhập bằng khuôn mặt"). Đối chiếu với các lần trước (`startid`) vẫn chạy nền như cũ.
+4. Vé sai / hết hạn / đề tắt tuỳ chọn → máy chủ trả `facePassRejected`, giao diện tự mở camera quét như bình thường.
+
+**Cài đặt theo từng đề:** trang quản trị → Đề thi (`/kiemtra/admin#exams`) → sửa đề → ô **"Đã đăng nhập bằng khuôn mặt thì không quét mặt lần hai"** (mặc định bật, kể cả các đề cũ).
+
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `FACE_PASS` | bật | Đặt `off` để tắt trên toàn hệ thống (mọi đề đều quét mặt lại) |
+| `FACE_PASS_TTL_MIN` | `15` | Số phút vé còn hiệu lực sau khi đăng nhập bằng khuôn mặt |
+
+Kiểm thử: `node dev/test-facepass.js`.

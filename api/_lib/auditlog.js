@@ -83,10 +83,10 @@ const EVENTS = {
 
 const SEGN = { both: "Cả hai ngành", gia_dung: "Gia dụng", may_loc: "Máy lọc nước" };
 const SKEYS = ["examTitle", "shareTitle", "examPeriod", "questionCount", "bothGiaDungCount", "secondsPerQuestion", "timeMode", "totalMinutes", "passEnabled", "passScore", "allowRetake", "maxAttempts",
-  "complianceEnabled", "complianceHighMin", "complianceMidMin", "complianceLowMin"];
+  "complianceEnabled", "complianceHighMin", "complianceMidMin", "complianceLowMin", "faceLoginSkip"];
 const SLABEL = { examTitle: "tên bài", shareTitle: "tiêu đề chia sẻ", examPeriod: "kỳ hiện tại", questionCount: "số câu", bothGiaDungCount: "số câu gia dụng (cả hai ngành)",
   secondsPerQuestion: "giây mỗi câu", timeMode: "cách tính giờ", totalMinutes: "phút cả bài", passEnabled: "bật ngưỡng đạt", passScore: "ngưỡng đạt", allowRetake: "cho làm lại", maxAttempts: "số lượt làm", complianceEnabled: "bật điểm tuân thủ",
-  complianceHighMin: "mốc 20 điểm", complianceMidMin: "mốc 15 điểm", complianceLowMin: "mốc 10 điểm" };
+  complianceHighMin: "mốc 20 điểm", complianceMidMin: "mốc 15 điểm", complianceLowMin: "mốc 10 điểm", faceLoginSkip: "bỏ quét mặt lần hai khi đã đăng nhập bằng khuôn mặt" };
 
 // Đọc trạng thái TRƯỚC khi thao tác (để ghi được "từ ... thành ...")
 async function before(area, op, b) {

@@ -1736,9 +1736,32 @@ $('btnStart').addEventListener('click', async function(){
     if (!sv.j.ok){ msg('regionMsg', sv.j.error || 'Không lưu được thông tin, vui lòng thử lại.'); return; }
     ST.cand.province = sv.j.province; ST.cand.region = sv.j.region; ST.cand.needRegion = false;
   }
-  PH.mode = 'exam'; show('photo');
+  PH.mode = 'exam';
+  if (facePassOk()) return startWithFacePass();
+  show('photo');
   photoInit();
 });
+// Đã đăng nhập bằng khuôn mặt (đề bật faceLoginSkip): không quét mặt lần hai, dùng ảnh lúc đăng nhập làm ảnh xác nhận
+function facePassOk(){
+  var f = ST.fp;
+  if (!f || !f.token || !f.photo || !ST.exam || !ST.exam.faceLoginSkip || !ST.cand) return false;
+  if (Date.now() - f.at > 14 * 60 * 1000){ ST.fp = null; return false; } // máy chủ cho 15 phút
+  return f.code.trim().toUpperCase() === String(ST.cand.inCode || '').trim().toUpperCase();
+}
+async function startWithFacePass(){
+  show('photo'); aiMode();
+  if (!DEV.loc) askLocation(); // vị trí không bắt buộc, chỉ xin thử như màn quét
+  aiTrackStop(); ST.identityWarn = false; LV.started = false; LV.on = false; PH.live = null; $('scrPhoto').classList.remove('lv');
+  PH.dataUrl = ST.fp.photo; PH.face = null;
+  $('pvImg').src = PH.dataUrl; $('pvImg').classList.remove('hide'); $('pvVideo').classList.add('hide'); $('faceGuide').classList.add('hide');
+  $('btnCapture').classList.add('hide'); $('btnPhotoRetry').classList.add('hide'); $('btnPhotoOk').classList.add('hide');
+  var pb = document.querySelector('#scrPhoto .photo-box'); pb.classList.remove('opening', 'scanning');
+  aiStepsReset(); aiStep(0, 'ok', 1); aiStep(1, 'ok', 1); aiStep(2, 'ok', 1);
+  msg('photoMsg', '✓ Bạn đã xác minh khuôn mặt khi đăng nhập, không cần quét lại.', 'ok');
+  await startExam(ST.fp.token);
+}
+
+$('btnPhotoOk').addEventListener('click', function(){ startExam(''); });
 
 /* ---------- Vị trí (bắt buộc: xin quyền bằng hộp thoại ở bước chụp ảnh, không có vị trí thì không bắt đầu được) ---------- */
 var LOC = { p:null };
@@ -2218,6 +2241,7 @@ async function doFaceLogin(){
   if (j && j.ok){
     aiStep(3, 'ok', 1); aiStep(4, 'run'); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN'); sndOk(); sayVn('Xin chào ' + (j.name || '')); msg('photoMsg', '✓ Xin chào ' + (j.name || j.code) + '. Đang mở thông tin của bạn…', 'ok');
     await aiDelay(900); aiStep(4, 'ok', 1); await aiDelay(450);
+    ST.fp = j.facePass ? { token: j.facePass, code: String(j.code || ''), photo: PH.dataUrl, at: Date.now() } : null; // vé: bỏ bước quét mặt lần hai khi bắt đầu làm bài
     PH.mode = 'exam'; photoStop(); show('check');
     $('inCode').value = j.code; $('inEmail').value = j.email; msg('photoMsg', '');
     var f = $('scrCheck'); if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', { cancelable:true }));
@@ -2229,17 +2253,24 @@ async function doFaceLogin(){
   if (j && j.off) $('btnFaceLogin').classList.add('hide');
 }
 
-$('btnPhotoOk').addEventListener('click', async function(){
-  var btn = $('btnPhotoOk'), label = btn.textContent;
-  btn.disabled = true; btn.textContent = 'AI đang xác minh và chuẩn bị đề…'; msg('photoMsg',''); aiVerifyStart();
-  var res;
-  try { res = await api('/api/kt-start', { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, face: PH.face, live: PH.live, device: DEV, examId:EXAM_ID, phone: ST.cand.phone || ST.phoneNew || '', province: (ST.rgNew && ST.rgNew.province) || '', region: (ST.rgNew && ST.rgNew.region) || '' }); } catch(e){ res = null; }
+async function startExam(passToken){ // passToken: vé đăng nhập bằng khuôn mặt ('' = ảnh vừa chụp ở màn quét)
+  var btn = $('btnPhotoOk'), label = '✓ Dùng ảnh này, bắt đầu làm bài';
+  if (START_BUSY) return; START_BUSY = true;
+  btn.disabled = true; btn.textContent = 'AI đang xác minh và chuẩn bị đề…'; if (!passToken) msg('photoMsg',''); aiVerifyStart();
+  var res, body = { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, face: PH.face, live: PH.live, device: DEV, examId:EXAM_ID, phone: ST.cand.phone || ST.phoneNew || '', province: (ST.rgNew && ST.rgNew.province) || '', region: (ST.rgNew && ST.rgNew.region) || '' };
+  if (passToken) body.facePass = passToken;
+  try { res = await api('/api/kt-start', body); } catch(e){ res = null; }
+  if (passToken && res && res.j && res.j.facePassRejected){ // vé hết hạn / đề yêu cầu quét lại: mở camera quét như bình thường
+    START_BUSY = false; btn.disabled = false; btn.textContent = label; ST.fp = null;
+    photoInit(); msg('photoMsg', res.j.error || 'Vui lòng quét khuôn mặt để bắt đầu làm bài.', 'warn'); return;
+  }
   await aiVerifyEnd(res); // giữ nút khoá trong lúc hiện kết quả, tránh bấm lần hai
-  btn.disabled = false; btn.textContent = label;
-  if (!res){ msg('photoMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
+  START_BUSY = false; btn.disabled = false; btn.textContent = label;
+  if (res && res.j && res.j.ok) ST.fp = null; // vé chỉ dùng cho lần bắt đầu này
+  if (!res){ msg('photoMsg','Không kết nối được máy chủ, vui lòng thử lại.'); if (passToken) $('btnPhotoRetry').classList.remove('hide'); return; } // không có ảnh quét mới: chỉ cho quét lại
   if (!res.j.ok && res.j.needPhone){ photoStop(); show('confirm'); msg('phoneMsg', res.j.error); return; }
   if (!res.j.ok && res.j.needRegion){ photoStop(); ST.cand.needRegion = true; renderConfirm(); msg('regionMsg', res.j.error); return; }
-  if (!res.j.ok){ msg('photoMsg', (res.j.faceRejected ? '⚠ ' : '') + (res.j.error || 'Không thể bắt đầu bài kiểm tra.')); if (res.j.faceRejected){ btn.classList.add('hide'); $('btnPhotoRetry').classList.remove('hide'); } return; }
+  if (!res.j.ok){ msg('photoMsg', (res.j.faceRejected ? '⚠ ' : '') + (res.j.error || 'Không thể bắt đầu bài kiểm tra.')); if (res.j.faceRejected || passToken){ btn.classList.add('hide'); $('btnPhotoRetry').classList.remove('hide'); } return; }
   if (!ST.cand.phone && ST.phoneNew) ST.cand.phone = ST.phoneNew;
   if (ST.rgNew){ ST.cand.province = ST.rgNew.province; ST.cand.region = ST.rgNew.region; ST.cand.needRegion = false; }
   ST.attemptId = res.j.attemptId;
@@ -2248,7 +2279,8 @@ $('btnPhotoOk').addEventListener('click', async function(){
   wmSet(); idWarnShow();
   if (res.j.done) return finish();
   loadQuestion(res.j);
-});
+}
+var START_BUSY = false;
 
 /* ---------- Bước 3: làm bài ---------- */
 function buildSeg(total){
