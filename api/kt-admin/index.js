@@ -345,6 +345,27 @@ const handler = async function (context, req) {
         if (q) list = list.filter((v) => norm([v.code, v.email, v.msg, v.detail, v.ip, v.dev, v.exam].join(" ")).indexOf(q) >= 0);
         return reply(context, 200, { ok: true, total: list.length, last24, items: list.slice(0, 400) });
       }
+      if (op === "logins") {
+        // Lịch sử đăng nhập: từng lượt + tổng hợp theo nhân viên (cách đăng nhập hay dùng, lần gần nhất)
+        const norm = (x) => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").toLowerCase();
+        const q = norm(String(req.query.q || "").trim().slice(0, 80)), method = String(req.query.method || ""), page = String(req.query.page || "");
+        const days = Math.max(0, Math.min(365, parseInt(req.query.days, 10) || 0)), from = days ? Date.now() - days * 86400e3 : 0;
+        let list = (await require("../_lib/loginlog").read()).slice().reverse();
+        if (from) list = list.filter((v) => v.at >= from);
+        if (method) list = list.filter((v) => v.method === method);
+        if (page) list = list.filter((v) => v.page === page);
+        if (q) list = list.filter((v) => norm([v.code, v.name, v.manager, v.ip, v.dev, v.exam].join(" ")).indexOf(q) >= 0);
+        const people = {}, stat = { face: 0, manual: 0, manual_face: 0 };
+        list.forEach((v) => {
+          const n = v.n || 1; stat[v.method] = (stat[v.method] || 0) + n;
+          const o = people[v.code] || (people[v.code] = { code: v.code, name: v.name, manager: v.manager, test: v.test, last: 0, lastMethod: "", lastPage: "", lastDev: "", face: 0, manual: 0, manual_face: 0, total: 0 });
+          o[v.method] = (o[v.method] || 0) + n; o.total += n;
+          if (v.at > o.last) { o.last = v.at; o.lastMethod = v.method; o.lastPage = v.page; o.lastDev = v.dev; if (v.name) o.name = v.name; }
+        });
+        const titles = {}; (await quiz.getExams()).forEach((e) => { titles[e.id] = e.title || e.id; });
+        const ppl = Object.values(people).sort((a, b) => b.last - a.last);
+        return reply(context, 200, { ok: true, total: list.length, stat, people: ppl.slice(0, 1000), peopleTotal: ppl.length, items: list.slice(0, 500), titles });
+      }
       if (op === "access") {
         const id = String((req.query && req.query.id) || ""), kind = String(req.query.kind || ""), role = String(req.query.role || "");
         const norm = (x) => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").toLowerCase();

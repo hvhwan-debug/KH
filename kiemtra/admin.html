@@ -1170,6 +1170,20 @@ table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-
 .exl-menu hr{border:0;border-top:1px solid #EDF1F7;margin:4px 0}
 .exl-menu .del{color:var(--bad)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* Lịch sử đăng nhập */
+.lg-stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:6px 0 14px}
+.lg-stat div{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#FAFCFF}
+.lg-stat b{display:block;font-size:22px;font-variant-numeric:tabular-nums}.lg-stat span{font-size:12.5px;color:var(--muted)}
+.lg-stat .face b{color:#17794A}.lg-stat .manual b{color:#28456F}.lg-stat .manual_face b{color:#8A5200}
+.lg-fil{display:flex;gap:8px;flex-wrap:wrap}.lg-fil input{flex:1 1 240px}.lg-fil select{flex:0 1 auto}
+.lg-views{margin-top:12px}
+.lg-m{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.lg-m.face{background:#E3F5EC;color:#17794A}.lg-m.manual{background:#EEF3FA;color:#28456F}.lg-m.manual_face{background:#FDF0DA;color:#8A5200}
+.lg-who b{display:block}.lg-who small,.lg-tab small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.lg-bar{display:flex;height:8px;border-radius:5px;overflow:hidden;background:#EEF1F4;min-width:120px;max-width:220px}
+.lg-bar i{display:block;height:100%}.lg-bar .face{background:#1E9E5A}.lg-bar .manual{background:#7C93B8}.lg-bar .manual_face{background:#E09B1A}
+.lg-tab td{vertical-align:top}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -1249,6 +1263,7 @@ table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-
       <button type="button" class="nv" data-nav="exams" onclick="switchTab('exams')" title="Đề thi"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg><span class="nv-l">Đề thi</span><span class="nv-cnt hide" id="nvExams"></span></button>
       <button type="button" class="nv" data-nav="candidates" onclick="switchTab('candidates')" title="Hồ sơ học tập"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg><span class="nv-l">Hồ sơ học tập</span><span class="nv-cnt hide" id="nvCand"></span></button>
       <button type="button" class="nv" data-nav="lookup" onclick="switchTab('lookup')" title="Tra cứu bài kiểm tra và lịch sử xem điểm"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><span class="nv-l">Tra cứu</span></button>
+      <button type="button" class="nv" data-nav="logins" onclick="switchTab('logins')" title="Lịch sử đăng nhập của nhân viên"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 16l4-4-4-4M14 12H4"/></svg><span class="nv-l">Lịch sử đăng nhập</span></button>
       <button type="button" class="nv" data-nav="notify" onclick="switchTab('notify')" title="Gửi thông báo và thư mời"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg><span class="nv-l">Thông báo, thư mời</span></button>
       <button type="button" class="nv" data-nav="managerview" onclick="switchTab('managerview')" title="Quản lí"><svg class="ic" aria-hidden="true"><use href="#i-mgr"/></svg><span class="nv-l">Quản lí</span></button>
       <button type="button" class="nv" data-nav="kai" onclick="switchTab('kai')" title="Trợ lí KAI: tài liệu và người dùng"><svg class="ic" aria-hidden="true"><use href="#i-help"/></svg><span class="nv-l">Trợ lí KAI</span></button>
@@ -1733,6 +1748,22 @@ table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-
         </div>
         <div class="ausum" id="alSum"></div>
         <div style="overflow-x:auto"><table class="dt autab"><thead><tr><th>Thời điểm</th><th>Bài làm</th><th>Xem gì</th><th>Người xem</th><th>IP / thiết bị</th></tr></thead><tbody id="alList"></tbody></table></div>
+      </div>
+    </div>
+    <div id="tab-logins" class="tabpane hide">
+      <div class="card">
+        <div class="dash-h"><h1>Lịch sử đăng nhập</h1><p class="small">Mỗi lần nhân viên vào hệ thống: lúc nào, bằng khuôn mặt hay nhập mã nhân viên + email, ở trang làm bài, tra cứu lịch sử hay xem lại đề, trên máy nào. Vào lại cùng cách, cùng trang, cùng mạng trong 10 phút được gộp một dòng.</p></div>
+        <div class="lg-stat" id="lgStat"></div>
+        <div class="aufil lg-fil">
+          <input type="search" id="lgQ" placeholder="Tìm tên, mã nhân viên, quản lí, IP…" aria-label="Tìm trong lịch sử đăng nhập">
+          <select id="lgMethod" aria-label="Cách đăng nhập"><option value="">Mọi cách đăng nhập</option><option value="face">Khuôn mặt</option><option value="manual">Mã NV + email</option><option value="manual_face">Mã NV + email, xác minh khuôn mặt</option></select>
+          <select id="lgPage" aria-label="Trang"><option value="">Mọi trang</option><option value="exam">Trang làm bài</option><option value="history">Tra cứu lịch sử</option><option value="paper">Xem lại đề</option></select>
+          <select id="lgDays" aria-label="Khoảng thời gian"><option value="1">24 giờ qua</option><option value="7" selected>7 ngày qua</option><option value="30">30 ngày qua</option><option value="0">Tất cả</option></select>
+        </div>
+        <div class="cand-views lg-views" role="tablist" aria-label="Cách xem"><button type="button" id="lgVP" class="on" role="tab" onclick="lgView('people')">Theo nhân viên</button><button type="button" id="lgVI" role="tab" onclick="lgView('items')">Từng lượt đăng nhập</button></div>
+        <div class="small" id="lgSum" style="margin:8px 0"></div>
+        <div style="overflow-x:auto"><table class="dt lg-tab" id="lgPeople"><thead><tr><th>Nhân viên</th><th>Lần gần nhất</th><th>Cách đăng nhập</th><th class="num">Số lượt</th></tr></thead><tbody id="lgPeopleB"></tbody></table>
+        <table class="dt lg-tab hide" id="lgItems"><thead><tr><th>Thời điểm</th><th>Nhân viên</th><th>Cách đăng nhập</th><th>Ở trang</th><th>IP / thiết bị</th></tr></thead><tbody id="lgItemsB"></tbody></table></div>
       </div>
     </div>
     <div id="tab-notify" class="tabpane hide">
@@ -2449,7 +2480,7 @@ $('auXlsx').addEventListener('click', async function(){
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   logEv('exportExcel', { period: 'nhật ký ' + $('auDay').value });
 });
-const TABS = ['exams','lookup','candidates','managerview','notify','kai','results','analysis','questions','examset','settings','viewers','banks','audit'];
+const TABS = ['exams','lookup','logins','candidates','managerview','notify','kai','results','analysis','questions','examset','settings','viewers','banks','audit'];
 const WS = ['results','analysis','questions','examset'], SYS = ['settings','viewers','banks','audit'];
 let CUR_EXAM = null, EX_NEW = false, EX_DEFAULT = '';
 // Địa chỉ dạng #exams, #candidates, #settings… hoặc #results/<mã đề>, #questions/<mã đề>, #examset/<mã đề>
@@ -2467,7 +2498,7 @@ function switchTab(t){
   const inWs = WS.indexOf(t) >= 0, inSys = SYS.indexOf(t) >= 0;
   const navKey = inWs ? 'exams' : inSys ? 'sys' : t;
   document.querySelectorAll('[data-nav]').forEach(b => { const on = b.dataset.nav === navKey; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-  const tb = $('tbTitle'); if (tb) tb.textContent = inWs ? 'Đề thi' : inSys ? 'Cài đặt' : ({ exams:'Đề thi', lookup:'Tra cứu', candidates:'Thí sinh', notify:'Thông báo, thư mời', managerview:'Quản lí', kai:'Trợ lí KAI' })[t] || 'Quản trị bài kiểm tra';
+  const tb = $('tbTitle'); if (tb) tb.textContent = inWs ? 'Đề thi' : inSys ? 'Cài đặt' : ({ exams:'Đề thi', lookup:'Tra cứu', logins:'Lịch sử đăng nhập', candidates:'Thí sinh', notify:'Thông báo, thư mời', managerview:'Quản lí', kai:'Trợ lí KAI' })[t] || 'Quản trị bài kiểm tra';
   document.querySelectorAll('.sysnav').forEach(el => el.classList.toggle('hide', !inSys));
   $('exHead').classList.toggle('hide', !inWs);
   $('exNav').classList.toggle('hide', EX_NEW);
@@ -2479,6 +2510,7 @@ function switchTab(t){
   if (t === 'candidates' && prevTab !== 'candidates') resetCandFilters(); if (t === 'candidates' && prevTab !== 'candidates') candView('list'); // vào tab Thí sinh: luôn hiện đủ danh sách, không giữ bộ lọc lần trước
   if (t === 'notify') loadNotify();
   if (t === 'lookup' && prevTab !== 'lookup') { lkSearch(); lkLog(); }
+  if (t === 'logins') loadLogins();
   if (t === 'kai') kaixOpen();
   if (t === 'kai' && prevTab !== 'kai') loadKaiPending();
   if (t === 'audit') { loadAudit(); loadFaceRejections(); loadEntryLog(); }
@@ -5345,6 +5377,41 @@ async function loadEntryLog(){
 /* ---------- Tra cứu bài kiểm tra + nhật ký xem điểm / xem lại đề ---------- */
 const AL_KIND = { score:'Xem điểm', paper:'Xem lại đề, bài làm', photo:'Xem ảnh xác nhận' };
 const AL_ROLE = { public:'Người có liên kết', candidate:'Thí sinh', manager:'Quản lí', admin:'Quản trị viên' };
+/* ---------- Lịch sử đăng nhập ---------- */
+const LG_M = { face:'Khuôn mặt', manual:'Mã NV + email', manual_face:'Mã NV + email + khuôn mặt' };
+const LG_P = { exam:'Trang làm bài', history:'Tra cứu lịch sử', paper:'Xem lại đề' };
+let LG_V = 'people', LG_T = null;
+const lgPill = m => '<span class="lg-m ' + esc(m) + '">' + esc(LG_M[m] || m) + '</span>';
+function lgView(v){
+  LG_V = v === 'items' ? 'items' : 'people';
+  $('lgVP').classList.toggle('on', LG_V === 'people'); $('lgVI').classList.toggle('on', LG_V === 'items');
+  $('lgPeople').classList.toggle('hide', LG_V !== 'people'); $('lgItems').classList.toggle('hide', LG_V !== 'items');
+}
+async function loadLogins(){
+  const qs = 'op=logins&q=' + encodeURIComponent($('lgQ').value.trim()) + '&method=' + encodeURIComponent($('lgMethod').value) + '&page=' + encodeURIComponent($('lgPage').value) + '&days=' + encodeURIComponent($('lgDays').value);
+  const { j } = await api('GET', '/api/kt-admin?' + qs);
+  if (!j || !j.ok){ $('lgSum').textContent = (j && j.error) || 'Không tải được lịch sử đăng nhập.'; return; }
+  const st = j.stat || {}, all = (st.face || 0) + (st.manual || 0) + (st.manual_face || 0), pc = n => all ? Math.round(n / all * 100) + '%' : '–';
+  $('lgStat').innerHTML = ['face','manual','manual_face'].map(m => '<div class="' + m + '"><b>' + (st[m] || 0) + '</b><span>' + LG_M[m] + ' · ' + pc(st[m] || 0) + '</span></div>').join('');
+  $('lgSum').textContent = j.total ? j.peopleTotal + ' nhân viên, ' + j.total + ' dòng nhật ký' + (LG_V === 'items' && j.total > j.items.length ? ' (hiện ' + j.items.length + ' dòng gần nhất)' : '') : 'Chưa có lượt đăng nhập nào' + ($('lgQ').value || $('lgMethod').value || $('lgPage').value ? ' khớp bộ lọc' : ' trong khoảng thời gian này') + '.';
+  const T = j.titles || {};
+  $('lgPeopleB').innerHTML = (j.people || []).map(p => {
+    const bar = ['face','manual','manual_face'].map(m => p[m] ? '<i class="' + m + '" style="width:' + (p[m] / p.total * 100) + '%" title="' + LG_M[m] + ': ' + p[m] + '"></i>' : '').join('');
+    const parts = ['face','manual','manual_face'].filter(m => p[m]).map(m => LG_M[m] + ' ' + p[m]).join(', ');
+    return '<tr><td class="lg-who"><b>' + esc(p.name || p.code) + (p.test ? ' <span class="small">(thử nghiệm)</span>' : '') + '</b><small>' + esc(p.code) + (p.manager ? ' · QL ' + esc(p.manager) : '') + '</small></td>' +
+      '<td style="white-space:nowrap">' + lkTime(p.last) + '<small>' + lgPill(p.lastMethod) + ' ' + esc(LG_P[p.lastPage] || '') + '</small></td>' +
+      '<td><div class="lg-bar">' + bar + '</div><small>' + esc(parts) + '</small></td><td class="num">' + p.total + '</td></tr>';
+  }).join('') || '<tr><td colspan="4" class="small">Không có dữ liệu.</td></tr>';
+  $('lgItemsB').innerHTML = (j.items || []).map(v => '<tr><td style="white-space:nowrap">' + lkTime(v.at) + (v.n > 1 ? '<small>' + v.n + ' lần</small>' : '') + '</td>' +
+    '<td class="lg-who"><b>' + esc(v.name || v.code) + '</b><small>' + esc(v.code) + (v.manager ? ' · QL ' + esc(v.manager) : '') + '</small></td>' +
+    '<td>' + lgPill(v.method) + (v.note ? '<small>' + esc(v.note) + '</small>' : '') + '</td>' +
+    '<td>' + esc(LG_P[v.page] || v.page) + (v.exam ? '<small>' + esc(T[v.exam] || v.exam) + '</small>' : '') + '</td>' +
+    '<td class="small">' + esc(v.ip || '') + (v.dev ? '<br>' + esc(v.dev) : '') + '</td></tr>').join('') || '<tr><td colspan="5" class="small">Không có dữ liệu.</td></tr>';
+}
+(function lgBind(){ if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', lgBind); return; }
+  ['lgMethod','lgPage','lgDays'].forEach(id => { const el = $(id); if (el) el.addEventListener('change', loadLogins); });
+  const q = $('lgQ'); if (q) q.addEventListener('input', () => { clearTimeout(LG_T); LG_T = setTimeout(loadLogins, 300); });
+})();
 const lkTime = ms => ms ? new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' }) : '–';
 let LK_T = null, LK_ROWS = [];
 async function lkSearch(){

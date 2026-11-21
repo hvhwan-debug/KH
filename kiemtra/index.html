@@ -1516,7 +1516,7 @@ $('scrCheck').addEventListener('submit', async function(e){
   if (!/^\S+@\S+\.\S+$/.test(email)){ msg('checkMsg','Email chưa đúng định dạng.'); $('inEmail').setAttribute('aria-invalid','true'); $('inEmail').focus(); return; }
   var btn = $('btnCheck'); btn.disabled = true; btn.textContent = 'Đang kiểm tra…';
   var res;
-  try { res = await api('/api/kt-check', { code:code, email:email, examId:EXAM_ID, selfie: FG.selfie || undefined }); }
+  try { res = await api('/api/kt-check', { code:code, email:email, examId:EXAM_ID, selfie: FG.selfie || undefined, facePass: (ST.fp && ST.fp.code.toUpperCase() === code.trim().toUpperCase()) ? ST.fp.token : undefined }); }
   catch(err){ res = null; }
   btn.disabled = false; btn.textContent = 'Tiếp tục';
   if (!res){ FG.selfie = ''; fgScan(false); msg('checkMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
@@ -2263,7 +2263,7 @@ $('btnFaceLogin').addEventListener('click', function(){
 // Đăng nhập bằng khuôn mặt: máy chủ nhận diện, trả mã NV + email; rồi đi tiếp đúng đường nhập tay (kt-check) để hiện thông tin
 async function doFaceLogin(){
   aiScr('verify'); aiChip('scan', 'AI ĐANG NHẬN DIỆN'); aiStep(3, 'run');
-  var res; try { res = await api('/api/kt-facelogin', { photo: PH.dataUrl, face: PH.face, live: PH.live }); } catch (e) { res = null; }
+  var res; try { res = await api('/api/kt-facelogin', { photo: PH.dataUrl, face: PH.face, live: PH.live, examId: EXAM_ID }); } catch (e) { res = null; }
   var j = res && res.j;
   if (j && j.ok){
     aiStep(3, 'ok', 1); aiStep(4, 'run'); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN'); sndOk(); sayVn('Xin chào ' + (j.name || '')); msg('photoMsg', '✓ Xin chào ' + (j.name || j.code) + '. Đang mở thông tin của bạn…', 'ok');
@@ -2686,7 +2686,7 @@ $('resTries').addEventListener('click', async function(e){
   var b = e.target.closest ? e.target.closest('#btnRetry') : null;
   if (!b || !ST.cand || !ST.cand.inCode) return;
   var lbl = b.textContent; b.disabled = true; b.textContent = 'Đang kiểm tra…';
-  var res; try { res = await api('/api/kt-check', { code:ST.cand.inCode, email:ST.cand.inEmail, examId:EXAM_ID }); } catch(err){ res = null; }
+  var res; try { res = await api('/api/kt-check', { code:ST.cand.inCode, email:ST.cand.inEmail, examId:EXAM_ID, again:true }); } catch(err){ res = null; }
   var gone = !document.body.contains(b); if (!gone){ b.disabled = false; b.textContent = lbl; }
   if (!res){ msg('retryMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
   var j = res.j; noteServerTime(j);

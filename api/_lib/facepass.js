@@ -34,4 +34,11 @@ function verify(token, code, photo) {
   return { ok: true, code: p.c, rec: { via: "faceLogin", at: p.at, d: p.d, s: p.s, ai: !!p.ai } };
 }
 
-module.exports = { issue, verify, enabled, TTL_MS };
+// Chỉ kiểm tra chữ ký + mã NV (không cần ảnh): dùng để biết lần kt-check này là ngay sau đăng nhập bằng khuôn mặt
+function peek(token, code) {
+  if (!token || typeof token !== "string" || token.length > 2000) return false;
+  const p = session.verify(token);
+  return !!(p && p.k === "fpass" && p.c === norm(code));
+}
+
+module.exports = { issue, verify, peek, enabled, TTL_MS };

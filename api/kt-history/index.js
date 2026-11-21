@@ -109,6 +109,7 @@ module.exports = async function (context, req) {
     }
     await logView(req, who, "ok", byFace ? "face:ok (chỉ quét mặt)" : "face:ok", "khoảng cách " + cmp.distance.toFixed(3) + " (ngưỡng " + cmp.threshold + ")");
 
+    await require("../_lib/loginlog").write(req, { code, name: who.name, manager: rows[0].manager, method: byFace ? "face" : "manual_face", page: "history", note: "độ lệch " + cmp.distance.toFixed(3) });
     // Khuôn mặt khớp: trả danh sách bài (không có email, ảnh, đáp án). Liên kết "t" mở trang kết quả chính thức của từng bài.
     const cache = {}; const best = {};
     const settingsOf = async (p) => { if (!(p in cache)) { try { cache[p] = await quiz.getExamSettings(p); } catch (e) { cache[p] = {}; } } return cache[p]; };

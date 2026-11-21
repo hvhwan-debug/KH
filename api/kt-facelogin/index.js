@@ -76,6 +76,7 @@ module.exports = async function (context, req) {
     }
     await log(req, c, true, "ok", "khoảng cách " + id.distance.toFixed(3) + (id.second != null ? " · người thứ hai " + id.second.toFixed(3) : "") + (aiOk ? "" : " · AI nhìn ảnh không trả lời, dựa vào thử thách quay mặt"));
     // Vé dùng ở bước bắt đầu làm bài: không phải quét mặt lần hai (nếu đề bật faceLoginSkip). Gắn với mã NV + đúng ảnh vừa quét.
+    await require("../_lib/loginlog").write(req, { code: c.code, name: c.name, manager: c.manager, method: "face", page: "exam", exam: String(b.examId || ""), test: !!c.test, note: "độ lệch " + id.distance.toFixed(3) });
     const pass = require("../_lib/facepass").issue(c.code, photo, { distance: id.distance, second: id.second, ai: aiOk });
     return reply(context, 200, { ok: true, code: c.code, email: c.email, name: c.name || "", facePass: pass || undefined });
   } catch (e) {

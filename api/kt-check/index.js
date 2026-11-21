@@ -104,6 +104,11 @@ module.exports = async function (context, req) {
       return reply(context, 404, { ok: false, face, faceNext: needFaceFor(req), error: "Không tìm thấy thông tin khớp với mã nhân viên và email đã nhập. Kiểm tra lại hoặc liên hệ quản trị viên." + (needFaceFor(req) && !needFace ? " Lần thử tiếp theo cần xác thực khuôn mặt." : "") });
     }
 
+    // Lịch sử đăng nhập: nhập mã NV + email (lần ngay sau đăng nhập bằng khuôn mặt đã ghi ở kt-facelogin; kiểm tra lại / lưu tỉnh thì không ghi)
+    if (!b.saveRegion && !b.again && !require("../_lib/facepass").peek(b.facePass, found.code)) {
+      await require("../_lib/loginlog").write(req, { code: found.code, name: found.name, manager: found.manager, method: face && face.matched ? "manual_face" : "manual", page: "exam", exam: String(b.examId || ""), test: !!found.test, note: needFace ? "phải xác thực khuôn mặt sau nhiều lần nhập sai" : "" });
+    }
+
     // Thí sinh vừa chọn tỉnh/thành + miền ở màn xác nhận: lưu NGAY vào hồ sơ (chỉ khi hồ sơ còn thiếu),
     // để lần sau vào không phải chọn lại kể cả khi chưa bắt đầu làm bài.
     if (b.saveRegion) {

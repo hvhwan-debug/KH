@@ -121,6 +121,7 @@ module.exports = async function (context, req) {
         return reply(context, cmp.code === "unavailable" ? 503 : 403, { ok: false, error: cmp.message });
       }
       if (prof && !onFile) { prof.phone = phone; if (attempt.test) await quiz.updateTestAccount(attempt.code, { phone }); else await quiz.saveCandidates(cands); } // hồ sơ chưa có số: lưu số vừa nhập sau khi khuôn mặt khớp
+      await require("../_lib/loginlog").write(req, { code: attempt.code, name: attempt.name, manager: attempt.manager, method: code ? "manual_face" : "face", page: "paper", exam: attempt.period, test: !!attempt.test, note: "độ lệch " + cmp.distance.toFixed(3) });
       await logView(req, attempt, "ok", "face:ok", "khoảng cách " + cmp.distance.toFixed(3) + " (ngưỡng " + cmp.threshold + ")");
     } else if (b.step === "check") {
       return reply(context, 200, { ok: true, needPhone: false });
