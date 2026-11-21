@@ -1216,6 +1216,11 @@ table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-
 .exinv summary{cursor:pointer;font-weight:700;color:var(--brand-deep)}
 .exinv textarea,.exinv input{width:100%;box-sizing:border-box}
 .exinv label{display:block;margin-top:8px;font-size:13px;font-weight:600}
+
+mark.qhit{background:#FFE58A;color:inherit;border-radius:3px;padding:0 1px}
+.qhit-x{margin-top:4px;font-size:12.5px;color:var(--muted);line-height:1.5}
+.qhit-l{display:inline-block;font-size:11px;font-weight:700;padding:0 6px;border-radius:5px;background:#EEF3FA;color:#28456F}
+.qhit-l.ok{background:#E3F5EC;color:#17794A}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -1757,7 +1762,7 @@ table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-
           <button class="btn dghost sm" id="btnDelAllQ" onclick="deleteAllQuestions()">🗑 Xoá tất cả câu hỏi của đề này</button>
         </div>
         <div class="qfilter">
-          <input type="search" id="qSearch" placeholder="Tìm nội dung câu hỏi…" oninput="QLIM=50;renderQList()" aria-label="Tìm câu hỏi">
+          <input type="search" id="qSearch" placeholder="Tìm trong câu hỏi, đáp án, giải thích…" oninput="QLIM=50;renderQList()" aria-label="Tìm trong câu hỏi, đáp án và giải thích">
           <select id="qCatF" onchange="QLIM=50;renderQList()" aria-label="Lọc danh mục"></select>
           <select id="qStatF" onchange="QLIM=50;renderQList()" aria-label="Lọc trạng thái">
             <option value="*">Mọi trạng thái</option><option value="on">Đang dùng</option><option value="off">Đã ẩn</option>
@@ -3952,18 +3957,39 @@ function clearQForm(){
   msg('qMsg','');
 }
 let QP = null, QMETA = {}, QLIST = [], QLIM = 50;
+// Tìm câu hỏi theo nội dung câu hỏi, các phương án (đáp án), đáp án điền khuyết, giải thích và thẻ.
+// Không phân biệt hoa/thường; gõ không dấu cũng tìm được ("loi loc" khớp "lõi lọc").
+const qFold = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/\s+/g, ' ');
+function qHas(t, raw){ return qFold(t).indexOf(qFold(raw)) >= 0; }
+// Đoạn chữ quanh chỗ khớp, tô nổi phần khớp (vị trí tính trên bản bỏ dấu: cùng độ dài với chữ gốc dạng tổ hợp sẵn NFC)
+function qMark(t, raw, max){
+  t = String(t || '').normalize('NFC').replace(/\s+/g, ' '); const f = qFold(t), k = qFold(raw).trim(), i = k ? f.indexOf(k) : -1;
+  if (i < 0 || f.length !== t.length) return esc(t.slice(0, max)) + (t.length > max ? '…' : '');
+  let a = 0, b = t.length; if (t.length > max){ a = Math.max(0, Math.min(i - 30, t.length - max)); b = Math.min(t.length, a + max); }
+  return (a > 0 ? '…' : '') + esc(t.slice(a, i)) + '<mark class="qhit">' + esc(t.slice(i, i + k.length)) + '</mark>' + esc(t.slice(i + k.length, b)) + (b < t.length ? '…' : '');
+}
+function qFind(q, raw){
+  const inText = qHas(q.text, raw), parts = [];
+  (q.options || []).forEach((o, i) => { if (qHas(o, raw)) { const ok = q.correctIndexes ? q.correctIndexes.indexOf(i) >= 0 : i === q.correctIndex; parts.push('<span class="qhit-l' + (ok ? ' ok' : '') + '">' + 'ABCDEFGH'[i] + (ok ? ' · đúng' : '') + '</span> ' + qMark(o, raw, 90)); } });
+  (q.accepted || []).forEach(a => { if (qHas(a, raw)) parts.push('<span class="qhit-l ok">Đáp án</span> ' + qMark(a, raw, 90)); });
+  if (q.explanation && qHas(q.explanation, raw)) parts.push('<span class="qhit-l">Giải thích</span> ' + qMark(q.explanation, raw, 90));
+  (q.tags || []).forEach(t => { if (qHas(t, raw)) parts.push('<span class="qhit-l">Thẻ</span> ' + qMark(t, raw, 40)); });
+  if (!inText && !parts.length) return null;
+  return { inText, extra: parts.length ? '<div class="qhit-x">' + parts.slice(0, 4).map(x => '<div>↳ ' + x + '</div>').join('') + '</div>' : '' };
+}
 function renderQList(){
   const L = QLIST, q0 = spNorm($('qSearch').value), cf = $('qCatF').value;
   const cats = Array.from(new Set(L.map(q => q.category || ''))).sort();
   $('qCatF').innerHTML = '<option value="*">Mọi danh mục (' + L.length + ')</option>' + cats.map(c => '<option value="' + esc(c) + '">' + esc(c || '(chưa có danh mục)') + ' (' + L.filter(q => (q.category||'') === c).length + ')</option>').join('');
   $('qCatF').value = cats.indexOf(cf) >= 0 ? cf : '*';
-  const F = L.filter(q => ($('qCatF').value === '*' || (q.category||'') === $('qCatF').value) && (!q0 || spNorm(q.text).indexOf(q0) >= 0) && qStatPass(q, $('qStatF').value));
+  const raw = $('qSearch').value.trim(), HIT = {};
+  const F = L.filter(q => ($('qCatF').value === '*' || (q.category||'') === $('qCatF').value) && (!q0 || (HIT[q.id] = qFind(q, raw))) && qStatPass(q, $('qStatF').value));
   qStatBarRender(L);
   const V = F.slice(0, QLIM);
   QPREV_IDS = V.map(q => q.id);
   $('qShown').textContent = F.length === L.length ? '' : 'Đang lọc: ' + F.length + ' câu';
   $('qList').innerHTML = V.map((q, i) =>
-    '<tr><td class="qno">' + (i + 1) + '</td><td class="qtxt" onclick="qPreview(\'' + q.id + '\')" title="Bấm để xem câu hỏi và đáp án">' + esc(q.text.slice(0,110)) + (q.text.length > 110 ? '…' : '') + '</td><td class="small">' + esc(q.category || '') + '</td><td>' + qStatusCell(q) + '</td>' +
+    '<tr><td class="qno">' + (i + 1) + '</td><td class="qtxt" onclick="qPreview(\'' + q.id + '\')" title="Bấm để xem câu hỏi và đáp án">' + (HIT[q.id] && HIT[q.id].inText ? qMark(q.text, raw, 110) : esc(q.text.slice(0,110)) + (q.text.length > 110 ? '…' : '')) + (HIT[q.id] ? HIT[q.id].extra : '') + '</td><td class="small">' + esc(q.category || '') + '</td><td>' + qStatusCell(q) + '</td>' +
     '<td style="white-space:nowrap;text-align:right"><button class="btn ghost sm" onclick="editQuestion(\'' + q.id + '\')">Sửa</button> <button class="btn ghost sm" onclick="toggleQuestion(\'' + q.id + '\')">' + (q.active !== false ? 'Ẩn' : 'Hiện') + '</button> <button class="btn dghost sm" onclick="deleteQuestion(\'' + q.id + '\')">Xoá</button></td></tr>'
   ).join('') || '<tr><td colspan="5" class="small">' + (L.length ? 'Không có câu nào khớp bộ lọc.' : 'Đề này chưa có câu hỏi. Bấm “📥 Nhập từ file Excel” hoặc chép từ đề khác ở trên.') + '</td></tr>';
   $('qMore').classList.toggle('hide', F.length <= QLIM);
