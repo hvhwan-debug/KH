@@ -1138,6 +1138,38 @@ button.rd-st:disabled{opacity:.55;cursor:default}
 #examFormCard .dt24 input{min-width:0}
 #examFormCard input:disabled{background:#F1F4F8;color:#8696B0;cursor:not-allowed}
 @media(max-width:640px){.exsteps button{padding:8px 10px;font-size:12.5px}.exbtns{width:100%}.exbtns .btn{flex:1}.exbar{bottom:6px}}
+
+/* Danh sách đề (dạng bảng) gọn: tên đề rộng + mã đề bên dưới, ngày ngắn, số câu mỗi người, một nút Sửa + menu ⋯ */
+.exl-wrap{overflow-x:auto;margin-top:6px}
+table.exl{width:100%;min-width:760px;border-collapse:collapse;font-size:13.5px}
+table.exl th{font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.exl th.n,table.exl td.n{text-align:right}
+table.exl td{padding:14px 12px;border-bottom:1px solid #EDF1F7;vertical-align:middle}
+table.exl tbody tr{cursor:pointer;transition:background .12s}
+table.exl tbody tr:hover{background:#F5F9FF}
+table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
+.exl-t{font-weight:700;font-size:14.5px;line-height:1.35;color:var(--ink);max-width:420px}
+.exl-m{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:5px;font-size:12.5px;color:var(--muted)}
+.exl-code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;background:#EEF3FA;color:#28456F;border:0;border-radius:6px;padding:2px 7px;cursor:copy}
+.exl-code:hover{background:#E1EAF7}
+.exl-tag{font-size:11.5px;font-weight:600;border-radius:6px;padding:2px 7px;background:#EEF3FA;color:#28456F}
+.exl-tag.p{background:#FDEBC8;color:#8A5200}.exl-tag.d{background:#E3F0FF;color:#1D4F91}.exl-tag.w{background:#FBE3E0;color:#9E2A20}
+.exl-d{white-space:nowrap;font-variant-numeric:tabular-nums}.exl-d small{display:block;color:var(--muted);font-size:12px;margin-top:3px;white-space:normal}
+.exl-num{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}.exl-num small{display:block;font-size:12px;font-weight:500;color:var(--muted)}
+.exl-st{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.exl-st i{width:8px;height:8px;border-radius:50%;background:#98A6BA}
+.exl-st.open{color:#17653A}.exl-st.open i{background:#1E9E5A;box-shadow:0 0 0 3px #D5F0E0}
+.exl-st.soon{color:#8A5200}.exl-st.soon i{background:#E09B1A}
+.exl-st.closed{color:var(--muted)}
+.exl-a{white-space:nowrap;text-align:right}
+.exl-more{border:1px solid var(--line);background:#fff;border-radius:8px;width:34px;height:32px;font-size:18px;line-height:1;color:var(--muted);cursor:pointer;margin-left:6px;vertical-align:middle}
+.exl-more:hover,.exl-more[aria-expanded="true"]{background:#EEF3FA;color:var(--ink)}
+.exl-menu{position:fixed;z-index:1000;min-width:210px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 36px -12px rgba(10,37,82,.35);padding:6px}
+.exl-menu button,.exl-menu a{display:block;width:100%;text-align:left;border:0;background:none;font:inherit;font-size:13.5px;color:var(--ink);padding:9px 12px;border-radius:8px;cursor:pointer;text-decoration:none}
+.exl-menu button:hover,.exl-menu a:hover,.exl-menu button:focus-visible,.exl-menu a:focus-visible{background:#EEF3FA;outline:none}
+.exl-menu hr{border:0;border-top:1px solid #EDF1F7;margin:4px 0}
+.exl-menu .del{color:var(--bad)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -1301,7 +1333,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
         </div>
         <div class="exf-count"><span id="exFCount" aria-live="polite"></span><button type="button" class="exf-clear hide" id="exFClear" onclick="exFiltClear()">✕ Xoá lọc</button></div>
         <div class="exgrid" id="exGrid"></div>
-        <table class="hide" id="exListTable"><thead><tr><th>Mã đề</th><th>Tên đề</th><th>Phân bổ câu hỏi</th><th>Thời gian</th><th>Bài đã nộp</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="exList"></tbody></table>
+        <div class="exl-wrap"><table class="hide exl" id="exListTable"><thead><tr><th>Đề thi</th><th>Thời gian</th><th class="n">Câu / người</th><th class="n">Đã nộp</th><th>Trạng thái</th><th><span class="sr">Thao tác</span></th></tr></thead><tbody id="exList"></tbody></table></div>
       </div>
     </div>
 
@@ -2631,24 +2663,67 @@ async function loadExams(){
   if (CUR_EXAM && WS.indexOf(document.body.dataset.tab) >= 0) renderExHead();
   renderExGrid();
   if (j.maxQuestions){ MAXQ = j.maxQuestions; if ($('maxQ')) $('maxQ').textContent = MAXQ; $('exCount').max = MAXQ; }
-  $('exList').innerHTML = EXAMS.map(e =>
-    '<tr data-exid="'+esc(e.id)+'"><td><code>'+esc(e.id)+'</code>'+(e.id===j.currentPeriod?' <span class="badge y">Mặc định</span>':'')+'</td>'+
-    '<td>'+esc(e.title||e.id)+(e.practice?' <span class="badge" style="background:#FDEBC8;color:#8A5200">Thi thử</span>':'')+'<div class="small"><a href="/kiemtra/?exam='+encodeURIComponent(e.id)+'" target="_blank" rel="noopener">link thi</a> · '+(e.bankCount ? e.bankCount+' câu hỏi riêng' : '<span style="color:var(--warn)">chưa có câu hỏi riêng</span>')+'</div></td>'+
-    '<td class="small">'+((+e.questionCount > MAXQ || bpTotalOf(e.blueprint) > MAXQ || (bpTotalOf(e.blueprint) && e.questionCount && bpTotalOf(e.blueprint) !== +e.questionCount)) ? '<span class="badge n">⚠ Cần sửa số câu</span> ' : '')+(bpTotalOf(e.blueprint) ? '<span class="badge y">Theo quy tắc</span> '+bpTotalOf(e.blueprint)+' câu / '+e.blueprint.rules.length+' quy tắc' : e.sharedUniform ? '<span class="badge y">Dùng chung</span> '+(e.questionCount ? e.questionCount+' câu/đề' : 'theo cài đặt chung')+' · không phân biệt nhóm ngành/miền' : (spHas(e.segmentPlans) ? 'Phân bổ riêng: '+SP_SEGS.filter(([k]) => e.segmentPlans[k] && e.segmentPlans[k].length).map(([k,l]) => l.replace('Chỉ bán ','').replace('Bán ','')+' '+e.segmentPlans[k].reduce((n,r) => n + r.count, 0)+' câu').join(' · ') : spHas(SEGPLANS) ? 'Theo phân bổ chung (Cài đặt)' : 'Theo nhóm ngành · '+(e.questionCount ? e.questionCount+' câu/đề' : 'theo cài đặt chung')))+'</td>'+
-    '<td class="small">'+esc(examWindowText(e))+'</td><td>'+(e.resultCount||0)+'</td>'+
-    '<td class="small">'+examStatusText(e, j.currentPeriod)+'</td>'+
-    '<td style="white-space:nowrap">'+
-      (e.id!==j.currentPeriod?'<button class="btn ghost sm" onclick="setDefaultExamUI(\''+esc(e.id)+'\')">Đặt mặc định</button> ':'')+
-      '<button class="btn ghost sm" onclick="editExam(\''+esc(e.id)+'\')">Sửa</button> '+
-      '<button class="btn ghost sm" onclick="openExamQuestions(\''+esc(e.id)+'\')">Câu hỏi</button> '+
-      (e.resultCount ? '<button class="btn ghost sm" onclick="openItemAnalysis(\''+esc(e.id)+'\')">Phân tích câu hỏi</button> ' : '')+
-      (e.id!==j.currentPeriod?'<button class="btn dghost sm" onclick="deleteExamUI(\''+esc(e.id)+'\')">Xoá</button>':'')+
-    '</td></tr>'
-  ).join('') || '<tr><td colspan="7" class="small">Chưa có đề thi nào, bấm "+ Tạo đề thi mới" để bắt đầu.</td></tr>';
+  $('exList').innerHTML = EXAMS.map(e => exListRow(e, j.currentPeriod)).join('') || '<tr><td colspan="6" class="small">Chưa có đề thi nào, bấm "+ Tạo đề thi mới" để bắt đầu.</td></tr>';
   exApplyListFilter();
   let savedView = 'card'; try { savedView = localStorage.getItem('exView') || 'card'; } catch (e) { /* bỏ qua */ }
   exSetView(savedView);
 }
+// Một dòng trong danh sách đề (dạng bảng): bấm cả dòng để mở đề; thao tác phụ gom vào menu ⋯
+function exShortDate(ms){
+  const d = new Date(ms), p = (x) => (x < 10 ? '0' : '') + x;
+  return p(d.getDate()) + '/' + p(d.getMonth() + 1) + (d.getFullYear() !== new Date().getFullYear() ? '/' + d.getFullYear() : '') + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+function exPerPerson(e){ // số câu mỗi thí sinh nhận + cách chia
+  const bp = bpTotalOf(e.blueprint);
+  if (bp) return { n: String(bp), how: 'theo quy tắc riêng' };
+  if (e.sharedUniform) return { n: e.questionCount ? String(e.questionCount) : '–', how: 'dùng chung mọi người' };
+  const plans = spHas(e.segmentPlans) ? e.segmentPlans : null;
+  if (plans){
+    const v = SP_SEGS.filter(([k]) => plans[k] && plans[k].length).map(([k]) => plans[k].reduce((n, r) => n + r.count, 0));
+    const lo = Math.min.apply(null, v), hi = Math.max.apply(null, v);
+    return { n: lo === hi ? String(lo) : lo + '–' + hi, how: 'chia theo nhóm ngành' };
+  }
+  return { n: e.questionCount ? String(e.questionCount) : (SETCACHE.questionCount ? String(SETCACHE.questionCount) : '–'), how: spHas(SEGPLANS) ? 'theo phân bổ chung' : 'theo nhóm ngành' };
+}
+function exListRow(e, cur){
+  const now = Date.now(), id = esc(e.id), jid = esc(JSON.stringify(e.id).slice(1, -1));
+  const st = e.openAt && now < e.openAt ? ['soon', 'Chưa mở'] : e.closeAt && now > e.closeAt ? ['closed', 'Đã đóng'] : ['open', 'Đang mở'];
+  const when = e.openAt && e.closeAt ? exShortDate(e.openAt) + ' → ' + exShortDate(e.closeAt) : e.openAt ? 'Từ ' + exShortDate(e.openAt) : e.closeAt ? 'Đến ' + exShortDate(e.closeAt) : 'Không giới hạn';
+  const nC = (e.codes || []).length, who = nC ? (e.codesExclude ? 'Mọi người trừ ' + nC + ' NV' : 'Gán ' + nC + ' NV') : ((e.segments || []).length ? e.segments.map(x => ({ gia_dung:'Gia dụng', may_loc:'Máy lọc', both:'Cả hai ngành' }[x] || x)).join(', ') : 'Mọi nhân viên');
+  const pp = exPerPerson(e), bank = qCountOf(e);
+  const bad = +e.questionCount > MAXQ || bpTotalOf(e.blueprint) > MAXQ || (bpTotalOf(e.blueprint) && e.questionCount && bpTotalOf(e.blueprint) !== +e.questionCount);
+  const tags = (e.id === cur ? '<span class="exl-tag d">Mặc định</span>' : '') + (e.practice ? '<span class="exl-tag p">Thi thử</span>' : '') + (bad ? '<span class="exl-tag w">Cần sửa số câu</span>' : '') + (!bank ? '<span class="exl-tag w">Chưa có câu hỏi</span>' : '');
+  return '<tr data-exid="' + id + '" tabindex="0" onclick="exRowOpen(event,\'' + jid + '\')" onkeydown="if(event.key===\'Enter\')exRowOpen(event,\'' + jid + '\')">' +
+    '<td><div class="exl-t">' + esc(exTitleOf(e)) + '</div><div class="exl-m"><button type="button" class="exl-code" title="Bấm để sao chép mã đề" onclick="event.stopPropagation();copyText(\'' + jid + '\', this)">' + id + '</button>' + tags + '</div></td>' +
+    '<td><div class="exl-d">' + esc(when) + '<small>' + esc(who) + '</small></div></td>' +
+    '<td class="n"><div class="exl-num" title="' + esc(pp.how) + '">' + esc(pp.n) + '<small>kho ' + bank + ' câu</small></div></td>' +
+    '<td class="n"><div class="exl-num">' + (e.resultCount || 0) + '</div></td>' +
+    '<td><span class="exl-st ' + st[0] + '"><i></i>' + st[1] + '</span></td>' +
+    '<td class="exl-a"><button class="btn ghost sm" onclick="event.stopPropagation();editExam(\'' + jid + '\')">Sửa</button><button type="button" class="exl-more" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác khác" onclick="event.stopPropagation();exMenu(this,\'' + jid + '\')">⋯</button></td></tr>';
+}
+function exRowOpen(ev, id){ if (ev.target.closest('button,a')) return; openExam(id); }
+var EXMENU = null;
+function exMenuClose(){ if (EXMENU){ EXMENU.m.remove(); EXMENU.b.setAttribute('aria-expanded', 'false'); EXMENU = null; } }
+function exMenu(btn, id){
+  const again = EXMENU && EXMENU.b === btn; exMenuClose(); if (again) return;
+  const e = examById(id) || { id }, jid = esc(JSON.stringify(id).slice(1, -1)), link = location.origin + '/kiemtra/?exam=' + encodeURIComponent(id);
+  const m = document.createElement('div'); m.className = 'exl-menu'; m.setAttribute('role', 'menu');
+  m.innerHTML = '<button role="menuitem" onclick="exMenuClose();openExam(\'' + jid + '\')">Xem kết quả</button>' +
+    '<button role="menuitem" onclick="exMenuClose();openExamQuestions(\'' + jid + '\')">Câu hỏi của đề</button>' +
+    (e.resultCount ? '<button role="menuitem" onclick="exMenuClose();openItemAnalysis(\'' + jid + '\')">Phân tích câu hỏi</button>' : '') +
+    '<hr><a role="menuitem" href="' + esc(link) + '" target="_blank" rel="noopener" onclick="exMenuClose()">Mở trang thi</a>' +
+    '<button role="menuitem" onclick="copyText(\'' + esc(link) + '\', this);setTimeout(exMenuClose,900)">Sao chép link thi</button>' +
+    (e.id !== EX_DEFAULT ? '<button role="menuitem" onclick="exMenuClose();setDefaultExamUI(\'' + jid + '\')">Đặt làm đề mặc định</button><hr><button role="menuitem" class="del" onclick="exMenuClose();deleteExamUI(\'' + jid + '\')">Xoá đề</button>' : '');
+  document.body.appendChild(m);
+  const r = btn.getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
+  m.style.left = Math.max(8, Math.min(r.right - mw, window.innerWidth - mw - 8)) + 'px';
+  m.style.top = (r.bottom + 6 + mh > window.innerHeight - 8 ? Math.max(8, r.top - mh - 6) : r.bottom + 6) + 'px';
+  btn.setAttribute('aria-expanded', 'true'); EXMENU = { m, b: btn };
+  const f = m.querySelector('[role=menuitem]'); if (f) f.focus();
+}
+document.addEventListener('click', (ev) => { if (EXMENU && !EXMENU.m.contains(ev.target) && ev.target !== EXMENU.b) exMenuClose(); });
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && EXMENU){ const b = EXMENU.b; exMenuClose(); b.focus(); } });
+window.addEventListener('scroll', exMenuClose, true); window.addEventListener('resize', exMenuClose);
 // Chuyển đổi hiển thị danh sách đề: dạng thẻ (card) hoặc dạng danh sách (bảng), nhớ lựa chọn cho lần sau.
 function exSetView(v){
   v = v === 'list' ? 'list' : 'card';
