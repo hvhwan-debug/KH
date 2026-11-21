@@ -71,10 +71,17 @@ async function describe(dataUrl) {
       big = all.filter((r) => r.detection.box.width >= img.width * MIN_FACE_FRAC).sort((a, b) => b.detection.box.area - a.detection.box.area);
       if (big.length) break;
     }
-    return { n: big.length, desc: big.length ? Array.from(big[0].descriptor).map((x) => Math.round(x * 1e4) / 1e4) : null };
+    return { n: big.length, desc: big.length ? Array.from(big[0].descriptor).map((x) => Math.round(x * 1e4) / 1e4) : null, yaw: big.length ? yawOf(big[0].landmarks.positions) : null };
   } finally { t.dispose(); }
 }
 
+// Độ quay đầu theo chiều ngang từ 68 điểm mốc: vị trí đỉnh mũi (điểm 30) trên đoạn nối hai điểm hàm ngoài cùng (0 và 16), trừ 0.5.
+// ~0 = nhìn thẳng. Ảnh GỐC của camera (không lật gương): âm = người dùng quay sang PHẢI của chính họ, dương = quay sang TRÁI.
+function yawOf(pts) {
+  const L = pts[0], R = pts[16], N = pts[30], ux = R.x - L.x, uy = R.y - L.y, uu = ux * ux + uy * uy;
+  if (!uu) return null;
+  return Math.round((((N.x - L.x) * ux + (N.y - L.y) * uy) / uu - 0.5) * 1e4) / 1e4;
+}
 function dist(a, b) { let s = 0; for (let i = 0; i < 128; i++) { const d = a[i] - b[i]; s += d * d; } return Math.sqrt(s); }
 
 // selfie: ảnh vừa chụp. refs: [{ photo, desc?, save?(desc) }] ảnh đã lưu của chủ hồ sơ (desc đã tính sẵn thì dùng luôn)
@@ -102,4 +109,4 @@ async function compare(selfie, refs) {
   return { ok: false, code: "mismatch", distance: best, threshold: MATCH_MAX, desc: me.desc, used, message: "Khuôn mặt không khớp với ảnh đã lưu của chủ bài làm này." };
 }
 
-module.exports = { compare, describe, dist, MATCH_MAX, _boot: boot, _decode: decodeJpeg };
+module.exports = { compare, describe, dist, yawOf, MATCH_MAX, _boot: boot, _decode: decodeJpeg };

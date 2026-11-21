@@ -48,6 +48,13 @@ module.exports = async function (context, req) {
       return reply(context, 503, { ok: false, unavailable: true, error: "Hệ thống chưa thể xác nhận ảnh chụp trực tiếp lúc này. Hãy nhập mã nhân viên và email để vào hệ thống." });
     }
 
+    // 1b) Thử thách sống (nhìn thẳng, quay trái, quay phải). Đăng nhập bằng khuôn mặt chặt hơn: chế độ "soft" cũng không được bỏ qua.
+    const fl = require("../_lib/facelive");
+    if (fl.mode() !== "off") {
+      const lv = await fl.verify(b.live, photo);
+      if (!lv.ok) { quiz.noteFail(req); await log(req, null, false, "liveness:" + lv.code); return reply(context, lv.unavailable ? 503 : 403, { ok: false, liveFailed: true, error: lv.message }); }
+    }
+
     // 2) Dấu vân khuôn mặt của người đang quét, rồi tìm trong thư viện
     let me;
     try { me = await facematch.describe(photo); } catch (e) { return reply(context, 503, { ok: false, unavailable: true, error: "Hệ thống nhận diện khuôn mặt tạm thời không khả dụng. Hãy nhập mã nhân viên và email." }); }

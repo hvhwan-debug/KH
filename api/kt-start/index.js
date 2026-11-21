@@ -87,6 +87,13 @@ module.exports = async function (context, req) {
         faceCheck = fc.record;
         if (!fc.allow) return reply(context, 422, { ok: false, faceRejected: true, error: fc.message });
       }
+      // Thử thách sống: nhìn thẳng + quay trái + quay phải (chặn ảnh tĩnh / ảnh trên màn hình). FACE_LIVENESS = on | soft | off
+      const fl = require("../_lib/facelive");
+      if (fl.mode() !== "off") {
+        const lv = await fl.verify(b.live, photo);
+        faceCheck = Object.assign({}, faceCheck || {}, { liveness: lv.evidence || { ok: false, code: lv.code } });
+        if (!lv.ok && fl.mode() === "on") return reply(context, 422, { ok: false, faceRejected: true, liveFailed: true, error: lv.message });
+      }
       const segment = quiz.normSegment(found.segment);
       // Phân bổ đề: dùng DUY NHẤT quiz.planExam (khống chế số câu, trần cứng, không bao giờ phát cả ngân hàng)
       const plan = quiz.planExam(allQuestions, settings, segment, found.region);
