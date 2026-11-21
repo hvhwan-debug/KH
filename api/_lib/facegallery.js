@@ -100,6 +100,17 @@ async function backfill(opts) {
   return { done, left };
 }
 
+// Gỡ dấu vân của một bài làm khỏi thư viện (khi quản trị viên xác định ảnh đó không phải chủ tài khoản)
+async function dropSrc(code, src) {
+  code = quiz.normCode(code); let had = false;
+  await store.update(KEY, (cur) => {
+    const d = cur && cur.people ? cur : { v: 1, people: {} }, p = d.people[code];
+    if (p) { const n = (p.descs || []).filter((x) => x.src !== src); had = n.length !== (p.descs || []).length; if (n.length) p.descs = n; else delete d.people[code]; }
+    return d;
+  });
+  cache = null; return had;
+}
+
 // Thống kê (không chứa dữ liệu khuôn mặt): số người, số dấu vân, và (nếu hỏi) một mã nhân viên đã có trong thư viện chưa
 async function stats(code) {
   const g = await load(), keys = Object.keys(g.people); let d = 0;
@@ -109,4 +120,4 @@ async function stats(code) {
   return out;
 }
 
-module.exports = { enrol, remove, identify, backfill, stats, pick, LOGIN_MAX, MARGIN, MAX_DESC };
+module.exports = { enrol, remove, dropSrc, identify, backfill, stats, pick, LOGIN_MAX, MARGIN, MAX_DESC };

@@ -105,3 +105,17 @@ Màn quét (làm bài và đăng nhập bằng khuôn mặt) có âm thanh để
 - Các tiếng đi qua một bộ nén nhẹ (nhiều âm chồng nhau không chói) và một vang dội ngắn có lọc để tiếng "ngân" mượt.
 - Các bước kiểm tra đạt dùng thang ngũ cung (C6 D6 E6 G6 A6 C7) nên "ting" cao dần theo từng bước và luôn hợp tông. Tiếng lỗi/cảnh báo là hai nốt trầm êm đi xuống, không chói.
 - Muốn chỉnh: âm lượng chung ở `sndOut` (`master.gain.value`), nốt và độ ngân ở các hàm `snd*` trong `kiemtra/index.html`.
+
+## Chẩn đoán khi một người không qua được bước đối chiếu khuôn mặt
+Bước **bắt đầu làm bài** chỉ kiểm tra "có một khuôn mặt người thật" và (nếu khác lần trước) cảnh báo, **không chặn**; còn **tra cứu lịch sử**, **xem lại đề** và **đăng nhập bằng khuôn mặt** là cổng chặn: khuôn mặt vừa quét phải khớp với ảnh đã lưu của mã đó. Vì vậy "vào được bài thi" không có nghĩa là hệ thống đã nhận ra người đó.
+
+Nguyên nhân thường gặp khi bị từ chối: (1) trong các ảnh đã lưu của mã có ảnh **không phải chủ tài khoản** (ví dụ thử bằng ảnh điện thoại, hoặc người khác làm hộ ở lần đầu); (2) tra cứu đang **bị khoá** (khoá 24 giờ sau 3 lần quét đáng ngờ); (3) mã chưa có ảnh nào; (4) ánh sáng / góc mặt khác nhiều.
+
+Xem và xử lý (quản trị viên, đang đăng nhập): mở `https://<tên-miền>/api/kt-facegallery?code=<mã nhân viên>&view=1`
+- Trang hiện các ảnh gần nhất của mã, ảnh nào **đang dùng để đối chiếu** (khung xanh, tối đa 3 ảnh gần nhất chưa bị đánh dấu "khác người"), tình trạng khoá và số dấu vân trong thư viện.
+- **Loại ảnh này**: ảnh không phải chủ tài khoản không còn dùng để đối chiếu và bị gỡ khỏi thư viện đăng nhập bằng khuôn mặt (có thể bấm **Dùng lại**). Nếu loại hết, lần làm bài kế tiếp thành ảnh gốc mới.
+- **Mở khoá tra cứu**, **Xoá thư viện khuôn mặt của mã này**.
+- Mọi thao tác được ghi vào nhật ký quản trị; mỗi lần xem ảnh được ghi vào sổ truy cập ảnh.
+- Lý do từ chối từng lần quét nằm trong **nhật ký thao tác**, mục "Thí sinh tra cứu lịch sử bài kiểm tra (đối chiếu khuôn mặt)": `face:mismatch` (không khớp, kèm độ lệch), `locked` (bị khoá), `face:noref` (chưa có ảnh), `live` (ảnh nghi chụp lại màn hình).
+
+> Đã sửa một lỗi có sẵn: kết quả quét khuôn mặt chạy nền trước đây không bao giờ được ghi vào chỉ mục bài làm (hàm `patchIndex` bị khai báo hai lần, bản sau đè bản trước), nên mỗi lượt `/api/kt-facegallery?run=1` cứ xử lý lại những bài cũ nhất mà không tiến lên. Từ bản này, `scan.left` giảm dần qua các lượt; nhãn "Khuôn mặt khác các lần trước" trong trang quản trị cũng hiện đủ cho các bài quét nền.

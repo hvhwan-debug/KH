@@ -51,7 +51,8 @@ async function checkWithin(attempt, ms, idx, opts) {
   } catch (e) { return null; } finally { clearTimeout(timer); }
 }
 
-async function patchIndex(id, faceId) { await quiz.patchIndex(id, { faceId }); }
+// quiz.patchIndex nhận MỘT bảng { id: trường } (bản khai báo thứ hai trong quiz.js đè bản (id, trường)); gọi sai kiểu thì không ghi gì cả
+async function patchIndex(id, faceId) { await quiz.patchIndex({ [id]: { faceId } }); }
 
 // Quét nền: đối chiếu các bài đã nộp chưa có kết quả, cũ nhất trước (để ảnh gốc của các lần đầu có trước).
 // period rỗng = mọi đề. Dừng khi hết thời gian cho phép. Trả về { done, left, mismatch }.
