@@ -145,3 +145,5 @@ Không còn bước nhập mã nhân viên + email ở hai trang này:
 - `FACE_LOGIN=off` tắt nhận diện 1-N: trang tra cứu tự quay về nhập mã nhân viên + email.
 
 Kiểm thử: `node dev/test-faceonly.js`.
+
+> Cập nhật: khi có vé đăng nhập bằng khuôn mặt, bấm **Bắt đầu làm bài** ở màn xác nhận là vào thẳng bài, **không hiện màn "Xác thực khuôn mặt"** nữa. Trang `/kiemtra` xin quyền vị trí **ngay khi mở trang** (không đợi tới bước quét mặt); vị trí vẫn không bắt buộc.
