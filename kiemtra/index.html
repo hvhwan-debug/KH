@@ -1741,11 +1741,14 @@ $('btnStart').addEventListener('click', async function(){
   show('photo');
   photoInit();
 });
+// Vé đăng nhập bằng khuôn mặt giữ trong sessionStorage của tab: tải lại trang (F5) sau khi đăng nhập vẫn không phải quét lại
+function fpSet(v){ ST.fp = v; try { if (v) sessionStorage.setItem('kt_fp', JSON.stringify(v)); else sessionStorage.removeItem('kt_fp'); } catch (e) {} }
+try { var fp0 = JSON.parse(sessionStorage.getItem('kt_fp') || 'null'); if (fp0 && fp0.token && Date.now() - fp0.at < 14 * 60 * 1000) ST.fp = fp0; } catch (e) {}
 // Đã đăng nhập bằng khuôn mặt (đề bật faceLoginSkip): không quét mặt lần hai, dùng ảnh lúc đăng nhập làm ảnh xác nhận
 function facePassOk(){
   var f = ST.fp;
   if (!f || !f.token || !f.photo || !ST.exam || !ST.exam.faceLoginSkip || !ST.cand) return false;
-  if (Date.now() - f.at > 14 * 60 * 1000){ ST.fp = null; return false; } // máy chủ cho 15 phút
+  if (Date.now() - f.at > 14 * 60 * 1000){ fpSet(null); return false; } // máy chủ cho 15 phút
   return f.code.trim().toUpperCase() === String(ST.cand.inCode || '').trim().toUpperCase();
 }
 async function startWithFacePass(){
@@ -2241,7 +2244,7 @@ async function doFaceLogin(){
   if (j && j.ok){
     aiStep(3, 'ok', 1); aiStep(4, 'run'); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN'); sndOk(); sayVn('Xin chào ' + (j.name || '')); msg('photoMsg', '✓ Xin chào ' + (j.name || j.code) + '. Đang mở thông tin của bạn…', 'ok');
     await aiDelay(900); aiStep(4, 'ok', 1); await aiDelay(450);
-    ST.fp = j.facePass ? { token: j.facePass, code: String(j.code || ''), photo: PH.dataUrl, at: Date.now() } : null; // vé: bỏ bước quét mặt lần hai khi bắt đầu làm bài
+    fpSet(j.facePass ? { token: j.facePass, code: String(j.code || ''), photo: PH.dataUrl, at: Date.now() } : null); // vé: bỏ bước quét mặt lần hai khi bắt đầu làm bài
     PH.mode = 'exam'; photoStop(); show('check');
     $('inCode').value = j.code; $('inEmail').value = j.email; msg('photoMsg', '');
     var f = $('scrCheck'); if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', { cancelable:true }));
@@ -2261,12 +2264,12 @@ async function startExam(passToken){ // passToken: vé đăng nhập bằng khu�
   if (passToken) body.facePass = passToken;
   try { res = await api('/api/kt-start', body); } catch(e){ res = null; }
   if (passToken && res && res.j && res.j.facePassRejected){ // vé hết hạn / đề yêu cầu quét lại: mở camera quét như bình thường
-    START_BUSY = false; btn.disabled = false; btn.textContent = label; ST.fp = null;
+    START_BUSY = false; btn.disabled = false; btn.textContent = label; fpSet(null);
     photoInit(); msg('photoMsg', res.j.error || 'Vui lòng quét khuôn mặt để bắt đầu làm bài.', 'warn'); return;
   }
   await aiVerifyEnd(res); // giữ nút khoá trong lúc hiện kết quả, tránh bấm lần hai
   START_BUSY = false; btn.disabled = false; btn.textContent = label;
-  if (res && res.j && res.j.ok) ST.fp = null; // vé chỉ dùng cho lần bắt đầu này
+  if (res && res.j && res.j.ok) fpSet(null); // vé chỉ dùng cho lần bắt đầu này
   if (!res){ msg('photoMsg','Không kết nối được máy chủ, vui lòng thử lại.'); if (passToken) $('btnPhotoRetry').classList.remove('hide'); return; } // không có ảnh quét mới: chỉ cho quét lại
   if (!res.j.ok && res.j.needPhone){ photoStop(); show('confirm'); msg('phoneMsg', res.j.error); return; }
   if (!res.j.ok && res.j.needRegion){ photoStop(); ST.cand.needRegion = true; renderConfirm(); msg('regionMsg', res.j.error); return; }
