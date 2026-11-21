@@ -100,4 +100,13 @@ async function backfill(opts) {
   return { done, left };
 }
 
-module.exports = { enrol, remove, identify, backfill, pick, LOGIN_MAX, MARGIN, MAX_DESC };
+// Thống kê (không chứa dữ liệu khuôn mặt): số người, số dấu vân, và (nếu hỏi) một mã nhân viên đã có trong thư viện chưa
+async function stats(code) {
+  const g = await load(), keys = Object.keys(g.people); let d = 0;
+  keys.forEach((k) => { d += g.people[k].descs.length; });
+  const out = { people: keys.length, descs: d };
+  if (code) { const p = g.people[quiz.normCode(code)]; out.code = { enrolled: !!p, n: p ? p.descs.length : 0 }; }
+  return out;
+}
+
+module.exports = { enrol, remove, identify, backfill, stats, pick, LOGIN_MAX, MARGIN, MAX_DESC };

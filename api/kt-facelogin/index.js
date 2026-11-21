@@ -39,20 +39,20 @@ module.exports = async function (context, req) {
     const photo = typeof b.photo === "string" ? b.photo : "";
     if (!/^data:image\/jpe?g;base64,/i.test(photo) || photo.length > 350000) return reply(context, 400, { ok: false, error: "Cần quét khuôn mặt bằng camera để đăng nhập." });
 
-    // 1) Chụp trực tiếp, đúng một người. Ở đây KHÔNG chấp nhận trường hợp AI máy chủ không trả lời.
+    // 1) Chụp trực tiếp, đúng một người. AI nhìn ảnh (nếu trả lời) có quyền TỪ CHỐI (không thấy mặt / nhiều người / nghi chụp lại màn hình).
     const live = await facecheck.verify(photo, b.face, "", "dang-nhap-khuon-mat");
     if (!live.allow) { quiz.noteFail(req); await log(req, null, false, "live", live.message); return reply(context, 403, { ok: false, error: live.message }); }
-    const by = live.record && live.record.by;
-    if (by !== "azure" && by !== "groq") {
-      await log(req, null, false, "live:unverified");
-      return reply(context, 503, { ok: false, unavailable: true, error: "Hệ thống chưa thể xác nhận ảnh chụp trực tiếp lúc này. Hãy nhập mã nhân viên và email để vào hệ thống." });
-    }
+    const by = live.record && live.record.by, aiOk = by === "azure" || by === "groq";
 
-    // 1b) Thử thách sống (nhìn thẳng, quay trái, quay phải). Đăng nhập bằng khuôn mặt chặt hơn: chế độ "soft" cũng không được bỏ qua.
+    // 1b) Thử thách sống (nhìn thẳng, quay trái, quay phải) là lớp chống ảnh giả CHÍNH và không phụ thuộc dịch vụ AI bên ngoài.
+    //     Đăng nhập bằng khuôn mặt chặt hơn: chế độ "soft" cũng không được bỏ qua. Chỉ khi thử thách bị tắt (off) mới BẮT BUỘC AI xác nhận.
     const fl = require("../_lib/facelive");
     if (fl.mode() !== "off") {
       const lv = await fl.verify(b.live, photo);
       if (!lv.ok) { quiz.noteFail(req); await log(req, null, false, "liveness:" + lv.code); return reply(context, lv.unavailable ? 503 : 403, { ok: false, liveFailed: true, error: lv.message }); }
+    } else if (!aiOk) {
+      await log(req, null, false, "live:unverified");
+      return reply(context, 503, { ok: false, unavailable: true, error: "Hệ thống chưa thể xác nhận ảnh chụp trực tiếp lúc này. Hãy nhập mã nhân viên và email để vào hệ thống." });
     }
 
     // 2) Dấu vân khuôn mặt của người đang quét, rồi tìm trong thư viện
@@ -74,7 +74,7 @@ module.exports = async function (context, req) {
       await log(req, { code: id.code }, false, "id:inactive");
       return reply(context, 404, { ok: false, notFound: true, error: NOT_FOUND });
     }
-    await log(req, c, true, "ok", "khoảng cách " + id.distance.toFixed(3) + (id.second != null ? " · người thứ hai " + id.second.toFixed(3) : ""));
+    await log(req, c, true, "ok", "khoảng cách " + id.distance.toFixed(3) + (id.second != null ? " · người thứ hai " + id.second.toFixed(3) : "") + (aiOk ? "" : " · AI nhìn ảnh không trả lời, dựa vào thử thách quay mặt"));
     return reply(context, 200, { ok: true, code: c.code, email: c.email, name: c.name || "" });
   } catch (e) {
     context.log.error("kt-facelogin", e && e.message);

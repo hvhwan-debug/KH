@@ -4,7 +4,7 @@ Nhân viên đã có dữ liệu khuôn mặt trên hệ thống chỉ cần qu�
 
 ## Cách hoạt động
 1. Trình duyệt chụp ảnh trong màn quét AI, kiểm tra tại máy (một khuôn mặt, đủ sáng, đủ lớn).
-2. `POST /api/kt-facelogin`: máy chủ kiểm tra ảnh chụp trực tiếp bằng AI (**bắt buộc có AI xác nhận**, không có thì từ chối), tính "dấu vân" 128 số rồi tìm trong thư viện khuôn mặt (`api/_lib/facegallery.js`).
+2. `POST /api/kt-facelogin`: máy chủ kiểm tra **thử thách quay mặt** (lớp chống ảnh giả chính, xem bên dưới) và nhờ AI nhìn ảnh để loại ảnh nghi chụp lại màn hình (nếu dịch vụ AI không trả lời thì vẫn đăng nhập được nhờ thử thách quay mặt; chỉ khi `FACE_LIVENESS=off` mới bắt buộc AI phải xác nhận), tính "dấu vân" 128 số rồi tìm trong thư viện khuôn mặt (`api/_lib/facegallery.js`).
 3. Nhận diện được và nhân viên còn trong danh sách (chưa `left`) thì trả mã NV + email; trình duyệt đi tiếp qua `/api/kt-check` như nhập tay nên mọi kiểm tra về đề thi giữ nguyên.
 
 ## Dữ liệu khuôn mặt
@@ -70,3 +70,12 @@ Không cảnh báo khi: chưa có ảnh trước (lần đầu của tài khoả
 - **Ảnh gốc là ảnh của lần làm bài đầu tiên.** Nếu người làm hộ là người làm bài lần đầu thì các lần sau chính chủ mới bị báo "khác người". Quản trị viên nên kiểm tra ảnh gốc của các tài khoản quan trọng.
 - Có thể báo nhầm khi ánh sáng, kính, khẩu trang, kiểu tóc thay đổi nhiều. Vì vậy mặc định chỉ cảnh báo, không chặn; nên so ảnh bằng mắt trong email trước khi kết luận.
 - Ảnh chụp lúc làm bài (nay có thử thách quay mặt) là ảnh lưu làm minh chứng; ảnh vừa quét chỉ có trong email gửi quản trị viên cùng với ảnh các lần trước.
+
+## Nạp dữ liệu khuôn mặt cho nhân viên hiện có
+Thư viện chỉ có người sau khi bài làm của họ được đối chiếu ("match"/"first"). Với bài làm **trước khi** có tính năng này, cần nạp một lần:
+
+1. Đăng nhập trang quản trị bằng tài khoản quản trị viên.
+2. Mở `https://<tên-miền>/api/kt-facegallery?run=1` trong cùng trình duyệt. Mỗi lần chạy xử lý một đợt (~30 giây) và trả về `scan.left` / `backfill.left`; **mở lại (F5) cho tới khi hai số này bằng 0**.
+3. Xem một người đã có chưa: `.../api/kt-facegallery?code=<mã nhân viên>`; xem tổng: `.../api/kt-facegallery` (chỉ trả số liệu, không trả ảnh hay dấu vân).
+
+Nhân viên **chưa có bài làm nào** thì không có dữ liệu để nhận diện: lần đầu họ nhập mã nhân viên + email, ảnh chụp lúc bắt đầu làm bài sẽ được đưa vào thư viện (nếu qua thử thách quay mặt và không bị đánh dấu khác người).
