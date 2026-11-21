@@ -176,7 +176,7 @@ async function preview(examId, draft) {
   const settings = await quiz.getExamSettings(examId);
   const c = (await quiz.getCandidates()).find((x) => x.email && !quiz.isLeft(x) && quiz.inAudience(settings, x)) || { name: "Nguyễn Văn An", segment: "both", manager: "" };
   const msg = inviteMsg(exam, settings, c, cfg().appUrl + "/kiemtra/?exam=" + encodeURIComponent(examId), false);
-  return { ok: true, subject: msg.subject, html: msg.html, sampleName: c.name || "" };
+  return { ok: true, subject: msg.subject, html: msg.html, text: msg.text, sampleName: c.name || "" };
 }
 
 module.exports = { run, resend, remind, preview, inviteMsg };

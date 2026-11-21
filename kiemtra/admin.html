@@ -1488,7 +1488,7 @@ table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-
             <textarea id="exInvNote" rows="3" maxlength="1000" oninput="exInvSum()" placeholder="Kết quả bài kiểm tra giúp đánh giá mức độ nắm vững nội dung đã được đào tạo, đồng thời giúp {xung_ho} chủ động nhận ra những phần cần củng cố để áp dụng tốt hơn trong công việc."></textarea>
             <label for="exInvClosing">Câu nhắc cuối thư</label>
             <input type="text" id="exInvClosing" maxlength="300" oninput="exInvSum()" placeholder="Đề nghị {xung_ho} sắp xếp thời gian làm bài nghiêm túc và hoàn thành đúng thời hạn.">
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px"><button type="button" class="btn ghost sm" onclick="exInvPreview()">👁 Xem trước email</button><span class="small" id="exInvMsg"></span></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px"><button type="button" class="btn ghost sm" onclick="exInvPreview()">👁 Xem trước email</button><input type="email" id="exInvTo" placeholder="email nhận thư thử" style="max-width:230px;margin:0" aria-label="Email nhận thư thử"><button type="button" class="btn ghost sm" id="exInvTestBtn" onclick="exInvTest()">✉ Gửi thử email mời</button><span class="small" id="exInvMsg"></span></div>
           </details>
 <div id="exResend" style="margin-bottom:12px"></div>
 <div id="exRemind" style="margin-bottom:12px"></div>
@@ -2795,6 +2795,15 @@ document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && EXMENU
 window.addEventListener('scroll', exMenuClose, true); window.addEventListener('resize', exMenuClose);
 // Nội dung email mời của đề: tóm tắt trạng thái + xem trước đúng email sẽ gửi (lấy một người thuộc đối tượng đề làm mẫu)
 function exInvSum(){ const own = $('exInvNote').value.trim() || $('exInvClosing').value.trim(); $('exInvSum').textContent = own ? '(đã soạn lời nhắn riêng cho đề này)' : '(đang dùng lời nhắn mặc định)'; }
+async function exInvTest(){
+  const id = $('exEditingId').value || $('exId').value.trim(), to = $('exInvTo').value.trim(), btn = $('exInvTestBtn');
+  if (!id){ $('exInvMsg').textContent = 'Nhập mã đề trước.'; return; }
+  if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(to)){ $('exInvMsg').textContent = 'Nhập email nhận thư thử.'; $('exInvTo').focus(); return; }
+  btn.disabled = true; $('exInvMsg').textContent = 'Đang gửi…';
+  const { j } = await api('POST', '/api/kt-admin', { op:'inviteTest', examId:id, to, draft:{ inviteNote:$('exInvNote').value, inviteClosing:$('exInvClosing').value, description:$('exDesc').value } });
+  btn.disabled = false;
+  $('exInvMsg').innerHTML = j && j.ok ? '<span style="color:var(--ok)">✓ Đã gửi thử tới <b>' + esc(j.to) + '</b> (mẫu dựng cho ' + esc(j.sampleName || '') + '). Kiểm tra cả hộp thư Spam/Quảng cáo.</span>' : '<span style="color:var(--bad)">' + esc((j && j.error) || 'Không gửi được.') + '</span>';
+}
 async function exInvPreview(){
   const id = $('exEditingId').value || $('exId').value.trim();
   if (!id){ $('exInvMsg').textContent = 'Nhập mã đề trước.'; return; }

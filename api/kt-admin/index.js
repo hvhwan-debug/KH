@@ -581,6 +581,19 @@ const handler = async function (context, req) {
       return reply(context, 200, { ok: true, questions: list, regrade });
     }
 
+    if (op === "inviteTest") {
+      // Gửi THỬ email mời của một đề tới một địa chỉ bất kỳ (chỉ quản trị viên): đúng nội dung thật, tiêu đề có [Gửi thử]
+      const id = String(b.examId || ""), to = String(b.to || "").trim().toLowerCase();
+      if (!id) return reply(context, 400, { ok: false, error: "Thiếu mã đề." });
+      if (!/^[^\s@<>,;]+@[^\s@<>,;]+\.[a-z]{2,}$/i.test(to) || to.length > 120) return reply(context, 400, { ok: false, error: "Địa chỉ email không hợp lệ." });
+      if (!require("../_lib/config").mailConfigured()) return reply(context, 200, { ok: false, error: "Chưa cấu hình gửi email (SMTP) trên máy chủ." });
+      const d = b.draft && typeof b.draft === "object" ? { inviteNote: String(b.draft.inviteNote || "").slice(0, 1000), inviteClosing: String(b.draft.inviteClosing || "").slice(0, 300), description: String(b.draft.description || "").slice(0, 500) } : null;
+      const p = await require("../_lib/examnotify").preview(id, d);
+      const M = require("../_lib/mail");
+      const ok = await M.send({ fromName: M.KT_NAME, to, subject: "[Gửi thử] " + p.subject, html: p.html, text: p.text || "" });
+      if (ok === false) return reply(context, 200, { ok: false, error: "Máy chủ chưa gửi được email (SMTP)." });
+      return reply(context, 200, { ok: true, to, subject: "[Gửi thử] " + p.subject, sampleName: p.sampleName });
+    }
     if (op === "invitePreview") {
       const id = String(b.examId || "");
       if (!id) return reply(context, 400, { ok: false, error: "Thiếu mã đề." });
