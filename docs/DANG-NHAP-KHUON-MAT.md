@@ -79,3 +79,23 @@ Thư viện chỉ có người sau khi bài làm của họ được đối chi�
 3. Xem một người đã có chưa: `.../api/kt-facegallery?code=<mã nhân viên>`; xem tổng: `.../api/kt-facegallery` (chỉ trả số liệu, không trả ảnh hay dấu vân).
 
 Nhân viên **chưa có bài làm nào** thì không có dữ liệu để nhận diện: lần đầu họ nhập mã nhân viên + email, ảnh chụp lúc bắt đầu làm bài sẽ được đưa vào thư viện (nếu qua thử thách quay mặt và không bị đánh dấu khác người).
+
+## Âm thanh ở màn quét khuôn mặt
+Màn quét (làm bài và đăng nhập bằng khuôn mặt) có âm thanh để nhân viên nhận biết hệ thống đang làm gì. Âm thanh được **tổng hợp ngay trong trình duyệt** (Web Audio), không có tệp âm thanh nào để tải.
+
+| Thời điểm | Âm thanh |
+|---|---|
+| Camera sẵn sàng | một tiếng "tít" nhẹ |
+| Khoá được khuôn mặt | hai nốt đi lên |
+| Có hướng dẫn mới (nhìn thẳng / quay trái / quay phải) | hai nốt báo hiệu + **giọng đọc tiếng Việt** |
+| Đang giữ đúng tư thế | các tiếng tít cao dần |
+| Chụp được một tư thế | tiếng "tách" màn trập |
+| Đang phân tích / xác minh | tiếng quét lặp theo nhịp tia quét |
+| Thành công | chuông 4 nốt (đăng nhập thành công có thêm giọng chào tên) |
+| Không đạt | hai tiếng trầm |
+| Khuôn mặt khác lần trước | hai nốt cảnh báo + giọng đọc |
+
+- Nút loa ở góc trên bên phải thẻ bật/tắt toàn bộ âm thanh; lựa chọn được nhớ trên máy (`localStorage`, khoá `kt_snd`).
+- Trình duyệt chỉ cho phát tiếng sau một thao tác của người dùng; màn quét luôn mở sau khi bấm nút nên không bị chặn. iPhone để chế độ im lặng sẽ không nghe thấy.
+- Giọng đọc chỉ hoạt động khi thiết bị có sẵn giọng tiếng Việt (Chrome/Edge trên Windows thường có, một số điện thoại cần cài giọng); không có thì chỉ phát âm báo, **không đọc tiếng Việt bằng giọng nước ngoài**.
+- Không có âm thanh ở màn làm bài.
