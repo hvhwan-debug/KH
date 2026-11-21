@@ -581,6 +581,12 @@ const handler = async function (context, req) {
       return reply(context, 200, { ok: true, questions: list, regrade });
     }
 
+    if (op === "invitePreview") {
+      const id = String(b.examId || "");
+      if (!id) return reply(context, 400, { ok: false, error: "Thiếu mã đề." });
+      const d = b.draft && typeof b.draft === "object" ? { inviteNote: String(b.draft.inviteNote || "").slice(0, 1000), inviteClosing: String(b.draft.inviteClosing || "").slice(0, 300), description: String(b.draft.description || "").slice(0, 500) } : null;
+      return reply(context, 200, await require("../_lib/examnotify").preview(id, d));
+    }
     if (op === "genQuestions") {
       const r = await require("../_lib/examai").generateDraft(b.topic, b.count, b.category, (await quiz.getQuestions()).map((q) => q.text), b.doc && typeof b.doc === "object" ? b.doc : null);
       return reply(context, 200, r);

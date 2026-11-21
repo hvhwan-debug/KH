@@ -7,6 +7,17 @@
 const quiz = require("./quiz");
 const mail = require("./mail");
 const assignmail = require("./assignmail");
+
+// Nội dung thư mời theo ĐÚNG đề và ĐÚNG người: số câu người đó nhận (theo nhóm ngành/miền), thời gian làm bài, số lượt,
+// giờ mở đề (nếu chưa mở), hạn chót, mô tả đề; lời nhắn / câu kết riêng của đề nếu quản trị viên đã soạn.
+function inviteMsg(exam, settings, c, link, replaces) {
+  let questions = 0; try { questions = quiz.countFor(settings, quiz.normSegment(c.segment), c.region); } catch (e) { questions = 0; }
+  const total = settings.timeMode === "total", spq = Math.max(10, settings.secondsPerQuestion || 60);
+  const duration = total ? (Math.max(1, parseInt(settings.totalMinutes, 10) || 30) + " phút cho cả bài") : (questions ? "khoảng " + Math.max(1, Math.round(questions * spq / 60)) + " phút (" + spq + " giây mỗi câu)" : spq + " giây mỗi câu");
+  const lim = quiz.attemptLimit(settings), attempts = lim === Infinity ? "Không giới hạn" : lim + " lượt";
+  return assignmail.build({ name: c.name, title: settings.examTitle || exam.title || exam.id, description: exam.description || "", questions, duration, attempts,
+    openMs: exam.openAt || 0, deadlineMs: exam.closeAt || 0, ctaUrl: link, manager: c.manager || "", note: exam.inviteNote || "", closing: exam.inviteClosing || "", replaces: !!replaces });
+}
 const { cfg } = require("./config");
 
 const MAX_PER_RUN = 300; // mỗi đề mỗi lượt chạy, để không vượt ngân sách thời gian
@@ -36,7 +47,7 @@ async function run(opts) {
         if (Date.now() - t0 > TIME_BUDGET) return;
         const c = list[idx++];
         try {
-          const msg = assignmail.build({ name: c.name, title, audience: exam.description || "", deadlineMs: exam.closeAt || 0, ctaUrl: link, manager: c.manager || "" });
+          const msg = inviteMsg(exam, settings, c, link, false);
           const ok = await mail.send({ fromName: mail.KT_NAME, to: c.email, subject: msg.subject, html: msg.html, text: msg.text });
           if (ok === false) { stopped = true; return; } // chưa cấu hình SMTP: dừng hẳn, không thử tiếp người khác
           done.push(quiz.normCode(c.code)); sent++;
@@ -85,7 +96,7 @@ async function resend(examId, opts) {
       if (Date.now() - t0 > TIME_BUDGET) return;
       const c = list[idx++];
       try {
-        const msg = assignmail.build({ name: c.name, title, audience: exam.description || "", deadlineMs: exam.closeAt || 0, ctaUrl: link, manager: c.manager || "", replaces: true });
+        const msg = inviteMsg(exam, settings, c, link, true);
         const ok = await mail.send({ fromName: mail.KT_NAME, to: c.email, subject: msg.subject, html: msg.html, text: msg.text });
         if (ok === false) { stopped = true; noSmtp = true; return; }
         done.push(quiz.normCode(c.code));
@@ -158,4 +169,14 @@ async function remind(examId, opts) {
   await quiz.saveExams(exams);
   return Object.assign({ ok: true, sent: done.length, remaining: pending.length - done.length, stats }, info);
 }
-module.exports = { run, resend, remind };
+// Xem trước thư mời của một đề (trang quản trị): dùng người đầu tiên thuộc đối tượng đề, hoặc một người mẫu.
+// draft: { inviteNote, inviteClosing, description } chưa lưu trên form, để xem ngay khi đang soạn.
+async function preview(examId, draft) {
+  const exams = await quiz.getExams(), exam = Object.assign({}, exams.find((e) => e.id === examId) || { id: examId, title: examId }, draft || {});
+  const settings = await quiz.getExamSettings(examId);
+  const c = (await quiz.getCandidates()).find((x) => x.email && !quiz.isLeft(x) && quiz.inAudience(settings, x)) || { name: "Nguyễn Văn An", segment: "both", manager: "" };
+  const msg = inviteMsg(exam, settings, c, cfg().appUrl + "/kiemtra/?exam=" + encodeURIComponent(examId), false);
+  return { ok: true, subject: msg.subject, html: msg.html, sampleName: c.name || "" };
+}
+
+module.exports = { run, resend, remind, preview, inviteMsg };

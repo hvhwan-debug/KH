@@ -639,6 +639,8 @@ async function upsertExam(data) {
     entry.segmentPlans = Object.keys(sp).length ? sp : null; // null = theo cài đặt chung
   }
   if (data && data.sharedUniform !== undefined) entry.sharedUniform = !!data.sharedUniform; // true = dùng chung, bỏ qua phân bổ nhóm ngành/miền
+  // Nội dung riêng của email mời cho đề này (trống = dùng lời nhắn mặc định). {xung_ho} được thay bằng Anh/Chị theo từng người.
+  ["inviteNote", "inviteClosing"].forEach((k) => { if (data && data[k] !== undefined) { const v = String(data[k] || "").replace(/\r/g, "").trim().slice(0, k === "inviteNote" ? 1000 : 300); if (v) entry[k] = v; else { delete entry[k]; if (i >= 0) delete exams[i][k]; } } });
   if (data && data.inviteOff !== undefined) entry.inviteOff = !!data.inviteOff; // true = tắt tự động gửi email mời khi có người mới được gán
   if (data && data.openAt !== undefined) entry.openAt = Math.max(0, Number(data.openAt) || 0);
   if (data && data.closeAt !== undefined) entry.closeAt = Math.max(0, Number(data.closeAt) || 0);

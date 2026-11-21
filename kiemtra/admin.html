@@ -1200,6 +1200,11 @@ table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-
 .aiq-chip b{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}.aiq-chip em{font-style:normal;color:var(--muted)}
 .aiq-chip button{border:0;background:#fff;border-radius:50%;width:22px;height:22px;line-height:1;cursor:pointer;color:var(--muted);font-size:15px}
 .aiq-chip.busy{padding-right:10px;color:var(--muted)}
+
+.exinv{margin:0 0 12px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:#FAFCFF}
+.exinv summary{cursor:pointer;font-weight:700;color:var(--brand-deep)}
+.exinv textarea,.exinv input{width:100%;box-sizing:border-box}
+.exinv label{display:block;margin-top:8px;font-size:13px;font-weight:600}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -1476,6 +1481,15 @@ table.exl tbody tr:focus-visible{outline:2px solid var(--brand);outline-offset:-
 <h2 class="exsec">Gán nhân viên làm đề này</h2>
           <label style="display:flex;align-items:flex-start;gap:8px;margin:6px 0 10px;font-size:14px"><input type="checkbox" id="exInviteOff" style="width:18px;height:18px;margin-top:2px"> <span>Không tự động gửi email mời làm bài <span class="small">(mặc định: ai mới được gán vào đề này sẽ tự nhận email mời, không cần quản trị viên gửi tay)</span></span></label>
           <div id="exInviteStat" class="small" style="margin-bottom:10px"></div>
+          <details class="exinv" id="exInvBox">
+            <summary>Nội dung email mời làm bài <span class="small" id="exInvSum">(đang dùng lời nhắn mặc định)</span></summary>
+            <p class="small" style="margin:8px 0 6px">Email tự điền đúng cho từng người: tên đề, mô tả đề, số câu người đó nhận, thời gian làm bài, số lượt, giờ mở đề (nếu chưa mở) và hạn chót. Ở đây chỉ cần soạn <b>lời nhắn</b> phù hợp với đề này. Để trống thì dùng lời nhắn chung. Gõ <code>{xung_ho}</code> để tự thay bằng Anh / Chị.</p>
+            <label for="exInvNote">Lời nhắn về mục đích bài kiểm tra</label>
+            <textarea id="exInvNote" rows="3" maxlength="1000" oninput="exInvSum()" placeholder="Kết quả bài kiểm tra giúp đánh giá mức độ nắm vững nội dung đã được đào tạo, đồng thời giúp {xung_ho} chủ động nhận ra những phần cần củng cố để áp dụng tốt hơn trong công việc."></textarea>
+            <label for="exInvClosing">Câu nhắc cuối thư</label>
+            <input type="text" id="exInvClosing" maxlength="300" oninput="exInvSum()" placeholder="Đề nghị {xung_ho} sắp xếp thời gian làm bài nghiêm túc và hoàn thành đúng thời hạn.">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px"><button type="button" class="btn ghost sm" onclick="exInvPreview()">👁 Xem trước email</button><span class="small" id="exInvMsg"></span></div>
+          </details>
 <div id="exResend" style="margin-bottom:12px"></div>
 <div id="exRemind" style="margin-bottom:12px"></div>
           <div class="asg-mode" role="radiogroup" aria-label="Đối tượng làm đề">
@@ -2779,6 +2793,23 @@ function exMenu(btn, id){
 document.addEventListener('click', (ev) => { if (EXMENU && !EXMENU.m.contains(ev.target) && ev.target !== EXMENU.b) exMenuClose(); });
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && EXMENU){ const b = EXMENU.b; exMenuClose(); b.focus(); } });
 window.addEventListener('scroll', exMenuClose, true); window.addEventListener('resize', exMenuClose);
+// Nội dung email mời của đề: tóm tắt trạng thái + xem trước đúng email sẽ gửi (lấy một người thuộc đối tượng đề làm mẫu)
+function exInvSum(){ const own = $('exInvNote').value.trim() || $('exInvClosing').value.trim(); $('exInvSum').textContent = own ? '(đã soạn lời nhắn riêng cho đề này)' : '(đang dùng lời nhắn mặc định)'; }
+async function exInvPreview(){
+  const id = $('exEditingId').value || $('exId').value.trim();
+  if (!id){ $('exInvMsg').textContent = 'Nhập mã đề trước.'; return; }
+  $('exInvMsg').textContent = 'Đang dựng email…';
+  const { j } = await api('POST', '/api/kt-admin', { op:'invitePreview', examId:id, draft:{ inviteNote:$('exInvNote').value, inviteClosing:$('exInvClosing').value, description:$('exDesc').value } });
+  if (!j || !j.ok){ $('exInvMsg').textContent = (j && j.error) || 'Không xem trước được.'; return; }
+  $('exInvMsg').textContent = '';
+  let ov = $('exInvOv');
+  if (!ov){ ov = document.createElement('div'); ov.id = 'exInvOv'; ov.className = 'modal-bg'; ov.onclick = (e) => { if (e.target === ov) ov.remove(); };
+    document.body.appendChild(ov); }
+  ov.innerHTML = '<div class="card modal-box" role="dialog" aria-modal="true" aria-label="Xem trước email mời" style="max-width:680px;width:100%;padding:16px"><button class="xclose modal-x" type="button" onclick="$(\'exInvOv\').remove()" aria-label="Đóng">×</button>' +
+    '<div class="small" style="margin:0 0 4px">Tiêu đề: <b>' + esc(j.subject) + '</b></div><div class="small" style="margin:0 0 10px">Mẫu dựng cho: ' + esc(j.sampleName || '') + ' (mỗi người nhận tên, xưng hô và số câu của chính mình)</div>' +
+    '<iframe title="Email mời" style="width:100%;height:70vh;border:1px solid var(--line);border-radius:12px;background:#fff" sandbox=""></iframe></div>';
+  ov.querySelector('iframe').srcdoc = j.html;
+}
 // Chuyển đổi hiển thị danh sách đề: dạng thẻ (card) hoặc dạng danh sách (bảng), nhớ lựa chọn cho lần sau.
 function exSetView(v){
   v = v === 'list' ? 'list' : 'card';
@@ -2916,7 +2947,7 @@ function clearExamForm(){
   $('exCount').value=''; $('exBothGD').value=''; $('exSeconds').value=''; $('exPass').value=''; $('exPassOn').checked=false;
   $('exRetake').checked=false; $('exAttempts').value=''; $('exAttempts').disabled=false; $('exPractice').checked=false; if ($('exSurveyUrl')) $('exSurveyUrl').value=''; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
   $('exDesc').value=''; asgLoad([]); $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
-  $('exInviteOff').checked = false; $('exInviteStat').textContent = ''; exResendReset(false);
+  $('exInviteOff').checked = false; $('exInvNote').value = ''; $('exInvClosing').value = ''; exInvSum(); $('exInviteStat').textContent = ''; exResendReset(false);
   BP_RULES = []; renderBpRules(); $('bpPreview').innerHTML=''; $('bpTotal').textContent='';
   msg('exMsg',''); $('exAdv').open = false; exSpSet('global');
   $('exPassOn').checked = !!SETCACHE.passEnabled; $('exRetake').checked = !!SETCACHE.allowRetake; $('exAttempts').disabled = $('exRetake').checked; $('exComplianceOn').checked = !!SETCACHE.complianceEnabled;
@@ -2946,7 +2977,7 @@ function editExam(id){
   $('exCHigh').value = e.complianceHighMin || ''; $('exCMid').value = e.complianceMidMin || ''; $('exCLow').value = e.complianceLowMin || '';
   $('exDesc').value = e.description || ''; $('exSurveyUrl').value = e.surveyUrl || ''; asgLoad(e.codes || [], e.codesExclude); $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
   document.querySelectorAll('.exSeg').forEach(c => c.checked = (e.segments || []).indexOf(c.value) >= 0);
-  $('exInviteOff').checked = !!e.inviteOff;
+  $('exInviteOff').checked = !!e.inviteOff; $('exInvNote').value = e.inviteNote || ''; $('exInvClosing').value = e.inviteClosing || ''; exInvSum();
   $('exInviteStat').textContent = (e.invitedCodes || []).length ? 'Đã tự động gửi email mời cho ' + e.invitedCodes.length + ' người được gán vào đề này.' : (e.inviteOff ? '' : 'Chưa có ai được gửi email mời (sẽ tự gửi khi lưu, nếu có người đủ điều kiện và có email).');
   BP_RULES = e.blueprint && e.blueprint.rules ? e.blueprint.rules.map(r => Object.assign({}, r)) : []; renderBpRules();
   $('examFormTitle').textContent = 'Cài đặt đề'; exResendReset(true);
@@ -3002,7 +3033,7 @@ const bad0 = exIssues(); for (let st = 1; st <= EX_STEPS; st++){ const e0 = bad0
     description: $('exDesc').value.trim(), surveyUrl: $('exSurveyUrl').value.trim(), codes: ASG.mode !== 'all' ? $('exCodes').value : '', codesExclude: ASG.mode === 'exclude',
     openAt: localToMs($('exOpen').value), closeAt: localToMs($('exClose').value),
     segments: Array.from(document.querySelectorAll('.exSeg:checked')).map(c => c.value),
-    segmentPlans: exSpOwn() ? spRead($('exSp')) : null, sharedUniform: exSpShared(), inviteOff: $('exInviteOff').checked,
+    segmentPlans: exSpOwn() ? spRead($('exSp')) : null, sharedUniform: exSpShared(), inviteOff: $('exInviteOff').checked, inviteNote: $('exInvNote').value.trim(), inviteClosing: $('exInvClosing').value.trim(),
     blueprint: BP_RULES.length ? { rules: BP_RULES.map(r => ({ bankId:r.bankId, category:r.category||'', difficulty:r.difficulty||'', tag:r.tag||'', count:+r.count||0 })) } : null
   };
   if (!exam.id){ exGoStep(1); msg('exMsg','Nhập mã đề thi.'); return; }

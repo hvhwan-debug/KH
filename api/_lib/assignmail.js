@@ -29,10 +29,14 @@ function properName(name) {
   return n;
 }
 
-const defaultNote = (h) => "Kết quả bài kiểm tra là cơ sở để đánh giá mức độ nắm bắt kiến thức sản phẩm, đồng thời giúp mỗi " + h + " chủ động nhận diện và củng cố những nội dung cần cải thiện trong quá trình tư vấn, bán hàng.";
-const defaultClosing = (h) => "Đề nghị " + h + " nghiêm túc thực hiện và hoàn thành đúng thời hạn.";
+// Lời nhắn mặc định: dùng chung cho mọi loại đề (kiến thức sản phẩm, kỹ năng bán hàng, quy trình...), không nói riêng một chủ đề.
+// Từng đề có thể ghi lời nhắn / câu kết riêng ở form đề thi (exam.inviteNote / exam.inviteClosing); {xung_ho} được thay bằng Anh/Chị.
+const defaultNote = (h) => "Kết quả bài kiểm tra giúp đánh giá mức độ nắm vững nội dung đã được đào tạo, đồng thời giúp " + h + " chủ động nhận ra những phần cần củng cố để áp dụng tốt hơn trong công việc.";
+const defaultClosing = (h) => "Đề nghị " + h + " sắp xếp thời gian làm bài nghiêm túc và hoàn thành đúng thời hạn.";
+const fill = (t, h) => String(t || "").replace(/\{xung_ho\}/gi, h).trim();
 
-// opts: { name, org, title, audience, format, deadlineMs, ctaUrl, note, closing, manager, replaces }
+// opts: { name, org, title, description, format, questions, duration, attempts, openMs, deadlineMs, ctaUrl, note, closing, manager, replaces }
+// (audience: tên cũ của description, vẫn nhận để tương thích)
 // replaces = true: thư gửi lại, thay thế thông báo đã gửi trước đó (có dòng báo bỏ qua thư cũ, tiêu đề có [Cập nhật])
 function build(opts) {
   opts = opts || {};
@@ -40,17 +44,22 @@ function build(opts) {
   const org = opts.org || "Đào tạo Kinh doanh";
   const title = String(opts.title || "Bài kiểm tra").trim();
   const subject = (opts.replaces ? "[Cập nhật] " : "") + "Bạn có bài kiểm tra mới: " + title;
-  const audience = opts.audience ? String(opts.audience).trim() : "";
+  const description = String(opts.description || opts.audience || "").trim().slice(0, 500);
   const format = opts.format || "Trắc nghiệm trực tuyến";
   const deadline = opts.deadlineMs ? vnDeadline(opts.deadlineMs) : "";
+  const opensLater = opts.openMs && opts.openMs > Date.now() ? vnDeadline(opts.openMs) : ""; // đề chưa mở: báo giờ mở để thí sinh không vào sớm rồi tưởng lỗi
+  const questions = opts.questions ? String(opts.questions) + " câu" : "", duration = String(opts.duration || ""), attempts = String(opts.attempts || "");
   // Xưng hô theo tên: Anh / Chị; không chắc thì giữ "Anh/Chị" (opts.honorific cho phép chỉ định tay)
   const hon = ["Anh", "Chị", "Anh/Chị"].indexOf(opts.honorific) >= 0 ? opts.honorific : honorific(opts.name);
-  const note = opts.note || defaultNote(hon);
-  const closing = opts.closing || defaultClosing(hon);
+  const note = fill(opts.note, hon) || defaultNote(hon);
+  const closing = fill(opts.closing, hon) || defaultClosing(hon);
   const ctaUrl = /^https?:\/\//i.test(opts.ctaUrl || "") ? opts.ctaUrl : "#";
   const support = supportLine(opts.manager);
   const replaceNote = opts.replaces ? "Email này thay thế thông báo đã gửi trước đó. Vui lòng dùng thông tin trong email này và bỏ qua email cũ." : "";
 
+  const guide = opensLater
+    ? hon + " vui lòng nhấn nút bên dưới để vào trang làm bài từ " + opensLater + (deadline ? " và hoàn thành trước " + deadline : "") + ". Trước giờ mở đề, trang sẽ hiện đồng hồ đếm ngược."
+    : hon + " vui lòng nhấn nút bên dưới để truy cập hệ thống và hoàn thành bài kiểm tra" + (deadline ? " trước thời hạn quy định." : ".");
   const row = (label, value, strong) => !value ? "" :
     '<tr><td style="padding:9px 0;' + (strong ? "border-top:1px solid " + C.line + ";" : "") + 'font-family:' + FONT + ';font-size:13.5px;color:' + C.muted + ';width:150px;vertical-align:top">' + esc(label) + '</td>' +
     '<td style="padding:9px 0;' + (strong ? "border-top:1px solid " + C.line + ";" : "") + 'font-family:' + FONT + ';font-size:14px;font-weight:' + (strong ? "800" : "600") + ';color:' + (strong ? C.brand : C.ink) + '">' + esc(value) + '</td></tr>';
@@ -78,8 +87,9 @@ function build(opts) {
     : '';
 
   // ---- Khu vực 2b: THÔNG TIN BÀI KIỂM TRA — danh sách nhãn/giá trị, dòng hạn hoàn thành được nhấn mạnh ----
-  const infoRows = row("Đối tượng", audience) + row("Hình thức", format) + row("Thời hạn hoàn thành", deadline, true);
-  const infoBlock = (audience || title || format || deadline)
+  const infoRows = row("Nội dung", description) + row("Hình thức", format) + row("Số câu hỏi", questions) + row("Thời gian làm bài", duration) + row("Số lượt làm", attempts) +
+    row("Mở đề lúc", opensLater) + row("Thời hạn hoàn thành", deadline, true);
+  const infoBlock = (description || title || format || deadline)
     ? '<tr><td style="padding:22px 32px 0;font-family:' + FONT + '">' +
       '<div style="font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:' + C.muted + ';margin:0 0 8px">Thông tin bài kiểm tra</div>' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:' + C.soft + ';border:1px solid ' + C.line + ';border-radius:12px"><tr><td style="padding:4px 16px">' +
@@ -91,7 +101,7 @@ function build(opts) {
   const cta =
     '<tr><td style="padding:24px 32px 0;font-family:' + FONT + '">' +
     '<div style="font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:' + C.muted + ';margin:0 0 8px">Hướng dẫn thực hiện</div>' +
-    '<div style="font-size:14px;line-height:1.75;color:' + C.body + '">' + hon + ' vui lòng nhấn nút bên dưới để truy cập hệ thống và hoàn thành bài kiểm tra trước thời hạn quy định.</div>' +
+    '<div style="font-size:14px;line-height:1.75;color:' + C.body + '">' + esc(guide) + '</div>' +
     '</td></tr>' +
     '<tr><td align="center" style="padding:20px 32px 6px;font-family:' + FONT + '">' +
     '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td align="center" bgcolor="' + C.brand + '" style="border-radius:12px;background:' + C.brand + ';background-image:linear-gradient(120deg,' + C.brand + ',' + C.brand2 + ')">' +
@@ -133,15 +143,15 @@ function build(opts) {
     '</table></td></tr></table></body></html>';
 
   const textRows = [
-    audience ? "- Đối tượng: " + audience : "", "- Hình thức: " + format,
-    deadline ? "- Thời hạn hoàn thành: " + deadline : ""
+    description ? "- Nội dung: " + description : "", "- Hình thức: " + format, questions ? "- Số câu hỏi: " + questions : "", duration ? "- Thời gian làm bài: " + duration : "",
+    attempts ? "- Số lượt làm: " + attempts : "", opensLater ? "- Mở đề lúc: " + opensLater : "", deadline ? "- Thời hạn hoàn thành: " + deadline : ""
   ].filter((x) => x !== "");
   const text = [
     "Chào " + hon + (name ? " " + name : "") + ",",
     org + " thông báo " + hon + " đã được giao bài kiểm tra: \u201c" + title + "\u201d.", ...(replaceNote ? [replaceNote] : []), "",
     "THÔNG TIN BÀI KIỂM TRA", ...textRows, "",
     "HƯỚNG DẪN THỰC HIỆN",
-    hon + " vui lòng nhấn vào liên kết bên dưới để truy cập hệ thống và hoàn thành bài kiểm tra trước thời hạn quy định.",
+    guide,
     ctaUrl, "",
     note, closing, "",
     support, "",
@@ -152,4 +162,4 @@ function build(opts) {
   return { subject, html, text };
 }
 
-module.exports = { build };
+module.exports = { build, defaultNote, defaultClosing };
