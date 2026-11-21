@@ -68,7 +68,7 @@ module.exports = async function (context, req) {
     }
 
     // 3) Người được nhận diện phải còn trong danh sách và chưa nghỉ
-    const c = (await quiz.getCandidates()).find((x) => quiz.normCode(x.code) === id.code);
+    const c = (await quiz.getCandidates()).find((x) => quiz.normCode(x.code) === id.code) || (await quiz.findTestByCode(id.code)); // thí sinh hoặc tài khoản thử nghiệm
     if (!c || quiz.isLeft(c) || !c.email) {
       quiz.noteFail(req);
       await log(req, { code: id.code }, false, "id:inactive");

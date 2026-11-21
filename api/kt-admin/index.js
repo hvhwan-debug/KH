@@ -1034,6 +1034,14 @@ const handler = async function (context, req) {
       } catch (e) { return reply(context, 502, { ok: false, error: String(e && e.message || e).slice(0, 300) }); }
     }
 
+    // Ô tích "Tài khoản thử nghiệm" trên hồ sơ thí sinh: chuyển sang / khỏi danh sách tài khoản thử nghiệm (xem api/_lib/testmode.js)
+    if (op === "setTestMode") {
+      const tm = require("../_lib/testmode"), code = String(b.code || "").trim().slice(0, 50);
+      const r = b.test === true ? await tm.toTest(code) : await tm.toCandidate(code);
+      if (!r.ok) return reply(context, r.status || 400, { ok: false, error: r.error });
+      return reply(context, 200, { ok: true });
+    }
+
     if (op === "saveTestAccounts") {
       const raw = Array.isArray(b.accounts) ? b.accounts : [];
       if (raw.length > 20) return reply(context, 400, { ok: false, error: "Tối đa 20 tài khoản thử nghiệm." });
@@ -1056,7 +1064,9 @@ const handler = async function (context, req) {
           segment: quiz.normSegment(r.segment), region: quiz.normRegion(r.region) || old.region || "" }));
       }
       await quiz.saveTestAccounts(out);
-      return reply(context, 200, { ok: true, accounts: out });
+      // Dòng bị xoá mà vốn là thí sinh thật (đã tích "Tài khoản thử nghiệm") thì trả về danh sách thí sinh, không để mất người
+      const restored = await require("../_lib/testmode").restoreMany(Object.keys(prev).filter((k) => !seen.has(k)).map((k) => prev[k]));
+      return reply(context, 200, { ok: true, accounts: out, restored });
     }
 
     if (op === "deleteCandidate") {

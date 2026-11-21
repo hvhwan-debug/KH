@@ -80,7 +80,7 @@ async function backfill(opts) {
   const g = await load();
   const have = new Set(), cnt = {};
   Object.keys(g.people).forEach((c) => { cnt[c] = g.people[c].descs.length; g.people[c].descs.forEach((x) => have.add(x.src)); });
-  const rows = (await quiz.getIndex())
+  const rows = (await quiz.getIndexAll())
     .filter((r) => r.status === "submitted" && r.faceId && (r.faceId.s === "match" || r.faceId.s === "first") && !have.has(r.id))
     .sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0));
   let done = 0, left = 0;

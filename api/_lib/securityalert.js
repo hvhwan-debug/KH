@@ -114,7 +114,7 @@ function identityMailHtml(a, n, count, cids) {
   const img = (cid, cap, border) => cid ? `<td align="center" style="padding:0 6px"><img src="cid:${cid}" width="200" style="display:block;width:200px;max-width:100%;border-radius:12px;border:3px solid ${border}"><div style="font-size:12px;color:#6B7F94;padding-top:6px">${cap}</div></td>` : "";
   return `<!DOCTYPE html><html lang="vi"><body style="margin:0;background:#EAF0F6;font-family:'Be Vietnam Pro','Segoe UI',Arial,sans-serif"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:22px 10px">` +
     `<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#fff;border-radius:18px;border:1px solid #DCE6F0;border-collapse:separate;overflow:hidden">` +
-    `<tr><td style="padding:22px 26px;background:#B26A00;background-image:linear-gradient(135deg,#8A5200,#E08A00);color:#fff"><div style="font-size:11px;letter-spacing:2px;font-weight:bold;opacity:.9">CẢNH BÁO · NGƯỜI LÀM BÀI KHÁC LẦN TRƯỚC</div><div style="font-size:22px;line-height:30px;font-weight:bold;padding-top:6px">Khuôn mặt khác với các lần làm bài trước của tài khoản này</div></td></tr>` +
+    `<tr><td style="padding:22px 26px;background:#B26A00;background-image:linear-gradient(135deg,#8A5200,#E08A00);color:#fff"><div style="font-size:11px;letter-spacing:2px;font-weight:bold;opacity:.9">CẢNH BÁO · NGƯỜI LÀM BÀI KHÁC LẦN TRƯỚC${a.test ? " · TÀI KHOẢN THỬ NGHIỆM" : ""}</div><div style="font-size:22px;line-height:30px;font-weight:bold;padding-top:6px">Khuôn mặt khác với các lần làm bài trước của tài khoản này</div></td></tr>` +
     `<tr><td style="padding:20px 26px 6px"><div style="font-size:14px;line-height:22px;color:#34506E">Người vừa <b>bắt đầu làm bài</b> có khuôn mặt <b>khác với ảnh đã lưu</b> ở các lần trước của tài khoản bên dưới. ${n.blocked ? "Hệ thống đã <b>chặn không cho bắt đầu làm bài</b>." : "Thí sinh <b>vẫn được làm bài</b>; bài làm đã được đánh dấu để bạn xem lại."}</div></td></tr>` +
     `<tr><td style="padding:8px 26px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #E3EBF3">` +
     row("Tài khoản", esc(one(a.name, 80)) + " · " + esc(one(a.code, 40))) + row("Quản lý", esc(one(a.manager, 80)) || "(chưa rõ)") + row("Bài kiểm tra", esc(one(a.examTitle || a.period || "", 120))) +
@@ -133,7 +133,7 @@ async function alertIdentity(req, attempt, info) {
   let lk = { count: 1, mail: true };
   try { lk = await noteEvent("ident:" + String(attempt.code || "").trim().toLowerCase()); } catch (e) { console.error("securityalert ident:", e && e.message); }
   const ip = device.ipOf(req), ua = String((req && req.headers && req.headers["user-agent"]) || "");
-  const rec = { at: now, kind: "identity", label: "Người làm bài khác với các lần trước" + (info.blocked ? " (đã chặn)" : ""), attempt: attempt.id, code: one(attempt.code, 40), name: one(attempt.name, 80), manager: one(attempt.manager, 80), exam: one(attempt.examTitle || attempt.period || "", 120),
+  const rec = { at: now, kind: "identity", label: (attempt.test ? "[Thử nghiệm] " : "") + "Người làm bài khác với các lần trước" + (info.blocked ? " (đã chặn)" : ""), attempt: attempt.id, code: one(attempt.code, 40), name: one(attempt.name, 80), manager: one(attempt.manager, 80), exam: one(attempt.examTitle || attempt.period || "", 120),
     ip, ua: one(ua, 140), distance: info.distance != null ? Math.round(info.distance * 1000) / 1000 : null, count: lk.count, locked: false, until: 0, mailed: false };
   try {
     if (lk.mail) {
@@ -143,7 +143,7 @@ async function alertIdentity(req, attempt, info) {
         const shot = dataBuf(info.selfie), ref = dataBuf(info.refPhoto);
         if (ref) { cids.ref = "anh-truoc@kiemtra"; atts.push({ filename: "anh-cac-lan-truoc.jpg", content: ref.buf, contentType: ref.type, cid: cids.ref, contentDisposition: "inline" }); }
         if (shot) { cids.shot = "anh-vua-chup@kiemtra"; atts.push({ filename: "nguoi-vua-bat-dau.jpg", content: shot.buf, contentType: shot.type, cid: cids.shot, contentDisposition: "inline" }); }
-        const subject = "[CẢNH BÁO] Người làm bài khác lần trước · " + one(attempt.name, 60) + " (" + one(attempt.code, 30) + ")" + (info.blocked ? " · ĐÃ CHẶN" : "");
+        const subject = (attempt.test ? "[THỬ NGHIỆM] " : "") + "[CẢNH BÁO] Người làm bài khác lần trước · " + one(attempt.name, 60) + " (" + one(attempt.code, 30) + ")" + (info.blocked ? " · ĐÃ CHẶN" : "");
         const sent = await mail.send({ fromName: mail.KT_NAME, to: to.join(", "), subject, html: identityMailHtml(attempt, { ip, ua, distance: info.distance, threshold: info.threshold, blocked: !!info.blocked }, lk.count, cids),
           text: subject + "\nThời điểm: " + vn(now) + "\nIP: " + ip + (info.distance != null ? "\nĐộ lệch khuôn mặt: " + Number(info.distance).toFixed(3) + " (ngưỡng " + info.threshold + ")" : ""), attachments: atts.length ? atts : undefined });
         rec.mailed = sent !== false;

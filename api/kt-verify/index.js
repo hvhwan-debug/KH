@@ -19,7 +19,7 @@ module.exports = async function (context, req) {
       const m = /^KT-?([0-9A-Z]{8})$/.exec(String(req.query.c).trim().toUpperCase());
       if (m) {
         const want = "KT-" + m[1];
-        const hit = (await quiz.getIndex()).filter((x) => x.status === "submitted" && String(x.proof || quiz.proofCode(x.id)).toUpperCase() === want);
+        const hit = (await quiz.getIndexAll()).filter((x) => x.status === "submitted" && String(x.proof || quiz.proofCode(x.id)).toUpperCase() === want);
         if (hit.length === 1) id = hit[0].id; else if (!hit.length && (id = await quiz.testAttemptByProof(want))) { /* bài của tài khoản thử nghiệm */ } else codeBad = true;
       } else codeBad = true;
     }

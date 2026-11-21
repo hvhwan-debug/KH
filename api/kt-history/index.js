@@ -42,7 +42,7 @@ module.exports = async function (context, req) {
     if (!code || !email) return reply(context, 400, { ok: false, error: "Vui lòng nhập mã nhân viên và email." });
 
     // Các bài ĐÃ NỘP của đúng mã nhân viên này (bài tài khoản thử nghiệm không nằm trong chỉ mục)
-    const rows = (await quiz.getIndex()).filter((r) => r.status === "submitted" && quiz.normCode(r.code) === code)
+    const rows = (await quiz.getIndexAll()).filter((r) => r.status === "submitted" && quiz.normCode(r.code) === code)
       .sort((a, c) => (c.submittedAt || 0) - (a.submittedAt || 0));
     if (!rows.length || !rows.some((r) => quiz.normEmail(r.email) === email)) {
       quiz.noteFail(req);
@@ -102,16 +102,16 @@ module.exports = async function (context, req) {
     // Khuôn mặt khớp: trả danh sách bài (không có email, ảnh, đáp án). Liên kết "t" mở trang kết quả chính thức của từng bài.
     const cache = {}; const best = {};
     const settingsOf = async (p) => { if (!(p in cache)) { try { cache[p] = await quiz.getExamSettings(p); } catch (e) { cache[p] = {}; } } return cache[p]; };
-    rows.forEach((r) => { const p = r.period || ""; if (!r.practice && quiz.betterResult(r, best[p])) best[p] = r; });
+    rows.forEach((r) => { const p = r.period || ""; if (!r.practice && !r.test && quiz.betterResult(r, best[p])) best[p] = r; });
     const list = [];
     for (const r of rows.slice(0, MAX_ROWS)) {
       const st = await settingsOf(r.period || "");
       list.push({
-        id: r.id, title: st.examTitle || r.examTitle || "Bài kiểm tra", practice: !!r.practice,
+        id: r.id, title: st.examTitle || r.examTitle || "Bài kiểm tra", practice: !!r.practice, test: !!r.test,
         score: r.score, total: r.total, pct: r.pct, wrong: r.wrong, blank: r.blank,
         passed: quiz.passState(r.pct, st), passScore: quiz.passScoreOf(st),
         submittedAt: r.submittedAt, durationSec: r.durationSec != null ? r.durationSec : null,
-        official: !r.practice && best[r.period || ""] === r, proof: r.proof || quiz.proofCode(r.id),
+        official: !r.practice && !r.test && best[r.period || ""] === r, proof: r.proof || quiz.proofCode(r.id),
         paperOpen: !!st.closeAt && Date.now() > st.closeAt, t: quiz.verifyToken(r.id)
       });
     }

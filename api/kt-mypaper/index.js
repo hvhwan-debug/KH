@@ -81,7 +81,7 @@ module.exports = async function (context, req) {
       const refs = [];
       const addRef = (a) => { if (a && a.photo && refs.length < 3) refs.push({ photo: a.photo, desc: a.faceDesc, save: async (d) => { a.faceDesc = d; await quiz.putAttempt(a); } }); };
       addRef(attempt);
-      const rows = (await quiz.getIndex()).filter((r) => quiz.normCode(r.code) === quiz.normCode(attempt.code) && r.id !== attempt.id).sort((a, c) => (c.startedAt || 0) - (a.startedAt || 0)).slice(0, 4);
+      const rows = (await quiz.getIndexAll()).filter((r) => quiz.normCode(r.code) === quiz.normCode(attempt.code) && r.id !== attempt.id).sort((a, c) => (c.startedAt || 0) - (a.startedAt || 0)).slice(0, 4);
       for (const r of rows) { if (refs.length >= 3) break; addRef(await quiz.getAttempt(r.id)); }
       if (!refs.length) {
         await logView(req, attempt, "denied", "face:noref");

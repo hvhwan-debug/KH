@@ -11,14 +11,14 @@ function mode() { const m = String(process.env.FACE_IDENTITY || "warn").toLowerC
 // ctx: { req, photo, found, settings, attemptId, now, enrolOk }. Trả { mode, status, rec, faceDesc, block }
 async function run(ctx) {
   const m = mode();
-  if (m === "off" || !ctx.found || ctx.found.test) return { mode: m, status: null, block: false };
+  if (m === "off" || !ctx.found) return { mode: m, status: null, block: false };
   const probe = { id: ctx.attemptId, code: ctx.found.code, startedAt: ctx.now, photo: ctx.photo }, out = {};
   let rec = null;
   try { rec = await faceid.checkWithin(probe, 12000, null, { enrol: ctx.enrolOk !== false, out }); } catch (e) { rec = null; }
   if (!rec) return { mode: m, status: null, block: false };
   if (rec.s === "mismatch") {
     try {
-      await secalert.alertIdentity(ctx.req, { id: ctx.attemptId, code: ctx.found.code, name: ctx.found.name, manager: ctx.found.manager, examTitle: ctx.settings && ctx.settings.examTitle, period: ctx.settings && ctx.settings.examPeriod },
+      await secalert.alertIdentity(ctx.req, { id: ctx.attemptId, test: !!ctx.found.test, code: ctx.found.code, name: ctx.found.name, manager: ctx.found.manager, examTitle: ctx.settings && ctx.settings.examTitle, period: ctx.settings && ctx.settings.examPeriod },
         { selfie: ctx.photo, refPhoto: out.refPhoto, distance: rec.d, threshold: rec.t, blocked: m === "block" });
     } catch (e) { /* không chặn luồng chính */ }
   }

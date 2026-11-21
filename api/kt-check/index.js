@@ -73,7 +73,7 @@ module.exports = async function (context, req) {
       face = { ok: true, live: true, matched: null };
       if (found && me && me.desc) {
         // Mã NV đã có ảnh các lần kiểm tra trước: khuôn mặt phải khớp
-        const rows = (await quiz.getIndex()).filter((r) => quiz.normCode(r.code) === code && !(r.faceId && r.faceId.s === "mismatch")).sort((a, c) => (c.startedAt || 0) - (a.startedAt || 0)).slice(0, 5);
+        const rows = (await quiz.getIndexAll()).filter((r) => quiz.normCode(r.code) === code && !(r.faceId && r.faceId.s === "mismatch")).sort((a, c) => (c.startedAt || 0) - (a.startedAt || 0)).slice(0, 5);
         let best = Infinity, used = 0;
         for (const r of rows) {
           if (used >= 3) break;

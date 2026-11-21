@@ -818,7 +818,10 @@ async function getAttempt(id) {
 }
 async function putAttempt(a) { await store.put("kt/attempt/" + a.id + ".json", a); }
 
-async function getIndex() { return (await store.get(IDX_KEY)) || []; }
+// Chỉ mục bài làm. getIndex() = CHỈ bài chính thức (mọi thống kê, báo cáo, nhắc nhở, xuất dữ liệu dùng hàm này nên không bao giờ thấy bài thử nghiệm).
+// getIndexAll() = gồm cả bài của tài khoản thử nghiệm (r.test), dành cho tính năng theo TỪNG NGƯỜI: đối chiếu khuôn mặt, đăng nhập bằng khuôn mặt, tra cứu lịch sử, xác thực kết quả.
+async function getIndexAll() { return (await store.get(IDX_KEY)) || []; }
+async function getIndex() { return (await getIndexAll()).filter((r) => !r.test); }
 async function saveIndex(list) { await store.put(IDX_KEY, list); }
 // Sửa vài trường của một dòng trong bảng kết quả (đọc-sửa-ghi nguyên tử, giữ nguyên các trường khác)
 async function patchIndex(id, fields) {
@@ -1251,7 +1254,7 @@ module.exports = { validImageUrl,
   getBanks, saveBanks, bankOf, validBankId, slugify, cleanQuestionMeta, DEFAULT_BANK, DIFFICULTIES,
   isLeft, cleanBlueprint, buildFromBlueprint, blueprintTotal, planExam, targetCount, cleanSegmentPlans, segPlanFor, countFor, validateCounts, MAX_QUESTION_COUNT, examAccessError, inAudience, asgModeOf, examKnown, scoreAttempt, summarize, patchIndex, previousResult, loadAttempts,
   TYPES, qType, normText, normalizeQuestionInput, gradeAnswer,
-  getIndex, upsertIndex, resetByCode,
+  getIndex, getIndexAll, upsertIndex, resetByCode,
   shuffle, genId, compliancePoints,
   buildPaper, getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, timeOf, timeFields, getActive, setActive, moveActive, syncAttempt, clientState, tooManyFails, noteFail
 };

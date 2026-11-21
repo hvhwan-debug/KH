@@ -340,12 +340,12 @@ function showList(j){
   $('wAv').textContent = initials(j.name); $('wName').textContent = j.name || j.code;
   $('wSub').textContent = 'Mã NV: ' + j.code + (j.manager ? ' · Quản lí: ' + j.manager : '');
   // tổng quan: số bài đã nộp · kết quả chính thức cao nhất (không tính thi thử) · bài gần nhất
-  var real = L.filter(function(r){ return !r.practice; }), best = real.reduce(function(m, r){ return r.pct > m ? r.pct : m; }, -1);
-  var chips = [ [j.total, 'Bài đã nộp'], [best >= 0 ? best + '%' : '–', 'Cao nhất'], [L.length ? L[0].pct + '%' : '–', 'Gần nhất'] ];
+  var real = L.filter(function(r){ return !r.practice && !r.test; }), best = real.reduce(function(m, r){ return r.pct > m ? r.pct : m; }, -1);
+  var chips = [ [j.total, 'Bài đã nộp'], [best >= 0 ? best + '%' : '–', 'Cao nhất'], [real.length ? real[0].pct + '%' : (L.length ? L[0].pct + '%' : '–'), 'Gần nhất'] ];
   $('wStats').innerHTML = chips.map(function(c){ return '<div class="th-stat"><strong>' + esc(c[0]) + '</strong><em>' + esc(c[1]) + '</em></div>'; }).join('');
   var html = L.map(function(r){
-    var st = r.practice ? 'd' : r.passed === true ? 'y' : r.passed === false ? 'n' : '';
-    var tag = r.practice ? '<span class="th-tag d">Thi thử</span>' : r.passed === true ? '<span class="th-tag y">Đạt</span>' : r.passed === false ? '<span class="th-tag n">Chưa đạt</span>' : '';
+    var st = (r.practice || r.test) ? 'd' : r.passed === true ? 'y' : r.passed === false ? 'n' : '';
+    var tag = r.test ? '<span class="th-tag d">Thử nghiệm</span>' : r.practice ? '<span class="th-tag d">Thi thử</span>' : r.passed === true ? '<span class="th-tag y">Đạt</span>' : r.passed === false ? '<span class="th-tag n">Chưa đạt</span>' : '';
     var off = r.official ? '<span class="th-tag o">Chính thức</span>' : '';
     var tot = r.total || 0, seg = function(n, c){ return n > 0 && tot ? '<i class="' + c + '" style="width:' + (n / tot * 100) + '%"></i>' : ''; };
     var bar = r.wrong != null && r.blank != null ? seg(r.score || 0, 'g') + seg(r.wrong, 'w') + seg(r.blank, 'b') : '<i class="g" style="width:' + (r.pct || 0) + '%"></i>';

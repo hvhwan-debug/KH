@@ -294,6 +294,11 @@ th{font-size:11.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 #qAddOptBtn.hide + #qShufBtn{display:none}
 .ta-row{display:grid;grid-template-columns:90px minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) 110px 110px 120px 110px auto;gap:6px;margin-bottom:6px;align-items:center}
+.ta-act{display:flex;gap:6px;align-items:center}
+.cand-test{margin-top:12px;padding:12px 14px;border:1.5px dashed #E0C070;border-radius:12px;background:#FFFAEB}
+.cand-test label{display:flex;gap:10px;align-items:flex-start;margin:0;font-weight:700;cursor:pointer}
+.cand-test input[type=checkbox]{flex:0 0 auto;width:18px;height:18px;margin:2px 0 0}
+.cand-test small{display:block;margin-top:4px;font-weight:400;color:var(--muted);line-height:1.55}
 @media(max-width:760px){.ta-row{grid-template-columns:1fr 1fr}}
 .qmeta3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
 .qmeta3>div>label{margin-top:0}
@@ -1748,6 +1753,9 @@ button.rd-st:disabled{opacity:.55;cursor:default}
             </select>
           </div>
         </div>
+        <div class="cand-test">
+          <label><input type="checkbox" id="candEditTest"><span>🧪 Tài khoản thử nghiệm<small>Dùng chính tài khoản này để làm thử đề như một thí sinh: bài làm được lưu để thử đăng nhập bằng khuôn mặt, tra cứu lịch sử, cảnh báo khác người…, vào được cả khi đề chưa mở và không giới hạn lượt, nhưng <b>không tính</b> vào kết quả, thống kê, nhắc nhở hay file xuất. Người này sẽ chuyển sang mục “🧪 Tài khoản thử nghiệm” bên dưới; bỏ tích ở đó để trả về thí sinh thường. Các bài chính thức đã làm trước đó vẫn giữ nguyên.</small></span></label>
+        </div>
         <div id="candEmpBox" class="cand-emp">
           <div class="cand-emp-t" id="candEmpTxt"></div>
           <button type="button" class="btn sm" id="candEmpBtn" onclick="candEmpToggle()"></button>
@@ -1795,6 +1803,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
               </select>
             </div>
           </div>
+          <div class="cand-test"><label><input type="checkbox" id="candNewTest"><span>🧪 Tài khoản thử nghiệm<small>Tạo luôn dưới dạng tài khoản thử nghiệm (không tính vào kết quả, thống kê, nhắc nhở), vẫn lưu bài làm để thử đủ các tính năng như thí sinh.</small></span></label></div>
           <button class="btn" style="margin-top:12px" onclick="addCandidateForm()">Thêm vào danh sách</button>
         </div>
         <div id="candAddXl" class="hide">
@@ -1842,7 +1851,7 @@ button.rd-st:disabled{opacity:.55;cursor:default}
       </div>
       <details class="card" id="taCard">
         <summary style="cursor:pointer;font-weight:700">🧪 Tài khoản thử nghiệm <span class="small" id="taSum"></span></summary>
-        <p class="small" style="margin:8px 0 10px">Dùng để quản trị tự làm thử đề: <b>không giới hạn số lượt</b>, vào được cả khi đề chưa mở / đã đóng / ngoài danh sách được thi, và <b>không lưu</b> vào kết quả, dashboard hay file xuất dữ liệu. Đăng nhập ở trang làm bài như thí sinh bằng mã + email bên dưới và đi đủ các bước như bình thường (số điện thoại, chọn tỉnh/miền, chụp ảnh, nhận email, xem lại bài…); thông tin nhập được ghi nhớ cho lần sau. Mã và email không được trùng thí sinh thật.</p>
+        <p class="small" style="margin:8px 0 10px">Dùng để quản trị tự làm thử đề như một thí sinh: <b>không giới hạn số lượt</b>, vào được cả khi đề chưa mở / đã đóng / ngoài danh sách được thi. Bài làm <b>được lưu đầy đủ</b> (để thử đăng nhập bằng khuôn mặt, tra cứu lịch sử, cảnh báo khác người…) nhưng <b>không tính</b> vào kết quả, dashboard, nhắc nhở hay file xuất dữ liệu. Muốn dùng tài khoản thật của mình: mở thí sinh đó và <b>tích “Tài khoản thử nghiệm”</b> (hoặc bấm ↩ ở dòng để trả về thí sinh thường). Đăng nhập ở trang làm bài bằng mã + email và đi đủ các bước như bình thường. Mã và email không được trùng thí sinh thật.</p>
         <div id="taRows"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
           <button class="btn ghost sm" type="button" onclick="taAdd()">+ Thêm tài khoản</button>
@@ -4211,11 +4220,18 @@ function taRow(a){
     '<input type="text" placeholder="Quản lí (tuỳ chọn)" value="' + esc(a.manager || '') + '"><input type="text" placeholder="Chức danh (tuỳ chọn)" value="' + esc(a.title || '') + '"><input type="text" placeholder="SĐT (tuỳ chọn)" value="' + esc(a.phone || '') + '">' +
     '<select aria-label="Ngành"><option value="both"' + (a.segment === 'both' || !a.segment ? ' selected' : '') + '>Cả hai ngành</option><option value="gia_dung"' + (a.segment === 'gia_dung' ? ' selected' : '') + '>Gia dụng</option><option value="may_loc"' + (a.segment === 'may_loc' ? ' selected' : '') + '>Máy lọc nước</option></select>' +
     '<select aria-label="Miền"><option value=""' + (!a.region ? ' selected' : '') + '>Miền: tự chọn</option><option value="bac"' + (a.region === 'bac' ? ' selected' : '') + '>Miền Bắc</option><option value="nam"' + (a.region === 'nam' ? ' selected' : '') + '>Miền Nam</option></select>' +
-    '<button class="btn dghost sm" type="button" onclick="this.parentNode.remove()" aria-label="Xoá dòng">✕</button></div>';
+    '<span class="ta-act">' + (a.code ? '<button class="btn ghost sm" type="button" onclick="taToCand(\'' + esc(a.code) + '\')" title="Bỏ tích thử nghiệm: trả về danh sách thí sinh thường" aria-label="Trả về thí sinh thường">↩</button>' : '') +
+    '<button class="btn dghost sm" type="button" onclick="this.closest(\'.ta-row\').remove()" title="Xoá dòng (nếu vốn là thí sinh thật thì được trả về danh sách thí sinh)" aria-label="Xoá dòng">✕</button></span></div>';
 }
 function taRender(list){
   $('taRows').innerHTML = (list || []).map(taRow).join('');
   $('taSum').textContent = list && list.length ? '· ' + list.length + ' tài khoản' : '· chưa có';
+}
+async function taToCand(code){
+  if (!confirm('Trả ' + code + ' về danh sách thí sinh thường?\n\nTừ lần làm bài sau, bài của tài khoản này sẽ được tính vào kết quả chính thức như mọi thí sinh. Các bài thử đã làm vẫn không tính.')) return;
+  const { j } = await api('POST', '/api/kt-admin', { op: 'setTestMode', code, test: false });
+  if (!j.ok){ msg('taMsg', j.error || 'Không chuyển được.', 'err'); return; }
+  msg('taMsg', 'Đã trả ' + code + ' về danh sách thí sinh thường.', 'ok'); loadTestAccounts(); loadCandidates();
 }
 function taAdd(){ $('taRows').insertAdjacentHTML('beforeend', taRow()); $('taCard').open = true; }
 async function loadTestAccounts(){
@@ -4228,7 +4244,7 @@ async function taSave(){
   }).filter(a => a.code || a.email);
   const { j } = await api('POST', '/api/kt-admin', { op: 'saveTestAccounts', accounts });
   if (!j.ok){ msg('taMsg', j.error || 'Không lưu được.', 'err'); return; }
-  taRender(j.accounts); msg('taMsg', 'Đã lưu ' + j.accounts.length + ' tài khoản thử nghiệm.', 'ok');
+  taRender(j.accounts); msg('taMsg', 'Đã lưu ' + j.accounts.length + ' tài khoản thử nghiệm.' + (j.restored ? ' Đã trả ' + j.restored + ' người (vốn là thí sinh thật) về danh sách thí sinh thường.' : ''), 'ok'); if (j.restored) loadCandidates();
 }
 // ----- Kết nối Google Drive bằng đăng nhập Google (hiện cửa sổ "Cho phép" của Google) -----
 function driveNeedConnect(box, st, why){
@@ -4461,6 +4477,7 @@ function editCandidateOpen(code){
   if (!c) return;
   $('candEditCode').value = c.code;
   $('candEditCodeShow').value = c.code;
+  $('candEditTest').checked = false;
   $('candEditName').value = c.name||'';
   $('candEditEmail').value = c.email||'';
   mgrFill('candEditMgrSel', 'candEditManager', c.manager);
@@ -4649,6 +4666,13 @@ async function saveCandidateEdit(){
     op:'addCandidates', rows:[{ code, name: $('candEditName').value.trim(), email, manager: $('candEditManager').value.trim(), segment: $('candEditSegment').value, title: $('candEditTitle').value.trim() || 'PC', phone: $('candEditPhone').value.trim(), province: $('candEditProvince').value, region: $('candEditRegion').value }]
   });
   if (!j.ok){ msg('candEditMsg', j.error, 'err'); return; }
+  if ($('candEditTest').checked){ // tích "Tài khoản thử nghiệm": chuyển người này sang danh sách thử nghiệm
+    const r = (await api('POST','/api/kt-admin', { op:'setTestMode', code, test:true })).j;
+    if (!r.ok){ msg('candEditMsg', 'Đã lưu thông tin nhưng chưa chuyển sang thử nghiệm: ' + (r.error || 'có lỗi, thử lại.'), 'err'); loadCandidates(); return; }
+    $('candEditCard').classList.add('hide'); loadCandidates(); loadTestAccounts();
+    msg('candMsg', 'Đã chuyển ' + code + ' sang tài khoản thử nghiệm (xem mục “🧪 Tài khoản thử nghiệm” bên dưới). Bài làm sẽ được lưu nhưng không tính vào kết quả chính thức.', 'ok');
+    return;
+  }
   msg('candEditMsg','Đã lưu.','ok');
   $('candEditCard').classList.add('hide');
   loadCandidates();
@@ -4661,7 +4685,11 @@ async function addCandidateForm(){
     op:'addCandidates', rows:[{ code, name: $('candNewName').value.trim(), email, manager: $('candNewManager').value.trim(), segment: $('candNewSegment').value, title: $('candNewTitle').value.trim() || 'PC', phone: $('candNewPhone').value.trim() }]
   });
   if (!j.ok){ msg('candMsg', j.error, 'err'); return; }
-  msg('candMsg', 'Đã thêm '+j.added+' thí sinh mới, cập nhật '+j.updated+' thí sinh.', 'ok');
+  if ($('candNewTest').checked){ // tạo luôn dạng tài khoản thử nghiệm
+    const r = (await api('POST','/api/kt-admin', { op:'setTestMode', code, test:true })).j;
+    if (!r.ok){ msg('candMsg', 'Đã thêm thí sinh nhưng chưa chuyển sang thử nghiệm: ' + (r.error || 'có lỗi, thử lại.'), 'err'); loadCandidates(); return; }
+    msg('candMsg', 'Đã tạo tài khoản thử nghiệm ' + code + ' (xem mục “🧪 Tài khoản thử nghiệm” bên dưới).', 'ok'); $('candNewTest').checked = false; loadTestAccounts();
+  } else msg('candMsg', 'Đã thêm '+j.added+' thí sinh mới, cập nhật '+j.updated+' thí sinh.', 'ok');
   ['candNewCode','candNewName','candNewEmail','candNewPhone'].forEach(id => $(id).value='');
   $('candNewCode').focus();
   loadCandidates();

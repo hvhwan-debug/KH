@@ -13,7 +13,7 @@ const MAP = { noref: "first", noface: "noface", multi: "noface", mismatch: "mism
 
 // Ảnh gốc: các bài TRƯỚC ĐÓ cùng mã NV có ảnh, không bị đánh dấu khác người; mới nhất trước (ngoại hình gần nhất)
 async function refsFor(attempt, idx) {
-  const rows = (idx || await quiz.getIndex())
+  const rows = (idx || await quiz.getIndexAll())
     .filter((r) => r.id !== attempt.id && (r.startedAt || 0) < (attempt.startedAt || 0) && quiz.normCode(r.code) === quiz.normCode(attempt.code) && !(r.faceId && r.faceId.s === "mismatch"))
     .sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0)).slice(0, 6);
   const refs = [];
@@ -39,7 +39,7 @@ async function check(attempt, idx, opts) {
   if (cmp.distance != null) { rec.d = Math.round(cmp.distance * 1000) / 1000; rec.t = cmp.threshold; }
   if (cmp.used) { rec.n = cmp.used; rec.refs = refs.map((r) => r.id).slice(0, MAX_REFS); }
   // Bài được xác nhận là chính chủ (hoặc ảnh đầu tiên của người đó): đưa dấu vân vào thư viện đăng nhập bằng khuôn mặt
-  if (!attempt.test && attempt.faceDesc && (s === "match" || s === "first") && !(opts && opts.enrol === false)) { try { await require("./facegallery").enrol(attempt.code, attempt.faceDesc, attempt.id); } catch (e) { /* không chặn */ } }
+  if (attempt.faceDesc && (s === "match" || s === "first") && !(opts && opts.enrol === false)) { try { await require("./facegallery").enrol(attempt.code, attempt.faceDesc, attempt.id); } catch (e) { /* không chặn */ } }
   return rec;
 }
 
@@ -58,7 +58,7 @@ async function patchIndex(id, faceId) { await quiz.patchIndex(id, { faceId }); }
 async function scan(opts) {
   opts = opts || {};
   const t0 = Date.now(), budget = opts.ms || 20000, period = opts.period || "";
-  const idx = await quiz.getIndex();
+  const idx = await quiz.getIndexAll();
   const todo = idx.filter((r) => r.status === "submitted" && !r.faceId && (!period || (r.period || "") === period))
     .sort((a, b) => (a.startedAt || 0) - (b.startedAt || 0));
   let done = 0, mismatch = 0;
