@@ -53,7 +53,11 @@ module.exports = async function (context, req) {
     await quiz.runMigrations(context.log);
     // Chống dò: đã nhập sai từ 2 lần thì lần thứ 3 trở đi phải kèm ảnh khuôn mặt chụp trực tiếp.
     // Ảnh phải có đúng một khuôn mặt người thật; nếu mã NV đã có ảnh các lần kiểm tra trước thì khuôn mặt phải khớp.
-    const needFace = !b.saveRegion && needFaceFor(req);
+    // Vừa đăng nhập bằng khuôn mặt (có vé ký của đúng mã NV này): KHÔNG bắt xác thực khuôn mặt lần nữa.
+    // Bước chống dò chỉ áp dụng khi tự nhập mã nhân viên + email.
+    const FP = require("../_lib/facepass");
+    const viaFace = FP.loginOk(b.faceLogin, code) || FP.peek(b.facePass, code);
+    const needFace = !b.saveRegion && !viaFace && needFaceFor(req);
     const selfie = needFace && typeof b.selfie === "string" ? b.selfie : "";
     if (needFace) {
       if (!selfie) return reply(context, 428, { ok: false, needFace: true, error: "Bạn đã nhập sai nhiều lần. Để tiếp tục, hãy xác thực khuôn mặt." });
@@ -90,6 +94,7 @@ module.exports = async function (context, req) {
       }
       if (found) { quiz.clearFails(req); hintClear(req); } // đã xác thực được: xoá số lần sai
     }
+    if (found && viaFace) { quiz.clearFails(req); hintClear(req); } // vào bằng khuôn mặt thành công: xoá số lần nhập sai trước đó
     if (!found) {
       quiz.noteFail(req);
       // Tài khoản thử nghiệm (quản trị viên tự tạo): nói rõ phần nào bị lệch để người kiểm thử sửa nhanh
@@ -105,7 +110,7 @@ module.exports = async function (context, req) {
     }
 
     // Lịch sử đăng nhập: nhập mã NV + email (lần ngay sau đăng nhập bằng khuôn mặt đã ghi ở kt-facelogin; kiểm tra lại / lưu tỉnh thì không ghi)
-    if (!b.saveRegion && !b.again && !require("../_lib/facepass").peek(b.facePass, found.code)) {
+    if (!b.saveRegion && !b.again && !viaFace) {
       await require("../_lib/loginlog").write(req, { code: found.code, name: found.name, manager: found.manager, method: face && face.matched ? "manual_face" : "manual", page: "exam", exam: String(b.examId || ""), test: !!found.test, note: needFace ? "phải xác thực khuôn mặt sau nhiều lần nhập sai" : "" });
     }
 

@@ -1616,7 +1616,7 @@ $('scrCheck').addEventListener('submit', async function(e){
   if (!/^\S+@\S+\.\S+$/.test(email)){ msg('checkMsg','Email chưa đúng định dạng.'); $('inEmail').setAttribute('aria-invalid','true'); $('inEmail').focus(); return; }
   var btn = $('btnCheck'); btn.disabled = true; btn.textContent = 'Đang kiểm tra…';
   var res;
-  try { res = await api('/api/kt-check', { code:code, email:email, examId:EXAM_ID, selfie: FG.selfie || undefined, facePass: (ST.fp && ST.fp.code.toUpperCase() === code.trim().toUpperCase()) ? ST.fp.token : undefined }); }
+  try { res = await api('/api/kt-check', { code:code, email:email, examId:EXAM_ID, selfie: FG.selfie || undefined, facePass: (ST.fp && ST.fp.code.toUpperCase() === code.trim().toUpperCase()) ? ST.fp.token : undefined, faceLogin: flFor(code) }); }
   catch(err){ res = null; }
   btn.disabled = false; btn.textContent = 'Tiếp tục';
   if (!res){ FG.selfie = ''; fgScan(false); msg('checkMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
@@ -1850,6 +1850,10 @@ $('btnStart').addEventListener('click', async function(){
   photoInit();
 });
 // Vé đăng nhập bằng khuôn mặt giữ trong sessionStorage của tab: tải lại trang (F5) sau khi đăng nhập vẫn không phải quét lại
+// Vé "vừa đăng nhập bằng khuôn mặt" (15 phút): kt-check bỏ bước chống dò cho đúng mã NV này
+function flSet(v){ ST.fl = v; try { if (v) sessionStorage.setItem('kt_fl', JSON.stringify(v)); else sessionStorage.removeItem('kt_fl'); } catch (e) {} }
+try { var fl0 = JSON.parse(sessionStorage.getItem('kt_fl') || 'null'); if (fl0 && fl0.token && Date.now() - fl0.at < 14 * 60 * 1000) ST.fl = fl0; } catch (e) {}
+function flFor(code){ var f = ST.fl; return f && f.token && Date.now() - f.at < 14 * 60 * 1000 && f.code.toUpperCase() === String(code || '').trim().toUpperCase() ? f.token : undefined; }
 function fpSet(v){ ST.fp = v; try { if (v) sessionStorage.setItem('kt_fp', JSON.stringify(v)); else sessionStorage.removeItem('kt_fp'); } catch (e) {} }
 try { var fp0 = JSON.parse(sessionStorage.getItem('kt_fp') || 'null'); if (fp0 && fp0.token && Date.now() - fp0.at < 14 * 60 * 1000) ST.fp = fp0; } catch (e) {}
 // Đã đăng nhập bằng khuôn mặt (cài đặt hệ thống): không quét mặt lần hai, dùng ảnh lúc đăng nhập làm ảnh xác nhận
@@ -2418,6 +2422,7 @@ async function doFaceLogin(){
     aiStep(3, 'ok', 1); aiStep(4, 'run'); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN'); sndOk(); sayVn('Xin chào ' + (j.name || '')); msg('photoMsg', '✓ Xin chào ' + (j.name || j.code) + '. Đang mở thông tin của bạn…', 'ok');
     await aiDelay(900); aiStep(4, 'ok', 1); await aiDelay(450);
     fpSet(j.facePass ? { token: j.facePass, code: String(j.code || ''), photo: PH.dataUrl, at: Date.now() } : null); // vé: bỏ bước quét mặt lần hai khi bắt đầu làm bài
+    flSet(j.faceLogin ? { token: j.faceLogin, code: String(j.code || ''), at: Date.now() } : null); // vé: vào bằng khuôn mặt thì không bị hỏi xác thực lại vì "nhập sai nhiều lần"
     PH.mode = 'exam'; photoStop(); show('check');
     $('inCode').value = j.code; $('inEmail').value = j.email; msg('photoMsg', '');
     var f = $('scrCheck'); if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', { cancelable:true }));

@@ -41,4 +41,18 @@ function peek(token, code) {
   return !!(p && p.k === "fpass" && p.c === norm(code));
 }
 
-module.exports = { issue, verify, peek, enabled, TTL_MS };
+// VÉ "VỪA ĐĂNG NHẬP BẰNG KHUÔN MẶT" (luôn cấp, kể cả khi FACE_PASS=off): chỉ dùng để kt-check biết lần kiểm tra mã NV + email này
+// đến từ đăng nhập khuôn mặt -> KHÔNG bắt xác thực khuôn mặt thêm lần nữa vì chống dò (đã nhập sai nhiều lần).
+// Gắn với mã nhân viên được nhận diện, hạn 15 phút. Không thay cho ảnh xác nhận lúc bắt đầu làm bài.
+const LOGIN_TTL_MS = 15 * 60 * 1000;
+function issueLogin(code) {
+  if (!code) return "";
+  return session.sign({ k: "flogin", c: norm(code), at: Date.now(), exp: Date.now() + LOGIN_TTL_MS });
+}
+function loginOk(token, code) {
+  if (!token || typeof token !== "string" || token.length > 2000 || !code) return false;
+  const p = session.verify(token);
+  return !!(p && p.k === "flogin" && p.c === norm(code));
+}
+
+module.exports = { issue, verify, peek, enabled, TTL_MS, issueLogin, loginOk };
