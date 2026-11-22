@@ -766,6 +766,12 @@ body.introbg #scrCheck .fl-go svg{width:55%;height:55%;color:#0A5BDC;filter:none
   body.introbg #scrConfirm:has(#reqBox:not(.hide)) #btnStart{position:static}
   #scrConfirm .sublinks{margin-top:8px}
 }
+/* ===== Đăng nhập bằng khuôn mặt: màn chờ gọn; bấm "Quét khuôn mặt" mới hiện tiến trình ===== */
+.ai-now-s{display:none!important}
+#scrPhoto.rdy .ai-chip{display:none!important}
+#scrPhoto.lg.rdy .ai-pipe{display:none!important}
+#scrPhoto.lg:not(.rdy) .ai-tips{display:none!important}
+#scrPhoto.lg.rdy .ai-tips{order:-1}
 /* hộp thoại Hướng dẫn / Hỗ trợ */
 .lp-dlg{position:fixed;inset:0;z-index:400;display:grid;place-items:center;padding:20px;background:rgba(10,37,82,.45);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .lp-box{width:min(480px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:22px;padding:24px 24px 20px;box-shadow:0 30px 80px -20px rgba(2,20,70,.6)}
@@ -2472,6 +2478,7 @@ function aiMode(){ // chữ trên màn quét theo chế độ: 'login' (đăng n
   $('btnPhotoBack').classList.toggle('hide', L); clearTimeout(PH.backT);
   if (L) PH.backT = setTimeout(function(){ if (PH.mode === 'login') $('btnPhotoBack').classList.remove('hide'); }, 45000);
   $('locLine').style.display = L ? 'none' : '';
+  $('scrPhoto').classList.toggle('lg', L);
 }
 
 /* ===== Thử thách sống: nhìn thẳng + quay trái + quay phải (thứ tự ngẫu nhiên do máy chủ cấp, máy chủ đo lại) ===== */
@@ -2632,7 +2639,8 @@ function aiTrackStart(){
     AI.loop = setTimeout(tick, 260);
   })();
 }
-function aiLive(){ if (AI.run || LV.started) return; LV.started = true; sndReady(); aiBuildMesh(); aiScr('live'); aiChip('', 'CAMERA TRỰC TIẾP'); aiRead(0, null); aiTrackStart(); lvBegin(); }
+function aiReadyView(){ if ($('scrPhoto').getAttribute('data-ai') !== 'live') aiScr('live'); $('aiHint').textContent = 'Đặt khuôn mặt vào trong khung oval'; aiRead(0, null); } // màn chờ: chỉ hiện camera + oval, chưa chạy thử thách
+function aiLive(){ if (AI.run || LV.started) return; if (PH.mode === 'login' && !LV.go){ aiReadyView(); return; } LV.started = true; sndReady(); aiBuildMesh(); aiScr('live'); aiChip('', 'CAMERA TRỰC TIẾP'); aiRead(0, null); aiTrackStart(); lvBegin(); }
 function aiScanStart(){ // vừa chụp xong: lưới mesh phủ lên khuôn mặt đã khoá gần nhất
   aiTrackStop(); aiBuildMesh(); aiStepsReset(); aiStep(0, 'run'); aiScr('scan'); aiChip('scan', 'ĐANG PHÂN TÍCH');
   aiPlace($('aiMesh'), AI.box || { x: .3, y: .08, w: .4, h: .76 }, AI.box ? .3 : 0);
@@ -2678,7 +2686,7 @@ async function photoInit(){
   $('pvVideo').classList.remove('hide'); $('pvImg').classList.add('hide'); $('faceGuide').classList.remove('hide');
   $('btnCapture').classList.remove('hide'); $('btnPhotoOk').classList.add('hide'); $('btnPhotoRetry').classList.add('hide');
   msg('photoMsg','');
-  aiTrackStop(); ST.identityWarn = false; LV.started = false; LV.on = false; PH.live = null; $('scrPhoto').classList.remove('lv'); $('btnCapture').classList.remove('hide'); aiStepsReset(); aiScr('idle'); aiChip('', 'CAMERA ĐANG MỞ'); aiRead(0, null); aiMode();
+  aiTrackStop(); ST.identityWarn = false; LV.started = false; LV.on = false; PH.live = null; $('scrPhoto').classList.remove('lv'); $('btnCapture').classList.remove('hide'); aiStepsReset(); aiScr('idle'); aiChip('', 'CAMERA ĐANG MỞ'); aiRead(0, null); aiMode(); LV.go = !!LV.keep; LV.keep = false; $('scrPhoto').classList.toggle('rdy', PH.mode === 'login' && !LV.go);
   var box = document.querySelector('#scrPhoto .photo-box'), v = $('pvVideo');
   box.classList.remove('scanning'); box.classList.add('opening'); requestAnimationFrame(aiGuideFit); $('camWaitT').textContent = 'Đang mở camera…';
   // Hết hiệu ứng chờ khi camera thật sự có hình (không chỉ khi có stream — nhiều máy còn đen thêm 1–2 giây)
@@ -2734,6 +2742,10 @@ async function photoProcess(c){ // c: canvas chứa ảnh nhìn thẳng
 }
 $('btnCapture').addEventListener('click', async function(){
   var v = $('pvVideo'), c = $('pvCanvas');
+  if (PH.mode === 'login' && $('scrPhoto').classList.contains('rdy')){ // đăng nhập: bấm để bắt đầu quét (thử thách quay mặt)
+    if (!v.videoWidth){ msg('photoMsg','Camera chưa sẵn sàng, đợi một chút rồi bấm lại.'); return; }
+    msg('photoMsg',''); sndUnlock(); LV.go = true; $('scrPhoto').classList.remove('rdy'); $('btnCapture').classList.add('hide'); aiLive(); return;
+  }
   if (document.getElementById('scrPhoto').getAttribute('data-ai') === 'scan') return;
   if (!v.videoWidth){ msg('photoMsg','Camera chưa sẵn sàng, đợi một chút rồi bấm lại.'); return; }
   c.width = v.videoWidth; c.height = v.videoHeight;
@@ -2743,7 +2755,7 @@ $('btnCapture').addEventListener('click', async function(){
 var idWarnT = null;
 function idWarnShow(){ var w = $('idWarn'); clearTimeout(idWarnT); if (!ST.identityWarn){ w.classList.add('hide'); return; } ST.identityWarn = false; w.classList.remove('hide'); idWarnT = setTimeout(function(){ w.classList.add('hide'); }, 20000); }
 $('idWarnX').addEventListener('click', function(){ $('idWarn').classList.add('hide'); });
-$('btnPhotoRetry').addEventListener('click', function(){ photoInit(); });
+$('btnPhotoRetry').addEventListener('click', function(){ LV.keep = true; photoInit(); });
 function loginFailBack(){ if (PH.mode === 'login'){ clearTimeout(PH.backT); $('btnPhotoBack').classList.remove('hide'); } }
 // Nút "Quét lại" hiện = có lỗi: lúc đó mới cho chọn nhập mã NV + email
 try { new MutationObserver(function(){ if (!$('btnPhotoRetry').classList.contains('hide')) loginFailBack(); }).observe($('btnPhotoRetry'), { attributes:true, attributeFilter:['class'] }); } catch (e) {}
