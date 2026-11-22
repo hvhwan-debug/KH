@@ -296,6 +296,9 @@ button,input{font:inherit;color:inherit}
 .rules div.best{background:linear-gradient(180deg,#EEF8F2,#E2F2E9);border-color:#BFE3CE}
 .rules div.best b{color:var(--ok)}
 .notes{margin:0 0 4px;padding:0 0 0 18px;font-size:13px;line-height:1.75;color:var(--muted)}
+.notes-h{margin:2px 0 8px;font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+.notes b{color:var(--ink);font-weight:700}
+.notes li::marker{color:var(--brand)}
 
 /* Làm bài */
 .qhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
@@ -1121,6 +1124,7 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
   #scrConfirm .rules>div:first-child:nth-last-child(2),#scrConfirm .rules>div:first-child:nth-last-child(2)~div{flex-basis:calc(50% - 4px)}
   #scrConfirm .rules b{font-size:20px;line-height:1.15;white-space:nowrap}
   #scrConfirm .rules span{font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #scrConfirm .notes-h{font-size:12px;margin-bottom:6px}
   #scrConfirm .notes{font-size:12.5px;line-height:1.6;padding-left:16px}
   #scrConfirm .notes li+li{margin-top:5px}
   body.introbg #scrConfirm #btnStart{margin-top:16px!important;height:54px}
@@ -1270,6 +1274,7 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
         <div id="regionMsg" role="alert"></div>
       </div>
       <div class="rules" id="rulesBox"></div>
+      <h2 class="notes-h">Lưu ý khi tham gia bài kiểm tra</h2>
       <ul class="notes" id="notesBox"></ul>
       <div id="resumeMsg"></div>
       <div id="reqState"></div>
@@ -1675,10 +1680,16 @@ function renderConfirm(){
   }
   $('rulesBox').style.gridTemplateColumns = 'repeat(' + (rl.length === 4 ? 2 : rl.length) + ',minmax(0,1fr))';
   $('rulesBox').innerHTML = rl.join('');
-  $('notesBox').innerHTML = (c.test ? '<li><b>Tài khoản thử nghiệm</b>: không giới hạn lượt làm. Bài làm vẫn được lưu và xem lại như thí sinh thường, nhưng <b>không tính</b> vào báo cáo hay dữ liệu xuất.</li>' : '') + (AT ? '<li>Bạn đã làm bài này <b>' + AT.used + ' lần</b>. Kết quả chính thức là <b>lần có điểm cao nhất</b>, làm lại không bị mất điểm cũ.</li>' : '') +
-    '<li>Thời gian làm bài được quy định riêng cho từng câu hỏi. Khi hết thời gian, hệ thống tự động chuyển sang câu tiếp theo và <b>không cho phép quay lại</b> câu đã hoàn thành.</li>'+
-    '<li>Trường hợp thoát khỏi bài thi hoặc tải lại trang, bạn có thể tiếp tục từ câu hỏi đang thực hiện. <b>Thời gian làm bài vẫn tiếp tục được tính</b> trong quá trình này.</li>'+
-    '<li>Mỗi câu hỏi chỉ được chọn <b>một đáp án</b>. Sau khi nộp bài, hệ thống tự động chấm điểm và gửi kết quả về email của bạn.</li>';
+  var tNote = x.timeMode === 'total'
+    ? '<li><b>Thời gian làm bài:</b> Bài kiểm tra có tổng thời gian <b>' + (x.totalMinutes||30) + ' phút</b> cho tất cả câu hỏi. Khi hết giờ, các câu chưa trả lời được tính là bỏ trống. Bạn <b>không thể quay lại</b> câu hỏi đã hoàn thành.</li>'
+    : '<li><b>Thời gian làm bài:</b> Mỗi câu hỏi có thời gian trả lời riêng. Khi hết thời gian, hệ thống tự động chuyển sang câu tiếp theo và bạn <b>không thể quay lại</b> câu hỏi đã hoàn thành.</li>';
+  $('notesBox').innerHTML =
+    (c.test ? '<li><b>Tài khoản thử nghiệm:</b> Không giới hạn số lượt làm bài. Kết quả vẫn được lưu và xem lại như tài khoản thông thường, nhưng <b>không được tính</b> vào báo cáo và dữ liệu xuất.</li>' : '') +
+    (AT ? '<li><b>Số lần làm bài:</b> Bạn đã thực hiện bài kiểm tra <b>' + AT.used + ' lần</b>. Kết quả chính thức được ghi nhận là <b>lần có điểm số cao nhất</b>. Việc làm lại bài không làm mất kết quả của các lần trước.</li>' : '') +
+    tNote +
+    '<li><b>Trường hợp gián đoạn:</b> Nếu thoát khỏi bài kiểm tra hoặc tải lại trang, bạn có thể tiếp tục từ câu hỏi đang thực hiện. Tuy nhiên, <b>thời gian làm bài vẫn tiếp tục được tính</b>, kể cả trong thời gian gián đoạn.</li>' +
+    '<li><b>Cách thức trả lời:</b> Mỗi câu hỏi chỉ được chọn <b>một đáp án duy nhất</b>.</li>' +
+    '<li><b>Kết quả bài kiểm tra:</b> Sau khi hoàn thành và nộp bài, hệ thống tự động chấm điểm và gửi kết quả về email đã đăng ký.</li>';
   if (ST.inProgress){
     $('resumeMsg').innerHTML = '<div class="msg info">Bạn có một bài đang làm dở (đã xong '+ST.inProgress.answered+'/'+ST.inProgress.total+' câu). Bấm tiếp tục để làm tiếp.</div>';
     $('btnStart').textContent = 'Tiếp tục làm bài';
