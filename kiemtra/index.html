@@ -1554,6 +1554,47 @@ body.exam .who{display:flex;align-items:center;gap:10px;margin-left:auto;flex:0 
   .who-t b{font-size:12px;max-width:none}.who-t small{font-size:10.5px}
 }
 @media print{.who{display:none!important}}
+
+/* ===== Quét khuôn mặt trên điện thoại: giao diện làm lại (camera lớn, bảng kính mờ ở đáy) ===== */
+@media(max-width:560px){
+  body #scrPhoto{overflow:hidden;gap:12px;padding:max(14px,env(safe-area-inset-top)) 14px max(16px,env(safe-area-inset-bottom));
+    background:radial-gradient(100% 42% at 50% -4%,rgba(46,141,255,.5),transparent 72%),radial-gradient(90% 38% at 50% 106%,rgba(18,181,201,.3),transparent 72%),linear-gradient(180deg,#0B2A66 0%,#071A40 46%,#040C22 100%)}
+  body #scrPhoto::after{-webkit-mask-image:radial-gradient(90% 60% at 50% 40%,#000 15%,transparent 100%);mask-image:radial-gradient(90% 60% at 50% 40%,#000 15%,transparent 100%);opacity:.7}
+  /* tiêu đề */
+  body #scrPhoto .ai-head{margin:0;gap:4px 10px}
+  body #scrPhoto .ai-k{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-size:10px;letter-spacing:.26em}
+  body #scrPhoto .ai-k::before{content:"";width:16px;height:16px;flex:0 0 auto;background:var(--ai);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z'/%3E%3Cpath d='m9 12 2.2 2.2L15.5 10'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z'/%3E%3Cpath d='m9 12 2.2 2.2L15.5 10'/%3E%3C/svg%3E") center/contain no-repeat}
+  body #scrPhoto h1{font-size:23px;line-height:1.2;letter-spacing:-.02em}
+  body #scrPhoto .ai-snd{width:40px;height:40px;background:rgba(255,255,255,.08);border-color:rgba(92,225,255,.4)}
+  body #scrPhoto .ai-snd svg{width:20px;height:20px}
+  body #scrPhoto.lg.rdy .ai-lead{display:block;margin:-2px 0 0;font-size:13.5px;line-height:1.5;color:rgba(214,236,255,.72)}
+  body #scrPhoto.lg.rdy .ai-lead b{color:#9FE8FF}
+  /* camera lớn, lấp đầy phần còn lại của màn hình */
+  body #scrPhoto .photo-box{flex:1 1 0;min-height:260px;width:100%;max-width:none;aspect-ratio:auto;border:0;border-radius:30px;
+    box-shadow:0 0 0 1.5px rgba(92,225,255,.6),0 0 46px -4px rgba(92,225,255,.5),0 28px 60px -28px #000,inset 0 0 90px rgba(0,0,0,.55)}
+  body #scrPhoto .photo-box video,body #scrPhoto .photo-box>img,body #scrPhoto .photo-box>canvas{position:absolute;inset:0;width:100%;height:100%}
+  body #scrPhoto .ai-rd{display:none}
+  body #scrPhoto .ai-hint{bottom:20px;font-size:13.5px;padding:9px 18px;background:rgba(4,16,42,.78);border-color:rgba(92,225,255,.45);box-shadow:0 10px 24px -10px rgba(0,0,0,.7)}
+  body #scrPhoto.lv .ai-say{bottom:22px}
+  body #scrPhoto.lv .ai-hold{bottom:12px}
+  body #scrPhoto .ai-c{width:30px;height:30px;border-width:0}
+  /* hướng dẫn nhanh trước khi quét: 3 ô kính mờ */
+  body #scrPhoto.lg.rdy .ai-tips{display:flex!important;order:9;gap:10px;margin:0;padding:0;list-style:none}
+  body #scrPhoto.lg.rdy .ai-tips li{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px 12px;border-radius:20px;text-align:center;font-size:12px;font-weight:700;line-height:1.3;color:#DDF3FF;
+    background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04));border:1px solid rgba(92,225,255,.28);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 14px 30px -18px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.12)}
+  body #scrPhoto.lg.rdy .ai-tips svg{width:26px;height:26px;padding:7px;box-sizing:content-box;border-radius:50%;background:rgba(92,225,255,.14);color:#5CE1FF}
+  /* tiến trình xác thực: thẻ kính mờ */
+  body #scrPhoto .ai-pipe{margin:0;max-width:none;padding:14px 16px 12px;border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04));border:1px solid rgba(92,225,255,.28);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+  body #scrPhoto .ai-fill{display:none}
+  body #scrPhoto #photoMsg:not(:empty){margin:0}
+  body #scrPhoto #btnPhotoOk,body #scrPhoto #btnPhotoRetry,body #scrPhoto #btnPhotoBack,body #scrPhoto #btnCapture{margin-top:0!important;border-radius:18px}
+  body #scrPhoto.lv .ai-tips{display:none!important}
+}
+@media(max-width:560px) and (max-height:700px){
+  body #scrPhoto h1{font-size:20px}
+  body #scrPhoto.lg.rdy .ai-lead{display:none}
+  body #scrPhoto.lg.rdy .ai-tips li{padding:10px 4px 9px;font-size:11px}
+}
 </style>
 </head>
 <body class="introbg" data-scr="check">
@@ -2810,7 +2851,7 @@ function aiBuildMesh(){
 function aiGuideFit(){
   var box = document.querySelector('#scrPhoto .photo-box'), g = box && box.querySelector('.ai-guide');
   if (!g || !box.clientWidth) return;
-  var W = box.clientWidth, H = box.clientHeight, cx = W / 2, cy = H * .42, rx = Math.min(H * .36 * .717, W * .30), ry = rx / .717, k = ry / 120; // oval mặt người, tỉ lệ cố định
+  var W = box.clientWidth, H = box.clientHeight, cx = W / 2, cy = H * .42, rx = Math.min(H * .36 * .717, W * .34), ry = rx / .717, k = ry / 120; // oval mặt người, tỉ lệ cố định
   g.setAttribute('viewBox', '0 0 ' + W + ' ' + H); g.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   var e = function(c, ax, ay){ var el = g.querySelector('.' + c); if (el){ el.setAttribute('cx', cx); el.setAttribute('cy', cy); el.setAttribute('rx', ax); el.setAttribute('ry', ay); } };
   e('ai-e0', rx, ry); e('ai-e1', rx + 11 * k, ry + 11 * k); e('ai-e2', rx + 22 * k, ry + 22 * k);
@@ -2818,6 +2859,7 @@ function aiGuideFit(){
   var tk = g.querySelector('.ai-tk path'), t = 10 * k; if (tk) tk.setAttribute('d', 'M' + cx + ' ' + (cy - ry - 2 * t) + 'v' + t + 'M' + cx + ' ' + (cy + ry + t) + 'v' + t + 'M' + (cx - rx - 2 * t) + ' ' + cy + 'h' + t + 'M' + (cx + rx + t) + ' ' + cy + 'h' + t);
 }
 window.addEventListener('resize', function(){ if (!$('scrPhoto').classList.contains('hide')) aiGuideFit(); });
+try { new ResizeObserver(function(){ if (!$('scrPhoto').classList.contains('hide')) aiGuideFit(); }).observe(document.querySelector('#scrPhoto .photo-box')); } catch (e) {}
 function aiPlace(el, b, grow){ // b: {x,y,w,h} theo tỉ lệ 0..1 của khung; grow: nở thêm quanh khuôn mặt
   var g = grow || 0, w = b.w * (1 + g), h = b.h * (1 + g * 1.1), x = b.x + b.w / 2 - w / 2, y = b.y + b.h / 2 - h / 2;
   el.style.left = (x * 100) + '%'; el.style.top = (y * 100) + '%'; el.style.width = (w * 100) + '%'; el.style.height = (h * 100) + '%';
