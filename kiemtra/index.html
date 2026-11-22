@@ -1784,6 +1784,96 @@ body.rs .stage{max-width:1500px;width:min(1500px,94vw);margin-left:auto;margin-r
   .rs-sum .bk{margin:18px 16px 4px}
 }
 
+/* ===== Kết quả trên điện thoại theo mẫu: đầu trang xanh có cúp, thẻ sáng (vòng tỉ lệ | người làm bài), giờ làm bài, hộp hoàn thành, nút xem chi tiết ===== */
+.rs-kick,.rs-mp,.rs-mob,.lp-txt,.lp-cup{display:none}
+@media(max-width:860px){
+  body.rs{background:#0B5BD6}
+  body.rs::before{background:radial-gradient(90% 40% at 50% 0%,rgba(80,170,255,.7),transparent 70%),linear-gradient(180deg,#0A4FCC 0%,#1170E8 40%,#4BA0FF 100%)}
+  body.rs::after{left:-30vw;right:-30vw;bottom:-14vh;height:24vh;border-top:2px solid rgba(255,255,255,.7);background:linear-gradient(180deg,rgba(255,255,255,.25),rgba(255,255,255,.05))}
+  body.rs .lp-bar{position:relative;height:auto;min-height:100px;padding:18px 16px 0;align-items:flex-start;background:none;border:0;-webkit-backdrop-filter:none;backdrop-filter:none;animation:none}
+  body.rs .lp-burger,body.rs .lp-me,body.rs .lp-name,body.rs .lp-nav,body.rs .lp-practice{display:none!important}
+  body.rs .lp-brand{gap:10px;max-width:calc(100% - 96px);position:relative;z-index:2}
+  body.rs .lp-mark{flex:0 0 auto;width:46px;height:46px;border-radius:15px;padding:6px}
+  body.rs .lp-txt{display:block;color:#fff;line-height:1.3}
+  body.rs .lp-txt b{display:block;font-size:clamp(13px,3.8vw,16px);font-weight:800;white-space:nowrap}
+  body.rs .lp-txt small{display:block;font-size:13px;font-weight:500;opacity:.85;margin-top:3px}
+  body.rs .lp-cup{display:block;position:absolute;right:6px;top:2px;width:96px;height:auto;z-index:1;filter:drop-shadow(0 10px 14px rgba(0,30,90,.35))}
+  body.rs .stage{width:100%;padding:0 10px}
+  #scrResult .rs-wrap{gap:12px;margin-top:-20px;position:relative;z-index:3}
+  /* thẻ tóm tắt */
+  .rs-sum{display:grid;grid-template-columns:44% 1fr;grid-template-areas:"top top" "ring mp" "mob mob";padding:0;border-radius:26px;background:linear-gradient(170deg,#FFFFFF 0%,#EEF5FF 45%,#DDEBFF 100%);border:1px solid rgba(255,255,255,.95)}
+  .rs-sum::after{display:none}
+  .rs-sum>.rs-top{grid-area:top}
+  .rs-sum>.ring{grid-area:ring}
+  .rs-sum>.rs-mp{grid-area:mp}
+  .rs-sum>.rs-mob{grid-area:mob}
+  #scrResult .rs-sum>h1,.rs-sum>.thr,.rs-sum>.cheer,.rs-sum>.stats,.rs-sum>.bk{display:none!important}
+  .rs-top{min-height:0;padding:22px 18px 4px;background:none;color:#0B1F4B}
+  .rs-top::after,.rs-art,.rs-ic,.rs-brand small{display:none}
+  .rs-kick{display:inline-flex;align-items:center;gap:10px;padding:6px 14px 6px 10px;border-radius:12px;background:#E3EEFF;color:#0B2A66;font-size:13px;font-weight:800;letter-spacing:.06em}
+  .rs-kick::before{content:"";width:5px;height:18px;border-radius:3px;background:linear-gradient(180deg,#5BB0FF,#1F6FE5)}
+  .rs-brand{max-width:none;margin-top:10px}
+  .rs-brand b{font-size:21px;line-height:1.3;color:#0B1F4B;font-weight:800}
+  #resBadge{margin-top:12px}
+  #resBadge .badge{padding:6px 16px 6px 6px;font-size:14px;box-shadow:none;border:2px solid currentColor}
+  #resBadge .badge.n{background:#FFF0F0}
+  #resBadge .badge.y,#resBadge .badge.d{background:#ECFAF1;color:#15924C}
+  #resBadge .badge.d svg circle{fill:#18A957;stroke:#18A957}#resBadge .badge.d svg path{stroke:#fff}
+  #resBadge .badge svg{width:22px;height:22px}
+  /* vòng tỉ lệ: viền xanh phát sáng, lòng xanh đậm */
+  .rs-sum .ring{width:min(156px,40vw);height:auto;aspect-ratio:1;margin:16px auto 10px 14px;border-radius:50%;background:radial-gradient(circle,#183C78 0 74%,#2F7FF0 75%,#69B6FF 88%,#2F8CFF 100%);box-shadow:0 0 0 4px rgba(255,255,255,.9),0 10px 26px -6px rgba(30,110,240,.7)}
+  .rs-sum .ring .trk{stroke:rgba(255,255,255,.18)}
+  #resRing.sc-red .prg{stroke:url(#gScRed)}
+  .rs-sum .ring .c b{color:#fff;font-size:clamp(28px,8.6vw,36px)}
+  .rs-sum .ring .c span{color:#E6F2FF;font-size:13px}
+  /* người làm bài */
+  .rs-mp{display:block;align-self:center;min-width:0;padding:6px 16px 6px 14px;border-left:1.5px solid #CFE0F5;margin:16px 0 10px}
+  .rs-mp h2{display:flex;align-items:center;gap:8px;margin:0;font-size:17px;line-height:1.25;font-weight:800;color:#0B1F4B;text-transform:uppercase;overflow-wrap:anywhere}
+  .rs-mp h2 svg{flex:0 0 auto;width:18px;height:18px;color:#1F6FE5}
+  .rs-mp .chip{display:inline-block;margin-top:8px;padding:3px 12px;border-radius:99px;background:#D9E9FF;color:#0B4FC4;font-size:13px;font-weight:600}
+  .rs-mp .sc{display:flex;align-items:baseline;gap:8px;margin:8px 0 0;flex-wrap:wrap}
+  .rs-mp .sc b{font-size:clamp(28px,8.4vw,36px);line-height:1.1;font-weight:900;color:#0B1F4B}
+  .rs-mp .sc span{font-size:14.5px;color:#1C2F55}
+  .rs-mp .bar{display:flex;height:11px;margin-top:8px;border-radius:99px;overflow:hidden;background:#DCE6F3}
+  .rs-mp .bar i{display:block;height:100%}.rs-mp .bar i.g{background:linear-gradient(90deg,#9BFF4F,#22C84A)}.rs-mp .bar i.r{background:#F25A5A}.rs-mp .bar i.b{background:#B8C4D4}
+  .rs-mp .sb{margin:8px 0 0;font-size:13px;color:#1C2F55}
+  .rs-mp .sb u{display:inline-block;width:1.5px;height:1em;margin:0 10px;background:#9FB2CC;vertical-align:-2px}
+  /* phần dưới */
+  .rs-mob{display:block;margin:6px 0 0;padding:16px 14px 18px;border-radius:24px 24px 26px 26px;background:linear-gradient(180deg,#FFFFFF,#F4F8FF);box-shadow:0 -10px 24px -18px rgba(20,70,160,.5)}
+  .rs-tm{margin:0;padding:2px 16px;border:1px solid #E1EAF6;border-radius:18px;background:#fff;box-shadow:0 8px 20px -16px rgba(20,70,160,.5)}
+  .rs-tm div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 0;border-top:1px solid #E8EFF8}
+  .rs-tm div:first-child{border-top:0}
+  .rs-tm dt{display:flex;align-items:center;gap:12px;font-size:14px;color:#1C2F55}
+  .rs-tm dt svg{flex:0 0 auto;width:22px;height:22px;color:#1F6FE5}
+  .rs-tm dd{margin:0;font-size:14px;font-weight:800;color:#0B1F4B;text-align:right;white-space:nowrap}
+  .rs-done{display:flex;align-items:center;gap:12px;margin-top:14px;padding:16px 16px 16px 12px;border-radius:18px;background:linear-gradient(100deg,#EAF9EF,#F3FBF5);border:1px solid #CDEFD8}
+  .rs-done>svg{flex:0 0 auto;width:64px;height:64px;filter:drop-shadow(0 6px 10px rgba(20,140,70,.3))}
+  .rs-done b{display:block;font-size:17px;font-weight:800;color:#147A3D}
+  .rs-done p{margin:4px 0 0;font-size:13.5px;line-height:1.5;color:#3A4C6E}
+  .rs-done.n{background:linear-gradient(100deg,#FFF5E6,#FFF9F0);border-color:#F6DDB4}.rs-done.n b{color:#B05E0A}.rs-done.n>svg{filter:drop-shadow(0 6px 10px rgba(200,110,20,.3))}
+  .rs-done.p{background:linear-gradient(100deg,#FFF8E6,#FFFBF2);border-color:#F1DCA8}.rs-done.p b{color:#8A5200}
+  .rs-more{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:58px;margin-top:16px;border:0;border-radius:99px;background:linear-gradient(100deg,#0B5BD6,#1E86F5);color:#fff;font:inherit;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 14px 26px -12px rgba(11,91,214,.8)}
+  .rs-more svg{width:24px;height:24px;flex:0 0 auto}.rs-more .ar{width:20px;height:20px;transition:transform .2s}
+  .rs-more[aria-expanded="true"] .ar{transform:rotate(90deg)}
+  .rs-more:focus-visible,.rs-links a:focus-visible{outline:3px solid #9CC3FF;outline-offset:2px}
+  .rs-links{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .rs-links a{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:8px 10px;white-space:nowrap;font-size:clamp(13px,3.7vw,15px)!important;border:1.5px solid #B9D2F3;border-radius:99px;background:#fff;color:#0B1F4B;font-size:14.5px;font-weight:800;text-decoration:none;text-align:center;line-height:1.25}
+  .rs-links svg{flex:0 0 auto;width:22px;height:22px;color:#1F6FE5}
+  /* thẻ chi tiết: ẩn cho tới khi bấm "Xem chi tiết bài làm" */
+  .rs-det{display:none;scroll-margin-top:12px}
+  body.rs .foot,body.rs .foot a{color:rgba(255,255,255,.88)}
+  .rs-det.mopen{display:block}
+  .rs-tabs{display:grid!important;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px}
+  .rs-tabs button{flex-direction:column;gap:4px;padding:9px 4px;font-size:12.5px;line-height:1.25;text-align:center}
+  .rs-tabs button.hide{display:none!important}
+}
+@media(max-width:360px){
+  .rs-sum{grid-template-columns:1fr;grid-template-areas:"top" "ring" "mp" "mob"}
+  .rs-sum .ring{margin:14px auto 4px}
+  .rs-mp{border-left:0;padding:0 18px;margin:6px 0 10px;text-align:center}.rs-mp h2{justify-content:center}.rs-mp .sc{justify-content:center}
+  .rs-links{grid-template-columns:1fr}
+}
+
 /* ===== Trang chủ /kiemtra (màn nhập mã đề) theo mẫu thiết kế ===== */
 .lnd-title,.lnd-cards,.lnd-laptop{display:none}
 .lp-nav .soon{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;font-size:13px;font-weight:700;color:#29466e;opacity:.5;cursor:default;white-space:nowrap}
@@ -1869,7 +1959,8 @@ body.rs .stage{max-width:1500px;width:min(1500px,94vw);margin-left:auto;margin-r
 <body class="introbg" data-scr="check">
 <div class="practice-bar hide" id="practiceBar" role="status"><span>ĐỀ THI THỬ</span></div>
 <header class="lp-bar">
-  <div class="lp-brand"><span class="lp-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span class="lp-name">Hệ thống kiểm tra đánh giá trực tuyến</span></div>
+  <div class="lp-brand"><span class="lp-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span class="lp-name">Hệ thống kiểm tra đánh giá trực tuyến</span><span class="lp-txt" aria-hidden="true"><b>Nền tảng kiểm tra trực tuyến</b><small>Kết quả bài kiểm tra</small></span></div>
+  <img class="lp-cup" id="lpCup" src="/kiemtra/trophy.png" alt="" width="180" height="150" aria-hidden="true">
   <button type="button" class="lp-burger" id="lpBurger" aria-label="Mở menu" aria-expanded="false" aria-controls="lpNav"><svg class="m" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   <nav class="lp-nav" id="lpNav" aria-label="Điều hướng">
     <a href="/kiemtra/" class="cur" title="Trang chủ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10M10 20v-5h4v5"/></svg><span>Trang chủ</span></a>
@@ -2179,6 +2270,7 @@ body.rs .stage{max-width:1500px;width:min(1500px,94vw);margin-left:auto;margin-r
         <div class="rs-sum">
           <div class="rs-top">
             <img class="rs-art" src="/kiemtra/rs-art.png" alt="" width="260" height="200" aria-hidden="true">
+            <span class="rs-kick" aria-hidden="true">KẾT QUẢ BÀI KIỂM TRA</span>
             <div class="rs-brand"><span class="rs-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4.5" width="14" height="17" rx="2.5"/><path d="M9 3h6v3H9z"/><path d="m8 11 1.3 1.3L11.5 10M13.5 11H16M8 16l1.3 1.3 2.2-2.3M13.5 16H16"/></svg></span><div><b id="rvTitle">Bài kiểm tra</b><small><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 2.5 2.5L16 9"/></svg>Kết quả bài kiểm tra</small></div></div>
             <div id="resBadge"></div>
           </div>
@@ -2188,8 +2280,18 @@ body.rs .stage{max-width:1500px;width:min(1500px,94vw);margin-left:auto;margin-r
           <p class="cheer" id="resCheer"></p>
           <div class="stats" id="resStats"></div>
           <div class="bk hide" id="resBk"></div>
+          <div class="rs-mp" id="resMp"></div>
+          <div class="rs-mob">
+            <dl class="rs-tm" id="resTm"></dl>
+            <div class="rs-done" id="resDone"></div>
+            <button type="button" class="rs-more" id="btnMore" aria-expanded="false" aria-controls="rsDet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4.5"/></svg><span>Xem chi tiết bài làm</span><svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+            <div class="rs-links">
+              <a href="/kiemtra/hoclieu.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 5.5C5.5 4 9 4.2 12 6v14c-3-1.8-6.5-2-9.5-.5z"/><path d="M21.5 5.5C18.5 4 15 4.2 12 6v14c3-1.8 6.5-2 9.5-.5z"/><path d="M5 9.5h4M5 12.5h4M15 9.5h4M15 12.5h4"/></svg><span>Học liệu liên quan</span></a>
+              <a href="/kiemtra/tracuu.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12M10 20V6M15 20v-9M20 20v-5M3 20.5h18"/></svg><span>Lịch sử làm bài</span></a>
+            </div>
+          </div>
         </div>
-        <div class="rs-det">
+        <div class="rs-det" id="rsDet">
           <div class="rs-who"><span class="av" id="rvAv" aria-hidden="true">?</span><div><b id="rvName"></b><span id="rvCode"></span></div><p class="rs-sub" id="resSub"></p></div>
           <div class="rs-tabs" id="rsTabs" role="tablist" aria-label="Chi tiết kết quả">
             <button type="button" role="tab" data-t="imp" id="tbImp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="m12 12 7-7M16.5 4.5 19 5l.5 2.5"/></svg><span id="tbImpL">Các vấn đề cần cải thiện</span></button>
@@ -3841,6 +3943,38 @@ function rsTabs(){ // tab mặc định: còn lượt làm tiếp → "Các lầ
   rsPick(($('btnRetry') && hasT) ? 'tries' : 'imp');
 }
 $('rsTabs').addEventListener('click', function(e){ var b = e.target.closest('button[data-t]'); if (b) rsPick(b.dataset.t); });
+// Màn kết quả trên điện thoại (theo mẫu): người làm bài cạnh vòng tỉ lệ, giờ bắt đầu / nộp / thời gian, hộp hoàn thành, nút xem chi tiết
+function renderMob(r, ps, prac, c){
+  var ok = function(x){ return x != null; };
+  $('resMp').innerHTML = '<h2><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.5" r="4.2" fill="currentColor"/><path d="M3.8 21c0-4.8 3.7-7.8 8.2-7.8s8.2 3 8.2 7.8z" fill="currentColor"/></svg><span>' + esc(c.name || c.code || '') + '</span></h2>' +
+    (c.code ? '<span class="chip">Mã NV: ' + esc(c.code) + '</span>' : '') +
+    '<p class="sc"><b>' + (ok(r.score) ? r.score : '–') + '/' + (ok(r.total) ? r.total : '–') + '</b><span>câu đúng</span></p>' +
+    (ok(r.wrong) && ok(r.blank) && r.total ? '<div class="bar" aria-hidden="true">' + [[r.score || 0, 'g'], [r.wrong, 'r'], [r.blank, 'b']].map(function(g){ return g[0] > 0 ? '<i class="' + g[1] + '" style="width:' + (g[0] / r.total * 100) + '%"></i>' : ''; }).join('') + '</div>' +
+      '<p class="sb">Sai: ' + r.wrong + '<u></u>Bỏ trống: ' + r.blank + '</p>' : '');
+  var rows = '';
+  if (r.startedAt) rows += '<div><dt>' + RS_ICO.play + 'Bắt đầu lúc</dt><dd>' + esc(fmtFull(r.startedAt).replace(',', '')) + '</dd></div>';
+  if (r.submittedAt) rows += '<div><dt>' + RS_ICO.flag + 'Nộp bài lúc</dt><dd>' + esc(fmtFull(r.submittedAt).replace(',', '')) + '</dd></div>';
+  if (r.durationSec != null) rows += '<div><dt>' + RS_ICO.clock + 'Thời gian hoàn thành</dt><dd>' + Math.floor(r.durationSec / 60) + ' phút ' + (r.durationSec % 60) + ' giây</dd></div>';
+  if (r.compliancePoints != null) rows += '<div><dt>' + RS_ICO.star + (prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ') + '</dt><dd>' + esc(r.compliancePoints) + ' điểm</dd></div>';
+  $('resTm').innerHTML = rows; $('resTm').classList.toggle('hide', !rows);
+  var k = prac ? 'p' : ps === false ? 'n' : 'y';
+  var t = prac ? ['Bài thi thử đã hoàn thành', 'Đây không phải thi chính thức. Xem chi tiết bài làm và học liệu gợi ý để chuẩn bị tốt hơn.']
+    : ps === true ? ['Chúc mừng, bạn đã đạt yêu cầu!', 'Xem chi tiết bài làm, nhận xét và học liệu gợi ý để củng cố thêm kiến thức.']
+    : ps === false ? ['Bạn chưa đạt yêu cầu', 'Xem các nội dung cần cải thiện và học liệu gợi ý để làm tốt hơn ở lần sau.']
+    : ['Đã hoàn thành bài kiểm tra!', 'Bạn có thể xem chi tiết bài làm, nhận xét và học liệu gợi ý để cải thiện kết quả.'];
+  $('resDone').className = 'rs-done ' + k;
+  $('resDone').innerHTML = (k === 'n' ? RS_ICO.medalN : RS_ICO.medal) + '<div><b>' + t[0] + '</b><p>' + t[1] + '</p></div>';
+  $('lpCup').src = ps === false ? '/kiemtra/rs-art.png' : '/kiemtra/trophy.png';
+  var open = !!$('btnRetry'); // còn lượt làm tiếp: mở sẵn phần chi tiết để thấy nút "Làm tiếp"
+  $('rsDet').classList.toggle('mopen', open); $('btnMore').setAttribute('aria-expanded', String(open));
+  $('btnMore').querySelector('span').textContent = open ? 'Thu gọn chi tiết bài làm' : 'Xem chi tiết bài làm';
+}
+$('btnMore').addEventListener('click', function(){
+  var d = $('rsDet'), on = !d.classList.contains('mopen');
+  d.classList.toggle('mopen', on); this.setAttribute('aria-expanded', String(on));
+  this.querySelector('span').textContent = on ? 'Thu gọn chi tiết bài làm' : 'Xem chi tiết bài làm';
+  if (on) setTimeout(function(){ d.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start' }); }, 30);
+});
 var RS_SIDE = function(){ return window.matchMedia && matchMedia('(max-width:860px)').matches ? 'bên dưới' : 'bên cạnh'; };
 var RS_SVG = function(d, sw){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (sw || 1.9) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
 var RS_ICO = {
@@ -3852,6 +3986,10 @@ var RS_ICO = {
   book: RS_SVG('<path d="M3 5.5C6 4 9 4.2 12 6c3-1.8 6-2 9-.5V19c-3-1.5-6-1.3-9 .5-3-1.8-6-2-9-.5z"/><path d="M12 6v13.5"/>', 2),
   list: RS_SVG('<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01" stroke-width="3"/>', 2.2),
   target: '<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="15" cy="17" r="12" fill="#FF8A3D"/><circle cx="15" cy="17" r="8.5" fill="#fff"/><circle cx="15" cy="17" r="5.2" fill="#FF8A3D"/><circle cx="15" cy="17" r="2" fill="#fff"/><path d="M15 17 27 5" stroke="#8A5A12" stroke-width="2" stroke-linecap="round"/><path d="m24 4 4-2 .8 3.4-3.2 1.6z" fill="#FFC21A"/></svg>',
+  play: RS_SVG('<circle cx="12" cy="12" r="9"/><path d="M10.2 8.6v6.8l5.4-3.4z"/>'),
+  flag: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5 4h14v10H5z" fill="#fff" stroke="currentColor" stroke-width="1.6"/><path d="M5 4h3.5v2.5H5zM12 4h3.5v2.5H12zM8.5 6.5H12V9H8.5zM15.5 6.5H19V9h-3.5zM5 9h3.5v2.5H5zM12 9h3.5v2.5H12zM8.5 11.5H12V14H8.5zM15.5 11.5H19V14h-3.5z" fill="currentColor"/></svg>',
+  medal: '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 40 12 58l8-3 4 7 7-17zM44 40l8 18-8-3-4 7-7-17z" fill="#1E9E4E"/><path d="M32 4l5 4 6-1 2.5 5.6 5.6 2.5-1 6 4 5-4 5 1 6-5.6 2.5L43 45l-6-1-5 4-5-4-6 1-2.5-5.6-5.6-2.5 1-6-4-5 4-5-1-6 5.6-2.5L21 7l6 1z" fill="#3CC46A"/><circle cx="32" cy="26" r="13" fill="#1FA355"/><path d="m25.5 26.5 4.5 4.5 8.5-9" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  medalN: '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M20 40 12 58l8-3 4 7 7-17zM44 40l8 18-8-3-4 7-7-17z" fill="#D9791A"/><path d="M32 4l5 4 6-1 2.5 5.6 5.6 2.5-1 6 4 5-4 5 1 6-5.6 2.5L43 45l-6-1-5 4-5-4-6 1-2.5-5.6-5.6-2.5 1-6-4-5 4-5-1-6 5.6-2.5L21 7l6 1z" fill="#F5A93A"/><circle cx="32" cy="26" r="13" fill="#E58A1F"/><path d="M32 18.5v9M32 33.2v.3" stroke="#fff" stroke-width="3.8" stroke-linecap="round"/></svg>',
   ok: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#18A957"/><path d="m7 12.3 3.3 3.2L17 8.8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   no: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#E5353F"/><path d="m8.2 8.2 7.6 7.6M15.8 8.2l-7.6 7.6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg>'
 };
@@ -3945,6 +4083,7 @@ function renderResult(r, already){
   renderAnalysis(null); // màn hình kết quả không hiện phần phân tích theo mảng kiến thức
   renderAdvice(r.advice);
   renderImp(r, ps, prac);
+  renderMob(r, ps, prac, c);
   shareMsg('');
   rsTabs();
   show('result');
