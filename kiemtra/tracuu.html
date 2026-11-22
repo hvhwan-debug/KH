@@ -211,6 +211,11 @@ body.cert-on .foot{display:none}
 .extra .proof>div{text-align:center}
 .extra .proof span{max-width:36ch;margin-left:auto;margin-right:auto;text-wrap:balance}
 .ct-verify{justify-content:center;text-align:center}
+/* Cảnh báo khuôn mặt không khớp chủ bài: tiêu đề in hoa + nội dung */
+.fm #fmMsg .pmsg.idw{max-width:38ch;text-align:left;padding:12px 14px;border-color:rgba(255,107,107,.7);background:rgba(255,92,122,.16)}
+.pmsg.idw b{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;letter-spacing:.06em;color:#FF8FA3;margin-bottom:5px}
+.pmsg.idw b::before{content:"⚠";font-size:15px;letter-spacing:0}
+.pmsg.idw span{display:block;font-size:13px;line-height:1.55}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <style>
@@ -456,7 +461,9 @@ async function fmVerify(photo){
     return;
   }
   fmState('s-bad'); $('fmRes').innerHTML = BAD_SVG; fmHint('Xác thực chưa thành công', 'bad');
-  $('fmMsg').innerHTML = '<div class="pmsg">' + esc((j && j.error) || 'Không thể kết nối đến hệ thống. Vui lòng thử lại sau.') + '</div>';
+  $('fmMsg').innerHTML = j && j.mismatch
+    ? '<div class="pmsg idw" role="alert"><b>' + esc(j.title || 'CẢNH BÁO XÁC THỰC KHUÔN MẶT') + '</b><span>' + esc(j.error) + '</span></div>' // khuôn mặt không khớp chủ bài
+    : '<div class="pmsg">' + esc((j && j.error) || 'Không thể kết nối đến hệ thống. Vui lòng thử lại sau.') + '</div>';
   if (j && j.locked){ closeFace(); showLocked(j.error); return; }
   if (j && j.off){ closeFace(); $('tMsg').innerHTML = '<div class="pmsg">' + esc(j.error) + '</div>'; return; } // tra cứu bằng khuôn mặt đang tắt
   if (j && j.notFound) $('fmMsg').innerHTML += '<p class="fm-tips" style="margin-top:8px">Hãy thử lại ở nơi đủ sáng, nhìn thẳng vào camera. Nếu vẫn không nhận diện được, vui lòng liên hệ bộ phận hỗ trợ.</p>';

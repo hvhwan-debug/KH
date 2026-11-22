@@ -107,7 +107,7 @@ module.exports = async function (context, req) {
       await logView(req, who, "denied", "face:" + cmp.code, cmp.distance != null ? "khoảng cách " + cmp.distance.toFixed(3) + " (ngưỡng " + cmp.threshold + ")" : "");
       if (cmp.code === "mismatch") {
         const al = await secalert.alertPaperAccess(req, pseudo, "mismatch", { selfie, refPhoto: refs[0].photo, distance: cmp.distance, threshold: cmp.threshold });
-        return reply(context, 403, { ok: false, locked: al.locked, error: cmp.message + " Sự việc đã được ghi nhận và báo cho quản trị viên." + (al.locked ? " Việc tra cứu đã bị tạm khoá." : "") });
+        return reply(context, 403, { ok: false, locked: al.locked, mismatch: true, title: "CẢNH BÁO XÁC THỰC KHUÔN MẶT", error: "Kết quả xác thực cho thấy khuôn mặt hiện tại không trùng khớp với hình ảnh đã đăng ký của chủ tài khoản bài làm. Hệ thống đã ghi nhận sự việc và gửi thông báo đến quản trị viên để kiểm tra, xác minh." + (al.locked ? " Việc tra cứu đã bị tạm khoá." : "") });
       }
       return reply(context, cmp.code === "unavailable" ? 503 : 403, { ok: false, error: cmp.message });
     }

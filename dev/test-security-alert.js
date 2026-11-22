@@ -18,7 +18,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { c ? pass++ : fail++; console.log(
   mailbox = () => global.__mailbox || [];
 
   let r = await call({ photo: jpg, phone: "0901234567" }, "1.1.1.1");
-  ok(r.status === 403 && /báo cho quản trị viên/.test(r.body.error), "1) khuôn mặt lạ bị chặn + thông báo đã báo admin");
+  ok(r.status === 403 && /gửi thông báo đến quản trị viên/.test(r.body.error) && r.body.mismatch && r.body.title === "CẢNH BÁO XÁC THỰC KHUÔN MẶT", "1) khuôn mặt lạ bị chặn + cảnh báo xác thực đã báo admin");
   ok(mailbox().length === 1 && /admin1@x.vn/.test(mailbox()[0].to) && /admin2@x.vn/.test(mailbox()[0].to), "2) email cảnh báo gửi tới TẤT CẢ admin");
   ok(mailbox()[0].attachments && mailbox()[0].attachments.length === 2, "3) email kèm 2 ảnh (gốc + người vừa quét)");
   ok(!JSON.stringify(await sa.list()).includes("fakejpeg") && !JSON.stringify((await quiz.getAttempt(att.id))).includes("nguoi-vua"), "4) ảnh vừa quét KHÔNG được lưu trên máy chủ");

@@ -116,7 +116,7 @@ module.exports = async function (context, req) {
         // Các lỗi kỹ thuật (không thấy mặt, ảnh hỏng, hệ thống bận) KHÔNG báo vì không phải người lạ.
         if (cmp.code === "mismatch") {
           const al = await secalert.alertPaperAccess(req, attempt, "mismatch", { selfie, refPhoto: refs[0] && refs[0].photo, distance: cmp.distance, threshold: cmp.threshold });
-          return reply(context, 403, { ok: false, locked: al.locked, error: cmp.message + " Sự việc đã được ghi nhận và báo cho quản trị viên." + (al.locked ? " Việc xem lại bài này đã bị tạm khoá." : "") });
+          return reply(context, 403, { ok: false, locked: al.locked, mismatch: true, title: "CẢNH BÁO XÁC THỰC KHUÔN MẶT", error: "Kết quả xác thực cho thấy khuôn mặt hiện tại không trùng khớp với hình ảnh đã đăng ký của chủ tài khoản bài làm. Hệ thống đã ghi nhận sự việc và gửi thông báo đến quản trị viên để kiểm tra, xác minh." + (al.locked ? " Việc xem lại bài này đã bị tạm khoá." : "") });
         }
         return reply(context, cmp.code === "unavailable" ? 503 : 403, { ok: false, error: cmp.message });
       }
