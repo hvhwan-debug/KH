@@ -47,7 +47,8 @@ glow("rgba(180,240,255,1)", 10, () => { spark(518, 46, 13); spark(540, 76, 6); }
 glow("rgba(120,210,255,.8)", 18, () => { c.save(); c.translate(440, 190); c.rotate(-0.06); rr(0, 0, 150, 96, 16); c.fillStyle = "rgba(90,170,255,.55)"; c.fill(); c.strokeStyle = "rgba(200,240,255,.85)"; c.lineWidth = 2; c.stroke();
   rr(16, 16, 48, 7, 3.5); c.fillStyle = "rgba(255,255,255,.8)"; c.fill(); rr(16, 28, 30, 6, 3); c.fillStyle = "rgba(255,255,255,.5)"; c.fill();
   [[22, 24], [50, 40], [78, 56], [106, 70]].forEach(([x, h]) => { rr(x, 84 - h, 18, h, 5); c.fillStyle = lin(0, 84 - h, 0, 84, ["#FFFFFF", "#9FD8FF"]); c.fill(); }); c.restore(); });
-// bia ngắm
+// bia ngắm (bỏ qua khi NO_TARGET=1: bản dùng để ghép với cúp ở trang kết quả)
+if (!process.env.NO_TARGET) {
 const tx = 420, ty = 360;
 glow("rgba(10,40,130,.55)", 24, () => { c.beginPath(); c.ellipse(tx, ty, 92, 98, -0.35, 0, Math.PI * 2); c.fillStyle = "#1546B8"; c.fill(); });
 c.beginPath(); c.ellipse(tx + 10, ty - 4, 86, 92, -0.35, 0, Math.PI * 2); c.fillStyle = lin(tx - 80, ty - 90, tx + 90, ty + 90, ["#4F8FF5", "#1A52CE"]); c.fill();
@@ -55,4 +56,6 @@ c.beginPath(); c.ellipse(tx + 10, ty - 4, 86, 92, -0.35, 0, Math.PI * 2); c.fill
 // mũi tên cắm vào tâm bia, đuôi lông vũ ở ngoài
 c.beginPath(); c.moveTo(tx + 14, ty - 6); c.lineTo(tx + 118, ty - 92); c.lineWidth = 7; c.strokeStyle = lin(tx, ty, tx + 118, ty - 92, ["#C9640A", "#FFB43A"]); c.stroke();
 [[-1, "#FFB020"], [1, "#FFD45A"]].forEach(([d, col]) => { c.save(); c.translate(tx + 112, ty - 87); c.rotate(-0.69); c.beginPath(); c.moveTo(0, 0); c.lineTo(34, d * 2); c.lineTo(44, d * 18); c.lineTo(10, d * 14); c.closePath(); c.fillStyle = col; c.fill(); c.restore(); });
-cv.encode("png").then((b) => require("fs").writeFileSync(path.join(__dirname, "../kiemtra/home-art.png"), b));
+}
+const OUT = process.env.OUT || path.join(__dirname, "../kiemtra/home-art.png");
+cv.encode("png").then((b) => require("fs").writeFileSync(OUT, b));
