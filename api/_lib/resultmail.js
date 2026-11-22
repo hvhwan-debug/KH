@@ -1,7 +1,7 @@
 // Email kết quả bài kiểm tra: dùng chung cho lúc nộp bài và khi thí sinh bấm "Gửi lại email xác nhận".
 // Nội dung và giao diện do resultemail.js dựng (khung riêng, độc lập với email của các ứng dụng khác trong repo).
 const mail = require("./mail");
-const { build } = require("./resultemail");
+const { build, artSpec } = require("./resultemail");
 
 // Gửi email kết quả tới địa chỉ của thí sinh. Ném lỗi nếu không gửi được.
 async function send(attempt, settings, advice) {
@@ -15,8 +15,12 @@ async function send(attempt, settings, advice) {
   catch (e) { console.error("resultmail card:", (e && e.message) || e); }
   try { const sc = require("./sharecard"); qr = { filename: "ma-qr-xac-thuc.png", content: await within(sc.qrPng(attempt), 5000), contentType: "image/png", cid: "qr-ket-qua@kiemtra", contentDisposition: "inline" }; }
   catch (e) { console.error("resultmail qr:", (e && e.message) || e); }
-  const m = build(attempt, settings, advice, { card: !!card, qrCid: qr ? qr.cid : "" });
-  const atts = [card, qr].filter(Boolean);
+  // Hình minh hoạ giao diện (logo, ảnh đầu thư, vòng tỉ lệ đúng, biểu tượng): lỗi thì gửi bản không hình
+  let art = null;
+  try { const s = artSpec(attempt, settings); art = await within(require("./mailart").render(s.pct, s.state, s.color), 8000); }
+  catch (e) { console.error("resultmail art:", (e && e.message) || e); }
+  const m = build(attempt, settings, advice, { card: !!card, qrCid: qr ? qr.cid : "", art: art ? art.cid : null });
+  const atts = [card, qr].concat(art ? art.atts : []).filter(Boolean);
   const sent = await mail.send({ fromName: mail.KT_NAME, to: attempt.email, subject: m.subject, html: m.html, text: m.text, attachments: atts.length ? atts : undefined });
   if (sent === false) throw new Error("Chưa cấu hình SMTP trên máy chủ, email không được gửi");
   return true;
