@@ -38,17 +38,21 @@ module.exports = async function (context, req) {
     if (quiz.tooManyFails(req, 8, 10 * 60 * 1000)) return reply(context, 429, { ok: false, error: "Bạn đã thử quá nhiều lần. Vui lòng đợi vài phút rồi thử lại." });
 
     const b = req.body || {};
-    let code = quiz.normCode(b.code), email = quiz.normEmail(b.email), byFace = null;
-    if (!code && !email && b.photo) {
+    // Tra cứu lịch sử CHỈ bằng khuôn mặt: không nhận mã NV + email (bỏ đường nhập tay dự phòng)
+    if (!b.photo) return reply(context, 400, { ok: false, error: "Vui lòng quét khuôn mặt để tra cứu." });
+    let code = "", email = "", byFace = null;
+    {
       // Chỉ quét khuôn mặt (không nhập mã NV + email): nhận diện 1-N trong thư viện, rồi vẫn đối chiếu 1-1 với ảnh đã lưu bên dưới
       const fi = await require("../_lib/faceident").identify(b.photo, "tra-cuu-lich-su");
       if (!fi.ok) {
         if (fi.fail) quiz.noteFail(req);
         try { await auditlog.write({ area: "verify", role: "candidate", by: "", op: "viewHistory", label: "Thí sinh tra cứu lịch sử bài kiểm tra (nhận diện khuôn mặt)", kind: "denied", status: fi.status, ok: false, details: { result: fi.why, note: fi.detail || "" }, ip: device.ipOf(req) }); } catch (e) { /* bỏ qua */ }
-        return reply(context, fi.status, fi.body);
+        const body = Object.assign({}, fi.body); delete body.needCode; // trang này không có đường nhập mã NV + email
+        if (body.off) body.error = "Tra cứu bằng khuôn mặt đang tạm tắt. Vui lòng liên hệ quản trị viên hoặc bộ phận hỗ trợ.";
+        return reply(context, fi.status, body);
       }
       code = quiz.normCode(fi.code); byFace = fi;
-    } else if (!code || !email) return reply(context, 400, { ok: false, needCode: true, error: "Vui lòng nhập mã nhân viên và email." });
+    }
 
     // Các bài ĐÃ NỘP của đúng mã nhân viên này (bài tài khoản thử nghiệm không nằm trong chỉ mục)
     const rows = (await quiz.getIndexAll()).filter((r) => r.status === "submitted" && quiz.normCode(r.code) === code)

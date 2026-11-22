@@ -274,15 +274,8 @@ body.au-lookup.th-wide #card{width:min(1040px,100%);padding:0;margin:0 auto}
     <section class="th-card" id="formView">
       <h1>Tra cứu bài kiểm tra của tôi</h1>
       <p class="sub" id="tSub">Chỉ cần quét khuôn mặt, hệ thống tự nhận ra bạn và hiện toàn bộ các bài kiểm tra bạn đã làm.</p>
-      <div id="tManual" class="hide">
-        <label for="tCode">Mã nhân viên</label>
-        <input id="tCode" type="text" inputmode="text" autocomplete="username" autocapitalize="characters" spellcheck="false" maxlength="50">
-        <label for="tEmail">Email</label>
-        <input id="tEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="120">
-      </div>
       <div id="tMsg" role="alert"></div>
       <button type="button" class="btn-outline solid" id="tGo">Quét khuôn mặt để tra cứu</button>
-      <button type="button" class="btn-outline" id="tManualBtn" style="margin-top:10px">Không nhận diện được? Nhập mã nhân viên và email</button>
     </section>
 
     <section class="hide" id="listView" aria-live="polite">
@@ -335,16 +328,8 @@ function initials(n){ var p = String(n || '').trim().split(/\s+/); return ((p[p.
 
 function show(which){ ['formView','listView','lockView'].forEach(function(v){ $(v).classList.toggle('hide', v !== which); }); document.body.classList.toggle('th-wide', which === 'listView'); window.scrollTo(0, 0); }
 function clearResult(){ $('thList').innerHTML = ''; $('wStats').innerHTML = ''; $('wName').textContent = ''; $('wSub').textContent = ''; clearTimeout(idleT); }
-function resetForm(){ clearResult(); FLOW.code = FLOW.email = ''; $('tEmail').value = ''; $('tMsg').innerHTML = ''; show('formView'); }
-// Mặc định chỉ quét khuôn mặt; nhập mã NV + email chỉ là đường dự phòng (chưa có dữ liệu khuôn mặt / không nhận diện được)
-var MANUAL = false;
-function setManual(on, note){
-  MANUAL = !!on; $('tManual').classList.toggle('hide', !MANUAL); $('tManualBtn').classList.toggle('hide', MANUAL);
-  $('tGo').textContent = MANUAL ? 'Tiếp tục và quét khuôn mặt' : 'Quét khuôn mặt để tra cứu';
-  $('tSub').textContent = MANUAL ? 'Nhập mã nhân viên và email công ty, sau đó quét khuôn mặt để xem toàn bộ các bài kiểm tra bạn đã làm.' : 'Chỉ cần quét khuôn mặt, hệ thống tự nhận ra bạn và hiện toàn bộ các bài kiểm tra bạn đã làm.';
-  $('tMsg').innerHTML = note ? '<div class="pmsg">' + esc(note) + '</div>' : '';
-  if (MANUAL) setTimeout(function(){ $('tCode').focus(); }, 50);
-}
+function resetForm(){ clearResult(); FLOW.code = FLOW.email = ''; $('tMsg').innerHTML = ''; show('formView'); }
+// Tra cứu chỉ bằng khuôn mặt (không có đường nhập mã nhân viên + email)
 function showLocked(msg){ clearResult(); $('lockMsg').textContent = msg || ''; show('lockView'); }
 
 function showList(j){
@@ -373,21 +358,8 @@ function showList(j){
   clearTimeout(idleT); idleT = setTimeout(resetForm, IDLE_MS); // tự ẩn kết quả sau 5 phút không thao tác
 }
 
-async function startLookup(){
-  if (!MANUAL){ FLOW.code = FLOW.email = ''; $('tMsg').innerHTML = ''; openFace(); return; }
-  var code = $('tCode').value.trim(), email = $('tEmail').value.trim();
-  if (!code || !email){ $('tMsg').innerHTML = '<div class="pmsg">Vui lòng nhập mã nhân viên và email.</div>'; return; }
-  $('tGo').disabled = true; $('tMsg').innerHTML = '';
-  var j = await postHist({ code: code, email: email, step: 'check' });
-  $('tGo').disabled = false;
-  if (j && j.ok){ FLOW.code = code; FLOW.email = email; openFace(); return; }
-  if (j && j.locked){ showLocked(j.error); return; }
-  $('tMsg').innerHTML = '<div class="pmsg">' + esc((j && j.error) || 'Không thể kết nối đến hệ thống. Vui lòng thử lại sau.') + '</div>';
-}
+function startLookup(){ FLOW.code = FLOW.email = ''; $('tMsg').innerHTML = ''; openFace(); }
 $('tGo').addEventListener('click', startLookup);
-$('tManualBtn').addEventListener('click', function(){ setManual(true); });
-$('tEmail').addEventListener('keydown', function(e){ if (e.key === 'Enter') startLookup(); });
-$('tCode').addEventListener('keydown', function(e){ if (e.key === 'Enter') $('tEmail').focus(); });
 $('tDone').addEventListener('click', resetForm);
 $('lockBack').addEventListener('click', resetForm);
 ['click','keydown','touchstart'].forEach(function(ev){ document.addEventListener(ev, function(){ if (!$('listView').classList.contains('hide')){ clearTimeout(idleT); idleT = setTimeout(resetForm, IDLE_MS); } }, { passive:true }); });
@@ -486,8 +458,8 @@ async function fmVerify(photo){
   fmState('s-bad'); $('fmRes').innerHTML = BAD_SVG; fmHint('Xác thực chưa thành công', 'bad');
   $('fmMsg').innerHTML = '<div class="pmsg">' + esc((j && j.error) || 'Không thể kết nối đến hệ thống. Vui lòng thử lại sau.') + '</div>';
   if (j && j.locked){ closeFace(); showLocked(j.error); return; }
-  if (j && (j.needCode || j.off) && !FLOW.code){ closeFace(); setManual(true, j.error); return; } // nhận diện bằng khuôn mặt đang tắt: nhập mã NV + email
-  if (j && j.notFound && !FLOW.code) $('fmMsg').innerHTML += '<button type="button" class="btn-outline" style="margin-top:10px" onclick="closeFace();setManual(true)">Nhập mã nhân viên và email</button>';
+  if (j && j.off){ closeFace(); $('tMsg').innerHTML = '<div class="pmsg">' + esc(j.error) + '</div>'; return; } // tra cứu bằng khuôn mặt đang tắt
+  if (j && j.notFound) $('fmMsg').innerHTML += '<p class="fm-tips" style="margin-top:8px">Hãy thử lại ở nơi đủ sáng, nhìn thẳng vào camera. Nếu vẫn không nhận diện được, vui lòng liên hệ bộ phận hỗ trợ.</p>';
   $('fmRetry').classList.remove('hide');
 }
 $('fmRetry').addEventListener('click', function(){

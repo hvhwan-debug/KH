@@ -27,10 +27,12 @@ const PHOTO = "data:image/jpeg;base64," + Buffer.from("selfie").toString("base64
   ok(r.s === 200 && r.j.ok && r.j.code === "NV1" && r.j.list.length === 1, "tra cứu lịch sử: chỉ quét mặt -> nhận ra NV1, trả danh sách bài");
   FACE.who = null;
   r = await call("hist", { photo: PHOTO });
-  ok(r.s === 404 && r.j.notFound, "tra cứu: không nhận diện được -> notFound (giao diện cho nhập mã NV + email)");
-  r = await call("hist", { code: "NV1", email: "a@x.vn", photo: PHOTO });
-  ok(r.s === 200 && r.j.ok, "tra cứu: đường dự phòng nhập mã NV + email vẫn chạy");
+  ok(r.s === 404 && r.j.notFound && !r.j.needCode, "tra cứu: không nhận diện được -> notFound, không mời nhập mã NV + email");
+  r = await call("hist", { code: "NV1", email: "a@x.vn" });
+  ok(r.s === 400 && !r.j.ok, "tra cứu: chỉ gửi mã NV + email (không có ảnh) -> từ chối");
   FACE.who = "NV1";
+  r = await call("hist", { code: "NV2", email: "b@x.vn", photo: PHOTO });
+  ok(r.s === 200 && r.j.ok && r.j.code === "NV1", "tra cứu: mã NV + email gửi kèm bị bỏ qua, chỉ khuôn mặt quyết định");
 
   const t = quiz.verifyToken("att1");
   r = await call("paper", { t, step: "check" });
