@@ -21,7 +21,7 @@ async function write(req, e) {
       at: Date.now(), code: clip(e.code, 40).toUpperCase(), name: clip(e.name, 80), manager: clip(e.manager, 80),
       method: METHODS.indexOf(e.method) >= 0 ? e.method : "manual", page: PAGES.indexOf(e.page) >= 0 ? e.page : "exam",
       exam: clip(e.exam, 60), note: clip(e.note, 120), test: !!e.test,
-      ip: d.ip || "", dev: [d.type, d.os, d.browser].filter(Boolean).join(" · ").slice(0, 80), n: 1
+      ip: d.ip || "", dev: [d.type, d.os, d.browser].filter(Boolean).join(" · ").slice(0, 80), bid: d.bid || "", n: 1
     };
     if (!row.code) return;
     await store.update(KEY, (cur) => {

@@ -25,7 +25,7 @@ function hintClear(req) { _hint.delete(hintKey(req)); }
 const needFaceFor = (req) => quiz.failCount(req, 10 * 60 * 1000) >= 2 || hintMissCount(req) >= 5;
 function hintMiss(req) { const k = hintKey(req), list = _hint.get(k) || []; list.push(Date.now()); _hint.set(k, list); }
 
-module.exports = async function (context, req) {
+async function handler(context, req) {
   const reply = require("../_lib/entrylog").wrap(req, "check", __reply, (b, st, r) => !!(r.body && r.body.hint) && st !== 429); // lỗi / lần vào không được -> nhật ký
   try {
     if (guardConfigured(context)) return;
@@ -35,6 +35,16 @@ module.exports = async function (context, req) {
       return reply(context, 429, { ok: false, error: "Bạn đã thử quá nhiều lần. Vui lòng đợi vài phút rồi thử lại." });
     }
     const b = req.body || {};
+    const CK = require("../_lib/candcookie");
+    // "Không phải tôi" / không đồng ý cookie: xoá phiên ghi nhớ
+    if (b.forget) { __reply(context, 200, { ok: true }); CK.attach(context, CK.clearCand()); return; }
+    // Vào lại bằng phiên ghi nhớ (cookie kt_cand có chữ ký, hạn 2 giờ): dùng mã NV + email trong phiên
+    let viaCookie = false;
+    if (b.resume) {
+      const cc = CK.candFromReq(req);
+      if (!cc) return __reply(context, 200, { ok: false, noResume: true });
+      b.code = cc.code; b.email = cc.email; viaCookie = true; delete b.hint; delete b.saveRegion;
+    }
     const code = quiz.normCode(b.code);
     // Gợi ý email: nhập đúng mã NV thì trả về email đã che (chỉ lộ 1 ký tự đầu + tên miền), giúp thí sinh nhớ dùng email nào.
     // Giới hạn riêng số lần hỏi mã không tồn tại theo IP để không dò được danh sách mã nhân viên.
@@ -56,7 +66,7 @@ module.exports = async function (context, req) {
     // Vừa đăng nhập bằng khuôn mặt (có vé ký của đúng mã NV này): KHÔNG bắt xác thực khuôn mặt lần nữa.
     // Bước chống dò chỉ áp dụng khi tự nhập mã nhân viên + email.
     const FP = require("../_lib/facepass");
-    const viaFace = FP.loginOk(b.faceLogin, code) || FP.peek(b.facePass, code);
+    const viaFace = viaCookie || FP.loginOk(b.faceLogin, code) || FP.peek(b.facePass, code);
     const needFace = !b.saveRegion && !viaFace && needFaceFor(req);
     const selfie = needFace && typeof b.selfie === "string" ? b.selfie : "";
     if (needFace) {
@@ -110,7 +120,7 @@ module.exports = async function (context, req) {
     }
 
     // Lịch sử đăng nhập: nhập mã NV + email (lần ngay sau đăng nhập bằng khuôn mặt đã ghi ở kt-facelogin; kiểm tra lại / lưu tỉnh thì không ghi)
-    if (!b.saveRegion && !b.again && !viaFace) {
+    if (!b.saveRegion && !b.again && !viaFace && !viaCookie) {
       await require("../_lib/loginlog").write(req, { code: found.code, name: found.name, manager: found.manager, method: face && face.matched ? "manual_face" : "manual", page: "exam", exam: String(b.examId || ""), test: !!found.test, note: needFace ? "phải xác thực khuôn mặt sau nhiều lần nhập sai" : "" });
     }
 
@@ -200,4 +210,16 @@ module.exports = async function (context, req) {
     context.log.error("kt-check", e && e.message);
     return reply(context, 500, { ok: false, error: "Có lỗi xảy ra, thử lại sau." });
   }
+};
+
+// Sau khi vào thành công (có thông tin thí sinh): nếu thí sinh đã đồng ý cookie (có kt_bid) thì ghi nhớ phiên 2 giờ
+module.exports = async function (context, req) {
+  await handler(context, req);
+  try {
+    const b = req.body || {}, r = context.res, CK = require("../_lib/candcookie");
+    if (r && r.status === 200 && r.body && r.body.ok && r.body.candidate && !b.saveRegion && !b.hint && CK.bidFromReq(req)
+        && !(r.headers && r.headers["Set-Cookie"])) {
+      CK.attach(context, CK.candCookie(r.body.candidate.code || b.code, r.body.candidate.email || b.email));
+    }
+  } catch (e) { /* không chặn luồng chính */ }
 };

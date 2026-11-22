@@ -1220,6 +1220,31 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
   .ai-tips svg{width:20px;height:20px;color:#5CE1FF}
 }
 @media(min-width:900px) and (min-height:560px) and (prefers-reduced-motion:reduce){.ai-bg i,#scrPhoto .photo-box::before{animation:none}}
+/* ===== Thông báo cookie (góc dưới, không che nút chính) ===== */
+.ck{position:fixed;left:16px;bottom:16px;z-index:400;width:min(420px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow-y:auto;border-radius:20px;background:#fff;color:var(--ink);
+  border:1px solid #DCE6F3;box-shadow:0 24px 60px -20px rgba(10,40,100,.45),0 2px 8px rgba(10,40,100,.08);animation:ckIn .35s cubic-bezier(.2,.8,.2,1)}
+.ck.hide{display:none}
+@keyframes ckIn{from{opacity:0;transform:translateY(14px)}}
+.ck-in{padding:18px 18px 14px}
+.ck-h{display:flex;align-items:center;gap:10px}
+.ck-ic{flex:0 0 auto;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#FFF2D6;color:#A36A00}.ck-ic svg{width:20px;height:20px}
+.ck h2{margin:0;font-size:16px;font-weight:800}
+.ck-p{margin:10px 0 6px;font-size:13px;color:var(--muted)}
+.ck ul{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.ck li{position:relative;padding-left:24px;font-size:13px;line-height:1.5;color:var(--muted)}
+.ck li b{color:var(--ink)}
+.ck-yes li::before{content:"";position:absolute;left:0;top:2px;width:16px;height:16px;border-radius:50%;background:#22B35E url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7'/%3E%3C/svg%3E") center/10px no-repeat}
+.ck-no li::before{content:"";position:absolute;left:0;top:2px;width:16px;height:16px;border-radius:50%;background:#E8EDF4 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237A8AA3' stroke-width='3.4' stroke-linecap='round'%3E%3Cpath d='M7 7l10 10M17 7 7 17'/%3E%3C/svg%3E") center/9px no-repeat}
+.ck-more{margin:10px 0 0;padding:4px 0;border:0;background:none;font:inherit;font-size:12.5px;font-weight:700;color:var(--brand);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.ck-lim{margin-top:8px;padding:10px 12px;border-radius:12px;background:#F5F8FC;border:1px solid #E3EAF4}
+.ck-lim p{margin:8px 0 0;font-size:12.5px;line-height:1.5;color:var(--muted)}.ck-lim p b{color:var(--ink)}
+.ck-btns{display:flex;gap:8px;margin-top:14px}
+.ck-b{flex:1;min-height:44px;border-radius:12px;border:1.5px solid #CFDCEC;background:#fff;color:var(--ink);font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+.ck-b.go{border:0;color:#fff;background:linear-gradient(100deg,#0869df,#08b9d4)}
+.ck-note{margin:10px 0 0;font-size:11.5px;line-height:1.5;color:var(--muted)}
+.ck-link{border:0;background:none;padding:0;margin-left:4px;font:inherit;color:inherit;text-decoration:underline;cursor:pointer}
+@media(max-width:560px){.ck{left:8px;right:8px;bottom:8px;width:auto;border-radius:18px}.ck-in{padding:16px 15px 12px}}
+body[data-scr=photo] .ck,body[data-scr=quiz] .ck{display:none}
 </style>
 </head>
 <body class="introbg" data-scr="check">
@@ -1532,7 +1557,30 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
   </main>
   </div>
 
-  <footer class="foot"><span class="fwrap">Nền tảng kiểm tra và đánh giá năng lực trực tuyến tích hợp AI dành cho đội ngũ Kinh doanh Kênh GT.</span></footer>
+  <footer class="foot"><span class="fwrap">Nền tảng kiểm tra và đánh giá năng lực trực tuyến tích hợp AI dành cho đội ngũ Kinh doanh Kênh GT. <button type="button" class="ck-link" id="ckOpen">Cài đặt cookie</button></span></footer>
+  <div class="ck hide" id="ckBox" role="dialog" aria-modal="false" aria-labelledby="ckT">
+    <div class="ck-in">
+      <div class="ck-h"><span class="ck-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9 3 3 0 0 1-3-3 3 3 0 0 1-3-3 3 3 0 0 1-3-3z"/><circle cx="8.5" cy="11" r="1"/><circle cx="12" cy="16" r="1"/><circle cx="15.5" cy="12.5" r=".6"/></svg></span>
+        <h2 id="ckT">Trang này sử dụng cookie</h2></div>
+      <p class="ck-p">Với sự đồng ý của bạn, cookie giúp hệ thống:</p>
+      <ul class="ck-yes">
+        <li><b>Ghi nhớ phiên đăng nhập</b> trong 2 giờ: tải lại trang không phải nhập lại.</li>
+        <li><b>Nhận diện trình duyệt</b> bằng một mã ngẫu nhiên, không chứa thông tin cá nhân.</li>
+        <li><b>Duy trì trạng thái làm bài</b>: mở lại trang là làm tiếp được bài đang dở.</li>
+      </ul>
+      <button type="button" class="ck-more" id="ckMore" aria-expanded="false" aria-controls="ckLimits">Cookie không thể tự đảm bảo điều gì?</button>
+      <div class="ck-lim hide" id="ckLimits">
+        <ul class="ck-no">
+          <li>Xác minh chính xác người đang ngồi trước máy tính.</li>
+          <li>Ngăn người dùng đổi trình duyệt hoặc thiết bị.</li>
+          <li>Chống gian lận thi cử tuyệt đối.</li>
+        </ul>
+        <p>Vì vậy hệ thống luôn kết hợp <b>xác thực khuôn mặt</b> và giám sát trong lúc làm bài, dù bạn đồng ý hay không.</p>
+      </div>
+      <div class="ck-btns"><button type="button" class="ck-b go" id="ckYes">Đồng ý</button><button type="button" class="ck-b" id="ckNo">Chỉ cookie cần thiết</button></div>
+      <p class="ck-note">Không đồng ý: bạn vẫn làm bài bình thường, chỉ là mỗi lần mở trang phải nhập lại. Có thể đổi lựa chọn ở “Cài đặt cookie” cuối trang.</p>
+    </div>
+  </div>
 </div>
 
 <div id="wm" aria-hidden="true"></div>
@@ -1703,7 +1751,14 @@ $('fgShot').addEventListener('click', function(){
 });
 $('scrCheck').addEventListener('submit', async function(e){
   e.preventDefault();
+  var resuming = !!ST.resuming; ST.resuming = false; // vào lại bằng phiên ghi nhớ (cookie kt_cand) lúc mở trang
   var code = $('inCode').value.trim(), email = $('inEmail').value.trim();
+  if (resuming){
+    var rr; try { rr = await api('/api/kt-check', { resume:true, examId:EXAM_ID }); } catch(err){ rr = null; }
+    if (!rr || !rr.j || !rr.j.ok || !rr.j.candidate) return; // không có / hết hạn phiên: giữ màn nhập như bình thường
+    $('inCode').value = rr.j.candidate.code || ''; $('inEmail').value = rr.j.candidate.email || '';
+    return checkDone(rr.j, rr.j.candidate.code || '', rr.j.candidate.email || '');
+  }
   msg('checkMsg','');
   $('inCode').setAttribute('aria-invalid', code ? 'false':'true');
   $('inEmail').setAttribute('aria-invalid', email ? 'false':'true');
@@ -1716,7 +1771,9 @@ $('scrCheck').addEventListener('submit', async function(e){
   catch(err){ res = null; }
   btn.disabled = false; btn.textContent = 'Tiếp tục';
   if (!res){ FG.selfie = ''; fgScan(false); msg('checkMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
-  var j = res.j;
+  checkDone(res.j, code, email);
+});
+function checkDone(j, code, email){
   noteServerTime(j);
   var hadSelfie = !!FG.selfie; FG.selfie = '';
   if (!j.ok && j.needFace){ faceGateOpen(hadSelfie ? j.error : ''); return; } // lần thứ 3 trở đi: phải xác thực khuôn mặt
@@ -1739,7 +1796,7 @@ $('scrCheck').addEventListener('submit', async function(e){
   ST.inProgress = j.inProgress || null;
   ST.attempts = j.attempts || null;
   renderConfirm();
-});
+}
 
 /* ---------- Bước 2: xác nhận + thể lệ ---------- */
 function renderConfirm(){
@@ -1812,7 +1869,7 @@ function renderConfirm(){
   msg('startMsg','');
   show('confirm');
 }
-$('btnBack').addEventListener('click', function(){ show('check'); $('inCode').focus(); });
+$('btnBack').addEventListener('click', function(){ api('/api/kt-check', { forget:true }).catch(function(){}); $('inCode').value = ''; $('inEmail').value = ''; show('check'); $('inCode').focus(); }); // xoá phiên ghi nhớ trên trình duyệt này
 
 var REGION_LABEL = { bac:'Miền Bắc', nam:'Miền Nam' };
 // 63 tỉnh/thành trước sáp nhập — khớp với danh sách máy chủ (api/_lib/provinces.js)
@@ -3720,6 +3777,25 @@ async function loadInfo(){
   if (INFO.openAt || INFO.closeAt) schedT = setInterval(renderSched, 1000);
 }
 loadInfo();
+
+/* ===== Cookie: xin đồng ý; đã đồng ý thì nhận diện trình duyệt (kt_bid) + ghi nhớ phiên 2 giờ (kt_cand) để vào lại / làm tiếp ===== */
+function ckGet(){ try { return localStorage.getItem('kt_ck'); } catch(e){ return null; } }
+function ckShow(on){ $('ckBox').classList.toggle('hide', !on); if (on) setTimeout(function(){ $('ckYes').focus(); }, 50); }
+async function ckSet(yes){
+  try { localStorage.setItem('kt_ck', yes ? '1' : '0'); } catch(e){}
+  ckShow(false);
+  try { await api('/api/kt-consent', { accept: !!yes }); } catch(e){}
+  if (!yes){ try { await api('/api/kt-check', { forget:true }); } catch(e){} }
+}
+$('ckYes').addEventListener('click', function(){ ckSet(true); });
+$('ckNo').addEventListener('click', function(){ ckSet(false); });
+$('ckOpen').addEventListener('click', function(){ ckShow(true); });
+$('ckMore').addEventListener('click', function(){ var m = $('ckLimits'), on = m.classList.toggle('hide'); this.setAttribute('aria-expanded', String(!on)); this.textContent = on ? 'Cookie không thể tự đảm bảo điều gì?' : 'Thu gọn'; });
+if (ckGet() === null) ckShow(true);
+// Đã đồng ý: thử vào lại bằng phiên ghi nhớ (tải lại trang, mở lại tab trong 2 giờ) — chỉ khi đang ở màn nhập và có đề
+else if (ckGet() === '1' && EXAM_ID && !$('scrCheck').classList.contains('hide')){
+  ST.resuming = true; var f = $('scrCheck'); if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', { cancelable:true }));
+}
 })();
 </script>
 </body>

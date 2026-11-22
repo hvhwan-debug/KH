@@ -46,7 +46,7 @@ function capture(req, hintsIn, stage) {
   const ua = clip((req.headers || {})["user-agent"], 400);
   return Object.assign(parseUA(ua, hints), {
     ip: ipOf(req), screen: /^\d{2,5}x\d{2,5}$/.test(String(h.screen || "")) ? String(h.screen) : "",
-    tz: clip(h.tz, 40), lang: clip(h.lang, 20), ua, stage: stage || "", at: Date.now(),
+    tz: clip(h.tz, 40), lang: clip(h.lang, 20), ua, stage: stage || "", at: Date.now(), bid: require("./candcookie").bidFromReq(req).slice(0, 12),
     loc: cleanLoc(h.loc), locErr: LOC_ERR.indexOf(h.locErr) >= 0 ? h.locErr : (cleanLoc(h.loc) ? "" : "none")
   });
 }
