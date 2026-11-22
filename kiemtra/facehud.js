@@ -107,6 +107,16 @@ var CSS = [
 '.fh-b.go{border:0;color:#fff;background:linear-gradient(100deg,#0869df,#08b9d4);box-shadow:0 12px 26px -8px rgba(8,140,232,.7)}',
 '.fh-b.hide{display:none}',
 '.fh-tip{margin:0;text-align:center;font-size:12px;line-height:1.55;color:rgba(200,225,245,.62)}',
+'.fh-side{display:contents}',
+'.fh-head{order:1}.fh-chip{order:2}.fh-box{order:3}.fh-pipe,.fh-msg,.fh-btns,.fh-tip{order:4}',
+/* máy tính: camera ngang bên trái, bảng tiến trình bên phải — giống màn đăng nhập bằng khuôn mặt */
+'@media(min-width:900px) and (min-height:540px){',
+'  .fh-in{max-width:1560px;display:grid;grid-template-columns:minmax(0,1fr) 400px;column-gap:32px;align-items:center;padding:24px 28px}',
+'  .fh-box{order:0;width:min(100%,calc((100dvh - 60px) * 1.3333));max-width:none;aspect-ratio:4/3;justify-self:center}',
+'  .fh-side{display:flex;flex-direction:column;gap:12px;padding:22px 22px 18px;border-radius:22px;border:1px solid rgba(92,225,255,.25);background:rgba(8,26,64,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}',
+'  .fh-head,.fh-chip,.fh-pipe,.fh-msg,.fh-btns,.fh-tip{order:0}',
+'  .fh h2{font-size:26px}',
+'}',
 '@media(max-width:420px){.fh-in{padding-left:14px;padding-right:14px;gap:10px}.fh h2{font-size:19px}.fh-hint{font-size:12.5px;bottom:42px}}',
 '@media(prefers-reduced-motion:reduce){.fh-arrow,.fh-sweep,.fh-seg li.run::before,.fh-chip i,.fh-s i,.fh-snd.wait{animation:none!important}}'
 ].join('\n');
@@ -120,10 +130,6 @@ var I_CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
 
 var HTML =
 '<div class="fh-in">' +
-'  <div class="fh-head"><div><span class="fh-k" id="fhK">AI FACE VERIFY</span><h2 id="fhTitle">Xác thực khuôn mặt</h2></div>' +
-'    <div class="fh-hr"><button type="button" class="fh-ib fh-snd" id="fhSnd" aria-label="Bật hoặc tắt âm thanh" title="Bật/tắt âm thanh">' + I_SND + '</button>' +
-'    <button type="button" class="fh-ib" id="fhClose" aria-label="Đóng" title="Đóng">' + I_X + '</button></div></div>' +
-'  <div class="fh-chip" id="fhChip" role="status" aria-live="polite"><i></i><span id="fhChipT">CAMERA ĐANG MỞ</span></div>' +
 '  <div class="fh-box">' +
 '    <video id="fhVideo" autoplay playsinline muted></video><img class="fh-shot" id="fhShot" alt="Ảnh vừa chụp">' +
 '    <svg class="fh-ov" viewBox="0 0 300 400" preserveAspectRatio="none" aria-hidden="true">' +
@@ -138,6 +144,11 @@ var HTML =
 '    <div class="fh-rd"><span id="fhRdL">FACES 0</span><span id="fhRdR">CONF --</span></div>' +
 '    <div class="fh-res" id="fhRes"></div><div class="fh-flash" id="fhFlash"></div>' +
 '  </div>' +
+'  <div class="fh-side">' +
+'  <div class="fh-head"><div><span class="fh-k" id="fhK">AI FACE VERIFY</span><h2 id="fhTitle">Xác thực khuôn mặt</h2></div>' +
+'    <div class="fh-hr"><button type="button" class="fh-ib fh-snd" id="fhSnd" aria-label="Bật hoặc tắt âm thanh" title="Bật/tắt âm thanh">' + I_SND + '</button>' +
+'    <button type="button" class="fh-ib" id="fhClose" aria-label="Đóng" title="Đóng">' + I_X + '</button></div></div>' +
+'  <div class="fh-chip" id="fhChip" role="status" aria-live="polite"><i></i><span id="fhChipT">CAMERA ĐANG MỞ</span></div>' +
 '  <div class="fh-pipe" id="fhPipe" data-st="run">' +
 '    <div class="fh-now"><span class="fh-n" id="fhN">01<i>/05</i></span><span class="fh-t" id="fhT">Phát hiện khuôn mặt</span><span class="fh-p" id="fhP">0<i>%</i></span></div>' +
 '    <ol class="fh-seg" id="fhSeg" aria-label="Các bước xác thực"></ol>' +
@@ -146,9 +157,21 @@ var HTML =
 '  <div class="fh-msg" id="fhMsg" role="alert"></div>' +
 '  <div class="fh-btns"><button type="button" class="fh-b go hide" id="fhManual">Chụp ngay</button><button type="button" class="fh-b go hide" id="fhRetry">Thử lại</button></div>' +
 '  <p class="fh-tip">Nhìn thẳng vào camera · Nơi đủ ánh sáng · Không đeo khẩu trang hoặc kính tối màu</p>' +
+'  </div>' +
 '</div>';
 
 var $ = function(id){ return document.getElementById(id); };
+// Oval đặt cao, sát phía trên khung (gần camera máy) để người dùng nhìn về phía camera; dùng chung với màn đăng nhập bằng khuôn mặt
+var FACE_CY = .42;
+function fit(){
+  var b = document.querySelector('#faceHud .fh-box'), o = b && b.querySelector('.fh-ov'); if (!o || !b.clientWidth) return;
+  var W = b.clientWidth, H = b.clientHeight, cx = W / 2, cy = H * FACE_CY, ry = Math.min(H * .36, W * .30 / .717), rx = ry * .717;
+  o.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  var g = o.querySelector('.g'); g.setAttribute('cx', cx); g.setAttribute('cy', cy); g.setAttribute('rx', rx); g.setAttribute('ry', ry);
+  o.querySelector('.p').setAttribute('d', 'M' + cx + ' ' + (cy - ry + 12) + 'A' + (rx - 10) + ' ' + (ry - 12) + ' 0 1 1 ' + cx + ' ' + (cy + ry - 12) + 'A' + (rx - 10) + ' ' + (ry - 12) + ' 0 1 1 ' + cx + ' ' + (cy - ry + 12));
+  o.querySelector('.x').setAttribute('d', 'M' + cx + ' ' + (cy - ry + 4) + 'v14M' + cx + ' ' + (cy + ry - 18) + 'v14M' + (cx - rx - 6) + ' ' + cy + 'h14M' + (cx + rx - 8) + ' ' + cy + 'h14');
+}
+window.addEventListener('resize', function(){ if (window.FaceHUD && document.getElementById('faceHud') && !document.getElementById('faceHud').classList.contains('hide')) fit(); });
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
 
 /* ---------- Âm thanh (Web Audio, không cần tệp) ---------- */
@@ -284,10 +307,10 @@ async function open(opts){
   build(); FM.opts = opts || {};
   $('fhK').textContent = FM.opts.kicker || 'AI FACE VERIFY'; $('fhTitle').textContent = FM.opts.title || 'Xác thực khuôn mặt';
   FM.live = null; setLabels();
-  FM.el.classList.remove('hide'); document.documentElement.style.overflow = 'hidden'; FM.open = true;
+  FM.el.classList.remove('hide'); document.documentElement.style.overflow = 'hidden'; FM.open = true; fit(); requestAnimationFrame(fit);
   reset(); steps(['run', '', '', '', '']); scr('cam'); chip('', 'CAMERA ĐANG MỞ'); hint('Đang mở camera…'); paintSnd();
   if (!FM.stream){
-    try { FM.stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ ideal:960 }, height:{ ideal:1280 } }, audio:false }); }
+    try { FM.stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ ideal: (window.matchMedia && matchMedia('(min-width:900px) and (min-height:540px)').matches) ? 1280 : 960 }, height:{ ideal: (window.matchMedia && matchMedia('(min-width:900px) and (min-height:540px)').matches) ? 960 : 1280 } }, audio:false }); }
     catch (e){
       if (!FM.open) return;
       scr('off'); chip('bad', 'KHÔNG MỞ ĐƯỢC CAMERA'); hint(''); steps(['bad', '', '', '', '']);
@@ -365,7 +388,7 @@ async function liveTick(v, t, dt){
   }
   stp[0] = 'ok'; stp[FM.i + 1] = 'run'; steps(stp);
   if (FM.i === 0 && !FM.said){ FM.said = true; sLock(); poseSay(); }
-  var r = big[0], bx = r.detection.box, w = bx.width / vw, off = Math.hypot((bx.x + bx.width / 2) / vw - .5, (bx.y + bx.height / 2) / vh - .46), y = yawOf(r.landmarks.positions), p = FM.live.seq[FM.i];
+  var r = big[0], bx = r.detection.box, w = bx.width / vw, off = Math.hypot((bx.x + bx.width / 2) / vw - .5, (bx.y + bx.height / 2) / vh - FACE_CY), y = yawOf(r.landmarks.positions), p = FM.live.seq[FM.i];
   if (p === 'front'){ var L = lum(v, bx); if (L < 60){ FM.hold = 0; hint('Thiếu sáng, hãy tới nơi sáng hơn'); prog(FM.i / 3); return; } }
   if (w < .18){ FM.hold = 0; hint('Hãy lại gần camera hơn một chút'); prog(FM.i / 3); return; }
   if (w > .78){ FM.hold = 0; hint('Hãy lùi ra xa camera một chút'); prog(FM.i / 3); return; }
@@ -389,7 +412,7 @@ async function plainTick(v, t, dt){
   n = all.length;
   if (n > 1){ st = ['ok', '', 'bad', '', '']; msg = 'Chỉ một người trong khung hình'; ck = ['bad', 'PHÁT HIỆN ' + n + ' KHUÔN MẶT']; conf = all[0].score; }
   else if (n === 1){
-    var bx = all[0].box, cx = bx.x + bx.width / 2 - vw / 2, cy = bx.y + bx.height / 2 - vh / 2, L = lum(v, bx); conf = all[0].score;
+    var bx = all[0].box, cx = bx.x + bx.width / 2 - vw / 2, cy = bx.y + bx.height / 2 - vh * FACE_CY, L = lum(v, bx); conf = all[0].score;
     st = ['ok', 'run', 'ok', '', '']; ck = ['seek', 'ĐANG CĂN CHỈNH'];
     if (L < 60) msg = 'Thiếu sáng, hãy tới nơi sáng hơn';
     else if (L > 235) msg = 'Quá chói, tránh nguồn sáng chiếu thẳng';
