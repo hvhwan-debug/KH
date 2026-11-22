@@ -459,6 +459,12 @@ body.cert-on .wrap{max-width:1180px;width:min(1180px,94vw)}
   .kv div,.kv dd{font-size:13.5px}
   .acts .btn-outline{min-height:50px;font-size:15px}
 }
+
+/* Ảnh cúp thật (trophy-photo.webp): nền xanh mờ dần vào thẻ */
+.cert.art-cup .ct-art{width:min(33%,400px);right:1.5%;filter:none;-webkit-mask-image:radial-gradient(closest-side,#000 72%,transparent 100%);mask-image:radial-gradient(closest-side,#000 72%,transparent 100%)}
+.ct-kick{letter-spacing:.02em;font-size:14px;font-weight:600;text-transform:none}
+@media(max-width:860px){.cert.art-cup .ct-art{width:200px!important}}
+@media(max-width:700px){.ct-result{grid-template-columns:minmax(104px,32%) 1fr;gap:12px}.ct-ring{width:100%}.ct-person{padding-left:12px}}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 </head>
@@ -485,8 +491,8 @@ body.cert-on .wrap{max-width:1180px;width:min(1180px,94vw)}
       <div class="vbar" id="vbar"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z" fill="currentColor"/><path d="m8.2 12.3 2.6 2.6 5-5.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Kết quả này đã được hệ thống xác thực</span></div>
       <div class="cert" id="cert">
         <section class="ct-top">
-          <img class="ct-art" id="vArt" src="/kiemtra/trophy.png" alt="" width="360" height="300" aria-hidden="true">
-          <div class="ct-kick">KẾT QUẢ BÀI KIỂM TRA</div>
+          <img class="ct-art" id="vArt" src="/kiemtra/trophy-photo.webp" alt="" width="588" height="475" aria-hidden="true">
+          <div class="ct-kick">Kết quả bài kiểm tra</div>
           <h1 class="ct-title" id="vTitle"></h1>
           <div id="vBadge"></div>
           <div class="ct-result">
@@ -882,7 +888,7 @@ $('paperAdmin').addEventListener('click', adminView);
   $('vRing').className = 'ct-ring t-' + tier; $('vPct').textContent = pct + '%';
   $('vOk').classList.toggle('hide', !(tier === 'g' || tier === 'b'));
   $('vName').textContent = r.name || r.code;
-  $('vArt').src = (!prac && ps !== false && pct >= 70) ? '/kiemtra/trophy.png' : '/kiemtra/rs-art.png';
+  $('vArt').src = (!prac && ps !== false && pct >= 70) ? '/kiemtra/trophy-photo.webp' : '/kiemtra/rs-art.png';
   $('cert').classList.toggle('art-cup', !prac && ps !== false && pct >= 70);
   $('vCode').innerHTML = r.code ? IC.card + '<span>Mã NV: ' + esc(r.code) + '</span>' : '';
   $('vMgr').innerHTML = r.manager ? IC.group + '<span>Quản lí: ' + esc(r.manager) + '</span>' : '';
