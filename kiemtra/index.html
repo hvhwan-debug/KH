@@ -1038,6 +1038,10 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
 .ai-snd:hover{background:rgba(92,225,255,.16)}
 .ai-snd svg{width:18px;height:18px}.ai-snd .mt{display:none}
 .ai-snd.off{color:rgba(190,225,245,.5)}.ai-snd.off .on{display:none}.ai-snd.off .mt{display:block}
+/* Tiếng đang bật nhưng trình duyệt điện thoại còn chặn: nút loa nhấp nháy, chạm để nghe */
+.ai-snd.wait{color:#FFD27A;border-color:rgba(255,200,87,.7);animation:sndWait 1.4s ease-in-out infinite}
+@keyframes sndWait{0%,100%{box-shadow:0 0 0 0 rgba(255,200,87,.55)}60%{box-shadow:0 0 0 9px rgba(255,200,87,0)}}
+@media(prefers-reduced-motion:reduce){.ai-snd.wait{animation:none}}
 @media(max-width:560px){.ai-hr{flex-wrap:wrap}}
 
 /* ---- Điện thoại: màn quét khuôn mặt toàn màn hình, khung camera dọc 3:4 (camera trước của điện thoại quay dọc), nút ở dưới tầm ngón cái ---- */
@@ -2018,10 +2022,25 @@ try { SND.on = localStorage.getItem('kt_snd') !== '0'; } catch (e) {}
 function sndCtx(){
   if (SND.ctx) return SND.ctx;
   var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
-  try { SND.ctx = new AC(); } catch (e) { return null; } return SND.ctx;
+  try { SND.ctx = new AC(); } catch (e) { return null; } sndWatch(); return SND.ctx;
 }
-function sndUnlock(){ var c = sndCtx(); if (c && c.state === 'suspended') { try { c.resume().catch(function(){}); } catch (e) {} } } // trình duyệt chỉ cho phát tiếng sau một thao tác của người dùng
-['pointerdown', 'keydown', 'touchstart'].forEach(function(ev){ document.addEventListener(ev, sndUnlock, { passive:true, capture:true }); });
+// iPhone/iPad (Safari 17+): phát tiếng kiểu "playback" để vẫn nghe được khi bật gạt im lặng (mặc định Web Audio bị tắt tiếng theo gạt)
+try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+// Mở khoá tiếng: trình duyệt chỉ cho phát sau một thao tác. Trên điện thoại chỉ touchend/click/pointerup được tính (touchstart/pointerdown KHÔNG),
+// và iOS có thêm trạng thái "interrupted" (khi mở camera, chuyển app, có cuộc gọi) nên phải bật lại mọi trạng thái khác "running".
+function sndUnlock(){
+  var c = sndCtx(); if (!c) return;
+  if (c.state !== 'running'){ try { var pr = c.resume(); if (pr && pr.then) pr.then(sndPaint, function(){}); } catch (e) {} }
+  if (!SND.primed){ // phát 1 mẫu im lặng ngay trong thao tác: iOS cũ cần vậy mới thật sự mở khoá
+    try { var b = c.createBuffer(1, 1, 22050), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); SND.primed = true; } catch (e) {}
+    try { if ('speechSynthesis' in window && SND.voice){ var u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } } catch (e) {} // mở khoá giọng đọc trên iOS
+  }
+  setTimeout(sndPaint, 60);
+}
+['touchend', 'click', 'pointerup', 'keydown', 'mousedown'].forEach(function(ev){ document.addEventListener(ev, sndUnlock, { passive:true, capture:true }); });
+// Quay lại trang / hết bị gián đoạn: thử bật lại (Safari cho phép khi gián đoạn kết thúc), cập nhật biểu tượng loa
+document.addEventListener('visibilitychange', function(){ if (!document.hidden && SND.ctx && SND.ctx.state !== 'running'){ try { SND.ctx.resume().catch(function(){}); } catch (e) {} } });
+function sndWatch(){ var c = SND.ctx; if (c && !c.__w){ c.__w = 1; try { c.addEventListener('statechange', function(){ sndPaint(); if (c.state === 'interrupted' && !document.hidden) setTimeout(function(){ try { c.resume().catch(function(){}); } catch (e) {} }, 300); }); } catch (e) {} } }
 function sndLive(c){ return !!c && SND.on && (c.state === 'running' || SND.offline); }
 // Chuỗi xử lý chung: tiếng -> nén nhẹ (không chói khi nhiều âm chồng) + vang dội (delay có lọc) để tiếng chuông "ngân" như thuỷ tinh
 function sndOut(c){
@@ -2082,7 +2101,8 @@ function sayVn(t){ // chỉ đọc khi thiết bị có giọng tiếng Việt (
   try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.voice = SND.voice; u.lang = SND.voice.lang; u.rate = 1.02; u.volume = .9; speechSynthesis.speak(u); } catch (e) {}
 }
 function sndStopVoice(){ try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {} }
-function sndPaint(){ var b = $('aiSnd'); b.classList.toggle('off', !SND.on); b.setAttribute('aria-pressed', SND.on ? 'true' : 'false'); }
+function sndBlocked(){ return SND.on && (!SND.ctx || SND.ctx.state !== 'running'); } // đang bật nhưng trình duyệt còn chặn tiếng
+function sndPaint(){ var b = $('aiSnd'); if (!b) return; var bl = sndBlocked() && SND.touched; b.classList.toggle('off', !SND.on); b.classList.toggle('wait', bl); b.setAttribute('aria-pressed', SND.on ? 'true' : 'false'); b.title = bl ? 'Chạm để bật âm thanh' : 'Bật/tắt âm thanh'; }
 
 function aiMode(){ // chữ trên màn quét theo chế độ: 'login' (đăng nhập bằng khuôn mặt) hoặc làm bài
   var L = PH.mode === 'login', k = document.querySelector('#scrPhoto .ai-k'), h = document.querySelector('#scrPhoto h1');
@@ -2175,7 +2195,7 @@ async function lvTick(){
   } catch (e) { /* một lần đo lỗi thì đo lại */ }
   LV.loop = setTimeout(lvTick, 90);
 }
-function aiScr(st){ $('scrPhoto').setAttribute('data-ai', st); sndScan(st === 'scan' || st === 'verify'); }
+function aiScr(st){ $('scrPhoto').setAttribute('data-ai', st); sndScan(st === 'scan' || st === 'verify'); SND.touched = true; sndPaint(); } // touched: đã vào màn quét, nếu tiếng còn bị chặn thì nhấp nháy nút loa để mời chạm
 function aiChip(cls, text){ $('aiChip').className = 'ai-chip' + (cls ? ' ' + cls : ''); $('aiChipT').textContent = text; }
 function aiStep(i, st, silent){ var li = $('aiSteps').children[i]; if (li) li.className = st || ''; if (st === 'ok' && !silent) sndBlip(i); aiNow(); }
 // Bảng tiến trình kiểu HUD: số bước hiện tại / tổng, tên bước, % hoàn tất, trạng thái; các bước là thanh phân đoạn phát sáng
@@ -2371,7 +2391,7 @@ function loginFailBack(){ if (PH.mode === 'login'){ clearTimeout(PH.backT); $('b
 // Nút "Quét lại" hiện = có lỗi: lúc đó mới cho chọn nhập mã NV + email
 try { new MutationObserver(function(){ if (!$('btnPhotoRetry').classList.contains('hide')) loginFailBack(); }).observe($('btnPhotoRetry'), { attributes:true, attributeFilter:['class'] }); } catch (e) {}
 $('btnPhotoBack').addEventListener('click', function(){ photoStop(); if (PH.mode === 'login'){ PH.mode = 'exam'; msg('photoMsg',''); show('check'); setTimeout(function(){ $('inCode').focus(); }, 60); } else show('confirm'); });
-$('aiSnd').addEventListener('click', function(){ SND.on = !SND.on; try { localStorage.setItem('kt_snd', SND.on ? '1' : '0'); } catch (e) {} sndPaint(); if (SND.on){ sndUnlock(); setTimeout(sndReady, 80); } else { sndStopVoice(); sndScan(false); } });
+$('aiSnd').addEventListener('click', function(){ if (sndBlocked()){ sndUnlock(); setTimeout(function(){ sndPaint(); sndReady(); }, 120); return; } SND.on = !SND.on; try { localStorage.setItem('kt_snd', SND.on ? '1' : '0'); } catch (e) {} sndPaint(); if (SND.on){ sndUnlock(); setTimeout(sndReady, 80); } else { sndStopVoice(); sndScan(false); } });
 sndPaint();
 $('btnFaceLogin').addEventListener('click', function(){
   sndUnlock();
