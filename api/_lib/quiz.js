@@ -1082,7 +1082,7 @@ function buildPaper(a, byId) {
     const ans = a.answers && a.answers[qid];
     const order = (a.orders && a.orders[qid]) || (q.options || []).map((_, k) => k);
     const g = gradeAnswer(q, ans, order);
-    const base = { n: i + 1, type, text: q.text, category: q.category || "", ok: g.ok, answerText: g.correctText, chosenText: g.state === "blank" ? null : g.chosenText };
+    const base = { n: i + 1, type, text: q.text, category: q.category || "", explanation: q.explanation || "", ok: g.ok, answerText: g.correctText, chosenText: g.state === "blank" ? null : g.chosenText };
     if (type === "fill") return Object.assign(base, { options: [], chosen: g.state === "blank" ? -1 : 0, correct: 0, accepted: (q.accepted || []).slice() });
     const chosenList = order.map((k, pos) => (g.chosenOrig.indexOf(k) >= 0 ? pos : -1)).filter((x) => x >= 0);
     const wantOrig = type === "multi" ? q.correctIndexes : [q.correctIndex];

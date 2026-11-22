@@ -282,6 +282,136 @@ body.cert-on .wrap{max-width:1260px;width:min(1260px,94vw);padding-top:24px}
   .ct-verify{font-size:14px}
 }
 @media print{.vt-bar{display:none!important}.acts{display:none}}
+
+/* ===== Màn xem lại bài làm (theo mẫu) ===== */
+body.pv-on #cert,body.pv-on #vbar{display:none!important}
+body.pv-on .wrap{max-width:1440px;width:min(1440px,96vw)}
+.pv{color:#fff}
+.pv-head{padding:6px 4px 0}
+.pv-ttl{display:flex;align-items:flex-start;gap:16px}
+.pv-back{flex:0 0 auto;display:grid;place-items:center;width:42px;height:42px;margin-top:4px;border:0;border-radius:50%;background:rgba(255,255,255,.92);color:#0B4FC4;cursor:pointer;box-shadow:0 6px 16px -6px rgba(0,20,80,.6)}
+.pv-back svg{width:22px;height:22px}
+.pv-back:focus-visible,.pv-tabs button:focus-visible,.pv-q:focus-visible,.pv-nav button:focus-visible,.pv-lg .lg:focus-visible{outline:3px solid #9CD7FF;outline-offset:2px}
+.pv-ttl small{display:block;font-size:16px;color:#DCEEFF}
+.pv-ttl h1{margin:4px 0 0;font-size:clamp(20px,2.2vw,30px);font-weight:800;line-height:1.25;outline:none}
+.pv-top{display:grid;grid-template-columns:minmax(150px,.75fr) minmax(170px,.75fr) minmax(220px,1.2fr) minmax(300px,1.3fr);gap:clamp(14px,2vw,34px);align-items:center;margin-top:4px}
+.pv-art{position:relative}
+.pv-art img{display:block;width:100%;max-width:250px;height:auto;margin-top:14px}
+.pv-tag{position:absolute;left:28%;top:0;z-index:1;display:inline-flex;align-items:center;gap:7px;padding:5px 14px 5px 6px;border-radius:99px;border:1.5px solid #F6C14B;background:rgba(80,60,0,.35);color:#FFE7A3;font-size:14px;font-weight:800}
+.pv-tag svg{width:20px;height:20px;color:#F6B420}
+.pv-tag.t-y{border-color:#6FE39A;background:rgba(0,80,30,.35);color:#C8F7D9}.pv-tag.t-y svg{color:#22C55E}
+.pv-tag.t-n{border-color:#FF9A8A;background:rgba(110,10,0,.3);color:#FFD7D0}.pv-tag.t-n svg{color:#F0603F}
+.pv-tag.t-d{border-color:#9FD3FF;background:rgba(0,40,120,.35);color:#DDEEFF}.pv-tag.t-d svg{color:#5AA9F5}
+.pv-ring{--c:#F0603F;position:relative;width:min(100%,200px);aspect-ratio:1;margin:auto;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),rgba(8,40,120,.65) 0);box-shadow:0 0 30px -6px var(--c)}
+.pv-ring.t-g{--c:#5BE36B}.pv-ring.t-b{--c:#5AAAFF}.pv-ring.t-y{--c:#FFC24A}.pv-ring.t-r{--c:#FF7A3C}
+.pv-ring>div{position:absolute;inset:11%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 50% 35%,#1D4FB8,#0B2E80)}
+.pv-ring b{font-size:clamp(34px,3.6vw,50px);font-weight:900;line-height:1}
+.pv-ring span{font-size:15px;margin-top:6px;color:#E6F2FF}
+.pv-who{padding-left:clamp(14px,2vw,30px);border-left:1.5px solid rgba(255,255,255,.3)}
+.pv-who h2{margin:0;font-size:clamp(22px,2.2vw,32px);font-weight:900;text-transform:uppercase;line-height:1.2}
+.pv-who p{display:flex;align-items:center;gap:8px;margin:6px 0 0;font-size:15px;color:#E6F2FF}
+.pv-who p svg{width:18px;height:18px}
+.pv-who .sc{margin-top:14px;gap:10px;align-items:baseline}.pv-who .sc b{font-size:clamp(32px,3.2vw,44px);font-weight:900;color:#fff}
+.pv-who .bar{display:flex;height:12px;margin-top:10px;border-radius:99px;overflow:hidden;background:#FF6B5E}
+.pv-who .bar i{display:block;height:100%}.pv-who .bar i.g{background:linear-gradient(90deg,#9BFF4F,#22D84A)}.pv-who .bar i.r{background:#FF6B5E}
+.pv-who .sb{font-size:15px}.pv-who .sb u{display:inline-block;width:1.5px;height:1em;margin:0 12px;background:rgba(255,255,255,.5);vertical-align:-2px}
+.pv-info{margin:0;padding:8px 22px;border:1.5px solid rgba(140,220,255,.7);border-radius:22px;background:rgba(8,40,130,.35);box-shadow:inset 0 0 24px rgba(80,180,255,.15)}
+.pv-info div{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(255,255,255,.18);font-size:15px}
+.pv-info div:first-child{border-top:0}
+.pv-info dt{display:flex;align-items:center;gap:10px;color:#E6F2FF}.pv-info dt svg{width:20px;height:20px}
+.pv-info dd{margin:0;font-weight:800;text-align:right}.pv-info dd.gold{color:#FFC94A}
+.pv-body{margin-top:18px;padding:12px 14px 16px;border-radius:30px;background:rgba(236,244,255,.92);border:1px solid rgba(255,255,255,.9);box-shadow:0 30px 70px -28px rgba(0,30,110,.6);color:#0B1F4B}
+.pv-tabs{display:inline-flex;gap:4px;padding:5px;border-radius:20px;background:#E3EDFB}
+.pv-tabs button{display:inline-flex;align-items:center;gap:10px;padding:12px 22px;border:0;border-radius:16px;background:none;color:#0B1F4B;font:inherit;font-size:16px;font-weight:800;cursor:pointer}
+.pv-tabs button svg{width:22px;height:22px;color:#1F6FE5}
+.pv-tabs button.on{background:linear-gradient(100deg,#0B5BD6,#1E86F5);color:#fff;box-shadow:0 10px 22px -10px rgba(11,91,214,.8)}.pv-tabs button.on svg{color:#fff}
+.pv-pn{margin-top:14px}
+.pv-rv{display:grid;grid-template-columns:minmax(280px,.62fr) minmax(0,1.38fr);gap:16px;align-items:start}
+.pv-list,.pv-qv,.pv-an,.pv-tp{padding:20px 22px;border-radius:22px;background:#fff;box-shadow:0 10px 26px -18px rgba(20,70,160,.5)}
+.pv-list h3{margin:0 0 10px;padding-bottom:10px;border-bottom:1px solid #E6EEF8;font-size:17px;font-weight:800}
+.pv-lg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.pv-lg .lg{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1.5px solid transparent;border-radius:99px;background:none;font:inherit;font-size:14px;font-weight:700;color:#0B1F4B;cursor:pointer}
+.pv-lg .lg svg{width:18px;height:18px}
+.pv-lg .lg.s-y b{color:#15924C}.pv-lg .lg.s-n b{color:#E5353F}.pv-lg .lg.s-b b{color:#6B7C98}
+.pv-lg .lg[aria-pressed="true"]{border-color:#9CC3F5;background:#EEF5FF}
+.pv-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.pv-q{display:flex;align-items:center;justify-content:center;gap:6px;height:42px;border:2px solid transparent;border-radius:12px;font:inherit;font-size:15px;font-weight:800;color:#0B1F4B;cursor:pointer}
+.pv-q svg{width:18px;height:18px}
+.pv-q.s-y{background:#DDF5E6}.pv-q.s-n{background:#FDE5E5}.pv-q.s-b{background:#EEF1F6}
+.pv-q.cur{border-color:#1F6FE5;background:#E3EEFF;color:#0B4FC4;box-shadow:0 6px 14px -6px rgba(31,111,229,.6)}
+.pv-qh{display:flex;flex-wrap:wrap;gap:8px}
+.pv-no{padding:4px 14px;border-radius:99px;background:#DCEBFF;color:#0B4FC4;font-size:14px;font-weight:800}
+.pv-cat{padding:4px 12px;border-radius:99px;background:#F1F5FB;color:#3A4C6E;font-size:13px;font-weight:600}
+.pv-qt{margin:12px 0 14px;font-size:18px;font-weight:800;line-height:1.45}
+.pv-opts{display:grid;gap:10px}
+.pv-opt{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid #DCE6F3;border-radius:16px;font-size:16px;line-height:1.45}
+.pv-opt .rd{flex:0 0 auto;width:22px;height:22px;border:2px solid #A9B7CC;border-radius:50%}.pv-opt .rd.sq{border-radius:6px}
+.pv-opt b{flex:0 0 auto}.pv-opt .tx{flex:1;min-width:0}
+.pv-opt svg{flex:0 0 auto;width:24px;height:24px}
+.pv-opt .who{flex:0 0 auto;font-style:normal;font-size:12.5px;font-weight:700;color:#5A6E90}
+.pv-opt.picked .rd{border-color:currentColor;background:radial-gradient(circle,currentColor 0 40%,transparent 45%)}
+.pv-opt.ok{border-color:#9FDDB6;background:#ECFAF1;color:#126B3A}
+.pv-opt.no{border-color:#F7B4B4;background:#FDECEC;color:#B3261E}
+.pv-opt.ok .tx,.pv-opt.no .tx{color:#0B1F4B}
+.pv-fill{display:grid;gap:6px;padding:14px 16px;border:1.5px solid #DCE6F3;border-radius:16px}.pv-fill span{font-size:13px;color:#5A6E90}.pv-fill b.ok{color:#126B3A}.pv-fill b.no{color:#B3261E}
+.pv-ans{display:flex;gap:12px;align-items:flex-start;margin-top:14px;padding:14px 18px;border-radius:16px;background:#E8F7EE;border:1px solid #BFE8CF}
+.pv-ans>svg{flex:0 0 auto;width:28px;height:28px}
+.pv-ans b{display:block;font-size:17px;color:#126B3A}
+.pv-ans.s-n{background:#FFF3F1;border-color:#F6CFC9}.pv-ans.s-n b{color:#B3261E}
+.pv-ans.s-b{background:#F3F6FA;border-color:#DCE4EE}.pv-ans.s-b b{color:#3A4C6E}
+.pv-bl{display:block;margin-bottom:4px;font-size:14px;font-weight:700;color:#5A6E90}
+.pv-ans p{margin:6px 0 0;font-size:14.5px;line-height:1.6;color:#1C2F55}
+.pv-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px}
+.pv-nav span{font-size:16px;font-weight:600;color:#0B4FC4}
+.pv-nav button{display:inline-flex;align-items:center;gap:10px;min-height:50px;padding:0 24px;border-radius:99px;font:inherit;font-size:17px;font-weight:800;cursor:pointer}
+.pv-nav button svg{width:22px;height:22px}
+.pv-prev{border:1.5px solid #B9D2F3;background:#EEF5FF;color:#0B4FC4}
+.pv-next{border:0;background:linear-gradient(100deg,#0B5BD6,#1E86F5);color:#fff;box-shadow:0 10px 22px -10px rgba(11,91,214,.8)}
+.pv-nav button:disabled{opacity:.45;cursor:default}
+.pv-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.pv-cards div{padding:16px;border-radius:18px;background:#F4F8FF;text-align:center}
+.pv-cards b{display:block;font-size:28px;font-weight:900}.pv-cards span{font-size:14px;color:#3A4C6E}
+.pv-cards .c-g b{color:#15924C}.pv-cards .c-r b{color:#E5353F}.pv-cards .c-b b{color:#6B7C98}.pv-cards .c-d b{color:#0B4FC4}
+.pv-an h3,.pv-tp h3{margin:22px 0 12px;font-size:18px;font-weight:800}.pv-tp h3:first-child{margin-top:0}
+.pv-an h3 small{font-size:13px;font-weight:500;color:#5A6E90;margin-left:6px}
+.pv-cats{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.pv-cats div{display:flex;justify-content:space-between;gap:12px;font-size:15px}.pv-cats span{color:#3A4C6E;white-space:nowrap}
+.pv-cats i{display:block;height:10px;margin-top:6px;border-radius:99px;background:#E6EDF6;overflow:hidden}
+.pv-cats em{display:block;height:100%;border-radius:99px}
+.t-g em,.pv-lgd .t-g{background:#18A957}.t-y em,.pv-lgd .t-y{background:#F0A93A}.t-r em,.pv-lgd .t-r{background:#E5353F}
+.pv-lgd{margin:14px 0 0;font-size:13px;color:#5A6E90}.pv-lgd span{display:inline-block;width:10px;height:10px;margin:0 6px 0 12px;border-radius:50%}.pv-lgd span:first-child{margin-left:0}
+.pv-weak{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.pv-weak li{padding:14px 16px;border-radius:16px;background:#FFF6EA;border:1px solid #F6DDB4}
+.pv-weak b{display:block;font-size:16px;color:#8A4B00}.pv-weak span{display:block;margin-top:4px;font-size:14px;color:#3A4C6E;line-height:1.9}
+.pv-jump{min-width:34px;height:28px;margin:0 4px 4px 0;padding:0 8px;border:1.5px solid #F2B8B8;border-radius:9px;background:#fff;color:#B3261E;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.pv-good{display:flex;gap:12px;padding:16px;border-radius:16px;background:#ECFAF1}.pv-good svg{width:28px;height:28px;flex:0 0 auto}.pv-good b{color:#126B3A}.pv-good p{margin:4px 0 0;color:#3A4C6E}
+.pv-howto ol{margin:0;padding-left:20px;font-size:15px;line-height:1.7;color:#1C2F55}
+.pv-study{display:inline-flex;align-items:center;gap:10px;margin-top:18px;padding:13px 26px;border-radius:99px;background:linear-gradient(100deg,#0B5BD6,#1E86F5);color:#fff;font-size:16px;font-weight:800;text-decoration:none}
+.pv-study svg{width:22px;height:22px}
+.pv-note{margin:12px 0 0;font-size:13.5px;color:#5A6E90}
+.pv-empty{color:#5A6E90}
+@media(max-width:1180px){
+  .pv-top{grid-template-columns:minmax(160px,1fr) minmax(0,1.6fr);row-gap:16px}
+  .pv-art{display:none}
+  .pv-info{grid-column:1/-1}
+}
+@media(max-width:860px){
+  .pv-top{grid-template-columns:minmax(120px,38%) 1fr}
+  .pv-ring b{font-size:clamp(24px,7.5vw,34px)}.pv-ring span{font-size:12px}
+  .pv-who{padding-left:12px}.pv-who h2{font-size:clamp(17px,5vw,22px)}.pv-who .sc b{font-size:clamp(26px,8vw,34px)}.pv-who p,.pv-who .sb{font-size:13.5px}
+  .pv-info{padding:4px 16px}.pv-info div{font-size:13.5px}
+  .pv-body{padding:8px;border-radius:22px}
+  .pv-tabs{display:grid;grid-template-columns:repeat(3,1fr);width:100%}
+  .pv-tabs button{flex-direction:column;gap:4px;padding:10px 4px;font-size:13px;text-align:center}
+  .pv-rv{grid-template-columns:1fr}
+  .pv-list,.pv-qv,.pv-an,.pv-tp{padding:16px 14px}
+  .pv-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+  .pv-q{height:38px;font-size:13px;gap:3px;border-radius:10px}.pv-q svg{width:14px;height:14px}
+  .pv-qv{order:-1}
+  .pv-qt{font-size:16.5px}.pv-opt{font-size:15px;padding:11px 12px}
+  .pv-opt .who{display:none}
+  .pv-nav{gap:8px}.pv-nav button{padding:0 14px;font-size:14.5px;min-height:46px;white-space:nowrap;gap:6px}.pv-nav button svg{width:18px;height:18px}.pv-nav span{font-size:13px;white-space:nowrap}
+}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 </head>
@@ -358,6 +488,7 @@ body.cert-on .wrap{max-width:1260px;width:min(1260px,94vw);padding-top:24px}
         </section>
         <div class="ct-wave" aria-hidden="true"></div>
       </div>
+      <section class="pv hide" id="pvWrap" aria-labelledby="pvTitle"></section>
     </div>
   </main>
 </div>
@@ -416,6 +547,7 @@ function showLookup(){
 var TOK = new URLSearchParams(location.search).get('t');
 var KCODE = new URLSearchParams(location.search).get('c'); // mã minh chứng KT-… (tra cứu không cần liên kết có chữ ký)
 $('paperToggle').addEventListener('click', function(){
+  if (PV.j){ pvOpen(); return; } // đã xác thực xem đề trong phiên này: mở lại, không quét lại
   $('paperToggle').classList.add('hide');
   // Đề chưa kết thúc: bấm nút mới hiện thông báo (và giờ quay lại), chưa mở ô đăng nhập xem đề
   if ($('paperBox').dataset.locked === '1'){ $('paperLocked').classList.remove('hide'); return; }
@@ -428,24 +560,149 @@ function postPaper(body){
   return fetch('/api/kt-mypaper', { method:'POST', headers:{'Content-Type':'application/json','X-Requested-With':'livotec'}, credentials:'same-origin', body: JSON.stringify(Object.assign({ t: TOK }, body)) })
     .then(function(r){ return r.json(); }).catch(function(){ return null; });
 }
+/* ---------- Màn XEM LẠI BÀI LÀM (theo mẫu): đầu trang tóm tắt kết quả + 3 tab: Xem lại bài làm / Phân tích kết quả / Gợi ý ôn tập ---------- */
+var RES = null, PV = { j:null, i:0, tab:'rv', f:'' };
+var LET = 'ABCDEFGHIJ';
+function pvState(q){ return !hasAnswer(q) ? 'b' : q.ok ? 'y' : 'n'; }
+function pvIc(k){ return k === 'y' ? '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#18A957"/><path d="m7.6 12.4 3 3 5.8-6.4" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  : k === 'n' ? '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#E5353F"/><path d="m8.5 8.5 7 7M15.5 8.5l-7 7" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>'
+  : '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="#8A9AB2" stroke-width="2.2"/></svg>'; }
 function showPaper(j){
-  $('paperForm').classList.add('hide'); $('paperToggle').classList.add('hide'); $('paperAdmin').classList.add('hide');
-  $('paperView').classList.remove('hide');
-  var nOk = j.paper.filter(function(q){ return q.ok; }).length;
-  var nBlank = j.paper.filter(function(q){ return !hasAnswer(q); }).length;
-  var nWrong = j.paper.length - nOk - nBlank;
-  $('paperView').innerHTML = '<p class="pnote" style="margin-top:0">Đề đã làm (' + j.paper.length + ' câu: <b style="color:var(--ok)">' + nOk + ' đúng</b>, <b style="color:var(--bad)">' + nWrong + ' sai</b>, <b>' + nBlank + ' bỏ trống</b>) — đáp án đúng tô xanh, đáp án bạn chọn sai tô đỏ.</p>' +
-    j.paper.map(function(q){
-      var answered = hasAnswer(q);
-      var st = !answered ? '<span class="st bl">— BỎ TRỐNG</span>' : q.ok ? '<span class="st ok">✓ ĐÚNG</span>' : '<span class="st no">✗ SAI</span>';
-      var opts = (q.options || []).map(function(o, idx){
-        var isCorrect = (q.correctList && q.correctList.indexOf(idx) >= 0) || q.correct === idx;
-        var isChosenWrong = !isCorrect && ((q.chosenList && q.chosenList.indexOf(idx) >= 0) || q.chosen === idx);
-        return '<div class="opt' + (isCorrect ? ' correct' : isChosenWrong ? ' wrong' : '') + '">' + esc(o) + (isCorrect ? ' ✓' : isChosenWrong ? ' ✗' : '') + '</div>';
-      }).join('');
-      return '<div class="pq"><span class="tag">Câu ' + q.n + (q.category ? ' · ' + esc(q.category) : '') + '</span>' + st + (!answered ? '<div class="opt blank-note">Bạn đã bỏ trống, không chọn phương án nào.</div>' : '') + '<p class="qt">' + esc(q.text) + '</p>' + opts + '</div>';
-    }).join('');
+  PV.j = j; PV.i = 0; PV.tab = 'rv'; PV.f = '';
+  $('paperForm').classList.add('hide'); $('paperView').classList.add('hide');
+  $('paperToggle').classList.remove('hide'); $('paperToggle').lastChild.textContent = 'Mở lại bài làm';
+  pvOpen();
 }
+function pvOpen(){
+  var j = PV.j, r = RES || {}, P = j.paper || [];
+  var nOk = P.filter(function(q){ return pvState(q) === 'y'; }).length, nB = P.filter(function(q){ return pvState(q) === 'b'; }).length, nW = P.length - nOk - nB;
+  var pct = j.pct != null ? j.pct : (r.pct || 0), tier = pct >= 90 ? 'g' : pct >= 70 ? 'b' : pct >= 60 ? 'y' : 'r';
+  var prac = !!r.practice, tag = prac ? 'Thi thử' : r.test ? 'Thử nghiệm' : (r.passed === true ? 'Đạt yêu cầu' : r.passed === false ? 'Chưa đạt' : 'Chính thức');
+  var tk = prac ? 'p' : r.passed === true ? 'y' : r.passed === false ? 'n' : 'd';
+  var info = '';
+  if (r.startedAt) info += '<div><dt>' + PV_I.cal + 'Bắt đầu lúc</dt><dd>' + esc(full(r.startedAt).replace(',', '')) + '</dd></div>';
+  if (r.submittedAt) info += '<div><dt>' + PV_I.cal + 'Nộp bài lúc</dt><dd>' + esc(full(r.submittedAt).replace(',', '')) + '</dd></div>';
+  if (r.durationSec != null) info += '<div><dt>' + PV_I.clock + 'Thời gian hoàn thành</dt><dd>' + esc(dur(r.durationSec)) + '</dd></div>';
+  if (r.compliancePoints != null) info += '<div><dt>' + PV_I.star + (prac ? 'Điểm tuân thủ (nếu thi thật)' : 'Điểm tuân thủ') + '</dt><dd class="gold">' + esc(r.compliancePoints) + ' điểm</dd></div>';
+  var tot = P.length || j.total || 0, w = function(x){ return tot ? x / tot * 100 : 0; };
+  $('pvWrap').innerHTML =
+    '<div class="pv-head">' +
+      '<div class="pv-ttl"><button type="button" class="pv-back" id="pvBack" aria-label="Quay lại trang kết quả"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>' +
+      '<div><small>Kết quả bài kiểm tra</small><h1 id="pvTitle" tabindex="-1">' + esc(j.title || r.title || '') + '</h1></div></div>' +
+      '<div class="pv-top">' +
+        '<div class="pv-art"><span class="pv-tag t-' + tk + '">' + PV_I.dot + esc(tag) + '</span><img src="/kiemtra/review-art.png" alt="" width="300" height="260"></div>' +
+        '<div class="pv-ring t-' + tier + '" role="img" aria-label="Tỉ lệ đúng ' + esc(pct) + '%" style="--p:' + Math.max(0, Math.min(100, pct)) + '"><div><b>' + esc(pct) + '%</b><span>Tỉ lệ đúng</span></div></div>' +
+        '<div class="pv-who"><h2>' + esc(j.name || r.name || '') + '</h2><p>' + PV_I.user + 'Mã NV: ' + esc(j.code || r.code || '') + '</p>' +
+          '<p class="sc"><b>' + nOk + '/' + tot + '</b> câu đúng</p><div class="bar" aria-hidden="true"><i class="g" style="width:' + w(nOk) + '%"></i><i class="r" style="width:' + w(nW) + '%"></i></div>' +
+          '<p class="sb">Sai: ' + nW + '<u></u>Bỏ trống: ' + nB + '</p></div>' +
+        (info ? '<dl class="pv-info">' + info + '</dl>' : '') +
+      '</div>' +
+    '</div>' +
+    '<div class="pv-body">' +
+      '<div class="pv-tabs" role="tablist" aria-label="Xem lại bài làm">' +
+        '<button type="button" role="tab" data-t="rv">' + PV_I.doc + 'Xem lại bài làm</button>' +
+        '<button type="button" role="tab" data-t="an">' + PV_I.bars + 'Phân tích kết quả</button>' +
+        '<button type="button" role="tab" data-t="tp">' + PV_I.target + 'Gợi ý ôn tập</button>' +
+      '</div>' +
+      '<div class="pv-pn" id="pvPn"></div>' +
+    '</div>';
+  document.body.classList.add('pv-on');
+  $('pvWrap').classList.remove('hide');
+  pvTab(PV.tab);
+  window.scrollTo(0, 0); $('pvTitle').focus({ preventScroll:true });
+}
+function pvClose(){ document.body.classList.remove('pv-on'); $('pvWrap').classList.add('hide'); $('paperToggle').focus(); }
+function pvTab(t){
+  PV.tab = t;
+  [].forEach.call(document.querySelectorAll('.pv-tabs button'), function(b){ var on = b.dataset.t === t; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
+  if (t === 'rv') pvReview(); else if (t === 'an') pvAnalysis(); else pvTips();
+}
+function pvReview(){
+  var P = PV.j.paper, cnt = { y:0, n:0, b:0 };
+  P.forEach(function(q){ cnt[pvState(q)]++; });
+  var list = P.map(function(q, i){ var k = pvState(q); return (!PV.f || PV.f === k) ? '<button type="button" class="pv-q s-' + k + (i === PV.i ? ' cur' : '') + '" data-i="' + i + '" aria-label="Câu ' + q.n + ': ' + (k === 'y' ? 'đúng' : k === 'n' ? 'sai' : 'chưa làm') + '"' + (i === PV.i ? ' aria-current="true"' : '') + '>' + (q.n < 10 ? '0' : '') + q.n + pvIc(k) + '</button>' : ''; }).join('');
+  var lg = [['y', 'Đúng'], ['n', 'Sai'], ['b', 'Chưa làm']].map(function(x){ return '<button type="button" class="lg s-' + x[0] + '" data-f="' + x[0] + '" aria-pressed="' + (PV.f === x[0]) + '">' + pvIc(x[0]) + x[1] + ' <b>(' + cnt[x[0]] + ')</b></button>'; }).join('');
+  $('pvPn').innerHTML = '<div class="pv-rv"><aside class="pv-list"><h3>Danh sách câu hỏi (' + P.length + ')</h3><div class="pv-lg">' + lg + '</div><div class="pv-grid">' + list + '</div></aside><div class="pv-qv" id="pvQv"></div></div>';
+  pvQuestion();
+}
+function pvQuestion(){
+  var P = PV.j.paper, q = P[PV.i], k = pvState(q), multi = q.type === 'multi', fill = q.type === 'fill';
+  var corr = q.correctList && q.correctList.length ? q.correctList : (q.correct != null && q.correct >= 0 ? [q.correct] : []);
+  var chosen = q.chosenList && q.chosenList.length ? q.chosenList : (q.chosen != null && q.chosen >= 0 ? [q.chosen] : []);
+  var opts = fill ? '<div class="pv-fill"><span>Câu trả lời của bạn</span><b class="' + (k === 'y' ? 'ok' : k === 'n' ? 'no' : '') + '">' + (q.chosenText ? esc(q.chosenText) : '<i>Bỏ trống</i>') + '</b></div>'
+    : (q.options || []).map(function(o, i){
+      var isC = corr.indexOf(i) >= 0, isP = chosen.indexOf(i) >= 0, cls = isC ? ' ok' : isP ? ' no' : '';
+      return '<div class="pv-opt' + cls + (isP ? ' picked' : '') + '"><span class="rd' + (multi ? ' sq' : '') + '" aria-hidden="true"></span><b>' + LET.charAt(i) + '.</b><span class="tx">' + esc(o) + '</span>' +
+        (isP ? '<em class="who">Bạn chọn</em>' : '') + (isC ? pvIc('y') : isP ? pvIc('n') : '') + '</div>';
+    }).join('');
+  var ans = fill ? esc(q.answerText || '') : corr.map(function(i){ return LET.charAt(i); }).join(', ');
+  var res = k === 'b' ? '<span class="pv-bl">Bạn đã bỏ trống câu này.</span>' : '';
+  $('pvQv').innerHTML =
+    '<div class="pv-qh"><span class="pv-no">Câu ' + q.n + ' / ' + P.length + '</span>' + (q.category ? '<span class="pv-cat">' + esc(q.category) + '</span>' : '') + (multi ? '<span class="pv-cat">Chọn nhiều đáp án</span>' : '') + '</div>' +
+    '<p class="pv-qt">' + esc(q.text) + '</p>' +
+    '<div class="pv-opts">' + opts + '</div>' +
+    '<div class="pv-ans">' + pvIc('y') + '<div>' + res + '<b>Đáp án đúng: ' + ans + '</b>' +
+      (q.explanation ? '<p><strong>Giải thích:</strong> ' + esc(q.explanation) + '</p>' : '') + '</div></div>' +
+    '<div class="pv-nav"><button type="button" class="pv-prev" data-go="-1"' + (PV.i <= 0 ? ' disabled' : '') + '>' + PV_I.left + 'Câu trước</button>' +
+    '<span>Câu ' + q.n + ' / ' + P.length + '</span>' +
+    '<button type="button" class="pv-next" data-go="1"' + (PV.i >= P.length - 1 ? ' disabled' : '') + '>Câu tiếp' + PV_I.right + '</button></div>';
+  [].forEach.call(document.querySelectorAll('.pv-q'), function(b){ var on = +b.dataset.i === PV.i; b.classList.toggle('cur', on); if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); });
+}
+function pvCats(){
+  var m = {}, order = [];
+  PV.j.paper.forEach(function(q){ var c = q.category || 'Khác'; if (!m[c]){ m[c] = { name:c, n:0, ok:0, wrong:[] }; order.push(c); } m[c].n++; if (q.ok) m[c].ok++; else m[c].wrong.push(q.n); });
+  return order.map(function(c){ var x = m[c]; x.pct = Math.round(x.ok / x.n * 100); return x; }).sort(function(a, b){ return a.pct - b.pct; });
+}
+function pvAnalysis(){
+  var P = PV.j.paper, C = pvCats(), r = RES || {};
+  var nOk = P.filter(function(q){ return q.ok; }).length, nB = P.filter(function(q){ return !hasAnswer(q); }).length;
+  var tone = function(p){ return p >= 80 ? 'g' : p >= 60 ? 'y' : 'r'; };
+  var cards = [[nOk, 'Câu đúng', 'g'], [P.length - nOk - nB, 'Câu sai', 'r'], [nB, 'Bỏ trống', 'b']];
+  if (r.durationSec != null && P.length) cards.push([Math.round(r.durationSec / P.length) + ' giây', 'Trung bình mỗi câu', 'd']);
+  $('pvPn').innerHTML = '<div class="pv-an"><div class="pv-cards">' + cards.map(function(c){ return '<div class="c-' + c[2] + '"><b>' + esc(c[0]) + '</b><span>' + c[1] + '</span></div>'; }).join('') + '</div>' +
+    '<h3>Kết quả theo mảng kiến thức <small>mảng yếu nhất ở trên</small></h3>' +
+    (C.length ? '<ul class="pv-cats">' + C.map(function(c){ return '<li><div><b>' + esc(c.name) + '</b><span>' + c.ok + '/' + c.n + ' câu · ' + c.pct + '%</span></div><i class="t-' + tone(c.pct) + '"><em style="width:' + Math.max(2, c.pct) + '%"></em></i></li>'; }).join('') + '</ul>' : '<p class="pv-empty">Đề không chia mảng kiến thức.</p>') +
+    '<p class="pv-lgd"><span class="t-g"></span>từ 80% <span class="t-y"></span>60 đến 79% <span class="t-r"></span>dưới 60%</p></div>';
+}
+function pvTips(){
+  var C = pvCats(), weak = C.filter(function(c){ return c.pct < 80; }), P = PV.j.paper;
+  var wrong = P.filter(function(q){ return !q.ok; });
+  $('pvPn').innerHTML = '<div class="pv-tp">' +
+    (weak.length ? '<h3>Nội dung nên ôn lại</h3><ul class="pv-weak">' + weak.slice(0, 5).map(function(c){ return '<li><b>' + esc(c.name) + '</b><span>Đúng ' + c.ok + '/' + c.n + ' câu (' + c.pct + '%). Xem lại các câu: ' +
+        c.wrong.map(function(n){ return '<button type="button" class="pv-jump" data-n="' + n + '">' + n + '</button>'; }).join('') + '</span></li>'; }).join('') + '</ul>'
+      : '<div class="pv-good">' + pvIc('y') + '<div><b>Bạn nắm tốt tất cả các mảng kiến thức của đề này.</b><p>Hãy tiếp tục ôn tập để giữ vững phong độ.</p></div></div>') +
+    '<div class="pv-howto"><h3>Cách ôn hiệu quả</h3><ol><li>Bắt đầu với mảng có tỉ lệ đúng thấp nhất; đọc kỹ phần giải thích của từng câu sai.</li><li>Tự giải thích lại đáp án đúng bằng lời của mình trước khi chuyển câu.</li><li>Xem tài liệu và video liên quan trong mục Học liệu.</li></ol></div>' +
+    '<a class="pv-study" href="/kiemtra/hoclieu.html" target="_blank" rel="noopener">' + PV_I.book + 'Mở Học liệu' + PV_I.right + '</a>' +
+    (wrong.length ? '<p class="pv-note">Bạn có ' + wrong.length + ' câu sai hoặc bỏ trống. Bấm số câu ở trên để xem lại ngay.</p>' : '') + '</div>';
+}
+var PV_I = {
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h2M12 14h2M8 17h2"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  star: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2.8 2.8 5.7 6.3.9-4.55 4.45 1.07 6.25L12 17.15 6.38 20.1l1.07-6.25L2.9 9.4l6.3-.9z" fill="#FFC21A"/></svg>',
+  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c0-4 3.4-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/></svg>',
+  dot: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 7v6M12 16.5v.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4.5"/></svg>',
+  bars: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12M10 20V6M15 20v-9M20 20v-5M3 20.5h18"/></svg>',
+  target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="13" r="8"/><circle cx="11" cy="13" r="4"/><path d="m11 13 9-9M16.5 3.5 20 4l.5 3.5"/></svg>',
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5C6 4 9 4.2 12 6c3-1.8 6-2 9-.5V19c-3-1.5-6-1.3-9 .5-3-1.8-6-2-9-.5z"/><path d="M12 6v13.5"/></svg>',
+  left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
+  right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
+};
+$('pvWrap').addEventListener('click', function(e){
+  var t = e.target.closest('button,a'); if (!t) return;
+  if (t.id === 'pvBack') pvClose();
+  else if (t.dataset.t) pvTab(t.dataset.t);
+  else if (t.dataset.i != null){ PV.i = +t.dataset.i; pvQuestion(); }
+  else if (t.dataset.go){ PV.i = Math.max(0, Math.min(PV.j.paper.length - 1, PV.i + +t.dataset.go)); pvQuestion(); }
+  else if (t.dataset.f){ PV.f = PV.f === t.dataset.f ? '' : t.dataset.f; pvReview(); }
+  else if (t.dataset.n){ PV.f = ''; PV.i = Math.max(0, +t.dataset.n - 1); pvTab('rv'); var b = document.querySelector('.pv-qv'); if (b) b.scrollIntoView({ block:'start' }); }
+});
+document.addEventListener('keydown', function(e){
+  if (!document.body.classList.contains('pv-on') || PV.tab !== 'rv' || /input|textarea|select/i.test((e.target.tagName || ''))) return;
+  if (e.key === 'ArrowRight' && PV.i < PV.j.paper.length - 1){ PV.i++; pvQuestion(); }
+  else if (e.key === 'ArrowLeft' && PV.i > 0){ PV.i--; pvQuestion(); }
+  else if (e.key === 'Escape') pvClose();
+});
 function pmsg(t){ $('paperMsg').innerHTML = t ? '<div class="pmsg">' + esc(t) + '</div>' : ''; }
 function normPhoneVN(v){
   var x = String(v || '').trim().slice(0, 30).replace(/[\s.\-()]/g, '');
@@ -528,7 +785,7 @@ $('paperAdmin').addEventListener('click', adminView);
   try { res = await fetch('/api/kt-verify?' + (t ? 't=' + encodeURIComponent(t) : 'c=' + encodeURIComponent(KCODE)), { credentials:'same-origin' }); j = await res.json(); }
   catch(e){ fail('Không kết nối được máy chủ, vui lòng thử lại.'); return; }
   if (!j || !j.ok){ fail((j && j.error) || 'Không xác thực được kết quả.'); return; }
-  off = (j.serverNow || Date.now()) - Date.now();
+  off = (j.serverNow || Date.now()) - Date.now(); RES = j.result;
   var r = j.result, ps = (r.passed === true || r.passed === false) ? r.passed : null, pct = r.pct == null ? 0 : r.pct;
   var prac = !!r.practice;
   // Đề chưa kết thúc: nút xem lại vẫn hiện, bấm vào mới hiện thông báo (không mở ô đăng nhập); tự mở khi tới giờ đóng đề (theo giờ máy chủ)

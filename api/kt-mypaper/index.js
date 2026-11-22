@@ -142,12 +142,18 @@ module.exports = async function (context, req) {
       await auditlog.write({ area: "admin", role: "admin", by: String(adminU.email).toLowerCase(), name: adminU.name || "", op: "viewPaper", label: "Xem đề như thí sinh", kind: "read", status: 200, ok: true,
         details: { code: attempt.code, name: attempt.name, attempt: attempt.id }, ip: device.ipOf(req) });
     }
+    // Giải thích đáp án: lấy theo mã câu hỏi của bài (bản lưu đề cũ chưa có trường này) từ ngân hàng câu hỏi hiện tại
+    let expl = {};
+    try {
+      const ids = attempt.questionIds || [];
+      if (ids.length) { const byId = {}; (await quiz.getQuestions()).forEach((q) => { byId[q.id] = q; }); paper.forEach((q) => { const src = byId[ids[q.n - 1]]; if (src && src.explanation) expl[q.n] = String(src.explanation); }); }
+    } catch (e) { expl = {}; }
     return reply(context, 200, {
       ok: true,
       title: attempt.examTitle || settings.examTitle || "Bài kiểm tra",
       name: attempt.name || "", code: attempt.code || "",
       score: attempt.score, total: attempt.total, pct: attempt.pct,
-      paper: paper.map((q) => ({ n: q.n, text: cleanText(q.text), category: q.category, options: cleanList(q.options), chosen: q.chosen, correct: q.correct, chosenList: q.chosenList, correctList: q.correctList, ok: q.ok, answerText: cleanText(q.answerText), chosenText: cleanText(q.chosenText), type: q.type }))
+      paper: paper.map((q) => ({ n: q.n, text: cleanText(q.text), category: q.category, options: cleanList(q.options), chosen: q.chosen, correct: q.correct, chosenList: q.chosenList, correctList: q.correctList, ok: q.ok, answerText: cleanText(q.answerText), chosenText: cleanText(q.chosenText), type: q.type, explanation: cleanText(q.explanation || expl[q.n] || "") }))
     });
   } catch (e) {
     context.log.error("kt-mypaper", e && e.message);
