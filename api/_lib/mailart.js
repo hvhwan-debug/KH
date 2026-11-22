@@ -185,4 +185,4 @@ async function render(pct, state, ringColor) {
   return { atts, cid };
 }
 
-module.exports = { render };
+module.exports = { render, hero };

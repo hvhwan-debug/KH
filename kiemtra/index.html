@@ -1654,6 +1654,136 @@ body.rs .stage{max-width:1140px}
 }
 @media(max-width:420px){.sh-row{grid-template-columns:1fr}}
 
+/* ===== Kết quả làm bài theo mẫu: thanh điều hướng trên, thẻ điểm (trái) | thẻ chi tiết với tab "Các vấn đề cần cải thiện" (phải) ===== */
+body.rs{background:#E8F2FF}
+body.rs::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(60% 50% at 0% 100%,rgba(120,180,255,.45),transparent 70%),radial-gradient(50% 45% at 100% 95%,rgba(90,160,255,.4),transparent 70%),radial-gradient(70% 60% at 85% 0%,rgba(255,255,255,.9),transparent 70%),radial-gradient(55% 40% at 10% 10%,rgba(200,228,255,.9),transparent 70%),linear-gradient(160deg,#F4F9FF,#DCEBFF)}
+body.rs::after{content:"";position:fixed;z-index:0;pointer-events:none;left:-10vw;right:-10vw;bottom:-22vh;height:44vh;border-radius:50%;border-top:2px solid rgba(255,255,255,.8);background:linear-gradient(180deg,rgba(255,255,255,.35),rgba(150,200,255,.15));filter:blur(1px)}
+body.rs .top{display:none}
+body.rs .lp-bar{display:flex;position:relative;z-index:5;height:70px;padding:0 clamp(18px,3.5vw,60px);align-items:center;justify-content:space-between;gap:14px;background:rgba(255,255,255,.8);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.9)}
+body.rs .lp-nav{margin-left:auto}
+body.rs .lp-nav a,body.rs .lp-nav button{font-size:14px;font-weight:600;padding:9px 14px}
+body.rs .lp-nav>*+*::before{display:none}
+body.rs .lp-nav a[title="Tra cứu kết quả"]{border-radius:99px;background:#E1EDFF;color:#0B5BD6}
+.lp-me{display:none}
+body.rs .lp-me{display:grid;place-items:center;flex:0 0 auto;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#1B78E8,#0B55C9);color:#fff;font-size:14px;font-weight:800;margin-left:6px;box-shadow:0 0 0 3px #fff,0 6px 14px -6px rgba(10,80,200,.6)}
+body.rs .lp-me:empty{display:none}
+body.rs .wrap{position:relative;z-index:1;max-width:none;width:100%;padding-left:0;padding-right:0}
+body.rs .stage{max-width:1500px;width:min(1500px,94vw);margin-left:auto;margin-right:auto}
+.rs-wrap{grid-template-columns:minmax(320px,.62fr) minmax(0,1.38fr);gap:24px}
+.rs-sum,.rs-det{border:1px solid rgba(255,255,255,.95);border-radius:28px;box-shadow:0 26px 60px -30px rgba(20,70,160,.5)}
+/* thẻ điểm */
+.rs-sum{padding-bottom:30px;background:#fff}
+.rs-sum::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34px;background:radial-gradient(120% 100% at 50% 0,transparent 62%,rgba(40,120,240,.18) 63%,rgba(40,120,240,.08) 78%,transparent 79%),linear-gradient(0deg,#1A6AE6 0 8px,transparent 8px);pointer-events:none;border-radius:0 0 28px 28px}
+.rs-top{position:relative;display:block;padding:26px 28px 56px;min-height:178px;background:radial-gradient(70% 140% at 90% 10%,rgba(120,200,255,.45),transparent 60%),linear-gradient(135deg,#0A4FD3,#1678F2 58%,#3A9BFF)}
+.rs-top::after{content:"";position:absolute;left:-4%;right:-4%;bottom:-1px;height:46px;background:#fff;border-radius:50% 50% 0 0/100% 100% 0 0;box-shadow:0 -6px 0 rgba(140,200,255,.45)}
+.rs-art{position:absolute;right:6px;bottom:22px;width:min(46%,190px);height:auto;pointer-events:none;z-index:1}
+.rs-brand{position:relative;z-index:2;align-items:flex-start;max-width:68%}
+.rs-ic{flex:0 0 auto;display:grid;place-items:center;width:42px;height:46px;color:#fff}
+.rs-ic svg{width:40px;height:40px}
+.rs-brand b{font-size:17px;line-height:1.35;font-weight:800}
+.rs-brand small{display:flex;align-items:center;gap:5px;font-size:12.5px;margin-top:4px;opacity:.92}
+.rs-brand small svg{width:14px;height:14px}
+#resBadge{position:relative;z-index:2;margin-top:16px}
+#resBadge .badge{padding:8px 18px 8px 8px;font-size:16px;font-weight:800;letter-spacing:.2px;box-shadow:0 8px 20px -10px rgba(0,0,0,.35)}
+#resBadge .badge.n{background:#FFECEC;color:#E5353F}
+#resBadge .badge.y{background:#E6F8EE;color:#15924C}
+#resBadge .badge svg{width:24px;height:24px}
+#resBadge .badge.n svg circle{fill:#E5353F;stroke:#E5353F}#resBadge .badge.n svg path{stroke:#fff}
+#resBadge .badge.y svg circle{fill:#18A957;stroke:#18A957}#resBadge .badge.y svg path{stroke:#fff}
+#scrResult .rs-sum h1{margin:8px 22px 0;font-size:22px;color:#0B1F4B}
+.rs-sum .ring{margin:14px auto 8px}
+.rs-sum .ring .c b{font-size:clamp(40px,3.6vw,52px);font-weight:900;color:#0B1F4B;letter-spacing:-1px}
+.rs-sum .ring .c span{font-size:15px;color:#1C2F55}
+.rs-sum .thr{display:table;margin:0 auto;padding:4px 16px;border-radius:99px;background:#E6F0FF;color:#0B2A66;font-size:14px;font-weight:700}
+.rs-sum .thr:empty{display:none}
+.rs-sum .cheer{margin:12px auto 20px;font-size:15px;color:#1C2F55}
+.rs-sum .stats{margin:0 24px;gap:14px}
+.rs-sum .stats div{display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 10px;border:0;border-radius:18px;background:#fff;box-shadow:0 10px 26px -14px rgba(20,70,160,.45),0 0 0 1px #E8EFFA}
+.rs-sum .stats div>svg{flex:0 0 auto;width:30px;height:30px;color:#1F6FE5}
+.rs-sum .stats p{margin:0;text-align:center}
+.rs-sum .stats b{font-size:clamp(20px,2.1vw,26px);color:#0B1F4B}
+.rs-sum .stats span{font-size:13.5px;color:#1C2F55;margin-top:2px}
+.rs-sum .stats.c3 div{flex-direction:column;gap:6px}
+.rs-sum .bk{margin:20px 24px 4px}
+.rs-sum .bk .bar{height:14px;border-radius:99px;overflow:hidden;background:#E3EAF4}
+.rs-sum .bk .bar i{border-radius:0}
+.rs-sum .bk .lg{display:flex;gap:22px;margin-top:10px;font-size:13.5px;color:#1C2F55}
+#resRing.sc-red .prg{stroke:#E5353F}
+/* thẻ chi tiết */
+.rs-det{padding:26px 30px 30px;background:#fff}
+.rs-who .av{width:56px;height:56px;font-size:19px}
+.rs-who>div b{font-size:21px;font-weight:800;text-transform:uppercase;letter-spacing:.2px}
+.rs-who>div span{font-size:14px}
+.rs-sub{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:600;color:#1C2F55}
+.rs-sub svg{width:22px;height:22px;color:#1C2F55}
+.rs-tabs{margin:22px 0 22px;padding:5px;gap:4px;border-radius:18px;background:#EDF3FC}
+.rs-tabs button{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:12px 12px;font-size:15px;color:#0B1F4B}
+.rs-tabs button svg{width:22px;height:22px;flex:0 0 auto}
+.rs-tabs button.on{color:#fff;background:linear-gradient(100deg,#0E5BDA,#2F80F6);box-shadow:0 10px 22px -10px rgba(14,91,218,.8)}
+/* tab "Các vấn đề cần cải thiện" */
+.im-h{display:flex;gap:12px;align-items:flex-start}
+.im-h>svg{flex:0 0 auto;width:34px;height:34px;margin-top:-2px}
+.im-h h2{margin:0;font-size:22px;font-weight:800;color:#0B1F4B;letter-spacing:-.2px}
+.im-h p{margin:6px 0 0;font-size:15px;color:#1C2F55}
+.im-sum{margin:16px 0 0 0;padding:16px 20px;border:1.5px solid #A9C9F7;border-radius:16px;background:linear-gradient(180deg,#F5F9FF,#EEF5FF)}
+.im-st{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.im-st svg{width:26px;height:26px;color:#1F6FE5}
+.im-st b{font-size:17px;font-weight:800;color:#0B1F4B}
+.im-st .tag{margin-left:auto;padding:4px 12px;border-radius:99px;background:#DDEAFE;color:#0B5BD6;font-size:12px;font-weight:600}
+.im-sum p{margin:8px 0 0 36px;font-size:15px;line-height:1.6;color:#1C2F55}
+.im-dt{margin-top:24px}
+.im-dt h3{display:flex;align-items:center;gap:12px;margin:0 0 8px;font-size:20px;font-weight:800;color:#0B1F4B}
+.im-dt h3 svg{width:26px;height:26px;color:#1F6FE5}
+.im-dt ul{list-style:none;margin:0;padding:0 0 0 12px;border-left:2px dotted #D5E1F2}
+.im-dt li{position:relative;display:flex;gap:12px;align-items:flex-start;padding:12px 0 12px 12px;border-bottom:1px solid #EDF2F9;font-size:15px;line-height:1.55;color:#1C2F55}
+.im-dt li:last-child{border-bottom:0}
+.im-dt li svg{flex:0 0 auto;width:22px;height:22px;margin-top:1px}
+.im-tip{display:flex;align-items:center;gap:14px;margin-top:20px;padding:18px 20px;border:1px solid #F5D98E;border-radius:18px;background:linear-gradient(100deg,#FFF9E8,#FFF1CC)}
+.im-tip>svg{flex:0 0 auto;width:32px;height:32px;align-self:flex-start}
+.im-tip>div{flex:1;min-width:0}
+.im-tip b{display:block;font-size:19px;font-weight:800;color:#5A1A08}
+.im-tip p{margin:4px 0 0;font-size:14.5px;line-height:1.6;color:#2B2F3F}
+.im-go{flex:0 0 auto;display:inline-flex;align-items:center;gap:10px;padding:12px 22px;border:2px solid #1F6FE5;border-radius:99px;background:#fff;color:#0B5BD6;font-size:15.5px;font-weight:800;text-decoration:none;white-space:nowrap;transition:background .15s,color .15s}
+.im-go:hover{background:#1F6FE5;color:#fff}
+.im-go:focus-visible{outline:3px solid #9CC3FF;outline-offset:2px}
+.im-go svg{width:22px;height:22px}
+@media(max-width:1180px){
+  body.rs .lp-nav a span,body.rs .lp-nav button span{display:none}
+  body.rs .lp-nav a,body.rs .lp-nav button{padding:10px}
+  .rs-wrap{grid-template-columns:minmax(300px,.8fr) minmax(0,1.2fr)}
+  .rs-tabs button{font-size:13.5px;gap:6px}
+}
+@media(max-width:860px){
+  body.rs .lp-bar{height:62px}
+  body.rs .lp-name{font-size:14px}
+  body.rs .lp-burger{display:grid;margin-left:auto}
+  body.rs .lp-me{margin-left:0}
+  body.rs .lp-nav{display:none;position:absolute;top:calc(100% + 6px);right:12px;z-index:50;flex-direction:column;gap:2px;min-width:230px;padding:6px;margin:0;background:#fff;border:1px solid rgba(41,70,110,.14);border-radius:16px;box-shadow:0 18px 40px -14px rgba(10,37,82,.4)}
+  body.rs .lp-bar.open .lp-nav{display:flex}
+  body.rs .lp-nav a span,body.rs .lp-nav button span{display:inline}
+  body.rs .lp-nav a,body.rs .lp-nav button{width:100%;justify-content:flex-start;gap:12px;padding:12px 14px;font-size:15px;border-radius:11px;text-align:left}
+  body.rs .lp-nav svg{width:20px;height:20px;flex:0 0 auto;color:#0A63C4}
+  .rs-wrap{grid-template-columns:minmax(0,1fr)}
+  .rs-det{padding:20px 16px 22px}
+  .rs-sub{flex:1 0 100%;margin:2px 0 0}
+  .rs-tabs{flex-wrap:wrap}
+  .rs-tabs button{flex:1 1 40%;padding:10px 8px;font-size:13px}
+  .rs-tabs button svg{width:18px;height:18px}
+  .im-h h2{font-size:19px}.im-dt h3{font-size:17px}
+  .im-sum{padding:14px}.im-sum p{margin-left:0}
+  .im-st .tag{margin-left:0}
+  .im-tip{flex-wrap:wrap}
+  .im-go{width:100%;justify-content:center}
+}
+@media(max-width:420px){
+  .rs-top{padding:22px 18px 52px}
+  .rs-brand{max-width:100%}
+  .rs-art{width:118px;bottom:30px;opacity:.9}
+  .rs-sum .stats{margin:0 16px;gap:10px}
+  .rs-sum .stats div{flex-direction:column;gap:4px}
+  .rs-sum .bk{margin:18px 16px 4px}
+}
+
 /* ===== Trang chủ /kiemtra (màn nhập mã đề) theo mẫu thiết kế ===== */
 .lnd-title,.lnd-cards,.lnd-laptop{display:none}
 .lp-nav .soon{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;font-size:13px;font-weight:700;color:#29466e;opacity:.5;cursor:default;white-space:nowrap}
@@ -1749,6 +1879,7 @@ body.rs .stage{max-width:1140px}
     <button type="button" data-lp="guide" title="Hướng dẫn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17v.1"/></svg><span>Hướng dẫn</span></button>
     <button type="button" data-lp="support" title="Hỗ trợ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/><path d="M19 20c0 1.5-2 2-5 2"/></svg><span>Hỗ trợ</span></button>
   </nav>
+  <span class="lp-me" id="lpMe" aria-hidden="true"></span>
   <div class="lp-practice" id="lpPractice"><span class="lp-pdot"></span><span>Đề thi thử</span></div>
 </header>
 <div class="lp-dlg hide" id="faceGate" role="dialog" aria-modal="true" aria-labelledby="fgT"><div class="lp-box fg-box">
@@ -2047,7 +2178,8 @@ body.rs .stage{max-width:1140px}
       <div class="rs-wrap">
         <div class="rs-sum">
           <div class="rs-top">
-            <div class="rs-brand"><span class="logo" aria-hidden="true"><img src="/kiemtra/logo-mark.png" alt="" width="40" height="40"></span><div><b id="rvTitle">Bài kiểm tra</b><small>Kết quả bài kiểm tra</small></div></div>
+            <img class="rs-art" src="/kiemtra/rs-art.png" alt="" width="260" height="200" aria-hidden="true">
+            <div class="rs-brand"><span class="rs-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4.5" width="14" height="17" rx="2.5"/><path d="M9 3h6v3H9z"/><path d="m8 11 1.3 1.3L11.5 10M13.5 11H16M8 16l1.3 1.3 2.2-2.3M13.5 16H16"/></svg></span><div><b id="rvTitle">Bài kiểm tra</b><small><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 2.5 2.5L16 9"/></svg>Kết quả bài kiểm tra</small></div></div>
             <div id="resBadge"></div>
           </div>
           <h1 tabindex="-1">Kết quả của bạn</h1>
@@ -2060,10 +2192,12 @@ body.rs .stage{max-width:1140px}
         <div class="rs-det">
           <div class="rs-who"><span class="av" id="rvAv" aria-hidden="true">?</span><div><b id="rvName"></b><span id="rvCode"></span></div><p class="rs-sub" id="resSub"></p></div>
           <div class="rs-tabs" id="rsTabs" role="tablist" aria-label="Chi tiết kết quả">
-            <button type="button" role="tab" data-t="tries" id="tbTries">Các lần làm</button>
-            <button type="button" role="tab" data-t="adv" id="tbAdv">Nhận xét</button>
-            <button type="button" role="tab" data-t="rcpt" id="tbRcpt">Biên nhận</button>
+            <button type="button" role="tab" data-t="imp" id="tbImp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="m12 12 7-7M16.5 4.5 19 5l.5 2.5"/></svg><span id="tbImpL">Các vấn đề cần cải thiện</span></button>
+            <button type="button" role="tab" data-t="tries" id="tbTries"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7.5V12l3 2"/></svg><span>Các lần làm</span></button>
+            <button type="button" role="tab" data-t="adv" id="tbAdv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.7 7.1L4 20l1-4A8 8 0 1 1 20 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01" stroke-width="2.6"/></svg><span>Nhận xét</span></button>
+            <button type="button" role="tab" data-t="rcpt" id="tbRcpt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V10M10 20V4M15 20v-7M20 20v-4M3 20h18"/></svg><span>Biên nhận</span></button>
           </div>
+          <div class="rs-pn" id="pnImp" role="tabpanel"></div>
           <div class="rs-pn" id="pnTries" role="tabpanel"><div class="tries hide" id="resTries"></div></div>
           <div class="rs-pn" id="pnAdv" role="tabpanel">
             <section class="sec hide" id="resAnalysis" aria-labelledby="anaT"></section>
@@ -3628,8 +3762,8 @@ function renderAdvice(a){
     '<b id="advTitle">Vài lời dành riêng cho bạn</b><span class="tag">' + (a.source === 'ai' ? 'Gợi ý bởi AI' : 'Nhận xét nhanh') + '</span></div>' +
     '<h3>' + esc(a.headline) + '</h3>' +
     (portrait ? '<div class="portrait"><span class="pl">Nhìn lại bài làm của bạn</span>' + esc(portrait) + '</div>' : '') +
-    (a.strengths && a.strengths.length ? '<span class="sub">Điều bạn làm tốt</span><ul class="str">' + a.strengths.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') +
-    (a.topics && a.topics.length ? '<span class="sub">Chủ đề nên ôn lại<small style="display:block;text-transform:none;letter-spacing:0;font-weight:500;opacity:.75;margin-top:2px">Đọc lại tài liệu, rồi thử tự giải thích bằng lời của mình.</small></span><ul class="topics">' + a.topics.map(function(x){ var i = x.indexOf(':'); return '<li>' + (i > 0 && i < 70 ? '<b>' + esc(x.slice(0, i)) + '</b>:' + esc(x.slice(i + 1)) : esc(x)) + '</li>'; }).join('') + '</ul>' : '') +
+    (a.strengths && a.strengths.length && !$('pnImp') ? '<span class="sub">Điều bạn làm tốt</span><ul class="str">' + a.strengths.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') +
+    (a.topics && a.topics.length && !$('pnImp') ? '<span class="sub">Chủ đề nên ôn lại<small style="display:block;text-transform:none;letter-spacing:0;font-weight:500;opacity:.75;margin-top:2px">Đọc lại tài liệu, rồi thử tự giải thích bằng lời của mình.</small></span><ul class="topics">' + a.topics.map(function(x){ var i = x.indexOf(':'); return '<li>' + (i > 0 && i < 70 ? '<b>' + esc(x.slice(0, i)) + '</b>:' + esc(x.slice(i + 1)) : esc(x)) + '</li>'; }).join('') + '</ul>' : '') +
     '<span class="sub">Gợi ý cho lần tới</span><ul>' + a.actions.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' +
     (a.goal ? '<div class="goal"><span aria-hidden="true">🎯</span><div><b>Mục tiêu nhỏ cho lần tới:</b> ' + esc(String(a.goal).replace(/^Lần tới:\s*/i, '')) + '</div></div>' : '');
   box.classList.remove('hide');
@@ -3697,17 +3831,57 @@ function surveyPrompt(){
   bg.querySelector('a.go').focus();
 }
 function rsPick(t){
-  var m = { tries:'Tries', adv:'Adv', rcpt:'Rcpt' };
+  var m = { imp:'Imp', tries:'Tries', adv:'Adv', rcpt:'Rcpt' };
   Object.keys(m).forEach(function(k){ var on = k === t; $('pn' + m[k]).classList.toggle('on', on); $('tb' + m[k]).classList.toggle('on', on); $('tb' + m[k]).setAttribute('aria-selected', String(on)); });
 }
-function rsTabs(){ // chọn tab mặc định: có lượt làm tiếp → "Các lần làm"; có nhận xét → "Nhận xét"; còn lại → "Biên nhận"
+function rsTabs(){ // tab mặc định: còn lượt làm tiếp → "Các lần làm"; còn lại → "Các vấn đề cần cải thiện" (luôn có)
   var hasT = !$('resTries').classList.contains('hide'), hasA = !$('resAdvice').classList.contains('hide');
   $('tbTries').classList.toggle('hide', !hasT); $('tbAdv').classList.toggle('hide', !hasA);
-  $('rsTabs').classList.toggle('hide', !hasT && !hasA);
-  rsPick(($('btnRetry') && hasT) ? 'tries' : hasA ? 'adv' : hasT ? 'tries' : 'rcpt');
-  if (!hasT && !hasA) $('pnRcpt').classList.add('on');
+  $('rsTabs').classList.remove('hide');
+  rsPick(($('btnRetry') && hasT) ? 'tries' : 'imp');
 }
 $('rsTabs').addEventListener('click', function(e){ var b = e.target.closest('button[data-t]'); if (b) rsPick(b.dataset.t); });
+var RS_SIDE = function(){ return window.matchMedia && matchMedia('(max-width:860px)').matches ? 'bên dưới' : 'bên cạnh'; };
+var RS_SVG = function(d, sw){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (sw || 1.9) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
+var RS_ICO = {
+  cal: RS_SVG('<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M7.5 13.5h.01M12 13.5h.01M16.5 13.5h.01M7.5 17h.01M12 17h.01" />'),
+  clip: RS_SVG('<rect x="5" y="4.5" width="14" height="16.5" rx="2.2"/><path d="M9 3h6v3H9z"/><path d="m8.2 11.5 1.4 1.4 2.4-2.6M8.2 16.5l1.4 1.4 2.4-2.6M14 12h2.5M14 17h2.5"/>'),
+  clock: RS_SVG('<circle cx="12" cy="13.5" r="7.5"/><path d="M10 2.5h4M12 2.5V6M12 13.5V10M12 13.5l2.6 1.6M18.5 6.5l1.4-1.4"/>'),
+  star: RS_SVG('<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>'),
+  bulb: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4a8.5 8.5 0 0 0-5 15.4c.8.6 1.3 1.6 1.3 2.6v.5h7.4V22c0-1 .5-2 1.3-2.6A8.5 8.5 0 0 0 16 4z" fill="#FFC21A"/><path d="M13.5 10.5a4 4 0 0 1 3-2" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none" opacity=".8"/><rect x="12.3" y="23.4" width="7.4" height="2.2" rx="1" fill="#8E9AAE"/><rect x="13" y="26.2" width="6" height="2.2" rx="1" fill="#6E7A90"/><path d="M16 1v1.6M5.6 5.4l1.1 1.1M26.4 5.4l-1.1 1.1M2.5 14h1.6M27.9 14h1.6" stroke="#FFB61E" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  book: RS_SVG('<path d="M3 5.5C6 4 9 4.2 12 6c3-1.8 6-2 9-.5V19c-3-1.5-6-1.3-9 .5-3-1.8-6-2-9-.5z"/><path d="M12 6v13.5"/>', 2),
+  list: RS_SVG('<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01" stroke-width="3"/>', 2.2),
+  target: '<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="15" cy="17" r="12" fill="#FF8A3D"/><circle cx="15" cy="17" r="8.5" fill="#fff"/><circle cx="15" cy="17" r="5.2" fill="#FF8A3D"/><circle cx="15" cy="17" r="2" fill="#fff"/><path d="M15 17 27 5" stroke="#8A5A12" stroke-width="2" stroke-linecap="round"/><path d="m24 4 4-2 .8 3.4-3.2 1.6z" fill="#FFC21A"/></svg>',
+  ok: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#18A957"/><path d="m7 12.3 3.3 3.2L17 8.8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  no: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#E5353F"/><path d="m8.2 8.2 7.6 7.6M15.8 8.2l-7.6 7.6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg>'
+};
+// Tab "Các vấn đề cần cải thiện": tóm tắt bằng số liệu bài làm + điểm mạnh / nội dung cần củng cố (từ nhận xét) + gợi ý học liệu
+function renderImp(r, ps, prac){
+  var a = r.advice || {}, box = $('pnImp'), total = r.total || 0, score = r.score || 0, wrong = r.wrong != null ? r.wrong : Math.max(0, total - score - (r.blank || 0));
+  var strengths = (a.strengths || []).filter(Boolean), topics = (a.topics || []).filter(Boolean);
+  var short = function(x){ var i = String(x).indexOf(':'), t = (i > 0 && i < 70 ? String(x).slice(0, i) : String(x)).trim().replace(/[.。]+$/, ''); return t.charAt(0).toLocaleLowerCase('vi-VN') + t.slice(1); };
+  var join = function(L){ return L.length < 2 ? L.join('') : L.slice(0, -1).join(', ') + ' và ' + L[L.length - 1]; };
+  var fail = ps === false;
+  $('tbImpL').textContent = fail ? 'Các vấn đề cần cải thiện' : 'Tổng quan bài làm';
+  var lead = fail ? 'Bài làm chưa đạt ngưỡng, dưới đây là những nội dung bạn cần tập trung cải thiện:'
+    : ps === true ? 'Bạn đã đạt ngưỡng. Dưới đây là tóm tắt bài làm và những nội dung nên củng cố thêm:'
+    : 'Dưới đây là tóm tắt bài làm và những nội dung bạn nên củng cố thêm:';
+  var sumTxt = total ? 'Bạn trả lời đúng ' + score + '/' + total + ' câu (' + (r.pct != null ? r.pct : Math.round(score / total * 100)) + '%)' +
+      (wrong ? (r.blank ? ', sai ' + wrong + ' câu và bỏ trống ' + r.blank + ' câu' : ' và có ' + wrong + ' câu sai') : r.blank ? ' và bỏ trống ' + r.blank + ' câu' : '') +
+      (topics.length && (wrong || r.blank) ? ', tập trung ở các nội dung: ' + join(topics.slice(0, 3).map(short)) + '.' : '.')
+    : 'Bài làm của bạn đã được ghi nhận.';
+  if (!topics.length && !wrong && !r.blank && total) sumTxt += ' Bạn không có câu sai nào, hãy giữ vững phong độ.';
+  var items = strengths.map(function(x){ return '<li class="ok">' + RS_ICO.ok + '<span>' + esc(x) + '</span></li>'; })
+    .concat(topics.map(function(x){ return '<li class="no">' + RS_ICO.no + '<span>' + esc(x) + '</span></li>'; }));
+  var tip = (a.actions || []).filter(function(x){ return /học liệu|tài liệu|ôn/i.test(x); })[0] || (a.actions || [])[0] ||
+    (fail ? 'Ôn tập lại các nội dung trên tại mục Học liệu trước khi làm lại bài kiểm tra.' : 'Xem thêm tài liệu tại mục Học liệu để củng cố kiến thức cho các lần kiểm tra sau.');
+  box.innerHTML =
+    '<div class="im-h">' + RS_ICO.bulb + '<div><h2>Thông tin dành riêng cho bạn</h2><p>' + lead + '</p></div></div>' +
+    '<div class="im-sum"><div class="im-st">' + RS_ICO.book + '<b>' + (fail ? 'Những nội dung cần cải thiện' : 'Tóm tắt bài làm') + '</b><span class="tag">Dựa trên kết quả làm bài</span></div><p>' + esc(sumTxt) + '</p></div>' +
+    (items.length ? '<div class="im-dt"><h3>' + RS_ICO.list + 'Chi tiết các nội dung</h3><ul>' + items.join('') + '</ul></div>' : '') +
+    '<div class="im-tip">' + RS_ICO.target + '<div><b>Gợi ý cho bạn</b><p>' + esc(tip) + '</p></div>' +
+    '<a class="im-go" href="/kiemtra/hoclieu.html" target="_blank" rel="noopener">' + RS_ICO.book + '<span>Xem học liệu</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>';
+}
 function renderResult(r, already){
   ST.res = { r:r, already:already };
   setTimeout(surveyPrompt, 900);
@@ -3717,32 +3891,33 @@ function renderResult(r, already){
   var pct = r.pct == null ? 0 : r.pct, c = ST.cand || {};
   $('rvTitle').textContent = (ST.exam && ST.exam.title) || $('examTitle').textContent || 'Bài kiểm tra';
   $('rvName').textContent = c.name || c.code || '';
-  $('rvCode').textContent = c.code ? ('Mã nhân viên: ' + c.code) : '';
+  $('rvCode').textContent = c.code ? ('Mã NV: ' + c.code) : '';
   $('rvAv').textContent = initials(c.name || c.code);
+  $('lpMe').textContent = initials(c.name || c.code); $('lpMe').title = c.name || c.code || '';
   $('resBadge').innerHTML = '<span class="badge '+(prac?'p':ps===null?'d':ps?'y':'n')+'" style="margin:0">'+(prac?'THI THỬ'+(ps===null?'':ps?' · ĐẠT':' · CHƯA ĐẠT'):ps===null?ICO_Y+'ĐÃ HOÀN THÀNH':ps?ICO_Y+'ĐẠT':ICO_N+'CHƯA ĐẠT')+'</span>';
   $('resCheer').textContent = prac
     ? 'Đây là bài thi thử, không phải thi chính thức.' + (r.compliancePoints != null ? ' Điểm tuân thủ bên dưới chỉ để bạn hình dung điểm của mình nếu thi thật.' : '')
     : ps === null
     ? ''
-    : ps ? 'Chúc mừng bạn đã đạt yêu cầu của bài kiểm tra.'
-    : 'Chưa đạt lần này. Hãy liên hệ quản trị viên phụ trách để được hướng dẫn ôn tập.';
-  $('resSub').textContent = r.submittedAt ? 'Hoàn thành lúc ' + fmtTime(r.submittedAt) : '';
+    : ps ? 'Chúc mừng bạn đã đạt yêu cầu của bài kiểm tra. Xem phần ' + RS_SIDE() + ' để biết điểm mạnh và nội dung nên củng cố thêm.'
+    : 'Bạn chưa đạt yêu cầu. Hãy xem phần nhận xét ' + RS_SIDE() + ' để biết nội dung cần cải thiện.';
+  $('resSub').innerHTML = r.submittedAt ? RS_ICO.cal + '<span>Hoàn thành lúc: ' + esc(fmtFull(r.submittedAt).replace(',', '')) + '</span>' : '';
   // Màu vòng tròn theo đúng mốc điểm (thang 10, tương đương % /10): <6 đỏ, 6-7 vàng, 7-9 xanh dương, >=9 xanh lá.
   $('resRing').className = 'ring ' + scoreTierClass(pct);
   $('resPct').textContent = pct + '%';
   $('resThr').textContent = (ps !== null && r.passScore) ? ('Ngưỡng đạt: ' + r.passScore + '%') : '';
 
-  var tl = [{ v:(r.score!=null?r.score:'–')+'/'+(r.total!=null?r.total:'–'), l:'Số câu đúng' }];
-  if (r.compliancePoints != null) tl.push({ v:r.compliancePoints+' điểm', l: prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ học tập', ref: prac });
-  if (r.durationSec != null) tl.push({ v:fmtClock(r.durationSec), l:'Thời gian hoàn thành' });
+  var tl = [{ v:(r.score!=null?r.score:'–')+'/'+(r.total!=null?r.total:'–'), l:'Số câu đúng', i:RS_ICO.clip }];
+  if (r.compliancePoints != null) tl.push({ v:r.compliancePoints+' điểm', l: prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ học tập', ref: prac, i:RS_ICO.star });
+  if (r.durationSec != null) tl.push({ v:fmtClock(r.durationSec), l:'Thời gian làm bài', i:RS_ICO.clock });
   $('resStats').className = 'stats ' + (tl.length === 3 ? 'c3' : tl.length === 1 ? 'c1' : '');
-  $('resStats').innerHTML = tl.map(function(t){ return '<div'+(t.ref?' class="ref"':'')+'><b>'+esc(t.v)+'</b><span>'+t.l+'</span></div>'; }).join('');
+  $('resStats').innerHTML = tl.map(function(t){ return '<div'+(t.ref?' class="ref"':'')+'>'+t.i+'<p><b>'+esc(t.v)+'</b><span>'+t.l+'</span></p></div>'; }).join('');
 
   var bk = $('resBk');
   if (r.wrong != null && r.blank != null && r.total){
-    var seg = [{ n:r.score||0, c:'#17794A', l:'Đúng' }, { n:r.wrong, c:'#B3261E', l:'Sai' }, { n:r.blank, c:'#AEB6C1', l:'Bỏ trống' }];
+    var seg = [{ n:r.score||0, c:'#18A957', l:'Đúng' }, { n:r.wrong, c:'#E5353F', l:'Sai' }, { n:r.blank, c:'#AEB6C1', l:'Bỏ trống' }];
     bk.innerHTML = '<div class="bar" aria-hidden="true">' + seg.map(function(g){ return g.n > 0 ? '<i style="--c:'+g.c+';width:'+(g.n / r.total * 100)+'%"></i>' : ''; }).join('') + '</div>' +
-      '<div class="lg">' + seg.map(function(g){ return '<span style="--c:'+g.c+'">'+g.l+' <b>'+g.n+'</b></span>'; }).join('') + '</div>';
+      '<div class="lg">' + seg.map(function(g){ return '<span style="--c:'+g.c+'">'+g.l+': <b>'+g.n+'</b></span>'; }).join('') + '</div>';
     bk.classList.remove('hide');
   } else bk.classList.add('hide');
 
@@ -3769,6 +3944,7 @@ function renderResult(r, already){
     '<button class="btn ghost" id="btnResend" type="button">' + RESEND_LABEL + '</button></div><div id="resendMsg" role="status"></div>';
   renderAnalysis(null); // màn hình kết quả không hiện phần phân tích theo mảng kiến thức
   renderAdvice(r.advice);
+  renderImp(r, ps, prac);
   shareMsg('');
   rsTabs();
   show('result');
