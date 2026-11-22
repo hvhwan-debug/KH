@@ -1595,6 +1595,64 @@ body.exam .who{display:flex;align-items:center;gap:10px;margin-left:auto;flex:0 
   body #scrPhoto.lg.rdy .ai-lead{display:none}
   body #scrPhoto.lg.rdy .ai-tips li{padding:10px 4px 9px;font-size:11px}
 }
+
+/* ===== Kết quả làm bài: 2 cột (điểm số | chi tiết có tab) ===== */
+body.rs .stage{max-width:1140px}
+#scrResult{background:none!important;border:0;box-shadow:none;padding:0;overflow:visible;text-align:left}
+#scrResult::before{display:none}
+.rs-wrap{display:grid;grid-template-columns:minmax(300px,.78fr) minmax(0,1.22fr);gap:20px;align-items:start}
+.rs-sum,.rs-det{position:relative;overflow:hidden;background:#fff;border:1px solid #DCE6F3;border-radius:26px;box-shadow:0 22px 50px -28px rgba(20,60,140,.45)}
+.rs-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:18px 22px;color:#fff;background:radial-gradient(60% 160% at 85% -40%,rgba(255,255,255,.28),transparent 62%),linear-gradient(135deg,#0A4FD3,#1678F2 60%,#2E9BFF)}
+.rs-brand{display:flex;align-items:center;gap:12px;min-width:0}
+.rs-brand .logo{width:40px;height:40px;flex:0 0 auto}
+.rs-brand b{display:block;font-size:15px;line-height:1.3;word-break:break-word}
+.rs-brand small{display:block;font-size:12px;opacity:.85;margin-top:1px}
+#scrResult .rs-sum h1{margin:22px 22px 0;text-align:center;font-size:20px;font-weight:800;letter-spacing:-.2px}
+.rs-sum .ring{margin:12px auto 4px}
+.rs-sum .thr{margin:0;text-align:center;font-size:13px;font-weight:600;color:#5A6F92}
+.rs-sum .cheer{margin:10px auto 18px;padding:0 22px;max-width:40ch;text-align:center;font-size:14.5px;line-height:1.6;color:#243B63}
+.rs-sum .stats{margin:0 22px;text-align:left}
+.rs-sum .stats div{padding:14px 12px;text-align:center}
+.rs-sum .stats b{white-space:nowrap;font-size:clamp(17px,5vw,21px)}
+.rs-sum .stats span{line-height:1.35}
+.rs-sum .bk{margin:16px 22px 22px}
+.rs-sum .bk.hide{display:none}.rs-sum .stats:last-child{margin-bottom:22px}
+.rs-det{padding:22px 24px 24px}
+.rs-who{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.rs-who .av{flex:0 0 auto;display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#1B78E8,#0B55C9);color:#fff;font-size:16px;font-weight:800}
+.rs-who>div{min-width:0}.rs-who>div b{display:block;font-size:18px;line-height:1.3;color:#0B1F4B}
+.rs-who>div span{display:block;font-size:13px;color:#5A6F92}
+.rs-sub{margin:0 0 0 auto;font-size:13px;font-weight:600;color:#5A6F92;text-align:right}.rs-sub:empty{display:none}
+.rs-tabs{display:flex;gap:6px;margin:18px 0 16px;padding:5px;border-radius:16px;background:#EEF4FC}
+.rs-tabs.hide{display:none}
+.rs-tabs button{flex:1;border:0;background:none;padding:10px 12px;border-radius:12px;font:inherit;font-size:14px;font-weight:700;color:#4B6086;cursor:pointer;transition:background .15s,color .15s}
+.rs-tabs button.hide{display:none}
+.rs-tabs button.on{background:#fff;color:#0B3F94;box-shadow:0 6px 14px -8px rgba(20,60,140,.55)}
+.rs-pn{display:none}.rs-pn.on{display:block}
+.rs-who+.rs-pn.on,.rs-tabs.hide+.rs-pn.on{margin-top:16px}
+#scrResult .tries{margin:0}
+#scrResult .advice{margin:0;padding:0;border:0;background:none}
+#scrResult .advice .adh{margin-bottom:12px}
+#pnRcpt .kv{margin:0 0 14px;padding:0 16px;text-align:left}
+#pnRcpt .kv:empty{display:none}
+#pnRcpt .proof{margin:0 0 14px}
+#pnRcpt .proof .pt span b{display:inline;font-size:inherit;letter-spacing:0;color:var(--brand-deep)}
+#resMail .mailrow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px;padding:12px 14px;border-radius:14px;background:#EAF7F0;border:1px solid #BFE3CE;color:#17794A;font-size:13.5px;font-weight:600;line-height:1.45}
+#resMail .mailrow.warn{background:#FFF6E0;border-color:#F0D58A;color:#6B4A00}
+#resMail .mailrow .btn{width:auto;min-height:36px;margin:0;padding:6px 14px;font-size:13px;border-radius:99px;flex:0 0 auto}
+#pnRcpt .share{gap:10px}
+#pnRcpt .agree{padding:10px 14px;font-size:13px}
+#pnRcpt .agree p{font-size:13px;line-height:1.5}
+.sh-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sh-row .btn{min-height:50px;font-size:15px;white-space:nowrap}
+#pnRcpt .sharehint{margin:0;text-align:left}
+@media(max-width:860px){
+  .rs-wrap{grid-template-columns:minmax(0,1fr);gap:14px}
+  .rs-det{padding:18px 16px 18px}
+  .rs-sub{margin:4px 0 0;text-align:left;flex:1 0 100%}
+  .rs-tabs button{padding:10px 6px;font-size:13px}
+}
+@media(max-width:420px){.sh-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body class="introbg" data-scr="check">
@@ -1901,46 +1959,46 @@ body.exam .who{display:flex;align-items:center;gap:10px;margin-left:auto;flex:0 
     <!-- 4. Kết quả -->
     <section class="card res hide" id="scrResult">
       <canvas class="confetti hide" id="confetti" aria-hidden="true"></canvas>
-      <div class="rv-head">
-        <div class="rv-brand"><span class="logo" aria-hidden="true"><img src="/kiemtra/logo-mark.png" alt="" width="40" height="40"></span><div><b id="rvTitle">Bài kiểm tra</b><small>Kết quả bài kiểm tra</small></div></div>
-        <div id="resBadge"></div>
-      </div>
-      <div class="rv-body">
-        <!-- 1. Kết quả -->
-        <h1 tabindex="-1">Kết quả của bạn</h1>
-        <p class="lead" id="resSub" style="margin-bottom:14px"></p>
-        <div class="rv-person"><span class="av" id="rvAv" aria-hidden="true">?</span><div><b id="rvName"></b><span id="rvCode"></span></div></div>
-        <div class="tries hide" id="resTries"></div>
-        <div class="ring" id="resRing"><svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="gP" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5C25E"/><stop offset="1" stop-color="#D68F1E"/></linearGradient><linearGradient id="gY" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12B5C9"/><stop offset="1" stop-color="#17794A"/></linearGradient><linearGradient id="gN" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B3261E"/></linearGradient><linearGradient id="gT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12B5C9"/><stop offset="1" stop-color="#0A63C4"/></linearGradient><linearGradient id="gScRed" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B3261E"/></linearGradient><linearGradient id="gScYellow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5C25E"/><stop offset="1" stop-color="#D68F1E"/></linearGradient><linearGradient id="gScBlue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5BA8E8"/><stop offset="1" stop-color="#1D6FC2"/></linearGradient><linearGradient id="gScGreen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5FD08A"/><stop offset="1" stop-color="#17794A"/></linearGradient></defs><circle class="trk" cx="60" cy="60" r="52" fill="none" stroke-width="10"/><circle class="prg" id="resArc" cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73"/></svg><div class="c"><b id="resPct">0%</b><span>Tỉ lệ đúng</span></div></div>
-        <p class="thr" id="resThr"></p>
-        <p class="cheer" id="resCheer"></p>
-        <div class="stats" id="resStats"></div>
-        <div class="bk hide" id="resBk"></div>
-
-        <!-- 2. Phân tích -->
-        <section class="sec hide" id="resAnalysis" aria-labelledby="anaT"></section>
-        <!-- 3. Lời khuyên -->
-        <section class="advice hide" id="resAdvice" aria-labelledby="advTitle"></section>
-
-        <!-- 4. Gửi kết quả cho quản lí (thao tác phụ, đặt sau kết quả) -->
-        <section class="sec" aria-labelledby="shT">
-          <h2 class="sec-h" id="shT">Gửi kết quả cho quản lí</h2>
-          <div class="share">
-          <div class="agree" id="agreeNote" role="note"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12.3 2.8 2.8 5.2-5.8"/></svg><p>Bằng việc <b>gửi minh chứng kết quả</b>, bạn xác nhận đã xem và <b>đồng ý với kết quả</b> bài kiểm tra này.</p></div>
-          <button class="btn zalo" id="btnZalo" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.6L3 21l1.5-5A8.5 8.5 0 1 1 21 12z"/><path d="M8.5 10h7M8.5 13.5h4"/></svg><span>Chia sẻ kết quả qua Zalo</span></button>
-          <button class="btn ghost" id="btnSave" type="button" style="margin-top:0">Lưu ảnh kết quả</button>
-          <div id="shareMsg" role="status"></div>
-          <p class="sharehint">Ảnh kết quả có họ tên, điểm số và thời gian xác nhận của hệ thống. Trên điện thoại, bấm nút Zalo rồi chọn Zalo trong bảng chia sẻ. Trên máy tính, ảnh sẽ được lưu để bạn gửi qua <a href="https://chat.zalo.me/" target="_blank" rel="noopener">Zalo</a>.</p>
+      <div class="rs-wrap">
+        <div class="rs-sum">
+          <div class="rs-top">
+            <div class="rs-brand"><span class="logo" aria-hidden="true"><img src="/kiemtra/logo-mark.png" alt="" width="40" height="40"></span><div><b id="rvTitle">Bài kiểm tra</b><small>Kết quả bài kiểm tra</small></div></div>
+            <div id="resBadge"></div>
           </div>
-        </section>
-
-        <!-- 5. Biên nhận -->
-        <section class="sec" aria-labelledby="rcT">
-          <h2 class="sec-h" id="rcT">Biên nhận nộp bài</h2>
-          <dl class="kv" id="resDetails" style="margin:0;text-align:left"></dl>
-          <div class="proof hide" id="resProof"></div>
-          <div id="resMail"></div>
-        </section>
+          <h1 tabindex="-1">Kết quả của bạn</h1>
+          <div class="ring" id="resRing"><svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="gP" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5C25E"/><stop offset="1" stop-color="#D68F1E"/></linearGradient><linearGradient id="gY" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12B5C9"/><stop offset="1" stop-color="#17794A"/></linearGradient><linearGradient id="gN" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B3261E"/></linearGradient><linearGradient id="gT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12B5C9"/><stop offset="1" stop-color="#0A63C4"/></linearGradient><linearGradient id="gScRed" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B3261E"/></linearGradient><linearGradient id="gScYellow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5C25E"/><stop offset="1" stop-color="#D68F1E"/></linearGradient><linearGradient id="gScBlue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5BA8E8"/><stop offset="1" stop-color="#1D6FC2"/></linearGradient><linearGradient id="gScGreen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5FD08A"/><stop offset="1" stop-color="#17794A"/></linearGradient></defs><circle class="trk" cx="60" cy="60" r="52" fill="none" stroke-width="10"/><circle class="prg" id="resArc" cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73"/></svg><div class="c"><b id="resPct">0%</b><span>Tỉ lệ đúng</span></div></div>
+          <p class="thr" id="resThr"></p>
+          <p class="cheer" id="resCheer"></p>
+          <div class="stats" id="resStats"></div>
+          <div class="bk hide" id="resBk"></div>
+        </div>
+        <div class="rs-det">
+          <div class="rs-who"><span class="av" id="rvAv" aria-hidden="true">?</span><div><b id="rvName"></b><span id="rvCode"></span></div><p class="rs-sub" id="resSub"></p></div>
+          <div class="rs-tabs" id="rsTabs" role="tablist" aria-label="Chi tiết kết quả">
+            <button type="button" role="tab" data-t="tries" id="tbTries">Các lần làm</button>
+            <button type="button" role="tab" data-t="adv" id="tbAdv">Nhận xét</button>
+            <button type="button" role="tab" data-t="rcpt" id="tbRcpt">Biên nhận</button>
+          </div>
+          <div class="rs-pn" id="pnTries" role="tabpanel"><div class="tries hide" id="resTries"></div></div>
+          <div class="rs-pn" id="pnAdv" role="tabpanel">
+            <section class="sec hide" id="resAnalysis" aria-labelledby="anaT"></section>
+            <section class="advice hide" id="resAdvice" aria-labelledby="advTitle"></section>
+          </div>
+          <div class="rs-pn" id="pnRcpt" role="tabpanel">
+            <dl class="kv" id="resDetails"></dl>
+            <div class="proof hide" id="resProof"></div>
+            <div id="resMail"></div>
+            <div class="share">
+              <div class="agree" id="agreeNote" role="note"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12.3 2.8 2.8 5.2-5.8"/></svg><p>Bằng việc <b>gửi minh chứng kết quả</b>, bạn xác nhận đã xem và <b>đồng ý với kết quả</b> bài kiểm tra này.</p></div>
+              <div class="sh-row">
+                <button class="btn zalo" id="btnZalo" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.6L3 21l1.5-5A8.5 8.5 0 1 1 21 12z"/><path d="M8.5 10h7M8.5 13.5h4"/></svg><span>Chia sẻ kết quả qua Zalo</span></button>
+                <button class="btn ghost" id="btnSave" type="button" style="margin-top:0">Lưu ảnh kết quả</button>
+              </div>
+              <div id="shareMsg" role="status"></div>
+              <p class="sharehint">Ảnh kết quả có họ tên, điểm số và thời gian xác nhận của hệ thống. Trên máy tính, ảnh được lưu về máy để bạn gửi qua <a href="https://chat.zalo.me/" target="_blank" rel="noopener">Zalo</a>.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   </main>
@@ -3547,6 +3605,18 @@ function surveyPrompt(){
   document.body.appendChild(bg);
   bg.querySelector('a.go').focus();
 }
+function rsPick(t){
+  var m = { tries:'Tries', adv:'Adv', rcpt:'Rcpt' };
+  Object.keys(m).forEach(function(k){ var on = k === t; $('pn' + m[k]).classList.toggle('on', on); $('tb' + m[k]).classList.toggle('on', on); $('tb' + m[k]).setAttribute('aria-selected', String(on)); });
+}
+function rsTabs(){ // chọn tab mặc định: có lượt làm tiếp → "Các lần làm"; có nhận xét → "Nhận xét"; còn lại → "Biên nhận"
+  var hasT = !$('resTries').classList.contains('hide'), hasA = !$('resAdvice').classList.contains('hide');
+  $('tbTries').classList.toggle('hide', !hasT); $('tbAdv').classList.toggle('hide', !hasA);
+  $('rsTabs').classList.toggle('hide', !hasT && !hasA);
+  rsPick(($('btnRetry') && hasT) ? 'tries' : hasA ? 'adv' : hasT ? 'tries' : 'rcpt');
+  if (!hasT && !hasA) $('pnRcpt').classList.add('on');
+}
+$('rsTabs').addEventListener('click', function(e){ var b = e.target.closest('button[data-t]'); if (b) rsPick(b.dataset.t); });
 function renderResult(r, already){
   ST.res = { r:r, already:already };
   setTimeout(surveyPrompt, 900);
@@ -3565,9 +3635,7 @@ function renderResult(r, already){
     ? ''
     : ps ? 'Chúc mừng bạn đã đạt yêu cầu của bài kiểm tra.'
     : 'Chưa đạt lần này. Hãy liên hệ quản trị viên phụ trách để được hướng dẫn ôn tập.';
-  $('resSub').textContent = already
-    ? ('Bạn đã hoàn thành bài kiểm tra này' + (r.submittedAt ? ' lúc ' + fmtTime(r.submittedAt) : ' trước đó') + '.')
-    : 'Cảm ơn bạn đã hoàn thành bài kiểm tra.';
+  $('resSub').textContent = r.submittedAt ? 'Hoàn thành lúc ' + fmtTime(r.submittedAt) : '';
   // Màu vòng tròn theo đúng mốc điểm (thang 10, tương đương % /10): <6 đỏ, 6-7 vàng, 7-9 xanh dương, >=9 xanh lá.
   $('resRing').className = 'ring ' + scoreTierClass(pct);
   $('resPct').textContent = pct + '%';
@@ -3591,17 +3659,14 @@ function renderResult(r, already){
   if (c.manager) rows += '<div><dt>Quản lí</dt><dd>'+esc(c.manager)+'</dd></div>';
   if (r.startedAt) rows += '<div><dt>Bắt đầu lúc</dt><dd>'+fmtFull(r.startedAt)+'</dd></div>';
   if (r.submittedAt) rows += '<div><dt>Nộp bài lúc</dt><dd>'+fmtFull(r.submittedAt)+'</dd></div>';
-  if (r.durationSec != null) rows += '<div><dt>Thời gian hoàn thành</dt><dd>'+fmtDur(r.durationSec)+'</dd></div>';
-  rows += '<div><dt>Giờ hệ thống</dt><dd id="resSys">'+fmtFull(sysNow())+'</dd></div>';
   $('resDetails').innerHTML = rows;
   clearInterval(ST.sysT);
-  ST.sysT = setInterval(function(){ var el = $('resSys'); if (el) el.textContent = fmtFull(sysNow()); }, 1000);
 
   var pf = $('resProof');
   if (r.proof){
     var vurl = verifyUrl(r), qm = vurl ? qrMatrix(vurl) : null;
     pf.innerHTML = '<svg width="38" height="38" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z" fill="#17794A"/><path d="m8.2 12.3 2.6 2.6 5-5.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-      '<div class="pt"><small>MÃ MINH CHỨNG</small><b>'+esc(r.proof)+'</b><span>Xác nhận bởi hệ thống. Quét hoặc bấm vào mã QR để xem ngay kết quả đã xác thực. Chỉ có mã? Nhập mã tại <b>'+esc(location.host)+'/kiemtra/ketqua.html</b></span></div>' +
+      '<div class="pt"><small>MÃ MINH CHỨNG</small><b>'+esc(r.proof)+'</b><span>Quét mã QR để xem kết quả đã xác thực, hoặc nhập mã tại <b>'+esc(location.host)+'/kiemtra/ketqua.html</b></span></div>' +
       (qm ? '<a class="qr" id="resQrLink" href="'+esc(vurl)+'" target="_blank" rel="noopener" aria-label="Mở trang kết quả đã xác thực"><canvas id="resQr"></canvas><span>Quét hoặc bấm</span></a>' : '');
     pf.classList.remove('hide');
     if (qm) paintQr($('resQr'), qm);
@@ -3609,13 +3674,12 @@ function renderResult(r, already){
 
   RESEND_LABEL = r.mailOk === false ? 'Thử gửi lại email xác nhận' : 'Gửi lại email xác nhận';
   clearInterval(resendT);
-  $('resMail').innerHTML = (r.mailOk === false
-    ? '<div class="msg warn" style="text-align:left">Kết quả đã được lưu nhưng hệ thống chưa gửi được email. Bạn có thể bấm gửi lại bên dưới, hoặc liên hệ quản trị viên nếu vẫn không nhận được.</div>'
-    : '<div class="msg ok" style="text-align:left">Kết quả chi tiết đã được gửi tự động về email bạn đã nhập.</div>') +
-    '<button class="btn ghost" id="btnResend" type="button" style="margin-top:10px;min-height:46px">' + RESEND_LABEL + '</button><div id="resendMsg" role="status"></div>';
+  $('resMail').innerHTML = '<div class="mailrow' + (r.mailOk === false ? ' warn' : '') + '"><span>' + (r.mailOk === false ? 'Kết quả đã được lưu nhưng chưa gửi được email.' : 'Kết quả chi tiết đã được gửi về email của bạn.') + '</span>' +
+    '<button class="btn ghost" id="btnResend" type="button">' + RESEND_LABEL + '</button></div><div id="resendMsg" role="status"></div>';
   renderAnalysis(null); // màn hình kết quả không hiện phần phân tích theo mảng kiến thức
   renderAdvice(r.advice);
   shareMsg('');
+  rsTabs();
   show('result');
   if (ps === true && !already) confetti();
   var arc = $('resArc');
