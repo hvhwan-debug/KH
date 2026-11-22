@@ -954,6 +954,19 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 .rd-stats b{font-size:22px}.rd-stats span{font-size:13px;font-weight:600}
 .rd-stats .ok{background:var(--ok-soft);color:var(--ok)}.rd-stats .bad{background:var(--bad-soft);color:var(--bad)}.rd-stats .blank{background:#ECEEF1;color:#545D68}
 .rd-fold{border:1px solid var(--line);border-radius:14px;padding:0 14px;margin-bottom:12px;background:#fff}
+.rd-evwrap{padding:4px 0 14px}
+.rd-evt{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0 12px}
+.rd-evt th{text-align:left;font-size:11.5px;font-weight:700;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line)}
+.rd-evt td{padding:8px;border-bottom:1px solid #F0F3F8}.rd-evt td:first-child{display:flex;align-items:center;gap:8px;font-weight:600}
+.rd-evk{display:inline-block;width:9px;height:9px;border-radius:50%;background:#8FA3C0;flex:0 0 auto}
+.rd-evk.tab,.rd-evk.min,.rd-evk.blur{background:#F59E0B}.rd-evk.fs{background:#E5533F}.rd-evk.dev{background:#B42318;box-shadow:0 0 0 3px rgba(180,35,24,.15)}
+.rd-evk.net{background:#6B7A99}.rd-evk.reload{background:#2563EB}
+.rd-evl{list-style:none;margin:0;padding:0 0 0 4px;max-height:280px;overflow-y:auto;border-left:2px solid #E6ECF5}
+.rd-evl li{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:6px 0 6px 14px;font-size:13px}
+.rd-evl li .rd-evk{position:absolute;left:-6px;top:11px}
+.rd-evl time{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink);min-width:64px}
+.rd-evl em{font-style:normal;color:var(--muted)}.rd-evl small{margin-left:auto;color:var(--muted);font-size:11.5px}
+.rd-evn{margin:10px 0 0;font-size:12px;color:var(--muted);line-height:1.5}
 .rd-fold.none{padding:11px 14px;font-size:13px;color:var(--muted)}
 .rd-fold>summary{cursor:pointer;padding:12px 0;font-weight:700;font-size:14px;list-style:none;display:flex;justify-content:space-between;gap:10px;align-items:center}
 .rd-fold>summary::-webkit-details-marker{display:none}
@@ -6584,6 +6597,36 @@ function closeResDetail(){
 }
 document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !document.getElementById('rdZoomOv')) closeResDetail(); });
 function rdFmtT(ms){ try { return new Date(ms).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour12:false}); } catch(e){ return ''; } }
+// Nhật ký hành vi khi làm bài (attempt.events): bảng tổng hợp theo loại + dòng thời gian. Chỉ là tín hiệu tuân thủ, không phải bằng chứng gian lận.
+const RD_EV = [
+  ['tab', 'Chuyển tab', 'Thời điểm, số lần, thời gian rời trang'],
+  ['min', 'Thu nhỏ trình duyệt', 'Thời điểm, thời lượng'],
+  ['blur', 'Chuyển sang cửa sổ khác', 'Thời điểm, thời lượng (trang vẫn hiện nhưng không được chọn)'],
+  ['fs', 'Thoát toàn màn hình', 'Thời điểm, thời gian đến khi bật lại'],
+  ['reload', 'Tải lại trang', 'Thời điểm, số lần'],
+  ['net', 'Mất kết nối', 'Thời điểm, thời lượng'],
+  ['dev', 'Đăng nhập thiết bị khác', 'Thiết bị, thời điểm']
+];
+function rdClock(ms){ try { return new Date(ms).toLocaleTimeString('vi-VN', { timeZone:'Asia/Ho_Chi_Minh', hour12:false }); } catch(e){ return ''; } }
+function rdLen(ms){ const s = Math.round((ms || 0) / 1000); return s >= 1 ? rdDur(s) : (ms ? 'dưới 1 giây' : ''); }
+function rdEvents(a){
+  const ev = Array.isArray(a.events) ? a.events : [];
+  if (!ev.length) return '<div class="rd-fold none">Nhật ký hành vi: không ghi nhận sự kiện nào trong lúc làm bài.</div>';
+  const sum = {}; ev.forEach(e => { const x = (sum[e.k] = sum[e.k] || { n:0, ms:0, first:e.t }); x.n++; x.ms += e.ms || 0; });
+  const rows = RD_EV.filter(k => sum[k[0]]).map(k => { const x = sum[k[0]];
+    return '<tr><td><span class="rd-evk ' + k[0] + '"></span>' + k[1] + '</td><td><b>' + x.n + '</b></td><td>' + (k[0] === 'reload' || k[0] === 'dev' ? '–' : esc(rdLen(x.ms)) || '–') + '</td><td>' + esc(rdClock(x.first)) + '</td></tr>'; }).join('');
+  const lab = {}; RD_EV.forEach(k => { lab[k[0]] = k[1]; });
+  const t0 = a.startedAt || ev[0].t;
+  const line = ev.map(e => {
+    const off = Math.max(0, Math.round((e.t - t0) / 1000)), mm = Math.floor(off / 60), ss = off % 60;
+    return '<li><time>' + esc(rdClock(e.t)) + '</time><span class="rd-evk ' + e.k + '"></span><b>' + esc(lab[e.k] || e.k) + '</b>' +
+      (e.d ? '<em>' + esc(e.d) + '</em>' : e.ms ? '<em>' + esc(rdLen(e.ms)) + '</em>' : '') + '<small>phút ' + mm + ':' + (ss < 10 ? '0' : '') + ss + ' của bài</small></li>';
+  }).join('');
+  const total = ev.filter(e => e.k !== 'reload').length, bad = (sum.dev ? sum.dev.n : 0) + (sum.fs ? sum.fs.n : 0);
+  return '<details class="rd-fold"' + (bad ? ' open' : '') + '><summary>Nhật ký hành vi khi làm bài <span class="rd-sub">' + ev.length + ' sự kiện' + (bad ? ' · <b style="color:var(--bad)">cần xem</b>' : '') + '</span></summary>' +
+    '<div class="rd-evwrap"><table class="rd-evt"><thead><tr><th>Sự kiện</th><th>Số lần</th><th>Tổng thời lượng</th><th>Lần đầu</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+    '<ol class="rd-evl">' + line + '</ol><p class="rd-evn">Đây là tín hiệu do trình duyệt và hệ thống ghi nhận, không phải bằng chứng gian lận. "Thu nhỏ trình duyệt" chỉ phân biệt được trên Windows; nơi khác được tính là "Chuyển tab".</p></div></details>';
+}
 function rdDur(sec){ if (!(sec > 0)) return ''; const m = Math.floor(sec / 60), s = sec % 60; return m ? m + ' phút' + (s ? ' ' + s + ' giây' : '') : s + ' giây'; }
 function rdZoom(src){
   const ov = document.createElement('div'); ov.id = 'rdZoomOv';
@@ -6703,7 +6746,7 @@ async function viewResult(id){
     }
     return '<div class="rd-q '+s+'" id="rdq-'+i+'" data-st="'+s+'">'+top+body+'</div>';
   }).join('');
-  $('resDetail').innerHTML = head + rdCompare(j.attempts) + devBlock + '<div class="rd-sticky">' + tabs + nav + '</div><div class="rd-list">' + qs + '</div>';
+  $('resDetail').innerHTML = head + rdCompare(j.attempts) + rdEvents(a) + devBlock + '<div class="rd-sticky">' + tabs + nav + '</div><div class="rd-list">' + qs + '</div>';
   resolveGeoNames($('resDetail'));
 }
 

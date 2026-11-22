@@ -29,6 +29,7 @@ module.exports = async function (context, req) {
       });
     }
 
+    try { require("../_lib/events").ingest(attempt, b.ev, Date.now()); } catch (e) { /* bỏ qua */ } // sự kiện cuối cùng trước khi nộp
     const f = await finalize.finalizeAttempt(context, attempt, { req, deviceHint: b.device });
     const correct = f.correct, total = f.total, pct = f.pct, passed = f.passed, compliance = f.compliance, mailOk = f.mailOk, advice = f.advice, settings = f.settings;
 

@@ -140,7 +140,17 @@ module.exports = async function (context, req) {
       quiz.syncAttempt(attempt, now);
     }
     // Ghi thiết bị đang dùng (bắt đầu / làm tiếp) để quản lí đối chiếu; đổi máy giữa chừng sẽ được đánh dấu.
-    try { device.record(attempt, device.capture(req, b.device, resumed ? "resume" : "start")); } catch (e) { (context.log.warn || context.log)("kt-start device", e && e.message); }
+    try {
+      const devs0 = Array.isArray(attempt.devices) ? attempt.devices : (attempt.device ? [attempt.device] : []), prev = devs0[devs0.length - 1];
+      const cap = device.capture(req, b.device, resumed ? "resume" : "start");
+      device.record(attempt, cap);
+      // Vào lại bài đang làm: cùng trình duyệt -> "Tải lại trang"; trình duyệt / thiết bị khác -> "Đăng nhập thiết bị khác"
+      if (resumed && prev) {
+        const sig = (d) => [d.type, d.os, d.browser, d.model].join("|");
+        const other = (prev.bid && cap.bid && prev.bid !== cap.bid) || sig(prev) !== sig(cap);
+        require("../_lib/events").push(attempt, other ? { k: "dev", t: now, d: device.label(cap) + (cap.ip ? " · " + cap.ip : "") } : { k: "reload", t: now }, now);
+      }
+    } catch (e) { (context.log.warn || context.log)("kt-start device", e && e.message); }
 
     const cs = quiz.clientState(attempt, byId, now);
     await quiz.putAttempt(attempt);

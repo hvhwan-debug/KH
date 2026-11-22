@@ -25,6 +25,8 @@ module.exports = async function (context, req) {
       const old = attempt.flags || { blur: 0, shot: 0 };
       attempt.flags = { blur: Math.max(old.blur || 0, cl(b.flags.blur)), shot: Math.max(old.shot || 0, cl(b.flags.shot)) };
     }
+    // Nhật ký hành vi (chuyển tab, thu nhỏ, thoát toàn màn hình, mất kết nối...) trình duyệt gửi kèm
+    try { require("../_lib/events").ingest(attempt, b.ev, now); } catch (e) { /* không chặn việc lưu câu trả lời */ }
     quiz.syncAttempt(attempt, now); // câu quá hạn tự tính là bỏ trống, con trỏ nhảy tới câu hiện tại
 
     const byId = {};

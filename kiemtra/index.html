@@ -1245,6 +1245,15 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
 .ck-link{border:0;background:none;padding:0;margin-left:4px;font:inherit;color:inherit;text-decoration:underline;cursor:pointer}
 @media(max-width:560px){.ck{left:8px;right:8px;bottom:8px;width:auto;border-radius:18px}.ck-in{padding:16px 15px 12px}}
 body[data-scr=photo] .ck,body[data-scr=quiz] .ck{display:none}
+/* ===== Yêu cầu toàn màn hình khi làm bài (máy tính) ===== */
+.fsg{position:fixed;inset:0;z-index:450;display:grid;place-items:center;padding:20px;background:rgba(6,16,40,.78);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.fsg.hide{display:none}
+.fsg-in{width:min(440px,100%);padding:28px 26px 24px;border-radius:22px;background:#fff;text-align:center;box-shadow:0 30px 70px -20px rgba(0,0,0,.6)}
+.fsg-ic{display:inline-grid;place-items:center;width:58px;height:58px;border-radius:16px;background:#E6F0FF;color:var(--brand)}.fsg-ic svg{width:30px;height:30px}
+.fsg h2{margin:14px 0 8px;font-size:20px;font-weight:800;color:var(--ink)}
+.fsg p{margin:0 0 10px;font-size:14px;line-height:1.6;color:var(--muted)}.fsg p b{color:var(--ink)}
+.fsg-warn{padding:9px 12px;border-radius:12px;background:#FFF1F1;color:#B42318!important;font-weight:600}
+.fsg .btn{margin-top:8px;width:100%}
 </style>
 </head>
 <body class="introbg" data-scr="check">
@@ -1558,6 +1567,15 @@ body[data-scr=photo] .ck,body[data-scr=quiz] .ck{display:none}
   </div>
 
   <footer class="foot"><span class="fwrap">Nền tảng kiểm tra và đánh giá năng lực trực tuyến tích hợp AI dành cho đội ngũ Kinh doanh Kênh GT. <button type="button" class="ck-link" id="ckOpen">Cài đặt cookie</button></span></footer>
+  <div class="fsg hide" id="fsGate" role="dialog" aria-modal="true" aria-labelledby="fsT">
+    <div class="fsg-in">
+      <span class="fsg-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></span>
+      <h2 id="fsT">Làm bài ở chế độ toàn màn hình</h2>
+      <p>Bài kiểm tra cần hiển thị toàn màn hình. <b>Thời gian vẫn tiếp tục được tính.</b></p>
+      <p class="fsg-warn hide" id="fsAgain">Bạn vừa thoát chế độ toàn màn hình. Sự việc đã được ghi nhận vào nhật ký bài làm.</p>
+      <button type="button" class="btn go" id="fsGo">Bật toàn màn hình và tiếp tục</button>
+    </div>
+  </div>
   <div class="ck hide" id="ckBox" role="dialog" aria-modal="false" aria-labelledby="ckT">
     <div class="ck-in">
       <div class="ck-h"><span class="ck-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9 3 3 0 0 1-3-3 3 3 0 0 1-3-3 3 3 0 0 1-3-3z"/><circle cx="8.5" cy="11" r="1"/><circle cx="12" cy="16" r="1"/><circle cx="15.5" cy="12.5" r=".6"/></svg></span>
@@ -1696,6 +1714,7 @@ function show(name){
     if (n === cur) li.setAttribute('aria-current','step'); else li.removeAttribute('aria-current');
   });
   ST.quizOn = (name === 'quiz');
+  if (typeof fsCheck === 'function') setTimeout(fsCheck, 0);
   document.body.classList.toggle('exam', name === 'quiz');
   document.body.classList.toggle('rs', name === 'result'); // bước kết quả: ẩn tiêu đề trang vì thẻ kết quả đã có tên đề
   document.body.dataset.scr = name;
@@ -2047,7 +2066,7 @@ async function startWithFacePass(){ // vào thẳng bài từ màn xác nhận: 
   if (j.identity === 'mismatch') ST.identityWarn = true; // vẫn cho làm bài; hiện cảnh báo ở đầu màn làm bài như cũ
   if (!ST.cand.phone && ST.phoneNew) ST.cand.phone = ST.phoneNew;
   if (ST.rgNew){ ST.cand.province = ST.rgNew.province; ST.cand.region = ST.rgNew.region; ST.cand.needRegion = false; }
-  ST.attemptId = j.attemptId;
+  ST.attemptId = j.attemptId; evLoad();
   if (j.examTitle) $('examTitle').textContent = j.examTitle;
   show('quiz');
   wmSet(); idWarnShow();
@@ -2620,7 +2639,7 @@ async function startExam(passToken){ // passToken: vé đăng nhập bằng khu�
   if (!res.j.ok){ msg('photoMsg', (res.j.faceRejected ? '⚠ ' : '') + (res.j.error || 'Không thể bắt đầu bài kiểm tra.')); if (res.j.faceRejected || passToken){ btn.classList.add('hide'); $('btnPhotoRetry').classList.remove('hide'); } return; }
   if (!ST.cand.phone && ST.phoneNew) ST.cand.phone = ST.phoneNew;
   if (ST.rgNew){ ST.cand.province = ST.rgNew.province; ST.cand.region = ST.rgNew.region; ST.cand.needRegion = false; }
-  ST.attemptId = res.j.attemptId;
+  ST.attemptId = res.j.attemptId; evLoad();
   if (res.j.examTitle) $('examTitle').textContent = res.j.examTitle;
   show('quiz');
   wmSet(); idWarnShow();
@@ -2801,17 +2820,18 @@ async function commit(payload, timedOut){
   if (ST.busy) return;
   ST.busy = true; clearInterval(ST.timer);
   var beh = qbSnap(timedOut); // chốt số liệu hành vi một lần, gửi lại y nguyên nếu phải thử lại do mất mạng
+  var ev = evTake(); // nhật ký hành vi đang chờ gửi
   $('qOpts').setAttribute('aria-disabled','true');
   $('btnNext').disabled = true; $('btnNext').textContent = 'Đang lưu…';
   var q = ST.q, tries = 0, out = null;
   while (!out){
     try {
-      var r = await api('/api/kt-answer', Object.assign({ attemptId:ST.attemptId, questionId:q.id, flags:ST.flags, beh:beh }, payload));
-      if (r.j && r.j.ok){ out = r.j; break; }
+      var r = await api('/api/kt-answer', Object.assign({ attemptId:ST.attemptId, questionId:q.id, flags:ST.flags, beh:beh, ev:ev }, payload));
+      if (r.j && r.j.ok){ out = r.j; evDone(ev.length); netBack(); break; }
       if (r.s >= 400 && r.s < 500 && r.s !== 408 && r.s !== 429){ setNet(false); return fatal(r.j && r.j.error); }
       throw new Error('retry');
     } catch(e){
-      tries++; setNet(true);
+      tries++; setNet(true); netLost();
       await sleep(Math.min(4000, 600 * tries));
     }
   }
@@ -2845,8 +2865,8 @@ async function finish(){
   var out = null, tries = 0;
   while (!out){
     try {
-      var r = await api('/api/kt-submit', { attemptId:ST.attemptId, device: DEV });
-      if (r.j && r.j.ok){ out = r.j; break; }
+      var evS = evTake(); var r = await api('/api/kt-submit', { attemptId:ST.attemptId, device: DEV, ev: evS });
+      if (r.j && r.j.ok){ out = r.j; evDone(evS.length); break; }
       if (r.s >= 400 && r.s < 500 && r.s !== 408 && r.s !== 429){ stopGradeAnim(); return fatal(r.j && r.j.error); }
       throw new Error('retry');
     } catch(e){ tries++; setNet(true); await sleep(Math.min(4000, 600 * tries)); }
@@ -3776,6 +3796,50 @@ async function loadInfo(){
   clearInterval(schedT);
   if (INFO.openAt || INFO.closeAt) schedT = setInterval(renderSched, 1000);
 }
+
+/* ===== Nhật ký hành vi khi làm bài: chuyển tab, thu nhỏ, sang cửa sổ khác, thoát toàn màn hình, mất kết nối =====
+   Ghi thời điểm + thời lượng, xếp hàng (giữ qua lần tải lại trang) và gửi kèm câu trả lời kế tiếp. Tải lại trang và đăng nhập
+   thiết bị khác do máy chủ tự ghi khi vào lại bài. Đây là tín hiệu tuân thủ, không phải bằng chứng gian lận. */
+var EV = { q:[], hid:null, blurAt:0, netAt:0 };
+function evKey(){ return 'kt_ev_' + (ST.attemptId || ''); }
+function evLoad(){ try { EV.q = JSON.parse(sessionStorage.getItem(evKey()) || '[]') || []; } catch(e){ EV.q = []; } }
+function evSave(){ try { sessionStorage.setItem(evKey(), JSON.stringify(EV.q.slice(-80))); } catch(e){} }
+function evAdd(k, t, ms){ if (!ST.attemptId) return; EV.q.push({ k:k, t:Math.round(t), ms:Math.max(0, Math.round(ms || 0)) }); EV.q = EV.q.slice(-80); evSave(); }
+function evTake(){ return EV.q.slice(0, 60); }
+function evDone(n){ EV.q = EV.q.slice(n); evSave(); }
+// Thu nhỏ cửa sổ: Windows đặt toạ độ cửa sổ về -32000; nơi khác trình duyệt không cho biết -> tính là chuyển tab
+function isMin(){ try { return window.screenX <= -30000 || window.screenY <= -30000 || (window.outerWidth === 0 && window.outerHeight === 0); } catch(e){ return false; } }
+document.addEventListener('visibilitychange', function(){
+  var now = Date.now();
+  if (document.hidden){
+    if (!ST.quizOn || EV.hid) return;
+    EV.hid = { t: now, min: isMin() }; EV.blurAt = 0;
+    setTimeout(function(){ if (EV.hid && !EV.hid.min && isMin()) EV.hid.min = true; }, 250);
+  } else if (EV.hid){
+    if (ST.quizOn) evAdd(EV.hid.min ? 'min' : 'tab', EV.hid.t, now - EV.hid.t);
+    EV.hid = null;
+  }
+});
+window.addEventListener('blur', function(){ if (!ST.quizOn) return; var t = Date.now(); setTimeout(function(){ if (!document.hidden && !EV.hid && !document.hasFocus()) EV.blurAt = t; }, 60); });
+window.addEventListener('focus', function(){ var now = Date.now(); if (EV.blurAt && ST.quizOn && now - EV.blurAt >= 300) evAdd('blur', EV.blurAt, now - EV.blurAt); EV.blurAt = 0; });
+function netLost(){ if (ST.quizOn && !EV.netAt) EV.netAt = Date.now(); }
+function netBack(){ if (EV.netAt){ var now = Date.now(); evAdd('net', EV.netAt, now - EV.netAt); EV.netAt = 0; } }
+window.addEventListener('offline', netLost);
+window.addEventListener('online', netBack);
+// Toàn màn hình (máy tính): vào bài thì yêu cầu bật; thoát ra thì ghi nhận và che bài đến khi bật lại. Điện thoại / trình duyệt không hỗ trợ: bỏ qua.
+var FS = { ok: !!(document.documentElement.requestFullscreen) && !(window.matchMedia && matchMedia('(pointer:coarse)').matches), entered:false, off:0 };
+function fsIn(){ return !!document.fullscreenElement; }
+function fsCheck(){
+  var g = $('fsGate'); if (!g) return;
+  if (!FS.ok || !ST.quizOn){ g.classList.add('hide'); if (!ST.quizOn && fsIn()) { try { document.exitFullscreen().catch(function(){}); } catch(e){} } return; }
+  if (fsIn()){ g.classList.add('hide'); if (FS.off){ evAdd('fs', FS.off, Date.now() - FS.off); FS.off = 0; } }
+  else { $('fsAgain').classList.toggle('hide', !FS.entered); g.classList.remove('hide'); }
+}
+document.addEventListener('fullscreenchange', function(){ if (ST.quizOn && !fsIn() && FS.entered && !FS.off) FS.off = Date.now(); fsCheck(); });
+$('fsGo').addEventListener('click', function(){
+  try { document.documentElement.requestFullscreen({ navigationUI:'hide' }).then(function(){ FS.entered = true; fsCheck(); }).catch(function(){ FS.ok = false; fsCheck(); }); }
+  catch(e){ FS.ok = false; fsCheck(); }
+});
 loadInfo();
 
 /* ===== Cookie: xin đồng ý; đã đồng ý thì nhận diện trình duyệt (kt_bid) + ghi nhớ phiên 2 giờ (kt_cand) để vào lại / làm tiếp ===== */
