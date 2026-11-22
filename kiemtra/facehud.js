@@ -38,7 +38,7 @@ var CSS = [
 '  border:1px solid rgba(92,225,255,.3);box-shadow:0 0 0 1px rgba(255,255,255,.03),0 18px 50px -12px rgba(0,0,0,.7),0 0 40px -14px rgba(92,225,255,.55)}',
 '.fh-box video,.fh-box .fh-shot{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}',
 '.fh-box .fh-shot{display:none}.fh[data-st="check"] .fh-shot,.fh[data-st="ok"] .fh-shot,.fh[data-st="bad"] .fh-shot{display:block}',
-'.fh-box::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 62% 54% at 50% 47%,transparent 60%,rgba(2,8,20,.55) 100%)}',
+'.fh-box::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 62% 54% at 50% 50%,transparent 60%,rgba(2,8,20,.55) 100%)}',
 '.fh-ov{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;overflow:visible}',
 '.fh-ov .g{fill:none;stroke:rgba(92,225,255,.55);stroke-width:1.6;stroke-dasharray:5 7}',
 '.fh-ov .p{fill:none;stroke:#5CE1FF;stroke-width:4.5;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;filter:drop-shadow(0 0 6px rgba(92,225,255,.9));transition:stroke-dashoffset .18s linear,stroke .3s}',
@@ -127,9 +127,9 @@ var HTML =
 '  <div class="fh-box">' +
 '    <video id="fhVideo" autoplay playsinline muted></video><img class="fh-shot" id="fhShot" alt="Ảnh vừa chụp">' +
 '    <svg class="fh-ov" viewBox="0 0 300 400" preserveAspectRatio="none" aria-hidden="true">' +
-'      <ellipse class="g" cx="150" cy="188" rx="106" ry="138"/>' +
-'      <path class="p" id="fhProg" d="M150 62A96 126 0 1 1 150 314A96 126 0 1 1 150 62" pathLength="100"/>' +
-'      <path class="x" d="M150 54v14M150 308v14M38 188h14M248 188h14"/>' +
+'      <ellipse class="g" cx="150" cy="200" rx="106" ry="138"/>' +
+'      <path class="p" id="fhProg" d="M150 74A96 126 0 1 1 150 326A96 126 0 1 1 150 74" pathLength="100"/>' +
+'      <path class="x" d="M150 66v14M150 320v14M38 200h14M248 200h14"/>' +
 '    </svg>' +
 '    <div class="fh-sweep"></div><i class="fh-cn a"></i><i class="fh-cn b"></i><i class="fh-cn c"></i><i class="fh-cn d"></i>' +
 '    <div class="fh-arrow" id="fhArrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></div>' +

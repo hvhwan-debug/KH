@@ -1555,11 +1555,11 @@ body.exam .who{display:flex;align-items:center;gap:10px;margin-left:auto;flex:0 
         <div class="cam-scan" aria-hidden="true"><i></i></div>
         <div class="ai-hud" aria-hidden="true">
           <svg class="ai-guide" viewBox="0 0 400 300" preserveAspectRatio="none">
-            <path class="ai-dim" fill-rule="evenodd" d="M0 0H400V300H0Z M200 18a86 120 0 1 0 .01 0Z"/>
-            <ellipse class="ai-e0" cx="200" cy="138" rx="86" ry="120"/>
-            <ellipse class="ai-e1" cx="200" cy="138" rx="97" ry="131"/>
-            <ellipse class="ai-e2" cx="200" cy="138" rx="108" ry="142"/>
-            <g class="ai-tk"><path d="M200 8v10M200 258v10M82 138h10M308 138h10"/></g>
+            <path class="ai-dim" fill-rule="evenodd" d="M0 0H400V300H0Z M200 30a86 120 0 1 0 .01 0Z"/>
+            <ellipse class="ai-e0" cx="200" cy="150" rx="86" ry="120"/>
+            <ellipse class="ai-e1" cx="200" cy="150" rx="97" ry="131"/>
+            <ellipse class="ai-e2" cx="200" cy="150" rx="108" ry="142"/>
+            <g class="ai-tk"><path d="M200 20v10M200 270v10M82 150h10M308 150h10"/></g>
           </svg>
           <i class="ai-c tl"></i><i class="ai-c tr"></i><i class="ai-c bl"></i><i class="ai-c br"></i>
           <div class="ai-sweep"></div>
@@ -2506,7 +2506,7 @@ async function lvTick(){
       var p = LV.seq[LV.i], big = res.filter(function(r){ return r.detection.box.width / v.videoWidth >= .08; }), good = false;
       if (big.length === 1){
         LV.lostAt = 0;
-        var bx = big[0].detection.box, w = bx.width / v.videoWidth, off = Math.hypot((bx.x + bx.width / 2) / v.videoWidth - .5, (bx.y + bx.height / 2) / v.videoHeight - .46), y = lvYaw(big[0].landmarks.positions);
+        var bx = big[0].detection.box, w = bx.width / v.videoWidth, off = Math.hypot((bx.x + bx.width / 2) / v.videoWidth - .5, (bx.y + bx.height / 2) / v.videoHeight - .5), y = lvYaw(big[0].landmarks.positions);
         good = now >= LV.lockUntil && y != null && lvOk(p, y, w, off);
         $('aiSayT').textContent = LV_TXT[p] + (now - LV.poseT0 > 12000 ? ' — hãy quay chậm hơn, giữ mặt trong khung' : '');
       } else {
@@ -2555,7 +2555,7 @@ function aiBuildMesh(){
 function aiGuideFit(){
   var box = document.querySelector('#scrPhoto .photo-box'), g = box && box.querySelector('.ai-guide');
   if (!g || !box.clientWidth) return;
-  var W = box.clientWidth, H = box.clientHeight, cx = W / 2, cy = H * .46, rx = Math.min(H * .40 * .717, W * .30), ry = rx / .717, k = ry / 120; // oval mặt người, tỉ lệ cố định
+  var W = box.clientWidth, H = box.clientHeight, cx = W / 2, cy = H / 2, rx = Math.min(H * .37 * .717, W * .30), ry = rx / .717, k = ry / 120; // oval mặt người, tỉ lệ cố định
   g.setAttribute('viewBox', '0 0 ' + W + ' ' + H); g.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   var e = function(c, ax, ay){ var el = g.querySelector('.' + c); if (el){ el.setAttribute('cx', cx); el.setAttribute('cy', cy); el.setAttribute('rx', ax); el.setAttribute('ry', ay); } };
   e('ai-e0', rx, ry); e('ai-e1', rx + 11 * k, ry + 11 * k); e('ai-e2', rx + 22 * k, ry + 22 * k);
@@ -2580,7 +2580,7 @@ function aiTrackUpdate(all, v, quiet){
   if (bw && bh){ var sc = Math.max(bw / vw, bh / vh), dw = vw * sc, dh = vh * sc, ox = (bw - dw) / 2, oy = (bh - dh) / 2;
     x = (ox + x * dw) / bw; y = (oy + y * dh) / bh; w = w * dw / bw; h = h * dh / bh; }
   AI.box = { x: x, y: y, w: w, h: h }; if (!AI.wasLocked){ AI.wasLocked = true; if (!quiet) sndLock(); } aiPlace(tr, AI.box, .18); tr.classList.add('on'); tr.classList.remove('lock');
-  var off = Math.hypot(x + w / 2 - .5, y + h / 2 - .46), hint = 'Giữ yên — đã khoá khuôn mặt', cls = 'lock', txt = 'ĐÃ KHOÁ KHUÔN MẶT';
+  var off = Math.hypot(x + w / 2 - .5, y + h / 2 - .5), hint = 'Giữ yên — đã khoá khuôn mặt', cls = 'lock', txt = 'ĐÃ KHOÁ KHUÔN MẶT';
   if (w < .2){ hint = 'Hãy lại gần camera hơn'; cls = 'seek'; txt = 'KHUÔN MẶT QUÁ XA'; }
   else if (w > .7){ hint = 'Hãy lùi ra xa một chút'; cls = 'seek'; txt = 'KHUÔN MẶT QUÁ GẦN'; }
   else if (off > .2){ hint = 'Đưa khuôn mặt vào giữa khung'; cls = 'seek'; txt = 'CĂN LẠI VỊ TRÍ'; }
