@@ -52,7 +52,7 @@ var CSS = [
 '.fh[data-st="ok"] .fh-sweep,.fh[data-st="bad"] .fh-sweep,.fh[data-st="off"] .fh-sweep{display:none}',
 '@keyframes fhSweep{0%{top:-70px}100%{top:100%}}',
 '.fh-rd{position:absolute;left:18px;right:18px;bottom:20px;z-index:3;display:flex;justify-content:space-between;font:700 10px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.18em;color:rgba(190,240,255,.85);text-shadow:0 1px 4px #000;pointer-events:none}',
-'.fh-hint{position:absolute;left:50%;bottom:46px;z-index:4;transform:translateX(-50%);max-width:88%;box-sizing:border-box;padding:8px 15px;border-radius:999px;font-size:13.5px;font-weight:700;line-height:1.35;text-align:center;color:#fff;',
+'.fh-hint{position:absolute;left:0;right:0;margin:0 auto;width:max-content;bottom:46px;z-index:4;max-width:88%;box-sizing:border-box;padding:8px 15px;border-radius:999px;font-size:13.5px;font-weight:700;line-height:1.35;text-align:center;color:#fff;',
 '  background:rgba(4,14,36,.72);border:1px solid rgba(92,225,255,.35);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:border-color .2s,color .2s}',
 '.fh-hint.ok{border-color:rgba(61,240,160,.7);color:#C9FFE6}.fh-hint.bad{border-color:rgba(255,92,122,.75);color:#FFD3DB}.fh-hint.chk{border-color:rgba(169,155,255,.75);color:#E6E1FF}',
 '.fh-hint:empty{display:none}',
@@ -75,7 +75,7 @@ var CSS = [
 '.fh-p{flex:0 0 auto;font:700 21px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#E8FAFF;font-variant-numeric:tabular-nums}',
 '.fh-p i{font-size:12px}',
 '.fh-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:5px;margin:11px 0 0;padding:0;list-style:none}',
-'.fh-seg li{position:relative;height:6px;border-radius:3px;overflow:hidden;background:rgba(190,225,245,.12)}',
+'.fh-seg li{position:relative;height:6px;border-radius:3px;overflow:hidden;background:rgba(190,225,245,.12);font-size:0;line-height:0;color:transparent}',
 '.fh-seg li.ok{background:linear-gradient(90deg,#2BD7A0,#5CE1FF);box-shadow:0 0 10px rgba(61,240,160,.55)}',
 '.fh-seg li.run{background:rgba(92,225,255,.18)}',
 '.fh-seg li.run::before{content:"";position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,#5CE1FF,#C9F6FF,#5CE1FF,transparent);box-shadow:0 0 12px #5CE1FF;animation:fhSeg 1.1s ease-in-out infinite}',
@@ -120,7 +120,7 @@ var HTML =
 '    <video id="fhVideo" autoplay playsinline muted></video><img class="fh-shot" id="fhShot" alt="Ảnh vừa chụp">' +
 '    <svg class="fh-ov" viewBox="0 0 300 400" preserveAspectRatio="none" aria-hidden="true">' +
 '      <ellipse class="g" cx="150" cy="188" rx="106" ry="138"/>' +
-'      <ellipse class="p" id="fhProg" cx="150" cy="188" rx="96" ry="126" pathLength="100" transform="rotate(-90 150 188)"/>' +
+'      <path class="p" id="fhProg" d="M150 62A96 126 0 1 1 150 314A96 126 0 1 1 150 62" pathLength="100"/>' +
 '      <path class="x" d="M150 54v14M150 308v14M38 188h14M248 188h14"/>' +
 '    </svg>' +
 '    <div class="fh-sweep"></div><i class="fh-cn a"></i><i class="fh-cn b"></i><i class="fh-cn c"></i><i class="fh-cn d"></i>' +
