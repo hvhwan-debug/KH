@@ -82,19 +82,62 @@ var CSS = [
 '.fh-t{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px;font-weight:700;color:#fff}',
 '.fh-p{flex:0 0 auto;font:700 21px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#E8FAFF;font-variant-numeric:tabular-nums}',
 '.fh-p i{font-size:12px}',
-'.fh-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:5px;margin:11px 0 0;padding:0;list-style:none}',
-'.fh-seg li{position:relative;height:6px;border-radius:3px;overflow:hidden;background:rgba(190,225,245,.12);font-size:0;line-height:0;color:transparent}',
-'.fh-seg li.ok{background:linear-gradient(90deg,#2BD7A0,#5CE1FF);box-shadow:0 0 10px rgba(61,240,160,.55)}',
-'.fh-seg li.run{background:rgba(92,225,255,.18)}',
-'.fh-seg li.run::before{content:"";position:absolute;top:0;bottom:0;left:0;width:45%;background:linear-gradient(90deg,transparent,#5CE1FF,#C9F6FF,#5CE1FF,transparent);box-shadow:0 0 12px #5CE1FF;animation:fhSeg 1.1s ease-in-out infinite}',
-'.fh-seg li.bad{background:linear-gradient(90deg,#FF5C7A,#FF8BA0);box-shadow:0 0 10px rgba(255,92,122,.6)}',
-'@keyframes fhSeg{0%{transform:translateX(-110%)}100%{transform:translateX(230%)}}',
+/* các bước xác thực: vòng tròn đánh số nối tiếp nhau (giống mẫu màn AI) */
+'.fh-seg{display:flex;align-items:flex-start;justify-content:space-between;gap:2px;margin:14px 0 0;padding:0;list-style:none;counter-reset:fhstep}',
+'.fh-seg li{position:relative;flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:2px;font-size:9.5px;font-weight:700;line-height:1.25;color:rgba(190,220,245,.55);text-align:center}',
+'.fh-seg li::before{counter-increment:fhstep;content:counter(fhstep);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font:800 11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:rgba(190,225,245,.12);color:rgba(210,232,255,.65);border:1.5px solid rgba(92,225,255,.25);z-index:1;transition:background .25s,border-color .25s,color .25s,box-shadow .25s}',
+'.fh-seg li:not(:last-child)::after{content:"";position:absolute;top:14px;left:50%;width:100%;height:2px;background:rgba(92,225,255,.18);z-index:0}',
+'.fh-seg li.ok{color:#7CF5C4}',
+'.fh-seg li.ok::before{content:"✓";background:linear-gradient(135deg,#2BD7A0,#3DF0A0);border-color:transparent;color:#03241a;box-shadow:0 0 12px rgba(61,240,160,.6)}',
+'.fh-seg li.ok:not(:last-child)::after{background:linear-gradient(90deg,#2BD7A0,#5CE1FF)}',
+'.fh-seg li.run{color:#fff}',
+'.fh-seg li.run::before{background:#0C1E3F;border-color:#5CE1FF;color:#5CE1FF;box-shadow:0 0 0 4px rgba(92,225,255,.22),0 0 14px rgba(92,225,255,.65);animation:fhSegPulse 1.4s ease-in-out infinite}',
+'@keyframes fhSegPulse{0%,100%{box-shadow:0 0 0 4px rgba(92,225,255,.22),0 0 14px rgba(92,225,255,.65)}50%{box-shadow:0 0 0 7px rgba(92,225,255,.1),0 0 18px rgba(92,225,255,.8)}}',
+'.fh-seg li.bad{color:#FFB3C2}',
+'.fh-seg li.bad::before{content:"✕";background:linear-gradient(135deg,#FF5C7A,#FF8BA0);border-color:transparent;color:#2a0007;box-shadow:0 0 12px rgba(255,92,122,.6)}',
+/* thanh phần trăm lớn dưới các bước */
+'.fh-bar{margin-top:13px}',
+'.fh-bar-row{display:flex;align-items:baseline;justify-content:space-between;font-size:12px;font-weight:700;color:rgba(222,238,255,.72);margin-bottom:7px}',
+'.fh-bar-row em{font-style:normal;font-weight:800;font-size:15px;color:#fff}',
+'.fh-bar-track{height:9px;border-radius:999px;background:rgba(190,225,245,.14);overflow:hidden}',
+'.fh-bar-fill{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#0ea5e9,#22d3ee 55%,#3DF0A0);transition:width .25s ease;box-shadow:0 0 10px rgba(92,225,255,.6)}',
+'.fh-pipe[data-st="bad"] .fh-bar-fill{background:linear-gradient(90deg,#FF5C7A,#FF8BA0)}',
 '.fh-s{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:10.5px;font-weight:800;letter-spacing:.14em;line-height:1.5;color:#9FE8FF}',
 '.fh-s i{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor;animation:fhBlink 1.2s ease-in-out infinite}',
 '.fh-s em{margin-left:auto;font:700 9.5px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-style:normal;opacity:.4;letter-spacing:.24em}',
 '.fh-pipe[data-st="ok"]{border-color:rgba(61,240,160,.45)}.fh-pipe[data-st="ok"] .fh-n,.fh-pipe[data-st="ok"] .fh-s{color:#7CF5C4}.fh-pipe[data-st="ok"] .fh-s i{animation:none}',
 '.fh-pipe[data-st="bad"]{border-color:rgba(255,92,122,.5)}.fh-pipe[data-st="bad"] .fh-n,.fh-pipe[data-st="bad"] .fh-s{color:#FF9CB0}.fh-pipe[data-st="bad"] .fh-s i{animation:none}.fh-pipe[data-st="bad"] .fh-t{color:#FFD3DB}',
 /* thông báo + nút */
+/* huy hiệu AI + phụ đề + nút hướng dẫn trên đầu trang */
+'.fh-htop{display:flex;align-items:flex-start;gap:12px;flex:1 1 auto;min-width:0}',
+'.fh-ic{flex:0 0 auto;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#0ea5e9,#22d3ee);color:#03182e;box-shadow:0 8px 20px -8px rgba(34,211,238,.7)}',
+'.fh-ic svg{width:22px;height:22px}',
+'.fh-sub{margin:3px 0 0;font-size:12.5px;line-height:1.4;color:rgba(210,232,255,.68);max-width:48ch}',
+'.fh-guide{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 13px;border-radius:999px;border:1px solid rgba(92,225,255,.35);background:rgba(92,225,255,.08);color:#BFE9FF;font:700 12.5px/1 inherit;cursor:pointer;white-space:nowrap}',
+'.fh-guide svg{width:15px;height:15px}',
+'.fh-guide:hover{background:rgba(92,225,255,.18)}',
+'@media(max-width:480px){.fh-guide span{display:none}.fh-guide{width:36px;height:36px;padding:0;border-radius:50%;justify-content:center}}',
+/* nhãn "camera đang hoạt động" + cụm nút góc khung camera */
+'.fh-live{position:absolute;top:14px;left:14px;z-index:4;display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:999px;background:rgba(4,14,36,.6);border:1px solid rgba(61,240,160,.4);font-size:11px;font-weight:800;letter-spacing:.05em;color:#CFFFE9;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}',
+'.fh-live i{width:7px;height:7px;border-radius:50%;background:#3DF0A0;box-shadow:0 0 8px #3DF0A0;animation:fhBlink 1.2s ease-in-out infinite}',
+'.fh[data-st="off"] .fh-live{display:none}',
+'.fh-ctools{position:absolute;top:14px;right:14px;z-index:4;display:flex;gap:8px}',
+'.fh-ctools .fh-ib{width:34px;height:34px;background:rgba(4,14,36,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}',
+/* thẻ nhỏ "đang xác thực khuôn mặt" phía trên các bước, bên panel phải */
+'.fh-mini{display:flex;align-items:center;gap:12px;margin-bottom:2px}',
+'.fh-mini .fh-ic{width:38px;height:38px;border-radius:11px}',
+'.fh-mini .fh-ic svg{width:20px;height:20px}',
+'.fh-mini h3{margin:0;font-size:15px;font-weight:800;color:#fff}',
+'.fh-mini p{margin:2px 0 0;font-size:11px;line-height:1.3;color:rgba(210,232,255,.58)}',
+/* bảng lưu ý thay cho dòng mẹo cũ */
+'.fh-tips{display:flex;flex-direction:column;gap:11px;padding:15px 16px;border-radius:17px;border:1px solid rgba(255,200,87,.28);background:linear-gradient(160deg,rgba(60,44,6,.35),rgba(10,16,34,.5))}',
+'.fh-tips.pulse{animation:fhPulseTip 1.6s ease}',
+'@keyframes fhPulseTip{0%,100%{box-shadow:none}30%{box-shadow:0 0 0 3px rgba(255,200,87,.55)}}',
+'.fh-tips-h{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;color:#FFD27A}',
+'.fh-tips-h svg{width:16px;height:16px;flex:0 0 auto}',
+'.fh-tips-g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}',
+'.fh-tips-g div{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:10.5px;line-height:1.3;color:rgba(214,234,255,.75)}',
+'.fh-tips-g svg{width:19px;height:19px;color:#5CE1FF}',
 '.fh-msg:empty{display:none}',
 '.fh-msg .pmsg{margin:0;padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.55;background:rgba(255,107,107,.16);color:#FFD6D6;border:1px solid rgba(255,107,107,.45)}',
 '.fh-msg .pmsg.idw{padding:12px 14px;border-color:rgba(255,107,107,.7);background:rgba(255,92,122,.16)}',
@@ -106,16 +149,15 @@ var CSS = [
 '.fh-b{width:100%;min-height:50px;border-radius:14px;border:1.5px solid rgba(92,225,255,.45);background:rgba(92,225,255,.08);color:#E8FAFF;font:inherit;font-size:15px;font-weight:800;cursor:pointer}',
 '.fh-b.go{border:0;color:#fff;background:linear-gradient(100deg,#0869df,#08b9d4);box-shadow:0 12px 26px -8px rgba(8,140,232,.7)}',
 '.fh-b.hide{display:none}',
-'.fh-tip{margin:0;text-align:center;font-size:12px;line-height:1.55;color:rgba(200,225,245,.62)}',
 '.fh-side{display:contents}',
-'.fh-head{order:1}.fh-chip{order:2}.fh-box{order:3}.fh-pipe,.fh-msg,.fh-btns,.fh-tip{order:4}',
+'.fh-head{order:1}.fh-chip{order:2}.fh-box{order:3}.fh-pipe,.fh-msg,.fh-btns,.fh-tips{order:4}',
 /* máy tính: camera ngang bên trái, bảng tiến trình bên phải — giống màn đăng nhập bằng khuôn mặt */
 '@media(min-width:900px) and (min-height:540px){',
-'  .fh-in{max-width:1560px;display:grid;grid-template-columns:minmax(0,1fr) 400px;column-gap:32px;align-items:center;padding:24px 28px}',
+'  .fh-in{max-width:1560px;display:grid;grid-template-columns:minmax(0,1fr) 452px;column-gap:32px;align-items:center;padding:24px 28px}',
 '  .fh-box{order:0;width:min(100%,calc((100dvh - 60px) * 1.3333));max-width:none;aspect-ratio:4/3;justify-self:center}',
 '  .fh-side{display:flex;flex-direction:column;gap:12px;padding:22px 22px 18px;border-radius:22px;border:1px solid rgba(92,225,255,.25);background:rgba(8,26,64,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}',
-'  .fh-head,.fh-chip,.fh-pipe,.fh-msg,.fh-btns,.fh-tip{order:0}',
-'  .fh h2{font-size:26px}',
+'  .fh-head,.fh-chip,.fh-pipe,.fh-msg,.fh-btns,.fh-tips{order:0}',
+'  .fh h2{font-size:18px}',
 '}',
 '@media(max-width:420px){.fh-in{padding-left:14px;padding-right:14px;gap:10px}.fh h2{font-size:19px}.fh-hint{font-size:12.5px;bottom:42px}}',
 '@media(prefers-reduced-motion:reduce){.fh-arrow,.fh-sweep,.fh-seg li.run::before,.fh-chip i,.fh-s i,.fh-snd.wait{animation:none!important}}'
@@ -127,6 +169,13 @@ var I_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wid
 var I_OK = '<svg viewBox="0 0 88 88" aria-hidden="true"><circle cx="44" cy="44" r="38" fill="#2BD7A0"/><path d="M27 45l12 12 22-26" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 var I_BAD = '<svg viewBox="0 0 88 88" aria-hidden="true"><circle cx="44" cy="44" r="38" fill="#FF5C7A"/><path d="M30 30l28 28M58 30L30 58" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/></svg>';
 var I_CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>';
+var I_FACE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="11" r="3"/><path d="M8 16.5c1-1.2 2.4-1.8 4-1.8s3 .6 4 1.8"/></svg>';
+var I_HELP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.2 9.3a2.8 2.8 0 1 1 3.9 3c-.8.5-1.1 1-1.1 2"/><path d="M12 17.2h.01"/></svg>';
+var I_SNAP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h2l1-1.5h7l1 1.5h2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.2"/></svg>';
+var I_BULB = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.45.9 1.15.9 1.9V16h5.4v-.3c0-.75.3-1.45.9-1.9A6 6 0 0 0 12 3Z"/></svg>';
+var I_FRAME = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V6a2 2 0 0 1 2-2h3M20 9V6a2 2 0 0 0-2-2h-3M4 15v3a2 2 0 0 0 2 2h3M20 15v3a2 2 0 0 1-2 2h-3"/><circle cx="12" cy="12" r="3.3"/></svg>';
+var I_SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>';
+var I_GLASSES = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6.5" cy="14" r="3.2"/><circle cx="17.5" cy="14" r="3.2"/><path d="M9.7 13h4.6M2 12l1.8-5.6A2 2 0 0 1 5.7 5H7M22 12l-1.8-5.6A2 2 0 0 0 18.3 5H17"/></svg>';
 
 var HTML =
 '<div class="fh-in">' +
@@ -137,6 +186,8 @@ var HTML =
 '      <path class="p" id="fhProg" d="M150 74A96 126 0 1 1 150 326A96 126 0 1 1 150 74" pathLength="100"/>' +
 '      <path class="x" d="M150 66v14M150 320v14M38 200h14M248 200h14"/>' +
 '    </svg>' +
+'    <div class="fh-live"><i></i><span>Camera đang hoạt động</span></div>' +
+'    <div class="fh-ctools"><button type="button" class="fh-ib" id="fhCamBtn" aria-label="Chụp ảnh ngay" title="Chụp ảnh ngay">' + I_SNAP + '</button></div>' +
 '    <div class="fh-sweep"></div><i class="fh-cn a"></i><i class="fh-cn b"></i><i class="fh-cn c"></i><i class="fh-cn d"></i>' +
 '    <div class="fh-arrow" id="fhArrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></div>' +
 '    <div class="fh-badge">' + I_CAM + 'ĐÃ CHỤP ẢNH</div>' +
@@ -145,18 +196,22 @@ var HTML =
 '    <div class="fh-res" id="fhRes"></div><div class="fh-flash" id="fhFlash"></div>' +
 '  </div>' +
 '  <div class="fh-side">' +
-'  <div class="fh-head"><div><span class="fh-k" id="fhK">AI FACE VERIFY</span><h2 id="fhTitle">Xác thực khuôn mặt</h2></div>' +
-'    <div class="fh-hr"><button type="button" class="fh-ib fh-snd" id="fhSnd" aria-label="Bật hoặc tắt âm thanh" title="Bật/tắt âm thanh">' + I_SND + '</button>' +
+'  <div class="fh-head"><div class="fh-htop"><div class="fh-ic">' + I_FACE + '</div><div><span class="fh-k" id="fhK">AI FACE VERIFY</span><h2 id="fhTitle">Xác thực khuôn mặt</h2><p class="fh-sub" id="fhSub">Xác minh danh tính để tiếp tục sử dụng hệ thống</p></div></div>' +
+'    <div class="fh-hr"><button type="button" class="fh-guide" id="fhGuide" aria-label="Xem hướng dẫn" title="Xem hướng dẫn">' + I_HELP + '<span>Hướng dẫn</span></button>' +
+'    <button type="button" class="fh-ib fh-snd" id="fhSnd" aria-label="Bật hoặc tắt âm thanh" title="Bật/tắt âm thanh">' + I_SND + '</button>' +
 '    <button type="button" class="fh-ib" id="fhClose" aria-label="Đóng" title="Đóng">' + I_X + '</button></div></div>' +
 '  <div class="fh-chip" id="fhChip" role="status" aria-live="polite"><i></i><span id="fhChipT">CAMERA ĐANG MỞ</span></div>' +
 '  <div class="fh-pipe" id="fhPipe" data-st="run">' +
+'    <div class="fh-mini"><div class="fh-ic">' + I_FACE + '</div><div><h3>Đang xác thực khuôn mặt</h3><p>Hệ thống đang nhận diện và đối chiếu thông tin</p></div></div>' +
 '    <div class="fh-now"><span class="fh-n" id="fhN">01<i>/05</i></span><span class="fh-t" id="fhT">Phát hiện khuôn mặt</span><span class="fh-p" id="fhP">0<i>%</i></span></div>' +
 '    <ol class="fh-seg" id="fhSeg" aria-label="Các bước xác thực"></ol>' +
+'    <div class="fh-bar"><div class="fh-bar-row"><span>Đang xử lý…</span><em id="fhBarPct">0%</em></div><div class="fh-bar-track"><div class="fh-bar-fill" id="fhBarFill"></div></div></div>' +
 '    <div class="fh-s"><i></i><span id="fhS">ĐANG XỬ LÝ</span><em>NEURAL ID PIPELINE</em></div>' +
 '  </div>' +
 '  <div class="fh-msg" id="fhMsg" role="alert"></div>' +
 '  <div class="fh-btns"><button type="button" class="fh-b go hide" id="fhManual">Chụp ngay</button><button type="button" class="fh-b go hide" id="fhRetry">Thử lại</button></div>' +
-'  <p class="fh-tip">Nhìn thẳng vào camera · Nơi đủ ánh sáng · Không đeo khẩu trang hoặc kính tối màu</p>' +
+'  <div class="fh-tips" id="fhTips"><div class="fh-tips-h">' + I_BULB + '<span>Lưu ý để xác thực nhanh và chính xác</span></div>' +
+'    <div class="fh-tips-g"><div>' + I_FRAME + '<span>Giữ khuôn mặt trong khung</span></div><div>' + I_SUN + '<span>Đảm bảo đủ ánh sáng</span></div><div>' + I_GLASSES + '<span>Không đeo khẩu trang hoặc kính râm</span></div></div></div>' +
 '  </div>' +
 '</div>';
 
@@ -256,6 +311,8 @@ function build(){
   $('fhClose').addEventListener('click', close);
   $('fhRetry').addEventListener('click', retry);
   $('fhManual').addEventListener('click', function(){ if (!FM.busy && FM.stream && !FM.live) shoot(); });
+  $('fhCamBtn').addEventListener('click', function(){ if (!FM.busy && FM.stream && !FM.live) shoot(); });
+  $('fhGuide').addEventListener('click', function(){ var t = $('fhTips'); if (!t) return; t.classList.remove('pulse'); void t.offsetWidth; t.classList.add('pulse'); t.scrollIntoView({ block:'nearest', behavior:'smooth' }); });
   $('fhSnd').addEventListener('click', function(){
     if (blocked()){ unlock(); setTimeout(function(){ paintSnd(); sReady(); }, 120); return; }
     SND.on = !SND.on; try { localStorage.setItem('kt_snd', SND.on ? '1' : '0'); } catch (e) {} paintSnd();
@@ -277,9 +334,11 @@ function now(){
   var ok = all.filter(function(li){ return li.className === 'ok'; }).length, done = ok === n;
   var cur = bad || run || (done ? all[n - 1] : all.filter(function(li){ return li.className !== 'ok'; })[0] || all[0]), idx = all.indexOf(cur);
   $('fhN').innerHTML = p2(idx + 1) + '<i>/' + p2(n) + '</i>'; $('fhT').textContent = FM.labels[idx];
-  $('fhP').innerHTML = Math.round((ok + (run && !bad ? .5 : 0)) / n * 100) + '<i>%</i>';
+  var pct = Math.round((ok + (run && !bad ? .5 : 0)) / n * 100);
+  $('fhP').innerHTML = pct + '<i>%</i>';
   var st = bad ? 'bad' : done ? 'ok' : run ? 'run' : 'wait';
   $('fhPipe').setAttribute('data-st', st); $('fhS').textContent = { bad:'CHƯA ĐẠT', ok:'HOÀN TẤT', run:'ĐANG XỬ LÝ', wait:'CHỜ XỬ LÝ' }[st];
+  var bf = $('fhBarFill'), bp = $('fhBarPct'); if (bf){ bf.style.width = pct + '%'; bp.textContent = pct + '%'; }
 }
 function msgHtml(h){ $('fhMsg').innerHTML = h || ''; }
 function btn(id, on){ $(id).classList.toggle('hide', !on); }
