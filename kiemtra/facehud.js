@@ -17,6 +17,13 @@ var CSS = [
 '  background:radial-gradient(120% 70% at 50% -10%,#123E8C 0%,#0A2156 45%,#050E2B 100%);-webkit-font-smoothing:antialiased}',
 '.fh.hide{display:none}',
 '.fh::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(92,225,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(92,225,255,.05) 1px,transparent 1px);background-size:32px 32px;-webkit-mask-image:radial-gradient(ellipse at 50% 30%,#000 30%,transparent 75%);mask-image:radial-gradient(ellipse at 50% 30%,#000 30%,transparent 75%)}',
+/* tia sáng chéo trang trí (giống nền xanh có sóng/tia sáng dùng chung trên các trang) */
+'.fh::after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.8;mix-blend-mode:screen;',
+'  background:linear-gradient(118deg,transparent 36%,rgba(160,225,255,.05) 42%,rgba(200,240,255,.16) 46%,rgba(160,225,255,.05) 50%,transparent 56%),',
+'  linear-gradient(118deg,transparent 58%,rgba(120,205,255,.09) 64%,transparent 72%),',
+'  linear-gradient(62deg,transparent 72%,rgba(140,215,255,.12) 80%,transparent 90%),',
+'  radial-gradient(60% 40% at 100% 0%,rgba(90,190,255,.22),transparent 65%),',
+'  radial-gradient(55% 38% at 0% 100%,rgba(60,170,255,.18),transparent 65%)}',
 '.fh-in{position:relative;width:100%;max-width:470px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area-inset-bottom,0px));margin:auto 0}',
 '.fh-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}',
 '.fh-k{display:block;font:700 10.5px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.28em;color:#5CE1FF;margin-bottom:7px}',
