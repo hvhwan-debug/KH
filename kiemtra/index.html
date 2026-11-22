@@ -295,10 +295,20 @@ button,input{font:inherit;color:inherit}
 .tries .note{margin:8px 0 0;font-size:13px;color:var(--muted)}
 .rules div.best{background:linear-gradient(180deg,#EEF8F2,#E2F2E9);border-color:#BFE3CE}
 .rules div.best b{color:var(--ok)}
-.notes{margin:0 0 4px;padding:0 0 0 18px;font-size:13px;line-height:1.75;color:var(--muted)}
+/* Lưu ý: mỗi mục một ô (biểu tượng + tiêu đề + nội dung); thông tin riêng của thí sinh tách lên trên, màu thông báo */
+.notes,.notes-mine{list-style:none;margin:0 0 6px;padding:0;display:grid;gap:8px}
+.notes li,.notes-mine li{display:flex;align-items:flex-start;gap:11px;padding:10px 12px;border-radius:14px;background:#F5F8FC;border:1px solid #E3EAF4}
+.notes-mine{margin-bottom:14px}
+.notes-mine li{background:#EEF6FF;border-color:#CFE2FA}
+.notes-mine li:first-child:has(path[d^="M9 3h6"]){background:#FFF7E6;border-color:#F6DFAE}
+.notes-mine li:first-child:has(path[d^="M9 3h6"]) .ni{background:#FFE9B8;color:#8A5A00}
+.notes .ni,.notes-mine .ni{flex:0 0 auto;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:#E2EEFC;color:var(--brand)}
+.notes .ni svg,.notes-mine .ni svg{width:17px;height:17px}
+.notes li b,.notes-mine li b{display:block;font-size:13px;font-weight:800;color:var(--ink);line-height:1.35}
+.notes li p,.notes-mine li p{margin:3px 0 0;font-size:12.5px;line-height:1.55;color:var(--muted)}
+.notes li p b,.notes-mine li p b{display:inline;font-size:inherit;font-weight:700;color:var(--ink)}
 .notes-h{margin:2px 0 8px;font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
-.notes b{color:var(--ink);font-weight:700}
-.notes li::marker{color:var(--brand)}
+
 
 /* Làm bài */
 .qhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
@@ -1125,8 +1135,6 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
   #scrConfirm .rules b{font-size:20px;line-height:1.15;white-space:nowrap}
   #scrConfirm .rules span{font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #scrConfirm .notes-h{font-size:12px;margin-bottom:6px}
-  #scrConfirm .notes{font-size:12.5px;line-height:1.6;padding-left:16px}
-  #scrConfirm .notes li+li{margin-top:5px}
   body.introbg #scrConfirm #btnStart{margin-top:16px!important;height:54px}
   /* Nút bắt đầu bám đáy màn hình khi cuộn (overflow:clip thay vì hidden để sticky chạy; máy cũ chỉ không bám, vẫn dùng được) */
   body.introbg #scrConfirm{overflow:clip}
@@ -1350,6 +1358,7 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
         <div id="regionMsg" role="alert"></div>
       </div>
       <div class="rules" id="rulesBox"></div>
+      <ul class="notes-mine hide" id="notesMine" aria-label="Thông tin của bạn"></ul>
       <h2 class="notes-h">Lưu ý khi tham gia bài kiểm tra</h2>
       <ul class="notes" id="notesBox"></ul>
       <div id="resumeMsg"></div>
@@ -1767,16 +1776,28 @@ function renderConfirm(){
   }
   $('rulesBox').style.gridTemplateColumns = 'repeat(' + (rl.length === 4 ? 2 : rl.length) + ',minmax(0,1fr))';
   $('rulesBox').innerHTML = rl.join('');
-  var tNote = x.timeMode === 'total'
-    ? '<li><b>Thời gian làm bài:</b> Bài kiểm tra có tổng thời gian <b>' + (x.totalMinutes||30) + ' phút</b> cho tất cả câu hỏi. Khi hết giờ, các câu chưa trả lời được tính là bỏ trống. Bạn <b>không thể quay lại</b> câu hỏi đã hoàn thành.</li>'
-    : '<li><b>Thời gian làm bài:</b> Mỗi câu hỏi có thời gian trả lời riêng. Khi hết thời gian, hệ thống tự động chuyển sang câu tiếp theo và bạn <b>không thể quay lại</b> câu hỏi đã hoàn thành.</li>';
+  // Lưu ý: tách 2 phần — (1) thông tin riêng của người này (ô thông báo), (2) thể lệ chung: mỗi mục một ô có biểu tượng, tiêu đề riêng
+  var IC = {
+    test:'<path d="M9 3h6M10 3v6L4.5 18.5A2 2 0 0 0 6.2 21.5h11.6a2 2 0 0 0 1.7-3L14 9V3"/><path d="M7.5 15h9"/>',
+    redo:'<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>',
+    time:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2h5"/>',
+    pause:'<path d="M5 12.5a7 7 0 1 0 2-5"/><path d="M5 4v4h4"/><path d="M12 9v3.5l2 1.5"/>',
+    one:'<circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16.5 9"/>',
+    mail:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>'
+  };
+  var ico = function(k){ return '<span class="ni" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + IC[k] + '</svg></span>'; };
+  var item = function(k, title, body){ return '<li>' + ico(k) + '<div><b>' + title + '</b><p>' + body + '</p></div></li>'; };
+  var tBody = x.timeMode === 'total'
+    ? 'Tổng thời gian <b>' + (x.totalMinutes||30) + ' phút</b> cho tất cả câu hỏi. Hết giờ, các câu chưa trả lời tính là bỏ trống. <b>Không thể quay lại</b> câu đã hoàn thành.'
+    : 'Mỗi câu hỏi có thời gian trả lời riêng. Hết giờ, hệ thống tự chuyển sang câu tiếp theo và bạn <b>không thể quay lại</b> câu đã hoàn thành.';
+  var mine = (c.test ? item('test', 'Tài khoản thử nghiệm', 'Không giới hạn số lượt làm bài. Kết quả vẫn được lưu và xem lại như tài khoản thông thường, nhưng <b>không được tính</b> vào báo cáo và dữ liệu xuất.') : '') +
+    (AT ? item('redo', 'Bạn đã làm bài này ' + AT.used + ' lần', 'Kết quả chính thức là <b>lần có điểm số cao nhất</b>. Làm lại bài không làm mất kết quả của các lần trước.') : '');
+  $('notesMine').innerHTML = mine; $('notesMine').classList.toggle('hide', !mine);
   $('notesBox').innerHTML =
-    (c.test ? '<li><b>Tài khoản thử nghiệm:</b> Không giới hạn số lượt làm bài. Kết quả vẫn được lưu và xem lại như tài khoản thông thường, nhưng <b>không được tính</b> vào báo cáo và dữ liệu xuất.</li>' : '') +
-    (AT ? '<li><b>Số lần làm bài:</b> Bạn đã thực hiện bài kiểm tra <b>' + AT.used + ' lần</b>. Kết quả chính thức được ghi nhận là <b>lần có điểm số cao nhất</b>. Việc làm lại bài không làm mất kết quả của các lần trước.</li>' : '') +
-    tNote +
-    '<li><b>Trường hợp gián đoạn:</b> Nếu thoát khỏi bài kiểm tra hoặc tải lại trang, bạn có thể tiếp tục từ câu hỏi đang thực hiện. Tuy nhiên, <b>thời gian làm bài vẫn tiếp tục được tính</b>, kể cả trong thời gian gián đoạn.</li>' +
-    '<li><b>Cách thức trả lời:</b> Mỗi câu hỏi chỉ được chọn <b>một đáp án duy nhất</b>.</li>' +
-    '<li><b>Kết quả bài kiểm tra:</b> Sau khi hoàn thành và nộp bài, hệ thống tự động chấm điểm và gửi kết quả về email đã đăng ký.</li>';
+    item('time', 'Thời gian làm bài', tBody) +
+    item('pause', 'Trường hợp gián đoạn', 'Thoát hoặc tải lại trang vẫn tiếp tục được từ câu đang làm, nhưng <b>thời gian vẫn tiếp tục được tính</b>, kể cả trong lúc gián đoạn.') +
+    item('one', 'Cách thức trả lời', 'Mỗi câu hỏi chỉ được chọn <b>một đáp án duy nhất</b>.') +
+    item('mail', 'Kết quả bài kiểm tra', 'Nộp bài xong, hệ thống tự động chấm điểm và gửi kết quả về <b>email đã đăng ký</b>.');
   if (ST.inProgress){
     $('resumeMsg').innerHTML = '<div class="msg info">Bạn có một bài đang làm dở (đã xong '+ST.inProgress.answered+'/'+ST.inProgress.total+' câu). Bấm tiếp tục để làm tiếp.</div>';
     $('btnStart').textContent = 'Tiếp tục làm bài';
