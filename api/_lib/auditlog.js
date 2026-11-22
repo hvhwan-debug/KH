@@ -42,6 +42,10 @@ function client(req) {
 // ---------- Danh mục thao tác: nhãn tiếng Việt + loại ----------
 // kind: change (thay đổi dữ liệu) | read (xem dữ liệu) | auth (đăng nhập/đăng xuất) | export (xuất file, in, AI) | denied (bị từ chối)
 const A = {
+  hoclieu: {
+    GET: { list: ["Xem danh sách học liệu", "read"], preview: ["Xem thử học liệu", "read"] },
+    POST: { saveItem: ["Lưu học liệu", "change"], deleteItem: ["Xoá học liệu", "change"], setFlag: ["Đăng / ẩn / đánh dấu nổi bật học liệu", "change"], saveCats: ["Lưu danh mục học liệu", "change"], upload: ["Tải tệp học liệu lên", "change"] }
+  },
   admin: {
     GET: {
       questions: ["Xem ngân hàng đề", "read"], questionsBackup: ["Xem bản sao lưu ngân hàng đề", "read"], deleteAllPreview: ["Mở bước xoá toàn bộ ngân hàng đề", "read"],
@@ -116,6 +120,10 @@ function details(area, op, q, b, res, pre) {
     case "audit": d.day = q.day; break;
     case "saveQuestion": { const qq = b.question || {}; d.question = s(qq.text, 100); if (qq.id) d.id = qq.id; if (typeof qq.period === "string") d.period = qq.period || "chưa gắn kỳ"; if (r.regrade && !r.regrade.failed) { d.regraded = r.regrade.changed; d.paperUpdated = r.regrade.paperUpdated; d.examined = r.regrade.examined; d.skipped = r.regrade.skipped; } break; }
     case "addQuestions": d.period = b.period; d.added = r.added; d.skipped = r.skipped; break;
+    case "saveItem": { const it = b.item || {}; d.title = s(it.title, 100); if (it.id) d.id = it.id; d.type = it.type; break; }
+    case "deleteItem": d.id = b.id; break;
+    case "setFlag": d.id = b.id; if (b.status) d.status = b.status; if (typeof b.featured === "boolean") d.featured = b.featured; break;
+    case "upload": d.kind = b.kind; d.file = s(b.name, 80); break;
     case "saveBank": d.bank = s(b.name, 80); if (b.id) d.id = b.id; break;
     case "deleteBank": d.id = b.id; d.moved = r.moved; break;
     case "moveToBank": d.to = b.to; d.moved = r.moved; break;

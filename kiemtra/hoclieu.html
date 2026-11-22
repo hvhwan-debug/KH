@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0A63C4">
+<link rel="icon" href="/kiemtra/favicon.ico?v=2" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/kiemtra/favicon-32.png?v=2">
+<link rel="apple-touch-icon" href="/kiemtra/apple-touch-icon.png?v=2">
+<title>Học liệu · Hệ thống kiểm tra đánh giá trực tuyến</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0B2A66;--ink2:#33507F;--muted:#5A6F92;--line:#D9E6F6;--brand:#1366E0;--brand2:#0B55C9}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;color:var(--ink);font-family:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;
+  background:radial-gradient(60% 40% at 100% 0%,rgba(120,190,255,.45),transparent 70%),radial-gradient(50% 40% at 0% 30%,rgba(160,210,255,.4),transparent 70%),linear-gradient(180deg,#EAF4FF 0%,#DCEBFD 100%);background-attachment:fixed}
+a{color:inherit}
+button{font:inherit;color:inherit}
+.hide{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+svg.i{width:1em;height:1em;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+/* thanh trên */
+.bar{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:16px;height:72px;padding:0 clamp(16px,3.4vw,64px);background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid rgba(190,210,235,.6)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0;text-decoration:none;font-weight:800;font-size:clamp(14px,1.35vw,20px);color:var(--ink)}
+.brand .mk{flex:0 0 auto;width:44px;height:44px;border-radius:13px;background:#fff;padding:4px;box-shadow:0 6px 16px -8px rgba(20,60,140,.5)}
+.brand .mk img{width:100%;height:100%;object-fit:contain;display:block}
+.brand span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav{display:flex;align-items:center;gap:6px}
+.nav a,.nav button{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border:0;border-radius:99px;background:none;font-size:14px;font-weight:700;color:#1E3F73;text-decoration:none;cursor:pointer;white-space:nowrap}
+.nav a:hover,.nav button:hover{background:rgba(27,120,232,.1)}
+.nav svg.i{font-size:18px}
+.nav a.cur{color:#fff;background:linear-gradient(100deg,#1B78E8,#0B5BD6);box-shadow:0 8px 18px -10px rgba(10,90,215,.9)}
+.burger{display:none;width:44px;height:44px;border:0;border-radius:12px;background:rgba(27,120,232,.1);cursor:pointer;color:#1E3F73}
+.burger svg.i{font-size:24px}
+/* khung chính */
+.wrap{width:min(1560px,100%);margin:0 auto;padding:clamp(12px,1.6vw,22px) clamp(14px,3.4vw,64px) 40px}
+.hero{position:relative;display:flex;align-items:center;gap:22px;min-height:clamp(150px,13vw,190px);padding:0 clamp(20px,4vw,72px);border-radius:28px;overflow:hidden;color:#fff;
+  background:radial-gradient(50% 120% at 80% 0%,rgba(255,255,255,.28),transparent 62%),linear-gradient(100deg,#0A47C8 0%,#1370EE 55%,#2E9BFF 100%);box-shadow:0 24px 50px -28px rgba(10,60,160,.7)}
+.hero .bk{flex:0 0 auto;width:clamp(60px,6vw,96px);height:clamp(60px,6vw,96px);color:#fff;filter:drop-shadow(0 8px 14px rgba(0,30,110,.3))}
+.hero h1{margin:0;font-size:clamp(28px,3.4vw,50px);font-weight:900;letter-spacing:-.6px;line-height:1.1}
+.hero p{margin:8px 0 0;max-width:34em;font-size:clamp(13px,1.2vw,18px);line-height:1.5;color:rgba(255,255,255,.92)}
+.hero .art{position:absolute;right:clamp(10px,2.4vw,50px);bottom:-6px;height:122%;pointer-events:none}
+.hero .art img{display:block;height:100%;width:auto;filter:drop-shadow(0 14px 20px rgba(0,30,110,.35))}
+.hero .fl{position:absolute;display:grid;place-items:center;width:clamp(44px,4.6vw,70px);aspect-ratio:1;border-radius:18px;background:linear-gradient(135deg,rgba(255,255,255,.55),rgba(255,255,255,.18));border:1px solid rgba(255,255,255,.7);box-shadow:0 14px 24px -12px rgba(0,40,140,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff}
+.hero .fl svg.i{width:54%;height:54%;stroke-width:2}
+.hero .f1{right:clamp(300px,30vw,520px);top:16%;transform:rotate(-8deg)}
+.hero .f2{right:clamp(180px,19vw,330px);top:8%;transform:rotate(7deg)}
+.hero .tx{position:relative;z-index:2}
+.layout{display:grid;grid-template-columns:clamp(230px,18vw,290px) minmax(0,1fr);gap:clamp(16px,2vw,32px);margin-top:clamp(14px,1.6vw,22px);align-items:start}
+.side{position:sticky;top:88px;padding:16px 14px;border-radius:24px;background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.9);box-shadow:0 20px 44px -28px rgba(20,70,160,.5)}
+.side button{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border:0;border-radius:12px;background:none;text-align:left;font-size:15px;font-weight:700;color:#1E3F73;cursor:pointer}
+.side button+button{margin-top:2px}
+.side button svg.i{font-size:21px;color:#1B78E8}
+.side button span{flex:1;min-width:0}
+.side button em{font-style:normal;min-width:30px;padding:2px 8px;border-radius:99px;background:#E6F0FD;color:#1B5FC4;font-size:12.5px;font-weight:800;text-align:center}
+.side button:hover{background:#EEF5FF}
+.side button.on{background:linear-gradient(100deg,#1B78E8,#0B5BD6);color:#fff;box-shadow:0 10px 20px -12px rgba(10,90,215,.9)}
+.side button.on svg.i{color:#fff}.side button.on em{background:rgba(255,255,255,.22);color:#fff}
+.tools{display:flex;gap:12px;flex-wrap:wrap}
+.search{flex:1 1 320px;display:flex;align-items:center;gap:10px;height:50px;padding:0 18px;border:1.5px solid #BFD8F6;border-radius:99px;background:rgba(255,255,255,.95);color:#5A7BA8}
+.search svg.i{font-size:20px}
+.search input{flex:1;min-width:0;border:0;outline:0;background:none;font:inherit;font-size:15px;color:var(--ink)}
+.search:focus-within{border-color:#1B78E8;box-shadow:0 0 0 4px rgba(27,120,232,.14)}
+.sel{position:relative;display:flex;align-items:center;gap:10px;height:50px;padding:0 16px;border:1.5px solid #BFD8F6;border-radius:99px;background:rgba(255,255,255,.95);color:#1E3F73;font-weight:700;font-size:14.5px}
+.sel svg.i{font-size:19px}
+.sel select{appearance:none;-webkit-appearance:none;border:0;background:none;font:inherit;color:inherit;padding-right:22px;cursor:pointer;outline:0}
+.sel::after{content:"";position:absolute;right:16px;top:50%;width:8px;height:8px;margin-top:-6px;border-right:2px solid #1E3F73;border-bottom:2px solid #1E3F73;transform:rotate(45deg);pointer-events:none}
+.sec-h{display:flex;align-items:center;gap:10px;margin:clamp(18px,2vw,28px) 0 14px;font-size:clamp(18px,1.6vw,23px);font-weight:900;color:var(--ink)}
+.sec-h svg.i{font-size:24px;color:#1B78E8}
+.sec-h small{margin-left:auto;font-size:13px;font-weight:600;color:var(--muted)}
+/* nổi bật */
+.feat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(12px,1.4vw,20px)}
+.fc{position:relative;display:flex;flex-direction:column;justify-content:space-between;min-height:clamp(150px,13vw,190px);padding:18px 20px;border:0;border-radius:22px;overflow:hidden;text-align:left;color:#fff;cursor:pointer;box-shadow:0 20px 38px -24px rgba(10,50,130,.8);transition:transform .15s}
+.fc:hover{transform:translateY(-3px)}
+.fc.c0{background:linear-gradient(120deg,#0A55D4,#2E8DFF)}.fc.c1{background:linear-gradient(120deg,#0E9C93,#2CC6B3)}.fc.c2{background:linear-gradient(120deg,#6B57E8,#9A8BFF)}
+.fc .chip{align-self:flex-start;padding:5px 14px;border-radius:99px;background:rgba(255,255,255,.88);color:#1B3F8F;font-size:13px;font-weight:700}
+.fc h3{position:relative;z-index:2;margin:12px 0 10px;max-width:62%;font-size:clamp(17px,1.55vw,22px);font-weight:800;line-height:1.28}
+.fc .meta{position:relative;z-index:2;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600}
+.fc .meta .pl{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#fff;color:#1366E0}
+.fc .meta .pl svg.i{font-size:17px;fill:currentColor}
+.fc .ar{position:absolute;right:-8px;bottom:-6px;top:0;width:48%;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.fc .ar img{width:100%;height:100%;object-fit:cover;opacity:.92;-webkit-mask-image:linear-gradient(90deg,transparent,#000 45%);mask-image:linear-gradient(90deg,transparent,#000 45%)}
+.fc .ar svg{width:86%;height:86%;filter:drop-shadow(0 12px 16px rgba(0,30,90,.3))}
+/* danh sách */
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(12px,1.4vw,20px)}
+.card{display:flex;flex-direction:column;border:0;padding:0;border-radius:20px;overflow:hidden;background:#fff;text-align:left;cursor:pointer;box-shadow:0 18px 36px -24px rgba(20,70,160,.55);transition:transform .15s,box-shadow .15s}
+.card:hover{transform:translateY(-3px);box-shadow:0 24px 40px -22px rgba(20,70,160,.7)}
+.card .th{position:relative;aspect-ratio:16/8.4;background:#CFE3FB;overflow:hidden}
+.card .th img{width:100%;height:100%;object-fit:cover;display:block}
+.card .ph{position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.95)}
+.card .ph svg.i{font-size:48px;stroke-width:1.6;filter:drop-shadow(0 6px 10px rgba(0,30,90,.3))}
+.card .tag{position:absolute;left:12px;bottom:10px;max-width:calc(100% - 24px);padding:4px 12px;border-radius:99px;background:rgba(235,246,255,.96);color:#1B5FC4;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .pt{position:absolute;right:12px;top:10px;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.9);color:#1366E0}
+.card .pt svg.i{font-size:17px}
+.card .bd{display:flex;flex-direction:column;gap:12px;padding:14px 16px 14px;flex:1}
+.card h3{margin:0;font-size:clamp(15px,1.15vw,17px);font-weight:800;line-height:1.35;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.7em}
+.card .ft{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13.5px;font-weight:600;color:var(--muted)}
+.card .ft span{display:inline-flex;align-items:center;gap:7px}
+.card .ft svg.i{font-size:18px;color:#1B78E8}
+.more{display:block;margin:22px auto 0;padding:12px 30px;border:1.5px solid #9FC6F2;border-radius:99px;background:#fff;font-size:14.5px;font-weight:800;color:#1B5FC4;cursor:pointer}
+.more:hover{background:#EEF5FF}
+.empty{padding:46px 20px;text-align:center;border:1.5px dashed #A9CBF1;border-radius:22px;background:rgba(255,255,255,.7);color:var(--ink2);font-weight:600}
+.empty b{display:block;margin-bottom:6px;font-size:18px;color:var(--ink)}
+.note{margin:26px 0 0;text-align:center;font-size:12.5px;color:var(--muted)}
+.skel{height:200px;border-radius:20px;background:linear-gradient(90deg,#E6EFFB,#F4F8FE,#E6EFFB);background-size:200% 100%;animation:sk 1.2s linear infinite}
+@keyframes sk{to{background-position:-200% 0}}
+/* trình xem */
+.vw{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:clamp(8px,2vw,28px);background:rgba(6,20,52,.74);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.vp{display:flex;flex-direction:column;width:min(1180px,100%);max-height:100%;border-radius:24px;overflow:hidden;background:#fff;box-shadow:0 40px 90px -30px rgba(0,0,0,.7)}
+.vh{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.vh h2{margin:0;flex:1;min-width:0;font-size:clamp(16px,1.5vw,20px);font-weight:800;line-height:1.3}
+.vh .tag{flex:0 0 auto;padding:4px 12px;border-radius:99px;background:#E6F0FD;color:#1B5FC4;font-size:12.5px;font-weight:700}
+.vx{flex:0 0 auto;display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:50%;background:#EEF4FC;cursor:pointer;color:#1E3F73}
+.vx:hover{background:#DCE9FA}.vx svg.i{font-size:20px}
+.vb{position:relative;flex:1;min-height:0;overflow:auto;background:#0B1730;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.vb video,.vb iframe{display:block;width:100%;aspect-ratio:16/9;max-height:calc(100vh - 210px);border:0;background:#000}
+.vb.pdf{background:#E9EEF6;padding:14px;text-align:center}
+.vb.pdf canvas{display:block;max-width:100%;height:auto;margin:0 auto 14px;border-radius:6px;box-shadow:0 10px 24px -14px rgba(10,40,100,.6);background:#fff}
+.vb .st{padding:60px 20px;color:#fff;font-weight:600}.vb.pdf .st{color:var(--ink2)}
+.vd{padding:12px 18px 16px;border-top:1px solid var(--line);font-size:14px;line-height:1.6;color:var(--ink2)}
+.vd b{color:var(--ink)}
+.vd small{display:block;margin-top:6px;font-size:12px;color:var(--muted)}
+.pgi{position:sticky;top:0;z-index:2;display:inline-block;margin:0 auto 10px;padding:5px 14px;border-radius:99px;background:rgba(11,42,102,.85);color:#fff;font-size:12.5px;font-weight:700}
+/* hộp thoại hướng dẫn / hỗ trợ */
+.dlg{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:20px;background:rgba(10,37,82,.45);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.dlg>div{width:min(480px,100%);max-height:88vh;overflow:auto;padding:24px;border-radius:22px;background:#fff;box-shadow:0 30px 80px -20px rgba(2,20,70,.6)}
+.dlg h3{margin:0 0 12px;font-size:19px}.dlg ol{margin:0 0 14px;padding-left:20px;font-size:14px;line-height:1.65;color:var(--ink2)}.dlg p{margin:0 0 12px;font-size:14px;line-height:1.65;color:var(--ink2)}
+.dlg button{width:100%;height:46px;border:0;border-radius:12px;background:linear-gradient(100deg,#0869df,#08b9d4);color:#fff;font-weight:800;cursor:pointer}
+@media print{body{display:none!important}}
+@media(max-width:1180px){
+  .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .nav a,.nav button{padding:8px 10px;font-size:13px}.nav svg.i{display:none}
+  .brand span{display:none}
+}
+@media(max-width:960px){
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .feat{grid-template-columns:1fr}
+  .layout{grid-template-columns:1fr}
+  .side{position:static;display:flex;gap:8px;overflow-x:auto;padding:10px;border-radius:18px;-webkit-overflow-scrolling:touch}
+  .side button{width:auto;flex:0 0 auto;white-space:nowrap;padding:10px 14px;font-size:14px}.side button+button{margin-top:0}
+  .side button svg.i{display:none}
+  .hero .art,.hero .fl{display:none}
+  .burger{display:inline-grid;place-items:center}
+  .nav{display:none;position:absolute;top:72px;right:12px;flex-direction:column;align-items:stretch;gap:2px;min-width:230px;padding:8px;border-radius:16px;background:#fff;box-shadow:0 24px 50px -14px rgba(10,37,82,.45)}
+  .bar.open .nav{display:flex}
+  .nav a,.nav button{padding:12px 14px;font-size:15px;border-radius:12px}.nav svg.i{display:block}
+  .brand span{display:block}
+}
+@media(max-width:560px){
+  .bar{height:64px}.nav{top:64px}
+  .brand span{font-size:13.5px;white-space:normal;line-height:1.2}
+  .hero{border-radius:22px;min-height:130px}
+  .grid{grid-template-columns:1fr}
+  .card{flex-direction:row;border-radius:18px}.card .th{aspect-ratio:auto;width:42%;flex:0 0 auto}.card .tag{display:none}.card .bd{padding:12px}
+  .fc h3{max-width:100%}.fc .ar{opacity:.35}
+  .tools .sel{flex:1 1 140px}
+  .vp{border-radius:18px}.vb video,.vb iframe{max-height:60vh}
+}
+</style>
+</head>
+<body>
+<header class="bar" id="bar">
+  <a class="brand" href="/kiemtra/"><span class="mk"><img src="/kiemtra/logo-mark.png" alt=""></span><span>Hệ thống kiểm tra đánh giá trực tuyến</span></a>
+  <button class="burger" id="burger" type="button" aria-label="Mở menu" aria-expanded="false"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <nav class="nav" id="nav" aria-label="Điều hướng">
+    <a href="/kiemtra/tracuu.html"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Tra cứu kết quả</a>
+    <a href="/kiemtra/tracuu.html"><svg class="i" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7.5V12l3 2"/></svg>Lịch sử làm bài</a>
+    <a class="cur" href="/kiemtra/hoclieu.html" aria-current="page"><svg class="i" viewBox="0 0 24 24"><path d="M3 5.5C6 4 9 4.2 12 6c3-1.8 6-2 9-.5V19c-3-1.5-6-1.3-9 .5-3-1.8-6-2-9-.5z"/><path d="M12 6v13.5"/></svg>Học liệu</a>
+    <button type="button" data-d="guide"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17v.1"/></svg>Hướng dẫn</button>
+    <button type="button" data-d="support"><svg class="i" viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/><path d="M19 20c0 1.5-2 2-5 2"/></svg>Hỗ trợ</button>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="hero" aria-label="Giới thiệu">
+    <svg class="bk" viewBox="0 0 64 56" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8c9-3 18-2 28 3 10-5 19-6 28-3v38c-9-3-18-2-28 3-10-5-19-6-28-3z"/><path d="M32 11v38"/></svg>
+    <div class="tx"><h1>Học liệu</h1><p>Kho tài liệu, video và nội dung ôn tập giúp bạn nắm vững kiến thức và sẵn sàng cho các bài kiểm tra.</p></div>
+    <span class="fl f1" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/></svg></span>
+    <span class="fl f2" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>
+    <div class="art" aria-hidden="true"><img src="/kiemtra/landing-laptop.png" alt="" width="440" height="310"></div>
+  </section>
+
+  <div class="layout">
+    <aside class="side" id="side" aria-label="Danh mục học liệu"></aside>
+    <section aria-label="Học liệu">
+      <div class="tools">
+        <label class="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Tìm kiếm học liệu (ví dụ: M25, kỹ năng tư vấn, chính sách...)" autocomplete="off" aria-label="Tìm kiếm học liệu"></label>
+        <label class="sel"><svg class="i" viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/></svg><select id="fmt" aria-label="Định dạng"><option value="">Tất cả định dạng</option><option value="video">Video</option><option value="pdf">Tài liệu PDF</option></select></label>
+        <label class="sel"><svg class="i" viewBox="0 0 24 24"><path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/></svg><select id="srt" aria-label="Sắp xếp"><option value="new">Mới nhất</option><option value="views">Xem nhiều nhất</option><option value="name">Tên A–Z</option></select></label>
+      </div>
+      <div id="featW" class="hide"><h2 class="sec-h"><svg class="i" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg>Học liệu nổi bật</h2><div class="feat" id="feat"></div></div>
+      <h2 class="sec-h"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.8"/></svg><span id="listT">Danh sách học liệu</span><small id="cnt"></small></h2>
+      <div class="grid" id="grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+      <button class="more hide" id="more" type="button">Xem thêm học liệu</button>
+      <p class="note">Học liệu chỉ để xem trực tuyến, không hỗ trợ tải xuống.</p>
+    </section>
+  </div>
+</main>
+
+<div class="vw hide" id="vw" role="dialog" aria-modal="true" aria-labelledby="vT">
+  <div class="vp">
+    <div class="vh"><h2 id="vT"></h2><span class="tag" id="vC"></span><button class="vx" id="vX" type="button" aria-label="Đóng"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="vb" id="vB"></div>
+    <div class="vd" id="vD"></div>
+  </div>
+</div>
+<div class="dlg hide" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dT"><div><h3 id="dT"></h3><div id="dB"></div><button type="button" id="dX">Đã hiểu</button></div></div>
+
+<script>
+var $ = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
+function norm(t){ return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase(); }
+var P = {
+  box:'<path d="M12 3 4 7.5v9L12 21l8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
+  chart:'<path d="M5 20V11M11 20V4M17 20v-7M3 20h18"/>',
+  doc:'<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/>',
+  play:'<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/>',
+  bookmark:'<path d="M6 3h12v18l-6-4.5L6 21z"/>',
+  book:'<path d="M3 5.5C6 4 9 4.2 12 6c3-1.8 6-2 9-.5V19c-3-1.5-6-1.3-9 .5-3-1.8-6-2-9-.5z"/><path d="M12 6v13.5"/>',
+  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+  star:'<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+  grid:'<rect x="3.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.8"/>',
+  eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'
+};
+function ic(k){ return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true">' + (P[k] || P.doc) + '</svg>'; }
+var PAL = [['#1B78E8','#0B55C9'],['#12B5A6','#0E8F8F'],['#7C6CFF','#5546E0'],['#F59E0B','#D97706'],['#EF6C8B','#D6457A'],['#34A853','#1E8E3E']];
+var ART = [
+  '<svg viewBox="0 0 120 120" aria-hidden="true"><path d="M60 14C44 40 32 54 32 72a28 28 0 0 0 56 0c0-18-12-32-28-58z" fill="#E8F6FF" opacity=".95"/><path d="M46 74a14 14 0 0 0 8 13" fill="none" stroke="#7BC4F5" stroke-width="5" stroke-linecap="round"/></svg>',
+  '<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="54" cy="66" r="40" fill="#fff" opacity=".95"/><circle cx="54" cy="66" r="29" fill="#2D8BFF"/><circle cx="54" cy="66" r="18" fill="#fff"/><circle cx="54" cy="66" r="8" fill="#F2564B"/><path d="m56 64 40-40M86 16l16 2-2 16" fill="none" stroke="#0B3F94" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  '<svg viewBox="0 0 120 120" aria-hidden="true"><g transform="rotate(10 60 60)"><rect x="24" y="16" width="72" height="92" rx="10" fill="#fff"/><rect x="44" y="8" width="32" height="18" rx="7" fill="#5B8DEF"/><g fill="none" stroke="#2D8BFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M36 46l5 5 9-10M36 70l5 5 9-10M36 94l5 5 9-10"/></g><g stroke="#B7C9F0" stroke-width="5" stroke-linecap="round"><path d="M58 46h26M58 70h26M58 94h18"/></g></g></svg>'
+];
+var D = { cats:[], items:[], cat:'', q:'', fmt:'', srt:'new', page:1 }, PER = 12, catIdx = {};
+function req(path, opt){ opt = opt || {}; opt.headers = Object.assign({ 'X-Requested-With':'livotec' }, opt.headers || {}); opt.credentials = 'same-origin'; return fetch(path, opt).then(function(r){ return r.json().catch(function(){ return { ok:false }; }); }); }
+function meta(it){ return it.type === 'video' ? 'Video' + (it.dur ? ' • ' + it.dur + ' phút' : '') : 'PDF' + (it.pages ? ' • ' + it.pages + ' trang' : ''); }
+function nf(n){ return String(n || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+function visible(){
+  var q = norm(D.q.trim()).split(/\s+/).filter(Boolean);
+  var l = D.items.filter(function(it){
+    if (D.cat && it.cat !== D.cat) return false;
+    if (D.fmt && it.type !== D.fmt) return false;
+    var hay = norm(it.title + ' ' + it.desc); return q.every(function(w){ return hay.indexOf(w) >= 0; });
+  });
+  if (D.srt === 'views') l.sort(function(a, b){ return (b.views || 0) - (a.views || 0); });
+  else if (D.srt === 'name') l.sort(function(a, b){ return a.title.localeCompare(b.title, 'vi'); });
+  return l;
+}
+function renderSide(){
+  var total = D.items.length;
+  $('side').innerHTML = '<button type="button" data-c="" class="' + (!D.cat ? 'on' : '') + '">' + ic('grid') + '<span>Tất cả học liệu</span><em>' + total + '</em></button>' +
+    D.cats.map(function(c){ return '<button type="button" data-c="' + esc(c.id) + '" class="' + (D.cat === c.id ? 'on' : '') + '">' + ic(c.icon) + '<span>' + esc(c.name) + '</span><em>' + c.count + '</em></button>'; }).join('');
+}
+function renderFeat(){
+  var on = !D.cat && !D.q.trim() && !D.fmt, f = D.items.filter(function(i){ return i.featured; }).slice(0, 3);
+  $('featW').classList.toggle('hide', !on || !f.length);
+  $('feat').innerHTML = f.map(function(it, i){
+    var art = it.thumb ? '<img src="' + esc(it.thumb) + '" alt="" loading="lazy">' : ART[i % 3];
+    return '<button type="button" class="fc c' + (i % 3) + '" data-id="' + esc(it.id) + '"><span class="chip">' + esc((catIdx[it.cat] || {}).name || 'Học liệu') + '</span><h3>' + esc(it.title) + '</h3>' +
+      '<span class="meta"><span class="pl">' + (it.type === 'video' ? ic('play').replace('<svg', '<svg style="stroke:none"').replace(P.play, '<path d="M9 7v10l8-5z"/>') : ic('doc')) + '</span>' + (it.type === 'video' ? 'Video' + (it.dur ? ' • ' + it.dur + ' phút' : '') : 'Tài liệu PDF' + (it.pages ? ' • ' + it.pages + ' trang' : '')) + '</span><span class="ar">' + art + '</span></button>';
+  }).join('');
+}
+function renderGrid(){
+  var l = visible(), part = l.slice(0, D.page * PER);
+  $('cnt').textContent = l.length ? l.length + ' học liệu' : '';
+  $('listT').textContent = D.cat ? ((catIdx[D.cat] || {}).name || 'Danh sách học liệu') : 'Danh sách học liệu';
+  if (!l.length){
+    $('grid').innerHTML = '<div class="empty" style="grid-column:1/-1"><b>' + (D.items.length ? 'Không tìm thấy học liệu phù hợp' : 'Chưa có học liệu nào') + '</b>' + (D.items.length ? 'Hãy thử từ khoá khác hoặc chọn danh mục khác.' : 'Học liệu sẽ xuất hiện ở đây khi quản trị viên đăng tải.') + '</div>';
+    $('more').classList.add('hide'); return;
+  }
+  $('grid').innerHTML = part.map(function(it){
+    var ci = Math.max(0, D.cats.findIndex(function(c){ return c.id === it.cat; })), pal = PAL[ci % PAL.length];
+    var th = it.thumb ? '<img src="' + esc(it.thumb) + '" alt="" loading="lazy" onerror="this.remove()">' : '';
+    return '<button type="button" class="card" data-id="' + esc(it.id) + '"><span class="th" style="background:linear-gradient(135deg,' + pal[0] + ',' + pal[1] + ')">' + th + '<span class="ph">' + (it.thumb ? '' : ic(it.type === 'video' ? 'play' : 'doc')) + '</span><span class="tag">' + esc((catIdx[it.cat] || {}).name || '') + '</span></span>' +
+      '<span class="bd"><h3>' + esc(it.title) + '</h3><span class="ft"><span>' + ic(it.type === 'video' ? 'play' : 'doc') + esc(meta(it)) + '</span><span>' + ic('eye') + nf(it.views) + '</span></span></span></button>';
+  }).join('');
+  $('more').classList.toggle('hide', part.length >= l.length);
+}
+function renderAll(){ renderSide(); renderFeat(); renderGrid(); }
+function load(){
+  req('/api/hoclieu').then(function(j){
+    if (!j.ok){ $('grid').innerHTML = '<div class="empty" style="grid-column:1/-1"><b>Không tải được học liệu</b>Vui lòng thử lại sau ít phút.</div>'; return; }
+    D.cats = j.categories || []; D.items = j.items || []; catIdx = {}; D.cats.forEach(function(c){ catIdx[c.id] = c; });
+    renderAll();
+    var h = decodeURIComponent((location.hash || '').slice(1)); if (h && D.items.some(function(i){ return i.id === h; })) openItem(h);
+  });
+}
+$('side').addEventListener('click', function(e){ var b = e.target.closest('button[data-c]'); if (!b) return; D.cat = b.dataset.c; D.page = 1; renderAll(); });
+$('q').addEventListener('input', function(){ D.q = this.value; D.page = 1; renderFeat(); renderGrid(); });
+$('fmt').addEventListener('change', function(){ D.fmt = this.value; D.page = 1; renderFeat(); renderGrid(); });
+$('srt').addEventListener('change', function(){ D.srt = this.value; D.page = 1; renderGrid(); });
+$('more').addEventListener('click', function(){ D.page++; renderGrid(); });
+document.addEventListener('click', function(e){ var c = e.target.closest('.card,.fc'); if (c && c.dataset.id) openItem(c.dataset.id); });
+
+/* ---- trình xem: chỉ xem, không có nút tải xuống ---- */
+var VW = { id:'', pdfSeq:0 };
+var PDFJS = '/kiemtra/vendor/pdfjs/', pdfP = null;
+function loadPdfJs(){
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (!pdfP) pdfP = new Promise(function(ok, no){
+    var s = document.createElement('script'); s.src = PDFJS + 'pdf.min.js';
+    s.onload = function(){ if (window.pdfjsLib){ pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js'; ok(pdfjsLib); } else { pdfP = null; no(new Error('pdfjs')); } };
+    s.onerror = function(){ pdfP = null; no(new Error('pdfjs')); };
+    document.head.appendChild(s);
+  });
+  return pdfP;
+}
+function openItem(id){
+  var it = D.items.filter(function(x){ return x.id === id; })[0]; if (!it) return;
+  VW.id = id; var seq = ++VW.pdfSeq;
+  $('vT').textContent = it.title; $('vC').textContent = (catIdx[it.cat] || {}).name || ''; $('vC').classList.toggle('hide', !(catIdx[it.cat]));
+  $('vD').innerHTML = (it.desc ? '<b>Giới thiệu</b><br>' + esc(it.desc).replace(/\n/g, '<br>') : '') + '<small>' + esc(meta(it)) + ' · ' + nf(it.views) + ' lượt xem · Chỉ xem trực tuyến, không hỗ trợ tải xuống.</small>';
+  var b = $('vB'); b.className = 'vb' + (it.type === 'pdf' ? ' pdf' : ''); b.innerHTML = '<div class="st">Đang mở…</div>';
+  $('vw').classList.remove('hide'); document.documentElement.style.overflow = 'hidden';
+  history.replaceState(null, '', '#' + encodeURIComponent(id));
+  req('/api/hoclieu?id=' + encodeURIComponent(id)).then(function(j){
+    if (seq !== VW.pdfSeq) return;
+    if (!j.ok){ b.innerHTML = '<div class="st">' + esc(j.error || 'Không mở được học liệu.') + '</div>'; return; }
+    play(j.item.play, it, seq);
+    req('/api/hoclieu', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ op:'view', id:id }) });
+  });
+}
+function play(p, it, seq){
+  var b = $('vB');
+  if (p.mode === 'embed'){
+    b.innerHTML = '<iframe src="' + esc(p.src) + '" allow="autoplay; encrypted-media; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="' + esc(it.title) + '"></iframe>'; return;
+  }
+  if (p.mode === 'video'){
+    b.innerHTML = '<video controls controlsList="nodownload noplaybackrate noremoteplayback" disablePictureInPicture disableRemotePlayback playsinline preload="metadata" oncontextmenu="return false"><source src="' + esc(p.src) + '"></video>'; return;
+  }
+  // PDF: vẽ từng trang lên canvas (không có thanh công cụ tải / in của trình duyệt)
+  b.innerHTML = '<div class="st">Đang tải tài liệu…</div>';
+  Promise.all([loadPdfJs(), fetch(p.src, { credentials:'same-origin' }).then(function(r){ if (!r.ok) throw new Error('file'); return r.arrayBuffer(); })]).then(function(a){
+    return a[0].getDocument({ data: a[1] }).promise;
+  }).then(function(doc){
+    if (seq !== VW.pdfSeq) return;
+    b.innerHTML = '<div class="pgi" id="pgi">Trang 1/' + doc.numPages + '</div><div id="pgs"></div>';
+    var box = $('pgs'), width = Math.min(960, b.clientWidth - 28), cvs = [];
+    for (var n = 1; n <= doc.numPages; n++){ var c = document.createElement('canvas'); c.dataset.n = n; c.width = width; c.height = Math.round(width * 1.4); box.appendChild(c); cvs.push(c); }
+    var done = {}, io = new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting && !done[e.target.dataset.n]){ done[e.target.dataset.n] = 1; draw(doc, e.target, width, seq); } if (e.isIntersecting) $('pgi').textContent = 'Trang ' + e.target.dataset.n + '/' + doc.numPages; }); }, { root: b, rootMargin: '300px 0px' });
+    cvs.forEach(function(c){ io.observe(c); });
+  }).catch(function(){
+    if (seq !== VW.pdfSeq) return;
+    if (p.frame) b.innerHTML = '<iframe src="' + esc(p.frame) + '#toolbar=0&navpanes=0" title="' + esc(it.title) + '" style="aspect-ratio:auto;height:calc(100vh - 220px)"></iframe>';
+    else b.innerHTML = '<div class="st">Không mở được tài liệu. Vui lòng kiểm tra kết nối mạng rồi thử lại.</div>';
+  });
+}
+function draw(doc, cv, width, seq){
+  doc.getPage(+cv.dataset.n).then(function(pg){
+    if (seq !== VW.pdfSeq) return;
+    var v1 = pg.getViewport({ scale:1 }), sc = width / v1.width, dpr = Math.min(2, window.devicePixelRatio || 1), vp = pg.getViewport({ scale: sc * dpr });
+    cv.width = vp.width; cv.height = vp.height; cv.style.width = width + 'px'; cv.style.height = Math.round(vp.height / dpr) + 'px';
+    pg.render({ canvasContext: cv.getContext('2d'), viewport: vp });
+  });
+}
+function closeViewer(){
+  VW.pdfSeq++; $('vB').innerHTML = ''; $('vw').classList.add('hide'); document.documentElement.style.overflow = '';
+  history.replaceState(null, '', location.pathname + location.search);
+}
+$('vX').addEventListener('click', closeViewer);
+$('vw').addEventListener('click', function(e){ if (e.target === $('vw')) closeViewer(); });
+['contextmenu', 'dragstart', 'copy', 'cut'].forEach(function(ev){ $('vB').addEventListener(ev, function(e){ e.preventDefault(); }); });
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape'){ if (!$('dlg').classList.contains('hide')) $('dlg').classList.add('hide'); else if (!$('vw').classList.contains('hide')) closeViewer(); }
+  if (!$('vw').classList.contains('hide') && (e.ctrlKey || e.metaKey) && /^[spu]$/i.test(e.key)) e.preventDefault();
+});
+
+/* ---- menu + hộp thoại ---- */
+var TXT = {
+  guide: { t:'Hướng dẫn xem học liệu', b:'<ol><li>Chọn danh mục ở cột bên trái, hoặc gõ từ khoá vào ô tìm kiếm.</li><li>Bấm vào một thẻ để mở video hoặc tài liệu ngay trên trang.</li><li>Học liệu chỉ để xem trực tuyến, không hỗ trợ tải xuống.</li><li>Muốn làm bài kiểm tra, quay lại Trang chủ và nhập mã đề thi.</li></ol>' },
+  support: { t:'Hỗ trợ', b:'<p>Mọi thắc mắc vui lòng liên hệ quản trị viên phụ trách.</p><p>Nếu video không phát, hãy thử Chrome hoặc Safari bản mới và kiểm tra kết nối mạng.</p>' }
+};
+document.querySelectorAll('[data-d]').forEach(function(b){ b.addEventListener('click', function(){ var x = TXT[b.dataset.d]; $('dT').textContent = x.t; $('dB').innerHTML = x.b; $('dlg').classList.remove('hide'); $('dX').focus(); $('bar').classList.remove('open'); }); });
+$('dX').addEventListener('click', function(){ $('dlg').classList.add('hide'); });
+$('dlg').addEventListener('click', function(e){ if (e.target === $('dlg')) $('dlg').classList.add('hide'); });
+$('burger').addEventListener('click', function(e){ e.stopPropagation(); var on = $('bar').classList.toggle('open'); this.setAttribute('aria-expanded', String(on)); });
+document.addEventListener('click', function(e){ if (!e.target.closest('#bar')) $('bar').classList.remove('open'); });
+load();
+</script>
+</body>
+</html>
