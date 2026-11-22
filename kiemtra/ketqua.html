@@ -181,11 +181,124 @@ body.cert-on .foot{display:none}
 .extra .proof>div{text-align:center}
 .extra .proof span{max-width:36ch;margin-left:auto;margin-right:auto;text-wrap:balance}
 .ct-verify{justify-content:center;text-align:center}
+
+/* ===== Giao diện xác thực theo mẫu mới: thanh điều hướng trắng, nền xanh sáng có sóng, thẻ rộng có cúp bên phải ===== */
+.vt-bar{display:none}
+body.cert-on .vt-bar{display:flex;position:sticky;top:0;z-index:20;height:70px;padding:0 clamp(18px,4vw,76px);align-items:center;gap:16px;background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 6px 24px -14px rgba(10,40,110,.45)}
+body.cert-on .au-bar,body.cert-on .top{display:none!important}
+.vt-brand{display:flex;align-items:center;gap:12px;min-width:0;text-decoration:none;color:#0B1F4B}
+.vt-mark{flex:0 0 auto;width:46px;height:46px;border-radius:13px;background:#fff;padding:4px;box-shadow:0 6px 16px -8px rgba(10,60,160,.5)}
+.vt-mark img{width:100%;height:100%;object-fit:contain;display:block}
+.vt-brand b{display:block;font-size:17px;font-weight:800;line-height:1.25;white-space:nowrap}
+.vt-brand small{display:block;font-size:12.5px;color:#5A6E90;margin-top:1px}
+.vt-nav{display:flex;align-items:center;gap:6px;margin-left:auto}
+.vt-nav a,.vt-nav button{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border:0;border-radius:99px;background:none;font:inherit;font-size:14.5px;font-weight:600;color:#1C2F55;text-decoration:none;white-space:nowrap;cursor:pointer;transition:background .15s}
+.vt-nav a:hover,.vt-nav button:hover{background:#EEF4FF}
+.vt-nav a.cur{background:#E1EDFF;color:#0B5BD6;font-weight:700}
+.vt-nav svg{width:20px;height:20px;flex:0 0 auto}
+.vt-burger{display:none;margin-left:auto;width:44px;height:44px;place-items:center;border:0;border-radius:12px;background:none;color:#1C2F55;cursor:pointer}
+.vt-burger svg{width:24px;height:24px}
+.vt-dlg{text-align:left}.vt-dlg h3{text-align:center}.vt-dlg p{font-size:14px;line-height:1.65;color:#3A4C6E;margin:0 0 10px}
+body.cert-on{background:#0A63D8}
+body.cert-on::before{background:radial-gradient(70% 55% at 50% 0%,rgba(90,200,255,.55),transparent 70%),radial-gradient(55% 60% at 0% 60%,rgba(255,255,255,.22),transparent 65%),radial-gradient(60% 70% at 100% 100%,rgba(40,140,255,.6),transparent 70%),linear-gradient(170deg,#0B57D0,#0A7BEA 55%,#1E9BFF)}
+body.cert-on::after{content:"";position:fixed;z-index:-1;pointer-events:none;left:-15vw;right:-15vw;bottom:-30vh;height:62vh;border-radius:50%;border-top:3px solid rgba(255,255,255,.55);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,0) 40%)}
+body.cert-on .wrap{max-width:1260px;width:min(1260px,94vw);padding-top:24px}
+.cert{border:2px solid rgba(140,220,255,.85);border-radius:34px;background:linear-gradient(145deg,#073B7A 0%,#0560B0 60%,#0A86D8 100%);box-shadow:0 30px 70px -20px rgba(0,25,80,.65)}
+.ct-top{padding:28px 5% 70px;min-height:0;background:radial-gradient(45% 80% at 80% 30%,rgba(40,180,255,.45),transparent 70%),linear-gradient(135deg,#073568,#0563B3 70%,#0A8FE0)}
+.ct-top::after{right:-8%;top:58%;width:62%;opacity:.8}
+.ct-art{position:absolute;z-index:1;right:4%;top:50%;transform:translateY(-52%);width:min(30%,360px);height:auto;pointer-events:none;filter:drop-shadow(0 20px 30px rgba(0,20,70,.35))}
+.cert:not(.art-cup) .ct-art{width:min(24%,260px)}
+.ct-kick,.ct-title,#vBadge,.ct-result{position:relative;z-index:2;max-width:66%}
+.ct-kick{display:inline-block;padding:6px 14px 6px 22px;border-radius:12px;background:rgba(255,255,255,.12);font-size:14px;font-weight:700;letter-spacing:.06em;color:#E6F5FF}
+.ct-kick::before{left:8px;top:6px;bottom:6px}
+.ct-title{font-size:clamp(22px,2.6vw,34px);margin:6px 0 16px}
+.ct-status{border:2px solid #6FE39A;background:linear-gradient(90deg,#16A156,#1FB463);padding:8px 20px 8px 10px;font-size:16px;box-shadow:0 8px 20px -10px rgba(0,60,20,.8)}
+.ct-status b{width:28px;height:28px;background:#fff;color:#16A156;font-size:17px}
+.ct-status i{font-size:.95em;font-weight:700;opacity:1;padding-left:14px}
+.ct-status.s-n{background:linear-gradient(90deg,#E5353F,#F0603F)}.ct-status.s-n b{background:#fff;color:#E5353F}
+.ct-status.s-p{background:linear-gradient(90deg,#D98B12,#F0A93A)}.ct-status.s-p b{background:#fff;color:#D98B12}
+.ct-status.s-d{border-color:#9FD3FF;background:linear-gradient(90deg,#1F6FE5,#3A8BF0)}.ct-status.s-d b{background:#fff;color:#1F6FE5}
+.ct-result{grid-template-columns:minmax(180px,34%) 1fr;margin-top:22px}
+.ct-ring .c span{font-size:16px;color:#fff}
+.ct-person h2{display:flex;align-items:center;gap:12px;font-size:clamp(24px,2.6vw,34px)}
+.ct-pi{flex:0 0 auto;display:grid;place-items:center;width:.9em;height:.9em;color:#fff}.ct-pi svg{width:100%;height:100%}
+.ct-person p{font-size:16px;color:#E8F4FF}.ct-person p svg{color:#D5ECFF}
+.ct-score strong{font-size:clamp(38px,4.2vw,52px)}.ct-score span{font-size:18px}
+.ct-progress{max-width:420px;height:12px}
+.ct-small{font-size:16px}
+.ct-bottom{padding:26px 3% 26px;margin-top:-30px;border-radius:30px 30px 0 0;background:linear-gradient(180deg,#FFFFFF,#F1F7FF)}
+.ct-wave{display:none}
+.extra{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;margin-top:0}
+.extra .kv{padding:4px 22px;border:1px solid #DCE7F7;border-radius:18px;background:#fff;box-shadow:0 10px 26px -18px rgba(20,70,160,.5)}
+.kv div{padding:14px 0;border-top-color:#E6EEF8;font-size:16px;align-items:center}
+.kv dt{display:flex;align-items:center;gap:14px;color:#1C2F55;font-weight:500}
+.kv dt svg{flex:0 0 auto;width:26px;height:26px;color:#1F6FE5}
+.kv dd{color:#0B1F4B;font-weight:800;font-size:16px}
+.extra .proof{flex-direction:row;justify-content:center;flex-wrap:wrap;gap:6px 22px;padding:22px 20px;border:1.5px dashed #9DD8B4;border-radius:18px;background:linear-gradient(180deg,#F1FBF5,#E8F7EE)}
+.extra .proof>svg{width:58px;height:58px;filter:drop-shadow(0 6px 10px rgba(23,121,74,.3))}
+.extra .proof>svg path:first-child{fill:#1FA355}
+.extra .proof small{font-size:14px;letter-spacing:.08em;color:#3A4C6E;font-weight:600}
+.extra .proof b{font-size:clamp(24px,2.5vw,32px);letter-spacing:.02em;color:#0B1F4B;font-weight:800}
+.extra .proof span{flex:1 0 100%;max-width:none;font-size:15px;color:#3A4C6E}
+.proof .pc{display:flex;flex-direction:column;align-items:center}
+.acts{display:flex;gap:18px;margin-top:4px}
+.acts .btn-outline{flex:1 1 0;gap:12px;min-height:60px;margin:0;padding:12px 18px;border:1.5px solid #C7DBF5;border-radius:99px;background:linear-gradient(180deg,#FFFFFF,#EEF5FF);color:#0B1F4B;font-size:17px;font-weight:800;text-decoration:none;box-shadow:0 10px 22px -16px rgba(20,70,160,.6);transition:transform .15s,box-shadow .15s}
+.acts .btn-outline:hover{transform:translateY(-1px);box-shadow:0 14px 26px -16px rgba(20,70,160,.7)}
+.acts .btn-outline.solid{flex:1.3 1 0;border-color:#1B6FE8;color:#fff;background:linear-gradient(100deg,#0B5BD6,#1E86F5);box-shadow:0 14px 26px -12px rgba(11,91,214,.75)}
+.acts .bi{display:grid;place-items:center;width:30px;height:30px}.acts .bi svg{width:100%;height:100%}
+.acts .btn-outline:focus-visible{outline:3px solid #9CC3FF;outline-offset:2px}
+.ct-verify{margin:18px 0 0!important;padding:12px 18px;border-radius:18px;background:#E3F4EA;box-shadow:none;font-size:clamp(15px,1.6vw,20px);font-weight:800}
+.ct-check{width:38px;height:38px;background:linear-gradient(135deg,#2BBE5E,#12923F)}
+@media(max-width:1100px){
+  .vt-nav a span,.vt-nav button span{display:none}
+  .vt-nav a,.vt-nav button{padding:10px}
+}
+@media(max-width:860px){
+  body.cert-on .vt-bar{height:62px}
+  .vt-brand b{font-size:15px;white-space:normal}.vt-brand small{font-size:11.5px}
+  .vt-mark{width:40px;height:40px}
+  .vt-burger{display:grid}
+  .vt-nav{display:none;position:absolute;top:calc(100% + 6px);right:12px;flex-direction:column;align-items:stretch;gap:2px;min-width:230px;padding:6px;background:#fff;border:1px solid rgba(41,70,110,.14);border-radius:16px;box-shadow:0 18px 40px -14px rgba(10,37,82,.4)}
+  .vt-bar.open .vt-nav{display:flex}
+  .vt-nav a span,.vt-nav button span{display:inline}
+  .vt-nav a,.vt-nav button{justify-content:flex-start;gap:12px;padding:12px 14px;border-radius:11px;font-size:15px}
+  .ct-art{position:relative;display:block;right:auto;top:auto;transform:none;width:150px!important;margin:-8px auto 0;order:-1}
+  .ct-top{display:flex;flex-direction:column;padding:24px 6% 50px}
+  .ct-kick,.ct-title,#vBadge,.ct-result{max-width:none}
+  .ct-kick{align-self:flex-start}
+  .extra{grid-template-columns:1fr}
+  .acts{flex-direction:column;gap:10px}
+  .acts .btn-outline{min-height:54px;font-size:16px}
+}
+@media(max-width:700px){
+  .ct-ring .c span{font-size:11px}
+  .ct-status{white-space:nowrap;font-size:13.5px;padding:7px 14px 7px 8px;gap:9px}.ct-status b{width:24px;height:24px;font-size:14px}.ct-status i{padding-left:9px}
+  .ct-result{width:100%;grid-template-columns:minmax(110px,34%) 1fr;gap:14px}
+  .ct-person{padding-left:12px}.ct-person h2{font-size:clamp(19px,5.4vw,24px)}.ct-score strong{font-size:clamp(30px,9vw,38px)}
+  .ct-ring .c strong{font-size:clamp(22px,6.5vw,30px)}
+  .ct-person h2{gap:8px}.ct-person p{font-size:13.5px}.ct-small{font-size:13px}.ct-score span{font-size:15px}
+  .kv div{font-size:14px}.kv dd{font-size:14px}.kv dt{gap:10px}.kv dt svg{width:22px;height:22px}
+  .extra .proof>svg{width:46px;height:46px}
+  .ct-verify{font-size:14px}
+}
+@media print{.vt-bar{display:none!important}.acts{display:none}}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 </head>
 <body>
 <header class="au-bar"><a class="au-brand" href="/kiemtra/"><span class="au-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span class="au-name">Hệ thống kiểm tra đánh giá trực tuyến</span></a><a class="au-back" href="/kiemtra/">Trang làm bài →</a></header>
+<header class="vt-bar" id="vtBar">
+  <a class="vt-brand" href="/kiemtra/"><span class="vt-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span><b>Nền tảng kiểm tra trực tuyến</b><small>Xác thực kết quả bài kiểm tra</small></span></a>
+  <button type="button" class="vt-burger" id="vtBurger" aria-label="Mở menu" aria-expanded="false" aria-controls="vtNav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <nav class="vt-nav" id="vtNav" aria-label="Điều hướng">
+    <a href="/kiemtra/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10M10 20v-5h4v5"/></svg><span>Trang chủ</span></a>
+    <a href="/kiemtra/tracuu.html" class="cur" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Tra cứu kết quả</span></a>
+    <a href="/kiemtra/tracuu.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg><span>Lịch sử làm bài</span></a>
+    <a href="/kiemtra/hoclieu.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4.5" width="14" height="16.5" rx="2.2"/><path d="M9 3h6v3H9z"/><path d="m9 13 2 2 4-4"/></svg><span>Học liệu</span></a>
+    <button type="button" data-vt="guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 16.5h.01"/></svg><span>Hướng dẫn</span></button>
+    <button type="button" data-vt="support"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 16.5h.01"/></svg><span>Hỗ trợ</span></button>
+  </nav>
+</header>
 <div class="wrap">
   <header class="top"><div class="logo" aria-hidden="true"><img src="/kiemtra/logo-mark.png" alt="" width="40" height="40"></div><div><b>Nền tảng kiểm tra trực tuyến</b><span>Xác thực kết quả bài kiểm tra</span></div></header>
 
@@ -195,6 +308,7 @@ body.cert-on .foot{display:none}
       <div class="vbar" id="vbar"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z" fill="currentColor"/><path d="m8.2 12.3 2.6 2.6 5-5.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Kết quả này đã được hệ thống xác thực</span></div>
       <div class="cert" id="cert">
         <section class="ct-top">
+          <img class="ct-art" id="vArt" src="/kiemtra/trophy.png" alt="" width="360" height="300" aria-hidden="true">
           <div class="ct-kick">KẾT QUẢ BÀI KIỂM TRA</div>
           <h1 class="ct-title" id="vTitle"></h1>
           <div id="vBadge"></div>
@@ -207,11 +321,11 @@ body.cert-on .foot{display:none}
                 <linearGradient id="ctR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC2B5"/><stop offset="1" stop-color="#F0603F"/></linearGradient></defs>
                 <circle class="in" cx="80" cy="80" r="71"/><circle class="trk" cx="80" cy="80" r="71" fill="none" stroke-width="13"/>
                 <circle class="prg" id="vArc" cx="80" cy="80" r="71" fill="none" stroke-width="13" stroke-linecap="round" stroke-dasharray="446.11" stroke-dashoffset="446.11" transform="rotate(-90 80 80)"/></svg>
-              <div class="c"><strong id="vPct">0%</strong><span>tỉ lệ đúng</span></div>
+              <div class="c"><strong id="vPct">0%</strong><span>Tỉ lệ đúng</span></div>
               <span class="ct-ok hide" id="vOk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 12.5 3.6 3.6 7.4-8.2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
             </div>
             <div class="ct-person">
-              <h2 id="vName"></h2>
+              <h2><span class="ct-pi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.5" r="4.2" fill="currentColor"/><path d="M3.8 21c0-4.8 3.7-7.8 8.2-7.8s8.2 3 8.2 7.8z" fill="currentColor"/></svg></span><span id="vName"></span></h2>
               <p id="vCode"></p>
               <p id="vMgr"></p>
               <div class="ct-score"><strong id="vScore"></strong><span>câu đúng</span></div>
@@ -224,11 +338,14 @@ body.cert-on .foot{display:none}
           <div class="ct-metrics" id="vStats"></div>
           <div class="extra">
         <dl class="kv" id="vRows"></dl>
-        <div class="proof"><svg width="38" height="38" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z" fill="#17794A"/><path d="m8.2 12.3 2.6 2.6 5-5.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><div><small>MÃ XÁC THỰC</small><b id="vProof"></b><span>Mã này khớp với dữ liệu bài làm trên hệ thống.</span></div></div>
+        <div class="proof"><svg width="38" height="38" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z" fill="#17794A"/><path d="m8.2 12.3 2.6 2.6 5-5.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="pc"><small>MÃ XÁC THỰC</small><b id="vProof"></b></div><span>Mã này khớp với dữ liệu bài làm trên hệ thống.</span></div>
         <div class="paperbox" id="paperBox">
           <p class="pnote hide" id="paperLocked" style="margin-top:0">Chỉ xem lại được <b>sau khi bài kiểm tra kết thúc</b>.</p>
-          <button type="button" class="btn-outline" id="paperToggle">Xem lại đề đã làm</button>
-          <button type="button" class="btn-outline solid hide" id="paperAdmin" style="margin-top:8px">Xem đề (quản trị viên)</button>
+          <div class="acts">
+            <button type="button" class="btn-outline solid hide" id="paperAdmin"><span class="bi" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 2.5h8.5L19 7v13a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V4a1.5 1.5 0 0 1 1-1.5z" fill="#E8FFF0"/><path d="M14.5 2.5V7H19" fill="#B9F0CF"/><path d="M8 10h7M8 13h7M8 16h4" stroke="#20A35A" stroke-width="1.6" stroke-linecap="round"/><rect x="13.5" y="15" width="7" height="6" rx="1.2" fill="#FFC21A"/><path d="M15 15v-1.4a2 2 0 0 1 4 0V15" fill="none" stroke="#FFC21A" stroke-width="1.6"/></svg></span>Xem đề (quản trị viên)</button>
+            <button type="button" class="btn-outline" id="paperToggle"><span class="bi" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4.5" y="4" width="15" height="17.5" rx="2.2" fill="#E3EEFF" stroke="#1F6FE5" stroke-width="1.6"/><rect x="8.5" y="2.5" width="7" height="3.6" rx="1.2" fill="#1F6FE5"/><path d="M8 11h8M8 14.5h8M8 18h5" stroke="#1F6FE5" stroke-width="1.6" stroke-linecap="round"/></svg></span>Xem lại đề đã làm</button>
+            <a class="btn-outline" href="/kiemtra/hoclieu.html" id="vStudy"><span class="bi" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2.5 5.5C5.5 4 9 4.2 12 6v15c-3-1.8-6.5-2-9.5-.5z" fill="#CFE2FF" stroke="#1F6FE5" stroke-width="1.6" stroke-linejoin="round"/><path d="M21.5 5.5C18.5 4 15 4.2 12 6v15c3-1.8 6.5-2 9.5-.5z" fill="#E8F1FF" stroke="#1F6FE5" stroke-width="1.6" stroke-linejoin="round"/><path d="M5 9.5h4.5M5 12.5h4.5M14.5 9.5H19M14.5 12.5H19" stroke="#1F6FE5" stroke-width="1.4" stroke-linecap="round"/></svg></span>Học liệu liên quan</a>
+          </div>
           <div class="hide" id="paperForm">
             <p class="pnote" style="margin-top:0">Quét khuôn mặt để xác nhận bạn là người đã làm bài này, không cần nhập mã nhân viên hay email.</p>
             <button type="button" class="btn-outline solid" id="paperGo">Quét khuôn mặt để xem lại đề</button>
@@ -244,6 +361,7 @@ body.cert-on .foot{display:none}
     </div>
   </main>
 </div>
+<div class="mdl hide" id="vtDlg" role="dialog" aria-modal="true" aria-labelledby="vtDlgT"><div class="mdl-box vt-dlg"><h3 id="vtDlgT"></h3><div id="vtDlgB"></div><button type="button" class="btn-outline solid" id="vtDlgX">Đã hiểu</button></div></div>
 <div class="mdl hide" id="phoneModal" role="dialog" aria-modal="true" aria-labelledby="phTitle">
   <div class="mdl-box">
     <div class="mdl-ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg></div>
@@ -379,6 +497,21 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape'){ if (w
 $('paperGo').addEventListener('click', startPaper);
 $('paperAdmin').addEventListener('click', adminView);
 // Quản trị viên đang đăng nhập: hiện nút xem thẳng, không cần nhập mã NV + email
+// Thanh điều hướng: menu ☰ trên điện thoại + hộp Hướng dẫn / Hỗ trợ
+(function(){
+  var TXT = {
+    guide: { t:'Hướng dẫn', b:'<p>Trang này xác thực kết quả bài kiểm tra bằng mã xác thực hoặc mã QR in trên thẻ kết quả.</p><p>Thông tin hiển thị được lấy trực tiếp từ dữ liệu bài làm trên hệ thống. Người làm bài có thể bấm <b>Xem lại đề đã làm</b> (sau khi bài kiểm tra kết thúc) và quét khuôn mặt để xem lại câu hỏi.</p>' },
+    support: { t:'Hỗ trợ', b:'<p>Mọi thắc mắc về kết quả, vui lòng liên hệ quản lí trực tiếp hoặc quản trị viên phụ trách.</p>' }
+  };
+  var bar = $('vtBar'), bt = $('vtBurger');
+  function set(on){ bar.classList.toggle('open', on); bt.setAttribute('aria-expanded', on ? 'true' : 'false'); bt.setAttribute('aria-label', on ? 'Đóng menu' : 'Mở menu'); }
+  bt.addEventListener('click', function(e){ e.stopPropagation(); set(!bar.classList.contains('open')); });
+  document.addEventListener('click', function(e){ if (bar.classList.contains('open') && !bar.contains(e.target)) set(false); });
+  document.querySelectorAll('[data-vt]').forEach(function(b){ b.addEventListener('click', function(){ set(false); var x = TXT[b.dataset.vt]; $('vtDlgT').textContent = x.t; $('vtDlgB').innerHTML = x.b; $('vtDlg').classList.remove('hide'); $('vtDlgX').focus(); }); });
+  $('vtDlgX').addEventListener('click', function(){ $('vtDlg').classList.add('hide'); });
+  $('vtDlg').addEventListener('click', function(e){ if (e.target === $('vtDlg')) $('vtDlg').classList.add('hide'); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape'){ $('vtDlg').classList.add('hide'); if (bar.classList.contains('open')){ set(false); bt.focus(); } } });
+})();
 (async function(){
   if (!TOK) return;
   try {
@@ -425,6 +558,11 @@ $('paperAdmin').addEventListener('click', adminView);
   $('cert').classList.toggle('pr', prac);
   $('vbar').classList.toggle('hide', !prac); // kết quả chính thức: dòng "đã xác thực" nằm ngay trong giấy; thi thử vẫn hiện khung báo
   var IC = {
+    card: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><rect x="5.5" y="8.5" width="5.5" height="7" rx="1" fill="currentColor"/><path d="M13.5 10h5M13.5 14h3.5"/></svg>',
+    play: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l5.5-3.5z"/></svg>',
+    flag: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5 4h14v10H5z" fill="#fff" stroke="currentColor" stroke-width="1.6"/><path d="M5 4h3.5v2.5H5zM12 4h3.5v2.5H12zM8.5 6.5H12V9H8.5zM15.5 6.5H19V9h-3.5zM5 9h3.5v2.5H5zM12 9h3.5v2.5H12zM8.5 11.5H12V14H8.5zM15.5 11.5H19V14h-3.5z" fill="currentColor"/></svg>',
+    watch: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="7.5"/><path d="M10 2.5h4M12 2.5V6M12 13.5V10M12 13.5l2.6 1.6M18.5 6.5l1.4-1.4"/></svg>',
+    star: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>',
     person: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.5" r="4" fill="currentColor"/><path d="M4 21c0-4.6 3.6-7.5 8-7.5s8 2.9 8 7.5z" fill="currentColor"/></svg>',
     group: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6" fill="currentColor"/><path d="M5.5 20c0-3.9 2.9-6.4 6.5-6.4s6.5 2.5 6.5 6.4z" fill="currentColor"/><circle cx="4.6" cy="9.6" r="2.4" fill="currentColor" opacity=".7"/><circle cx="19.4" cy="9.6" r="2.4" fill="currentColor" opacity=".7"/></svg>',
     target: '<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="22" cy="26" r="16"/><circle cx="22" cy="26" r="9"/><circle cx="22" cy="26" r="2.6" fill="currentColor"/><path d="M22 26 40 8M40 8v9M40 8h-9"/></svg>',
@@ -434,13 +572,15 @@ $('paperAdmin').addEventListener('click', adminView);
   $('vTitle').textContent = r.title;
   var kind = prac ? 's-p' : ps === null ? 's-d' : ps ? 's-y' : 's-n', mark = (prac || ps === false) ? '!' : '✓';
   var pillTxt = prac ? 'THI THỬ' + (ps === null ? '' : ps ? ' · ĐẠT' : ' · CHƯA ĐẠT') : ps === null ? 'ĐÃ HOÀN THÀNH' : ps ? 'ĐẠT' : 'CHƯA ĐẠT';
-  $('vBadge').innerHTML = '<span class="ct-status ' + kind + '"><b>' + mark + '</b>' + esc(pillTxt) + ((ps !== null && r.passScore) ? '<i>Ngưỡng đạt ' + esc(r.passScore) + '%</i>' : '') + '</span>';
+  $('vBadge').innerHTML = '<span class="ct-status ' + kind + '"><b>' + mark + '</b>' + esc(pillTxt) + ((ps !== null && r.passScore) ? '<i>Ngưỡng đạt: ' + esc(r.passScore) + '%</i>' : '') + '</span>';
   // Màu vòng theo mốc điểm (giống thẻ ảnh và email): >= 90% xanh lá, 70-90% xanh dương, 60-70% vàng, dưới 60% đỏ
   var tier = pct >= 90 ? 'g' : pct >= 70 ? 'b' : pct >= 60 ? 'y' : 'r';
   $('vRing').className = 'ct-ring t-' + tier; $('vPct').textContent = pct + '%';
   $('vOk').classList.toggle('hide', !(tier === 'g' || tier === 'b'));
   $('vName').textContent = r.name || r.code;
-  $('vCode').innerHTML = r.code ? IC.person + '<span>Mã NV: ' + esc(r.code) + '</span>' : '';
+  $('vArt').src = (!prac && ps !== false && pct >= 70) ? '/kiemtra/trophy.png' : '/kiemtra/rs-art.png';
+  $('cert').classList.toggle('art-cup', !prac && ps !== false && pct >= 70);
+  $('vCode').innerHTML = r.code ? IC.card + '<span>Mã NV: ' + esc(r.code) + '</span>' : '';
   $('vMgr').innerHTML = r.manager ? IC.group + '<span>Quản lí: ' + esc(r.manager) + '</span>' : '';
   $('vScore').textContent = (r.score != null ? r.score : '–') + '/' + (r.total != null ? r.total : '–');
   if (r.wrong != null && r.blank != null && r.total){
@@ -455,10 +595,10 @@ $('paperAdmin').addEventListener('click', adminView);
   $('vStats').style.setProperty('--n', Math.max(1, ms.length)); $('vStats').classList.toggle('hide', !ms.length);
   $('vStats').innerHTML = ms.map(function(x){ return '<div class="ct-m' + (x.gold ? ' gold' : '') + '">' + x.ic + '<strong>' + esc(x.v) + '</strong><span>' + esc(x.l) + '</span></div>'; }).join('');
   var rows = '';
-  if (r.startedAt) rows += '<div><dt>Bắt đầu lúc</dt><dd>'+full(r.startedAt)+'</dd></div>';
-  if (r.submittedAt) rows += '<div><dt>Nộp bài lúc</dt><dd>'+full(r.submittedAt)+'</dd></div>';
-  if (r.durationSec != null) rows += '<div><dt>Thời gian hoàn thành</dt><dd>'+dur(r.durationSec)+'</dd></div>';
-  if (r.compliancePoints != null) rows += '<div><dt>' + (prac ? 'Điểm tuân thủ (nếu thi thật)' : 'Điểm tuân thủ') + '</dt><dd class="gold">' + esc(r.compliancePoints) + ' điểm</dd></div>';
+  if (r.startedAt) rows += '<div><dt>'+IC.play+'Bắt đầu lúc</dt><dd>'+full(r.startedAt)+'</dd></div>';
+  if (r.submittedAt) rows += '<div><dt>'+IC.flag+'Nộp bài lúc</dt><dd>'+full(r.submittedAt)+'</dd></div>';
+  if (r.durationSec != null) rows += '<div><dt>'+IC.watch+'Thời gian hoàn thành</dt><dd>'+dur(r.durationSec)+'</dd></div>';
+  if (r.compliancePoints != null) rows += '<div><dt>'+IC.star+(prac ? 'Điểm tuân thủ (nếu thi thật)' : 'Điểm tuân thủ') + '</dt><dd class="gold">' + esc(r.compliancePoints) + ' điểm</dd></div>';
   $('vRows').innerHTML = rows; $('vRows').classList.toggle('hide', !rows); $('vProof').textContent = r.proof;
   $('vSys').textContent = full(Date.now() + off);
   setInterval(function(){ $('vSys').textContent = full(Date.now() + off); }, 1000);
