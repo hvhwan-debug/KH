@@ -1100,6 +1100,34 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
 @keyframes aiPulse{50%{opacity:.35}}
 @media(max-width:560px){.ai-pipe{margin-top:12px;padding:12px 14px 10px;border-radius:16px}.ai-now-t{font-size:14px}.ai-now-p{font-size:20px}}
 @media(prefers-reduced-motion:reduce){.ai-pipe::before,#scrPhoto .ai-pipe .ai-steps li.run::before,.ai-now-s i{animation:none!important}}
+/* ---- Màn Xác nhận thông tin trên điện thoại: gọn, ô thống kê không vỡ chữ, nút bắt đầu gần hơn ---- */
+.rules b small{font-size:.6em;font-weight:700;letter-spacing:0;margin-left:1px}
+@media(max-width:560px){
+  body.introbg #scrConfirm{padding:20px 16px 18px}
+  body.introbg #scrConfirm h1{font-size:22px;margin-bottom:6px}
+  body.introbg #scrConfirm .lead{font-size:13px;line-height:1.5;margin-bottom:14px}
+  #scrConfirm .kv{padding:0 14px;margin-bottom:12px;border-radius:14px}
+  #scrConfirm .kv div{padding:10px 0;font-size:13.5px;gap:12px;align-items:baseline}
+  #scrConfirm .kv dt{flex:0 0 auto;white-space:nowrap}
+  #scrConfirm .kv dd{min-width:0;overflow-wrap:anywhere}
+  /* Ô thống kê: tối đa 3 ô/hàng; 4 ô thành 2×2; 5 ô thành 3 + 2 */
+  #scrConfirm .rules{display:flex!important;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  #scrConfirm .rules>div{flex:1 1 calc(33.333% - 6px);min-width:0;padding:10px 4px 9px;border-radius:13px}
+  #scrConfirm .rules>div:first-child:nth-last-child(4),#scrConfirm .rules>div:first-child:nth-last-child(4)~div,
+  #scrConfirm .rules>div:first-child:nth-last-child(2),#scrConfirm .rules>div:first-child:nth-last-child(2)~div{flex-basis:calc(50% - 4px)}
+  #scrConfirm .rules b{font-size:20px;line-height:1.15;white-space:nowrap}
+  #scrConfirm .rules span{font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #scrConfirm .notes{font-size:12.5px;line-height:1.6;padding-left:16px}
+  #scrConfirm .notes li+li{margin-top:5px}
+  body.introbg #scrConfirm #btnStart{margin-top:16px!important;height:54px}
+  /* Nút bắt đầu bám đáy màn hình khi cuộn (overflow:clip thay vì hidden để sticky chạy; máy cũ chỉ không bám, vẫn dùng được) */
+  body.introbg #scrConfirm{overflow:clip}
+  body.introbg #scrConfirm #btnStart{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:5;box-shadow:0 10px 28px rgba(8,90,200,.35),0 0 0 6px rgba(255,255,255,.85)}
+  body.introbg #scrConfirm:has(#reqBox:not(.hide)) #btnStart{position:static}
+  #scrConfirm .sublinks{margin-top:6px}
+  #scrConfirm .sublinks .lnk{min-height:44px}
+}
+@media(max-width:340px){#scrConfirm .rules b{font-size:18px}#scrConfirm .kv div{flex-wrap:wrap}#scrConfirm .kv dd{text-align:left}}
 </style>
 </head>
 <body class="introbg" data-scr="check">
@@ -1632,7 +1660,7 @@ function renderConfirm(){
     $('inProvinceQ').removeAttribute('aria-invalid'); $('inRegion').classList.remove('bad'); msg('regionMsg','');
   }
   var secs = x.secondsPerQuestion || 60, n = x.questionCount || 0;
-  var timeBox = x.timeMode === 'total' ? '<div><b>'+(x.totalMinutes||30)+' phút</b><span>Cả bài</span></div>' : '<div><b>'+secs+'s</b><span>Mỗi câu</span></div>';
+  var timeBox = x.timeMode === 'total' ? '<div><b>'+(x.totalMinutes||30)+'<small> phút</small></b><span>Cả bài</span></div>' : '<div><b>'+secs+'<small>s</small></b><span>Mỗi câu</span></div>';
   var rl = ['<div><b>'+(n||'–')+'</b><span>Số câu hỏi</span></div>', timeBox];
   if (x.passScore > 0) rl.push('<div><b>'+x.passScore+'%</b><span>Ngưỡng đạt</span></div>');
   // Đã làm, còn lượt: thêm ô "Lượt còn lại" và "Điểm cao nhất" ngay trong khung thống kê
