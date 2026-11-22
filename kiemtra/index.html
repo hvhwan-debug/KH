@@ -813,6 +813,7 @@ body.introbg #scrCheck .fl-go svg{width:55%;height:55%;color:#0A5BDC;filter:none
 #scrPhoto.lg.rdy .ai-pipe{display:none!important}
 #scrPhoto.lg:not(.rdy) .ai-tips{display:none!important}
 #scrPhoto.lg.rdy .ai-tips{order:-1}
+#scrPhoto.lg.rdy #btnCapture{display:none!important}
 /* ===== Màn làm bài trên điện thoại (theo mẫu thiết kế) ===== */
 .qbrand,.qexam,.qstat,.qgb{display:none}
 .qcard{display:block}
@@ -2855,7 +2856,38 @@ function aiTrackStart(){
     AI.loop = setTimeout(tick, 260);
   })();
 }
-function aiReadyView(){ if ($('scrPhoto').getAttribute('data-ai') !== 'live') aiScr('live'); $('aiHint').textContent = 'Đặt khuôn mặt vào trong khung oval'; aiRead(0, null); } // màn chờ: chỉ hiện camera + oval, chưa chạy thử thách
+var RD = { run:false, loop:null, fa:null, okAt:0 };
+function aiReadyStop(){ RD.run = false; clearTimeout(RD.loop); RD.loop = null; RD.okAt = 0; }
+// Màn chờ (đăng nhập bằng khuôn mặt): hệ thống tự nhận diện; có đúng một khuôn mặt nằm trong oval và giữ yên ~0,7 giây thì tự bắt đầu quét, không cần bấm nút
+function aiReadyWatch(){
+  if (RD.run) return; RD.run = true; RD.okAt = 0;
+  var v = $('pvVideo');
+  (async function tick(){
+    if (!RD.run) return;
+    try {
+      if (!RD.fa) RD.fa = await loadFaceAI();
+      if (!RD.run) return;
+      if (v.videoWidth && v.readyState >= 2){
+        var all = await RD.fa.detectAllFaces(v, new RD.fa.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }));
+        if (!RD.run) return;
+        aiTrackUpdate(all, v, true); // vẽ khung theo dõi trên khuôn mặt (không đổi nhãn trạng thái)
+        var n = all.filter(function(d){ return d.box.width / v.videoWidth >= 0.08; }).length, b = AI.box, hint = 'Đặt khuôn mặt vào trong khung oval', good = false;
+        if (n > 1) hint = 'Chỉ một người trong khung hình';
+        else if (n === 1 && b){
+          var off = Math.hypot(b.x + b.w / 2 - .5, b.y + b.h / 2 - .42);
+          if (b.w < .2) hint = 'Hãy lại gần camera hơn';
+          else if (b.w > .7) hint = 'Hãy lùi ra xa một chút';
+          else if (off > .2) hint = 'Đưa khuôn mặt vào giữa khung oval';
+          else { hint = 'Giữ yên, đang bắt đầu quét…'; good = true; }
+        }
+        $('aiHint').textContent = hint;
+        if (good){ if (!RD.okAt) RD.okAt = Date.now(); if (Date.now() - RD.okAt >= 700){ aiReadyStop(); LV.go = true; $('scrPhoto').classList.remove('rdy'); aiLive(); return; } } else RD.okAt = 0;
+      }
+    } catch (e) { if (!RD.fa){ aiReadyStop(); LV.go = true; $('scrPhoto').classList.remove('rdy'); aiLive(); return; } } // không tải được bộ nhận diện: vào thẳng thử thách như cũ
+    RD.loop = setTimeout(tick, 260);
+  })();
+}
+function aiReadyView(){ if ($('scrPhoto').getAttribute('data-ai') !== 'live') aiScr('live'); $('aiHint').textContent = 'Đặt khuôn mặt vào trong khung oval'; aiRead(0, null); aiReadyWatch(); } // màn chờ: chỉ hiện camera + oval, tự nhận diện rồi tự quét
 function aiLive(){ if (AI.run || LV.started) return; if (PH.mode === 'login' && !LV.go){ aiReadyView(); return; } LV.started = true; sndReady(); aiBuildMesh(); aiScr('live'); aiChip('', 'CAMERA TRỰC TIẾP'); aiRead(0, null); aiTrackStart(); lvBegin(); }
 function aiScanStart(){ // vừa chụp xong: lưới mesh phủ lên khuôn mặt đã khoá gần nhất
   aiTrackStop(); aiBuildMesh(); aiStepsReset(); aiStep(0, 'run'); aiScr('scan'); aiChip('scan', 'ĐANG PHÂN TÍCH');
@@ -2898,6 +2930,7 @@ async function aiVerifyEnd(res){ // kết quả máy chủ (kt-start): đối ch
   aiStep(3, ''); aiStep(4, ''); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN KHUÔN MẶT'); // lỗi khác (thiếu thông tin…): giữ nguyên kết quả nhận diện
 }
 async function photoInit(){
+  aiReadyStop();
   PH.dataUrl = ''; PH.face = null; if (PH.mode !== 'login'){ renderLoc(); askLocation(); } loadFaceAI().catch(function(){}); // tải sẵn bộ nhận diện trong lúc mở camera; vị trí không bắt buộc, chỉ xin thử
   $('pvVideo').classList.remove('hide'); $('pvImg').classList.add('hide'); $('faceGuide').classList.remove('hide');
   $('btnCapture').classList.remove('hide'); $('btnPhotoOk').classList.add('hide'); $('btnPhotoRetry').classList.add('hide');
@@ -2924,7 +2957,7 @@ async function photoInit(){
   }
 }
 function photoStop(){
-  aiTrackStop(); sndStopVoice();
+  aiTrackStop(); aiReadyStop(); sndStopVoice();
   var pb = document.querySelector('#scrPhoto .photo-box'); if (pb) pb.classList.remove('opening');
   if (PH.stream){ PH.stream.getTracks().forEach(function(t){ t.stop(); }); PH.stream = null; }
 }
