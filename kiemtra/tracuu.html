@@ -292,6 +292,132 @@ body.au-lookup.th-wide #card{width:min(1040px,100%);padding:0;margin:0 auto}
   .th-who{padding:18px 18px}.th-stats{width:100%}.th-stat{flex:1;min-width:0;padding:9px 6px}.th-stat strong{font-size:21px}
   .th-vbar{padding:10px 18px}.th-list{padding:14px 12px 20px}
 }
+
+/* ===== Tra cứu: màn danh sách kết quả (theo mẫu thiết kế). Không có tải báo cáo / tải video: học viên chỉ xem. ===== */
+body.au-lookup.th-wide .au-bar{background:linear-gradient(100deg,#0A4FD3 0%,#1678F2 60%,#2E9BFF 100%);border:0;box-shadow:0 10px 30px -14px rgba(10,60,160,.6);-webkit-backdrop-filter:none;backdrop-filter:none}
+body.au-lookup.th-wide .au-brand{gap:16px;color:#fff;font-size:clamp(15px,1.4vw,20px);line-height:1.22}
+body.au-lookup.th-wide .au-mark{width:auto;height:auto;padding:0;border-radius:0;background:none!important;box-shadow:none}
+body.au-lookup.th-wide .au-mark img{display:none}
+body.au-lookup.th-wide .au-cap{display:block;width:clamp(40px,3.6vw,56px);height:auto;color:#fff}
+body.au-lookup.th-wide .au-name{white-space:normal;max-width:11.5em;padding-left:16px;border-left:1.5px solid rgba(255,255,255,.6)}
+body.au-lookup.th-wide .au-back{color:#fff;background:rgba(255,255,255,.16);border-radius:99px;padding:9px 16px}
+body.au-lookup.th-wide .au-back:hover{background:rgba(255,255,255,.26)}
+body.au-lookup.th-wide .wrap{min-height:calc(100vh - 76px);padding:22px clamp(12px,3vw,40px) 36px;align-items:center;justify-content:flex-start}
+body.au-lookup.th-wide #card{width:min(1120px,100%);padding:clamp(14px,2vw,24px);border-radius:28px;background:rgba(255,255,255,.96);overflow:visible}
+/* thẻ xanh: người làm + 4 chỉ số */
+.tr-who{display:flex;align-items:center;gap:22px;flex-wrap:wrap;padding:clamp(16px,2vw,24px) clamp(16px,2.2vw,28px);border-radius:22px;color:#fff;background:radial-gradient(60% 150% at 85% -40%,rgba(255,255,255,.26),transparent 62%),linear-gradient(100deg,#0A3FBF 0%,#1370EE 60%,#2E8DFF 100%)}
+.tr-id{display:flex;align-items:center;gap:18px;min-width:0;flex:1 1 300px;padding-right:22px;border-right:1px solid rgba(255,255,255,.35)}
+.tr-id .av{flex:0 0 auto;display:grid;place-items:center;width:clamp(54px,5.4vw,76px);height:clamp(54px,5.4vw,76px);border-radius:50%;background:#3F93F5;border:2px solid rgba(255,255,255,.35);font-size:clamp(20px,2vw,28px);font-weight:800}
+.tr-id b{display:block;font-size:clamp(20px,2.2vw,30px);font-weight:900;letter-spacing:-.4px;line-height:1.2;word-break:break-word}
+.tr-id span{display:block;margin-top:4px;font-size:clamp(12px,1vw,14.5px);opacity:.9}
+.tr-stats{display:grid;grid-template-columns:repeat(4,minmax(86px,1fr));gap:10px;flex:2 1 420px}
+.tr-stat{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 8px;border-radius:16px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);text-align:center}
+.tr-stat svg{width:22px;height:22px;opacity:.95}
+.tr-stat strong{font-size:clamp(20px,2vw,28px);font-weight:900;line-height:1.15}
+.tr-stat em{font-style:normal;font-size:12px;opacity:.92}
+.tr-vbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:10px 0 0;padding:10px 18px;border-radius:14px;background:#D9F5E6;color:#14753F;font-size:14px;font-weight:700}
+.tr-vbar .ok{display:inline-flex;align-items:center;gap:8px}
+.tr-vbar em{margin-left:auto;font-style:normal;font-size:13px;font-weight:600;color:#3F6E55}
+.tr-vbar button{border:1.5px solid rgba(20,117,63,.4);background:rgba(255,255,255,.7);color:#14753F;font:inherit;font-size:13px;font-weight:700;padding:6px 14px;border-radius:99px;cursor:pointer}
+.tr-vbar button:hover{background:#fff}
+/* thanh công cụ */
+.tr-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 14px}
+.tr-chips{display:flex;gap:8px;flex-wrap:wrap}
+.tr-chips button{display:inline-flex;align-items:center;gap:7px;border:1.5px solid #D5E2F2;background:#fff;color:#1B3A6B;font:inherit;font-size:13.5px;font-weight:700;padding:9px 16px;border-radius:99px;cursor:pointer;transition:background .15s,color .15s}
+.tr-chips button svg{width:17px;height:17px}
+.tr-chips button[aria-pressed=true]{background:linear-gradient(100deg,#1B78E8,#0B5BD6);border-color:transparent;color:#fff;box-shadow:0 8px 18px -10px rgba(10,90,215,.8)}
+.tr-search{display:flex;align-items:center;gap:8px;margin-left:auto;min-width:200px;flex:0 1 260px;padding:0 14px;height:42px;border:1.5px solid #D5E2F2;border-radius:99px;background:#fff;color:#6B7FA3}
+.tr-search svg{width:18px;height:18px;flex:0 0 auto}
+.tr-search input{flex:1;min-width:0;border:0;outline:0;background:none;font:inherit;font-size:14px;color:#0B1F4B}
+.tr-search:focus-within{border-color:#1B78E8;box-shadow:0 0 0 4px rgba(27,120,232,.12)}
+.tr-fwrap{position:relative}
+.tr-fbtn{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 18px;border:1.5px solid #D5E2F2;border-radius:99px;background:#fff;color:#1B3A6B;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.tr-fbtn svg{width:18px;height:18px}
+.tr-pop{position:absolute;right:0;top:calc(100% + 8px);z-index:20;width:230px;padding:14px 16px;border-radius:16px;background:#fff;border:1px solid #D5E2F2;box-shadow:0 24px 50px -20px rgba(10,40,100,.5)}
+.tr-pop.hide{display:none}
+.tr-pop b{display:block;margin:2px 0 8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#5A6F92}
+.tr-pop label{display:flex;align-items:center;gap:10px;padding:7px 2px;font-size:14px;font-weight:600;color:#0B1F4B;cursor:pointer}
+.tr-pop b+label{margin-top:-2px}.tr-pop label+b{margin-top:12px}
+.tr-pop input{accent-color:#1B78E8}
+/* thẻ từng bài */
+.tr-list{display:flex;flex-direction:column;gap:12px}
+.tr-grp{border:1.5px solid #E1EAF6;border-radius:18px;background:#fff;box-shadow:0 10px 26px -20px rgba(20,60,140,.5);overflow:hidden}
+.tr-grp.open{border-color:#C5D8F2}
+.tr-gh{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;align-items:center;gap:16px;width:100%;padding:14px 18px;border:0;background:none;font:inherit;text-align:left;cursor:pointer;color:inherit}
+.tr-ic{display:grid;place-items:center;width:52px;height:52px;border-radius:14px;background:#E3EEFC;color:#1366E0}
+.tr-ic svg{width:28px;height:28px}
+.tr-ic.kp{background:#E3F1FF}.tr-ic.kt{background:#E6EEFB}
+.tr-gt{min-width:0}
+.tr-gt>b{display:block;font-size:clamp(15px,1.3vw,18px);font-weight:800;line-height:1.3;color:#0B1F4B}
+.tr-tags{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:13px;color:#4B6086}
+.tr-kind{font-style:normal;font-weight:700;padding:2px 12px;border-radius:99px;background:#DCEBFF;color:#1B5FC4}
+.tr-kind.ko{background:#FFF1CC;color:#8A5A00}
+.tr-big{text-align:center;line-height:1.1}
+.tr-big strong{display:block;font-size:clamp(24px,2.4vw,34px);font-weight:900;color:#243B7A;letter-spacing:-.5px}
+.tr-big small{font-size:.55em;font-weight:800}
+.tr-big em{display:block;margin-top:2px;font-style:normal;font-size:12.5px;font-weight:600;color:#5A6F92}
+.tr-grp.y .tr-big strong{color:#15803D}.tr-grp.n .tr-big strong{color:#243B7A}
+.tr-pill{display:inline-flex;align-items:center;justify-content:center;min-width:104px;padding:7px 16px;border-radius:99px;font-size:13.5px;font-weight:800;white-space:nowrap}
+.tr-pill.y{background:#D9F5E6;color:#14753F}.tr-pill.n{background:#FFE3E3;color:#C0262D}
+.tr-chev{width:24px;height:24px;color:#4B6086;transition:transform .2s}
+.tr-grp.open .tr-chev{transform:rotate(180deg)}
+.tr-tbl{display:none;margin:0 14px 14px;padding:8px 6px 4px;border:1px solid #E1EAF6;border-radius:14px;background:#fff}
+.tr-grp.open .tr-tbl{display:block}
+.tr-th,.tr-row{display:grid;grid-template-columns:minmax(78px,.8fr) minmax(104px,1fr) minmax(170px,2fr) minmax(106px,1fr) minmax(88px,.9fr) minmax(82px,.7fr);align-items:center;gap:12px;padding:0 12px}
+.tr-th{padding-top:6px;padding-bottom:8px;font-size:12.5px;font-weight:700;color:#4B6086}
+.tr-rows{list-style:none;margin:0;padding:0}
+.tr-row{padding-top:12px;padding-bottom:12px;border-top:1px solid #EDF2F9;font-size:13.5px;color:#243B63}
+.tr-n{font-weight:800;color:#0B1F4B;display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+.tr-star{font-style:normal;font-size:10.5px;font-weight:800;color:#14753F;background:#E6F7EE;border:1px solid #A8DDBF;border-radius:99px;padding:1px 8px}
+.tr-res{display:flex;align-items:center;gap:12px}
+.tr-bar{display:flex;flex:1 1 90px;max-width:170px;height:9px;border-radius:99px;overflow:hidden;background:#DDE5F0}
+.tr-bar i{display:block;height:100%}.tr-bar .g{background:#16B364}.tr-bar .w{background:#F0605D}
+.tr-res b{white-space:nowrap;font-weight:800;color:#0B1F4B}.tr-res em{font-style:normal;font-weight:600;color:#4B6086}
+.tr-dur{display:flex;align-items:center;gap:6px}.tr-dur svg{width:15px;height:15px;color:#6B7FA3;flex:0 0 auto}
+.tr-state{font-weight:700;color:#14753F}
+.tr-go{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#1366E0;text-decoration:none;white-space:nowrap}
+.tr-go svg{width:18px;height:18px}.tr-go:hover{text-decoration:underline}
+.tr-empty{padding:28px;text-align:center;color:#4B6086;font-weight:600;border:1.5px dashed #D5E2F2;border-radius:16px}
+/* phân trang */
+.tr-pager{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:16px;font-size:13.5px;color:#4B6086}
+.tr-pager:empty{display:none}
+.tr-pn{display:inline-flex;gap:6px}
+.tr-pn button{min-width:36px;height:36px;border:1.5px solid #D5E2F2;border-radius:10px;background:#fff;color:#1B3A6B;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.tr-pn button.on{background:#1B78E8;border-color:#1B78E8;color:#fff}
+.tr-pn button:disabled{opacity:.45;cursor:default}
+.tr-pr{display:inline-flex;align-items:center;gap:10px}
+.tr-pr select{height:36px;padding:0 10px;border:1.5px solid #D5E2F2;border-radius:10px;background:#fff;font:inherit;font-size:14px;color:#0B1F4B}
+@media(max-width:860px){
+  body.au-lookup.th-wide .au-bar{height:64px;padding:0 4vw}
+  body.au-lookup.th-wide .au-brand{font-size:13.5px}
+  body.au-lookup.th-wide .au-cap{width:38px}
+  body.au-lookup.th-wide .au-back{display:none}
+  body.au-lookup.th-wide .wrap{padding:12px 10px 28px}
+  body.au-lookup.th-wide #card{padding:10px;border-radius:24px}
+  .tr-id{flex-basis:100%;padding:0 0 12px;border-right:0;border-bottom:1px solid rgba(255,255,255,.3)}
+  .tr-stats{flex-basis:100%;grid-template-columns:repeat(4,1fr);gap:6px}
+  .tr-stat{padding:10px 2px}.tr-stat strong{font-size:19px}.tr-stat em{font-size:10.5px}
+  .tr-chips{order:1;flex:1 1 100%}
+  .tr-search{order:2;flex:1 1 0;min-width:0;margin-left:0}
+  .tr-fwrap{order:3}
+  .tr-chips{flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+  .tr-chips button{white-space:nowrap;padding:8px 13px}
+  .tr-tools{gap:10px}
+  .tr-gh{grid-template-columns:auto minmax(0,1fr) auto;gap:12px;padding:12px 12px}
+  .tr-ic{width:42px;height:42px;border-radius:12px}.tr-ic svg{width:23px;height:23px}
+  .tr-pill{grid-column:2;grid-row:2;justify-self:start;min-width:0;padding:4px 12px;font-size:12.5px}
+  .tr-chev{grid-column:3;grid-row:2;justify-self:end}
+  .tr-big{grid-column:3;grid-row:1}
+  .tr-th{display:none}
+  .tr-tbl{margin:0 8px 10px;padding:2px 0}
+  .tr-row{grid-template-columns:1fr auto;gap:6px 10px;padding:12px 10px}
+  .tr-n{grid-column:1;flex-direction:row;align-items:center;gap:8px}
+  .tr-when{grid-column:2;grid-row:1;text-align:right;color:#4B6086}
+  .tr-res{grid-column:1/-1}.tr-bar{max-width:none}
+  .tr-dur{grid-column:1}.tr-state{display:none}
+  .tr-go{grid-column:2;justify-self:end}
+  .tr-pager{justify-content:center;text-align:center}
+}
 </style>
 </head>
 <body class="au-lookup">
@@ -314,12 +440,29 @@ body.au-lookup.th-wide #card{width:min(1040px,100%);padding:0;margin:0 auto}
     </section>
 
     <section class="hide" id="listView" aria-live="polite">
-      <div class="th-who">
-        <div class="th-id"><div class="av" id="wAv" aria-hidden="true"></div><div><b id="wName"></b><span id="wSub"></span></div></div>
-        <div class="th-stats" id="wStats"></div>
+      <div class="tr-who">
+        <div class="tr-id"><div class="av" id="wAv" aria-hidden="true"></div><div><b id="wName"></b><span id="wSub"></span></div></div>
+        <div class="tr-stats" id="wStats"></div>
       </div>
-      <div class="th-vbar"><span><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5.2v6c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8v-6z" fill="currentColor"/><path d="m8.2 12.3 2.6 2.6 5-5.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Đã xác thực khuôn mặt</span><button type="button" id="tDone">Xong, ẩn kết quả</button></div>
-      <div class="th-list" id="thList"></div>
+      <div class="tr-vbar"><span class="ok"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="m7.6 12.4 3 3 5.8-6.4" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Đã xác thực khuôn mặt</span><em id="wUpd"></em><button type="button" id="tDone">Xong, ẩn kết quả</button></div>
+      <div class="tr-tools">
+        <div class="tr-chips" id="thChips" role="group" aria-label="Lọc theo loại"></div>
+        <label class="tr-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="thQ" type="search" placeholder="Tìm bài kiểm tra..." autocomplete="off" aria-label="Tìm bài kiểm tra"></label>
+        <div class="tr-fwrap">
+          <button type="button" class="tr-fbtn" id="thFb" aria-expanded="false" aria-controls="thPop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg>Bộ lọc</button>
+          <div class="tr-pop hide" id="thPop" role="dialog" aria-label="Bộ lọc">
+            <b>Trạng thái</b>
+            <label><input type="radio" name="fs" value="" checked>Tất cả</label>
+            <label><input type="radio" name="fs" value="y">Đạt yêu cầu</label>
+            <label><input type="radio" name="fs" value="n">Chưa đạt</label>
+            <b>Sắp xếp</b>
+            <label><input type="radio" name="fo" value="new" checked>Mới nhất</label>
+            <label><input type="radio" name="fo" value="best">Điểm cao nhất</label>
+          </div>
+        </div>
+      </div>
+      <div class="tr-list" id="thList"></div>
+      <div class="tr-pager" id="thPager"></div>
     </section>
 
     <section class="hide th-lock" id="lockView"><b>Tra cứu đang bị tạm khoá</b><p class="pnote" id="lockMsg"></p><button type="button" class="btn-outline" id="lockBack">Quay lại</button></section>
@@ -346,12 +489,12 @@ function fmtClock(sec){ if (sec == null || sec < 0) return ''; var m = Math.floo
 function initials(n){ var p = String(n || '').trim().split(/\s+/); return ((p[p.length - 1] || '?').charAt(0) + (p.length > 1 ? p[0].charAt(0) : '')).toUpperCase(); }
 
 function show(which){ ['formView','listView','lockView'].forEach(function(v){ $(v).classList.toggle('hide', v !== which); }); document.body.classList.toggle('th-wide', which === 'listView'); window.scrollTo(0, 0); }
-function clearResult(){ $('thList').innerHTML = ''; $('wStats').innerHTML = ''; $('wName').textContent = ''; $('wSub').textContent = ''; clearTimeout(idleT); }
+function clearResult(){ $('thList').innerHTML = ''; $('thPager').innerHTML = ''; $('thChips').innerHTML = ''; $('wStats').innerHTML = ''; $('wName').textContent = ''; $('wSub').textContent = ''; $('wUpd').textContent = ''; $('thQ').value = ''; clearTimeout(idleT); }
 function resetForm(){ clearResult(); FLOW.code = FLOW.email = ''; $('tMsg').innerHTML = ''; show('formView'); }
 // Tra cứu chỉ bằng khuôn mặt (không có đường nhập mã nhân viên + email)
 function showLocked(msg){ clearResult(); $('lockMsg').textContent = msg || ''; show('lockView'); }
 
-var TH = { groups:[], filter:'', open:{} };
+var TH = { groups:[], filter:'', q:'', status:'', sort:'new', page:1, per:5, open:{} };
 function fmtDur(sec){ // 95 -> "1 phút 35 giây"; 80214 -> "22 giờ 16 phút"
   if (sec == null || sec < 0) return '';
   var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
@@ -360,61 +503,118 @@ function fmtDur(sec){ // 95 -> "1 phút 35 giây"; 80214 -> "22 giờ 16 phút"
 function fmtShort(ms){ // "22/11 · 12:40" theo giờ Việt Nam
   try { var o = {}; new Intl.DateTimeFormat('en-GB', { timeZone:'Asia/Ho_Chi_Minh', hour12:false, day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }).formatToParts(new Date(ms)).forEach(function(x){ o[x.type] = x.value; });
     return o.day + '/' + o.month + ' · ' + o.hour + ':' + o.minute; } catch(e){ return ''; } }
-function renderGroups(){
-  var KIND = { o:'Chính thức', p:'Thi thử', t:'Thử nghiệm' };
-  var html = TH.groups.filter(function(g){ return !TH.filter || g.kind === TH.filter; }).map(function(g, gi){
-    var gid = g.kind + ':' + g.title, rows = g.rows, off = rows.filter(function(r){ return r.official; })[0];
-    var head = off || rows.reduce(function(m, r){ return (r.pct || 0) > (m.pct || 0) ? r : m; }, rows[0]); // kết quả chính thức (hoặc cao nhất nếu không tính)
-    var st = g.kind === 'o' ? (head.passed === true ? 'y' : head.passed === false ? 'n' : '') : '';
-    var verdict = g.kind !== 'o' ? 'Cao nhất' : head.passed === true ? 'ĐẠT' : head.passed === false ? 'CHƯA ĐẠT' : 'Kết quả';
-    var shown = TH.open[gid] ? rows : rows.slice(0, 3);
-    return '<article class="th-grp ' + st + '"><div class="th-gh"><div class="th-gt"><h3>' + esc(g.title) + '</h3><p>' +
-        '<span class="th-kind' + (g.kind === 'o' ? ' o' : '') + '">' + KIND[g.kind] + '</span>' +
-        '<span>' + rows.length + ' lượt làm</span>' + (head.passScore ? '<span>Ngưỡng đạt ' + esc(head.passScore) + '%</span>' : '') + '</p></div>' +
-      '<div class="th-big"><strong>' + esc(head.pct) + '<small>%</small></strong><span>' + verdict + '</span></div></div>' +
-      '<ul class="th-rows">' + shown.map(function(r){
-        var tot = r.total || 0, w = function(n){ return tot ? (n / tot * 100) : 0; };
-        var bar = '<i class="g" style="width:' + (r.wrong != null ? w(r.score || 0) : (r.pct || 0)) + '%"></i>' + (r.wrong != null ? '<i class="w" style="width:' + w(r.wrong) + '%"></i>' : '');
-        var tip = 'Đúng ' + (r.score != null ? r.score : '–') + ' · Sai ' + (r.wrong != null ? r.wrong : '–') + ' · Bỏ trống ' + (r.blank != null ? r.blank : '–') + ' · Mã xác thực ' + r.proof;
-        return '<li class="th-row' + (r.official ? ' off' : '') + '" title="' + esc(tip) + '">' +
-          '<span class="th-when">' + esc(fmtShort(r.submittedAt)) + '</span>' +
-          '<span class="th-bar" aria-hidden="true">' + bar + '</span>' +
-          '<span class="th-sc">' + esc(r.score != null ? r.score : '–') + '/' + esc(tot) + '<em>' + esc(r.pct) + '%</em>' + (r.official && rows.length > 1 ? '<span class="th-star">Chính thức</span>' : '') + '</span>' +
-          '<span class="th-dur">' + esc(fmtDur(r.durationSec)) + '</span>' +
-          '<a class="th-go" href="/kiemtra/ketqua.html?t=' + encodeURIComponent(r.t) + '">' + (r.paperOpen ? 'Xem bài' : 'Chi tiết') + ' →</a></li>';
-      }).join('') + '</ul>' +
-      (rows.length > 3 ? '<button type="button" class="th-more" data-g="' + esc(gid) + '">' + (TH.open[gid] ? 'Thu gọn' : 'Xem thêm ' + (rows.length - 3) + ' lượt') + '</button>' : '') +
-      '</article>';
-  }).join('');
-  $('thGroups').innerHTML = html || '<div class="th-empty">Chưa có bài kiểm tra nào.</div>';
+function norm(t){ return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase(); }
+var KIND = { o:'Chính thức', p:'Thi thử', t:'Thử nghiệm' };
+var KICON = {
+  o:'<path d="M9 4h6l1 2h3v15H5V6h3z"/><path d="M9 4v3h6V4M8.5 13l2.2 2.2 4.3-4.6"/>',
+  p:'<path d="M3 5.5C6 4 9 4.2 12 6c3-1.8 6-2 9-.5V19c-3-1.5-6-1.3-9 .5-3-1.8-6-2-9-.5z"/><path d="M12 6v13.5"/>',
+  t:'<path d="M5 20V11M11 20V4M17 20v-7M3 20h18"/>'
+};
+function ico(path, cls){ return '<svg class="' + (cls || '') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + '</svg>'; }
+function visibleGroups(){
+  var q = norm(TH.q.trim()), list = TH.groups.filter(function(g){
+    if (TH.filter && g.kind !== TH.filter) return false;
+    if (q && norm(g.title).indexOf(q) < 0) return false;
+    if (TH.status === 'y' && g.pass !== true) return false;
+    if (TH.status === 'n' && g.pass !== false) return false;
+    return true;
+  });
+  if (TH.sort === 'best') list = list.slice().sort(function(a, b){ return (b.head.pct || 0) - (a.head.pct || 0); });
+  return list;
 }
-$('thList').addEventListener('click', function(e){
-  var f = e.target.closest('.th-filter button'), m = e.target.closest('.th-more');
-  if (f){ TH.filter = f.dataset.k; [].forEach.call(document.querySelectorAll('.th-filter button'), function(b){ b.setAttribute('aria-pressed', String(b === f)); }); renderGroups(); }
-  if (m){ TH.open[m.dataset.g] = !TH.open[m.dataset.g]; renderGroups(); }
+function renderGroups(){
+  var list = visibleGroups(), total = list.length, pages = Math.max(1, Math.ceil(total / TH.per));
+  TH.page = Math.min(Math.max(1, TH.page), pages);
+  var from = (TH.page - 1) * TH.per, part = list.slice(from, from + TH.per);
+  $('thList').innerHTML = part.map(function(g){
+    var rows = g.rows, head = g.head, open = !!TH.open[g.gid], n = rows.length;
+    var pill = g.pass === true ? '<span class="tr-pill y">Đạt yêu cầu</span>' : g.pass === false ? '<span class="tr-pill n">Chưa đạt</span>' : '';
+    var body = rows.map(function(r, idx){
+      var tot = r.total || 0, w = function(x){ return tot ? (x / tot * 100) : 0; };
+      var bar = '<i class="g" style="width:' + (r.wrong != null ? w(r.score || 0) : (r.pct || 0)) + '%"></i>' + (r.wrong != null ? '<i class="w" style="width:' + w(r.wrong) + '%"></i>' : '');
+      var tip = 'Đúng ' + (r.score != null ? r.score : '–') + ' · Sai ' + (r.wrong != null ? r.wrong : '–') + ' · Bỏ trống ' + (r.blank != null ? r.blank : '–') + ' · Mã xác thực ' + r.proof;
+      return '<li class="tr-row' + (r.official ? ' off' : '') + '" title="' + esc(tip) + '">' +
+        '<span class="tr-n">Lần ' + (n - idx) + (r.official && n > 1 ? '<i class="tr-star">★ Chính thức</i>' : '') + '</span>' +
+        '<span class="tr-when">' + esc(fmtShort(r.submittedAt).replace(' · ', ' - ')) + '</span>' +
+        '<span class="tr-res"><span class="tr-bar" aria-hidden="true">' + bar + '</span><b>' + esc(r.score != null ? r.score : '–') + '/' + esc(tot) + ' <em>(' + esc(r.pct) + '%)</em></b></span>' +
+        '<span class="tr-dur">' + ico('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2h5"/>') + esc(fmtDur(r.durationSec)) + '</span>' +
+        '<span class="tr-state">Hoàn thành</span>' +
+        '<a class="tr-go" href="/kiemtra/ketqua.html?t=' + encodeURIComponent(r.t) + '">' + ico('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>') + '<span>' + (r.paperOpen ? 'Xem bài' : 'Chi tiết') + '</span></a></li>';
+    }).join('');
+    return '<article class="tr-grp ' + (g.pass === true ? 'y' : g.pass === false ? 'n' : '') + (open ? ' open' : '') + '">' +
+      '<button type="button" class="tr-gh" data-g="' + esc(g.gid) + '" aria-expanded="' + open + '">' +
+        '<span class="tr-ic k' + g.kind + '">' + ico(KICON[g.kind]) + '</span>' +
+        '<span class="tr-gt"><b>' + esc(g.title) + '</b><span class="tr-tags"><i class="tr-kind k' + g.kind + '">' + KIND[g.kind] + '</i><span>' + n + ' lượt làm</span>' + (head.passScore ? '<span>Ngưỡng đạt: ' + esc(head.passScore) + '%</span>' : '') + '</span></span>' +
+        '<span class="tr-big"><strong>' + esc(head.pct) + '<small>%</small></strong><em>' + (g.kind === 'o' ? 'Kết quả' : 'Cao nhất') + '</em></span>' + pill +
+        '<svg class="tr-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>' +
+      '<div class="tr-tbl"><div class="tr-th"><span>Lần làm</span><span>Thời gian</span><span>Kết quả</span><span>Thời gian làm</span><span>Trạng thái</span><span></span></div><ul class="tr-rows">' + body + '</ul></div></article>';
+  }).join('') || '<div class="tr-empty">Không có bài kiểm tra nào phù hợp.</div>';
+  // phân trang
+  var pg = '';
+  if (total > 5){
+    var nums = '', lo = Math.max(1, Math.min(TH.page - 2, pages - 4)), hi = Math.min(pages, lo + 4);
+    for (var x = lo; x <= hi; x++) nums += '<button type="button" data-p="' + x + '"' + (x === TH.page ? ' class="on" aria-current="page"' : '') + '>' + x + '</button>';
+    pg = '<span class="tr-pi">Hiển thị ' + (from + 1) + ' – ' + Math.min(total, from + TH.per) + ' trong ' + total + ' bài kiểm tra</span>' +
+      '<span class="tr-pn"><button type="button" data-p="' + (TH.page - 1) + '" aria-label="Trang trước"' + (TH.page <= 1 ? ' disabled' : '') + '>‹</button>' + nums + '<button type="button" data-p="' + (TH.page + 1) + '" aria-label="Trang sau"' + (TH.page >= pages ? ' disabled' : '') + '>›</button></span>' +
+      '<label class="tr-pr">Số dòng/trang <select id="thPer">' + [5, 10, 20].map(function(v){ return '<option value="' + v + '"' + (v === TH.per ? ' selected' : '') + '>' + v + '</option>'; }).join('') + '</select></label>';
+  }
+  $('thPager').innerHTML = pg;
+}
+function renderChips(){
+  var kinds = ['o', 'p', 't'].filter(function(k){ return TH.groups.some(function(g){ return g.kind === k; }); });
+  var cnt = function(k){ return TH.groups.filter(function(g){ return !k || g.kind === k; }).length; };
+  $('thChips').innerHTML = kinds.length > 1 ? ['', 'o', 'p', 't'].filter(function(k){ return !k || kinds.indexOf(k) >= 0; }).map(function(k){
+    return '<button type="button" data-k="' + k + '" aria-pressed="' + (TH.filter === k) + '">' + (k ? ico(KICON[k]) : ico('<path d="M9 4h6l1 2h3v15H5V6h3z"/><path d="M9 4v3h6V4"/>')) + (k ? KIND[k] : 'Tất cả') + ' (' + cnt(k) + ')</button>';
+  }).join('') : '';
+}
+$('listView').addEventListener('click', function(e){
+  var c = e.target.closest('#thChips button'), g = e.target.closest('.tr-gh'), pn = e.target.closest('#thPager button[data-p]');
+  if (c){ TH.filter = c.dataset.k; TH.page = 1; renderChips(); renderGroups(); }
+  if (g){ TH.open[g.dataset.g] = !TH.open[g.dataset.g]; renderGroups(); }
+  if (pn && !pn.disabled){ TH.page = +pn.dataset.p; renderGroups(); }
+  if (e.target.closest('#thFb')){ var pop = $('thPop'), on = pop.classList.toggle('hide'); $('thFb').setAttribute('aria-expanded', String(!on)); }
 });
+document.addEventListener('click', function(e){ if (!e.target.closest('.tr-fwrap')){ $('thPop').classList.add('hide'); $('thFb').setAttribute('aria-expanded', 'false'); } });
+$('listView').addEventListener('change', function(e){
+  var t = e.target;
+  if (t.id === 'thPer'){ TH.per = +t.value; TH.page = 1; renderGroups(); }
+  else if (t.name === 'fs'){ TH.status = t.value; TH.page = 1; renderGroups(); }
+  else if (t.name === 'fo'){ TH.sort = t.value; TH.page = 1; renderGroups(); }
+});
+$('thQ').addEventListener('input', function(){ TH.q = this.value; TH.page = 1; renderGroups(); });
 function showList(j){
   var L = j.list || [];
   $('wAv').textContent = initials(j.name); $('wName').textContent = j.name || j.code;
-  $('wSub').textContent = 'Mã NV: ' + j.code + (j.manager ? ' · Quản lí: ' + j.manager : '');
-  // tổng quan: số bài đã nộp · kết quả chính thức cao nhất (không tính thi thử) · bài gần nhất
-  var real = L.filter(function(r){ return !r.practice && !r.test; }), best = real.reduce(function(m, r){ return r.pct > m ? r.pct : m; }, -1);
-  var chips = [ [j.total, 'Bài đã nộp'], [best >= 0 ? best + '%' : '–', 'Cao nhất'], [real.length ? real[0].pct + '%' : (L.length ? L[0].pct + '%' : '–'), 'Gần nhất'] ];
-  $('wStats').innerHTML = chips.map(function(c){ return '<div class="th-stat"><strong>' + esc(c[0]) + '</strong><em>' + esc(c[1]) + '</em></div>'; }).join('');
+  $('wSub').textContent = 'Mã NV: ' + j.code + (j.manager ? ' | Quản lí: ' + j.manager : '');
   // Gom theo đề (và loại: chính thức / thi thử / thử nghiệm); mỗi đề một thẻ, các lượt làm là các dòng
-  var KIND = { o:'Chính thức', p:'Thi thử', t:'Thử nghiệm' }, groups = [], byKey = {};
+  var groups = [], byKey = {};
   L.forEach(function(r){
     var k = r.test ? 't' : r.practice ? 'p' : 'o', key = (r.exam || r.title) + '|' + k, g = byKey[key];
-    if (!g){ g = byKey[key] = { kind:k, title:r.title, rows:[] }; groups.push(g); }
+    if (!g){ g = byKey[key] = { kind:k, title:r.title, rows:[], gid:k + ':' + (r.exam || r.title) }; groups.push(g); }
     g.rows.push(r);
   });
-  TH.groups = groups; TH.filter = TH.filter && groups.some(function(g){ return g.kind === TH.filter; }) ? TH.filter : '';
-  var kinds = ['o', 'p', 't'].filter(function(k){ return groups.some(function(g){ return g.kind === k; }); });
-  $('thList').innerHTML = (kinds.length > 1 ? '<div class="th-filter" role="group" aria-label="Lọc theo loại">' +
-      '<button type="button" data-k="" aria-pressed="' + (!TH.filter) + '">Tất cả<b>' + groups.length + '</b></button>' +
-      kinds.map(function(k){ return '<button type="button" data-k="' + k + '" aria-pressed="' + (TH.filter === k) + '">' + KIND[k] + '<b>' + groups.filter(function(g){ return g.kind === k; }).length + '</b></button>'; }).join('') +
-    '</div>' : '') + '<div id="thGroups" style="display:contents"></div>';
-  renderGroups();
+  groups.forEach(function(g){
+    var off = g.rows.filter(function(r){ return r.official; })[0];
+    g.head = off || g.rows.reduce(function(m, r){ return (r.pct || 0) > (m.pct || 0) ? r : m; }, g.rows[0]); // kết quả chính thức (hoặc cao nhất nếu không tính)
+    g.pass = (g.head.passed === true || g.head.passed === false) ? g.head.passed : null;
+  });
+  // tổng quan: số bài đã nộp · điểm cao nhất · điểm trung bình · số bài đạt yêu cầu (tính trên các đề chính thức)
+  var real = L.filter(function(r){ return !r.practice && !r.test; }), base = real.length ? real : L;
+  var best = base.reduce(function(m, r){ return r.pct > m ? r.pct : m; }, -1);
+  var avg = base.length ? Math.round(base.reduce(function(a, r){ return a + (r.pct || 0); }, 0) / base.length) : -1;
+  var og = groups.filter(function(g){ return g.kind === 'o' && g.pass !== null; }), okN = og.filter(function(g){ return g.pass; }).length;
+  var chips = [
+    [j.total, 'Bài đã nộp', '<path d="M9 4h6l1 2h3v15H5V6h3z"/><path d="M9 4v3h6V4M9 12h6M9 16h4"/>'],
+    [best >= 0 ? best + '%' : '–', 'Điểm cao nhất', '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/>'],
+    [avg >= 0 ? avg + '%' : '–', 'Điểm trung bình', '<path d="M5 20V11M11 20V4M17 20v-7M3 20h18"/>'],
+    [og.length ? okN + '/' + og.length : '–', 'Đạt yêu cầu', '<circle cx="12" cy="9" r="6"/><path d="m9 14-1.5 7 4.5-2.5 4.5 2.5L15 14M10 9l1.5 1.5L14.5 7.5"/>']
+  ];
+  $('wStats').innerHTML = chips.map(function(c){ return '<div class="tr-stat">' + ico(c[2]) + '<strong>' + esc(c[0]) + '</strong><em>' + c[1] + '</em></div>'; }).join('');
+  $('wUpd').textContent = 'Cập nhật lần cuối: ' + fmtDate(j.now || Date.now());
+  TH.groups = groups; TH.filter = ''; TH.q = ''; TH.status = ''; TH.sort = 'new'; TH.page = 1; TH.open = {};
+  if (groups[0]) TH.open[groups[0].gid] = true; // mở sẵn đề gần nhất
+  $('thQ').value = ''; [].forEach.call(document.querySelectorAll('#thPop input'), function(i){ i.checked = (i.value === '' || i.value === 'new'); });
+  renderChips(); renderGroups();
   show('listView');
   clearTimeout(idleT); idleT = setTimeout(resetForm, IDLE_MS); // tự ẩn kết quả sau 5 phút không thao tác
 }
