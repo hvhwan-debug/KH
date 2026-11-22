@@ -173,7 +173,9 @@ function drawShareCard(ctx, W, H, d){
   ctx.fillStyle = 'rgba(6,50,130,.55)'; ctx.beginPath(); ctx.moveTo(cx, wt + 74); ctx.bezierCurveTo(cx + cw*.25, wt + 34, cx + cw*.55, wt + 96, cx + cw, wt + 36); ctx.lineTo(cx + cw, cb); ctx.lineTo(cx, cb); ctx.closePath(); ctx.fill();
   ctx.save(); ctx.shadowColor = 'rgba(255,214,120,.8)'; ctx.shadowBlur = 10; ctx.lineWidth = 4.5; ctx.lineCap = 'round'; ctx.strokeStyle = lg(cx, 0, cx + cw, 0, [[0, 'rgba(255,214,120,0)'], [.4, '#F6C968'], [.75, '#FFE7A6'], [1, 'rgba(255,214,120,0)']]); ctx.beginPath(); ctx.moveTo(cx, wt + 70); ctx.bezierCurveTo(cx + cw*.25, wt + 30, cx + cw*.55, wt + 92, cx + cw, wt + 32); ctx.stroke(); ctx.restore();
   // ---- cúp
-  trophy(cx + cw - 124, L.cy + 214, .8);
+  // ảnh cúp (trophy-photo.webp) nếu đã tải được; không có thì vẽ cúp bằng nét như cũ
+  if (d.cupImg && d.cupImg.width){ var cupW = 268, cupH = cupW * d.cupImg.height / d.cupImg.width; ctx.drawImage(d.cupImg, cx + cw - 124 - cupW / 2, L.cy + 214 + 140 - cupH, cupW, cupH); }
+  else trophy(cx + cw - 124, L.cy + 214, .8);
   // ---- tiêu đề + nhãn trạng thái
   var xh = P + 10;
   rr(xh, cy + 58, 5, 28, 3); ctx.fillStyle = lg(0, cy + 58, 0, cy + 86, [[0, '#8FE3FF'], [1, '#2BA8FF']]); ctx.fill();

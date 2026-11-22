@@ -18,6 +18,13 @@ function load() {
   drawer = require("./sharecard-draw")(() => L.createCanvas(8, 8).getContext("2d"));
   lib = L;
 }
+// Ảnh cúp in trên thẻ (giống ảnh trên trang); không đọc được thì thẻ vẽ cúp bằng nét
+let cupImg; // undefined: chưa tải; null: lỗi
+async function cup() {
+  if (cupImg !== undefined) return cupImg;
+  try { cupImg = await lib.loadImage(path.join(__dirname, "assets", "trophy-photo.webp")); } catch (e) { cupImg = null; }
+  return cupImg;
+}
 
 const fmtFull = (ms) => { try { return new Date(ms).toLocaleString("vi-VN", { timeZone: ZONE, hour: "2-digit", minute: "2-digit", second: "2-digit", day: "2-digit", month: "2-digit", year: "numeric", hour12: false }); } catch (e) { return ""; } };
 const fmtClock = (sec) => { sec = Math.max(0, Math.round(sec || 0)); const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60, p = (x) => (x < 10 ? "0" : "") + x; return h ? h + ":" + p(m) + ":" + p(s) : m + ":" + p(s); };
@@ -56,7 +63,8 @@ function cardData(attempt, settings, now) {
 // Trả về Buffer PNG của thẻ kết quả
 async function renderPng(attempt, settings, now) {
   load();
-  const d = cardData(attempt, settings, now), H = drawer.height(d), cv = lib.createCanvas(1080, H);
+  const d = cardData(attempt, settings, now); d.cupImg = await cup();
+  const H = drawer.height(d), cv = lib.createCanvas(1080, H);
   drawer.draw(cv.getContext("2d"), 1080, H, d);
   return cv.encode("png");
 }

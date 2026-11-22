@@ -2036,7 +2036,7 @@ body[data-scr="exam"] #examMsg:not(:empty){margin-top:10px}
 <div class="practice-bar hide" id="practiceBar" role="status"><span>ĐỀ THI THỬ</span></div>
 <header class="lp-bar">
   <div class="lp-brand"><span class="lp-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span class="lp-name">Hệ thống kiểm tra đánh giá trực tuyến</span><span class="lp-txt" aria-hidden="true"><b>Nền tảng kiểm tra trực tuyến</b><small>Kết quả bài kiểm tra</small></span></div>
-  <img class="lp-cup" id="lpCup" src="/kiemtra/trophy.png" alt="" width="180" height="150" aria-hidden="true">
+  <img class="lp-cup" id="lpCup" src="/kiemtra/trophy-photo.webp" alt="" width="600" height="541" aria-hidden="true">
   <button type="button" class="lp-burger" id="lpBurger" aria-label="Mở menu" aria-expanded="false" aria-controls="lpNav"><svg class="m" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   <nav class="lp-nav" id="lpNav" aria-label="Điều hướng">
     <a href="/kiemtra/" class="cur" title="Trang chủ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10M10 20v-5h4v5"/></svg><span>Trang chủ</span></a>
@@ -4048,7 +4048,7 @@ function renderMob(r, ps, prac, c){
     : ['Đã hoàn thành bài kiểm tra!', 'Bạn có thể xem chi tiết bài làm, nhận xét và học liệu gợi ý để cải thiện kết quả.'];
   $('resDone').className = 'rs-done ' + k;
   $('resDone').innerHTML = (k === 'n' ? RS_ICO.medalN : RS_ICO.medal) + '<div><b>' + t[0] + '</b><p>' + t[1] + '</p></div>';
-  $('lpCup').src = ps === false ? '/kiemtra/rs-art.png' : '/kiemtra/trophy.png';
+  $('lpCup').src = ps === false ? '/kiemtra/fail-photo.webp' : '/kiemtra/trophy-photo.webp';
   var open = !!$('btnRetry'); // còn lượt làm tiếp: mở sẵn phần chi tiết để thấy nút "Làm tiếp"
   $('rsDet').classList.toggle('mopen', open); $('btnMore').setAttribute('aria-expanded', String(open));
   $('btnMore').querySelector('span').textContent = open ? 'Thu gọn chi tiết bài làm' : 'Xem chi tiết bài làm';
@@ -4342,7 +4342,9 @@ function drawShareCard(ctx, W, H, d){
   ctx.fillStyle = 'rgba(6,50,130,.55)'; ctx.beginPath(); ctx.moveTo(cx, wt + 74); ctx.bezierCurveTo(cx + cw*.25, wt + 34, cx + cw*.55, wt + 96, cx + cw, wt + 36); ctx.lineTo(cx + cw, cb); ctx.lineTo(cx, cb); ctx.closePath(); ctx.fill();
   ctx.save(); ctx.shadowColor = 'rgba(255,214,120,.8)'; ctx.shadowBlur = 10; ctx.lineWidth = 4.5; ctx.lineCap = 'round'; ctx.strokeStyle = lg(cx, 0, cx + cw, 0, [[0, 'rgba(255,214,120,0)'], [.4, '#F6C968'], [.75, '#FFE7A6'], [1, 'rgba(255,214,120,0)']]); ctx.beginPath(); ctx.moveTo(cx, wt + 70); ctx.bezierCurveTo(cx + cw*.25, wt + 30, cx + cw*.55, wt + 92, cx + cw, wt + 32); ctx.stroke(); ctx.restore();
   // ---- cúp
-  trophy(cx + cw - 124, L.cy + 214, .8);
+  // ảnh cúp (trophy-photo.webp) nếu đã tải được; không có thì vẽ cúp bằng nét như cũ
+  if (d.cupImg && d.cupImg.width){ var cupW = 268, cupH = cupW * d.cupImg.height / d.cupImg.width; ctx.drawImage(d.cupImg, cx + cw - 124 - cupW / 2, L.cy + 214 + 140 - cupH, cupW, cupH); }
+  else trophy(cx + cw - 124, L.cy + 214, .8);
   // ---- tiêu đề + nhãn trạng thái
   var xh = P + 10;
   rr(xh, cy + 58, 5, 28, 3); ctx.fillStyle = lg(0, cy + 58, 0, cy + 86, [[0, '#8FE3FF'], [1, '#2BA8FF']]); ctx.fill();
@@ -4464,11 +4466,17 @@ function shareData(){
     host: location.host + '/kiemtra',
     qr: r.verify ? qrMatrix(verifyUrl(r)) : null,
     avgSec: r.durationSec != null && r.total ? Math.round(r.durationSec / r.total) : null,
-    cats: [] // ảnh chia sẻ chỉ ghi kết quả, không kèm phân tích theo mảng kiến thức
+    cats: [], // ảnh chia sẻ chỉ ghi kết quả, không kèm phân tích theo mảng kiến thức
+    cupImg: SC_CUP.ok ? SC_CUP.img : null
   };
 }
+// Ảnh cúp cho thẻ chia sẻ: tải sẵn; makePng chờ tối đa 3 giây, lỗi thì thẻ vẽ cúp bằng nét
+var SC_CUP = { img:new Image(), ok:false, p:null };
+SC_CUP.p = new Promise(function(res){ SC_CUP.img.onload = function(){ SC_CUP.ok = true; res(); }; SC_CUP.img.onerror = function(){ res(); }; });
+SC_CUP.img.src = '/kiemtra/trophy-photo.webp';
 async function makePng(){
   try { if (document.fonts && document.fonts.load) await Promise.all(['500','700','800'].map(function(w){ return document.fonts.load(w + ' 28px "Be Vietnam Pro"'); })); } catch(e){}
+  try { await Promise.race([SC_CUP.p, new Promise(function(r){ setTimeout(r, 3000); })]); } catch(e){}
   var cv = document.createElement('canvas'); var sd = shareData(), H = shareCardHeight(sd);
   cv.width = 1080; cv.height = H;
   drawShareCard(cv.getContext('2d'), 1080, H, sd);
