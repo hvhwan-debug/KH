@@ -180,6 +180,54 @@ body.cert-on .foot{display:none}
 .extra .proof>div{text-align:center}
 .extra .proof span{max-width:36ch;margin-left:auto;margin-right:auto;text-wrap:balance}
 .ct-verify{justify-content:center;text-align:center}
+
+/* ===== Tra cứu: giao diện theo mẫu thiết kế (chỉ màn quét khuôn mặt; danh sách kết quả giữ nền sáng) ===== */
+.au-cap,.th-scan,.th-feat{display:none}
+body.au-lookup:not(.th-wide){background:#2f86ec url(/kiemtra/tracuu-bg.jpg) left center/cover no-repeat fixed}
+body.au-lookup:not(.th-wide)::before{display:none}
+body.au-lookup:not(.th-wide) .au-bar{position:absolute;top:0;left:0;right:0;height:96px;background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.au-lookup:not(.th-wide) .au-brand{gap:16px;color:#fff;font-size:clamp(15px,1.45vw,22px);line-height:1.22;text-shadow:0 2px 14px rgba(0,40,120,.35)}
+body.au-lookup:not(.th-wide) .au-mark{width:auto;height:auto;padding:0;border-radius:0;background:none!important;box-shadow:none}
+body.au-lookup:not(.th-wide) .au-mark img{display:none}
+body.au-lookup:not(.th-wide) .au-cap{display:block;width:clamp(44px,4.4vw,70px);height:auto;color:#fff;filter:drop-shadow(0 4px 10px rgba(0,40,120,.35))}
+body.au-lookup:not(.th-wide) .au-name{white-space:normal;max-width:11.5em;padding-left:16px;border-left:1.5px solid rgba(255,255,255,.6)}
+body.au-lookup:not(.th-wide) .au-back{color:#fff;background:rgba(255,255,255,.16);border-radius:99px;padding:9px 16px}
+body.au-lookup:not(.th-wide) .au-back:hover{background:rgba(255,255,255,.26)}
+body.au-lookup:not(.th-wide) .wrap{min-height:100vh;justify-content:center;align-items:flex-end;padding:100px clamp(20px,5vw,92px) 36px}
+body.au-lookup:not(.th-wide) #card{width:min(48vw,820px);padding:clamp(26px,3.2vw,50px) clamp(24px,3.6vw,56px);border-radius:30px;background:rgba(255,255,255,.95)}
+body.au-lookup .th-hero h1{margin:0 0 10px;text-align:center;font-size:clamp(24px,2.7vw,42px);font-weight:900;letter-spacing:-.8px;line-height:1.15;color:#0B1F4B}
+body.au-lookup .th-hero .sub{margin:0 auto;text-align:center;font-size:clamp(14px,1.15vw,17px);line-height:1.55;color:#3C5379}
+body.au-lookup:not(.th-wide) .th-scan{display:grid;place-items:center;position:relative;width:clamp(170px,16vw,260px);aspect-ratio:1;margin:clamp(14px,2.2vw,32px) auto clamp(14px,2vw,28px)}
+.th-scan .r{position:absolute;border-radius:50%;border:1.5px solid rgba(46,141,255,.26)}
+.th-scan .r1{inset:0;background:radial-gradient(circle,rgba(190,220,255,.45),rgba(255,255,255,0) 70%);animation:thPulse 3.2s ease-in-out infinite}
+.th-scan .r2{inset:9%;border-color:rgba(46,141,255,.4);animation:thPulse 3.2s ease-in-out 1.3s infinite}
+.th-scan .ic{position:relative;display:grid;place-items:center;width:68%;aspect-ratio:1;border-radius:50%;background:linear-gradient(180deg,#DCEBFF,#C6DEFB);color:#1366E0;box-shadow:inset 0 0 0 2px rgba(255,255,255,.7),0 16px 36px -14px rgba(20,100,230,.5)}
+.th-scan .ic svg{width:56%;height:56%}
+@keyframes thPulse{0%,100%{transform:scale(1);opacity:.95}50%{transform:scale(1.06);opacity:.5}}
+#tGo.th-go{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;height:clamp(58px,5.4vw,86px);margin:0;border:0;border-radius:99px;background:linear-gradient(100deg,#0AAEF0,#0A55D4);color:#fff;font-size:clamp(16px,1.6vw,26px);font-weight:800;box-shadow:0 18px 34px -14px rgba(10,85,212,.7);transition:transform .15s,filter .15s}
+#tGo.th-go:hover{transform:translateY(-1px);filter:brightness(1.05)}
+#tGo.th-go svg{width:1.5em;height:1.5em;flex:0 0 auto}
+body.au-lookup:not(.th-wide) .th-feat{display:grid;grid-template-columns:repeat(3,1fr);margin:clamp(16px,2vw,28px) 0 0;padding:clamp(12px,1.4vw,20px) 6px;list-style:none;border-radius:20px;background:#EEF4FC}
+.th-feat li{display:flex;align-items:center;justify-content:center;gap:12px;padding:0 8px;border-left:1px solid #D2E0F2;font-size:clamp(12px,1.05vw,16px);font-weight:700;line-height:1.3;color:#0B2A66}
+.th-feat li:first-child{border-left:0}
+.th-feat svg{flex:0 0 auto;width:clamp(26px,2.4vw,38px);height:auto;color:#1B78E8}
+body.au-lookup:not(.th-wide) #tMsg:not(:empty){margin:0 0 14px}
+@media(max-width:860px){
+  body.au-lookup:not(.th-wide){background:linear-gradient(165deg,#0A47C8 0%,#1B7CF2 52%,#8DCBFF 100%) fixed}
+  body.au-lookup:not(.th-wide)::before{display:block;background:radial-gradient(80% 36% at 92% 0%,rgba(255,255,255,.3),transparent 70%),radial-gradient(90% 38% at 0% 100%,rgba(255,255,255,.4),transparent 70%)}
+  body.au-lookup:not(.th-wide) .au-bar{height:76px;padding:0 4vw}
+  body.au-lookup:not(.th-wide) .au-brand{font-size:14px}
+  body.au-lookup:not(.th-wide) .au-cap{width:42px}
+  body.au-lookup:not(.th-wide) .au-back{padding:8px 12px;font-size:12.5px}
+  body.au-lookup:not(.th-wide) .wrap{align-items:center;padding:84px 16px 28px}
+  body.au-lookup:not(.th-wide) #card{width:100%;padding:26px 20px 22px;border-radius:26px}
+  .th-feat li{flex-direction:column;gap:6px;text-align:center;font-size:12px}
+  body.au-lookup:not(.th-wide) .th-hero{padding:0}
+  body.au-lookup .th-hero h1{font-size:clamp(22px,6.4vw,28px)}
+}
+body.au-lookup .th-hero h1{text-wrap:balance}
+body.au-lookup:not(.th-wide) .th-hero{padding:0}
+@media(prefers-reduced-motion:reduce){.th-scan .r{animation:none}}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <style>
@@ -247,16 +295,22 @@ body.au-lookup.th-wide #card{width:min(1040px,100%);padding:0;margin:0 auto}
 </style>
 </head>
 <body class="au-lookup">
-<header class="au-bar"><a class="au-brand" href="/kiemtra/"><span class="au-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span class="au-name">Hệ thống kiểm tra đánh giá trực tuyến</span></a><a class="au-back" href="/kiemtra/">Trang làm bài →</a></header>
+<header class="au-bar"><a class="au-brand" href="/kiemtra/"><span class="au-mark"><img src="/kiemtra/logo-mark.png" alt=""><svg class="au-cap" viewBox="0 0 64 56" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M32 6 4 20l28 14 28-14z"/><path d="M14 27v13c0 5 8 10 18 10s18-5 18-10V27"/><path d="M60 20v14"/><circle cx="60" cy="38" r="2.2" fill="currentColor"/></svg></span><span class="au-name">Hệ thống kiểm tra đánh giá trực tuyến</span></a><a class="au-back" href="/kiemtra/">Trang làm bài →</a></header>
 <div class="wrap">
   <header class="top"><div class="logo" aria-hidden="true"><img src="/kiemtra/logo-mark.png" alt="" width="40" height="40"></div><div><b>Nền tảng kiểm tra trực tuyến</b><span>Tra cứu bài kiểm tra của tôi</span></div></header>
 
   <main class="card" id="card">
-    <section class="th-card" id="formView">
-      <h1>Tra cứu bài kiểm tra của tôi</h1>
-      <p class="sub" id="tSub">Chỉ cần quét khuôn mặt, hệ thống tự nhận ra bạn và hiện toàn bộ các bài kiểm tra bạn đã làm.</p>
+    <section class="th-card th-hero" id="formView">
+      <h1>Tra cứu kết quả bài kiểm tra</h1>
+      <p class="sub" id="tSub">Xác thực khuôn mặt để xem kết quả và lịch sử làm bài của bạn.</p>
+      <div class="th-scan" aria-hidden="true"><span class="r r1"></span><span class="r r2"></span><span class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 17v-6a5 5 0 0 1 5-5h6M31 6h6a5 5 0 0 1 5 5v6M42 31v6a5 5 0 0 1-5 5h-6M17 42h-6a5 5 0 0 1-5-5v-6"/><circle cx="24" cy="19" r="6"/><path d="M12.5 36c1.6-6 6.2-8.6 11.5-8.6S33.9 30 35.5 36"/></svg></span></div>
       <div id="tMsg" role="alert"></div>
-      <button type="button" class="btn-outline solid" id="tGo">Quét khuôn mặt để tra cứu</button>
+      <button type="button" class="btn-outline solid th-go" id="tGo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.6"/></svg><span>Quét khuôn mặt để tra cứu</span></button>
+      <ul class="th-feat" aria-label="Bạn sẽ xem được">
+        <li><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h11l6 6v20H8z"/><path d="M19 3v6h6M12 15h8M12 20h5"/><path d="m16.5 25 2.5 2.5 5-5.5"/></svg><span>Xem điểm<br>bài kiểm tra</span></li>
+        <li><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 28V16M13 28V8M20 28V13M27 28V4"/></svg><span>Theo dõi<br>lịch sử làm bài</span></li>
+        <li><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="12" r="8"/><path d="m16 8.2 1.2 2.5 2.7.4-2 1.9.5 2.7-2.4-1.3-2.4 1.3.5-2.7-2-1.9 2.7-.4zM11.5 18.5 9 28l7-3.4 7 3.4-2.5-9.5"/></svg><span>Xếp loại<br>kết quả</span></li>
+      </ul>
     </section>
 
     <section class="hide" id="listView" aria-live="polite">
