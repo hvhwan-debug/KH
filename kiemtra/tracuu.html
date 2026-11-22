@@ -228,6 +228,28 @@ body.au-lookup:not(.th-wide) #tMsg:not(:empty){margin:0 0 14px}
 body.au-lookup .th-hero h1{text-wrap:balance}
 body.au-lookup:not(.th-wide) .th-hero{padding:0}
 @media(prefers-reduced-motion:reduce){.th-scan .r{animation:none}}
+
+/* ===== Tra cứu bằng mã xác thực (mặc định) ===== */
+.th-cform{display:grid;gap:12px}
+.th-cin{position:relative;display:block}
+.th-cin svg{position:absolute;left:20px;top:50%;width:24px;height:24px;transform:translateY(-50%);color:#1B78E8;pointer-events:none}
+body.au-lookup .th-cin input{width:100%;height:clamp(54px,4.6vw,68px);padding:0 18px 0 56px!important;border:1.5px solid #BFD6F5;border-radius:18px;background:#F7FAFF;font:inherit;font-size:clamp(15px,1.25vw,18px);font-weight:600;letter-spacing:.02em;color:#0B1F4B;outline:none;transition:border-color .15s,box-shadow .15s}
+.th-cin input::placeholder{font-weight:500;letter-spacing:0;color:#7A8BA6}
+.th-cin input:focus{border-color:#1B78E8;box-shadow:0 0 0 4px rgba(27,120,232,.15);background:#fff}
+#cGo.th-go{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;height:clamp(54px,4.6vw,72px);margin:0;border:0;border-radius:99px;background:linear-gradient(100deg,#0AAEF0,#0A55D4);color:#fff;font-size:clamp(16px,1.45vw,22px);font-weight:800;cursor:pointer;box-shadow:0 16px 30px -14px rgba(10,85,212,.8);transition:transform .15s,filter .15s}
+#cGo.th-go:hover{transform:translateY(-1px);filter:brightness(1.05)}
+#cGo.th-go svg{width:1.3em;height:1.3em}
+#cMsg:not(:empty){margin-top:12px}
+#cMsg .pmsg{margin:0}
+body.au-lookup:not(.th-wide) #codePane .th-scan{width:clamp(130px,11vw,180px);margin:clamp(12px,1.6vw,22px) auto}
+.th-alt{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 10px;width:100%;margin:16px 0 0;padding:12px 14px;border:1.5px dashed #C7DAF3;border-radius:16px;background:none;font:inherit;font-size:14px;color:#3C5379;cursor:pointer;text-align:center}
+.th-alt em{font-style:normal;font-weight:800;color:#0B5BD6}
+.th-alt:hover{background:#F2F7FF}
+.th-alt:focus-visible,.th-cin input:focus-visible,#cGo:focus-visible{outline:3px solid #9CC3FF;outline-offset:2px}
+body.au-lookup .th-cform{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-auto-flow:row!important;justify-items:stretch!important;width:100%}
+body.au-lookup .th-cform>*{justify-self:stretch!important;grid-column:1/-1!important}
+body.au-lookup .th-cin,body.au-lookup .th-cin input,body.au-lookup #cGo.th-go{width:100%!important;max-width:none!important;min-width:0}
+@media(max-width:560px){body.au-lookup .th-cin input{font-size:16px}body.au-lookup #codePane .th-scan{width:110px}}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <style>
@@ -488,16 +510,35 @@ body.au-lookup.th-wide #card{padding:14px;border-radius:30px;background:rgba(255
 
   <main class="card" id="card">
     <section class="th-card th-hero" id="formView">
-      <h1>Tra cứu kết quả bài kiểm tra</h1>
+      <div id="codePane">
+        <h1>Tra cứu kết quả bài kiểm tra</h1>
+        <p class="sub">Nhập <b>mã xác thực</b> in trên thẻ kết quả (dạng KT-XXXXXXXX) hoặc dán liên kết xác thực để xem kết quả đã được hệ thống xác thực.</p>
+        <div class="th-scan" aria-hidden="true"><span class="r r1"></span><span class="r r2"></span><span class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 4 8 10v11c0 10 6.8 18.6 16 23 9.2-4.4 16-13 16-23V10z"/><path d="m16.5 24.5 5 5 10-11"/></svg></span></div>
+        <form class="th-cform" id="cForm" novalidate>
+          <label class="th-cin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4.5"/><path d="m11.2 11.8 8.3-8.3M16.5 6.5l2.5 2.5M14 9l2 2"/></svg><input id="cIn" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="400" placeholder="Mã xác thực, ví dụ KT-PI8TJZD9" aria-label="Mã xác thực hoặc liên kết xác thực"></label>
+          <button type="submit" class="btn-outline solid th-go" id="cGo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Tra cứu kết quả</span></button>
+        </form>
+        <div id="cMsg" role="alert"></div>
+        <ul class="th-feat" aria-label="Đặc điểm">
+          <li><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3 6 7v7c0 6.6 4.3 12.3 10 15 5.7-2.7 10-8.4 10-15V7z"/><path d="m11.5 16 3.2 3.2 6-6.7"/></svg><span>Kết quả do<br>hệ thống xác thực</span></li>
+          <li><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="14" width="18" height="14" rx="3"/><path d="M11 14V9a5 5 0 0 1 9.6-2"/></svg><span>Không cần<br>đăng nhập</span></li>
+          <li><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h22M5 16h22M5 23h14"/><path d="m21 23 2.5 2.5L28 21"/></svg><span>Khớp đúng<br>dữ liệu bài làm</span></li>
+        </ul>
+        <button type="button" class="th-alt" id="toFace"><span>Bạn muốn xem <b>lịch sử làm bài của chính mình</b>?</span><em>Quét khuôn mặt →</em></button>
+      </div>
+      <div id="facePane" class="hide">
+      <h1>Lịch sử làm bài của tôi</h1>
       <p class="sub" id="tSub">Xác thực khuôn mặt để xem kết quả và lịch sử làm bài của bạn.</p>
       <div class="th-scan" aria-hidden="true"><span class="r r1"></span><span class="r r2"></span><span class="ic"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 17v-6a5 5 0 0 1 5-5h6M31 6h6a5 5 0 0 1 5 5v6M42 31v6a5 5 0 0 1-5 5h-6M17 42h-6a5 5 0 0 1-5-5v-6"/><circle cx="24" cy="19" r="6"/><path d="M12.5 36c1.6-6 6.2-8.6 11.5-8.6S33.9 30 35.5 36"/></svg></span></div>
       <div id="tMsg" role="alert"></div>
-      <button type="button" class="btn-outline solid th-go" id="tGo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.6"/></svg><span>Quét khuôn mặt để tra cứu</span></button>
+      <button type="button" class="btn-outline solid th-go" id="tGo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.6"/></svg><span>Quét khuôn mặt để xem</span></button>
       <ul class="th-feat" aria-label="Bạn sẽ xem được">
         <li><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h11l6 6v20H8z"/><path d="M19 3v6h6M12 15h8M12 20h5"/><path d="m16.5 25 2.5 2.5 5-5.5"/></svg><span>Xem điểm<br>bài kiểm tra</span></li>
         <li><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 28V16M13 28V8M20 28V13M27 28V4"/></svg><span>Theo dõi<br>lịch sử làm bài</span></li>
         <li><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="12" r="8"/><path d="m16 8.2 1.2 2.5 2.7.4-2 1.9.5 2.7-2.4-1.3-2.4 1.3.5-2.7-2-1.9 2.7-.4zM11.5 18.5 9 28l7-3.4 7 3.4-2.5-9.5"/></svg><span>Xếp loại<br>kết quả</span></li>
       </ul>
+        <button type="button" class="th-alt" id="toCode"><span>Có mã xác thực KT-… trên thẻ kết quả?</span><em>← Tra cứu bằng mã</em></button>
+      </div>
     </section>
 
     <section class="hide" id="listView" aria-live="polite">
@@ -691,6 +732,30 @@ function showList(j){
 
 function startLookup(){ FLOW.code = FLOW.email = ''; $('tMsg').innerHTML = ''; openFace(); }
 $('tGo').addEventListener('click', startLookup);
+// Hai chế độ của màn tra cứu: mặc định tra bằng MÃ XÁC THỰC (ai có mã đều xem được kết quả đã xác thực, không cần khuôn mặt);
+// #lichsu: xem lịch sử làm bài của chính mình (quét khuôn mặt)
+function pane(face){
+  $('codePane').classList.toggle('hide', face); $('facePane').classList.toggle('hide', !face);
+  document.title = face ? 'Lịch sử làm bài của tôi' : 'Tra cứu kết quả bài kiểm tra';
+  if (!face) setTimeout(function(){ try { $('cIn').focus({ preventScroll:true }); } catch(e){} }, 30);
+}
+function syncPane(){ if ($('listView').classList.contains('hide')) pane(location.hash === '#lichsu'); }
+window.addEventListener('hashchange', syncPane); syncPane();
+$('toFace').addEventListener('click', function(){ if (location.hash !== '#lichsu') location.hash = 'lichsu'; else pane(true); });
+$('toCode').addEventListener('click', function(){ history.replaceState(null, '', location.pathname + location.search); pane(false); });
+$('cForm').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  var v = $('cIn').value.trim().replace(/\s+/g, ''), tok = '';
+  if (!v){ $('cMsg').innerHTML = '<div class="pmsg">Vui lòng nhập mã xác thực in trên thẻ kết quả.</div>'; $('cIn').focus(); return; }
+  try { var u = new URL(v, location.origin); tok = u.searchParams.get('t') || ''; if (!tok && u.searchParams.get('c')) v = u.searchParams.get('c'); } catch(e){}
+  if (!tok && /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(v)) tok = v;
+  if (tok){ location.href = '/kiemtra/ketqua.html?t=' + encodeURIComponent(tok); return; }
+  var m = /^KT-?([0-9A-Za-z]{8})$/i.exec(v);
+  if (m){ location.href = '/kiemtra/ketqua.html?c=' + encodeURIComponent('KT-' + m[1].toUpperCase()); return; }
+  $('cMsg').innerHTML = '<div class="pmsg">Chưa nhận ra mã. Mã xác thực có dạng <b>KT-</b> và 8 ký tự (ví dụ KT-PI8TJZD9), in trên thẻ kết quả; hoặc dán liên kết xác thực.</div>';
+  $('cIn').focus();
+});
+$('cIn').addEventListener('input', function(){ $('cMsg').innerHTML = ''; });
 $('tDone').addEventListener('click', resetForm);
 $('lockBack').addEventListener('click', resetForm);
 ['click','keydown','touchstart'].forEach(function(ev){ document.addEventListener(ev, function(){ if (!$('listView').classList.contains('hide')){ clearTimeout(idleT); idleT = setTimeout(resetForm, IDLE_MS); } }, { passive:true }); });
