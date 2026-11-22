@@ -272,7 +272,7 @@ body.au-lookup.th-wide #card{width:min(1040px,100%);padding:0;margin:0 auto}
   </main>
 </div>
 
-<script src="/kiemtra/facehud.js?v=2"></script>
+<script src="/kiemtra/facehud.js?v=3"></script>
 
 <script>
 var $ = function(id){ return document.getElementById(id); };
@@ -376,7 +376,7 @@ window.addEventListener('pagehide', clearResult);
 function closeFace(){ if (window.FaceHUD) FaceHUD.close(); }
 function openFace(){
   FaceHUD.open({ kicker:'AI FACE VERIFY', title:'Xác thực khuôn mặt', target:'AI nhận diện danh tính',
-    verify: function(photo){ return postHist({ photo: photo }); },
+    verify: function(photo, live){ return postHist({ photo: photo, live: live || undefined }); },
     done: function(j){ showList(j); },
     fail: function(j){
       if (j && j.locked){ closeFace(); showLocked(j.error); return false; }

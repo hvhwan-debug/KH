@@ -8,12 +8,13 @@ const FACE = { who: "NV1", same: true };
 stub("facecheck", { verify: async () => ({ allow: true, record: { status: "ok", by: "azure" } }) });
 stub("facematch", { describe: async () => ({ n: 1, desc: new Array(128).fill(0.1) }), compare: async () => FACE.same ? { ok: true, distance: 0.3, threshold: 0.55 } : { ok: false, code: "mismatch", distance: 0.7, threshold: 0.55, message: "Khuôn mặt không khớp." } });
 stub("facegallery", { identify: async () => FACE.who ? { ok: true, code: FACE.who, distance: 0.3, second: 0.6 } : { ok: false, reason: "far", distance: 0.6 } });
+stub("facelive", { mode: () => "on", verify: async (live) => live && live.token === "ok" ? { ok: true } : { ok: false, code: "missing", message: "Cần hoàn thành thử thách nhìn thẳng, quay trái, quay phải trước khi tiếp tục." } });
 const quiz = require("../api/_lib/quiz");
 const H = { "x-requested-with": "livotec" };
 const fn = { hist: require("../api/kt-history"), paper: require("../api/kt-mypaper") };
 let pass = 0, fail = 0;
 const ok = (c, m) => { c ? pass++ : fail++; console.log((c ? "PASS " : "FAIL ") + m); };
-async function call(name, body) { const ctx = { log: Object.assign(() => {}, { error: console.error, warn: () => {} }), res: null }; await fn[name](ctx, { method: "POST", headers: H, body, query: {} }); return { s: ctx.res.status, j: ctx.res.body }; }
+async function call(name, body) { if (body && body.photo && !body.nolive && !body.live) body = Object.assign({ live: { token: "ok", frames: [] } }, body); const ctx = { log: Object.assign(() => {}, { error: console.error, warn: () => {} }), res: null }; await fn[name](ctx, { method: "POST", headers: H, body, query: {} }); return { s: ctx.res.status, j: ctx.res.body }; }
 const PHOTO = "data:image/jpeg;base64," + Buffer.from("selfie").toString("base64");
 (async () => {
   await quiz.saveCandidates([{ code: "NV1", name: "A", email: "a@x.vn", phone: "0912345678" }]);
@@ -45,5 +46,10 @@ const PHOTO = "data:image/jpeg;base64," + Buffer.from("selfie").toString("base64
   FACE.same = true;
   r = await call("paper", { t, code: "NV9", email: "z@x.vn", photo: PHOTO });
   ok(r.s === 403, "xem lại đề: nếu vẫn gửi mã NV + email sai -> từ chối");
+  // Thử thách sống: thiếu thử thách (giơ ảnh tĩnh, không quay trái/phải) -> từ chối, KHÔNG trả danh sách / đề
+  r = await call("hist", { photo: PHOTO, nolive: true });
+  ok(r.s === 403 && r.j.liveFailed && !r.j.list, "tra cứu: không qua thử thách quay mặt -> từ chối");
+  r = await call("paper", { t, photo: PHOTO, nolive: true });
+  ok(r.s === 403 && r.j.liveFailed && !r.j.paper, "xem lại đề: không qua thử thách quay mặt -> từ chối");
   console.log("\n" + pass + " đạt, " + fail + " lỗi"); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

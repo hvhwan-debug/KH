@@ -95,6 +95,16 @@ module.exports = async function (context, req) {
       if (!phone) return reply(context, 400, { ok: false, needPhone: true, error: "Vui lòng nhập số điện thoại hoặc Zalo (10 số, bắt đầu bằng 0)." });
       const selfie = typeof b.photo === "string" ? b.photo : "";
       if (!selfie.startsWith("data:image/") || selfie.length > 350000) return reply(context, 400, { ok: false, error: "Cần quét khuôn mặt bằng camera để xác thực." });
+      // 0) Thử thách sống (nhìn thẳng + quay trái + quay phải): chặn giơ ảnh / màn hình người khác để xem bài
+      const FL = require("../_lib/facelive");
+      if (FL.mode() === "on") {
+        const lv = await FL.verify(b.live, selfie);
+        if (!lv.ok) {
+          if (!lv.unavailable) quiz.noteFail(req);
+          await logView(req, attempt, "denied", "liveness:" + lv.code, lv.message);
+          return reply(context, lv.unavailable ? 503 : 403, { ok: false, liveFailed: true, error: lv.message });
+        }
+      }
       // 1) Ảnh phải chụp trực tiếp, không phải chụp lại từ màn hình / ảnh in (AI nhìn ảnh; AI không trả lời được thì bỏ qua bước này)
       const live = await facecheck.verify(selfie, null, attempt.code, "xem-lai-de");
       if (!live.allow) {

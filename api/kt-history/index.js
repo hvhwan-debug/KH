@@ -40,6 +40,17 @@ module.exports = async function (context, req) {
     const b = req.body || {};
     // Tra cứu lịch sử CHỈ bằng khuôn mặt: không nhận mã NV + email (bỏ đường nhập tay dự phòng)
     if (!b.photo) return reply(context, 400, { ok: false, error: "Vui lòng quét khuôn mặt để tra cứu." });
+    // Thử thách sống (nhìn thẳng + quay trái + quay phải theo thứ tự ngẫu nhiên): chặn giơ ảnh / màn hình người khác.
+    // Máy chủ tự đo lại góc quay trên từng ảnh và kiểm tra cùng một người. FACE_LIVENESS=soft: không chặn; off: tắt.
+    const FL = require("../_lib/facelive");
+    if (FL.mode() === "on") {
+      const lv = await FL.verify(b.live, b.photo);
+      if (!lv.ok) {
+        if (!lv.unavailable) quiz.noteFail(req);
+        try { await auditlog.write({ area: "verify", role: "candidate", by: "", op: "viewHistory", label: "Thí sinh tra cứu lịch sử bài kiểm tra (thử thách quay mặt)", kind: "denied", status: 403, ok: false, details: { result: "liveness:" + lv.code, note: lv.message }, ip: device.ipOf(req) }); } catch (e) { /* bỏ qua */ }
+        return reply(context, lv.unavailable ? 503 : 403, { ok: false, liveFailed: true, error: lv.message });
+      }
+    }
     let code = "", email = "", byFace = null;
     {
       // Chỉ quét khuôn mặt (không nhập mã NV + email): nhận diện 1-N trong thư viện, rồi vẫn đối chiếu 1-1 với ảnh đã lưu bên dưới

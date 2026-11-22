@@ -255,7 +255,7 @@ body.cert-on .foot{display:none}
     <button type="button" class="btn-outline" id="phCancel" style="margin-top:8px">Quay lại</button>
   </div>
 </div>
-<script src="/kiemtra/facehud.js?v=2"></script>
+<script src="/kiemtra/facehud.js?v=3"></script>
 <script>
 (function(){
 'use strict';
@@ -370,7 +370,7 @@ $('phCancel').addEventListener('click', closePhone);
 function closeFace(){ if (window.FaceHUD) FaceHUD.close(); }
 function openFace(){
   FaceHUD.open({ kicker:'AI FACE VERIFY', title:'Xác thực khuôn mặt', target:'AI đối chiếu với chủ bài làm',
-    verify: function(photo){ return postPaper({ code: FLOW.code, email: FLOW.email, phone: FLOW.phone, photo: photo }); },
+    verify: function(photo, live){ return postPaper({ code: FLOW.code, email: FLOW.email, phone: FLOW.phone, photo: photo, live: live || undefined }); },
     done: function(j){ showPaper(j); },
     fail: function(j){ if (j && j.needPhone){ closeFace(); openPhone(); return false; } }
   });

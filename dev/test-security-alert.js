@@ -1,6 +1,8 @@
 process.env.STORAGE_MODE = "memory"; process.env.MAIL_MODE = "memory"; process.env.ADMIN_EMAILS = "admin1@x.vn,admin2@x.vn"; process.env.SESSION_SECRET = "s".repeat(40); process.env.APP_URL = "https://t.vn"; process.env.ALLOWED_EMAIL_DOMAINS = "x.vn";
 const P = require("path").join(__dirname, "..", "api") + "/";
 const facematch = require(P + "_lib/facematch"), facecheck = require(P + "_lib/facecheck");
+const facelive = require(P + "_lib/facelive"); facelive.mode = () => "on";
+facelive.verify = async (live) => live && live.token === "ok" ? { ok: true } : { ok: false, code: "missing", message: "Cần hoàn thành thử thách." };
 let mode = "mismatch";
 facecheck.verify = async () => mode === "spoof" ? { allow: false, message: "Ảnh có dấu hiệu chụp lại.", record: { status: "spoof" } } : { allow: true, record: { status: "ok" } };
 facematch.compare = async () => mode === "ok" ? { ok: true, distance: 0.2, threshold: 0.55 } : { ok: false, code: "mismatch", distance: 0.91, threshold: 0.55, message: "Khuôn mặt không khớp với ảnh đã lưu của chủ bài làm này." };
@@ -13,7 +15,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { c ? pass++ : fail++; console.log(
   await quiz.putAttempt(att);
   quiz.getExamSettings = async () => ({ closeAt: Date.now() - 1000, examTitle: "Kiểm tra 10/2026" });
   const call = async (body, ip) => { let out; const ctx = { log: Object.assign(() => {}, { error() {}, warn() {} }), res: null };
-    const req = { method: "POST", headers: { "x-requested-with": "livotec", "x-forwarded-for": ip || "1.1.1.1", "user-agent": "TestUA/1.0" }, body: Object.assign({ t: quiz.verifyToken(att.id), code: att.code, email: att.email }, body), query: {} };
+    const req = { method: "POST", headers: { "x-requested-with": "livotec", "x-forwarded-for": ip || "1.1.1.1", "user-agent": "TestUA/1.0" }, body: Object.assign({ t: quiz.verifyToken(att.id), code: att.code, email: att.email, live: { token: "ok", frames: [] } }, body), query: {} };
     await handler(ctx, req); return ctx.res; };
   mailbox = () => global.__mailbox || [];
 
