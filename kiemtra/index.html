@@ -1254,6 +1254,23 @@ body[data-scr=photo] .ck,body[data-scr=quiz] .ck{display:none}
 .fsg p{margin:0 0 10px;font-size:14px;line-height:1.6;color:var(--muted)}.fsg p b{color:var(--ink)}
 .fsg-warn{padding:9px 12px;border-radius:12px;background:#FFF1F1;color:#B42318!important;font-weight:600}
 .fsg .btn{margin-top:8px;width:100%}
+/* ===== Thẻ tên người làm bài (góc phải thanh trên cùng, chỉ khi đang làm bài) ===== */
+.who{display:none}
+body.exam .top{justify-content:flex-start}
+body.exam .who{display:flex;align-items:center;gap:10px;margin-left:auto;flex:0 1 auto;min-width:0;padding:5px 14px 5px 5px;border-radius:999px;background:#fff;border:1px solid #DCE6F3;box-shadow:0 6px 16px -10px rgba(16,40,90,.35)}
+.who-av{flex:0 0 auto;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff;background:linear-gradient(135deg,#0A63C4,#12A6E0)}
+.who-t{display:flex;flex-direction:column;min-width:0;line-height:1.2}
+.who-t b{font-size:13.5px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.who-t small{font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who-t small:not(:empty)::before{content:"Mã NV: "}
+@media(max-width:560px){
+  body.exam .who{padding:3px 10px 3px 3px;gap:7px;max-width:44%;flex:0 0 auto}
+  body.exam .top>div:nth-child(2){min-width:0;flex:1 1 auto}
+  .who-t small:not(:empty)::before{content:none}
+  .who-av{width:28px;height:28px;font-size:11px}
+  .who-t b{font-size:12px;max-width:none}.who-t small{font-size:10.5px}
+}
+@media print{.who{display:none!important}}
 </style>
 </head>
 <body class="introbg" data-scr="check">
@@ -1288,6 +1305,7 @@ body[data-scr=photo] .ck,body[data-scr=quiz] .ck{display:none}
   <header class="top">
     <div class="logo" aria-hidden="true"><img src="/kiemtra/logo-mark.png" alt="" width="40" height="40"></div>
     <div><h2><span class="wl">Chào mừng bạn đến với</span> <span id="examTitle">Hệ thống kiểm tra trực tuyến</span><span class="ex">!</span></h2></div>
+    <div class="who" id="whoChip" aria-label="Người làm bài"><span class="who-av" id="whoAv" aria-hidden="true"></span><span class="who-t"><b id="whoName"></b><small id="whoCode"></small></span></div>
   </header>
 
   <div class="stage nohero">
@@ -1714,6 +1732,7 @@ function show(name){
     if (n === cur) li.setAttribute('aria-current','step'); else li.removeAttribute('aria-current');
   });
   ST.quizOn = (name === 'quiz');
+  if (name === 'quiz') whoPaint();
   if (typeof fsCheck === 'function') setTimeout(fsCheck, 0);
   document.body.classList.toggle('exam', name === 'quiz');
   document.body.classList.toggle('rs', name === 'result'); // bước kết quả: ẩn tiêu đề trang vì thẻ kết quả đã có tên đề
@@ -3533,6 +3552,13 @@ if ('IntersectionObserver' in window){
 var holdUntil = 0, holdTimer = null, away = false;
 var IS_TOUCH = !!(window.matchMedia && matchMedia('(pointer:coarse)').matches) || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
 var AWAY_MSG = 'Nội dung bài thi đã được ẩn. Hãy quay lại cửa sổ bài thi để tiếp tục. Đồng hồ vẫn đang chạy.';
+// Thẻ tên người làm bài ở góc màn hình làm bài: chữ cái đầu + họ tên + mã nhân viên
+function whoPaint(){
+  var c = ST.cand || {}, n = String(c.name || '').trim(), p = n.split(/\s+/);
+  $('whoAv').textContent = ((p[p.length - 1] || '?').charAt(0) + (p.length > 1 ? p[0].charAt(0) : '')).toUpperCase();
+  $('whoName').textContent = n || c.code || ''; $('whoCode').textContent = c.code || '';
+  $('whoChip').title = [n, c.code].filter(Boolean).join(' · ');
+}
 function wmSet(){
 var c = ST.cand || {};
 var hm = new Date(sysNow()).toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit' });
