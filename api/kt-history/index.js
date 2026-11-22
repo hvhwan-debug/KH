@@ -122,7 +122,7 @@ module.exports = async function (context, req) {
     for (const r of rows.slice(0, MAX_ROWS)) {
       const st = await settingsOf(r.period || "");
       list.push({
-        id: r.id, title: st.examTitle || r.examTitle || "Bài kiểm tra", practice: !!r.practice, test: !!r.test,
+        id: r.id, exam: r.period || "", title: st.examTitle || r.examTitle || "Bài kiểm tra", practice: !!r.practice, test: !!r.test,
         score: r.score, total: r.total, pct: r.pct, wrong: r.wrong, blank: r.blank,
         passed: quiz.passState(r.pct, st), passScore: quiz.passScoreOf(st),
         submittedAt: r.submittedAt, durationSec: r.durationSec != null ? r.durationSec : null,
