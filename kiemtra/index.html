@@ -3121,6 +3121,7 @@ var FACE_MSG = {
 
 /* ---------- Bước 2b: chụp ảnh xác nhận ---------- */
 var PH = { stream:null, dataUrl:'' };
+var AUTO_T = null; // hẹn giờ tự động vào bài sau khi AI nhận diện khuôn mặt đạt, hủy nếu bấm "Chụp lại"
 
 /* ===== HUD AI: theo dõi khuôn mặt thời gian thực + các bước xác thực (bước chụp ảnh xác nhận) ===== */
 var AI = { run:false, loop:null, box:null, built:false, wasLocked:false };
@@ -3460,7 +3461,7 @@ async function aiVerifyEnd(res){ // kết quả máy chủ (kt-start): đối ch
   aiStep(3, ''); aiStep(4, ''); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN KHUÔN MẶT'); // lỗi khác (thiếu thông tin…): giữ nguyên kết quả nhận diện
 }
 async function photoInit(){
-  aiReadyStop();
+  clearTimeout(AUTO_T); aiReadyStop();
   PH.dataUrl = ''; PH.face = null; if (PH.mode !== 'login'){ renderLoc(); askLocation(); } loadFaceAI().catch(function(){}); // tải sẵn bộ nhận diện trong lúc mở camera; vị trí không bắt buộc, chỉ xin thử
   $('pvVideo').classList.remove('hide'); $('pvImg').classList.add('hide'); $('faceGuide').classList.remove('hide');
   $('btnCapture').classList.remove('hide'); $('btnPhotoOk').classList.add('hide'); $('btnPhotoRetry').classList.add('hide');
@@ -3487,7 +3488,7 @@ async function photoInit(){
   }
 }
 function photoStop(){
-  aiTrackStop(); aiReadyStop(); sndStopVoice();
+  clearTimeout(AUTO_T); aiTrackStop(); aiReadyStop(); sndStopVoice();
   var pb = document.querySelector('#scrPhoto .photo-box'); if (pb) pb.classList.remove('opening');
   if (PH.stream){ PH.stream.getTracks().forEach(function(t){ t.stop(); }); PH.stream = null; }
 }
@@ -3510,14 +3511,15 @@ async function photoProcess(c){ // c: canvas chứa ảnh nhìn thẳng
     $('pvImg').src = PH.dataUrl;
   }
   PH.face = r; aiFinal(r);
-  $('btnPhotoRetry').classList.remove('hide');
-  if (r.status === 'ok'){ msg('photoMsg', '✓ Đã nhận diện được khuôn mặt.', 'ok'); $('btnPhotoOk').classList.remove('hide'); }
-  else if (r.status === 'unavailable'){ msg('photoMsg', 'Không tải được bộ kiểm tra khuôn mặt trên máy này. Ảnh sẽ được kiểm tra khi bắt đầu làm bài.', 'warn'); $('btnPhotoOk').classList.remove('hide'); }
-  else { msg('photoMsg', '⚠ ' + FACE_MSG[r.status], 'err'); }  // không cho bắt đầu, chỉ cho chụp lại
-  if (PH.mode === 'login'){ // đăng nhập: không cần bấm "Dùng ảnh này", đạt kiểm tra ở máy thì gửi nhận diện luôn
-    $('btnPhotoOk').classList.add('hide');
-    if (r.status === 'ok' || r.status === 'unavailable'){ msg('photoMsg', ''); $('btnPhotoRetry').classList.add('hide'); doFaceLogin(); }
+  $('btnPhotoRetry').classList.remove('hide'); $('btnPhotoOk').classList.add('hide');
+  // Nhận diện đạt (hoặc máy không kiểm tra được cục bộ): tự động vào bài luôn, không bắt bấm "Dùng ảnh này" nữa.
+  // Vẫn chờ một nhịp ngắn và giữ nút "Chụp lại" để kịp hủy nếu ảnh chưa ưng ý.
+  if (r.status === 'ok' || r.status === 'unavailable'){
+    msg('photoMsg', r.status === 'ok' ? '✓ Đã nhận diện được khuôn mặt. Đang vào bài…' : 'Không tải được bộ kiểm tra khuôn mặt trên máy này. Ảnh sẽ được kiểm tra khi bắt đầu làm bài. Đang vào bài…', 'ok');
+    clearTimeout(AUTO_T);
+    AUTO_T = setTimeout(function(){ if (PH.mode === 'login') doFaceLogin(); else startExam(''); }, 900);
   }
+  else { msg('photoMsg', '⚠ ' + FACE_MSG[r.status], 'err'); }  // không cho bắt đầu, chỉ cho chụp lại
 }
 $('btnCapture').addEventListener('click', async function(){
   var v = $('pvVideo'), c = $('pvCanvas');
@@ -3534,7 +3536,7 @@ $('btnCapture').addEventListener('click', async function(){
 var idWarnT = null;
 function idWarnShow(){ var w = $('idWarn'); clearTimeout(idWarnT); if (!ST.identityWarn){ w.classList.add('hide'); return; } ST.identityWarn = false; w.classList.remove('hide'); idWarnT = setTimeout(function(){ w.classList.add('hide'); }, 20000); }
 $('idWarnX').addEventListener('click', function(){ $('idWarn').classList.add('hide'); });
-$('btnPhotoRetry').addEventListener('click', function(){ LV.keep = true; photoInit(); });
+$('btnPhotoRetry').addEventListener('click', function(){ clearTimeout(AUTO_T); LV.keep = true; photoInit(); });
 function loginFailBack(){ if (PH.mode === 'login'){ clearTimeout(PH.backT); $('btnPhotoBack').classList.remove('hide'); } }
 // Nút "Quét lại" hiện = có lỗi: lúc đó mới cho chọn nhập mã NV + email
 try { new MutationObserver(function(){ if (!$('btnPhotoRetry').classList.contains('hide')) loginFailBack(); }).observe($('btnPhotoRetry'), { attributes:true, attributeFilter:['class'] }); } catch (e) {}
