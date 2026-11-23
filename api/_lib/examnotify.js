@@ -13,7 +13,7 @@ const assignmail = require("./assignmail");
 function inviteMsg(exam, settings, c, link, replaces) {
   let questions = 0; try { questions = quiz.countFor(settings, quiz.normSegment(c.segment), c.region); } catch (e) { questions = 0; }
   const total = settings.timeMode === "total", spq = Math.max(10, settings.secondsPerQuestion || 60);
-  const duration = total ? (Math.max(1, parseInt(settings.totalMinutes, 10) || 30) + " phút cho cả bài") : (questions ? "khoảng " + Math.max(1, Math.round(questions * spq / 60)) + " phút (" + spq + " giây mỗi câu)" : spq + " giây mỗi câu");
+  const duration = total ? (Math.max(1, parseInt(settings.totalMinutes, 10) || 30) + " phút") : (questions ? "~" + Math.max(1, Math.round(questions * spq / 60)) + " phút" : spq + " giây/câu");
   const lim = quiz.attemptLimit(settings), attempts = lim === Infinity ? "Không giới hạn" : lim + " lượt";
   return assignmail.build({ name: c.name, title: settings.examTitle || exam.title || exam.id, description: exam.description || "", questions, duration, attempts,
     openMs: exam.openAt || 0, deadlineMs: exam.closeAt || 0, ctaUrl: link, manager: c.manager || "", note: exam.inviteNote || "", closing: exam.inviteClosing || "", replaces: !!replaces });

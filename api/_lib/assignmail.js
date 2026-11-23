@@ -133,7 +133,7 @@ function build(opts) {
   const steps = [
     ["Mở đường dẫn", opensLater ? "Từ " + opensLater.replace(/\s*\(.*\)$/, "") + ", bằng Chrome hoặc Safari" : "Bằng Chrome hoặc Safari, không mở trong Zalo/Facebook"],
     ["Đăng nhập", "Xác thực danh tính theo hướng dẫn trên màn hình"],
-    ["Làm bài và nộp", deadline ? "Hoàn thành trước " + deadline.replace(/\s*\(.*\)$/, "") : "Nộp bài khi làm xong"]
+    ["Làm bài và nộp", deadline ? "Nộp trước khi hết hạn (xem phía trên)" : "Nộp bài khi làm xong"]
   ];
   const stepBlock =
     '<tr><td class="px" style="padding:26px 28px 0;' + F + '">' +
