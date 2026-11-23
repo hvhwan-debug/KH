@@ -2415,6 +2415,7 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
 </style>
 </head>
 <body class="introbg" data-scr="check">
+<script src="/kiemtra/voice.js?v=1"></script>
 <div class="practice-bar hide" id="practiceBar" role="status"><span>ĐỀ THI THỬ</span></div>
 <header class="lp-bar">
   <div class="lp-brand"><span class="lp-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span class="lp-name">Hệ thống kiểm tra đánh giá trực tuyến</span><span class="lp-txt" aria-hidden="true"><b>Nền tảng kiểm tra trực tuyến</b><small>Kết quả bài kiểm tra</small></span></div>
@@ -3077,7 +3078,7 @@ function checkDone(j, code, email){
   if (j.alreadyDone){ renderResult(j.result, true); return; }
   ST.inProgress = j.inProgress || null;
   ST.attempts = j.attempts || null;
-  renderConfirm();
+  vgWait(12000).then(renderConfirm); // đọc hết câu đang đọc rồi mới sang màn Xác nhận thông tin
 }
 
 /* ---------- Bước 2: xác nhận + thể lệ ---------- */
@@ -3347,6 +3348,7 @@ async function startWithFacePass(){ // vào thẳng bài từ màn xác nhận: 
   if (ST.rgNew){ ST.cand.province = ST.rgNew.province; ST.cand.region = ST.rgNew.region; ST.cand.needRegion = false; }
   ST.attemptId = j.attemptId; evLoad();
   if (j.examTitle) $('examTitle').textContent = j.examTitle;
+  await vgWait(12000);
   show('quiz');
   wmSet(); idWarnShow();
   if (j.done) return finish();
@@ -3585,34 +3587,11 @@ function sndPickVoice(){ // ưu tiên giọng tiếng Việt tự nhiên (Edge: 
 try { if ('speechSynthesis' in window){ sndPickVoice(); speechSynthesis.onvoiceschanged = sndPickVoice; } } catch (e) {}
 /* Giọng đọc: ưu tiên file ghi sẵn /kiemtra/voice (cùng một giọng trên mọi máy, kể cả máy không có giọng tiếng Việt như Chrome trên Windows);
    câu không có file (vd. có tên riêng) thì dùng giọng tiếng Việt của máy; máy cũng không có thì phát câu dự phòng ghi sẵn. */
-var VCLIP = { map:null, buf:{}, raw:{}, src:null, want:'', busyUntil:0 };
-function vgNorm(t){ return String(t || '').replace(/^[\s⚠✓!]+/, '').replace(/…/g, '.').replace(/\s+/g, ' ').trim(); }
-try { fetch('/kiemtra/voice/index.json', { cache:'no-cache' }).then(function(r){ return r.json(); }).then(function(m){ VCLIP.map = m || {}; }).catch(function(){ VCLIP.map = {}; }); } catch (e) { VCLIP.map = {}; }
-function vclipFile(k){ var m = VCLIP.map || {}; return m[k] || m[k.replace(/\.$/, '')] || m[k + '.'] || ''; }
-function vclipStop(){ if (typeof VCLIP === 'undefined' || !VCLIP) return; VCLIP.want = ''; VCLIP.busyUntil = 0; try { if (VCLIP.src) VCLIP.src.stop(); } catch (e) {} VCLIP.src = null; }
-function vclipPlay(file){
-  var c = sndCtx(); if (!c) return false;
-  VCLIP.want = file;
-  var go = function(b){
-    if (VCLIP.want !== file) return; try { if (VCLIP.src) VCLIP.src.stop(); } catch (e) {}
-    var s = c.createBufferSource(), g = c.createGain(); g.gain.value = 1; s.buffer = b; s.connect(g); g.connect(c.destination);
-    try { s.start(); } catch (e) { return; } VCLIP.src = s; VCLIP.busyUntil = Date.now() + b.duration * 1000;
-  };
-  if (VCLIP.buf[file]) { go(VCLIP.buf[file]); return true; }
-  (VCLIP.raw[file] || (VCLIP.raw[file] = fetch('/kiemtra/voice/' + file).then(function(r){ if (!r.ok) throw 0; return r.arrayBuffer(); })))
-    .then(function(ab){ return new Promise(function(res, rej){ c.decodeAudioData(ab.slice(0), res, rej); }); })
-    .then(function(b){ VCLIP.buf[file] = b; go(b); }).catch(function(){ delete VCLIP.raw[file]; });
-  return true;
-}
-function vgBusy(){ return Date.now() < VCLIP.busyUntil || !!(window.speechSynthesis && speechSynthesis.speaking); }
-function sayVn(t){
-  if (!SND.on) return;
-  var k = vgNorm(t), f = vclipFile(k);
-  sndStopVoice();
-  if (f && vclipPlay(f)) return;
-  if (SND.voice){ try { var u = new SpeechSynthesisUtterance(t); u.voice = SND.voice; u.lang = SND.voice.lang; u.rate = 1.02; u.volume = .9; speechSynthesis.speak(u); } catch (e) {} return; }
-  var fb = vclipFile(/^Xin chào/.test(k) ? 'Xin chào. Đăng nhập thành công.' : 'Vui lòng xem thông báo trên màn hình.'); if (fb) vclipPlay(fb);
-}
+// Giọng đọc: dùng hàng đợi chung KTVoice (kiemtra/voice.js) — câu đang đọc luôn được đọc HẾT, câu mới chờ tới lượt
+function vgNorm(t){ return window.KTVoice ? KTVoice.norm(t) : String(t || '').trim(); }
+function vgBusy(){ return !!(window.KTVoice && KTVoice.busy()); }
+function vgWait(max){ return window.KTVoice ? KTVoice.wait(max || 8000) : Promise.resolve(); } // dùng trước khi TỰ chuyển màn hình
+function sayVn(t){ if (!SND.on || !window.KTVoice) return; KTVoice.say(t); }
 /* ===== Hướng dẫn bằng giọng nói ở mọi màn đăng nhập (chọn cách xác thực, nhập mã, quét khuôn mặt, xác nhận thông tin) =====
    key: chống đọc lặp cùng một câu trong khoảng gap (ms). Chưa có thao tác nào trên trang (trình duyệt chặn tiếng):
    giữ lại câu gần nhất, đọc ngay sau lần chạm/nhấp đầu tiên nếu lúc đó không có câu mới hơn. */
@@ -3630,7 +3609,7 @@ function guideScreen(name){
 }
 setTimeout(function(){ guideScreen(document.body.dataset.scr); }, 0); // màn đầu tiên đã hiện trước khi phần giọng nói sẵn sàng
 function guideMsgText(t){ return vgNorm(t); }
-function sndStopVoice(){ try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {} if (typeof vclipStop === 'function') vclipStop(); }
+function sndStopVoice(){ if (window.KTVoice) KTVoice.stop(); else try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {} }
 function sndBlocked(){ return SND.on && (!SND.ctx || SND.ctx.state !== 'running'); } // đang bật nhưng trình duyệt còn chặn tiếng
 function sndPaint(){ var b = $('aiSnd'); if (!b) return; var bl = sndBlocked() && SND.touched; b.classList.toggle('off', !SND.on); b.classList.toggle('wait', bl); b.setAttribute('aria-pressed', SND.on ? 'true' : 'false'); b.title = bl ? 'Chạm để bật âm thanh' : 'Bật/tắt âm thanh'; }
 
@@ -3990,7 +3969,7 @@ async function photoProcess(c){ // c: canvas chứa ảnh nhìn thẳng
   if (r.status === 'ok' || r.status === 'unavailable'){
     msg('photoMsg', r.status === 'ok' ? '✓ Đã nhận diện được khuôn mặt. Đang vào bài…' : 'Không tải được bộ kiểm tra khuôn mặt trên máy này. Ảnh sẽ được kiểm tra khi bắt đầu làm bài. Đang vào bài…', 'ok');
     clearTimeout(AUTO_T);
-    AUTO_T = setTimeout(function(){ if (g !== PHG || document.body.dataset.scr !== 'photo') return; if (PH.mode === 'login') doFaceLogin(); else startExam(''); }, 900);
+    AUTO_T = setTimeout(async function(){ if (g !== PHG || document.body.dataset.scr !== 'photo') return; await vgWait(12000); if (g !== PHG || document.body.dataset.scr !== 'photo') return; if (PH.mode === 'login') doFaceLogin(); else startExam(''); }, 900);
   }
   else { msg('photoMsg', '⚠ ' + FACE_MSG[r.status], 'err'); }  // không cho bắt đầu, chỉ cho chụp lại
 }
@@ -4038,7 +4017,7 @@ async function doFaceLogin(){
   var j = res && res.j;
   if (j && j.ok){
     aiStep(3, 'ok', 1); aiStep(4, 'run'); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN'); sndOk(); guide('Xin chào ' + (j.name || '') + '. Đăng nhập thành công.', 'hello', 8000); msg('photoMsg', '✓ Xin chào ' + (j.name || j.code) + '. Đang mở thông tin của bạn…', 'ok');
-    await aiDelay(900); if (g !== PHG) return; aiStep(4, 'ok', 1); await aiDelay(450); if (g !== PHG) return;
+    await aiDelay(900); if (g !== PHG) return; aiStep(4, 'ok', 1); await aiDelay(450); await vgWait(12000); if (g !== PHG) return; VG.last['scr-check'] = Date.now();
     fpSet(j.facePass ? { token: j.facePass, code: String(j.code || ''), photo: PH.dataUrl, at: Date.now() } : null); // vé: bỏ bước quét mặt lần hai khi bắt đầu làm bài
     flSet(j.faceLogin ? { token: j.faceLogin, code: String(j.code || ''), at: Date.now() } : null); // vé: vào bằng khuôn mặt thì không bị hỏi xác thực lại vì "nhập sai nhiều lần"
     PH.mode = 'exam'; photoStop(); show('check');
@@ -4075,6 +4054,7 @@ async function startExam(passToken){ // passToken: vé đăng nhập bằng khu�
   if (ST.rgNew){ ST.cand.province = ST.rgNew.province; ST.cand.region = ST.rgNew.region; ST.cand.needRegion = false; }
   ST.attemptId = res.j.attemptId; evLoad();
   if (res.j.examTitle) $('examTitle').textContent = res.j.examTitle;
+  await vgWait(12000); // đọc hết "xác thực thành công…" rồi mới vào bài
   show('quiz');
   wmSet(); idWarnShow();
   if (res.j.done) return finish();

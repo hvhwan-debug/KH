@@ -440,20 +440,13 @@ function voxPick(){
   return v || null;
 }
 if ('speechSynthesis' in window && window.speechSynthesis.addEventListener){ try { window.speechSynthesis.addEventListener('voiceschanged', voxPick); } catch (e) {} }
-function speak(t){
-  if (!t || !FM.open || !SND.on || !('speechSynthesis' in window)) return;
-  var v = voxPick();
-  if (!v) return; // không có giọng tiếng Việt trên máy/trình duyệt này: thà im lặng còn hơn đọc sai bằng giọng ngôn ngữ khác
+function speak(t){ // dùng hàng đợi chung KTVoice (kiemtra/voice.js): câu đang đọc luôn được đọc HẾT, câu mới chờ tới lượt
+  if (!t || !FM.open || !SND.on) return;
   var n = Date.now();
-  if (n - VOX.lastAt < 900) return; // tránh nói chồng chéo liên tục khi gợi ý đổi nhanh
-  if (t === VOX.last && n - VOX.lastAt < 4000) return; // tránh lặp lại y nguyên câu vừa nói
-  try {
-    window.speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(t);
-    u.lang = 'vi-VN'; u.rate = 1.05; u.pitch = 1; u.volume = 1; u.voice = v;
-    window.speechSynthesis.speak(u);
-  } catch (e) {}
+  if (t === VOX.last && n - VOX.lastAt < 4000) return; // không lặp lại y nguyên câu vừa nói
   VOX.last = t; VOX.lastAt = n;
+  if (window.KTVoice){ KTVoice.say(t); return; }
+  try { var v = voxPick(); if (!v) return; window.speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.lang = 'vi-VN'; u.voice = v; window.speechSynthesis.speak(u); } catch (e) {}
 }
 ['touchend', 'click', 'pointerup', 'keydown', 'mousedown'].forEach(function(ev){ document.addEventListener(ev, unlock, { passive:true, capture:true }); });
 document.addEventListener('visibilitychange', function(){ if (!document.hidden && SND.ctx && SND.ctx.state !== 'running'){ try { SND.ctx.resume().catch(function(){}); } catch (e) {} } });
@@ -532,7 +525,7 @@ function build(){
   $('fhSnd').addEventListener('click', function(){
     if (blocked()){ unlock(); setTimeout(function(){ paintSnd(); sReady(); }, 120); return; }
     SND.on = !SND.on; try { localStorage.setItem('kt_snd', SND.on ? '1' : '0'); } catch (e) {} paintSnd();
-    if (!SND.on && 'speechSynthesis' in window){ try { window.speechSynthesis.cancel(); } catch (e) {} }
+    if (!SND.on){ try { if (window.KTVoice) KTVoice.stop(); else if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) {} }
     else if (SND.on) speak($('fhHint') ? $('fhHint').textContent : '');
     if (SND.on){ unlock(); setTimeout(sReady, 80); if (FM.busy) sScan(true); } else sScan(false);
   });
@@ -564,7 +557,7 @@ function btn(id, on){ $(id).classList.toggle('hide', !on); }
 function stopCam(){ if (FM.timer){ clearTimeout(FM.timer); FM.timer = null; } if (FM.stream){ FM.stream.getTracks().forEach(function(t){ t.stop(); }); FM.stream = null; } }
 function close(){
   FM.gen = (FM.gen || 0) + 1; FM.open = false; FM.busy = false; sScan(false); stopCam(); arrow('');
-  try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) {}
+  try { if (window.KTVoice) KTVoice.stop(); else if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) {}
   try { var v = $('fhVideo'); if (v) v.srcObject = null; } catch (e) {}
   if (FM.el){ FM.el.classList.add('hide'); } document.documentElement.style.overflow = '';
   if (history.state && history.state.fhOpen && !FM.popping){ FM.popping = true; try { history.back(); } catch (e) { FM.popping = false; } }
@@ -674,7 +667,7 @@ async function liveTick(v, t, dt){
   if (n !== 1){
     FM.hold = 0; arrow(n ? '' : (FM.i ? FM.live.seq[FM.i] : ''));
     if (n > 1){ stp[0] = 'bad'; chip('bad', 'PHÁT HIỆN ' + n + ' KHUÔN MẶT'); hint('Chỉ một người trong khung hình', 'bad'); }
-    else { chip('seek', FM.i ? 'THỬ THÁCH ' + (FM.i + 1) + '/3 · ' + POSE_CHIP[FM.live.seq[FM.i]] : 'ĐANG TÌM KHUÔN MẶT'); hint(FM.i ? 'Giữ khuôn mặt trong khung và ' + POSE_HINT[FM.live.seq[FM.i]].toLowerCase() : 'Đưa khuôn mặt vào khung oval'); }
+    else { chip('seek', FM.i ? 'THỬ THÁCH ' + (FM.i + 1) + '/3 · ' + POSE_CHIP[FM.live.seq[FM.i]] : 'ĐANG TÌM KHUÔN MẶT'); hint(FM.i ? 'Giữ khuôn mặt trong khung và ' + POSE_HINT[FM.live.seq[FM.i]].toLowerCase() : 'Đưa khuôn mặt vào giữa khung'); }
     steps(stp); scr('scan'); prog((FM.i) / 3); return;
   }
   stp[0] = 'ok'; stp[FM.i + 1] = 'run'; steps(stp);
@@ -741,7 +734,7 @@ async function verify(photo, live){
   if (!FM.open) return;
   if (j && j.ok){
     steps(['ok', 'ok', 'ok', 'ok', 'ok']); scr('ok'); chip('ok', 'XÁC THỰC THÀNH CÔNG'); hint('Xác thực thành công', 'ok'); $('fhRes').innerHTML = I_OK; sOk();
-    setTimeout(function(){ if (!FM.open || g !== FM.gen) return; var o = FM.opts; close(); if (o.done) o.done(j); }, 1100);
+    setTimeout(async function(){ if (!FM.open || g !== FM.gen) return; if (window.KTVoice) await KTVoice.wait(12000); /* đọc hết "Xác thực thành công" rồi mới chuyển */ if (!FM.open || g !== FM.gen) return; var o = FM.opts; close(); if (o.done) o.done(j); }, 1100);
     return;
   }
   steps(['ok', 'ok', 'ok', 'ok', 'bad']); scr('bad'); $('fhRes').innerHTML = I_BAD; sBad();

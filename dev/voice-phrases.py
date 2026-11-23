@@ -26,12 +26,17 @@ def collect():
     for f in [os.path.join(ROOT, 'api', n, 'index.js') for n in ('kt-check', 'kt-facelogin', 'kt-info', 'kt-live', 'kt-start', 'kt-consent')]:
         s = open(f, encoding='utf-8').read()
         out += re.findall(r'error:\s*"([^"]{12,})"', s)
+    # 4b) màn quét dùng chung (kiemtra/facehud.js): câu nhắc hint('...') / msg = '...', tư thế thử thách
+    fh = open(os.path.join(ROOT, 'kiemtra/facehud.js'), encoding='utf-8').read()
+    out += re.findall(r"hint\('([^']{4,})'", fh) + re.findall(r"msg = '([^']{4,})'", fh) + re.findall(r"\? '([^']{6,})' :", fh) + re.findall(r": '([^']{6,})', '(?:ok|bad|chk)'\)", fh)
+    ph = dict(re.findall(r"(\w+):'([^']+)'", re.search(r"var POSE_HINT = \{(.*?)\};", fh).group(1)))
+    for v in ph.values(): out += [v, 'Giữ khuôn mặt trong khung và ' + v.lower(), v + ' — quay chậm, giữ mặt trong khung']
     # 5) câu dự phòng cho nội dung có tên riêng / không đoán trước được
     out += ['Quay nhẹ hơn để camera còn thấy khuôn mặt.', 'Đưa khuôn mặt vào giữa khung.']  # câu trong biểu thức ba ngôi
     out += ['Xin chào. Đăng nhập thành công.', 'Vui lòng xem thông báo trên màn hình.']
     seen, res = set(), []
     for t in map(norm, out):
-        ok = t and t not in seen and len(t.split()) >= 3 and not t.startswith('.') and not re.search(r'\$\{|\+|→|\\\\', t)
+        ok = t and t not in seen and len(t.split()) >= 2 and not t.startswith('.') and not re.search(r'\$\{|\+|→|\\\\', t)
         if ok: seen.add(t); res.append(t)
     return res
 if __name__ == '__main__':
