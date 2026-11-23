@@ -636,7 +636,8 @@ async function upsertExam(data) {
   const i = exams.findIndex((e) => e.id === id);
   const now = Date.now();
   const entry = Object.assign(
-    { id, title: String((data && data.title) || id).trim().slice(0, 150), createdAt: i >= 0 ? exams[i].createdAt : now },
+    // Tên đề: chỉ đổi khi có gửi tên mới (sửa đề chỉ gửi các ô đã thay đổi); không gửi thì giữ tên cũ
+    { id, title: String((data && String(data.title || "").trim()) || (i >= 0 && exams[i].title) || id).trim().slice(0, 150), createdAt: i >= 0 ? exams[i].createdAt : now },
     pick(data || {}, OVERRIDABLE_FIELDS)
   );
   // Khống chế số câu: kiểm tra chặt, lưu dạng SỐ (không lưu chuỗi thô như trước)

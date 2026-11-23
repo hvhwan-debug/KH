@@ -3387,7 +3387,7 @@ function clearExamForm(){
   $('exId').oninput = () => { $('exSp').dataset.bank = $('exId').value.trim(); spRefresh($('exSp')); exQSummary(); };
 }
 function openNewExam(){
-  EX_NEW = true; CUR_EXAM = null; switchTab('examset');
+  EX_SNAP = null; EX_NEW = true; CUR_EXAM = null; switchTab('examset');
   clearExamForm();
   $('examFormTitle').textContent = 'Tạo đề thi mới';
   // Đề mới: mặc định phân bổ riêng, điền sẵn theo phân bổ chung (nếu đã cài) hoặc mẫu chuẩn 5/10/15/5/5 và 5/25/10
@@ -3396,11 +3396,14 @@ function openNewExam(){
   previewPlan();
   $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
 }
-function editExam(id){
-  const e = EXAMS.find(x => x.id === id) || { id };
+async function editExam(id){
+  // Danh sách đề chưa tải xong (vd vừa mở lại trang): chờ tải rồi mới điền form, KHÔNG mở form trống với giá trị mặc định
+  let e = EXAMS.find(x => x.id === id);
+  if (!e){ EX_SNAP = null; $('examFormCard').classList.add('hide'); await loadExams(); e = EXAMS.find(x => x.id === id); }
+  if (!e){ msg('exMsg', 'Không tải được cài đặt của đề “' + id + '”. Tải lại trang rồi thử lại.', 'err'); return; }
   clearExamForm();
   $('exEditingId').value = id; $('exId').value = id; $('exId').disabled = true;
-  $('exTitle').value = ownTitle(e) ? e.title : ''; $('exShareTitle').value = e.shareTitle || '';
+  $('exTitle').value = e.title || e.id; $('exShareTitle').value = e.shareTitle || '';
   $('exCount').value = e.questionCount || ''; $('exBothGD').value = e.bothGiaDungCount || '';
   $('exTimeMode').value = e.timeMode || ''; $('exTotalMin').value = e.totalMinutes || ''; timeUi('ex');
   $('exSeconds').value = e.secondsPerQuestion || ''; $('exPass').value = e.passScore || ''; $('exPassOn').checked = e.passEnabled != null ? !!e.passEnabled : !!SETCACHE.passEnabled;
@@ -3417,6 +3420,7 @@ function editExam(id){
   $('exAdv').open = !!(BP_RULES.length || e.questionCount || e.bothGiaDungCount || (e.segments||[]).length);
   exSpSet(e.sharedUniform ? 'none' : (spHas(e.segmentPlans) ? 'own' : 'global'), e.segmentPlans); previewPlan();
   $('examFormCard').classList.remove('hide'); exGoStep(1); exRefreshNow();
+  EX_SNAP = examPayload();
   $('examFormCard').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function examDraft(){
@@ -3443,6 +3447,21 @@ function renderPlan(j){
       '</div>').join('') + '</div>';
 }
 async function previewPlan(){ $('planPreview').innerHTML = '<div class="small" style="margin-top:8px">Đang kiểm tra…</div>'; renderPlan(await fetchPlan()); }
+let EX_SNAP = null; // giá trị các ô lúc vừa mở form sửa đề (để chỉ lưu phần thay đổi)
+function examPayload(){
+  return {
+    id: $('exEditingId').value || $('exId').value.trim(),
+    title: $('exTitle').value.trim(), shareTitle: $('exShareTitle').value.trim(),
+    questionCount: $('exCount').value, bothGiaDungCount: $('exBothGD').value, secondsPerQuestion: $('exSeconds').value, timeMode: $('exTimeMode').value, totalMinutes: $('exTotalMin').value,
+    passEnabled: $('exPassOn').checked, passScore: $('exPass').value, allowRetake: $('exRetake').checked, maxAttempts: $('exAttempts').value.trim(), practice: $('exPractice').checked,
+    complianceEnabled: $('exComplianceOn').checked, complianceHighMin: $('exCHigh').value, complianceMidMin: $('exCMid').value, complianceLowMin: $('exCLow').value,
+    description: $('exDesc').value.trim(), surveyUrl: $('exSurveyOn').checked ? ($('exSurveyUrl').value.trim() || SURVEY_DEFAULT_URL) : '', codes: ASG.mode !== 'all' ? $('exCodes').value : '', codesExclude: ASG.mode === 'exclude',
+    openAt: localToMs($('exOpen').value), closeAt: localToMs($('exClose').value),
+    segments: Array.from(document.querySelectorAll('.exSeg:checked')).map(c => c.value),
+    segmentPlans: exSpOwn() ? spRead($('exSp')) : null, sharedUniform: exSpShared(), inviteOff: $('exInviteOff').checked, inviteNote: $('exInvNote').value.trim(), inviteClosing: $('exInvClosing').value.trim(),
+    blueprint: BP_RULES.length ? { rules: BP_RULES.map(r => ({ bankId:r.bankId, category:r.category||'', difficulty:r.difficulty||'', tag:r.tag||'', count:+r.count||0 })) } : null
+  };
+}
 async function saveExam(){
   const tt = $('exTitle').value.trim(), prac = $('exPractice').checked;
   if (!tt){ exGoStep(1); msg('exMsg','Nhập tên đề thi (thí sinh thấy tên này trên đề và phiếu kết quả).'); $('exTitle').focus(); return; }
@@ -3457,18 +3476,18 @@ const bad0 = exIssues(); for (let st = 1; st <= EX_STEPS; st++){ const e0 = bad0
     const bad = pj.plans.filter(p => p.error || p.short);
     if (bad.length && !confirm('Ngân hàng chưa đủ câu cho: ' + bad.map(p => p.label + ' (' + p.got + '/' + p.target + ')').join(', ') + '.\nThí sinh nhóm này sẽ nhận ÍT câu hơn quy định. Vẫn lưu?')) return;
   }
-  const exam = {
-    id: $('exEditingId').value || $('exId').value.trim(),
-    title: $('exTitle').value.trim(), shareTitle: $('exShareTitle').value.trim(),
-    questionCount: $('exCount').value, bothGiaDungCount: $('exBothGD').value, secondsPerQuestion: $('exSeconds').value, timeMode: $('exTimeMode').value, totalMinutes: $('exTotalMin').value,
-    passEnabled: $('exPassOn').checked, passScore: $('exPass').value, allowRetake: $('exRetake').checked, maxAttempts: $('exAttempts').value.trim(), practice: $('exPractice').checked,
-    complianceEnabled: $('exComplianceOn').checked, complianceHighMin: $('exCHigh').value, complianceMidMin: $('exCMid').value, complianceLowMin: $('exCLow').value,
-    description: $('exDesc').value.trim(), surveyUrl: $('exSurveyOn').checked ? ($('exSurveyUrl').value.trim() || SURVEY_DEFAULT_URL) : '', codes: ASG.mode !== 'all' ? $('exCodes').value : '', codesExclude: ASG.mode === 'exclude',
-    openAt: localToMs($('exOpen').value), closeAt: localToMs($('exClose').value),
-    segments: Array.from(document.querySelectorAll('.exSeg:checked')).map(c => c.value),
-    segmentPlans: exSpOwn() ? spRead($('exSp')) : null, sharedUniform: exSpShared(), inviteOff: $('exInviteOff').checked, inviteNote: $('exInvNote').value.trim(), inviteClosing: $('exInvClosing').value.trim(),
-    blueprint: BP_RULES.length ? { rules: BP_RULES.map(r => ({ bankId:r.bankId, category:r.category||'', difficulty:r.difficulty||'', tag:r.tag||'', count:+r.count||0 })) } : null
-  };
+  const full = examPayload(), editing = !!$('exEditingId').value;
+  // Sửa đề: chỉ gửi những ô đã thay đổi so với lúc mở form; mọi cài đặt khác của đề giữ nguyên trên máy chủ
+  let exam = full;
+  if (editing && EX_SNAP){
+    exam = { id: full.id };
+    Object.keys(full).forEach(k => { if (k !== 'id' && JSON.stringify(full[k]) !== JSON.stringify(EX_SNAP[k])) exam[k] = full[k]; });
+    if (exam.codes !== undefined || exam.codesExclude !== undefined){ exam.codes = full.codes; exam.codesExclude = full.codesExclude; }
+    if (exam.segmentPlans !== undefined || exam.sharedUniform !== undefined){ exam.segmentPlans = full.segmentPlans; exam.sharedUniform = full.sharedUniform; }
+    if (exam.timeMode !== undefined){ exam.totalMinutes = full.totalMinutes; exam.secondsPerQuestion = full.secondsPerQuestion; }
+    if (Object.keys(exam).length === 1){ msg('exMsg', 'Chưa có thay đổi nào để lưu.', 'ok'); return; }
+  }
+
   if (!exam.id){ exGoStep(1); msg('exMsg','Nhập mã đề thi.'); return; }
   const { j } = await api('POST','/api/kt-admin', { op:'saveExam', exam });
   if (!j.ok){ msg('exMsg', j.error, 'err'); return; }
@@ -3476,7 +3495,7 @@ const bad0 = exIssues(); for (let st = 1; st <= EX_STEPS; st++){ const e0 = bad0
   const wasNew = EX_NEW;
   await loadExams();
   if (wasNew){ openExam(exam.id, 'questions'); msg('qPerMsg', 'Đã tạo đề “' + (exam.title || exam.id) + '”. Bước tiếp theo: nạp câu hỏi cho đề (nhập file Excel hoặc chép từ đề khác).', 'ok'); }
-  else msg('exMsg','Đã lưu cài đặt đề.','ok');
+  else { EX_SNAP = examPayload(); msg('exMsg','Đã lưu ' + (Object.keys(exam).length - 1) + ' thay đổi. Các cài đặt khác của đề giữ nguyên.','ok'); }
 }
 async function setDefaultExamUI(id){
   if (!confirm('Đặt "'+id+'" làm đề thi mặc định (chỉ dùng trong trang quản trị; thí sinh vẫn phải vào bằng link hoặc mã đề)?')) return;

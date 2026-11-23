@@ -43,5 +43,10 @@ async function call(method, query, body) {
   await call("POST", {}, { op: "saveSettings", questionCount: "7", secondsPerQuestion: "15", passEnabled: true, passScore: "50", timeMode: "perQuestion" });
   const old2 = await quiz.getExamSettings("de-cu");
   ok(old2.questionCount === 15 && old2.passScore === 80, "sau đó đổi mặc định: đề cũ vẫn giữ nguyên");
+  // Sửa đề chỉ gửi ô đã thay đổi: tên đề và mọi cài đặt khác giữ nguyên
+  await call("POST", {}, { op: "saveExam", exam: { id: "de-b", title: "Đề B riêng", secondsPerQuestion: "45", passScore: "70", allowRetake: false, codes: "NV1", codesExclude: false } });
+  r = await call("POST", {}, { op: "saveExam", exam: { id: "de-b", passScore: "90" } });
+  const bb = (await quiz.getExams()).find((e) => e.id === "de-b"), bs = await quiz.getExamSettings("de-b");
+  ok(r.ok && bb.title === "Đề B riêng" && bs.passScore === 90 && bs.secondsPerQuestion === 45 && bb.codes.join().toUpperCase() === "NV1", "sửa riêng điểm đạt: tên đề, thời gian, người được gán giữ nguyên");
   console.log(pass + " PASS, " + fail + " FAIL"); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
