@@ -84,84 +84,91 @@ function build(attempt, settings, advice, opts) {
   const pctN = Math.max(0, Math.min(100, Number(attempt.pct) || 0)), total = m.total || 0, score = attempt.score || 0;
   const base = String(cfg().appUrl || "https://kh.io.vn").replace(/\/+$/, ""), studyUrl = base + "/kiemtra/hoclieu.html";
   const pass = quiz.passScoreOf(settings) || null;
-  const stColor = t.practice ? K.amber : m.ps === false ? K.red : m.ps === true ? K.green : K.blue;
-  const ringColor = m.ps === false ? K.red : m.ps === true ? K.green : pctN >= 80 ? K.green : pctN >= 60 ? K.amber : K.red;
+  const BL = "#1F66E0", NV = "#14357A", GR = "#4A5B7D";
   const td = (style, inner, attrs) => "<td" + (attrs ? " " + attrs : "") + ' style="font-family:' + TF + ";" + style + '">' + inner + "</td>";
   const T = (inner, attrs, style) => '<table role="presentation" cellpadding="0" cellspacing="0" border="0"' + (attrs ? " " + attrs : "") + (style ? ' style="' + style + '"' : "") + ">" + inner + "</table>";
   const row = (inner, cls, style) => '<tr><td class="' + (cls || "pad") + '" style="padding:0 28px;' + (style || "") + '">' + inner + "</td></tr>";
   const gap = (h) => '<tr><td style="height:' + h + "px;line-height:" + h + 'px;font-size:0;">&nbsp;</td></tr>';
 
-  // ---- 1. Đầu thư + lời chào
-  const brand = row(T("<tr>" + (art.logo ? td("padding:0 10px 0 0;", img("logo", 32, 32, "")) : "") +
-    td("font-size:14px;line-height:19px;font-weight:bold;color:" + K.navy + ";", "Hệ thống kiểm tra đánh giá trực tuyến") + "</tr>"), "pad", "padding-top:20px;");
-  const hello = row('<div style="font-family:' + TF + ";font-size:19px;line-height:26px;font-weight:bold;color:" + K.navy + ';">Xin chào ' + esc(m.greet) + ",</div>" +
-    '<div style="font-family:' + TF + ";font-size:14.5px;line-height:21px;color:" + K.body + ';padding-top:2px;">Đây là kết quả bài kiểm tra của bạn.</div>', "pad", "padding-top:16px;padding-bottom:16px;");
+  // ---- 1. Đầu thư: logo + tên hệ thống (hai dòng)
+  const brand = row(T("<tr>" + (art.logo ? td("padding:0 12px 0 0;", img("logo", 56, 50, "")) : "") +
+    td("font-size:16px;line-height:21px;font-weight:bold;color:" + NV + ";", "Hệ thống kiểm tra<br>đánh giá trực tuyến") + "</tr>"), "pad", "padding-top:24px;");
 
-  // ---- 2. Thẻ kết quả: tên đề + trạng thái | huy hiệu (hoặc vòng %) + điểm | một dòng giờ giấc
-  const stMark = m.ps === false && !t.practice ? "&#10005;" : m.ps === true && !t.practice ? "&#10003;" : "";
-  const statusPill = T("<tr>" + td("background:#ffffff;border-radius:20px;padding:5px 13px 5px " + (stMark ? 7 : 13) + "px;white-space:nowrap;",
-    (stMark ? '<span style="display:inline-block;width:18px;height:18px;line-height:18px;border-radius:9px;background:' + stColor + ";color:#ffffff;font-size:11px;font-weight:bold;text-align:center;vertical-align:middle;margin-right:7px;\">" + stMark + "</span>" : "") +
-    '<span style="font-size:13.5px;line-height:19px;font-weight:bold;color:' + stColor + ';vertical-align:middle;">' + esc(m.status) + "</span>", 'bgcolor="#FFFFFF"') + "</tr>");
-  const head = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0F3E9E" style="background:#0F3E9E;background-image:linear-gradient(135deg,#0B3489 0%,#1F6FE5 100%);"><tr>' +
-    '<td style="padding:18px 20px;font-family:' + TF + ';">' +
-    '<div class="hero-title" style="font-size:18px;line-height:24px;font-weight:bold;color:#ffffff;padding-bottom:10px;">' + esc(t.main) + (t.chan ? ' <span style="font-size:12px;font-weight:600;color:#BFDBFF;">· Kênh ' + esc(t.chan) + "</span>" : "") + "</div>" + statusPill + "</td></tr></table>";
+  // ---- 2. Lời chào + gạch nhấn
+  const hello = row('<div style="font-family:' + TF + ";font-size:27px;line-height:34px;font-weight:800;color:" + NV + ';">Xin chào ' + esc(m.greet) + ",</div>" +
+    '<div style="font-family:' + TF + ";font-size:15.5px;line-height:23px;color:" + GR + ';padding-top:4px;">Đây là kết quả bài kiểm tra của bạn.</div>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;"><tr><td width="46" height="4" bgcolor="' + BL + '" style="width:46px;height:4px;line-height:4px;font-size:0;background:' + BL + ';border-radius:3px;">&nbsp;</td></tr></table>', "pad", "padding-top:26px;padding-bottom:20px;");
+
+  // ---- 3. Thẻ kết quả: dải xanh có tên đề | huy hiệu + vạch | điểm + nhãn | hàng giờ giấc
+  const sp = t.practice ? { bg: "#FFF1D6", fg: "#8A5200", mark: "!", mbg: "#D68F1E" } : m.ps === false ? { bg: "#FDE8E8", fg: "#D32F2F", mark: "&#10005;", mbg: "#E53935" } : m.ps === true ? { bg: "#E3F5EA", fg: "#17794A", mark: "&#10003;", mbg: "#18A957" } : { bg: "#E8F0FE", fg: BL, mark: "&#10003;", mbg: BL };
+  const statusPill = T("<tr>" + td("background:" + sp.bg + ";border-radius:12px;padding:8px 16px 8px 10px;white-space:nowrap;",
+    '<span style="display:inline-block;width:24px;height:24px;line-height:24px;border-radius:12px;background:' + sp.mbg + ';color:#ffffff;font-size:13px;font-weight:bold;text-align:center;vertical-align:middle;margin-right:9px;">' + sp.mark + "</span>" +
+    '<span style="font-size:16px;line-height:22px;font-weight:800;color:' + sp.fg + ';vertical-align:middle;">' + esc(m.status) + "</span>", 'bgcolor="' + sp.bg + '"') + "</tr>");
+  const band = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#1F66E0" style="background:#1F66E0;background-image:linear-gradient(135deg,#1B5FD9 0%,#3B8CF6 100%);"><tr>' +
+    '<td align="center" style="padding:15px 16px;font-family:' + TF + ';text-align:center;"><div class="band-title" style="font-size:18px;line-height:24px;font-weight:800;color:#ffffff;">' + esc(t.main) + "</div></td></tr></table>";
   const useBadge = !t.practice && [0, 10, 15, 20].indexOf(compliance) >= 0 && !!art.hero;
-  const visual = useBadge ? img("hero", 112, 86, "Điểm tuân thủ " + compliance, "margin:0 auto;")
-    : art.ring ? img("ring", 100, 100, attempt.pct + "% tỉ lệ trả lời đúng", "margin:0 auto;")
-    : '<div style="font-family:' + TF + ";font-size:34px;line-height:40px;font-weight:800;color:" + ringColor + ';">' + esc(attempt.pct) + "%</div>";
-  const meta = [oneLine(attempt.code, 40) ? "Mã NV: " + esc(oneLine(attempt.code, 40)) : "", oneLine(attempt.manager, 80) ? "Quản lý: " + esc(oneLine(attempt.manager, 80)) : ""].filter(Boolean).join("<br>");
+  const visual = useBadge ? img("hero", 184, 141, "Điểm tuân thủ " + compliance, "margin:0 auto;")
+    : art.ring ? img("ring", 120, 120, attempt.pct + "% tỉ lệ trả lời đúng", "margin:0 auto;")
+    : '<div style="font-family:' + TF + ";font-size:38px;line-height:44px;font-weight:800;color:" + BL + ';">' + esc(attempt.pct) + "%</div>";
   const body = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
-    '<td width="128" align="center" valign="middle" style="width:128px;padding:16px 0 16px 14px;">' + visual + "</td>" +
-    '<td valign="middle" style="padding:16px 18px 16px 12px;font-family:' + TF + ';">' +
-    '<div style="white-space:nowrap;"><span style="font-size:34px;line-height:40px;font-weight:800;color:' + K.deep + ';">' + esc(score) + "/" + esc(total) + '</span><span style="font-size:15px;font-weight:600;color:' + K.body + ';"> câu đúng</span></div>' +
-    '<div style="font-size:14px;line-height:20px;color:' + K.body + ';">Tỉ lệ đúng: <b style="color:' + ringColor + ';">' + esc(attempt.pct) + "%</b></div>" +
-    (meta ? '<div style="font-size:12.5px;line-height:18px;color:' + K.muted + ';padding-top:6px;">' + meta + "</div>" : "") + "</td></tr></table>";
-  const times = '<div style="font-family:' + TF + ";font-size:12.5px;line-height:19px;color:" + K.muted + ';text-align:center;padding:10px 14px;background:#F2F7FF;border-top:1px solid ' + K.line + ';">' +
-    (m.dur != null ? "Làm bài trong <b style=\"color:" + K.ink + '">' + esc(clock(m.dur)) + "</b> &nbsp;·&nbsp; " : "") + "Nộp lúc <b style=\"color:" + K.ink + '">' + esc(m.whenShort) + "</b></div>";
-  const resultCard = row(T("<tr>" + td("padding:0;", head + body + times) + "</tr>", 'width="100%" bgcolor="#FFFFFF"', "background:#FFFFFF;border:1px solid " + K.line + ";border-radius:14px;border-collapse:separate;overflow:hidden;"));
+    '<td class="vis" width="44%" align="center" valign="middle" style="width:44%;padding:18px 6px 18px 12px;border-right:1px solid #D7E4F8;">' + visual + "</td>" +
+    '<td valign="middle" style="padding:18px 14px 18px 20px;font-family:' + TF + ';">' +
+    '<div style="white-space:nowrap;"><span class="big-score" style="font-size:46px;line-height:52px;font-weight:800;color:' + BL + ';">' + esc(score) + "/" + esc(total) + '</span><span style="font-size:17px;font-weight:700;color:' + NV + ';"> câu đúng</span></div>' +
+    '<div style="font-size:16.5px;line-height:24px;color:' + GR + ';padding-top:2px;">Tỉ lệ đúng: <b style="color:' + BL + ';">' + esc(attempt.pct) + "%</b></div>" +
+    '<div style="padding-top:12px;">' + statusPill + "</div></td></tr></table>";
+  const tm = m.when.split(" "), tmT = (tm[0] || "").replace(/:\d{2}$/, ""), tmD = tm[1] || "";
+  const ic = (k, w) => (art[k] ? '<td width="' + (w + 8) + '" valign="middle" style="width:' + (w + 8) + 'px;padding-right:8px;">' + img(k, w, w, "") + "</td>" : "");
+  const cell = (k, inner, last) => '<td valign="middle" align="center" style="padding:11px 8px;' + (last ? "" : "border-right:1px solid #D7E4F8;") + 'font-family:' + TF + ';">' + T("<tr>" + ic(k, 22) + td("font-size:14px;line-height:20px;color:" + GR + ";white-space:nowrap;", inner, 'valign="middle"') + "</tr>", 'align="center"') + "</td>";
+  const times = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0 14px 16px;">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F0F6FF" style="background:#F0F6FF;border-radius:14px;border-collapse:separate;"><tr>' +
+    (m.dur != null ? cell("ic-clock", "Làm bài trong: <b style=\"color:" + BL + '">' + esc(clock(m.dur)) + "</b>", false) : "") +
+    cell("ic-cal", "Nộp lúc: <b style=\"color:" + BL + '">' + esc(tmT) + "</b> <b style=\"color:" + NV + '">- ' + esc(tmD) + "</b>", true) + "</tr></table></td></tr></table>";
+  const resultCard = row(T("<tr>" + td("padding:0;", band + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="background:#FFFFFF;"><tr><td>' + body + times + "</td></tr></table>") + "</tr>",
+    'width="100%" bgcolor="#FFFFFF"', "background:#FFFFFF;border:1px solid #DCE8FA;border-radius:20px;border-collapse:separate;overflow:hidden;box-shadow:0 10px 28px rgba(31,102,224,.13);"));
 
   const practiceNote = t.practice
-    ? gap(12) + row('<div style="font-family:' + TF + ';font-size:12.5px;line-height:19px;color:#6b4a00;"><b>Bài thi thử, không phải kỳ kiểm tra chính thức.</b> ' +
+    ? gap(14) + row('<div style="font-family:' + TF + ';font-size:12.5px;line-height:19px;color:#6b4a00;"><b>Bài thi thử, không phải kỳ kiểm tra chính thức.</b> ' +
         (compliance != null ? "Điểm tuân thủ chỉ để bạn hình dung nếu thi thật, không được ghi nhận." : "Kết quả không được ghi nhận chính thức.") + "</div>")
     : "";
 
-  // ---- 3. Gợi ý: chỉ một hai câu, không khung
+  // ---- 4. Hộp gợi ý (sách) + "Nên làm" (bóng đèn)
   const act = (a.actions || [])[0];
-  const lead = m.ps === false
-    ? "Kết quả chưa đạt yêu cầu" + (pass ? " (" + pass + "%)" : "") + ". Bạn nên ôn lại học liệu rồi làm lại."
-    : m.ps === true ? "Chúc mừng bạn đã đạt yêu cầu" + (pass ? " (" + pass + "%)" : "") + ". Hãy tiếp tục phát huy!" : "";
-  const tips = lead || (m.ps === false && act)
-    ? gap(16) + row('<div style="font-family:' + TF + ";font-size:14.5px;line-height:22px;color:" + K.ink + ';">' + esc(lead) + "</div>" +
-        (m.ps === false && act ? '<div style="font-family:' + TF + ";font-size:13.5px;line-height:21px;color:" + K.body + ';padding-top:6px;"><b>Nên làm:</b> ' + esc(act) + "</div>" : ""))
-    : "";
+  const lead1 = m.ps === false ? "Kết quả chưa đạt yêu cầu" + (pass ? " (" + pass + "%)" : "") + "." : m.ps === true ? "Chúc mừng bạn đã đạt yêu cầu" + (pass ? " (" + pass + "%)" : "") + "." : "";
+  const lead2 = m.ps === false ? "Bạn nên ôn lại học liệu rồi làm lại." : m.ps === true ? "Hãy tiếp tục phát huy!" : "";
+  const tipBox = lead1 ? gap(16) + row(T("<tr>" + (art["ic-book"] ? '<td class="bk" width="72" align="center" valign="middle" style="width:72px;padding:14px 0;border-right:1px solid #C9DAF5;">' + img("ic-book", 42, 42, "", "margin:0 auto;") + "</td>" : "") +
+      td("padding:14px 18px;", '<div style="font-size:17px;line-height:24px;font-weight:800;color:' + NV + ';">' + esc(lead1) + '</div><div style="font-size:15.5px;line-height:23px;color:' + GR + ';">' + esc(lead2) + "</div>", 'valign="middle"') + "</tr>",
+      'width="100%" bgcolor="#EAF2FF"', "background:#EAF2FF;border:1px solid #D6E5FA;border-radius:16px;border-collapse:separate;")) : "";
+  const doBox = m.ps === false && act ? gap(12) + row(T("<tr>" + (art["ic-bulb"] ? '<td width="52" valign="top" style="width:52px;padding:0 10px 0 0;">' + img("ic-bulb", 42, 42, "") + "</td>" : "") +
+      td("font-size:15.5px;line-height:23px;color:" + GR + ";", "<b style=\"color:" + NV + '">Nên làm:</b> ' + esc(act), 'valign="middle"') + "</tr>", 'width="100%"')) : "";
 
-  // ---- 4. Một nút
+  // ---- 5. Một nút
   const ctaFail = m.ps !== true;
-  const cta = gap(20) + '<tr><td align="center" class="pad" style="padding:0 28px;">' +
-    T("<tr>" + '<td align="center" bgcolor="#1663E6" style="background:#1663E6;background-image:linear-gradient(90deg,#0E56D8,#2F80F6);border-radius:30px;">' +
-      '<a href="' + esc(ctaFail ? studyUrl : m.url) + '" target="_blank" style="display:block;padding:13px 30px;font-family:' + TF + ';font-size:16px;line-height:22px;font-weight:bold;color:#ffffff;text-decoration:none;white-space:nowrap;">' +
-      (ctaFail ? "Xem học liệu ôn tập" : "Xem kết quả chi tiết") + " &#8594;</a></td></tr>", 'class="cta" align="center"', "margin:0 auto;") + "</td></tr>";
+  const cta = gap(22) + '<tr><td align="center" class="pad" style="padding:0 28px;">' +
+    T("<tr>" + '<td align="center" bgcolor="#1F66E0" style="background:#1F66E0;background-image:linear-gradient(90deg,#2F8CF8,#1B57C9);border-radius:32px;box-shadow:0 8px 18px rgba(31,102,224,.32);">' +
+      '<a href="' + esc(ctaFail ? studyUrl : m.url) + '" target="_blank" style="display:block;padding:16px 44px;font-family:' + TF + ';font-size:18px;line-height:24px;font-weight:bold;color:#ffffff;text-decoration:none;white-space:nowrap;">' +
+      (ctaFail ? "Xem học liệu ôn tập" : "Xem kết quả chi tiết") + " &nbsp;&#8594;</a></td></tr>", 'class="cta" align="center"', "margin:0 auto;") + "</td></tr>";
 
-  // ---- 5. Chân thư gọn: xác thực + hỗ trợ
-  const verify = gap(22) + '<tr><td class="pad" style="padding:14px 28px 18px;border-top:1px solid ' + K.line + ';font-family:' + TF + ';font-size:12px;line-height:18px;color:' + K.muted + ';">' +
-    '<div><span style="color:#1E7A4C;font-weight:bold;">&#10003; Đã xác thực</span> lúc ' + esc(vn(Date.now())) + " &nbsp;·&nbsp; Mã minh chứng <b>" + esc(m.proof) + '</b> &nbsp;·&nbsp; <a href="' + esc(m.url) + '" target="_blank" style="color:' + K.blue + ';text-decoration:none;font-weight:600;">Xem bản gốc</a></div>' +
-    (cardNote ? '<div style="padding-top:3px;">Thẻ kết quả (ảnh PNG) được đính kèm.</div>' : "") +
-    '<div style="padding-top:6px;color:' + K.body + ';">' + esc(supportLine(attempt.manager)) + "</div></td></tr>" +
-    '<tr><td align="center" bgcolor="#0A1F44" style="padding:12px 20px;background:#0A1F44;font-family:' + TF + ';color:#9FB6DD;font-size:11px;line-height:16px;">Email tự động, vui lòng không trả lời. Email chứa thông tin cá nhân, vui lòng không chuyển tiếp.</td></tr>';
+  // ---- 6. Chân thư rất nhỏ + hình minh hoạ
+  const foot = gap(22) + '<tr><td class="pad" align="center" style="padding:0 28px;font-family:' + TF + ';font-size:11.5px;line-height:17px;color:#7A8AA6;text-align:center;">' +
+    '<div><span style="color:#1E7A4C;font-weight:bold;">&#10003; Đã xác thực</span>' + (oneLine(attempt.code, 40) ? " &nbsp;·&nbsp; Mã NV " + esc(oneLine(attempt.code, 40)) : "") + " &nbsp;·&nbsp; Mã minh chứng " + esc(m.proof) + ' &nbsp;·&nbsp; <a href="' + esc(m.url) + '" target="_blank" style="color:' + BL + ';text-decoration:none;font-weight:600;">Xem bản gốc</a></div>' +
+    (cardNote ? '<div>Thẻ kết quả (ảnh PNG) được đính kèm.</div>' : "") +
+    '<div style="padding-top:4px;">' + esc(supportLine(attempt.manager)) + "</div>" +
+    '<div style="padding-top:4px;">Email tự động, vui lòng không trả lời hoặc chuyển tiếp.</div></td></tr>' +
+    (art.deco ? '<tr><td style="padding:0;line-height:0;font-size:0;">' + img("deco", 560, 166, "", "width:100%;height:auto;") + "</td></tr>" : gap(20));
 
   const css =
-    "body{margin:0!important;padding:0!important;background:" + K.page + ";-webkit-text-size-adjust:100%}table{border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt}img{border:0;-ms-interpolation-mode:bicubic}a{color:" + K.blue + "}" +
-    ".shell{width:100%;max-width:600px}" +
-    "@media screen and (max-width:600px){.outer{padding:0!important}.shell{border-radius:0!important;border-left:0!important;border-right:0!important}.pad{padding-left:16px!important;padding-right:16px!important}.hero-title{font-size:17px!important;line-height:23px!important}}";
+    "body{margin:0!important;padding:0!important;background:#EEF4FD;-webkit-text-size-adjust:100%}table{border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt}img{border:0;-ms-interpolation-mode:bicubic}a{color:" + BL + "}" +
+    ".shell{width:100%;max-width:560px}" +
+    "@media screen and (max-width:600px){.outer{padding:0!important}.shell{border-radius:0!important}.pad{padding-left:18px!important;padding-right:18px!important}.big-score{font-size:38px!important;line-height:44px!important}.band-title{font-size:16px!important;line-height:22px!important}.vis{padding-left:4px!important}}";
 
   const html =
     '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="x-apple-disable-message-reformatting">' +
     '<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>' + esc(m.subject) + "</title><style>" + css + "</style></head>" +
-    '<body style="margin:0;padding:0;background:' + K.page + ";font-family:" + TF + ";color:" + K.ink + ';-webkit-text-size-adjust:100%">' +
-    '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:' + K.page + '">' + esc(pre) + "&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>" +
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' + K.page + '" style="width:100%;background:' + K.page + ';"><tr><td align="center" class="outer" style="padding:20px 10px;">' +
-    '<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="shell" align="center" bgcolor="#FFFFFF" style="margin:0 auto;width:100%;max-width:600px;background:#FFFFFF;border:1px solid ' + K.line + ';border-radius:18px;border-collapse:separate;overflow:hidden;text-align:left;">' +
-    brand + hello + resultCard + practiceNote + tips + cta + verify +
+    '<body style="margin:0;padding:0;background:#EEF4FD;font-family:' + TF + ";color:" + K.ink + ';-webkit-text-size-adjust:100%">' +
+    '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:#EEF4FD">' + esc(pre) + "&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>" +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#EEF4FD" style="width:100%;background:#EEF4FD;"><tr><td align="center" class="outer" style="padding:18px 10px;">' +
+    '<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" class="shell" align="center" bgcolor="#FFFFFF" style="margin:0 auto;width:100%;max-width:560px;background:#FFFFFF;background-image:linear-gradient(180deg,#FFFFFF 0%,#F2F8FF 100%);border-radius:22px;border-collapse:separate;overflow:hidden;text-align:left;">' +
+    brand + hello + resultCard + practiceNote + tipBox + doBox + cta + foot +
     "</table></td></tr></table></body></html>";
 
   return { subject: m.subject, html: harden(html), text: textOf(attempt, settings, m, cardNote) };

@@ -118,6 +118,51 @@ function logo() {
   return png(o);
 }
 
+// Logo thật của hệ thống (laptop + danh sách tick), cắt bớt lề trắng
+async function logoReal() {
+  const im = await load().loadImage(path.join(__dirname, "assets", "logo-mark.png"));
+  const W = 64, H = 57, o = canvas(W, H, 2);
+  o.c.drawImage(im, 18, 30, 220, 196, 0, 0, W, H);
+  return png(o);
+}
+
+// Quyển sách mở màu xanh (biểu tượng ở hộp gợi ý)
+function bookBlue() {
+  const S = 56, o = canvas(S, S, 3), c = o.c;
+  c.save(); c.shadowColor = "rgba(20,80,200,.28)"; c.shadowBlur = 6; c.shadowOffsetY = 2;
+  c.beginPath(); c.moveTo(28, 14); c.quadraticCurveTo(16, 7, 4, 10); c.lineTo(4, 43); c.quadraticCurveTo(16, 40, 28, 47); c.closePath();
+  c.fillStyle = lin(c, 4, 10, 28, 47, ["#6FB0FF", "#2A74EA"]); c.fill();
+  c.beginPath(); c.moveTo(28, 14); c.quadraticCurveTo(40, 7, 52, 10); c.lineTo(52, 43); c.quadraticCurveTo(40, 40, 28, 47); c.closePath();
+  c.fillStyle = lin(c, 52, 10, 28, 47, ["#4A92F5", "#1A5BD2"]); c.fill();
+  c.restore();
+  c.strokeStyle = "#fff"; c.lineWidth = 2.6; c.lineCap = "round";
+  [[10, 22, 22, 24.5], [10, 30, 22, 32.5], [34, 24.5, 46, 22], [34, 32.5, 46, 30]].forEach((l) => { c.beginPath(); c.moveTo(l[0], l[1]); c.lineTo(l[2], l[3]); c.stroke(); });
+  return png(o);
+}
+
+// Hình minh hoạ chân thư: sóng xanh nhạt + quyển sách mở + lá (nền trong suốt, rộng bằng thư)
+function deco() {
+  const W = 560, H = 166, o = canvas(W, H, 2), c = o.c;
+  c.beginPath(); c.moveTo(0, 96); c.bezierCurveTo(110, 66, 230, 132, 350, 100); c.bezierCurveTo(440, 78, 510, 84, 560, 70); c.lineTo(560, H); c.lineTo(0, H); c.closePath();
+  c.fillStyle = lin(c, 0, 70, 560, 150, ["rgba(214,232,255,.85)", "rgba(190,217,252,.9)"]); c.fill();
+  c.beginPath(); c.moveTo(0, 122); c.bezierCurveTo(130, 100, 260, 150, 380, 124); c.bezierCurveTo(460, 108, 520, 112, 560, 104); c.lineTo(560, H); c.lineTo(0, H); c.closePath();
+  c.fillStyle = "rgba(168,203,250,.55)"; c.fill();
+  // lá phía sau sách
+  const leaf = (x, y, rx, ry, rot, a) => { c.save(); c.translate(x, y); c.rotate(rot); c.beginPath(); c.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); c.fillStyle = "rgba(160,198,250," + a + ")"; c.fill(); c.restore(); };
+  leaf(498, 44, 13, 34, 0.42, 0.6); leaf(522, 58, 11, 28, 0.9, 0.5); leaf(470, 40, 10, 26, -0.35, 0.5);
+  // sách mở
+  c.save(); c.shadowColor = "rgba(20,70,170,.25)"; c.shadowBlur = 10; c.shadowOffsetY = 4;
+  c.beginPath(); c.moveTo(372, 118); c.lineTo(452, 144); c.lineTo(534, 112); c.lineTo(538, 122); c.lineTo(452, 154); c.lineTo(368, 128); c.closePath();
+  c.fillStyle = lin(c, 368, 118, 538, 154, ["#2E7BEF", "#1A56C8"]); c.fill(); c.restore();
+  c.beginPath(); c.moveTo(452, 98); c.lineTo(386, 78); c.lineTo(374, 118); c.lineTo(452, 144); c.closePath();
+  c.fillStyle = lin(c, 380, 80, 452, 144, ["#FFFFFF", "#DCEAFF"]); c.fill(); c.strokeStyle = "#B7D0F5"; c.lineWidth = 1.2; c.stroke();
+  c.beginPath(); c.moveTo(452, 98); c.lineTo(526, 72); c.lineTo(534, 112); c.lineTo(452, 144); c.closePath();
+  c.fillStyle = lin(c, 526, 72, 452, 144, ["#F4F9FF", "#D3E4FF"]); c.fill(); c.stroke();
+  c.strokeStyle = "#A9C6F0"; c.lineWidth = 1.6; c.lineCap = "round";
+  [0, 1, 2, 3].forEach((i) => { const d = i * 9; c.beginPath(); c.moveTo(394 + i * 1.5, 90 + d * 0.95); c.lineTo(440, 108 + d * 0.9); c.stroke(); c.beginPath(); c.moveTo(464, 108 + d * 0.9); c.lineTo(516, 86 + d * 0.95); c.stroke(); });
+  return png(o);
+}
+
 // Biểu tượng nét (26 px hiển thị)
 function icon(kind, color) {
   const S = 26, o = canvas(S, S, 3), c = o.c; c.strokeStyle = color || BLUE; c.fillStyle = color || BLUE; c.lineWidth = 2;
@@ -185,10 +230,10 @@ let cache = null;
 // Trả về { atts: [tệp đính kèm nội tuyến], cid: { khoá: mã cid } }
 async function render(pct, state, ringColor, comp) {
   load();
-  // Chỉ vẽ những hình email thật sự dùng: logo; vòng % theo từng bài;
+  // Chỉ vẽ những hình email thật sự dùng: logo, biểu tượng đồng hồ / lịch / sách / bóng đèn, hình chân thư; vòng % theo từng bài;
   // huy hiệu điểm tuân thủ (khoá "hero") chỉ khi bài có điểm tuân thủ.
   if (!cache) {
-    cache = { logo: await logo() };
+    cache = { logo: await logoReal(), "ic-clock": await icon("clock"), "ic-cal": await icon("cal"), "ic-book": await bookBlue(), "ic-bulb": await bulb(), deco: await deco() };
   }
   const all = Object.assign({}, cache, { ring: await ring(pct, ringColor) });
   if (comp != null) { const fh = await heroFrom("compliance-" + comp + ".webp"); if (fh) all.hero = fh; }
