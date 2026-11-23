@@ -3561,7 +3561,9 @@ $('btnRulesTg').addEventListener('click', function(){ var c = $('scrConfirm'), o
 $('btnManual').addEventListener('click', function(){ openManual($('manualBox').classList.contains('hide')); });
 $('btnFaceLogin').addEventListener('click', function(){
   sndUnlock();
-  if ($('btnCheck').dataset.sched === 'up'){ msg('checkMsg', 'Bài kiểm tra chưa mở. Vui lòng quay lại đúng giờ mở đề.', 'warn'); return; }
+  var sch = $('btnCheck').dataset.sched;
+  if (sch === 'up'){ msg('checkMsg', 'Bài kiểm tra chưa mở. Vui lòng quay lại đúng giờ mở đề.', 'warn'); return; }
+  if (sch === 'off'){ msg('checkMsg', 'Bài kiểm tra đã đóng. Nếu cần làm bài, hãy liên hệ quản trị viên phụ trách.', 'warn'); return; }
   msg('checkMsg', ''); PH.mode = 'login'; show('photo'); photoInit();
 });
 // Đăng nhập bằng khuôn mặt: máy chủ nhận diện, trả mã NV + email; rồi đi tiếp đúng đường nhập tay (kt-check) để hiện thông tin
@@ -4865,11 +4867,11 @@ function renderSched(){
   // Thanh thời gian đã trôi qua của cả khung mở đề
   var spb = box.querySelector('.sp i'); if (spb && x.openAt && x.closeAt) spb.style.width = Math.max(0, Math.min(100, (now - x.openAt) / (x.closeAt - x.openAt) * 100)).toFixed(2) + '%';
   // Chưa mở: khoá nút Tiếp tục, tự mở khoá đúng giờ (theo giờ máy chủ). Đã đóng: máy chủ vẫn là nơi quyết định cuối cùng.
-  var lock = st === 'up';
+  var lock = st === 'up' || st === 'off';
   if (btn.dataset.sched !== st){
     btn.dataset.sched = st;
     btn.disabled = lock;
-    btn.textContent = lock ? 'Chưa đến giờ mở đề' : BTN_CHECK_LABEL;
+    btn.textContent = st === 'up' ? 'Chưa đến giờ mở đề' : st === 'off' ? 'Đã đóng bài kiểm tra' : BTN_CHECK_LABEL;
   }
 }
 function heroTitle(h, t){ // "THI THỬ - KIỂM TRA ĐỊNH KÌ PCs - THÁNG 10/2026" -> tên đề + dòng tháng/năm kèm biểu tượng lịch
