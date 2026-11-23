@@ -284,6 +284,37 @@ var CSS = [
 '  .fh.fh .fh-tips{display:none}',
 '  .fh.fh .fh-seg li::before{width:34px;height:34px}.fh.fh .fh-seg li:not(:last-child)::after{top:16px}',
 '}',
+'/* ===== GỌN: bỏ biểu tượng/chữ thừa; tiến độ = MỘT dòng "bước hiện tại ... %" + thanh phân đoạn dẹt (giống trang làm bài) ===== */',
+'.fh.fh .fh-htop .fh-ic,.fh.fh .fh-k,.fh.fh .fh-sub,.fh.fh .fh-guide,.fh.fh .fh-live,.fh.fh .fh-ctools,.fh.fh .fh-badge,.fh.fh .fh-tips,.fh.fh .fh-mini,.fh.fh .fh-bar,.fh.fh .fh-s,.fh.fh .fh-n{display:none!important}',
+'.fh.fh .fh-head{min-height:40px;display:flex;align-items:center;justify-content:flex-start;padding-right:96px;box-sizing:border-box}',
+'.fh.fh .fh-htop{display:block;text-align:left}',
+'.fh.fh .fh-htop>div:last-child{display:block}',
+'.fh.fh h2{font-size:22px;text-align:left}',
+'.fh.fh .fh-box{width:min(88%,max(260px,calc((100dvh - 300px) * .86)))}',
+'.fh.fh .fh-pipe{display:block;width:min(100%,560px);max-width:none;padding:14px 18px 16px;border-radius:20px}',
+'.fh.fh .fh-now{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:0}',
+'.fh.fh .fh-t{flex:1 1 auto;min-width:0;padding:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:16px;font-weight:700}',
+'.fh.fh .fh-p{display:block;padding:0;border:0;font:800 16px/1.2 "Be Vietnam Pro",system-ui,sans-serif}',
+'.fh.fh .fh-p::after{display:none}',
+'.fh.fh .fh-seg{display:flex;gap:5px;margin:10px 0 0;padding:0;border:0}',
+'.fh.fh .fh-seg li{flex:1 1 0;display:block;height:6px;padding:0;border-radius:3px;overflow:hidden;font-size:0;line-height:0;color:transparent;background:#E4E9F1}',
+'.fh.fh .fh-seg li::after{display:none}',
+'.fh.fh .fh-seg li::before{content:"";display:none;width:auto;height:auto;border:0;box-shadow:none}',
+'.fh.fh .fh-seg li.ok{background:var(--okc)}',
+'.fh.fh .fh-seg li.bad{background:#E5484D}',
+'.fh.fh .fh-seg li.run{position:relative;background:rgba(31,107,245,.25)}',
+'.fh.fh .fh-seg li.run::before{display:block;position:absolute;inset:0 auto 0 0;width:45%;height:100%;border-radius:inherit;background:var(--blue);animation:fhSeg 1.1s ease-in-out infinite}',
+'@keyframes fhSeg{0%{transform:translateX(-100%)}100%{transform:translateX(230%)}}',
+'.fh.fh .fh-pipe[data-st="ok"] .fh-p{color:var(--okc)}',
+'.fh.fh .fh-ov .p{stroke-linecap:butt}',
+'@media(prefers-reduced-motion:reduce){.fh.fh .fh-seg li.run::before{animation:none}}',
+'@media(min-width:561px){',
+'  .fh.fh .fh-head{justify-content:center;padding-right:0;min-height:44px}',
+'  .fh.fh .fh-htop{text-align:center}',
+'  .fh.fh h2{font-size:clamp(24px,3.6vh,32px);text-align:center}',
+'  .fh.fh .fh-box{height:clamp(260px,calc(100vh - 250px),660px);width:auto}',
+'}',
+'@media(min-width:561px) and (max-height:760px){.fh.fh .fh-box{height:clamp(250px,calc(100vh - 230px),660px)}}',
 ].join('\n');
 
 var I_SND = '<svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>' +
@@ -664,7 +695,7 @@ function finish(){
   if (FM.shot) $('fhShot').src = FM.shot;
   flash(); sShutter(); try { if (navigator.vibrate) navigator.vibrate(35); } catch (e) {}
   prog(1); arrow(''); btn('fhManual', false); msgHtml('');
-  steps(['ok', 'ok', 'ok', 'ok', 'run']); scr('check'); chip('scan', 'ĐÃ CHỤP · ĐANG ĐỐI CHIẾU'); hint('Đã chụp ảnh. AI đang đối chiếu…', 'chk');
+  steps(['ok', 'ok', 'ok', 'ok', 'run']); scr('check'); chip('scan', 'ĐÃ CHỤP · ĐANG ĐỐI CHIẾU'); hint('Đang đối chiếu…', 'chk');
   setTimeout(function(){ if (FM.busy && FM.open) sScan(true); }, 450);
   verify(FM.photo, FM.live ? { token: FM.live.token, frames: FM.frames.slice() } : null);
 }
