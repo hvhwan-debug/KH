@@ -25,7 +25,7 @@ const DEFAULT_SETTINGS = {
   totalMinutes: 30,
   // Ngưỡng đạt chỉ áp dụng khi bật (passEnabled). Mặc định TẮT: bài không có ngưỡng thì không hiện Đạt/Chưa đạt.
   passEnabled: false,
-  passScore: 70,
+  passScore: 80,
   allowRetake: false,
   // Số lượt làm tối đa của mỗi thí sinh trong một đề (khi không bật "làm lại nhiều lần"). Mặc định 1.
   maxAttempts: 1,
@@ -203,7 +203,7 @@ async function ensureSegmentByTitle() {
   return n;
 }
 async function runMigrations(log) {
-  for (const [name, fn] of [["regionTags", ensureRegionTags], ["seeds", ensureSeeds], ["moveNam", ensureMoveNam], ["noSkill", ensureNoSkill], ["segByTitle", ensureSegmentByTitle], ["freezeExams", ensureFreezeExams]]) {
+  for (const [name, fn] of [["regionTags", ensureRegionTags], ["seeds", ensureSeeds], ["moveNam", ensureMoveNam], ["noSkill", ensureNoSkill], ["segByTitle", ensureSegmentByTitle], ["freezeExams", ensureFreezeExams], ["passDefault80", ensurePassDefault80]]) {
     try { await fn(); } catch (e) { if (log) (log.warn || log)("migration " + name + " loi: " + (e && e.message)); } // lỗi thì lần gọi sau thử lại
   }
 }
@@ -214,6 +214,16 @@ async function ensureFreezeExams() {
   if (await store.get(FREEZE_MIGRATE_KEY)) return;
   const n = await freezeAllExams(await getSettings());
   await store.put(FREEZE_MIGRATE_KEY, { at: Date.now(), frozen: n });
+}
+// Chuyển đổi một lần (23/11/2026): ngưỡng đạt MẶC ĐỊNH đổi thành 80%. Chạy SAU freezeExams nên các đề đã có
+// giữ nguyên ngưỡng đang dùng; chỉ đề tạo mới (để trống ô điểm đạt) mới lấy 80%. Không đổi trạng thái bật/tắt ngưỡng.
+const PASS80_KEY = "kt/migrate-pass-default-80-v1.json";
+async function ensurePassDefault80() {
+  if (await store.get(PASS80_KEY)) return;
+  const cur = (await store.get(S_KEY)) || null, before = cur ? cur.passScore : undefined;
+  if (cur && cur.passScore !== 80) { cur.passScore = 80; await saveSettings(cur); }
+  await store.put(PASS80_KEY, { at: Date.now(), before: before === undefined ? null : before });
+  try { await require("./auditlog").write({ area: "system", role: "system", by: "hệ thống", name: "Hệ thống", op: "saveSettings", label: "Đổi ngưỡng đạt mặc định thành 80%", kind: "change", status: 200, ok: true, details: { before: before === undefined ? "" : before } }); } catch (e) {}
 }
 async function ensureBankPeriods() {
   await runMigrations();

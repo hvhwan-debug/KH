@@ -13,6 +13,7 @@ async function call(method, query, body) {
   const qs = []; for (let i = 0; i < 40; i++) qs.push({ id: "q" + i, text: "Câu " + i, category: "Gia dụng", options: ["A", "B"], correctIndex: 0, active: true, period: i < 20 ? "de-a" : "de-b" });
   await quiz.saveQuestions(qs);
   await quiz.saveCandidates([{ code: "NV1", name: "An", segment: "gia_dung", manager: "Bình" }, { code: "NV2", name: "Chi", segment: "may_loc", left: true }]);
+  await quiz.runMigrations(); // chạy trước các chuyển đổi một lần (vd ngưỡng đạt mặc định 80%) để cài đặt kiểm thử bên dưới không bị đổi
   await quiz.saveSettings({ examTitle: "T", questionCount: 10, bothGiaDungCount: 0, secondsPerQuestion: 30, passEnabled: true, passScore: 60, allowRetake: false, segmentPlans: {} });
   // Đề cũ kiểu trước: chỉ có tên, mọi ô khác trống (đang "theo mặc định")
   await quiz.saveExams([{ id: "de-a", title: "Đề A", createdAt: 1 }]);
