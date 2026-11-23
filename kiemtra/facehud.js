@@ -158,14 +158,7 @@ var CSS = [
 '.fh-b.hide{display:none}',
 '.fh-side{display:contents}',
 '.fh-head{order:1}.fh-chip{order:2}.fh-box{order:3}.fh-pipe,.fh-msg,.fh-btns,.fh-tips{order:4}',
-/* di động: bớt chữ phụ không cần thiết (phụ đề, nhãn kỹ thuật, trạng thái lặp lại, nhãn dưới từng vòng số)
-   để khung camera/oval có nhiều chỗ hơn, đỡ bị thu nhỏ và đỡ rối mắt */
-'@media(max-width:899px){',
-'  .fh-sub,.fh-k,.fh-chip,.fh-mini p{display:none}',
-'  .fh-htop .fh-ic{width:32px;height:32px;border-radius:9px}.fh-htop .fh-ic svg{width:17px;height:17px}',
-'  .fh-seg li{font-size:0;gap:0}',
-'  .fh-box{width:min(100%,calc((100dvh - 190px) * .75),420px)}',
-'}',
+
 /* máy tính: camera ngang bên trái, bảng tiến trình bên phải — giống màn đăng nhập bằng khuôn mặt */
 '@media(min-width:900px) and (min-height:540px){',
 '  .fh-in{max-width:1560px;display:grid;grid-template-columns:minmax(0,1fr) 452px;column-gap:32px;align-items:center;padding:24px 28px}',
