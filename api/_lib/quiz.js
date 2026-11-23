@@ -203,9 +203,17 @@ async function ensureSegmentByTitle() {
   return n;
 }
 async function runMigrations(log) {
-  for (const [name, fn] of [["regionTags", ensureRegionTags], ["seeds", ensureSeeds], ["moveNam", ensureMoveNam], ["noSkill", ensureNoSkill], ["segByTitle", ensureSegmentByTitle]]) {
+  for (const [name, fn] of [["regionTags", ensureRegionTags], ["seeds", ensureSeeds], ["moveNam", ensureMoveNam], ["noSkill", ensureNoSkill], ["segByTitle", ensureSegmentByTitle], ["freezeExams", ensureFreezeExams]]) {
     try { await fn(); } catch (e) { if (log) (log.warn || log)("migration " + name + " loi: " + (e && e.message)); } // lỗi thì lần gọi sau thử lại
   }
+}
+// Chuyển đổi một lần (11/2026): chốt cài đặt riêng cho MỌI đề đang có bằng đúng giá trị mặc định đang áp dụng
+// (không đổi gì về cách đề đang chạy), để từ nay sửa Cài đặt mặc định hay sửa đề khác không làm đề nào đổi theo.
+const FREEZE_MIGRATE_KEY = "kt/migrate-freeze-exams-v1.json";
+async function ensureFreezeExams() {
+  if (await store.get(FREEZE_MIGRATE_KEY)) return;
+  const n = await freezeAllExams(await getSettings());
+  await store.put(FREEZE_MIGRATE_KEY, { at: Date.now(), frozen: n });
 }
 async function ensureBankPeriods() {
   await runMigrations();

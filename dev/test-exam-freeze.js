@@ -21,7 +21,7 @@ async function call(method, query, body) {
   const b0 = await quiz.getExamSettings("de-b");
   ok(b0.questionCount === 10 && b0.secondsPerQuestion === 45 && b0.passScore === 60, "đề B: ô trống lấy mặc định lúc lưu (10 câu, 60%), ô có giá trị giữ riêng (45 giây)");
   r = await call("POST", {}, { op: "saveSettings", questionCount: "15", secondsPerQuestion: "20", passEnabled: true, passScore: "80", allowRetake: true, timeMode: "perQuestion" });
-  ok(r.ok && r.frozenExams >= 1, "lưu cài đặt mặc định mới (" + r.frozenExams + " đề được giữ nguyên)");
+  ok(r.ok, "lưu cài đặt mặc định mới");
   const a1 = await quiz.getExamSettings("de-a"), b1 = await quiz.getExamSettings("de-b");
   ok(a1.questionCount === 10 && a1.secondsPerQuestion === 30 && a1.passScore === 60 && a1.allowRetake === false, "đề A cũ KHÔNG đổi theo mặc định mới");
   ok(b1.questionCount === 10 && b1.secondsPerQuestion === 45 && b1.passScore === 60, "đề B KHÔNG đổi theo mặc định mới");
@@ -33,5 +33,15 @@ async function call(method, query, body) {
   ok(a2.secondsPerQuestion === 60 && a2.questionCount === 10 && b2.secondsPerQuestion === 45, "sửa đề A chỉ đổi đề A, không ảnh hưởng đề B");
   r = await call("GET", { op: "people" });
   ok(r.ok && r.people.length === 2 && r.people[0].code === "NV1" && r.people[0].manager === "Bình" && r.people[1].left === true && !("email" in r.people[0]), "op=people trả danh sách gọn");
+  // Chuyển đổi một lần: đề cũ chưa chốt được chốt ngay khi hệ thống chạy, không cần ai bấm Lưu cài đặt
+  const store = require("../api/_lib/store");
+  await store.put("kt/migrate-freeze-exams-v1.json", null);
+  const ex0 = await quiz.getExams(); ex0.push({ id: "de-cu", title: "Đề cũ", createdAt: 2 }); await quiz.saveExams(ex0);
+  await quiz.runMigrations();
+  const old = (await quiz.getExams()).find((e) => e.id === "de-cu");
+  ok(old.frozen && old.questionCount === 15 && old.secondsPerQuestion === 20 && old.passScore === 80, "chuyển đổi một lần: đề cũ được chốt đúng giá trị đang áp dụng");
+  await call("POST", {}, { op: "saveSettings", questionCount: "7", secondsPerQuestion: "15", passEnabled: true, passScore: "50", timeMode: "perQuestion" });
+  const old2 = await quiz.getExamSettings("de-cu");
+  ok(old2.questionCount === 15 && old2.passScore === 80, "sau đó đổi mặc định: đề cũ vẫn giữ nguyên");
   console.log(pass + " PASS, " + fail + " FAIL"); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
