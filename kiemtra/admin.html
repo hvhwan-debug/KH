@@ -1072,6 +1072,17 @@ button.exh-chip{cursor:pointer}button.exh-chip:hover{background:#E8F0F9;border-c
 .exh-link a:hover{text-decoration:underline}
 .exh-link .btn{white-space:nowrap;flex:0 0 auto}
 .exh-b{display:inline-flex;align-items:center;gap:7px}.exh-b svg{width:15px;height:15px}
+button.exh-chip.exh-tg[aria-expanded=true]{background:#E6F0FC;border-color:#BCD3F0;color:#0B3F94}
+.exh-tg i{font-style:normal;font-size:10px;transition:transform .15s}.exh-tg[aria-expanded=true] i{transform:rotate(180deg)}
+.exh-sum{margin:14px 0 4px;padding:14px 16px;border-radius:14px;background:#F7FAFD;border:1px solid #E1E8F0}
+.exh-sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px 22px;margin:0}
+.exh-sg>div{min-width:0}.exh-sg dt{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 2px}
+.exh-sg dd{margin:0;font-size:14px;font-weight:700;color:#0A2A66;overflow-wrap:anywhere;line-height:1.4}
+.exh-sg dd small{display:block;font-weight:500;font-size:12px;color:var(--muted)}
+.exh-sg dd.off{color:#5B6676;font-weight:600}
+.exh-sg .wide{grid-column:1/-1}.exh-sg dd a{color:var(--brand-deep)}
+.exh-sf{display:flex;justify-content:flex-end;margin-top:12px}
+@media(prefers-reduced-motion:reduce){.exh-tg i{transition:none}}
 @media(max-width:700px){
   .exh-tile{width:44px;height:44px;border-radius:14px}.exh-tile svg{width:22px;height:22px}
   /* điện thoại: ô biểu tượng + tên ở hàng trên, các chip và link chiếm trọn chiều ngang bên dưới */
@@ -1408,6 +1419,7 @@ table.hlx-t tbody tr:hover{background:#F5F9FF}
         </div>
         <div class="exh-act" id="ehAct"></div>
       </div>
+      <div class="exh-sum hide" id="ehSum" aria-label="Tóm tắt cài đặt đề"></div>
       <div class="subnav in" id="exNav">
         <button data-sub="results" onclick="switchTab('results')"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg><span>Kết quả</span></button>
         <button data-sub="analysis" onclick="switchTab('analysis')"><svg class="ic" aria-hidden="true"><use href="#i-trend"/></svg><span>Phân tích</span></button>
@@ -2953,6 +2965,7 @@ const ownTitle = (e) => !!(e && e.title && e.title !== e.id);
 const exTitleOf = (e) => ownTitle(e) ? e.title : (SETCACHE.examTitle || e.id);
 function examById(id){ return EXAMS.find(e => e.id === id) || null; }
 const EXI = {
+  set:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
   key:'<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/>',
   cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2.3.6 3.5 2.6 3.5 5.5"/>',
@@ -2992,10 +3005,63 @@ function renderExHead(){
     '<span class="exh-chip ' + w.cls + '" title="' + esc(examWindowText(e)) + '">' + exIc('cal') + '<b>' + esc(w.text) + '</b>' + (w.sub ? '<em>' + esc(w.sub) + '</em>' : '') + '</span>' +
     '<span class="exh-chip">' + exIc('users') + (nCodes ? (e.codesExclude ? 'Tất cả trừ <b>' + nCodes + '</b> NV' : 'Gán <b>' + nCodes + '</b> NV') : 'Mọi nhân viên thuộc nhóm ngành') + '</span>' +
     (segs.length ? '<span class="exh-chip">' + exIc('layers') + esc(segs.join(' / ')) + '</span>' : '') +
+    '<button type="button" class="exh-chip exh-tg" id="ehSumBtn" aria-controls="ehSum" aria-expanded="' + exSumOpen() + '" onclick="exSumToggle()">' + exIc('set') + '<span>Xem cài đặt đề</span><i aria-hidden="true">▼</i></button>' +
     '<span class="exh-br"></span><div class="exh-link">' + exIc('link') + '<a href="' + esc(link) + '" target="_blank" rel="noopener" title="Mở trang thí sinh">' + esc(link.replace(/^https?:\/\//, '')) + '</a><button class="btn ghost sm" type="button" onclick="copyText(\'' + esc(link) + '\', this)">Sao chép</button></div>';
   $('ehQ').textContent = qCountOf(e);
+  renderExSum(e);
   $('ehAct').innerHTML = (e.id !== EX_DEFAULT ? '<button class="btn ghost sm exh-b" onclick="setDefaultExamUI(\'' + esc(e.id) + '\')" title="Đề mặc định chỉ dùng trong trang quản trị; thí sinh vào bằng link hoặc mã đề">' + exIc('star') + 'Đặt làm đề mặc định</button>' : '') +
     (e.id !== EX_DEFAULT ? '<button class="btn dghost sm exh-b" onclick="deleteExamUI(\'' + esc(e.id) + '\')">' + exIc('trash') + 'Xoá đề</button>' : '');
+}
+// Tóm tắt toàn bộ cài đặt cơ bản của đề, ngay ở đầu trang đề (bấm "Xem cài đặt đề" để mở / đóng)
+function exSumOpen(){ try { return localStorage.getItem('exSumOpen') === '1'; } catch (x) { return false; } }
+function exSumToggle(){
+  const on = !exSumOpen(); try { localStorage.setItem('exSumOpen', on ? '1' : '0'); } catch (x) {}
+  const b = $('ehSumBtn'); if (b) b.setAttribute('aria-expanded', String(on));
+  $('ehSum').classList.toggle('hide', !on);
+}
+function renderExSum(e){
+  const box = $('ehSum'); if (!box) return;
+  if (EX_NEW){ box.classList.add('hide'); box.innerHTML = ''; return; }
+  const S = SETCACHE || {}, v = (k) => (e[k] !== undefined && e[k] !== null && e[k] !== '') ? e[k] : S[k];
+  const dfl = (k) => (e[k] === undefined || e[k] === null || e[k] === '') ? '<small>theo mặc định</small>' : '';
+  const fmt = (ms) => new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
+  const sum = (rs) => (rs || []).reduce((n, r) => n + (+r.count || 0), 0);
+  // Số câu & cách ra đề
+  let qc, qs;
+  if (e.blueprint && (e.blueprint.rules || []).length){ qc = sum(e.blueprint.rules) + ' câu'; qs = 'Theo cấu trúc đề riêng (' + e.blueprint.rules.length + ' quy tắc)'; }
+  else if (e.sharedUniform){ qc = (v('questionCount') || '?') + ' câu'; qs = 'Dùng chung cho mọi thí sinh'; }
+  else {
+    const P = e.segmentPlans && Object.keys(e.segmentPlans).length ? e.segmentPlans : (SEGPLANS || {});
+    const segs = SP_SEGS.filter(([k]) => P[k] && P[k].length);
+    if (segs.length){ const ns = Array.from(new Set(segs.map(([k]) => sum(P[k])))); qc = ns.join(' / ') + ' câu'; qs = 'Phân bổ theo nhóm ngành' + (e.segmentPlans && Object.keys(e.segmentPlans).length ? ' (riêng của đề)' : ' (mặc định)') + ': ' + segs.map(([k, l]) => l + ' ' + sum(P[k])).join(' · '); }
+    else { qc = (v('questionCount') || '?') + ' câu'; qs = 'Rút từ ngân hàng của đề'; }
+  }
+  const total = v('timeMode') === 'total';
+  const time = total ? (v('totalMinutes') || '?') + ' phút cả bài' : (v('secondsPerQuestion') || '?') + ' giây mỗi câu';
+  const passOn = e.passEnabled != null ? !!e.passEnabled : !!S.passEnabled;
+  const retake = e.allowRetake != null ? !!e.allowRetake : !!S.allowRetake;
+  const tries = retake ? 'Không giới hạn' : ((e.maxAttempts > 1 ? e.maxAttempts : 1) + ' lượt');
+  const compOn = e.complianceEnabled != null ? !!e.complianceEnabled : !!S.complianceEnabled;
+  const comp = compOn ? 'Bật' + (v('complianceHighMin') || v('complianceMidMin') || v('complianceLowMin') ? '<small>Cao ≥ ' + (v('complianceHighMin') || 0) + ' · TB ≥ ' + (v('complianceMidMin') || 0) + ' · Thấp ≥ ' + (v('complianceLowMin') || 0) + '</small>' : '') : 'Tắt';
+  const nC = (e.codes || []).length, segL = (e.segments || []).map(x => ({ gia_dung:'Gia dụng', may_loc:'Máy lọc nước', both:'Cả hai ngành' }[x] || x));
+  const who = nC ? (e.codesExclude ? 'Tất cả trừ ' + nC + ' người' : nC + ' người được gán') : 'Tất cả nhân viên';
+  const inv = e.inviteOff ? 'Không tự gửi' : 'Tự gửi khi được gán' + ((e.invitedCodes || []).length ? '<small>Đã gửi ' + e.invitedCodes.length + ' người</small>' : '');
+  const row = (k, val, cls) => '<div' + (cls === 'wide' ? ' class="wide"' : '') + '><dt>' + k + '</dt><dd' + (cls === 'off' ? ' class="off"' : '') + '>' + val + '</dd></div>';
+  box.innerHTML = '<dl class="exh-sg">' +
+    row('Số câu mỗi thí sinh', esc(qc) + '<small>' + esc(qs) + '</small>') +
+    row('Thời gian làm bài', esc(time) + dfl(total ? 'totalMinutes' : 'secondsPerQuestion')) +
+    row('Điểm đạt', passOn ? (v('passScore') != null && v('passScore') !== '' ? esc(v('passScore')) + '% số câu đúng' : '?') + dfl('passScore') : 'Không xét đạt / chưa đạt', passOn ? '' : 'off') +
+    row('Số lượt làm mỗi người', esc(tries)) +
+    row('Mở đề', e.openAt ? esc(fmt(e.openAt)) : 'Mở ngay', e.openAt ? '' : 'off') +
+    row('Đóng đề', e.closeAt ? esc(fmt(e.closeAt)) : 'Không có hạn chót', e.closeAt ? '' : 'off') +
+    row('Ai được làm', esc(who) + (segL.length ? '<small>Nhóm ngành: ' + esc(segL.join(', ')) + '</small>' : '')) +
+    row('Email mời làm bài', inv, e.inviteOff ? 'off' : '') +
+    row('Điểm tuân thủ', comp, compOn ? '' : 'off') +
+    row('Loại đề', e.practice ? 'Thi thử' : 'Thi chính thức') +
+    row('Khảo sát sau bài thi', e.surveyUrl ? '<a href="' + esc(e.surveyUrl) + '" target="_blank" rel="noopener">Có — mở phiếu</a>' : 'Không', e.surveyUrl ? '' : 'off') +
+    (e.description ? row('Mô tả / thể lệ', esc(e.description), 'wide') : '') +
+    '</dl><div class="exh-sf"><button class="btn ghost sm" type="button" onclick="switchTab(\'examset\')">Sửa cài đặt</button></div>';
+  box.classList.toggle('hide', !exSumOpen());
 }
 function examBadges(e){
   const now = Date.now(), st = e.openAt && now < e.openAt ? ['n','Chưa mở'] : e.closeAt && now > e.closeAt ? ['n','Đã đóng'] : ['y','Đang mở'];
