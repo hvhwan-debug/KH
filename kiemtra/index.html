@@ -1845,9 +1845,6 @@ body.exam .who{display:flex;align-items:center;gap:10px;margin-left:auto;flex:0 
   html body #scrPhoto .fv-ch{font-size:19px;padding:0 10px}
 }
 
-/* loa: máy chưa có giọng đọc tiếng Việt → chấm vàng nhỏ, bấm để xem cách bật */
-#scrPhoto .ai-snd.nov::after{content:"";position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;background:#F5A524;box-shadow:0 0 0 2px #fff}
-
 /* ===== Kết quả làm bài: 2 cột (điểm số | chi tiết có tab) ===== */
 body.rs .stage{max-width:1140px}
 #scrResult{background:none!important;border:0;box-shadow:none;padding:0;overflow:visible;text-align:left}
@@ -3400,7 +3397,7 @@ function sndUnlock(){
   if (!SND.primed){ // phát 1 mẫu im lặng ngay trong thao tác: iOS cũ cần vậy mới thật sự mở khoá
     try { var b = c.createBuffer(1, 1, 22050), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); SND.primed = true; } catch (e) {}
     try { if ('speechSynthesis' in window && SND.voice){ var u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } } catch (e) {} // mở khoá giọng đọc trên iOS
-    if (SND.primed && VG.pending) setTimeout(function(){ var t = VG.pending; VG.pending = ''; if (t && !(window.speechSynthesis && speechSynthesis.speaking)) sayVn(t); }, 450);
+    if (SND.primed && VG.pending) setTimeout(function(){ var t = VG.pending; VG.pending = ''; if (t && !vgBusy()) sayVn(t); }, 450);
   }
   setTimeout(sndPaint, 60);
 }
@@ -3470,9 +3467,35 @@ function sndPickVoice(){ // ưu tiên giọng tiếng Việt tự nhiên (Edge: 
   } catch (e) {}
 }
 try { if ('speechSynthesis' in window){ sndPickVoice(); speechSynthesis.onvoiceschanged = sndPickVoice; } } catch (e) {}
-function sayVn(t){ // chỉ đọc khi thiết bị có giọng tiếng Việt (không đọc tiếng Việt bằng giọng nước ngoài)
-  if (!SND.on || !SND.voice) return;
-  try { speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.voice = SND.voice; u.lang = SND.voice.lang; u.rate = 1.02; u.volume = .9; speechSynthesis.speak(u); } catch (e) {}
+/* Giọng đọc: ưu tiên file ghi sẵn /kiemtra/voice (cùng một giọng trên mọi máy, kể cả máy không có giọng tiếng Việt như Chrome trên Windows);
+   câu không có file (vd. có tên riêng) thì dùng giọng tiếng Việt của máy; máy cũng không có thì phát câu dự phòng ghi sẵn. */
+var VCLIP = { map:null, buf:{}, raw:{}, src:null, want:'', busyUntil:0 };
+function vgNorm(t){ return String(t || '').replace(/^[\s⚠✓!]+/, '').replace(/…/g, '.').replace(/\s+/g, ' ').trim(); }
+try { fetch('/kiemtra/voice/index.json', { cache:'no-cache' }).then(function(r){ return r.json(); }).then(function(m){ VCLIP.map = m || {}; }).catch(function(){ VCLIP.map = {}; }); } catch (e) { VCLIP.map = {}; }
+function vclipFile(k){ var m = VCLIP.map || {}; return m[k] || m[k.replace(/\.$/, '')] || m[k + '.'] || ''; }
+function vclipStop(){ if (typeof VCLIP === 'undefined' || !VCLIP) return; VCLIP.want = ''; VCLIP.busyUntil = 0; try { if (VCLIP.src) VCLIP.src.stop(); } catch (e) {} VCLIP.src = null; }
+function vclipPlay(file){
+  var c = sndCtx(); if (!c) return false;
+  VCLIP.want = file;
+  var go = function(b){
+    if (VCLIP.want !== file) return; try { if (VCLIP.src) VCLIP.src.stop(); } catch (e) {}
+    var s = c.createBufferSource(), g = c.createGain(); g.gain.value = 1; s.buffer = b; s.connect(g); g.connect(c.destination);
+    try { s.start(); } catch (e) { return; } VCLIP.src = s; VCLIP.busyUntil = Date.now() + b.duration * 1000;
+  };
+  if (VCLIP.buf[file]) { go(VCLIP.buf[file]); return true; }
+  (VCLIP.raw[file] || (VCLIP.raw[file] = fetch('/kiemtra/voice/' + file).then(function(r){ if (!r.ok) throw 0; return r.arrayBuffer(); })))
+    .then(function(ab){ return new Promise(function(res, rej){ c.decodeAudioData(ab.slice(0), res, rej); }); })
+    .then(function(b){ VCLIP.buf[file] = b; go(b); }).catch(function(){ delete VCLIP.raw[file]; });
+  return true;
+}
+function vgBusy(){ return Date.now() < VCLIP.busyUntil || !!(window.speechSynthesis && speechSynthesis.speaking); }
+function sayVn(t){
+  if (!SND.on) return;
+  var k = vgNorm(t), f = vclipFile(k);
+  sndStopVoice();
+  if (f && vclipPlay(f)) return;
+  if (SND.voice){ try { var u = new SpeechSynthesisUtterance(t); u.voice = SND.voice; u.lang = SND.voice.lang; u.rate = 1.02; u.volume = .9; speechSynthesis.speak(u); } catch (e) {} return; }
+  var fb = vclipFile(/^Xin chào/.test(k) ? 'Xin chào. Đăng nhập thành công.' : 'Vui lòng xem thông báo trên màn hình.'); if (fb) vclipPlay(fb);
 }
 /* ===== Hướng dẫn bằng giọng nói ở mọi màn đăng nhập (chọn cách xác thực, nhập mã, quét khuôn mặt, xác nhận thông tin) =====
    key: chống đọc lặp cùng một câu trong khoảng gap (ms). Chưa có thao tác nào trên trang (trình duyệt chặn tiếng):
@@ -3490,10 +3513,10 @@ function guideScreen(name){
   else if (name === 'confirm') guide('Vui lòng kiểm tra lại thông tin bài kiểm tra của bạn.', 'scr-confirm', 20000);
 }
 setTimeout(function(){ guideScreen(document.body.dataset.scr); }, 0); // màn đầu tiên đã hiện trước khi phần giọng nói sẵn sàng
-function guideMsgText(t){ return String(t || '').replace(/^[\s⚠✓!]+/, '').replace(/…/g, '.').trim(); }
-function sndStopVoice(){ try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {} }
+function guideMsgText(t){ return vgNorm(t); }
+function sndStopVoice(){ try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {} if (typeof vclipStop === 'function') vclipStop(); }
 function sndBlocked(){ return SND.on && (!SND.ctx || SND.ctx.state !== 'running'); } // đang bật nhưng trình duyệt còn chặn tiếng
-function sndPaint(){ var b = $('aiSnd'); if (!b) return; var bl = sndBlocked() && SND.touched; b.classList.toggle('off', !SND.on); b.classList.toggle('wait', bl); b.setAttribute('aria-pressed', SND.on ? 'true' : 'false'); var nv = SND.on && SND.voicesLoaded && !SND.voice; b.classList.toggle('nov', nv); b.title = bl ? 'Chạm để bật âm thanh' : nv ? 'Máy này chưa có giọng đọc tiếng Việt' : 'Bật/tắt âm thanh'; }
+function sndPaint(){ var b = $('aiSnd'); if (!b) return; var bl = sndBlocked() && SND.touched; b.classList.toggle('off', !SND.on); b.classList.toggle('wait', bl); b.setAttribute('aria-pressed', SND.on ? 'true' : 'false'); b.title = bl ? 'Chạm để bật âm thanh' : 'Bật/tắt âm thanh'; }
 
 function aiMode(){ // chữ trên màn quét theo chế độ: 'login' (đăng nhập bằng khuôn mặt) hoặc làm bài
   var L = PH.mode === 'login', k = document.querySelector('#scrPhoto .ai-k'), h = document.querySelector('#scrPhoto h1');
@@ -3844,7 +3867,7 @@ function loginFailBack(){ if (PH.mode === 'login'){ clearTimeout(PH.backT); $('b
 // Nút "Quét lại" hiện = có lỗi: lúc đó mới cho chọn nhập mã NV + email
 try { new MutationObserver(function(){ if (!$('btnPhotoRetry').classList.contains('hide')) loginFailBack(); }).observe($('btnPhotoRetry'), { attributes:true, attributeFilter:['class'] }); } catch (e) {}
 $('btnPhotoBack').addEventListener('click', function(){ photoStop(); if (PH.mode === 'login'){ PH.mode = 'exam'; msg('photoMsg',''); show('check'); setTimeout(function(){ $('inCode').focus(); }, 60); } else show('confirm'); });
-$('aiSnd').addEventListener('click', function(){ if (SND.on && SND.voicesLoaded && !SND.voice && !sndBlocked() && !this.__nv){ this.__nv = 1; msg('photoMsg', 'Máy này chưa có giọng đọc tiếng Việt nên chỉ phát âm báo. Trên Windows: Cài đặt → Thời gian và ngôn ngữ → Giọng nói → thêm Tiếng Việt, hoặc mở trang bằng trình duyệt Edge. Trên điện thoại: bật giọng tiếng Việt trong cài đặt Chuyển văn bản thành giọng nói.', 'warn'); return; } if (sndBlocked()){ sndUnlock(); setTimeout(function(){ sndPaint(); sndReady(); }, 120); return; } SND.on = !SND.on; try { localStorage.setItem('kt_snd', SND.on ? '1' : '0'); } catch (e) {} sndPaint(); if (SND.on){ sndUnlock(); setTimeout(sndReady, 80); } else { sndStopVoice(); sndScan(false); } });
+$('aiSnd').addEventListener('click', function(){ if (sndBlocked()){ sndUnlock(); setTimeout(function(){ sndPaint(); sndReady(); }, 120); return; } SND.on = !SND.on; try { localStorage.setItem('kt_snd', SND.on ? '1' : '0'); } catch (e) {} sndPaint(); if (SND.on){ sndUnlock(); setTimeout(sndReady, 80); } else { sndStopVoice(); sndScan(false); } });
 sndPaint();
 
 /* Màn Xác thực: nút "Đăng nhập bằng mã nhân viên và email" mở / đóng ô nhập tay */
