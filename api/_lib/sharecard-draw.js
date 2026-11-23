@@ -23,7 +23,8 @@ function scWrap(ctx, text, font, maxW, maxLines){
 function scLayout(d){
   var c = MK(), W = SC.W, cx = SC.M, cw = W - 2*SC.M, P = cx + SC.PAD, R = cx + cw - SC.PAD;
   var L = { cx:cx, cy:SC.M, cw:cw, P:P, R:R };
-  L.trophyX = cx + cw - 244; L.trophyB = L.cy + 332;                       // vùng chiếc cúp (góc phải trên): chữ không được đè lên
+  L.comp = !d.practice && !!(d.compImg && d.compImg.width);                // có điểm tuân thủ: huy hiệu nằm ở chỗ ô tròn %, không chiếm góc phải trên
+  L.trophyX = L.comp ? cx + cw + 8 : cx + cw - 244; L.trophyB = L.comp ? L.cy : L.cy + 332;                       // vùng chiếc cúp (góc phải trên): chữ không được đè lên
   L.titleLines = scWrap(c, d.title, '700 32px ' + SC.F, L.trophyX - P - 8, 2);
   L.pillY = L.cy + 134 + (L.titleLines.length - 1) * 44 + 30;
   L.ringR = 132; L.ringW = 22; L.ringO = L.ringR + L.ringW / 2;
@@ -177,7 +178,7 @@ function drawShareCard(ctx, W, H, d){
   // chưa đạt (không phải thi thử): ảnh "Chưa đạt" (fail-photo.webp) thay cho cúp
   // bài có điểm tuân thủ (không phải thi thử): huy hiệu "N điểm tuân thủ" thay cho cúp / ảnh chưa đạt
   var failArt = d.passed === false && !d.practice && d.failImg && d.failImg.width;
-  if (!d.practice && d.compImg && d.compImg.width){ var kW = 236, kH = kW * d.compImg.height / d.compImg.width; ctx.drawImage(d.compImg, cx + cw - 124 - kW / 2, L.cy + 214 + 146 - kH, kW, kH); }
+  if (L.comp){ /* huy hiệu điểm tuân thủ được vẽ ở chỗ ô tròn % (bên dưới) */ }
   else if (failArt){ var fW = 250, fH = fW * d.failImg.height / d.failImg.width; ctx.drawImage(d.failImg, cx + cw - 124 - fW / 2, L.cy + 214 + 150 - fH, fW, fH); }
   else if (d.cupImg && d.cupImg.width){ var cupW = 268, cupH = cupW * d.cupImg.height / d.cupImg.width; ctx.drawImage(d.cupImg, cx + cw - 124 - cupW / 2, L.cy + 214 + 140 - cupH, cupW, cupH); }
   else trophy(cx + cw - 124, L.cy + 214, .8);
@@ -199,6 +200,10 @@ function drawShareCard(ctx, W, H, d){
   if (pill.b){ txt('|', xh + 54 + wa + 12, py + 31, 20, 400, 'rgba(255,255,255,.55)'); txt(pill.b, xh + 54 + wa + 26, py + 31, 18, 600, 'rgba(255,255,255,.92)'); }
   // ---- huy hiệu điểm (huy chương): thay cho vòng tiến độ cũ, cùng kiểu với huy hiệu điểm tuân thủ bên cạnh
   var rx = L.ringCX, ry = L.ringCY, Rr = L.ringR;
+  if (L.comp){
+    var cI = d.compImg, cH = 2 * L.ringO + 36, cW = cH * cI.width / cI.height; if (cW > 2 * L.ringO + 40){ cW = 2 * L.ringO + 40; cH = cW * cI.height / cI.width; }
+    ctx.save(); ctx.shadowColor = 'rgba(0,20,80,.45)'; ctx.shadowBlur = 26; ctx.shadowOffsetY = 12; ctx.drawImage(cI, rx - cW / 2, ry - cH / 2, cW, cH); ctx.restore();
+  } else {
   var rc = tier === 'sc-red' ? ['#FFC2B5', '#F0603F', 'rgba(255,110,80,.75)'] : tier === 'sc-yellow' ? ['#FFE7A8', '#F0A93A', 'rgba(255,200,80,.75)'] : tier === 'sc-blue' ? ['#BDE3FF', '#3A8BF0', 'rgba(90,170,255,.75)'] : ['#D8FF7E', '#22D84A', 'rgba(110,255,110,.85)'];
   function ribbon(dxEnd, lenEnd){
     var w0 = Rr*.4, nx = w0/2, notch = w0*.3, x0 = rx + dxEnd*0.12, y0 = ry + Rr*.58, x1 = rx + dxEnd, y1 = ry + lenEnd;
@@ -232,6 +237,7 @@ function drawShareCard(ctx, W, H, d){
   })();
   txt(pct + '%', rx, ry + 26, 74, 800, '#fff', 'center');
   txt('tỉ lệ đúng', rx, ry + 64, 20, 600, 'rgba(255,255,255,.92)', 'center');
+  }
   // ---- đường ngăn dọc + thông tin người làm bài
   ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(L.divX, ry - 124); ctx.lineTo(L.divX, ry + 124); ctx.stroke();
   var nx = L.nx, ny = L.textTop + L.nameFont;
@@ -250,7 +256,8 @@ function drawShareCard(ctx, W, H, d){
     ctx.restore();
     var t1 = 'Sai: ' + d.wrong, t2 = 'Bỏ trống: ' + d.blank, wsa = width(t1, '500 21px ' + F);
     txt(t1, nx, sb + 80, 21, 500, 'rgba(255,255,255,.92)'); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(nx + wsa + 16, sb + 64); ctx.lineTo(nx + wsa + 16, sb + 84); ctx.stroke(); txt(t2, nx + wsa + 32, sb + 80, 21, 500, 'rgba(255,255,255,.92)');
-  }
+    if (L.comp){ var wsb = width(t2, '500 21px ' + F), px = nx + wsa + 32 + wsb + 16; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px, sb + 64); ctx.lineTo(px, sb + 84); ctx.stroke(); txt('Tỉ lệ đúng: ' + pct + '%', px + 16, sb + 80, 21, 700, '#fff'); }
+  } else if (L.comp){ txt('Tỉ lệ đúng: ' + pct + '%', nx, sb + 52, 24, 700, '#fff'); }
   // ---- chỉ số phụ (khung trắng)
   var cols = [];
   if (d.compliance != null) cols.push(['target', d.compliance + ' điểm', d.practice ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ', '#A35F0B']);
