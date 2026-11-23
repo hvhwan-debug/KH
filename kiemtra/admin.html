@@ -1374,6 +1374,25 @@ body[data-tab="exams"] .wrap{max-width:1440px;padding:28px 28px 70px}
 .nv .nv-cnt{background:rgba(255,255,255,.2)}
 .nv.on .nv-cnt{background:rgba(255,255,255,.28)}
 .nv-grp{color:rgba(255,255,255,.62)}
+
+/* Hồ sơ học tập: đầu thẻ gọn (tiêu đề trái, nút phải) + một dải lọc dạng viên bo tròn */
+.cand-hact{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto}
+.qfilter.cfbar{gap:8px;margin:14px 0 8px;padding:8px;border-radius:16px;background:#F3F7FD;border:1px solid #E3EBF6}
+.cfbar input[type=search]{flex:1 1 220px;max-width:none;height:38px;margin:0;padding:0 14px 0 36px;border:1px solid #DCE5F2;border-radius:999px;font-size:13.5px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234F6486' stroke-width='2.3' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 13px 50%}
+.cfbar select{-webkit-appearance:none;appearance:none;flex:0 1 auto;width:auto;max-width:190px;height:38px;margin:0;padding:0 30px 0 14px;border:1px solid #DCE5F2;border-radius:999px;font-size:13px;font-weight:600;color:#2A4068;text-overflow:ellipsis;cursor:pointer;
+  background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232A4068' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center}
+.cfbar select:hover,.cfbar input[type=search]:hover{border-color:#B9CBE6}
+.cfbar select.on{background-color:#E6F0FC;border-color:#2F7CF6;color:#1452D2}
+.cfbar .cf-foot{display:contents}
+.cfbar .cf-foot .small:empty{display:none}
+.cfbar #candShown{font-weight:600;color:#1452D2;padding:0 4px;white-space:nowrap}
+@media(max-width:600px){
+  .qfilter.cfbar{padding:6px;gap:6px}
+  .cfbar input[type=search]{flex:1 1 100%}
+  .cfbar select{flex:1 1 calc(50% - 3px);width:calc(50% - 3px);min-width:0;max-width:none;padding:0 26px 0 12px}
+  .cfbar .cf-foot{display:flex;flex:1 1 100%;align-items:center;justify-content:space-between;order:9}
+  .cfbar .cf-foot:not(:has(.small:not(:empty))):not(:has(.exf-clear:not(.hide))){display:none}
+}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -2087,17 +2106,17 @@ body[data-tab="exams"] .wrap{max-width:1440px;padding:28px 28px 70px}
       <div class="card" id="candListCard">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <h1 style="margin:0">Hồ sơ học tập (<span id="candCount">0</span>)</h1>
-          <button class="btn" type="button" onclick="$('candAddCard').classList.remove('hide');$('candAddCard').scrollIntoView({behavior:'smooth'});candAddMode('form');$('candNewCode').focus()">＋ Thêm thí sinh</button>
-          <button class="btn ghost sm" type="button" onclick="hrsToggle()">⇄ Đối chiếu file HR</button>
+          <div class="cand-hact"><button class="btn ghost sm" type="button" onclick="hrsToggle()">⇄ Đối chiếu file HR</button>
+          <button class="btn" type="button" onclick="$('candAddCard').classList.remove('hide');$('candAddCard').scrollIntoView({behavior:'smooth'});candAddMode('form');$('candNewCode').focus()">＋ Thêm thí sinh</button></div>
         </div>
-        <div class="qfilter">
+        <div class="qfilter cfbar">
           <input type="search" id="candSearch" autocomplete="off" placeholder="Tìm mã NV, tên, email…" oninput="renderCandidates()" aria-label="Tìm thí sinh">
           <select id="candMgrF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo quản lí"></select>
           <select id="candTitleF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo chức danh"></select>
           <select id="candSegF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo nhóm ngành"><option value="*">Mọi nhóm ngành</option><option value="both">Cả hai ngành</option><option value="may_loc">Ngành 1 · Máy lọc nước</option><option value="gia_dung">Ngành 2 · Gia dụng</option></select>
           <select id="candRgF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo miền"><option value="*">Mọi miền</option><option value="bac">Miền Bắc</option><option value="nam">Miền Nam</option><option value="">Chưa chọn miền</option></select>
           <select id="candEmpF" autocomplete="off" onchange="renderCandidates()" aria-label="Lọc theo tình trạng làm việc"><option value="*">Mọi tình trạng</option><option value="active">Đang làm việc</option><option value="left">Đã nghỉ việc</option></select>
-          <span class="small" id="candShown"></span>
+          <span class="cf-foot"><span class="small" id="candShown"></span><button type="button" class="exf-clear hide" id="candClear" onclick="candFiltClear()">✕ Xoá lọc</button></span>
         </div>
         <div id="candProfBanner" class="cand-banner hide"></div>
         <div class="stk-scroll"><table class="stk"><thead><tr><th>Mã NV</th><th>Họ tên</th><th>Chức danh / Ngành</th><th>Email</th><th>SĐT / Zalo</th><th>Quản lí</th><th>Tỉnh / Miền</th><th>Đăng nhập gần nhất</th><th></th></tr></thead><tbody id="candList"></tbody></table></div>
@@ -5234,6 +5253,7 @@ function renderCandidates(){
   const q = spNorm($('candSearch').value), mf = $('candMgrF').value, sf = $('candSegF').value, tf = $('candTitleF').value, rf = $('candRgF').value;
   const ef = $('candEmpF').value, L = CANDIDATES.filter(c => (ef === '*' || (ef === 'left') === !!c.left) && (rf === '*' || (c.region||'') === rf) && (mf === '*' || mgrNorm(c.manager) === mgrNorm(mf)) && (sf === '*' || (c.segment||'both') === sf) && (tf === '*' || (c.title||'PC') === tf) && (!q || spNorm([c.code, c.name, c.email, c.phone || '', c.title || 'PC', c.province || ''].join(' ')).indexOf(q) >= 0));
   $('candShown').textContent = L.length === CANDIDATES.length ? '' : 'Đang lọc: ' + L.length + ' người';
+  { let on = !!$('candSearch').value.trim(); ['candMgrF','candTitleF','candSegF','candRgF','candEmpF'].forEach(id => { const a = $(id).value !== '*'; $(id).classList.toggle('on', a); on = on || a; }); $('candClear').classList.toggle('hide', !on); }
   $('candList').innerHTML = L.map(c =>
     '<tr'+(c.left?' class="left"':'')+'><td>'+esc(c.code)+(c.joinDate?'<small class="cand-sub" title="Ngày vào làm">Vào '+esc(c.joinDate.split('-').reverse().join('/'))+'</small>':'')+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button>'+(c.left?'<span class="tag tag-left" aria-label="Đã nghỉ việc" title="'+(c.leftAt?'Nghỉ việc từ '+new Date(c.leftAt).toLocaleDateString('vi-VN')+'. ':'')+'Không gán đề, không gửi thông báo">ĐNV</span>':'')+(c.probation&&!c.left?'<span class="tag tag-tv" aria-label="Thử việc" title="Thử việc từ '+esc(c.probation.from)+' đến hết '+esc(c.probation.until)+'">TV</span>':'')+'<small class="candmail" title="'+esc(c.email)+'">'+esc(c.email)+'</small>'+'</td><td><button type="button" class="ttlchip cflt-chip" title="'+esc(c.title||'PC')+' · bấm để lọc theo chức danh này" onclick="candFilter(\'candTitleF\',\''+esc(c.title||'PC')+'\')">'+esc(c.title||'PC')+'</button><small class="cand-sub">'+'<button type="button" class="cflt" title="'+esc(segLabel[c.segment]||'Cả hai')+' · bấm để lọc" onclick="candFilter(\'candSegF\',\''+esc((c.segment||'both'))+'\')">'+esc((segLabel[c.segment]||'Cả hai').split(' · ')[0])+'</button>'+'</small></td><td>'+esc(c.email)+'</td><td>'+(c.phone?'<button type="button" class="phbtn" data-phone="'+esc(c.phone)+'" aria-haspopup="menu" title="Nhắn SMS, mở Zalo hoặc gọi điện">'+esc(c.phone)+'</button>':'<span class="badge n" title="Thí sinh sẽ phải tự điền khi vào làm bài">Chưa có</span>')+'</td><td>'+(c.manager?'<button type="button" class="cflt" title="Lọc theo quản lí này" onclick="candFilter(\'candMgrF\',\''+esc(c.manager)+'\')">'+esc(c.manager)+'</button>':'')+'</td><td class="small">'+(c.province||c.region ? (c.province ? '<button type="button" class="cflt" title="Xem ai ở '+esc(c.province)+'" onclick="candSearchProvince(\''+esc(c.province)+'\')">'+esc(c.province)+'</button>' : '–')+'<br>'+'<button type="button" class="cflt" title="Lọc theo miền này" onclick="candFilter(\'candRgF\',\''+esc((c.region||''))+'\')">'+esc(RG_LABEL[c.region]||'Chưa chọn miền')+'</button>' : '<button type="button" class="badge n cflt-chip" title="Thí sinh bắt buộc tự chọn khi vào làm bài · bấm để xem ai chưa chọn miền" onclick="candFilter(\'candRgF\',\'\')">Chưa chọn</button>')+'</td><td>'+candLoginCell(c)+'</td><td style="white-space:nowrap"><button type="button" class="stk-more" onclick="candToggle(this)">Chi tiết ▾</button><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
   ).join('') || '<tr><td colspan="9" class="small">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Bấm “＋ Thêm thí sinh”.') + '</td></tr>';
@@ -5246,6 +5266,7 @@ function candLoginCell(c){
   if (!L) return '<span class="small" style="color:var(--muted)">Chưa đăng nhập</span>';
   return '<button type="button" class="cand-lg" title="' + esc(lkTime(L.at) + ' · ' + (LG_M[L.method] || '') + ' · ' + L.n + ' lượt · bấm để xem lịch sử') + '" onclick="candLogins(\'' + esc(c.code) + '\')"><span>' + esc(lgAgo(L.at)) + '</span>' + lgPill(L.method) + '</button>';
 }
+function candFiltClear(){ $('candSearch').value = ''; ['candMgrF','candTitleF','candSegF','candRgF','candEmpF'].forEach(id => { $(id).value = '*'; }); renderCandidates(); }
 function candFilter(id, v){ const el = $(id); if (!el) return; el.value = el.value === v ? '*' : v; if (el.selectedIndex < 0) el.value = '*'; renderCandidates(); el.scrollIntoView({behavior:'smooth', block:'center'}); }
 function candSearchProvince(p){ $('candSearch').value = p; renderCandidates(); $('candSearch').scrollIntoView({behavior:'smooth', block:'center'}); $('candSearch').focus(); }
 function candToggle(btn){ var tr = btn.closest('tr'), open = tr.classList.toggle('open'); btn.textContent = open ? 'Thu gọn ▴' : 'Chi tiết ▾'; }
