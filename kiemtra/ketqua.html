@@ -466,8 +466,8 @@ body.cert-on .wrap{max-width:1180px;width:min(1180px,94vw)}
 @media(max-width:860px){.cert.art-cup .ct-art{width:200px!important}}
 @media(max-width:700px){.ct-result{grid-template-columns:minmax(104px,32%) 1fr;gap:12px}.ct-ring{width:100%}.ct-person{padding-left:12px}}
 
-/* Ảnh "chưa đạt" (fail-photo.webp): bia ngắm + dấu ✕ trên bệ */
-.cert.art-fail .ct-art{width:min(31%,380px);right:1.5%;filter:drop-shadow(0 18px 26px rgba(0,20,80,.35));-webkit-mask-image:linear-gradient(180deg,#000 82%,transparent 100%);mask-image:linear-gradient(180deg,#000 82%,transparent 100%)}
+/* Ảnh "chưa đạt" (fail-photo.webp): bảng ghi + bia ngắm + nhãn "Chưa đạt" */
+.cert.art-fail .ct-art{width:min(30%,360px);right:1.5%;filter:drop-shadow(0 18px 26px rgba(0,20,80,.35))}
 @media(max-width:860px){.cert.art-fail .ct-art{width:210px!important}}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
@@ -895,7 +895,7 @@ $('paperAdmin').addEventListener('click', adminView);
   $('vOk').classList.toggle('hide', !(tier === 'g' || tier === 'b'));
   $('vName').textContent = r.name || r.code;
   var cup = !prac && ps !== false && pct >= 70, miss = !prac && ps === false; // đạt: cúp; chưa đạt: bia ngắm có dấu ✕; còn lại: bảng ghi
-  $('vArt').src = cup ? '/kiemtra/trophy-photo.webp' : miss ? '/kiemtra/fail-photo.webp' : '/kiemtra/rs-art.png';
+  $('vArt').src = cup ? '/kiemtra/trophy-photo.webp' : miss ? '/kiemtra/fail-photo.webp?v=2' : '/kiemtra/rs-art.png';
   $('cert').classList.toggle('art-cup', cup); $('cert').classList.toggle('art-fail', miss);
   $('vCode').innerHTML = r.code ? IC.card + '<span>Mã NV: ' + esc(r.code) + '</span>' : '';
   $('vMgr').innerHTML = r.manager ? IC.group + '<span>Quản lí: ' + esc(r.manager) + '</span>' : '';

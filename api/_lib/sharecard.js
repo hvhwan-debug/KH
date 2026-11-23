@@ -25,6 +25,13 @@ async function cup() {
   try { cupImg = await lib.loadImage(path.join(__dirname, "assets", "trophy-photo.webp")); } catch (e) { cupImg = null; }
   return cupImg;
 }
+// Ảnh "Chưa đạt" thay cho cúp khi bài chưa đạt
+let failImg;
+async function fail() {
+  if (failImg !== undefined) return failImg;
+  try { failImg = await lib.loadImage(path.join(__dirname, "assets", "fail-photo.webp")); } catch (e) { failImg = null; }
+  return failImg;
+}
 
 const fmtFull = (ms) => { try { return new Date(ms).toLocaleString("vi-VN", { timeZone: ZONE, hour: "2-digit", minute: "2-digit", second: "2-digit", day: "2-digit", month: "2-digit", year: "numeric", hour12: false }); } catch (e) { return ""; } };
 const fmtClock = (sec) => { sec = Math.max(0, Math.round(sec || 0)); const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60, p = (x) => (x < 10 ? "0" : "") + x; return h ? h + ":" + p(m) + ":" + p(s) : m + ":" + p(s); };
@@ -63,7 +70,7 @@ function cardData(attempt, settings, now) {
 // Trả về Buffer PNG của thẻ kết quả
 async function renderPng(attempt, settings, now) {
   load();
-  const d = cardData(attempt, settings, now); d.cupImg = await cup();
+  const d = cardData(attempt, settings, now); d.cupImg = await cup(); d.failImg = await fail();
   const H = drawer.height(d), cv = lib.createCanvas(1080, H);
   drawer.draw(cv.getContext("2d"), 1080, H, d);
   return cv.encode("png");

@@ -174,7 +174,10 @@ function drawShareCard(ctx, W, H, d){
   ctx.save(); ctx.shadowColor = 'rgba(255,214,120,.8)'; ctx.shadowBlur = 10; ctx.lineWidth = 4.5; ctx.lineCap = 'round'; ctx.strokeStyle = lg(cx, 0, cx + cw, 0, [[0, 'rgba(255,214,120,0)'], [.4, '#F6C968'], [.75, '#FFE7A6'], [1, 'rgba(255,214,120,0)']]); ctx.beginPath(); ctx.moveTo(cx, wt + 70); ctx.bezierCurveTo(cx + cw*.25, wt + 30, cx + cw*.55, wt + 92, cx + cw, wt + 32); ctx.stroke(); ctx.restore();
   // ---- cúp
   // ảnh cúp (trophy-photo.webp) nếu đã tải được; không có thì vẽ cúp bằng nét như cũ
-  if (d.cupImg && d.cupImg.width){ var cupW = 268, cupH = cupW * d.cupImg.height / d.cupImg.width; ctx.drawImage(d.cupImg, cx + cw - 124 - cupW / 2, L.cy + 214 + 140 - cupH, cupW, cupH); }
+  // chưa đạt (không phải thi thử): ảnh "Chưa đạt" (fail-photo.webp) thay cho cúp
+  var failArt = d.passed === false && !d.practice && d.failImg && d.failImg.width;
+  if (failArt){ var fW = 250, fH = fW * d.failImg.height / d.failImg.width; ctx.drawImage(d.failImg, cx + cw - 124 - fW / 2, L.cy + 214 + 150 - fH, fW, fH); }
+  else if (d.cupImg && d.cupImg.width){ var cupW = 268, cupH = cupW * d.cupImg.height / d.cupImg.width; ctx.drawImage(d.cupImg, cx + cw - 124 - cupW / 2, L.cy + 214 + 140 - cupH, cupW, cupH); }
   else trophy(cx + cw - 124, L.cy + 214, .8);
   // ---- tiêu đề + nhãn trạng thái
   var xh = P + 10;

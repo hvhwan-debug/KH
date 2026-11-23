@@ -166,6 +166,20 @@ function grad() {
   return png(o);
 }
 
+// Ảnh đầu thư khi CHƯA ĐẠT: ảnh "Chưa đạt" (assets/fail-photo.webp) đặt gọn trong khung cùng cỡ ảnh đầu thư thường
+let failHero; // undefined: chưa dựng; null: lỗi (dùng ảnh đầu thư thường)
+async function heroFail() {
+  if (failHero !== undefined) return failHero;
+  try {
+    const im = await load().loadImage(path.join(__dirname, "assets", "fail-photo.webp"));
+    const W = 260, H = 200, o = canvas(W, H, 2), c = o.c, k = Math.min(W / im.width, H / im.height) * 0.98;
+    const w = im.width * k, h = im.height * k;
+    c.drawImage(im, (W - w) / 2 + 6, H - h, w, h);
+    failHero = await png(o);
+  } catch (e) { failHero = null; }
+  return failHero;
+}
+
 let cache = null;
 // Trả về { atts: [tệp đính kèm nội tuyến], cid: { khoá: mã cid } }
 async function render(pct, state, ringColor) {
@@ -177,6 +191,7 @@ async function render(pct, state, ringColor) {
     cache = Object.assign({ logo: await logo(), hero: await hero(), bulb: await bulb(), grad: await grad() }, icons);
   }
   const all = Object.assign({}, cache, { ring: await ring(pct, ringColor), badge: await resultBadge(state) });
+  if (state === false) { const fh = await heroFail(); if (fh) all.hero = fh; }
   const atts = [], cid = {};
   Object.keys(all).forEach((k) => {
     cid[k] = k + "@ketqua.kiemtra";
