@@ -1553,6 +1553,8 @@ body.introbg .sched.lux .st{font-size:13px}body.introbg .sched.lux .sl{font-size
 .ck-b{flex:1;min-height:44px;border-radius:12px;border:1.5px solid #CFDCEC;background:#fff;color:var(--ink);font:inherit;font-size:14px;font-weight:800;cursor:pointer}
 .ck-b.go{border:0;color:#fff;background:linear-gradient(100deg,#0869df,#08b9d4)}
 .ck-note{margin:10px 0 0;font-size:11.5px;line-height:1.5;color:var(--muted)}
+.ck-blocked{margin-top:4px}
+.ck-warn{margin:0 0 10px;padding:10px 12px;border-radius:12px;background:#FFF6E0;border:1px solid #EBCB84;color:#6b4a00;font-size:13px;line-height:1.6}
 .ck-link{border:0;background:none;padding:0;margin-left:4px;font:inherit;color:inherit;text-decoration:underline;cursor:pointer}
 @media(max-width:560px){.ck{left:8px;right:8px;bottom:8px;width:auto;border-radius:18px}.ck-in{padding:16px 15px 12px}}
 body[data-scr=photo] .ck,body[data-scr=quiz] .ck{display:none}
@@ -2601,6 +2603,15 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
         </fieldset>
         <div id="regionMsg" role="alert"></div>
       </div>
+      <div class="rgbox hide" id="birthBox">
+        <h2>Ngày sinh</h2>
+        <p class="small" style="margin:0 0 10px">Chỉ cần ngày và tháng sinh — để hệ thống gửi lời chúc mừng sinh nhật, không cần nhập năm sinh.</p>
+        <div class="field" style="display:flex;gap:10px;margin:0">
+          <div style="flex:1"><label for="inBirthDay">Ngày <span class="req">*</span></label><select id="inBirthDay"></select></div>
+          <div style="flex:1"><label for="inBirthMonth">Tháng <span class="req">*</span></label><select id="inBirthMonth"></select></div>
+        </div>
+        <div id="birthMsg" role="alert"></div>
+      </div>
       <div class="rules" id="rulesBox"></div>
 </div><div class="cf-r">
       <ul class="notes-mine hide" id="notesMine" aria-label="Thông tin của bạn"></ul>
@@ -2866,8 +2877,18 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
         </table>
         <p>Đây là tín hiệu tuân thủ, không phải bằng chứng gian lận. Việc ghi nhận này áp dụng dù bạn đồng ý cookie hay không.</p>
       </div>
-      <div class="ck-btns"><button type="button" class="ck-b go" id="ckYes">Đồng ý</button><button type="button" class="ck-b" id="ckNo">Chỉ cookie cần thiết</button></div>
-      <p class="ck-note">Không đồng ý: bạn vẫn làm bài bình thường, chỉ là mỗi lần mở trang phải nhập lại. Có thể đổi lựa chọn ở “Cài đặt cookie” cuối trang.</p>
+      <div class="ck-btns" id="ckBtns"><button type="button" class="ck-b go" id="ckYes">Đồng ý</button><button type="button" class="ck-b" id="ckNo">Chỉ cookie cần thiết</button></div>
+      <p class="ck-note" id="ckNote">Không đồng ý: bạn vẫn làm bài bình thường, chỉ là mỗi lần mở trang phải nhập lại. Có thể đổi lựa chọn ở “Cài đặt cookie” cuối trang.</p>
+      <div class="ck-blocked hide" id="ckBlocked">
+        <p class="ck-warn">⚠ Trình duyệt của bạn đang <b>chặn cookie</b>, nên dù bạn chọn gì ở đây, hệ thống cũng không ghi nhớ được — lần sau mở trang sẽ lại thấy thông báo này.</p>
+        <p class="ck-p">Cách bật cookie (tuỳ trình duyệt):</p>
+        <ul class="ck-yes">
+          <li><b>Safari (iPhone/iPad):</b> Cài đặt → Safari → tắt "Ngăn chặn theo dõi trên nhiều trang web" hoặc tắt chế độ duyệt web riêng tư.</li>
+          <li><b>Chrome/Cốc Cốc:</b> bấm biểu tượng ổ khoá cạnh địa chỉ trang → Cookie → Cho phép.</li>
+          <li><b>Mở trong Zalo/Facebook:</b> bấm "Mở bằng trình duyệt" (Chrome/Safari) thay vì làm bài ngay trong ứng dụng.</li>
+        </ul>
+        <div class="ck-btns"><button type="button" class="ck-b go" id="ckBlockedOk">Đã hiểu, tiếp tục làm bài</button></div>
+      </div>
     </div>
   </div>
 </div>
@@ -3133,6 +3154,17 @@ function renderConfirm(){
     Array.prototype.forEach.call(document.querySelectorAll('#inRegion input'), function(r){ r.checked = r.value === rv; });
     $('inProvinceQ').removeAttribute('aria-invalid'); $('inRegion').classList.remove('bad'); msg('regionMsg','');
   }
+  var askBirth = c.needBirth;
+  $('birthBox').classList.toggle('hide', !askBirth);
+  if (askBirth){
+    if (!$('inBirthDay').options.length){
+      var dOpts = '<option value="">—</option>', mOpts = '<option value="">—</option>';
+      for (var di = 1; di <= 31; di++) dOpts += '<option value="' + di + '">' + di + '</option>';
+      for (var mi = 1; mi <= 12; mi++) mOpts += '<option value="' + mi + '">Tháng ' + mi + '</option>';
+      $('inBirthDay').innerHTML = dOpts; $('inBirthMonth').innerHTML = mOpts;
+    }
+    $('inBirthDay').removeAttribute('aria-invalid'); $('inBirthMonth').removeAttribute('aria-invalid'); msg('birthMsg','');
+  }
   var secs = x.secondsPerQuestion || 60, n = x.questionCount || 0;
   var timeBox = x.timeMode === 'total' ? '<div>'+RI('clock')+'<b>'+(x.totalMinutes||30)+'<small> phút</small></b><span>Cả bài</span></div>' : '<div>'+RI('clock')+'<b>'+secs+'<small>s</small></b><span>Mỗi câu</span></div>';
   var rl = ['<div>'+RI('q')+'<b>'+(n||'–')+'</b><span>Số câu hỏi</span></div>', timeBox];
@@ -3321,6 +3353,14 @@ $('btnStart').addEventListener('click', async function(){
     if (!sv.j.ok){ msg('regionMsg', sv.j.error || 'Không lưu được thông tin, vui lòng thử lại.'); return; }
     ST.cand.province = sv.j.province; ST.cand.region = sv.j.region; ST.cand.needRegion = false;
   }
+  if (!$('birthBox').classList.contains('hide')){
+    var bDay = $('inBirthDay').value, bMon = $('inBirthMonth').value;
+    $('inBirthDay').setAttribute('aria-invalid', bDay ? 'false' : 'true');
+    $('inBirthMonth').setAttribute('aria-invalid', bMon ? 'false' : 'true');
+    if (!bDay || !bMon){ msg('birthMsg','Vui lòng chọn đầy đủ ngày và tháng sinh.'); return; }
+    ST.birthNew = (bMon.length < 2 ? '0' + bMon : bMon) + '-' + (bDay.length < 2 ? '0' + bDay : bDay);
+    msg('birthMsg','');
+  }
   PH.mode = 'exam';
   if (facePassOk()) return startWithFacePass();
   show('photo');
@@ -3346,7 +3386,7 @@ async function startWithFacePass(){ // vào thẳng bài từ màn xác nhận: 
   btn.disabled = true; btn.textContent = 'Đang chuẩn bị đề…'; msg('startMsg', '');
   if (!DEV.loc && LOC.p) await Promise.race([LOC.p, aiDelay(3000)]); // đang lấy vị trí (xin từ lúc vào trang): chờ tối đa 3 giây
   ST.identityWarn = false; PH.dataUrl = ST.fp.photo; PH.face = null; PH.live = null;
-  var res, body = { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, facePass: ST.fp.token, device: DEV, examId:EXAM_ID, phone: ST.cand.phone || ST.phoneNew || '', province: (ST.rgNew && ST.rgNew.province) || '', region: (ST.rgNew && ST.rgNew.region) || '' };
+  var res, body = { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, facePass: ST.fp.token, device: DEV, examId:EXAM_ID, phone: ST.cand.phone || ST.phoneNew || '', province: (ST.rgNew && ST.rgNew.province) || '', region: (ST.rgNew && ST.rgNew.region) || '', birthDate: ST.birthNew || '' };
   try { res = await api('/api/kt-start', body); } catch(e){ res = null; }
   START_BUSY = false; btn.disabled = false; btn.textContent = label;
   var j = res && res.j;
@@ -3354,8 +3394,10 @@ async function startWithFacePass(){ // vào thẳng bài từ màn xác nhận: 
   if (j && j.facePassRejected){ fpSet(null); show('photo'); photoInit(); msg('photoMsg', j.error || 'Vui lòng quét khuôn mặt để bắt đầu làm bài.', 'warn'); return; } // vé hết hạn / đề yêu cầu quét lại
   if (!j.ok && j.needPhone){ msg('phoneMsg', j.error); return; }
   if (!j.ok && j.needRegion){ ST.cand.needRegion = true; renderConfirm(); msg('regionMsg', j.error); return; }
+  if (!j.ok && j.needBirth){ ST.cand.needBirth = true; renderConfirm(); msg('birthMsg', j.error); return; }
   if (!j.ok){ msg('startMsg', j.error || 'Không thể bắt đầu bài kiểm tra.'); return; }
   fpSet(null);
+  if (!ST.cand.birthDate && ST.birthNew) ST.cand.birthDate = ST.birthNew;
   if (j.identity === 'mismatch') ST.identityWarn = true; // vẫn cho làm bài; hiện cảnh báo ở đầu màn làm bài như cũ
   if (!ST.cand.phone && ST.phoneNew) ST.cand.phone = ST.phoneNew;
   if (ST.rgNew){ ST.cand.province = ST.rgNew.province; ST.cand.region = ST.rgNew.region; ST.cand.needRegion = false; }
@@ -4049,7 +4091,7 @@ async function startExam(passToken){ // passToken: vé đăng nhập bằng khu�
   var btn = $('btnPhotoOk'), label = '✓ Dùng ảnh này, bắt đầu làm bài';
   if (START_BUSY) return; START_BUSY = true;
   btn.disabled = true; btn.textContent = 'AI đang xác minh và chuẩn bị đề…'; if (!passToken) msg('photoMsg',''); aiVerifyStart();
-  var res, body = { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, face: PH.face, live: PH.live, device: DEV, examId:EXAM_ID, phone: ST.cand.phone || ST.phoneNew || '', province: (ST.rgNew && ST.rgNew.province) || '', region: (ST.rgNew && ST.rgNew.region) || '' };
+  var res, body = { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, face: PH.face, live: PH.live, device: DEV, examId:EXAM_ID, phone: ST.cand.phone || ST.phoneNew || '', province: (ST.rgNew && ST.rgNew.province) || '', region: (ST.rgNew && ST.rgNew.region) || '', birthDate: ST.birthNew || '' };
   if (passToken) body.facePass = passToken;
   try { res = await api('/api/kt-start', body); } catch(e){ res = null; }
   if (passToken && res && res.j && res.j.facePassRejected){ // vé hết hạn / đề yêu cầu quét lại: mở camera quét như bình thường
@@ -4062,9 +4104,11 @@ async function startExam(passToken){ // passToken: vé đăng nhập bằng khu�
   if (!res){ msg('photoMsg','Không kết nối được máy chủ, vui lòng thử lại.'); if (passToken) $('btnPhotoRetry').classList.remove('hide'); return; } // không có ảnh quét mới: chỉ cho quét lại
   if (!res.j.ok && res.j.needPhone){ photoStop(); show('confirm'); msg('phoneMsg', res.j.error); return; }
   if (!res.j.ok && res.j.needRegion){ photoStop(); ST.cand.needRegion = true; renderConfirm(); msg('regionMsg', res.j.error); return; }
+  if (!res.j.ok && res.j.needBirth){ photoStop(); ST.cand.needBirth = true; renderConfirm(); msg('birthMsg', res.j.error); return; }
   if (!res.j.ok){ msg('photoMsg', (res.j.faceRejected ? '⚠ ' : '') + (res.j.error || 'Không thể bắt đầu bài kiểm tra.')); if (res.j.faceRejected || passToken){ btn.classList.add('hide'); $('btnPhotoRetry').classList.remove('hide'); } return; }
   if (!ST.cand.phone && ST.phoneNew) ST.cand.phone = ST.phoneNew;
   if (ST.rgNew){ ST.cand.province = ST.rgNew.province; ST.cand.region = ST.rgNew.region; ST.cand.needRegion = false; }
+  if (!ST.cand.birthDate && ST.birthNew) ST.cand.birthDate = ST.birthNew;
   ST.attemptId = res.j.attemptId; evLoad();
   if (res.j.examTitle) $('examTitle').textContent = res.j.examTitle;
   await vgWait(12000); // đọc hết "xác thực thành công…" rồi mới vào bài
@@ -5467,7 +5511,21 @@ loadInfo();
 
 /* ===== Cookie: xin đồng ý; đã đồng ý thì nhận diện trình duyệt (kt_bid) + ghi nhớ phiên 2 giờ (kt_cand) để vào lại / làm tiếp ===== */
 function ckGet(){ try { return localStorage.getItem('kt_ck'); } catch(e){ return null; } }
-function ckShow(on){ $('ckBox').classList.toggle('hide', !on); if (on) setTimeout(function(){ $('ckYes').focus(); }, 50); }
+// Thử ghi+đọc+xoá một khoá tạm: localStorage "có vẻ" hoạt động (set không văng lỗi) nhưng trình duyệt
+// (vd Safari riêng tư, một số webview Zalo/Facebook) có thể âm thầm không lưu — nên phải đọc lại để biết chắc.
+function ckStorageWorks(){
+  try { var k = '__kt_ck_test__'; localStorage.setItem(k, '1'); var ok = localStorage.getItem(k) === '1'; localStorage.removeItem(k); return ok; }
+  catch(e){ return false; }
+}
+function ckShow(on){
+  $('ckBox').classList.toggle('hide', !on);
+  if (!on) return;
+  var blocked = !ckStorageWorks();
+  $('ckBlocked').classList.toggle('hide', !blocked);
+  $('ckBtns').classList.toggle('hide', blocked);
+  $('ckNote').classList.toggle('hide', blocked);
+  setTimeout(function(){ (blocked ? $('ckBlockedOk') : $('ckYes')).focus(); }, 50);
+}
 async function ckSet(yes){
   try { localStorage.setItem('kt_ck', yes ? '1' : '0'); } catch(e){}
   ckShow(false);
@@ -5477,6 +5535,7 @@ async function ckSet(yes){
 $('ckLog').addEventListener('click', function(){ var t = $('ckTable'), on = t.classList.toggle('hide'); this.setAttribute('aria-expanded', String(!on)); this.textContent = on ? 'Hệ thống ghi nhận gì khi làm bài?' : 'Thu gọn bảng ghi nhận'; });
 $('ckYes').addEventListener('click', function(){ ckSet(true); });
 $('ckNo').addEventListener('click', function(){ ckSet(false); });
+$('ckBlockedOk').addEventListener('click', function(){ ckShow(false); }); // không ghi nhớ được gì (storage bị chặn): chỉ đóng thông báo, không chặn làm bài
 $('ckOpen').addEventListener('click', function(){ ckShow(true); });
 $('ckMore').addEventListener('click', function(){ var m = $('ckLimits'), on = m.classList.toggle('hide'); this.setAttribute('aria-expanded', String(!on)); this.textContent = on ? 'Cookie không thể tự đảm bảo điều gì?' : 'Thu gọn'; });
 if (ckGet() === null) ckShow(true);
