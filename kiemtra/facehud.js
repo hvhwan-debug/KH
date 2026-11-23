@@ -245,6 +245,33 @@ function unlock(){ // chỉ touchend/click/pointerup mới được tính là th
   var c = sctx(); if (!c) return;
   if (c.state !== 'running'){ try { var p = c.resume(); if (p && p.then) p.then(paintSnd, function(){}); } catch (e) {} }
   if (!SND.primed){ try { var b = c.createBuffer(1, 1, 22050), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); SND.primed = true; } catch (e) {} }
+  if (!VOX.primed && 'speechSynthesis' in window){ try { var u0 = new SpeechSynthesisUtterance(' '); u0.volume = 0; window.speechSynthesis.speak(u0); VOX.primed = true; } catch (e) {} }
+}
+
+/* ---------- Giọng nói hướng dẫn (Web Speech API), đi theo cùng nút Bật/tắt âm thanh ---------- */
+var VOX = { last:'', lastAt:0, primed:false, voice:null };
+function voxPick(){
+  if (!('speechSynthesis' in window)) return null;
+  if (VOX.voice) return VOX.voice;
+  var vs = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+  var v = vs.filter(function(x){ return /^vi([-_]|$)/i.test(x.lang); })[0];
+  if (v) VOX.voice = v;
+  return v || null;
+}
+if ('speechSynthesis' in window && window.speechSynthesis.addEventListener){ try { window.speechSynthesis.addEventListener('voiceschanged', voxPick); } catch (e) {} }
+function speak(t){
+  if (!t || !SND.on || !('speechSynthesis' in window)) return;
+  var n = Date.now();
+  if (n - VOX.lastAt < 900) return; // tránh nói chồng chéo liên tục khi gợi ý đổi nhanh
+  if (t === VOX.last && n - VOX.lastAt < 4000) return; // tránh lặp lại y nguyên câu vừa nói
+  try {
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(t);
+    u.lang = 'vi-VN'; u.rate = 1.05; u.pitch = 1; u.volume = 1;
+    var v = voxPick(); if (v) u.voice = v;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+  VOX.last = t; VOX.lastAt = n;
 }
 ['touchend', 'click', 'pointerup', 'keydown', 'mousedown'].forEach(function(ev){ document.addEventListener(ev, unlock, { passive:true, capture:true }); });
 document.addEventListener('visibilitychange', function(){ if (!document.hidden && SND.ctx && SND.ctx.state !== 'running'){ try { SND.ctx.resume().catch(function(){}); } catch (e) {} } });
@@ -323,13 +350,15 @@ function build(){
   $('fhSnd').addEventListener('click', function(){
     if (blocked()){ unlock(); setTimeout(function(){ paintSnd(); sReady(); }, 120); return; }
     SND.on = !SND.on; try { localStorage.setItem('kt_snd', SND.on ? '1' : '0'); } catch (e) {} paintSnd();
+    if (!SND.on && 'speechSynthesis' in window){ try { window.speechSynthesis.cancel(); } catch (e) {} }
+    else if (SND.on) speak($('fhHint') ? $('fhHint').textContent : '');
     if (SND.on){ unlock(); setTimeout(sReady, 80); if (FM.busy) sScan(true); } else sScan(false);
   });
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && FM.open) close(); });
 }
 function scr(st){ FM.el.setAttribute('data-st', st); }
 function chip(cls, t){ $('fhChip').className = 'fh-chip' + (cls ? ' ' + cls : ''); $('fhChipT').textContent = t; }
-function hint(t, tone){ var h = $('fhHint'); h.textContent = t || ''; h.className = 'fh-hint' + (tone ? ' ' + tone : ''); }
+function hint(t, tone){ var h = $('fhHint'); h.textContent = t || ''; h.className = 'fh-hint' + (tone ? ' ' + tone : ''); speak(t); }
 function prog(p){ FM.prog = Math.max(0, Math.min(1, p)); $('fhProg').style.strokeDashoffset = String(100 * (1 - FM.prog)); }
 function rd(n, conf){ $('fhRdL').textContent = 'FACES ' + n; $('fhRdR').textContent = 'CONF ' + (conf == null ? '--' : Math.round(conf * 100) + '%'); }
 function arrow(p){ var a = $('fhArrow'); a.className = 'fh-arrow' + (p === 'left' ? ' l' : p === 'right' ? ' r' : ''); }
