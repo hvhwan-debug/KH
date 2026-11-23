@@ -16,7 +16,7 @@ const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</
 const oneLine = (s, n) => String(s == null ? "" : s).replace(/[\r\n\u0000-\u001f]+/g, " ").trim().slice(0, n || 200);
 const vn = (ms) => new Date(ms).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", second: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
 const clock = (sec) => { sec = Math.max(0, Math.round(sec || 0)); return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0"); };
-const band = (p) => (p >= 80 ? C.ok : p >= 60 ? C.warn : C.bad);
+const band = (p) => (p >= 80 ? K.green : p >= 60 ? K.amber : K.red);
 
 // Tên đề thi dùng làm tiêu đề: tránh lặp "THI THỬ" khi tên đề đã có sẵn chữ đó
 function displayTitle(settings) {
@@ -130,7 +130,7 @@ function build(attempt, settings, advice, opts) {
       '<div style="padding-top:8px;white-space:nowrap;"><span class="big-score" style="font-family:' + TF + ";font-size:44px;line-height:50px;font-weight:800;color:" + K.deep + ';">' + esc(score) + "/" + esc(total) + '</span><span style="font-family:' + TF + ";font-size:16px;font-weight:600;color:" + K.navy + ';">&nbsp; câu đúng</span></div>' +
       '<div style="font-size:12.5px;line-height:18px;color:' + K.muted + ';">Sai ' + esc(m.wrong) + " &nbsp;·&nbsp; Bỏ trống " + esc(m.blank) + "</div>", 'valign="middle"') +
     (art.badge ? '<td width="96" align="right" valign="middle" style="padding:6px 8px 6px 0;">' + img("badge", 88, 88, m.ps === false ? "Chưa đạt" : m.ps === true ? "Đạt" : "") + "</td>" : "") +
-    "</tr>", 'width="100%" bgcolor="#E8F1FF"', "background:#E8F1FF;background-image:linear-gradient(120deg,#EEF5FF,#DDEBFF);border:1px solid #D3E3FB;border-radius:14px;border-collapse:separate;");
+    "</tr>", 'width="100%" bgcolor="#F2F7FF"', "background:#F2F7FF;border:1px solid #D3E3FB;border-radius:14px;border-collapse:separate;");
   const summary = row('<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="stack"><tr>' +
     '<td class="col ring-col" width="250" align="center" valign="middle" style="padding:4px 18px 4px 0;border-right:1px solid ' + K.line + ';">' + ringCell + "</td>" +
     '<td class="col info-col" valign="middle" style="padding:4px 0 4px 22px;font-family:' + TF + ';">' +
@@ -145,7 +145,7 @@ function build(attempt, settings, advice, opts) {
   const cells = [compliance != null
     ? { ic: "ic-clip", k: t.practice ? "Tuân thủ (nếu thi thật)" : "Điểm tuân thủ", v: compliance + "/20" }
     : { ic: "ic-clip", k: "Số câu đúng", v: score + "/" + total }];
-  if (m.dur != null) cells.push({ ic: "ic-clock", k: "Thời gian làm bài", v: clock(m.dur), c: K.pink });
+  if (m.dur != null) cells.push({ ic: "ic-clock", k: "Thời gian làm bài", v: clock(m.dur) });
   cells.push({ ic: "ic-cal", k: "Thời điểm nộp", v: whenT, s: whenD });
   const mw = Math.floor(10000 / cells.length) / 100;
   const metrics = row(T("<tr>" + cells.map((c, i) =>
@@ -154,7 +154,7 @@ function build(attempt, settings, advice, opts) {
       td("text-align:left;", '<div style="font-size:13px;line-height:18px;color:' + K.body + ';">' + esc(c.k) + "</div>" +
         '<div class="m-val" style="font-size:' + (c.s ? 19 : 23) + "px;line-height:28px;font-weight:800;color:" + (c.c || K.navy) + ';">' + esc(c.v) + "</div>" +
         (c.s ? '<div style="font-size:12.5px;line-height:17px;color:' + K.body + ';">' + esc(c.s) + "</div>" : ""), 'valign="middle"') + "</tr>", 'align="center"') +
-    "</td>").join("") + "</tr>", 'width="100%" bgcolor="#F4F8FF"', "background:#F4F8FF;border:1px solid " + K.line + ";border-radius:14px;border-collapse:separate;"), "pad", "padding-top:22px;");
+    "</td>").join("") + "</tr>", 'width="100%" bgcolor="#F2F7FF"', "background:#F2F7FF;border:1px solid " + K.line + ";border-radius:14px;border-collapse:separate;"), "pad", "padding-top:22px;");
 
   // ---- Phân tích theo mảng + chỉ số phụ (chỉ khi có dữ liệu)
   let cats = "", grid = "";
@@ -167,12 +167,12 @@ function build(attempt, settings, advice, opts) {
           '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 13px"><tr><td style="font-family:' + TF + ";font-size:13.5px;font-weight:600;color:" + K.ink + '">' + esc(oneLine(c.name, 60)) + "</td>" +
           '<td align="right" width="96" style="width:96px;font-family:' + TF + ";font-size:12.5px;color:" + K.muted + ';white-space:nowrap"><b style="color:' + K.ink + '">' + esc(c.ok) + "/" + esc(c.n) + "</b> · " + esc(c.pct) + "%</td></tr>" +
           '<tr><td colspan="2" style="padding-top:6px">' + oneBar(c.pct, band(c.pct), 8) + "</td></tr></table>").join("") +
-        '<div style="font-family:' + TF + ";font-size:11.5px;color:" + K.muted + '"><span style="color:' + C.ok + '">&#9679;</span> từ 80% &nbsp; <span style="color:' + C.warn + '">&#9679;</span> 60 đến 79% &nbsp; <span style="color:' + C.bad + '">&#9679;</span> dưới 60%</div>';
+        '<div style="font-family:' + TF + ";font-size:11.5px;color:" + K.muted + '"><span style="color:' + K.green + '">&#9679;</span> từ 80% &nbsp; <span style="color:' + K.amber + '">&#9679;</span> 60 đến 79% &nbsp; <span style="color:' + K.red + '">&#9679;</span> dưới 60%</div>';
     }
     const facts = [];
     if (an.avgSec != null && an.limitSec) facts.push({ k: "Tốc độ làm bài trung bình", v: an.avgSec + " giây/câu", s: "Giới hạn " + an.limitSec + " giây mỗi câu" });
     if (an.timeouts > 0) facts.push({ k: "Câu hết giờ", v: an.timeouts + " câu", s: "chưa kịp trả lời" });
-    if (an.prev && an.prev.pct != null) { const d = (an.pct || 0) - an.prev.pct; facts.push({ k: "So với kỳ trước", v: (d > 0 ? "▲ +" : d < 0 ? "▼ " : "≈ ") + d + " điểm %", c: d >= 5 ? C.ok : d <= -5 ? C.bad : K.ink, s: (an.prev.period ? "Kỳ " + an.prev.period + ": " : "Trước đó: ") + an.prev.pct + "%" }); }
+    if (an.prev && an.prev.pct != null) { const d = (an.pct || 0) - an.prev.pct; facts.push({ k: "So với kỳ trước", v: (d > 0 ? "▲ +" : d < 0 ? "▼ " : "≈ ") + d + " điểm %", c: d >= 5 ? K.green : d <= -5 ? K.red : K.ink, s: (an.prev.period ? "Kỳ " + an.prev.period + ": " : "Trước đó: ") + an.prev.pct + "%" }); }
     if (an.nextBand && an.total) facts.push({ k: "Mốc tuân thủ kế tiếp", v: an.nextBand.points + " điểm", s: "Cần đúng " + an.nextBand.needCorrect + "/" + an.total + " câu (thiếu " + an.nextBand.gap + ")" });
     grid = facts.map((f, i) =>
       '<tr><td valign="middle" style="padding:11px 0;' + (i ? "border-top:1px solid #E4ECF8;" : "") + "font-family:" + TF + '"><div style="font-size:13px;font-weight:600;color:' + K.ink + '">' + esc(f.k) + '</div><div style="font-size:12px;color:' + K.muted + ';margin-top:2px">' + esc(f.s) + "</div></td>" +
@@ -186,12 +186,12 @@ function build(attempt, settings, advice, opts) {
 
   // ---- Gợi ý cho bạn: câu mở đầu theo trạng thái + nhận xét AI (nếu có)
   const topicName = lc1((t.main.split(":").pop() || t.main).trim());
+  const portrait = a.portrait || a.summary || "";
   const lead = m.ps === false
     ? "Kết quả chưa đạt ngưỡng yêu cầu" + (pass ? " (" + pass + "%)" : "") + ". Bạn nên ôn tập thêm kiến thức về " + esc(topicName) + ((a.topics || []).length ? ", đặc biệt là " + esc((a.topics || []).slice(0, 2).map(lc1).join(" và ")) : "") + "."
     : m.ps === true
       ? "Chúc mừng bạn đã đạt ngưỡng yêu cầu" + (pass ? " (" + pass + "%)" : "") + ". Hãy tiếp tục củng cố kiến thức về " + esc(topicName) + " để giữ vững phong độ."
-      : "Bài làm của bạn đã được ghi nhận. Bạn có thể ôn tập thêm kiến thức về " + esc(topicName) + " để làm tốt hơn ở lần sau.";
-  const portrait = a.portrait || a.summary || "";
+      : (a.headline || portrait) ? "" : "Bài làm của bạn đã được ghi nhận. Bạn có thể ôn tập thêm kiến thức về " + esc(topicName) + " để làm tốt hơn ở lần sau.";
   const li = (arr, mark) => arr.map((x, i) => '<div style="padding:0 0 4px 18px;text-indent:-18px;">' + (mark === "n" ? "<b>" + (i + 1) + ".</b>" : "&#8226;") + "&nbsp; " + esc(x) + "</div>").join("");
   const extra = [
     a.headline || portrait ? '<div style="padding-top:10px;">' + (a.headline ? "<b>" + esc(a.headline) + "</b> " : "") + esc(portrait) + "</div>" : "",
@@ -219,17 +219,17 @@ function build(attempt, settings, advice, opts) {
 
   // ---- Lời chúc cuối thư
   const wish = m.ps === true ? "Chúc mừng bạn! Hãy tiếp tục phát huy<br>ở những lần kiểm tra tiếp theo." : "Chúc bạn ôn tập hiệu quả<br>và đạt kết quả tốt hơn ở lần kiểm tra tiếp theo!";
-  const outro = gap(22) + '<tr><td bgcolor="#E3EEFF" style="background:#E3EEFF;background-image:linear-gradient(100deg,#F3F8FF 0%,#DCEBFF 100%);padding:0;">' +
+  const outro = gap(22) + '<tr><td bgcolor="#F2F7FF" style="background:#F2F7FF;padding:0;">' +
     T("<tr>" + (art.grad ? '<td class="grad" width="200" valign="bottom" style="padding:14px 0 6px 22px;">' + img("grad", 176, 96, "") + "</td>" : "") +
       td("padding:22px 28px 22px " + (art.grad ? 12 : 32) + "px;font-size:17px;line-height:25px;font-weight:bold;color:" + K.deep + ";", wish, 'valign="middle"') + "</tr>", 'width="100%"') + "</td></tr>";
 
   // ---- Xác thực + QR + hỗ trợ + chân thư
   const verify =
-    '<tr><td class="pad" style="padding:18px 32px 20px;background:#ffffff;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
-    '<td valign="middle" style="padding-right:12px;font-family:' + TF + ';"><div style="font-size:12.5px;line-height:19px;font-weight:bold;color:#1E7A4C;">&#10003; Đã xác thực bởi hệ thống lúc ' + esc(vn(Date.now())) + "</div>" +
+    '<tr><td class="pad" style="padding:18px 32px 20px;background:#ffffff;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F7FAFC;border:1px solid ' + K.line + ';border-radius:12px;"><tr>' +
+    '<td valign="middle" style="padding:14px 16px;font-family:' + TF + ';"><div style="font-size:12.5px;line-height:19px;font-weight:bold;color:#1E7A4C;">&#10003; Đã xác thực bởi hệ thống lúc ' + esc(vn(Date.now())) + "</div>" +
     '<div style="font-size:11.5px;line-height:18px;color:' + K.muted + ';padding-top:3px;">Mã minh chứng: <b>' + esc(m.proof) + "</b>" + (cardNote ? ". Thẻ kết quả (ảnh PNG) được đính kèm theo email này." : "") + "</div>" +
     '<div style="font-size:12px;line-height:19px;color:' + K.body + ';padding-top:8px;">' + esc(supportLine(attempt.manager)) + "</div></td>" +
-    (qrCid ? '<td width="86" align="center" valign="middle" style="font-family:' + TF + ';"><a href="' + esc(m.url) + '" target="_blank"><img class="footer-qr" src="cid:' + qrCid + '" width="76" height="76" alt="QR xem kết quả" style="display:block;margin:0 auto;width:76px;height:76px;border:1px solid ' + K.line + ';border-radius:6px;"></a>' +
+    (qrCid ? '<td width="86" align="center" valign="middle" style="padding:14px 16px 14px 0;font-family:' + TF + ';"><a href="' + esc(m.url) + '" target="_blank"><img class="footer-qr" src="cid:' + qrCid + '" width="76" height="76" alt="QR xem kết quả" style="display:block;margin:0 auto;width:76px;height:76px;border:1px solid ' + K.line + ';border-radius:6px;"></a>' +
       '<div style="font-size:10px;line-height:15px;color:' + K.muted + ';padding-top:4px;">Quét QR xem bản gốc</div></td>' : "") +
     "</tr></table></td></tr>" +
     '<tr><td align="center" bgcolor="#0A1F44" style="padding:20px 22px 22px;background:#0A1F44;background-image:linear-gradient(140deg,#071A3E,#0F2E6E);font-family:' + TF + ';color:#9FB6DD;font-size:11px;line-height:17px;"><div style="font-size:13px;line-height:19px;font-weight:800;color:#ffffff;padding-bottom:6px;">Hệ thống Kiểm tra &amp; Đánh giá Trực tuyến</div>Email tự động từ hệ thống kiểm tra, vui lòng không trả lời email này.<br>Email chứa thông tin cá nhân của bạn, vui lòng không chuyển tiếp cho người khác.</td></tr>';
