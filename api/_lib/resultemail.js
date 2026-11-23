@@ -91,7 +91,8 @@ function build(attempt, settings, advice, opts) {
 
   // ---- Logo + tên hệ thống
   const brand = row(T("<tr>" + (art.logo ? td("padding:0 12px 0 0;", img("logo", 44, 44, "")) + "" : "") +
-    td("font-size:17px;line-height:23px;font-weight:bold;color:" + K.navy + ";", "Hệ thống kiểm tra<br>đánh giá trực tuyến") + "</tr>"), "pad", "padding-top:24px;padding-bottom:18px;");
+    td("font-size:17px;line-height:23px;font-weight:bold;color:" + K.navy + ";", "Hệ thống kiểm tra<br>đánh giá trực tuyến") +
+    '<td class="org" align="right" valign="middle" style="font-family:' + TF + ';"><span style="display:inline-block;padding:6px 12px;border-radius:999px;background:#F2F5FA;border:1px solid ' + K.line + ';font-size:12px;font-weight:700;color:#0F2E6E;white-space:nowrap;">Đào tạo Kinh doanh</span></td>' + "</tr>", 'width="100%"'), "pad", "padding-top:24px;padding-bottom:18px;");
 
   // ---- Dải xanh: nhãn, tên bài, trạng thái, hình minh hoạ
   const stMark = m.ps === false && !t.practice ? "&#10005;" : m.ps === true && !t.practice ? "&#10003;" : "";
@@ -104,7 +105,7 @@ function build(attempt, settings, advice, opts) {
     '<div class="hero-title" style="font-family:' + TF + ';font-size:22px;line-height:29px;font-weight:bold;color:#ffffff;padding:10px 0 14px;">' + esc(t.main) + "</div>" + statusPill;
   const hero =
     '<tr><td class="pad" style="padding:0 16px;">' +
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#1259D6" style="background:#1259D6;background-image:linear-gradient(120deg,#0A49C2 0%,#1767E3 55%,#3C93FF 100%);border-radius:18px;border-collapse:separate;"><tr>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0F3E9E" style="background:#0F3E9E;background-image:radial-gradient(420px 260px at 100% 0%,rgba(120,190,255,.55) 0%,rgba(120,190,255,0) 70%),radial-gradient(300px 200px at 0% 100%,rgba(46,123,240,.45) 0%,rgba(46,123,240,0) 70%),linear-gradient(140deg,#071A3E 0%,#0F2E6E 50%,#1559C4 100%);border-radius:20px;border-collapse:separate;"><tr>' +
     '<td class="hero-l" valign="middle" style="padding:20px 0 20px 22px;font-family:' + TF + ';">' + heroLeft + "</td>" +
     (art.hero ? '<td class="hero-r" width="220" align="right" valign="bottom" style="padding:14px 10px 10px 0;">' + img("hero", 210, 162, "") + "</td>" : "") +
     "</tr></table></td></tr>";
@@ -231,13 +232,13 @@ function build(attempt, settings, advice, opts) {
     (qrCid ? '<td width="86" align="center" valign="middle" style="font-family:' + TF + ';"><a href="' + esc(m.url) + '" target="_blank"><img class="footer-qr" src="cid:' + qrCid + '" width="76" height="76" alt="QR xem kết quả" style="display:block;margin:0 auto;width:76px;height:76px;border:1px solid ' + K.line + ';border-radius:6px;"></a>' +
       '<div style="font-size:10px;line-height:15px;color:' + K.muted + ';padding-top:4px;">Quét QR xem bản gốc</div></td>' : "") +
     "</tr></table></td></tr>" +
-    '<tr><td align="center" style="padding:12px 18px 16px;background:#ffffff;border-top:1px solid ' + K.line + ";font-family:" + TF + ";color:" + K.muted + ';font-size:10.5px;line-height:16px;">Email tự động từ hệ thống kiểm tra, vui lòng không trả lời email này.<br>Email chứa thông tin cá nhân của bạn, vui lòng không chuyển tiếp cho người khác.</td></tr>';
+    '<tr><td align="center" bgcolor="#0A1F44" style="padding:20px 22px 22px;background:#0A1F44;background-image:linear-gradient(140deg,#071A3E,#0F2E6E);font-family:' + TF + ';color:#9FB6DD;font-size:11px;line-height:17px;"><div style="font-size:13px;line-height:19px;font-weight:800;color:#ffffff;padding-bottom:6px;">Hệ thống Kiểm tra &amp; Đánh giá Trực tuyến</div>Email tự động từ hệ thống kiểm tra, vui lòng không trả lời email này.<br>Email chứa thông tin cá nhân của bạn, vui lòng không chuyển tiếp cho người khác.</td></tr>';
 
   const css =
     "body{margin:0!important;padding:0!important;background:" + K.page + ";-webkit-text-size-adjust:100%}table{border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt}img{border:0;-ms-interpolation-mode:bicubic}a{color:" + K.blue + "}" +
     ".shell{width:100%;max-width:640px}" +
     "@media screen and (max-width:600px){.outer{padding:0!important}.shell{border-radius:0!important;border-left:0!important;border-right:0!important}.pad{padding-left:16px!important;padding-right:16px!important}" +
-    ".hero-r{display:none!important}.hero-l{padding:16px 16px!important}.hero-title{font-size:19px!important;line-height:25px!important;padding:8px 0 12px!important}" +
+    ".hero-r{display:none!important}.org{display:none!important}.hero-l{padding:16px 16px!important}.hero-title{font-size:19px!important;line-height:25px!important;padding:8px 0 12px!important}" +
     ".stack,.stack>tbody,.stack>tbody>tr,.stack>tbody>tr>td.col{display:block!important;width:100%!important}.ring-col{border-right:0!important;padding:0 0 14px!important;text-align:center!important}.info-col{padding:0!important}" +
     ".person-name{font-size:20px!important}.big-score{font-size:38px!important}" +
     ".metric{padding:12px 3px!important}.m-ic{display:none!important}.metric td{text-align:center!important}.m-val{font-size:17px!important;line-height:23px!important}" +
