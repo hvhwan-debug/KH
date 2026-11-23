@@ -376,7 +376,7 @@ function voxPick(){
 }
 if ('speechSynthesis' in window && window.speechSynthesis.addEventListener){ try { window.speechSynthesis.addEventListener('voiceschanged', voxPick); } catch (e) {} }
 function speak(t){
-  if (!t || !SND.on || !('speechSynthesis' in window)) return;
+  if (!t || !FM.open || !SND.on || !('speechSynthesis' in window)) return;
   var v = voxPick();
   if (!v) return; // không có giọng tiếng Việt trên máy/trình duyệt này: thà im lặng còn hơn đọc sai bằng giọng ngôn ngữ khác
   var n = Date.now();
@@ -496,7 +496,17 @@ function now(){
 function msgHtml(h){ $('fhMsg').innerHTML = h || ''; }
 function btn(id, on){ $(id).classList.toggle('hide', !on); }
 function stopCam(){ if (FM.timer){ clearTimeout(FM.timer); FM.timer = null; } if (FM.stream){ FM.stream.getTracks().forEach(function(t){ t.stop(); }); FM.stream = null; } }
-function close(){ FM.open = false; FM.busy = false; sScan(false); stopCam(); arrow(''); if (FM.el){ FM.el.classList.add('hide'); } document.documentElement.style.overflow = ''; if (FM.opts && FM.opts.closed) FM.opts.closed(); }
+function close(){
+  FM.gen = (FM.gen || 0) + 1; FM.open = false; FM.busy = false; sScan(false); stopCam(); arrow('');
+  try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) {}
+  try { var v = $('fhVideo'); if (v) v.srcObject = null; } catch (e) {}
+  if (FM.el){ FM.el.classList.add('hide'); } document.documentElement.style.overflow = '';
+  if (history.state && history.state.fhOpen && !FM.popping){ FM.popping = true; try { history.back(); } catch (e) { FM.popping = false; } }
+  if (FM.opts && FM.opts.closed) FM.opts.closed();
+}
+// Nút/vuốt Back của trình duyệt khi đang quét: đóng màn quét (không rời trang); rời trang/ẩn trang: tắt camera ngay
+window.addEventListener('popstate', function(){ if (FM.popping){ FM.popping = false; return; } if (FM.open) close(); });
+window.addEventListener('pagehide', function(){ if (FM.open) close(); });
 
 // Nhãn các bước: có thử thách = [phát hiện, 3 tư thế theo thứ tự máy chủ cấp, AI đối chiếu]; không có = kiểu cũ (chụp 1 ảnh)
 function setLabels(){
@@ -520,29 +530,32 @@ async function open(opts){
   $('fhK').textContent = FM.opts.kicker || 'AI FACE VERIFY'; $('fhTitle').textContent = FM.opts.title || 'Xác thực khuôn mặt';
   FM.live = null; setLabels();
   FM.el.classList.remove('hide'); document.documentElement.style.overflow = 'hidden'; FM.open = true; fit(); requestAnimationFrame(fit);
+  FM.gen = (FM.gen || 0) + 1; var g = FM.gen;
+  try { if (!(history.state && history.state.fhOpen)) history.pushState({ fhOpen:1 }, '', location.href); } catch (e) {}
   reset(); steps(['run', '', '', '', '']); scr('cam'); chip('', 'CAMERA ĐANG MỞ'); hint('Đang mở camera…'); paintSnd();
   if (!FM.stream){
     try { FM.stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ ideal: (window.matchMedia && matchMedia('(min-width:900px) and (min-height:540px)').matches) ? 1280 : 960 }, height:{ ideal: (window.matchMedia && matchMedia('(min-width:900px) and (min-height:540px)').matches) ? 960 : 1280 } }, audio:false }); }
     catch (e){
-      if (!FM.open) return;
+      if (!FM.open || g !== FM.gen) return;
       scr('off'); chip('bad', 'KHÔNG MỞ ĐƯỢC CAMERA'); hint(''); steps(['bad', '', '', '', '']);
       msgHtml('<div class="pmsg">Vui lòng cho phép trình duyệt sử dụng camera (và mở bằng Chrome/Safari, không mở trong Zalo/Facebook), sau đó bấm Thử lại.</div>');
       btn('fhRetry', true); return;
     }
   }
-  if (!FM.open){ stopCam(); return; }
+  if (!FM.open || g !== FM.gen){ if (!FM.open) stopCam(); return; }
   var v = $('fhVideo'); v.srcObject = FM.stream; try { await v.play(); } catch (e) {}
   start();
 }
 // Bắt đầu một lượt quét: xin thử thách mới, tải bộ nhận diện (kèm điểm mốc khuôn mặt để đo góc quay), chạy vòng theo dõi
 async function start(){
+  var g = FM.gen;
   reset(); scr('scan'); chip('seek', 'ĐANG CHUẨN BỊ'); hint('Đang chuẩn bị…');
   var lv; try { lv = await getLive(); } catch (e) { lv = undefined; }
-  if (!FM.open) return;
+  if (!FM.open || g !== FM.gen) return;
   if (lv === undefined){ return failLocal('Không kết nối được hệ thống. Hãy kiểm tra mạng rồi bấm Thử lại.'); }
   FM.live = lv; setLabels(); steps(['run', '', '', '', '']);
   FM.fa = null; try { FM.fa = await loadFA(); if (FM.live && !FM.fa.nets.faceLandmark68Net.isLoaded) await FM.fa.nets.faceLandmark68Net.loadFromUri('/kiemtra/vendor/face-api/model'); } catch (e) { FM.fa = null; }
-  if (!FM.open) return;
+  if (!FM.open || g !== FM.gen) return;
   if (!FM.fa){
     if (FM.live) return failLocal('Thiết bị chưa hỗ trợ thử thách quay mặt. Hãy dùng trình duyệt Chrome hoặc Safari bản mới rồi thử lại.');
     return manualMode();
@@ -656,12 +669,13 @@ function finish(){
   verify(FM.photo, FM.live ? { token: FM.live.token, frames: FM.frames.slice() } : null);
 }
 async function verify(photo, live){
-  var j = null; try { j = await FM.opts.verify(photo, live); } catch (e) { j = null; }
+  var g = FM.gen, j = null; try { j = await FM.opts.verify(photo, live); } catch (e) { j = null; }
+  if (g !== FM.gen) return; // đã đóng màn quét trong lúc chờ: bỏ qua kết quả
   sScan(false);
   if (!FM.open) return;
   if (j && j.ok){
     steps(['ok', 'ok', 'ok', 'ok', 'ok']); scr('ok'); chip('ok', 'XÁC THỰC THÀNH CÔNG'); hint('Xác thực thành công', 'ok'); $('fhRes').innerHTML = I_OK; sOk();
-    setTimeout(function(){ if (!FM.open) return; close(); if (FM.opts.done) FM.opts.done(j); }, 1100);
+    setTimeout(function(){ if (!FM.open || g !== FM.gen) return; var o = FM.opts; close(); if (o.done) o.done(j); }, 1100);
     return;
   }
   steps(['ok', 'ok', 'ok', 'ok', 'bad']); scr('bad'); $('fhRes').innerHTML = I_BAD; sBad();

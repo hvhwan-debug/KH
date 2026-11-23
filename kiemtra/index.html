@@ -1629,7 +1629,7 @@ body.exam .who{display:flex;align-items:center;gap:10px;margin-left:auto;flex:0 
   html body #scrPhoto h1{margin:0;font-size:clamp(23px,7vw,28px);line-height:1.2;font-weight:800;letter-spacing:-.02em;color:var(--fvink);text-shadow:none}
   html body #scrPhoto .fv-sub{display:block;margin:8px 0 0;font-size:14px;line-height:1.45;color:var(--fvmut)}
   html body #scrPhoto .ai-chip{display:none}
-  html body #scrPhoto .ai-snd{position:absolute;top:0;right:0;width:38px;height:38px;color:#3D5A8A;background:#fff;border:1px solid #DCE5F2;box-shadow:0 6px 14px -10px rgba(20,60,140,.5)}
+  html body #scrPhoto .ai-snd{position:absolute;top:0;right:46px;width:38px;height:38px;color:#3D5A8A;background:#fff;border:1px solid #DCE5F2;box-shadow:0 6px 14px -10px rgba(20,60,140,.5)}
   html body #scrPhoto .ai-snd.off{color:#9AA8BF}
   html body #scrPhoto.lg.rdy .ai-lead{margin:10px 0 0;font-size:13.5px;line-height:1.5;color:var(--fvmut);text-align:center}
   html body #scrPhoto.lg.rdy .ai-lead b{color:var(--fvblue)}
@@ -1741,7 +1741,7 @@ body.exam .who{display:flex;align-items:center;gap:10px;margin-left:auto;flex:0 
   html body #scrPhoto.lg.rdy .ai-lead{display:block;max-width:640px;margin:8px auto 0;text-align:center;font-size:14.5px;line-height:1.55;color:var(--fvmut)}
   html body #scrPhoto.lg.rdy .ai-lead b{color:var(--fvblue)}
   html body #scrPhoto .ai-hr{display:block;position:static}
-  html body #scrPhoto .ai-snd{position:fixed;top:18px;right:22px;z-index:70;width:44px;height:44px;color:#3D5A8A;background:#fff;border:1px solid #DCE5F2;box-shadow:0 8px 18px -12px rgba(20,60,140,.55)}
+  html body #scrPhoto .ai-snd{position:fixed;top:18px;right:76px;z-index:70;width:44px;height:44px;color:#3D5A8A;background:#fff;border:1px solid #DCE5F2;box-shadow:0 8px 18px -12px rgba(20,60,140,.55)}
   html body #scrPhoto .ai-snd.off{color:#9AA8BF}
   html body #scrPhoto #btnPhotoBack{position:fixed;top:18px;left:22px;z-index:70;width:auto;min-height:44px;height:44px;margin:0!important;padding:0 18px 0 14px;border-radius:999px;font-size:14.5px;gap:6px}
   html body #scrPhoto #btnPhotoBack::before{content:"";width:18px;height:18px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 5l-7 7 7 7'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 5l-7 7 7 7'/%3E%3C/svg%3E") center/contain no-repeat;position:static;animation:none;transform:none}
@@ -1861,6 +1861,14 @@ body.exam .who{display:flex;align-items:center;gap:10px;margin-left:auto;flex:0 
   body[data-scr="check"] .hero .sline.off em{color:#C62118}
 }
 @media(max-width:860px) and (prefers-reduced-motion:reduce){body[data-scr="check"] .hero .sline.on i{animation:none}}
+
+/* nút thoát màn xác thực khuôn mặt: thoát là dừng hẳn camera, nhận diện, giọng đọc */
+.ai-x{display:none}
+#scrPhoto .ai-x{display:grid;place-items:center;flex:0 0 auto;width:38px;height:38px;padding:0;border-radius:50%;cursor:pointer;color:#3D5A8A;background:#fff;border:1px solid #DCE5F2;box-shadow:0 6px 14px -10px rgba(20,60,140,.5)}
+#scrPhoto .ai-x svg{width:18px;height:18px}
+#scrPhoto .ai-x:hover{background:#F1F6FD}
+@media(max-width:560px){html body #scrPhoto .ai-x{position:absolute;top:0;right:0}}
+@media(min-width:561px){html body #scrPhoto .ai-x{position:fixed;top:18px;right:22px;z-index:70;width:44px;height:44px}}
 
 /* ===== Kết quả làm bài: 2 cột (điểm số | chi tiết có tab) ===== */
 body.rs .stage{max-width:1140px}
@@ -2536,7 +2544,7 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
       <div class="ai-head">
         <div class="ai-ttl"><span class="fv-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="10" r="2.6"/><path d="M7.8 16.5c.8-2 2.4-3 4.2-3s3.4 1 4.2 3"/></svg></span><span class="ai-k">AI FACE VERIFY</span><h1 tabindex="-1">Xác thực khuôn mặt</h1><p class="fv-sub">Xác minh danh tính để tiếp tục sử dụng hệ thống</p></div>
         <div class="ai-hr">
-          <button type="button" class="ai-snd" id="aiSnd" aria-pressed="true" title="Bật/tắt âm thanh" aria-label="Bật hoặc tắt âm thanh"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg><svg class="mt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l4 6M21 9l-4 6"/></svg></button>
+          <button type="button" class="ai-snd" id="aiSnd" aria-pressed="true" title="Bật/tắt âm thanh" aria-label="Bật hoặc tắt âm thanh"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg><svg class="mt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l4 6M21 9l-4 6"/></svg></button><button type="button" class="ai-x" id="aiClose" title="Thoát xác thực" aria-label="Thoát xác thực khuôn mặt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
           <div class="ai-chip" id="aiChip" role="status" aria-live="polite"><i></i><span id="aiChipT">CAMERA ĐANG MỞ</span></div>
         </div>
       </div>
@@ -2868,6 +2876,9 @@ async function api(path, body){
 }
 
 function show(name){
+  var prevScr = document.body.dataset.scr;
+  if (prevScr === 'photo' && name !== 'photo' && typeof photoLeave === 'function') photoLeave();
+  if (name === 'photo' && prevScr !== 'photo'){ try { if (!(history.state && history.state.ktPhoto)) history.pushState({ ktPhoto:1 }, '', location.href); } catch (e) {} }
   Object.keys(SCREENS).forEach(function(k){ $(SCREENS[k]).classList.toggle('hide', k !== name); });
   var cur = STEP_OF[name];
   document.querySelectorAll('#steps li').forEach(function(li){
@@ -3836,8 +3847,24 @@ function photoStop(){
   var pb = document.querySelector('#scrPhoto .photo-box'); if (pb) pb.classList.remove('opening');
   if (PH.stream){ PH.stream.getTracks().forEach(function(t){ t.stop(); }); PH.stream = null; }
 }
+/* Rời màn xác thực khuôn mặt (Quay lại, vuốt/bấm Back, chuyển màn, rời trang): dừng HẲN mọi thứ —
+   camera, vòng nhận diện, thử thách, âm thanh, giọng đọc, hẹn giờ tự vào bài — và bỏ qua kết quả đang chờ máy chủ trả về. */
+var PHG = 0; // tăng mỗi lần rời màn: các bước bất đồng bộ cũ thấy khác số thì dừng
+function photoLeave(){
+  PHG++; photoStop(); RD.okAt = 0; LV.on = false; LV.started = false; LV.go = false; LV.run = false; clearTimeout(LV.loop);
+  try { sndScan(false); } catch (e) {} sndStopVoice(); if (typeof VG !== 'undefined' && VG) VG.pending = '';
+  $('scrPhoto').classList.remove('lv', 'rdy', 'flash'); aiScr('idle');
+  if (history.state && history.state.ktPhoto && !PH.popping){ PH.popping = true; try { history.back(); } catch (e) { PH.popping = false; } }
+}
+function photoExit(){ var login = PH.mode === 'login'; photoLeave(); if (login){ PH.mode = 'exam'; msg('photoMsg', ''); show('check'); } else show('confirm'); }
+window.addEventListener('popstate', function(){
+  if (PH.popping){ PH.popping = false; return; }
+  if (document.body.dataset.scr === 'photo') photoExit(); // nút/vuốt Back của trình duyệt khi đang quét: thoát về màn trước, không rời trang
+});
+window.addEventListener('pagehide', function(){ if (document.body.dataset.scr === 'photo'){ PHG++; photoStop(); sndStopVoice(); } });
+window.addEventListener('pageshow', function(e){ if (e.persisted && document.body.dataset.scr === 'photo') photoExit(); });
 async function photoProcess(c){ // c: canvas chứa ảnh nhìn thẳng
-  var v = $('pvVideo');
+  var v = $('pvVideo'), g = PHG;
   PH.dataUrl = c.toDataURL('image/jpeg', 0.7);
   $('pvImg').src = PH.dataUrl;
   $('pvImg').classList.remove('hide'); $('pvVideo').classList.add('hide'); $('faceGuide').classList.add('hide');
@@ -3847,7 +3874,9 @@ async function photoProcess(c){ // c: canvas chứa ảnh nhìn thẳng
   msg('photoMsg', '');
   aiScanStart();
   var r; try { r = await checkFace(c); } catch(e){ r = { status:'unavailable', faces:null }; }
+  if (g !== PHG) return;
   await aiResult(r, c);
+  if (g !== PHG) return;
   pbox.classList.remove('scanning');
   if ((r.status === 'ok' || r.status === 'small') && r.box){
     var fc = cropToFace(c, r.box);
@@ -3861,7 +3890,7 @@ async function photoProcess(c){ // c: canvas chứa ảnh nhìn thẳng
   if (r.status === 'ok' || r.status === 'unavailable'){
     msg('photoMsg', r.status === 'ok' ? '✓ Đã nhận diện được khuôn mặt. Đang vào bài…' : 'Không tải được bộ kiểm tra khuôn mặt trên máy này. Ảnh sẽ được kiểm tra khi bắt đầu làm bài. Đang vào bài…', 'ok');
     clearTimeout(AUTO_T);
-    AUTO_T = setTimeout(function(){ if (PH.mode === 'login') doFaceLogin(); else startExam(''); }, 900);
+    AUTO_T = setTimeout(function(){ if (g !== PHG || document.body.dataset.scr !== 'photo') return; if (PH.mode === 'login') doFaceLogin(); else startExam(''); }, 900);
   }
   else { msg('photoMsg', '⚠ ' + FACE_MSG[r.status], 'err'); }  // không cho bắt đầu, chỉ cho chụp lại
 }
@@ -3884,7 +3913,8 @@ $('btnPhotoRetry').addEventListener('click', function(){ clearTimeout(AUTO_T); L
 function loginFailBack(){ if (PH.mode === 'login'){ clearTimeout(PH.backT); $('btnPhotoBack').classList.remove('hide'); } }
 // Nút "Quét lại" hiện = có lỗi: lúc đó mới cho chọn nhập mã NV + email
 try { new MutationObserver(function(){ if (!$('btnPhotoRetry').classList.contains('hide')) loginFailBack(); }).observe($('btnPhotoRetry'), { attributes:true, attributeFilter:['class'] }); } catch (e) {}
-$('btnPhotoBack').addEventListener('click', function(){ photoStop(); if (PH.mode === 'login'){ PH.mode = 'exam'; msg('photoMsg',''); show('check'); setTimeout(function(){ $('inCode').focus(); }, 60); } else show('confirm'); });
+$('aiClose').addEventListener('click', function(){ photoExit(); });
+$('btnPhotoBack').addEventListener('click', function(){ var login = PH.mode === 'login'; photoExit(); if (login) setTimeout(function(){ $('inCode').focus(); }, 60); });
 $('aiSnd').addEventListener('click', function(){ if (sndBlocked()){ sndUnlock(); setTimeout(function(){ sndPaint(); sndReady(); }, 120); return; } SND.on = !SND.on; try { localStorage.setItem('kt_snd', SND.on ? '1' : '0'); } catch (e) {} sndPaint(); if (SND.on){ sndUnlock(); setTimeout(sndReady, 80); } else { sndStopVoice(); sndScan(false); } });
 sndPaint();
 
@@ -3901,12 +3931,14 @@ $('btnFaceLogin').addEventListener('click', function(){
 });
 // Đăng nhập bằng khuôn mặt: máy chủ nhận diện, trả mã NV + email; rồi đi tiếp đúng đường nhập tay (kt-check) để hiện thông tin
 async function doFaceLogin(){
+  var g = PHG; if (document.body.dataset.scr !== 'photo') return;
   aiScr('verify'); aiChip('scan', 'AI ĐANG NHẬN DIỆN'); aiStep(3, 'run');
   var res; try { res = await api('/api/kt-facelogin', { photo: PH.dataUrl, face: PH.face, live: PH.live, examId: EXAM_ID }); } catch (e) { res = null; }
+  if (g !== PHG) return; // đã thoát màn quét trong lúc chờ máy chủ
   var j = res && res.j;
   if (j && j.ok){
     aiStep(3, 'ok', 1); aiStep(4, 'run'); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN'); sndOk(); guide('Xin chào ' + (j.name || '') + '. Đăng nhập thành công.', 'hello', 8000); msg('photoMsg', '✓ Xin chào ' + (j.name || j.code) + '. Đang mở thông tin của bạn…', 'ok');
-    await aiDelay(900); aiStep(4, 'ok', 1); await aiDelay(450);
+    await aiDelay(900); if (g !== PHG) return; aiStep(4, 'ok', 1); await aiDelay(450); if (g !== PHG) return;
     fpSet(j.facePass ? { token: j.facePass, code: String(j.code || ''), photo: PH.dataUrl, at: Date.now() } : null); // vé: bỏ bước quét mặt lần hai khi bắt đầu làm bài
     flSet(j.faceLogin ? { token: j.faceLogin, code: String(j.code || ''), at: Date.now() } : null); // vé: vào bằng khuôn mặt thì không bị hỏi xác thực lại vì "nhập sai nhiều lần"
     PH.mode = 'exam'; photoStop(); show('check');
