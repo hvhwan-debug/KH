@@ -1612,7 +1612,7 @@ body.exam .who{display:flex;align-items:center;gap:10px;margin-left:auto;flex:0 
 }
 
 /* ===== Xác thực khuôn mặt trên điện thoại: giao diện sáng (biểu tượng + tiêu đề giữa, thanh thử thách, camera bo góc, thẻ tiến trình 4 bước) ===== */
-.fv-ic,.fv-sub,.fv-prog,.fv-cam,.fv-shot,.fv-card{display:none}
+.fv-ic,.fv-sub,.fv-prog,.fv-cam,.fv-shot,.fv-card,.fv-oval,.fv-ch,.fv-pc small{display:none}
 @media(max-width:560px){
   html body #scrPhoto{--fvink:#0B1F5C;--fvmut:#6A7A96;--fvblue:#1F6BF5;--fvok:#2DBE6C;--fvline:#DDE4EF;
     overflow-y:auto;gap:14px;color:var(--fvink);padding:max(18px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));
@@ -1712,6 +1712,137 @@ body.exam .who{display:flex;align-items:center;gap:10px;margin-left:auto;flex:0 
   html body #scrPhoto .fv-sub{font-size:13px;margin-top:4px}
   html body #scrPhoto .fv-prog{margin-top:10px;padding-top:8px;padding-bottom:8px}
   html body #scrPhoto .photo-box{width:min(84%,max(245px,calc((100dvh - 380px) * .86)));font-size:13.5px}
+}
+
+/* ===== Xác thực khuôn mặt trên MÁY TÍNH / máy tính bảng: giao diện sáng đồng bộ với điện thoại
+   (tiêu đề ngang có biểu tượng, camera giữa có khung oval phát sáng, thẻ tiến trình ngang: thử thách | 4 bước | % hoàn thành) ===== */
+@media(min-width:561px){
+  body[data-scr=photo]{overflow:hidden}
+  body[data-scr=photo] .top,body[data-scr=photo] .foot,body[data-scr=photo] .lp-bar{display:none}
+  html body #scrPhoto{--fvink:#0B1F5C;--fvmut:#5F6F8C;--fvblue:#1F6BF5;--fvok:#2DBE6C;--fvline:#DDE4EF;
+    position:fixed;inset:0;z-index:60;margin:0;max-width:none;width:auto;border:0;border-radius:0;box-shadow:none;
+    display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2.2vh,22px);overflow-y:auto;color:var(--fvink);
+    padding:clamp(16px,3vh,30px) clamp(16px,4vw,56px) clamp(16px,3vh,28px);
+    background:radial-gradient(60% 55% at 100% 30%,rgba(170,205,255,.45),transparent 70%),radial-gradient(55% 50% at 0% 85%,rgba(170,205,255,.4),transparent 70%),linear-gradient(180deg,#F7FAFE,#EEF4FC)}
+  html body #scrPhoto.hide{display:none!important}
+  html body #scrPhoto::after,html body #scrPhoto .ai-bg{display:none}
+  html body #scrPhoto>*{flex:0 0 auto}
+  html body #scrPhoto .ai-side{display:contents}
+  /* tiêu đề: biểu tượng bên trái, chữ bên phải, mô tả canh giữa bên dưới */
+  html body #scrPhoto .ai-head{display:block;margin:0;width:100%;max-width:1100px;text-align:center}
+  html body #scrPhoto .ai-ttl{display:grid;grid-template-columns:auto auto;justify-content:center;align-items:center;column-gap:22px;text-align:left}
+  html body #scrPhoto .fv-ic{display:grid;place-items:center;grid-row:1 / span 2;width:clamp(56px,7vh,78px);height:clamp(56px,7vh,78px);border-radius:20px;color:#fff;background:linear-gradient(160deg,#3B8BFF,#1F6BF5);box-shadow:0 14px 26px -14px rgba(31,107,245,.85)}
+  html body #scrPhoto .fv-ic svg{width:52%;height:52%}
+  html body #scrPhoto .ai-k{display:block;margin:0 0 4px;font:600 clamp(12px,1.5vh,15px)/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.3em;color:#5B6B86;opacity:1}
+  html body #scrPhoto .ai-k::before{display:none}
+  html body #scrPhoto h1{margin:0;max-width:none;font-size:clamp(26px,4.4vh,42px);line-height:1.15;font-weight:800;letter-spacing:-.02em;color:var(--fvink);text-shadow:none}
+  html body #scrPhoto .fv-sub{display:block;grid-column:1 / -1;margin:clamp(6px,1.2vh,12px) 0 0;text-align:center;font-size:clamp(14px,2vh,19px);font-weight:500;color:var(--fvmut)}
+  html body #scrPhoto .ai-chip,html body #scrPhoto .fv-prog,html body #scrPhoto .ai-lead{display:none}
+  html body #scrPhoto.lg.rdy .ai-lead{display:block;max-width:640px;margin:8px auto 0;text-align:center;font-size:14.5px;line-height:1.55;color:var(--fvmut)}
+  html body #scrPhoto.lg.rdy .ai-lead b{color:var(--fvblue)}
+  html body #scrPhoto .ai-hr{display:block;position:static}
+  html body #scrPhoto .ai-snd{position:fixed;top:18px;right:22px;z-index:70;width:44px;height:44px;color:#3D5A8A;background:#fff;border:1px solid #DCE5F2;box-shadow:0 8px 18px -12px rgba(20,60,140,.55)}
+  html body #scrPhoto .ai-snd.off{color:#9AA8BF}
+  html body #scrPhoto #btnPhotoBack{position:fixed;top:18px;left:22px;z-index:70;width:auto;min-height:44px;height:44px;margin:0!important;padding:0 18px 0 14px;border-radius:999px;font-size:14.5px;gap:6px}
+  html body #scrPhoto #btnPhotoBack::before{content:"";width:18px;height:18px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 5l-7 7 7 7'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 5l-7 7 7 7'/%3E%3C/svg%3E") center/contain no-repeat;position:static;animation:none;transform:none}
+  /* camera giữa, tỉ lệ ngang nhẹ, chiều cao theo phần còn lại của màn hình */
+  html body #scrPhoto .photo-box{grid-column:auto;grid-row:auto;align-self:center;justify-self:auto;flex:0 0 auto;
+    height:clamp(260px,calc(100vh - 420px),640px);width:auto;max-width:calc(100vw - 40px);aspect-ratio:1.23;min-height:0;margin:0;
+    border:0;border-radius:30px;background:#5C6472;box-shadow:0 26px 50px -30px rgba(20,50,110,.6)}
+  html body #scrPhoto .photo-box::before{display:none}
+  html body #scrPhoto[data-ai="ok"] .photo-box{box-shadow:0 0 0 3px var(--fvok),0 26px 50px -30px rgba(20,50,110,.6)}
+  html body #scrPhoto[data-ai="bad"] .photo-box{box-shadow:0 0 0 3px #E5484D,0 26px 50px -30px rgba(20,50,110,.6)}
+  html body #scrPhoto .photo-box video,html body #scrPhoto .photo-box>img,html body #scrPhoto .photo-box>canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  html body #scrPhoto .ai-hud{opacity:1}
+  html body #scrPhoto .ai-guide,html body #scrPhoto .ai-mesh,html body #scrPhoto .ai-track,html body #scrPhoto .ai-pills,html body #scrPhoto .ai-arrow,html body #scrPhoto .ai-hold,html body #scrPhoto .ai-rd,html body #scrPhoto .ai-c{display:none}
+  html body #scrPhoto[data-ai="live"] .ai-sweep,html body #scrPhoto[data-ai="idle"] .ai-sweep{display:none}
+  html body #scrPhoto .fv-oval{display:block;position:absolute;left:50%;top:51%;z-index:2;width:48%;height:76%;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
+    border:3px solid #8FF5F0;box-shadow:0 0 0 9999px rgba(12,22,44,.16),0 0 18px 2px rgba(110,240,235,.75),inset 0 0 18px 1px rgba(110,240,235,.45);transition:border-color .3s,box-shadow .3s}
+  html body #scrPhoto[data-ai="ok"] .fv-oval{border-color:#6BEA9E;box-shadow:0 0 0 9999px rgba(12,22,44,.16),0 0 18px 2px rgba(61,220,130,.75)}
+  html body #scrPhoto[data-ai="bad"] .fv-oval{border-color:#FF8A8F;box-shadow:0 0 0 9999px rgba(12,22,44,.16),0 0 18px 2px rgba(229,72,77,.7)}
+  html body #scrPhoto .photo-box.opening .fv-oval,html body #scrPhoto .photo-box.opening .fv-cam,html body #scrPhoto .photo-box.opening .fv-shot{display:none}
+  html body #scrPhoto .fv-cam{display:inline-flex;align-items:center;gap:10px;position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:6;max-width:calc(100% - 150px);padding:9px 20px;border-radius:999px;background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font-size:15px;font-weight:600;color:var(--fvink);white-space:nowrap}
+  html body #scrPhoto .fv-cam span{overflow:hidden;text-overflow:ellipsis}
+  html body #scrPhoto .fv-cam i{flex:0 0 auto;width:11px;height:11px;border-radius:50%;background:#3CD02F}
+  html body #scrPhoto .fv-cam.seek i{background:#F5A524}html body #scrPhoto .fv-cam.bad i{background:#E5484D}
+  html body #scrPhoto .fv-shot{display:grid;place-items:center;position:absolute;top:12px;right:14px;z-index:6;width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.92);color:var(--fvink)}
+  html body #scrPhoto .fv-shot svg{width:26px;height:26px}
+  html body #scrPhoto .ai-hint,html body #scrPhoto.lv .ai-say{left:0;right:0;width:fit-content;max-width:calc(100% - 60px);box-sizing:border-box;margin:0 auto;transform:none;bottom:12px;padding:10px 40px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(18,24,38,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:none;font-size:16px;font-weight:600;color:#fff;text-align:center;white-space:normal}
+  html body #scrPhoto.lv .ai-say b{font-weight:600}
+  /* thẻ tiến trình ngang */
+  html body #scrPhoto .fv-card,html body #scrPhoto .ai-pipe{width:min(1270px,100%);box-sizing:border-box;margin:0;border-radius:28px;background:#fff;border:1px solid #E6ECF5;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 20px 44px -30px rgba(20,60,140,.55)}
+  html body #scrPhoto .fv-card{display:grid;grid-template-columns:minmax(170px,1fr) minmax(0,2.6fr) minmax(150px,1fr);align-items:center;padding:clamp(12px,2vh,20px) 0}
+  html body #scrPhoto:not([data-ai="idle"]):not([data-ai="live"]) .fv-card,html body #scrPhoto.lg.rdy .fv-card{display:none}
+  html body #scrPhoto .fv-ch{display:block;grid-column:1;grid-row:1;padding:0 20px;text-align:center;font-size:clamp(20px,3.2vh,30px);font-weight:800;color:var(--fvink);white-space:nowrap}
+  html body #scrPhoto .fv-top{display:contents}
+  html body #scrPhoto #fvCurT{display:none}
+  html body #scrPhoto .fv-pc{grid-column:3;grid-row:1;display:flex;flex-direction:column;align-items:center;gap:2px;border-left:1px solid #E3E9F2;padding:6px 16px}
+  html body #scrPhoto #fvPct{font-size:clamp(28px,4.6vh,42px);line-height:1.05;font-weight:800;color:var(--fvblue);font-variant-numeric:tabular-nums}
+  html body #scrPhoto .fv-pc small{display:block;font-size:15px;font-weight:600;color:var(--fvmut)}
+  html body #scrPhoto .fv-steps{grid-column:2;grid-row:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:0;padding:6px 18px;list-style:none;border-left:1px solid #E3E9F2}
+  html body #scrPhoto .fv-steps li{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;font-size:clamp(13px,1.8vh,16px);font-weight:600;line-height:1.3;color:#7D8AA2}
+  html body #scrPhoto .fv-steps li+li::before{content:"";position:absolute;top:19px;right:50%;width:100%;height:3px;border-radius:3px;background:var(--fvline)}
+  html body #scrPhoto .fv-steps li.done+li::before{background:var(--fvok)}
+  html body #scrPhoto .fv-steps li.done+li.cur::before{background:linear-gradient(90deg,var(--fvok),var(--fvblue))}
+  html body #scrPhoto .fv-steps i{position:relative;z-index:1;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;font-style:normal;font-size:16px;font-weight:700;background:#E4E9F1;color:#7D8AA2}
+  html body #scrPhoto .fv-steps i svg{width:20px;height:20px}
+  html body #scrPhoto .fv-steps li.done i{background:var(--fvok);color:#fff}
+  html body #scrPhoto .fv-steps li.cur i{background:var(--fvblue);color:#fff;box-shadow:0 0 0 6px rgba(31,107,245,.18)}
+  html body #scrPhoto .fv-steps li.cur{color:var(--fvink);font-weight:700}
+  /* bảng xử lý sau khi quét: cùng khung thẻ ngang, các bước có tên */
+  html body #scrPhoto[data-ai="idle"] .ai-pipe,html body #scrPhoto[data-ai="live"] .ai-pipe{display:none!important}
+  html body #scrPhoto:not([data-ai="idle"]):not([data-ai="live"]) .ai-pipe{display:grid!important;grid-template-columns:minmax(170px,1fr) minmax(0,2.6fr) minmax(150px,1fr);align-items:center;padding:clamp(12px,2vh,20px) 0}
+  html body #scrPhoto .ai-pipe::before{display:none}
+  html body #scrPhoto .ai-now{display:contents}
+  html body #scrPhoto .ai-now-n{grid-column:1;grid-row:1;align-self:end;text-align:center;font-size:14px;color:var(--fvblue);text-shadow:none}
+  html body #scrPhoto .ai-now-t{grid-column:1;grid-row:2;align-self:start;padding:4px 20px 0;text-align:center;white-space:normal;font-size:clamp(16px,2.4vh,20px);font-weight:800;color:var(--fvink)}
+  html body #scrPhoto .ai-now-p{grid-column:3;grid-row:1;align-self:end;justify-self:center;font:800 clamp(28px,4.6vh,42px)/1.05 'Be Vietnam Pro',system-ui,sans-serif;color:var(--fvblue);text-shadow:none}
+  html body #scrPhoto .ai-now-p i{font-size:.55em;opacity:.7}
+  html body #scrPhoto .ai-now-s{display:flex!important;grid-column:3;grid-row:2;align-self:start;justify-content:center;margin:6px 0 0;color:var(--fvmut)}
+  html body #scrPhoto .ai-now-s span{font-size:12px;letter-spacing:.12em}
+  html body #scrPhoto .ai-now-s i{background:var(--fvblue);box-shadow:0 0 0 3px rgba(31,107,245,.18)}
+  html body #scrPhoto .ai-now-s em{display:none}
+  html body #scrPhoto .ai-pipe[data-st="ok"] .ai-now-s,html body #scrPhoto .ai-pipe[data-st="ok"] .ai-now-n{color:var(--fvok)}
+  html body #scrPhoto .ai-pipe[data-st="ok"] .ai-now-s i{background:var(--fvok)}
+  html body #scrPhoto .ai-pipe .ai-steps{grid-column:2;grid-row:1 / span 2;display:flex!important;flex-direction:row;gap:0;margin:0;padding:4px 14px;border-left:1px solid #E3E9F2;border-right:1px solid #E3E9F2}
+  html body #scrPhoto .ai-pipe .ai-steps li{flex:1 1 0;position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;height:auto;margin:0;padding:34px 4px 0;border:0;border-radius:0;overflow:visible;text-align:center;font-size:12.5px;font-weight:600;line-height:1.3;color:#7D8AA2;background:none!important;box-shadow:none!important}
+  html body #scrPhoto .ai-pipe .ai-steps li::before{content:"";position:absolute;top:0;left:50%;right:auto;bottom:auto;inset:0 auto auto 50%;width:26px;height:26px;margin-left:-13px;box-sizing:border-box;border-radius:50%;border:0;z-index:1;background:#E4E9F1 center/14px no-repeat;box-shadow:none;animation:none;transform:none}
+  html body #scrPhoto .ai-pipe .ai-steps li+li::after{content:"";position:absolute;top:12px;right:50%;left:auto;bottom:auto;width:100%;height:3px;border-radius:3px;background:var(--fvline);display:block}
+  html body #scrPhoto .ai-pipe .ai-steps li:first-child::after{display:none}
+  html body #scrPhoto .ai-pipe .ai-steps li.ok{color:var(--fvink)}
+  html body #scrPhoto .ai-pipe .ai-steps li.ok::before{background-color:var(--fvok);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7'/%3E%3C/svg%3E")}
+  html body #scrPhoto .ai-pipe .ai-steps li.ok+li::after{background:var(--fvok)}
+  html body #scrPhoto .ai-pipe .ai-steps li.run{color:var(--fvink);font-weight:700}
+  html body #scrPhoto .ai-pipe .ai-steps li.run::before{background:#fff;border:3px solid rgba(31,107,245,.22);border-top-color:var(--fvblue);animation:cwSpin .8s linear infinite}
+  html body #scrPhoto .ai-pipe .ai-steps li.bad{color:#C2262B;font-weight:700}
+  html body #scrPhoto .ai-pipe .ai-steps li.bad::before{background-color:#E5484D;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.4' stroke-linecap='round'%3E%3Cpath d='M7 7l10 10M17 7 7 17'/%3E%3C/svg%3E")}
+  /* mẹo + thông báo + nút */
+  html body #scrPhoto .ai-tips{display:none}
+  html body #scrPhoto.lg.rdy .ai-tips{display:flex;gap:12px;width:min(640px,100%);margin:0;padding:0;list-style:none}
+  html body #scrPhoto.lg.rdy .ai-tips li{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 8px;border-radius:18px;background:#fff;border:1px solid #E6ECF5;font-size:13px;font-weight:700;color:var(--fvink);box-shadow:0 12px 26px -20px rgba(20,60,140,.5)}
+  html body #scrPhoto.lg.rdy .ai-tips svg{width:22px;height:22px;padding:7px;box-sizing:content-box;border-radius:50%;background:#E8F0FE;color:var(--fvblue)}
+  html body #scrPhoto .ai-fill{display:none}
+  html body #scrPhoto .locline,html body #scrPhoto #photoMsg:not(:empty){width:min(760px,100%);box-sizing:border-box;margin:0}
+  html body #scrPhoto .locline{background:#fff;color:#4B5D7A;border:1px solid #E1E8F3}
+  html body #scrPhoto .locline.ok{background:#EAF8F0;color:#1D7A47;border-color:#BFE8CF}
+  html body #scrPhoto .locline.bad{background:#FFF6E0;color:#7A5200;border-color:#F0D58A}
+  html body #scrPhoto .btn{width:min(420px,100%);max-width:none;margin:0!important;height:auto;min-height:52px;border-radius:16px;font-size:16px;background:linear-gradient(100deg,#1660E8,#1F7BF7);box-shadow:0 14px 26px -14px rgba(31,107,245,.8)}
+  html body #scrPhoto .btn.go::before{display:none}
+  html body #scrPhoto .btn.ghost{background:#fff;color:var(--fvink);border:1.5px solid #D6E0EE;box-shadow:0 8px 18px -14px rgba(20,60,140,.5)}
+  html body #scrPhoto .btn.hide{display:none}
+}
+@media(min-width:561px) and (max-height:760px){
+  html body #scrPhoto .photo-box{height:clamp(250px,calc(100vh - 320px),640px)}
+  html body #scrPhoto .fv-cam{font-size:13.5px;padding:7px 14px;gap:8px;max-width:calc(100% - 124px)}
+  html body #scrPhoto .fv-shot{width:46px;height:46px;top:10px;right:10px}html body #scrPhoto .fv-shot svg{width:22px;height:22px}
+  html body #scrPhoto .ai-hint,html body #scrPhoto.lv .ai-say{font-size:14.5px;padding:8px 26px}
+  html body #scrPhoto .ai-head{margin-top:-4px}
+  html body #scrPhoto .fv-steps li,html body #scrPhoto .ai-pipe .ai-steps li{font-size:12.5px;gap:6px}
+  html body #scrPhoto .fv-steps i{width:34px;height:34px}html body #scrPhoto .fv-steps li+li::before{top:16px}
+}
+@media(min-width:561px) and (max-width:899px){
+  html body #scrPhoto .fv-card,html body #scrPhoto:not([data-ai="idle"]):not([data-ai="live"]) .ai-pipe{grid-template-columns:minmax(120px,.8fr) minmax(0,2.6fr) minmax(110px,.8fr)}
+  html body #scrPhoto .fv-ch{font-size:19px;padding:0 10px}
 }
 
 /* ===== Kết quả làm bài: 2 cột (điểm số | chi tiết có tab) ===== */
@@ -2396,6 +2527,7 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
       </div>
       <div class="photo-box">
         <video id="pvVideo" autoplay playsinline muted></video>
+        <i class="fv-oval" aria-hidden="true"></i>
         <div class="fv-cam" id="fvCam" aria-hidden="true"><i></i><span id="fvCamT">Camera đang hoạt động</span></div>
         <span class="fv-shot" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.5-2h5.6l1.5 2h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.8" r="3.4"/></svg></span>
         <div class="face-guide" id="faceGuide" aria-hidden="true"><div class="ring"></div><div class="tip">Đưa khuôn mặt vào giữa vòng tròn</div></div>
@@ -2426,7 +2558,7 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
         </div>
       </div>
       <div class="ai-side ai-side2">
-      <div class="fv-card" id="fvCard" aria-hidden="true"><div class="fv-top"><b id="fvCurT">Phát hiện khuôn mặt</b><span id="fvPct">0%</span></div><ol class="fv-steps" id="fvSteps"></ol></div>
+      <div class="fv-card" id="fvCard" aria-hidden="true"><b class="fv-ch" id="fvChT">Chuẩn bị</b><div class="fv-top"><b id="fvCurT">Phát hiện khuôn mặt</b><span class="fv-pc"><span id="fvPct">0%</span><small>Hoàn thành</small></span></div><ol class="fv-steps" id="fvSteps"></ol></div>
       <div class="ai-pipe" id="aiPipe" data-st="run">
       <div class="ai-now" aria-live="polite"><span class="ai-now-n" id="aiNowN">01<i>/05</i></span><span class="ai-now-t" id="aiNowT">Phát hiện khuôn mặt</span><span class="ai-now-p" id="aiNowP">0<i>%</i></span></div>
       <ol class="ai-steps" id="aiSteps" aria-label="Các bước xác thực">
@@ -3373,7 +3505,7 @@ function fvPaint(hold){
     var st = k < cur ? 'done' : k === cur ? 'cur' : '';
     return '<li class="' + st + '"><i>' + (st === 'done' ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>' : k ? k : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M6.5 18c1.2-2.4 3.2-3.6 5.5-3.6s4.3 1.2 5.5 3.6"/></svg>') + '</i><span>' + n + '</span></li>';
   }).join('');
-  $('fvProgT').textContent = 'Thử thách ' + Math.min(i + 1, 3) + '/3';
+  $('fvProgT').textContent = 'Thử thách ' + Math.min(i + 1, 3) + '/3'; $('fvChT').textContent = on ? 'Thử thách ' + Math.min(i + 1, 3) + '/3' : 'Chuẩn bị';
   [].forEach.call($('fvProg').querySelectorAll('i'), function(d, k){ d.className = k < i ? 'done' : k === i ? 'cur' : ''; });
 }
 function lvSay(){
@@ -3552,7 +3684,7 @@ function aiReadyWatch(){
     RD.loop = setTimeout(tick, 260);
   })();
 }
-function aiReadyView(){ if ($('scrPhoto').getAttribute('data-ai') !== 'live') aiScr('live'); $('aiHint').textContent = 'Đặt khuôn mặt vào giữa khung'; aiRead(0, null); aiReadyWatch(); } // màn chờ: chỉ hiện camera + oval, tự nhận diện rồi tự quét
+function aiReadyView(){ if ($('scrPhoto').getAttribute('data-ai') !== 'live') aiScr('live'); $('aiHint').textContent = 'Giữ khuôn mặt trong khung'; aiRead(0, null); aiReadyWatch(); } // màn chờ: chỉ hiện camera + oval, tự nhận diện rồi tự quét
 function aiLive(){ if (AI.run || LV.started) return; if (PH.mode === 'login' && !LV.go){ aiReadyView(); return; } LV.started = true; sndReady(); aiBuildMesh(); aiScr('live'); aiChip('', 'CAMERA TRỰC TIẾP'); aiRead(0, null); aiTrackStart(); lvBegin(); }
 function aiScanStart(){ // vừa chụp xong: lưới mesh phủ lên khuôn mặt đã khoá gần nhất
   aiTrackStop(); aiBuildMesh(); aiStepsReset(); aiStep(0, 'run'); aiScr('scan'); aiChip('scan', 'ĐANG PHÂN TÍCH');
