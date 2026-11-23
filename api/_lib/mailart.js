@@ -185,15 +185,16 @@ let cache = null;
 // Trả về { atts: [tệp đính kèm nội tuyến], cid: { khoá: mã cid } }
 async function render(pct, state, ringColor, comp) {
   load();
+  // Chỉ vẽ những hình email thật sự dùng: logo, 3 biểu tượng chỉ số, biểu tượng sách ở nút; vòng % theo từng bài;
+  // huy hiệu điểm tuân thủ (khoá "hero") chỉ khi bài có điểm tuân thủ.
   if (!cache) {
     const icons = {};
-    for (const k of ["user", "id", "target", "clip", "clock", "cal"]) icons["ic-" + k] = await icon(k);
+    for (const k of ["clip", "clock", "cal"]) icons["ic-" + k] = await icon(k);
     icons["ic-book"] = await icon("book", "#FFFFFF");
-    cache = Object.assign({ logo: await logo(), hero: await hero(), bulb: await bulb(), grad: await grad() }, icons);
+    cache = Object.assign({ logo: await logo() }, icons);
   }
-  const all = Object.assign({}, cache, { ring: await ring(pct, ringColor), badge: await resultBadge(state) });
-  const special = comp != null ? "compliance-" + comp + ".webp" : state === false ? "fail-photo.webp" : "";
-  if (special) { const fh = await heroFrom(special); if (fh) all.hero = fh; }
+  const all = Object.assign({}, cache, { ring: await ring(pct, ringColor) });
+  if (comp != null) { const fh = await heroFrom("compliance-" + comp + ".webp"); if (fh) all.hero = fh; }
   const atts = [], cid = {};
   Object.keys(all).forEach((k) => {
     cid[k] = k + "@ketqua.kiemtra";
