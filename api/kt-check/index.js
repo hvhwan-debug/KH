@@ -83,7 +83,7 @@ async function handler(context, req) {
       const fm = require("../_lib/facematch");
       let me = null;
       try { me = await fm.describe(selfie); } catch (e) { me = null; } // máy chủ không đối chiếu được: dựa vào bước kiểm tra ảnh ở trên
-      if (me && me.n !== 1) { quiz.noteFail(req); return reply(context, 403, { ok: false, needFace: true, error: me.n ? "Ảnh có nhiều hơn một người. Chỉ người làm bài được có mặt trong ảnh, hãy chụp lại." : "Không thấy rõ khuôn mặt. Hãy nhìn thẳng camera, đủ sáng rồi chụp lại." }); }
+      if (me && me.n !== 1) { quiz.noteFail(req); return reply(context, 403, { ok: false, needFace: true, error: me.n ? "Ảnh có nhiều hơn một người. Chỉ người làm bài được có mặt trong ảnh, hãy chụp lại." : "Không thấy rõ khuôn mặt. Hãy nhìn thẳng vào máy ảnh, đủ sáng rồi chụp lại." }); }
       face = { ok: true, live: true, matched: null };
       if (found && me && me.desc) {
         // Mã NV đã có ảnh các lần kiểm tra trước: khuôn mặt phải khớp

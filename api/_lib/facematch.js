@@ -90,7 +90,7 @@ async function compare(selfie, refs) {
   let me;
   try { me = await describe(selfie); }
   catch (e) { return { ok: false, code: e && e.message === "not-jpeg" ? "badimg" : "unavailable", message: e && e.message === "not-jpeg" ? "Ảnh chụp không đọc được. Hãy chụp lại." : "Hệ thống đối chiếu khuôn mặt tạm thời không khả dụng. Vui lòng thử lại sau ít phút." }; }
-  if (me.n === 0) return { ok: false, code: "noface", message: "Không thấy khuôn mặt trong ảnh. Hãy nhìn thẳng camera, đủ sáng rồi chụp lại." };
+  if (me.n === 0) return { ok: false, code: "noface", message: "Không thấy khuôn mặt trong ảnh. Hãy nhìn thẳng vào máy ảnh, đủ sáng rồi chụp lại." };
   if (me.n > 1) return { ok: false, code: "multi", message: "Ảnh có nhiều hơn một người. Chỉ người xem được có mặt trong ảnh." };
   let best = Infinity, used = 0;
   const t0 = Date.now();

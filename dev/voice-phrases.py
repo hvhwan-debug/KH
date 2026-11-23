@@ -21,7 +21,7 @@ def collect():
     for v in lv.values(): out += [v, 'Bắt đầu thử thách. ' + v, v + '. Hãy quay chậm hơn và giữ khuôn mặt trong khung.']
     rw = re.search(r"function aiReadyWatch\(\)\{(.*?)\n\}", h, re.S).group(1)
     out += [m for m in re.findall(r"hint = '([^']+)'", rw)]
-    for p in ('Đăng nhập bằng khuôn mặt. ', 'Xác thực khuôn mặt. '): out.append(p + 'Đang mở camera, nếu trình duyệt hỏi, hãy bấm Cho phép.')
+    for p in ('Đăng nhập bằng khuôn mặt. ', 'Xác thực khuôn mặt. '): out.append(p + 'Đang mở máy ảnh, nếu trình duyệt hỏi, hãy bấm Cho phép.')
     # 4) lỗi trả về từ API của các bước đăng nhập / vào bài
     for f in [os.path.join(ROOT, 'api', n, 'index.js') for n in ('kt-check', 'kt-facelogin', 'kt-info', 'kt-live', 'kt-start', 'kt-consent')]:
         s = open(f, encoding='utf-8').read()
@@ -32,7 +32,7 @@ def collect():
     ph = dict(re.findall(r"(\w+):'([^']+)'", re.search(r"var POSE_HINT = \{(.*?)\};", fh).group(1)))
     for v in ph.values(): out += [v, 'Giữ khuôn mặt trong khung và ' + v.lower(), v + ' — quay chậm, giữ mặt trong khung']
     # 5) câu dự phòng cho nội dung có tên riêng / không đoán trước được
-    out += ['Quay nhẹ hơn để camera còn thấy khuôn mặt.', 'Đưa khuôn mặt vào giữa khung.']  # câu trong biểu thức ba ngôi
+    out += ['Quay nhẹ hơn để máy ảnh còn thấy khuôn mặt.', 'Đưa khuôn mặt vào giữa khung.']  # câu trong biểu thức ba ngôi
     out += ['Xin chào. Đăng nhập thành công.', 'Vui lòng xem thông báo trên màn hình.']
     seen, res = set(), []
     for t in map(norm, out):

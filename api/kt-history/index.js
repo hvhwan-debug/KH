@@ -97,7 +97,7 @@ module.exports = async function (context, req) {
     if (b.step === "check") return reply(context, 200, { ok: true, name: who.name });
 
     const selfie = typeof b.photo === "string" ? b.photo : "";
-    if (!selfie.startsWith("data:image/") || selfie.length > 350000) return reply(context, 400, { ok: false, error: "Cần quét khuôn mặt bằng camera để xác thực." });
+    if (!selfie.startsWith("data:image/") || selfie.length > 350000) return reply(context, 400, { ok: false, error: "Cần quét khuôn mặt bằng máy ảnh để xác thực." });
 
     // 1) Chụp trực tiếp, không phải chụp lại từ màn hình / ảnh in (đã kiểm tra khi nhận diện chỉ bằng khuôn mặt)
     const live = byFace ? byFace.live : await facecheck.verify(selfie, null, code, "tra-cuu-lich-su");

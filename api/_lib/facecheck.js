@@ -66,9 +66,9 @@ async function verify(photo, clientRaw, code, period) {
   const srv = await serverCheck(photo);
   const at = Date.now();
   if (srv) {
-    if (srv.faces === 0) { await logRejection(code, period, "noface", srv.reason); return { allow: false, message: "Hệ thống không thấy khuôn mặt người trong ảnh xác nhận. Hãy nhìn thẳng camera, đủ sáng, rồi chụp lại.", record: { status: "noface", by: srv.by, server: srv, client, at } }; }
+    if (srv.faces === 0) { await logRejection(code, period, "noface", srv.reason); return { allow: false, message: "Hệ thống không thấy khuôn mặt người trong ảnh xác nhận. Hãy nhìn thẳng vào máy ảnh, đủ sáng, rồi chụp lại.", record: { status: "noface", by: srv.by, server: srv, client, at } }; }
     if (srv.faces > 1) { await logRejection(code, period, "multi", srv.reason); return { allow: false, message: "Ảnh xác nhận có nhiều hơn một người. Chỉ người làm bài được có mặt trong ảnh, hãy chụp lại.", record: { status: "multi", by: srv.by, server: srv, client, at } }; }
-    if (srv.spoof) { await logRejection(code, period, "spoof", srv.reason); return { allow: false, message: "Ảnh xác nhận có dấu hiệu chụp lại từ màn hình hoặc ảnh in, không phải chụp trực tiếp qua camera. Hãy mở camera và chụp ảnh thật của chính bạn, không chụp qua điện thoại/ảnh khác.", record: { status: "spoof", by: srv.by, server: srv, client, at } }; }
+    if (srv.spoof) { await logRejection(code, period, "spoof", srv.reason); return { allow: false, message: "Ảnh xác nhận có dấu hiệu chụp lại từ màn hình hoặc ảnh in, không phải chụp trực tiếp qua máy ảnh. Hãy mở máy ảnh và chụp ảnh thật của chính bạn, không chụp qua điện thoại/ảnh khác.", record: { status: "spoof", by: srv.by, server: srv, client, at } }; }
     return { allow: true, record: { status: srv.clear ? "ok" : "unclear", by: srv.by, server: srv, client, at } };
   }
   // AI máy chủ không trả lời: dựa vào kết quả trên máy thí sinh

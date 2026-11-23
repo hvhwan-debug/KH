@@ -37,7 +37,7 @@ module.exports = async function (context, req) {
 
     const b = req.body || {};
     const photo = typeof b.photo === "string" ? b.photo : "";
-    if (!/^data:image\/jpe?g;base64,/i.test(photo) || photo.length > 350000) return reply(context, 400, { ok: false, error: "Cần quét khuôn mặt bằng camera để đăng nhập." });
+    if (!/^data:image\/jpe?g;base64,/i.test(photo) || photo.length > 350000) return reply(context, 400, { ok: false, error: "Cần quét khuôn mặt bằng máy ảnh để đăng nhập." });
 
     // 1) Chụp trực tiếp, đúng một người. AI nhìn ảnh (nếu trả lời) có quyền TỪ CHỐI (không thấy mặt / nhiều người / nghi chụp lại màn hình).
     const live = await facecheck.verify(photo, b.face, "", "dang-nhap-khuon-mat");
@@ -58,7 +58,7 @@ module.exports = async function (context, req) {
     // 2) Dấu vân khuôn mặt của người đang quét, rồi tìm trong thư viện
     let me;
     try { me = await facematch.describe(photo); } catch (e) { return reply(context, 503, { ok: false, unavailable: true, error: "Hệ thống nhận diện khuôn mặt tạm thời không khả dụng. Hãy nhập mã nhân viên và email." }); }
-    if (me.n === 0) { quiz.noteFail(req); await log(req, null, false, "noface"); return reply(context, 403, { ok: false, error: "Không thấy khuôn mặt trong ảnh. Hãy nhìn thẳng camera, đủ sáng rồi quét lại." }); }
+    if (me.n === 0) { quiz.noteFail(req); await log(req, null, false, "noface"); return reply(context, 403, { ok: false, error: "Không thấy khuôn mặt trong ảnh. Hãy nhìn thẳng vào máy ảnh, đủ sáng rồi quét lại." }); }
     if (me.n > 1) { quiz.noteFail(req); await log(req, null, false, "multi"); return reply(context, 403, { ok: false, error: "Ảnh có nhiều hơn một người. Chỉ người đăng nhập được có mặt trong ảnh." }); }
     const id = await gallery.identify(me.desc);
     if (!id.ok) {

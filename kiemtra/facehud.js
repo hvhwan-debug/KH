@@ -321,6 +321,16 @@ var CSS = [
 '.fh.fh .fh-say{display:block;order:3;flex:0 0 auto;width:min(100%,560px);box-sizing:border-box;min-height:1.4em;margin:-4px 0 -2px;padding:0 8px;text-align:center;font-size:16px;font-weight:700;line-height:1.4;color:var(--ink)}',
 '.fh.fh .fh-say.empty{visibility:hidden}',
 '.fh.fh .fh-say.ok{color:#178A47}.fh.fh .fh-say.bad{color:#C2262B}.fh.fh .fh-say.chk{color:var(--blue)}',
+'/* Câu trạng thái (đang đối chiếu / thành công / lỗi) nổi bật: nền đặc, chữ trắng; khi đang đối chiếu có vòng xoay nhỏ */',
+'.fh.fh .fh-say{width:max-content;max-width:min(100%,560px);margin:0 auto;padding:8px 20px;border-radius:999px;transition:background-color .2s,color .2s}',
+'.fh.fh .fh-say.chk,.fh.fh .fh-say.ok,.fh.fh .fh-say.bad{color:#fff;font-size:17px;letter-spacing:.01em}',
+'.fh.fh .fh-say.chk{background:#1A56DB;box-shadow:0 10px 22px -12px rgba(26,86,219,.95)}',
+'.fh.fh .fh-say.ok{background:#16A34A;box-shadow:0 10px 22px -12px rgba(22,163,74,.95)}',
+'.fh.fh .fh-say.bad{background:#DC2626;box-shadow:0 10px 22px -12px rgba(220,38,38,.95)}',
+'.fh.fh .fh-say.chk::before{content:"";display:inline-block;box-sizing:border-box;width:15px;height:15px;margin:0 9px -2px 0;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:fhSayRot .8s linear infinite}',
+'@keyframes fhSayRot{to{transform:rotate(360deg)}}',
+'@media(max-width:560px){.fh.fh .fh-say.chk,.fh.fh .fh-say.ok,.fh.fh .fh-say.bad{font-size:16px}}',
+'@media(prefers-reduced-motion:reduce){.fh.fh .fh-say.chk::before{animation:none;border-color:#fff}}',
 '.fh.fh .fh-pipe{order:4}',
 '.fh.fh .fh-res{place-items:start end;padding:14px}.fh.fh .fh-res svg{width:46px;height:46px}',
 '@media(max-width:560px){.fh.fh .fh-say{font-size:15px}}',
@@ -373,7 +383,7 @@ var HTML =
 '      <path class="p" id="fhProg" d="M150 74A96 126 0 1 1 150 326A96 126 0 1 1 150 74" pathLength="100"/>' +
 '      <path class="x" d="M150 66v14M150 320v14M38 200h14M248 200h14"/>' +
 '    </svg>' +
-'    <div class="fh-live"><i></i><span>Camera đang hoạt động</span></div>' +
+'    <div class="fh-live"><i></i><span>Máy ảnh đang hoạt động</span></div>' +
 '    <div class="fh-ctools"><button type="button" class="fh-ib" id="fhCamBtn" aria-label="Chụp ảnh ngay" title="Chụp ảnh ngay">' + I_SNAP + '</button></div>' +
 '    <div class="fh-sweep"></div><i class="fh-cn a"></i><i class="fh-cn b"></i><i class="fh-cn c"></i><i class="fh-cn d"></i>' +
 '    <div class="fh-arrow" id="fhArrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></div>' +
@@ -388,7 +398,7 @@ var HTML =
 '    <div class="fh-hr"><button type="button" class="fh-guide" id="fhGuide" aria-label="Xem hướng dẫn" title="Xem hướng dẫn">' + I_HELP + '<span>Hướng dẫn</span></button>' +
 '    <button type="button" class="fh-ib fh-snd" id="fhSnd" aria-label="Bật hoặc tắt âm thanh" title="Bật/tắt âm thanh">' + I_SND + '</button>' +
 '    <button type="button" class="fh-ib" id="fhClose" aria-label="Đóng" title="Đóng">' + I_X + '</button></div></div>' +
-'  <div class="fh-chip" id="fhChip" role="status" aria-live="polite"><i></i><span id="fhChipT">CAMERA ĐANG MỞ</span></div>' +
+'  <div class="fh-chip" id="fhChip" role="status" aria-live="polite"><i></i><span id="fhChipT">MÁY ẢNH ĐANG MỞ</span></div>' +
 '  <div class="fh-pipe" id="fhPipe" data-st="run">' +
 '    <div class="fh-mini"><div class="fh-ic">' + I_FACE + '</div><div><h3>Đang xác thực khuôn mặt</h3><p>Hệ thống đang nhận diện và đối chiếu thông tin</p></div></div>' +
 '    <div class="fh-now"><span class="fh-n" id="fhN">01<i>/05</i></span><span class="fh-t" id="fhT">Phát hiện khuôn mặt</span><span class="fh-p" id="fhP">0<i>%</i></span></div>' +
@@ -509,8 +519,8 @@ function loadFA(){
 var FM = { open:false, stream:null, timer:null, prog:0, last:0, busy:false, fa:null, startAt:0, opts:null, el:null,
            live:null, i:0, hold:0, lockUntil:0, poseT0:0, photo:'', shot:'', frames:[] };
 var HOLD_MS = 1500, POSE_HOLD = 650; // giữ đúng tư thế bao lâu thì chụp
-var POSE = { front:'Nhìn thẳng vào camera', left:'Quay mặt sang trái', right:'Quay mặt sang phải' };
-var POSE_HINT = { front:'Nhìn thẳng vào camera', left:'Từ từ quay mặt sang TRÁI', right:'Từ từ quay mặt sang PHẢI' };
+var POSE = { front:'Nhìn thẳng vào máy ảnh', left:'Quay mặt sang trái', right:'Quay mặt sang phải' };
+var POSE_HINT = { front:'Nhìn thẳng vào máy ảnh', left:'Từ từ quay mặt sang TRÁI', right:'Từ từ quay mặt sang PHẢI' };
 var POSE_CHIP = { front:'NHÌN THẲNG', left:'QUAY TRÁI', right:'QUAY PHẢI' };
 function build(){
   if (FM.el) return;
@@ -591,13 +601,13 @@ async function open(opts){
   FM.el.classList.remove('hide'); document.documentElement.style.overflow = 'hidden'; FM.open = true; fit(); requestAnimationFrame(fit);
   FM.gen = (FM.gen || 0) + 1; var g = FM.gen;
   try { if (!(history.state && history.state.fhOpen)) history.pushState({ fhOpen:1 }, '', location.href); } catch (e) {}
-  reset(); steps(['run', '', '', '', '']); scr('cam'); chip('', 'CAMERA ĐANG MỞ'); hint('Đang mở camera…'); paintSnd();
+  reset(); steps(['run', '', '', '', '']); scr('cam'); chip('', 'MÁY ẢNH ĐANG MỞ'); hint('Đang mở máy ảnh…'); paintSnd();
   if (!FM.stream){
     try { FM.stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ ideal: (window.matchMedia && matchMedia('(min-width:900px) and (min-height:540px)').matches) ? 1280 : 960 }, height:{ ideal: (window.matchMedia && matchMedia('(min-width:900px) and (min-height:540px)').matches) ? 960 : 1280 } }, audio:false }); }
     catch (e){
       if (!FM.open || g !== FM.gen) return;
-      scr('off'); chip('bad', 'KHÔNG MỞ ĐƯỢC CAMERA'); hint(''); steps(['bad', '', '', '', '']);
-      msgHtml('<div class="pmsg">Vui lòng cho phép trình duyệt sử dụng camera (và mở bằng Chrome/Safari, không mở trong Zalo/Facebook), sau đó bấm Thử lại.</div>');
+      scr('off'); chip('bad', 'KHÔNG MỞ ĐƯỢC MÁY ẢNH'); hint(''); steps(['bad', '', '', '', '']);
+      msgHtml('<div class="pmsg">Vui lòng cho phép trình duyệt sử dụng máy ảnh (và mở bằng Chrome/Safari, không mở trong Zalo/Facebook), sau đó bấm Thử lại.</div>');
       btn('fhRetry', true); return;
     }
   }
@@ -674,8 +684,8 @@ async function liveTick(v, t, dt){
   if (FM.i === 0 && !FM.said){ FM.said = true; sLock(); poseSay(); }
   var r = big[0], bx = r.detection.box, w = bx.width / vw, off = Math.hypot((bx.x + bx.width / 2) / vw - .5, (bx.y + bx.height / 2) / vh - FACE_CY), y = yawOf(r.landmarks.positions), p = FM.live.seq[FM.i];
   if (p === 'front'){ var L = lum(v, bx); if (L < 60){ FM.hold = 0; hint('Thiếu sáng, hãy tới nơi sáng hơn'); prog(FM.i / 3); return; } }
-  if (w < .18){ FM.hold = 0; hint('Hãy lại gần camera hơn một chút'); prog(FM.i / 3); return; }
-  if (w > .78){ FM.hold = 0; hint('Hãy lùi ra xa camera một chút'); prog(FM.i / 3); return; }
+  if (w < .18){ FM.hold = 0; hint('Hãy lại gần máy ảnh hơn một chút'); prog(FM.i / 3); return; }
+  if (w > .78){ FM.hold = 0; hint('Hãy lùi ra xa máy ảnh một chút'); prog(FM.i / 3); return; }
   var good = t >= FM.lockUntil && y != null && poseOk(p, y, w, off);
   if (good){ FM.hold += dt; scr('hold'); hint(p === 'front' ? 'Giữ yên…' : 'Tốt lắm, giữ yên…', 'ok'); }
   else { FM.hold = Math.max(0, FM.hold - dt * 2); scr('scan'); hint(POSE_HINT[p] + (t - FM.poseT0 > 12000 ? ' — quay chậm, giữ mặt trong khung' : '')); }
@@ -700,8 +710,8 @@ async function plainTick(v, t, dt){
     st = ['ok', 'run', 'ok', '', '']; ck = ['seek', 'ĐANG CĂN CHỈNH'];
     if (L < 60) msg = 'Thiếu sáng, hãy tới nơi sáng hơn';
     else if (L > 235) msg = 'Quá chói, tránh nguồn sáng chiếu thẳng';
-    else if (bx.width < 0.30 * s) msg = 'Hãy lại gần camera hơn một chút';
-    else if (bx.width > 0.80 * s) msg = 'Hãy lùi ra xa camera một chút';
+    else if (bx.width < 0.30 * s) msg = 'Hãy lại gần máy ảnh hơn một chút';
+    else if (bx.width > 0.80 * s) msg = 'Hãy lùi ra xa máy ảnh một chút';
     else if (Math.sqrt(cx * cx + cy * cy) > 0.2 * s) msg = 'Đưa khuôn mặt vào giữa khung';
     else { good = true; st = ['ok', 'ok', 'ok', 'run', '']; msg = 'Giữ yên, đang tự chụp…'; ck = ['scan', 'GIỮ YÊN · SẮP CHỤP']; }
   }

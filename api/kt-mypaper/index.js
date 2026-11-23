@@ -94,7 +94,7 @@ module.exports = async function (context, req) {
       const phone = onFile || normPhone(b.phone);
       if (!phone) return reply(context, 400, { ok: false, needPhone: true, error: "Vui lòng nhập số điện thoại hoặc Zalo (10 số, bắt đầu bằng 0)." });
       const selfie = typeof b.photo === "string" ? b.photo : "";
-      if (!selfie.startsWith("data:image/") || selfie.length > 350000) return reply(context, 400, { ok: false, error: "Cần quét khuôn mặt bằng camera để xác thực." });
+      if (!selfie.startsWith("data:image/") || selfie.length > 350000) return reply(context, 400, { ok: false, error: "Cần quét khuôn mặt bằng máy ảnh để xác thực." });
       // 0) Thử thách sống (nhìn thẳng + quay trái + quay phải): chặn giơ ảnh / màn hình người khác để xem bài
       const FL = require("../_lib/facelive");
       if (FL.mode() === "on") {
