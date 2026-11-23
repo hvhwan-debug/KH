@@ -70,6 +70,9 @@ function speech(t, g){
 function play(t){
   V.busy = true; var g = ++V.gen, k = norm(t), f = file(k);
   if (f && clip(f, g)) return;
+  // Câu chào có tên riêng ("Xin chào <tên>. Đăng nhập thành công.") không có file ghi sẵn: đọc file "Xin chào. Đăng nhập thành công."
+  // cùng giọng với các câu trước, không chuyển sang giọng của máy (nghe lạc tông giữa chừng). Tên đã hiện trên màn hình.
+  if (!f && /^Xin chào/.test(k)){ var hi = file('Xin chào. Đăng nhập thành công.'); if (hi && clip(hi, g)) return; }
   if (speech(t, g)) return;
   var fb = file(/^Xin chào/.test(k) ? 'Xin chào. Đăng nhập thành công.' : 'Vui lòng xem thông báo trên màn hình.');
   if (fb && clip(fb, g)) return;

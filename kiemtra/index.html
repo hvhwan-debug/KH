@@ -2416,7 +2416,7 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
 </style>
 </head>
 <body class="introbg" data-scr="check">
-<script src="/kiemtra/voice.js?v=1"></script>
+<script src="/kiemtra/voice.js?v=2"></script>
 <div class="practice-bar hide" id="practiceBar" role="status"><span>ĐỀ THI THỬ</span></div>
 <header class="lp-bar">
   <div class="lp-brand"><span class="lp-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span class="lp-name">Hệ thống kiểm tra đánh giá trực tuyến</span><span class="lp-txt" aria-hidden="true"><b>Nền tảng kiểm tra trực tuyến</b><small>Kết quả bài kiểm tra</small></span></div>
@@ -3855,7 +3855,7 @@ function aiReadyWatch(){
 function aiReadyView(){ if ($('scrPhoto').getAttribute('data-ai') !== 'live') aiScr('live'); $('aiHint').textContent = 'Giữ khuôn mặt trong khung'; guide('Hãy nhìn thẳng và giữ khuôn mặt trong khung, hệ thống sẽ tự nhận diện.', 'ready', 15000); aiRead(0, null); aiReadyWatch(); } // màn chờ: chỉ hiện camera + oval, tự nhận diện rồi tự quét
 function aiLive(){ if (AI.run || LV.started) return; if (PH.mode === 'login' && !LV.go){ aiReadyView(); return; } LV.started = true; sndReady(); aiBuildMesh(); aiScr('live'); aiChip('', 'MÁY ẢNH TRỰC TIẾP'); aiRead(0, null); aiTrackStart(); lvBegin(); }
 function aiScanStart(){ // vừa chụp xong: lưới mesh phủ lên khuôn mặt đã khoá gần nhất
-  aiTrackStop(); aiBuildMesh(); aiStepsReset(); aiStep(0, 'run'); aiScr('scan'); aiChip('scan', 'ĐANG PHÂN TÍCH'); guide('Đang phân tích khuôn mặt, vui lòng giữ yên.', 'scan', 5000);
+  aiTrackStop(); aiBuildMesh(); aiStepsReset(); aiStep(0, 'run'); aiScr('scan'); aiChip('scan', 'ĐANG PHÂN TÍCH'); guide('Đang phân tích khuôn mặt. Vui lòng giữ nguyên tư thế.', 'scan', 5000);
   aiPlace($('aiMesh'), AI.box || { x: .3, y: .08, w: .4, h: .76 }, AI.box ? .3 : 0);
 }
 async function aiResult(r, c){ // r: kết quả checkFace (thật). Các bước chỉ tích khi kết quả thật đạt.
