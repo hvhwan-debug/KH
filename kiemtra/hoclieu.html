@@ -114,19 +114,43 @@ svg.i{width:1em;height:1em;flex:0 0 auto;fill:none;stroke:currentColor;stroke-wi
 .hub .go svg.i{font-size:18px}
 .hub .ar{position:absolute;right:2px;bottom:-10px;top:0;width:46%;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:.92}
 .hub .ar svg.i{width:72%;height:72%;filter:drop-shadow(0 10px 16px rgba(0,20,70,.35))}
-/* cổng xác thực khuôn mặt trước khi vào trang */
-.gate{display:flex;align-items:center;justify-content:center;min-height:min(72vh,640px);padding:20px}
-.gate-card{width:min(480px,100%);text-align:center;padding:clamp(26px,4vw,40px) clamp(22px,4vw,36px);border-radius:28px;background:rgba(255,255,255,.92);box-shadow:0 30px 70px -30px rgba(10,50,130,.55);border:1px solid rgba(255,255,255,.9)}
+/* cổng xác thực khuôn mặt trước khi vào trang: ảnh người dùng bên trái, thẻ xác thực bên phải */
+.gate{position:relative;width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);padding:0;overflow:hidden;background:linear-gradient(180deg,#EDF5FF 0%,#DCEBFD 55%,#EAF4FF 100%)}
+.gate::after{content:"";position:absolute;left:0;right:0;bottom:0;height:min(14vw,120px);pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1400 120' preserveAspectRatio='none'%3E%3Cpath d='M0 70C260 20 520 110 800 58C980 24 1180 8 1400 0V120H0Z' fill='%23BFDCFB' fill-opacity='.55'/%3E%3Cpath d='M0 92C320 46 660 118 1400 56V120H0Z' fill='%23D7E9FC'/%3E%3C/svg%3E") center bottom/100% 100% no-repeat}
+.gate-in{position:relative;z-index:1;max-width:1480px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(340px,500px);gap:clamp(24px,4.4vw,70px);align-items:center;padding:clamp(28px,5vw,60px) clamp(20px,4.5vw,56px) clamp(74px,9vw,116px)}
+.gate-pic{position:relative;justify-self:center;width:min(100%,540px)}
+.gate-pic img{display:block;width:100%;height:auto;filter:drop-shadow(0 26px 44px rgba(10,60,160,.22))}
+.gp-frame{position:absolute;top:16%;left:18%;width:46%;height:56%;border:2px solid rgba(255,255,255,.95);border-radius:18px;transform:rotate(-4deg);box-shadow:0 0 0 2000px rgba(235,246,255,0),inset 0 0 30px rgba(255,255,255,.25);background:linear-gradient(160deg,rgba(255,255,255,.25),rgba(170,215,255,.06))}
+.gp-ic{position:absolute;display:grid;place-items:center;border-radius:18px;background:rgba(255,255,255,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 14px 28px -14px rgba(10,60,160,.4);color:#1B78E8}
+.gp-ic.a{top:24%;right:6%;width:68px;height:68px}.gp-ic.a svg{width:34px;height:34px}
+.gp-ic.b{top:46%;right:-2%;width:52px;height:52px;color:#16A34A}.gp-ic.b svg{width:26px;height:26px}
+.gp-note{position:absolute;top:18%;left:-8%;max-width:160px;font-weight:800;font-size:15px;line-height:1.35;color:#1B4FA0;transform:rotate(-6deg);text-align:center}
+.gp-note svg{display:block;width:40px;height:30px;margin:4px auto 0;color:#1B4FA0}
+@media(max-width:1180px){.gp-note{display:none}}
+.gate-card{background:#fff;border-radius:28px;text-align:center;padding:clamp(26px,3vw,42px) clamp(22px,3vw,40px);box-shadow:0 34px 70px -30px rgba(10,50,130,.4);border:1px solid rgba(255,255,255,.9)}
 .gate-ic{width:68px;height:68px;margin:0 auto 18px;border-radius:20px;display:grid;place-items:center;background:linear-gradient(135deg,#1B78E8,#0B55C9);color:#fff;box-shadow:0 14px 28px -12px rgba(10,80,210,.6)}
 .gate-ic svg.i{font-size:34px}
-.gate-card h1{margin:0 0 10px;font-size:clamp(20px,2.2vw,26px);font-weight:900;color:var(--ink);line-height:1.25}
-.gate-card p{margin:0 0 18px;font-size:14.5px;line-height:1.6;color:var(--ink2)}
-.gate-go{display:inline-flex;align-items:center;gap:10px;height:52px;padding:0 26px;border:0;border-radius:99px;background:linear-gradient(100deg,#0869df,#08b9d4);color:#fff;font-size:15.5px;font-weight:800;cursor:pointer;box-shadow:0 16px 30px -14px rgba(8,140,232,.7)}
+.gate-kick{margin:0;font-size:15px;font-weight:600;color:#33507F}
+.gate-card h1{margin:2px 0 14px;font-size:clamp(26px,2.8vw,36px);font-weight:900;color:#1366E0;line-height:1.2}
+.gate-card p.gate-desc{margin:0 0 20px;font-size:14.5px;line-height:1.65;color:var(--ink2)}
+.gate-go{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:56px;padding:0 24px;border:0;border-radius:99px;background:linear-gradient(100deg,#0869df,#08b9d4);color:#fff;font-size:15.5px;font-weight:800;cursor:pointer;box-shadow:0 16px 30px -14px rgba(8,140,232,.7)}
 .gate-go svg.i{font-size:20px}
+.gate-go .go-ar{margin-left:auto;font-size:18px}
 .gate-go:hover{filter:brightness(1.05)}
-.gate-note{margin:16px 0 0;font-size:12px;color:var(--muted)}
+.gate-feats{list-style:none;display:flex;justify-content:space-between;gap:8px;margin:24px 0 0;padding:20px 0 0;border-top:1px solid #E3ECFA}
+.gate-feats li{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:11.5px;font-weight:700;color:#1E3F73;line-height:1.3}
+.gate-feats .fi{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#EAF2FF;color:#1B78E8}
+.gate-feats li:nth-child(2) .fi{background:#FFF3DF;color:#E08A1E}
+.gate-feats li:nth-child(3) .fi{background:#FDEBF1;color:#E0457A}
+.gate-feats svg{width:18px;height:18px}
+.gate-note{margin:14px 0 0;font-size:11.5px;color:var(--muted)}
 #gMsg:empty{display:none}
 #gMsg .pmsg{margin:0 0 14px;padding:11px 14px;border-radius:12px;font-size:13.5px;line-height:1.5;background:rgba(255,76,76,.12);color:#B42020;border:1px solid rgba(255,76,76,.35);text-align:left}
+@media(max-width:980px){
+  .gate-in{grid-template-columns:1fr;padding-top:clamp(24px,6vw,40px)}
+  .gate-pic{order:1;width:min(78%,340px)}
+  .gate-card{order:2}
+}
 .hero-who{margin:10px 0 0!important;display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:99px;background:rgba(255,255,255,.18);font-size:12.5px!important;font-weight:700;color:#fff!important}
 @media(max-width:960px){.hubgrid{grid-template-columns:repeat(2,1fr)}.hub,.hub.wide{grid-column:span 1}}
 .empty{padding:46px 20px;text-align:center;border:1.5px dashed #A9CBF1;border-radius:22px;background:rgba(255,255,255,.7);color:var(--ink2);font-weight:600}
@@ -203,13 +227,28 @@ svg.i{width:1em;height:1em;flex:0 0 auto;fill:none;stroke:currentColor;stroke-wi
 
 <main class="wrap">
   <section class="gate" id="gateView">
-    <div class="gate-card">
-      <div class="gate-ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="11" r="3"/><path d="M8 16.5c1-1.2 2.4-1.8 4-1.8s3 .6 4 1.8"/></svg></div>
-      <h1>Xác thực khuôn mặt để vào Học liệu</h1>
-      <p>Để bảo vệ học liệu nội bộ, vui lòng quét khuôn mặt trước khi xem. Quá trình chỉ mất vài giây.</p>
-      <div id="gMsg" role="alert"></div>
-      <button type="button" class="gate-go" id="gGo"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h2l1-1.5h7l1 1.5h2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.2"/></svg><span>Quét khuôn mặt để tiếp tục</span></button>
-      <p class="gate-note">Khuôn mặt chỉ dùng để xác thực quyền xem học liệu, không dùng cho mục đích khác.</p>
+    <div class="gate-in">
+      <div class="gate-pic" aria-hidden="true">
+        <img src="/kiemtra/hero-woman.webp" alt="" width="900" height="822">
+        <span class="gp-frame"></span>
+        <span class="gp-ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="11" r="3"/><path d="M8 16.5c1-1.2 2.4-1.8 4-1.8s3 .6 4 1.8"/></svg></span>
+        <span class="gp-ic b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 9.5 17 19 7"/></svg></span>
+        <span class="gp-note">Chỉ mất vài giây<br>để xác thực!<svg viewBox="0 0 40 30" fill="none"><path d="M4 4c10 2 16 10 14 22" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M12 22 14 28 20 24" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </div>
+      <div class="gate-card">
+        <div class="gate-ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="11" r="3"/><path d="M8 16.5c1-1.2 2.4-1.8 4-1.8s3 .6 4 1.8"/></svg></div>
+        <p class="gate-kick">Xác thực khuôn mặt để vào</p>
+        <h1>Học liệu</h1>
+        <p class="gate-desc">Để bảo vệ học liệu nội bộ, vui lòng quét khuôn mặt trước khi xem. Quá trình chỉ mất vài giây.</p>
+        <div id="gMsg" role="alert"></div>
+        <button type="button" class="gate-go" id="gGo"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h2l1-1.5h7l1 1.5h2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.2"/></svg><span>Quét khuôn mặt để tiếp tục</span><svg class="i go-ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+        <ul class="gate-feats">
+          <li><span class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6z"/><path d="m9.3 12 1.8 1.8 3.6-3.6"/></svg></span><span>Bảo mật<br>thông tin</span></li>
+          <li><span class="fi"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 11-14h-7z"/></svg></span><span>Nhanh chóng<br>thuận tiện</span></li>
+          <li><span class="fi"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-10-9.3C.3 8 2 4.5 5.4 4 7.8 3.6 9.8 4.7 12 7c2.2-2.3 4.2-3.4 6.6-3 3.4.5 5.1 4 3.4 7.7C19.5 16.4 12 21 12 21z"/></svg></span><span>Chỉ dành cho<br>nhân sự nội bộ</span></li>
+        </ul>
+        <p class="gate-note">Khuôn mặt chỉ dùng để xác thực quyền xem học liệu, không dùng cho mục đích khác.</p>
+      </div>
     </div>
   </section>
   <div id="appView" class="hide">
