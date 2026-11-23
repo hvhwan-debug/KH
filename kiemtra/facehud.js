@@ -340,6 +340,14 @@ var CSS = [
 '.fh.fh .fh-ov .g{display:block;stroke:#8FF5F0;stroke-width:3;stroke-dasharray:none;filter:drop-shadow(0 0 5px rgba(110,240,235,.95)) drop-shadow(0 0 12px rgba(110,240,235,.6))}',
 '.fh.fh[data-st="ok"] .fh-ov .g{stroke:#6BEA9E}.fh.fh[data-st="bad"] .fh-ov .g{stroke:#FF8A8F}',
 '.fh.fh .fh-box::after{background:none}',
+'/* Khung oval: một đường duy nhất (CSS), nằm gọn trong khung camera, cách đều mép, tỉ lệ khuôn mặt 0.78; giữ đúng tư thế → xanh lá */',
+'.fh.fh .fh-ov,.fh.fh .fh-cn{display:none!important}',
+'.fh.fh .fh-box::after{content:"";display:block;position:absolute;left:50%;top:50%;z-index:2;height:74%;width:auto;max-width:84%;aspect-ratio:.78;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;',
+'  border:2.5px solid #8FF5F0;background:none;box-shadow:0 0 0 9999px rgba(12,22,44,.14),0 0 16px 2px rgba(110,240,235,.75),inset 0 0 16px 1px rgba(110,240,235,.45);transition:border-color .25s,box-shadow .25s}',
+'.fh.fh[data-st="hold"] .fh-box::after,.fh.fh[data-st="ok"] .fh-box::after{border-color:#6BEA9E;box-shadow:0 0 0 9999px rgba(12,22,44,.14),0 0 16px 2px rgba(61,220,130,.75)}',
+'.fh.fh[data-st="check"] .fh-box::after{border-color:#9DBBFF;box-shadow:0 0 0 9999px rgba(12,22,44,.14),0 0 16px 2px rgba(110,150,255,.7)}',
+'.fh.fh[data-st="bad"] .fh-box::after{border-color:#FF8A8F;box-shadow:0 0 0 9999px rgba(12,22,44,.14),0 0 16px 2px rgba(229,72,77,.7)}',
+'.fh.fh[data-st="cam"] .fh-box::after,.fh.fh[data-st="off"] .fh-box::after{display:none}',
 ].join('\n');
 
 var I_SND = '<svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>' +
