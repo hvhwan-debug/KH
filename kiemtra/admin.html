@@ -1787,6 +1787,7 @@ body[data-tab="results"] .wrap,body[data-tab="analysis"] .wrap,body[data-tab="qu
         </div>
 <div class="exstep" data-step="3">
 <h2 class="exsec">Câu hỏi mỗi thí sinh nhận</h2>
+        <div id="exQJump" class="small" style="margin:0 0 14px;padding:10px 12px;border-radius:10px;background:#FFFBEA;border:1px solid #F2E2A0"></div>
         <div class="exq" id="exQBox" style="margin-top:0">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
             <b>Số câu mỗi thí sinh nhận</b>
@@ -3987,6 +3988,10 @@ function exRefreshNow(){
 const card = $('examFormCard'); if (!card || card.classList.contains('hide')) return;
 try {
 exDefaults();
+{ const qid = ($('exEditingId').value || $('exId').value).trim();
+  $('exQJump').innerHTML = (EX_NEW || !$('exEditingId').value)
+    ? 'Mục này chỉ để <b>chia số câu theo nhóm</b> — câu hỏi thật (nội dung, phương án, đáp án) phải thêm ở trang <b>Ngân hàng câu hỏi</b> riêng, chỉ mở được <b>sau khi đã lưu đề này</b>. Bấm "Lưu đề" ở cuối trang, sau đó quay lại đây sẽ thấy nút vào Ngân hàng câu hỏi.'
+    : '<button type="button" class="btn ghost sm" onclick="openExam(\'' + esc(qid) + '\',\'questions\')">📚 Mở Ngân hàng câu hỏi của đề này</button> — thêm/sửa câu hỏi thật tại đó (gõ tay, nhập Excel hoặc JSON), rồi quay lại đây để chia số câu theo nhóm.'; }
 const iss = exIssues(); let errs = 0; const list = [];
 for (let st = 1; st <= EX_STEPS; st++){
 const e = iss[st].filter(x => x.t === 'err').length, w = iss[st].length - e; errs += e;
