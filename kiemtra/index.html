@@ -1845,6 +1845,23 @@ body.exam .who{display:flex;align-items:center;gap:10px;margin-left:auto;flex:0 
   html body #scrPhoto .fv-ch{font-size:19px;padding:0 10px}
 }
 
+/* ===== Trạng thái mở/đóng đề trên điện thoại: một dòng chữ dưới tên bài kiểm tra ===== */
+.sline{display:none}
+@media(max-width:860px){
+  body[data-scr="check"] .hero .sched{display:none!important}
+  body[data-scr="check"] .hero .sline:not(.hide){display:flex;align-items:center;gap:8px;margin:6px 0 0;font-size:14px;line-height:1.35;font-weight:500;color:#33496E;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+  body[data-scr="check"] .hero .sline span{overflow:hidden;text-overflow:ellipsis}
+  body[data-scr="check"] .hero .sline em{font-style:normal;font-weight:800}
+  body[data-scr="check"] .hero .sline b{font-weight:800;color:#0B1F4B}
+  body[data-scr="check"] .hero .sline i{flex:0 0 auto;width:9px;height:9px;border-radius:50%;background:#F5A524;box-shadow:0 0 0 3px rgba(245,165,36,.2)}
+  body[data-scr="check"] .hero .sline.up em{color:#B26A00}
+  body[data-scr="check"] .hero .sline.on i{background:#22B35E;box-shadow:0 0 0 3px rgba(34,179,94,.2);animation:aiBlink 1.4s ease-in-out infinite}
+  body[data-scr="check"] .hero .sline.on em{color:#178A47}
+  body[data-scr="check"] .hero .sline.off i{background:#E02B20;box-shadow:0 0 0 3px rgba(224,43,32,.18)}
+  body[data-scr="check"] .hero .sline.off em{color:#C62118}
+}
+@media(max-width:860px) and (prefers-reduced-motion:reduce){body[data-scr="check"] .hero .sline.on i{animation:none}}
+
 /* ===== Kết quả làm bài: 2 cột (điểm số | chi tiết có tab) ===== */
 body.rs .stage{max-width:1140px}
 #scrResult{background:none!important;border:0;box-shadow:none;padding:0;overflow:visible;text-align:left}
@@ -2353,6 +2370,7 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
         <span class="cf-pill">ĐỀ THI THỬ</span>
         <h3>HỆ THỐNG<br><span>KIỂM TRA</span><br><span>TRỰC TUYẾN</span></h3>
         <p class="mline" id="mLine"></p>
+        <p class="sline hide" id="schedLine" role="status"></p>
       </div>
       <svg class="cf-clip" viewBox="0 0 120 130" aria-hidden="true"><g transform="rotate(12 60 65)"><rect x="18" y="16" width="84" height="100" rx="12" fill="#fff"/><rect x="18" y="16" width="84" height="100" rx="12" fill="none" stroke="#BFD9FF" stroke-width="3"/><rect x="40" y="6" width="40" height="20" rx="8" fill="#1B6FF0"/><circle cx="60" cy="14" r="4" fill="#fff"/><g fill="none" stroke="#17B890" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M30 46l6 6 11-12M30 72l6 6 11-12M30 98l6 6 11-12"/></g><g stroke="#9CC4F5" stroke-width="5" stroke-linecap="round"><path d="M58 46h30M58 72h30M58 98h22"/></g></g></svg>
       <img class="hero-man" src="/kiemtra/hero-man.webp" alt="" width="900" height="890" decoding="async">
@@ -5151,9 +5169,22 @@ var SCHED_KEY = '';
 var IC_CAL = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>';
 var IC_CLK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
 var IC_LCK = '<svg viewBox="0 0 64 64" fill="none" aria-hidden="true"><rect x="6" y="12" width="40" height="40" rx="6" fill="#fff" stroke="#E7A8A2" stroke-width="2"/><path d="M6 24h40v-6a6 6 0 0 0-6-6H12a6 6 0 0 0-6 6z" fill="#E02B20"/><g fill="#F2C3BF"><rect x="12" y="30" width="7" height="6" rx="1.5"/><rect x="22" y="30" width="7" height="6" rx="1.5"/><rect x="32" y="30" width="7" height="6" rx="1.5"/><rect x="12" y="40" width="7" height="6" rx="1.5"/><rect x="22" y="40" width="7" height="6" rx="1.5"/></g><rect x="35" y="36" width="24" height="20" rx="4" fill="#E02B20"/><path d="M40 36v-4a7 7 0 0 1 14 0v4" stroke="#E02B20" stroke-width="3.4" stroke-linecap="round" fill="none"/><circle cx="47" cy="45" r="2.8" fill="#fff"/><path d="M47 46v5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>';
+/* Điện thoại: trạng thái mở/đóng gọn thành MỘT dòng chữ dưới tên bài kiểm tra (thay cho khung đếm ngược lớn) */
+function schedShort(t){ var d = new Date(t + 7 * 3600e3), p = function(n){ return (n < 10 ? '0' : '') + n; };
+  return p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ' ' + p(d.getUTCDate()) + '/' + p(d.getUTCMonth() + 1); }
+function schedLeft(c){ if (!c) return ''; var p = function(n){ return (n < 10 ? '0' : '') + n; };
+  return (c.d ? c.d + ' ngày ' : '') + (c.d || c.h ? p(c.h) + ':' : '') + p(c.m) + ':' + p(c.s); }
+function schedLine(st, x, now, c){
+  var el = $('schedLine'); if (!el) return;
+  var lab = { up:'Sắp mở', on:'Đang mở', off:'Đã đóng' }[st], t;
+  if (st === 'up') t = 'mở lúc ' + schedShort(x.openAt) + ' · còn <b>' + schedLeft(c) + '</b>';
+  else if (st === 'off') t = 'đóng lúc ' + schedShort(x.closeAt);
+  else t = x.closeAt ? 'đóng lúc ' + schedShort(x.closeAt) + ' · còn <b>' + schedLeft(c) + '</b>' : 'vào làm bài ngay';
+  el.className = 'sline ' + st; el.innerHTML = '<i aria-hidden="true"></i><span><em>' + lab + '</em> · ' + t + '</span>';
+}
 function renderSched(){
   var box = $('sched'), x = INFO, btn = $('btnCheck');
-  if (!x || (!x.openAt && !x.closeAt)){ box.classList.add('hide'); return; }
+  if (!x || (!x.openAt && !x.closeAt)){ box.classList.add('hide'); if ($('schedLine')) $('schedLine').className = 'sline hide'; return; }
   if (!BTN_CHECK_LABEL) BTN_CHECK_LABEL = btn.textContent;
   var now = sysNow(), st, html, cdp = null;
   if (x.openAt && now < x.openAt){
@@ -5179,6 +5210,7 @@ function renderSched(){
   var key = st + '|' + (cdp && cdp.d ? 'd' : '');
   if (key !== SCHED_KEY){ SCHED_KEY = key; box.className = 'sched ' + st + (st !== 'off' ? ' lux' : ''); box.innerHTML = html; }
   if (cdp) cdTick(box, cdp);
+  schedLine(st, x, now, cdp);
   // Thanh thời gian đã trôi qua của cả khung mở đề
   var spb = box.querySelector('.sp i'); if (spb && x.openAt && x.closeAt) spb.style.width = Math.max(0, Math.min(100, (now - x.openAt) / (x.closeAt - x.openAt) * 100)).toFixed(2) + '%';
   // Chưa mở: khoá nút Tiếp tục, tự mở khoá đúng giờ (theo giờ máy chủ). Đã đóng: máy chủ vẫn là nơi quyết định cuối cùng.
