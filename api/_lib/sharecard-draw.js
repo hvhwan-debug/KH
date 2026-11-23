@@ -175,8 +175,10 @@ function drawShareCard(ctx, W, H, d){
   // ---- cúp
   // ảnh cúp (trophy-photo.webp) nếu đã tải được; không có thì vẽ cúp bằng nét như cũ
   // chưa đạt (không phải thi thử): ảnh "Chưa đạt" (fail-photo.webp) thay cho cúp
+  // bài có điểm tuân thủ (không phải thi thử): huy hiệu "N điểm tuân thủ" thay cho cúp / ảnh chưa đạt
   var failArt = d.passed === false && !d.practice && d.failImg && d.failImg.width;
-  if (failArt){ var fW = 250, fH = fW * d.failImg.height / d.failImg.width; ctx.drawImage(d.failImg, cx + cw - 124 - fW / 2, L.cy + 214 + 150 - fH, fW, fH); }
+  if (!d.practice && d.compImg && d.compImg.width){ var kW = 236, kH = kW * d.compImg.height / d.compImg.width; ctx.drawImage(d.compImg, cx + cw - 124 - kW / 2, L.cy + 214 + 146 - kH, kW, kH); }
+  else if (failArt){ var fW = 250, fH = fW * d.failImg.height / d.failImg.width; ctx.drawImage(d.failImg, cx + cw - 124 - fW / 2, L.cy + 214 + 150 - fH, fW, fH); }
   else if (d.cupImg && d.cupImg.width){ var cupW = 268, cupH = cupW * d.cupImg.height / d.cupImg.width; ctx.drawImage(d.cupImg, cx + cw - 124 - cupW / 2, L.cy + 214 + 140 - cupH, cupW, cupH); }
   else trophy(cx + cw - 124, L.cy + 214, .8);
   // ---- tiêu đề + nhãn trạng thái

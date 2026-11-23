@@ -308,7 +308,8 @@ function textOf(attempt, settings, m, cardNote) {
 // Thông số để mailart.js vẽ vòng tỉ lệ và huy hiệu: cùng quy tắc màu với build()
 function artSpec(attempt, settings) {
   const ps = quiz.passState(attempt.pct, settings), p = Math.max(0, Math.min(100, Number(attempt.pct) || 0));
-  return { pct: p, state: settings.practice ? null : ps, color: ps === false ? K.red : ps === true ? K.green : p >= 80 ? K.green : p >= 60 ? K.amber : K.red };
+  const cp = attempt.compliancePoints;
+  return { comp: !settings.practice && [0, 10, 15, 20].indexOf(cp) >= 0 ? cp : null, pct: p, state: settings.practice ? null : ps, color: ps === false ? K.red : ps === true ? K.green : p >= 80 ? K.green : p >= 60 ? K.amber : K.red };
 }
 
 module.exports = { build, model, esc, artSpec };

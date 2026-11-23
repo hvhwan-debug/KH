@@ -25,6 +25,14 @@ async function cup() {
   try { cupImg = await lib.loadImage(path.join(__dirname, "assets", "trophy-photo.webp")); } catch (e) { cupImg = null; }
   return cupImg;
 }
+// Huy hiệu "N điểm tuân thủ" (0 / 10 / 15 / 20): thay cho cúp khi bài có điểm tuân thủ
+const compImgs = {};
+async function comp(cp) {
+  if ([0, 10, 15, 20].indexOf(cp) < 0) return null;
+  if (compImgs[cp] !== undefined) return compImgs[cp];
+  try { compImgs[cp] = await lib.loadImage(path.join(__dirname, "assets", "compliance-" + cp + ".webp")); } catch (e) { compImgs[cp] = null; }
+  return compImgs[cp];
+}
 // Ảnh "Chưa đạt" thay cho cúp khi bài chưa đạt
 let failImg;
 async function fail() {
@@ -70,7 +78,7 @@ function cardData(attempt, settings, now) {
 // Trả về Buffer PNG của thẻ kết quả
 async function renderPng(attempt, settings, now) {
   load();
-  const d = cardData(attempt, settings, now); d.cupImg = await cup(); d.failImg = await fail();
+  const d = cardData(attempt, settings, now); d.cupImg = await cup(); d.failImg = await fail(); d.compImg = await comp(d.compliance);
   const H = drawer.height(d), cv = lib.createCanvas(1080, H);
   drawer.draw(cv.getContext("2d"), 1080, H, d);
   return cv.encode("png");

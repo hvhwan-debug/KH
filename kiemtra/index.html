@@ -4558,7 +4558,8 @@ function renderMob(r, ps, prac, c){
     : ['Đã hoàn thành bài kiểm tra!', 'Bạn có thể xem chi tiết bài làm, nhận xét và học liệu gợi ý để cải thiện kết quả.'];
   $('resDone').className = 'rs-done ' + k;
   $('resDone').innerHTML = (k === 'n' ? RS_ICO.medalN : RS_ICO.medal) + '<div><b>' + t[0] + '</b><p>' + t[1] + '</p></div>';
-  $('lpCup').src = ps === false && !prac ? '/kiemtra/fail-photo.webp?v=2' : '/kiemtra/trophy-photo.webp';
+  $('lpCup').src = !prac && compSrc(r.compliancePoints) ? compSrc(r.compliancePoints) : ps === false && !prac ? '/kiemtra/fail-photo.webp?v=2' : '/kiemtra/trophy-photo.webp';
+  if (!prac) compArt(r.compliancePoints); // tải sẵn cho thẻ chia sẻ
   var open = !!$('btnRetry'); // còn lượt làm tiếp: mở sẵn phần chi tiết để thấy nút "Làm tiếp"
   $('rsDet').classList.toggle('mopen', open); $('btnMore').setAttribute('aria-expanded', String(open));
   $('btnMore').querySelector('span').textContent = open ? 'Thu gọn chi tiết bài làm' : 'Xem chi tiết bài làm';
@@ -4854,8 +4855,10 @@ function drawShareCard(ctx, W, H, d){
   // ---- cúp
   // ảnh cúp (trophy-photo.webp) nếu đã tải được; không có thì vẽ cúp bằng nét như cũ
   // chưa đạt (không phải thi thử): ảnh "Chưa đạt" (fail-photo.webp) thay cho cúp
+  // bài có điểm tuân thủ (không phải thi thử): huy hiệu "N điểm tuân thủ" thay cho cúp / ảnh chưa đạt
   var failArt = d.passed === false && !d.practice && d.failImg && d.failImg.width;
-  if (failArt){ var fW = 250, fH = fW * d.failImg.height / d.failImg.width; ctx.drawImage(d.failImg, cx + cw - 124 - fW / 2, L.cy + 214 + 150 - fH, fW, fH); }
+  if (!d.practice && d.compImg && d.compImg.width){ var kW = 236, kH = kW * d.compImg.height / d.compImg.width; ctx.drawImage(d.compImg, cx + cw - 124 - kW / 2, L.cy + 214 + 146 - kH, kW, kH); }
+  else if (failArt){ var fW = 250, fH = fW * d.failImg.height / d.failImg.width; ctx.drawImage(d.failImg, cx + cw - 124 - fW / 2, L.cy + 214 + 150 - fH, fW, fH); }
   else if (d.cupImg && d.cupImg.width){ var cupW = 268, cupH = cupW * d.cupImg.height / d.cupImg.width; ctx.drawImage(d.cupImg, cx + cw - 124 - cupW / 2, L.cy + 214 + 140 - cupH, cupW, cupH); }
   else trophy(cx + cw - 124, L.cy + 214, .8);
   // ---- tiêu đề + nhãn trạng thái
@@ -4981,7 +4984,8 @@ function shareData(){
     avgSec: r.durationSec != null && r.total ? Math.round(r.durationSec / r.total) : null,
     cats: [], // ảnh chia sẻ chỉ ghi kết quả, không kèm phân tích theo mảng kiến thức
     cupImg: SC_CUP.ok ? SC_CUP.img : null,
-    failImg: SC_FAIL.ok ? SC_FAIL.img : null
+    failImg: SC_FAIL.ok ? SC_FAIL.img : null,
+    compImg: compArt(r.compliancePoints).ok ? compArt(r.compliancePoints).img : null
   };
 }
 // Ảnh cúp cho thẻ chia sẻ: tải sẵn; makePng chờ tối đa 3 giây, lỗi thì thẻ vẽ cúp bằng nét
@@ -4991,9 +4995,17 @@ SC_CUP.img.src = '/kiemtra/trophy-photo.webp';
 var SC_FAIL = { img:new Image(), ok:false, p:null }; // ảnh "Chưa đạt" thay cúp khi bài chưa đạt
 SC_FAIL.p = new Promise(function(res){ SC_FAIL.img.onload = function(){ SC_FAIL.ok = true; res(); }; SC_FAIL.img.onerror = function(){ res(); }; });
 SC_FAIL.img.src = '/kiemtra/fail-photo.webp?v=2';
+// Huy hiệu điểm tuân thủ (0 / 10 / 15 / 20 điểm): chỉ tải ảnh của mức điểm đang cần
+var SC_COMP = {};
+function compSrc(cp){ return [0, 10, 15, 20].indexOf(cp) >= 0 ? '/kiemtra/compliance-' + cp + '.webp' : ''; }
+function compArt(cp){
+  var src = compSrc(cp); if (!src) return { ok:false, img:null, p:Promise.resolve() };
+  if (!SC_COMP[cp]){ var o = SC_COMP[cp] = { img:new Image(), ok:false, p:null }; o.p = new Promise(function(res){ o.img.onload = function(){ o.ok = true; res(); }; o.img.onerror = function(){ res(); }; }); o.img.src = src; }
+  return SC_COMP[cp];
+}
 async function makePng(){
   try { if (document.fonts && document.fonts.load) await Promise.all(['500','700','800'].map(function(w){ return document.fonts.load(w + ' 28px "Be Vietnam Pro"'); })); } catch(e){}
-  try { await Promise.race([Promise.all([SC_CUP.p, SC_FAIL.p]), new Promise(function(r){ setTimeout(r, 3000); })]); } catch(e){}
+  try { var cpNow = ((ST.res && ST.res.r) || {}).compliancePoints; await Promise.race([Promise.all([SC_CUP.p, SC_FAIL.p, compArt(cpNow).p]), new Promise(function(r){ setTimeout(r, 3000); })]); } catch(e){}
   var cv = document.createElement('canvas'); var sd = shareData(), H = shareCardHeight(sd);
   cv.width = 1080; cv.height = H;
   drawShareCard(cv.getContext('2d'), 1080, H, sd);

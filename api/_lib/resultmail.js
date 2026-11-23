@@ -17,7 +17,7 @@ async function send(attempt, settings, advice) {
   catch (e) { console.error("resultmail qr:", (e && e.message) || e); }
   // Hình minh hoạ giao diện (logo, ảnh đầu thư, vòng tỉ lệ đúng, biểu tượng): lỗi thì gửi bản không hình
   let art = null;
-  try { const s = artSpec(attempt, settings); art = await within(require("./mailart").render(s.pct, s.state, s.color), 8000); }
+  try { const s = artSpec(attempt, settings); art = await within(require("./mailart").render(s.pct, s.state, s.color, s.comp), 8000); }
   catch (e) { console.error("resultmail art:", (e && e.message) || e); }
   const m = build(attempt, settings, advice, { card: !!card, qrCid: qr ? qr.cid : "", art: art ? art.cid : null });
   const atts = [card, qr].concat(art ? art.atts : []).filter(Boolean);
