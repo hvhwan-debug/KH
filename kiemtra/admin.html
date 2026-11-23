@@ -1393,6 +1393,140 @@ body[data-tab="exams"] .wrap{max-width:1440px;padding:28px 28px 70px}
   .cfbar .cf-foot{display:flex;flex:1 1 100%;align-items:center;justify-content:space-between;order:9}
   .cfbar .cf-foot:not(:has(.small:not(:empty))):not(:has(.exf-clear:not(.hide))){display:none}
 }
+
+/* ===================== Trang của MỘT đề (Kết quả / Phân tích / Câu hỏi / Cài đặt đề): giao diện theo mẫu ===================== */
+body[data-tab="results"] .main,body[data-tab="analysis"] .main,body[data-tab="questions"] .main,body[data-tab="examset"] .main{min-height:100vh;background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 220' preserveAspectRatio='none'%3E%3Cpath d='M0 120C260 60 520 70 760 120s500 80 680 10V220H0z' fill='%23DCEBFF' fill-opacity='.55'/%3E%3Cpath d='M0 170c300-60 560-40 820 0s440 50 620-10V220H0z' fill='%23CFE3FF' fill-opacity='.5'/%3E%3C/svg%3E") left bottom/100% 190px no-repeat fixed,
+  radial-gradient(70% 55% at 85% 0%,#E1EEFF 0%,transparent 70%),linear-gradient(180deg,#F3F8FF 0%,#EAF2FD 100%)}
+body[data-tab="results"] .wrap,body[data-tab="analysis"] .wrap,body[data-tab="questions"] .wrap,body[data-tab="examset"] .wrap{max-width:1440px;padding:24px 28px 70px}
+/* Đầu trang đề: nằm thẳng trên nền, không khung */
+.card.exhead{background:none!important;border:0;box-shadow:none;padding:0 4px!important;margin-bottom:18px}
+.exhead .back:hover{background:#DDEBFC}
+.exh-tile{width:56px;height:56px;border-radius:0;background:none!important;box-shadow:none!important}
+.exh-tile svg{width:56px;height:56px}
+.card.exhead .exh-top h1{font-size:30px;color:#0A2552}
+.exh-chip{background:#fff;border-color:#DCE6F3}
+.exh-link{background:rgba(255,255,255,.7)}
+/* Thanh mục của đề: khối trắng bo tròn, mục đang chọn là viên xanh đặc */
+#exNav{margin:18px 0 0;padding:6px!important;gap:0;border:0;border-radius:18px;background:#fff;box-shadow:0 10px 26px -18px rgba(16,60,140,.45)}
+#exNav button{padding:0 30px;height:48px;border-radius:14px;color:#0A2552;font-size:15.5px;gap:10px}
+#exNav button+button::before{content:'';position:absolute;left:0;top:14px;bottom:14px;width:1px;background:#E3EAF4}
+#exNav button.on+button::before,#exNav button:has(+button.on)+button.on::before{display:none}
+#exNav button .ic{width:22px;height:22px}
+#exNav button:hover{background:#F1F6FD;color:#0A2552}
+#exNav button.on{background:linear-gradient(180deg,#2F7CF6,#1557D8);color:#fff;box-shadow:0 8px 18px -8px rgba(21,87,216,.7)}
+#exNav button.on::after,#exNav button.on::before{display:none}
+#exNav button.on .cnt{background:rgba(255,255,255,.25);color:#fff}
+/* Tổng quan */
+#tab-results #dashCard{border:0;border-radius:22px;padding:20px 20px 18px;box-shadow:0 14px 32px -22px rgba(16,60,140,.45)}
+#tab-results #dashCard .dash-h h1{font-size:21px}
+#dashKpis{grid-template-columns:minmax(370px,1.45fr) repeat(3,minmax(0,1fr));gap:18px}
+#dashKpis .k-ring .rt{flex:1 1 auto}#dashKpis .k-ring .l{white-space:nowrap}
+#pgCard .pg-tab.all i{display:none}
+#dashKpis .kpi{border:1px solid #E2EAF5;border-radius:20px;padding:20px 22px;box-shadow:0 10px 24px -20px rgba(16,60,140,.5)}
+#dashKpis .kpi .l{font-size:14px;font-weight:600;color:#22385E;padding-right:40px}
+#dashKpis .kpi .v{font-size:36px;font-weight:800;color:#0A2552}
+#dashKpis .kpi .d{font-size:14px;color:#22385E;line-height:1.5}
+#dashKpis .k-ic{position:absolute;top:18px;right:18px;width:30px;height:30px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#dashKpis .k-score{background:linear-gradient(180deg,#fff,#F5F9FF)}#dashKpis .k-score .k-ic{stroke:#2F7CF6}
+#dashKpis .k-warn.calm{background:linear-gradient(160deg,#F2FBF6 0%,#E2F5EA 100%);border-color:#CFEBDB}#dashKpis .k-warn.calm .k-ic{stroke:#27A567}
+#dashKpis .k-warn.calm .d{color:#17794A;font-weight:700}
+#dashKpis .k-warn.alert .k-ic{stroke:#D0442F}
+#dashKpis .k-warn .v small,#dashKpis .k-time .v small{font-size:18px;font-weight:600;color:inherit}
+#dashKpis .k-time{background:linear-gradient(160deg,#F8F7FF 0%,#ECEBFF 100%);border-color:#E1DEFA}#dashKpis .k-time .k-ic{stroke:#6F5CF0}
+#dashKpis .k-time .v{font-size:36px}
+.kbar{height:10px;margin:14px 0 10px;border-radius:99px;background:#E3EAF5;overflow:hidden}
+.kbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#1557D8,#3D8BFF)}
+#dashKpis .k-ring{gap:22px;padding:22px 26px;border:0;background:radial-gradient(260px 180px at 105% 0%,rgba(80,200,255,.35),transparent 70%),linear-gradient(135deg,#0D3FA6 0%,#1463D9 55%,#11A3D6 100%);box-shadow:0 18px 34px -20px rgba(13,63,166,.9)}
+#dashKpis .k-ring .ring{width:104px;height:104px}
+#dashKpis .k-ring .trk,#dashKpis .k-ring .prg{stroke-width:10}
+#dashKpis .k-ring .rt-top{display:flex;align-items:center;gap:18px}
+#dashKpis .k-ring .v{font-size:44px;color:#fff}
+#dashKpis .k-ring .l{margin:0;font-size:15px;line-height:1.5;color:#fff}#dashKpis .k-ring .l b{font-size:16px;font-weight:700}
+#dashKpis .k-ring .d{margin-top:14px;color:#D4F1FF;font-weight:500;font-size:14.5px}
+/* Tab trạng thái + công cụ */
+#pgCard .pg-tabs{gap:12px;margin:22px 0 16px}
+#pgCard .pg-tab{gap:9px;height:42px;padding:0 8px 0 18px;border:0;border-radius:999px;background:#fff;font-size:15.5px;font-weight:700;color:#0A2552;box-shadow:0 8px 20px -14px rgba(16,60,140,.45)}
+#pgCard .pg-tab b{min-width:30px;padding:2px 8px;border-radius:999px;font-size:14px;text-align:center;background:#EEF3FA;color:#0A2552}
+#pgCard .pg-tab.all{padding-left:18px}#pgCard .pg-tab.all b{background:#2F7CF6;color:#fff}
+#pgCard .pg-tab.doing b{background:#E3F6EA;color:#17794A}#pgCard .pg-tab.done b{background:#E3EEFD;color:#1452D2}#pgCard .pg-tab.none b{background:#FDE6E3;color:#C8281D}
+#pgCard .pg-tab i{width:12px;height:12px;display:grid;place-items:center}
+#pgCard .pg-tab.doing i{background:#2BB673}#pgCard .pg-tab.none i{background:#E5352B}
+#pgCard .pg-tab.done i{width:18px;height:18px;background:#2F7CF6}
+#pgCard .pg-tab.done i svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+#pgCard .pg-tab.on{box-shadow:inset 0 0 0 2px #2F7CF6,0 8px 20px -14px rgba(16,60,140,.45);background:#fff;color:#0A2552}
+#pgCard .pg-tools{gap:12px;margin-bottom:16px}
+#pgCard .pg-tools input{flex:1 1 320px;height:46px;padding:0 16px 0 44px;border:0;border-radius:14px;font-size:14.5px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%234F6486' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 16px 50%;box-shadow:0 8px 20px -14px rgba(16,60,140,.45)}
+#pgCard .pg-tools select{-webkit-appearance:none;appearance:none;flex:0 1 200px;height:46px;padding:0 36px 0 16px;border:0;border-radius:14px;font-size:14px;font-weight:700;color:#0A2552;
+  background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%230A2552' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center;box-shadow:0 8px 20px -14px rgba(16,60,140,.45)}
+#pgCard .pg-tools .btn.ghost{height:42px;gap:8px;padding:0 16px;border:0;border-radius:12px;background:#fff;color:#1452D2;font-size:14px;box-shadow:0 8px 20px -14px rgba(16,60,140,.45)}
+#pgCard .pg-tools .btn.ghost:hover{background:#EEF4FE}
+.pg-ti{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#pgCard #pgUpd{font-size:14px;color:#22385E}
+/* Danh sách thí sinh: một khối trắng, các dòng ngăn bằng đường kẻ, có ô chữ cái đầu */
+#pgCard .pg-list{gap:0;padding:6px 18px;border-radius:20px;background:#fff;box-shadow:0 14px 30px -22px rgba(16,60,140,.45)}
+#pgCard .pg-list:has(.pg-empty:only-child){padding:0;background:none;box-shadow:none}
+#pgCard .pg-row{grid-template-columns:12px 42px minmax(0,1.7fr) 116px minmax(0,1.3fr);gap:16px;min-height:64px;padding:10px 4px;border:0;border-radius:0;background:none}
+#pgCard .pg-row+.pg-row{border-top:1px solid #E8EEF6}
+#pgCard .pg-row.doing{background:#FFFBF2}
+#pgCard .pg-row.none .pg-dot{background:#E5352B}#pgCard .pg-row.done .pg-dot{background:#2BB673}
+.pg-av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:18px;color:#1452D2;background:#E3EEFD}
+#pgCard .pg-who .pg-nm{font-size:16px;font-weight:700;color:#0A2552}
+#pgCard .pg-who small{font-size:13.5px;color:#22385E;margin-top:2px}
+#pgCard .pg-who small span+span::before{content:' • ';color:#8A9AB4}
+#pgCard .pg-st{font-size:13.5px;padding:5px 12px}
+#pgCard .pg-row.none .pg-st{background:#FDE3E1;color:#D0281D}
+#pgCard .pg-info{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:15px}
+#pgCard .pg-info .pg-sub{font-size:15px;color:#0A2552;font-variant-numeric:tabular-nums}
+#pgCard .pg-rm{margin-left:auto!important;height:36px;padding:0 20px;border-radius:999px;border:1.5px solid #BCD0EE;background:#fff;color:#1452D2;font-size:14px}
+#pgCard .pg-rm:hover{background:#EEF4FE;border-color:#2F7CF6}
+#pgCard .pg-more{margin:10px auto 8px;display:flex}
+#tab-results #resCard{border:0;border-radius:20px;box-shadow:0 14px 30px -22px rgba(16,60,140,.45)}
+@media(max-width:1100px){#dashKpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:860px){
+  .card.exhead .exh-top h1{font-size:23px}.exh-tile,.exh-tile svg{width:44px;height:44px}
+  #exNav button{padding:0 16px;font-size:14px}
+  #pgCard .pg-tab{height:38px;font-size:14px;padding-left:14px}
+  #pgCard .pg-tools select{flex:1 1 160px}
+  #dashKpis .kpi .v,#dashKpis .k-time .v{font-size:30px}
+}
+@media(max-width:760px){
+  body[data-tab="results"] .main,body[data-tab="analysis"] .main,body[data-tab="questions"] .main,body[data-tab="examset"] .main{background-attachment:scroll}
+  body[data-tab="results"] .wrap,body[data-tab="analysis"] .wrap,body[data-tab="questions"] .wrap,body[data-tab="examset"] .wrap{padding:16px 14px 90px}
+  #exNav{padding:4px!important}
+  #exNav button{height:auto;padding:8px 2px;border-radius:12px;font-size:12px}
+  #exNav button+button::before{display:none}
+  #dashKpis .k-ring .ring{width:92px;height:92px}#dashKpis .k-ring .v{font-size:36px}
+}
+@media(max-width:640px){
+  #pgCard .pg-tabs{gap:6px}
+  #pgCard .pg-tab{height:auto;min-height:58px;padding:8px 2px 7px;border-radius:14px;font-size:12.5px;gap:4px}
+  #pgCard .pg-tab b{font-size:15px;padding:1px 9px}
+  #pgCard .pg-tab i{position:absolute;top:7px;right:7px;width:8px;height:8px}
+  #pgCard .pg-tab.done i{width:14px;height:14px;top:5px;right:5px}#pgCard .pg-tab.done i svg{width:10px;height:10px}
+  #dashKpis .kpi{padding:16px}
+  #dashKpis .kpi .l{font-size:13px;padding-right:28px}
+  #dashKpis .k-ic{top:14px;right:12px;width:24px;height:24px}
+  #dashKpis .kpi .v,#dashKpis .k-time .v{font-size:26px}
+  #dashKpis .k-warn .v small,#dashKpis .k-time .v small{font-size:14px}
+  #dashKpis .k-ring{padding:18px;gap:16px}
+  #dashKpis .k-ring .rt-top{flex-wrap:wrap;gap:4px 12px}
+  #dashKpis .k-ring .l{white-space:normal;font-size:14px}
+  #dashKpis .k-ring .d{margin-top:8px}
+  #pgCard .pg-list{padding:4px 12px}
+  #pgCard #pgList .pg-row{grid-template-columns:38px minmax(0,1fr) auto;gap:6px 12px;padding:12px 2px}
+  #pgCard #pgList .pg-dot{display:none}
+  #pgCard #pgList .pg-av{grid-column:1;grid-row:1/3;align-self:start}
+  #pgCard #pgList .pg-who{grid-column:2;grid-row:1}
+  #pgCard #pgList .pg-st{grid-column:3;grid-row:1;align-self:start}
+  #pgCard #pgList:not([data-f=all]) .pg-who{grid-column:2/-1}
+  #pgCard #pgList .pg-info{grid-column:2/-1;grid-row:2;text-align:left}
+  #pgCard #pgList .pg-info .pg-sub{font-size:14px}
+  #pgCard .pg-rm{height:34px;padding:0 14px;font-size:13px;white-space:nowrap}
+  #pgCard .pg-who small span+span::before{content:none}
+  .pg-av{width:38px;height:38px;font-size:16px}
+  #pgCard .pg-tools .btn.ghost{flex:1 1 auto;justify-content:center}
+}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -1518,7 +1652,7 @@ body[data-tab="exams"] .wrap{max-width:1440px;padding:28px 28px 70px}
       <button class="back" type="button" onclick="switchTab('exams')"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg><span>Tất cả đề thi</span></button>
       <div class="exh-top">
         <div class="exh-id">
-          <div class="exh-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14l2 2 4-4"/></svg></div>
+          <div class="exh-tile" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="30" height="34" rx="6" fill="#E8F3FF" stroke="#2F7CF6" stroke-width="2.6"/><rect x="17" y="5" width="14" height="8" rx="3" fill="#fff" stroke="#2F7CF6" stroke-width="2.6"/><path d="m15.5 22 2.5 2.5 4-4.5M15.5 32l2.5 2.5 4-4.5" stroke="#1BB0E0" stroke-width="2.6"/><path d="M26 23h7M26 33h7" stroke="#2F7CF6" stroke-width="2.6"/></svg></div>
           <div class="exh-body">
             <h1 id="ehTitle">Đề thi</h1>
             <div class="exh-meta" id="ehMeta"></div>
@@ -2543,9 +2677,9 @@ body[data-tab="exams"] .wrap{max-width:1440px;padding:28px 28px 70px}
         <div class="pg-tools">
           <input type="search" id="pgSearch" placeholder="Tìm tên, mã NV, quản lí, tỉnh…" oninput="renderProgress();filterResults()" aria-label="Tìm thí sinh (lọc cả bảng Bài đã nộp bên dưới)">
           <select id="pgMgr" onchange="renderProgress();filterResults()" aria-label="Lọc theo quản lí (lọc cả bảng Bài đã nộp bên dưới)"></select>
-          <button class="btn ghost sm pg-rf" type="button" onclick="loadProgress()" aria-label="Làm mới" title="Làm mới"><span aria-hidden="true">↻</span><span class="pg-rtxt"> Làm mới</span></button>
-          <button class="btn ghost sm" type="button" id="pgCopy" onclick="pgCopy()">Sao chép danh sách</button>
-          <button class="btn ghost sm pg-xl" type="button" id="pgXlsx" aria-haspopup="menu" onclick="exportPick(this,'xlsx')" title="Xuất Excel: tổng hợp, danh sách đầy đủ, người cần nhắc, người dưới chuẩn">⬇ Xuất Excel ▾</button>
+          <button class="btn ghost sm pg-rf" type="button" onclick="loadProgress()" aria-label="Làm mới" title="Làm mới"><svg class="pg-ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg><span class="pg-rtxt">Làm mới</span></button>
+          <button class="btn ghost sm" type="button" id="pgCopy" onclick="pgCopy()"><svg class="pg-ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>Sao chép danh sách</button>
+          <button class="btn ghost sm pg-xl" type="button" id="pgXlsx" aria-haspopup="menu" onclick="exportPick(this,'xlsx')" title="Xuất Excel: tổng hợp, danh sách đầy đủ, người cần nhắc, người dưới chuẩn"><svg class="pg-ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>Xuất Excel ▾</button>
           <span class="small" id="pgUpd"></span>
         </div>
         <div class="pg-list" id="pgList"></div>
@@ -6418,7 +6552,7 @@ async function loadProgress(sel){
   const c0 = j.count || {};
   if (PG_INIT !== PG_P || (PG_F === 'doing' && !c0.doing)){ PG_F = c0.doing ? 'doing' : 'none'; PG_INIT = PG_P; }
   const t = new Date(j.serverNow + 7 * 3600 * 1000), p = n => (n < 10 ? '0' : '') + n;
-  $('pgUpd').textContent = 'Cập nhật ' + p(t.getUTCHours()) + ':' + p(t.getUTCMinutes()) + ':' + p(t.getUTCSeconds()) + (j.count.doing ? ' · tự làm mới mỗi 30 giây' : '');
+  $('pgUpd').textContent = 'Cập nhật: ' + p(t.getUTCHours()) + ':' + p(t.getUTCMinutes()) + ':' + p(t.getUTCSeconds()) + (j.count.doing ? ' · tự làm mới mỗi 30 giây' : '');
   const mv = $('pgMgr').value, mgrs = Array.from(new Set(j.list.map(x => x.manager || ''))).sort((a, b) => a.localeCompare(b, 'vi'));
   $('pgMgr').innerHTML = '<option value="*">Mọi quản lí</option>' + mgrs.map(m => '<option value="' + esc(m) + '">' + esc(m || '(chưa có quản lí)') + '</option>').join('');
   $('pgMgr').value = mgrs.indexOf(mv) >= 0 ? mv : '*';
@@ -6438,7 +6572,7 @@ function renderProgress(){
   if (!PG) return;
   const base = pgRows(), cnt = { all: base.length, doing: 0, done: 0, none: 0 }; base.forEach(x => cnt[x.status]++);
   const pl = $('pgPulse'); if (pl) pl.innerHTML = '';
-  $('pgTabs').innerHTML = ['all','doing','done','none'].map(k => '<button type="button" role="tab" class="pg-tab ' + k + (PG_F === k ? ' on' : '') + '" aria-selected="' + (PG_F === k) + '" onclick="pgSetF(\'' + k + '\')"><i></i>' + PG_LBL[k] + ' <b>' + cnt[k] + '</b></button>').join('');
+  $('pgTabs').innerHTML = ['all','doing','done','none'].map(k => '<button type="button" role="tab" class="pg-tab ' + k + (PG_F === k ? ' on' : '') + '" aria-selected="' + (PG_F === k) + '" onclick="pgSetF(\'' + k + '\')"><i>' + (k === 'done' ? '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 8.3 2.3 2.3 4.7-4.9"/></svg>' : '') + '</i>' + PG_LBL[k] + ' <b>' + cnt[k] + '</b></button>').join('');
   // Tab Tất cả: mọi thí sinh trong một danh sách (đang làm → hoàn thành → chưa làm)
   // Tab Hoàn thành: dùng luôn bảng kết quả đầy đủ (điểm, cảnh báo, xem bài, xuất Excel); hai tab kia dùng danh sách gọn
   const isDone = PG_F === 'done';
@@ -6467,7 +6601,7 @@ function renderProgress(){
       info = '<a class="pg-tel" href="tel:' + esc(String(x.phone).replace(/[^0-9+]/g, '')) + '" aria-label="Gọi ' + esc(x.name || x.code) + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>' + esc(x.phone) + '</a>';
     } else info = '<small class="pg-sub' + (x.phone ? '' : ' pg-nop') + '"' + (x.phone ? '' : ' title="Chưa có số điện thoại"') + '>' + (x.phone ? esc(x.phone) : '—') + '</small>';
     const rm = x.status !== 'done' ? '<button type="button" class="btn ghost sm pg-rm" style="margin-left:8px" onclick="removeFromExamUI(\'' + esc(x.code) + '\',\'' + esc((x.name || x.code).replace(/'/g, "\\'")) + '\')" title="Loại người này khỏi đề — các đề khác không bị ảnh hưởng">Loại khỏi đề</button>' : '';
-    return '<div class="pg-row ' + x.status + '"><span class="pg-dot" aria-hidden="true"></span>' +
+    return '<div class="pg-row ' + x.status + '"><span class="pg-dot" aria-hidden="true"></span><span class="pg-av" aria-hidden="true">' + esc(String(x.name || x.code || '?').trim().charAt(0).toUpperCase()) + '</span>' +
       '<div class="pg-who"><button type="button" class="candnm pg-nm" title="Xem hồ sơ học tập" onclick="openCandProfile(\'' + esc(x.code) + '\')">' + esc(x.name || x.code) + '</button><small><span class="pg-code">' + esc(x.code) + '</span>' + (x.manager ? '<span class="pg-mgr">' + esc(x.manager) + '</span>' : '') + (x.province ? '<span class="pg-prov">' + esc(x.province) + '</span>' : '') + (x.region ? '<span class="pg-reg">' + (x.region === 'bac' ? 'Miền Bắc' : 'Miền Nam') + '</span>' : '') + '</small></div>' +
       '<span class="pg-st">' + PG_LBL[x.status] + (x.done && x.status === 'done' && x.done.auto ? '<span class="pg-auto" title="Hết giờ, hệ thống tự thu bài">tự thu</span>' : '') + '</span><div class="pg-info">' + info + rm + '</div></div>';
   }).join('') + (MOB && L.length > PG_SHOW ? '<button type="button" class="btn ghost pg-more" onclick="pgMore()">Hiện thêm ' + Math.min(20, L.length - PG_SHOW) + ' người · còn ' + (L.length - PG_SHOW) + '</button>' : '') || '<div class="pg-empty">Không có thí sinh nào ở mục này.</div>';
@@ -6926,6 +7060,11 @@ async function exportBehaviorXlsx(sharedWb, sharedE, silent){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
+const KPI_IC = {
+  score:'<svg class="k-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="6"/><circle cx="12" cy="9" r="3"/><path d="m8.5 13.8-1.6 6.7 5.1-2.4 5.1 2.4-1.6-6.7"/></svg>',
+  warn:'<svg class="k-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16.5 14.2c2.6.2 4.5 2.1 4.5 4.8"/></svg>',
+  time:'<svg class="k-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>'
+};
 async function loadDashboard(sel){
   const want = /^[a-z0-9][a-z0-9-]{0,39}$/i.test(sel||'') ? sel : ''; // cả mã tháng (2026-10) lẫn mã đề tự đặt (thi-thu)
   const { j } = await api('GET','/api/kt-admin?op=dashboard'+(want?'&period='+encodeURIComponent(want):''));
@@ -6951,15 +7090,13 @@ async function loadDashboard(sel){
   const CIRC = 2 * Math.PI * 50, off = CIRC * (1 - Math.min(100, rate) / 100), left0 = Math.max(0, (j.candidates || 0) - (j.submitted || 0));
   const pos = v => Math.max(0, Math.min(100, Number(v) || 0)), has = j.avgPct != null && j.minPct != null && j.maxPct != null;
   const gauge = has
-    ? '<div class="gauge" role="img" aria-label="Điểm thấp nhất ' + pctTxt(j.minPct) + ', trung bình ' + pctTxt(j.avgPct) + ', cao nhất ' + pctTxt(j.maxPct) + '"><i class="gr" style="left:' + pos(j.minPct) + '%;width:' + Math.max(1, pos(j.maxPct) - pos(j.minPct)) + '%"></i>' +
-      (j.medianPct != null ? '<i class="gm" style="left:' + pos(j.medianPct) + '%" title="Trung vị ' + pctTxt(j.medianPct) + '"></i>' : '') + '<i class="ga" style="left:' + pos(j.avgPct) + '%" title="Trung bình ' + pctTxt(j.avgPct) + '"></i></div>' +
-      '<div class="gscale"><span>0</span><span>50</span><span>100%</span></div>' : '';
+    ? '<div class="kbar" role="img" aria-label="Trung bình ' + pctTxt(j.avgPct) + '"><i style="width:' + pos(j.avgPct) + '%"></i></div>' : '';
   $('dashKpis').innerHTML =
     '<div class="kpi k-ring"><svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="ovg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9BEBF7"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient></defs><circle class="trk" cx="60" cy="60" r="50"/><circle class="prg" cx="60" cy="60" r="50" style="stroke-dasharray:' + CIRC.toFixed(1) + ';--to:' + off.toFixed(1) + '"/></svg>' +
-      '<div class="rt"><div class="v">' + rate + '<small>%</small></div><div class="l"><b>' + j.submitted + '</b> / ' + j.candidates + ' đã nộp bài</div><div class="d">' + (left0 ? 'Còn ' + left0 + ' người chưa làm' : 'Đủ cả danh sách') + '</div></div></div>' +
-    '<div class="kpi k-score"><div class="l">Tỉ lệ đúng trung bình</div><div class="v">' + pctTxt(j.avgPct) + '</div>' + gauge + (has ? '<div class="d flat">Thấp nhất ' + pctTxt(j.minPct) + ' · trung vị ' + pctTxt(j.medianPct) + ' · cao nhất ' + pctTxt(j.maxPct) + '</div>' : '') + delta + '</div>' +
-    '<div class="kpi k-warn' + (lt ? ' alert' : ' calm') + '"><div class="l">Dưới chuẩn, cần đào tạo lại</div><div class="v">' + lt + '<small> người</small></div><div class="d flat">' + (lt ? '0 điểm tuân thủ' : 'Không ai dưới chuẩn') + (j.prev ? ' · đề trước ' + j.prev.weak + ' người' : '') + '</div></div>' +
-    '<div class="kpi k-time"><div class="l">Thời gian làm bài trung bình</div><div class="v">' + (typeof j.avgDurationSec === 'number' && j.avgDurationSec > 0 ? Math.floor(j.avgDurationSec / 60) + '<small> phút </small>' + String(Math.round(j.avgDurationSec % 60)).padStart(2, '0') + '<small> giây</small>' : durTxt(j.avgDurationSec)) + '</div></div>';
+      '<div class="rt"><div class="rt-top"><div class="v">' + rate + '<small>%</small></div><div class="l"><b>' + j.submitted + ' / ' + j.candidates + ' thí sinh</b><br>đã nộp bài</div></div><div class="d">' + (left0 ? 'Còn ' + left0 + ' thí sinh chưa làm' : 'Đủ cả danh sách') + '</div></div></div>' +
+    '<div class="kpi k-score">' + KPI_IC.score + '<div class="l">Tỉ lệ đúng trung bình</div><div class="v">' + pctTxt(j.avgPct) + '</div>' + gauge + (has ? '<div class="d flat">Thấp nhất ' + pctTxt(j.minPct) + ' • Trung vị ' + pctTxt(j.medianPct) + '<br>Cao nhất ' + pctTxt(j.maxPct) + '</div>' : '') + delta + '</div>' +
+    '<div class="kpi k-warn' + (lt ? ' alert' : ' calm') + '">' + KPI_IC.warn + '<div class="l">Dưới chuẩn, cần đào tạo lại</div><div class="v">' + lt + '<small> người</small></div><div class="d flat">' + (lt ? '0 điểm tuân thủ' : 'Không có ai dưới chuẩn') + (j.prev ? ' · đề trước ' + j.prev.weak + ' người' : '') + '</div></div>' +
+    '<div class="kpi k-time">' + KPI_IC.time + '<div class="l">Thời gian làm bài trung bình</div><div class="v">' + (typeof j.avgDurationSec === 'number' && j.avgDurationSec > 0 ? Math.floor(j.avgDurationSec / 60) + '<small> phút </small>' + String(Math.round(j.avgDurationSec % 60)).padStart(2, '0') + '<small> giây</small>' : durTxt(j.avgDurationSec)) + '</div></div>';
   // Phân bố điểm tuân thủ
   const BC = ['var(--bad)','#E0A030','#5D86BB','var(--ok)'], tot = Math.max(1, j.submitted);
   $('dashBands').innerHTML = j.bands.map((b,i) => '<div class="band"><span>' + esc(b.label) + ' <span class="small">(' + b.pts + 'đ)</span></span><span class="t"><i style="width:' + (b.n/tot*100) + '%;background:' + BC[i] + '"></i></span><span class="n"><b>' + b.n + '</b> · ' + Math.round(b.n/tot*100) + '%</span></div>').join('') +
