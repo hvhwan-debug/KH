@@ -219,7 +219,7 @@ module.exports = async function (context, req) {
   await handler(context, req);
   try {
     const b = req.body || {}, r = context.res, CK = require("../_lib/candcookie");
-    if (r && r.status === 200 && r.body && r.body.ok && r.body.candidate && !b.saveRegion && !b.hint && CK.bidFromReq(req)
+    if (r && r.status === 200 && r.body && r.body.ok && r.body.candidate && !b.saveRegion && !b.hint && (CK.bidFromReq(req) || require("../_lib/facepass").loginOk(b.faceLogin, b.code))
         && !(r.headers && r.headers["Set-Cookie"])) {
       CK.attach(context, CK.candCookie(r.body.candidate.code || b.code, r.body.candidate.email || b.email));
     }

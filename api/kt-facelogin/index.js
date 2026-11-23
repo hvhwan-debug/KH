@@ -78,7 +78,10 @@ module.exports = async function (context, req) {
     // Vé dùng ở bước bắt đầu làm bài: không phải quét mặt lần hai (nếu đề bật faceLoginSkip). Gắn với mã NV + đúng ảnh vừa quét.
     await require("../_lib/loginlog").write(req, { code: c.code, name: c.name, manager: c.manager, method: "face", page: "exam", exam: String(b.examId || ""), test: !!c.test, note: "độ lệch " + id.distance.toFixed(3) });
     const pass = require("../_lib/facepass").issue(c.code, photo, { distance: id.distance, second: id.second, ai: aiOk });
-    return reply(context, 200, { ok: true, code: c.code, email: c.email, name: c.name || "", facePass: pass || undefined, faceLogin: require("../_lib/facepass").issueLogin(c.code) });
+    reply(context, 200, { ok: true, code: c.code, email: c.email, name: c.name || "", facePass: pass || undefined, faceLogin: require("../_lib/facepass").issueLogin(c.code) });
+    // Vào từ trang Học liệu: ghi nhớ phiên 8 giờ bằng cookie (tải lại trang không phải quét lại)
+    if (String(b.examId || "") === "hoclieu") { const CK = require("../_lib/candcookie"); CK.attach(context, CK.hlCookie(c.code, c.name)); }
+    return;
   } catch (e) {
     context.log.error("kt-facelogin", e && e.message);
     return reply(context, 500, { ok: false, error: "Có lỗi xảy ra. Hãy nhập mã nhân viên và email để vào hệ thống." });

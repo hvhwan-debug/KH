@@ -482,10 +482,15 @@ function openFace(){
 }
 function enter(j){
   $('gateView').classList.add('hide'); $('appView').classList.remove('hide');
-  if (j && j.name){ var w = $('heroWho'); w.textContent = 'Đã xác thực: ' + j.name; w.classList.remove('hide'); }
+  if (j && j.name){ var w = $('heroWho'); w.textContent = 'Đã xác thực: ' + j.name + ' · '; w.classList.remove('hide');
+    var o = document.createElement('a'); o.href = '#'; o.textContent = 'Đổi người'; o.style.cssText = 'color:inherit;text-decoration:underline;white-space:nowrap';
+    o.addEventListener('click', function(e){ e.preventDefault(); req('/api/hoclieu', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ op:'logout' }) }).then(function(){ location.reload(); }, function(){ location.reload(); }); });
+    w.appendChild(o); }
   load();
 }
 $('gGo').addEventListener('click', openFace);
+// Đã xác thực khuôn mặt trước đó (cookie phiên 8 giờ): tải lại trang vào thẳng, không phải quét lại
+req('/api/hoclieu?me=1').then(function(j){ if (j && j.ok) enter(j); }).catch(function(){});
 </script>
 </body>
 </html>

@@ -27,6 +27,13 @@ function candCookie(code, email) { return base("kt_cand", session.sign({ k: "can
 function candFromReq(req) { const p = session.verify(parse(req).kt_cand); return p && p.k === "cand" && p.c && p.e ? { code: p.c, email: p.e } : null; }
 const clearCand = () => base("kt_cand", "", 0);
 
+// PHIÊN HỌC LIỆU (kt_hl): đặt sau khi xác thực khuôn mặt vào trang Học liệu, hạn 8 giờ. HttpOnly, ký HMAC; tải lại trang không phải quét lại.
+// Là cookie phiên đăng nhập (cần thiết để trang hoạt động) nên không phụ thuộc lựa chọn cookie phân tích.
+const HL_AGE = 8 * 3600;
+function hlCookie(code, name) { return base("kt_hl", session.sign({ k: "hl", c: String(code || ""), n: String(name || "").slice(0, 80), exp: Date.now() + HL_AGE * 1000 }), HL_AGE); }
+function hlFromReq(req) { const p = session.verify(parse(req).kt_hl); return p && p.k === "hl" && p.c ? { code: p.c, name: p.n || "" } : null; }
+const clearHl = () => base("kt_hl", "", 0);
+
 function attach(context, cookie) { if (context && context.res && cookie) context.res.headers = Object.assign({}, context.res.headers, { "Set-Cookie": cookie }); }
 
-module.exports = { parse, bidFromReq, newBid, bidCookie, clearBid, candCookie, candFromReq, clearCand, attach, BID_AGE, CAND_AGE };
+module.exports = { parse, bidFromReq, newBid, bidCookie, clearBid, candCookie, candFromReq, clearCand, hlCookie, hlFromReq, clearHl, attach, BID_AGE, CAND_AGE, HL_AGE };

@@ -5539,8 +5539,9 @@ $('ckBlockedOk').addEventListener('click', function(){ ckShow(false); }); // kh�
 $('ckOpen').addEventListener('click', function(){ ckShow(true); });
 $('ckMore').addEventListener('click', function(){ var m = $('ckLimits'), on = m.classList.toggle('hide'); this.setAttribute('aria-expanded', String(!on)); this.textContent = on ? 'Cookie không thể tự đảm bảo điều gì?' : 'Thu gọn'; });
 if (ckGet() === null) ckShow(true);
-// Đã đồng ý: thử vào lại bằng phiên ghi nhớ (tải lại trang, mở lại tab trong 2 giờ) — chỉ khi đang ở màn nhập và có đề
-else if (ckGet() === '1' && EXAM_ID && !$('scrCheck').classList.contains('hide')){
+// Thử vào lại bằng phiên ghi nhớ (tải lại trang, mở lại tab trong 2 giờ) — chỉ khi chưa từ chối cookie, đang ở màn nhập và có đề.
+// Phiên được đặt khi đã đồng ý cookie HOẶC vừa đăng nhập bằng khuôn mặt; không có phiên thì máy chủ trả noResume và giữ nguyên màn nhập.
+if (ckGet() !== '0' && EXAM_ID && !$('scrCheck').classList.contains('hide')){
   ST.resuming = true; var f = $('scrCheck'); if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', { cancelable:true }));
 }
 })();
