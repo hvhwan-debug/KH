@@ -173,9 +173,11 @@ async function heroFrom(file) {
   if (heroImgs[file] !== undefined) return heroImgs[file];
   try {
     const im = await load().loadImage(path.join(__dirname, "assets", file));
-    const W = 260, H = 200, o = canvas(W, H, 2), c = o.c, k = Math.min(W / im.width, H / im.height) * 0.98;
+    const W = 260, H = 200, o = canvas(W, H, 2), c = o.c, k = Math.min(W / im.width, (H - 8) / im.height) * 0.94;
     const w = im.width * k, h = im.height * k;
-    c.drawImage(im, (W - w) / 2 + 6, H - h, w, h);
+    // vòng sáng dưới chân (fx-halo.webp), vẽ trước để nằm phía sau ảnh
+    try { const hl = await load().loadImage(path.join(__dirname, "assets", "fx-halo.webp")); const hw = W * 1.0, hh = hw * hl.height / hl.width; c.drawImage(hl, (W - hw) / 2 + 6, H - hh * 0.78, hw, hh); } catch (e) { /* không có vòng sáng: vẫn dùng ảnh */ }
+    c.drawImage(im, (W - w) / 2 + 6, H - h * 1.0 - 4, w, h * 1.0);
     heroImgs[file] = await png(o);
   } catch (e) { heroImgs[file] = null; }
   return heroImgs[file];

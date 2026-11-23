@@ -20,7 +20,7 @@ fs.readdirSync(apiDir).forEach((n) => {
   const b = JSON.parse(fs.readFileSync(fj, "utf8")).bindings.find((x) => x.type === "httpTrigger");
   routes.push({ route: "/api/" + b.route, methods: b.methods.map((m) => m.toUpperCase()), fn: require(path.join(apiDir, n, "index.js")) });
 });
-const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".json": "application/json", ".webmanifest": "application/manifest+json", ".png": "image/png", ".css": "text/css" };
+const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".json": "application/json", ".webmanifest": "application/manifest+json", ".png": "image/png", ".css": "text/css", ".webp": "image/webp", ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".mp3": "audio/mpeg" };
 
 http.createServer(async (rq, rs) => {
   const url = new URL(rq.url, "http://localhost");
