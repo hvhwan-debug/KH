@@ -1924,6 +1924,13 @@ html body #scrPhoto .ai-pipe[data-st="ok"] .ai-now-p{color:#2DBE6C}html body #sc
 /* Màn xác thực khuôn mặt: tắt hẳn ô lưu ý / cảnh báo vị trí (vị trí không bắt buộc, vẫn xin quyền ngầm) */
 #scrPhoto .locline,#scrPhoto #locLine,#scrPhoto .ai-tips,#scrPhoto .fv-prog{display:none!important}
 
+/* Không để chữ đè lên khuôn mặt khi xác minh: câu nhắc trong khung camera ẩn đi, hiện thành một dòng ngay dưới camera */
+html body #scrPhoto .ai-hint,html body #scrPhoto.lv .ai-say,html body #scrPhoto .ai-track span,html body #scrPhoto .ai-rd{display:none!important}
+.fv-say{display:none}
+html body #scrPhoto .fv-say{display:block;flex:0 0 auto;width:min(100%,560px);box-sizing:border-box;min-height:1.4em;margin:-4px 0 -2px;padding:0 8px;text-align:center;font-size:16px;font-weight:700;line-height:1.4;color:#0B1F5C}
+html body #scrPhoto .fv-say.hide{visibility:hidden}
+@media(max-width:560px){html body #scrPhoto .fv-say{font-size:15px}}
+
 /* ===== Kết quả làm bài: 2 cột (điểm số | chi tiết có tab) ===== */
 body.rs .stage{max-width:1140px}
 #scrResult{background:none!important;border:0;box-shadow:none;padding:0;overflow:visible;text-align:left}
@@ -2637,6 +2644,7 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
           <div class="ai-rd"><span id="aiRdL">FACES 0</span><span id="aiRdR">CONF --</span></div>
         </div>
       </div>
+      <p class="fv-say hide" id="fvSay" aria-hidden="true"></p>
       <div class="ai-side ai-side2">
       <div class="fv-card" id="fvCard" aria-hidden="true"><b class="fv-ch" id="fvChT">Chuẩn bị</b><div class="fv-top"><b id="fvCurT">Phát hiện khuôn mặt</b><span class="fv-pc"><span id="fvPct">0%</span><small>Hoàn thành</small></span></div><ol class="fv-steps" id="fvSteps"></ol></div>
       <div class="ai-pipe" id="aiPipe" data-st="run">
@@ -3630,6 +3638,19 @@ function lvOk(p, y, w, off){ // ngưỡng ở trình duyệt chặt hơn máy ch
   return y <= -.15;
 }
 function lvPills(){ $('aiPills').innerHTML = LV.seq.map(function(p, k){ return '<li class="' + (k < LV.i ? 'done' : k === LV.i ? 'cur' : '') + '">' + (k < LV.i ? '✓ ' : '') + LV_NAME[p] + '</li>'; }).join(''); }
+/* Câu nhắc hiển thị DƯỚI khung camera (không đè lên khuôn mặt): lấy từ câu nhắc thử thách / câu nhắc chờ */
+function fvSaySync(){
+  var el = $('fvSay'), sc = $('scrPhoto'); if (!el || !sc) return;
+  var st = sc.getAttribute('data-ai'), t = '';
+  if (st === 'live' || st === 'idle') t = (sc.classList.contains('lv') && st === 'live' ? $('aiSayT').textContent : $('aiHint').textContent) || '';
+  if (sc.querySelector('.photo-box.opening')) t = '';
+  if (el.textContent !== t) el.textContent = t;
+  el.classList.toggle('hide', !t);
+}
+try { var fvMo = new MutationObserver(fvSaySync);
+  ['aiHint', 'aiSayT'].forEach(function(id){ fvMo.observe($(id), { childList:true, characterData:true, subtree:true }); });
+  fvMo.observe($('scrPhoto'), { attributes:true, attributeFilter:['class', 'data-ai'] });
+  fvMo.observe(document.querySelector('#scrPhoto .photo-box'), { attributes:true, attributeFilter:['class'] }); } catch (e) {}
 /* Thẻ tiến trình kiểu "Phát hiện khuôn mặt → 3 thử thách" (giao diện điện thoại) */
 var FV_NAME = { front:'Nhìn thẳng vào camera', left:'Quay mặt sang trái', right:'Quay mặt sang phải' };
 function fvPaint(hold){

@@ -315,6 +315,15 @@ var CSS = [
 '  .fh.fh .fh-box{height:clamp(260px,calc(100vh - 250px),660px);width:auto}',
 '}',
 '@media(min-width:561px) and (max-height:760px){.fh.fh .fh-box{height:clamp(250px,calc(100vh - 230px),660px)}}',
+'/* Không để chữ đè lên khuôn mặt: câu nhắc / nhãn trong khung camera ẩn, câu nhắc hiện thành một dòng dưới camera */',
+'.fh.fh .fh-hint,.fh.fh .fh-badge,.fh.fh .fh-rd,.fh.fh .fh-live{display:none!important}',
+'.fh-say{display:none}',
+'.fh.fh .fh-say{display:block;order:3;flex:0 0 auto;width:min(100%,560px);box-sizing:border-box;min-height:1.4em;margin:-4px 0 -2px;padding:0 8px;text-align:center;font-size:16px;font-weight:700;line-height:1.4;color:var(--ink)}',
+'.fh.fh .fh-say.empty{visibility:hidden}',
+'.fh.fh .fh-say.ok{color:#178A47}.fh.fh .fh-say.bad{color:#C2262B}.fh.fh .fh-say.chk{color:var(--blue)}',
+'.fh.fh .fh-pipe{order:4}',
+'.fh.fh .fh-res{place-items:start end;padding:14px}.fh.fh .fh-res svg{width:46px;height:46px}',
+'@media(max-width:560px){.fh.fh .fh-say{font-size:15px}}',
 ].join('\n');
 
 var I_SND = '<svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>' +
@@ -349,6 +358,7 @@ var HTML =
 '    <div class="fh-rd"><span id="fhRdL">FACES 0</span><span id="fhRdR">CONF --</span></div>' +
 '    <div class="fh-res" id="fhRes"></div><div class="fh-flash" id="fhFlash"></div>' +
 '  </div>' +
+'  <p class="fh-say" id="fhSay" aria-hidden="true"></p>' +
 '  <div class="fh-side">' +
 '  <div class="fh-head"><div class="fh-htop"><div class="fh-ic">' + I_FACE + '</div><div><span class="fh-k" id="fhK">AI FACE VERIFY</span><h2 id="fhTitle">Xác thực khuôn mặt</h2><p class="fh-sub" id="fhSub">Xác minh danh tính để tiếp tục sử dụng hệ thống</p></div></div>' +
 '    <div class="fh-hr"><button type="button" class="fh-guide" id="fhGuide" aria-label="Xem hướng dẫn" title="Xem hướng dẫn">' + I_HELP + '<span>Hướng dẫn</span></button>' +
@@ -506,7 +516,8 @@ function build(){
 }
 function scr(st){ FM.el.setAttribute('data-st', st); }
 function chip(cls, t){ $('fhChip').className = 'fh-chip' + (cls ? ' ' + cls : ''); $('fhChipT').textContent = t; }
-function hint(t, tone){ var h = $('fhHint'); h.textContent = t || ''; h.className = 'fh-hint' + (tone ? ' ' + tone : ''); speak(t); }
+function hint(t, tone){ var h = $('fhHint'); h.textContent = t || ''; h.className = 'fh-hint' + (tone ? ' ' + tone : '');
+  var y = $('fhSay'); if (y){ y.textContent = t || ''; y.className = 'fh-say' + (tone ? ' ' + tone : '') + (t ? '' : ' empty'); } speak(t); } // câu nhắc hiện DƯỚI camera, không đè lên mặt
 function prog(p){ FM.prog = Math.max(0, Math.min(1, p)); $('fhProg').style.strokeDashoffset = String(100 * (1 - FM.prog)); }
 function rd(n, conf){ $('fhRdL').textContent = 'FACES ' + n; $('fhRdR').textContent = 'CONF ' + (conf == null ? '--' : Math.round(conf * 100) + '%'); }
 function arrow(p){ var a = $('fhArrow'); a.className = 'fh-arrow' + (p === 'left' ? ' l' : p === 'right' ? ' r' : ''); }
