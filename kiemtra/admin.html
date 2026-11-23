@@ -1464,7 +1464,10 @@ table.hlx-t tbody tr:hover{background:#F5F9FF}
           <div><label>Tên đề thi (thí sinh thấy)</label><input type="text" id="exTitle" placeholder="vd: Kiểm tra kiến thức PC tháng 11"></div>
           <div><label>Mô tả / thể lệ ngắn (tuỳ chọn)</label><input type="text" id="exDesc" placeholder="Vd: Kiểm tra kiến thức sản phẩm quý 4"></div>
           <div><label>Tên rút gọn khi chia sẻ Zalo (tuỳ chọn)</label><input type="text" id="exShareTitle" placeholder="trống = dùng tên đề"></div>
-          <div style="grid-column:1/-1"><label>Link khảo sát sau bài thi (tuỳ chọn)</label><input type="url" id="exSurveyUrl" placeholder="https://office.karofi.com/survey/start/..."><div class="small" style="margin-top:4px">Có link: sau khi nộp bài, thí sinh thấy cửa sổ mời làm khảo sát chương trình đào tạo. Để trống: không hiện.</div></div>
+          <div style="grid-column:1/-1"><label style="display:flex;align-items:center;gap:8px;font-weight:600"><input type="checkbox" id="exSurveyOn" style="width:18px;height:18px" onchange="exSurveyToggle()"> Mời thí sinh làm khảo sát sau bài thi</label>
+            <div id="exSurveyWrap" class="hide"><label for="exSurveyUrl" style="margin-top:6px">Link khảo sát</label><input type="url" id="exSurveyUrl" placeholder="https://office.karofi.com/survey/start/cc944e49-c7b4-467a-af2b-784891e161bc">
+            <div class="small" style="margin-top:4px">Mặc định dùng phiếu khảo sát chương trình đào tạo; đổi link nếu đề này dùng phiếu khác. <a href="#" onclick="$('exSurveyUrl').value=SURVEY_DEFAULT_URL;return false">Dùng lại link mặc định</a></div></div>
+            <div class="small" style="margin-top:4px">Bật: sau khi nộp bài, thí sinh thấy cửa sổ mời làm khảo sát. Tắt: không hiện.</div></div>
         </div>
         <label style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;padding:10px 12px;border-radius:10px;background:#FFF6E0;border:1.5px solid #F0D58A;color:#6B4A00"><input type="checkbox" id="exPractice" style="width:18px;height:18px;margin-top:2px"> <span><b>Đề thi thử (không phải thi chính thức)</b><br><span class="small" style="color:#6B4A00">Thí sinh thấy dải chữ "THI THỬ" ở mọi màn hình; phiếu kết quả, ảnh chia sẻ và email đều ghi rõ "Thi thử, không phải thi chính thức". Điểm tuân thủ học tập <b>vẫn được quy đổi bình thường</b> (ghi là "nếu thi thật") để thí sinh hình dung điểm của mình.</span></span></label>
 
@@ -3299,11 +3302,17 @@ function asgFindKey(ev){
   const c = ASG_HITS.find(x => !ASG.set.has(asgKey(x.code))); if (!c) return;
   ASG.set.add(asgKey(c.code)); ev.target.value = ''; asgChanged();
 }
+const SURVEY_DEFAULT_URL = 'https://office.karofi.com/survey/start/cc944e49-c7b4-467a-af2b-784891e161bc'; // link khảo sát điền sẵn khi bật khảo sát cho đề
+function exSurveySet(url){ $('exSurveyOn').checked = !!url; $('exSurveyUrl').value = url || ''; $('exSurveyWrap').classList.toggle('hide', !url); }
+function exSurveyToggle(){
+  const on = $('exSurveyOn').checked; $('exSurveyWrap').classList.toggle('hide', !on);
+  if (on && !$('exSurveyUrl').value.trim()) $('exSurveyUrl').value = SURVEY_DEFAULT_URL;
+}
 function clearExamForm(){
   $('planPreview').innerHTML = ''; $('exCount').oninput = () => { updateBpTotal(); $('planPreview').innerHTML = ''; };
   $('exEditingId').value=''; $('exId').value=''; $('exId').disabled=false; $('exTitle').value=''; $('exShareTitle').value='';
   $('exCount').value=''; $('exBothGD').value=''; $('exSeconds').value=''; $('exPass').value=''; $('exPassOn').checked=false;
-  $('exRetake').checked=false; $('exAttempts').value=''; $('exAttempts').disabled=false; $('exPractice').checked=false; if ($('exSurveyUrl')) $('exSurveyUrl').value=''; $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
+  $('exRetake').checked=false; $('exAttempts').value=''; $('exAttempts').disabled=false; $('exPractice').checked=false; exSurveySet(''); $('exComplianceOn').checked=false; $('exCHigh').value=''; $('exCMid').value=''; $('exCLow').value='';
   $('exDesc').value=''; asgLoad([]); $('exOpen').value=''; $('exClose').value=''; document.querySelectorAll('.exSeg').forEach(c => c.checked=false);
   $('exInviteOff').checked = false; $('exInvNote').value = ''; $('exInvClosing').value = ''; exInvSum(); $('exInviteStat').textContent = ''; exResendReset(false);
   BP_RULES = []; renderBpRules(); $('bpPreview').innerHTML=''; $('bpTotal').textContent='';
@@ -3333,7 +3342,7 @@ function editExam(id){
   const dflt = (k) => e[k] != null ? !!e[k] : !!SETCACHE[k];
   $('exRetake').checked = dflt('allowRetake'); $('exAttempts').value = e.maxAttempts > 1 ? e.maxAttempts : ''; $('exAttempts').disabled = $('exRetake').checked; $('exPractice').checked = !!e.practice; $('exComplianceOn').checked = dflt('complianceEnabled');
   $('exCHigh').value = e.complianceHighMin || ''; $('exCMid').value = e.complianceMidMin || ''; $('exCLow').value = e.complianceLowMin || '';
-  $('exDesc').value = e.description || ''; $('exSurveyUrl').value = e.surveyUrl || ''; asgLoad(e.codes || [], e.codesExclude); $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
+  $('exDesc').value = e.description || ''; exSurveySet(e.surveyUrl || ''); asgLoad(e.codes || [], e.codesExclude); $('exOpen').value = msToLocal(e.openAt); $('exClose').value = msToLocal(e.closeAt);
   document.querySelectorAll('.exSeg').forEach(c => c.checked = (e.segments || []).indexOf(c.value) >= 0);
   $('exInviteOff').checked = !!e.inviteOff; $('exInvNote').value = e.inviteNote || ''; $('exInvClosing').value = e.inviteClosing || ''; exInvSum();
   $('exInviteStat').textContent = (e.invitedCodes || []).length ? 'Đã tự động gửi email mời cho ' + e.invitedCodes.length + ' người được gán vào đề này.' : (e.inviteOff ? '' : 'Chưa có ai được gửi email mời (sẽ tự gửi khi lưu, nếu có người đủ điều kiện và có email).');
@@ -3388,7 +3397,7 @@ const bad0 = exIssues(); for (let st = 1; st <= EX_STEPS; st++){ const e0 = bad0
     questionCount: $('exCount').value, bothGiaDungCount: $('exBothGD').value, secondsPerQuestion: $('exSeconds').value, timeMode: $('exTimeMode').value, totalMinutes: $('exTotalMin').value,
     passEnabled: $('exPassOn').checked, passScore: $('exPass').value, allowRetake: $('exRetake').checked, maxAttempts: $('exAttempts').value.trim(), practice: $('exPractice').checked,
     complianceEnabled: $('exComplianceOn').checked, complianceHighMin: $('exCHigh').value, complianceMidMin: $('exCMid').value, complianceLowMin: $('exCLow').value,
-    description: $('exDesc').value.trim(), surveyUrl: $('exSurveyUrl').value.trim(), codes: ASG.mode !== 'all' ? $('exCodes').value : '', codesExclude: ASG.mode === 'exclude',
+    description: $('exDesc').value.trim(), surveyUrl: $('exSurveyOn').checked ? ($('exSurveyUrl').value.trim() || SURVEY_DEFAULT_URL) : '', codes: ASG.mode !== 'all' ? $('exCodes').value : '', codesExclude: ASG.mode === 'exclude',
     openAt: localToMs($('exOpen').value), closeAt: localToMs($('exClose').value),
     segments: Array.from(document.querySelectorAll('.exSeg:checked')).map(c => c.value),
     segmentPlans: exSpOwn() ? spRead($('exSp')) : null, sharedUniform: exSpShared(), inviteOff: $('exInviteOff').checked, inviteNote: $('exInvNote').value.trim(), inviteClosing: $('exInvClosing').value.trim(),
