@@ -745,12 +745,16 @@ const handler = async function (context, req) {
 
     if (op === "copyQuestions") {
       const from = String(b.from == null ? "" : b.from), to = String(b.to || "");
-      if (!quiz.validPeriod(from) || !/^\d{4}-\d{2}$/.test(to) || from === to) return reply(context, 400, { ok: false, error: "Chọn kỳ nguồn và kỳ đích hợp lệ (khác nhau)." });
+      // Kỳ đích chấp nhận mọi mã đề hợp lệ (chữ/số/gạch ngang hoặc dạng năm-tháng), không chỉ riêng dạng năm-tháng.
+      if (!quiz.validPeriod(from) || !to || !quiz.validPeriod(to) || from === to) return reply(context, 400, { ok: false, error: "Chọn kỳ nguồn và kỳ đích hợp lệ (khác nhau)." });
+      // category (tuỳ chọn): chỉ chép câu thuộc ĐÚNG danh mục này; để trống = chép toàn bộ danh mục như cũ.
+      const cat = b.category !== undefined ? String(b.category || "").trim() : null;
       const list = await quiz.getQuestions();
       const norm = (t) => String(t || "").trim().toLowerCase().replace(/\s+/g, " ");
+      const normCat = (t) => String(t || "").trim().toLowerCase();
       const have = new Set(list.filter((q) => (q.period || "") === to).map((q) => norm(q.text)));
       let added = 0, skipped = 0;
-      list.filter((q) => (q.period || "") === from).forEach((q) => {
+      list.filter((q) => (q.period || "") === from && (cat === null || cat === "" ? true : normCat(q.category) === normCat(cat))).forEach((q) => {
         if (have.has(norm(q.text))) { skipped++; return; }
         list.push({ id: quiz.genId(), text: q.text, options: (q.options || []).slice(), correctIndex: q.correctIndex, category: q.category || "", active: q.active !== false, period: to, copiedFrom: q.id, type: q.type, correctIndexes: q.correctIndexes, accepted: q.accepted, bankId: q.bankId, difficulty: q.difficulty || "", tags: (q.tags || []).slice(), explanation: q.explanation || "" });
         have.add(norm(q.text)); added++;
