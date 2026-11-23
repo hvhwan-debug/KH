@@ -391,6 +391,9 @@ body.au-lookup.th-wide #card{width:min(1120px,100%);padding:clamp(14px,2vw,24px)
 .tr-row{padding-top:12px;padding-bottom:12px;border-top:1px solid #EDF2F9;font-size:13.5px;color:#243B63}
 .tr-n{font-weight:800;color:#0B1F4B;display:flex;flex-direction:column;align-items:flex-start;gap:3px}
 .tr-star{font-style:normal;font-size:10.5px;font-weight:800;color:#14753F;background:#E6F7EE;border:1px solid #A8DDBF;border-radius:99px;padding:1px 8px}
+.tr-card{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;color:#0B3F94;background:#EAF1FD;border:1px solid #CFE0FA;border-radius:99px;padding:2px 9px 2px 7px;text-decoration:none;margin-left:6px;vertical-align:middle;transition:background .12s,box-shadow .12s}
+.tr-card:hover{background:#DCEBFF;box-shadow:0 2px 8px -4px rgba(11,63,148,.4)}
+.tr-card svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tr-res{display:flex;align-items:center;gap:12px}
 .tr-bar{display:flex;flex:1 1 90px;max-width:170px;height:9px;border-radius:99px;overflow:hidden;background:#DDE5F0}
 .tr-bar i{display:block;height:100%}.tr-bar .g{background:#16B364}.tr-bar .w{background:#F0605D}
@@ -649,8 +652,9 @@ function renderGroups(){
       var tot = r.total || 0, w = function(x){ return tot ? (x / tot * 100) : 0; };
       var bar = '<i class="g" style="width:' + (r.wrong != null ? w(r.score || 0) : (r.pct || 0)) + '%"></i>' + (r.wrong != null ? '<i class="w" style="width:' + w(r.wrong) + '%"></i>' : '');
       var tip = 'Đúng ' + (r.score != null ? r.score : '–') + ' · Sai ' + (r.wrong != null ? r.wrong : '–') + ' · Bỏ trống ' + (r.blank != null ? r.blank : '–') + ' · Mã xác thực ' + r.proof;
+      var isBest = r === head;
       return '<li class="tr-row' + (r.official ? ' off' : '') + '" title="' + esc(tip) + '">' +
-        '<span class="tr-n">Lần ' + (n - idx) + (r.official && n > 1 ? '<i class="tr-star">★ Chính thức</i>' : '') + '</span>' +
+        '<span class="tr-n">Lần ' + (n - idx) + (r.official && n > 1 ? '<i class="tr-star">★ Chính thức</i>' : '') + (isBest ? '<a class="tr-card" href="/api/kt-card?t=' + encodeURIComponent(r.t) + '" title="Tải phiếu xác nhận (ảnh) của lần làm tốt nhất">' + ico('<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>') + '<span>Phiếu xác nhận</span></a>' : '') + '</span>' +
         '<span class="tr-when">' + esc(fmtShort(r.submittedAt).replace(' · ', ' - ')) + '</span>' +
         '<span class="tr-res"><span class="tr-bar" aria-hidden="true">' + bar + '</span><b>' + esc(r.score != null ? r.score : '–') + '/' + esc(tot) + ' <em>(' + esc(r.pct) + '%)</em></b></span>' +
         '<span class="tr-dur">' + ico('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2h5"/>') + esc(fmtDur(r.durationSec)) + '</span>' +
