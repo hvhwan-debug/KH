@@ -1,5 +1,5 @@
 // Hồ sơ nhân sự của thí sinh (chỉ dữ liệu LIÊN QUAN CÔNG VIỆC), lưu cùng bản ghi thí sinh trong kho riêng của hệ thống.
-// Cố ý KHÔNG lưu: ngày sinh đầy đủ (chỉ giữ năm sinh cho thống kê), giới tính, địa chỉ, nơi sinh, quê quán, tôn giáo, dân tộc, quốc tịch, tình trạng hôn nhân.
+// Cố ý KHÔNG lưu trong hồ sơ nhân sự này: giới tính, địa chỉ, nơi sinh, quê quán, tôn giáo, dân tộc, quốc tịch, tình trạng hôn nhân.
 // Mọi dữ liệu vào đều qua cleanProfile (danh sách trường cố định, giới hạn độ dài): không nhận trường lạ từ trình duyệt.
 const STR = { donVi: 80, khoi: 60, phong: 60, boPhan: 80, toNhom: 60, khuVucCon: 30, noiLamViec: 60, mien: 30, loaiNV: 40, chucDanhGoc: 80, quanLy: 80,
   trinhDo: 50, bangCap: 50, chuyenNganh: 80, truong: 100, tinhPhuTrach: 300,

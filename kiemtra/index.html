@@ -2605,10 +2605,11 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
       </div>
       <div class="rgbox hide" id="birthBox">
         <h2>Ngày sinh</h2>
-        <p class="small" style="margin:0 0 10px">Chỉ cần ngày và tháng sinh — để hệ thống gửi lời chúc mừng sinh nhật, không cần nhập năm sinh.</p>
+        <p class="small" style="margin:0 0 10px">Nhập ngày, tháng, năm sinh — chỉ để hệ thống gửi lời chúc mừng sinh nhật, không dùng cho mục đích khác.</p>
         <div class="field" style="display:flex;gap:10px;margin:0">
           <div style="flex:1"><label for="inBirthDay">Ngày <span class="req">*</span></label><select id="inBirthDay"></select></div>
           <div style="flex:1"><label for="inBirthMonth">Tháng <span class="req">*</span></label><select id="inBirthMonth"></select></div>
+          <div style="flex:1"><label for="inBirthYear">Năm <span class="req">*</span></label><select id="inBirthYear"></select></div>
         </div>
         <div id="birthMsg" role="alert"></div>
       </div>
@@ -3162,8 +3163,12 @@ function renderConfirm(){
       for (var di = 1; di <= 31; di++) dOpts += '<option value="' + di + '">' + di + '</option>';
       for (var mi = 1; mi <= 12; mi++) mOpts += '<option value="' + mi + '">Tháng ' + mi + '</option>';
       $('inBirthDay').innerHTML = dOpts; $('inBirthMonth').innerHTML = mOpts;
+      var yOpts = '<option value="">—</option>';
+      for (var yi = new Date().getFullYear() - 16; yi >= 1950; yi--) yOpts += '<option value="' + yi + '">' + yi + '</option>';
+      $('inBirthYear').innerHTML = yOpts;
     }
-    $('inBirthDay').removeAttribute('aria-invalid'); $('inBirthMonth').removeAttribute('aria-invalid'); msg('birthMsg','');
+    if (c.birthMD && !$('inBirthDay').value && !$('inBirthMonth').value){ var bp = c.birthMD.split('-'); $('inBirthMonth').value = String(parseInt(bp[0], 10)); $('inBirthDay').value = String(parseInt(bp[1], 10)); } // đã có ngày/tháng từ trước: điền sẵn, chỉ xin thêm năm
+    $('inBirthDay').removeAttribute('aria-invalid'); $('inBirthMonth').removeAttribute('aria-invalid'); $('inBirthYear').removeAttribute('aria-invalid'); msg('birthMsg','');
   }
   var secs = x.secondsPerQuestion || 60, n = x.questionCount || 0;
   var timeBox = x.timeMode === 'total' ? '<div>'+RI('clock')+'<b>'+(x.totalMinutes||30)+'<small> phút</small></b><span>Cả bài</span></div>' : '<div>'+RI('clock')+'<b>'+secs+'<small>s</small></b><span>Mỗi câu</span></div>';
@@ -3354,11 +3359,14 @@ $('btnStart').addEventListener('click', async function(){
     ST.cand.province = sv.j.province; ST.cand.region = sv.j.region; ST.cand.needRegion = false;
   }
   if (!$('birthBox').classList.contains('hide')){
-    var bDay = $('inBirthDay').value, bMon = $('inBirthMonth').value;
+    var bDay = $('inBirthDay').value, bMon = $('inBirthMonth').value, bYear = $('inBirthYear').value;
     $('inBirthDay').setAttribute('aria-invalid', bDay ? 'false' : 'true');
     $('inBirthMonth').setAttribute('aria-invalid', bMon ? 'false' : 'true');
-    if (!bDay || !bMon){ msg('birthMsg','Vui lòng chọn đầy đủ ngày và tháng sinh.'); return; }
-    ST.birthNew = (bMon.length < 2 ? '0' + bMon : bMon) + '-' + (bDay.length < 2 ? '0' + bDay : bDay);
+    $('inBirthYear').setAttribute('aria-invalid', bYear ? 'false' : 'true');
+    if (!bDay || !bMon || !bYear){ msg('birthMsg','Vui lòng chọn đầy đủ ngày, tháng và năm sinh.'); return; }
+    var bChk = new Date(Date.UTC(+bYear, +bMon - 1, +bDay));
+    if (bChk.getUTCMonth() !== +bMon - 1 || bChk.getUTCDate() !== +bDay){ $('inBirthDay').setAttribute('aria-invalid', 'true'); msg('birthMsg','Ngày sinh không tồn tại, vui lòng kiểm tra lại.'); return; }
+    ST.birthNew = bYear + '-' + (bMon.length < 2 ? '0' + bMon : bMon) + '-' + (bDay.length < 2 ? '0' + bDay : bDay);
     msg('birthMsg','');
   }
   PH.mode = 'exam';

@@ -31,7 +31,7 @@ const DEFAULT_SETTINGS = {
   maxAttempts: 1,
   // Điểm tuân thủ học tập: quy đổi từ tỉ lệ đúng (thang điểm 10) sang một mốc điểm cố định
   // (mặc định theo quy tắc kiểm tra định kỳ PC: <6 → 0, 6-6.99 → 10, 7-8.99 → 15, >=9 → 20).
-  // Bắt buộc khai ngày sinh (ngày/tháng, không cần năm) trước khi làm bài, để hệ thống chúc mừng sinh nhật.
+  // Bắt buộc khai ngày, tháng, năm sinh trước khi làm bài, để hệ thống chúc mừng sinh nhật.
   // Mặc định TẮT: chỉ bật khi quản trị viên chủ động chọn trong Cài đặt, tránh chặn nhầm ai khi chưa sẵn sàng.
   requireBirthDate: false,
   complianceEnabled: true,
@@ -86,17 +86,30 @@ const CATEGORY_BY_SEGMENT = { gia_dung: "Gia dụng", may_loc: "Máy lọc nư�
 // Câu hỏi gắn tag "Miền Bắc" / "Miền Nam" chỉ phát cho PC thuộc miền đó; câu không gắn tag miền dùng chung.
 const REGION_LABEL = { bac: "Miền Bắc", nam: "Miền Nam" };
 const foldRg = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, " ").trim();
-// Ngày sinh chỉ lấy NGÀY + THÁNG (không hỏi năm sinh) — chỉ để hệ thống biết ngày nào chúc mừng sinh nhật.
-// Lưu dạng "MM-DD" (vd "03-05" = ngày 5 tháng 3). Trả về "" nếu không hợp lệ.
-function normBirthDate(s) {
-  const m = /^(\d{1,2})-(\d{1,2})$/.exec(String(s || "").trim());
+// Ngày sinh lưu dạng "YYYY-MM-DD" (đủ ngày, tháng, năm) để chúc mừng sinh nhật. Dữ liệu cũ chỉ có "MM-DD" (không năm) vẫn đọc được;
+// needYear = true thì BẮT BUỘC có năm (dùng khi thu thập). Trả về "" nếu không hợp lệ.
+function normBirthDate(s, needYear) {
+  const v = String(s || "").trim(), p2 = (n) => String(n).padStart(2, "0");
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(v);
+  if (m) {
+    const y = parseInt(m[1], 10), mo = parseInt(m[2], 10), da = parseInt(m[3], 10), nowY = new Date(Date.now() + 7 * 3600000).getUTCFullYear();
+    if (y < 1940 || y > nowY - 15) return ""; // năm sinh hợp lý: từ 1940, tối thiểu 15 tuổi
+    const d = new Date(Date.UTC(y, mo - 1, da));
+    if (d.getUTCFullYear() !== y || d.getUTCMonth() !== mo - 1 || d.getUTCDate() !== da) return ""; // ngày không tồn tại (31/4, 29/2 năm không nhuận...)
+    return y + "-" + p2(mo) + "-" + p2(da);
+  }
+  if (needYear) return "";
+  m = /^(\d{1,2})-(\d{1,2})$/.exec(v);
   if (!m) return "";
   const mo = parseInt(m[1], 10), da = parseInt(m[2], 10);
   if (mo < 1 || mo > 12 || da < 1 || da > 31) return "";
-  const dim = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1]; // tháng 2 cho phép 29 (năm nhuận) để khỏi phải hỏi năm sinh
+  const dim = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1];
   if (da > dim) return "";
-  return String(mo).padStart(2, "0") + "-" + String(da).padStart(2, "0");
+  return p2(mo) + "-" + p2(da);
 }
+// "MM-DD" của một ngày sinh đã lưu (dạng đủ năm hoặc dạng cũ); "" nếu chưa có
+function birthMD(s) { const m = /(?:^|-)(\d{2})-(\d{2})$/.exec(String(s || "")); return m ? m[1] + "-" + m[2] : ""; }
+const hasBirthYear = (s) => /^\d{4}-\d{2}-\d{2}$/.test(String(s || ""));
 function normRegion(s) {
   const k = foldRg(s).replace(/^mien /, "");
   return k === "bac" || k === "mb" ? "bac" : k === "nam" || k === "mn" ? "nam" : "";
@@ -1331,3 +1344,5 @@ module.exports = { validImageUrl,
   shuffle, genId, compliancePoints,
   buildPaper, getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, timeOf, timeFields, getActive, setActive, moveActive, syncAttempt, clientState, tooManyFails, noteFail
 };
+module.exports.birthMD = birthMD;
+module.exports.hasBirthYear = hasBirthYear;

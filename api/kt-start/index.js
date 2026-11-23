@@ -68,9 +68,9 @@ module.exports = async function (context, req) {
     }
 
     // Hệ thống yêu cầu khai ngày sinh (Cài đặt mặc định) và hồ sơ chưa có: bắt điền ở màn xác nhận trước khi vào bài.
-    if ((await quiz.getSettings()).requireBirthDate && !found.birthDate) {
-      const bd = quiz.normBirthDate(b.birthDate);
-      if (!bd) return reply(context, 400, { ok: false, needBirth: true, error: "Vui lòng nhập ngày sinh (ngày và tháng) để tiếp tục." });
+    if ((await quiz.getSettings()).requireBirthDate && !quiz.hasBirthYear(found.birthDate)) {
+      const bd = quiz.normBirthDate(b.birthDate, true);
+      if (!bd) return reply(context, 400, { ok: false, needBirth: true, error: "Vui lòng nhập đầy đủ ngày, tháng và năm sinh hợp lệ để tiếp tục." });
       found.birthDate = bd;
       if (found.test) await quiz.updateTestAccount(found.code, { birthDate: bd }); else await quiz.saveCandidates(candidates);
     }

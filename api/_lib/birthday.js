@@ -1,4 +1,4 @@
-// Chúc mừng sinh nhật tự động: mỗi lần chạy (cron), kiểm tra ai có ngày sinh (MM-DD, không có năm) trùng HÔM NAY
+// Chúc mừng sinh nhật tự động: mỗi lần chạy (cron), kiểm tra ai có ngày sinh (lấy ngày + tháng từ ngày sinh đã khai) trùng HÔM NAY
 // theo giờ Việt Nam, gửi email chúc mừng — mỗi người chỉ gửi đúng 1 lần/năm (đánh dấu birthdayWishedYear).
 const quiz = require("./quiz");
 const mail = require("./mail");
@@ -26,7 +26,7 @@ function cardHtml(name) {
 async function run() {
   const md = todayMD(), yr = todayYear();
   const candidates = await quiz.getCandidates();
-  const todays = candidates.filter((c) => !quiz.isLeft(c) && c.birthDate === md);
+  const todays = candidates.filter((c) => !quiz.isLeft(c) && quiz.birthMD(c.birthDate) === md);
   let sent = 0;
   let touched = false;
   for (const c of todays) {
@@ -48,7 +48,7 @@ async function run() {
 async function today() {
   const md = todayMD();
   const candidates = await quiz.getCandidates();
-  return candidates.filter((c) => !quiz.isLeft(c) && c.birthDate === md).map((c) => ({ code: c.code, name: c.name || c.code, manager: c.manager || "" }));
+  return candidates.filter((c) => !quiz.isLeft(c) && quiz.birthMD(c.birthDate) === md).map((c) => ({ code: c.code, name: c.name || c.code, manager: c.manager || "" }));
 }
 
 module.exports = { run, today, todayMD };
