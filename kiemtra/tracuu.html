@@ -449,6 +449,7 @@ body.au-lookup.th-wide::after{content:"";position:fixed;z-index:0;pointer-events
 body.au-lookup.th-wide .au-bar{background:linear-gradient(100deg,#0A3FB8,#0B55D6 60%,#1266E6);gap:20px}
 body.au-lookup.th-wide .au-back{display:none}
 body.au-lookup.th-wide .tr-nav{display:flex;align-items:center;gap:6px;margin-left:auto}
+@media(min-width:861px){ body.au-lookup:not(.th-wide) .tr-nav{display:flex;align-items:center;gap:4px;margin-left:auto} } /* màn tra cứu mặc định (nền ảnh): hiện menu đầy đủ trên máy tính, giống các trang khác */
 .tr-nav a,.tr-nav button{display:inline-flex;align-items:center;gap:9px;padding:10px 18px;border:0;border-radius:99px;background:none;color:#fff;font:inherit;font-size:15px;font-weight:700;text-decoration:none;white-space:nowrap;cursor:pointer;transition:background .15s}
 .tr-nav a:hover,.tr-nav button:hover{background:rgba(255,255,255,.14)}
 .tr-nav a.cur{background:linear-gradient(100deg,#1E86F5,#3DA2FF);box-shadow:0 8px 18px -8px rgba(0,30,120,.6)}
@@ -501,9 +502,12 @@ body.au-lookup.th-wide #card{padding:14px;border-radius:30px;background:rgba(255
   <a href="/kiemtra/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10M10 20v-5h4v5"/></svg><span>Trang chủ</span></a>
   <a href="/kiemtra/tracuu.html" class="cur" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12M11 20V5M17 20v-9"/></svg><span>Kết quả</span></a>
   <a href="/kiemtra/hoclieu.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5C6 4 9 4.2 12 6c3-1.8 6-2 9-.5V19c-3-1.5-6-1.3-9 .5-3-1.8-6-2-9-.5z"/><path d="M12 6v13.5"/></svg><span>Học liệu</span></a>
+  <a href="/kiemtra/tracuu.html#lichsu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7.5V12l3 2"/></svg><span>Lịch sử làm bài</span></a>
   <button type="button" id="trGuide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 16.5h.01"/></svg><span>Hướng dẫn</span></button>
+  <button type="button" id="trSupport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/><path d="M19 20c0 1.5-2 2-5 2"/></svg><span>Hỗ trợ</span></button>
 </nav><span class="tr-me" id="trMe" aria-hidden="true"></span></header>
 <dialog class="tr-dlg" id="trDlg" aria-labelledby="trDlgT"><h3 id="trDlgT">Hướng dẫn xem kết quả</h3><ul><li>Mỗi thẻ là một bài kiểm tra; bấm vào thẻ để mở các lần làm bài.</li><li>Kết quả chính thức là lần có điểm cao nhất (hoặc lần được đánh dấu ★ Chính thức).</li><li>Bấm <b>Xem bài</b> để mở trang kết quả đã xác thực của từng lần làm.</li><li>Dùng các nút Tất cả, Chính thức, Thi thử, Thử nghiệm, ô tìm kiếm và Bộ lọc để thu gọn danh sách.</li><li>Kết quả tự ẩn sau 5 phút không thao tác; bấm <b>Xong, ẩn kết quả</b> khi dùng máy chung.</li></ul><form method="dialog"><button>Đã hiểu</button></form></dialog>
+<dialog class="tr-dlg" id="trSupportDlg" aria-labelledby="trSupportDlgT"><h3 id="trSupportDlgT">Hỗ trợ</h3><ul><li>Mọi thắc mắc vui lòng liên hệ quản trị viên phụ trách.</li><li>Nếu không tra cứu được kết quả hoặc quét khuôn mặt bị lỗi, hãy thử lại bằng Chrome hoặc Safari bản mới và kiểm tra kết nối mạng.</li></ul><form method="dialog"><button>Đã hiểu</button></form></dialog>
 <div class="wrap">
   <aside class="tr-side" aria-hidden="true"><img src="/kiemtra/tracuu-art.png" alt="" width="500" height="430"><p>Nền tảng kiểm tra,<br>đánh giá năng lực<br>thông minh<br>tích hợp <b>AI</b></p></aside>
   <header class="top"><div class="logo" aria-hidden="true"><img src="/kiemtra/logo-mark.png" alt="" width="40" height="40"></div><div><b>Nền tảng kiểm tra trực tuyến</b><span>Tra cứu bài kiểm tra của tôi</span></div></header>
@@ -692,6 +696,7 @@ $('listView').addEventListener('change', function(e){
   else if (t.name === 'fo'){ TH.sort = t.value; TH.page = 1; renderGroups(); }
 });
 $('trGuide').addEventListener('click', function(){ var d = $('trDlg'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); });
+$('trSupport').addEventListener('click', function(){ var d = $('trSupportDlg'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); });
 $('thQ').addEventListener('input', function(){ TH.q = this.value; TH.page = 1; renderGroups(); });
 function showList(j){
   var L = j.list || [];
