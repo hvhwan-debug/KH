@@ -480,6 +480,71 @@ body.cert-on .wrap{max-width:1180px;width:min(1180px,94vw)}
 .ct-pcts{display:none}
 .cert.art-comp .ct-pcts{display:block;margin-top:8px;font-size:15px;font-weight:600;color:#e1f8ff}
 .cert.art-comp .ct-pcts b{font-size:18px;font-weight:800;color:#fff}
+
+/* ===== ĐIỆN THOẠI (≤640px): giao diện gọn như email kết quả — dải xanh có tên đề + trạng thái, thẻ trắng bên dưới ===== */
+@media(max-width:640px){
+  body.cert-on{background:#EEF4FD!important}
+  body.cert-on::before,body.cert-on::after{display:none!important}
+  body.cert-on .wrap{width:100%!important;max-width:none!important;padding:10px 10px calc(18px + env(safe-area-inset-bottom))!important}
+  .cert{border:0!important;border-radius:22px!important;background:#fff!important;box-shadow:0 10px 28px -8px rgba(31,102,224,.28)!important}
+  .ct-top{display:block!important;padding:18px 18px 0!important;min-height:0!important;background:linear-gradient(135deg,#1B5FD9 0%,#3B8CF6 100%)!important;overflow:visible!important}
+  .ct-top::before,.ct-top::after{display:none!important}
+  /* minh hoạ trang trí (cúp / chưa đạt / bảng ghi) bỏ đi cho gọn; huy hiệu điểm tuân thủ vẫn nằm trong thẻ trắng */
+  .cert:not(.art-comp) .ct-art{display:none!important}
+  .ct-kick{display:block!important;max-width:none!important;margin:0 0 6px!important;padding:0!important;background:none!important;border:0!important;text-align:center!important;font-size:11px!important;font-weight:700!important;letter-spacing:.12em!important;text-transform:uppercase!important;color:#C6DEFF!important}
+  .ct-kick::before{display:none!important}
+  .ct-title{max-width:none!important;margin:0 0 12px!important;text-align:center!important;font-size:18px!important;line-height:1.3!important;font-weight:800!important;color:#fff!important}
+  #vBadge{max-width:none!important;display:flex!important;justify-content:center!important;margin:0 0 16px!important}
+  /* nhãn trạng thái: viên trắng, chữ màu theo kết quả */
+  .ct-status{max-width:100%!important;flex-wrap:wrap!important;justify-content:center!important;row-gap:2px!important;background:#fff!important;border:0!important;box-shadow:none!important;color:#17794A!important;font-size:14px!important;padding:6px 14px 6px 8px!important;gap:8px!important}
+  .ct-status b{width:22px!important;height:22px!important;font-size:13px!important;background:#18A957!important;color:#fff!important}
+  .ct-status.s-n{color:#D32F2F!important}.ct-status.s-n b{background:#E53935!important;color:#fff!important}
+  .ct-status.s-p{color:#8A5200!important}.ct-status.s-p b{background:#D68F1E!important;color:#fff!important}
+  .ct-status.s-d{color:#1F66E0!important}.ct-status.s-d b{background:#1F66E0!important;color:#fff!important}
+  .ct-status i{font-size:12.5px!important;font-weight:600!important;color:#5D6F8E!important;border-left:1px solid #D7E4F8!important;padding-left:10px!important;opacity:1!important}
+  /* thẻ kết quả: nền trắng bám mép dưới dải xanh, hai cột (huy hiệu / vòng % | thông tin) */
+  .ct-result{display:grid!important;grid-template-columns:116px minmax(0,1fr)!important;gap:0!important;align-items:center!important;max-width:none!important;width:auto!important;margin:0 -18px!important;padding:18px 16px 14px!important;background:#fff!important;color:#14357A!important;border-radius:22px 22px 0 0!important}
+  .ct-result .ct-art{display:block!important;position:static!important;transform:none!important;width:112px!important;max-width:100%!important;height:auto!important;margin:0 auto!important;filter:drop-shadow(0 6px 10px rgba(0,30,90,.25))!important}
+  .ct-ring{width:108px!important;margin:0 auto!important}
+  .ct-ring .in{fill:#F2F7FF!important}.ct-ring .trk{stroke:#DCE7F7!important}
+  .ct-ring .c strong{color:#14357A!important;font-size:25px!important}.ct-ring .c span{color:#5D6F8E!important;font-size:10px!important}
+  .ct-person{min-width:0!important;padding:0 0 0 14px!important;margin-left:10px!important;border-left:1px solid #D7E4F8!important;text-align:left!important}
+  .ct-person h2{display:block!important;margin:0 0 4px!important;max-width:none!important;font-size:18px!important;line-height:1.25!important;color:#14357A!important}
+  .ct-person h2 .ct-pi{display:none!important}
+  .ct-person p{margin:2px 0!important;font-size:12.5px!important;gap:6px!important;color:#5D6F8E!important}
+  .ct-person p svg{color:#5B9BEA!important;width:14px!important;height:14px!important}
+  .ct-score{margin-top:6px!important;gap:6px!important;justify-content:flex-start!important}
+  .ct-score strong{font-size:34px!important;line-height:1.1!important;color:#1F66E0!important}
+  .ct-score span{font-size:14px!important;font-weight:700!important;color:#14357A!important}
+  .ct-progress{max-width:none!important;height:9px!important;margin:8px 0 6px!important;background:#E3ECF8!important;box-shadow:none!important}
+  .ct-small{font-size:12px!important;color:#5D6F8E!important}
+  .ct-small u{background:#C5D3E8!important}
+  /* phần chi tiết bên dưới: liền với thẻ trắng, chữ gọn, không xuống dòng */
+  .ct-bottom{margin-top:0!important;border-radius:0!important;padding:2px 14px 22px!important;background:#fff!important}
+  .ct-wave{display:none!important}
+  .ct-metrics{margin:0!important}
+  .extra{display:grid!important;grid-template-columns:1fr!important;gap:12px!important;margin:6px 0 0!important}
+  .extra .kv{padding:2px 14px!important;border:1px solid #DCE8FA!important;border-radius:16px!important;background:#F7FAFF!important;box-shadow:none!important}
+  .kv div{padding:11px 0!important;gap:10px!important;font-size:13.5px!important;align-items:center!important;border-top-color:#E3ECF8!important}
+  .kv dt{display:flex!important;align-items:center!important;gap:8px!important;font-size:13.5px!important;color:#4A5B7D!important;white-space:nowrap!important}
+  .kv dt svg{width:18px!important;height:18px!important;flex:0 0 auto!important}
+  .kv dd{font-size:13.5px!important;white-space:nowrap!important;word-break:normal!important;color:#14357A!important}
+  .kv dd.gold{color:#A35F0B!important}
+  .extra .proof{flex-direction:row!important;text-align:left!important;justify-content:flex-start!important;align-items:center!important;gap:12px!important;padding:11px 14px!important;border-radius:16px!important}
+  .extra .proof>div{text-align:left!important}
+  .extra .proof svg{width:30px!important;height:30px!important;flex:0 0 auto!important}
+  .proof b{font-size:17px!important}
+  .extra .proof span{max-width:none!important;margin:2px 0 0!important;font-size:11.5px!important}
+  .acts{flex-direction:column!important;gap:10px!important;margin-top:2px!important}
+  .btn-outline{min-height:48px!important;padding:10px 16px!important;font-size:15px!important;border-radius:14px!important;box-shadow:none!important}
+  #vStudy{background:linear-gradient(90deg,#2F8CF8,#1B57C9)!important;border-color:transparent!important;color:#fff!important}
+  #vStudy .bi svg{filter:brightness(0) invert(1)}
+  .ct-verify{margin:12px 0 0!important;padding:0!important;background:none!important;box-shadow:none!important;font-size:12.5px!important;font-weight:600!important;color:#1E7A4C!important;justify-content:center!important}
+  .ct-verify .ct-check{width:18px!important;height:18px!important;flex:0 0 auto!important}
+  .ct-verify>span:last-child{flex:0 1 auto!important;text-align:left!important}
+  .cert.art-comp .ct-pcts{margin:0!important;font-size:14px!important;font-weight:600!important;color:#4A5B7D!important}
+  .cert.art-comp .ct-pcts b{font-size:15px!important;color:#1F66E0!important}
+}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 </head>
@@ -931,7 +996,7 @@ $('paperAdmin').addEventListener('click', adminView);
   var rows = '';
   if (r.startedAt) rows += '<div><dt>'+IC.play+'Bắt đầu lúc</dt><dd>'+full(r.startedAt)+'</dd></div>';
   if (r.submittedAt) rows += '<div><dt>'+IC.flag+'Nộp bài lúc</dt><dd>'+full(r.submittedAt)+'</dd></div>';
-  if (r.durationSec != null) rows += '<div><dt>'+IC.watch+'Thời gian hoàn thành</dt><dd>'+dur(r.durationSec)+'</dd></div>';
+  if (r.durationSec != null) rows += '<div><dt>'+IC.watch+'Thời gian làm bài</dt><dd>'+dur(r.durationSec)+'</dd></div>';
   if (r.compliancePoints != null) rows += '<div><dt>'+IC.star+(prac ? 'Điểm tuân thủ (nếu thi thật)' : 'Điểm tuân thủ') + '</dt><dd class="gold">' + esc(r.compliancePoints) + ' điểm</dd></div>';
   $('vRows').innerHTML = rows; $('vRows').classList.toggle('hide', !rows); $('vProof').textContent = r.proof;
   $('vSys').textContent = full(Date.now() + off);
