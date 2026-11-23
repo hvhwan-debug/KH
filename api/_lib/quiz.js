@@ -587,6 +587,39 @@ function pick(obj, keys) {
   return out;
 }
 
+// ---------- Mỗi đề giữ cài đặt RIÊNG, không bị đổi theo khi sửa Cài đặt mặc định ----------
+// Trước đây ô để trống ở đề = "theo Cài đặt mặc định" và được đọc LẠI mỗi lần thí sinh vào thi, nên sửa Cài đặt
+// mặc định (số câu, thời gian, điểm đạt, phân bổ nhóm ngành...) là đổi theo hàng loạt mọi đề cũ.
+// Nay: lúc lưu đề, ô nào để trống được chép giá trị mặc định HIỆN TẠI vào đề (đóng băng); trước khi lưu Cài đặt mặc định
+// mới, mọi đề đang có được đóng băng bằng giá trị CŨ. Cài đặt mặc định chỉ còn là giá trị điền sẵn cho đề tạo mới.
+const FREEZE_FIELDS = [
+  "shareTitle", "questionCount", "bothGiaDungCount", "secondsPerQuestion", "timeMode", "totalMinutes",
+  "passEnabled", "passScore", "allowRetake", "complianceEnabled", "complianceHighMin", "complianceMidMin", "complianceLowMin"
+];
+const emptyV = (v) => v === undefined || v === null || v === "";
+function freezeExam(ex, base) {
+  let changed = false;
+  FREEZE_FIELDS.forEach((k) => { if (emptyV(ex[k]) && !emptyV(base[k])) { ex[k] = JSON.parse(JSON.stringify(base[k])); changed = true; } });
+  const hasOwnPlan = ex.segmentPlans && Object.keys(ex.segmentPlans).length;
+  if (!ex.sharedUniform && !hasOwnPlan && base.segmentPlans && Object.keys(base.segmentPlans).length) {
+    ex.segmentPlans = JSON.parse(JSON.stringify(base.segmentPlans)); changed = true;
+  }
+  if (!ex.frozen) { ex.frozen = true; changed = true; }
+  return changed;
+}
+// Đóng băng MỌI đề đang có bằng cài đặt mặc định `base` (gọi TRƯỚC khi lưu cài đặt mặc định mới).
+// Kỳ cũ chỉ có câu hỏi/kết quả mà chưa có bản ghi đề cũng được tạo bản ghi để giữ nguyên cài đặt đang dùng.
+async function freezeAllExams(base) {
+  const exams = await getExams(); let n = 0;
+  const known = new Set(exams.map((e) => e.id));
+  try {
+    (await listExamsSummary()).forEach((e) => { if (e.id && !known.has(e.id)) { exams.push({ id: e.id, title: e.title || e.id, createdAt: 0 }); known.add(e.id); } });
+  } catch (e) { /* không lấy được danh sách kỳ cũ: vẫn đóng băng các đề đã có bản ghi */ }
+  exams.forEach((e) => { if (freezeExam(e, base)) n++; });
+  if (n) await saveExams(exams);
+  return n;
+}
+
 // Tạo mới hoặc cập nhật một đề thi (theo id). Validate id và các trường ghi đè trước khi lưu.
 async function upsertExam(data) {
   const id = String((data && data.id) || "").trim();
@@ -653,8 +686,10 @@ async function upsertExam(data) {
   if (data && data.asgMode !== undefined) entry.asgMode = ["all", "pick", "exclude"].indexOf(data.asgMode) >= 0 ? data.asgMode : "";
   if (data && data.segments !== undefined) entry.segments = (Array.isArray(data.segments) ? data.segments : []).map(normSegment).filter((v, k, a) => a.indexOf(v) === k);
   if (i >= 0) exams[i] = Object.assign({}, exams[i], entry); else exams.push(entry);
+  const saved = exams[i >= 0 ? i : exams.length - 1];
+  freezeExam(saved, base); // ô để trống: lấy giá trị mặc định hiện tại, từ nay đề giữ riêng giá trị này
   await saveExams(exams);
-  return { ok: true, exam: entry, created: i < 0 };
+  return { ok: true, exam: saved, created: i < 0 };
 }
 async function deleteExam(id) {
   const exams = await getExams();
@@ -1255,7 +1290,7 @@ module.exports = { validImageUrl,
   getCandidates, saveCandidates, getTestAccounts, saveTestAccounts, findTestAccount, findTestByCode, testNearMiss, updateTestAccount, recordTestAttempt, testAttemptByProof,
   getSettings, saveSettings,
   getAttempt, putAttempt, saveIndex, activeForPeriod,
-  getExams, saveExams, getExamSettings, upsertExam, deleteExam, listExamsSummary, fmtVN,
+  getExams, saveExams, getExamSettings, upsertExam, freezeExam, freezeAllExams, deleteExam, listExamsSummary, fmtVN,
   getBanks, saveBanks, bankOf, validBankId, slugify, cleanQuestionMeta, DEFAULT_BANK, DIFFICULTIES,
   isLeft, cleanBlueprint, buildFromBlueprint, blueprintTotal, planExam, targetCount, cleanSegmentPlans, segPlanFor, countFor, validateCounts, MAX_QUESTION_COUNT, examAccessError, inAudience, asgModeOf, examKnown, scoreAttempt, summarize, patchIndex, previousResult, loadAttempts,
   TYPES, qType, normText, normalizeQuestionInput, gradeAnswer,

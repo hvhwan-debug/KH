@@ -281,6 +281,11 @@ const handler = async function (context, req) {
         const managers = Array.from(new Set(cands.map((c) => String(c.manager || "").trim()).filter(Boolean))).sort();
         return reply(context, 200, { ok: true, viewers, managers, permKeys: permsLib.KEYS, permLabels: permsLib.LABELS, presets: permsLib.PRESETS });
       }
+      // Danh sách gọn cho màn "Gán nhân viên làm đề": chỉ các trường cần để tìm/lọc, không đọc lịch sử đăng nhập
+      // nên trả về nhanh hơn nhiều so với op=candidates (dùng khi mở đề mà danh sách đầy đủ chưa tải xong).
+      if (op === "people") {
+        return reply(context, 200, { ok: true, people: (await quiz.getCandidates()).map((c) => ({ code: c.code, name: c.name || "", title: quiz.titleOf(c), manager: c.manager || "", segment: c.segment || "", province: c.province || "", left: c.left || false })) });
+      }
       if (op === "candidates") {
         const LL = {}; // lần đăng nhập gần nhất + tổng số lượt của từng người (lịch sử đăng nhập)
         (await require("../_lib/loginlog").read()).forEach((v) => { const k = String(v.code || "").toUpperCase(), o = LL[k] || (LL[k] = { at: 0, method: "", page: "", n: 0 }); o.n += v.n || 1; if (v.at > o.at) { o.at = v.at; o.method = v.method; o.page = v.page; } });
@@ -1151,8 +1156,11 @@ const handler = async function (context, req) {
         examPeriod: quiz.validPeriod(String(b.examPeriod || "").trim()) && String(b.examPeriod || "").trim() ? String(b.examPeriod).trim() : cur.examPeriod,
         segmentPlans: sp
       });
+      // Giữ nguyên cài đặt của các đề đã có: đóng băng chúng bằng cài đặt mặc định CŨ trước khi lưu cái mới,
+      // để sửa Cài đặt mặc định chỉ áp dụng cho đề tạo mới, không đổi hàng loạt đề cũ.
+      const frozen = await quiz.freezeAllExams(cur);
       await quiz.saveSettings(next);
-      return reply(context, 200, { ok: true, settings: next });
+      return reply(context, 200, { ok: true, settings: next, frozenExams: frozen });
     }
 
     // ---------- Nhiều đề thi độc lập ----------
