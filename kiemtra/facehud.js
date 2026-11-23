@@ -335,6 +335,11 @@ var CSS = [
 '@media(max-width:560px){.fh.fh .fh-box{width:min(86%,max(250px,calc((100dvh - 380px) * .86)))}}',
 '@media(min-width:561px){.fh.fh .fh-box{height:clamp(240px,calc(100vh - 330px),640px)}.fh.fh .fh-htop .fh-ic{width:58px;height:58px;border-radius:17px}.fh.fh .fh-htop .fh-ic svg{width:30px;height:30px}.fh.fh .fh-k{font-size:13px}.fh.fh h2{font-size:clamp(24px,3.6vh,32px)}}',
 '@media(max-height:700px){.fh.fh .fh-htop .fh-ic{width:44px;height:44px;margin-bottom:6px}.fh.fh .fh-htop .fh-ic svg{width:24px;height:24px}}',
+'/* Điện thoại: khung oval phát sáng giống bản máy tính (thay 4 góc ngắm) */',
+'.fh.fh .fh-cn{display:none!important}',
+'.fh.fh .fh-ov .g{display:block;stroke:#8FF5F0;stroke-width:3;stroke-dasharray:none;filter:drop-shadow(0 0 5px rgba(110,240,235,.95)) drop-shadow(0 0 12px rgba(110,240,235,.6))}',
+'.fh.fh[data-st="ok"] .fh-ov .g{stroke:#6BEA9E}.fh.fh[data-st="bad"] .fh-ov .g{stroke:#FF8A8F}',
+'.fh.fh .fh-box::after{background:none}',
 ].join('\n');
 
 var I_SND = '<svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>' +
