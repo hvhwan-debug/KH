@@ -168,7 +168,122 @@ var CSS = [
 '  .fh h2{font-size:18px}',
 '}',
 '@media(max-width:420px){.fh-in{padding-left:14px;padding-right:14px;gap:10px}.fh h2{font-size:19px}.fh-hint{font-size:12.5px;bottom:42px}}',
-'@media(prefers-reduced-motion:reduce){.fh-arrow,.fh-sweep,.fh-seg li.run::before,.fh-chip i,.fh-s i,.fh-snd.wait{animation:none!important}}'
+'@media(prefers-reduced-motion:reduce){.fh-arrow,.fh-sweep,.fh-seg li.run::before,.fh-chip i,.fh-s i,.fh-snd.wait{animation:none!important}}',
+'/* ===== GIAO DIỆN SÁNG đồng bộ với màn xác thực khuôn mặt của trang làm bài (kiemtra/index.html) =====',
+'   Điện thoại: tiêu đề giữa, camera dọc có 4 góc ngắm, câu nhắc ở đáy camera, thẻ trắng: tên bước + % + các bước.',
+'   Máy tính: biểu tượng cạnh tiêu đề, camera ngang có khung oval phát sáng, thẻ ngang: bước | các bước | % hoàn thành. */',
+'.fh.fh{--ink:#0B1F5C;--mut:#5F6F8C;--blue:#1F6BF5;--okc:#2DBE6C;--line:#DDE4EF;color:var(--ink);',
+'  background:radial-gradient(70% 30% at 100% 0%,rgba(150,195,255,.35),transparent 70%),radial-gradient(80% 30% at 0% 100%,rgba(170,205,255,.3),transparent 70%),linear-gradient(180deg,#F6F9FE,#EEF4FC)}',
+'.fh.fh::before,.fh.fh::after{display:none}',
+'.fh.fh .fh-in{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:none;margin:0;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(18px + env(safe-area-inset-bottom,0px))}',
+'.fh.fh .fh-side{display:contents}',
+'.fh.fh .fh-in>*,.fh.fh .fh-side>*{flex-shrink:0}.fh.fh .fh-in{height:auto;min-height:min-content}',
+'.fh.fh .fh-head{order:1}.fh.fh .fh-chip{order:2;display:none}.fh.fh .fh-box{order:3}.fh.fh .fh-pipe{order:4}.fh.fh .fh-msg{order:5}.fh.fh .fh-btns{order:6}.fh.fh .fh-tips{order:7}',
+'/* tiêu đề */',
+'.fh.fh .fh-head{display:block;position:static;width:100%;max-width:1100px;margin:0;text-align:center}',
+'.fh.fh .fh-htop{display:flex;flex-direction:column;align-items:center;gap:0;text-align:center}',
+'.fh.fh .fh-htop .fh-ic{width:52px;height:52px;margin:0 0 12px;border-radius:14px;color:#fff;background:linear-gradient(160deg,#3B8BFF,#1F6BF5);box-shadow:0 10px 20px -10px rgba(31,107,245,.8)}',
+'.fh.fh .fh-htop .fh-ic svg{width:28px;height:28px}',
+'.fh.fh .fh-k{display:block;margin:0 0 8px;padding-left:.3em;font:600 12px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.3em;color:#5B6B86}',
+'.fh.fh h2{margin:0;font-size:clamp(23px,7vw,28px);line-height:1.2;font-weight:800;letter-spacing:-.02em;color:var(--ink)}',
+'.fh.fh .fh-sub{margin:8px auto 0;max-width:none;font-size:14px;line-height:1.45;color:var(--mut)}',
+'.fh.fh .fh-hr{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:12px;z-index:6;display:flex;gap:8px}',
+'.fh.fh .fh-hr .fh-ib,.fh.fh .fh-guide{width:38px;height:38px;padding:0;border-radius:50%;justify-content:center;color:#3D5A8A;background:#fff;border:1px solid #DCE5F2;box-shadow:0 6px 14px -10px rgba(20,60,140,.5)}',
+'.fh.fh .fh-guide span{display:none}',
+'.fh.fh .fh-snd.off{color:#9AA8BF}',
+'/* camera */',
+'.fh.fh .fh-box{align-self:center;flex:0 0 auto;width:min(84%,max(255px,calc((100dvh - 430px) * .86)));min-width:0;max-width:none;aspect-ratio:.86;border:0;border-radius:26px;background:#D9DEE6;box-shadow:0 18px 40px -24px rgba(20,50,110,.55)}',
+'.fh.fh .fh-box::after{background:none}',
+'.fh.fh[data-st="ok"] .fh-box{box-shadow:0 0 0 3px var(--okc),0 18px 40px -24px rgba(20,50,110,.55)}',
+'.fh.fh[data-st="bad"] .fh-box{box-shadow:0 0 0 3px #E5484D,0 18px 40px -24px rgba(20,50,110,.55)}',
+'.fh.fh .fh-ov .g,.fh.fh .fh-ov .x{display:none}',
+'.fh.fh .fh-ov .p{stroke:#fff;stroke-width:4;filter:drop-shadow(0 0 4px rgba(31,107,245,.6))}',
+'.fh.fh[data-st="hold"] .fh-ov .p{stroke:#7BE3A6;filter:drop-shadow(0 0 6px rgba(45,190,108,.7))}',
+'.fh.fh[data-st="ok"] .fh-ov .p{stroke:#6BEA9E}.fh.fh[data-st="bad"] .fh-ov .p{stroke:#FF8A8F}.fh.fh[data-st="check"] .fh-ov .p{stroke:#9DBBFF}',
+'.fh.fh .fh-cn{width:34px;height:34px;border-color:rgba(255,255,255,.95);filter:drop-shadow(0 1px 3px rgba(0,0,0,.25))}',
+'.fh.fh .fh-cn.a,.fh.fh .fh-cn.b{top:22%}.fh.fh .fh-cn.a,.fh.fh .fh-cn.c{left:16px}.fh.fh .fh-cn.b,.fh.fh .fh-cn.d{right:16px}.fh.fh .fh-cn.c,.fh.fh .fh-cn.d{bottom:16px}',
+'.fh.fh .fh-cn.a{border-top-left-radius:16px}.fh.fh .fh-cn.b{border-top-right-radius:16px}.fh.fh .fh-cn.c{border-bottom-left-radius:16px}.fh.fh .fh-cn.d{border-bottom-right-radius:16px}',
+'.fh.fh .fh-rd,.fh.fh .fh-arrow{display:none!important}',
+'.fh.fh:not([data-st="check"]) .fh-sweep{display:none}',
+'.fh.fh .fh-live{top:17px;left:calc(50% - 20px);transform:translateX(-50%);max-width:calc(100% - 80px);box-sizing:border-box;gap:8px;padding:7px 13px;border:0;border-radius:999px;background:rgba(255,255,255,.88);font-size:12.5px;font-weight:500;letter-spacing:0;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+'.fh.fh .fh-live i{width:9px;height:9px;background:#2FC25B;box-shadow:none;animation:none}',
+'.fh.fh .fh-ctools{top:12px;right:12px}',
+'.fh.fh .fh-ctools .fh-ib{width:42px;height:42px;border:0;background:rgba(255,255,255,.88);color:var(--ink)}',
+'.fh.fh .fh-ctools .fh-ib svg{width:21px;height:21px}',
+'.fh.fh .fh-badge{top:62px;background:rgba(45,190,108,.95);color:#fff}',
+'.fh.fh .fh-hint{bottom:34px;max-width:calc(100% - 40px);padding:9px 20px;border:0;border-radius:999px;background:rgba(40,38,48,.72);font-size:14.5px;font-weight:600;color:#fff}',
+'.fh.fh .fh-hint.ok{background:rgba(29,122,71,.85);color:#fff}.fh.fh .fh-hint.bad{background:rgba(194,38,43,.85);color:#fff}.fh.fh .fh-hint.chk{background:rgba(31,80,190,.85);color:#fff}',
+'/* thẻ tiến trình */',
+'.fh.fh .fh-pipe{width:100%;max-width:470px;box-sizing:border-box;padding:18px 16px 16px;border-radius:24px;background:#fff;border:1px solid #E6ECF5;box-shadow:0 16px 36px -26px rgba(20,60,140,.5)}',
+'.fh.fh .fh-mini,.fh.fh .fh-bar,.fh.fh .fh-s{display:none}',
+'.fh.fh .fh-now{align-items:baseline;gap:10px;padding:0 6px}',
+'.fh.fh .fh-n{display:none}',
+'.fh.fh .fh-t{font-size:17px;font-weight:800;color:var(--ink)}',
+'.fh.fh .fh-p{font:800 20px/1 "Be Vietnam Pro",system-ui,sans-serif;color:var(--blue)}',
+'.fh.fh .fh-p i{opacity:1;font-size:1em}',
+'.fh.fh .fh-seg{margin:14px 0 0;gap:0}',
+'.fh.fh .fh-seg li{gap:8px;padding:0 2px;font-size:11.5px;font-weight:500;line-height:1.3;color:#7D8AA2}',
+'.fh.fh .fh-seg li::before{width:32px;height:32px;box-sizing:border-box;border:0;font:700 13px/1 "Be Vietnam Pro",system-ui,sans-serif;background:#E4E9F1;color:#7D8AA2;box-shadow:none;animation:none}',
+'.fh.fh .fh-seg li:not(:last-child)::after{top:15px;height:3px;border-radius:3px;background:var(--line)}',
+'.fh.fh .fh-seg li.ok{color:#7D8AA2}',
+'.fh.fh .fh-seg li.ok::before{background:var(--okc);color:#fff;box-shadow:none}',
+'.fh.fh .fh-seg li.ok:not(:last-child)::after{background:var(--okc)}',
+'.fh.fh .fh-seg li.run{color:var(--ink);font-weight:700}',
+'.fh.fh .fh-seg li.run::before{background:var(--blue);color:#fff;box-shadow:0 0 0 5px rgba(31,107,245,.18)}',
+'.fh.fh .fh-seg li.bad{color:#C2262B;font-weight:700}',
+'.fh.fh .fh-seg li.bad::before{background:#E5484D;color:#fff;box-shadow:none}',
+'.fh.fh .fh-pipe[data-st="ok"]{border-color:#BFE8CF}.fh.fh .fh-pipe[data-st="bad"]{border-color:#F3C2C4}.fh.fh .fh-pipe[data-st="bad"] .fh-t{color:#C2262B}',
+'/* thông báo, nút, lưu ý */',
+'.fh.fh .fh-msg,.fh.fh .fh-btns,.fh.fh .fh-tips{width:100%;max-width:470px;box-sizing:border-box}',
+'.fh.fh .fh-msg .pmsg{background:#FFF1F1;color:#9B1C1C;border-color:#F5C2C2}',
+'.fh.fh .fh-msg .pmsg.idw{background:#FFF1F1}.fh.fh .fh-msg .pmsg.idw b{color:#C2262B}',
+'.fh.fh .fh-msg .note{color:var(--mut)}',
+'.fh.fh .fh-b{border:1.5px solid #D6E0EE;background:#fff;color:var(--ink)}',
+'.fh.fh .fh-b.go{border:0;color:#fff;background:linear-gradient(100deg,#1660E8,#1F7BF7);box-shadow:0 14px 26px -14px rgba(31,107,245,.8)}',
+'.fh.fh .fh-tips{background:#fff;border:1px solid #E6ECF5;box-shadow:0 12px 26px -22px rgba(20,60,140,.5)}',
+'.fh.fh .fh-tips-h{color:var(--ink)}.fh.fh .fh-tips-h svg{color:#F5A524}',
+'.fh.fh .fh-tips-g div{color:var(--mut)}.fh.fh .fh-tips-g svg{color:var(--blue)}',
+'@media(max-height:700px){.fh.fh .fh-htop .fh-ic{width:44px;height:44px;margin-bottom:8px}.fh.fh .fh-sub{font-size:13px;margin-top:4px}.fh.fh .fh-box{width:min(84%,max(245px,calc((100dvh - 380px) * .86)))}}',
+'/* máy tính / máy tính bảng */',
+'@media(min-width:561px){',
+'  .fh.fh .fh-in{display:flex;max-width:none;gap:clamp(12px,2.2vh,22px);padding:clamp(16px,3vh,30px) clamp(16px,4vw,56px)}',
+'  .fh.fh .fh-htop{display:grid;grid-template-columns:auto auto;justify-content:center;align-items:center;column-gap:22px;text-align:left}',
+'  .fh.fh .fh-htop .fh-ic{grid-row:1 / span 2;width:clamp(56px,7vh,78px);height:clamp(56px,7vh,78px);margin:0;border-radius:20px}',
+'  .fh.fh .fh-htop .fh-ic svg{width:52%;height:52%}',
+'  .fh.fh .fh-htop>div:last-child{display:contents}',
+'  .fh.fh .fh-k{grid-column:2;margin:0 0 4px;font-size:clamp(12px,1.5vh,15px)}',
+'  .fh.fh h2{grid-column:2;font-size:clamp(26px,4.4vh,42px)}',
+'  .fh.fh .fh-sub{grid-column:1 / -1;margin-top:clamp(6px,1.2vh,12px);font-size:clamp(14px,2vh,19px);font-weight:500}',
+'  .fh.fh .fh-hr{top:18px;right:22px}',
+'  .fh.fh .fh-hr .fh-ib,.fh.fh .fh-guide{width:44px;height:44px}',
+'  .fh.fh .fh-box{order:3;height:clamp(260px,calc(100vh - 420px),640px);width:auto;min-width:0;max-width:calc(100vw - 40px);aspect-ratio:1.23;border-radius:30px;background:#5C6472;justify-self:auto}',
+'  .fh.fh .fh-ov .g{display:block;stroke:#8FF5F0;stroke-width:3;stroke-dasharray:none;filter:drop-shadow(0 0 6px rgba(110,240,235,.8))}',
+'  .fh.fh[data-st="ok"] .fh-ov .g{stroke:#6BEA9E}.fh.fh[data-st="bad"] .fh-ov .g{stroke:#FF8A8F}',
+'  .fh.fh .fh-cn{display:none}',
+'  .fh.fh .fh-live{left:50%;font-size:15px;font-weight:600;padding:9px 20px;max-width:calc(100% - 150px)}',
+'  .fh.fh .fh-live i{width:11px;height:11px}',
+'  .fh.fh .fh-ctools .fh-ib{width:54px;height:54px}.fh.fh .fh-ctools .fh-ib svg{width:25px;height:25px}',
+'  .fh.fh .fh-hint{bottom:12px;padding:10px 40px;font-size:16px}',
+'  .fh.fh .fh-pipe{order:4;width:min(1270px,100%);max-width:none;display:grid;grid-template-columns:minmax(170px,1fr) minmax(0,2.6fr) minmax(150px,1fr);align-items:center;padding:clamp(12px,2vh,20px) 0;border-radius:28px}',
+'  .fh.fh .fh-now{display:contents}',
+'  .fh.fh .fh-n{display:block;grid-column:1;grid-row:1;align-self:end;text-align:center;font:700 14px/1 "Be Vietnam Pro",system-ui,sans-serif;letter-spacing:.04em;color:var(--blue)}',
+'  .fh.fh .fh-n i{opacity:.55}',
+'  .fh.fh .fh-t{grid-column:1;grid-row:2;align-self:start;padding:6px 18px 0;text-align:center;white-space:normal;font-size:clamp(17px,2.6vh,24px)}',
+'  .fh.fh .fh-p{grid-column:3;grid-row:1 / span 2;display:block;text-align:center;white-space:nowrap;font-size:clamp(28px,4.6vh,42px);border-left:1px solid #E3E9F2;padding:6px 16px}',
+'  .fh.fh .fh-p::after{content:"Hoàn thành";display:block;margin-top:4px;font-size:15px;font-weight:600;color:var(--mut)}',
+'  .fh.fh .fh-seg{grid-column:2;grid-row:1 / span 2;margin:0;padding:6px 18px;border-left:1px solid #E3E9F2}',
+'  .fh.fh .fh-seg li{font-size:clamp(12.5px,1.8vh,15px);font-weight:600;gap:10px}',
+'  .fh.fh .fh-seg li::before{width:40px;height:40px;font-size:15px}',
+'  .fh.fh .fh-seg li:not(:last-child)::after{top:19px}',
+'  .fh.fh .fh-msg,.fh.fh .fh-btns{max-width:760px}',
+'  .fh.fh .fh-btns{flex-direction:row;justify-content:center}.fh.fh .fh-b{width:min(420px,100%)}',
+'  .fh.fh .fh-tips{max-width:760px}',
+'}',
+'@media(min-width:561px) and (max-height:760px){',
+'  .fh.fh .fh-box{height:clamp(250px,calc(100vh - 330px),640px)}',
+'  .fh.fh .fh-tips{display:none}',
+'  .fh.fh .fh-seg li::before{width:34px;height:34px}.fh.fh .fh-seg li:not(:last-child)::after{top:16px}',
+'}',
 ].join('\n');
 
 var I_SND = '<svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>' +
@@ -432,12 +547,12 @@ async function start(){
     if (FM.live) return failLocal('Thiết bị chưa hỗ trợ thử thách quay mặt. Hãy dùng trình duyệt Chrome hoặc Safari bản mới rồi thử lại.');
     return manualMode();
   }
-  chip('seek', 'ĐANG TÌM KHUÔN MẶT'); hint('Đưa khuôn mặt vào khung oval');
+  chip('seek', 'ĐANG TÌM KHUÔN MẶT'); hint('Đưa khuôn mặt vào giữa khung');
   FM.last = Date.now(); FM.startAt = Date.now(); FM.poseT0 = Date.now(); loop();
 }
 function failLocal(t){ scr('off'); chip('bad', 'CHƯA SẴN SÀNG'); hint(''); arrow(''); msgHtml('<div class="pmsg">' + esc(t) + '</div>'); btn('fhRetry', true); }
 function manualMode(){ // không tải được bộ nhận diện trên máy và máy chủ không yêu cầu thử thách: chụp thủ công
-  steps(['ok', 'ok', 'ok', 'run', '']); chip('seek', 'CHỤP THỦ CÔNG'); hint('Căn khuôn mặt vào khung oval rồi bấm “Chụp ngay”'); btn('fhManual', true);
+  steps(['ok', 'ok', 'ok', 'run', '']); chip('seek', 'CHỤP THỦ CÔNG'); hint('Căn khuôn mặt vào giữa khung rồi bấm “Chụp ngay”'); btn('fhManual', true);
 }
 // Độ sáng trung bình vùng khuôn mặt (0-255), lấy mẫu nhỏ cho nhẹ
 function lum(v, bx){
@@ -503,7 +618,7 @@ async function liveTick(v, t, dt){
 }
 // Không có thử thách (máy chủ tắt): như trước — giữ yên đúng vị trí thì tự chụp một ảnh
 async function plainTick(v, t, dt){
-  var vw = v.videoWidth, vh = v.videoHeight, s = Math.min(vw, vh), good = false, msg = 'Đưa khuôn mặt vào khung oval', st = ['run', '', '', '', ''], ck = ['seek', 'ĐANG TÌM KHUÔN MẶT'], conf = null, n = 0;
+  var vw = v.videoWidth, vh = v.videoHeight, s = Math.min(vw, vh), good = false, msg = 'Đưa khuôn mặt vào giữa khung', st = ['run', '', '', '', ''], ck = ['seek', 'ĐANG TÌM KHUÔN MẶT'], conf = null, n = 0;
   var all = await FM.fa.detectAllFaces(v, new FM.fa.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }));
   if (!FM.open || FM.busy) return;
   n = all.length;
@@ -515,7 +630,7 @@ async function plainTick(v, t, dt){
     else if (L > 235) msg = 'Quá chói, tránh nguồn sáng chiếu thẳng';
     else if (bx.width < 0.30 * s) msg = 'Hãy lại gần camera hơn một chút';
     else if (bx.width > 0.80 * s) msg = 'Hãy lùi ra xa camera một chút';
-    else if (Math.sqrt(cx * cx + cy * cy) > 0.2 * s) msg = 'Đưa khuôn mặt vào giữa khung oval';
+    else if (Math.sqrt(cx * cx + cy * cy) > 0.2 * s) msg = 'Đưa khuôn mặt vào giữa khung';
     else { good = true; st = ['ok', 'ok', 'ok', 'run', '']; msg = 'Giữ yên, đang tự chụp…'; ck = ['scan', 'GIỮ YÊN · SẮP CHỤP']; }
   }
   rd(n, conf); steps(st); chip(ck[0], ck[1]); hint(msg, good ? 'ok' : (n > 1 ? 'bad' : ''));
