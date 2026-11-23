@@ -67,7 +67,9 @@ function model(attempt, settings, advice) {
 // dải 3 chỉ số, hộp "Gợi ý cho bạn", nút học liệu, lời chúc cuối thư. Chỉ dùng bảng + CSS nội tuyến; chuyển màu có màu nền dự phòng cho Outlook.
 const TF = "'Be Vietnam Pro','Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 const K = { navy: "#0F2A5C", ink: "#1B2F55", body: "#3A4C6E", muted: "#5D6F8E", blue: "#1F6FE5", deep: "#0B4FC4", line: "#DCE7F7", soft: "#F2F7FF", page: "#EAF2FE", red: "#F0394A", green: "#18A957", amber: "#D68F1E", pink: "#E5246B" };
-const lc1 = (s) => String(s || "").charAt(0).toLocaleLowerCase("vi-VN") + String(s || "").slice(1);
+// Viết thường chữ đầu để ghép giữa câu ("ôn tập thêm kiến thức về sản phẩm…"); giữ nguyên nếu là mã/viết tắt
+// hoặc tên viết hoa toàn bộ (vd "SR2 - KỸ NĂNG…" không thành "sR2").
+const lc1 = (s) => { const v = String(s || ""), w = v.split(/\s+/)[0] || ""; return w.length > 1 && w === w.toLocaleUpperCase("vi-VN") ? v : v.charAt(0).toLocaleLowerCase("vi-VN") + v.slice(1); };
 function build(attempt, settings, advice, opts) {
   opts = opts || {};
   const cardNote = !!opts.card, qrCid = opts.qrCid ? String(opts.qrCid).replace(/[^\w.@-]/g, "") : "";
@@ -93,17 +95,17 @@ function build(attempt, settings, advice, opts) {
 
   // ---- Dải xanh: nhãn, tên bài, trạng thái, hình minh hoạ
   const stMark = m.ps === false && !t.practice ? "&#10005;" : m.ps === true && !t.practice ? "&#10003;" : "";
-  const statusPill = T("<tr>" + td("background:" + stColor + ";border-radius:24px;padding:9px 18px 9px " + (stMark ? 10 : 18) + "px;white-space:nowrap;",
-    (stMark ? '<span style="display:inline-block;width:22px;height:22px;line-height:22px;border-radius:11px;background:#ffffff;color:' + stColor + ';font-size:13px;font-weight:bold;text-align:center;vertical-align:middle;margin-right:8px;">' + stMark + "</span>" : "") +
-    '<span style="font-size:17px;line-height:22px;font-weight:bold;color:#ffffff;vertical-align:middle;">' + esc(m.status) + "</span>", 'bgcolor="' + stColor + '"') + "</tr>");
+  const statusPill = T("<tr>" + td("background:" + stColor + ";border-radius:20px;padding:6px 14px 6px " + (stMark ? 8 : 14) + "px;white-space:nowrap;",
+    (stMark ? '<span style="display:inline-block;width:18px;height:18px;line-height:18px;border-radius:9px;background:#ffffff;color:' + stColor + ';font-size:11px;font-weight:bold;text-align:center;vertical-align:middle;margin-right:7px;">' + stMark + "</span>" : "") +
+    '<span style="font-size:14px;line-height:19px;font-weight:bold;color:#ffffff;vertical-align:middle;">' + esc(m.status) + "</span>", 'bgcolor="' + stColor + '"') + "</tr>");
   const heroLeft =
-    T("<tr>" + td("background:#3B86F2;border-radius:16px;padding:6px 16px;font-size:12px;line-height:17px;font-weight:bold;letter-spacing:.5px;color:#ffffff;white-space:nowrap;", "KẾT QUẢ BÀI KIỂM TRA", 'bgcolor="#3B86F2"') +
+    T("<tr>" + td("background:#3B86F2;border-radius:16px;padding:5px 12px;font-size:11px;line-height:15px;font-weight:bold;letter-spacing:.5px;color:#ffffff;white-space:nowrap;", "KẾT QUẢ BÀI KIỂM TRA", 'bgcolor="#3B86F2"') +
       (t.chan ? '<td style="width:8px;font-size:0;">&nbsp;</td>' + td("background:#ffffff;border-radius:16px;padding:6px 12px;font-size:12px;line-height:17px;font-weight:bold;color:" + K.deep + ";white-space:nowrap;", "Kênh " + esc(t.chan), 'bgcolor="#ffffff"') : "") + "</tr>") +
-    '<div class="hero-title" style="font-family:' + TF + ';font-size:29px;line-height:37px;font-weight:bold;color:#ffffff;padding:14px 0 18px;">' + esc(t.main) + "</div>" + statusPill;
+    '<div class="hero-title" style="font-family:' + TF + ';font-size:22px;line-height:29px;font-weight:bold;color:#ffffff;padding:10px 0 14px;">' + esc(t.main) + "</div>" + statusPill;
   const hero =
     '<tr><td class="pad" style="padding:0 16px;">' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#1259D6" style="background:#1259D6;background-image:linear-gradient(120deg,#0A49C2 0%,#1767E3 55%,#3C93FF 100%);border-radius:18px;border-collapse:separate;"><tr>' +
-    '<td class="hero-l" valign="middle" style="padding:26px 0 26px 26px;font-family:' + TF + ';">' + heroLeft + "</td>" +
+    '<td class="hero-l" valign="middle" style="padding:20px 0 20px 22px;font-family:' + TF + ';">' + heroLeft + "</td>" +
     (art.hero ? '<td class="hero-r" width="220" align="right" valign="bottom" style="padding:14px 10px 10px 0;">' + img("hero", 210, 162, "") + "</td>" : "") +
     "</tr></table></td></tr>";
 
@@ -113,7 +115,7 @@ function build(attempt, settings, advice, opts) {
     : "";
 
   // ---- Lời chào
-  const hello = row('<div style="font-family:' + TF + ";font-size:22px;line-height:29px;font-weight:bold;color:" + K.navy + ';">Xin chào ' + esc(who) + ",</div>" +
+  const hello = row('<div style="font-family:' + TF + ";font-size:19px;line-height:26px;font-weight:bold;color:" + K.navy + ';">Xin chào ' + esc(who) + ",</div>" +
     '<div style="font-family:' + TF + ";font-size:14.5px;line-height:22px;color:" + K.body + ';padding-top:4px;">Dưới đây là kết quả bài kiểm tra của bạn trên hệ thống.</div>', "pad", "padding-top:24px;");
 
   // ---- Vòng tỉ lệ đúng | thông tin người làm + thẻ kết quả bài làm
@@ -235,7 +237,7 @@ function build(attempt, settings, advice, opts) {
     "body{margin:0!important;padding:0!important;background:" + K.page + ";-webkit-text-size-adjust:100%}table{border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt}img{border:0;-ms-interpolation-mode:bicubic}a{color:" + K.blue + "}" +
     ".shell{width:100%;max-width:640px}" +
     "@media screen and (max-width:600px){.outer{padding:0!important}.shell{border-radius:0!important;border-left:0!important;border-right:0!important}.pad{padding-left:16px!important;padding-right:16px!important}" +
-    ".hero-r{display:none!important}.hero-l{padding:22px 20px!important}.hero-title{font-size:24px!important;line-height:31px!important}" +
+    ".hero-r{display:none!important}.hero-l{padding:16px 16px!important}.hero-title{font-size:19px!important;line-height:25px!important;padding:8px 0 12px!important}" +
     ".stack,.stack>tbody,.stack>tbody>tr,.stack>tbody>tr>td.col{display:block!important;width:100%!important}.ring-col{border-right:0!important;padding:0 0 14px!important;text-align:center!important}.info-col{padding:0!important}" +
     ".person-name{font-size:20px!important}.big-score{font-size:38px!important}" +
     ".metric{padding:12px 3px!important}.m-ic{display:none!important}.metric td{text-align:center!important}.m-val{font-size:17px!important;line-height:23px!important}" +
