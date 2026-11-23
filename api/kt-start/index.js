@@ -67,6 +67,14 @@ module.exports = async function (context, req) {
       if (found.test) await quiz.updateTestAccount(found.code, { province: pv, region: rg }); else await quiz.saveCandidates(candidates);
     }
 
+    // Hệ thống yêu cầu khai ngày sinh (Cài đặt mặc định) và hồ sơ chưa có: bắt điền ở màn xác nhận trước khi vào bài.
+    if ((await quiz.getSettings()).requireBirthDate && !found.birthDate) {
+      const bd = quiz.normBirthDate(b.birthDate);
+      if (!bd) return reply(context, 400, { ok: false, needBirth: true, error: "Vui lòng nhập ngày sinh (ngày và tháng) để tiếp tục." });
+      found.birthDate = bd;
+      if (found.test) await quiz.updateTestAccount(found.code, { birthDate: bd }); else await quiz.saveCandidates(candidates);
+    }
+
     await quiz.ensureBankPeriods();
     const allQuestions = await quiz.getQuestions();
     const byId = {};

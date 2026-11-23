@@ -31,6 +31,9 @@ const DEFAULT_SETTINGS = {
   maxAttempts: 1,
   // Điểm tuân thủ học tập: quy đổi từ tỉ lệ đúng (thang điểm 10) sang một mốc điểm cố định
   // (mặc định theo quy tắc kiểm tra định kỳ PC: <6 → 0, 6-6.99 → 10, 7-8.99 → 15, >=9 → 20).
+  // Bắt buộc khai ngày sinh (ngày/tháng, không cần năm) trước khi làm bài, để hệ thống chúc mừng sinh nhật.
+  // Mặc định TẮT: chỉ bật khi quản trị viên chủ động chọn trong Cài đặt, tránh chặn nhầm ai khi chưa sẵn sàng.
+  requireBirthDate: false,
   complianceEnabled: true,
   complianceHighMin: 9,   // >= mốc này: 20 điểm
   complianceMidMin: 7,    // >= mốc này (và < mốc trên): 15 điểm
@@ -83,6 +86,17 @@ const CATEGORY_BY_SEGMENT = { gia_dung: "Gia dụng", may_loc: "Máy lọc nư�
 // Câu hỏi gắn tag "Miền Bắc" / "Miền Nam" chỉ phát cho PC thuộc miền đó; câu không gắn tag miền dùng chung.
 const REGION_LABEL = { bac: "Miền Bắc", nam: "Miền Nam" };
 const foldRg = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/[^a-z0-9]+/g, " ").trim();
+// Ngày sinh chỉ lấy NGÀY + THÁNG (không hỏi năm sinh) — chỉ để hệ thống biết ngày nào chúc mừng sinh nhật.
+// Lưu dạng "MM-DD" (vd "03-05" = ngày 5 tháng 3). Trả về "" nếu không hợp lệ.
+function normBirthDate(s) {
+  const m = /^(\d{1,2})-(\d{1,2})$/.exec(String(s || "").trim());
+  if (!m) return "";
+  const mo = parseInt(m[1], 10), da = parseInt(m[2], 10);
+  if (mo < 1 || mo > 12 || da < 1 || da > 31) return "";
+  const dim = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1]; // tháng 2 cho phép 29 (năm nhuận) để khỏi phải hỏi năm sinh
+  if (da > dim) return "";
+  return String(mo).padStart(2, "0") + "-" + String(da).padStart(2, "0");
+}
 function normRegion(s) {
   const k = foldRg(s).replace(/^mien /, "");
   return k === "bac" || k === "mb" ? "bac" : k === "nam" || k === "mn" ? "nam" : "";
@@ -1304,7 +1318,7 @@ function noteFail(req) {
 
 module.exports = { validImageUrl,
   patchIndex, failCount, clearFails,
-  runMigrations, managerCanon, properCaseName, normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, betterResult, attemptsSummary, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods,
+  runMigrations, managerCanon, properCaseName, normCode, normEmail, normSegment, normTitle, titleOf, attemptLimit, betterResult, attemptsSummary, submittedOf, normRegion, questionRegion, needsRegion, REGION_LABEL, DEFAULT_TITLE, CATEGORY_BY_SEGMENT, bankFor, usableQ, validPeriod, ensureBankPeriods, normBirthDate,
   getQuestions, saveQuestions,
   getCandidates, saveCandidates, getTestAccounts, saveTestAccounts, findTestAccount, findTestByCode, testNearMiss, updateTestAccount, recordTestAttempt, testAttemptByProof,
   getSettings, saveSettings,

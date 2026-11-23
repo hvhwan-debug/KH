@@ -29,6 +29,9 @@ module.exports = async function (context, req) {
     // cả mọi người). Mời làm bài giờ chỉ gửi thủ công qua nút "Gửi lại thư mời" ở trang quản trị (có xem trước +
     // xác nhận trước khi gửi).
     // try { examInvite = await require("../_lib/examnotify").run(); } catch (e) { context.log.error("cron examnotify", e && e.message); }
+    // Chúc mừng sinh nhật tự động cho nhân viên có ngày sinh trùng hôm nay (đã khai ngày/tháng sinh)
+    let birthday = null;
+    try { birthday = await require("../_lib/birthday").run(); } catch (e) { context.log.error("cron birthday", e && e.message); }
     const names = await store.list("user/");
     let users = 0, sent = 0, failed = 0;
     for (const name of names) {
@@ -57,7 +60,7 @@ module.exports = async function (context, req) {
         context.log.error("cron user", name, e && e.message);
       }
     }
-    return reply(context, 200, { ok: true, users, sent, failed, swept, faceScan, examInvite });
+    return reply(context, 200, { ok: true, users, sent, failed, swept, faceScan, examInvite, birthday });
   } catch (e) {
     context.log.error("cron", e && e.message);
     return reply(context, 500, { ok: false });

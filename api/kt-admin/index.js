@@ -313,6 +313,9 @@ const handler = async function (context, req) {
       }
       if (op === "settings") return reply(context, 200, { ok: true, settings: await quiz.getSettings(), isOwner: isOwner(u.email) });
 
+      // Danh sách sinh nhật hôm nay, hiện ở banner trang quản trị (chỉ xem, không gửi email ở đây).
+      if (op === "birthdaysToday") return reply(context, 200, { ok: true, people: await require("../_lib/birthday").today() });
+
       // Ảnh đại diện (rõ nhất theo kỹ thuật, từ ảnh xác thực làm bài) — chỉ dành cho OWNER_EMAILS, hẹp hơn admin thường.
       if (op === "profilePhoto") {
         if (!isOwner(u.email)) return reply(context, 403, { ok: false, error: "Bạn không có quyền xem ảnh đại diện." });
@@ -1167,6 +1170,7 @@ const handler = async function (context, req) {
         complianceMidMin: Math.min(10, Math.max(0, parseFloat(b.complianceMidMin) || 0)),
         complianceLowMin: Math.min(10, Math.max(0, parseFloat(b.complianceLowMin) || 0)),
         examPeriod: quiz.validPeriod(String(b.examPeriod || "").trim()) && String(b.examPeriod || "").trim() ? String(b.examPeriod).trim() : cur.examPeriod,
+        requireBirthDate: !!b.requireBirthDate,
         segmentPlans: sp
       });
       // Giữ nguyên cài đặt của các đề đã có: đóng băng chúng bằng cài đặt mặc định CŨ trước khi lưu cái mới,

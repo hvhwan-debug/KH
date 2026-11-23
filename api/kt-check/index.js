@@ -149,6 +149,8 @@ async function handler(context, req) {
       province: require("../_lib/provinces").canonProvince(found.province) || "", region: quiz.normRegion(found.region) };
     // PC chưa có tỉnh/miền: phải chọn ở màn xác nhận trước khi làm bài (miền quyết định bộ đề sản phẩm)
     candidate.needRegion = quiz.needsRegion(found) && !(candidate.province && candidate.region);
+    // Chưa có ngày sinh VÀ hệ thống đang yêu cầu khai (Cài đặt mặc định): phải điền ở màn xác nhận trước khi làm bài
+    candidate.needBirth = !!defaultSettings.requireBirthDate && !found.birthDate;
     candidate.test = !!found.test;
     const pendingRequest = (await require("../_lib/changereq").getAll()).some((r) => r.status === "pending" && quiz.normCode(r.code) === code);
     // Khung thời gian mở/đóng + đối tượng được thi (chỉ áp dụng cho đề thi có cấu hình các mục này)
