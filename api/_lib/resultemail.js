@@ -92,7 +92,7 @@ function build(attempt, settings, advice, opts) {
 
   // ---- 1. Đầu thư: logo + tên hệ thống (hai dòng)
   const brand = row(T("<tr>" + (art.logo ? td("padding:0 12px 0 0;", img("logo", 56, 50, "")) : "") +
-    td("font-size:16px;line-height:21px;font-weight:bold;color:" + NV + ";", "Hệ thống kiểm tra<br>đánh giá trực tuyến") + "</tr>"), "pad", "padding-top:24px;");
+    td("font-size:16px;line-height:21px;font-weight:bold;color:" + NV + ";text-align:left;", "Hệ thống kiểm tra<br>đánh giá trực tuyến") + "</tr>", 'align="center"', "margin:0 auto;"), "pad", "padding-top:24px;text-align:center;");
 
   // ---- 2. Lời chào + gạch nhấn
   const hello = row('<div style="font-family:' + TF + ";font-size:27px;line-height:34px;font-weight:800;color:" + NV + ';">Xin chào ' + esc(m.greet) + ",</div>" +
