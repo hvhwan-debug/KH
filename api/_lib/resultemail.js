@@ -58,7 +58,10 @@ function model(attempt, settings, advice) {
   const subject = (t.practice && !t.hasTag ? "[THI THỬ] " : "") + "Kết quả " + t.title + ": " + attempt.pct + "% (" + attempt.score + "/" + total + " câu đúng)";
   const intro = "Bài làm của bạn đã được ghi nhận. Dưới đây là kết quả và một vài gợi ý để lần sau làm tốt hơn.";
   const when = vn(attempt.submittedAt), whenShort = when.replace(/^(\d{2}:\d{2}):\d{2}\s*/, "$1 · ");
-  return { t, ps, a, an, total, wrong, blank, dur, name, status, color, subject, intro, when, whenShort, url: verifyLink(attempt), proof: quiz.proofCode(attempt.id) };
+  // Xưng hô trong lời chào: "Anh Cường" / "Chị Hoa" (chỉ Anh hoặc Chị); không đủ căn cứ thì gọi thẳng tên, không dùng "Anh/Chị"
+  const given = oneLine(attempt.name, 80) ? name.split(/\s+/).pop() : "", hon = given ? require("./honorific").honorific(attempt.name, true) : "";
+  const greet = given ? (hon ? hon + " " : "") + given : oneLine(attempt.code, 40) || "bạn";
+  return { t, ps, a, an, total, wrong, blank, dur, name, greet, status, color, subject, intro, when, whenShort, url: verifyLink(attempt), proof: quiz.proofCode(attempt.id) };
 }
 
 // opts.card = true: email có đính kèm ảnh thẻ kết quả; opts.qrCid = mã cid ảnh QR; opts.art = { khoá: cid } các hình minh hoạ do mailart.js vẽ
@@ -79,7 +82,6 @@ function build(attempt, settings, advice, opts) {
   const m = model(attempt, settings, advice), t = m.t, a = m.a, an = m.an;
   const compliance = attempt.compliancePoints;
   const pre = attempt.pct + "% · " + attempt.score + "/" + m.total + " câu đúng" + (t.practice ? " · Bài thi thử, không phải thi chính thức" : "") + ". " + (a.headline || "Xem kết quả và gợi ý ôn tập của bạn.");
-  const who = oneLine(attempt.name, 80) ? m.name : oneLine(attempt.code, 40);
   const pctN = Math.max(0, Math.min(100, Number(attempt.pct) || 0)), total = m.total || 0, score = attempt.score || 0;
   const base = String(cfg().appUrl || "https://kh.io.vn").replace(/\/+$/, ""), studyUrl = base + "/kiemtra/hoclieu.html";
   const pass = quiz.passScoreOf(settings) || null;
@@ -97,7 +99,7 @@ function build(attempt, settings, advice, opts) {
     td("font-size:15px;line-height:20px;font-weight:bold;color:" + K.navy + ";", "Hệ thống kiểm tra đánh giá trực tuyến") + "</tr>"), "pad", "padding-top:22px;padding-bottom:4px;");
 
   // ---- 2. Lời chào (ngắn gọn, một lần)
-  const hello = row('<div style="font-family:' + TF + ";font-size:18px;line-height:25px;font-weight:bold;color:" + K.navy + ';">Xin chào ' + esc(who) + ",</div>" +
+  const hello = row('<div style="font-family:' + TF + ";font-size:18px;line-height:25px;font-weight:bold;color:" + K.navy + ';">Xin chào ' + esc(m.greet) + ",</div>" +
     '<div style="font-family:' + TF + ";font-size:14px;line-height:21px;color:" + K.body + ';padding-top:3px;">Bài làm của bạn đã được ghi nhận. Kết quả chi tiết như sau.</div>', "pad", "padding-top:14px;padding-bottom:18px;");
 
   // ---- 3. THẺ KẾT QUẢ (một khối): đề + trạng thái | huy hiệu hoặc vòng % | người làm + điểm + thanh | 3 chỉ số
@@ -121,8 +123,7 @@ function build(attempt, settings, advice, opts) {
   const body = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="stack"><tr>' +
     '<td class="col ring-col" width="230" align="center" valign="middle" style="padding:20px 8px 20px 20px;">' + visual + "</td>" +
     '<td class="col info-col" valign="middle" style="padding:20px 24px 20px 12px;font-family:' + TF + ';">' +
-    '<div class="person-name" style="font-size:20px;line-height:26px;font-weight:bold;color:' + K.navy + ';">' + esc(who) + "</div>" +
-    (meta ? '<div style="font-size:13px;line-height:19px;color:' + K.muted + ';padding-top:2px;">' + meta + "</div>" : "") +
+    (meta ? '<div style="font-size:13.5px;line-height:20px;color:' + K.body + ';">' + meta + "</div>" : "") +
     '<div style="padding-top:12px;white-space:nowrap;"><span class="big-score" style="font-size:38px;line-height:44px;font-weight:800;color:' + K.deep + ';">' + esc(score) + "/" + esc(total) + '</span><span style="font-size:15px;font-weight:600;color:' + K.body + ';"> câu đúng</span></div>' +
     (showPctLine ? '<div style="font-size:14px;line-height:20px;color:' + K.body + ';padding-top:2px;">Tỉ lệ đúng: <b style="color:' + ringColor + ';">' + esc(attempt.pct) + "%</b></div>" : "") +
     '<div style="padding-top:12px;">' + bar + "</div>" +
@@ -144,33 +145,6 @@ function build(attempt, settings, advice, opts) {
   const practiceNote = t.practice
     ? gap(14) + row(T("<tr>" + td("padding:11px 15px;font-size:13px;line-height:20px;color:#6b4a00;", "<b>Bài thi thử, không phải kỳ kiểm tra chính thức.</b> " +
         (compliance != null ? "Điểm tuân thủ chỉ để bạn hình dung nếu thi thật, không được ghi nhận." : "Kết quả không được ghi nhận chính thức.")) + "</tr>", 'width="100%" bgcolor="#FFF6E2"', "background:#FFF6E2;border:1px solid #EBCB84;border-radius:10px;border-collapse:separate;"))
-    : "";
-
-  // ---- 4. Phân tích theo mảng kiến thức + chỉ số khác (chỉ khi có dữ liệu)
-  let cats = "", grid = "";
-  if (an) {
-    if (an.random != null) {
-      cats = '<div style="font-family:' + TF + ';font-size:13px;line-height:1.7;color:#6B4A00;background:#FFF6E2;border:1px solid #F0DDB0;border-radius:10px;padding:11px 14px">Kết quả gần bằng mức chọn bừa (khoảng ' + esc(an.random) + "%) nên chưa phản ánh kiến thức theo từng mảng. Hãy làm lại nghiêm túc để có phân tích chính xác.</div>";
-    } else if ((an.categories || []).length) {
-      cats = '<div style="font-family:' + TF + ";font-size:12.5px;color:" + K.muted + ';margin:0 0 12px">Mảng yếu nhất ở trên</div>' +
-        an.categories.map((c) =>
-          '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 13px"><tr><td style="font-family:' + TF + ";font-size:13.5px;font-weight:600;color:" + K.ink + '">' + esc(oneLine(c.name, 60)) + "</td>" +
-          '<td align="right" width="96" style="width:96px;font-family:' + TF + ";font-size:12.5px;color:" + K.muted + ';white-space:nowrap"><b style="color:' + K.ink + '">' + esc(c.ok) + "/" + esc(c.n) + "</b> · " + esc(c.pct) + "%</td></tr>" +
-          '<tr><td colspan="2" style="padding-top:6px">' + oneBar(c.pct, band(c.pct), 8) + "</td></tr></table>").join("") +
-        '<div style="font-family:' + TF + ";font-size:11.5px;color:" + K.muted + '"><span style="color:' + K.green + '">&#9679;</span> từ 80% &nbsp; <span style="color:' + K.amber + '">&#9679;</span> 60 đến 79% &nbsp; <span style="color:' + K.red + '">&#9679;</span> dưới 60%</div>';
-    }
-    const facts = [];
-    if (an.avgSec != null && an.limitSec) facts.push({ k: "Tốc độ làm bài trung bình", v: an.avgSec + " giây/câu", s: "Giới hạn " + an.limitSec + " giây mỗi câu" });
-    if (an.timeouts > 0) facts.push({ k: "Câu hết giờ", v: an.timeouts + " câu", s: "chưa kịp trả lời" });
-    if (an.prev && an.prev.pct != null) { const d = (an.pct || 0) - an.prev.pct; facts.push({ k: "So với kỳ trước", v: (d > 0 ? "▲ +" : d < 0 ? "▼ " : "≈ ") + d + " điểm %", c: d >= 5 ? K.green : d <= -5 ? K.red : K.ink, s: (an.prev.period ? "Kỳ " + an.prev.period + ": " : "Trước đó: ") + an.prev.pct + "%" }); }
-    if (an.nextBand && an.total) facts.push({ k: "Mốc tuân thủ kế tiếp", v: an.nextBand.points + " điểm", s: "Cần đúng " + an.nextBand.needCorrect + "/" + an.total + " câu (thiếu " + an.nextBand.gap + ")" });
-    grid = facts.map((f, i) =>
-      '<tr><td valign="middle" style="padding:11px 0;' + (i ? "border-top:1px solid #E4ECF8;" : "") + "font-family:" + TF + '"><div style="font-size:13px;font-weight:600;color:' + K.ink + '">' + esc(f.k) + '</div><div style="font-size:12px;color:' + K.muted + ';margin-top:2px">' + esc(f.s) + "</div></td>" +
-      '<td align="right" valign="middle" style="padding:11px 0 11px 12px;' + (i ? "border-top:1px solid #E4ECF8;" : "") + "font-family:" + TF + ";font-size:16px;font-weight:800;color:" + (f.c || K.ink) + ';white-space:nowrap">' + esc(f.v) + "</td></tr>").join("");
-  }
-  const analysis = (cats || grid)
-    ? gap(18) + row(card('<div style="padding:18px 20px 10px;">' + h2("Phân tích kết quả") + cats +
-        (grid ? (cats ? '<div style="height:8px;line-height:8px;font-size:0;border-bottom:1px solid #E4ECF8;">&nbsp;</div>' : "") + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' + grid + "</table>" : "") + "</div>"))
     : "";
 
   // ---- 5. Nhận xét và gợi ý ôn tập (một khối, viền nhấn bên trái)
@@ -224,7 +198,7 @@ function build(attempt, settings, advice, opts) {
     "@media screen and (max-width:600px){.outer{padding:0!important}.shell{border-radius:0!important;border-left:0!important;border-right:0!important}.pad{padding-left:16px!important;padding-right:16px!important}" +
     ".hero-l{padding:16px!important}.hero-title{font-size:19px!important;line-height:25px!important}" +
     ".stack,.stack>tbody,.stack>tbody>tr,.stack>tbody>tr>td.col{display:block!important;width:100%!important}.ring-col{padding:16px 16px 0!important;text-align:center!important}.info-col{padding:12px 16px 18px!important}" +
-    ".person-name{font-size:19px!important}.big-score{font-size:34px!important}" +
+    ".big-score{font-size:34px!important}" +
     ".metric{padding:12px 3px!important}.m-val{font-size:16px!important;line-height:22px!important}.footer-qr{width:70px!important;height:70px!important}}";
 
   const html =
@@ -234,7 +208,7 @@ function build(attempt, settings, advice, opts) {
     '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:' + K.page + '">' + esc(pre) + "&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>" +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' + K.page + '" style="width:100%;background:' + K.page + ';"><tr><td align="center" class="outer" style="padding:22px 10px;">' +
     '<table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" class="shell" align="center" bgcolor="#FFFFFF" style="margin:0 auto;width:100%;max-width:640px;background:#FFFFFF;border:1px solid ' + K.line + ';border-radius:20px;border-collapse:separate;overflow:hidden;text-align:left;">' +
-    brand + hello + resultCard + practiceNote + analysis + tips + cta + verify +
+    brand + hello + resultCard + practiceNote + tips + cta + verify +
     "</table></td></tr></table></body></html>";
 
   return { subject: m.subject, html: harden(html), text: textOf(attempt, settings, m, cardNote) };
@@ -257,22 +231,12 @@ function harden(html) {
 // Bản chữ thuần: đọc được trên mọi ứng dụng thư, cùng nội dung và cùng thứ tự với bản HTML
 function textOf(attempt, settings, m, cardNote) {
   const t = m.t, a = m.a, an = m.an, compliance = attempt.compliancePoints, L = [];
-  L.push("KẾT QUẢ BÀI KIỂM TRA", t.main + (t.chan ? " · Kênh " + t.chan : "") + (t.practice ? "  [THI THỬ - KHÔNG PHẢI THI CHÍNH THỨC]" : ""), "Nộp lúc " + m.whenShort, "", "Chào " + m.name + ",", "", m.intro, "");
+  L.push("KẾT QUẢ BÀI KIỂM TRA", t.main + (t.chan ? " · Kênh " + t.chan : "") + (t.practice ? "  [THI THỬ - KHÔNG PHẢI THI CHÍNH THỨC]" : ""), "Nộp lúc " + m.whenShort, "", "Chào " + m.greet + ",", "", m.intro, "");
   L.push("KẾT QUẢ", "- Tỉ lệ trả lời đúng: " + attempt.pct + "% (" + attempt.score + "/" + m.total + " câu)", "- Đúng " + (attempt.score || 0) + " · Sai " + m.wrong + " · Bỏ trống " + m.blank);
   if (m.ps !== null) L.push("- Kết quả: " + (m.ps ? "ĐẠT" : "CHƯA ĐẠT") + (settings.passScore ? " (ngưỡng " + settings.passScore + "%)" : ""));
   if (compliance != null) L.push("- " + (t.practice ? "Điểm tuân thủ (nếu thi thật): " : "Điểm tuân thủ học tập: ") + compliance + " điểm");
   if (m.dur != null) L.push("- Thời gian hoàn thành: " + clock(m.dur));
   if (t.practice) L.push("", "Lưu ý: Đây là bài thi thử, không phải kỳ kiểm tra chính thức" + (compliance != null ? "; điểm tuân thủ chỉ để hình dung nếu thi thật." : "."));
-  if (an && an.random != null) L.push("", "PHÂN TÍCH", "Kết quả gần bằng mức chọn bừa (khoảng " + an.random + "%) nên chưa phản ánh kiến thức theo từng mảng; hãy làm lại nghiêm túc để có phân tích chính xác.");
-  else if (an && (an.categories || []).length) { L.push("", "KẾT QUẢ THEO MẢNG KIẾN THỨC (mảng yếu nhất ở trên)"); an.categories.forEach((c) => L.push("- " + oneLine(c.name, 60) + ": " + c.ok + "/" + c.n + " (" + c.pct + "%)")); }
-  if (an) {
-    const x = [];
-    if (an.avgSec != null && an.limitSec) x.push("- Tốc độ làm bài trung bình: " + an.avgSec + " giây/câu (giới hạn " + an.limitSec + " giây)");
-    if (an.timeouts > 0) x.push("- Câu hết giờ: " + an.timeouts + " câu");
-    if (an.prev && an.prev.pct != null) { const d = (an.pct || 0) - an.prev.pct; x.push("- So với " + (an.prev.period ? "kỳ " + an.prev.period : "lần trước") + " (" + an.prev.pct + "%): " + (d > 0 ? "+" : "") + d + " điểm phần trăm"); }
-    if (an.nextBand && an.total) x.push("- Mốc tuân thủ kế tiếp: " + an.nextBand.points + " điểm, cần đúng " + an.nextBand.needCorrect + "/" + an.total + " câu (thiếu " + an.nextBand.gap + ")");
-    if (x.length) L.push("", "CHỈ SỐ KHÁC", ...x);
-  }
   if (a.headline || (a.actions || []).length) {
     L.push("", "NHẬN XÉT DÀNH RIÊNG CHO BẠN" + (a.source === "ai" ? " (gợi ý bởi AI)" : ""));
     if (a.headline) L.push(a.headline);
