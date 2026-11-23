@@ -261,14 +261,15 @@ function voxPick(){
 if ('speechSynthesis' in window && window.speechSynthesis.addEventListener){ try { window.speechSynthesis.addEventListener('voiceschanged', voxPick); } catch (e) {} }
 function speak(t){
   if (!t || !SND.on || !('speechSynthesis' in window)) return;
+  var v = voxPick();
+  if (!v) return; // không có giọng tiếng Việt trên máy/trình duyệt này: thà im lặng còn hơn đọc sai bằng giọng ngôn ngữ khác
   var n = Date.now();
   if (n - VOX.lastAt < 900) return; // tránh nói chồng chéo liên tục khi gợi ý đổi nhanh
   if (t === VOX.last && n - VOX.lastAt < 4000) return; // tránh lặp lại y nguyên câu vừa nói
   try {
     window.speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(t);
-    u.lang = 'vi-VN'; u.rate = 1.05; u.pitch = 1; u.volume = 1;
-    var v = voxPick(); if (v) u.voice = v;
+    u.lang = 'vi-VN'; u.rate = 1.05; u.pitch = 1; u.volume = 1; u.voice = v;
     window.speechSynthesis.speak(u);
   } catch (e) {}
   VOX.last = t; VOX.lastAt = n;
