@@ -30,14 +30,26 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 button,input{font:inherit;color:inherit}
 :focus-visible{outline:3px solid #7AA0D2;outline-offset:2px}
 .hide{display:none!important}
-.svp-bg{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(9,20,38,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
-.svp{background:#fff;border-radius:18px;max-width:430px;width:100%;padding:26px 24px 20px;box-shadow:0 18px 50px rgba(0,0,0,.28);text-align:center}
-.svp h3{margin:0 0 8px;font-size:20px;line-height:1.3;color:#10243f}
-.svp p{margin:0 0 20px;color:#4a5b72;line-height:1.55;font-size:14.5px}
-.svp .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.svp a.go,.svp button.later{font:inherit;font-weight:700;font-size:14.5px;border-radius:12px;padding:11px 20px;cursor:pointer;text-decoration:none}
-.svp a.go{background:#1d5fd1;color:#fff;border:0}
-.svp button.later{background:#fff;color:#33445c;border:1.5px solid #cdd6e2}
+.svp-bg{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(6,16,34,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:svpIn .25s ease-out}
+.svp{position:relative;background:#fff;border-radius:22px;max-width:440px;width:100%;padding:0 0 22px;box-shadow:0 30px 80px rgba(0,0,0,.4);text-align:center;overflow:hidden;animation:svpUp .3s cubic-bezier(.2,.9,.3,1.2)}
+.svp .top{padding:26px 24px 22px;color:#fff;background:linear-gradient(155deg,#0A3C99 0%,#1D5FD1 60%,#2F8CF0 100%)}
+.svp .ic{width:62px;height:62px;margin:0 auto 12px;border-radius:18px;display:grid;place-items:center;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28)}
+.svp .ic svg{width:32px;height:32px}
+.svp .step{display:inline-block;margin:0 0 8px;padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.18);font-size:12.5px;font-weight:700}
+.svp h3{margin:0;font-size:22px;line-height:1.3;color:#fff}
+.svp p{margin:18px 24px 18px;color:#33445c;line-height:1.6;font-size:15px}
+.svp p b{color:#10243f}
+.svp .row{display:flex;flex-direction:column;gap:10px;padding:0 24px}
+.svp a.go,.svp button.done{display:flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:800;font-size:16.5px;border-radius:14px;padding:15px 20px;cursor:pointer;text-decoration:none;border:0}
+.svp a.go{background:#1d5fd1;color:#fff;box-shadow:0 10px 24px -10px rgba(29,95,209,.9);animation:svpPulse 2s ease-in-out 1s infinite}
+.svp a.go:hover,.svp a.go:focus-visible{background:#164db0}
+.svp a.go.again{background:#fff;color:#1d5fd1;border:1.5px solid #c3d5f3;box-shadow:none;animation:none;font-size:14.5px;padding:11px 16px}
+.svp button.done{background:#178A47;color:#fff}
+.svp a.go:focus,.svp button.done:focus{outline:3px solid #9CC2FF;outline-offset:2px}
+.svp .note{margin:12px 24px 0;font-size:12.5px;color:#6B7A90}
+@keyframes svpIn{from{opacity:0}}@keyframes svpUp{from{opacity:0;transform:translateY(16px) scale(.97)}}
+@keyframes svpPulse{0%,100%{box-shadow:0 10px 24px -10px rgba(29,95,209,.9),0 0 0 0 rgba(29,95,209,.35)}50%{box-shadow:0 10px 24px -10px rgba(29,95,209,.9),0 0 0 9px rgba(29,95,209,0)}}
+@media(prefers-reduced-motion:reduce){.svp-bg,.svp,.svp a.go{animation:none}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* Đầu trang */
@@ -4475,7 +4487,8 @@ $('resTries').addEventListener('click', async function(e){
   renderConfirm();
 });
 // Mời làm khảo sát chương trình đào tạo sau khi nộp bài (chỉ khi đề có link khảo sát, không áp dụng cho đề thi thử).
-// Mỗi người chỉ bị hỏi một lần cho mỗi đề: bấm "Làm khảo sát" hoặc "Để sau" đều ghi nhớ trên trình duyệt này.
+// BẮT BUỘC: không có nút "Để sau", không đóng bằng Esc hay bấm ra ngoài. Cửa sổ chỉ đóng sau khi thí sinh đã mở phiếu khảo sát
+// và bấm "Tôi đã gửi khảo sát". Chưa mở phiếu mà tải lại trang thì cửa sổ hiện lại (ghi nhớ theo người + đề trên trình duyệt này).
 function surveyPrompt(){
   var ex = ST.exam || {}, url = String(ex.surveyUrl || '');
   if (!url || isPractice() || !/^https?:\/\//i.test(url) || document.querySelector('.svp-bg')) return;
@@ -4484,17 +4497,34 @@ function surveyPrompt(){
   if (seen) return;
   var mark = function(){ try { localStorage.setItem(key, String(Date.now())); } catch (e) { /* bỏ qua */ } };
   var bg = document.createElement('div'); bg.className = 'svp-bg';
-  bg.innerHTML = '<div class="svp" role="dialog" aria-modal="true" aria-labelledby="svpT"><h3 id="svpT">Bạn đã hoàn thành bài kiểm tra</h3>' +
-    '<p>Hãy dành 2–3 phút đánh giá chương trình đào tạo để chúng tôi cải thiện tốt hơn. Ý kiến của bạn rất quan trọng.</p>' +
-    '<div class="row"><button type="button" class="later">Để sau</button><a class="go" target="_blank" rel="noopener noreferrer">Làm khảo sát</a></div></div>';
-  bg.querySelector('a.go').href = url;
-  var close = function(){ bg.remove(); document.removeEventListener('keydown', onKey); };
-  var onKey = function(ev){ if (ev.key === 'Escape'){ mark(); close(); } };
-  bg.querySelector('a.go').addEventListener('click', function(){ mark(); setTimeout(close, 50); });
-  bg.querySelector('button.later').addEventListener('click', function(){ mark(); close(); });
-  document.addEventListener('keydown', onKey);
+  bg.innerHTML = '<div class="svp" role="dialog" aria-modal="true" aria-labelledby="svpT" aria-describedby="svpD">' +
+    '<div class="top"><div class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"/><path d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><path d="M8.5 12.5l2 2 4.5-4.5"/><path d="M8.5 17.5h7"/></svg></div>' +
+    '<span class="step">Bước cuối cùng</span><h3 id="svpT">Khảo sát chương trình đào tạo</h3></div>' +
+    '<p id="svpD">Bạn đã nộp bài xong. Vui lòng dành <b>2–3 phút</b> trả lời khảo sát để hoàn tất. Ý kiến của bạn giúp chương trình đào tạo tốt hơn.</p>' +
+    '<div class="row"><a class="go" target="_blank" rel="noopener noreferrer">Làm khảo sát ngay</a></div>' +
+    '<p class="note">Phiếu khảo sát mở trong thẻ mới. Làm xong, quay lại đây để xem kết quả bài kiểm tra.</p></div>';
+  var go = bg.querySelector('a.go'); go.href = url;
+  // Chặn Esc / Tab ra ngoài cửa sổ: giữ tiêu điểm trong cửa sổ
+  var onKey = function(ev){
+    if (ev.key === 'Escape'){ ev.preventDefault(); return; }
+    if (ev.key === 'Tab'){ var f = bg.querySelectorAll('a,button'); if (!f.length) return; var first = f[0], last = f[f.length - 1];
+      if (ev.shiftKey && document.activeElement === first){ ev.preventDefault(); last.focus(); } else if (!ev.shiftKey && document.activeElement === last){ ev.preventDefault(); first.focus(); } }
+  };
+  go.addEventListener('click', function(){
+    // Đã mở phiếu: đổi sang nút "Tôi đã gửi khảo sát" (và nút mở lại phiếu nếu lỡ đóng thẻ)
+    setTimeout(function(){
+      if (bg.querySelector('button.done')) return;
+      go.classList.add('again'); go.textContent = 'Mở lại phiếu khảo sát';
+      var d = document.createElement('button'); d.type = 'button'; d.className = 'done'; d.textContent = '✓ Tôi đã gửi khảo sát';
+      d.addEventListener('click', function(){ mark(); bg.remove(); document.removeEventListener('keydown', onKey, true); });
+      go.parentNode.insertBefore(d, go);
+      bg.querySelector('.note').textContent = 'Đã gửi khảo sát xong thì bấm nút xanh lá để xem kết quả bài kiểm tra.';
+      $('svpD').innerHTML = 'Cảm ơn bạn! Sau khi <b>gửi phiếu khảo sát</b> ở thẻ vừa mở, quay lại đây và bấm nút bên dưới.';
+    }, 300);
+  });
+  document.addEventListener('keydown', onKey, true);
   document.body.appendChild(bg);
-  bg.querySelector('a.go').focus();
+  go.focus();
 }
 function rsPick(t){
   var m = { imp:'Imp', tries:'Tries', adv:'Adv', rcpt:'Rcpt' };
