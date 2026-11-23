@@ -17,7 +17,7 @@
   ];
   var css = ''
   + (cfg.hide ? cfg.hide + '{display:none!important}' : '')
-  + '.kt-bar{position:relative;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:14px;height:76px;box-sizing:border-box;padding:0 clamp(24px,4.5vw,78px);'
+  + '.kt-bar{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:14px;height:76px;box-sizing:border-box;padding:0 clamp(24px,4.5vw,78px);'
   +   'font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid rgba(190,210,235,.6)}'
   + '.kt-brand{display:flex;align-items:center;gap:12px;min-width:0;font-weight:800;font-size:18px;color:#0B1F4B;text-decoration:none}'
   + '.kt-mark{flex:0 0 auto;width:44px;height:44px;box-sizing:border-box;border-radius:14px;background:#fff;display:grid;place-items:center;padding:5px;box-shadow:0 5px 18px rgba(22,76,140,.1)}'
@@ -43,7 +43,7 @@
   +   '.kt-bar.open .kt-nav{display:flex}.kt-nav>*+*::before{display:none}'
   +   '.kt-nav a,.kt-nav button{width:100%;justify-content:flex-start;gap:12px;padding:12px 14px;font-size:15px;font-weight:600;border-radius:11px;text-align:left}'
   +   '.kt-nav a:hover,.kt-nav button:hover{background:#EEF4FB}.kt-nav svg{display:block;width:20px;height:20px;color:#0A63C4}.kt-nav a.cur svg{color:#fff}}'
-  + '@media print{.kt-bar{display:none}}';
+  + 'html{scroll-padding-top:84px}@media(max-width:860px){html{scroll-padding-top:72px}}@media print{.kt-bar{display:none}}';
   var st = document.createElement('style'); st.id = 'ktBarCss'; st.textContent = css; (document.head || document.documentElement).appendChild(st);
   var bar = document.createElement('header'); bar.className = 'kt-bar'; bar.id = 'ktBar';
   bar.innerHTML = '<a class="kt-brand" href="/kiemtra/"><span class="kt-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span class="kt-name">Hệ thống kiểm tra đánh giá trực tuyến</span></a>'
