@@ -4006,9 +4006,12 @@ const card = $('examFormCard'); if (!card || card.classList.contains('hide')) re
 try {
 exDefaults();
 { const qid = ($('exEditingId').value || $('exId').value).trim();
-  $('exQJump').innerHTML = (EX_NEW || !$('exEditingId').value)
-    ? 'Mục này chỉ để <b>chia số câu theo nhóm</b> — câu hỏi thật (nội dung, phương án, đáp án) phải thêm ở trang <b>Ngân hàng câu hỏi</b> riêng, chỉ mở được <b>sau khi đã lưu đề này</b>. Bấm "Lưu đề" ở cuối trang, sau đó quay lại đây sẽ thấy nút vào Ngân hàng câu hỏi.'
-    : '<button type="button" class="btn ghost sm" onclick="openExam(\'' + esc(qid) + '\',\'questions\')">📚 Mở Ngân hàng câu hỏi của đề này</button> — thêm/sửa câu hỏi thật tại đó (gõ tay, nhập Excel hoặc JSON), rồi quay lại đây để chia số câu theo nhóm.'; }
+  const missingBasics = !$('exTitle').value.trim() || !($('exId').value || '').trim();
+  $('exQJump').innerHTML = $('exEditingId').value
+    ? '<button type="button" class="btn ghost sm" onclick="openExam(\'' + esc(qid) + '\',\'questions\')">📚 Mở Ngân hàng câu hỏi của đề này</button> — thêm/sửa câu hỏi thật tại đó (gõ tay, nhập Excel hoặc JSON), rồi quay lại đây để chia số câu theo nhóm.'
+    : missingBasics
+      ? 'Mục này chỉ để <b>chia số câu theo nhóm</b> — câu hỏi thật phải thêm ở trang <b>Ngân hàng câu hỏi</b> riêng, chỉ mở được sau khi lưu đề. Bạn cần điền <b>Tên đề thi</b> và <b>Mã đề</b> ở Bước 1 trước đã (xem 2 dòng lỗi đỏ phía trên). <a href="#" onclick="event.preventDefault();exGoStep(1)" style="font-weight:700">Đi tới Bước 1</a>'
+      : '<button type="button" class="btn sm" onclick="saveExam()">💾 Lưu đề thi ngay</button> — đã đủ tên đề + mã đề, bấm nút này để lưu và mở khoá Ngân hàng câu hỏi (các bước còn lại vẫn giữ nguyên, sửa sau cũng được).'; }
 const iss = exIssues(); let errs = 0; const list = [];
 for (let st = 1; st <= EX_STEPS; st++){
 const e = iss[st].filter(x => x.t === 'err').length, w = iss[st].length - e; errs += e;
