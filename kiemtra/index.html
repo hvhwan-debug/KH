@@ -1611,6 +1611,109 @@ body.exam .who{display:flex;align-items:center;gap:10px;margin-left:auto;flex:0 
   body #scrPhoto.lg.rdy .ai-tips li{padding:10px 4px 9px;font-size:11px}
 }
 
+/* ===== Xác thực khuôn mặt trên điện thoại: giao diện sáng (biểu tượng + tiêu đề giữa, thanh thử thách, camera bo góc, thẻ tiến trình 4 bước) ===== */
+.fv-ic,.fv-sub,.fv-prog,.fv-cam,.fv-shot,.fv-card{display:none}
+@media(max-width:560px){
+  html body #scrPhoto{--fvink:#0B1F5C;--fvmut:#6A7A96;--fvblue:#1F6BF5;--fvok:#2DBE6C;--fvline:#DDE4EF;
+    overflow-y:auto;gap:14px;color:var(--fvink);padding:max(18px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));
+    background:radial-gradient(70% 30% at 100% 0%,rgba(150,195,255,.35),transparent 70%),radial-gradient(80% 30% at 0% 100%,rgba(170,205,255,.3),transparent 70%),linear-gradient(180deg,#F6F9FE,#EEF4FC)}
+  html body #scrPhoto::after{display:none}
+  html body #scrPhoto .ai-side1{display:flex;flex-direction:column;align-items:center}
+  /* tiêu đề giữa */
+  html body #scrPhoto .ai-head{display:block;position:relative;width:100%;margin:0;text-align:center}
+  html body #scrPhoto .ai-ttl{display:flex;flex-direction:column;align-items:center}
+  html body #scrPhoto .fv-ic{display:grid;place-items:center;width:52px;height:52px;margin:0 0 12px;border-radius:14px;color:#fff;background:linear-gradient(160deg,#3B8BFF,#1F6BF5);box-shadow:0 10px 20px -10px rgba(31,107,245,.8)}
+  html body #scrPhoto .fv-ic svg{width:28px;height:28px}
+  html body #scrPhoto .ai-k{display:block;margin:0 0 8px;padding-left:.32em;font:600 12px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.32em;color:#5B6B86;opacity:1}
+  html body #scrPhoto .ai-k::before{display:none}
+  html body #scrPhoto h1{margin:0;font-size:clamp(23px,7vw,28px);line-height:1.2;font-weight:800;letter-spacing:-.02em;color:var(--fvink);text-shadow:none}
+  html body #scrPhoto .fv-sub{display:block;margin:8px 0 0;font-size:14px;line-height:1.45;color:var(--fvmut)}
+  html body #scrPhoto .ai-chip{display:none}
+  html body #scrPhoto .ai-snd{position:absolute;top:0;right:0;width:38px;height:38px;color:#3D5A8A;background:#fff;border:1px solid #DCE5F2;box-shadow:0 6px 14px -10px rgba(20,60,140,.5)}
+  html body #scrPhoto .ai-snd.off{color:#9AA8BF}
+  html body #scrPhoto.lg.rdy .ai-lead{margin:10px 0 0;font-size:13.5px;line-height:1.5;color:var(--fvmut);text-align:center}
+  html body #scrPhoto.lg.rdy .ai-lead b{color:var(--fvblue)}
+  /* thanh "Thử thách 1/3" */
+  html body #scrPhoto.lv[data-ai="live"] .fv-prog{display:flex}
+  html body #scrPhoto .fv-prog{align-items:center;justify-content:space-between;gap:16px;width:min(100%,290px);box-sizing:border-box;margin:14px auto 0;padding:10px 18px 10px 22px;border-radius:999px;background:#E6EEFB;font-size:15px;color:var(--fvink)}
+  html body #scrPhoto .fv-prog b{font-weight:800}
+  html body #scrPhoto .fv-dots{display:flex;gap:8px}
+  html body #scrPhoto .fv-dots i{width:9px;height:9px;border-radius:50%;background:#C9D8F2;transition:background .25s}
+  html body #scrPhoto .fv-dots i.cur{background:var(--fvblue)}
+  html body #scrPhoto .fv-dots i.done{background:var(--fvok)}
+  /* camera */
+  html body #scrPhoto .photo-box{min-height:300px;border-radius:26px;background:#D9DEE6;box-shadow:0 18px 40px -24px rgba(20,50,110,.55)}
+  html body #scrPhoto .photo-box::before{display:none}
+  html body #scrPhoto[data-ai="ok"] .photo-box{box-shadow:0 0 0 3px var(--fvok),0 18px 40px -24px rgba(20,50,110,.55)}
+  html body #scrPhoto[data-ai="bad"] .photo-box{box-shadow:0 0 0 3px #E5484D,0 18px 40px -24px rgba(20,50,110,.55)}
+  html body #scrPhoto .ai-dim,html body #scrPhoto .ai-guide ellipse,html body #scrPhoto .ai-tk,html body #scrPhoto .ai-mesh,html body #scrPhoto .ai-track,html body #scrPhoto .ai-pills,html body #scrPhoto .ai-arrow,html body #scrPhoto .ai-hold,html body #scrPhoto .ai-rd{display:none}
+  html body #scrPhoto .ai-hud{opacity:1}
+  html body #scrPhoto .ai-c{display:block;width:34px;height:34px;border:0 solid rgba(255,255,255,.95);filter:drop-shadow(0 1px 3px rgba(0,0,0,.25))}
+  html body #scrPhoto .ai-c.tl{left:16px;top:66px;border-left-width:3px;border-top-width:3px;border-top-left-radius:16px}
+  html body #scrPhoto .ai-c.tr{right:16px;top:66px;border-right-width:3px;border-top-width:3px;border-top-right-radius:16px}
+  html body #scrPhoto .ai-c.bl{left:16px;bottom:16px;border-left-width:3px;border-bottom-width:3px;border-bottom-left-radius:16px}
+  html body #scrPhoto .ai-c.br{right:16px;bottom:16px;border-right-width:3px;border-bottom-width:3px;border-bottom-right-radius:16px}
+  html body #scrPhoto[data-ai="ok"] .ai-c{border-color:#7BE3A6}html body #scrPhoto[data-ai="bad"] .ai-c{border-color:#FF9AA0}
+  html body #scrPhoto .fv-cam{display:inline-flex;align-items:center;gap:9px;position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:6;max-width:calc(100% - 120px);padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font-size:13.5px;font-weight:500;color:var(--fvink);white-space:nowrap}
+  html body #scrPhoto .fv-cam span{overflow:hidden;text-overflow:ellipsis}
+  html body #scrPhoto .fv-cam i{flex:0 0 auto;width:9px;height:9px;border-radius:50%;background:#2FC25B}
+  html body #scrPhoto .fv-cam.seek i{background:#F5A524}html body #scrPhoto .fv-cam.bad i{background:#E5484D}
+  html body #scrPhoto .fv-shot{display:grid;place-items:center;position:absolute;top:12px;right:14px;z-index:6;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.88);color:var(--fvink);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  html body #scrPhoto .fv-shot svg{width:22px;height:22px}
+  html body #scrPhoto .photo-box.opening .fv-cam,html body #scrPhoto .photo-box.opening .fv-shot{display:none}
+  /* câu nhắc ở đáy camera */
+  html body #scrPhoto[data-ai="live"] .ai-sweep,html body #scrPhoto[data-ai="idle"] .ai-sweep{display:none}
+  html body #scrPhoto .ai-hint,html body #scrPhoto.lv .ai-say{left:0;right:0;width:fit-content;margin:0 auto;transform:none;bottom:34px;max-width:calc(100% - 96px);box-sizing:border-box;text-align:center;padding:9px 20px;border:0;border-radius:999px;background:rgba(40,38,48,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:none;font-size:14.5px;color:#fff;white-space:normal}
+  html body #scrPhoto.lv .ai-say b{font-weight:600}
+  /* thẻ tiến trình 4 bước */
+  html body #scrPhoto .fv-card{display:block}
+  html body #scrPhoto:not([data-ai="idle"]):not([data-ai="live"]) .fv-card,html body #scrPhoto.lg.rdy .fv-card{display:none}
+  html body #scrPhoto .fv-card,html body #scrPhoto .ai-pipe{padding:18px 16px 16px;border-radius:24px;background:#fff;border:1px solid #E6ECF5;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 16px 36px -26px rgba(20,60,140,.5)}
+  html body #scrPhoto .fv-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:0 6px}
+  html body #scrPhoto .fv-top b{font-size:17px;font-weight:800;color:var(--fvink)}
+  html body #scrPhoto #fvPct{font-size:20px;font-weight:800;color:var(--fvblue);font-variant-numeric:tabular-nums}
+  html body #scrPhoto .fv-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:14px 0 0;padding:0;list-style:none}
+  html body #scrPhoto .fv-steps li{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;font-size:12px;line-height:1.3;color:#7D8AA2}
+  html body #scrPhoto .fv-steps li+li::before{content:"";position:absolute;top:15px;right:50%;width:100%;height:3px;border-radius:3px;background:var(--fvline)}
+  html body #scrPhoto .fv-steps li.done+li::before{background:var(--fvok)}
+  html body #scrPhoto .fv-steps li.done+li.cur::before{background:linear-gradient(90deg,var(--fvok),var(--fvblue))}
+  html body #scrPhoto .fv-steps i{position:relative;z-index:1;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;font-style:normal;font-size:14px;font-weight:700;background:#E4E9F1;color:#7D8AA2}
+  html body #scrPhoto .fv-steps i svg{width:17px;height:17px}
+  html body #scrPhoto .fv-steps li.done i{background:var(--fvok);color:#fff}
+  html body #scrPhoto .fv-steps li.cur i{background:var(--fvblue);color:#fff;box-shadow:0 0 0 5px rgba(31,107,245,.18)}
+  html body #scrPhoto .fv-steps li.cur{color:var(--fvink);font-weight:700}
+  /* bảng xử lý sau khi quét: thẻ trắng */
+  html body #scrPhoto .ai-pipe::before{display:none}
+  html body #scrPhoto .ai-now-n{color:var(--fvblue);text-shadow:none}
+  html body #scrPhoto .ai-now-t{color:var(--fvink)}
+  html body #scrPhoto .ai-now-p{color:var(--fvblue);text-shadow:none}
+  html body #scrPhoto .ai-pipe .ai-steps li{background:#E4E9F1}
+  html body #scrPhoto .ai-pipe .ai-steps li.ok{background:var(--fvok);box-shadow:none}
+  html body #scrPhoto .ai-pipe .ai-steps li.run{background:rgba(31,107,245,.18)}
+  html body #scrPhoto .ai-pipe .ai-steps li.run::before{background:linear-gradient(90deg,transparent,var(--fvblue),transparent);box-shadow:none}
+  html body #scrPhoto .ai-pipe .ai-steps li.bad{background:#E5484D;box-shadow:none}
+  html body #scrPhoto .ai-now-s{color:var(--fvblue)}html body #scrPhoto .ai-now-s i{background:var(--fvblue);box-shadow:0 0 0 3px rgba(31,107,245,.18)}
+  html body #scrPhoto .ai-now-s em{display:none}
+  html body #scrPhoto .ai-pipe[data-st="ok"] .ai-now-n,html body #scrPhoto .ai-pipe[data-st="ok"] .ai-now-s{color:var(--fvok)}
+  html body #scrPhoto .ai-pipe[data-st="ok"]{border-color:#BFE8CF}
+  /* mẹo trước khi quét (đăng nhập) */
+  html body #scrPhoto.lg.rdy .ai-tips li{color:var(--fvink);background:#fff;border:1px solid #E6ECF5;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 12px 26px -20px rgba(20,60,140,.5)}
+  html body #scrPhoto.lg.rdy .ai-tips svg{background:#E8F0FE;color:var(--fvblue)}
+  /* thông báo + nút */
+  html body #scrPhoto .locline{background:#fff;color:#4B5D7A;border:1px solid #E1E8F3}
+  html body #scrPhoto .locline.ok{background:#EAF8F0;color:#1D7A47;border-color:#BFE8CF}
+  html body #scrPhoto .locline.bad{background:#FFF6E0;color:#7A5200;border-color:#F0D58A}
+  html body #scrPhoto .btn{background:linear-gradient(100deg,#1660E8,#1F7BF7);box-shadow:0 14px 26px -14px rgba(31,107,245,.8)}
+  html body #scrPhoto .btn.go::before{display:none}
+  html body #scrPhoto .btn.ghost{background:#fff;color:var(--fvink);border:1.5px solid #D6E0EE;box-shadow:none}
+}
+@media(max-width:560px) and (max-height:700px){
+  html body #scrPhoto .fv-ic{width:44px;height:44px;margin-bottom:8px}
+  html body #scrPhoto .fv-sub{font-size:13px;margin-top:4px}
+  html body #scrPhoto .fv-prog{margin-top:10px;padding-top:8px;padding-bottom:8px}
+  html body #scrPhoto .photo-box{min-height:250px}
+}
+
 /* ===== Kết quả làm bài: 2 cột (điểm số | chi tiết có tab) ===== */
 body.rs .stage{max-width:1140px}
 #scrResult{background:none!important;border:0;box-shadow:none;padding:0;overflow:visible;text-align:left}
@@ -2282,16 +2385,19 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
       <div class="ai-bg" aria-hidden="true"><i></i><i></i><i></i></div>
       <div class="ai-side ai-side1">
       <div class="ai-head">
-        <div class="ai-ttl"><span class="ai-k">AI FACE VERIFY</span><h1 tabindex="-1">Xác thực khuôn mặt</h1></div>
+        <div class="ai-ttl"><span class="fv-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="10" r="2.6"/><path d="M7.8 16.5c.8-2 2.4-3 4.2-3s3.4 1 4.2 3"/></svg></span><span class="ai-k">AI FACE VERIFY</span><h1 tabindex="-1">Xác thực khuôn mặt</h1><p class="fv-sub">Xác minh danh tính để tiếp tục sử dụng hệ thống</p></div>
         <div class="ai-hr">
           <button type="button" class="ai-snd" id="aiSnd" aria-pressed="true" title="Bật/tắt âm thanh" aria-label="Bật hoặc tắt âm thanh"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg><svg class="mt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l4 6M21 9l-4 6"/></svg></button>
           <div class="ai-chip" id="aiChip" role="status" aria-live="polite"><i></i><span id="aiChipT">CAMERA ĐANG MỞ</span></div>
         </div>
       </div>
       <p class="ai-lead">Hệ thống sẽ tự động nhận diện và xác minh khuôn mặt để đảm bảo kết quả bài kiểm tra chính xác. Vui lòng nhìn thẳng vào camera trong giây lát.</p>
+      <div class="fv-prog" id="fvProg" aria-hidden="true"><b id="fvProgT">Thử thách 1/3</b><span class="fv-dots"><i></i><i></i><i></i></span></div>
       </div>
       <div class="photo-box">
         <video id="pvVideo" autoplay playsinline muted></video>
+        <div class="fv-cam" id="fvCam" aria-hidden="true"><i></i><span id="fvCamT">Camera đang hoạt động</span></div>
+        <span class="fv-shot" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.5-2h5.6l1.5 2h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.8" r="3.4"/></svg></span>
         <div class="face-guide" id="faceGuide" aria-hidden="true"><div class="ring"></div><div class="tip">Đưa khuôn mặt vào giữa vòng tròn</div></div>
         <canvas id="pvCanvas" class="hide"></canvas>
         <img id="pvImg" class="hide" alt="Ảnh đã chụp">
@@ -2320,6 +2426,7 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
         </div>
       </div>
       <div class="ai-side ai-side2">
+      <div class="fv-card" id="fvCard" aria-hidden="true"><div class="fv-top"><b id="fvCurT">Phát hiện khuôn mặt</b><span id="fvPct">0%</span></div><ol class="fv-steps" id="fvSteps"></ol></div>
       <div class="ai-pipe" id="aiPipe" data-st="run">
       <div class="ai-now" aria-live="polite"><span class="ai-now-n" id="aiNowN">01<i>/05</i></span><span class="ai-now-t" id="aiNowT">Phát hiện khuôn mặt</span><span class="ai-now-p" id="aiNowP">0<i>%</i></span></div>
       <ol class="ai-steps" id="aiSteps" aria-label="Các bước xác thực">
@@ -3255,8 +3362,22 @@ function lvOk(p, y, w, off){ // ngưỡng ở trình duyệt chặt hơn máy ch
   return y <= -.15;
 }
 function lvPills(){ $('aiPills').innerHTML = LV.seq.map(function(p, k){ return '<li class="' + (k < LV.i ? 'done' : k === LV.i ? 'cur' : '') + '">' + (k < LV.i ? '✓ ' : '') + LV_NAME[p] + '</li>'; }).join(''); }
+/* Thẻ tiến trình kiểu "Phát hiện khuôn mặt → 3 thử thách" (giao diện điện thoại) */
+var FV_NAME = { front:'Nhìn thẳng vào camera', left:'Quay mặt sang trái', right:'Quay mặt sang phải' };
+function fvPaint(hold){
+  var on = LV.on && LV.seq && LV.seq.length === 3, i = on ? Math.min(LV.i, 3) : 0, cur = on ? 1 + i : 0, h = Math.max(0, Math.min(1, hold || 0));
+  var names = ['Phát hiện khuôn mặt'].concat(on ? LV.seq.map(function(p){ return FV_NAME[p]; }) : ['Thử thách 1', 'Thử thách 2', 'Thử thách 3']);
+  var pct = on ? Math.min(100, Math.round((cur + (i < 3 ? h : 0)) / 4 * 100)) : 0;
+  $('fvCurT').textContent = names[Math.min(cur, 3)]; $('fvPct').textContent = pct + '%';
+  $('fvSteps').innerHTML = names.map(function(n, k){
+    var st = k < cur ? 'done' : k === cur ? 'cur' : '';
+    return '<li class="' + st + '"><i>' + (st === 'done' ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>' : k ? k : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M6.5 18c1.2-2.4 3.2-3.6 5.5-3.6s4.3 1.2 5.5 3.6"/></svg>') + '</i><span>' + n + '</span></li>';
+  }).join('');
+  $('fvProgT').textContent = 'Thử thách ' + Math.min(i + 1, 3) + '/3';
+  [].forEach.call($('fvProg').querySelectorAll('i'), function(d, k){ d.className = k < i ? 'done' : k === i ? 'cur' : ''; });
+}
 function lvSay(){
-  var p = LV.seq[LV.i], a = $('aiArrow'); $('aiSayT').textContent = LV_TXT[p];
+  var p = LV.seq[LV.i], a = $('aiArrow'); $('aiSayT').textContent = LV_TXT[p]; fvPaint(0);
   a.className = 'ai-arrow' + (p === 'left' ? ' l' : p === 'right' ? ' r' : '');
   aiChip('', 'THỬ THÁCH ' + (LV.i + 1) + '/3'); lvPills(); $('aiHold').style.width = '0'; sndCue(); sayVn(LV_VOICE[p]);
 }
@@ -3287,7 +3408,7 @@ function lvCapture(p, v){
   lvSay();
 }
 function lvDone(){
-  LV.run = false; clearTimeout(LV.loop); $('aiHold').style.width = '100%';
+  LV.run = false; clearTimeout(LV.loop); $('aiHold').style.width = '100%'; fvPaint(1);
   PH.live = { token: LV.token, frames: LV.frames.slice() };
   AI.box = LV.frontBox; $('scrPhoto').classList.remove('lv');
   photoProcess($('pvCanvas')); // phân tích ảnh nhìn thẳng như khi chụp tay
@@ -3312,14 +3433,15 @@ async function lvTick(){
         if (!big.length) aiChip('seek', 'ĐANG TÌM KHUÔN MẶT'); else aiChip('bad', 'PHÁT HIỆN NHIỀU NGƯỜI');
       }
       if (big.length === 1 && $('aiChipT').textContent.indexOf('THỬ THÁCH') !== 0) aiChip('', 'THỬ THÁCH ' + (LV.i + 1) + '/3');
-      LV.hold = good ? LV.hold + 1 : 0; if (good && LV.hold < LV_NEED) sndTick(LV.hold); $('aiHold').style.width = Math.min(100, LV.hold / LV_NEED * 100) + '%';
+      LV.hold = good ? LV.hold + 1 : 0; if (good && LV.hold < LV_NEED) sndTick(LV.hold); $('aiHold').style.width = Math.min(100, LV.hold / LV_NEED * 100) + '%'; fvPaint(LV.hold / LV_NEED);
       if (LV.hold >= LV_NEED){ lvCapture(p, v); if (!LV.run) return; }
     }
   } catch (e) { /* một lần đo lỗi thì đo lại */ }
   LV.loop = setTimeout(lvTick, 90);
 }
-function aiScr(st){ $('scrPhoto').setAttribute('data-ai', st); sndScan(st === 'scan' || st === 'verify'); SND.touched = true; sndPaint(); } // touched: đã vào màn quét, nếu tiếng còn bị chặn thì nhấp nháy nút loa để mời chạm
-function aiChip(cls, text){ $('aiChip').className = 'ai-chip' + (cls ? ' ' + cls : ''); $('aiChipT').textContent = text; }
+function aiScr(st){ $('scrPhoto').setAttribute('data-ai', st); if (!LV.on) fvPaint(0); sndScan(st === 'scan' || st === 'verify'); SND.touched = true; sndPaint(); } // touched: đã vào màn quét, nếu tiếng còn bị chặn thì nhấp nháy nút loa để mời chạm
+function aiChip(cls, text){ $('aiChip').className = 'ai-chip' + (cls ? ' ' + cls : ''); $('aiChipT').textContent = text;
+  $('fvCam').className = 'fv-cam' + (cls ? ' ' + cls : ''); $('fvCamT').textContent = /^(THỬ THÁCH|CAMERA)/.test(text) ? 'Camera đang hoạt động' : text.charAt(0) + text.slice(1).toLowerCase(); }
 function aiStep(i, st, silent){ var li = $('aiSteps').children[i]; if (li) li.className = st || ''; if (st === 'ok' && !silent) sndBlip(i); aiNow(); }
 // Bảng tiến trình kiểu HUD: số bước hiện tại / tổng, tên bước, % hoàn tất, trạng thái; các bước là thanh phân đoạn phát sáng
 function aiNow(){
@@ -3430,7 +3552,7 @@ function aiReadyWatch(){
     RD.loop = setTimeout(tick, 260);
   })();
 }
-function aiReadyView(){ if ($('scrPhoto').getAttribute('data-ai') !== 'live') aiScr('live'); $('aiHint').textContent = 'Đặt khuôn mặt vào trong khung oval'; aiRead(0, null); aiReadyWatch(); } // màn chờ: chỉ hiện camera + oval, tự nhận diện rồi tự quét
+function aiReadyView(){ if ($('scrPhoto').getAttribute('data-ai') !== 'live') aiScr('live'); $('aiHint').textContent = 'Đặt khuôn mặt vào giữa khung'; aiRead(0, null); aiReadyWatch(); } // màn chờ: chỉ hiện camera + oval, tự nhận diện rồi tự quét
 function aiLive(){ if (AI.run || LV.started) return; if (PH.mode === 'login' && !LV.go){ aiReadyView(); return; } LV.started = true; sndReady(); aiBuildMesh(); aiScr('live'); aiChip('', 'CAMERA TRỰC TIẾP'); aiRead(0, null); aiTrackStart(); lvBegin(); }
 function aiScanStart(){ // vừa chụp xong: lưới mesh phủ lên khuôn mặt đã khoá gần nhất
   aiTrackStop(); aiBuildMesh(); aiStepsReset(); aiStep(0, 'run'); aiScr('scan'); aiChip('scan', 'ĐANG PHÂN TÍCH');
