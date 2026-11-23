@@ -4997,7 +4997,7 @@ SC_FAIL.p = new Promise(function(res){ SC_FAIL.img.onload = function(){ SC_FAIL.
 SC_FAIL.img.src = '/kiemtra/fail-photo.webp?v=2';
 // Huy hiệu điểm tuân thủ (0 / 10 / 15 / 20 điểm): chỉ tải ảnh của mức điểm đang cần
 var SC_COMP = {};
-function compSrc(cp){ return [0, 10, 15, 20].indexOf(cp) >= 0 ? '/kiemtra/compliance-' + cp + '.webp' : ''; }
+function compSrc(cp){ return [0, 10, 15, 20].indexOf(cp) >= 0 ? '/kiemtra/compliance-' + cp + '.webp?v=2' : ''; }
 function compArt(cp){
   var src = compSrc(cp); if (!src) return { ok:false, img:null, p:Promise.resolve() };
   if (!SC_COMP[cp]){ var o = SC_COMP[cp] = { img:new Image(), ok:false, p:null }; o.p = new Promise(function(res){ o.img.onload = function(){ o.ok = true; res(); }; o.img.onerror = function(){ res(); }; }); o.img.src = src; }
