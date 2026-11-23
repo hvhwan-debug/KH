@@ -33,13 +33,6 @@ async function comp(cp) {
   try { compImgs[cp] = await lib.loadImage(path.join(__dirname, "assets", "compliance-" + cp + ".webp")); } catch (e) { compImgs[cp] = null; }
   return compImgs[cp];
 }
-// Vòng sáng dưới chân cúp / huy hiệu
-let haloImg;
-async function halo() {
-  if (haloImg !== undefined) return haloImg;
-  try { haloImg = await lib.loadImage(path.join(__dirname, "assets", "fx-halo.webp")); } catch (e) { haloImg = null; }
-  return haloImg;
-}
 // Ảnh "Chưa đạt" thay cho cúp khi bài chưa đạt
 let failImg;
 async function fail() {
@@ -85,7 +78,7 @@ function cardData(attempt, settings, now) {
 // Trả về Buffer PNG của thẻ kết quả
 async function renderPng(attempt, settings, now) {
   load();
-  const d = cardData(attempt, settings, now); d.cupImg = await cup(); d.failImg = await fail(); d.compImg = await comp(d.compliance); d.haloImg = await halo();
+  const d = cardData(attempt, settings, now); d.cupImg = await cup(); d.failImg = await fail(); d.compImg = await comp(d.compliance);
   const H = drawer.height(d), cv = lib.createCanvas(1080, H);
   drawer.draw(cv.getContext("2d"), 1080, H, d);
   return cv.encode("png");
