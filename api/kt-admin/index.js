@@ -1,6 +1,6 @@
 // Chỉ ADMIN_EMAILS: quản lý ngân hàng đề, danh sách thí sinh, cài đặt bài kiểm tra, xem kết quả.
 const { reply, guardConfigured, requireAjax, requireUserActive } = require("../_lib/http");
-const { isAdmin, validEmail, emailAllowed } = require("../_lib/config");
+const { isAdmin, isOwner, validEmail, emailAllowed } = require("../_lib/config");
 const quiz = require("../_lib/quiz");
 const { modelName } = require("../_lib/devicename");
 const store = require("../_lib/store");
@@ -311,7 +311,16 @@ const handler = async function (context, req) {
         });
         return reply(context, 200, { ok: true, exam: { id, title: exSt.examTitle || id, openAt: exSt.openAt || 0, closeAt: exSt.closeAt || 0 }, recipients });
       }
-      if (op === "settings") return reply(context, 200, { ok: true, settings: await quiz.getSettings() });
+      if (op === "settings") return reply(context, 200, { ok: true, settings: await quiz.getSettings(), isOwner: isOwner(u.email) });
+
+      // Ảnh đại diện (rõ nhất theo kỹ thuật, từ ảnh xác thực làm bài) — chỉ dành cho OWNER_EMAILS, hẹp hơn admin thường.
+      if (op === "profilePhoto") {
+        if (!isOwner(u.email)) return reply(context, 403, { ok: false, error: "Bạn không có quyền xem ảnh đại diện." });
+        const code = String(b.code || "").trim();
+        if (!code) return reply(context, 400, { ok: false, error: "Thiếu mã nhân viên." });
+        const r = await require("../_lib/profilephoto").bestPhotoFor(code);
+        return reply(context, 200, { ok: true, photo: r ? r.photo : null, at: r ? r.at : 0, period: r ? r.period : "" });
+      }
       if (op === "securityAlerts") { // cảnh báo có người cố xem lại bài của người khác (mới nhất trước)
         const sa = require("../_lib/securityalert");
         return reply(context, 200, { ok: true, alerts: (await sa.list()).slice().reverse() });

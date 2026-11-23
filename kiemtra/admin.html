@@ -1342,6 +1342,11 @@ body[data-tab="exams"] .main{min-height:100vh;background:
 .exc-when{font-weight:600;color:#22385E}
 .exc-sub{font-size:12px;color:#7B8DAA;overflow-wrap:anywhere}
 .exc-code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;background:#F1F5FB;border:1px solid #E2EAF5;border-radius:5px;padding:1px 5px;color:#3A5278}
+.cand-namewrap{display:inline-flex;align-items:center;gap:8px}
+.cand-ava{all:unset;cursor:pointer;width:26px;height:26px;border-radius:50%;background:#EAF1FD;border:1px solid #D3E2FA;display:grid;place-items:center;font-size:13px;flex:0 0 auto;overflow:hidden;transition:box-shadow .12s}
+.cand-ava:hover{box-shadow:0 0 0 3px rgba(10,99,196,.15)}
+.cand-ava img{width:100%;height:100%;object-fit:cover}
+.cand-ava.loading{opacity:.6;cursor:wait}
 #tab-exams .exc-cal{width:18px;height:18px;flex:0 0 auto;margin-top:2px;fill:none;stroke:#7B8DAA;stroke-width:1.8;stroke-linecap:round}
 #tab-exams .excard .warn{font-size:13px}
 #tab-exams .exl-wrap:has(table:not(.hide)){margin-top:16px;padding:6px 14px;border-radius:20px;background:#fff;box-shadow:0 14px 30px -20px rgba(16,60,140,.45)}
@@ -5414,7 +5419,7 @@ function renderCandidates(){
   $('candShown').textContent = L.length === CANDIDATES.length ? '' : 'Đang lọc: ' + L.length + ' người';
   { let on = !!$('candSearch').value.trim(); ['candMgrF','candTitleF','candSegF','candRgF','candEmpF'].forEach(id => { const a = $(id).value !== '*'; $(id).classList.toggle('on', a); on = on || a; }); $('candClear').classList.toggle('hide', !on); }
   $('candList').innerHTML = L.map(c =>
-    '<tr'+(c.left?' class="left"':'')+'><td>'+esc(c.code)+(c.joinDate?'<small class="cand-sub" title="Ngày vào làm">Vào '+esc(c.joinDate.split('-').reverse().join('/'))+'</small>':'')+'</td><td><button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button>'+(c.left?'<span class="tag tag-left" aria-label="Đã nghỉ việc" title="'+(c.leftAt?'Nghỉ việc từ '+new Date(c.leftAt).toLocaleDateString('vi-VN')+'. ':'')+'Không gán đề, không gửi thông báo">ĐNV</span>':'')+(c.probation&&!c.left?'<span class="tag tag-tv" aria-label="Thử việc" title="Thử việc từ '+esc(c.probation.from)+' đến hết '+esc(c.probation.until)+'">TV</span>':'')+'<small class="candmail" title="'+esc(c.email)+'">'+esc(c.email)+'</small>'+'</td><td><button type="button" class="ttlchip cflt-chip" title="'+esc(c.title||'PC')+' · bấm để lọc theo chức danh này" onclick="candFilter(\'candTitleF\',\''+esc(c.title||'PC')+'\')">'+esc(c.title||'PC')+'</button><small class="cand-sub">'+'<button type="button" class="cflt" title="'+esc(segLabel[c.segment]||'Cả hai')+' · bấm để lọc" onclick="candFilter(\'candSegF\',\''+esc((c.segment||'both'))+'\')">'+esc((segLabel[c.segment]||'Cả hai').split(' · ')[0])+'</button>'+'</small></td><td>'+esc(c.email)+'</td><td>'+(c.phone?'<button type="button" class="phbtn" data-phone="'+esc(c.phone)+'" aria-haspopup="menu" title="Nhắn SMS, mở Zalo hoặc gọi điện">'+esc(c.phone)+'</button>':'<span class="badge n" title="Thí sinh sẽ phải tự điền khi vào làm bài">Chưa có</span>')+'</td><td>'+(c.manager?'<button type="button" class="cflt" title="Lọc theo quản lí này" onclick="candFilter(\'candMgrF\',\''+esc(c.manager)+'\')">'+esc(c.manager)+'</button>':'')+'</td><td class="small">'+(c.province||c.region ? (c.province ? '<button type="button" class="cflt" title="Xem ai ở '+esc(c.province)+'" onclick="candSearchProvince(\''+esc(c.province)+'\')">'+esc(c.province)+'</button>' : '–')+'<br>'+'<button type="button" class="cflt" title="Lọc theo miền này" onclick="candFilter(\'candRgF\',\''+esc((c.region||''))+'\')">'+esc(RG_LABEL[c.region]||'Chưa chọn miền')+'</button>' : '<button type="button" class="badge n cflt-chip" title="Thí sinh bắt buộc tự chọn khi vào làm bài · bấm để xem ai chưa chọn miền" onclick="candFilter(\'candRgF\',\'\')">Chưa chọn</button>')+'</td><td>'+candLoginCell(c)+'</td><td style="white-space:nowrap"><button type="button" class="stk-more" onclick="candToggle(this)">Chi tiết ▾</button><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
+    '<tr'+(c.left?' class="left"':'')+'><td>'+esc(c.code)+(c.joinDate?'<small class="cand-sub" title="Ngày vào làm">Vào '+esc(c.joinDate.split('-').reverse().join('/'))+'</small>':'')+'</td><td><span class="cand-namewrap">'+(IS_OWNER ? '<button type="button" class="cand-ava" title="Xem ảnh rõ nhất (chỉ mình bạn thấy)" aria-label="Xem ảnh đại diện" onclick="event.stopPropagation();loadProfilePhoto(this,\''+esc(c.code)+'\')">👤</button>' : '')+'<button type="button" class="candnm" title="Xem hồ sơ học tập" onclick="openCandProfile(\''+esc(c.code)+'\')">'+esc(c.name||c.code)+'</button></span>'+(c.left?'<span class="tag tag-left" aria-label="Đã nghỉ việc" title="'+(c.leftAt?'Nghỉ việc từ '+new Date(c.leftAt).toLocaleDateString('vi-VN')+'. ':'')+'Không gán đề, không gửi thông báo">ĐNV</span>':'')+(c.probation&&!c.left?'<span class="tag tag-tv" aria-label="Thử việc" title="Thử việc từ '+esc(c.probation.from)+' đến hết '+esc(c.probation.until)+'">TV</span>':'')+'<small class="candmail" title="'+esc(c.email)+'">'+esc(c.email)+'</small>'+'</td><td><button type="button" class="ttlchip cflt-chip" title="'+esc(c.title||'PC')+' · bấm để lọc theo chức danh này" onclick="candFilter(\'candTitleF\',\''+esc(c.title||'PC')+'\')">'+esc(c.title||'PC')+'</button><small class="cand-sub">'+'<button type="button" class="cflt" title="'+esc(segLabel[c.segment]||'Cả hai')+' · bấm để lọc" onclick="candFilter(\'candSegF\',\''+esc((c.segment||'both'))+'\')">'+esc((segLabel[c.segment]||'Cả hai').split(' · ')[0])+'</button>'+'</small></td><td>'+esc(c.email)+'</td><td>'+(c.phone?'<button type="button" class="phbtn" data-phone="'+esc(c.phone)+'" aria-haspopup="menu" title="Nhắn SMS, mở Zalo hoặc gọi điện">'+esc(c.phone)+'</button>':'<span class="badge n" title="Thí sinh sẽ phải tự điền khi vào làm bài">Chưa có</span>')+'</td><td>'+(c.manager?'<button type="button" class="cflt" title="Lọc theo quản lí này" onclick="candFilter(\'candMgrF\',\''+esc(c.manager)+'\')">'+esc(c.manager)+'</button>':'')+'</td><td class="small">'+(c.province||c.region ? (c.province ? '<button type="button" class="cflt" title="Xem ai ở '+esc(c.province)+'" onclick="candSearchProvince(\''+esc(c.province)+'\')">'+esc(c.province)+'</button>' : '–')+'<br>'+'<button type="button" class="cflt" title="Lọc theo miền này" onclick="candFilter(\'candRgF\',\''+esc((c.region||''))+'\')">'+esc(RG_LABEL[c.region]||'Chưa chọn miền')+'</button>' : '<button type="button" class="badge n cflt-chip" title="Thí sinh bắt buộc tự chọn khi vào làm bài · bấm để xem ai chưa chọn miền" onclick="candFilter(\'candRgF\',\'\')">Chưa chọn</button>')+'</td><td>'+candLoginCell(c)+'</td><td style="white-space:nowrap"><button type="button" class="stk-more" onclick="candToggle(this)">Chi tiết ▾</button><button class="btn ghost sm" onclick="editCandidateOpen(\''+esc(c.code)+'\')">Sửa</button> <button class="btn dghost sm" onclick="deleteCandidate(\''+esc(c.code)+'\')">Xoá</button></td></tr>'
   ).join('') || '<tr><td colspan="9" class="small">' + (CANDIDATES.length ? 'Không có ai khớp bộ lọc.' : 'Chưa có thí sinh nào. Bấm “＋ Thêm thí sinh”.') + '</td></tr>';
 }
 // Bấm vào chức danh / quản lí / ngành / miền trong bảng: lọc theo đúng giá trị đó; bấm lại lần nữa thì bỏ lọc
@@ -5782,10 +5787,26 @@ async function deleteCandidate(code){
 }
 
 /* ---------- Cài đặt ---------- */
+let IS_OWNER = false; // quyền hẹp hơn admin thường (vd xem ảnh đại diện rõ nhất) — chỉ true với OWNER_EMAILS
+// Chỉ gọi khi owner bấm vào từng người — không tự tải ảnh của cả danh sách. Ảnh được chọn theo kỹ thuật
+// (rõ mặt nhất trong các lần làm bài đã có), không theo thẩm mỹ.
+async function loadProfilePhoto(btn, code){
+  if (btn.classList.contains('loading') || btn.querySelector('img')) return;
+  btn.classList.add('loading');
+  try {
+    const { j } = await api('POST', '/api/kt-admin', { op:'profilePhoto', code });
+    if (!j.ok){ alert(j.error || 'Không xem được ảnh.'); return; }
+    if (!j.photo){ btn.title = 'Chưa có ảnh xác thực nào của người này'; return; }
+    btn.innerHTML = '<img src="' + j.photo + '" alt="Ảnh đại diện">';
+    btn.title = 'Ảnh rõ nhất trong các lần làm bài (chỉ mình bạn thấy)';
+  } catch (e) { alert('Lỗi khi tải ảnh, thử lại.'); }
+  finally { btn.classList.remove('loading'); }
+}
 async function loadSettings(){
   const { j } = await api('GET','/api/kt-admin?op=settings');
   if (!j.ok) return;
   const s = j.settings;
+  IS_OWNER = !!j.isOwner;
   CUR_PERIOD = s.examPeriod || ''; SETCACHE = s; fillSetPeriod(); exRefresh();
   $('setCount').value = s.questionCount;
   $('setBothGD').value = s.bothGiaDungCount;

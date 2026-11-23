@@ -16,6 +16,7 @@ function cfg() {
     allowDomains: list(env.ALLOWED_EMAIL_DOMAINS),
     allowEmails: list(env.ALLOWED_EMAILS),
     adminEmails: list(env.ADMIN_EMAILS),
+    ownerEmails: list(env.OWNER_EMAILS), // cấp quyền hẹp hơn cả ADMIN_EMAILS, dùng cho vài tính năng nhạy cảm riêng
     cookieInsecure: env.COOKIE_INSECURE === "1",
     signupClosed: env.SIGNUP_CLOSED === "1", // 1 = chỉ quản trị viên tạo được tài khoản mới
     smtp: {
@@ -65,4 +66,11 @@ function isAdmin(email) {
   return !!e && c.adminEmails.includes(e);
 }
 
-module.exports = { cfg, missing, mailConfigured, emailAllowed, validEmail, isAdmin };
+// Cấp quyền hẹp hơn admin thường (OWNER_EMAILS, cấu hình riêng trên Azure) — dùng cho vài tính năng nhạy cảm
+// mà ngay cả quản trị viên khác cũng không nên thấy mặc định.
+function isOwner(email) {
+  const c = cfg(), e = String(email || "").toLowerCase();
+  return !!e && c.ownerEmails.includes(e);
+}
+
+module.exports = { cfg, missing, mailConfigured, emailAllowed, validEmail, isAdmin, isOwner };
