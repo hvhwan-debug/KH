@@ -324,6 +324,17 @@ var CSS = [
 '.fh.fh .fh-pipe{order:4}',
 '.fh.fh .fh-res{place-items:start end;padding:14px}.fh.fh .fh-res svg{width:46px;height:46px}',
 '@media(max-width:560px){.fh.fh .fh-say{font-size:15px}}',
+'/* Đầu màn: biểu tượng + "AI FACE VERIFY" + tiêu đề căn giữa trên đầu (giống trang làm bài) */',
+'.fh.fh .fh-head{display:block;min-height:0;padding-right:0;text-align:center}',
+'.fh.fh .fh-htop{display:flex;flex-direction:column;align-items:center;text-align:center}',
+'.fh.fh .fh-htop .fh-ic{display:grid!important;place-items:center;width:52px;height:52px;margin:0 0 10px;border-radius:15px;color:#fff;background:linear-gradient(160deg,#3B8BFF,#1F6BF5);box-shadow:0 10px 20px -10px rgba(31,107,245,.8)}',
+'.fh.fh .fh-htop .fh-ic svg{width:28px;height:28px}',
+'.fh.fh .fh-htop>div:last-child{display:block}',
+'.fh.fh .fh-k{display:block!important;margin:0 0 6px;padding-left:.3em;font:600 12px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.3em;color:#5B6B86}',
+'.fh.fh h2{text-align:center;font-size:clamp(22px,6vw,28px)}',
+'@media(max-width:560px){.fh.fh .fh-box{width:min(86%,max(250px,calc((100dvh - 380px) * .86)))}}',
+'@media(min-width:561px){.fh.fh .fh-box{height:clamp(240px,calc(100vh - 330px),640px)}.fh.fh .fh-htop .fh-ic{width:58px;height:58px;border-radius:17px}.fh.fh .fh-htop .fh-ic svg{width:30px;height:30px}.fh.fh .fh-k{font-size:13px}.fh.fh h2{font-size:clamp(24px,3.6vh,32px)}}',
+'@media(max-height:700px){.fh.fh .fh-htop .fh-ic{width:44px;height:44px;margin-bottom:6px}.fh.fh .fh-htop .fh-ic svg{width:24px;height:24px}}',
 ].join('\n');
 
 var I_SND = '<svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>' +
