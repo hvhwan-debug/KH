@@ -1286,6 +1286,94 @@ table.hlx-t tbody tr:hover{background:#F5F9FF}
 .hlx-pv video,.hlx-pv iframe{display:block;width:100%;aspect-ratio:16/9;border:0;background:#000;border-radius:10px}
 .hlx-pv iframe.pdf{aspect-ratio:auto;height:78vh}
 @media(max-width:700px){.hlx-two{grid-template-columns:1fr}.hlx-cat{grid-template-columns:1fr 1fr}.hlx-cat input{grid-column:1/-1}}
+
+/* ===================== Danh sách đề thi: thiết kế mới (nền xanh nhạt, đầu trang lớn, thẻ có viền màu nhấn) ===================== */
+body[data-tab="exams"] .main{min-height:100vh;background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 220' preserveAspectRatio='none'%3E%3Cpath d='M0 120C260 60 520 70 760 120s500 80 680 10V220H0z' fill='%23DCEBFF' fill-opacity='.55'/%3E%3Cpath d='M0 170c300-60 560-40 820 0s440 50 620-10V220H0z' fill='%23CFE3FF' fill-opacity='.5'/%3E%3C/svg%3E") left bottom/100% 190px no-repeat fixed,
+  radial-gradient(70% 55% at 85% 0%,#E1EEFF 0%,transparent 70%),linear-gradient(180deg,#F3F8FF 0%,#EAF2FD 100%)}
+#tab-exams>.card.exlist{background:none;border:0;box-shadow:none;padding:6px 6px 0}
+.exl-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.exl-id{display:flex;align-items:center;gap:14px;min-width:0}
+.exl-tile{width:52px;height:52px;flex:0 0 auto}.exl-tile svg{width:100%;height:100%;display:block}
+.exl-id h1{margin:0;font-size:30px;line-height:1.15;font-weight:800;letter-spacing:-.01em;color:#0A2552}
+.exl-sub{margin:4px 0 0;font-size:14.5px;color:#3E5478}
+.exl-act{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.exseg{display:flex;padding:4px;border-radius:999px;background:#fff;box-shadow:0 6px 18px -10px rgba(16,60,140,.35)}
+.exseg .btn,.exseg .btn.ghost{gap:8px;height:42px;padding:0 22px;border:0;border-radius:999px;font-size:15px;font-weight:700;background:transparent;color:#0A2552}
+.exseg .btn:not(.ghost){background:linear-gradient(180deg,#2F7CF6,#1557D8);color:#fff;box-shadow:0 6px 14px -6px rgba(21,87,216,.7)}
+.exseg svg,.exl-new svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.exseg .btn:not(.ghost) svg rect,.exseg .btn:not(.ghost) svg circle{fill:currentColor}
+.exl-new{height:50px;padding:0 26px;border-radius:999px;font-size:15.5px;gap:8px;background:linear-gradient(180deg,#2F7CF6,#1452D2);box-shadow:0 10px 22px -10px rgba(20,82,210,.75)}
+.exl-new:hover{filter:brightness(1.06)}
+#tab-exams .exf{gap:14px;margin:26px 0 6px}
+#tab-exams .exf input[type=search]{flex:1 1 300px;height:54px;padding:0 18px 0 52px;border:0;border-radius:999px;font-size:15.5px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%231C3D78' stroke-width='2.3' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 20px 50%;box-shadow:0 8px 22px -14px rgba(16,60,140,.4)}
+#tab-exams .exf input[type=search]:focus{outline:2px solid #2F7CF6;outline-offset:1px}
+#tab-exams .exf select{-webkit-appearance:none;appearance:none;flex:0 1 160px;width:160px;height:48px;padding:0 40px 0 22px;border:0;border-radius:999px;font-size:14.5px;font-weight:700;color:#0A2552;
+  background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230A2552' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 18px center;box-shadow:0 8px 22px -14px rgba(16,60,140,.4)}
+#tab-exams .exf select#exFSort{flex-basis:196px;width:196px}
+#tab-exams .exf select.on{background-color:#E6F0FC;color:#1452D2;box-shadow:inset 0 0 0 1.5px #2F7CF6}
+#tab-exams .exf-count{margin:14px 2px 2px;font-size:14.5px;color:#22385E}
+#tab-exams .exgrid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px 18px;margin-top:16px}
+#tab-exams .excard{position:relative;gap:12px;padding:22px 22px 20px 24px;border:0;border-radius:20px;background:#fff;overflow:hidden;
+  box-shadow:0 14px 30px -20px rgba(16,60,140,.45),0 1px 0 rgba(16,60,140,.04);transition:transform .15s,box-shadow .15s}
+#tab-exams .excard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,var(--ac),color-mix(in srgb,var(--ac) 20%,#fff))}
+#tab-exams .excard:hover,#tab-exams .excard:focus-visible{border:0;transform:translateY(-2px);box-shadow:0 20px 36px -20px rgba(16,60,140,.55),0 0 0 2px color-mix(in srgb,var(--ac) 45%,transparent)}
+#tab-exams .excard .exc-ic{position:absolute;top:18px;right:18px;width:46px;height:46px;display:grid;place-items:center;border-radius:14px;color:var(--ac);background:color-mix(in srgb,var(--ac) 10%,#fff)}
+#tab-exams .excard .exc-ic svg{width:30px;height:30px}
+#tab-exams .excard .t{font-size:17.5px;font-weight:800;line-height:1.38;color:#0A2552;padding-right:52px;min-height:48px}
+#tab-exams .excard .b{display:flex;flex-wrap:wrap;gap:8px}
+#tab-exams .excard .badge{padding:5px 14px;font-size:13px;font-weight:700;border-radius:999px}
+#tab-exams .excard .badge.y{background:#DDF4E7;color:#178A4E}
+#tab-exams .excard .badge.n{background:#FDE3E1;color:#C8281D}
+#tab-exams .excard .st{gap:26px;font-size:15px;color:#22385E;margin-top:2px}
+#tab-exams .excard .st span{display:inline-flex;align-items:center;gap:6px}
+#tab-exams .excard .st b{font-size:18px;font-weight:800;color:#0A2552;margin-right:2px}
+#tab-exams .exc-si{width:20px;height:20px;fill:#E4EEFC;stroke:#5C7FB8;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
+#tab-exams .exc-meta{display:flex;gap:10px;align-items:flex-start;padding-top:14px;border-top:1px solid #E6EDF7;font-size:13.5px;line-height:1.6;color:#22385E}
+#tab-exams .exc-cal{width:18px;height:18px;flex:0 0 auto;margin-top:2px;fill:none;stroke:#7B8DAA;stroke-width:1.8;stroke-linecap:round}
+#tab-exams .excard .warn{font-size:13px}
+#tab-exams .exl-wrap:has(table:not(.hide)){margin-top:16px;padding:6px 14px;border-radius:20px;background:#fff;box-shadow:0 14px 30px -20px rgba(16,60,140,.45)}
+@media(max-width:860px){
+  .exl-id h1{font-size:24px}.exl-tile{width:44px;height:44px}.exl-sub{font-size:13.5px}
+  .exl-act{width:100%;justify-content:space-between;gap:10px}
+  .exseg .btn,.exseg .btn.ghost{height:38px;padding:0 16px;font-size:14px}.exl-new{height:44px;padding:0 18px;font-size:14.5px}
+  #tab-exams .exf{gap:10px;margin-top:18px}
+  #tab-exams .exf input[type=search]{height:48px}
+  #tab-exams .exf select,#tab-exams .exf select#exFSort{flex:1 1 calc(50% - 5px);width:calc(50% - 5px);height:44px;padding-left:16px}
+}
+@media(max-width:1099px){#tab-exams .exf select,#tab-exams .exf select#exFSort{flex:1 1 150px}}
+@media(max-width:760px){body[data-tab="exams"] .main{background-attachment:scroll}
+  .exseg{flex:1 1 100%}.exseg .btn{flex:1;justify-content:center}.exl-new{flex:1 1 100%;justify-content:center}}
+
+body[data-tab="exams"] .wrap{max-width:1440px;padding:28px 28px 70px}
+#tab-exams .excard .st span{white-space:nowrap}
+#tab-exams .excard .st{gap:8px 16px;flex-wrap:wrap;font-size:14.5px}
+#tab-exams .exc-si{width:22px;height:22px}
+@media(min-width:1100px){
+  :root{--side-w:272px}
+  .side{padding:22px 16px 16px}
+  .side-brand{gap:14px;padding:4px 8px 14px}
+  .side-brand .dot{width:56px;height:56px;border-radius:16px}
+  .side-brand b{font-size:20px}.side-brand small{font-size:14px;color:rgba(255,255,255,.75)}
+  .side-nav{margin:0 -16px;padding:0 16px 8px}
+  .nv{height:50px;gap:14px;padding:0 14px;font-size:16px;border-radius:14px}
+  .nv+.nv{margin-top:4px}
+  .nv .ic{width:22px;height:22px}
+  .nv .nv-cnt{font-size:13px;padding:3px 10px}
+  .nv-grp{font-size:12px;letter-spacing:.06em;margin:22px 12px 10px}
+  .side-user .who b{font-size:14px}.side-user .av{width:42px;height:42px}
+}
+/* Thanh bên: nền xanh tươi hơn, mục đang chọn là khối sáng nổi, đường sóng nhẹ ở đáy */
+.side{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 120' preserveAspectRatio='none'%3E%3Cpath d='M0 70C60 40 130 95 260 40V120H0z' fill='%23fff' fill-opacity='.05'/%3E%3Cpath d='M0 95c80-30 150 20 260-25' fill='none' stroke='%2378B8FF' stroke-opacity='.45' stroke-width='1.5'/%3E%3C/svg%3E") left bottom/100% 120px no-repeat,
+  linear-gradient(180deg,#1556D6 0%,#0E43B8 55%,#0A3496 100%);--nv-cut:#0E43B8}
+.nv{color:rgba(255,255,255,.9)}
+.nv .cut{stroke:var(--nv-cut)}.nv .cutf{fill:var(--nv-cut)}
+.nv.on{background:linear-gradient(90deg,#3B8BFF,#2A72F0);box-shadow:0 8px 20px -8px rgba(0,20,80,.6),inset 0 1px 0 rgba(255,255,255,.25);--nv-cut:#2F7CF6}
+.nv.on .ic{color:#fff}
+.nv.on::before{display:none}
+.nv .nv-cnt{background:rgba(255,255,255,.2)}
+.nv.on .nv-cnt{background:rgba(255,255,255,.28)}
+.nv-grp{color:rgba(255,255,255,.62)}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -1363,14 +1451,14 @@ table.hlx-t tbody tr:hover{background:#F5F9FF}
     <nav class="side-nav" aria-label="Mục chính">
       <div class="nv-grp">Vận hành</div>
       <button type="button" class="nv" data-nav="exams" onclick="switchTab('exams')" title="Đề thi"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg><span class="nv-l">Đề thi</span><span class="nv-cnt hide" id="nvExams"></span></button>
-      <button type="button" class="nv" data-nav="candidates" onclick="switchTab('candidates')" title="Hồ sơ học tập"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg><span class="nv-l">Hồ sơ học tập</span><span class="nv-cnt hide" id="nvCand"></span></button>
+      <button type="button" class="nv" data-nav="candidates" onclick="switchTab('candidates')" title="Hồ sơ học tập"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4 2 9l10 5 10-5z" fill="currentColor"/><path d="M6 11.2V16c0 1.6 2.7 3 6 3s6-1.4 6-3v-4.8"/><path d="M21 9.5V14"/></svg><span class="nv-l">Hồ sơ học tập</span><span class="nv-cnt hide" id="nvCand"></span></button>
       <button type="button" class="nv" data-nav="lookup" onclick="switchTab('lookup')" title="Tra cứu bài kiểm tra và lịch sử xem điểm"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><span class="nv-l">Tra cứu</span></button>
-      <button type="button" class="nv" data-nav="notify" onclick="switchTab('notify')" title="Gửi thông báo và thư mời"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg><span class="nv-l">Thông báo, thư mời</span></button>
+      <button type="button" class="nv" data-nav="notify" onclick="switchTab('notify')" title="Gửi thông báo và thư mời"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3.5a5.5 5.5 0 0 0-5.5 5.5v3.6L5 15.5h14l-1.5-2.9V9A5.5 5.5 0 0 0 12 3.5z" fill="currentColor"/><path d="M9.8 18.5a2.3 2.3 0 0 0 4.4 0"/></svg><span class="nv-l">Thông báo, thư mời</span></button>
       <button type="button" class="nv" data-nav="managerview" onclick="switchTab('managerview')" title="Quản lí"><svg class="ic" aria-hidden="true"><use href="#i-mgr"/></svg><span class="nv-l">Quản lí</span></button>
-      <button type="button" class="nv" data-nav="kai" onclick="switchTab('kai')" title="Trợ lí KAI: tài liệu và người dùng"><svg class="ic" aria-hidden="true"><use href="#i-help"/></svg><span class="nv-l">Trợ lí KAI</span></button>
-      <button type="button" class="nv" data-nav="hoclieu" onclick="switchTab('hoclieu')" title="Học liệu: tài liệu và video cho học viên"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 5.5C6 4 9 4.2 12 6c3-1.8 6-2 9-.5V19c-3-1.5-6-1.3-9 .5-3-1.8-6-2-9-.5z"/><path d="M12 6v13.5"/></svg><span class="nv-l">Học liệu</span></button>
+      <button type="button" class="nv" data-nav="kai" onclick="switchTab('kai')" title="Trợ lí KAI: tài liệu và người dùng"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M11 3.5c.5 4.2 2.3 6 6.5 6.5-4.2.5-6 2.3-6.5 6.5-.5-4.2-2.3-6-6.5-6.5 4.2-.5 6-2.3 6.5-6.5z" fill="currentColor"/><path d="M18.5 15.5c.2 1.6.9 2.3 2.5 2.5-1.6.2-2.3.9-2.5 2.5-.2-1.6-.9-2.3-2.5-2.5 1.6-.2 2.3-.9 2.5-2.5z" fill="currentColor" stroke-width="1"/></svg><span class="nv-l">Trợ lí KAI</span></button>
+      <button type="button" class="nv" data-nav="hoclieu" onclick="switchTab('hoclieu')" title="Học liệu: tài liệu và video cho học viên"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 5.5C6 4 9 4.2 12 6c3-1.8 6-2 9-.5V19c-3-1.5-6-1.3-9 .5-3-1.8-6-2-9-.5z" fill="currentColor"/><path d="M12 6v13.5" class="cut"/></svg><span class="nv-l">Học liệu</span></button>
       <div class="nv-grp">Hệ thống</div>
-      <button type="button" class="nv" data-nav="sys" onclick="switchTab('settings')" title="Cài đặt"><svg class="ic" aria-hidden="true"><use href="#i-set"/></svg><span class="nv-l">Cài đặt</span></button>
+      <button type="button" class="nv" data-nav="sys" onclick="switchTab('settings')" title="Cài đặt"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M10.3 2.8h3.4l.5 2.4 1.8.8 2.1-1.3 2.4 2.4-1.3 2.1.8 1.8 2.4.5v3.4l-2.4.5-.8 1.8 1.3 2.1-2.4 2.4-2.1-1.3-1.8.8-.5 2.4h-3.4l-.5-2.4-1.8-.8-2.1 1.3-2.4-2.4 1.3-2.1-.8-1.8-2.4-.5v-3.4l2.4-.5.8-1.8-1.3-2.1 2.4-2.4 2.1 1.3 1.8-.8z" fill="currentColor" stroke-width="1.2"/><circle cx="12" cy="12" r="3" class="cutf"/></svg><span class="nv-l">Cài đặt</span></button>
       <div class="subnav sysnav sysnav-side hide" aria-label="Mục cài đặt">
         <button type="button" data-sub="settings" onclick="switchTab('settings')"><svg class="ic" aria-hidden="true"><use href="#i-set"/></svg><span>Cài đặt mặc định</span></button>
         <button type="button" data-sub="viewers" onclick="switchTab('viewers')"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg><span>Quản lí xem kết quả</span></button>
@@ -1379,7 +1467,7 @@ table.hlx-t tbody tr:hover{background:#F5F9FF}
       </div>
       <div class="nv-grp">Liên kết nhanh</div>
       <a class="nv" href="/kiemtra/" target="_blank" rel="noopener" title="Trang làm bài của thí sinh"><svg class="ic" aria-hidden="true"><use href="#i-ext"/></svg><span class="nv-l">Trang làm bài</span></a>
-      <a class="nv" href="/kiemtra/ketqua.html" target="_blank" rel="noopener" title="Trang xác thực kết quả"><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg><span class="nv-l">Xác thực kết quả</span></a>
+      <a class="nv" href="/kiemtra/ketqua.html" target="_blank" rel="noopener" title="Trang xác thực kết quả"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 3 8.3 7 9.8 4-1.5 7-5.2 7-9.8V6z" fill="currentColor"/><path d="m9 12 2.2 2.2L15 10" class="cut" stroke-width="2.2"/></svg><span class="nv-l">Xác thực kết quả</span></a>
       <a class="nv" href="/kiemtra/ks-admin" target="_blank" rel="noopener" title="Tạo và quản lý phiếu khảo sát"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg><span class="nv-l">Khảo sát</span></a>
     </nav>
     <div class="side-user">
@@ -1430,18 +1518,23 @@ table.hlx-t tbody tr:hover{background:#F5F9FF}
 
     <!-- Ngân hàng đề -->
     <div id="tab-exams" class="tabpane hide">
-            <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <h1 style="margin:0">Danh sách đề thi</h1>
-          <div style="display:flex;gap:8px;align-items:center">
-            <div role="group" aria-label="Kiểu hiển thị" style="display:flex;gap:4px">
-              <button type="button" id="exViewCard" class="btn sm" onclick="exSetView('card')" title="Xem dạng thẻ">▦ Thẻ</button>
-              <button type="button" id="exViewList" class="btn ghost sm" onclick="exSetView('list')" title="Xem dạng danh sách">☰ Danh sách</button>
+            <div class="card exlist">
+        <div class="exl-head">
+          <div class="exl-id">
+            <div class="exl-tile" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="30" height="34" rx="6" fill="#E8F3FF" stroke="#2F7CF6" stroke-width="2.6"/><rect x="17" y="5" width="14" height="8" rx="3" fill="#fff" stroke="#2F7CF6" stroke-width="2.6"/><path d="m15.5 22 2.5 2.5 4-4.5M15.5 32l2.5 2.5 4-4.5" stroke="#1BB0E0" stroke-width="2.6"/><path d="M26 23h7M26 33h7" stroke="#2F7CF6" stroke-width="2.6"/></svg></div>
+            <div>
+              <h1>Danh sách đề thi</h1>
+              <p class="exl-sub">Bấm vào một đề để xem kết quả, quản lý câu hỏi và cài đặt của đề đó.</p>
             </div>
-            <button class="btn" onclick="openNewExam()">＋ Tạo đề thi mới</button>
+          </div>
+          <div class="exl-act">
+            <div class="exseg" role="group" aria-label="Kiểu hiển thị">
+              <button type="button" id="exViewCard" class="btn sm" onclick="exSetView('card')" title="Xem dạng thẻ"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>Thẻ</button>
+              <button type="button" id="exViewList" class="btn ghost sm" onclick="exSetView('list')" title="Xem dạng danh sách"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg>Danh sách</button>
+            </div>
+            <button class="btn exl-new" onclick="openNewExam()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Tạo đề thi mới</button>
           </div>
         </div>
-        <p class="small" style="margin:6px 0 0">Bấm vào một đề để xem kết quả, quản lý câu hỏi và cài đặt của đề đó.</p>
         <div id="exFilter" class="exf">
           <input type="search" id="exQ" autocomplete="off" placeholder="Tìm tên hoặc mã đề" oninput="exFilt.q=this.value;exRefilter()" aria-label="Tìm đề thi">
           <select id="exFStatus" onchange="exFilt.status=this.value;exRefilter()" aria-label="Lọc theo trạng thái"><option value="">Trạng thái</option><option value="open">Đang mở</option><option value="soon">Chưa mở</option><option value="closed">Đã đóng</option></select>
@@ -2950,14 +3043,40 @@ function renderExGrid(){
   if (!$('exGrid')) return;
   if ($('setPeriod')) fillSetPeriod();
   const exShown = exFiltered(); exUpdateCount(exShown.length);
-  $('exGrid').innerHTML = exShown.map(e => {
+  $('exGrid').innerHTML = exShown.map((e, i) => {
     const plan = spHas(e.segmentPlans) ? 'Phân bổ riêng' : spHas(SEGPLANS) ? 'Phân bổ chung' : 'Chia theo nhóm ngành';
-    return '<button type="button" class="excard" onclick="openExam(\'' + esc(e.id) + '\')"><div class="t">' + esc(exTitleOf(e)) + (!ownTitle(e) ? ' <span class="small" style="font-weight:500">(tên mặc định)</span>' : '') + '</div><div class="b">' + examBadges(e) + '</div>' +
-      '<div class="st"><span><b>' + qCountOf(e) + '</b> câu hỏi</span><span><b>' + (e.resultCount || 0) + '</b> bài đã nộp</span></div>' +
-      '<div class="small">' + esc(e.id) + ' · ' + plan + ' · ' + esc(examWindowText(e)) + '</div>' +
+    const ac = EXC_AC[i % EXC_AC.length], title = exTitleOf(e);
+    return '<button type="button" class="excard" style="--ac:' + ac + '" onclick="openExam(\'' + esc(e.id) + '\')">' +
+      '<span class="exc-ic" aria-hidden="true">' + excIcon(e, title) + '</span>' +
+      '<div class="t">' + esc(title) + (!ownTitle(e) ? ' <span class="small" style="font-weight:500">(tên mặc định)</span>' : '') + '</div><div class="b">' + examBadges(e) + '</div>' +
+      '<div class="st"><span>' + EXC_SI.q + '<b>' + qCountOf(e) + '</b> câu hỏi</span><span>' + EXC_SI.s + '<b>' + (e.resultCount || 0) + '</b> bài đã nộp</span></div>' +
+      '<div class="exc-meta">' + EXC_SI.cal + '<span>' + esc(e.id) + ' · ' + plan + ' · ' + esc(examWindowText(e)) + '</span></div>' +
       (!qCountOf(e) ? '<div class="warn">⚠ Chưa có câu hỏi riêng</div>' : '') + '</button>';
   }).join('') || '<div class="small" style="padding:20px 0">' + (EXAMS.length ? 'Không có đề nào khớp bộ lọc. Bấm “Xoá lọc” để xem lại tất cả.' : 'Chưa có đề thi nào. Bấm “＋ Tạo đề thi mới” để bắt đầu.') + '</div>';
 }
+// Thẻ đề: màu nhấn xoay vòng theo vị trí + biểu tượng theo nội dung tên đề
+const EXC_AC = ['#1FB2E6', '#27BE84', '#7C6CF2', '#EE5F95', '#3D9CF4', '#F2AE1C', '#22B5D8', '#8B6CF0'];
+const EXC_ICO = {
+  chat:'<path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h8A2.5 2.5 0 0 1 17 6.5v5a2.5 2.5 0 0 1-2.5 2.5H9l-4 3v-3.2A2.5 2.5 0 0 1 4 11.5z"/><path d="M19.5 9.5a2 2 0 0 1 .5 1.3v4.7a2 2 0 0 1-1 1.7V20l-3-2.5h-4.5"/><path d="M8 9h.01M10.5 9h.01M13 9h.01"/>',
+  cart:'<path d="M3 4h2.2l2.3 10.5h10.3L20 7.5H6.2"/><circle cx="9.5" cy="19" r="1.4"/><circle cx="16.5" cy="19" r="1.4"/><path d="M10 11h6"/>',
+  layers:'<path d="M12 3.5 21 8l-9 4.5L3 8z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16 9 4.5 9-4.5"/>',
+  drop:'<path d="M12 3.5s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z"/><path d="M9.2 15.2a3 3 0 0 0 2.6 2.5"/>',
+  chart:'<path d="M4 20h16"/><rect x="5.5" y="12" width="3" height="6" rx=".8"/><rect x="10.5" y="8" width="3" height="10" rx=".8"/><rect x="15.5" y="4" width="3" height="14" rx=".8"/>',
+  users:'<circle cx="12" cy="8" r="3"/><path d="M6.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="5.5" cy="10" r="2.2"/><circle cx="18.5" cy="10" r="2.2"/><path d="M2.5 18c0-2 1.2-3.5 3-4M21.5 18c0-2-1.2-3.5-3-4"/>',
+  check:'<rect x="5" y="4.5" width="14" height="16" rx="2.5"/><path d="M9 3.5h6v3H9z"/><path d="m9 13 2.2 2.2L15.5 11"/>',
+  doc:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>'
+};
+function excIcon(e, title){
+  const t = exNorm(title + ' ' + e.id);
+  const k = e.practice || /thi thu/.test(t) ? 'check' : /nuoc/.test(t) ? 'drop' : /ban cheo|ban hang|\bban\b/.test(t) ? 'cart' : /tu choi|xu li|xu ly|giao tiep/.test(t) ? 'chat' :
+    /san pham|kien thuc/.test(t) ? 'layers' : /\bpcs\b/.test(t) ? 'users' : /dinh ki|dinh ky/.test(t) ? 'chart' : 'doc';
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + EXC_ICO[k] + '</svg>';
+}
+const EXC_SI = {
+  q:'<svg class="exc-si" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="7" rx="7" ry="3"/><path d="M5 7v5c0 1.7 3.1 3 7 3s7-1.3 7-3V7"/><path d="M5 12v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5"/></svg>',
+  s:'<svg class="exc-si" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 13.5 12 18l8.5-4.5"/><path d="M3.5 9.5 12 5l8.5 4.5L12 14z"/></svg>',
+  cal:'<svg class="exc-cal" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>'
+};
 // Số câu hỏi riêng của một đề (đếm trực tiếp khi đã tải ngân hàng câu hỏi)
 function qCountOf(e){ return QUESTIONS && QUESTIONS.length ? QUESTIONS.filter(q => (q.period || '') === e.id).length : (e.bankCount || 0); }
 // Tên thí sinh thấy: tên riêng của đề, chưa đặt thì dùng tên mặc định ở Cài đặt
