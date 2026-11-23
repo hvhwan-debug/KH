@@ -4930,45 +4930,19 @@ function drawShareCard(ctx, W, H, d){
   if (pill.mark === 'ok') icCheck(xh + 29, py + 24, 22, '#fff', 3.6); else txt(pill.mark, xh + 29, py + 32, 22, 800, '#fff', 'center');
   txt(pill.a, xh + 54, py + 32, 21, 800, pill.col, 'left', 1.2);
   if (pill.b){ txt('|', xh + 54 + wa + 12, py + 31, 20, 400, 'rgba(255,255,255,.55)'); txt(pill.b, xh + 54 + wa + 26, py + 31, 18, 600, 'rgba(255,255,255,.92)'); }
-  // ---- huy hiệu điểm (huy chương): thay cho vòng tiến độ cũ, cùng kiểu với huy hiệu điểm tuân thủ bên cạnh
+  // ---- huy hiệu điểm tuân thủ (nếu có) hoặc vòng tỉ lệ đúng
   var rx = L.ringCX, ry = L.ringCY, Rr = L.ringR;
   if (L.comp){
     var cI = d.compImg, cH = 2 * L.ringO + 36, cW = cH * cI.width / cI.height; if (cW > 2 * L.ringO + 40){ cW = 2 * L.ringO + 40; cH = cW * cI.height / cI.width; }
     ctx.save(); ctx.shadowColor = 'rgba(0,20,80,.45)'; ctx.shadowBlur = 26; ctx.shadowOffsetY = 12; ctx.drawImage(cI, rx - cW / 2, ry - cH / 2, cW, cH); ctx.restore();
   } else {
-  var rc = tier === 'sc-red' ? ['#FFC2B5', '#F0603F', 'rgba(255,110,80,.75)'] : tier === 'sc-yellow' ? ['#FFE7A8', '#F0A93A', 'rgba(255,200,80,.75)'] : tier === 'sc-blue' ? ['#BDE3FF', '#3A8BF0', 'rgba(90,170,255,.75)'] : ['#D8FF7E', '#22D84A', 'rgba(110,255,110,.85)'];
-  function ribbon(dxEnd, lenEnd){
-    var w0 = Rr*.4, nx = w0/2, notch = w0*.3, x0 = rx + dxEnd*0.12, y0 = ry + Rr*.58, x1 = rx + dxEnd, y1 = ry + lenEnd;
-    ctx.beginPath(); ctx.moveTo(x0 - nx, y0); ctx.lineTo(x0 + nx, y0); ctx.lineTo(x1 + nx*.8, y1 - notch); ctx.lineTo(x1, y1); ctx.lineTo(x1 - nx*.8, y1 - notch); ctx.closePath();
-    ctx.fillStyle = lg(x0, y0, x1, y1, [[0, rc[1]], [1, rc[0]]]); ctx.fill();
-    ctx.fillStyle = lg(x0, y0, x1, y1, [[0, 'rgba(0,0,0,.18)'], [1, 'rgba(0,0,0,0)']]); ctx.fill();
-  }
-  ribbon(-Rr*.46, Rr*1.5); ribbon(Rr*.46, Rr*1.42);
-  // vòng ngoài (viền huy chương ánh kim loại theo màu mốc điểm)
-  ctx.save(); ctx.shadowColor = rc[2]; ctx.shadowBlur = 30;
-  ctx.beginPath(); ctx.arc(rx, ry, Rr, 0, Math.PI*2); ctx.fillStyle = lg(rx - Rr, ry - Rr, rx + Rr, ry + Rr, [[0, rc[0]], [.45, rc[1]], [.55, rc[1]], [1, rc[0]]]); ctx.fill(); ctx.restore();
-  ctx.beginPath(); ctx.arc(rx, ry, Rr, 0, Math.PI*2); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.stroke();
-  // mặt trong (tối, giống nền thẻ) + viền sáng bên trong
-  var innerR = Rr - L.ringW;
-  ctx.fillStyle = rg(rx - innerR*.3, ry - innerR*.3, 0, innerR, [[0, 'rgba(10,70,170,.85)'], [.75, 'rgba(8,44,120,.85)'], [1, 'rgba(6,36,100,.9)']]); ctx.beginPath(); ctx.arc(rx, ry, innerR, 0, Math.PI*2); ctx.fill();
-  ctx.lineWidth = 4; ctx.strokeStyle = lg(rx, ry - innerR, rx, ry + innerR, [[0, 'rgba(255,255,255,.7)'], [.5, 'rgba(255,255,255,.15)'], [1, 'rgba(255,255,255,.35)']]); ctx.beginPath(); ctx.arc(rx, ry, innerR, 0, Math.PI*2); ctx.stroke();
-  // ngấn khía quanh viền (dấu hiệu huy chương dập nổi)
-  ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 2;
-  var midR = (Rr + innerR) / 2;
-  for (var ti = 0; ti < 40; ti++){ var ta = ti / 40 * Math.PI * 2; ctx.beginPath(); ctx.moveTo(rx + (midR-5)*Math.cos(ta), ry + (midR-5)*Math.sin(ta)); ctx.lineTo(rx + (midR+5)*Math.cos(ta), ry + (midR+5)*Math.sin(ta)); ctx.stroke(); }
-  ctx.restore();
-  // ánh sáng chéo góc trên trái + tia lấp lánh
-  ctx.save(); ctx.beginPath(); ctx.arc(rx, ry, Rr, 0, Math.PI*2); ctx.clip(); ctx.fillStyle = lg(rx - Rr, ry - Rr, rx, ry, [[0, 'rgba(255,255,255,.3)'], [1, 'rgba(255,255,255,0)']]); ctx.fillRect(rx - Rr, ry - Rr, Rr, Rr); ctx.restore();
-  var sa = -Math.PI*0.72, sx = rx + Rr*0.86*Math.cos(sa), sy = ry + Rr*0.86*Math.sin(sa);
-  ctx.save(); ctx.translate(sx, sy); ctx.fillStyle = rg(0, 0, 0, 24, [[0, 'rgba(255,255,255,.95)'], [1, 'rgba(255,255,255,0)']]); ctx.fillRect(-24, -24, 48, 48); ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.fillRect(-1.2, -18, 2.4, 36); ctx.fillRect(-18, -1.2, 36, 2.4); ctx.restore();
-  // ngôi sao nhỏ đính trên đỉnh huy chương (điểm nối ruy băng truyền thống)
-  (function(){
-    ctx.save(); ctx.translate(rx, ry - Rr + 6); ctx.beginPath();
-    for (var si = 0; si < 10; si++){ var sang = -Math.PI/2 + si*Math.PI/5, srad = si % 2 ? 6 : 14; ctx.lineTo(srad*Math.cos(sang), srad*Math.sin(sang)); }
-    ctx.closePath(); ctx.fillStyle = '#FFE38A'; ctx.fill(); ctx.strokeStyle = 'rgba(160,100,0,.5)'; ctx.lineWidth = 1.4; ctx.stroke(); ctx.restore();
-  })();
-  txt(pct + '%', rx, ry + 26, 74, 800, '#fff', 'center');
-  txt('tỉ lệ đúng', rx, ry + 64, 20, 600, 'rgba(255,255,255,.92)', 'center');
+    // vòng tỉ lệ đúng: gọn, màu theo mốc điểm (không ruy băng, ngôi sao, tia lấp lánh)
+    var rcol = tier === 'sc-red' ? ['#FF9C8E', '#F0594F'] : tier === 'sc-yellow' ? ['#FFD98A', '#F0A93A'] : tier === 'sc-blue' ? ['#A8D2FF', '#3B82F6'] : ['#7AE8B4', '#14A558'], rw = 20;
+    ctx.fillStyle = 'rgba(6,36,100,.32)'; ctx.beginPath(); ctx.arc(rx, ry, Rr - rw / 2, 0, Math.PI*2); ctx.fill();
+    ctx.lineWidth = rw; ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(255,255,255,.16)'; ctx.beginPath(); ctx.arc(rx, ry, Rr, 0, Math.PI*2); ctx.stroke();
+    if (pct > 0){ var a1 = -Math.PI/2 + Math.PI*2*Math.max(pct, 2)/100; ctx.strokeStyle = lg(rx - Rr, ry - Rr, rx + Rr, ry + Rr, [[0, rcol[0]], [1, rcol[1]]]); ctx.beginPath(); ctx.arc(rx, ry, Rr, -Math.PI/2, a1); ctx.stroke(); }
+    txt(pct + '%', rx, ry + 24, 70, 800, '#fff', 'center');
+    txt('tỉ lệ đúng', rx, ry + 60, 20, 600, 'rgba(255,255,255,.85)', 'center');
   }
   // ---- đường ngăn dọc + thông tin người làm bài
   ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(L.divX, ry - 124); ctx.lineTo(L.divX, ry + 124); ctx.stroke();
