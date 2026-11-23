@@ -1337,7 +1337,11 @@ body[data-tab="exams"] .main{min-height:100vh;background:
 #tab-exams .excard .st span{display:inline-flex;align-items:center;gap:6px}
 #tab-exams .excard .st b{font-size:18px;font-weight:800;color:#0A2552;margin-right:2px}
 #tab-exams .exc-si{width:20px;height:20px;fill:#E4EEFC;stroke:#5C7FB8;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
-#tab-exams .exc-meta{display:flex;gap:10px;align-items:flex-start;padding-top:14px;border-top:1px solid #E6EDF7;font-size:13.5px;line-height:1.6;color:#22385E}
+#tab-exams .exc-meta{display:flex;gap:10px;align-items:flex-start;padding-top:14px;border-top:1px solid #E6EDF7;font-size:13.5px;line-height:1.5;color:#22385E}
+.exc-metatext{display:flex;flex-direction:column;gap:4px;min-width:0}
+.exc-when{font-weight:600;color:#22385E}
+.exc-sub{font-size:12px;color:#7B8DAA;overflow-wrap:anywhere}
+.exc-code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;background:#F1F5FB;border:1px solid #E2EAF5;border-radius:5px;padding:1px 5px;color:#3A5278}
 #tab-exams .exc-cal{width:18px;height:18px;flex:0 0 auto;margin-top:2px;fill:none;stroke:#7B8DAA;stroke-width:1.8;stroke-linecap:round}
 #tab-exams .excard .warn{font-size:13px}
 #tab-exams .exl-wrap:has(table:not(.hide)){margin-top:16px;padding:6px 14px;border-radius:20px;background:#fff;box-shadow:0 14px 30px -20px rgba(16,60,140,.45)}
@@ -3212,7 +3216,7 @@ function renderExGrid(){
       '<span class="exc-ic" aria-hidden="true">' + excIcon(e, title) + '</span>' +
       '<div class="t">' + esc(title) + (!ownTitle(e) ? ' <span class="small" style="font-weight:500">(tên mặc định)</span>' : '') + '</div><div class="b">' + examBadges(e) + '</div>' +
       '<div class="st"><span>' + EXC_SI.q + '<b>' + qCountOf(e) + '</b> câu hỏi</span><span>' + EXC_SI.s + '<b>' + (e.resultCount || 0) + '</b> bài đã nộp</span></div>' +
-      '<div class="exc-meta">' + EXC_SI.cal + '<span>' + esc(e.id) + ' · ' + plan + ' · ' + esc(examWindowText(e)) + '</span></div>' +
+      '<div class="exc-meta">' + EXC_SI.cal + '<div class="exc-metatext"><div class="exc-when">' + esc(examWindowOnly(e)) + '</div><div class="exc-sub"><code class="exc-code">' + esc(e.id) + '</code> · ' + plan + (examAudienceText(e) ? ' · ' + esc(examAudienceText(e)) : '') + '</div></div></div>' +
       (!qCountOf(e) ? '<div class="warn">⚠ Chưa có câu hỏi riêng</div>' : '') + '</button>';
   }).join('') || '<div class="small" style="padding:20px 0">' + (EXAMS.length ? 'Không có đề nào khớp bộ lọc. Bấm “Xoá lọc” để xem lại tất cả.' : 'Chưa có đề thi nào. Bấm “＋ Tạo đề thi mới” để bắt đầu.') + '</div>';
 }
@@ -4093,14 +4097,22 @@ function exCloseQuick(days){
   const baseMs = localToMs($('exOpen').value) || Date.now();
   $('exClose').value = msToLocal(baseMs + days * 86400000);
 }
-function examWindowText(e){
+// Chỉ khung giờ (không kèm đối tượng), dùng cho dòng riêng trong thẻ đề
+function examWindowOnly(e){
   const f = (ms) => new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
-  const seg = ((e.segments || []).length ? ' · ' + e.segments.map(s => ({gia_dung:'Gia dụng',may_loc:'Máy lọc',both:'Cả hai'}[s]||s)).join('/') : '') + ((e.codes || []).length ? (e.codesExclude ? ' · trừ ' + e.codes.length + ' NV' : ' · gán ' + e.codes.length + ' NV') : '');
-  if (e.openAt && e.closeAt) return f(e.openAt) + ' → ' + f(e.closeAt) + seg;
-  if (e.openAt) return 'Từ ' + f(e.openAt) + seg;
-  if (e.closeAt) return 'Đến ' + f(e.closeAt) + seg;
-  return 'Không giới hạn' + seg;
+  if (e.openAt && e.closeAt) return f(e.openAt) + ' → ' + f(e.closeAt);
+  if (e.openAt) return 'Từ ' + f(e.openAt);
+  if (e.closeAt) return 'Đến ' + f(e.closeAt);
+  return 'Không giới hạn thời gian';
 }
+// Chỉ đối tượng được gán (nhóm ngành + gán/trừ N NV), dùng cho dòng riêng trong thẻ đề
+function examAudienceText(e){
+  const segTxt = (e.segments || []).length ? e.segments.map(s => ({gia_dung:'Gia dụng',may_loc:'Máy lọc',both:'Cả hai'}[s]||s)).join('/') : '';
+  const codeTxt = (e.codes || []).length ? (e.codesExclude ? 'Trừ ' + e.codes.length + ' NV' : 'Gán ' + e.codes.length + ' NV') : '';
+  return [segTxt, codeTxt].filter(Boolean).join(' · ');
+}
+// Giữ nguyên cho các chỗ đang dùng 1 chuỗi gộp (vd title tooltip)
+function examWindowText(e){ const a = examAudienceText(e); return examWindowOnly(e) + (a ? ' · ' + a : ''); }
 function examStatusText(e, cur){
   const now = Date.now();
   if (e.openAt && now < e.openAt) return '<span class="badge n">Chưa mở</span>';
