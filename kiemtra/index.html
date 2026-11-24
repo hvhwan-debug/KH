@@ -4600,7 +4600,8 @@ function renderMob(r, ps, prac, c){
   if (r.startedAt) rows += '<div><dt>' + RS_ICO.play + 'Bắt đầu lúc</dt><dd>' + esc(fmtFull(r.startedAt).replace(',', '')) + '</dd></div>';
   if (r.submittedAt) rows += '<div><dt>' + RS_ICO.flag + 'Nộp bài lúc</dt><dd>' + esc(fmtFull(r.submittedAt).replace(',', '')) + '</dd></div>';
   if (r.durationSec != null) rows += '<div><dt>' + RS_ICO.clock + 'Thời gian hoàn thành</dt><dd>' + Math.floor(r.durationSec / 60) + ' phút ' + (r.durationSec % 60) + ' giây</dd></div>';
-  if (r.compliancePoints != null) rows += '<div><dt>' + RS_ICO.star + (prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ') + '</dt><dd>' + esc(r.compliancePoints) + ' điểm</dd></div>';
+  // Chỉ thêm dòng này khi huy hiệu đầu trang KHÔNG hiện cùng số điểm đó (bài thi thử, hoặc mốc điểm không khớp ảnh huy hiệu) — tránh lặp lại khi huy hiệu đã hiện rồi.
+  if (r.compliancePoints != null && (prac || !compSrc(r.compliancePoints))) rows += '<div><dt>' + RS_ICO.star + (prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ') + '</dt><dd>' + esc(r.compliancePoints) + ' điểm</dd></div>';
   $('resTm').innerHTML = rows; $('resTm').classList.toggle('hide', !rows);
   var k = prac ? 'p' : ps === false ? 'n' : 'y';
   var t = prac ? ['Bài thi thử đã hoàn thành', 'Đây không phải thi chính thức. Xem chi tiết bài làm và học liệu gợi ý để chuẩn bị tốt hơn.']
