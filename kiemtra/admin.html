@@ -260,6 +260,8 @@ textarea{resize:vertical;min-height:80px}
 .qfilter{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 4px}
 .qfilter input{max-width:340px;margin:0}.qfilter select{max-width:260px;margin:0}
 .exf{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 2px}
+.exf-more{display:contents}
+.exf-toggle{display:none}
 .exf input[type=search]{flex:1 1 190px;min-width:170px;width:auto;margin:0;padding:9px 12px 9px 36px;border-radius:999px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234F6486' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 13px 50%}
 .exf select{flex:0 0 auto;width:auto;max-width:100%;margin:0;padding:8px 30px 8px 12px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);background-color:#fff;cursor:pointer}
 .exf select.on{border-color:var(--brand);background-color:#E6F0FC;color:var(--brand-deep)}
@@ -1354,13 +1356,19 @@ body[data-tab="exams"] .main{min-height:100vh;background:
 #tab-exams .excard .warn{font-size:13px}
 #tab-exams .exl-wrap:has(table:not(.hide)){margin-top:16px;padding:6px 14px;border-radius:20px;background:#fff;box-shadow:0 14px 30px -20px rgba(16,60,140,.45)}
 @media(max-width:860px){
-  .exl-id h1{font-size:19px}.exl-tile{width:34px;height:34px}.exl-sub{font-size:12.5px;margin-top:2px}
+  .exl-id h1{font-size:19px}.exl-tile{width:34px;height:34px}
+  .exl-sub{display:none}
   .exl-act{width:100%;justify-content:space-between;gap:8px;margin-top:4px}
   .exseg .btn,.exseg .btn.ghost{height:36px;padding:0 14px;font-size:13px}.exl-new{height:40px;padding:0 16px;font-size:13.5px}
   #tab-exams .exf{gap:8px;margin-top:10px}
-  #tab-exams .exf input[type=search]{height:42px}
+  #tab-exams .exf input[type=search]{height:42px;flex:1 1 auto}
   #tab-exams .exf select,#tab-exams .exf select#exFSort{flex:1 1 calc(50% - 4px);width:calc(50% - 4px);height:38px;padding-left:14px;font-size:12.5px}
   .exf-count{margin:8px 0 4px}
+  /* Gộp 4 bộ lọc vào sau 1 nút "Bộ lọc" để đỡ chiếm chỗ — chỉ hiện khi bấm mở, ô tìm kiếm vẫn luôn hiện sẵn */
+  .exf-toggle{display:flex;align-items:center;gap:5px;height:42px;padding:0 14px;border:0;border-radius:999px;background:#fff;color:#0A2552;font:inherit;font-size:12.5px;font-weight:700;box-shadow:0 8px 22px -14px rgba(16,60,140,.4);flex:0 0 auto}
+  .exf-toggle.open{background:#EAF1FD;color:#0B5C52}
+  .exf-more{display:none;width:100%;flex-wrap:wrap;gap:8px}
+  .exf-more.open{display:flex}
 }
 @media(max-width:1099px){#tab-exams .exf select,#tab-exams .exf select#exFSort{flex:1 1 150px}}
 @media(max-width:760px){body[data-tab="exams"] .main{background-attachment:scroll}
@@ -1771,10 +1779,13 @@ body[data-tab="results"] .wrap,body[data-tab="analysis"] .wrap,body[data-tab="qu
         </div>
         <div id="exFilter" class="exf">
           <input type="search" id="exQ" autocomplete="off" placeholder="Tìm tên hoặc mã đề" oninput="exFilt.q=this.value;exRefilter()" aria-label="Tìm đề thi">
+          <button type="button" class="exf-toggle" id="exfToggle" onclick="document.getElementById('exfMore').classList.toggle('open');this.classList.toggle('open')" aria-expanded="false" aria-controls="exfMore">⚙ Bộ lọc</button>
+          <div class="exf-more" id="exfMore">
           <select id="exFStatus" onchange="exFilt.status=this.value;exRefilter()" aria-label="Lọc theo trạng thái"><option value="">Trạng thái</option><option value="open">Đang mở</option><option value="soon">Chưa mở</option><option value="closed">Đã đóng</option></select>
           <select id="exFType" onchange="exFilt.type=this.value;exRefilter()" aria-label="Lọc theo loại đề"><option value="">Loại đề</option><option value="official">Chính thức</option><option value="practice">Thi thử</option></select>
           <select id="exFSurvey" onchange="exFilt.survey=this.value;exRefilter()" aria-label="Lọc theo khảo sát"><option value="">Khảo sát</option><option value="yes">Có khảo sát</option><option value="no">Không có khảo sát</option></select>
           <select id="exFSort" onchange="exFilt.sort=this.value;exRefilter()" aria-label="Sắp xếp"><option value="new">Mới tạo trước</option><option value="status">Đang mở trước</option><option value="subs">Nhiều bài nộp</option><option value="name">Tên A → Z</option></select>
+          </div>
         </div>
         <div class="exf-count"><span id="exFCount" aria-live="polite"></span><button type="button" class="exf-clear hide" id="exFClear" onclick="exFiltClear()">✕ Xoá lọc</button></div>
         <div class="exgrid" id="exGrid"></div>
