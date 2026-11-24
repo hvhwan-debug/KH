@@ -23,7 +23,7 @@ function scWrap(ctx, text, font, maxW, maxLines){
 function scLayout(d){
   var c = MK(), W = SC.W, cx = SC.M, cw = W - 2*SC.M, P = cx + SC.PAD, R = cx + cw - SC.PAD;
   var L = { cx:cx, cy:SC.M, cw:cw, P:P, R:R };
-  L.comp = !d.practice && !!(d.compImg && d.compImg.width);                // có điểm tuân thủ: huy hiệu nằm ở chỗ ô tròn %, không chiếm góc phải trên
+  L.comp = false; // đã bỏ huy hiệu điểm tuân thủ (đặt ở góc/thay vòng tròn % trông mất thẩm mỹ) — điểm tuân thủ giờ chỉ hiện ở hàng thông số dạng chữ bên dưới
   L.trophyX = L.comp ? cx + cw + 8 : cx + cw - 244; L.trophyB = L.comp ? L.cy : L.cy + 332;                       // vùng chiếc cúp (góc phải trên): chữ không được đè lên
   L.titleLines = scWrap(c, d.title, '700 32px ' + SC.F, L.trophyX - P - 8, 2);
   L.pillY = L.cy + 134 + (L.titleLines.length - 1) * 44 + 30;
