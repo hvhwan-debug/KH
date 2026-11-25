@@ -592,6 +592,20 @@ body.cert-on .wrap{max-width:1180px;width:min(1180px,94vw)}
   .btn-outline{flex:1 1 0!important;min-height:54px!important;font-size:16px!important}
   .ct-verify{font-size:14px!important;margin-top:16px!important}
 }
+
+/* ===== FIX: màn XEM LẠI BÀI LÀM (.pv) dùng chữ trắng nên cần nền xanh đậm.
+   Khối "giao diện sáng" phía trên ép body.cert-on về nền nhạt (#EEF4FD) làm chữ trắng bị chìm.
+   Chỉ áp dụng khi đang ở chế độ xem lại (body.pv-on) ===== */
+body.pv-on,body.cert-on.pv-on{background:#0A63D8!important}
+body.pv-on::before,body.cert-on.pv-on::before{display:block!important;background:radial-gradient(70% 55% at 50% 0%,rgba(90,200,255,.55),transparent 70%),radial-gradient(60% 70% at 100% 100%,rgba(40,140,255,.6),transparent 70%),linear-gradient(170deg,#0B57D0,#0A7BEA 55%,#1E9BFF)!important}
+body.pv-on::after,body.cert-on.pv-on::after{display:none!important}
+body.pv-on .wrap,body.cert-on.pv-on .wrap{max-width:1440px!important;width:min(1440px,96vw)!important;padding:24px 16px 44px!important}
+.pv-ttl small{color:#DCEEFF!important}
+.pv-ttl h1,.pv-who h2,.pv-who .sc b,.pv-info dd{color:#fff!important;text-shadow:0 1px 2px rgba(0,30,100,.35)}
+.pv-info dd.gold{color:#FFC94A!important}
+.pv-who p,.pv-who .sb,.pv-info dt{color:#E6F2FF!important}
+.pv-tag{left:auto;right:6%;top:-6px}
+@media(max-width:860px){.pv-top{grid-template-columns:1fr 1fr!important}.pv-who{border-left:0;padding-left:0}}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/inapp.js?v=3" data-lazy></script>
