@@ -144,6 +144,18 @@ function build(opts) {
       "</tr>", 'width="100%"')).join("") +
     "</td></tr>";
 
+  // ---- Tài liệu ôn tập gắn với đề (nếu có) — thay cho việc hiện ở màn bắt đầu làm bài ----
+  const materials = Array.isArray(opts.materials) ? opts.materials.filter((m) => m && m.url && m.title) : [];
+  const materialsBlock = materials.length
+    ? '<tr><td class="px" style="padding:22px 28px 0;' + F + '">' +
+      T('<tr><td style="padding:16px 18px;' + F + '">' +
+        '<div style="font-size:14px;line-height:20px;font-weight:800;color:' + C.navy + ';padding-bottom:8px;">\uD83D\uDCDA Tài liệu ôn tập cho bài này</div>' +
+        '<div style="font-size:12.5px;line-height:19px;color:' + C.muted + ';padding-bottom:10px;">Nên xem trước khi làm bài. Mở ở trang Học liệu (cần xác thực khuôn mặt).</div>' +
+        materials.map((m) => '<div style="padding:5px 0;"><a href="' + esc(m.url) + '" target="_blank" style="font-size:13.5px;line-height:19px;font-weight:700;color:' + C.brand + ';text-decoration:none;">' + (m.type === "video" ? "\u25B6 " : "\uD83D\uDCC4 ") + esc(m.title) + "</a></div>").join("") +
+        "</td></tr>", 'width="100%" bgcolor="' + C.soft + '"', "background:" + C.soft + ";border:1px solid " + C.line + ";border-radius:14px;border-collapse:separate;") +
+      "</td></tr>"
+    : "";
+
   // ---- Ý nghĩa kết quả + lời nhắc + chữ ký ----
   const closingBlock =
     '<tr><td class="px" style="padding:26px 28px 0;' + F + '">' +
@@ -175,7 +187,7 @@ function build(opts) {
     '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:' + C.page + '">' + esc(title) + (deadline ? " · Hạn " + esc(deadline) : "") + "&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>" +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' + C.page + '" style="background:' + C.page + '"><tr><td class="wrap" align="center" style="padding:30px 12px">' +
     '<table role="presentation" class="card" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="max-width:600px;width:100%;background:#ffffff;border:1px solid ' + C.line + ';border-radius:22px;border-collapse:separate;overflow:hidden;box-shadow:0 24px 50px -28px rgba(10,31,68,.45)">' +
-    brand + hero + greetBlock + replaceBlock + tileBlock + cta + stepBlock + closingBlock + footer +
+    brand + hero + greetBlock + replaceBlock + tileBlock + cta + stepBlock + materialsBlock + closingBlock + footer +
     "</table></td></tr></table></body></html>";
 
   const textRows = [
@@ -189,6 +201,7 @@ function build(opts) {
     "HƯỚNG DẪN THỰC HIỆN",
     guide,
     ctaUrl, "",
+    ...(materials.length ? ["TÀI LIỆU ÔN TẬP CHO BÀI NÀY (nên xem trước, mở ở trang Học liệu):", ...materials.map((m) => "- " + m.title + ": " + m.url), ""] : []),
     note, closing, "",
     support, "",
     "Trân trọng,", org, "",

@@ -5495,12 +5495,8 @@ function heroTitle(h, t){ // "THI THỬ - KIỂM TRA ĐỊNH KÌ PCs - THÁNG 10
 // Tài liệu ôn tập quản trị viên gắn vào đề: hiện trước khi làm bài; bấm để mở ở trang Học liệu
 function matsUrl(id){ return '/kiemtra/hoclieu.html?exam=' + encodeURIComponent(EXAM_ID) + (id ? '#' + encodeURIComponent(id) : ''); }
 function renderMats(){
-  var b = $('matBox'), l = (INFO && INFO.materials) || []; if (!b) return;
-  if (!l.length){ b.classList.add('hide'); return; }
-  b.innerHTML = '<h3>📚 Tài liệu ôn tập cho bài này</h3><p>Nên xem trước khi làm bài. Tài liệu mở ở trang Học liệu (cần xác thực khuôn mặt).</p>' +
-    l.slice(0, 5).map(function(m){ return '<a class="mt" href="' + matsUrl(m.id) + '" target="_blank" rel="noopener"><i aria-hidden="true">' + (m.type === 'video' ? '▶' : '📄') + '</i><span>' + esc(m.title) + '<small>' + (m.type === 'video' ? 'Video' + (m.dur ? ' · ' + m.dur + ' phút' : '') : 'Tài liệu PDF' + (m.pages ? ' · ' + m.pages + ' trang' : '')) + '</small></span></a>'; }).join('') +
-    (l.length > 5 ? '<a class="all" href="' + matsUrl('') + '" target="_blank" rel="noopener">Xem cả ' + l.length + ' tài liệu →</a>' : '');
-  b.classList.remove('hide');
+  // Đã bỏ hiện khối "Tài liệu ôn tập" ở màn bắt đầu làm bài — tài liệu ôn tập giờ gửi kèm link trong email mời làm bài.
+  var b = $('matBox'); if (b) b.classList.add('hide');
 }
 async function loadInfo(){
   if (!EXAM_ID) return;

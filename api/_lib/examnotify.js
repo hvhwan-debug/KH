@@ -10,13 +10,24 @@ const assignmail = require("./assignmail");
 
 // Nội dung thư mời theo ĐÚNG đề và ĐÚNG người: số câu người đó nhận (theo nhóm ngành/miền), thời gian làm bài, số lượt,
 // giờ mở đề (nếu chưa mở), hạn chót, mô tả đề; lời nhắn / câu kết riêng của đề nếu quản trị viên đã soạn.
-function inviteMsg(exam, settings, c, link, replaces) {
+async function examMaterials(examId) {
+  // Tài liệu ôn tập gắn với đề này — không hiện ở màn bắt đầu làm bài nữa, mà gửi kèm link ngay trong email mời.
+  try {
+    const d = await require("./hoclieu").load();
+    return d.items.filter((x) => x.status !== "draft" && (x.exams || []).indexOf(examId) >= 0)
+      .map((x) => ({ id: x.id, title: x.title, type: x.type })).slice(0, 8);
+  } catch (e) { return []; }
+}
+async function inviteMsg(exam, settings, c, link, replaces) {
   let questions = 0; try { questions = quiz.countFor(settings, quiz.normSegment(c.segment), c.region); } catch (e) { questions = 0; }
   const total = settings.timeMode === "total", spq = Math.max(10, settings.secondsPerQuestion || 60);
   const duration = total ? (Math.max(1, parseInt(settings.totalMinutes, 10) || 30) + " phút") : (questions ? "~" + Math.max(1, Math.round(questions * spq / 60)) + " phút" : spq + " giây/câu");
   const lim = quiz.attemptLimit(settings), attempts = lim === Infinity ? "Không giới hạn" : lim + " lượt";
+  const materials = await examMaterials(exam.id);
+  const matUrl = (id) => cfg().appUrl + "/kiemtra/hoclieu.html?exam=" + encodeURIComponent(exam.id) + (id ? "#" + encodeURIComponent(id) : "");
   return assignmail.build({ name: c.name, title: settings.examTitle || exam.title || exam.id, description: exam.description || "", questions, duration, attempts,
-    openMs: exam.openAt || 0, deadlineMs: exam.closeAt || 0, ctaUrl: link, manager: c.manager || "", note: exam.inviteNote || "", closing: exam.inviteClosing || "", replaces: !!replaces });
+    openMs: exam.openAt || 0, deadlineMs: exam.closeAt || 0, ctaUrl: link, manager: c.manager || "", note: exam.inviteNote || "", closing: exam.inviteClosing || "", replaces: !!replaces,
+    materials: materials.map((m) => ({ title: m.title, type: m.type, url: matUrl(m.id) })) });
 }
 const { cfg } = require("./config");
 
@@ -47,7 +58,7 @@ async function run(opts) {
         if (Date.now() - t0 > TIME_BUDGET) return;
         const c = list[idx++];
         try {
-          const msg = inviteMsg(exam, settings, c, link, false);
+          const msg = await inviteMsg(exam, settings, c, link, false);
           const ok = await mail.send({ fromName: mail.KT_NAME, to: c.email, subject: msg.subject, html: msg.html, text: msg.text });
           if (ok === false) { stopped = true; return; } // chưa cấu hình SMTP: dừng hẳn, không thử tiếp người khác
           done.push(quiz.normCode(c.code)); sent++;
@@ -96,7 +107,7 @@ async function resend(examId, opts) {
       if (Date.now() - t0 > TIME_BUDGET) return;
       const c = list[idx++];
       try {
-        const msg = inviteMsg(exam, settings, c, link, true);
+        const msg = await inviteMsg(exam, settings, c, link, true);
         const ok = await mail.send({ fromName: mail.KT_NAME, to: c.email, subject: msg.subject, html: msg.html, text: msg.text });
         if (ok === false) { stopped = true; noSmtp = true; return; }
         done.push(quiz.normCode(c.code));
@@ -175,7 +186,7 @@ async function preview(examId, draft) {
   const exams = await quiz.getExams(), exam = Object.assign({}, exams.find((e) => e.id === examId) || { id: examId, title: examId }, draft || {});
   const settings = await quiz.getExamSettings(examId);
   const c = (await quiz.getCandidates()).find((x) => x.email && !quiz.isLeft(x) && quiz.inAudience(settings, x)) || { name: "Nguyễn Văn An", segment: "both", manager: "" };
-  const msg = inviteMsg(exam, settings, c, cfg().appUrl + "/kiemtra/?exam=" + encodeURIComponent(examId), false);
+  const msg = await inviteMsg(exam, settings, c, cfg().appUrl + "/kiemtra/?exam=" + encodeURIComponent(examId), false);
   return { ok: true, subject: msg.subject, html: msg.html, text: msg.text, sampleName: c.name || "" };
 }
 
