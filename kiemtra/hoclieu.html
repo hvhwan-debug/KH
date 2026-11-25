@@ -170,6 +170,11 @@ svg.i{width:1em;height:1em;flex:0 0 auto;fill:none;stroke:currentColor;stroke-wi
 .vx{flex:0 0 auto;display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:50%;background:#EEF4FC;cursor:pointer;color:#1E3F73}
 .vx:hover{background:#DCE9FA}.vx svg.i{font-size:20px}
 .vb{position:relative;flex:1;min-height:0;overflow:auto;background:#0B1730;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.vfs{all:unset;box-sizing:border-box;cursor:pointer;flex:0 0 auto;width:34px;height:34px;display:grid;place-items:center;border-radius:10px;color:var(--muted);transition:background .12s,color .12s}
+.vfs:hover,.vfs:focus-visible{background:#EEF3FC;color:var(--ink)}
+.vfs .i{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.vw.full{padding:0}
+.vw.full .vp{width:100%;height:100%;max-height:100%;border-radius:0}
 .vb .emb{position:relative}
 .vb .gd-shield{position:absolute;top:0;right:14px;width:72px;height:72px;background:#1D1E1F;z-index:2;cursor:default}
 .vb video,.vb iframe{display:block;width:100%;aspect-ratio:16/9;max-height:calc(100vh - 210px);border:0;background:#000}
@@ -307,7 +312,7 @@ svg.i{width:1em;height:1em;flex:0 0 auto;fill:none;stroke:currentColor;stroke-wi
 
 <div class="vw hide" id="vw" role="dialog" aria-modal="true" aria-labelledby="vT">
   <div class="vp">
-    <div class="vh"><h2 id="vT"></h2><span class="tag" id="vC"></span><button class="vx" id="vX" type="button" aria-label="Đóng"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="vh"><h2 id="vT"></h2><span class="tag" id="vC"></span><button class="vfs" id="vFS" type="button" aria-label="Xem toàn màn hình" aria-pressed="false" title="Xem toàn màn hình"><svg class="i" id="vFSi" viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 0 0-1 1v4M15 4h4a1 1 0 0 1 1 1v4M9 20H5a1 1 0 0 1-1-1v-4M15 20h4a1 1 0 0 0 1-1v-4"/></svg></button><button class="vx" id="vX" type="button" aria-label="Đóng"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     <div class="vb" id="vB"></div>
     <div class="vd" id="vD"></div>
     <div class="vv" id="vV"></div>
@@ -525,9 +530,20 @@ function draw(doc, cv, width, seq){
 }
 function closeViewer(){
   VW.pdfSeq++; $('vB').innerHTML = ''; $('vw').classList.add('hide'); document.documentElement.style.overflow = '';
+  $('vw').classList.remove('full'); $('vFS').setAttribute('aria-pressed', 'false'); $('vFS').title = 'Xem toàn màn hình'; $('vFS').setAttribute('aria-label', 'Xem toàn màn hình');
+  $('vFSi').innerHTML = '<path d="M9 4H5a1 1 0 0 0-1 1v4M15 4h4a1 1 0 0 1 1 1v4M9 20H5a1 1 0 0 1-1-1v-4M15 20h4a1 1 0 0 0 1-1v-4"/>';
   history.replaceState(null, '', location.pathname + location.search);
 }
 $('vX').addEventListener('click', closeViewer);
+$('vFS').addEventListener('click', function(){
+  var on = $('vw').classList.toggle('full');
+  $('vFS').setAttribute('aria-pressed', on ? 'true' : 'false');
+  $('vFS').title = on ? 'Thoát toàn màn hình' : 'Xem toàn màn hình';
+  $('vFS').setAttribute('aria-label', $('vFS').title);
+  $('vFSi').innerHTML = on
+    ? '<path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/>'
+    : '<path d="M9 4H5a1 1 0 0 0-1 1v4M15 4h4a1 1 0 0 1 1 1v4M9 20H5a1 1 0 0 1-1-1v-4M15 20h4a1 1 0 0 0 1-1v-4"/>';
+});
 $('vw').addEventListener('click', function(e){ if (e.target === $('vw')) closeViewer(); });
 ['contextmenu', 'dragstart', 'copy', 'cut'].forEach(function(ev){ $('vB').addEventListener(ev, function(e){ e.preventDefault(); }); });
 document.addEventListener('keydown', function(e){
