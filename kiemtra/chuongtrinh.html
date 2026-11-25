@@ -502,16 +502,22 @@ table.t td input[type=checkbox],table.t th input[type=checkbox]{width:17px;heigh
   <h3 id="dlgT">Chương trình học</h3>
   <div class="frm">
     <div class="full"><label for="fT">Tên chương trình *</label><input id="fT" maxlength="150" placeholder="Ví dụ: Khoá kỹ năng tư vấn máy lọc nước, tháng 12"></div>
-    <div class="full"><label for="fD">Giới thiệu & lợi ích</label><textarea id="fD" maxlength="2000" placeholder="Một câu hấp dẫn về chương trình.
-- Chốt đơn nhanh hơn với 3 câu hỏi khai thác nhu cầu
-- Xử lý 5 lời từ chối hay gặp nhất tại điểm bán
-- Nhận chứng nhận hoàn thành khoá học"></textarea><div class="hint">Mỗi dòng bắt đầu bằng dấu “-” sẽ hiện thành một lợi ích có dấu ✓ trong email. Viết theo hướng “học xong làm được gì”.</div></div>
-    <div><label for="fW">Thời gian</label><input id="fW" maxlength="200" placeholder="8:30 – 11:30, thứ Bảy 06/12/2026"></div>
-    <div><label for="fP">Địa điểm / hình thức</label><input id="fP" maxlength="200" placeholder="Văn phòng Hà Nội / Online qua Teams"></div>
+    <div class="full"><label for="fD">Giới thiệu & lợi ích</label><textarea id="fD" maxlength="2000" placeholder="Chương trình đào tạo chuyên sâu về kỹ năng bán hàng và tư vấn sản phẩm.
+- Cập nhật kiến thức sản phẩm mới nhất
+- Nâng cao kỹ năng tư vấn và xử lý tình huống thực tế
+- Giao lưu, chia sẻ kinh nghiệm cùng đồng nghiệp
+- Ứng dụng ngay vào công việc để tăng hiệu quả bán hàng"></textarea><div class="hint">Dòng thường là lời giới thiệu. Mỗi dòng bắt đầu bằng “-” là một ý trong khối “VÌ SAO NÊN THAM GIA?” (tối đa 4). Để trống thì dùng 4 ý mặc định.</div></div>
+    <div class="full"><label for="fTg">Khẩu hiệu trên ảnh đầu thư</label><input id="fTg" maxlength="140" placeholder="Cùng nâng cao kiến thức – Tăng tự tin – Bứt phá doanh số"></div>
+    <div><label for="fW">Thời gian</label><input id="fW" maxlength="200" placeholder="Ngày 22/12/2026 | Buổi sáng hoặc buổi chiều"><div class="hint">Dấu “|” tách dòng chính và dòng phụ.</div></div>
+    <div><label for="fP">Hình thức / địa điểm</label><input id="fP" maxlength="200" placeholder="Trực tuyến (Online) | Tham gia qua nền tảng Zoom"></div>
+    <div class="full"><label for="fAu">Đối tượng tham gia</label><input id="fAu" maxlength="200" placeholder="Toàn bộ nhân viên kinh doanh tại kênh GT"></div>
     <div><label for="fDl">Hạn đăng ký</label><input id="fDl" type="datetime-local"><div class="hint">Giờ Việt Nam. Để trống = không giới hạn.</div></div>
     <div><label for="fC">Số chỗ tối đa</label><input id="fC" type="number" min="0" step="1" placeholder="Không giới hạn"><div class="hint">Đủ chỗ thì hệ thống tự ngừng nhận.</div></div>
     <div><label for="fSp">Người chia sẻ / giảng viên</label><input id="fSp" maxlength="150" placeholder="Anh Nguyễn Ngọc Hiếu, ASM xuất sắc 2025"></div>
-    <div><label for="fCt">Người liên hệ</label><input id="fCt" maxlength="200" placeholder="Phòng Đào tạo · 0901 234 567"></div>
+    <div><label for="fOrg">Đơn vị tổ chức (ký tên cuối thư)</label><input id="fOrg" maxlength="120" placeholder="Đào tạo Kinh doanh GT"></div>
+    <div><label for="fCt">Đầu mối liên hệ</label><input id="fCt" maxlength="200" placeholder="Đào tạo Kinh doanh GT"></div>
+    <div><label for="fPh">Điện thoại liên hệ</label><input id="fPh" maxlength="40" placeholder="0846 793 993"></div>
+    <div><label for="fEm">Email liên hệ</label><input id="fEm" type="email" maxlength="120" placeholder="daotao.gt@karofi.com.vn"></div>
     <div class="askw" id="askW"><label class="sw"><input type="checkbox" id="fAsk" checked> Sau khi đăng ký, hỏi kỳ vọng và tình huống muốn chia sẻ (không bắt buộc với học viên)</label>
       <div class="frm askf" style="grid-template-columns:1fr">
         <div><label for="fQ1">Câu hỏi kỳ vọng</label><input id="fQ1" maxlength="200"></div>
@@ -576,7 +582,7 @@ function renderDetail(){
   $('dTitle').textContent = p.title;
   $('dChips').innerHTML = '<span class="chip ' + s[1] + '">' + s[0] + '</span>';
   $('bToggle').textContent = p.status === 'closed' ? 'Mở lại đăng ký' : 'Đóng đăng ký';
-  var rows = [['Thời gian', p.when], ['Địa điểm / hình thức', p.where], ['Hạn đăng ký', p.deadline ? vn(p.deadline) : 'Không giới hạn'], ['Số chỗ', p.capacity ? p.capacity + ' người' : 'Không giới hạn'], ['Người chia sẻ', p.speaker], ['Liên hệ', p.contact]].filter(function(x){ return x[1]; });
+  var rows = [['Thời gian', p.when], ['Địa điểm / hình thức', p.where], ['Hạn đăng ký', p.deadline ? vn(p.deadline) : 'Không giới hạn'], ['Số chỗ', p.capacity ? p.capacity + ' người' : 'Không giới hạn'], ['Đối tượng', p.audience], ['Người chia sẻ', p.speaker], ['Liên hệ', [p.contact, p.phone, p.email].filter(Boolean).join(' · ')], ['Đơn vị tổ chức', p.org]].filter(function(x){ return x[1]; });
   $('dInfo').innerHTML = rows.map(function(x){ return '<div><span>' + x[0] + '</span><b>' + esc(x[1]) + '</b></div>'; }).join('') + (p.desc ? '<div style="grid-column:1/-1"><span>Giới thiệu</span><div style="white-space:pre-line">' + esc(p.desc) + '</div></div>' : '');
   var resp = Object.keys(S.invited).filter(function(k){ return S.regs[k]; }).length;
   $('dKpi').innerHTML = [['Đã mời', nInv, ''], ['Đã đăng ký', nReg + (p.capacity ? '<small>/' + p.capacity + '</small>' : ''), p.capacity ? 'Còn ' + Math.max(0, p.capacity - nReg) + ' chỗ' : ''],
@@ -676,12 +682,13 @@ function openForm(p){
   S.editId = p ? p.id : ''; $('dlgT').textContent = p ? 'Sửa chương trình' : 'Tạo chương trình học'; $('dlgMsg').innerHTML = '';
   $('fT').value = p ? p.title : ''; $('fD').value = p ? p.desc || '' : ''; $('fW').value = p ? p.when || '' : ''; $('fP').value = p ? p.where || '' : '';
   $('fDl').value = p ? toLocal(p.deadline) : ''; $('fC').value = p && p.capacity ? p.capacity : ''; $('fCt').value = p ? p.contact || '' : ''; $('fSp').value = p ? p.speaker || '' : '';
+  $('fTg').value = p ? p.tagline || '' : ''; $('fAu').value = p ? p.audience || '' : ''; $('fOrg').value = p ? p.org || '' : ''; $('fPh').value = p ? p.phone || '' : ''; $('fEm').value = p ? p.email || '' : '';
   var AD = S.askDefault || {}; $('fAsk').checked = !(p && p.ask === false); $('fQ1').value = (p && p.q1) || AD.q1 || ''; $('fQ2').value = (p && p.q2) || AD.q2 || '';
   $('fOpts').value = ((p && p.opts) || AD.opts || []).join('\n'); $('askW').classList.toggle('off', !$('fAsk').checked);
   $('dlg').classList.remove('hide'); $('fT').focus();
 }
 async function saveForm(){
-  var prog = { id: S.editId || undefined, title: $('fT').value.trim(), desc: $('fD').value.trim(), when: $('fW').value.trim(), where: $('fP').value.trim(), deadline: fromLocal($('fDl').value), capacity: +$('fC').value || 0, contact: $('fCt').value.trim(), speaker: $('fSp').value.trim(), ask: $('fAsk').checked, q1: $('fQ1').value.trim(), q2: $('fQ2').value.trim(), opts: $('fOpts').value.split('\n').map(function(x){ return x.trim(); }).filter(Boolean), status: S.editId && S.cur ? S.cur.status : 'open' };
+  var prog = { id: S.editId || undefined, title: $('fT').value.trim(), desc: $('fD').value.trim(), when: $('fW').value.trim(), where: $('fP').value.trim(), deadline: fromLocal($('fDl').value), capacity: +$('fC').value || 0, contact: $('fCt').value.trim(), speaker: $('fSp').value.trim(), tagline: $('fTg').value.trim(), audience: $('fAu').value.trim(), org: $('fOrg').value.trim(), phone: $('fPh').value.trim(), email: $('fEm').value.trim(), ask: $('fAsk').checked, q1: $('fQ1').value.trim(), q2: $('fQ2').value.trim(), opts: $('fOpts').value.split('\n').map(function(x){ return x.trim(); }).filter(Boolean), status: S.editId && S.cur ? S.cur.status : 'open' };
   if (!prog.title){ $('dlgMsg').innerHTML = '<div class="msg r">Vui lòng nhập tên chương trình.</div>'; return; }
   $('dlgOk').disabled = true; var r = await api('POST', '/api/kt-program', { op:'save', program:prog }); $('dlgOk').disabled = false;
   if (!r.j.ok){ $('dlgMsg').innerHTML = '<div class="msg r">' + esc(r.j.error || 'Không lưu được.') + '</div>'; return; }
