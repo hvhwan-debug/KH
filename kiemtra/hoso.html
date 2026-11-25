@@ -966,7 +966,7 @@ function renderList(){
       '<td class="r">' + (r.comp == null ? '–' : r.comp) + '</td>' +
       (function(){ var x = kdLast(c), h = kdHt(x); return '<td class="r nw"' + (x ? ' title="' + esc(kdText(x)) + '"' : '') + '>' + (!x ? '<span style="color:#9AA7BC">–</span>' : '<span class="chip plain ' + kdCls(x) + '" style="padding:1px 8px">' + (h == null ? 'Chưa có CT' : vn(h, 0) + '%') + '</span> <span style="color:#9AA7BC;font-size:11.5px">' + kdMon(x.month) + '</span>'); })() + '</td>' +
       '<td><span class="chip ' + r.st + '">' + STL[r.st] + '</span></td>' +
-      '<td class="nw" title="' + esc(vnDT(r.act)) + '">' + (r.act ? ago(r.act) : '–') + '</td>' +
+      '<td class="nw" title="' + esc(vnDT(r.act)) + '">' + (r.act ? ago(r.act) + '<br><small style="color:#7A8AA5;font-size:11.5px">' + esc(vnDT(r.act)) + '</small>' : '–') + '</td>' +
       '<td><button type="button" class="btn sm" data-go="' + esc(c.code) + '">Xem chi tiết</button></td></tr>';
   }).join('');
   var pn = pageNums(V.page, pages).map(function(p){ return p === '…' ? '<span style="padding:0 4px">…</span>' : '<button type="button" data-pg="' + p + '" class="' + (p === V.page ? 'on' : '') + '">' + p + '</button>'; }).join('');
@@ -1045,7 +1045,7 @@ function renderDetail(){
   var stateChip = c.left ? '<span class="chip left">Đã nghỉ việc</span>' : P.status === 'doing' ? '<span class="chip ok">Đang làm bài</span>' : '<span class="chip ok" style="background:#E8F0FB;color:#0B3F94">Đang làm việc</span>';
   var d = a.delta;
   var h = crumb(c.name || c.code) +
-    '<div class="card ph-card"><div class="av lg" data-av="' + esc(c.code) + '">' + esc(initials(c.name || c.code)) + '</div><div class="who"><h1>' + esc(c.name || c.code) + '</h1><div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">' + stateChip + '<span class="chip ' + a.st + '">' + STL[a.st] + '</span><span style="color:#5B6B86;font-size:12.5px">Hoạt động gần nhất: ' + (a.act ? ago(a.act) : '–') + '</span></div><div class="ph-meta">' + meta + '</div></div>' +
+    '<div class="card ph-card"><div class="av lg" data-av="' + esc(c.code) + '">' + esc(initials(c.name || c.code)) + '</div><div class="who"><h1>' + esc(c.name || c.code) + '</h1><div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">' + stateChip + '<span class="chip ' + a.st + '">' + STL[a.st] + '</span><span style="color:#5B6B86;font-size:12.5px">Hoạt động gần nhất: ' + (a.act ? ago(a.act) + ' · <b style="font-weight:600;color:#2F4468">' + esc(vnDT(a.act)) + '</b>' : '–') + '</span></div><div class="ph-meta">' + meta + '</div></div>' +
     '<div class="ph-act"><button class="btn" type="button" data-xl="person">⬇ Xuất Excel hồ sơ</button></div></div>' +
     '<div class="kpis6">' +
       kpi('Điểm trung bình', 'Trung bình điểm của từng bài kiểm tra (mỗi bài lấy lần điểm cao nhất).', a.avg == null ? '–' : vn(a.avg) + '<small>%</small>', a.avg == null ? 'Chưa có kết quả' : BL[band(a.avg)]) +
