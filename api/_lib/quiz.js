@@ -453,6 +453,8 @@ function attemptsSummary(idx, code, period, settings, currentId, unlimited) {
 function bankFor(all, period) {
   const own = all.filter((q) => usableQ(q) && (q.period || "") === period);
   if (own.length || !period) return { list: own, source: own.length ? "period" : "none" };
+  // Đề tự đặt mã (không phải dạng tháng YYYY-MM) chỉ dùng câu của chính nó, không bao giờ mượn câu của đề khác
+  if (!/^\d{4}-\d{2}$/.test(period)) return { list: [], source: "none" };
   const shared = all.filter((q) => usableQ(q) && !q.period);
   if (shared.length) return { list: shared, source: "unassigned" };
   const prev = Array.from(new Set(all.filter((q) => usableQ(q) && q.period && q.period < period).map((q) => q.period))).sort().pop();

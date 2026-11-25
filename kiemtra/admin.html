@@ -2170,7 +2170,7 @@ a.bb{text-decoration:none}
       <div class="card hide" id="qXlsCard">
         <button class="xclose" type="button" onclick="qPanel(null)" aria-label="Đóng">×</button>
         <h1>Nhập câu hỏi từ file Excel <span class="small" id="xlTarget" style="font-weight:600"></span></h1>
-        <p class="small">Mỗi sheet là một nhóm câu hỏi. Dòng đầu là tiêu đề cột, cần có: <b>Câu hỏi</b>, <b>Phương án A</b>, <b>Phương án B</b>, <b>Phương án C</b>, <b>Phương án D</b>, <b>Đáp án đúng</b> (A/B/C/D). Cột tuỳ chọn: <b>Danh mục</b>, <b>Phân loại sản phẩm / Chuyên đề</b> (thành thẻ), <b>Model / Chủ đề áp dụng</b> và <b>Trích dẫn / Tài liệu tham chiếu</b> (thành giải thích đáp án). Các cột khác bị bỏ qua.</p>
+        <p class="small">Mỗi sheet là một nhóm câu hỏi. Dòng đầu là tiêu đề cột, cần có: <b>Câu hỏi</b>, <b>Phương án A</b>, <b>Phương án B</b>, <b>Phương án C</b>, <b>Phương án D</b>, <b>Đáp án đúng</b> (A/B/C/D). Cột tuỳ chọn: <b>Danh mục</b> (giữ đúng tên trong file, không bị đổi), <b>Mã đề / Đề</b> (mã hoặc tên đề; trống = đề đang mở; sheet đặt đúng tên/mã đề cũng được hiểu là đề đó), <b>Phân loại sản phẩm / Chuyên đề</b> (thành thẻ), <b>Model / Chủ đề áp dụng</b> và <b>Trích dẫn / Tài liệu tham chiếu</b> (thành giải thích đáp án). Các cột khác bị bỏ qua.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <button class="btn" type="button" onclick="$('xlFile').click()">📁 Chọn file Excel…</button>
           <input type="file" id="xlFile" accept=".xlsx" style="display:none" onchange="xlRead(event)">
@@ -4947,7 +4947,7 @@ function renderQuestions(){
   // Cùng thứ tự dự phòng với máy chủ: câu của kỳ -> câu chưa gắn kỳ -> đề kỳ gần nhất trước đó
   const L = cnt(QP), hasOwn = L.filter(q => q.active !== false).length;
   let fbList = null, fbNote = '';
-  if (QP && !hasOwn){
+  if (QP && !hasOwn && /^\d{4}-\d{2}$/.test(QP)){
     const ua = un.filter(q => q.active !== false), prevP = pers.filter(p => p < QP && cnt(p).some(q => q.active !== false)).sort().pop();
     if (ua.length){ fbList = un; fbNote = ua.length + ' câu chưa gắn kỳ'; }
     else if (prevP){ fbList = cnt(prevP); fbNote = 'đề của ' + qPerLabel(prevP).toLowerCase() + ' (' + fbList.length + ' câu)'; }
@@ -4986,7 +4986,7 @@ function renderQuestions(){
   $('qBulkPer').textContent = '→ vào ' + qPerLabel(QP).toLowerCase();
   $('xlTarget').textContent = '→ vào ' + qPerLabel(QP); if (XL) xlRender();
   $('qCount').textContent = L.length;
-  QLIST = L; renderQList();
+  QLIST = L; renderQList(); catListFill(QP);
   $('qPeriod').innerHTML = pers.map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + (p === cur ? ' (hiện tại)' : '') + '</option>').join('') + (un.length ? '<option value="">Chưa gắn kỳ</option>' : '');
   $('qPeriod').value = QP;
 }
@@ -6057,11 +6057,19 @@ function xlClean(s, isOpt){
   if (isOpt){ s = s.replace(/^[\s"\\]+|[\s"\\]+$/g, ''); if ((s.match(/"/g) || []).length % 2) s += '"'; } // bỏ ngoặc kép thừa bọc ngoài phương án
   return s;
 }
+// Tìm đề theo mã hoặc tên đề (không phân biệt hoa thường). Trả về mã đề, hoặc null nếu không khớp đề nào.
+function xlExam(v){
+  const k = spNorm(xlText(v)); if (!k) return null;
+  const e = (EXAMS || []).find(x => spNorm(x.id) === k) || (EXAMS || []).find(x => x.title && spNorm(x.title) === k);
+  return e ? e.id : null;
+}
+const xlDest = (r) => r.exam !== null && r.exam !== undefined ? r.exam : (QP || '');
+const xlCatOf = (sh, r) => r.rowCat || sh.cat; // danh mục ghi trong file luôn được giữ, ô danh mục của sheet chỉ bù cho dòng để trống
 function xlCols(header){
   const H = header.map(h => spNorm(xlText(h))), find = (...re) => H.findIndex(h => h && re.some(r => r.test(h)));
   return { q: find(/^câu hỏi$/, /^nội dung/, /^câu hỏi/), a: find(/^phương án a$/, /^đáp án a$/, /^a$/), b: find(/^phương án b$/, /^đáp án b$/, /^b$/),
     c: find(/^phương án c$/, /^đáp án c$/, /^c$/), d: find(/^phương án d$/, /^đáp án d$/, /^d$/), ans: find(/^đáp án đúng/, /^đáp án$/),
-    cat: find(/^danh mục/), tag: find(/^phân loại/, /^chuyên đề/), model: find(/^model/, /^chủ đề/), ref: find(/^trích dẫn/, /^tài liệu/, /^giải thích/, /^nguồn/) };
+    cat: find(/^danh mục/, /^mục$/), exam: find(/^mã đề/, /^đề$/, /^đề thi$/, /^tên đề/, /^kỳ$/), tag: find(/^phân loại/, /^chuyên đề/), model: find(/^model/, /^chủ đề/), ref: find(/^trích dẫn/, /^tài liệu/, /^giải thích/, /^nguồn/) };
 }
 async function xlRead(ev){
   const file = ev.target.files && ev.target.files[0]; ev.target.value = '';
@@ -6070,27 +6078,33 @@ async function xlRead(ev){
   let wb;
   try { const X = await loadExcelJS(); wb = new X.Workbook(); await wb.xlsx.load(await file.arrayBuffer()); }
   catch(e){ $('xlPreview').innerHTML = ''; msg('xlMsg','Không đọc được file. Hãy lưu lại dưới dạng .xlsx rồi thử lại.','err'); return; }
-  const have = new Set(QUESTIONS.filter(q => (q.period || '') === (QP || '')).map(q => spNorm(q.text))), seen = new Set();
+  // Chống trùng theo TỪNG đề đích (câu trùng ở đề khác vẫn nhập bình thường)
+  const haveOf = {}, have = (p) => haveOf[p] || (haveOf[p] = new Set(QUESTIONS.filter(q => (q.period || '') === p).map(q => spNorm(q.text))));
   const sheets = [];
   wb.eachSheet(ws => {
     const header = []; ws.getRow(1).eachCell({ includeEmpty: true }, (c, i) => { header[i - 1] = c.value; });
     const C = xlCols(header);
     if (C.q < 0 || C.a < 0 || C.b < 0 || C.ans < 0) { sheets.push({ name: ws.name, skip: 'thiếu cột Câu hỏi / Phương án / Đáp án đúng', rows: [], bad: [], dup: 0 }); return; }
-    const sh = { name: ws.name, cat: xlGuessCat(ws.name) || (C.cat >= 0 ? '' : ws.name), colCat: C.cat >= 0, rows: [], bad: [], dup: 0, on: true };
+    const shExam = xlExam(ws.name);
+    // Danh mục: lấy đúng theo cột Danh mục của file; sheet không có cột này mới dùng tên sheet (hoặc gõ tay)
+    const sh = { name: ws.name, exam: shExam, cat: C.cat >= 0 ? '' : (shExam ? '' : ws.name), colCat: C.cat >= 0, rows: [], bad: [], dup: 0, on: true };
     ws.eachRow((row, r) => {
       if (r === 1) return;
       const v = (i) => i >= 0 ? row.getCell(i + 1).value : null;
       const text = xlClean(v(C.q));
       if (!text) return;
+      const exRaw = xlClean(v(C.exam)), rowExam = exRaw ? xlExam(exRaw) : null;
       const opts = [C.a, C.b, C.c, C.d].filter(i => i >= 0).map(i => xlClean(v(i), true)).filter(Boolean);
       const ans = xlClean(v(C.ans)).toUpperCase().replace(/[^A-F]/g, '').slice(0, 1), idx = 'ABCDEF'.indexOf(ans);
-      const why = opts.length < 2 ? 'thiếu phương án' : idx < 0 ? 'đáp án đúng không phải A/B/C/D' : idx >= opts.length ? 'đáp án ' + ans + ' không có phương án tương ứng' : new Set(opts.map(spNorm)).size < opts.length ? 'có phương án trùng nhau' : '';
+      const why = exRaw && !rowExam ? 'không tìm thấy đề “' + exRaw + '”' : opts.length < 2 ? 'thiếu phương án' : idx < 0 ? 'đáp án đúng không phải A/B/C/D' : idx >= opts.length ? 'đáp án ' + ans + ' không có phương án tương ứng' : new Set(opts.map(spNorm)).size < opts.length ? 'có phương án trùng nhau' : '';
       if (why){ sh.bad.push({ row: r, why }); return; }
       const k = spNorm(text);
-      if (have.has(k) || seen.has(k)){ sh.dup++; return; }
-      seen.add(k);
+      // rowExam/shExam = null nghĩa là vào đề đang mở (QP) lúc bấm nhập
+      const dest = rowExam !== null ? rowExam : shExam, H = have(dest !== null ? dest : (QP || ''));
+      if (H.has(k)){ sh.dup++; return; }
+      H.add(k);
       const tag = xlClean(v(C.tag)), model = xlClean(v(C.model)), ref = xlClean(v(C.ref));
-      sh.rows.push({ text, options: opts, correctIndex: idx, rowCat: xlClean(v(C.cat)), tags: tag ? [tag.slice(0, 40)] : [], explanation: ((model ? 'Áp dụng: ' + model + '. ' : '') + ref).slice(0, 1000) });
+      sh.rows.push({ text, options: opts, correctIndex: idx, exam: dest, rowCat: xlClean(v(C.cat)).slice(0, 100), tags: tag ? [tag.slice(0, 40)] : [], explanation: ((model ? 'Áp dụng: ' + model + '. ' : '') + ref).slice(0, 1000) });
     });
     sheets.push(sh);
   });
@@ -6099,39 +6113,52 @@ async function xlRead(ev){
 function xlRender(){
   if (!XL) return;
   const dest = qPerLabel(QP || '');
-  $('xlPreview').innerHTML = '<table style="margin-top:12px"><thead><tr><th style="width:34px"></th><th>Sheet</th><th>Câu hợp lệ</th><th>Danh mục gán cho các câu</th><th>Bỏ qua</th></tr></thead><tbody>' +
-    XL.sheets.map((sh, i) => sh.skip ? '<tr><td></td><td>' + esc(sh.name) + '</td><td colspan="3" class="small" style="color:var(--warn)">Bỏ qua sheet: ' + esc(sh.skip) + '</td></tr>' :
+  $('xlPreview').innerHTML = '<table style="margin-top:12px"><thead><tr><th style="width:34px"></th><th>Sheet</th><th>Câu hợp lệ</th><th>Vào đề</th><th>Danh mục</th><th>Bỏ qua</th></tr></thead><tbody>' +
+    XL.sheets.map((sh, i) => sh.skip ? '<tr><td></td><td>' + esc(sh.name) + '</td><td colspan="4" class="small" style="color:var(--warn)">Bỏ qua sheet: ' + esc(sh.skip) + '</td></tr>' :
       '<tr><td><input type="checkbox" ' + (sh.on ? 'checked' : '') + ' onchange="XL.sheets[' + i + '].on=this.checked;xlSum()" style="width:18px;height:18px"></td><td><b>' + esc(sh.name) + '</b></td><td>' + sh.rows.length + '</td>' +
-      '<td><input type="text" list="catList" value="' + esc(sh.cat) + '" placeholder="' + (sh.colCat ? 'trống = lấy theo cột Danh mục' : 'nhập danh mục') + '" oninput="XL.sheets[' + i + '].cat=this.value.trim();xlSum()" style="margin:0"></td>' +
+      '<td class="small">' + xlCount(sh.rows, xlDest, qPerLabel) + '</td>' +
+      '<td>' + (sh.colCat ? '<div class="small" style="margin-bottom:4px">' + (xlCount(sh.rows.filter(r => r.rowCat), r => r.rowCat, c => c) || '') + '</div>' : '') +
+      (!sh.colCat || sh.rows.some(r => !r.rowCat) ? '<input type="text" list="catList" value="' + esc(sh.cat) + '" placeholder="' + (sh.colCat ? 'danh mục cho dòng để trống' : 'nhập danh mục') + '" oninput="XL.sheets[' + i + '].cat=this.value.trim();xlSum()" style="margin:0">' : '') + '</td>' +
       '<td class="small">' + [sh.dup ? sh.dup + ' câu đã có / trùng' : '', sh.bad.length ? '<span style="color:var(--warn)" title="' + esc(sh.bad.slice(0, 20).map(b => 'Dòng ' + b.row + ': ' + b.why).join('\n')) + '">' + sh.bad.length + ' dòng lỗi (di chuột để xem)</span>' : ''].filter(Boolean).join(' · ') + '</td></tr>').join('') +
     '</tbody></table><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px"><button class="btn" type="button" id="xlGo" onclick="xlImport()"></button><span class="small" id="xlSum"></span></div>';
   xlSum();
 }
+function xlCount(rows, key, label){
+  const m = {}; rows.forEach(r => { const k = key(r); m[k] = (m[k] || 0) + 1; });
+  return Object.keys(m).map(k => esc(label(k)) + ' <b>' + m[k] + '</b>').join('<br>');
+}
 function xlPicked(){ return XL ? XL.sheets.filter(sh => !sh.skip && sh.on) : []; }
 function xlSum(){
-  const P = xlPicked(), n = P.reduce((t, sh) => t + sh.rows.length, 0), noCat = P.filter(sh => !sh.cat && !sh.colCat).length;
-  $('xlGo').textContent = 'Nhập ' + n + ' câu vào ' + qPerLabel(QP || '');
+  const P = xlPicked(), n = P.reduce((t, sh) => t + sh.rows.length, 0), noCat = P.filter(sh => !sh.cat && sh.rows.some(r => !r.rowCat)).length;
+  const dests = Array.from(new Set([].concat(...P.map(sh => sh.rows.map(xlDest)))));
+  $('xlGo').textContent = 'Nhập ' + n + ' câu vào ' + (dests.length > 1 ? dests.length + ' đề' : qPerLabel(dests[0] !== undefined ? dests[0] : (QP || '')));
   $('xlGo').disabled = !n || !!noCat;
-  $('xlSum').textContent = noCat ? 'Còn sheet chưa có danh mục.' : 'Danh mục phải trùng tên với phân bổ số câu (vd "Máy lọc nước") thì đề mới rút đúng.';
+  $('xlSum').textContent = noCat ? 'Còn câu chưa có danh mục: ghi vào cột Danh mục trong file hoặc nhập ở ô của sheet.' : 'Mỗi câu vào đúng đề và danh mục ghi trong file. Danh mục phải trùng tên với phân bổ số câu của đề thì đề mới rút đúng.';
 }
 async function xlImport(){
-  const P = xlPicked();
-  const questions = [].concat(...P.map(sh => sh.rows.map(r => ({ text: r.text, options: r.options, correctIndex: r.correctIndex, category: sh.cat || r.rowCat, tags: r.tags, explanation: r.explanation }))));
-  if (!questions.length) return;
-  if (!QP && !confirm('Đang chọn "Chưa gắn kỳ". Nhập các câu này mà không gắn đề/kỳ nào?')) return;
+  const P = xlPicked(), byDest = {};
+  P.forEach(sh => sh.rows.forEach(r => { const d = xlDest(r); (byDest[d] = byDest[d] || []).push({ text: r.text, options: r.options, correctIndex: r.correctIndex, category: xlCatOf(sh, r), tags: r.tags, explanation: r.explanation }); }));
+  const dests = Object.keys(byDest);
+  if (!dests.length) return;
+  if (byDest[''] && !confirm('Có ' + byDest[''].length + ' câu sẽ vào "Chưa gắn kỳ" (không thuộc đề nào). Tiếp tục?')) return;
   $('xlGo').disabled = true; $('xlGo').textContent = 'Đang nhập…';
-  const { j } = await api('POST','/api/kt-admin', { op:'addQuestions', questions, period: QP || '', bankId: 'default' });
-  if (!j || !j.ok){ msg('xlMsg', (j && j.error) || 'Không nhập được.', 'err'); xlSum(); return; }
-  msg('xlMsg', 'Đã nhập ' + j.added + ' câu vào ' + qPerLabel(QP || '') + (j.skipped ? ', bỏ qua ' + j.skipped + ' câu thiếu dữ liệu' : '') + '.', 'ok');
+  const done = [];
+  for (const d of dests){
+    const { j } = await api('POST','/api/kt-admin', { op:'addQuestions', questions: byDest[d], period: d, bankId: 'default' });
+    if (!j || !j.ok){ msg('xlMsg', (done.length ? 'Đã nhập: ' + done.join('; ') + '. ' : '') + 'Lỗi ở ' + qPerLabel(d) + ': ' + ((j && j.error) || 'không nhập được.'), 'err'); if (done.length) loadQuestions(); xlSum(); return; }
+    QUESTIONS = j.questions;
+    done.push(j.added + ' câu vào ' + qPerLabel(d) + (j.dup ? ' (bỏ qua ' + j.dup + ' câu trùng)' : '') + (j.skipped ? ' (bỏ qua ' + j.skipped + ' câu thiếu dữ liệu)' : ''));
+  }
+  msg('xlMsg', 'Đã nhập ' + done.join('; ') + '.', 'ok');
   XL = null; $('xlPreview').innerHTML = ''; $('xlName').textContent = '';
-  QUESTIONS = j.questions; loadQuestions();
+  loadQuestions();
 }
 async function xlTemplate(){
   const X = await loadExcelJS(), wb = new X.Workbook();
-  const cols = ['Câu hỏi','Phương án A','Phương án B','Phương án C','Phương án D','Đáp án đúng','Danh mục','Phân loại sản phẩm','Model áp dụng','Trích dẫn'];
+  const cols = ['Câu hỏi','Phương án A','Phương án B','Phương án C','Phương án D','Đáp án đúng','Danh mục','Mã đề','Phân loại sản phẩm','Model áp dụng','Trích dẫn'];
   [['Máy lọc nước','Máy lọc nước'],['Thương hiệu','Thương hiệu'],['Kỹ năng bán hàng máy lọc','Kỹ năng bán hàng máy lọc']].forEach(([name, cat]) => {
     const ws = wb.addWorksheet(name); ws.addRow(cols); ws.getRow(1).font = { bold: true };
-    if (name === 'Máy lọc nước') ws.addRow(['Ví dụ: Máy KAE-S88 Promax có bao nhiêu tấm điện cực?','5 tấm','7 tấm','9 tấm','11 tấm','B',cat,'Máy lọc nước Hydro-ion kiềm','KAE-S88 PROMAX','Catalog 2026, trang 3']);
+    if (name === 'Máy lọc nước') ws.addRow(['Ví dụ: Máy KAE-S88 Promax có bao nhiêu tấm điện cực?','5 tấm','7 tấm','9 tấm','11 tấm','B',cat,QP || '','Máy lọc nước Hydro-ion kiềm','KAE-S88 PROMAX','Catalog 2026, trang 3']);
     ws.columns.forEach((c, i) => { c.width = i === 0 ? 60 : i < 5 ? 30 : 18; });
   });
   const buf = await wb.xlsx.writeBuffer(), a = document.createElement('a');
@@ -6168,6 +6195,7 @@ const spHas = plans => SP_SEGS.some(([k]) => plans && plans[k] && plans[k].lengt
 function bankOfPeriod(p){
   const act = (QUESTIONS || []).filter(q => q.active !== false), own = act.filter(q => (q.period || '') === p);
   if (own.length || !p) return { list: own, note: '' };
+  if (!/^\d{4}-\d{2}$/.test(p)) return { list: [], note: 'đề này chưa có câu hỏi nào (đề chỉ dùng câu của chính nó)' };
   const un = act.filter(q => !q.period); if (un.length) return { list: un, note: 'đề này chưa có câu riêng, đang tạm dùng câu chưa gắn kỳ' };
   const prev = Array.from(new Set(act.filter(q => q.period && q.period < p).map(q => q.period))).sort().pop();
   return prev ? { list: act.filter(q => q.period === prev), note: 'đề này chưa có câu riêng, đang tạm dùng câu của ' + qPerLabel(prev) } : { list: [], note: 'đề này chưa có câu hỏi nào' };
@@ -6208,8 +6236,16 @@ function spRefresh(el){
     const t = root.querySelector('[data-box="'+k+'"] .tot');
     if (t) t.textContent = tot ? 'Tổng ' + tot + ' câu mỗi đề' : (k.indexOf('mien_') === 0 ? 'Để trống: dùng phân bổ nhóm ngành, tự lọc câu đúng miền' : 'Chưa phân bổ: dùng cách chia cũ');
   });
-  const names = Array.from(new Set((QUESTIONS || []).map(q => (q.category || '').trim()).filter(Boolean).concat(...Object.values(SP_TEMPLATE).map(a => a.map(x => x[0])))));
-  $('catList').innerHTML = names.map(n => '<option value="'+esc(n)+'">').join('');
+  catListFill(root.dataset.bank || CUR_PERIOD);
+}
+// Gợi ý danh mục (ô Danh mục, phân bổ, nhập Excel): CHỈ danh mục của đề đang làm việc + danh mục trong phân bổ của đề đó,
+// không trộn danh mục của các đề khác trong hệ thống.
+function catListFill(p){
+  const e = (EXAMS || []).find(x => x.id === p), P = e && spHas(e.segmentPlans) ? e.segmentPlans : SEGPLANS;
+  const own = (QUESTIONS || []).filter(q => (q.period || '') === (p || '')).map(q => (q.category || '').trim());
+  const plan = SP_SEGS.flatMap(([k]) => ((P || {})[k] || []).map(r => (r.category || '').trim()));
+  const names = Array.from(new Set(own.concat(plan).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'vi'));
+  if ($('catList')) $('catList').innerHTML = names.map(n => '<option value="'+esc(n)+'">').join('');
 }
 /* ---------- Gắn nhãn miền hàng loạt cho câu hỏi ---------- */
 function rgTagOpen(){
