@@ -350,6 +350,25 @@ a.nv{text-decoration:none}
   body.menu-open #sideScrim{display:block;position:fixed;inset:0;background:rgba(8,28,70,.5);z-index:55}
   body.menu-open{overflow:hidden}
 }
+/* ---- kế hoạch đề xuất & bảng đối chiếu ---- */
+.pl-q{border-radius:12px;padding:12px 14px;margin-bottom:14px;border-left:4px solid var(--brand);background:var(--soft)}
+.pl-q b{color:var(--navy);font-size:14.5px}
+.pl-q.pl-g{border-left-color:var(--ok-bar);background:#EEF9F2}.pl-q.pl-o{border-left-color:var(--good-bar);background:#F0F7FF}.pl-q.pl-w{border-left-color:var(--warn-bar);background:#FFF7E8}.pl-q.pl-r{border-left-color:var(--bad-bar);background:#FEF1F0}.pl-q.pl-none{border-left-color:#B8C3D4;background:#F4F6FA}
+.plan .pl-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:18px;background:none}
+.pl-ev,.pl-tg{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.pl-ev li{font-size:13px;line-height:1.45;padding-left:0}.pl-ev li span{display:inline-block;min-width:78px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-right:6px}
+.pl-ev li.gd{color:var(--ok)}
+.pl-tg li{font-size:13px;font-weight:600;color:var(--navy);padding-left:20px;position:relative}.pl-tg li::before{content:"◎";position:absolute;left:0;color:var(--brand)}
+table.t.pl-act td{vertical-align:top;font-size:13px}
+.qd-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qd{border-radius:12px;padding:12px 14px;border:1px solid var(--line);min-height:120px}
+.qd.pl-g{background:#EEF9F2;border-color:#CDEBD8}.qd.pl-o{background:#F0F7FF;border-color:#D3E4F8}.qd.pl-w{background:#FFF7E8;border-color:#F5DFB4}.qd.pl-r{background:#FEF1F0;border-color:#F3CFCB}
+.qd-h{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.qd-h b{color:var(--navy);font-size:13.5px}.qd-n{font-size:24px;font-weight:800;color:var(--navy);line-height:1}
+.qd-l{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
+.qd-p{border:1px solid rgba(11,42,91,.12);background:#fff;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer}.qd-p:hover{border-color:var(--brand);color:var(--brand)}.qd-p span{color:var(--muted);font-weight:500;margin-left:2px}
+.qd-ax,.qd-ax2{font-size:11.5px;color:var(--muted);font-weight:600}.qd-ax{margin-bottom:6px}.qd-ax2{display:flex;justify-content:space-between;margin-top:6px}
+@media(max-width:900px){.plan .pl-cols{grid-template-columns:1fr}}
+@media(max-width:600px){.qd-grid{grid-template-columns:1fr}}
 </style>
 <script>try{if(localStorage.getItem("kt_side_collapsed")==="1")document.documentElement.classList.add("sidec")}catch(e){}</script>
 <link rel="stylesheet" href="/kiemtra/sidebar.css?v=1">
@@ -530,6 +549,124 @@ function kdMoney(n){ return n == null ? '–' : Math.round(n).toLocaleString('vi
 function kdShort(n){ if (n == null) return '–'; var a = Math.abs(n); if (a >= 1e9) return (n / 1e9).toLocaleString('vi-VN', { maximumFractionDigits:2 }) + ' tỷ'; if (a >= 1e6) return (n / 1e6).toLocaleString('vi-VN', { maximumFractionDigits:1 }) + ' tr'; return kdMoney(n); }
 function kdCls(x){ var h = kdHt(x); if (h == null) return 'none'; if (h >= 100) return 'g'; if (x.elapsed != null && h >= x.elapsed * 100) return 'o'; return h > 0 ? 'w' : 'r'; }
 function kdText(x){ if (!x) return ''; var h = kdHt(x); return (h == null ? 'Chưa có chỉ tiêu' : vn(h, 0) + '%') + ' · ' + kdShort(x.actual) + (x.target ? ' / ' + kdShort(x.target) : '') + ' (' + kdMon(x.month) + ')'; }
+
+
+/* ====================== ĐỐI CHIẾU: hành vi kiểm tra × kết quả kinh doanh -> kế hoạch đề xuất ======================
+   Dùng chung cho: nhận định tổng quan, lộ trình học tập, tab kết quả kinh doanh, bảng đối chiếu ở trang tổng quan, Excel.
+   Là gợi ý tự động từ dữ liệu; ASM cần xác nhận nguyên nhân thực tế trước khi áp dụng. */
+function kLevel(a){ if (!a || !a.n || a.avg == null) return 'none'; return a.avg >= S.th.mid ? 'good' : a.avg >= S.th.low ? 'mid' : 'weak'; }
+function sLevel(x){
+  if (!x) return 'na'; if (!x.target) return 'nt'; if (!x.actual) return 'zero';
+  var h = kdHt(x); if (h >= 100) return 'done'; return x.elapsed != null && h >= x.elapsed * 100 ? 'track' : 'behind';
+}
+var KL = { good:'Kiến thức vững', mid:'Kiến thức trung bình', weak:'Kiến thức yếu', none:'Chưa có kết quả kiểm tra' };
+var SL = { done:'Đạt chỉ tiêu', track:'Đúng tiến độ', behind:'Chậm tiến độ', zero:'Chưa phát sinh doanh số', nt:'Chưa được giao chỉ tiêu', na:'Chưa có dữ liệu kinh doanh' };
+// Nhóm đối chiếu (dùng cả ở trang tổng quan)
+function quadOf(a, x){
+  var k = kLevel(a), s = sLevel(x), sg = s === 'done' || s === 'track', sb = s === 'behind' || s === 'zero';
+  if (k === 'none' || !(sg || sb)) return { q:'x', k:k, s:s };
+  return { q: sg ? (k === 'good' ? 'A' : 'B') : (k === 'good' ? 'C' : 'D'), k:k, s:s };
+}
+var QD = {
+  A:{ t:'Hình mẫu: kiến thức vững, kinh doanh tốt', c:'g', d:'Năng lực và kết quả song hành. Nên giữ động lực và nhân rộng cách làm.' },
+  B:{ t:'Bán tốt nhưng kiến thức chưa vững', c:'o', d:'Doanh số đang tốt nhưng có rủi ro tư vấn sai sản phẩm / chính sách và khó duy trì khi thị trường đổi. Bổ sung kiến thức mà không kéo nhân viên khỏi thị trường.' },
+  C:{ t:'Nắm kiến thức nhưng chưa ra doanh số', c:'w', d:'Hiểu sản phẩm, chính sách nhưng chưa chuyển thành đơn hàng. Nguyên nhân thường nằm ở kỹ năng thực địa, độ phủ tuyến, nhà phân phối hoặc hàng hoá, không phải lý thuyết.' },
+  D:{ t:'Ưu tiên hỗ trợ: kiến thức và kinh doanh đều chưa đạt', c:'r', d:'Cần kế hoạch cải thiện có theo dõi sát, kết hợp học lại kiến thức nền với kèm cặp thực địa.' },
+  x:{ t:'Chưa đủ dữ liệu để đối chiếu', c:'none', d:'' }
+};
+// Tín hiệu hành vi khi làm bài kiểm tra (từ các lượt chính thức gần nhất)
+function behaviorOf(a, P){
+  var H = (P && P.history || []).filter(function(x){ return !x.hidden && !x.practice && !x.test; }).sort(function(x, y){ return (y.submittedAt || 0) - (x.submittedAt || 0); }).slice(0, 3);
+  var out = [], now = Date.now();
+  if (H.length){
+    var blur = H.reduce(function(s, x){ return s + ((x.flags && x.flags.blur) || 0); }, 0) / H.length;
+    if (blur >= 3) out.push({ key:'distract', t:'Hay rời màn hình khi làm bài (trung bình ' + vn(blur, 0) + ' lần / bài)' });
+    var fast = H.filter(function(x){ return x.durationSec && x.total && x.durationSec / x.total < 10 && (x.pct || 0) < S.th.mid; });
+    if (fast.length) out.push({ key:'rush', t:'Làm bài rất nhanh (~' + vn(fast[0].durationSec / fast[0].total, 0) + ' giây/câu) nhưng điểm chưa đạt: dấu hiệu làm cho xong' });
+    var bl = H.filter(function(x){ return x.total && (x.blank || 0) / x.total >= 0.15; });
+    if (bl.length) out.push({ key:'blank', t:'Bỏ trống nhiều câu (' + bl[0].blank + '/' + bl[0].total + ' ở một lượt gần đây)' });
+    if (H[0].compliancePoints === 0) out.push({ key:'comp', t:'Điểm tuân thủ lần gần nhất bằng 0' });
+  }
+  if (a && a.assigned && a.done < a.assigned){
+    var over = (D && D.att ? allExams(D.att) : []).filter(function(e){ return inAud(e, a.c) && e.closeAt && e.closeAt < now && !(a.per || []).some(function(x){ return (x.period || '') === e.id; }); }).length;
+    out.push({ key: over ? 'overdue' : 'pending', t: over ? over + ' bài kiểm tra được giao đã quá hạn mà chưa làm' : (a.assigned - a.done) + ' bài kiểm tra được giao chưa hoàn thành' });
+  }
+  if (a && a.stuck) out.push({ key:'stuck', t:'Làm nhiều lượt nhưng điểm gần như không cải thiện' });
+  if (a && a.improved) out.push({ key:'improved', t:'Điểm bài gần nhất tăng ' + vn(a.delta, 0) + ' điểm % so với bài trước', good:true });
+  if (P && (P.repeatWrong || []).length >= 3) out.push({ key:'repeat', t:P.repeatWrong.length + ' câu hỏi sai lặp lại từ 2 lần trở lên' });
+  return out;
+}
+function daysSince(d){ var t = Date.parse(d || ''); return isNaN(t) ? null : Math.floor((Date.now() - t) / 864e5); }
+function planOf(c, a, P){
+  var l = kdList(c), x = l.length ? l[l.length - 1] : null, pv = l.length > 1 ? l[l.length - 2] : null;
+  var Q = quadOf(a, x), B = behaviorOf(a, P), has = function(k){ return B.some(function(b){ return b.key === k; }); };
+  var weak = (P && P.categories || []).filter(function(z){ return z.pct != null && z.pct < S.th.mid; }).sort(function(p, q){ return p.pct - q.pct; }).slice(0, 3).map(function(z){ return z.category; });
+  var h = kdHt(x), trend = x && pv && pv.actual ? (x.actual - pv.actual) / pv.actual * 100 : null;
+  var age = daysSince(c.joinDate), isNew = age != null && age <= 60;
+  var ev = [], act = [], tg = [];
+  // Bằng chứng
+  ev.push({ g:'Kiểm tra', t: a && a.n ? 'Điểm TB ' + pc(a.avg) + ' (' + BL[band(a.avg)] + '), ' + a.n + ' lượt' + (a.lastP != null ? ', gần nhất ' + pc(a.lastP) : '') + (weak.length ? '; yếu nhất: ' + weak.join(', ') : '') : 'Chưa có lượt kiểm tra chính thức nào' });
+  ev.push({ g:'Kinh doanh', t: x ? kdMon(x.month) + ': ' + (h == null ? 'chưa có chỉ tiêu' : vn(h, 0) + '% chỉ tiêu') + ' (' + kdShort(x.actual) + (x.target ? ' / ' + kdShort(x.target) : '') + ')' + (x.elapsed != null && h != null ? ', thời gian đã qua ' + vn(x.elapsed * 100, 0) + '%' : '') + (trend != null ? '; ' + (trend >= 0 ? 'tăng ' : 'giảm ') + vn(Math.abs(trend), 0) + '% so với ' + kdMon(pv.month) : '') : 'Chưa có số liệu trong file Salerep đã tải lên' });
+  B.forEach(function(b){ ev.push({ g:'Hành vi', t:b.t, good:b.good }); });
+  var A = function(who, when, t){ act.push({ who:who, when:when, t:t }); };
+  // Hành động theo nhóm đối chiếu
+  if (Q.q === 'A'){
+    A('ASM', '2 tuần', 'Ghi nhận kết quả; mời chia sẻ cách làm tuyến / chốt đơn trong họp nhóm.');
+    A('ASM', '1 tháng', 'Giao kèm cặp 1–2 nhân viên thuộc nhóm “Nắm kiến thức nhưng chưa ra doanh số” hoặc “Ưu tiên hỗ trợ”.');
+    A('Đào tạo', '1 tháng', 'Đưa vào nguồn ứng viên phát triển; giao bài kiểm tra nâng cao để giữ thử thách.');
+  } else if (Q.q === 'B'){
+    A('Nhân viên', '2 tuần', 'Học ngắn 15 phút/ngày' + (weak.length ? ' các chuyên đề: ' + weak.join(', ') : ' theo chuyên đề yếu') + ' trên Học liệu, không rút khỏi thị trường.');
+    A('Đào tạo', '2 tuần', 'Giao bài kiểm tra ôn tập rồi làm lại bài chính thức để xác nhận đã nắm.');
+    A('ASM', '1 tháng', 'Khi đi tuyến cùng, kiểm tra cách tư vấn chính sách / sản phẩm thực tế với khách để tránh sai sót.');
+  } else if (Q.q === 'C'){
+    A('ASM', '1 tuần', 'Đi tuyến cùng ít nhất 2 buổi/tuần, quan sát kỹ năng mở bán, xử lý từ chối và chốt đơn; phản hồi ngay sau mỗi buổi.');
+    A('ASM', '1 tuần', 'Rà soát nguyên nhân khách quan: độ phủ tuyến, nhà phân phối' + (x && !x.npp ? ' (chưa gán NPP trong file Salerep)' : '') + ', hàng hoá, tồn kho, giá.');
+    A('Nhân viên', 'Hằng tuần', 'Đặt mục tiêu doanh số theo tuần cùng ASM và báo cáo tiến độ; ưu tiên kỹ năng bán hàng hơn học lý thuyết.');
+  } else if (Q.q === 'D'){
+    A('ASM', 'Ngay', 'Trao đổi 1-1 để tìm nguyên nhân (động lực, hoàn cảnh, địa bàn) và thống nhất kế hoạch cải thiện 30 ngày có mốc kiểm tra sau 2 tuần.');
+    A('Nhân viên', '2 tuần', 'Học lại kiến thức nền' + (weak.length ? ' (' + weak.join(', ') + ')' : '') + ' và làm lại bài kiểm tra.');
+    A('ASM', '30 ngày', 'Kèm cặp thực địa 2–3 buổi/tuần; theo dõi doanh số theo tuần thay vì chờ cuối tháng.');
+  } else {
+    if (Q.k === 'none') A('ASM', '1 tuần', 'Yêu cầu hoàn thành bài kiểm tra được giao để có cơ sở đánh giá năng lực.');
+    if (Q.s === 'na') A('Quản trị', 'Kỳ tới', 'Kiểm tra mã NV trong file Salerep (có thể khác mã trong hồ sơ) hoặc tải file kết quả tháng mới nhất.');
+    if (Q.s === 'nt') A('ASM', 'Kỳ tới', 'Giao chỉ tiêu doanh số cụ thể để theo dõi được kết quả kinh doanh.');
+  }
+  // Điều chỉnh theo trường hợp đặc biệt và hành vi
+  if (Q.s === 'zero') A(isNew ? 'ASM' : 'ASM', 'Ngay', isNew ? 'Nhân viên mới (' + age + ' ngày): tập trung hội nhập, đi tuyến cùng, mục tiêu có đơn hàng đầu tiên trong 2 tuần.' : 'Chưa phát sinh doanh số cả tháng: xác nhận nhân viên còn hoạt động trên tuyến, đã được gán NPP và tuyến chưa.');
+  if (has('rush') || has('distract') || has('comp')) A('ASM', '1 tuần', (Q.s === 'behind' || Q.s === 'zero') ? 'Hành vi làm bài thiếu nghiêm túc cùng với doanh số thấp có thể là dấu hiệu giảm động lực: trao đổi trực tiếp, kiểm tra báo cáo ngày.' : 'Nhắc làm bài nghiêm túc; lượt kiểm tra tới nên làm tại văn phòng hoặc có giám sát.');
+  if (has('overdue')) A('ASM', '3 ngày', 'Đặt hạn hoàn thành các bài kiểm tra quá hạn và theo dõi đến khi xong.');
+  if (has('stuck')) A('Đào tạo', '2 tuần', 'Đổi cách học: kèm 1-1 giải thích các câu sai thay vì cho làm lại bài nhiều lần.');
+  if (has('repeat')) A('Nhân viên', '1 tuần', 'Ôn đúng các câu hỏi sai lặp lại (xem tab Phân tích kiến thức).');
+  if (trend != null && trend <= -30 && Q.s !== 'zero') A('ASM', '1 tuần', 'Doanh số giảm ' + vn(-trend, 0) + '% so với tháng trước: tìm nguyên nhân cụ thể (NPP, hàng, tuyến, đối thủ).');
+  // Mục tiêu kỳ tới
+  if (a && a.avg != null && a.avg < S.th.high) tg.push('Điểm kiểm tra ≥ ' + nextBand(a.avg) + '% ở bài tiếp theo');
+  if (Q.k === 'none') tg.push('Hoàn thành 100% bài kiểm tra được giao');
+  if (x && x.target) tg.push(h != null && h >= 100 ? 'Duy trì ≥ 100% chỉ tiêu tháng tới' : Q.s === 'zero' ? 'Có doanh số trong 2 tuần tới' : 'Đạt ≥ 100% chỉ tiêu tháng tới (tháng này ' + vn(h, 0) + '%)');
+  return { Q:Q, ev:ev, act:act, tg:tg };
+}
+function planCard(span){
+  var c = D.c, pl = planOf(c, D.agg, D.P), q = QD[pl.Q.q];
+  var chip = function(t, cl){ return '<span class="chip ' + cl + '">' + esc(t) + '</span>'; };
+  var kc = { good:'g', mid:'w', weak:'r', none:'none' }[pl.Q.k], sc = { done:'g', track:'o', behind:'w', zero:'r', nt:'none', na:'none' }[pl.Q.s];
+  return '<div class="card ' + (span || 'c12') + ' plan"><div class="card-h"><h2>Kế hoạch đề xuất: đối chiếu kiểm tra × kinh doanh</h2>' + TIP('Ghép ba nguồn: kết quả kiểm tra (năng lực kiến thức), hành vi khi làm bài (thời gian, bỏ trống, rời màn hình, bài quá hạn) và kết quả kinh doanh tháng gần nhất (Salerep). Đây là gợi ý tự động; ASM cần xác nhận nguyên nhân thực tế.') + '</div><div class="card-b">' +
+    '<div class="pl-q pl-' + q.c + '"><b>' + esc(q.t) + '</b><div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">' + chip(KL[pl.Q.k], kc) + chip(SL[pl.Q.s], sc) + '</div>' + (q.d ? '<div class="q" style="margin:0">' + esc(q.d) + '</div>' : '') + '</div>' +
+    '<div class="pl-cols"><div><div class="sec-t" style="margin-top:0">Căn cứ</div><ul class="pl-ev">' + pl.ev.map(function(e){ return '<li' + (e.good ? ' class="gd"' : '') + '><span>' + esc(e.g) + '</span>' + esc(e.t) + '</li>'; }).join('') + '</ul>' +
+    (pl.tg.length ? '<div class="sec-t">Mục tiêu kỳ tới</div><ul class="pl-tg">' + pl.tg.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' : '') + '</div>' +
+    '<div><div class="sec-t" style="margin-top:0">Hành động đề xuất</div>' + (pl.act.length ? '<table class="t pl-act"><thead><tr><th>Việc cần làm</th><th>Ai</th><th>Thời hạn</th></tr></thead><tbody>' + pl.act.map(function(x){ return '<tr><td>' + esc(x.t) + '</td><td class="nw"><b>' + esc(x.who) + '</b></td><td class="nw">' + esc(x.when) + '</td></tr>'; }).join('') + '</tbody></table>' : '<div class="empty">Chưa có hành động đề xuất.</div>') + '</div></div>' +
+    '</div></div>';
+}
+// Bảng đối chiếu cho trang tổng quan
+function quadBox(){
+  if (!S.SBm.length) return '<div class="empty">Chưa có dữ liệu kinh doanh. Tải file Salerep ở <a href="/kiemtra/soban.html">Kết quả số bán</a> để đối chiếu.</div>';
+  var g = { A:[], B:[], C:[], D:[], x:[] };
+  M.base.forEach(function(r){ if (r.c.left) return; g[quadOf(r, kdLast(r.c)).q].push(r); });
+  var cell = function(k){ var l = g[k].slice().sort(function(p, q){ return (kdHt(kdLast(p.c)) || 0) - (kdHt(kdLast(q.c)) || 0); }), q = QD[k];
+    return '<div class="qd pl-' + q.c + '"><div class="qd-h"><b>' + esc(q.t) + '</b><span class="qd-n">' + l.length + '</span></div><div class="qd-l">' +
+      (l.length ? l.slice(0, 6).map(function(r){ var x = kdLast(r.c); return '<button type="button" class="qd-p" data-go="' + esc(r.c.code) + '" title="Mở hồ sơ & kế hoạch đề xuất">' + esc(r.c.name || r.c.code) + ' <span>' + (r.avg == null ? '–' : vn(r.avg, 0) + '%') + ' · ' + (kdHt(x) == null ? '–' : vn(kdHt(x), 0) + '%') + '</span></button>'; }).join('') + (l.length > 6 ? '<span class="q" style="margin:0">+' + (l.length - 6) + ' người khác</span>' : '') : '<span class="q" style="margin:0">Không có ai</span>') + '</div></div>'; };
+  return '<div class="qd-ax"><span>↑ Kinh doanh đạt / đúng tiến độ</span></div><div class="qd-grid">' + cell('B') + cell('A') + cell('D') + cell('C') + '</div>' +
+    '<div class="qd-ax2"><span>← Kiến thức chưa đạt (&lt; ' + S.th.mid + '%)</span><span>Kiến thức vững (≥ ' + S.th.mid + '%) →</span></div>' +
+    '<div class="q" style="margin-top:8px">Mỗi người: điểm kiểm tra TB · %HT kinh doanh tháng gần nhất. ' + g.x.length + ' người chưa đủ dữ liệu (chưa kiểm tra, chưa có số liệu hoặc chưa có chỉ tiêu). Bấm tên để xem kế hoạch đề xuất.</div>';
+}
 
 /* ====================== Mô hình tính toán ====================== */
 function better(a, b){ if ((a.pct || 0) !== (b.pct || 0)) return (a.pct || 0) > (b.pct || 0); if ((a.score || 0) !== (b.score || 0)) return (a.score || 0) > (b.score || 0); return (a.submittedAt || 0) > (b.submittedAt || 0); }
@@ -765,6 +902,7 @@ function renderOverview(){
   var h = renderKpis() + '<div class="grid">' +
     '<div class="card c8"><div class="card-h"><h2>Xu hướng điểm theo bài kiểm tra</h2>' + TIP('Điểm trung bình của những người đã làm từng bài kiểm tra (mỗi người lấy lần điểm cao nhất của bài đó), theo thứ tự thời gian. Đường đỏ nét đứt là mốc chuẩn của hệ thống.') + '</div><div class="card-b">' + trendChart() + '</div></div>' +
     '<div class="card c4"><div class="card-h"><h2>Trạng thái học tập</h2>' + TIP('Phân loại theo kết quả bài kiểm tra gần nhất của từng người trong phạm vi lọc. Bấm vào một dòng để xem danh sách.') + '</div><div class="card-b">' + donut(parts, String(M.base.length), 'nhân sự') + '</div></div>' +
+    '<div class="card c12"><div class="card-h"><h2>Đối chiếu năng lực kiểm tra × kết quả kinh doanh</h2>' + TIP('Xếp mỗi nhân sự vào 4 nhóm theo điểm kiểm tra trung bình (mốc ' + S.th.mid + '%) và kết quả kinh doanh tháng gần nhất (đạt / đúng tiến độ so với thời gian đã qua, hay chậm / chưa phát sinh). Mỗi nhóm có hướng xử lý khác nhau; bấm tên để xem kế hoạch đề xuất của từng người.') + '</div><div class="card-b">' + quadBox() + '</div></div>' +
     '<div class="card c6"><div class="card-h"><h2>Nhân viên có kết quả thấp</h2></div><div class="card-b">' + lowList() + '</div></div>' +
     '<div class="card c6"><div class="card-h"><h2>Năng lực trung bình theo khu vực</h2>' + TIP('Điểm trung bình của nhân sự theo miền hoặc tỉnh, khu vực thấp nhất ở trên cùng.') + '</div><div class="card-b">' + geoBars() + '</div></div>' +
     '<div class="card c6"><div class="card-h"><h2>Chuyên đề có tỉ lệ đúng thấp nhất</h2>' + TIP('Tổng hợp từ phân tích câu hỏi của một bài kiểm tra: tỉ lệ trả lời đúng theo từng chuyên đề (mảng kiến thức).') + '</div><div class="card-b" id="catBox">' + catBox() + '</div></div>' +
@@ -894,6 +1032,9 @@ function insight(){
   if ((P.repeatWrong || []).length) t.push('Có <b>' + P.repeatWrong.length + '</b> câu hỏi sai lặp lại từ 2 lần trở lên.');
   t.push(a.st === 'need' ? 'Theo ngưỡng của hệ thống, nhân viên <b style="color:#C0332B">cần đào tạo bổ sung</b>.' : 'Theo ngưỡng của hệ thống, nhân viên <b style="color:#16794A">đang đạt yêu cầu</b>.');
   if (a.stuck) t.push('Đã làm nhiều lượt nhưng điểm chưa cải thiện đáng kể.');
+  var pl = planOf(D.c, a, P), x = kdLast(D.c);
+  if (x) t.push('Kết quả kinh doanh ' + esc(kdMon(x.month)) + ': <b>' + (kdHt(x) == null ? 'chưa có chỉ tiêu' : vn(kdHt(x), 0) + '% chỉ tiêu') + '</b> (' + esc(SL[pl.Q.s].toLowerCase()) + ').');
+  if (pl.Q.q !== 'x') t.push('Đối chiếu hai mặt: <b>' + esc(QD[pl.Q.q].t) + '</b>. Xem kế hoạch đề xuất bên dưới.');
   return t.join(' ');
 }
 function renderDetail(){
@@ -927,7 +1068,7 @@ function renderTab(){
 /* --- Tab 1: Tổng quan năng lực --- */
 function tab1(){
   var P = D.P, a = D.agg, H = histOfficial().slice().sort(function(x, y){ return (x.submittedAt || 0) - (y.submittedAt || 0); });
-  if (!H.length) return '<div class="card"><div class="empty" style="padding:40px 14px">' + (P.status === 'doing' ? 'Nhân viên đang làm bài, chưa có kết quả nào.' : 'Nhân viên chưa có kết quả kiểm tra chính thức nào.') + '</div></div>';
+  if (!H.length) return '<div class="card"><div class="empty" style="padding:40px 14px">' + (P.status === 'doing' ? 'Nhân viên đang làm bài, chưa có kết quả nào.' : 'Nhân viên chưa có kết quả kiểm tra chính thức nào.') + '</div></div><div class="grid" style="margin-top:14px">' + planCard() + '</div>';
   var pts = H.slice(-10).map(function(x){ return { l:vnDate(x.submittedAt), v:x.pct, v2:x.teamAvg }; });
   var byP = {}; H.forEach(function(x){ var p = x.period || ''; var o = byP[p] || (byP[p] = { s:0, n:0, t:0 }); o.s += x.pct || 0; o.n++; o.t = Math.max(o.t, x.submittedAt || 0); });
   var prog = Object.keys(byP).sort(function(x, y){ return byP[x].t - byP[y].t; }).map(function(p){ return { label:xTitle(p), sub:byP[p].n + ' lượt', v:byP[p].s / byP[p].n }; });
@@ -941,7 +1082,7 @@ function tab1(){
     '<div class="card c6"><div class="card-h"><h2>Điểm trung bình từng chương trình</h2></div><div class="card-b">' + hbars(prog) + '</div></div>' +
     '<div class="card c6"><div class="card-h"><h2>Nhận định tổng quan</h2>' + TIP('Nhận định được tổng hợp tự động từ dữ liệu kiểm tra thực tế của nhân viên theo các ngưỡng đang cấu hình trong hệ thống.') + '</div><div class="card-b"><div class="ins">' + insight() + '</div></div></div>' +
     '<div class="card c6"><div class="card-h"><h2>Chuyên đề mạnh nhất</h2><span class="sub">từ ' + (P.papersRead || 0) + ' bài gần nhất</span></div><div class="card-b">' + cl(strong) + '</div></div>' +
-    '<div class="card c6"><div class="card-h"><h2>Chuyên đề cần cải thiện</h2></div><div class="card-b">' + cl(weak) + '</div></div></div>';
+    '<div class="card c6"><div class="card-h"><h2>Chuyên đề cần cải thiện</h2></div><div class="card-b">' + cl(weak) + '</div></div>' + planCard() + '</div>';
 }
 /* --- Tab 2: Lịch sử kiểm tra --- */
 function tab2(){
@@ -990,7 +1131,7 @@ function tab4(){
   var pendH = pend.length ? pend.map(function(e){ var over = e.closeAt && e.closeAt < now; return '<div class="lp' + (over ? ' urg' : '') + '"><div class="n">!</div><div style="flex:1"><b>' + esc(xTitle(e.id)) + '</b> ' + (over ? '<span class="chip r">Quá hạn</span>' : '<span class="chip w">Cần hoàn thành</span>') + '<div class="q">' + (e.closeAt ? 'Hạn hoàn thành: <b>' + vnDT(e.closeAt) + '</b>' : 'Chưa đặt hạn hoàn thành') + ' · <a href="/kiemtra/?exam=' + encodeURIComponent(e.id) + '" target="_blank" rel="noopener">Đường dẫn làm bài</a></div></div></div>'; }).join('') : '<div class="empty">Nhân viên đã hoàn thành mọi bài kiểm tra được giao.</div>';
   var weakH = weak.length ? weak.map(function(x, i){ var tg = nextBand(x.pct); return '<div class="lp' + (x.pct < S.th.low ? ' urg' : '') + '"><div class="n">' + (i + 1) + '</div><div style="flex:1"><b>' + esc(x.category) + '</b> <span class="chip ' + band(x.pct) + '">' + BL[band(x.pct)] + '</span><div class="q">Hiện đúng <b>' + pc(x.pct) + '</b> trên ' + x.n + ' câu · mục tiêu lần tới: ít nhất <b>' + tg + '%</b>' + (rep[x.category] ? ' · có <b>' + rep[x.category] + '</b> câu sai lặp lại, nên xem lại trước' : '') + '</div></div></div>'; }).join('') : '<div class="empty">' + ((P.categories || []).length ? 'Mọi nhóm kiến thức đều đạt từ ' + S.th.mid + '%, chưa cần học bổ sung.' : 'Chưa có dữ liệu theo nhóm kiến thức.') + '</div>';
   var postH = post.length ? post.map(function(j){ var d = j.best - j.first; return '<div class="lp"><div class="n" style="background:' + (d > 0 ? '#E3F5EA;color:#16794A' : d < 0 ? '#FDE8E7;color:#C0332B' : '#EEF2F7;color:#5B6B86') + '">' + (d > 0 ? '▲' : d < 0 ? '▼' : '=') + '</div><div style="flex:1"><b>' + esc(xTitle(j.p)) + '</b><div class="q">Lần đầu <b>' + pc(j.first) + '</b> → cao nhất <b>' + pc(j.best) + '</b> sau ' + j.n + ' lượt (' + (d > 0 ? 'tăng ' : d < 0 ? 'giảm ' : 'không đổi ') + (d ? vn(Math.abs(d), 0) + ' điểm %' : '') + ')</div></div></div>'; }).join('') : '<div class="empty">Chưa có bài nào được làm lại để so sánh trước và sau đào tạo.</div>';
-  return '<div class="grid">' +
+  return '<div class="grid">' + planCard() +
     '<div class="card c12"><div class="card-h"><h2>Tiến độ học tập</h2></div><div class="card-b">' + (a.assigned ? '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap"><div style="font-size:30px;font-weight:800;color:#0B2A5B;letter-spacing:-.02em">' + a.done + '<small style="font-size:16px;color:#5B6B86"> / ' + a.assigned + ' bài</small></div><div style="flex:1;min-width:220px"><div class="prog"><i style="width:' + Math.min(100, a.compl) + '%"></i></div><div class="q" style="margin-top:4px">' + vn(a.compl, 0) + '% bài kiểm tra được giao đã hoàn thành</div></div></div>' : '<div class="empty">Chưa được giao bài kiểm tra nào.</div>') + '</div></div>' +
     '<div class="card c6"><div class="card-h"><h2>Bài kiểm tra cần hoàn thành</h2><span class="sub">' + pend.length + ' bài</span></div><div class="card-b">' + pendH + '</div></div>' +
     '<div class="card c6"><div class="card-h"><h2>Nội dung cần học bổ sung</h2>' + TIP('Các nhóm kiến thức dưới ' + S.th.mid + '% (mốc “Đạt” của hệ thống), yếu nhất trước. Mục tiêu là mốc xếp loại kế tiếp.') + '</div><div class="card-b">' + weakH + '<div style="margin-top:10px"><a class="btn sm" href="/kiemtra/hoclieu.html" target="_blank" rel="noopener">Mở kho học liệu ôn tập</a></div></div></div>' +
@@ -1018,7 +1159,7 @@ function tab5(){
 /* --- Tab 6: Kết quả kinh doanh --- */
 function tab6(){
   var c = D.c, l = kdList(c).slice().reverse(), x = l[0];
-  if (!x) return '<div class="card"><div class="empty" style="padding:40px 14px">Chưa có kết quả kinh doanh của mã NV <b>' + esc(c.code) + '</b>' + (S.SBm.length ? ' trong các tháng đã cập nhật (' + S.SBm.map(kdMon).join(', ') + ').' : '. Hãy tải file Salerep ở trang Kết quả số bán.') + '<div style="margin-top:12px"><a class="btn sm" href="/kiemtra/soban.html">Mở trang Kết quả số bán</a></div></div></div>';
+  if (!x) return '<div class="card"><div class="empty" style="padding:40px 14px">Chưa có kết quả kinh doanh của mã NV <b>' + esc(c.code) + '</b>' + (S.SBm.length ? ' trong các tháng đã cập nhật (' + S.SBm.map(kdMon).join(', ') + ').' : '. Hãy tải file Salerep ở trang Kết quả số bán.') + '<div style="margin-top:12px"><a class="btn sm" href="/kiemtra/soban.html">Mở trang Kết quả số bán</a></div></div></div><div class="grid" style="margin-top:14px">' + planCard() + '</div>';
   var h = kdHt(x), p = l[1], dl = p && p.actual ? ((x.actual || 0) - p.actual) / p.actual * 100 : null;
   var kc = h == null ? '' : h >= 100 ? 'ok' : (x.elapsed != null && h < x.elapsed * 100 ? 'bad' : '');
   var rows = l.map(function(r, i){ var hh = kdHt(r), pv = l[i + 1], d = pv && pv.actual ? ((r.actual || 0) - pv.actual) / pv.actual * 100 : null;
@@ -1032,6 +1173,7 @@ function tab6(){
       kpi('So với tháng trước', 'Mức tăng / giảm thực đạt so với tháng liền trước có dữ liệu.', dl == null ? '–' : (dl >= 0 ? '▲ ' : '▼ ') + vn(Math.abs(dl), 0) + '<small>%</small>', p ? kdMon(p.month) + ': ' + kdShort(p.actual) : 'Chưa có tháng trước', dl == null ? '' : dl >= 0 ? 'ok' : 'bad') +
     '</div><div class="card"><div class="card-h"><h2>Kết quả kinh doanh theo tháng</h2><span class="sub">' + l.length + ' tháng</span><span class="sp"></span><a class="btn sm" href="/kiemtra/soban.html#' + esc(x.month) + '">Xem cả đội ' + esc(kdMon(x.month)) + '</a></div>' +
     '<div class="tw" style="margin-top:8px"><table class="t"><thead><tr><th>Tháng</th><th class="r">Chỉ tiêu</th><th class="r">Thực đạt</th><th class="r">%HT</th><th class="r">So tháng trước</th><th>ASM</th><th>KV</th><th>NPP</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>' +
+    '<div class="grid" style="margin-top:14px">' + planCard() + '</div>' +
     '<div class="q" style="margin-top:10px">Số liệu lấy từ file Salerep GT đã tải lên ở trang Kết quả số bán, ghép với hồ sơ theo Mã NV.</div>';
 }
 
@@ -1064,7 +1206,8 @@ async function exportXlsx(kind){
     if (kind === 'person'){
       var c = D.c, a = D.agg, P = D.P;
       file = 'ho-so-' + norm(c.code);
-      addSheet(wb, used, 'Tổng quan', ['Chỉ tiêu', 'Giá trị'], [['Mã NV', c.code], ['Họ và tên', c.name || ''], ['Chức danh', c.title || ''], ['Miền', c._reg], ['Tỉnh / thành', c.province || ''], ['Quản lí (ASM)', c.manager || ''], ['Trạng thái học tập', STL[a.st]], ['Số lượt kiểm tra', a.n], ['Điểm TB (%)', a.avg == null ? '' : Math.round(a.avg * 10) / 10], ['Điểm cao nhất (%)', a.best == null ? '' : Math.round(a.best * 10) / 10], ['Điểm gần nhất (%)', a.lastP == null ? '' : Math.round(a.lastP * 10) / 10], ['Tỉ lệ hoàn thành (%)', a.compl == null ? '' : Math.round(a.compl)], ['Kết quả kinh doanh', kdText(kdLast(c))]]);
+      addSheet(wb, used, 'Tổng quan', ['Chỉ tiêu', 'Giá trị'], [['Mã NV', c.code], ['Họ và tên', c.name || ''], ['Chức danh', c.title || ''], ['Miền', c._reg], ['Tỉnh / thành', c.province || ''], ['Quản lí (ASM)', c.manager || ''], ['Trạng thái học tập', STL[a.st]], ['Số lượt kiểm tra', a.n], ['Điểm TB (%)', a.avg == null ? '' : Math.round(a.avg * 10) / 10], ['Điểm cao nhất (%)', a.best == null ? '' : Math.round(a.best * 10) / 10], ['Điểm gần nhất (%)', a.lastP == null ? '' : Math.round(a.lastP * 10) / 10], ['Tỉ lệ hoàn thành (%)', a.compl == null ? '' : Math.round(a.compl)], ['Kết quả kinh doanh', kdText(kdLast(c))], ['Nhóm đối chiếu', QD[planOf(c, a, P).Q.q].t]]);
+      (function(){ var pl = planOf(c, a, P); addSheet(wb, used, 'Kế hoạch đề xuất', ['Loại', 'Nội dung', 'Ai', 'Thời hạn'], pl.ev.map(function(e){ return ['Căn cứ: ' + e.g, e.t, '', '']; }).concat(pl.act.map(function(x){ return ['Hành động', x.t, x.who, x.when]; })).concat(pl.tg.map(function(x){ return ['Mục tiêu kỳ tới', x, '', '']; }))); })();
       if (kdList(c).length) addSheet(wb, used, 'Kết quả kinh doanh', ['Tháng', 'Chỉ tiêu', 'Thực đạt', '%HT', 'ASM', 'KV', 'NPP'], kdList(c).slice().reverse().map(function(x){ var h = kdHt(x); return [kdMon(x.month), x.target == null ? '' : x.target, x.actual || 0, h == null ? '' : Math.round(h * 10) / 10, x.asmName || '', x.kv || '', x.npp || '']; }));
       addSheet(wb, used, 'Lịch sử kiểm tra', ['Bài kiểm tra', 'Nộp lúc', 'Số câu đúng', 'Tổng số câu', 'Tỉ lệ đúng (%)', 'Điểm tuân thủ', 'Thời gian làm bài', 'Kết quả', 'Ghi chú'],
         (P.history || []).slice().sort(function(x, y){ return (y.submittedAt || 0) - (x.submittedAt || 0); }).map(function(x){ return [xTitle(x.period || ''), vnDT(x.submittedAt), x.score == null ? '' : x.score, x.total == null ? '' : x.total, x.pct == null ? '' : Math.round(x.pct * 10) / 10, x.compliancePoints == null ? '' : x.compliancePoints, dur(x.durationSec), attemptState(x) === 'ok' ? 'Đạt' : 'Chưa đạt', [x.hidden ? 'Đã ẩn' : '', x.practice ? 'Thi thử' : '', x.test ? 'Thử nghiệm' : ''].filter(Boolean).join(', ')]; }));
