@@ -36,6 +36,9 @@ const DEFAULT_SETTINGS = {
   requireBirthDate: false,
   // Nhắc nhẹ xin ngày sinh khi nhân viên vào Học liệu / tra cứu / làm bài xong (bỏ qua được, hỏi lại hôm sau). Mặc định BẬT.
   askBirthDate: true,
+  // Màn kết quả chỉ hiện "Đã hoàn thành bài kiểm tra", ẩn điểm số/chi tiết bài làm — hạn chế chụp màn hình chia sẻ
+  // điểm; ai cần minh chứng thì dùng nút Lưu ảnh/Chia sẻ thẻ kết quả (có xác thực) thay vì chụp màn hình. Mặc định TẮT.
+  hideResultScore: false,
   complianceEnabled: true,
   complianceHighMin: 9,   // >= mốc này: 20 điểm
   complianceMidMin: 7,    // >= mốc này (và < mốc trên): 15 điểm

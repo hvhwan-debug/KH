@@ -170,7 +170,8 @@ async function handler(context, req) {
       practice: !!settings.practice,
       faceLoginSkip: !!settings.faceLoginSkip && require("../_lib/facepass").enabled(), // đã đăng nhập bằng khuôn mặt -> bỏ bước quét mặt lần hai
       surveyUrl: settings.surveyUrl || "",
-      maxAttempts: found.test || quiz.attemptLimit(settings) === Infinity ? 0 : quiz.attemptLimit(settings) // 0 = không giới hạn
+      maxAttempts: found.test || quiz.attemptLimit(settings) === Infinity ? 0 : quiz.attemptLimit(settings), // 0 = không giới hạn
+      hideResultScore: !!settings.hideResultScore // chỉ hiện "đã hoàn thành", ẩn điểm/chi tiết bài làm ở màn kết quả (chống chụp màn hình chia sẻ)
     };
     const idxAll = await quiz.getIndex();
     const subs = found.test ? [] : quiz.submittedOf(idxAll, code, settings.examPeriod); // tài khoản thử nghiệm: không có lịch sử, không giới hạn lượt

@@ -1197,6 +1197,7 @@ const handler = async function (context, req) {
         examPeriod: quiz.validPeriod(String(b.examPeriod || "").trim()) && String(b.examPeriod || "").trim() ? String(b.examPeriod).trim() : cur.examPeriod,
         requireBirthDate: !!b.requireBirthDate,
         askBirthDate: b.askBirthDate !== false,
+        hideResultScore: !!b.hideResultScore,
         segmentPlans: sp
       });
       // Giữ nguyên cài đặt của các đề đã có: đóng băng chúng bằng cài đặt mặc định CŨ trước khi lưu cái mới,

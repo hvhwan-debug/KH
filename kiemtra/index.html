@@ -2175,6 +2175,15 @@ body.rs .stage{max-width:1500px;width:min(1500px,94vw);margin-left:auto;margin-r
   body.rs .lp-txt b{display:block;font-size:clamp(13px,3.8vw,16px);font-weight:800;white-space:nowrap}
   body.rs .lp-txt small{display:block;font-size:13px;font-weight:500;opacity:.85;margin-top:3px}
   body.rs .lp-cup{display:none}
+}
+/* Ẩn điểm số/chi tiết bài làm ở màn kết quả — chỉ còn thông báo hoàn thành + nút lưu/chia sẻ thẻ kết quả */
+body.hide-score .rs-art,body.hide-score .ring,body.hide-score .thr,body.hide-score .cheer,
+body.hide-score .stats,body.hide-score .bk,body.hide-score .rs-mp,body.hide-score #resTm,
+body.hide-score .rs-tabs,body.hide-score #btnMore,body.hide-score .rs-links,
+body.hide-score #pnImp,body.hide-score #pnTries,body.hide-score #pnAdv,
+body.hide-score dl.kv#resDetails,body.hide-score #resProof{display:none!important}
+body.hide-score .rs-det,body.hide-score #pnRcpt{display:block!important}
+@media(max-width:860px){
   body.rs .stage{width:100%;padding:0 10px}
   #scrResult .rs-wrap{gap:12px;margin-top:-20px;position:relative;z-index:3}
   /* thẻ tóm tắt */
@@ -4630,8 +4639,11 @@ function renderMob(r, ps, prac, c){
   if (r.durationSec != null) rows += '<div class="tm-d"><dt>' + RS_ICO.clock + 'Thời gian hoàn thành</dt><dd>' + Math.floor(r.durationSec / 60) + ' phút ' + (r.durationSec % 60) + ' giây</dd></div>';
   if (r.compliancePoints != null) rows += '<div class="tm-p"><dt>' + RS_ICO.star + (prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ') + '</dt><dd>' + esc(r.compliancePoints) + ' điểm</dd></div>';
   $('resTm').innerHTML = rows; $('resTm').classList.toggle('hide', !rows);
-  var k = prac ? 'p' : ps === false ? 'n' : 'y';
-  var t = prac ? ['Bài thi thử đã hoàn thành', 'Đây không phải thi chính thức. Xem chi tiết bài làm và học liệu gợi ý để chuẩn bị tốt hơn.']
+  var hideScore = !!(ST.exam && ST.exam.hideResultScore);
+  document.body.classList.toggle('hide-score', hideScore);
+  var k = hideScore ? 'y' : prac ? 'p' : ps === false ? 'n' : 'y';
+  var t = hideScore ? ['Đã hoàn thành bài kiểm tra!', 'Cảm ơn bạn đã tham gia. Bấm "Lưu ảnh kết quả" hoặc "Chia sẻ qua Zalo" bên dưới nếu cần gửi minh chứng.']
+    : prac ? ['Bài thi thử đã hoàn thành', 'Đây không phải thi chính thức. Xem chi tiết bài làm và học liệu gợi ý để chuẩn bị tốt hơn.']
     : ps === true ? ['Chúc mừng, bạn đã đạt yêu cầu!', 'Xem chi tiết bài làm, nhận xét và học liệu gợi ý để củng cố thêm kiến thức.']
     : ps === false ? ['Bạn chưa đạt yêu cầu', 'Xem các nội dung cần cải thiện và học liệu gợi ý để làm tốt hơn ở lần sau.']
     : ['Đã hoàn thành bài kiểm tra!', 'Bạn có thể xem chi tiết bài làm, nhận xét và học liệu gợi ý để cải thiện kết quả.'];
