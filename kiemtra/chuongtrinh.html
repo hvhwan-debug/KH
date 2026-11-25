@@ -353,6 +353,20 @@ a.nv{text-decoration:none}
 </style>
 <script>try{if(localStorage.getItem("kt_side_collapsed")==="1")document.documentElement.classList.add("sidec")}catch(e){}</script><style>
 /* ---- trang Chương trình học ---- */
+.ansum{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:14px}
+.bars .br{display:grid;grid-template-columns:minmax(0,190px) 1fr 40px;gap:10px;align-items:center;font-size:13px;margin:7px 0}
+.bars .br .tk{height:10px;border-radius:99px;background:#E7EEF7;overflow:hidden}.bars .br .tk i{display:block;height:100%;background:var(--brand);border-radius:99px}
+.bars .br b{text-align:right;color:var(--navy);font-variant-numeric:tabular-nums}
+.ansl{display:grid;gap:10px}
+.anc{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fff}
+.anc .w{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.anc .w b{color:var(--navy)}.anc .w span{font-size:12px;color:var(--muted)}
+.anc .ch{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.anc .ch span{font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;background:#EAF2FF;color:#1B5FC4}
+.anc p{margin:8px 0 0;font-size:13.5px;line-height:1.55;color:var(--body);white-space:pre-line}.anc p em{font-style:normal;font-weight:700;color:var(--ink)}
+.anc.story{border-left:4px solid #F5B400}
+.frm .askw{grid-column:1/-1;border-top:1px dashed var(--line);padding-top:12px;margin-top:4px}
+.frm .askw.off .askf{opacity:.45;pointer-events:none}
+.frm label.sw{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:var(--navy);margin:0 0 10px}.frm label.sw input{width:18px;height:18px}
+@media(max-width:800px){.ansum{grid-template-columns:1fr}.bars .br{grid-template-columns:minmax(0,130px) 1fr 34px}}
 .kpis4{display:grid;gap:0;border:1px solid var(--line2);border-radius:14px;overflow:hidden}
 .kpis4 .kpi{border-right:1px solid var(--line2);border-radius:0;box-shadow:none}.kpis4 .kpi:last-child{border-right:0}
 .kpi .v small{font-size:13px;color:var(--muted);font-weight:600}
@@ -462,7 +476,7 @@ table.t td input[type=checkbox],table.t th input[type=checkbox]{width:17px;heigh
       <div class="hdr-act"><button class="btn" type="button" id="bEdit">Sửa</button><button class="btn" type="button" id="bToggle"></button><button class="btn" type="button" id="bPrev">Xem trước email</button><button class="btn dng" type="button" id="bDel">Xoá</button></div></div>
     <div class="card"><div class="card-b"><div class="info" id="dInfo"></div><div class="kpis4" id="dKpi" style="margin-top:14px;grid-template-columns:repeat(4,minmax(0,1fr))"></div></div></div>
     <div class="card" style="margin-top:14px"><div class="card-b">
-      <div class="tabs2" role="tablist"><button type="button" data-t="inv" class="on">Gửi lời mời</button><button type="button" data-t="reg" id="tReg">Danh sách đăng ký</button></div>
+      <div class="tabs2" role="tablist"><button type="button" data-t="inv" class="on">Gửi lời mời</button><button type="button" data-t="reg" id="tReg">Danh sách đăng ký</button><button type="button" data-t="ans" id="tAns">Kỳ vọng & tình huống</button></div>
       <div id="pInv">
         <div class="fbar2">
           <input type="search" id="fq" placeholder="Tìm tên, mã NV, email…" autocomplete="off">
@@ -474,6 +488,7 @@ table.t td input[type=checkbox],table.t th input[type=checkbox]{width:17px;heigh
         <div class="sendbar"><b id="selN">Chưa chọn ai</b><div class="prog hide" id="prog"><i id="progI"></i></div><span class="sp"></span><span class="small" id="sendS" style="color:var(--muted);font-size:12.5px"></span><button class="btn pri" type="button" id="bSend" disabled>✉ Gửi email mời</button></div>
         <div id="sendMsg"></div>
       </div>
+      <div id="pAns" class="hide"></div>
       <div id="pReg" class="hide">
         <div class="fbar2"><input type="search" id="rq" placeholder="Tìm trong danh sách đăng ký…" autocomplete="off"><span class="sp" style="flex:1"></span><button class="btn sm" type="button" id="bCsv">⬇ Tải CSV</button></div>
         <div class="tw"><table class="t" id="regT"></table></div>
@@ -497,6 +512,12 @@ table.t td input[type=checkbox],table.t th input[type=checkbox]{width:17px;heigh
     <div><label for="fC">Số chỗ tối đa</label><input id="fC" type="number" min="0" step="1" placeholder="Không giới hạn"><div class="hint">Đủ chỗ thì hệ thống tự ngừng nhận.</div></div>
     <div><label for="fSp">Người chia sẻ / giảng viên</label><input id="fSp" maxlength="150" placeholder="Anh Nguyễn Ngọc Hiếu, ASM xuất sắc 2025"></div>
     <div><label for="fCt">Người liên hệ</label><input id="fCt" maxlength="200" placeholder="Phòng Đào tạo · 0901 234 567"></div>
+    <div class="askw" id="askW"><label class="sw"><input type="checkbox" id="fAsk" checked> Sau khi đăng ký, hỏi kỳ vọng và tình huống muốn chia sẻ (không bắt buộc với học viên)</label>
+      <div class="frm askf" style="grid-template-columns:1fr">
+        <div><label for="fQ1">Câu hỏi kỳ vọng</label><input id="fQ1" maxlength="200"></div>
+        <div><label for="fOpts">Lựa chọn nhanh cho câu hỏi kỳ vọng</label><textarea id="fOpts" style="min-height:96px" placeholder="Mỗi dòng một lựa chọn (tối đa 10)"></textarea><div class="hint">Học viên bấm chọn nhiều ô, và vẫn viết thêm được. Để trống nếu chỉ muốn họ tự viết.</div></div>
+        <div><label for="fQ2">Câu hỏi tình huống</label><input id="fQ2" maxlength="200"></div>
+      </div></div>
   </div>
   <div id="dlgMsg"></div>
   <div class="ov-f"><button class="btn" type="button" id="dlgNo">Huỷ</button><button class="btn pri" type="button" id="dlgOk">Lưu</button></div>
@@ -520,7 +541,7 @@ async function api(method, path, body){
   return { s:r.status, j:j };
 }
 function state(which, msg){ ['stLoading','stDenied','stError','vList','vDetail'].forEach(function(id){ $(id).classList.add('hide'); }); $(which).classList.remove('hide'); if (msg) $('errM').textContent = msg; }
-var S = { list:[], mail:true, cur:null, invited:{}, regs:{}, cancels:{}, cands:[], sel:{}, sending:false, editId:'' };
+var S = { answers:{}, askDefault:null, list:[], mail:true, cur:null, invited:{}, regs:{}, cancels:{}, cands:[], sel:{}, sending:false, editId:'' };
 
 function stLabel(p){
   if (p.status === 'closed') return ['Đã đóng đăng ký','none'];
@@ -533,12 +554,12 @@ async function loadList(){
   var r = await api('GET', '/api/kt-program?op=list');
   if (r.s === 401 || r.s === 403) return state('stDenied');
   if (!r.j.ok) return state('stError', r.j.error || '');
-  S.list = r.j.programs || []; S.mail = r.j.mail !== false;
+  S.list = r.j.programs || []; S.mail = r.j.mail !== false; S.askDefault = r.j.askDefault || S.askDefault;
   $('mailWarn').classList.toggle('hide', S.mail);
   $('plist').innerHTML = S.list.length ? S.list.map(function(p){ var s = stLabel(p);
     return '<button type="button" class="pc" data-id="' + esc(p.id) + '"><div style="display:flex;gap:8px;align-items:flex-start;justify-content:space-between"><h3>' + esc(p.title) + '</h3><span class="chip ' + s[1] + '">' + s[0] + '</span></div>' +
       '<div class="meta">' + (p.when ? '<span>🗓 ' + esc(p.when) + '</span>' : '') + (p.where ? '<span>📍 ' + esc(p.where) + '</span>' : '') + (p.deadline ? '<span>⏳ Hạn đăng ký ' + esc(vn(p.deadline)) + '</span>' : '') + '</div>' +
-      '<div class="nums"><div><b>' + p.invited + '</b><span>Đã mời</span></div><div class="g"><b>' + p.regs + (p.capacity ? '<small style="font-size:12px;color:var(--muted)">/' + p.capacity + '</small>' : '') + '</b><span>Đã đăng ký</span></div><div><b>' + (p.invited ? Math.round(p.regs / p.invited * 100) + '%' : '–') + '</b><span>Tỉ lệ đăng ký</span></div></div></button>'; }).join('')
+      '<div class="nums"><div><b>' + p.invited + '</b><span>Đã mời</span></div><div class="g"><b>' + p.regs + (p.capacity ? '<small style="font-size:12px;color:var(--muted)">/' + p.capacity + '</small>' : '') + '</b><span>Đã đăng ký</span></div><div><b>' + (p.invited ? Math.round(p.regs / p.invited * 100) + '%' : '–') + '</b><span>Tỉ lệ đăng ký</span></div>' + (p.ask !== false ? '<div><b>' + (p.answered || 0) + '</b><span>Đã chia sẻ</span></div>' : '') + '</div></button>'; }).join('')
     : '<div class="card" style="grid-column:1/-1"><div class="state"><div><b>Chưa có chương trình nào</b>Bấm “+ Tạo chương trình” để bắt đầu.</div></div></div>';
   state('vList');
 }
@@ -546,7 +567,7 @@ async function loadList(){
 async function openDetail(id){
   var r = await api('GET', '/api/kt-program?op=detail&id=' + encodeURIComponent(id));
   if (!r.j.ok){ toast(r.j.error || 'Không mở được chương trình.'); location.hash = ''; return; }
-  S.cur = r.j.program; S.invited = r.j.invited; S.regs = r.j.regs; S.cancels = r.j.cancels; S.cands = r.j.candidates || []; S.mail = r.j.mail !== false;
+  S.cur = r.j.program; S.invited = r.j.invited; S.regs = r.j.regs; S.cancels = r.j.cancels; S.cands = r.j.candidates || []; S.mail = r.j.mail !== false; S.answers = r.j.answers || {}; S.askDefault = r.j.askDefault || S.askDefault;
   var keep = {}; Object.keys(S.sel).forEach(function(k){ if (!S.regs[k]) keep[k] = 1; }); S.sel = keep;
   renderDetail(); state('vDetail');
 }
@@ -562,7 +583,7 @@ function renderDetail(){
     ['Tỉ lệ đăng ký', nInv ? Math.round(resp / nInv * 100) + '<small>%</small>' : '–', resp + ' / ' + nInv + ' người được mời'], ['Đã huỷ', Object.keys(S.cancels).length, '']]
     .map(function(k){ return '<div class="kpi"><div class="l">' + k[0] + '</div><div class="v">' + k[1] + '</div><div class="s">' + k[2] + '</div></div>'; }).join('');
   $('tReg').textContent = 'Danh sách đăng ký (' + nReg + ')';
-  fillFilters(); renderInv(); renderReg();
+  fillFilters(); renderInv(); renderReg(); renderAns();
 }
 function fillFilters(){
   var t = {}, m = {}; S.cands.forEach(function(c){ if (c.title) t[c.title] = 1; if (c.manager) m[c.manager] = 1; });
@@ -611,6 +632,28 @@ function renderReg(){
       : '<tr><td colspan="8" style="text-align:center;padding:22px;color:var(--muted)">' + (Object.keys(S.regs).length ? 'Không có ai khớp từ khoá.' : 'Chưa có ai đăng ký.') + '</td></tr>') + '</tbody>' +
     (cs.length ? '<tbody><tr><td colspan="8" style="background:#F7F9FC;font-weight:700;color:var(--muted)">Đã huỷ (' + cs.length + ')</td></tr>' + cs.map(function(x){ return '<tr style="color:var(--muted)"><td></td><td class="code">' + esc(x.code) + '</td><td>' + esc(x.name) + '</td><td colspan="3">' + (x.admin ? 'Quản trị viên gỡ (' + esc(x.admin) + ')' : 'Tự huỷ') + '</td><td class="nw">' + esc(vn(x.at)) + '</td><td></td></tr>'; }).join('') + '</tbody>' : '');
 }
+/* ---------- kỳ vọng & tình huống ---------- */
+function renderAns(){
+  var p = S.cur, byC = {}; S.cands.forEach(function(c){ byC[c.code] = c; });
+  var l = Object.keys(S.answers).filter(function(k){ return S.regs[k]; }).map(function(k){ var a = S.answers[k], r = S.regs[k], c = byC[k] || {}; return { code:k, name: r.name || c.name || k, title: c.title || '', manager: c.manager || '', a:a }; })
+    .sort(function(x, y){ return (y.a.at || 0) - (x.a.at || 0); });
+  var nReg = Object.keys(S.regs).length;
+  $('tAns').textContent = 'Kỳ vọng & tình huống (' + l.length + ')';
+  if (p.ask === false){ $('pAns').innerHTML = '<div class="msg w">Chương trình này đang tắt câu hỏi kỳ vọng & tình huống. Bật lại trong nút “Sửa”.</div>'; return; }
+  if (!l.length){ $('pAns').innerHTML = '<div class="state"><div><b>Chưa có ai chia sẻ</b>Sau khi đăng ký, học viên được mời trả lời: “' + esc(p.q1) + '” và “' + esc(p.q2) + '”.</div></div>'; return; }
+  var cnt = {}; (p.opts || []).forEach(function(o){ cnt[o] = 0; }); l.forEach(function(x){ (x.a.opts || []).forEach(function(o){ cnt[o] = (cnt[o] || 0) + 1; }); });
+  var keys = Object.keys(cnt).sort(function(a, b){ return cnt[b] - cnt[a]; }), mx = Math.max(1, Math.max.apply(null, keys.map(function(k){ return cnt[k]; })));
+  var stories = l.filter(function(x){ return x.a.story; });
+  var card = function(x, only){ return '<div class="anc' + (only === 'story' ? ' story' : '') + '"><div class="w"><b>' + esc(x.name) + '</b><span>' + esc([x.code, x.title, x.manager].filter(Boolean).join(' · ')) + ' · ' + esc(vn(x.a.at)) + '</span></div>' +
+    (only !== 'story' && (x.a.opts || []).length ? '<div class="ch">' + x.a.opts.map(function(o){ return '<span>' + esc(o) + '</span>'; }).join('') + '</div>' : '') +
+    (only !== 'story' && x.a.expect ? '<p><em>Kỳ vọng:</em> ' + esc(x.a.expect) + '</p>' : '') + (x.a.story ? '<p><em>Tình huống:</em> ' + esc(x.a.story) + '</p>' : '') + '</div>'; };
+  $('pAns').innerHTML = '<div class="ansum"><div class="card"><div class="card-b"><b style="color:var(--navy)">' + esc(p.q1) + '</b><div class="small" style="color:var(--muted);font-size:12.5px;margin:2px 0 8px">' + l.length + ' / ' + nReg + ' người đã đăng ký có chia sẻ</div><div class="bars">' +
+      keys.map(function(k){ return '<div class="br"><span>' + esc(k) + '</span><span class="tk"><i style="width:' + Math.round(cnt[k] / mx * 100) + '%"></i></span><b>' + cnt[k] + '</b></div>'; }).join('') + '</div></div></div>' +
+    '<div class="card"><div class="card-b"><b style="color:var(--navy)">Tình huống được gửi (' + stories.length + ')</b><div class="small" style="color:var(--muted);font-size:12.5px;margin:2px 0 8px">Nguồn ví dụ thực tế cho người chia sẻ</div><div class="ansl" style="max-height:320px;overflow:auto">' +
+      (stories.length ? stories.map(function(x){ return card(x, 'story'); }).join('') : '<div class="small" style="color:var(--muted)">Chưa có tình huống nào.</div>') + '</div></div></div></div>' +
+    '<div class="fbar2"><b style="color:var(--navy)">Tất cả chia sẻ</b><span class="sp" style="flex:1"></span><button class="btn sm" type="button" id="bAnsCsv">⬇ Tải CSV chia sẻ</button></div>' +
+    '<div class="ansl">' + l.map(function(x){ return card(x); }).join('') + '</div>';
+}
 /* ---------- gửi email theo đợt ---------- */
 async function send(){
   var codes = selList(); if (!codes.length) return;
@@ -633,10 +676,12 @@ function openForm(p){
   S.editId = p ? p.id : ''; $('dlgT').textContent = p ? 'Sửa chương trình' : 'Tạo chương trình học'; $('dlgMsg').innerHTML = '';
   $('fT').value = p ? p.title : ''; $('fD').value = p ? p.desc || '' : ''; $('fW').value = p ? p.when || '' : ''; $('fP').value = p ? p.where || '' : '';
   $('fDl').value = p ? toLocal(p.deadline) : ''; $('fC').value = p && p.capacity ? p.capacity : ''; $('fCt').value = p ? p.contact || '' : ''; $('fSp').value = p ? p.speaker || '' : '';
+  var AD = S.askDefault || {}; $('fAsk').checked = !(p && p.ask === false); $('fQ1').value = (p && p.q1) || AD.q1 || ''; $('fQ2').value = (p && p.q2) || AD.q2 || '';
+  $('fOpts').value = ((p && p.opts) || AD.opts || []).join('\n'); $('askW').classList.toggle('off', !$('fAsk').checked);
   $('dlg').classList.remove('hide'); $('fT').focus();
 }
 async function saveForm(){
-  var prog = { id: S.editId || undefined, title: $('fT').value.trim(), desc: $('fD').value.trim(), when: $('fW').value.trim(), where: $('fP').value.trim(), deadline: fromLocal($('fDl').value), capacity: +$('fC').value || 0, contact: $('fCt').value.trim(), speaker: $('fSp').value.trim(), status: S.editId && S.cur ? S.cur.status : 'open' };
+  var prog = { id: S.editId || undefined, title: $('fT').value.trim(), desc: $('fD').value.trim(), when: $('fW').value.trim(), where: $('fP').value.trim(), deadline: fromLocal($('fDl').value), capacity: +$('fC').value || 0, contact: $('fCt').value.trim(), speaker: $('fSp').value.trim(), ask: $('fAsk').checked, q1: $('fQ1').value.trim(), q2: $('fQ2').value.trim(), opts: $('fOpts').value.split('\n').map(function(x){ return x.trim(); }).filter(Boolean), status: S.editId && S.cur ? S.cur.status : 'open' };
   if (!prog.title){ $('dlgMsg').innerHTML = '<div class="msg r">Vui lòng nhập tên chương trình.</div>'; return; }
   $('dlgOk').disabled = true; var r = await api('POST', '/api/kt-program', { op:'save', program:prog }); $('dlgOk').disabled = false;
   if (!r.j.ok){ $('dlgMsg').innerHTML = '<div class="msg r">' + esc(r.j.error || 'Không lưu được.') + '</div>'; return; }
@@ -664,7 +709,7 @@ $('bToggle').addEventListener('click', async function(){ var r = await api('POST
 $('bDel').addEventListener('click', async function(){ if (!confirm('Xoá chương trình "' + S.cur.title + '" và toàn bộ danh sách đăng ký? Liên kết trong các email đã gửi sẽ không dùng được nữa.')) return; var r = await api('POST', '/api/kt-program', { op:'delete', id:S.cur.id }); if (r.j.ok){ toast('Đã xoá chương trình.'); location.hash = ''; } else toast(r.j.error || 'Lỗi.'); });
 $('bPrev').addEventListener('click', async function(){ var r = await api('GET', '/api/kt-program?op=preview&id=' + encodeURIComponent(S.cur.id)); if (!r.j.ok) return toast(r.j.error || 'Lỗi.'); $('pvF').srcdoc = r.j.html; $('pvS').innerHTML = 'Tiêu đề thư: <b style="color:var(--ink)">' + esc(r.j.subject || '') + '</b>'; $('pv').classList.remove('hide'); });
 $('pvX').addEventListener('click', function(){ $('pv').classList.add('hide'); });
-document.querySelector('.tabs2').addEventListener('click', function(e){ var b = e.target.closest('button[data-t]'); if (!b) return; document.querySelectorAll('.tabs2 button').forEach(function(x){ x.classList.toggle('on', x === b); }); $('pInv').classList.toggle('hide', b.dataset.t !== 'inv'); $('pReg').classList.toggle('hide', b.dataset.t !== 'reg'); });
+document.querySelector('.tabs2').addEventListener('click', function(e){ var b = e.target.closest('button[data-t]'); if (!b) return; document.querySelectorAll('.tabs2 button').forEach(function(x){ x.classList.toggle('on', x === b); }); $('pInv').classList.toggle('hide', b.dataset.t !== 'inv'); $('pReg').classList.toggle('hide', b.dataset.t !== 'reg'); $('pAns').classList.toggle('hide', b.dataset.t !== 'ans'); });
 ['fq'].forEach(function(id){ $(id).addEventListener('input', renderInv); });
 ['fTitle','fMgr','fHideInv','fHideReg'].forEach(function(id){ $(id).addEventListener('change', renderInv); });
 $('rq').addEventListener('input', renderReg);
@@ -674,6 +719,14 @@ $('invT').addEventListener('change', function(e){
   if (t.dataset.c){ if (t.checked) S.sel[t.dataset.c] = 1; else delete S.sel[t.dataset.c]; updSel(); }
 });
 $('bSend').addEventListener('click', send);
+$('fAsk').addEventListener('change', function(){ $('askW').classList.toggle('off', !this.checked); });
+$('pAns').addEventListener('click', function(e){
+  if (e.target.id !== 'bAnsCsv') return;
+  var byC = {}; S.cands.forEach(function(c){ byC[c.code] = c; });
+  var q = function(v){ v = v == null ? '' : String(v); return /[",;\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  var lines = [['Mã NV','Họ tên','Chức danh','Quản lí','Kỳ vọng (chọn)','Kỳ vọng (viết)','Tình huống','Gửi lúc'].join(',')].concat(Object.keys(S.answers).filter(function(k){ return S.regs[k]; }).map(function(k){ var a = S.answers[k], c = byC[k] || {}; return [k, S.regs[k].name || c.name, c.title, c.manager, (a.opts || []).join('; '), a.expect, a.story, vn(a.at)].map(q).join(','); }));
+  var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + lines.join('\r\n')], { type:'text/csv;charset=utf-8' })); a.download = 'ky-vong-' + S.cur.id + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+});
 $('regT').addEventListener('click', async function(e){ var b = e.target.closest('[data-rm]'); if (!b || !confirm('Gỡ ' + b.dataset.rm + ' khỏi danh sách đăng ký?')) return; var r = await api('POST', '/api/kt-program', { op:'removeReg', id:S.cur.id, code:b.dataset.rm }); if (r.j.ok){ toast('Đã gỡ.'); openDetail(S.cur.id); } else toast(r.j.error || 'Lỗi.'); });
 $('bCsv').addEventListener('click', function(){
   var byC = {}; S.cands.forEach(function(c){ byC[c.code] = c; });

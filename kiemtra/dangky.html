@@ -39,6 +39,22 @@ h1{margin:0 0 8px;font-size:clamp(22px,5vw,27px);font-weight:900;color:var(--nav
 .link{margin-top:18px;background:none;border:0;color:var(--muted);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer}
 .foot{padding:14px 22px;border-top:1px solid var(--line);font-size:12px;color:#94A0B8;text-align:center}
 .hide{display:none!important}
+/* chia sẻ kỳ vọng / tình huống (không bắt buộc) */
+.ask{margin:22px 0 0;text-align:left;border:1.5px solid #CFE0FA;border-radius:18px;background:linear-gradient(180deg,#F4F8FF,#FFFFFF 60%);padding:18px 18px 16px}
+.ask .h{display:flex;align-items:center;gap:10px}.ask .h b{font-size:16px;color:var(--navy)}.ask .h span{font-size:11.5px;font-weight:700;color:var(--muted);background:#EEF2F8;border-radius:99px;padding:2px 9px;margin-left:auto;white-space:nowrap}
+.ask .sub{margin:4px 0 0;font-size:13px;color:var(--muted)}
+.ask label.q{display:block;margin:16px 0 8px;font-size:14.5px;font-weight:700;color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{border:1.5px solid #D3E1F5;background:#fff;color:#33507F;border-radius:99px;padding:8px 14px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s}
+.chips button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.chips button.on::before{content:"✓ "}
+.ask textarea{width:100%;min-height:76px;border:1.5px solid #D3E1F5;border-radius:12px;padding:10px 12px;font:inherit;font-size:14.5px;line-height:1.5;resize:vertical;background:#fff;color:var(--ink)}
+.ask textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(21,89,196,.15)}
+.ask .cnt{font-size:11.5px;color:#94A0B8;text-align:right;margin-top:3px}
+.ask .go{display:flex;align-items:center;gap:10px;margin-top:14px}
+.ask .go button{height:46px;padding:0 22px;white-space:nowrap;flex:none;border:0;border-radius:12px;background:var(--brand);color:#fff;font:inherit;font-size:15px;font-weight:800;cursor:pointer}
+.ask .go button:disabled{opacity:.55;cursor:default}
+.ask .go .m{font-size:13px;color:var(--muted)}.ask .go .m.ok{color:var(--ok);font-weight:700}.ask .go .m.bad{color:var(--bad)}
 </style>
 </head>
 <body>
@@ -74,6 +90,32 @@ function show(kind, title, lead, extra){
   box.innerHTML = '<div class="ic ' + kind + '">' + (IC[kind] || IC.info) + '</div><h1>' + title + '</h1>' + (lead ? '<p class="lead">' + lead + '</p>' : '') + (extra || '');
 }
 function who(){ return D && D.name ? ' <b>' + esc(D.name) + '</b>' : ''; }
+// Khung chia sẻ kỳ vọng + tình huống: chỉ hiện SAU khi đã đăng ký, không bắt buộc (đăng ký đã xong từ trước)
+function mountAsk(j){
+  var a = j.ask, ans = j.answer || { opts:[], expect:'', story:'' }, sel = {};
+  (ans.opts || []).forEach(function(o){ sel[o] = 1; });
+  var box = document.createElement('div'); box.className = 'ask'; box.id = 'ask';
+  box.innerHTML = '<div class="h"><b>💬 Giúp buổi học sát với bạn hơn</b><span>Không bắt buộc</span></div>' +
+    '<p class="sub">' + (j.answer ? 'Bạn đã chia sẻ. Có thể sửa lại bất cứ lúc nào trước buổi học.' : 'Người chia sẻ sẽ dựa vào đây để chuẩn bị nội dung và ví dụ sát thực tế của bạn.') + '</p>' +
+    '<label class="q">' + esc(a.q1) + '</label>' +
+    (a.opts && a.opts.length ? '<div class="chips" id="chips">' + a.opts.map(function(o){ return '<button type="button" data-o="' + esc(o) + '" class="' + (sel[o] ? 'on' : '') + '" aria-pressed="' + !!sel[o] + '">' + esc(o) + '</button>'; }).join('') + '</div>' : '') +
+    '<textarea id="aExp" maxlength="600" placeholder="Hoặc viết thêm điều bạn mong muốn…" style="margin-top:10px">' + esc(ans.expect) + '</textarea>' +
+    '<label class="q">' + esc(a.q2) + '</label>' +
+    '<textarea id="aSto" maxlength="1500" placeholder="Ví dụ: Khách chê máy lọc đắt hơn bên khác 1 triệu, em chưa biết trả lời thế nào cho thuyết phục…" style="min-height:96px">' + esc(ans.story) + '</textarea><div class="cnt" id="aCnt"></div>' +
+    '<div class="go"><button type="button" id="aSend">' + (j.answer ? 'Cập nhật chia sẻ' : 'Gửi chia sẻ') + '</button><span class="m" id="aMsg"></span></div>';
+  var p = box; var anchor = document.querySelector('#box .prog'); anchor.parentNode.insertBefore(box, anchor.nextSibling);
+  var cnt = function(){ document.getElementById('aCnt').textContent = document.getElementById('aSto').value.length + ' / 1500'; }; cnt();
+  document.getElementById('aSto').addEventListener('input', cnt);
+  var ch = document.getElementById('chips'); if (ch) ch.addEventListener('click', function(e){ var b = e.target.closest('button[data-o]'); if (!b) return; var o = b.dataset.o; if (sel[o]) delete sel[o]; else sel[o] = 1; b.classList.toggle('on', !!sel[o]); b.setAttribute('aria-pressed', String(!!sel[o])); });
+  document.getElementById('aSend').onclick = function(){
+    var btn = this, m = document.getElementById('aMsg'), body = { op:'answer', opts: Object.keys(sel), expect: document.getElementById('aExp').value.trim(), story: document.getElementById('aSto').value.trim() };
+    if (!body.opts.length && !body.expect && !body.story){ m.className = 'm bad'; m.textContent = 'Hãy chọn hoặc viết ít nhất một điều nhé.'; return; }
+    btn.disabled = true; m.className = 'm'; m.textContent = 'Đang gửi…';
+    api('POST', body).then(function(r){ btn.disabled = false;
+      if (!r.ok){ m.className = 'm bad'; m.textContent = r.error || 'Chưa gửi được, vui lòng thử lại.'; return; }
+      D.answer = r.answer; btn.textContent = 'Cập nhật chia sẻ'; m.className = 'm ok'; m.textContent = '✓ Cảm ơn bạn! Đã gửi tới người chia sẻ.'; });
+  };
+}
 function render(j, fresh){
   if (!j.ok){ show('bad', 'Chưa đăng ký được', esc(j.error || 'Đã có lỗi xảy ra.')); return; }
   D = j; var p = j.program;
@@ -81,6 +123,7 @@ function render(j, fresh){
     show('ok', (j.already || !fresh) ? 'Bạn đã đăng ký rồi' : 'Đăng ký thành công!',
       ((j.already || !fresh) ? 'Hệ thống đã ghi nhận' + who() + ' đăng ký' + (j.regAt ? ' lúc ' + vn(j.regAt) : '') + '.' : 'Cảm ơn' + who() + '! Bạn đã có tên trong danh sách tham gia.') + ' Không cần làm gì thêm.',
       progBox(p) + (j.locked ? '<p class="lead" style="margin-top:14px;font-size:13px">Đã hết hạn đăng ký nên không thể tự huỷ. Cần thay đổi, vui lòng liên hệ người gửi thư mời.</p>' : '<button type="button" class="link" id="bCancel">Tôi không thể tham gia, huỷ đăng ký</button>'));
+    if (j.ask) mountAsk(j);
     var c = document.getElementById('bCancel'); if (c) c.onclick = function(){ if (confirm('Huỷ đăng ký chương trình "' + p.title + '"?')){ c.disabled = true; api('POST', { op:'cancel' }).then(function(r){ render(r); }); } };
     return;
   }

@@ -10,7 +10,9 @@ function view(p, R, t, extra) {
     ok: true,
     program: { title: p.title, desc: p.desc, when: p.when, where: p.where, contact: p.contact, deadline: p.deadline || 0, capacity: p.capacity || 0, left },
     name: (R.invited[t.code] || R.regs[t.code] || {}).name || "", code: t.code,
-    state: P.stateOf(p, R, t.code), regAt: (R.regs[t.code] || {}).at || 0
+    state: P.stateOf(p, R, t.code), regAt: (R.regs[t.code] || {}).at || 0,
+    ask: p.ask === false ? null : { q1: p.q1 || P.ASK_DEFAULT.q1, q2: p.q2 || P.ASK_DEFAULT.q2, opts: p.opts || P.ASK_DEFAULT.opts },
+    answer: R.answers[t.code] ? { opts: R.answers[t.code].opts || [], expect: R.answers[t.code].expect || "", story: R.answers[t.code].story || "", at: R.answers[t.code].at } : null
   }, extra || {});
 }
 
@@ -24,6 +26,11 @@ module.exports = async function (context, req) {
     const p = await P.get(t.id);
     if (!p) return reply(context, 404, { ok: false, error: "Chương trình này không còn tồn tại." });
     if (req.method === "GET") return reply(context, 200, view(p, await P.regs(p.id), t));
+    if (b.op === "answer") {
+      const a = await P.answer(p.id, t.code, b);
+      if (a.error) return reply(context, a.status || 400, { ok: false, error: a.error });
+      return reply(context, 200, view(await P.get(p.id), await P.regs(p.id), t, { saved: true }));
+    }
     if (b.op !== "join" && b.op !== "cancel") return reply(context, 400, { ok: false, error: "Thao tác không hợp lệ." });
     const ua = (req.headers && req.headers["user-agent"]) || "";
     const r = await P.act(p.id, t.code, b.op, { ua });

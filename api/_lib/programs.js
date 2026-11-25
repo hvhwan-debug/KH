@@ -10,6 +10,12 @@ const { cfg } = require("./config");
 const LIST = "kt/programs.json";
 const regKey = (id) => "kt/program/" + id + ".json";
 const TOKEN_AGE = 180 * 24 * 3600 * 1000;
+// Câu hỏi sau khi đăng ký (không bắt buộc): kỳ vọng + tình huống muốn chia sẻ. Quản trị viên sửa được từng chương trình.
+const ASK_DEFAULT = {
+  q1: "Bạn kỳ vọng điều gì nhất sau buổi học?",
+  opts: ["Kỹ năng chốt đơn", "Xử lý lời từ chối", "Kiến thức sản phẩm", "Tư vấn đúng nhu cầu khách", "Chăm sóc khách sau bán", "Học kinh nghiệm từ người giỏi"],
+  q2: "Có tình huống thực tế nào bạn muốn được giải đáp hoặc chia sẻ trong buổi học không?"
+};
 const clip = (v, n) => String(v == null ? "" : v).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").trim().slice(0, n);
 const up = (s) => String(s || "").trim().toUpperCase();
 
@@ -17,7 +23,7 @@ async function list() { const d = (await store.get(LIST)) || {}; return Array.is
 async function get(id) { return (await list()).find((p) => p.id === id) || null; }
 async function regs(id) {
   const d = (await store.get(regKey(id))) || {};
-  return { invited: d.invited || {}, regs: d.regs || {}, cancels: d.cancels || {} };
+  return { invited: d.invited || {}, regs: d.regs || {}, cancels: d.cancels || {}, answers: d.answers || {} };
 }
 
 function clean(b, old) {
@@ -28,6 +34,9 @@ function clean(b, old) {
     id: (old && old.id) || "p" + Date.now().toString(36) + require("crypto").randomBytes(2).toString("hex"),
     title, desc: clip(b.desc, 2000), when: clip(b.when, 200), where: clip(b.where, 200),
     contact: clip(b.contact, 200), speaker: clip(b.speaker, 150),
+    ask: b.ask === false ? false : true,
+    q1: clip(b.q1, 200) || ASK_DEFAULT.q1, q2: clip(b.q2, 200) || ASK_DEFAULT.q2,
+    opts: (Array.isArray(b.opts) ? b.opts : ASK_DEFAULT.opts).map((x) => clip(x, 60)).filter(Boolean).filter((x, i, a) => a.indexOf(x) === i).slice(0, 10),
     deadline: n(b.deadline) > 1e12 ? n(b.deadline) : 0,
     capacity: Math.min(n(b.capacity), 100000),
     status: b.status === "closed" ? "closed" : "open",
@@ -101,6 +110,25 @@ async function act(id, code, op, meta) {
   });
   const R = await regs(id);
   return Object.assign({ program: p, taken: Object.keys(R.regs).length }, res);
+}
+
+// Lưu câu trả lời kỳ vọng / tình huống (chỉ người ĐÃ đăng ký; gửi lại = cập nhật). Giữ lại nếu người đó huỷ rồi đăng ký lại.
+async function answer(id, code, b) {
+  const p = await get(id);
+  if (!p) return { error: "Chương trình này không còn tồn tại.", status: 404 };
+  if (p.ask === false) return { error: "Chương trình này không thu thập câu trả lời.", status: 400 };
+  const k = up(code), opts = (Array.isArray(b.opts) ? b.opts : []).map((x) => clip(x, 60)).filter((x) => (p.opts || []).indexOf(x) >= 0).slice(0, 10);
+  const a = { opts, expect: clip(b.expect, 600), story: clip(b.story, 1500), at: Date.now() };
+  if (!a.opts.length && !a.expect && !a.story) return { error: "Bạn chưa chọn hoặc viết gì.", status: 400 };
+  let res = null;
+  await store.update(regKey(id), (cur) => {
+    const c = cur && typeof cur === "object" && !cur.deleted ? cur : {};
+    c.regs = c.regs || {}; c.answers = c.answers || {};
+    if (!c.regs[k]) { res = { error: "Bạn cần đăng ký trước khi chia sẻ.", status: 400 }; return c; }
+    a.first = (c.answers[k] && c.answers[k].first) || a.at;
+    c.answers[k] = a; res = { ok: true, answer: a }; return c;
+  });
+  return res;
 }
 
 async function markInvited(id, sent) {
@@ -206,7 +234,7 @@ async function inviteMail(p, cand, stats) {
       '<div style="margin-top:12px;font-size:13px;color:' + C.muted + '">Chỉ <b style="color:' + C.ink + '">1 lần bấm</b> · không cần đăng nhập · huỷ được nếu bận</div></td></tr>' +
     // 3 bước
     '<tr><td class="pad" style="padding:22px 26px 6px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' + C.soft + ';border-radius:16px"><tr><td style="padding:18px 10px 10px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' +
-      step(1, "Bấm “Giữ chỗ”", "Hệ thống ghi tên bạn ngay") + step(2, "Nhận xác nhận", "Trang báo đăng ký thành công") + step(3, "Đến lớp", p.when ? esc(p.when) : "Theo lịch của chương trình") +
+      step(1, "Bấm “Giữ chỗ”", "Hệ thống ghi tên bạn ngay") + step(2, p.ask === false ? "Nhận xác nhận" : "Chia sẻ kỳ vọng", p.ask === false ? "Trang báo đăng ký thành công" : "Điều bạn muốn học, tình huống muốn hỏi (tuỳ chọn)") + step(3, "Đến lớp", p.when ? esc(p.when) : "Theo lịch của chương trình") +
     '</tr></table></td></tr></table></td></tr>' +
     (p.contact ? '<tr><td class="pad" style="padding:14px 32px 0;font-size:13.5px;color:' + C.body + '">Cần hỏi thêm? Liên hệ <b style="color:' + C.ink + '">' + esc(p.contact) + '</b></td></tr>' : '') +
     '<tr><td class="pad" style="padding:22px 32px 26px"><div style="border-top:1px solid ' + C.line + ';padding-top:16px;font-size:11.5px;line-height:1.6;color:#94A0B8">' +
@@ -222,4 +250,4 @@ async function inviteMail(p, cand, stats) {
   return { subject, html, text, attachments, previewHtml };
 }
 
-module.exports = { list, get, regs, save, remove, token, readToken, joinUrl, stateOf, act, markInvited, inviteMail, vnTime, up };
+module.exports = { ASK_DEFAULT, answer, list, get, regs, save, remove, token, readToken, joinUrl, stateOf, act, markInvited, inviteMail, vnTime, up };

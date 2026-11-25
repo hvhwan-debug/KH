@@ -8,7 +8,7 @@ const mail = require("../_lib/mail");
 
 const BATCH = 25; // số email mỗi lần gọi (trang quản trị tự chia đợt) để không quá thời gian chạy của máy chủ
 
-function counts(R) { return { invited: Object.keys(R.invited).length, regs: Object.keys(R.regs).length, cancels: Object.keys(R.cancels).length }; }
+function counts(R) { return { invited: Object.keys(R.invited).length, regs: Object.keys(R.regs).length, cancels: Object.keys(R.cancels).length, answered: Object.keys(R.answers || {}).filter((k) => R.regs[k]).length }; }
 
 const handler = async function (context, req) {
   try {
@@ -22,14 +22,14 @@ const handler = async function (context, req) {
       if (op === "list") {
         const L = await P.list();
         const out = await Promise.all(L.map(async (p) => Object.assign({}, p, counts(await P.regs(p.id)))));
-        return reply(context, 200, { ok: true, programs: out.sort((a, b) => b.createdAt - a.createdAt), mail: mailConfigured() });
+        return reply(context, 200, { ok: true, programs: out.sort((a, b) => b.createdAt - a.createdAt), mail: mailConfigured(), askDefault: P.ASK_DEFAULT });
       }
       if (op === "detail") {
         const p = await P.get(String(q.id || ""));
         if (!p) return reply(context, 404, { ok: false, error: "Không tìm thấy chương trình." });
         const R = await P.regs(p.id);
         const cands = (await quiz.getCandidates()).filter((c) => !c.left).map((c) => ({ code: P.up(c.code), name: c.name || "", email: c.email || "", title: quiz.titleOf(c), manager: c.manager || "", segment: c.segment || "", province: c.province || "" }));
-        return reply(context, 200, { ok: true, program: Object.assign({}, p, counts(R)), invited: R.invited, regs: R.regs, cancels: R.cancels, candidates: cands, mail: mailConfigured() });
+        return reply(context, 200, { ok: true, program: Object.assign({}, p, counts(R)), invited: R.invited, regs: R.regs, cancels: R.cancels, answers: R.answers, candidates: cands, mail: mailConfigured(), askDefault: P.ASK_DEFAULT });
       }
       if (op === "preview") { // xem trước email mời với một người mẫu
         const p = await P.get(String(q.id || ""));

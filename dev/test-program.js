@@ -33,6 +33,21 @@ const tok = (m) => decodeURIComponent((m.html.match(/dangky\.html\?t=([^"&<]+)/)
   r = await call("POST", "/api/program-join", { t: tT, op: "join" }); ok(r.j.state === "full", "Tra đăng ký khi đủ chỗ -> báo đã đủ chỗ");
   r = await call("POST", "/api/program-join", { t: tD, op: "cancel" }); ok(r.j.cancelled && r.j.state === "open", "Duy huỷ -> mở lại 1 chỗ");
   r = await call("POST", "/api/program-join", { t: tT, op: "join" }); ok(r.j.state === "registered", "Tra đăng ký được sau khi có chỗ");
+  // ---- kỳ vọng & tình huống (không bắt buộc) ----
+  r = await call("GET", "/api/program-join?t=" + encodeURIComponent(tB)); ok(r.j.ask && r.j.ask.opts.length === 6 && r.j.answer === null, "người đã đăng ký thấy câu hỏi kỳ vọng (mặc định 6 lựa chọn)");
+  r = await call("POST", "/api/program-join", { t: tD, op: "answer", expect: "abc" }); ok(r.s === 400, "chưa đăng ký (đã huỷ) thì không gửi chia sẻ được");
+  r = await call("POST", "/api/program-join", { t: tB, op: "answer" }); ok(r.s === 400, "gửi rỗng -> nhắc chọn hoặc viết");
+  r = await call("POST", "/api/program-join", { t: tB, op: "answer", opts: ["Kỹ năng chốt đơn", "Lựa chọn bịa"], expect: "Muốn chốt nhanh hơn", story: "Khách chê đắt hơn bên khác 1 triệu" });
+  ok(r.j.ok && r.j.saved && JSON.stringify(r.j.answer.opts) === '["Kỹ năng chốt đơn"]' && r.j.answer.story.indexOf("1 triệu") > 0, "lưu chia sẻ (bỏ lựa chọn không có trong danh sách)");
+  r = await call("POST", "/api/program-join", { t: tB, op: "answer", opts: ["Xử lý lời từ chối"], story: "Đã sửa" }); ok(r.j.answer.opts[0] === "Xử lý lời từ chối" && r.j.answer.story === "Đã sửa" && r.j.answer.expect === "", "gửi lại = cập nhật");
+  r = await call("GET", "/api/kt-program?op=detail&id=" + id, null, A);
+  ok(r.j.answers.T030000475 && r.j.answers.T030000475.story === "Đã sửa" && r.j.program.answered === 1, "quản trị thấy câu trả lời + số người đã chia sẻ");
+  r = await call("POST", "/api/kt-program", { op: "save", program: { title: "Lớp không hỏi", ask: false } }, A); const id2 = r.j.program.id;
+  r = await call("POST", "/api/kt-program", { op: "send", id: id2, codes: ["T030000475"] }, A);
+  const t2 = tok((await box()).filter((x) => x.to === "bach@livotec.vn").pop()); await call("POST", "/api/program-join", { t: t2, op: "join" });
+  r = await call("POST", "/api/program-join", { t: t2, op: "answer", expect: "x" }); ok(r.s === 400, "chương trình tắt câu hỏi -> không nhận chia sẻ");
+  r = await call("GET", "/api/program-join?t=" + encodeURIComponent(t2)); ok(r.j.ask === null, "tắt câu hỏi -> trang không hiện khung chia sẻ");
+  await call("POST", "/api/kt-program", { op: "delete", id: id2 }, A);
   r = await call("GET", "/api/kt-program?op=detail&id=" + id, null, A);
   ok(Object.keys(r.j.regs).join() === "T030000475,T030000535" && r.j.cancels.T030000526 && Object.keys(r.j.invited).length === 3, "quản trị thấy đúng: 2 đăng ký, 1 huỷ, 3 đã mời");
   await call("POST", "/api/kt-program", { op: "setStatus", id, status: "closed" }, A);
