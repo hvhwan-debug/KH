@@ -505,7 +505,7 @@ function loadFA(){
   FA.p = new Promise(function(res, rej){
     if (window.faceapi && window.faceapi.nets && window.faceapi.nets.tinyFaceDetector.isLoaded) return res(window.faceapi);
     var go = async function(){
-      try { var tf = window.faceapi.tf, ok = false; try { ok = await tf.setBackend('webgl'); } catch (e) {} if (!ok) await tf.setBackend('cpu'); await tf.ready();
+      try { var tf = window.faceapi.tf, ok = false, isIOS = (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)); /* iOS: WebGL 16-bit cho toạ độ NaN (Box.constructor null) -> dùng CPU */ if (!isIOS) { try { ok = await tf.setBackend('webgl'); } catch (e) {} } if (!ok) await tf.setBackend('cpu'); await tf.ready();
         await window.faceapi.nets.tinyFaceDetector.loadFromUri('/kiemtra/vendor/face-api/model'); res(window.faceapi); } catch (e) { rej(e); }
     };
     if (window.faceapi) return go();
