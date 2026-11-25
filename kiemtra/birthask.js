@@ -34,13 +34,13 @@
     css(); open = true;
     var ov = document.createElement('div'); ov.className = 'kba-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Cập nhật ngày sinh');
     var y0 = new Date().getFullYear() - 16;
-    ov.innerHTML = '<div class="kba-card"><div class="kba-ic" aria-hidden="true">🎂</div><h2>Cho hệ thống biết ngày sinh của bạn nhé</h2>' +
-      '<p>Để gửi lời chúc mừng sinh nhật đến bạn. Thông tin này chỉ dùng cho việc chúc mừng.</p>' +
+    ov.innerHTML = '<div class="kba-card"><div class="kba-ic" aria-hidden="true">🎂</div><h2>Chúng tôi muốn hiểu bạn hơn!</h2>' +
+      '<p>Chia sẻ ngày sinh để chúng tôi cá nhân hoá trải nghiệm và dành tặng bạn những điều thú vị, bắt đầu từ lời chúc mừng đúng ngày sinh nhật của bạn.</p>' +
       '<div class="kba-row"><label>Ngày<select id="kbaD">' + opts(1, 31, '—') + '</select></label><label>Tháng<select id="kbaM">' + opts(1, 12, '—') + '</select></label><label>Năm<select id="kbaY">' + opts(y0, 1950, '—') + '</select></label></div>' +
       '<div class="kba-msg" id="kbaMsg" role="alert"></div>' +
       '<button type="button" class="kba-btn kba-ok" id="kbaSave">Lưu ngày sinh</button>' +
       '<button type="button" class="kba-btn kba-later" id="kbaLater">Để sau</button>' +
-      '<div class="kba-note">Bạn có thể bỏ qua, hôm sau hệ thống sẽ hỏi lại.</div></div>';
+      '<div class="kba-note">Ngày sinh chỉ dùng để gửi lời chúc mừng sinh nhật. Bạn có thể bỏ qua, hôm sau hệ thống sẽ hỏi lại.</div></div>';
     document.body.appendChild(ov);
     var $ = function(id){ return document.getElementById(id); };
     if (b.md && /^\d{2}-\d{2}$/.test(b.md)){ $('kbaM').value = String(parseInt(b.md.slice(0, 2), 10)); $('kbaD').value = String(parseInt(b.md.slice(3), 10)); } // đã có ngày/tháng: chỉ xin thêm năm
@@ -61,7 +61,7 @@
       fetch('/api/kt-birth', { method:'POST', headers:{ 'Content-Type':'application/json', 'X-Requested-With':'livotec' }, credentials:'same-origin', body: JSON.stringify({ tok: b.tok, birth: iso }) })
         .then(function(r){ return r.json().catch(function(){ return {}; }); })
         .then(function(j){
-          if (j && j.ok){ clearSkip(); ov.querySelector('.kba-card').innerHTML = '<div class="kba-ic" aria-hidden="true">🎉</div><h2>Cảm ơn bạn!</h2><p style="margin:0">Hệ thống sẽ gửi lời chúc mừng đúng ngày sinh nhật của bạn.</p>'; setTimeout(close, 2200); return; }
+          if (j && j.ok){ clearSkip(); ov.querySelector('.kba-card').innerHTML = '<div class="kba-ic" aria-hidden="true">🎉</div><h2>Cảm ơn bạn đã chia sẻ!</h2><p style="margin:0">Hẹn gặp bạn vào ngày sinh nhật với một lời chúc thật đặc biệt nhé 🎁</p>'; setTimeout(close, 2200); return; }
           btn.disabled = false; msg.textContent = (j && j.error) || 'Không lưu được, vui lòng thử lại.';
           if (j && j.expired){ btn.style.display = 'none'; }
         })
