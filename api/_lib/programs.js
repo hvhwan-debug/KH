@@ -208,6 +208,7 @@ async function inviteMail(p, cand, stats) {
   const seats = p.capacity ? (left > 0 ? (left <= Math.max(3, Math.ceil(p.capacity * 0.2)) ? '🔥 Chỉ còn <b style="color:#C2410C">' + left + ' chỗ</b>' : 'Còn <b style="color:' + C.navy + '">' + left + '/' + p.capacity + ' chỗ</b>') : '<b>Đã đủ chỗ</b>') + (taken ? ' · ' + taken + ' đồng nghiệp đã đăng ký' : '')
     : (taken ? taken + ' đồng nghiệp đã đăng ký' : '');
   const contactName = p.contact || org;
+  const fm = (function () { const h = require("./honorific").honorific(cand.name) || "Anh/Chị", nm = String(cand.name || "").trim(); return { h, to: nm ? h + " " + nm : h }; })();
   const infoAlt = [when.main ? "Thời gian: " + [when.main, when.sub].filter(Boolean).join(", ") : "", where.main ? "Hình thức: " + [where.main, where.sub].filter(Boolean).join(", ") : "", p.audience ? "Đối tượng: " + p.audience : "",
     p.deadline ? "Hạn đăng ký: trước " + vnTime(p.deadline) : "", p.phone ? "Liên hệ: " + p.phone : ""].filter(Boolean).join(" · ");
   const html = '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">' +
@@ -242,15 +243,22 @@ async function inviteMail(p, cand, stats) {
       '</td></tr></table></td></tr></table></td></tr>' : '') +
     // ký tên
     '<tr><td class="pad" style="padding:22px 36px 8px;font-size:14.5px;line-height:1.6;color:' + C.ink + '">Trân trọng,<br><b style="color:' + C.navy + '">' + esc(org) + '</b></td></tr>' +
-    '<tr><td class="pad" style="padding:14px 36px 26px;font-size:11.5px;line-height:1.6;color:#98A6BE">Thư mời dành riêng cho ' + esc(cand.name || cand.code) + ' (mã NV ' + esc(cand.code) + '), vui lòng không chuyển tiếp. Không muốn tham gia thì chỉ cần bỏ qua email này.' +
-      '<br>Nút không bấm được? Mở liên kết: <a href="' + esc(url) + '" style="color:' + C.brand + ';word-break:break-all">' + esc(url) + '</a></td></tr>' +
+    // chân thư: xưng hô trang trọng "Anh/Chị <họ tên>" (chắc chắn thì "Anh"/"Chị"), liên kết dự phòng dạng chữ
+    '<tr><td class="pad" style="padding:14px 36px 26px"><div style="border-top:1px solid ' + C.line + ';padding-top:14px;font-size:12px;line-height:1.7;color:#7C8AA5">' +
+      'Thư mời này được gửi riêng đến ' + esc(fm.to) + ' (Mã nhân viên: ' + esc(cand.code) + '). Vui lòng không chuyển tiếp email này cho người khác.<br>' +
+      'Nếu ' + esc(fm.h) + ' không có nhu cầu tham gia chương trình, vui lòng bỏ qua email này.<br>' +
+      'Trong trường hợp không thể nhấn nút đăng ký, ' + esc(fm.h) + ' vui lòng truy cập đường dẫn dưới đây để đăng ký:<br>' +
+      '<a href="' + esc(url) + '" target="_blank" style="color:' + C.brand + ';font-weight:700;text-decoration:underline">Liên kết đăng ký chương trình</a></div></td></tr>' +
     '</table></td></tr></table></body></html>';
   // chỉ gắn biểu tượng THỰC SỰ có trong thư (các ô thời gian / địa điểm / liên hệ đã nằm trong thẻ thông tin thì không gắn nữa)
   if (I) Object.keys(used).filter((k) => html.indexOf("cid:pg-" + k + '"') >= 0).forEach((k) => atts.push({ filename: k + ".png", content: I[k], contentType: "image/png", cid: "pg-" + k }));
   const text = "Chào " + np.call + ",\n" + org + " trân trọng mời " + np.call + " đăng ký tham gia" + (named ? " " : " chương trình ") + p.title + "\n" + (D.intro.length ? D.intro.join("\n") + "\n" : "") + "\n" +
     [["Thời gian", [when.main, when.sub].filter(Boolean).join(" – ")], ["Hình thức / địa điểm", [where.main, where.sub].filter(Boolean).join(" – ")], ["Đối tượng", p.audience], ["Người chia sẻ", p.speaker], ["Hạn đăng ký", p.deadline ? "trước " + vnTime(p.deadline) : ""]].filter((r) => r[1]).map((r) => r[0] + ": " + r[1]).join("\n") +
     "\n\nĐĂNG KÝ THAM GIA NGAY (chỉ 1 lần bấm):\n" + url + "\n\nVì sao nên tham gia?\n" + gains.map((g) => "  • " + g).join("\n") +
-    ((p.phone || p.email) ? "\n\nLiên hệ: " + contactName + [p.phone ? " · ĐT " + p.phone : "", p.email ? " · " + p.email : ""].join("") : "") + "\n\nTrân trọng,\n" + org;
+    ((p.phone || p.email) ? "\n\nLiên hệ: " + contactName + [p.phone ? " · ĐT " + p.phone : "", p.email ? " · " + p.email : ""].join("") : "") + "\n\nTrân trọng,\n" + org +
+    "\n\n---\nThư mời này được gửi riêng đến " + fm.to + " (Mã nhân viên: " + cand.code + "). Vui lòng không chuyển tiếp email này cho người khác.\n" +
+    "Nếu " + fm.h + " không có nhu cầu tham gia chương trình, vui lòng bỏ qua email này.\n" +
+    "Trong trường hợp không thể nhấn nút đăng ký, " + fm.h + " vui lòng truy cập đường dẫn dưới đây để đăng ký:\n" + url;
   const subject = "Thư mời đăng ký chương trình đào tạo dành cho " + np.call + ": " + p.title + (left != null && left > 0 && left <= Math.max(3, Math.ceil(p.capacity * 0.2)) ? " (chỉ còn " + left + " chỗ)" : "");
   let previewHtml = html; atts.forEach((a) => { previewHtml = previewHtml.split("cid:" + a.cid).join("data:" + a.contentType + ";base64," + a.content.toString("base64")); });
   return { subject, html, text, attachments: atts.length ? atts : undefined, previewHtml };
