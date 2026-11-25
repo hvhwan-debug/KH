@@ -1039,7 +1039,9 @@ body.introbg .btn.go:active{transform:scale(.99)}
   body.introbg .lp-nav button{padding:8px 9px;font-size:12px}
   body.introbg .lp-nav a{padding:8px 9px;font-size:12px}
   body.introbg .wrap{min-height:calc(100vh - 66px)}
-  body.introbg .stage{grid-template-columns:1fr;gap:6px;padding:16px 0 26px;width:92vw}
+  body.introbg .stage{grid-template-columns:minmax(0,1fr);gap:6px;padding:16px 0 26px;width:92vw}
+  /* mọi khối con của lưới được phép co lại, nếu không dòng chữ dài sẽ kéo giãn cột và tràn khỏi màn hình */
+  body.introbg .stage>*{min-width:0;max-width:100%}
   body.introbg .hero{max-width:none;padding:10px 4px 14px}
   body.introbg .eyebrow{background:none;box-shadow:none;padding:0;border-radius:0;color:#0878e8;font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
   body.introbg .eyebrow i{display:none}
@@ -1864,8 +1866,8 @@ body.exam .who{display:flex;align-items:center;gap:10px;margin-left:auto;flex:0 
 .sline{display:none}
 @media(max-width:860px){
   body[data-scr="check"] .hero .sched{display:none!important}
-  body[data-scr="check"] .hero .sline:not(.hide){display:flex;align-items:center;gap:8px;margin:6px 0 0;font-size:14px;line-height:1.35;font-weight:500;color:#33496E;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
-  body[data-scr="check"] .hero .sline span{overflow:hidden;text-overflow:ellipsis}
+  body[data-scr="check"] .hero .sline:not(.hide){display:flex;align-items:center;gap:8px;margin:6px 0 0;font-size:14px;line-height:1.35;font-weight:500;color:#33496E;font-variant-numeric:tabular-nums;white-space:normal;min-width:0;overflow:hidden}
+  body[data-scr="check"] .hero .sline span{min-width:0;overflow-wrap:anywhere}
   body[data-scr="check"] .hero .sline em{font-style:normal;font-weight:800}
   body[data-scr="check"] .hero .sline b{font-weight:800;color:#0B1F4B}
   body[data-scr="check"] .hero .sline i{flex:0 0 auto;width:9px;height:9px;border-radius:50%;background:#F5A524;box-shadow:0 0 0 3px rgba(245,165,36,.2)}
