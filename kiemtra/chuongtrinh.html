@@ -518,6 +518,8 @@ table.t td input[type=checkbox],table.t th input[type=checkbox]{width:17px;heigh
     <div><label for="fCt">Đầu mối liên hệ</label><input id="fCt" maxlength="200" placeholder="Đào tạo Kinh doanh GT"></div>
     <div><label for="fPh">Điện thoại liên hệ</label><input id="fPh" maxlength="40" placeholder="0846 793 993"></div>
     <div><label for="fEm">Email liên hệ</label><input id="fEm" type="email" maxlength="120" placeholder="daotao.gt@karofi.com.vn"></div>
+    <div class="full" style="border-top:1px dashed var(--line);padding-top:12px"><label class="sw" style="display:flex;align-items:flex-start;gap:8px;font-size:13.5px;font-weight:700;color:var(--navy)"><input type="checkbox" id="fLive" checked style="width:18px;height:18px;margin-top:1px;flex:none"> Thông tin trong thư tự cập nhật theo hệ thống</label>
+      <div class="hint">Bật: ảnh đầu thư và thẻ thông tin (thời gian, hình thức, đối tượng, hạn, số chỗ còn lại, liên hệ, trạng thái đóng/hết hạn) được máy chủ vẽ lại mỗi lần người nhận mở thư, nên sửa ở đây thì thư đã gửi cũng đổi theo. Outlook bản cài máy tính có thể cần bấm “Tải hình ảnh”. Tắt: ảnh gắn cố định vào thư lúc gửi.</div></div>
     <div class="askw" id="askW"><label class="sw"><input type="checkbox" id="fAsk" checked> Sau khi đăng ký, hỏi kỳ vọng và tình huống muốn chia sẻ (không bắt buộc với học viên)</label>
       <div class="frm askf" style="grid-template-columns:1fr">
         <div><label for="fQ1">Câu hỏi kỳ vọng</label><input id="fQ1" maxlength="200"></div>
@@ -683,12 +685,13 @@ function openForm(p){
   $('fT').value = p ? p.title : ''; $('fD').value = p ? p.desc || '' : ''; $('fW').value = p ? p.when || '' : ''; $('fP').value = p ? p.where || '' : '';
   $('fDl').value = p ? toLocal(p.deadline) : ''; $('fC').value = p && p.capacity ? p.capacity : ''; $('fCt').value = p ? p.contact || '' : ''; $('fSp').value = p ? p.speaker || '' : '';
   $('fTg').value = p ? p.tagline || '' : ''; $('fAu').value = p ? p.audience || '' : ''; $('fOrg').value = p ? p.org || '' : ''; $('fPh').value = p ? p.phone || '' : ''; $('fEm').value = p ? p.email || '' : '';
+  $('fLive').checked = !(p && p.live === false);
   var AD = S.askDefault || {}; $('fAsk').checked = !(p && p.ask === false); $('fQ1').value = (p && p.q1) || AD.q1 || ''; $('fQ2').value = (p && p.q2) || AD.q2 || '';
   $('fOpts').value = ((p && p.opts) || AD.opts || []).join('\n'); $('askW').classList.toggle('off', !$('fAsk').checked);
   $('dlg').classList.remove('hide'); $('fT').focus();
 }
 async function saveForm(){
-  var prog = { id: S.editId || undefined, title: $('fT').value.trim(), desc: $('fD').value.trim(), when: $('fW').value.trim(), where: $('fP').value.trim(), deadline: fromLocal($('fDl').value), capacity: +$('fC').value || 0, contact: $('fCt').value.trim(), speaker: $('fSp').value.trim(), tagline: $('fTg').value.trim(), audience: $('fAu').value.trim(), org: $('fOrg').value.trim(), phone: $('fPh').value.trim(), email: $('fEm').value.trim(), ask: $('fAsk').checked, q1: $('fQ1').value.trim(), q2: $('fQ2').value.trim(), opts: $('fOpts').value.split('\n').map(function(x){ return x.trim(); }).filter(Boolean), status: S.editId && S.cur ? S.cur.status : 'open' };
+  var prog = { id: S.editId || undefined, title: $('fT').value.trim(), desc: $('fD').value.trim(), when: $('fW').value.trim(), where: $('fP').value.trim(), deadline: fromLocal($('fDl').value), capacity: +$('fC').value || 0, contact: $('fCt').value.trim(), speaker: $('fSp').value.trim(), live: $('fLive').checked, tagline: $('fTg').value.trim(), audience: $('fAu').value.trim(), org: $('fOrg').value.trim(), phone: $('fPh').value.trim(), email: $('fEm').value.trim(), ask: $('fAsk').checked, q1: $('fQ1').value.trim(), q2: $('fQ2').value.trim(), opts: $('fOpts').value.split('\n').map(function(x){ return x.trim(); }).filter(Boolean), status: S.editId && S.cur ? S.cur.status : 'open' };
   if (!prog.title){ $('dlgMsg').innerHTML = '<div class="msg r">Vui lòng nhập tên chương trình.</div>'; return; }
   $('dlgOk').disabled = true; var r = await api('POST', '/api/kt-program', { op:'save', program:prog }); $('dlgOk').disabled = false;
   if (!r.j.ok){ $('dlgMsg').innerHTML = '<div class="msg r">' + esc(r.j.error || 'Không lưu được.') + '</div>'; return; }

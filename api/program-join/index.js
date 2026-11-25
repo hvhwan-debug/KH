@@ -8,7 +8,8 @@ function view(p, R, t, extra) {
   const left = p.capacity ? Math.max(0, p.capacity - Object.keys(R.regs).length) : null;
   return Object.assign({
     ok: true,
-    program: { title: p.title, desc: p.desc, when: p.when, where: p.where, contact: p.contact, deadline: p.deadline || 0, capacity: p.capacity || 0, left },
+    program: { title: p.title, desc: p.desc, when: p.when, where: p.where, contact: p.contact, deadline: p.deadline || 0, capacity: p.capacity || 0, left,
+      audience: p.audience || "", speaker: p.speaker || "", phone: p.phone || "", email: p.email || "", org: p.org || "" },
     name: (R.invited[t.code] || R.regs[t.code] || {}).name || "", code: t.code,
     state: P.stateOf(p, R, t.code), regAt: (R.regs[t.code] || {}).at || 0,
     ask: p.ask === false ? null : { q1: p.q1 || P.ASK_DEFAULT.q1, q2: p.q2 || P.ASK_DEFAULT.q2, opts: p.opts || P.ASK_DEFAULT.opts },

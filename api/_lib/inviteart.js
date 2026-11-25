@@ -118,4 +118,59 @@ async function icons() {
   for (const n of NAMES) out[n] = await icon(n, n === "phone" ? 104 : 96);
   ICONS = out; return out;
 }
-module.exports = { hero, icons, NAMES };
+// ---------- thẻ thông tin chương trình (vẽ lại MỖI LẦN người nhận mở thư, theo dữ liệu mới nhất) ----------
+// p: chương trình hiện tại; st: { taken, state: "open"|"closed"|"expired"|"full"|"gone" }
+const SP = (s) => { const x = String(s || "").split("|").map((v) => v.trim()).filter(Boolean); return { main: x[0] || "", sub: x.slice(1).join(" · ") }; };
+function vnTime(ms) { const d = new Date(ms + 7 * 3600e3), p = (n) => String(n).padStart(2, "0"); return p(d.getUTCHours()) + ":" + p(d.getUTCMinutes()) + " ngày " + p(d.getUTCDate()) + "/" + p(d.getUTCMonth() + 1) + "/" + d.getUTCFullYear(); }
+function leftText(ms) { const d = ms - Date.now(); if (d <= 0) return ""; const days = Math.floor(d / 864e5), h = Math.floor(d / 36e5); return days >= 1 ? "còn " + days + " ngày" : h >= 1 ? "chỉ còn " + h + " giờ" : "sắp hết hạn"; }
+async function infoCard(p, st) {
+  const { createCanvas, loadImage } = lib(), I = await icons(), W = 720, PADX = 34;
+  st = st || {};
+  const rows = [];
+  if (st.state === "gone") rows.push({ banner: ["CHƯƠNG TRÌNH KHÔNG CÒN TỔ CHỨC", "#B6372E", "#FDECEA"] });
+  else if (st.state === "closed") rows.push({ banner: ["ĐÃ ĐÓNG ĐĂNG KÝ", "#B6372E", "#FDECEA"] });
+  else if (st.state === "expired") rows.push({ banner: ["ĐÃ HẾT HẠN ĐĂNG KÝ", "#B45309", "#FFF4DE"] });
+  else if (st.state === "full") rows.push({ banner: ["ĐÃ ĐỦ CHỖ", "#B45309", "#FFF4DE"] });
+  if (st.state !== "gone") {
+    const w = SP(p.when), wh = SP(p.where);
+    if (w.main) rows.push({ ic: "calendar", label: "THỜI GIAN", main: w.main, sub: w.sub });
+    if (wh.main) rows.push({ ic: "pin", label: "HÌNH THỨC / ĐỊA ĐIỂM", main: wh.main, sub: wh.sub });
+    if (p.audience) rows.push({ ic: "people", label: "ĐỐI TƯỢNG THAM GIA", main: p.audience });
+    if (p.speaker) rows.push({ ic: "group", label: "NGƯỜI CHIA SẺ", main: p.speaker });
+    if (p.deadline) rows.push({ ic: "clock", label: "THỜI HẠN ĐĂNG KÝ", main: "Trước " + vnTime(p.deadline), hot: st.state === "open" ? leftText(p.deadline) : "" });
+    if (p.capacity) { const left = Math.max(0, p.capacity - (st.taken || 0)); rows.push({ ic: "target", label: "SỐ CHỖ", main: left > 0 ? "Còn " + left + " / " + p.capacity + " chỗ" : "Đã đủ " + p.capacity + " chỗ", sub: st.taken ? st.taken + " đồng nghiệp đã đăng ký" : "", hot: left > 0 && left <= Math.max(3, Math.ceil(p.capacity * 0.2)) ? "sắp hết chỗ" : "" }); }
+    else if (st.taken) rows.push({ ic: "group", label: "ĐÃ ĐĂNG KÝ", main: st.taken + " đồng nghiệp" });
+    const ct = [p.phone ? "ĐT " + p.phone : "", p.email || ""].filter(Boolean).join("  ·  ");
+    if (p.contact || ct) rows.push({ ic: "phone", label: "LIÊN HỆ", main: p.contact || p.org || "", sub: ct });
+  }
+  // đo chiều cao
+  const m = createCanvas(10, 10).getContext("2d"), TW = W - PADX * 2 - 92;
+  rows.forEach((r) => {
+    if (r.banner) { r.h = 74; return; }
+    m.font = F(700, 28); r.ml = wrap(m, r.main, TW - (r.hot ? 0 : 0)); m.font = F(400, 22); r.sl = r.sub ? wrap(m, r.sub, TW) : [];
+    r.h = 30 + 24 + r.ml.length * 36 + r.sl.length * 30 + (r.hot ? 32 : 0) + 22;
+  });
+  const H = 24 + rows.reduce((a, r) => a + r.h, 0) + 14;
+  const cv = createCanvas(W, H), c = cv.getContext("2d");
+  rr(c, 0, 0, W, H, 26); c.fillStyle = "#F1F6FD"; c.fill();
+  let y = 24;
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    if (r.banner) { rr(c, PADX, y + 8, W - PADX * 2, 56, 14); c.fillStyle = r.banner[2]; c.fill(); c.fillStyle = r.banner[1]; c.font = F(800, 26); c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(r.banner[0], W / 2, y + 37); c.textAlign = "left"; y += r.h; continue; }
+    if (i && !rows[i - 1].banner) { c.fillStyle = "#DCE6F4"; c.fillRect(PADX, y, W - PADX * 2, 2); }
+    const img = await loadImage(I[r.ic]); c.drawImage(img, PADX, y + 30, 60, 60);
+    let ty = y + 30; c.textBaseline = "top"; const X = PADX + 92;
+    c.fillStyle = "#6B7A96"; c.font = F(600, 19); c.fillText(r.label, X, ty); ty += 28;
+    c.fillStyle = NAVY; c.font = F(700, 28); r.ml.forEach((l) => { c.fillText(l, X, ty); ty += 36; });
+    c.fillStyle = "#33425E"; c.font = F(400, 22); r.sl.forEach((l) => { c.fillText(l, X, ty + 2); ty += 30; });
+    if (r.hot) { c.font = F(700, 21); const tw = c.measureText(r.hot).width + 24; rr(c, X, ty + 4, tw, 30, 15); c.fillStyle = "#FFEDD5"; c.fill(); c.fillStyle = "#C2410C"; c.fillText(r.hot, X + 12, ty + 8); }
+    y += r.h;
+  }
+  return cv.encode("png");
+}
+async function goneHero() {
+  const { createCanvas } = lib(), cv = createCanvas(1200, 300), c = cv.getContext("2d");
+  c.fillStyle = "#EEF2F8"; c.fillRect(0, 0, 1200, 300); c.fillStyle = "#6B7A96"; c.font = F(700, 40); c.textAlign = "center"; c.textBaseline = "middle";
+  c.fillText("Chương trình này không còn tổ chức", 600, 150); return cv.encode("jpeg", 85);
+}
+module.exports = { hero, icons, NAMES, infoCard, goneHero };

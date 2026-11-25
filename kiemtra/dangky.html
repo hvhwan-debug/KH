@@ -82,8 +82,10 @@ function api(method, body){
     .then(function(r){ return r.json().catch(function(){ return { ok:false, error:'Máy chủ không phản hồi, vui lòng thử lại.' }; }); }, function(){ return { ok:false, error:'Không kết nối được máy chủ. Kiểm tra mạng rồi mở lại liên kết trong email.' }; });
 }
 function progBox(p){
-  var rows = [['Thời gian', p.when], ['Địa điểm / hình thức', p.where], ['Hạn đăng ký', p.deadline ? vn(p.deadline) : ''], ['Chỗ còn lại', p.capacity ? p.left + ' / ' + p.capacity : ''], ['Liên hệ', p.contact]].filter(function(r){ return r[1] !== '' && r[1] != null; });
-  return '<div class="prog"><div class="t">' + esc(p.title) + '</div>' + (p.desc ? '<p class="d">' + esc(p.desc) + '</p>' : '') +
+  var pp = function(s){ return String(s || '').split('|').map(function(x){ return x.trim(); }).filter(Boolean).join(' · '); };
+  var rows = [['Thời gian', pp(p.when)], ['Hình thức / địa điểm', pp(p.where)], ['Đối tượng', p.audience], ['Người chia sẻ', p.speaker], ['Hạn đăng ký', p.deadline ? vn(p.deadline) : ''], ['Chỗ còn lại', p.capacity ? p.left + ' / ' + p.capacity : ''], ['Liên hệ', [p.contact || p.org, p.phone, p.email].filter(Boolean).join(' · ')]].filter(function(r){ return r[1] !== '' && r[1] != null; });
+  return '<div class="prog"><div class="t">' + esc(p.title) + '</div>' + (function(){ var L = String(p.desc || '').split(/\r?\n/).map(function(s){ return s.trim(); }).filter(Boolean), it = L.filter(function(s){ return !/^[-•+*]/.test(s); }), g = L.filter(function(s){ return /^[-•+*]/.test(s); }).map(function(s){ return s.replace(/^[-•+*]\s*/, ''); });
+      return (it.length ? '<p class="d">' + esc(it.join('\n')) + '</p>' : '') + (g.length ? '<ul style="margin:8px 0 0;padding-left:18px;font-size:14px;line-height:1.6">' + g.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : ''); })() +
     (rows.length ? '<dl>' + rows.map(function(r){ return '<dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '</dl>' : '') + '</div>';
 }
 function show(kind, title, lead, extra){

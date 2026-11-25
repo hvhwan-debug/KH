@@ -34,6 +34,7 @@ function clean(b, old) {
     id: (old && old.id) || "p" + Date.now().toString(36) + require("crypto").randomBytes(2).toString("hex"),
     title, desc: clip(b.desc, 2000), when: clip(b.when, 200), where: clip(b.where, 200),
     contact: clip(b.contact, 200), speaker: clip(b.speaker, 150),
+    live: b.live === false ? false : true,
     org: clip(b.org, 120), tagline: clip(b.tagline, 140), audience: clip(b.audience, 200), phone: clip(b.phone, 40), email: clip(b.email, 120),
     ask: b.ask === false ? false : true,
     q1: clip(b.q1, 200) || ASK_DEFAULT.q1, q2: clip(b.q2, 200) || ASK_DEFAULT.q2,
@@ -182,7 +183,13 @@ async function inviteMail(p, cand, stats) {
   const atts = [], cid = (k) => "cid:pg-" + k;
   let hero = null, I = null;
   try { const A = require("./inviteart"); hero = await A.hero(p); I = await A.icons(); } catch (e) { hero = null; I = null; }
-  if (hero) atts.push({ filename: "thu-moi.jpg", content: hero, contentType: "image/jpeg", cid: "pg-hero" });
+  const live = p.live !== false && !!cfg().appUrl;
+  const liveUrl = (k) => { const s = require("../program-img/index.js").sig(p.id); return cfg().appUrl + "/api/program-img?p=" + encodeURIComponent(p.id) + "&k=" + k + "&s=" + s; };
+  let info = null;
+  if (!live) { try { const R = await regs(p.id); info = await require("./inviteart").infoCard(p, { taken: Object.keys(R.regs).length, state: stateOf(p, R, "") }); } catch (e) { info = null; } }
+  if (hero && !live) atts.push({ filename: "thu-moi.jpg", content: hero, contentType: "image/jpeg", cid: "pg-hero" });
+  if (info) atts.push({ filename: "thong-tin.png", content: info, contentType: "image/png", cid: "pg-info" });
+  const heroSrc = live ? liveUrl("hero") : cid("hero"), infoSrc = live ? liveUrl("info") : (info ? cid("info") : "");
   const used = {};
   const img = (k, w, extra) => { if (!I || !I[k]) return ""; used[k] = 1; return '<img src="' + cid(k) + '" width="' + w + '" height="' + w + '" alt="" style="display:block;width:' + w + 'px;height:' + w + 'px;border:0' + (extra || "") + '">'; };
   const when = splitPipe(p.when), where = splitPipe(p.where);
@@ -196,11 +203,13 @@ async function inviteMail(p, cand, stats) {
   const reason = (g, i) => '<td class="rs" width="' + Math.floor(100 / gains.length) + '%" valign="top" align="center" style="padding:6px 10px 4px;' + (i ? 'border-left:1px solid #D5E1F2;' : '') + '">' +
     '<div style="width:46px;margin:0 auto">' + img(gIc[i], 46) + '</div><div style="margin-top:12px;font-size:13.5px;line-height:1.5;color:' + C.ink + '">' + esc(g) + '</div></td>';
   const named = /^(chương trình|khoá|khóa|lớp|buổi|hội thảo|workshop)(?=\s|$)/i.test(String(p.title).normalize("NFC").trim()); // (\b không dùng được với chữ có dấu) // tên đã nói rõ loại: không lặp "chương trình"
-  const intro = esc(org) + ' trân trọng mời ' + esc(np.call) + ' đăng ký tham gia ' + (named ? '' : 'chương trình ') + '<b style="color:' + C.navy + '">' + esc(p.title) + '</b>.' +
+  const intro = esc(org) + ' trân trọng mời ' + esc(np.call) + (live ? ' đăng ký tham gia chương trình đào tạo dưới đây.' : ' đăng ký tham gia ' + (named ? '' : 'chương trình ') + '<b style="color:' + C.navy + '">' + esc(p.title) + '</b>.') +
     (D.intro.length ? '<br>' + D.intro.map(esc).join('<br>') : '');
   const seats = p.capacity ? (left > 0 ? (left <= Math.max(3, Math.ceil(p.capacity * 0.2)) ? '🔥 Chỉ còn <b style="color:#C2410C">' + left + ' chỗ</b>' : 'Còn <b style="color:' + C.navy + '">' + left + '/' + p.capacity + ' chỗ</b>') : '<b>Đã đủ chỗ</b>') + (taken ? ' · ' + taken + ' đồng nghiệp đã đăng ký' : '')
     : (taken ? taken + ' đồng nghiệp đã đăng ký' : '');
   const contactName = p.contact || org;
+  const infoAlt = [when.main ? "Thời gian: " + [when.main, when.sub].filter(Boolean).join(", ") : "", where.main ? "Hình thức: " + [where.main, where.sub].filter(Boolean).join(", ") : "", p.audience ? "Đối tượng: " + p.audience : "",
+    p.deadline ? "Hạn đăng ký: trước " + vnTime(p.deadline) : "", p.phone ? "Liên hệ: " + p.phone : ""].filter(Boolean).join(" · ");
   const html = '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">' +
     '<style>@media only screen and (max-width:560px){.pad{padding-left:20px!important;padding-right:20px!important}.tl{display:block!important;width:100%!important;padding:0 0 12px!important}.tls{padding:0 20px!important}.rs{display:inline-block!important;width:46%!important;border-left:0!important;padding:10px 2%!important}.cta a{padding:17px 26px!important;font-size:16px!important}.ft td{display:block!important}}</style></head>' +
     '<body style="margin:0;padding:0;background:#EEF3FA">' +
@@ -208,28 +217,26 @@ async function inviteMail(p, cand, stats) {
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EEF3FA"><tr><td align="center" style="padding:24px 10px">' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;background:#ffffff;border-radius:18px;border-collapse:separate;overflow:hidden;font-family:' + FF + ';color:' + C.body + '">' +
     // ảnh đầu thư
-    '<tr><td style="padding:0;background:#EAF2FD">' + (hero ? '<img src="' + cid("hero") + '" width="640" alt="Thư mời tham gia: ' + esc(p.title) + '" style="display:block;width:100%;max-width:640px;height:auto;border:0">'
+    '<tr><td style="padding:0;background:#EAF2FD">' + ((hero || live) ? '<img src="' + esc(heroSrc) + '" width="640" alt="Thư mời tham gia: ' + esc(p.title) + '" style="display:block;width:100%;max-width:640px;height:auto;border:0">'
       : '<div style="padding:34px 32px"><div style="display:inline-block;background:#DCE8FB;color:' + C.brand + ';font-weight:700;font-size:12px;padding:6px 12px;border-radius:8px">THƯ MỜI THAM GIA</div><div style="margin-top:14px;font-size:28px;font-weight:800;color:' + C.navy + ';line-height:1.25">' + esc(p.title) + '</div></div>') + '</td></tr>' +
     // lời chào
     '<tr><td class="pad" style="padding:30px 36px 6px;font-size:16px;line-height:1.65;color:' + C.ink + '">Chào ' + esc(np.call) + ',<br>' + intro + '</td></tr>' +
-    // thời gian / hình thức
-    (tiles.length ? '<tr><td class="tls" style="padding:16px 30px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' + tiles.join("") + '</tr></table></td></tr>' : '') +
-    // đối tượng
-    (p.audience ? '<tr><td class="pad" style="padding:6px 36px 0"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td valign="middle" style="padding:6px 16px 6px 6px">' + img("people", 44) + '</td>' +
-      '<td valign="middle"><div style="font-size:13.5px;font-weight:800;letter-spacing:.04em;color:' + C.navy + '">ĐỐI TƯỢNG THAM GIA</div><div style="margin-top:3px;font-size:15px;color:' + C.body + '">' + esc(p.audience) + '</div></td></tr></table></td></tr>' : '') +
-    (p.speaker ? '<tr><td class="pad" style="padding:10px 36px 0;font-size:14.5px;color:' + C.body + '">🎤 Người chia sẻ: <b style="color:' + C.navy + '">' + esc(p.speaker) + '</b></td></tr>' : '') +
+    // thẻ thông tin: ảnh do máy chủ vẽ lúc mở thư (thời gian, hình thức, đối tượng, người chia sẻ, hạn, số chỗ, liên hệ, trạng thái)
+    (infoSrc ? '<tr><td class="pad" style="padding:18px 36px 0"><img src="' + esc(infoSrc) + '" width="560" alt="' + esc(infoAlt) + '" style="display:block;width:100%;max-width:560px;height:auto;border:0;border-radius:14px;font-size:14px;line-height:1.6;color:' + C.body + '">' +
+      (live ? '<div style="margin-top:8px;font-size:11.5px;color:#98A6BE">ⓘ Thông tin luôn cập nhật theo hệ thống. Không thấy hình? Bấm “Hiển thị hình ảnh” hoặc mở trang đăng ký.</div>' : '') + '</td></tr>'
+      : (tiles.length ? '<tr><td class="tls" style="padding:16px 30px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' + tiles.join("") + '</tr></table></td></tr>' : '')) +
     // nút
     '<tr><td align="center" style="padding:26px 20px 6px"><table role="presentation" cellpadding="0" cellspacing="0" class="cta"><tr><td align="center" bgcolor="' + C.brand + '" style="border-radius:40px;background:' + C.brand + ';background:linear-gradient(180deg,#1E6AD8,#1152B8)">' +
       '<a href="' + esc(url) + '" target="_blank" style="display:inline-block;padding:20px 54px;font-family:' + FF + ';font-size:18px;font-weight:800;letter-spacing:.02em;color:#ffffff;text-decoration:none;border-radius:40px">ĐĂNG KÝ THAM GIA NGAY &nbsp;&rarr;</a></td></tr></table>' +
-      (p.deadline ? '<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr><td valign="middle" style="padding-right:8px">' + img("clock", 20) + '</td><td valign="middle" style="font-size:14.5px;color:' + C.body + '">Thời hạn đăng ký: <b style="color:' + C.navy + '">trước ' + vnTime(p.deadline).replace(" ngày ", " ngày ") + '</b>' + (leftText(p.deadline) ? ' <span style="color:#C2410C;font-weight:700">(' + leftText(p.deadline) + ')</span>' : '') + '</td></tr></table>' : '') +
-      (seats ? '<div style="margin-top:8px;font-size:13.5px;color:' + C.muted + '">' + seats + '</div>' : '') +
+      (p.deadline && !infoSrc ? '<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr><td valign="middle" style="padding-right:8px">' + img("clock", 20) + '</td><td valign="middle" style="font-size:14.5px;color:' + C.body + '">Thời hạn đăng ký: <b style="color:' + C.navy + '">trước ' + vnTime(p.deadline).replace(" ngày ", " ngày ") + '</b>' + (leftText(p.deadline) ? ' <span style="color:#C2410C;font-weight:700">(' + leftText(p.deadline) + ')</span>' : '') + '</td></tr></table>' : '') +
+      (seats && !infoSrc ? '<div style="margin-top:8px;font-size:13.5px;color:' + C.muted + '">' + seats + '</div>' : '') +
       '<div style="margin-top:6px;font-size:12.5px;color:' + C.muted + '">Chỉ cần 1 lần bấm · không cần đăng nhập</div></td></tr>' +
     // vì sao nên tham gia
     '<tr><td class="pad" style="padding:26px 30px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' + C.tile + ';border-radius:16px"><tr><td style="padding:22px 18px 22px">' +
       '<div style="padding:0 14px 14px;font-size:18px;font-weight:800;color:' + C.navy + '">VÌ SAO NÊN THAM GIA?</div>' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' + gains.map(reason).join("") + '</tr></table></td></tr></table></td></tr>' +
     // liên hệ
-    ((p.phone || p.email || p.contact) ? '<tr><td class="pad" style="padding:24px 36px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ' + C.line + '"><tr><td style="padding-top:18px"><table role="presentation" cellpadding="0" cellspacing="0" class="ft"><tr>' +
+    ((p.phone || p.email || p.contact) && !infoSrc ? '<tr><td class="pad" style="padding:24px 36px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ' + C.line + '"><tr><td style="padding-top:18px"><table role="presentation" cellpadding="0" cellspacing="0" class="ft"><tr>' +
       '<td valign="middle" style="padding-right:16px">' + img("phone", 52) + '</td><td valign="middle" style="font-size:13.5px;line-height:1.7;color:' + C.body + '">Mọi thắc mắc vui lòng liên hệ: <b style="color:' + C.navy + '">' + esc(contactName) + '</b><br>' +
       [p.phone ? 'Điện thoại: <b style="color:' + C.navy + '">' + esc(p.phone) + '</b>' : '', p.email ? 'Email: <a href="mailto:' + esc(p.email) + '" style="color:' + C.brand + ';font-weight:700;text-decoration:none">' + esc(p.email) + '</a>' : ''].filter(Boolean).join(' &nbsp;|&nbsp; ') +
       '</td></tr></table></td></tr></table></td></tr>' : '') +
@@ -238,7 +245,8 @@ async function inviteMail(p, cand, stats) {
     '<tr><td class="pad" style="padding:14px 36px 26px;font-size:11.5px;line-height:1.6;color:#98A6BE">Thư mời dành riêng cho ' + esc(cand.name || cand.code) + ' (mã NV ' + esc(cand.code) + '), vui lòng không chuyển tiếp. Không muốn tham gia thì chỉ cần bỏ qua email này.' +
       '<br>Nút không bấm được? Mở liên kết: <a href="' + esc(url) + '" style="color:' + C.brand + ';word-break:break-all">' + esc(url) + '</a></td></tr>' +
     '</table></td></tr></table></body></html>';
-  if (I) Object.keys(used).forEach((k) => atts.push({ filename: k + ".png", content: I[k], contentType: "image/png", cid: "pg-" + k }));
+  // chỉ gắn biểu tượng THỰC SỰ có trong thư (các ô thời gian / địa điểm / liên hệ đã nằm trong thẻ thông tin thì không gắn nữa)
+  if (I) Object.keys(used).filter((k) => html.indexOf("cid:pg-" + k + '"') >= 0).forEach((k) => atts.push({ filename: k + ".png", content: I[k], contentType: "image/png", cid: "pg-" + k }));
   const text = "Chào " + np.call + ",\n" + org + " trân trọng mời " + np.call + " đăng ký tham gia" + (named ? " " : " chương trình ") + p.title + "\n" + (D.intro.length ? D.intro.join("\n") + "\n" : "") + "\n" +
     [["Thời gian", [when.main, when.sub].filter(Boolean).join(" – ")], ["Hình thức / địa điểm", [where.main, where.sub].filter(Boolean).join(" – ")], ["Đối tượng", p.audience], ["Người chia sẻ", p.speaker], ["Hạn đăng ký", p.deadline ? "trước " + vnTime(p.deadline) : ""]].filter((r) => r[1]).map((r) => r[0] + ": " + r[1]).join("\n") +
     "\n\nĐĂNG KÝ THAM GIA NGAY (chỉ 1 lần bấm):\n" + url + "\n\nVì sao nên tham gia?\n" + gains.map((g) => "  • " + g).join("\n") +
