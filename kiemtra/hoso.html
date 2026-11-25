@@ -186,6 +186,21 @@ svg.ch text{font-family:inherit;fill:#5B6B86;font-size:11px}
 @media(max-width:700px){main{padding:12px 12px 50px}.top-in{padding:9px 12px}.kpis,.kpis6{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi .v{font-size:22px}
   .fbar .fs{flex:1 1 100%}.fbar .fld.h{flex:1 1 calc(50% - 5px)}.fbar .fld.h select{width:100%;max-width:none}.card-h,.card-b{padding-left:14px;padding-right:14px}.hb-row{grid-template-columns:minmax(80px,110px) 1fr 48px}
   .ph-card{padding:14px}.tabs button{padding:10px 12px}}
+
+/* ===== Danh sách hồ sơ: bảng rộng hơn, không bị cắt cột, tên không rớt dòng ===== */
+@media(min-width:1500px){main,.top-in{max-width:1840px}}
+@media(min-width:1100px){
+  #secLs table.t th,#secLs table.t td{padding-left:9px;padding-right:9px}
+  #secLs table.t td .nm{white-space:nowrap}
+  #secLs table.t td:nth-child(5),#secLs table.t td:nth-child(7){min-width:130px}
+  #secLs table.t td .chip{white-space:nowrap}
+}
+/* Cột thao tác luôn nằm sát mép phải khi bảng phải cuộn ngang */
+#secLs table.t th:last-child,#secLs table.t td:last-child{position:sticky;right:0;background:#fff;box-shadow:-10px 0 10px -10px rgba(15,37,80,.18)}
+#secLs table.t th:last-child{background:#F7F9FC;z-index:2}
+#secLs table.t tbody tr:hover td:last-child{background:#F8FBFF}
+/* Bóng mờ hai mép báo hiệu còn nội dung để cuộn ngang */
+#secLs .tw{background:linear-gradient(to right,#fff 30%,rgba(255,255,255,0)) 0 0/36px 100% no-repeat local,linear-gradient(to left,#fff 30%,rgba(255,255,255,0)) 100% 0/36px 100% no-repeat local,linear-gradient(to right,rgba(15,37,80,.12),rgba(15,37,80,0)) 0 0/10px 100% no-repeat scroll,linear-gradient(to left,rgba(15,37,80,.12),rgba(15,37,80,0)) 100% 0/10px 100% no-repeat scroll}
 </style>
 <style id="sideCss">
 :root{--side-w:272px;--rail-w:78px}
