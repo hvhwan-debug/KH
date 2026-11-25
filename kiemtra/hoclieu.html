@@ -168,6 +168,8 @@ svg.i{width:1em;height:1em;flex:0 0 auto;fill:none;stroke:currentColor;stroke-wi
 .vx{flex:0 0 auto;display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:50%;background:#EEF4FC;cursor:pointer;color:#1E3F73}
 .vx:hover{background:#DCE9FA}.vx svg.i{font-size:20px}
 .vb{position:relative;flex:1;min-height:0;overflow:auto;background:#0B1730;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.vb .emb{position:relative}
+.vb .gd-shield{position:absolute;top:0;right:14px;width:72px;height:72px;background:#1D1E1F;z-index:2;cursor:default}
 .vb video,.vb iframe{display:block;width:100%;aspect-ratio:16/9;max-height:calc(100vh - 210px);border:0;background:#000}
 .vb.pdf{background:#E9EEF6;padding:14px;text-align:center}
 .vb.pdf canvas{display:block;max-width:100%;height:auto;margin:0 auto 14px;border-radius:6px;box-shadow:0 10px 24px -14px rgba(10,40,100,.6);background:#fff}
@@ -474,7 +476,11 @@ $('vV').addEventListener('click', function(e){
 function play(p, it, seq){
   var b = $('vB');
   if (p.mode === 'embed'){
-    b.innerHTML = '<iframe src="' + esc(p.src) + '" allow="autoplay; encrypted-media; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="' + esc(it.title) + '"></iframe>'; return;
+    var gd = /^https:\/\/drive\.google\.com\//.test(p.src);
+    // Google Drive có nút "Mở trong cửa sổ mới" (góc trên bên phải) nằm trong khung của Google, không xoá được từ trang này:
+    // phủ một lớp cùng màu đúng chỗ nút để che và chặn bấm.
+    b.innerHTML = '<div class="emb"><iframe src="' + esc(p.src) + '" allow="autoplay; encrypted-media; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="' + esc(it.title) + '"></iframe>' +
+      (gd ? '<div class="gd-shield" aria-hidden="true"></div>' : '') + '</div>'; return;
   }
   if (p.mode === 'video'){
     b.innerHTML = '<video controls controlsList="nodownload noplaybackrate noremoteplayback" disablePictureInPicture disableRemotePlayback playsinline preload="metadata" oncontextmenu="return false"><source src="' + esc(p.src) + '"></video>'; return;
