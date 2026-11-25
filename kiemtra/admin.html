@@ -6944,9 +6944,11 @@ async function loadProgress(sel){
   if (PG_INIT !== PG_P || (PG_F === 'doing' && !c0.doing)){ PG_F = c0.doing ? 'doing' : 'none'; PG_INIT = PG_P; }
   const t = new Date(j.serverNow + 7 * 3600 * 1000), p = n => (n < 10 ? '0' : '') + n;
   $('pgUpd').textContent = 'Cập nhật: ' + p(t.getUTCHours()) + ':' + p(t.getUTCMinutes()) + ':' + p(t.getUTCSeconds()) + (j.count.doing ? ' · tự làm mới mỗi 30 giây' : '');
-  const mv = $('pgMgr').value, mgrs = Array.from(new Set(j.list.map(x => x.manager || ''))).sort((a, b) => a.localeCompare(b, 'vi'));
-  $('pgMgr').innerHTML = '<option value="*">Mọi quản lí</option>' + mgrs.map(m => '<option value="' + esc(m) + '">' + esc(m || '(chưa có quản lí)') + '</option>').join('');
-  $('pgMgr').value = mgrs.indexOf(mv) >= 0 ? mv : '*';
+  // Lần đầu ô chọn còn rỗng (value ''), trước đây bị hiểu nhầm là "(chưa có quản lí)" nên ô hiện sai chữ. Người chưa có quản lí dùng giá trị riêng '__none__'.
+  const mv = $('pgMgr').options.length ? $('pgMgr').value : '*', mgrs = Array.from(new Set(j.list.map(x => x.manager || ''))).sort((a, b) => a.localeCompare(b, 'vi'));
+  const mgrVal = m => m || '__none__';
+  $('pgMgr').innerHTML = '<option value="*">Mọi quản lí</option>' + mgrs.map(m => '<option value="' + esc(mgrVal(m)) + '">' + esc(m || '(chưa có quản lí)') + '</option>').join('');
+  $('pgMgr').value = (mv === '*' || mgrs.some(m => mgrVal(m) === mv)) ? mv : '*';
   renderProgress();
   clearTimeout(PG_T);
   // Có người đang làm: tự làm mới khi khung còn hiển thị
@@ -6957,7 +6959,7 @@ function pgSetF(f){
 }
 function pgRows(){
   const q = spNorm($('pgSearch').value || ''), m = $('pgMgr').value || '*';
-  return PG.list.filter(x => (m === '*' || (x.manager || '') === m) && (!q || spNorm([x.name, x.code, x.manager, x.province, x.phone].join(' ')).indexOf(q) >= 0));
+  return PG.list.filter(x => (m === '*' || (m === '__none__' ? !x.manager : (x.manager || '') === m)) && (!q || spNorm([x.name, x.code, x.manager, x.province, x.phone].join(' ')).indexOf(q) >= 0));
 }
 // Ô tròn đại diện: thay chữ cái bằng ảnh khuôn mặt (ảnh xác thực rõ nhất từ các bài đã làm, thu nhỏ 96px).
 // Chỉ tài khoản OWNER được xem (máy chủ trả 403 với người khác -> giữ chữ cái); người chưa từng làm bài nào thì chưa có ảnh -> giữ chữ cái.
@@ -7065,7 +7067,7 @@ async function exportProgressXlsx(sharedWb, sharedE, silent){
 
   const ex = examById(period), exTitle = (ex && exTitleOf(ex)) || PG.title || period;
   const mgrF = $('pgMgr').value, qF = ($('pgSearch').value || '').trim();
-  const filt = [mgrF && mgrF !== '*' ? 'Quản lí: ' + (mgrF || '(chưa có quản lí)') : '', qF ? 'Tìm: “' + qF + '”' : ''].filter(Boolean).join(' · ') || 'Toàn bộ thí sinh của đề';
+  const filt = [mgrF && mgrF !== '*' ? 'Quản lí: ' + (mgrF === '__none__' ? '(chưa có quản lí)' : mgrF) : '', qF ? 'Tìm: “' + qF + '”' : ''].filter(Boolean).join(' · ') || 'Toàn bộ thí sinh của đề';
   const vnNow = new Date(Date.now() + 7 * 3600e3), p2 = n => (n < 10 ? '0' : '') + n;
   const nowTxt = p2(vnNow.getUTCHours()) + ':' + p2(vnNow.getUTCMinutes()) + ' ngày ' + p2(vnNow.getUTCDate()) + '/' + p2(vnNow.getUTCMonth() + 1) + '/' + vnNow.getUTCFullYear();
   const xlDate = ms => ms ? new Date(ms + 7 * 3600e3) : null; // ExcelJS ghi theo UTC → cộng 7 giờ để hiện giờ Việt Nam
@@ -7257,7 +7259,7 @@ async function exportBehaviorXlsx(sharedWb, sharedE, silent){
   if (PG && PG.period === period){
     const keep = new Set(pgRows().map(x => String(x.code || '').toLowerCase()));
     const mgrF = $('pgMgr').value, qF = ($('pgSearch').value || '').trim();
-    if ((mgrF && mgrF !== '*') || qF){ A = A.filter(a => keep.has(String(a.code || '').toLowerCase())); filt = [mgrF && mgrF !== '*' ? 'Quản lí: ' + (mgrF || '(chưa có)') : '', qF ? 'Tìm: “' + qF + '”' : ''].filter(Boolean).join(' · '); }
+    if ((mgrF && mgrF !== '*') || qF){ A = A.filter(a => keep.has(String(a.code || '').toLowerCase())); filt = [mgrF && mgrF !== '*' ? 'Quản lí: ' + (mgrF === '__none__' ? '(chưa có)' : mgrF) : '', qF ? 'Tìm: “' + qF + '”' : ''].filter(Boolean).join(' · '); }
   }
   if (!A.length){ if (!silent) alert('Chưa có bài nộp nào trong phạm vi đang lọc.'); return; }
   A.sort((x, y) => String(x.manager || '~').localeCompare(String(y.manager || '~'), 'vi') || String(x.name).localeCompare(String(y.name), 'vi') || x.nth - y.nth);
@@ -7669,9 +7671,12 @@ function filterResults(){
   // Khi khung theo dõi đang hiện, ô tìm kiếm + bộ lọc quản lí ở đó lọc luôn bảng này (một nơi lọc chung)
   const shared = $('pgCard') && !$('pgCard').classList.contains('hide');
   const q = ((shared ? ($('pgSearch') || {}).value : ($('resSearch') || {}).value) || '').trim().toLowerCase();
-  const mg = shared && $('pgMgr') && $('pgMgr').value !== '*' ? String($('pgMgr').value).toLowerCase() : '';
+  const mv = shared && $('pgMgr') ? $('pgMgr').value : '*';
+  const mg = mv && mv !== '*' && mv !== '__none__' ? String(mv).toLowerCase() : '';
+  // "(chưa có quản lí)": giữ các dòng thuộc người không có quản lí (so theo mã NV)
+  const noMgr = mv === '__none__' && PG && PG.list ? PG.list.filter(x => !x.manager).map(x => String(x.code || '').toLowerCase()) : null;
   const vis = {};
-  document.querySelectorAll('#resList tr:not(.rt-sub)').forEach(tr => { const tx = tr.textContent.toLowerCase(), ok = (!q || tx.indexOf(q) >= 0) && (!mg || tx.indexOf(mg) >= 0); tr.style.display = ok ? '' : 'none'; if (tr.dataset.g != null) vis[tr.dataset.g] = ok; });
+  document.querySelectorAll('#resList tr:not(.rt-sub)').forEach(tr => { const tx = tr.textContent.toLowerCase(), ok = (!q || tx.indexOf(q) >= 0) && (!mg || tx.indexOf(mg) >= 0) && (!noMgr || noMgr.some(c => c && tx.indexOf(c) >= 0)); tr.style.display = ok ? '' : 'none'; if (tr.dataset.g != null) vis[tr.dataset.g] = ok; });
   document.querySelectorAll('#resList tr.rt-sub').forEach(tr => { tr.style.display = vis[tr.dataset.g] ? '' : 'none'; });
 }
 async function resetAttempt(code, period){
