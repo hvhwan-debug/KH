@@ -1652,6 +1652,157 @@ body[data-tab="results"] .wrap,body[data-tab="analysis"] .wrap,body[data-tab="qu
 #tab-exams .excard .warn{display:flex;align-items:center;gap:6px;margin-top:2px;padding:8px 11px;border-radius:10px;background:#FFF4E0;border:1px solid #F3DBA0;color:#8A5200}
 a.nv{text-decoration:none}
 a.bb{text-decoration:none}
+
+/* ===================== Quản lý đề thi — giao diện SaaS / LMS doanh nghiệp (redesign) =====================
+   Nền #F5F8FC · thẻ trắng bo 12–16px · xanh dương #1D6FEA / navy #0B2A66 · chữ Be Vietnam Pro · icon nét (kiểu Lucide) */
+body[data-tab="exams"] .main{background:#F5F8FC!important}
+#tab-exams>.card.exlist{padding:0}
+.exp-bc{display:flex;align-items:center;gap:6px;margin:0 0 10px;font-size:12.5px;color:#6B7B96}
+.exp-bc svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.exp-bc b{color:#0B2A66;font-weight:600}
+.exp-head h1{margin:0;font-size:26px;line-height:1.25;font-weight:800;letter-spacing:-.01em;color:#0B2A66}
+#tab-exams .exl-sub{display:block;margin:4px 0 0;font-size:14px;color:#5B6B86}
+/* Banner chào cũ: bỏ phần trang trí, chỉ giữ thông báo sinh nhật và nút "Gắn kỳ" khi có */
+body[data-tab="exams"] #hero{background:none!important;box-shadow:none!important;padding:0!important;margin:0 0 4px!important;min-height:0!important;border-radius:0!important;color:#0B2A66}
+body[data-tab="exams"] #hero::before,body[data-tab="exams"] #hero::after{display:none!important}
+body[data-tab="exams"] #hero .khero-eb,body[data-tab="exams"] #hero .khero-t,body[data-tab="exams"] #hero .hm{display:none}
+body[data-tab="exams"] #hero .hm-bday{margin:0 8px 8px 0;background:#fff;border:1px solid #DCE6F3;color:#0B2A66;border-radius:10px;font-size:13px}
+body[data-tab="exams"] #hero .hm-link{margin:0 8px 8px 0;border-radius:10px;background:#FFF3DC;color:#8A5200}
+body[data-tab="exams"] #hero:not(:has(.hm-bday:not(.hide),.hm-link)){display:none}
+/* KPI */
+.exp-kpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:20px 0}
+.exp-kpi .kc{display:flex;align-items:center;gap:14px;min-width:0;padding:16px 18px;background:#fff;border:1px solid #E3EAF4;border-radius:14px;box-shadow:0 1px 2px rgba(16,42,100,.04),0 8px 18px -14px rgba(16,42,100,.2)}
+.ki{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;flex:0 0 auto}
+.ki svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ki.b{background:#E8F1FF;color:#1D6FEA}.ki.g{background:#E3F6EC;color:#16A05A}.ki.c{background:#E2F5FA;color:#0E92B5}.ki.p{background:#EEE9FD;color:#6D4FD8}
+.kt{min-width:0}
+.kl{font-size:13px;font-weight:500;color:#5B6B86}
+.kv{margin-top:2px;font-size:26px;line-height:1.2;font-weight:800;color:#0B2A66;font-variant-numeric:tabular-nums}
+.kv small{margin-left:1px;font-size:15px;font-weight:700}
+.ks{margin-top:2px;font-size:12px;color:#7B8AA5;overflow-wrap:anywhere}
+.ks .up{color:#16A05A;font-weight:600}.ks .dn{color:#D6453D;font-weight:600}
+/* Khung quản lý */
+.exp-panel{background:#fff;border:1px solid #E3EAF4;border-radius:16px;box-shadow:0 1px 2px rgba(16,42,100,.04),0 10px 24px -18px rgba(16,42,100,.22);padding:0 20px 18px}
+.exp-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid #E3EAF4}
+.exp-tabs{display:flex;gap:4px;min-width:0;overflow-x:auto}
+.exp-tabs button{display:inline-flex;align-items:center;gap:8px;height:56px;padding:0 14px;margin-bottom:-1px;border:0;border-bottom:2px solid transparent;background:none;color:#5B6B86;font:inherit;font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer;transition:color .12s,border-color .12s}
+.exp-tabs button:hover{color:#0B2A66}
+.exp-tabs button[aria-selected="true"]{color:#1D6FEA;border-bottom-color:#1D6FEA}
+.exp-tabs button:focus-visible{outline:2px solid #1D6FEA;outline-offset:-3px;border-radius:8px}
+.exp-tabs svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.exp-tabs .cnt{min-width:22px;padding:1px 7px;border-radius:999px;background:#E8F1FF;color:#1D6FEA;font-size:12px;font-weight:700;text-align:center}
+.exp-tabs .cnt:empty{display:none}
+#tab-exams .exl-act{display:flex;align-items:center;gap:10px;padding:10px 0}
+#tab-exams .exseg{display:flex;padding:2px;border:1px solid #D9E3F1;border-radius:10px;background:#F5F8FC;box-shadow:none}
+#tab-exams .exseg .btn,#tab-exams .exseg .btn.ghost{display:grid;place-items:center;width:34px;height:30px;padding:0;border:0;border-radius:8px;background:transparent;color:#5B6B86;box-shadow:none;cursor:pointer}
+#tab-exams .exseg .btn:not(.ghost){background:#fff;color:#1D6FEA;box-shadow:0 1px 3px rgba(16,42,100,.15)}
+#tab-exams .exseg .btn.ghost:hover{color:#0B2A66;background:#EAF0F9}
+#tab-exams .exseg .btn:focus-visible{outline:2px solid #1D6FEA;outline-offset:1px}
+#tab-exams .exseg svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#tab-exams .exseg .btn:not(.ghost) svg rect,#tab-exams .exseg .btn:not(.ghost) svg circle{fill:none}
+#tab-exams .exl-new{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 16px;border:0;border-radius:10px;background:#1D6FEA;color:#fff;font-size:13.5px;font-weight:700;box-shadow:0 1px 2px rgba(29,111,234,.35);cursor:pointer;transition:background .12s,box-shadow .12s}
+#tab-exams .exl-new:hover{background:#1859C4;filter:none;box-shadow:0 4px 12px -4px rgba(29,111,234,.55)}
+#tab-exams .exl-new:focus-visible{outline:3px solid rgba(29,111,234,.35);outline-offset:2px}
+#tab-exams .exl-new:disabled{background:#A9C4F2;box-shadow:none;cursor:not-allowed}
+#tab-exams .exl-new svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+/* Tìm kiếm + bộ lọc: một hàng */
+#tab-exams .exf{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:16px 0 4px}
+#tab-exams .exf input[type=search]{flex:1 1 280px;min-width:220px;height:40px;padding:0 14px 0 40px;border:1px solid #D9E3F1;border-radius:10px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%237B8AA5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E") no-repeat 13px 50%;font-size:14px;color:#0B2A66;box-shadow:none}
+#tab-exams .exf input[type=search]:focus{outline:0;border-color:#1D6FEA;box-shadow:0 0 0 3px rgba(29,111,234,.15)}
+#tab-exams .exf select{-webkit-appearance:none;appearance:none;flex:0 1 150px;width:150px;height:40px;padding:0 32px 0 12px;border:1px solid #D9E3F1;border-radius:10px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235B6B86' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 11px center;font-size:13.5px;font-weight:500;color:#0B2A66;box-shadow:none;cursor:pointer}
+#tab-exams .exf select#exFSort{flex-basis:150px;width:150px}
+#tab-exams .exf select:hover{border-color:#B9CCEA}
+#tab-exams .exf select:focus{outline:0;border-color:#1D6FEA;box-shadow:0 0 0 3px rgba(29,111,234,.15)}
+#tab-exams .exf select.on{border-color:#1D6FEA;background-color:#EEF4FF;color:#1D6FEA;font-weight:600}
+@media(min-width:861px){#tab-exams .exf-more{display:contents}#tab-exams .exf-toggle{display:none}}
+#tab-exams .exf-count{display:flex;align-items:center;gap:10px;margin:10px 2px 10px;font-size:13px;color:#5B6B86}
+#tab-exams .exf-clear{padding:4px 10px;border:1px solid #D9E3F1;border-radius:8px;background:#fff;color:#1D6FEA;font-size:12.5px;font-weight:600}
+#tab-exams .exf-clear:hover{background:#EEF4FF}
+/* Bảng danh sách */
+#tab-exams .exl-wrap:has(table:not(.hide)){margin-top:0;padding:0;overflow-x:auto;border:1px solid #E3EAF4;border-radius:12px;background:#fff;box-shadow:none}
+#tab-exams .exl-wrap:not(:has(table:not(.hide))){display:none}
+#tab-exams table.exl{width:100%;min-width:900px;border-collapse:separate;border-spacing:0}
+#tab-exams table.exl thead th{padding:12px 16px;background:#F5F8FC;border-bottom:1px solid #E3EAF4;color:#5B6B86;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;text-align:left;white-space:nowrap}
+#tab-exams table.exl thead th.n{text-align:center}
+#tab-exams table.exl tbody td{padding:14px 16px;border-bottom:1px solid #EDF2F9;vertical-align:middle;background:transparent}
+#tab-exams table.exl tbody tr:last-child td{border-bottom:0}
+#tab-exams table.exl tbody td.n{text-align:center}
+#tab-exams table.exl tbody tr{cursor:pointer;transition:background .12s}
+#tab-exams table.exl tbody tr:hover{background:#F3F8FF}
+#tab-exams table.exl tbody tr:focus-visible{outline:2px solid #1D6FEA;outline-offset:-2px}
+.exl-id2{display:flex;align-items:center;gap:12px;min-width:0}
+.exl-ic{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;background:#E8F1FF;color:#1D6FEA}
+.exl-ic svg{width:20px;height:20px}
+#tab-exams .exl-t{font-size:14.5px;font-weight:700;line-height:1.35;color:#0B2A66}
+#tab-exams .exl-m{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:5px}
+#tab-exams .exl-code{padding:2px 8px;border:0;border-radius:6px;background:#E6F0FF;color:#1D5FD0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px;font-weight:600;cursor:pointer}
+#tab-exams .exl-code:hover{background:#D5E5FF}
+#tab-exams .exl-code:focus-visible{outline:2px solid #1D6FEA;outline-offset:1px}
+#tab-exams .exl-d{font-size:13px;font-weight:600;color:#0B2A66}
+#tab-exams .exl-d small{display:block;margin-top:3px;font-size:12px;font-weight:500;color:#7B8AA5}
+#tab-exams .exl-num{font-size:16px;font-weight:800;color:#0B2A66;font-variant-numeric:tabular-nums}
+#tab-exams .exl-num small{display:block;margin-top:2px;font-size:11.5px;font-weight:500;color:#7B8AA5}
+#tab-exams .exl-st{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:12.5px;font-weight:700;white-space:nowrap}
+#tab-exams .exl-st i{width:7px;height:7px;border-radius:50%;background:currentColor}
+#tab-exams .exl-st.open{background:#E3F6EC;color:#12834A}
+#tab-exams .exl-st.soon{background:#FFF3DC;color:#A8680A}
+#tab-exams .exl-st.closed{background:#EEF1F6;color:#5B6B86}
+#tab-exams .exl-a{white-space:nowrap;text-align:right}
+#tab-exams .exl-a .btn{height:32px;padding:0 14px;border:1px solid #D9E3F1;border-radius:8px;background:#fff;color:#0B2A66;font-size:13px;font-weight:600;box-shadow:none}
+#tab-exams .exl-a .btn:hover{background:#F3F8FF;border-color:#B9CCEA}
+#tab-exams .exl-a .btn:focus-visible,#tab-exams .exl-icb:focus-visible,#tab-exams .exl-more:focus-visible{outline:2px solid #1D6FEA;outline-offset:1px}
+#tab-exams .exl-a .btn:disabled{opacity:.5;cursor:not-allowed}
+#tab-exams .exl-icb,#tab-exams .exl-more{display:inline-grid;place-items:center;width:32px;height:32px;margin-left:4px;padding:0;border:1px solid transparent;border-radius:8px;background:none;color:#5B6B86;font-size:17px;line-height:1;cursor:pointer;vertical-align:middle}
+#tab-exams .exl-icb:hover,#tab-exams .exl-more:hover{background:#EAF0F9;color:#0B2A66}
+#tab-exams .exl-icb svg{width:17px;height:17px}
+/* Thẻ (dạng lưới): đồng bộ phong cách */
+#tab-exams .exgrid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:4px}
+#tab-exams .excard{border:1px solid #E3EAF4;border-radius:14px;box-shadow:0 1px 2px rgba(16,42,100,.04)}
+#tab-exams .excard:hover,#tab-exams .excard:focus-visible{border:1px solid #B9CCEA;transform:none;box-shadow:0 8px 20px -12px rgba(16,42,100,.3)}
+/* Phân trang */
+.exp-pager{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 2px 0;font-size:13px;color:#5B6B86}
+.exp-pager:empty{display:none}
+.pg-ctl{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.pg-size{display:flex;align-items:center;gap:8px}
+.pg-size select{-webkit-appearance:none;appearance:none;width:68px;height:34px;padding:0 24px 0 10px;border:1px solid #D9E3F1;border-radius:8px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235B6B86' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;color:#0B2A66;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.pg-size select:focus-visible{outline:2px solid #1D6FEA;outline-offset:1px}
+.pg-btns{display:flex;align-items:center;gap:4px}
+.pg-b{display:inline-grid;place-items:center;min-width:34px;height:34px;padding:0 8px;border:1px solid #D9E3F1;border-radius:8px;background:#fff;color:#0B2A66;font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .12s}
+.pg-b:hover:not(:disabled){background:#F3F8FF}
+.pg-b:focus-visible{outline:2px solid #1D6FEA;outline-offset:1px}
+.pg-b[aria-current="page"]{background:#1D6FEA;border-color:#1D6FEA;color:#fff}
+.pg-b:disabled{opacity:.45;cursor:not-allowed}
+.pg-dots{padding:0 4px;color:#7B8AA5}
+/* Tab Thống kê kết quả */
+#exPaneStat{padding-top:18px}
+.st-sum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.st-c{padding:14px 16px;border:1px solid #E3EAF4;border-radius:12px;background:#F8FAFD}
+.st-h{margin:22px 0 10px;font-size:14px;font-weight:700;color:#0B2A66}
+.st-h span{font-weight:500;color:#7B8AA5;font-size:12.5px}
+.st-bars{display:flex;flex-direction:column;gap:4px}
+.st-r{display:grid;grid-template-columns:minmax(160px,1.1fr) 2fr 52px;align-items:center;gap:14px;width:100%;padding:8px 10px;border:0;border-radius:10px;background:none;font:inherit;text-align:left;cursor:pointer;transition:background .12s}
+.st-r:hover{background:#F3F8FF}
+.st-r:focus-visible{outline:2px solid #1D6FEA;outline-offset:-2px}
+.st-n{min-width:0;font-size:13.5px;font-weight:600;color:#0B2A66;overflow-wrap:anywhere}
+.st-n small{display:block;margin-top:2px;font-size:11.5px;font-weight:500;color:#7B8AA5}
+.st-bar{height:8px;border-radius:999px;background:#EAF0F9;overflow:hidden}
+.st-bar i{display:block;height:100%;border-radius:999px;background:#1D6FEA}
+.st-r b{text-align:right;font-size:14px;color:#0B2A66;font-variant-numeric:tabular-nums}
+.st-note{margin:12px 2px 0}
+/* Responsive */
+@media(max-width:1100px){.exp-kpi,.st-sum{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:860px){
+  .exp-head h1{font-size:22px}
+  .exp-panel{padding:0 12px 14px}
+  #tab-exams .exf select,#tab-exams .exf select#exFSort{flex:1 1 calc(50% - 5px);width:auto}
+  #tab-exams .exf-toggle{display:inline-flex;align-items:center;height:40px;padding:0 14px;border:1px solid #D9E3F1;border-radius:10px;background:#fff;color:#0B2A66;font-size:13.5px;font-weight:600;box-shadow:none}
+  #tab-exams .exf-toggle.open{background:#EEF4FF;color:#1D6FEA;border-color:#1D6FEA}
+  #tab-exams .exl-act{width:100%;justify-content:space-between}
+  .st-r{grid-template-columns:1fr 52px}.st-bar{grid-column:1/-1;order:3}
+}
+@media(max-width:600px){.exp-kpi{gap:10px}.exp-kpi .kc{padding:12px;gap:10px}.ki{width:38px;height:38px}.kv{font-size:22px}}
+@media(prefers-reduced-motion:reduce){#tab-exams *{transition:none!important}}
+@media(max-width:760px){#tab-exams .exseg{flex:0 0 auto}#tab-exams .exseg .btn{flex:0 0 auto}#tab-exams .exl-new{flex:1 1 auto;justify-content:center}}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -1802,36 +1953,51 @@ a.bb{text-decoration:none}
 
     <!-- Ngân hàng đề -->
     <div id="tab-exams" class="tabpane hide">
-            <div class="card exlist">
-        <div class="exl-head">
-          <div class="exl-id">
-            <div class="exl-tile" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="30" height="34" rx="6" fill="#E8F3FF" stroke="#2F7CF6" stroke-width="2.6"/><rect x="17" y="5" width="14" height="8" rx="3" fill="#fff" stroke="#2F7CF6" stroke-width="2.6"/><path d="m15.5 22 2.5 2.5 4-4.5M15.5 32l2.5 2.5 4-4.5" stroke="#1BB0E0" stroke-width="2.6"/><path d="M26 23h7M26 33h7" stroke="#2F7CF6" stroke-width="2.6"/></svg></div>
-            <div>
-              <h1>Danh sách đề thi</h1>
-              <p class="exl-sub">Bấm vào một đề để xem kết quả, quản lý câu hỏi và cài đặt của đề đó.</p>
+      <div class="card exlist">
+        <nav class="exp-bc" aria-label="Vị trí hiện tại"><span>Quản trị</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><b>Quản lý đề thi</b></nav>
+        <div class="exp-head">
+          <h1>Quản lý đề thi</h1>
+          <p class="exl-sub">Tạo, quản lý và theo dõi kết quả các bài kiểm tra, đánh giá.</p>
+        </div>
+        <div class="exp-kpi" id="exKpi" aria-label="Thống kê nhanh">
+          <div class="kc"><span class="ki b" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8M16 13H8M16 17H8"/></svg></span><div class="kt"><div class="kl">Tổng đề thi</div><div class="kv" id="kpiTotal">–</div><div class="ks" id="kpiTotalS"></div></div></div>
+          <div class="kc"><span class="ki g" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z"/></svg></span><div class="kt"><div class="kl">Đề đang mở</div><div class="kv" id="kpiOpen">–</div><div class="ks" id="kpiOpenS"></div></div></div>
+          <div class="kc"><span class="ki c" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span><div class="kt"><div class="kl">Tỷ lệ hoàn thành</div><div class="kv" id="kpiRate">–</div><div class="ks" id="kpiRateS"></div></div></div>
+          <div class="kc"><span class="ki p" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M15.48 12.89 17 22l-5-3-5 3 1.52-9.11"/></svg></span><div class="kt"><div class="kl">Điểm trung bình</div><div class="kv" id="kpiAvg">–</div><div class="ks" id="kpiAvgS"></div></div></div>
+        </div>
+        <div class="exp-panel">
+          <div class="exp-bar">
+            <div class="exp-tabs" role="tablist" aria-label="Quản lý đề thi">
+              <button type="button" role="tab" id="exTabList" aria-selected="true" aria-controls="exPaneList" onclick="exTab('list')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8M16 13H8M16 17H8"/></svg>Danh sách đề thi<span class="cnt" id="exTabCnt"></span></button>
+              <button type="button" role="tab" id="exTabStat" aria-selected="false" aria-controls="exPaneStat" onclick="exTab('stat')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>Thống kê kết quả</button>
+            </div>
+            <div class="exl-act">
+              <div class="exseg" role="group" aria-label="Kiểu hiển thị">
+                <button type="button" id="exViewList" class="btn sm" onclick="exSetView('list')" title="Xem dạng bảng" aria-label="Xem dạng bảng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+                <button type="button" id="exViewCard" class="btn ghost sm" onclick="exSetView('card')" title="Xem dạng thẻ" aria-label="Xem dạng thẻ"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+              </div>
+              <button type="button" class="btn exl-new" onclick="openNewExam()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>Tạo đề thi mới</button>
             </div>
           </div>
-          <div class="exl-act">
-            <div class="exseg" role="group" aria-label="Kiểu hiển thị">
-              <button type="button" id="exViewCard" class="btn sm" onclick="exSetView('card')" title="Xem dạng thẻ"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>Thẻ</button>
-              <button type="button" id="exViewList" class="btn ghost sm" onclick="exSetView('list')" title="Xem dạng danh sách"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg>Danh sách</button>
+          <div id="exPaneList" role="tabpanel" aria-labelledby="exTabList">
+            <div id="exFilter" class="exf">
+              <input type="search" id="exQ" autocomplete="off" placeholder="Tìm theo tên đề hoặc mã đề…" oninput="exFilt.q=this.value;exRefilter()" aria-label="Tìm đề thi">
+              <button type="button" class="exf-toggle" id="exfToggle" onclick="document.getElementById('exfMore').classList.toggle('open');this.classList.toggle('open')" aria-expanded="false" aria-controls="exfMore">Bộ lọc</button>
+              <div class="exf-more" id="exfMore">
+                <select id="exFStatus" onchange="exFilt.status=this.value;exRefilter()" aria-label="Lọc theo trạng thái"><option value="">Trạng thái</option><option value="open">Đang mở</option><option value="soon">Chưa mở</option><option value="closed">Đã đóng</option></select>
+                <select id="exFType" onchange="exFilt.type=this.value;exRefilter()" aria-label="Lọc theo loại đề"><option value="">Loại đề</option><option value="official">Chính thức</option><option value="practice">Thi thử</option></select>
+                <select id="exFSurvey" onchange="exFilt.survey=this.value;exRefilter()" aria-label="Lọc theo khảo sát"><option value="">Khảo sát</option><option value="yes">Có khảo sát</option><option value="no">Không có khảo sát</option></select>
+                <select id="exFCreated" onchange="exFilt.created=this.value;exRefilter()" aria-label="Lọc theo thời gian tạo"><option value="">Thời gian tạo</option><option value="7">7 ngày qua</option><option value="30">30 ngày qua</option><option value="90">90 ngày qua</option><option value="365">12 tháng qua</option></select>
+                <select id="exFSort" onchange="exFilt.sort=this.value;exRefilter()" aria-label="Sắp xếp"><option value="new">Mới tạo trước</option><option value="status">Đang mở trước</option><option value="subs">Nhiều bài nộp</option><option value="name">Tên A → Z</option></select>
+              </div>
             </div>
-            <button class="btn exl-new" onclick="openNewExam()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Tạo đề thi mới</button>
+            <div class="exf-count"><span id="exFCount" aria-live="polite"></span><button type="button" class="exf-clear hide" id="exFClear" onclick="exFiltClear()">Xoá lọc</button></div>
+            <div class="exgrid" id="exGrid"></div>
+            <div class="exl-wrap"><table class="hide exl" id="exListTable"><thead><tr><th>Đề thi</th><th>Thời gian</th><th class="n">Câu / người</th><th class="n">Đã nộp</th><th>Trạng thái</th><th class="a"><span class="sr">Thao tác</span></th></tr></thead><tbody id="exList"></tbody></table></div>
+            <div class="exp-pager" id="exPager"></div>
           </div>
+          <div id="exPaneStat" class="hide" role="tabpanel" aria-labelledby="exTabStat"></div>
         </div>
-        <div id="exFilter" class="exf">
-          <input type="search" id="exQ" autocomplete="off" placeholder="Tìm tên hoặc mã đề" oninput="exFilt.q=this.value;exRefilter()" aria-label="Tìm đề thi">
-          <button type="button" class="exf-toggle" id="exfToggle" onclick="document.getElementById('exfMore').classList.toggle('open');this.classList.toggle('open')" aria-expanded="false" aria-controls="exfMore">⚙ Bộ lọc</button>
-          <div class="exf-more" id="exfMore">
-          <select id="exFStatus" onchange="exFilt.status=this.value;exRefilter()" aria-label="Lọc theo trạng thái"><option value="">Trạng thái</option><option value="open">Đang mở</option><option value="soon">Chưa mở</option><option value="closed">Đã đóng</option></select>
-          <select id="exFType" onchange="exFilt.type=this.value;exRefilter()" aria-label="Lọc theo loại đề"><option value="">Loại đề</option><option value="official">Chính thức</option><option value="practice">Thi thử</option></select>
-          <select id="exFSurvey" onchange="exFilt.survey=this.value;exRefilter()" aria-label="Lọc theo khảo sát"><option value="">Khảo sát</option><option value="yes">Có khảo sát</option><option value="no">Không có khảo sát</option></select>
-          <select id="exFSort" onchange="exFilt.sort=this.value;exRefilter()" aria-label="Sắp xếp"><option value="new">Mới tạo trước</option><option value="status">Đang mở trước</option><option value="subs">Nhiều bài nộp</option><option value="name">Tên A → Z</option></select>
-          </div>
-        </div>
-        <div class="exf-count"><span id="exFCount" aria-live="polite"></span><button type="button" class="exf-clear hide" id="exFClear" onclick="exFiltClear()">✕ Xoá lọc</button></div>
-        <div class="exgrid" id="exGrid"></div>
-        <div class="exl-wrap"><table class="hide exl" id="exListTable"><thead><tr><th>Đề thi</th><th>Thời gian</th><th class="n">Câu / người</th><th class="n">Đã nộp</th><th>Trạng thái</th><th><span class="sr">Thao tác</span></th></tr></thead><tbody id="exList"></tbody></table></div>
       </div>
     </div>
 
@@ -3357,14 +3523,19 @@ function fillSetPeriod(){
   $('setPeriod').value = CUR_PERIOD;
 }
 // ---- Tìm kiếm / sàng lọc danh sách đề (chạy trên trình duyệt, áp dụng cho cả dạng thẻ và dạng danh sách) ----
-const exFilt = { q:'', status:'', type:'', survey:'', sort:'new' };
+const exFilt = { q:'', status:'', type:'', survey:'', created:'', sort:'new' };
+const exPg = { page:1, size:10 }; // phân trang danh sách đề (áp dụng cho cả dạng bảng và dạng thẻ)
+try { const sz = +localStorage.getItem('exSize'); if ([10,20,50].indexOf(sz) >= 0) exPg.size = sz; } catch (e) { /* bỏ qua */ }
+let EXDASH = null; // số liệu tổng quan kỳ hiện tại (từ dashboard) dùng cho thẻ KPI
 function exNorm(s){ return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').trim(); }
 function exStatusKey(e){ const now = Date.now(); return e.openAt && now < e.openAt ? 'soon' : e.closeAt && now > e.closeAt ? 'closed' : 'open'; }
 function exFiltered(){
   const words = exNorm(exFilt.q).split(/\s+/).filter(Boolean), rank = { open:0, soon:1, closed:2 };
+  const now = Date.now();
   const out = EXAMS.filter(e => {
     const hay = exNorm((exTitleOf(e) || '') + ' ' + e.id);
     return words.every(w => hay.indexOf(w) >= 0) &&
+      (!exFilt.created || (e.createdAt && now - e.createdAt <= (+exFilt.created) * 86400e3)) &&
       (!exFilt.status || exStatusKey(e) === exFilt.status) &&
       (!exFilt.type || (exFilt.type === 'practice') === !!e.practice) &&
       (!exFilt.survey || (exFilt.survey === 'yes') === !!e.surveyUrl);
@@ -3375,33 +3546,97 @@ function exFiltered(){
     name: (a, b) => String(exTitleOf(a)).localeCompare(String(exTitleOf(b)), 'vi') }[exFilt.sort];
   return cmp ? out.slice().sort(cmp) : out;
 }
-function exRefilter(){
-  [['exFStatus','status'],['exFType','type'],['exFSurvey','survey']].forEach(p => { if ($(p[0])) $(p[0]).classList.toggle('on', !!exFilt[p[1]]); });
+function exRefilter(keepPage){
+  if (keepPage !== true) exPg.page = 1;
+  [['exFStatus','status'],['exFType','type'],['exFSurvey','survey'],['exFCreated','created']].forEach(p => { if ($(p[0])) $(p[0]).classList.toggle('on', !!exFilt[p[1]]); });
   if ($('exFSort')) $('exFSort').classList.toggle('on', exFilt.sort !== 'new');
   renderExGrid(); exApplyListFilter();
 }
 function exFiltClear(){
-  exFilt.q = exFilt.status = exFilt.type = exFilt.survey = ''; exFilt.sort = 'new';
-  ['exQ','exFStatus','exFType','exFSurvey'].forEach(id => { if ($(id)) $(id).value = ''; }); if ($('exFSort')) $('exFSort').value = 'new';
+  exFilt.q = exFilt.status = exFilt.type = exFilt.survey = exFilt.created = ''; exFilt.sort = 'new';
+  ['exQ','exFStatus','exFType','exFSurvey','exFCreated'].forEach(id => { if ($(id)) $(id).value = ''; }); if ($('exFSort')) $('exFSort').value = 'new';
   exRefilter();
 }
 // Dạng danh sách (bảng): ẩn các dòng không khớp và sắp lại thứ tự theo kết quả lọc
 function exApplyListFilter(){
   const tb = $('exList'); if (!tb) return;
-  const ids = exFiltered().map(e => e.id), rows = {};
+  const ids = exPageData().slice.map(e => e.id), rows = {};
   Array.prototype.forEach.call(tb.querySelectorAll('tr[data-exid]'), tr => { rows[tr.dataset.exid] = tr; tr.classList.add('hide'); });
   ids.forEach(id => { if (rows[id]){ rows[id].classList.remove('hide'); tb.appendChild(rows[id]); } });
 }
-function exUpdateCount(n){
+function exUpdateCount(P){
   const el = $('exFCount'); if (!el) return;
-  const on = !!(exFilt.q || exFilt.status || exFilt.type || exFilt.survey);
-  el.textContent = EXAMS.length ? ('Hiển thị ' + n + '/' + EXAMS.length + ' đề' + (on && !n ? ' · không có đề nào khớp bộ lọc' : '')) : '';
+  const on = !!(exFilt.q || exFilt.status || exFilt.type || exFilt.survey || exFilt.created);
+  el.textContent = EXAMS.length ? (P.all.length + ' đề' + (on ? ' khớp bộ lọc (trên tổng ' + EXAMS.length + ' đề)' : '') + (on && !P.all.length ? ' · không có đề nào khớp bộ lọc' : '')) : '';
+  if ($('exTabCnt')) $('exTabCnt').textContent = EXAMS.length || '';
   if ($('exFClear')) $('exFClear').classList.toggle('hide', !on && exFilt.sort === 'new');
+}
+// Cắt danh sách đã lọc theo trang hiện tại
+function exPageData(){
+  const all = exFiltered(), pages = Math.max(1, Math.ceil(all.length / exPg.size));
+  if (exPg.page > pages) exPg.page = pages; if (exPg.page < 1) exPg.page = 1;
+  const start = (exPg.page - 1) * exPg.size;
+  return { all, pages, start, slice: all.slice(start, start + exPg.size) };
+}
+function exGo(p){ exPg.page = +p || 1; exRefilter(true); }
+function exSetSize(n){ exPg.size = [10,20,50].indexOf(+n) >= 0 ? +n : 10; try { localStorage.setItem('exSize', String(exPg.size)); } catch (e) { /* bỏ qua */ } exPg.page = 1; exRefilter(true); }
+function exRenderPager(P){
+  const el = $('exPager'); if (!el) return;
+  if (!P.all.length){ el.innerHTML = ''; return; }
+  const cur = exPg.page, last = P.pages, nums = [];
+  for (let n = 1; n <= last; n++){ if (n === 1 || n === last || Math.abs(n - cur) <= 1) nums.push(n); else if (nums[nums.length - 1] !== '…') nums.push('…'); }
+  const chev = (d) => '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
+  el.innerHTML = '<div class="pg-info">Hiển thị <b>' + (P.start + 1) + '–' + (P.start + P.slice.length) + '</b> trong <b>' + P.all.length + '</b> đề</div>' +
+    '<div class="pg-ctl"><label class="pg-size">Số dòng<select onchange="exSetSize(this.value)" aria-label="Số dòng mỗi trang">' + [10,20,50].map(n => '<option value="' + n + '"' + (n === exPg.size ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></label>' +
+    '<div class="pg-btns" role="navigation" aria-label="Phân trang"><button type="button" class="pg-b" ' + (cur <= 1 ? 'disabled ' : '') + 'onclick="exGo(' + (cur - 1) + ')" aria-label="Trang trước">' + chev('m15 18-6-6 6-6') + '</button>' +
+    nums.map(n => n === '…' ? '<span class="pg-dots">…</span>' : '<button type="button" class="pg-b"' + (n === cur ? ' aria-current="page"' : '') + ' onclick="exGo(' + n + ')" aria-label="Trang ' + n + '">' + n + '</button>').join('') +
+    '<button type="button" class="pg-b" ' + (cur >= last ? 'disabled ' : '') + 'onclick="exGo(' + (cur + 1) + ')" aria-label="Trang sau">' + chev('m9 18 6-6-6-6') + '</button></div></div>';
+}
+// Thẻ KPI: số đề tính từ danh sách đề; tỷ lệ hoàn thành / điểm trung bình lấy từ dashboard kỳ hiện tại
+function renderExKpi(){
+  if (!$('kpiTotal')) return;
+  const cnt = { open:0, soon:0, closed:0 }; EXAMS.forEach(e => { cnt[exStatusKey(e)]++; });
+  $('kpiTotal').textContent = EXAMS.length;
+  $('kpiTotalS').textContent = EXAMS.length ? cnt.closed + ' đã đóng · ' + cnt.soon + ' chưa mở' : 'Chưa có đề thi nào';
+  $('kpiOpen').textContent = cnt.open;
+  $('kpiOpenS').textContent = cnt.open ? 'Thí sinh có thể làm bài ngay' : 'Hiện không có đề nào đang mở';
+  const d = EXDASH;
+  if (d && d.candidates){
+    const rate = Math.round(d.submitted / d.candidates * 100);
+    $('kpiRate').innerHTML = rate + '<small>%</small>';
+    $('kpiRateS').textContent = d.submitted + '/' + d.candidates + ' thí sinh · kỳ hiện tại';
+  } else { $('kpiRate').textContent = '–'; $('kpiRateS').textContent = 'Chưa có dữ liệu kỳ hiện tại'; }
+  if (d && d.avgPct != null){
+    $('kpiAvg').textContent = pctTxt(d.avgPct);
+    const pv = d.prev && d.prev.avgPct != null ? Math.round((d.avgPct - d.prev.avgPct) * 10) / 10 : null;
+    $('kpiAvgS').innerHTML = 'Tỉ lệ đúng trung bình' + (pv == null || pv === 0 ? '' : ' · <span class="' + (pv > 0 ? 'up' : 'dn') + '">' + (pv > 0 ? '▲ +' : '▼ ') + String(pv).replace('.', ',') + ' so với kỳ trước</span>');
+  } else { $('kpiAvg').textContent = '–'; $('kpiAvgS').textContent = 'Chưa có bài nộp'; }
+}
+// Tab: Danh sách đề thi / Thống kê kết quả
+function exTab(t){
+  const stat = t === 'stat';
+  if ($('exPaneList')) $('exPaneList').classList.toggle('hide', stat);
+  if ($('exPaneStat')) $('exPaneStat').classList.toggle('hide', !stat);
+  [['exTabList', !stat], ['exTabStat', stat]].forEach(p => { if ($(p[0])) $(p[0]).setAttribute('aria-selected', String(p[1])); });
+  if ($('exViewList') && $('exViewList').parentNode) $('exViewList').parentNode.classList.toggle('hide', stat);
+  if (stat) renderExStat();
+}
+function renderExStat(){
+  const el = $('exPaneStat'); if (!el) return;
+  if (!EXAMS.length){ el.innerHTML = '<div class="small" style="padding:24px 4px">Chưa có đề thi nào để thống kê.</div>'; return; }
+  const total = EXAMS.reduce((n, e) => n + (e.resultCount || 0), 0), cnt = { open:0, soon:0, closed:0 };
+  EXAMS.forEach(e => { cnt[exStatusKey(e)]++; });
+  const top = EXAMS.slice().sort((a, b) => (b.resultCount || 0) - (a.resultCount || 0)).slice(0, 10), max = Math.max(1, top[0].resultCount || 0);
+  const box = (l, v, sb) => '<div class="st-c"><div class="kl">' + l + '</div><div class="kv">' + v + '</div>' + (sb ? '<div class="ks">' + sb + '</div>' : '') + '</div>';
+  el.innerHTML = '<div class="st-sum">' + box('Tổng bài đã nộp', total.toLocaleString('vi-VN'), 'trên tất cả đề thi') + box('Đề đang mở', cnt.open, '') + box('Đề chưa mở', cnt.soon, '') + box('Đề đã đóng', cnt.closed, '') + '</div>' +
+    '<div class="st-h">Số bài nộp theo đề thi <span>(tối đa 10 đề nhiều nhất)</span></div><div class="st-bars">' +
+    top.map(e => '<button type="button" class="st-r" onclick="openExam(\'' + esc(JSON.stringify(e.id).slice(1, -1)) + '\',\'results\')"><span class="st-n">' + esc(exTitleOf(e)) + '<small>' + esc(e.id) + '</small></span><span class="st-bar"><i style="width:' + Math.round((e.resultCount || 0) / max * 100) + '%"></i></span><b>' + (e.resultCount || 0) + '</b></button>').join('') +
+    '</div><p class="small st-note">Bấm vào một đề để xem kết quả chi tiết.</p>';
 }
 function renderExGrid(){
   if (!$('exGrid')) return;
   if ($('setPeriod')) fillSetPeriod();
-  const exShown = exFiltered(); exUpdateCount(exShown.length);
+  const P = exPageData(), exShown = P.slice; exUpdateCount(P);
   $('exGrid').innerHTML = exShown.map((e, i) => {
     const plan = spHas(e.segmentPlans) ? 'Phân bổ riêng' : spHas(SEGPLANS) ? 'Phân bổ chung' : 'Chia theo nhóm ngành';
     const ac = EXC_AC[i % EXC_AC.length], title = exTitleOf(e);
@@ -3412,6 +3647,7 @@ function renderExGrid(){
       '<div class="exc-meta">' + EXC_SI.cal + '<div class="exc-metatext"><div class="exc-when">' + esc(examWindowOnly(e)) + '</div><div class="exc-sub"><code class="exc-code">' + esc(e.id) + '</code> · ' + plan + (examAudienceText(e) ? ' · ' + esc(examAudienceText(e)) : '') + '</div></div></div>' +
       (!qCountOf(e) ? '<div class="warn">⚠ Chưa có câu hỏi riêng</div>' : '') + '</button>';
   }).join('') || '<div class="small" style="padding:20px 0">' + (EXAMS.length ? 'Không có đề nào khớp bộ lọc. Bấm “Xoá lọc” để xem lại tất cả.' : 'Chưa có đề thi nào. Bấm “＋ Tạo đề thi mới” để bắt đầu.') + '</div>';
+  exRenderPager(P); renderExKpi(); if ($('exPaneStat') && !$('exPaneStat').classList.contains('hide')) renderExStat();
 }
 // Thẻ đề: màu nhấn xoay vòng theo vị trí + biểu tượng theo nội dung tên đề
 const EXC_AC = ['#1FB2E6', '#27BE84', '#7C6CF2', '#EE5F95', '#3D9CF4', '#F2AE1C', '#22B5D8', '#8B6CF0'];
@@ -3601,7 +3837,7 @@ async function loadExams(){
   if (j.maxQuestions){ MAXQ = j.maxQuestions; if ($('maxQ')) $('maxQ').textContent = MAXQ; $('exCount').max = MAXQ; }
   $('exList').innerHTML = EXAMS.map(e => exListRow(e, j.currentPeriod)).join('') || '<tr><td colspan="6" class="small">Chưa có đề thi nào, bấm "+ Tạo đề thi mới" để bắt đầu.</td></tr>';
   exApplyListFilter();
-  let savedView = 'card'; try { savedView = localStorage.getItem('exView') || 'card'; } catch (e) { /* bỏ qua */ }
+  let savedView = 'list'; try { savedView = localStorage.getItem('exView2') || 'list'; } catch (e) { /* bỏ qua */ }
   exSetView(savedView);
 }
 // Một dòng trong danh sách đề (dạng bảng): bấm cả dòng để mở đề; thao tác phụ gom vào menu ⋯
@@ -3621,6 +3857,8 @@ function exPerPerson(e){ // số câu mỗi thí sinh nhận + cách chia
   }
   return { n: e.questionCount ? String(e.questionCount) : (SETCACHE.questionCount ? String(SETCACHE.questionCount) : '–'), how: spHas(SEGPLANS) ? 'theo phân bổ chung' : 'theo nhóm ngành' };
 }
+const EXL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8M16 13H8M16 17H8"/></svg>';
+const EXL_EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
 function exListRow(e, cur){
   const now = Date.now(), id = esc(e.id), jid = esc(JSON.stringify(e.id).slice(1, -1));
   const st = e.openAt && now < e.openAt ? ['soon', 'Chưa mở'] : e.closeAt && now > e.closeAt ? ['closed', 'Đã đóng'] : ['open', 'Đang mở'];
@@ -3630,12 +3868,12 @@ function exListRow(e, cur){
   const bad = +e.questionCount > MAXQ || bpTotalOf(e.blueprint) > MAXQ || (bpTotalOf(e.blueprint) && e.questionCount && bpTotalOf(e.blueprint) !== +e.questionCount);
   const tags = (e.id === cur ? '<span class="exl-tag d">Mặc định</span>' : '') + (e.practice ? '<span class="exl-tag p">Thi thử</span>' : '') + (bad ? '<span class="exl-tag w">Cần sửa số câu</span>' : '') + (!bank ? '<span class="exl-tag w">Chưa có câu hỏi</span>' : '');
   return '<tr data-exid="' + id + '" tabindex="0" onclick="exRowOpen(event,\'' + jid + '\')" onkeydown="if(event.key===\'Enter\')exRowOpen(event,\'' + jid + '\')">' +
-    '<td><div class="exl-t">' + esc(exTitleOf(e)) + '</div><div class="exl-m"><button type="button" class="exl-code" title="Bấm để sao chép mã đề" onclick="event.stopPropagation();copyText(\'' + jid + '\', this)">' + id + '</button>' + tags + '</div></td>' +
-    '<td><div class="exl-d">' + esc(when) + '<small>' + esc(who) + '</small></div></td>' +
+    '<td><div class="exl-id2"><span class="exl-ic" aria-hidden="true">' + EXL_ICON + '</span><div><div class="exl-t">' + esc(exTitleOf(e)) + '</div><div class="exl-m"><button type="button" class="exl-code" title="Bấm để sao chép mã đề" onclick="event.stopPropagation();copyText(\'' + jid + '\', this)">' + id + '</button>' + tags + '</div></div></div></td>' +
+    '<td><div class="exl-d">' + esc(when) + '<small>' + esc([exWindow(e).sub, who].filter(Boolean).join(' · ')) + '</small></div></td>' +
     '<td class="n"><div class="exl-num" title="' + esc(pp.how) + '">' + esc(pp.n) + '<small>kho ' + bank + ' câu</small></div></td>' +
     '<td class="n"><div class="exl-num">' + (e.resultCount || 0) + '</div></td>' +
     '<td><span class="exl-st ' + st[0] + '"><i></i>' + st[1] + '</span></td>' +
-    '<td class="exl-a"><button class="btn ghost sm" onclick="event.stopPropagation();editExam(\'' + jid + '\')">Sửa</button><button type="button" class="exl-more" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác khác" onclick="event.stopPropagation();exMenu(this,\'' + jid + '\')">⋯</button></td></tr>';
+    '<td class="exl-a"><button type="button" class="exl-icb" title="Xem chi tiết" aria-label="Xem chi tiết" onclick="event.stopPropagation();openExam(\'' + jid + '\')">' + EXL_EYE + '</button><button class="btn ghost sm" onclick="event.stopPropagation();editExam(\'' + jid + '\')">Sửa</button><button type="button" class="exl-more" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác khác" onclick="event.stopPropagation();exMenu(this,\'' + jid + '\')">⋯</button></td></tr>';
 }
 function exRowOpen(ev, id){ if (ev.target.closest('button,a')) return; openExam(id); }
 var EXMENU = null;
@@ -3689,7 +3927,7 @@ async function exInvPreview(){
 // Chuyển đổi hiển thị danh sách đề: dạng thẻ (card) hoặc dạng danh sách (bảng), nhớ lựa chọn cho lần sau.
 function exSetView(v){
   v = v === 'list' ? 'list' : 'card';
-  try { localStorage.setItem('exView', v); } catch (e) { /* bỏ qua nếu trình duyệt chặn lưu */ }
+  try { localStorage.setItem('exView2', v); } catch (e) { /* bỏ qua nếu trình duyệt chặn lưu */ }
   if ($('exGrid')) $('exGrid').classList.toggle('hide', v !== 'card');
   if ($('exListTable')) $('exListTable').classList.toggle('hide', v !== 'list');
   const card = $('exViewCard'), list = $('exViewList');
@@ -6853,6 +7091,7 @@ function heroHTML(o){
 }
 // Banner luôn tóm tắt KỲ HIỆN TẠI (lấy từ dashboard khi đang xem kỳ hiện tại)
 function renderAdminHero(j){
+  EXDASH = j; if (typeof renderExKpi === 'function') renderExKpi();
   const n = j.candidates, done = j.submitted, rate = n ? Math.round(done / n * 100) : 0;
   const weak = j.bands && j.bands[0] ? j.bands[0].n : 0, low = j.lowPct || 60, avg = j.avgPct;
   const avgCol = avg == null ? 'rgba(255,255,255,.5)' : avg >= low ? '#7FE3B0' : avg >= low - 15 ? '#FFD678' : '#FF9A8F';
