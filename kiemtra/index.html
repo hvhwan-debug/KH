@@ -3104,7 +3104,7 @@ function checkDone(j, code, email){
     return;
   }
   if (!j.ok){ msg('checkMsg', j.error || 'Có lỗi xảy ra, thử lại sau.'); return; }
-  ST.cand = { code:j.candidate.code, name:j.candidate.name, email:j.candidate.email, manager:j.candidate.manager, phone:j.candidate.phone || '', segment:j.candidate.segment || 'both', title:j.candidate.title || 'PC', province:j.candidate.province || '', region:j.candidate.region || '', needRegion:!!j.candidate.needRegion, test:!!j.candidate.test, inCode:code, inEmail:email };
+  ST.cand = { birth:j.candidate.birth, code:j.candidate.code, name:j.candidate.name, email:j.candidate.email, manager:j.candidate.manager, phone:j.candidate.phone || '', segment:j.candidate.segment || 'both', title:j.candidate.title || 'PC', province:j.candidate.province || '', region:j.candidate.region || '', needRegion:!!j.candidate.needRegion, test:!!j.candidate.test, inCode:code, inEmail:email };
   ST.phoneNew = ''; ST.rgNew = null; ST.pending = !!j.pendingRequest;
   ST.exam = j.exam || {};
   applyPractice();
@@ -4667,6 +4667,7 @@ function renderImp(r, ps, prac){
     '<a class="im-go" href="/kiemtra/hoclieu.html" target="_blank" rel="noopener">' + RS_ICO.book + '<span>Xem học liệu</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>';
 }
 function renderResult(r, already){
+  if (ST.cand && ST.cand.birth && window.BirthAsk) BirthAsk.ask(ST.cand.birth); // xin ngày sinh ở màn kết quả (nhắc nhẹ, bỏ qua được)
   ST.res = { r:r, already:already };
   setTimeout(surveyPrompt, 900);
   renderTries(r.attempts);
@@ -5534,5 +5535,6 @@ if (ckGet() !== '0' && EXAM_ID && !$('scrCheck').classList.contains('hide')){
 }
 })();
 </script>
+<script src="/kiemtra/birthask.js?v=1" defer></script>
 </body>
 </html>

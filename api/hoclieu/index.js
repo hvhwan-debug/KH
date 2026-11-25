@@ -34,7 +34,7 @@ module.exports = async function (context, req) {
     // Khôi phục phiên đã xác thực khuôn mặt (cookie kt_hl) khi tải lại trang
     if (req.method === "GET" && req.query && req.query.me) {
       const s = CK.hlFromReq(req);
-      return reply(context, 200, s ? { ok: true, name: s.name } : { ok: false });
+      return reply(context, 200, s ? { ok: true, name: s.name, birth: await require("../_lib/birthask").forCode(s.code) } : { ok: false });
     }
     if (req.method === "POST" && req.body && req.body.op === "logout") { reply(context, 200, { ok: true }); CK.attach(context, CK.clearHl()); return; }
     const d = await hl.load();

@@ -34,6 +34,8 @@ const DEFAULT_SETTINGS = {
   // Bắt buộc khai ngày, tháng, năm sinh trước khi làm bài, để hệ thống chúc mừng sinh nhật.
   // Mặc định TẮT: chỉ bật khi quản trị viên chủ động chọn trong Cài đặt, tránh chặn nhầm ai khi chưa sẵn sàng.
   requireBirthDate: false,
+  // Nhắc nhẹ xin ngày sinh khi nhân viên vào Học liệu / tra cứu / làm bài xong (bỏ qua được, hỏi lại hôm sau). Mặc định BẬT.
+  askBirthDate: true,
   complianceEnabled: true,
   complianceHighMin: 9,   // >= mốc này: 20 điểm
   complianceMidMin: 7,    // >= mốc này (và < mốc trên): 15 điểm

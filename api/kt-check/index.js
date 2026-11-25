@@ -151,6 +151,7 @@ async function handler(context, req) {
     candidate.needRegion = quiz.needsRegion(found) && !(candidate.province && candidate.region);
     // Chưa có ngày sinh đủ năm VÀ hệ thống đang yêu cầu khai (Cài đặt mặc định): phải điền ở màn xác nhận trước khi làm bài
     candidate.needBirth = !!defaultSettings.requireBirthDate && !quiz.hasBirthYear(found.birthDate);
+    if (!candidate.needBirth) { const bk = await require("../_lib/birthask").forCandidate(found); if (bk) candidate.birth = bk; } // nhắc nhẹ (bỏ qua được) ở màn kết quả
     candidate.birthMD = candidate.needBirth ? quiz.birthMD(found.birthDate) : ""; // đã có ngày/tháng (dữ liệu cũ) thì chỉ xin thêm năm
     candidate.test = !!found.test;
     const pendingRequest = (await require("../_lib/changereq").getAll()).some((r) => r.status === "pending" && quiz.normCode(r.code) === code);

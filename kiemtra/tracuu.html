@@ -705,6 +705,7 @@ $('trGuide').addEventListener('click', function(){ var d = $('trDlg'); if (d.sho
 $('trSupport').addEventListener('click', function(){ var d = $('trSupportDlg'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); });
 $('thQ').addEventListener('input', function(){ TH.q = this.value; TH.page = 1; renderGroups(); });
 function showList(j){
+  if (j && j.birth && window.BirthAsk) BirthAsk.ask(j.birth); // xin ngày sinh (nhắc nhẹ, bỏ qua được)
   var L = j.list || [];
   $('wAv').textContent = initials(j.name); $('wName').textContent = j.name || j.code; $('trMe').textContent = initials(j.name || j.code);
   $('wSub').textContent = 'Mã NV: ' + j.code + (j.manager ? ' | Quản lí: ' + j.manager : '');
@@ -786,5 +787,6 @@ function openFace(){
   });
 }
 </script>
+<script src="/kiemtra/birthask.js?v=1" defer></script>
 </body>
 </html>

@@ -141,7 +141,7 @@ module.exports = async function (context, req) {
         paperOpen: !!st.closeAt && Date.now() > st.closeAt, t: quiz.verifyToken(r.id)
       });
     }
-    return reply(context, 200, { ok: true, name: who.name, code: rows[0].code || "", manager: rows[0].manager || "", total: rows.length, list, serverNow: Date.now() });
+    return reply(context, 200, { ok: true, name: who.name, code: rows[0].code || "", manager: rows[0].manager || "", total: rows.length, list, serverNow: Date.now(), birth: await require("../_lib/birthask").forCode(code) });
   } catch (e) {
     context.log.error("kt-history", e && e.message);
     return reply(context, 500, { ok: false, error: "Có lỗi xảy ra, thử lại sau." });

@@ -2481,6 +2481,7 @@ body[data-tab="results"] .wrap,body[data-tab="analysis"] .wrap,body[data-tab="qu
         <h1>Chúc mừng sinh nhật</h1>
         <p class="small">Khi bật, nhân viên chưa khai ngày sinh sẽ phải điền (chỉ ngày + tháng, không hỏi năm) ở màn "Xác nhận thông tin" trước khi được vào làm bài, để hệ thống tự gửi lời chúc mừng đúng ngày sinh nhật của họ.</p>
         <label style="display:flex;align-items:center;gap:8px;margin-top:0"><input type="checkbox" id="setReqBirth" style="width:18px;height:18px"> Bắt buộc khai ngày, tháng, năm sinh trước khi làm bài (để chúc mừng sinh nhật)</label>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input type="checkbox" id="setAskBirth" style="width:18px;height:18px"> Nhắc nhẹ xin ngày sinh khi nhân viên vào Học liệu, tra cứu hoặc làm bài xong (bỏ qua được, hôm sau hỏi lại)</label>
       </div>
       <div class="card">
         <h1>Điểm tuân thủ học tập (mặc định)</h1>
@@ -5920,6 +5921,7 @@ async function loadSettings(){
   $('setSeconds').value = s.secondsPerQuestion; $('setPass').value = s.passScore; $('setPassOn').checked = !!s.passEnabled; $('setPass').disabled = !s.passEnabled;
   $('setRetake').checked = !!s.allowRetake;
   $('setReqBirth').checked = !!s.requireBirthDate;
+  $('setAskBirth').checked = s.askBirthDate !== false;
   $('setComplianceOn').checked = !!s.complianceEnabled;
   $('setCHigh').value = s.complianceHighMin; $('setCMid').value = s.complianceMidMin; $('setCLow').value = s.complianceLowMin;
   SEGPLANS = s.segmentPlans || {}; renderSegPlans(); renderExGrid();
@@ -5937,6 +5939,7 @@ async function saveSettings(){
     op:'saveSettings', examPeriod: period, questionCount: $('setCount').value, bothGiaDungCount: $('setBothGD').value,
     secondsPerQuestion: $('setSeconds').value, timeMode: $('setTimeMode').value, totalMinutes: $('setTotalMin').value, passEnabled: $('setPassOn').checked, passScore: $('setPass').value, allowRetake: $('setRetake').checked,
     requireBirthDate: $('setReqBirth').checked,
+    askBirthDate: $('setAskBirth').checked,
     complianceEnabled: $('setComplianceOn').checked, complianceHighMin: $('setCHigh').value,
     complianceMidMin: $('setCMid').value, complianceLowMin: $('setCLow').value,
     segmentPlans: readSegPlans()
