@@ -251,10 +251,10 @@ const handler = async function (context, req) {
         const err = quiz.validateCounts({ questionCount: eff.questionCount, bothGiaDungCount: eff.bothGiaDungCount, blueprint: eff.blueprint }, 0);
         const all = await quiz.getQuestions();
         const hasBp = eff.blueprint && eff.blueprint.rules && eff.blueprint.rules.length, spx = eff.segmentPlans || {};
-        const segs = hasBp ? [["*", "Mọi thí sinh"]] : eff.sharedUniform ? [["*", "Dùng chung (mọi nhân viên)"]] : [["gia_dung", "Bán Gia dụng"], ["may_loc", "Bán Máy lọc nước"], ["both", "Bán cả 2 ngành"]];
-        // Xem trước thêm đề của PC từng miền (khi đã phân bổ theo miền)
-        if (!hasBp) [["bac", "PC Miền Bắc"], ["nam", "PC Miền Nam"]].forEach(([rg, label]) => { if (Array.isArray(spx["mien_" + rg]) && spx["mien_" + rg].length) segs.push(["mien_" + rg, label, rg]); });
-        const plans = segs.map(([seg, label, rg]) => { const p = quiz.planExam(all, eff, rg ? "both" : seg, rg); return { segment: seg, label, target: p.target, got: p.picked.length, short: p.short, pool: p.pool, mode: p.mode, source: p.source, parts: p.parts, error: p.error }; });
+        // Xem trước đúng đề từng ô ngành × miền (mỗi miền chỉ rút câu của miền mình + câu dùng chung)
+        const segs = hasBp ? [["*", "Mọi thí sinh"]] : eff.sharedUniform ? [["*", "Dùng chung (mọi nhân viên)"]] :
+          [["both", "Bán cả 2 ngành"], ["may_loc", "Bán Máy lọc nước"], ["gia_dung", "Bán Gia dụng"]].flatMap(([seg, label]) => [[seg, label + " · Miền Bắc", "bac"], [seg, label + " · Miền Nam", "nam"]]);
+        const plans = segs.map(([seg, label, rg]) => { const p = quiz.planExam(all, eff, seg, rg); return { segment: seg + (rg ? "_" + rg : ""), label, target: p.target, got: p.picked.length, short: p.short, pool: p.pool, mode: p.mode, source: p.source, parts: p.parts, error: p.error }; });
         return reply(context, 200, { ok: true, max: quiz.MAX_QUESTION_COUNT, invalid: err || "", plans });
       }
       if (op === "previewBlueprint") {

@@ -184,10 +184,26 @@ html{overflow-x:hidden}
 label.chk{display:flex!important;align-items:center;gap:8px;font-weight:600;margin:0}
 label.chk input,#exSpMode input{width:18px!important;height:18px;margin:0;flex:0 0 auto}
 #exSpMode label{display:inline-flex!important;align-items:center;gap:6px;width:auto}
-.spg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
-.spbox[data-box^=mien_]{border-color:#9FC3EE;background:#F5F9FE}
-.spbox .rgnote{font-size:12px;color:var(--muted);margin:0 0 8px}
-@media(max-width:900px){.spg{grid-template-columns:1fr}}
+.spg{margin-top:12px}
+.sptabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.sptabs button{flex:1 1 180px;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px;cursor:pointer;font:inherit;color:inherit}
+.sptabs button b{display:block;font-size:14px}.sptabs button .sum{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.sptabs button.on{border-color:var(--brand,#2563EB);background:#F3F7FF;box-shadow:0 0 0 1px var(--brand,#2563EB) inset}
+.sptabs button.warn .sum{color:var(--warn)}
+.spind{display:none}.spind.on{display:block}
+.sphead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:14px}
+.spsw{display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.spsw button{border:0;background:#fff;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--muted)}
+.spsw button+button{border-left:1.5px solid var(--line)}
+.spind[data-split="0"] .spsw button[data-v="0"],.spind[data-split="1"] .spsw button[data-v="1"]{background:#F3F7FF;color:inherit;font-weight:700}
+.spcols{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.spind[data-split="1"] .spcols{grid-template-columns:repeat(2,minmax(0,1fr))}
+.spind[data-split="0"] .spbox.rg-bac,.spind[data-split="0"] .spbox.rg-nam,.spind[data-split="1"] .spbox.rg-all,.spind[data-split="0"] .sprgtool{display:none}
+.spbox.rg-bac,.spbox.rg-nam{background:#F8FBFF}
+.sptools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:13px}
+.sptools select{width:auto;margin:0;padding:6px 8px;font-size:13px}
+.spconv{font-size:12.5px;padding:8px 10px;border-radius:10px;background:#FFFBEA;border:1px solid #F2E2A0;margin-bottom:10px}
+@media(max-width:900px){.spind[data-split="1"] .spcols{grid-template-columns:1fr}}
 .spbox{border:1px solid var(--line);border-radius:12px;padding:12px}
 .spbox h3{margin:0 0 2px;font-size:14px}.spbox .tot{font-size:12.5px;color:var(--muted);margin-bottom:8px}
 .sprow{display:grid;grid-template-columns:minmax(0,1fr) 64px 28px;gap:6px;align-items:center;margin-top:6px}
@@ -1913,9 +1929,9 @@ a.bb{text-decoration:none}
             <button class="btn ghost sm" type="button" onclick="previewPlan()">Kiểm tra đủ câu chưa</button>
           </div>
           <div id="exSpMode" style="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;font-size:14px">
-            <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="radio" name="exSpMode" value="none" onchange="exSpModeChanged()"> Dùng chung (không phân biệt nhóm ngành/miền)</label>
+            <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="radio" name="exSpMode" value="none" onchange="exSpModeChanged()"> Dùng chung (không phân biệt ngành/miền)</label>
             <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="radio" name="exSpMode" value="global" checked onchange="exSpModeChanged()"> Chép phân bổ mặc định (tab Cài đặt) vào đề này</label>
-            <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="radio" name="exSpMode" value="own" onchange="exSpModeChanged()"> Phân bổ riêng cho đề này</label>
+            <label style="display:flex;align-items:center;gap:6px;margin:0"><input type="radio" name="exSpMode" value="own" onchange="exSpModeChanged()"> Chia riêng theo ngành / miền cho đề này</label>
           </div>
           <div id="exSpOwn" class="hide"><div class="spg" id="exSp" oninput="exQSummary();$('planPreview').innerHTML=''" onclick="setTimeout(exQSummary,0)"></div></div>
           <div id="exSpNone" class="hide" style="margin-top:8px;padding:10px 12px;border-radius:10px;background:#F3F7FF;border:1.5px solid #D6E3FA">
@@ -2470,8 +2486,8 @@ a.bb{text-decoration:none}
         <div id="setMsg"></div>
       </div>
       <div class="card" id="segPlanCard">
-        <h1>Phân bổ câu hỏi mặc định theo nhóm ngành</h1>
-        <p class="small"><b>Đề mới tạo sẽ chép sẵn phân bổ này</b> (sửa riêng được trong “Cài đặt đề”). Mỗi nhóm thí sinh nhận đúng số câu của từng danh mục. Tên danh mục phải <b>trùng với ô "Phân loại"</b> của câu hỏi (không phân biệt hoa thường). Nhóm nào để trống thì dùng cách chia cũ ở trên (Tổng số câu + số câu Gia dụng cố định). Nếu một đề thi có "Cấu trúc đề" riêng thì cấu trúc đó được ưu tiên. <b>Miền Bắc / Miền Nam</b>: áp dụng cho MỌI chức danh (PC, SR...) — hễ đã chọn miền thì nhận đề theo khung của miền mình (ưu tiên hơn nhóm ngành); câu hỏi gắn tag “Miền Bắc”/“Miền Nam” (hoặc danh mục có chữ “Miền Bắc”/“Miền Nam”) chỉ phát cho đúng miền, câu không gắn miền dùng chung.</p>
+        <h1>Phân bổ câu hỏi mặc định theo ngành / miền</h1>
+        <p class="small"><b>Đề mới tạo sẽ chép sẵn phân bổ này</b> (sửa riêng được trong “Cài đặt đề”). Mỗi nhóm thí sinh nhận đúng số câu của từng danh mục. Tên danh mục phải <b>trùng với ô "Phân loại"</b> của câu hỏi (không phân biệt hoa thường). Nhóm nào để trống thì dùng cách chia cũ ở trên (Tổng số câu + số câu Gia dụng cố định). Nếu một đề thi có "Cấu trúc đề" riêng thì cấu trúc đó được ưu tiên. <b>Chia theo miền</b>: chọn ngành ở thẻ phía trên, rồi để “Hai miền chung 1 đề” hoặc bấm “Tách đề Miền Bắc / Miền Nam” nếu hai miền cần đề khác nhau. Mỗi nhân viên nhận đúng đề của ngành và miền mình. Câu hỏi gắn tag “Miền Bắc”/“Miền Nam” (hoặc danh mục có chữ “Miền Bắc”/“Miền Nam”) chỉ phát cho đúng miền; câu không gắn miền dùng chung cho cả hai miền.</p>
         <div class="spg" id="spWrap"></div>
         <datalist id="catList"></datalist>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
@@ -3489,9 +3505,9 @@ function renderExSum(e){
   if (e.blueprint && (e.blueprint.rules || []).length){ qc = sum(e.blueprint.rules) + ' câu'; qs = 'Theo cấu trúc đề riêng (' + e.blueprint.rules.length + ' quy tắc)'; }
   else if (e.sharedUniform){ qc = (v('questionCount') || '?') + ' câu'; qs = 'Dùng chung cho mọi thí sinh'; }
   else {
-    const P = e.segmentPlans && Object.keys(e.segmentPlans).length ? e.segmentPlans : (SEGPLANS || {});
+    const P = spView(e.segmentPlans && Object.keys(e.segmentPlans).length ? e.segmentPlans : (SEGPLANS || {}));
     const segs = SP_SEGS.filter(([k]) => P[k] && P[k].length);
-    if (segs.length){ const ns = Array.from(new Set(segs.map(([k]) => sum(P[k])))); qc = ns.join(' / ') + ' câu'; qs = 'Phân bổ theo nhóm ngành' + (e.segmentPlans && Object.keys(e.segmentPlans).length ? ' (riêng của đề)' : ' (mặc định)') + ': ' + segs.map(([k, l]) => l + ' ' + sum(P[k])).join(' · '); }
+    if (segs.length){ const ns = Array.from(new Set(segs.map(([k]) => sum(P[k])))); qc = ns.join(' / ') + ' câu'; qs = 'Phân bổ theo ngành / miền' + (e.segmentPlans && Object.keys(e.segmentPlans).length ? ' (riêng của đề)' : ' (mặc định)') + ': ' + segs.map(([k, l]) => l + ' ' + sum(P[k])).join(' · '); }
     else { qc = (v('questionCount') || '?') + ' câu'; qs = 'Rút từ ngân hàng của đề'; }
   }
   const total = v('timeMode') === 'total';
@@ -3593,11 +3609,11 @@ function exPerPerson(e){ // số câu mỗi thí sinh nhận + cách chia
   const bp = bpTotalOf(e.blueprint);
   if (bp) return { n: String(bp), how: 'theo quy tắc riêng' };
   if (e.sharedUniform) return { n: e.questionCount ? String(e.questionCount) : '–', how: 'dùng chung mọi người' };
-  const plans = spHas(e.segmentPlans) ? e.segmentPlans : null;
+  const plans = spHas(e.segmentPlans) ? spView(e.segmentPlans) : null;
   if (plans){
     const v = SP_SEGS.filter(([k]) => plans[k] && plans[k].length).map(([k]) => plans[k].reduce((n, r) => n + r.count, 0));
     const lo = Math.min.apply(null, v), hi = Math.max.apply(null, v);
-    return { n: lo === hi ? String(lo) : lo + '–' + hi, how: 'chia theo nhóm ngành' };
+    return { n: lo === hi ? String(lo) : lo + '–' + hi, how: 'chia theo ngành / miền' };
   }
   return { n: e.questionCount ? String(e.questionCount) : (SETCACHE.questionCount ? String(SETCACHE.questionCount) : '–'), how: spHas(SEGPLANS) ? 'theo phân bổ chung' : 'theo nhóm ngành' };
 }
@@ -3685,12 +3701,12 @@ function exQSummary(){
   if (BP_RULES.length){ const t = BP_RULES.reduce((n,r) => n + (+r.count||0), 0); box.innerHTML = 'Theo <b>cấu trúc đề riêng</b> (Tuỳ chọn nâng cao): ' + t + ' câu cho mọi thí sinh.'; return; }
   const bk = bankOfPeriod($('exEditingId').value || $('exId').value.trim());
   const note = bk.note ? '<div style="color:var(--warn);margin-top:4px">⚠ Ngân hàng: ' + esc(bk.note) + '. Thêm câu cho đề này ở tab Câu hỏi (nút "Câu hỏi" trong danh sách đề).</div>' : '';
-  if (exSpShared()){ const cnt = $('exCount').value.trim(); box.innerHTML = 'Theo <b>dùng chung</b>: ' + (cnt ? cnt + ' câu' : 'theo Cài đặt mặc định') + ' cho MỌI thí sinh, không phân biệt nhóm ngành hay miền.' + note; return; }
+  if (exSpShared()){ const cnt = $('exCount').value.trim(); box.innerHTML = 'Theo <b>dùng chung</b>: ' + (cnt ? cnt + ' câu' : 'theo Cài đặt mặc định') + ' cho MỌI thí sinh, không phân biệt ngành hay miền.' + note; return; }
   if (own){ const P = spRead($('exSp')); box.innerHTML = 'Theo <b>phân bổ riêng của đề này</b>: ' + (SP_SEGS.filter(([k]) => P[k] && P[k].length).map(([k,l]) => l + ' <b>' + P[k].reduce((n,r) => n + r.count, 0) + ' câu</b>').join(' · ') || 'chưa nhập dòng nào') + note; return; }
-  const segs = SP_SEGS.filter(([k]) => SEGPLANS[k] && SEGPLANS[k].length);
+  const GP = spView(SEGPLANS), segs = SP_SEGS.filter(([k]) => GP[k] && GP[k].length);
   const old = ($('exCount').value.trim() ? 'tổng ' + $('exCount').value.trim() + ' câu' : 'tổng số câu theo Cài đặt') + ' (cách chia cũ)';
-  box.innerHTML = segs.length ? 'Theo <b>Phân bổ nhóm ngành</b> ở tab Cài đặt: ' + segs.map(([k,l]) => l + ' <b>' + SEGPLANS[k].reduce((n,r) => n + r.count, 0) + ' câu</b>').join(' · ') +
-    (segs.filter(([k]) => k.indexOf('mien_') < 0).length < 3 ? ' · nhóm còn lại: ' + old : '') + note : old + '. Muốn chia theo danh mục cho từng nhóm ngành, chọn "Phân bổ riêng cho đề này" hoặc chỉnh ở tab Cài đặt.' + note;
+  box.innerHTML = segs.length ? 'Theo <b>Phân bổ nhóm ngành</b> ở tab Cài đặt: ' + segs.map(([k,l]) => l + ' <b>' + GP[k].reduce((n,r) => n + r.count, 0) + ' câu</b>').join(' · ') +
+    (SP_IND.filter(([k]) => GP[k] || GP[k+'_bac'] || GP[k+'_nam']).length < 3 ? ' · nhóm còn lại: ' + old : '') + note : old + '. Muốn chia theo danh mục cho từng nhóm ngành, chọn "Chia riêng theo ngành / miền cho đề này" hoặc chỉnh ở tab Cài đặt.' + note;
 }
 const exSpMode = () => { const r = document.querySelector('input[name=exSpMode]:checked'); return r ? r.value : 'global'; };
 const exSpOwn = () => exSpMode() === 'own';
@@ -4913,15 +4929,16 @@ async function loadQuestions(){
   loadQBackup();
 }
 function qReadiness(list, isCur){
-  const exQ = EXAMS.find(e => e.id === QP), P = exQ && spHas(exQ.segmentPlans) ? exQ.segmentPlans : SEGPLANS;
+  const exQ = EXAMS.find(e => e.id === QP), own = exQ && spHas(exQ.segmentPlans), P = spView(own ? exQ.segmentPlans : SEGPLANS);
   if (SP_SEGS.some(([k]) => P[k] && P[k].length)){
-    const act = list.filter(q => q.active !== false), cats = {};
-    act.forEach(q => { const k = spNorm(q.category); cats[k] = (cats[k] || 0) + 1; });
+    const CO = spCatCounts(list.filter(q => q.active !== false));
+    // Đề chung 2 miền: lấy miền ít câu hơn (thí sinh mỗi miền chỉ rút câu của miền mình + câu dùng chung)
+    const have = (k, c) => { const rg = spRgOf(k), x = spNorm(c); return rg ? (CO[rg][x] || 0) : Math.min(CO.bac[x] || 0, CO.nam[x] || 0); };
     return SP_SEGS.filter(([k]) => P[k] && P[k].length).map(([k,l]) => {
-      const rows = P[k], need = rows.reduce((n,r) => n + r.count, 0), short = rows.filter(r => (cats[spNorm(r.category)] || 0) < r.count);
-      return '<div class="row"><span><b>' + l + '</b> (' + need + ' câu): ' + rows.map(r => esc(r.category) + ' ' + r.count).join(' · ') + '</span><span class="' + (short.length ? 'bad' : 'ok') + '">' +
-        (short.length ? '⚠ thiếu: ' + short.map(r => esc(r.category) + ' ' + (cats[spNorm(r.category)] || 0) + '/' + r.count).join(', ') : '✓ đủ') + '</span></div>';
-    }).join('').replace(/^/, '<div class="hd">Đủ câu theo phân bổ ' + (P === SEGPLANS ? 'chung' : 'riêng của đề này') + ' chưa?</div>');
+      const rows = P[k], need = rows.reduce((n,r) => n + r.count, 0), short = rows.filter(r => have(k, r.category) < r.count);
+      return '<div class="row"><span><b>' + l + (spRgOf(k) ? '' : ' (cả 2 miền)') + '</b> (' + need + ' câu): ' + rows.map(r => esc(r.category) + ' ' + r.count).join(' · ') + '</span><span class="' + (short.length ? 'bad' : 'ok') + '">' +
+        (short.length ? '⚠ thiếu: ' + short.map(r => esc(r.category) + ' ' + have(k, r.category) + '/' + r.count).join(', ') : '✓ đủ') + '</span></div>';
+    }).join('').replace(/^/, '<div class="hd">Đủ câu theo phân bổ ' + (own ? 'riêng của đề này' : 'chung') + ' chưa?</div>');
   }
   const act = list.filter(q => q.active !== false), Q = +QMETA.questionCount || act.length, G = +QMETA.bothGiaDungCount || 0;
   const gd = act.filter(q => q.category === 'Gia dụng').length, ml = act.filter(q => q.category === 'Máy lọc nước').length, other = act.length - gd;
@@ -4962,7 +4979,7 @@ function renderQuestions(){
   // Cong cu doi ten danh muc hang loat: chi hien khi phan bo rieng cua de dang bao thieu (thuong do ten danh
   // muc cau hoi nhap vao khac voi ten de dang yeu cau, chu khong phai that su thieu cau).
   (function(){
-    const exQ2 = EXAMS.find(e => e.id === QP), P2 = exQ2 && spHas(exQ2.segmentPlans) ? exQ2.segmentPlans : SEGPLANS;
+    const exQ2 = EXAMS.find(e => e.id === QP), P2 = spView(exQ2 && spHas(exQ2.segmentPlans) ? exQ2.segmentPlans : SEGPLANS);
     const haveCats = Array.from(new Set(L.filter(q => q.active !== false).map(q => q.category).filter(Boolean))).sort();
     const needCats = SP_SEGS.some(([k]) => P2[k] && P2[k].length) ? Array.from(new Set(SP_SEGS.flatMap(([k]) => (P2[k] || []).map(r => r.category)))).sort() : [];
     const missing = needCats.filter(c => !haveCats.some(h => spNorm(h) === spNorm(c)));
@@ -6169,14 +6186,30 @@ async function xlTemplate(){
 /* ---------- Phân bổ câu hỏi theo nhóm ngành ---------- */
 // Dùng chung cho tab Cài đặt (phân bổ chung) và form đề thi (phân bổ riêng của từng đề). Mỗi khung là một .spg có data-bank = mã kỳ/đề để đếm câu.
 let SEGPLANS = {};
-const SP_SEGS = [['both','Bán cả 2 ngành'],['may_loc','Chỉ bán máy lọc nước'],['gia_dung','Chỉ bán gia dụng'],['mien_bac','Miền Bắc (mọi chức danh)'],['mien_nam','Miền Nam (mọi chức danh)']];
+// Ngành × miền: mỗi ngành có 1 đề dùng chung cho cả hai miền (khoá "both"/"may_loc"/"gia_dung"),
+// hoặc tách thành đề Miền Bắc + đề Miền Nam (khoá "<ngành>_bac" / "<ngành>_nam"). Ngành và miền ngang hàng, không khung nào đè khung nào.
+const SP_IND = [['both','Bán cả 2 ngành'],['may_loc','Chỉ bán máy lọc nước'],['gia_dung','Chỉ bán gia dụng']];
+const SP_RG = [['bac','Miền Bắc'],['nam','Miền Nam']];
+const SP_SEGS = SP_IND.flatMap(([k,l]) => [[k,l],[k+'_bac',l+' · Miền Bắc'],[k+'_nam',l+' · Miền Nam']]);
+const spRgOf = k => /_bac$/.test(k) ? 'bac' : /_nam$/.test(k) ? 'nam' : '';
+// Đổi phân bổ kiểu cũ (khung "Miền Bắc/Miền Nam (mọi chức danh)" đè lên mọi ngành) sang bảng ngành × miền, GIỮ NGUYÊN cách phát đề
+function spNormalizePlans(P){
+  const src = P || {}, out = {}, cp = L => (L || []).map(r => ({ category: r.category, count: r.count }));
+  SP_SEGS.forEach(([k]) => { if (Array.isArray(src[k]) && src[k].length) out[k] = cp(src[k]); });
+  const old = { bac: src.mien_bac || [], nam: src.mien_nam || [] };
+  if (!old.bac.length && !old.nam.length) return { plans: out, converted: false };
+  SP_IND.forEach(([k]) => {
+    SP_RG.forEach(([rg]) => { const kk = k + '_' + rg; if (!out[kk]){ const L = old[rg].length ? old[rg] : out[k]; if (L && L.length) out[kk] = cp(L); } });
+    if (out[k + '_bac'] && out[k + '_nam']) delete out[k];
+  });
+  return { plans: out, converted: true };
+}
+const spView = P => spNormalizePlans(P).plans;
 const SP_TEMPLATE = {
   // Từ 10/2026 ngưng dùng câu kỹ năng bán hàng máy lọc (chưa đảm bảo chất lượng): phần đó thay bằng câu Máy lọc nước
   both: [['Thương hiệu',5],['Gia dụng',10],['Máy lọc nước',20],['Kỹ năng bán hàng gia dụng',5]],
   may_loc: [['Thương hiệu',5],['Máy lọc nước',35]],
-  gia_dung: [],
-  mien_bac: [['Máy lọc nước',40]],
-  mien_nam: [['Máy lọc nước',40]]
+  gia_dung: []
 };
 // Miền của câu hỏi (khớp quiz.questionRegion ở máy chủ): tag "Miền Bắc"/"Miền Nam" hoặc tên danh mục có chữ "Miền Bắc"/"Miền Nam"
 const rgFold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/[^a-z0-9]+/g, ' ').trim();
@@ -6190,7 +6223,7 @@ function qRegion(q){
   return r === '*' ? '' : r;
 }
 const spNorm = c => String(c || '').normalize('NFC').trim().replace(/\s+/g,' ').toLowerCase();
-const spHas = plans => SP_SEGS.some(([k]) => plans && plans[k] && plans[k].length);
+const spHas = plans => { const P = spView(plans); return SP_SEGS.some(([k]) => P[k] && P[k].length); };
 // Câu đang dùng của một kỳ/đề (cùng thứ tự dự phòng với máy chủ: câu của kỳ/đề → câu chưa gắn kỳ → kỳ gần nhất trước đó)
 function bankOfPeriod(p){
   const act = (QUESTIONS || []).filter(q => q.active !== false), own = act.filter(q => (q.period || '') === p);
@@ -6204,10 +6237,63 @@ function spBank(){ return bankOfPeriod(CUR_PERIOD).list; }
 function spRowHTML(seg, r){
   return '<div class="sprow" data-seg="'+seg+'"><input type="text" list="catList" placeholder="Danh mục" value="'+esc(r.category||'')+'" oninput="spRefresh(this)"><input type="text" inputmode="numeric" placeholder="Số câu" value="'+(r.count||'')+'" oninput="spRefresh(this)"><button class="x" type="button" title="Bỏ dòng" onclick="const g=this.closest(\'.spg\');this.parentNode.remove();spRefresh(g)">×</button><div class="have"></div></div>';
 }
+function spBoxHTML(key, title, rows){
+  const rg = spRgOf(key);
+  return '<div class="spbox rg-'+(rg || 'all')+'" data-box="'+key+'"><h3>'+title+'</h3><div class="tot"></div><div class="rows">'+
+    (rows || []).map(r => spRowHTML(key, r)).join('') + '</div><button class="btn ghost sm" type="button" style="margin-top:8px" onclick="spAdd(this,\''+key+'\')">＋ Thêm danh mục</button></div>';
+}
 function spRender(root, plans){
-  root.innerHTML = SP_SEGS.map(([k,l]) => '<div class="spbox" data-box="'+k+'"><h3>'+l+'</h3><div class="tot"></div>'+(k.indexOf('mien_') === 0 ? '<p class="rgnote"><b>Thường để trống:</b> Nhân viên (bất kỳ chức danh nào) thuộc '+(k==='mien_bac'?'Miền Bắc':'Miền Nam')+' vẫn nhận đúng câu của miền mình theo phân bổ nhóm ngành ở trên. Chỉ điền khi miền này cần cấu trúc đề khác; khi điền, khung này thay thế phân bổ nhóm ngành cho mọi nhân viên của miền (kể cả người bán gia dụng).</p>' : '')+'<div class="rows">'+
-    ((plans || {})[k] || []).map(r => spRowHTML(k, r)).join('') + '</div><button class="btn ghost sm" type="button" style="margin-top:8px" onclick="spAdd(this,\''+k+'\')">＋ Thêm danh mục</button></div>').join('');
-  spRefresh(root);
+  const N = spNormalizePlans(plans), P = N.plans;
+  if (!root.dataset.tab) root.dataset.tab = (SP_IND.find(([k]) => P[k] || P[k+'_bac'] || P[k+'_nam']) || SP_IND[0])[0];
+  root.innerHTML = (N.converted ? '<div class="spconv">Đề này đang dùng kiểu cũ (khung Miền đè lên mọi ngành). Đã chuyển sang cách mới: <b>mỗi ngành tách đề Miền Bắc / Miền Nam</b>, giữ nguyên đề thí sinh đang nhận. Kiểm tra lại rồi bấm Lưu.</div>' : '') +
+    '<div class="sptabs" role="tablist">' + SP_IND.map(([k,l]) => '<button type="button" role="tab" data-tab="'+k+'" onclick="spTab(this)"><b>'+l+'</b><span class="sum"></span></button>').join('') + '</div>' +
+    SP_IND.map(([k,l]) => {
+      const split = !!((P[k+'_bac'] || []).length || (P[k+'_nam'] || []).length);
+      return '<div class="spind" data-ind="'+k+'" data-split="'+(split ? 1 : 0)+'">' +
+        '<div class="sphead"><span>Nhân viên <b>'+l.toLowerCase()+'</b> nhận:</span><div class="spsw"><button type="button" data-v="0" onclick="spSplit(this,0)">Hai miền chung 1 đề</button><button type="button" data-v="1" onclick="spSplit(this,1)">Tách đề Miền Bắc / Miền Nam</button></div></div>' +
+        '<div class="spcols">' + spBoxHTML(k, 'Đề chung cả 2 miền', P[k]) + spBoxHTML(k+'_bac', 'Đề Miền Bắc', P[k+'_bac']) + spBoxHTML(k+'_nam', 'Đề Miền Nam', P[k+'_nam']) + '</div>' +
+        '<div class="sptools"><button class="btn ghost sm sprgtool" type="button" onclick="spCopyRg(this)">Chép đề Miền Bắc sang Miền Nam</button>' +
+        '<select onchange="spCopyInd(this)"><option value="">Chép đề từ ngành khác…</option>' + SP_IND.filter(([o]) => o !== k).map(([o,ol]) => '<option value="'+o+'">'+ol+'</option>').join('') + '</select></div></div>';
+    }).join('');
+  spShowTab(root); spRefresh(root);
+}
+function spShowTab(root){
+  const t = root.dataset.tab;
+  root.querySelectorAll('.sptabs button').forEach(b => { b.classList.toggle('on', b.dataset.tab === t); b.setAttribute('aria-selected', b.dataset.tab === t); });
+  root.querySelectorAll('.spind').forEach(d => d.classList.toggle('on', d.dataset.ind === t));
+}
+function spTab(btn){ const root = btn.closest('.spg'); root.dataset.tab = btn.dataset.tab; spShowTab(root); }
+const spRowsOf = (ind, key) => Array.from(ind.querySelectorAll('.sprow[data-seg="'+key+'"]')).map(r => { const i = r.querySelectorAll('input'); return { category: i[0].value.trim(), count: parseInt(i[1].value, 10) || 0 }; }).filter(r => r.category || r.count);
+const spSetRows = (ind, key, rows) => { ind.querySelector('[data-box="'+key+'"] .rows').innerHTML = (rows || []).map(r => spRowHTML(key, r)).join(''); };
+const spSame = (a, b) => JSON.stringify(a.map(r => [spNorm(r.category), r.count])) === JSON.stringify(b.map(r => [spNorm(r.category), r.count]));
+// Bật/tắt tách đề theo miền của một ngành. Dữ liệu chuyển qua lại để khung bị ẩn luôn trống (không lưu nhầm).
+function spSplit(btn, on){
+  const ind = btn.closest('.spind'), k = ind.dataset.ind;
+  if (+ind.dataset.split === on) return;
+  if (on){
+    const base = spRowsOf(ind, k);
+    spSetRows(ind, k+'_bac', base); spSetRows(ind, k+'_nam', base); spSetRows(ind, k, []);
+  } else {
+    const b = spRowsOf(ind, k+'_bac'), n = spRowsOf(ind, k+'_nam');
+    if (b.length && n.length && !spSame(b, n) && !confirm('Đề Miền Bắc và Miền Nam đang khác nhau. Gộp lại sẽ dùng đề Miền Bắc cho cả hai miền. Tiếp tục?')) return;
+    spSetRows(ind, k, b.length ? b : n); spSetRows(ind, k+'_bac', []); spSetRows(ind, k+'_nam', []);
+  }
+  ind.dataset.split = on ? 1 : 0;
+  spRefresh(ind);
+}
+function spCopyRg(btn){
+  const ind = btn.closest('.spind'), k = ind.dataset.ind, n = spRowsOf(ind, k+'_nam');
+  if (n.length && !confirm('Thay đề Miền Nam bằng đề Miền Bắc?')) return;
+  spSetRows(ind, k+'_nam', spRowsOf(ind, k+'_bac')); spRefresh(ind);
+}
+function spCopyInd(sel){
+  const from = sel.value; sel.value = ''; if (!from) return;
+  const ind = sel.closest('.spind'), k = ind.dataset.ind, root = ind.closest('.spg'), src = root.querySelector('.spind[data-ind="'+from+'"]');
+  const has = ['', '_bac', '_nam'].some(x => spRowsOf(ind, k + x).length);
+  if (has && !confirm('Thay đề của ngành này bằng đề của "' + SP_IND.find(([o]) => o === from)[1] + '"?')) return;
+  ['', '_bac', '_nam'].forEach(x => spSetRows(ind, k + x, spRowsOf(src, from + x)));
+  ind.dataset.split = src.dataset.split;
+  spRefresh(ind);
 }
 function renderSegPlans(){ $('spWrap').dataset.bank = CUR_PERIOD; spRender($('spWrap'), SEGPLANS); }
 function spAdd(btn, seg){ const box = btn.closest('.spbox').querySelector('.rows'); box.insertAdjacentHTML('beforeend', spRowHTML(seg, {})); box.lastElementChild.querySelector('input').focus(); spRefresh(box); }
@@ -6217,24 +6303,44 @@ function spRead(root){
   return out;
 }
 function readSegPlans(){ return spRead($('spWrap')); }
+// Số câu theo danh mục: '' = toàn ngân hàng; 'bac'/'nam' = câu nhân viên miền đó thực sự được rút (câu của miền + câu dùng chung)
+function spCatCounts(bank){
+  const catsOf = {};
+  ['', 'bac', 'nam'].forEach(rg => { const m = catsOf[rg] = {}; bank.forEach(q => { const qr = rg ? qRegion(q) : ''; if (rg && qr && qr !== rg) return; const k = spNorm(q.category); if (k) m[k] = (m[k] || 0) + 1; }); });
+  return catsOf;
+}
 function spRefresh(el){
   const root = el && el.closest ? (el.classList && el.classList.contains('spg') ? el : el.closest('.spg')) : $('spWrap');
-  if (!root) return;
-  const bank = bankOfPeriod(root.dataset.bank || CUR_PERIOD).list, catsOf = {};
-  // Đếm câu theo danh mục; khung của miền chỉ đếm câu của miền đó + câu dùng chung
-  ['', 'bac', 'nam'].forEach(rg => { const m = catsOf[rg] = {}; bank.forEach(q => { const qr = rg ? qRegion(q) : ''; if (rg && qr && qr !== rg) return; const k = spNorm(q.category); if (k) m[k] = (m[k] || 0) + 1; }); });
+  if (!root || !root.querySelector('.sptabs')) return;
+  const catsOf = spCatCounts(bankOfPeriod(root.dataset.bank || CUR_PERIOD).list);
+  const totOf = {}, shortOf = {};
   SP_SEGS.forEach(([k]) => {
-    const cats = catsOf[k === 'mien_bac' ? 'bac' : k === 'mien_nam' ? 'nam' : ''];
-    let tot = 0;
+    const rg = spRgOf(k);
+    let tot = 0, short = false;
     root.querySelectorAll('.sprow[data-seg="'+k+'"]').forEach(r => {
-      const i = r.querySelectorAll('input'), n = parseInt(i[1].value, 10) || 0, have = cats[spNorm(i[0].value)] || 0, h = r.querySelector('.have');
+      const i = r.querySelectorAll('input'), n = parseInt(i[1].value, 10) || 0, c = spNorm(i[0].value), h = r.querySelector('.have');
       tot += n;
       if (!i[0].value.trim()){ h.className = 'have'; h.textContent = ''; return; }
-      h.className = 'have ' + (have >= n ? 'ok' : 'bad');
-      h.textContent = have >= n ? '✓ ngân hàng có ' + have + ' câu' : '⚠ ngân hàng chỉ có ' + have + ' câu, thiếu ' + (n - have);
+      if (rg){
+        const have = catsOf[rg][c] || 0;
+        h.className = 'have ' + (have >= n ? 'ok' : 'bad'); if (have < n) short = true;
+        h.textContent = have >= n ? '✓ ngân hàng có ' + have + ' câu' : '⚠ ngân hàng chỉ có ' + have + ' câu, thiếu ' + (n - have);
+      } else {
+        const b = catsOf.bac[c] || 0, m = catsOf.nam[c] || 0, ok = b >= n && m >= n;
+        h.className = 'have ' + (ok ? 'ok' : 'bad'); if (!ok) short = true;
+        h.textContent = (ok ? '✓ ' : '⚠ ') + 'Miền Bắc có ' + b + ' · Miền Nam có ' + m + ' câu' + (ok ? '' : (b >= n || m >= n) ? ' (hai miền khác câu: nên tách đề theo miền)' : ', thiếu');
+      }
     });
+    totOf[k] = tot; shortOf[k] = short;
     const t = root.querySelector('[data-box="'+k+'"] .tot');
-    if (t) t.textContent = tot ? 'Tổng ' + tot + ' câu mỗi đề' : (k.indexOf('mien_') === 0 ? 'Để trống: dùng phân bổ nhóm ngành, tự lọc câu đúng miền' : 'Chưa phân bổ: dùng cách chia cũ');
+    if (t) t.textContent = tot ? 'Tổng ' + tot + ' câu mỗi đề' : rg ? 'Chưa có dòng nào: nhân viên ' + (rg === 'bac' ? 'Miền Bắc' : 'Miền Nam') + ' của ngành này nhận đề theo cách chia cũ' : 'Chưa phân bổ: dùng cách chia cũ';
+  });
+  SP_IND.forEach(([k]) => {
+    const ind = root.querySelector('.spind[data-ind="'+k+'"]'), b = root.querySelector('.sptabs button[data-tab="'+k+'"]');
+    if (!ind || !b) return;
+    const split = ind.dataset.split === '1', keys = split ? [k+'_bac', k+'_nam'] : [k];
+    b.querySelector('.sum').textContent = split ? 'Bắc ' + (totOf[k+'_bac'] || '–') + ' · Nam ' + (totOf[k+'_nam'] || '–') + ' câu' : totOf[k] ? totOf[k] + ' câu, chung 2 miền' : 'chưa phân bổ';
+    b.classList.toggle('warn', keys.some(x => shortOf[x]));
   });
   catListFill(root.dataset.bank || CUR_PERIOD);
 }
@@ -6243,7 +6349,7 @@ function spRefresh(el){
 function catListFill(p){
   const e = (EXAMS || []).find(x => x.id === p), P = e && spHas(e.segmentPlans) ? e.segmentPlans : SEGPLANS;
   const own = (QUESTIONS || []).filter(q => (q.period || '') === (p || '')).map(q => (q.category || '').trim());
-  const plan = SP_SEGS.flatMap(([k]) => ((P || {})[k] || []).map(r => (r.category || '').trim()));
+  const PV = spView(P), plan = SP_SEGS.flatMap(([k]) => (PV[k] || []).map(r => (r.category || '').trim()));
   const names = Array.from(new Set(own.concat(plan).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'vi'));
   if ($('catList')) $('catList').innerHTML = names.map(n => '<option value="'+esc(n)+'">').join('');
 }

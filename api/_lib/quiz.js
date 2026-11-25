@@ -397,7 +397,7 @@ function plansWithoutSkill(sp, mayLocName) {
   const out = {}; let moved = 0;
   Object.keys(sp).forEach((seg) => {
     const rows = Array.isArray(sp[seg]) ? sp[seg].map((r) => Object.assign({}, r)) : sp[seg];
-    if (!Array.isArray(rows) || seg === "gia_dung") { out[seg] = rows; return; }
+    if (!Array.isArray(rows) || seg.indexOf("gia_dung") === 0) { out[seg] = rows; return; }
     const skill = rows.filter((r) => isSkillCat(r.category)), n = skill.reduce((x, r) => x + (toInt(r.count) || 0), 0);
     if (!skill.length) { out[seg] = rows; return; }
     const keep = rows.filter((r) => !isSkillCat(r.category));
@@ -1029,7 +1029,12 @@ function planExam(all, settings, segment, region) {
 // ---------- Phân bổ câu hỏi theo nhóm ngành (cài đặt chung) ----------
 // segmentPlans = { both: [{category, count}], may_loc: [...], gia_dung: [...] }. Nhóm nào có danh sách thì đề của thí sinh
 // thuộc nhóm đó rút đúng số câu từng danh mục (trong ngân hàng của kỳ); nhóm để trống thì dùng cách cũ.
-const PLAN_SEGS = ["both", "may_loc", "gia_dung", "mien_bac", "mien_nam"];
+// Mỗi ngành: 1 đề chung 2 miền ("both"...) hoặc tách đề theo miền ("both_bac", "both_nam"...).
+// "mien_bac"/"mien_nam" là kiểu cũ (một đề miền đè lên mọi ngành), chỉ còn đọc cho dữ liệu đã lưu trước đây.
+const PLAN_INDS = ["both", "may_loc", "gia_dung"];
+const PLAN_SEGS = PLAN_INDS.flatMap((k) => [k, k + "_bac", k + "_nam"]).concat(["mien_bac", "mien_nam"]);
+const IND_LABEL = { both: "bán cả 2 ngành", may_loc: "chỉ bán máy lọc", gia_dung: "chỉ bán gia dụng" };
+const planSegLabel = (seg) => { const m = /^(.+?)_(bac|nam)$/.exec(seg); return m && IND_LABEL[m[1]] ? IND_LABEL[m[1]] + " · Miền " + (m[2] === "bac" ? "Bắc" : "Nam") : IND_LABEL[seg] || ({ mien_bac: "Miền Bắc", mien_nam: "Miền Nam" }[seg]) || seg; };
 const normCat = (c) => String(c || "").normalize("NFC").trim().replace(/\s+/g, " ").toLowerCase();
 function cleanSegmentPlans(sp) {
   const out = {};
@@ -1048,19 +1053,21 @@ function cleanSegmentPlans(sp) {
       clean.push({ category, count });
     }
     const total = clean.reduce((n, x) => n + x.count, 0);
-    if (total > MAX_QUESTION_COUNT) return { error: "Phân bổ cho nhóm " + ({ both: "bán cả 2 ngành", may_loc: "chỉ bán máy lọc", gia_dung: "chỉ bán gia dụng", mien_bac: "Miền Bắc", mien_nam: "Miền Nam" }[seg]) + " cộng ra " + total + " câu, vượt giới hạn " + MAX_QUESTION_COUNT + " câu mỗi đề." };
+    if (total > MAX_QUESTION_COUNT) return { error: "Phân bổ cho nhóm " + planSegLabel(seg) + " cộng ra " + total + " câu, vượt giới hạn " + MAX_QUESTION_COUNT + " câu mỗi đề." };
     if (clean.length) out[seg] = clean;
   }
   return out;
 }
-// Nhân viên (bất kỳ chức danh nào) đã chọn miền: ưu tiên phân bổ của miền ("mien_bac"/"mien_nam"); miền đó chưa phân bổ thì theo nhóm ngành như cũ.
+// Đề của một thí sinh = ô (ngành, miền) của người đó: đề riêng của miền trong ngành ("may_loc_bac") nếu ngành đó tách theo miền,
+// không thì đề chung 2 miền của ngành ("may_loc"). Kiểu cũ "mien_bac"/"mien_nam" vẫn được đọc cho dữ liệu chưa lưu lại.
 function segPlanFor(settings, segment, region) {
   const sp = settings && settings.segmentPlans;
-  const rg = normRegion(region);
-  const rgRows = rg && sp && sp["mien_" + rg];
-  if (Array.isArray(rgRows) && rgRows.length) return rgRows;
-  const rows = sp && sp[normSegment(segment)];
-  return Array.isArray(rows) && rows.length ? rows : null;
+  if (!sp) return null;
+  const rg = normRegion(region), seg = normSegment(segment);
+  const ok = (r) => Array.isArray(r) && r.length;
+  if (rg && seg && ok(sp[seg + "_" + rg])) return sp[seg + "_" + rg];
+  if (rg && ok(sp["mien_" + rg])) return sp["mien_" + rg];
+  return ok(sp[seg]) ? sp[seg] : null;
 }
 // Số câu thực tế của đề cho một thí sinh (để hiện ở thể lệ)
 function countFor(settings, segment, region) {
