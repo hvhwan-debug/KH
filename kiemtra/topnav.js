@@ -11,7 +11,7 @@
   var p = location.pathname, h = location.hash;
   var cur = /hoclieu/.test(p) ? 'hoclieu' : /tracuu/.test(p) ? (h === '#lichsu' ? 'lichsu' : 'tracuu') : /ketqua/.test(p) ? 'tracuu' : 'home';
   var ITEMS = [
-    ['home', 'a', '/kiemtra/', 'Trang chủ'], ['hoclieu', 'a', '/kiemtra/hoclieu.html', 'Học liệu'],
+    ['hoclieu', 'a', '/kiemtra/hoclieu.html', 'Học liệu'],
     ['tracuu', 'a', '/kiemtra/tracuu.html', 'Tra cứu kết quả'], ['lichsu', 'a', '/kiemtra/tracuu.html#lichsu', 'Lịch sử làm bài'],
     ['guide', 'button', '', 'Hướng dẫn'], ['support', 'button', '', 'Hỗ trợ']
   ];
