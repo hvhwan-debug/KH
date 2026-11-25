@@ -67,7 +67,7 @@ async function handler(context, req) {
     // Bước chống dò chỉ áp dụng khi tự nhập mã nhân viên + email.
     const FP = require("../_lib/facepass");
     const viaFace = viaCookie || FP.loginOk(b.faceLogin, code) || FP.peek(b.facePass, code);
-    const needFace = !b.saveRegion && !viaFace && needFaceFor(req);
+    const needFace = !b.saveRegion && !b.saveBirth && !viaFace && needFaceFor(req);
     const selfie = needFace && typeof b.selfie === "string" ? b.selfie : "";
     if (needFace) {
       if (!selfie) return reply(context, 428, { ok: false, needFace: true, error: "Bạn đã nhập sai nhiều lần. Để tiếp tục, hãy xác thực khuôn mặt." });
@@ -120,7 +120,7 @@ async function handler(context, req) {
     }
 
     // Lịch sử đăng nhập: nhập mã NV + email (lần ngay sau đăng nhập bằng khuôn mặt đã ghi ở kt-facelogin; kiểm tra lại / lưu tỉnh thì không ghi)
-    if (!b.saveRegion && !b.again && !viaFace && !viaCookie) {
+    if (!b.saveRegion && !b.saveBirth && !b.again && !viaFace && !viaCookie) {
       await require("../_lib/loginlog").write(req, { code: found.code, name: found.name, manager: found.manager, method: face && face.matched ? "manual_face" : "manual", page: "exam", exam: String(b.examId || ""), test: !!found.test, note: needFace ? "phải xác thực khuôn mặt sau nhiều lần nhập sai" : "" });
     }
 
@@ -135,6 +135,18 @@ async function handler(context, req) {
         if (found.test) await quiz.updateTestAccount(found.code, { province: pv, region: rg }); else await quiz.saveCandidates(candidates);
       }
       return reply(context, 200, { ok: true, province: found.province, region: quiz.normRegion(found.region) });
+    }
+
+    // Thí sinh vừa bấm "Xác nhận" ở popup ngày sinh: lưu NGAY vào hồ sơ (chỉ khi hồ sơ còn thiếu năm sinh),
+    // không cần đợi đến lúc bắt đầu làm bài.
+    if (b.saveBirth) {
+      const bd = quiz.normBirthDate(b.birthDate, true);
+      if (!bd) return reply(context, 400, { ok: false, error: "Ngày sinh không hợp lệ, vui lòng kiểm tra lại." });
+      if (!quiz.hasBirthYear(found.birthDate)) {
+        found.birthDate = bd;
+        if (found.test) await quiz.updateTestAccount(found.code, { birthDate: bd }); else await quiz.saveCandidates(candidates);
+      }
+      return reply(context, 200, { ok: true, birthDate: found.birthDate });
     }
 
     const defaultSettings = await quiz.getSettings();

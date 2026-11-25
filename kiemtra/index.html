@@ -150,6 +150,10 @@ button,input{font:inherit;color:inherit}
 .bbcard h2{margin:0 0 10px;font-size:19px;color:var(--ink)}
 .bbcard .small{text-align:left;line-height:1.55;margin:0 0 18px}
 .bbcard .field{text-align:left}
+.bbcard .field select{width:100%;appearance:none;-webkit-appearance:none;border:1.5px solid var(--line);border-radius:12px;padding:12px 32px 12px 14px;font-size:15px;font-weight:600;font-family:inherit;color:var(--ink);background:#FAFCFC url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%234F6486' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 11px center;transition:border-color .15s,box-shadow .15s,background-color .15s}
+.bbcard .field select:hover{border-color:#B9C3D0}
+.bbcard .field select:focus{outline:none;border-color:var(--brand);background-color:#fff;box-shadow:0 0 0 4px var(--brand-soft)}
+.bbcard .field select[aria-invalid=true]{border-color:var(--bad)}
 @media(max-width:480px){.bbcard{padding:26px 18px 20px;border-radius:20px}.bbcard .field{gap:6px!important}}
 .rgbox h2{font-size:16px;margin:0 0 14px;color:var(--ink)}
 .rgbox .rgdesc{font-size:13.5px;line-height:1.5;color:var(--muted);margin:0 0 16px}
@@ -5578,7 +5582,17 @@ function validateBirth(){
   msg('birthMsg','');
   return true;
 }
-$('btnBirthOk').addEventListener('click', function(){ if (validateBirth()) $('birthBox').classList.add('hide'); });
+$('btnBirthOk').addEventListener('click', async function(){
+  if (!validateBirth()) return;
+  var btn = $('btnBirthOk'), lbl = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Đang lưu…';
+  var sv; try { sv = await api('/api/kt-check', { code:ST.cand.inCode, email:ST.cand.inEmail, examId:EXAM_ID, saveBirth:true, birthDate: ST.birthNew }); } catch(e){ sv = null; }
+  btn.disabled = false; btn.textContent = lbl;
+  if (!sv){ msg('birthMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
+  if (!sv.j.ok){ msg('birthMsg', sv.j.error || 'Không lưu được thông tin, vui lòng thử lại.'); return; }
+  ST.cand.needBirth = false; ST.cand.birthDate = sv.j.birthDate || ST.birthNew;
+  $('birthBox').classList.add('hide');
+});
 function ckGet(){ try { return localStorage.getItem('kt_ck'); } catch(e){ return null; } }
 // Thử ghi+đọc+xoá một khoá tạm: localStorage "có vẻ" hoạt động (set không văng lỗi) nhưng trình duyệt
 // (vd Safari riêng tư, một số webview Zalo/Facebook) có thể âm thầm không lưu — nên phải đọc lại để biết chắc.
