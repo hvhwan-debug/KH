@@ -1634,6 +1634,30 @@ a.bb{text-decoration:none}
 <script src="/kiemtra/hrsync.js?v=1"></script>
 <script src="/kiemtra/docread.js?v=1"></script>
 <script src="/kiemtra/notify.js?v=14"></script>
+<style id="sideCollapse">
+/* Thu gọn menu bên trái (màn hình rộng ≥1100px): co thành thanh biểu tượng, nhớ lựa chọn */
+.side-toggle{display:none;position:fixed;top:30px;left:calc(var(--side-w) - 13px);z-index:41;width:26px;height:26px;padding:0;border-radius:50%;border:1px solid #D8E2F0;background:#fff;color:#0B3F94;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(8,28,70,.28)}
+.side-toggle:hover{background:#EAF2FD}.side-toggle:focus-visible{outline:2px solid #1F66E0;outline-offset:2px}
+.side-toggle svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;transition:transform .18s}
+@media(min-width:1100px){
+.side-toggle{display:flex}
+.side,.main,.page,.side-toggle{transition:width .18s ease,margin-left .18s ease,left .18s ease}
+html.sidec .side{width:var(--rail-w);padding:16px 10px 12px}
+html.sidec .side-brand{justify-content:center;padding:2px 0 8px}
+html.sidec .side-brand>div:last-child{display:none}
+html.sidec .nv-grp{font-size:0;height:1px;margin:14px 10px;background:rgba(255,255,255,.14)}
+html.sidec .nv{justify-content:center;padding:0}
+html.sidec .nv .nv-l,html.sidec .nv .nv-cnt{display:none}
+html.sidec .side-nav{margin:0 -10px;padding:0 10px 8px}
+html.sidec .nv.on::before{left:-10px}
+html.sidec .side-user{flex-direction:column;padding:12px 0 0}
+html.sidec .side-user .who{display:none}
+html.sidec .main,html.sidec .page{margin-left:var(--rail-w)}
+html.sidec .side-toggle{left:calc(var(--rail-w) - 13px)}
+html.sidec .side-toggle svg{transform:rotate(180deg)}
+}
+</style>
+<script>try{if(localStorage.getItem("kt_side_collapsed")==="1")document.documentElement.classList.add("sidec")}catch(e){}</script>
 </head>
 <body>
 <header class="au-bar"><a class="au-brand" href="/kiemtra/"><span class="au-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span class="au-name">Hệ thống kiểm tra đánh giá trực tuyến</span></a><a class="au-back" href="/kiemtra/">Trang làm bài →</a></header>
@@ -1728,6 +1752,8 @@ a.bb{text-decoration:none}
       <button type="button" class="out" onclick="doLogout()" title="Đăng xuất" aria-label="Đăng xuất"><svg class="ic" aria-hidden="true"><use href="#i-out"/></svg></button>
     </div>
   </aside>
+  <button type="button" class="side-toggle" id="sideToggle" aria-label="Thu gọn menu" aria-pressed="false" title="Thu gọn menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+
   <div class="main">
   <div class="topbar">
     <div class="dot"><img src="/kiemtra/logo-mark.png" alt="" width="40" height="40"></div>
@@ -7666,6 +7692,14 @@ async function resolveGeoNames(scopeEl){
 }
 
 boot();
+</script>
+<script>
+(function(){
+  var b = document.getElementById('sideToggle'); if (!b) return;
+  function sync(){ var c = document.documentElement.classList.contains('sidec'); b.setAttribute('aria-pressed', String(c)); var t = c ? 'Mở rộng menu' : 'Thu gọn menu'; b.title = t; b.setAttribute('aria-label', t); }
+  b.addEventListener('click', function(){ var c = document.documentElement.classList.toggle('sidec'); try { localStorage.setItem('kt_side_collapsed', c ? '1' : '0'); } catch (e) {} sync(); });
+  sync();
+})();
 </script>
 </body>
 </html>
