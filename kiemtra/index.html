@@ -2648,13 +2648,14 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
         <div class="bbcard">
           <div class="bbic" aria-hidden="true">🎂</div>
           <h2 id="bbTitle">Ngày sinh của bạn</h2>
-          <p class="small">Chúng tôi muốn hiểu bạn hơn! Chia sẻ ngày sinh để nhận lời chúc mừng đúng ngày sinh nhật của bạn. Thông tin không dùng cho mục đích khác.</p>
+          <p class="small">Vui lòng nhập ngày sinh để tiếp tục.</p>
           <div class="field" style="display:flex;gap:10px;margin:0">
             <div style="flex:1"><label for="inBirthDay">Ngày <span class="req">*</span></label><select id="inBirthDay"></select></div>
             <div style="flex:1"><label for="inBirthMonth">Tháng <span class="req">*</span></label><select id="inBirthMonth"></select></div>
             <div style="flex:1"><label for="inBirthYear">Năm <span class="req">*</span></label><select id="inBirthYear"></select></div>
           </div>
           <div id="birthMsg" role="alert"></div>
+          <button type="button" class="btn" id="btnBirthOk" style="margin-top:16px">Xác nhận</button>
         </div>
       </div>
       <div class="rules" id="rulesBox"></div>
@@ -3404,15 +3405,7 @@ $('btnStart').addEventListener('click', async function(){
     ST.cand.province = sv.j.province; ST.cand.region = sv.j.region; ST.cand.needRegion = false;
   }
   if (!$('birthBox').classList.contains('hide')){
-    var bDay = $('inBirthDay').value, bMon = $('inBirthMonth').value, bYear = $('inBirthYear').value;
-    $('inBirthDay').setAttribute('aria-invalid', bDay ? 'false' : 'true');
-    $('inBirthMonth').setAttribute('aria-invalid', bMon ? 'false' : 'true');
-    $('inBirthYear').setAttribute('aria-invalid', bYear ? 'false' : 'true');
-    if (!bDay || !bMon || !bYear){ msg('birthMsg','Vui lòng chọn đầy đủ ngày, tháng và năm sinh.'); return; }
-    var bChk = new Date(Date.UTC(+bYear, +bMon - 1, +bDay));
-    if (bChk.getUTCMonth() !== +bMon - 1 || bChk.getUTCDate() !== +bDay){ $('inBirthDay').setAttribute('aria-invalid', 'true'); msg('birthMsg','Ngày sinh không tồn tại, vui lòng kiểm tra lại.'); return; }
-    ST.birthNew = bYear + '-' + (bMon.length < 2 ? '0' + bMon : bMon) + '-' + (bDay.length < 2 ? '0' + bDay : bDay);
-    msg('birthMsg','');
+    if (!validateBirth()) return;
   }
   PH.mode = 'exam';
   if (facePassOk()) return startWithFacePass();
@@ -5572,6 +5565,20 @@ $('fsGo').addEventListener('click', function(){
 loadInfo();
 
 /* ===== Cookie: xin đồng ý; đã đồng ý thì nhận diện trình duyệt (kt_bid) + ghi nhớ phiên 2 giờ (kt_cand) để vào lại / làm tiếp ===== */
+// Kiểm tra 3 ô Ngày/Tháng/Năm sinh: hợp lệ thì lưu vào ST.birthNew và trả về true; không thì báo lỗi và trả về false.
+function validateBirth(){
+  var bDay = $('inBirthDay').value, bMon = $('inBirthMonth').value, bYear = $('inBirthYear').value;
+  $('inBirthDay').setAttribute('aria-invalid', bDay ? 'false' : 'true');
+  $('inBirthMonth').setAttribute('aria-invalid', bMon ? 'false' : 'true');
+  $('inBirthYear').setAttribute('aria-invalid', bYear ? 'false' : 'true');
+  if (!bDay || !bMon || !bYear){ msg('birthMsg','Vui lòng chọn đầy đủ ngày, tháng và năm sinh.'); return false; }
+  var bChk = new Date(Date.UTC(+bYear, +bMon - 1, +bDay));
+  if (bChk.getUTCMonth() !== +bMon - 1 || bChk.getUTCDate() !== +bDay){ $('inBirthDay').setAttribute('aria-invalid', 'true'); msg('birthMsg','Ngày sinh không tồn tại, vui lòng kiểm tra lại.'); return false; }
+  ST.birthNew = bYear + '-' + (bMon.length < 2 ? '0' + bMon : bMon) + '-' + (bDay.length < 2 ? '0' + bDay : bDay);
+  msg('birthMsg','');
+  return true;
+}
+$('btnBirthOk').addEventListener('click', function(){ if (validateBirth()) $('birthBox').classList.add('hide'); });
 function ckGet(){ try { return localStorage.getItem('kt_ck'); } catch(e){ return null; } }
 // Thử ghi+đọc+xoá một khoá tạm: localStorage "có vẻ" hoạt động (set không văng lỗi) nhưng trình duyệt
 // (vd Safari riêng tư, một số webview Zalo/Facebook) có thể âm thầm không lưu — nên phải đọc lại để biết chắc.
