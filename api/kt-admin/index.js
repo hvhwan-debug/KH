@@ -289,7 +289,9 @@ const handler = async function (context, req) {
       if (op === "candidates") {
         const LL = {}; // lần đăng nhập gần nhất + tổng số lượt của từng người (lịch sử đăng nhập)
         (await require("../_lib/loginlog").read()).forEach((v) => { const k = String(v.code || "").toUpperCase(), o = LL[k] || (LL[k] = { at: 0, method: "", page: "", n: 0 }); o.n += v.n || 1; if (v.at > o.at) { o.at = v.at; o.method = v.method; o.page = v.page; } });
-        return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; o.lastLogin = LL[String(c.code || "").toUpperCase()] || null; o.title = quiz.titleOf(c); const prob = require("../_lib/probation"); o.joinDate = prob.joinDateOf(c.code, c.joinDate); o.probation = prob.probationOf(c.code, undefined, o.joinDate); return o; }) });
+        const TBM = {}; // ngày sinh khai qua tài khoản thử nghiệm (cùng mã NV) nằm trong kt/testaccounts.json: bổ sung khi hồ sơ chính còn trống
+        (await quiz.getTestAccounts()).forEach((t) => { if (t && t.birthDate) TBM[quiz.normCode(t.code)] = t.birthDate; });
+        return reply(context, 200, { ok: true, candidates: (await quiz.getCandidates()).map((c) => { const o = Object.assign({}, c); delete o.audit; if (!o.birthDate && TBM[quiz.normCode(c.code)]) o.birthDate = TBM[quiz.normCode(c.code)]; o.lastLogin = LL[String(c.code || "").toUpperCase()] || null; o.title = quiz.titleOf(c); const prob = require("../_lib/probation"); o.joinDate = prob.joinDateOf(c.code, c.joinDate); o.probation = prob.probationOf(c.code, undefined, o.joinDate); return o; }) });
       }
       if (op === "driveStatus") return reply(context, 200, Object.assign({ ok: true }, await require("../_lib/gdrive").status()));
       if (op === "testAccounts") return reply(context, 200, { ok: true, accounts: await quiz.getTestAccounts() });

@@ -545,7 +545,7 @@ async function findTestAccount(code, email) {
 // Hồ sơ đầy đủ như thí sinh thường (số điện thoại, tỉnh/miền được lưu lại ngay trong tài khoản thử nghiệm).
 function testCandidate(t) {
   return { code: t.code, email: t.email, name: t.name || "Tài khoản thử nghiệm", manager: t.manager || "", phone: t.phone || "", segment: normSegment(t.segment), title: normTitle(t.title) || DEFAULT_TITLE,
-    province: t.province || "", region: normRegion(t.region), lastAttemptId: t.lastAttemptId || "", test: true };
+    province: t.province || "", region: normRegion(t.region), birthDate: t.birthDate || "", lastAttemptId: t.lastAttemptId || "", test: true };
 }
 // Tài khoản thử nghiệm khớp MỘT trong hai (mã hoặc email) nhưng lệch cái còn lại: để báo rõ cho người kiểm thử
 async function testNearMiss(code, email) {
