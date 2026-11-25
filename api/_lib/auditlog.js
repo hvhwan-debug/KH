@@ -42,6 +42,10 @@ function client(req) {
 // ---------- Danh mục thao tác: nhãn tiếng Việt + loại ----------
 // kind: change (thay đổi dữ liệu) | read (xem dữ liệu) | auth (đăng nhập/đăng xuất) | export (xuất file, in, AI) | denied (bị từ chối)
 const A = {
+  program: {
+    GET: { list: ["Xem danh sách chương trình học", "read"], detail: ["Xem chi tiết chương trình học", "read"], preview: ["Xem trước email mời chương trình học", "read"] },
+    POST: { save: ["Lưu chương trình học", "change"], delete: ["Xoá chương trình học", "change"], setStatus: ["Mở / đóng đăng ký chương trình học", "change"], send: ["Gửi email mời tham gia chương trình học", "change"], removeReg: ["Gỡ người đăng ký khỏi chương trình học", "change"] }
+  },
   sales: {
     GET: { list: ["Xem danh sách tháng số bán", "read"], month: ["Xem kết quả số bán", "read"], byEmp: ["Xem kết quả kinh doanh trong hồ sơ học tập", "read"] },
     POST: { saveMonth: ["Cập nhật kết quả số bán", "change"], deleteMonth: ["Xoá kết quả số bán một tháng", "change"] }
