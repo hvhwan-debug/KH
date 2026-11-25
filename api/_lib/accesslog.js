@@ -37,6 +37,33 @@ async function write(req, e) {
   } catch (err) { /* không chặn luồng chính */ }
 }
 
+// Ghi nhiều dòng một lượt (ví dụ xem ảnh thu nhỏ của cả danh sách): một lần cập nhật kho, vẫn gộp theo quy tắc 10 phút từng dòng.
+async function writeMany(req, entries) {
+  try {
+    if (!entries || !entries.length) return;
+    const d = req ? device.capture(req, null, "view") : {}, now = Date.now();
+    const rows = entries.map((e) => ({
+      at: now, kind: e.kind, role: e.role, ok: e.ok !== false,
+      id: clip(e.attempt && e.attempt.id, 60), code: clip(e.attempt && e.attempt.code, 40), name: clip(e.attempt && e.attempt.name, 80), period: clip(e.attempt && e.attempt.period, 60),
+      by: clip(e.by, 120).toLowerCase(), byName: clip(e.byName, 80), via: clip(e.via, 60), note: clip(e.note, 160),
+      ip: d.ip || "", dev: [d.type, d.os, d.browser].filter(Boolean).join(" · ").slice(0, 80), n: 1
+    }));
+    await store.update(KEY, (cur) => {
+      let list = Array.isArray(cur) ? cur : [];
+      for (const row of rows) {
+        let merged = false;
+        for (let i = list.length - 1; i >= 0 && i >= list.length - 300; i--) {
+          const x = list[i];
+          if (row.at - x.at > MERGE_MS) break;
+          if (x.id === row.id && x.kind === row.kind && x.by === row.by && x.ip === row.ip && x.ok === row.ok && x.role === row.role) { x.n = (x.n || 1) + 1; x.at = row.at; merged = true; break; }
+        }
+        if (!merged) list.push(row);
+      }
+      return list.length > MAX ? list.slice(-MAX) : list;
+    });
+  } catch (err) { /* không chặn luồng chính */ }
+}
+
 async function read() { return (await store.get(KEY)) || []; }
 
-module.exports = { write, read };
+module.exports = { write, writeMany, read };

@@ -324,6 +324,15 @@ const handler = async function (context, req) {
         const r = await require("../_lib/profilephoto").bestPhotoFor(code);
         return reply(context, 200, { ok: true, photo: r ? r.photo : null, at: r ? r.at : 0, period: r ? r.period : "" });
       }
+      // Ảnh thu nhỏ hàng loạt cho danh sách theo dõi (ô tròn đại diện): cùng quyền với profilePhoto (OWNER_EMAILS), mỗi ảnh hiển thị đều ghi sổ truy cập.
+      if (op === "profilePhotos") {
+        if (!isOwner(u.email)) return reply(context, 403, { ok: false, error: "Bạn không có quyền xem ảnh đại diện." });
+        const codes = (Array.isArray(b.codes) ? b.codes : []).map((c) => String(c || "").trim().slice(0, 50)).filter(Boolean).slice(0, 40);
+        const got = await require("../_lib/profilephoto").thumbsFor(codes), thumbs = {}, logs = [];
+        Object.keys(got).forEach((c) => { thumbs[c] = got[c].img; logs.push({ kind: "photo", role: "admin", attempt: got[c].attempt, by: u.email, byName: u.name, via: "Danh sách theo dõi (ảnh thu nhỏ)" }); });
+        await require("../_lib/accesslog").writeMany(req, logs);
+        return reply(context, 200, { ok: true, thumbs });
+      }
       if (op === "securityAlerts") { // cảnh báo có người cố xem lại bài của người khác (mới nhất trước)
         const sa = require("../_lib/securityalert");
         return reply(context, 200, { ok: true, alerts: (await sa.list()).slice().reverse() });
