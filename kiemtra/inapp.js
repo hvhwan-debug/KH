@@ -2,13 +2,15 @@
    Khi mở từ các app này, hiện lớp phủ toàn màn hình, BẮT BUỘC bấm nút để chuyển sang trình duyệt mặc định (Chrome / Safari).
    Lớp phủ không có nút đóng. Dùng cho các trang cần camera: hoclieu, ketqua, tracuu (trang index có màn chặn riêng). */
 (function(){
+  // Chế độ lười (<script data-lazy>): KHÔNG tự chặn khi mở trang; chỉ hiện lớp phủ khi trang gọi window.inAppBlock() (vd. lúc bấm nút cần camera).
+  var lazy = !!(document.currentScript && document.currentScript.hasAttribute('data-lazy'));
   var ua = navigator.userAgent || '', name = '';
   if (/Zalo/i.test(ua)) name = 'Zalo';
   else if (/FBAN|FBAV|FB_IAB|Messenger/i.test(ua)) name = 'Facebook/Messenger';
   else if (/Instagram/i.test(ua)) name = 'Instagram';
   else if (/Line\//i.test(ua)) name = 'Line';
   else if (/musical_ly|BytedanceWebview|TikTok/i.test(ua)) name = 'TikTok';
-  if (!name) return;
+  if (!name){ if (lazy) window.inAppBlock = function(){ return false; }; return; }
 
   var css = '#iaOv{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(160deg,#0B1F5C,#13317F);color:#fff;font-family:"Times New Roman",Arial,sans-serif;text-align:center}' +
     '#iaOv .b{max-width:380px;width:100%}#iaOv h1{margin:0 0 10px;font-size:24px;line-height:1.25;color:#F5C451}' +
@@ -52,5 +54,6 @@
       catch(e){ var t = document.createElement('input'); t.value = location.href; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); m.textContent = 'Đã sao chép link. Dán vào Chrome hoặc Safari.'; } catch(x){ h.style.display = 'block'; } t.remove(); }
     });
   }
+  if (lazy){ window.inAppBlock = function(){ if (!document.getElementById('iaOv')) build(); return true; }; return; }
   if (document.body) build(); else document.addEventListener('DOMContentLoaded', build);
 })();

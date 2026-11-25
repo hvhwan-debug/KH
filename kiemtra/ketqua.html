@@ -594,7 +594,7 @@ body.cert-on .wrap{max-width:1180px;width:min(1180px,94vw)}
 }
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
-<script src="/kiemtra/inapp.js?v=1"></script>
+<script src="/kiemtra/inapp.js?v=2" data-lazy></script>
 </head>
 <body>
 <script src="/kiemtra/topnav.js" data-hide=".au-bar,#vtBar,header.top" data-guide='[data-vt="guide"]' data-support='[data-vt="support"]'></script>
@@ -934,7 +934,7 @@ function openFace(){
   });
 }
 document.addEventListener('keydown', function(e){ if (e.key === 'Escape'){ if (window.FaceHUD && FaceHUD.isOpen()) return; if (!$('phoneModal').classList.contains('hide')) closePhone(); } });
-$('paperGo').addEventListener('click', startPaper);
+$('paperGo').addEventListener('click', function(){ if (window.inAppBlock && window.inAppBlock()) return; startPaper(); }); // trang xác thực xem được trong Zalo; chỉ khi cần camera (quét mặt xem lại đề) mới yêu cầu mở bằng trình duyệt
 $('paperAdmin').addEventListener('click', adminView);
 // Quản trị viên đang đăng nhập: hiện nút xem thẳng, không cần nhập mã NV + email
 // Thanh điều hướng: menu ☰ trên điện thoại + hộp Hướng dẫn / Hỗ trợ
