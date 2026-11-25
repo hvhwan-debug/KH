@@ -1088,6 +1088,44 @@ function ruleLabel(r) {
     (r.difficulty ? " · " + ({ easy: "Dễ", medium: "Trung bình", hard: "Khó" }[r.difficulty] || r.difficulty) : "") + (r.tag ? " · #" + r.tag : "");
 }
 
+// ---------- Thứ tự hiển thị phương án khi đảo đáp án ----------
+// Nhãn A, B, C, D luôn cố định theo VỊ TRÍ, chỉ nội dung được đảo. Riêng các phương án phụ thuộc vị trí thì không được đảo bừa:
+//  - Có phương án nhắc tới chữ cái ("Cả A và B", "Đáp án C sai", "A, B, D") hoặc các phương án tự ghi nhãn ("A. ...", "B) ...")
+//    -> GIỮ NGUYÊN thứ tự cả câu (đảo sẽ làm sai nghĩa).
+//  - Phương án dạng tổng hợp ("Tất cả các đáp án trên", "Cả ba đều đúng", "Không có đáp án nào đúng", "Đáp án khác")
+//    -> GHIM tại vị trí gốc (thường là D); các phương án còn lại vẫn đảo với nhau.
+// Trả về order: order[vị trí hiển thị] = chỉ số gốc (cùng quy ước với attempt.orders).
+const foldVN = (s) => String(s == null ? "" : s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().replace(/\s+/g, " ").trim();
+const OPT_LABEL = /^\s*[A-Ha-h]\s*[.):\-]\s+/;
+const OPT_LETTER_REF = [
+  /(^|[^\p{L}])[A-H]\s*(và|,|&|hoặc|\+|\/|-)\s*[A-H](?![\p{L}])/u,
+  /(đáp án|Đáp án|ĐÁP ÁN|phương án|Phương án|câu|Câu|ý|Ý|cả|Cả|CẢ|trừ|Trừ|ngoại trừ|Ngoại trừ)\s+[A-H](?![\p{L}])/u
+];
+const OPT_META = [
+  /\b(tat ca|toan bo)\b.*\b(tren|deu|dung|sai|dap an|phuong an|y)\b/,
+  /\bca (hai|ba|bon|2|3|4)\b.*\b(tren|deu dung|deu sai|deu)\b/,
+  /\bcac (dap an|phuong an|y|cau|lua chon) (tren|deu)\b/,
+  /\bkhong (co )?(dap an|phuong an|y|lua chon|cau) nao\b/,
+  /\b(dap an|phuong an|y kien|lua chon) khac\b/,
+  /^(tat ca|ca hai|ca ba|ca bon|khong co|khong dap an nao)\.?$/
+];
+function optionPositional(q) {
+  const ops = (q && q.options) || [];
+  if (ops.length >= 2 && ops.every((o) => OPT_LABEL.test(String(o)))) return true;
+  return ops.some((o) => OPT_LETTER_REF.some((re) => re.test(String(o))));
+}
+function optionIsMeta(o) { const f = foldVN(o); return OPT_META.some((re) => re.test(f)); }
+function optionOrder(q) {
+  const ops = (q && q.options) || [], n = ops.length, ident = ops.map((_, i) => i);
+  if (n < 2 || optionPositional(q)) return ident;
+  const pinned = ident.filter((i) => optionIsMeta(ops[i]));
+  if (pinned.length >= n - 1) return ident;
+  const free = shuffle(ident.filter((i) => pinned.indexOf(i) < 0));
+  const out = []; let k = 0;
+  for (let i = 0; i < n; i++) out.push(pinned.indexOf(i) >= 0 ? i : free[k++]);
+  return out;
+}
+
 function shuffle(arr) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -1367,7 +1405,7 @@ module.exports = { validImageUrl,
   isLeft, cleanBlueprint, buildFromBlueprint, blueprintTotal, planExam, targetCount, cleanSegmentPlans, segPlanFor, countFor, validateCounts, MAX_QUESTION_COUNT, examAccessError, inAudience, asgModeOf, examKnown, scoreAttempt, summarize, patchIndex, previousResult, loadAttempts,
   TYPES, qType, normText, normalizeQuestionInput, gradeAnswer,
   getIndex, getIndexAll, upsertIndex, resetByCode,
-  shuffle, genId, compliancePoints,
+  shuffle, optionOrder, optionPositional, optionIsMeta, genId, compliancePoints,
   buildPaper, getViewers, saveViewers, findViewer, normPerson, inScope, passState, passScoreOf, verifyToken, checkVerifyToken, backupQuestions, getQuestionsBackup, countInProgress, proofCode, GRACE_MS, timeOf, timeFields, getActive, setActive, moveActive, syncAttempt, clientState, tooManyFails, noteFail
 };
 module.exports.birthMD = birthMD;

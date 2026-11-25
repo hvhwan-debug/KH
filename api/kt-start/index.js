@@ -128,7 +128,7 @@ module.exports = async function (context, req) {
       const picked = plan.picked;
       if (plan.short) (context.log.warn || context.log)("kt-start: de thieu cau", settings.examPeriod, segment, plan.picked.length + "/" + plan.target);
       const orders = {};
-      picked.forEach((q) => { orders[q.id] = quiz.shuffle(q.options.map((_, i) => i)); }); // order[vị trí hiển thị] = chỉ số gốc
+      picked.forEach((q) => { orders[q.id] = quiz.optionOrder(q); }); // order[vị trí hiển thị] = chỉ số gốc; nhãn A-D cố định, phương án phụ thuộc vị trí được giữ/ghim
       attempt = {
         id: newId, code: found.code, name: found.name, email: found.email, phone: normPhone(found.phone), manager: found.manager || "", segment, province: found.province || "", region: quiz.normRegion(found.region),
         period: settings.examPeriod,
