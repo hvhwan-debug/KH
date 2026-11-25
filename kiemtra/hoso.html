@@ -43,6 +43,7 @@ main{max-width:1380px;margin:0 auto;padding:18px 20px 60px}
 .card-b{padding:12px 18px 16px}
 h1.pg{margin:2px 0 4px;font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-.01em}
 .pgsub{margin:0 0 14px;color:var(--muted)}
+.pg-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}.pg-mgmt{margin-top:4px}
 /* tab chính */
 .seg{display:inline-flex;background:#E9EFF7;border-radius:11px;padding:3px;gap:2px}
 .seg button{border:0;background:transparent;padding:7px 15px;border-radius:9px;font-weight:600;color:var(--muted);cursor:pointer;font-size:13.5px}
@@ -365,8 +366,8 @@ a.nv{text-decoration:none}
 <nav class="side-nav" aria-label="Mục chính">
 <div class="nv-grp">Vận hành</div>
 <a class="nv" href="/kiemtra/admin#exams" title="Đề thi"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg><span class="nv-l">Đề thi</span></a>
-<a class="nv" href="/kiemtra/admin#candidates" title="Danh sách thí sinh, nhập danh sách, đối chiếu HR, lịch sử đăng nhập"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4 2 9l10 5 10-5z" fill="currentColor"/><path d="M6 11.2V16c0 1.6 2.7 3 6 3s6-1.4 6-3v-4.8"/><path d="M21 9.5V14"/></svg><span class="nv-l">Thí sinh</span></a>
-<a class="nv on" href="/kiemtra/hoso.html" aria-current="page" title="Hồ sơ học tập: phân tích năng lực, tiến bộ và nhu cầu đào tạo của nhân sự"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="nv-l">Hồ sơ học tập</span></a>
+
+<a class="nv on" href="/kiemtra/hoso.html" aria-current="page" title="Hồ sơ học tập: phân tích năng lực, tiến bộ và nhu cầu đào tạo của nhân sự"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="nv-l">Hồ sơ học tập</span><span class="nv-cnt hide" id="nvCand"></span></a>
 <a class="nv" href="/kiemtra/admin#lookup" title="Tra cứu bài kiểm tra và lịch sử xem điểm"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><span class="nv-l">Tra cứu</span></a>
 <a class="nv" href="/kiemtra/admin#notify" title="Gửi thông báo và thư mời"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3.5a5.5 5.5 0 0 0-5.5 5.5v3.6L5 15.5h14l-1.5-2.9V9A5.5 5.5 0 0 0 12 3.5z" fill="currentColor"/><path d="M9.8 18.5a2.3 2.3 0 0 0 4.4 0"/></svg><span class="nv-l">Thông báo, thư mời</span></a>
 <a class="nv" href="/kiemtra/admin#managerview" title="Quản lí"><svg class="ic" aria-hidden="true"><use href="#i-mgr"/></svg><span class="nv-l">Quản lí</span></a>
@@ -391,8 +392,9 @@ a.nv{text-decoration:none}
 
   <!-- ============ MÀN CHÍNH: tổng quan + danh sách ============ -->
   <div id="vMain" class="hide">
-    <h1 class="pg">Hồ sơ học tập</h1>
-    <p class="pgsub">Theo dõi năng lực, tiến bộ và nhu cầu đào tạo của toàn bộ nhân sự từ dữ liệu kiểm tra thực tế.</p>
+    <div class="pg-head"><div><h1 class="pg">Hồ sơ học tập</h1>
+    <p class="pgsub">Theo dõi năng lực, tiến bộ và nhu cầu đào tạo của toàn bộ nhân sự từ dữ liệu kiểm tra thực tế.</p></div>
+    <a class="btn pg-mgmt" href="/kiemtra/admin#candidates" title="Thêm thí sinh, nhập danh sách từ Excel, đối chiếu HR, lịch sử đăng nhập, tài khoản thử nghiệm">👥 Quản lí danh sách thí sinh</a></div>
     <div class="card" id="fltCard">
       <div class="flt" id="flt">
         <div class="fld"><label for="fQ">Tìm theo tên hoặc mã nhân viên</label><input id="fQ" type="search" placeholder="Nhập tên hoặc mã NV…" autocomplete="off"></div>
@@ -488,6 +490,7 @@ function build(c, r, x, s){
   S.X = x.exams || []; S.cur = x.currentPeriod || st.examPeriod || '';
   S.xById = {}; S.X.forEach(function(e){ S.xById[e.id] = e; });
   S.loaded = true;
+  var nc = $('nvCand'); if (nc){ nc.textContent = S.C.length; nc.classList.remove('hide'); }
 }
 
 /* ====================== Mô hình tính toán ====================== */
