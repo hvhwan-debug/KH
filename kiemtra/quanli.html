@@ -286,6 +286,8 @@ table.emp-t{width:100%;border-collapse:collapse;font-size:14px}
 .chart svg{width:100%;height:auto;display:block}
 .chart .lg{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:4px}
 .chart .lg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-2px}
+.ht tr.hid td:not(:last-child){opacity:.5}.rowact{display:flex;gap:5px;flex-wrap:nowrap;justify-content:flex-end}.rowact .btn.sm{padding:5px 9px;font-size:12.5px;white-space:nowrap}
+@media(max-width:700px){.ht th:last-child,.ht td:last-child{position:sticky;right:0;background:#fff;box-shadow:-10px 0 10px -10px rgba(0,30,80,.22)}.ht td:nth-child(2){min-width:104px}}.btn.sm.dng{color:#B3261E;border-color:#E3A9A4}.btn.sm.dng:hover{background:#FDECEA}
 .ht{width:100%;border-collapse:collapse;font-size:13px}
 .ht th{text-align:left;font-weight:600;color:var(--muted);font-size:12px;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
 .ht td{padding:8px;border-bottom:1px solid #EEF1F4;font-variant-numeric:tabular-nums;vertical-align:middle}
@@ -1542,24 +1544,28 @@ function learningPathHTML(P, low){
   return '<div class="psec"><h3>🎯 Lộ trình học tập đề xuất <small>ưu tiên mảng yếu nhất trước</small></h3><div class="lpath">' + steps + '</div></div>';
 }
 function renderProfile(){
-  var P = PROF, H = P.history, low = (P.complianceLowMin || 6) * 10;
-  if (!H.length){
+  var P = PROF, HA = P.history, H = HA.filter(function(x){ return !x.hidden; }), low = (P.complianceLowMin || 6) * 10, ADM = !!(VIEWER && VIEWER.isAdmin);
+  if (!HA.length){
     $('fBody').innerHTML = '<div class="empty">' + (P.status === 'doing' ? 'Nhân viên đang làm bài, chưa có kết quả nào.' : 'Nhân viên chưa làm bài kiểm tra nào.') + '</div>'; return;
   }
+  var html = '';
+  if (H.length){
   var last = H[H.length-1], prev = H.length > 1 ? H[H.length-2] : null;
   var avgAll = Math.round(H.reduce(function(a,x){ return a + (x.pct||0); }, 0) / H.length * 10) / 10;
   var d = prev ? Math.round((last.pct - prev.pct) * 10) / 10 : null;
   var hiAvg = last.teamAvg != null ? Math.round((last.pct - last.teamAvg) * 10) / 10 : null;
-  var html = '<div class="pkpi">' +
+  html = '<div class="pkpi">' +
     '<div><b>' + H.length + '</b><span>Lần kiểm tra đã nộp</span></div>' +
     '<div><b class="' + (last.pct < low ? 'down' : '') + '">' + pc(last.pct) + '</b><span>Đề ' + perL(last.period) + (hiAvg != null ? ' · ' + (hiAvg >= 0 ? 'hơn' : 'kém') + ' đội ' + pc(Math.abs(hiAvg)).replace('%',' điểm') : '') + '</span></div>' +
     '<div><b>' + pc(avgAll) + '</b><span>Trung bình các lần</span></div>' +
     '<div><b class="' + (d == null ? '' : d > 0 ? 'up' : d < 0 ? 'down' : '') + '">' + (d == null ? '–' : (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + String(Math.abs(d)).replace('.', ',')) + '</b><span>' + (d == null ? 'Cần ít nhất 2 kỳ để so sánh' : 'Điểm % so với lần trước') + '</span></div></div>';
   html += '<div class="psec chart"><h3>Tỉ lệ đúng theo kỳ</h3>' + chartSvg(H, low) + '<div class="lg"><span><i style="background:#0A63C4"></i>Nhân viên</span><span><i style="background:#E0A030;border-radius:50%"></i>Trung bình đội cùng kỳ</span>' + (H.some(function(x){ return !x.latest; }) ? '<span>* lần làm trước khi làm lại trong cùng kỳ</span>' : '') + '</div></div>';
+  }
+  else html = '<div class="msg" style="margin-bottom:10px">Tất cả bài làm của nhân viên này đang bị ẩn nên không tính vào báo cáo.</div>';
   html += '<div class="psec"><h3>Lịch sử từng kỳ</h3><div style="overflow-x:auto"><table class="ht"><thead><tr><th>Ảnh</th><th>Kỳ</th><th class="r">Điểm</th><th class="r">Tỉ lệ</th><th class="r">TB đội</th><th class="r">Hạng</th><th class="r">Tuân thủ</th><th>Cảnh báo</th><th>Nộp lúc</th><th></th></tr></thead><tbody>' +
-    H.slice().reverse().map(function(x){
+    HA.slice().reverse().map(function(x){
       var fl = x.flags ? [x.flags.blur ? 'Rời trang ' + x.flags.blur : '', x.flags.shot ? 'Chụp MH ' + x.flags.shot : ''].filter(Boolean).join(', ') : '';
-      return '<tr><td><div class="ph xs" id="th-' + esc(x.id) + '"></div></td><td>' + perL(x.period) + (x.latest ? '' : '*') + (x.test ? ' <span class="chip warn">Thử nghiệm · không tính vào báo cáo</span>' : '') + (x.practice ? ' <span class="chip warn">Thi thử · không phải thi chính thức</span>' : '') + '</td><td class="r">' + x.score + '/' + x.total + '</td><td class="r' + (x.pct < low ? ' lt' : '') + '">' + x.pct + '%</td><td class="r">' + pc(x.teamAvg) + '</td><td class="r">' + (x.rank ? x.rank + '/' + x.teamSize : '–') + '</td><td class="r">' + (x.compliancePoints != null ? x.compliancePoints : '–') + '</td><td>' + esc(fl || '–') + '</td><td>' + esc(fmt(x.submittedAt)) + '</td><td><button type="button" class="btn ghost sm" data-paper="' + esc(x.id) + '">Bài làm</button></td></tr>';
+      return '<tr' + (x.hidden ? ' class="hid"' : '') + '><td><div class="ph xs" id="th-' + esc(x.id) + '"></div></td><td>' + perL(x.period) + (x.latest ? '' : '*') + (x.hidden ? ' <span class="chip warn">Đã ẩn · không tính vào báo cáo</span>' : '') + (x.test ? ' <span class="chip warn">Thử nghiệm · không tính vào báo cáo</span>' : '') + (x.practice ? ' <span class="chip warn">Thi thử · không phải thi chính thức</span>' : '') + '</td><td class="r">' + x.score + '/' + x.total + '</td><td class="r' + (x.pct < low ? ' lt' : '') + '">' + x.pct + '%</td><td class="r">' + pc(x.teamAvg) + '</td><td class="r">' + (x.rank ? x.rank + '/' + x.teamSize : '–') + '</td><td class="r">' + (x.compliancePoints != null ? x.compliancePoints : '–') + '</td><td>' + esc(fl || '–') + '</td><td>' + esc(fmt(x.submittedAt)) + '</td><td><div class="rowact"><button type="button" class="btn ghost sm" data-paper="' + esc(x.id) + '">Bài làm</button>' + (ADM && !x.test ? '<button type="button" class="btn ghost sm" data-hide="' + esc(x.id) + '" data-to="' + (x.hidden ? '0' : '1') + '" title="' + (x.hidden ? 'Tính lại vào báo cáo' : 'Không tính vào báo cáo, thống kê, xếp hạng; hoàn tác được') + '">' + (x.hidden ? 'Hiện lại' : 'Ẩn') + '</button><button type="button" class="btn ghost sm dng" data-del="' + esc(x.id) + '" title="Xoá hẳn bài làm này">Xoá</button>' : '') + '</div></td></tr>';
     }).join('') + '</tbody></table></div></div>';
   if (P.categories.length){
     html += '<div class="psec"><h3>Theo mảng kiến thức <small>từ ' + P.papersRead + ' bài gần nhất · cột phải: kỳ gần nhất</small></h3>' + P.categories.map(function(c){
@@ -1624,6 +1630,21 @@ async function runProfileAI(){
   } catch(x){ $('aiProfOut').innerHTML = '<div class="msg err">Không kết nối được máy chủ, thử lại.</div>'; }
   btn.disabled = false;
 }
+/* Quản trị viên: ẨN (không tính vào báo cáo, hoàn tác được) hoặc XOÁ HẲN một bài làm ngay từ bảng "Lịch sử từng kỳ" */
+$('ovProf').addEventListener('click', async function(ev){
+  var hb = ev.target.closest('button[data-hide]'), db = ev.target.closest('button[data-del]');
+  if ((!hb && !db) || !PROF || !VIEWER || !VIEWER.isAdmin) return;
+  var btn = hb || db, id = btn.getAttribute(hb ? 'data-hide' : 'data-del');
+  var x = (PROF.history || []).filter(function(h){ return h.id === id; })[0]; if (!x) return;
+  var what = 'Kỳ ' + perL(x.period) + ' · ' + x.score + '/' + x.total + ' (' + x.pct + '%) · nộp ' + fmt(x.submittedAt);
+  if (db && !confirm('XOÁ HẲN bài làm này?\n\n' + what + '\n\nBài làm và ảnh khuôn mặt của bài này sẽ bị xoá khỏi hệ thống, không khôi phục được từ giao diện.\nNếu chỉ muốn loại khỏi báo cáo, hãy bấm "Ẩn" (hoàn tác được).')) return;
+  btn.disabled = true;
+  var r = await api('POST', '/api/kt-admin', hb ? { op:'hideAttempt', id:id, hidden: hb.getAttribute('data-to') === '1' } : { op:'deleteAttempt', id:id });
+  if (!r.j.ok){ btn.disabled = false; alert(r.j.error || 'Không thực hiện được, thử lại.'); return; }
+  try { if (window.parent !== window) window.parent.postMessage({ kt:'attemptsChanged' }, location.origin); } catch(e){}
+  var emp = PROF.emp; try { await openProfile(emp); } catch(e){}
+  try { if (typeof load === 'function' && !document.documentElement.classList.contains('pvonly')) load(); } catch(e){}
+});
 $('ovProf').addEventListener('click', function(ev){
   var b = ev.target.closest('button[data-paper]'); if (!b || !PROF) return;
   $('ovProf').classList.add('hide'); openPaper(PROF.emp, b.getAttribute('data-paper'));

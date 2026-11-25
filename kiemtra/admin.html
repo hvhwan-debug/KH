@@ -5553,6 +5553,7 @@ function closeCandProfile(){
   document.body.style.overflow = '';
 }
 window.addEventListener('message', ev => { if (ev.origin === location.origin && ev.data && ev.data.kt === 'closeProfile') closeCandProfile(); });
+window.addEventListener('message', ev => { if (ev.origin === location.origin && ev.data && ev.data.kt === 'attemptsChanged'){ try { loadProgress(); } catch(e){} try { loadResults(); } catch(e){} } });
 document.addEventListener('keydown', ev => { if (ev.key === 'Escape') closeCandProfile(); });
 const PF_LBL = [['chucDanhGoc','Nghề nghiệp (chức danh gốc)'],['thamNien','Kinh nghiệm tại công ty (thâm niên)'],['trinhDo','Trình độ'],['bangCap','Bằng cấp'],['chuyenNganh','Chuyên ngành'],['truong','Trường tốt nghiệp'],['nganh','Ngành'],['loaiNV','Loại nhân viên'],['hinhThuc','Hình thức (biến động gần nhất)'],['hieuLuc','Hiệu lực từ ngày'],['donVi','Đơn vị thành viên'],['tapDoan','Tập đoàn'],['khoi','Khối'],['phong','Phòng'],['boPhan','Bộ phận'],['toNhom','Tổ nhóm'],['khuVucCon','Khu vực (cấp bổ sung)'],['noiLamViec','Nơi làm việc'],['mien','Miền'],['tinhPhuTrach','Tỉnh phụ trách'],['quanLy','Quản lý trực tiếp'],['vaoLanDau','Vào công ty lần đầu'],['vaoCongTy','Vào công ty (đơn vị hiện tại)'],['kyHDChinhThuc','Ký HĐ chính thức đầu tiên'],['msnvCu','MSNV cũ'],['maChamCong','Mã chấm công']];
 function tenureOf(p){

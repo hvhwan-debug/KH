@@ -1017,6 +1017,22 @@ const handler = async function (context, req) {
       return reply(context, 200, { ok: true, assigned: n, period });
     }
 
+    // Ẩn / hiện lại / xoá MỘT bài làm đã nộp (từ bảng "Lịch sử từng kỳ" trong hồ sơ nhân viên).
+    if (op === "hideAttempt" || op === "deleteAttempt") {
+      const id = String(b.id || "").trim().slice(0, 80);
+      const a = await quiz.getAttempt(id);
+      if (!a || a.status !== "submitted") return reply(context, 404, { ok: false, error: "Không tìm thấy bài làm đã nộp này." });
+      const info = { code: a.code, name: a.name || "", period: a.period || "", score: a.score + "/" + a.total };
+      if (op === "hideAttempt") {
+        const hide = b.hidden !== false;
+        await quiz.setAttemptHidden(id, hide, u.email);
+        return reply(context, 200, Object.assign({ ok: true, hidden: hide }, info));
+      }
+      await quiz.deleteSubmittedAttempt(id, u.email);
+      try { await require("../_lib/facegallery").dropSrc(quiz.normCode(a.code), id); } catch (e) { /* không chặn */ }
+      return reply(context, 200, Object.assign({ ok: true, deleted: true }, info));
+    }
+
     if (op === "resetAttempt") {
       // Làm lại theo kỳ: chỉ xoá kết quả của kỳ được chọn (period = "" là bài chưa gắn kỳ).
       const removed = await quiz.resetByCode(b.code, typeof b.period === "string" ? b.period : undefined);

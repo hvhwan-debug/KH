@@ -58,7 +58,7 @@ const A = {
       saveQuestion: ["Lưu câu hỏi", "change"], addQuestions: ["Thêm câu hỏi hàng loạt", "change"], deleteQuestion: ["Xoá câu hỏi", "change"],
       deleteAllQuestions: ["XOÁ TOÀN BỘ ngân hàng đề của kỳ", "change"], copyQuestions: ["Sao chép đề sang kỳ khác", "change"], moveQuestions: ["Chuyển câu hỏi sang kỳ khác", "change"], restoreQuestions: ["Khôi phục ngân hàng đề", "change"],
       saveViewer: ["Cấp / sửa quyền quản lí", "change"], setViewerPassword: ["Đặt mật khẩu cho quản lí", "change"], deleteViewer: ["Thu hồi quyền quản lí", "change"],
-      addCandidates: ["Thêm / cập nhật thí sinh", "change"], approveChange: ["Duyệt yêu cầu điều chỉnh thông tin", "change"], notifyEmail: ["Gửi thông báo qua email", "change"], rejectChange: ["Từ chối yêu cầu điều chỉnh thông tin", "change"], deleteCandidate: ["Xoá thí sinh", "change"], renameCandidate: ["Đổi mã nhân viên", "change"], resetAttempt: ["Cho làm lại (xoá kết quả kỳ)", "change"],
+      addCandidates: ["Thêm / cập nhật thí sinh", "change"], approveChange: ["Duyệt yêu cầu điều chỉnh thông tin", "change"], notifyEmail: ["Gửi thông báo qua email", "change"], rejectChange: ["Từ chối yêu cầu điều chỉnh thông tin", "change"], deleteCandidate: ["Xoá thí sinh", "change"], renameCandidate: ["Đổi mã nhân viên", "change"], resetAttempt: ["Cho làm lại (xoá kết quả kỳ)", "change"], hideAttempt: ["Ẩn / hiện lại một bài làm", "change"], deleteAttempt: ["Xoá một bài làm đã nộp", "change"],
       saveSettings: ["Đổi cài đặt", "change"], assignPeriod: ["Gắn kỳ cho bài chưa có kỳ", "change"],
       saveBank: ["Lưu ngân hàng câu hỏi", "change"], deleteBank: ["Xoá ngân hàng câu hỏi", "change"], moveToBank: ["Chuyển câu hỏi sang ngân hàng khác", "change"],
       setQuestionActive: ["Ẩn / hiện câu hỏi", "change"], regrade: ["Chấm lại đề thi", "change"], regradeQuestion: ["Chấm lại bài có câu hỏi", "change"], saveExam: ["Lưu đề thi", "change"], deleteExam: ["Xoá đề thi", "change"], setDefaultExam: ["Đặt đề thi mặc định", "change"]
@@ -143,6 +143,8 @@ function details(area, op, q, b, res, pre) {
     case "deleteViewer": d.email = s(b.email, 80); if (pre.viewer) d.scopes = s((pre.viewer.scopes || []).join("; "), 200); break;
     case "addCandidates": d.rows = Array.isArray(b.rows) && b.rows.length ? b.rows.length : (typeof b.text === "string" ? b.text.split("\n").filter(Boolean).length : undefined); d.added = r.added; d.updated = r.updated; break;
     case "deleteCandidate": case "deleteEmployee": d.code = b.code; if (cand) { d.name = cand.name; d.email = cand.email; d.manager = cand.manager; } break;
+    case "hideAttempt": d.attempt = b.id; d.code = r.code; d.name = r.name; d.period = r.period || "chưa gắn kỳ"; d.hidden = r.hidden ? "ẩn" : "hiện lại"; break;
+    case "deleteAttempt": d.attempt = b.id; d.code = r.code; d.name = r.name; d.period = r.period || "chưa gắn kỳ"; d.score = r.score; break;
     case "resetAttempt": d.code = b.code; d.period = typeof b.period === "string" ? (b.period || "chưa gắn kỳ") : "mọi kỳ"; d.removed = r.removed; if (cand) d.name = cand.name; break;
     case "approveChange": case "rejectChange": d.id = b.id; break;
     case "notifyEmail": d.count = Array.isArray(b.items) ? b.items.length : 0; d.sent = r.sent; d.subject = s(b.subject, 100); break;

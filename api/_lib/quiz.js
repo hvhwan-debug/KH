@@ -907,7 +907,7 @@ async function putAttempt(a) { await store.put("kt/attempt/" + a.id + ".json", a
 // Chỉ mục bài làm. getIndex() = CHỈ bài chính thức (mọi thống kê, báo cáo, nhắc nhở, xuất dữ liệu dùng hàm này nên không bao giờ thấy bài thử nghiệm).
 // getIndexAll() = gồm cả bài của tài khoản thử nghiệm (r.test), dành cho tính năng theo TỪNG NGƯỜI: đối chiếu khuôn mặt, đăng nhập bằng khuôn mặt, tra cứu lịch sử, xác thực kết quả.
 async function getIndexAll() { return (await store.get(IDX_KEY)) || []; }
-async function getIndex() { return (await getIndexAll()).filter((r) => !r.test); }
+async function getIndex() { return (await getIndexAll()).filter((r) => !r.test && !r.hidden); } // bài bị quản trị viên ẩn cũng không tính vào mọi thống kê / báo cáo / xếp hạng
 async function saveIndex(list) { await store.put(IDX_KEY, list); }
 // Sửa vài trường của một dòng trong bảng kết quả (đọc-sửa-ghi nguyên tử, giữ nguyên các trường khác)
 async function patchIndex(id, fields) {
@@ -1154,6 +1154,30 @@ async function patchIndex(patches) {
   await store.update(IDX_KEY, (cur) => (Array.isArray(cur) ? cur : []).map((r) => (patches[r.id] ? Object.assign({}, r, patches[r.id]) : r)));
 }
 
+// ---- Ẩn / xoá MỘT bài làm đã nộp (quản trị viên) ----
+// Ẩn: bài vẫn còn trong kho nhưng không tính vào báo cáo, thống kê, xếp hạng, lịch sử của thí sinh và không mở được bằng liên kết xác thực; hoàn tác được ("hiện lại").
+async function setAttemptHidden(id, hidden, by) {
+  const a = await getAttempt(id);
+  if (!a || a.status !== "submitted") return null;
+  if (hidden) { a.hidden = true; a.hiddenAt = Date.now(); a.hiddenBy = String(by || "").slice(0, 120); } else { delete a.hidden; delete a.hiddenAt; delete a.hiddenBy; }
+  await putAttempt(a);
+  await patchIndex({ [id]: { hidden: !!hidden } });
+  return a;
+}
+// Xoá hẳn: gỡ khỏi chỉ mục và xoá bài làm. Giữ MỘT bản dự phòng (kt/attempt-trash/<id>.json) để quản trị viên khôi phục thủ công khi lỡ tay;
+// bản dự phòng KHÔNG kèm ảnh khuôn mặt và dấu vân khuôn mặt (dữ liệu sinh trắc học bị xoá thật sự).
+async function deleteSubmittedAttempt(id, by) {
+  const a = await getAttempt(id);
+  if (!a || a.status !== "submitted") return null;
+  const keep = Object.assign({}, a); delete keep.photo; delete keep.faceDesc;
+  keep.deletedAt = Date.now(); keep.deletedBy = String(by || "").slice(0, 120);
+  await store.put("kt/attempt-trash/" + id + ".json", keep);
+  await store.update(IDX_KEY, (cur) => (Array.isArray(cur) ? cur : []).filter((r) => r.id !== id));
+  await store.del("kt/attempt/" + id + ".json");
+  try { const act = await getActive(a.code); if (act && act.id === id) await setActive(a.code, null); } catch (e) { /* không chặn */ }
+  return a;
+}
+
 // Bản sao bài làm (từng câu theo ĐÚNG thứ tự đáp án thí sinh đã thấy): lưu lúc nộp bài để xem lại ổn định
 // kể cả khi ngân hàng đề sau đó bị sửa/xoá.
 function buildPaper(a, byId) {
@@ -1346,3 +1370,5 @@ module.exports = { validImageUrl,
 };
 module.exports.birthMD = birthMD;
 module.exports.hasBirthYear = hasBirthYear;
+module.exports.setAttemptHidden = setAttemptHidden;
+module.exports.deleteSubmittedAttempt = deleteSubmittedAttempt;

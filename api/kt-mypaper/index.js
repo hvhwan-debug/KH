@@ -43,7 +43,7 @@ module.exports = async function (context, req) {
     if (b.probe) return reply(context, 200, { ok: true, admin: !!adminU }); // trang kết quả hỏi: có phải quản trị viên không
     const id = quiz.checkVerifyToken(b.t);
     const attempt = id ? await quiz.getAttempt(id) : null;
-    if (!attempt || attempt.status !== "submitted") { quiz.noteFail(req); return reply(context, 404, { ok: false, error: "Không tìm thấy kết quả. Mã QR không hợp lệ." }); }
+    if (!attempt || attempt.status !== "submitted" || attempt.hidden) { quiz.noteFail(req); return reply(context, 404, { ok: false, error: "Không tìm thấy kết quả. Mã QR không hợp lệ." }); }
 
     const code = quiz.normCode(b.code), email = quiz.normEmail(b.email);
     const master = !!(adminU && b.admin === true);

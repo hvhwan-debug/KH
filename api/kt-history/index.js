@@ -66,7 +66,7 @@ module.exports = async function (context, req) {
     }
 
     // Các bài ĐÃ NỘP của đúng mã nhân viên này (bài tài khoản thử nghiệm không nằm trong chỉ mục)
-    const rows = (await quiz.getIndexAll()).filter((r) => r.status === "submitted" && quiz.normCode(r.code) === code)
+    const rows = (await quiz.getIndexAll()).filter((r) => r.status === "submitted" && !r.hidden && quiz.normCode(r.code) === code)
       .sort((a, c) => (c.submittedAt || 0) - (a.submittedAt || 0));
     if (byFace && !rows.length) return reply(context, 404, { ok: false, error: "Đã nhận diện được bạn nhưng bạn chưa có bài kiểm tra nào đã nộp." });
     if (!rows.length || (!byFace && !rows.some((r) => quiz.normEmail(r.email) === email))) {

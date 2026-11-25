@@ -159,16 +159,17 @@ const handler = async function (context, req) {
           const t = Object.values(team[a.period || ""] || {}); const ps = t.map((x) => x.pct || 0);
           const latestInPeriod = (team[a.period || ""] || {})[quiz.normCode(c.code)];
           return { id: a.id, period: a.period || "", score: a.score, total: a.total, pct: a.pct, passed: quiz.passState(a.pct, settings), practice: !!a.practice, test: a.test ? true : undefined, compliancePoints: a.compliancePoints,
-            submittedAt: a.submittedAt, durationSec: a.durationSec, flags: P.viewAi ? (a.flags || null) : undefined, proof: quiz.proofCode(a.id), wrong: a.wrong, blank: a.blank,
-            latest: a.test ? true : (!!latestInPeriod && latestInPeriod.id === a.id),
+            submittedAt: a.submittedAt, durationSec: a.durationSec, flags: P.viewAi ? (a.flags || null) : undefined, proof: quiz.proofCode(a.id), wrong: a.wrong, blank: a.blank, hidden: a.hidden ? true : undefined,
+            latest: a.test ? true : (!a.hidden && !!latestInPeriod && latestInPeriod.id === a.id),
             teamAvg: ps.length ? Math.round(ps.reduce((x, y) => x + y, 0) / ps.length * 10) / 10 : null, teamSize: ps.length,
             rank: ps.length ? 1 + ps.filter((v) => v > (a.pct || 0)).length : null, weak: (a.pct || 0) < lo };
         });
         // Mảng kiến thức + câu sai lặp lại: đọc bản sao bài làm (tối đa 12 bài gần nhất)
         const cats = {}, wq = {};
-        const recent = mineList.slice(-12);
+        const mineVisible = mineList.filter((a) => !a.hidden); // bài đã ẩn không tính vào mảng kiến thức / câu sai lặp lại
+        const recent = mineVisible.slice(-12);
         const atts = await Promise.all(recent.map((a) => quiz.getAttempt(a.id).catch(() => null)));
-        const lastId = mineList.length ? mineList[mineList.length - 1].id : "";
+        const lastId = mineVisible.length ? mineVisible[mineVisible.length - 1].id : "";
         let lastWrong = [];
         atts.forEach((at, i) => {
           if (!at || !Array.isArray(at.paper)) return; const p = recent[i].period || "";
