@@ -175,6 +175,25 @@ svg.i{width:1em;height:1em;flex:0 0 auto;fill:none;stroke:currentColor;stroke-wi
 .vd{padding:12px 18px 16px;border-top:1px solid var(--line);font-size:14px;line-height:1.6;color:var(--ink2)}
 .vd b{color:var(--ink)}
 .vd small{display:block;margin-top:6px;font-size:12px;color:var(--muted)}
+/* đánh giá học liệu + bài kiểm tra liên quan */
+.vv{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line);background:#F8FBFF}
+.vv .vq{font-size:13.5px;font-weight:700;color:var(--ink);margin-right:4px}
+.vbtn{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px;border-radius:99px;border:1.5px solid #D3E1F5;background:#fff;color:#33507F;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s,color .15s,transform .1s}
+.vbtn:hover{border-color:#9DC0EE}.vbtn:active{transform:scale(.96)}.vbtn:disabled{opacity:.6;cursor:default}
+.vbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.vbtn em{font-style:normal;font-weight:800;font-variant-numeric:tabular-nums;opacity:.85}
+.vbtn.up.on{background:#E3F5EA;border-color:#1FAE6B;color:#16794A}.vbtn.up.on svg{fill:#1FAE6B;stroke:#16794A}
+.vbtn.dn.on{background:#FDEBEA;border-color:#E2574C;color:#B6372E}.vbtn.dn.on svg{fill:#F3A39C;stroke:#B6372E}
+.vv .vmsg{font-size:12.5px;color:var(--muted)}
+.vrs{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+.vrs span{font-size:12.5px;color:var(--muted);align-self:center;margin-right:2px}
+.vrs button{height:30px;padding:0 12px;border-radius:99px;border:1px solid #E4C9C6;background:#fff;color:#8A3B34;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.vrs button.on,.vrs button:hover{background:#FDEBEA;border-color:#E2574C}
+.vex{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.vex a,.exban a.ch{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:99px;background:#FFF4DE;color:#8A5A00;font-size:12.5px;font-weight:700;text-decoration:none}
+.exban{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px;padding:12px 16px;border-radius:16px;background:linear-gradient(100deg,#FFF6E3,#FFFBF2);border:1px solid #F4DDAE;color:#6B4A00;font-size:14px}
+.exban b{color:#4A3300}.exban .x{margin-left:auto;font-size:13px;font-weight:700;color:#1B5FC4;text-decoration:none}
+.card .ft .lk svg.i{color:#1FAE6B}
 .pgi{position:sticky;top:0;z-index:2;display:inline-block;margin:0 auto 10px;padding:5px 14px;border-radius:99px;background:rgba(11,42,102,.85);color:#fff;font-size:12.5px;font-weight:700}
 /* hộp thoại hướng dẫn / hỗ trợ */
 .dlg{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:20px;background:rgba(10,37,82,.45);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
@@ -268,9 +287,10 @@ svg.i{width:1em;height:1em;flex:0 0 auto;fill:none;stroke:currentColor;stroke-wi
       <div class="tools">
         <label class="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Tìm kiếm học liệu (ví dụ: M25, kỹ năng tư vấn, chính sách...)" autocomplete="off" aria-label="Tìm kiếm học liệu"></label>
         <label class="sel"><svg class="i" viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/></svg><select id="fmt" aria-label="Định dạng"><option value="">Tất cả định dạng</option><option value="video">Video</option><option value="pdf">Tài liệu PDF</option></select></label>
-        <label class="sel"><svg class="i" viewBox="0 0 24 24"><path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/></svg><select id="srt" aria-label="Sắp xếp"><option value="new">Mới nhất</option><option value="views">Xem nhiều nhất</option><option value="name">Tên A–Z</option></select></label>
+        <label class="sel"><svg class="i" viewBox="0 0 24 24"><path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/></svg><select id="srt" aria-label="Sắp xếp"><option value="new">Mới nhất</option><option value="views">Xem nhiều nhất</option><option value="liked">Hữu ích nhất</option><option value="name">Tên A–Z</option></select></label>
       </div>
       <h2 class="sec-h"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.8"/></svg><span id="listT">Danh sách học liệu</span><small id="cnt"></small></h2>
+      <div class="exban hide" id="exBan"></div>
       <div class="hubgrid hide" id="hubW"></div>
       <div class="grid" id="grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
       <button class="more hide" id="more" type="button">Xem thêm học liệu</button>
@@ -285,6 +305,7 @@ svg.i{width:1em;height:1em;flex:0 0 auto;fill:none;stroke:currentColor;stroke-wi
     <div class="vh"><h2 id="vT"></h2><span class="tag" id="vC"></span><button class="vx" id="vX" type="button" aria-label="Đóng"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     <div class="vb" id="vB"></div>
     <div class="vd" id="vD"></div>
+    <div class="vv" id="vV"></div>
   </div>
 </div>
 <div class="dlg hide" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dT"><div><h3 id="dT"></h3><div id="dB"></div><button type="button" id="dX">Đã hiểu</button></div></div>
@@ -306,6 +327,7 @@ var P = {
   star:'<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
   grid:'<rect x="3.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.8"/>',
   eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  like:'<path d="M7 11v9H4v-9zM7 11l4-7c1.4 0 2.3 1.1 2 2.5L12.4 10H18a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 16.8 20H7"/>',
   arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>'
 };
 function ic(k){ return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true">' + (P[k] || P.doc) + '</svg>'; }
@@ -315,7 +337,7 @@ var ART = [
   '<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="54" cy="66" r="40" fill="#fff" opacity=".95"/><circle cx="54" cy="66" r="29" fill="#2D8BFF"/><circle cx="54" cy="66" r="18" fill="#fff"/><circle cx="54" cy="66" r="8" fill="#F2564B"/><path d="m56 64 40-40M86 16l16 2-2 16" fill="none" stroke="#0B3F94" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   '<svg viewBox="0 0 120 120" aria-hidden="true"><g transform="rotate(10 60 60)"><rect x="24" y="16" width="72" height="92" rx="10" fill="#fff"/><rect x="44" y="8" width="32" height="18" rx="7" fill="#5B8DEF"/><g fill="none" stroke="#2D8BFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M36 46l5 5 9-10M36 70l5 5 9-10M36 94l5 5 9-10"/></g><g stroke="#B7C9F0" stroke-width="5" stroke-linecap="round"><path d="M58 46h26M58 70h26M58 94h18"/></g></g></svg>'
 ];
-var D = { cats:[], items:[], cat:'', q:'', fmt:'', srt:'new', page:1 }, PER = 12, catIdx = {};
+var D = { cats:[], items:[], cat:'', q:'', fmt:'', srt:'new', page:1, exam:(function(){ try { return new URLSearchParams(location.search).get('exam') || ''; } catch(e){ return ''; } })() }, PER = 12, catIdx = {};
 function req(path, opt){ opt = opt || {}; opt.headers = Object.assign({ 'X-Requested-With':'livotec' }, opt.headers || {}); opt.credentials = 'same-origin'; return fetch(path, opt).then(function(r){ return r.json().catch(function(){ return { ok:false }; }); }); }
 function meta(it){ return it.type === 'video' ? 'Video' + (it.dur ? ' • ' + it.dur + ' phút' : '') : 'PDF' + (it.pages ? ' • ' + it.pages + ' trang' : ''); }
 function nf(n){ return String(n || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
@@ -324,9 +346,11 @@ function visible(){
   var l = D.items.filter(function(it){
     if (D.cat && it.cat !== D.cat) return false;
     if (D.fmt && it.type !== D.fmt) return false;
+    if (D.exam && !(it.exams || []).some(function(x){ return x.id === D.exam; })) return false;
     var hay = norm(it.title + ' ' + it.desc); return q.every(function(w){ return hay.indexOf(w) >= 0; });
   });
   if (D.srt === 'views') l.sort(function(a, b){ return (b.views || 0) - (a.views || 0); });
+  else if (D.srt === 'liked') l.sort(function(a, b){ return ((b.up || 0) - (b.down || 0)) - ((a.up || 0) - (a.down || 0)) || (b.up || 0) - (a.up || 0); });
   else if (D.srt === 'name') l.sort(function(a, b){ return a.title.localeCompare(b.title, 'vi'); });
   return l;
 }
@@ -336,7 +360,7 @@ function renderSide(){
     D.cats.map(function(c){ return '<button type="button" data-c="' + esc(c.id) + '" class="' + (D.cat === c.id ? 'on' : '') + '">' + ic(c.icon) + '<span>' + esc(c.name) + '</span><em>' + c.count + '</em></button>'; }).join('');
 }
 // Khu chọn nhanh danh mục (thay cho ô "nổi bật" cũ): hiện khi chưa lọc/tìm gì, giống màn gốc của Học liệu
-function hubOn(){ return !D.cat && !D.q.trim() && !D.fmt; }
+function hubOn(){ return !D.cat && !D.q.trim() && !D.fmt && !D.exam; }
 function renderHub(){
   var on = hubOn(); $('hubW').classList.toggle('hide', !on || !D.cats.length);
   if (!on || !D.cats.length) return;
@@ -351,7 +375,7 @@ function renderHub(){
 function renderGrid(){
   var on = hubOn();
   $('grid').classList.toggle('hide', on); $('more').classList.toggle('hide', on);
-  $('listT').textContent = D.cat ? ((catIdx[D.cat] || {}).name || 'Danh sách học liệu') : 'Danh sách học liệu';
+  $('listT').textContent = D.exam ? 'Tài liệu ôn tập' : D.cat ? ((catIdx[D.cat] || {}).name || 'Danh sách học liệu') : 'Danh sách học liệu';
   if (on){ $('cnt').textContent = ''; return; }
   var l = visible(), part = l.slice(0, D.page * PER);
   $('cnt').textContent = l.length ? l.length + ' học liệu' : '';
@@ -363,11 +387,17 @@ function renderGrid(){
     var ci = Math.max(0, D.cats.findIndex(function(c){ return c.id === it.cat; })), pal = PAL[ci % PAL.length];
     var th = it.thumb ? '<img src="' + esc(it.thumb) + '" alt="" loading="lazy" onerror="this.remove()">' : '';
     return '<button type="button" class="card" data-id="' + esc(it.id) + '"><span class="th" style="background:linear-gradient(135deg,' + pal[0] + ',' + pal[1] + ')">' + th + '<span class="ph">' + (it.thumb ? '' : ic(it.type === 'video' ? 'play' : 'doc')) + '</span><span class="tag">' + esc((catIdx[it.cat] || {}).name || '') + '</span></span>' +
-      '<span class="bd"><h3>' + esc(it.title) + '</h3><span class="ft"><span>' + ic(it.type === 'video' ? 'play' : 'doc') + esc(meta(it)) + '</span><span>' + ic('eye') + nf(it.views) + '</span></span></span></button>';
+      '<span class="bd"><h3>' + esc(it.title) + '</h3><span class="ft"><span>' + ic(it.type === 'video' ? 'play' : 'doc') + esc(meta(it)) + '</span><span>' + (it.up ? '<span class="lk">' + ic('like') + nf(it.up) + '</span>' : '') + ic('eye') + nf(it.views) + '</span></span></span></button>';
   }).join('');
   $('more').classList.toggle('hide', part.length >= l.length);
 }
-function renderAll(){ renderSide(); renderHub(); renderGrid(); }
+function renderBan(){
+  var b = $('exBan'); if (!D.exam){ b.classList.add('hide'); return; }
+  var t = ''; D.items.some(function(it){ return (it.exams || []).some(function(x){ if (x.id === D.exam){ t = x.title; return true; } }); });
+  b.innerHTML = ic('bookmark') + '<span>Tài liệu ôn tập cho bài kiểm tra <b>' + esc(t || D.exam) + '</b></span><a class="x" href="' + location.pathname + '">Xem tất cả học liệu</a>';
+  b.classList.remove('hide');
+}
+function renderAll(){ renderSide(); renderHub(); renderBan(); renderGrid(); }
 function load(){
   req('/api/hoclieu').then(function(j){
     if (!j.ok){ $('grid').innerHTML = '<div class="empty" style="grid-column:1/-1"><b>Không tải được học liệu</b>Vui lòng thử lại sau ít phút.</div>'; return; }
@@ -401,7 +431,9 @@ function openItem(id){
   var it = D.items.filter(function(x){ return x.id === id; })[0]; if (!it) return;
   VW.id = id; var seq = ++VW.pdfSeq;
   $('vT').textContent = it.title; $('vC').textContent = (catIdx[it.cat] || {}).name || ''; $('vC').classList.toggle('hide', !(catIdx[it.cat]));
-  $('vD').innerHTML = (it.desc ? '<b>Giới thiệu</b><br>' + esc(it.desc).replace(/\n/g, '<br>') : '') + '<small>' + esc(meta(it)) + ' · ' + nf(it.views) + ' lượt xem · Chỉ xem trực tuyến, không hỗ trợ tải xuống.</small>';
+  $('vD').innerHTML = (it.desc ? '<b>Giới thiệu</b><br>' + esc(it.desc).replace(/\n/g, '<br>') : '') + '<small>' + esc(meta(it)) + ' · ' + nf(it.views) + ' lượt xem · Chỉ xem trực tuyến, không hỗ trợ tải xuống.</small>' +
+    ((it.exams || []).length ? '<div class="vex">' + it.exams.map(function(x){ return '<a href="/kiemtra/?exam=' + encodeURIComponent(x.id) + '" target="_blank" rel="noopener" title="Mở bài kiểm tra">📝 Ôn tập cho: ' + esc(x.title) + '</a>'; }).join('') + '</div>' : '');
+  renderVote(it);
   var b = $('vB'); b.className = 'vb' + (it.type === 'pdf' ? ' pdf' : ''); b.innerHTML = '<div class="st">Đang mở…</div>';
   $('vw').classList.remove('hide'); document.documentElement.style.overflow = 'hidden';
   history.replaceState(null, '', '#' + encodeURIComponent(id));
@@ -412,6 +444,33 @@ function openItem(id){
     req('/api/hoclieu', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ op:'view', id:id }) });
   });
 }
+/* ---- thích / không thích ---- */
+var REASONS = [['hard','Khó hiểu'],['old','Thông tin cũ / chưa đúng'],['irrelevant','Không liên quan đến công việc'],['long','Quá dài'],['broken','Lỗi hiển thị']];
+var THUMB = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11v9H4v-9zM7 11l4-7c1.4 0 2.3 1.1 2 2.5L12.4 10H18a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 16.8 20H7z"/></svg>';
+function renderVote(it, note, askWhy){
+  var m = it.mine || '';
+  $('vV').innerHTML = '<span class="vq">Học liệu này có hữu ích với bạn không?</span>' +
+    '<button type="button" class="vbtn up' + (m === 'up' ? ' on' : '') + '" data-v="up" aria-pressed="' + (m === 'up') + '" title="Hữu ích">' + THUMB + 'Hữu ích <em>' + nf(it.up) + '</em></button>' +
+    '<button type="button" class="vbtn dn' + (m === 'down' ? ' on' : '') + '" data-v="down" aria-pressed="' + (m === 'down') + '" title="Chưa hữu ích"><span style="display:inline-flex;transform:rotate(180deg)">' + THUMB + '</span>Chưa hữu ích <em>' + nf(it.down) + '</em></button>' +
+    (note ? '<span class="vmsg" role="status">' + esc(note) + '</span>' : '') +
+    (askWhy ? '<div class="vrs"><span>Điều gì chưa tốt? (tuỳ chọn)</span>' + REASONS.map(function(r){ return '<button type="button" data-why="' + r[0] + '">' + r[1] + '</button>'; }).join('') + '</div>' : '');
+}
+function sendVote(v, why){
+  var it = D.items.filter(function(x){ return x.id === VW.id; })[0]; if (!it) return;
+  var next = why ? 'down' : (it.mine === v ? '' : v); // bấm lại nút đang chọn = bỏ đánh giá
+  $('vV').querySelectorAll('button').forEach(function(b){ b.disabled = true; });
+  req('/api/hoclieu', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ op:'vote', id: it.id, v: next, reason: why || '' }) }).then(function(j){
+    if (!j.ok){ renderVote(it, j.error || 'Chưa gửi được đánh giá, vui lòng thử lại.'); return; }
+    it.up = j.up; it.down = j.down; it.mine = j.mine;
+    renderVote(it, why ? 'Cảm ơn góp ý của bạn! Quản trị viên sẽ xem để cải thiện tài liệu.' : next === 'up' ? 'Cảm ơn bạn đã đánh giá!' : '', next === 'down' && !why);
+    renderGrid();
+  }, function(){ renderVote(it, 'Mất kết nối, vui lòng thử lại.'); });
+}
+$('vV').addEventListener('click', function(e){
+  var w = e.target.closest('button[data-why]'); if (w){ sendVote('down', w.dataset.why); return; }
+  var b = e.target.closest('button[data-v]'); if (b) sendVote(b.dataset.v);
+});
+
 function play(p, it, seq){
   var b = $('vB');
   if (p.mode === 'embed'){

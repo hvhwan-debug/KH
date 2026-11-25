@@ -2426,6 +2426,15 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
   body[data-scr="exam"] .lnd-hi{font-style:normal;letter-spacing:0;text-transform:none;color:#33507F;text-shadow:none}
   body[data-scr="exam"] .lnd-sub{display:block;margin:8px 0 0;color:#33507F}
 }
+/* tài liệu ôn tập gắn với đề */
+.mats{margin:0 0 12px;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,#F2F8FF,#FFFFFF);border:1px solid #D9E7FA}
+.mats h3{margin:0 0 4px;font-size:15px;font-weight:800;color:#14357A;display:flex;align-items:center;gap:8px}
+.mats p{margin:0 0 10px;font-size:13px;color:#5B6B86}
+.mats a.mt{display:flex;align-items:center;gap:10px;padding:9px 12px;margin-top:6px;border-radius:12px;background:#fff;border:1px solid #E1EBF8;color:#0F2549;text-decoration:none;font-size:14px;font-weight:600}
+.mats a.mt:hover{border-color:#8DB8F0;background:#F7FBFF}
+.mats a.mt i{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:#E6F0FD;color:#1B5FC4;font-style:normal;font-size:15px}
+.mats a.mt span{flex:1;min-width:0}.mats a.mt small{display:block;font-size:12px;font-weight:500;color:#7A8AA6}
+.mats a.all{display:inline-block;margin-top:10px;font-size:13px;font-weight:700;color:#1B5FC4}
 </style>
 </head>
 <body class="introbg" data-scr="check">
@@ -2615,6 +2624,7 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
       <div class="rules" id="rulesBox"></div>
 </div><div class="cf-r">
       <ul class="notes-mine hide" id="notesMine" aria-label="Thông tin của bạn"></ul>
+      <div class="mats hide" id="matBox"></div>
       <button type="button" class="rl-tg" id="btnRulesTg" aria-expanded="false" aria-controls="notesBox"><span>Xem thể lệ làm bài</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
       <h2 class="notes-h">Lưu ý khi tham gia bài kiểm tra</h2>
       <ul class="notes" id="notesBox"></ul>
@@ -4664,7 +4674,7 @@ function renderImp(r, ps, prac){
     '<div class="im-sum"><div class="im-st">' + RS_ICO.book + '<b>' + (fail ? 'Những nội dung cần cải thiện' : 'Tóm tắt bài làm') + '</b><span class="tag">Dựa trên kết quả làm bài</span></div><p>' + esc(sumTxt) + '</p></div>' +
     (items.length ? '<div class="im-dt"><h3>' + RS_ICO.list + 'Chi tiết các nội dung</h3><ul>' + items.join('') + '</ul></div>' : '') +
     '<div class="im-tip">' + RS_ICO.target + '<div><b>Gợi ý cho bạn</b><p>' + esc(tip) + '</p></div>' +
-    '<a class="im-go" href="/kiemtra/hoclieu.html" target="_blank" rel="noopener">' + RS_ICO.book + '<span>Xem học liệu</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>';
+    '<a class="im-go" href="' + (INFO && (INFO.materials || []).length ? matsUrl('') : '/kiemtra/hoclieu.html') + '" target="_blank" rel="noopener">' + RS_ICO.book + '<span>' + (INFO && (INFO.materials || []).length ? 'Ôn tập với tài liệu của bài này' : 'Xem học liệu') + '</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>';
 }
 function renderResult(r, already){
   if (ST.cand && ST.cand.birth && window.BirthAsk) BirthAsk.ask(ST.cand.birth); // xin ngày sinh ở màn kết quả (nhắc nhẹ, bỏ qua được)
@@ -5437,6 +5447,16 @@ function heroTitle(h, t){ // "THI THỬ - KIỂM TRA ĐỊNH KÌ PCs - THÁNG 10
   t = String(t || ''); var m = t.match(/^(.*?)\s*[-–—]\s*(tháng\s*\d{1,2}\s*\/\s*\d{4})\s*$/i), main = m ? m[1] : t, sub = m ? m[2] : '';
   h.innerHTML = esc(main) + (sub ? '<span class="hsub2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>' + esc(sub.toUpperCase()) + '</span>' : '');
 }
+// Tài liệu ôn tập quản trị viên gắn vào đề: hiện trước khi làm bài; bấm để mở ở trang Học liệu
+function matsUrl(id){ return '/kiemtra/hoclieu.html?exam=' + encodeURIComponent(EXAM_ID) + (id ? '#' + encodeURIComponent(id) : ''); }
+function renderMats(){
+  var b = $('matBox'), l = (INFO && INFO.materials) || []; if (!b) return;
+  if (!l.length){ b.classList.add('hide'); return; }
+  b.innerHTML = '<h3>📚 Tài liệu ôn tập cho bài này</h3><p>Nên xem trước khi làm bài. Tài liệu mở ở trang Học liệu (cần xác thực khuôn mặt).</p>' +
+    l.slice(0, 5).map(function(m){ return '<a class="mt" href="' + matsUrl(m.id) + '" target="_blank" rel="noopener"><i aria-hidden="true">' + (m.type === 'video' ? '▶' : '📄') + '</i><span>' + esc(m.title) + '<small>' + (m.type === 'video' ? 'Video' + (m.dur ? ' · ' + m.dur + ' phút' : '') : 'Tài liệu PDF' + (m.pages ? ' · ' + m.pages + ' trang' : '')) + '</small></span></a>'; }).join('') +
+    (l.length > 5 ? '<a class="all" href="' + matsUrl('') + '" target="_blank" rel="noopener">Xem cả ' + l.length + ' tài liệu →</a>' : '');
+  b.classList.remove('hide');
+}
 async function loadInfo(){
   if (!EXAM_ID) return;
   var r = null;
@@ -5448,6 +5468,7 @@ async function loadInfo(){
   if (INFO.title){ $('examTitle').textContent = INFO.title; var hh = document.querySelector('.hero h3'); if (hh){ heroTitle(hh, INFO.title); hh.classList.add('long'); var sg = document.querySelector('.stage'); if (sg) sg.classList.remove('nohero'); } }
   if (!INFO.title && (INFO.openAt || INFO.closeAt)){ var sg0 = document.querySelector('.stage'); if (sg0) sg0.classList.remove('nohero'); }
   if (!ST.exam){ ST.exam = { title: INFO.title, practice: INFO.practice }; applyPractice(); }
+  renderMats();
   SCHED_KEY = ''; renderSched();
   clearInterval(schedT);
   if (INFO.openAt || INFO.closeAt) schedT = setInterval(renderSched, 1000);

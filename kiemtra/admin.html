@@ -1284,6 +1284,13 @@ table.hlx-t tbody tr:hover{background:#F5F9FF}
 .hlx-ti b{display:block;font-size:14px;line-height:1.35}.hlx-ti span.small{display:block;margin-top:2px;max-width:34em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hlx-star{border:0;background:none;font-size:18px;line-height:1;cursor:pointer;color:#C9D3E3;padding:2px 4px}.hlx-star.on{color:#F5A623}
 .hlx-acts{display:flex;gap:6px;flex-wrap:nowrap}
+.hlx-ex{margin-top:14px}.hlx-ex>label{display:block;font-weight:600;margin-bottom:6px}
+.hlx-exl{max-height:220px;overflow:auto;border:1px solid var(--line,#E1E8F2);border-radius:10px;margin-top:8px;padding:4px}
+.hlx-exl label{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;cursor:pointer;font-weight:500}
+.hlx-exl label:hover{background:#F3F8FF}.hlx-exl input[type=checkbox]{width:18px;height:18px;flex:none;margin:0;padding:0}.hlx-exl label span{flex:1;min-width:0}.hlx-exl label small{color:#7A8AA6;margin-left:auto;white-space:nowrap}
+.hlx-vt{white-space:nowrap;font-weight:700;font-variant-numeric:tabular-nums}.hlx-vt .u{color:#16794A}.hlx-vt .d{color:#B6372E;margin-left:8px}
+.hlx-rs{display:block;font-size:11.5px;color:#8A5A50;font-weight:500;margin-top:2px;white-space:normal;max-width:180px}
+.hlx-exb{display:inline-block;margin-top:3px;padding:1px 8px;border-radius:99px;background:#FFF4DE;color:#8A5A00;font-size:11.5px;font-weight:700}
 #hlKpis{grid-template-columns:repeat(5,minmax(0,1fr))}
 @media(max-width:900px){#hlKpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .hlx-form{display:grid;gap:12px;max-width:820px}
@@ -2523,7 +2530,7 @@ a.bb{text-decoration:none}
             <select id="hlFCat" aria-label="Lọc theo danh mục"><option value="">Mọi danh mục</option></select>
             <select id="hlFSt" aria-label="Lọc theo trạng thái"><option value="">Mọi trạng thái</option><option value="published">Đang hiển thị</option><option value="draft">Bản nháp</option></select>
           </div>
-          <div style="overflow-x:auto"><table class="hlx-t"><thead><tr><th>Học liệu</th><th>Danh mục</th><th>Loại</th><th>Trạng thái</th><th class="n">Lượt xem</th><th>Thao tác</th></tr></thead><tbody id="hlRows"></tbody></table></div>
+          <div style="overflow-x:auto"><table class="hlx-t"><thead><tr><th>Học liệu</th><th>Danh mục</th><th>Loại</th><th>Trạng thái</th><th class="n">Lượt xem</th><th>Đánh giá</th><th>Thao tác</th></tr></thead><tbody id="hlRows"></tbody></table></div>
         </div>
 
         <div id="hlEdit" class="hide">
@@ -2561,6 +2568,9 @@ a.bb{text-decoration:none}
                   <div class="small" style="margin-top:6px">JPG, PNG hoặc WebP, tối đa 4 MB. Video YouTube tự lấy ảnh bìa nếu để trống.</div>
                   <button type="button" class="btn ghost sm" id="hlThumbClr" style="margin-top:8px">Bỏ ảnh bìa</button></div></div></div>
             <label class="chk"><input type="checkbox" id="hlFeat"> Học liệu nổi bật (hiện ở đầu trang, tối đa 3 thẻ)</label>
+            <div class="hlx-ex"><label>Gắn vào bài kiểm tra <span class="small">(tài liệu ôn tập: hiện cho thí sinh trước khi làm bài và ở màn kết quả của các bài được chọn)</span></label>
+              <input type="search" id="hlExQ" placeholder="Tìm bài kiểm tra…" autocomplete="off">
+              <div class="hlx-exl" id="hlExList"></div><div class="small" id="hlExN"></div></div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
             <button type="button" class="btn" id="hlSave">Lưu học liệu</button>
@@ -3035,7 +3045,7 @@ $('auXlsx').addEventListener('click', async function(){
 });
 
 /* ===== Học liệu (quản trị) ===== */
-const HL = { items:[], cats:[], stats:{}, limits:{}, view:'list', type:'video', mode:'upload', file:null, thumb:null, editId:'', loaded:false, busy:false };
+const HL = { items:[], cats:[], stats:{}, limits:{}, view:'list', type:'video', mode:'upload', file:null, thumb:null, editId:'', loaded:false, busy:false, exSel:[], reasonLabels:{} };
 const HLC = 3 * 1024 * 1024;
 function hlMsg(t, c){ msg('hlMsg', t, c); }
 function hlBytes(n){ return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
@@ -3044,7 +3054,7 @@ async function hlOpen(){
   hlMsg('');
   const r = await api('GET', '/api/hoclieu-admin?op=list');
   if (!r.j.ok){ hlMsg(r.j.error || 'Không tải được danh sách học liệu.'); return; }
-  HL.items = r.j.items; HL.cats = r.j.categories; HL.stats = r.j.stats; HL.limits = r.j.limits || {}; HL.loaded = true;
+  HL.items = r.j.items; HL.cats = r.j.categories; HL.stats = r.j.stats; HL.limits = r.j.limits || {}; HL.reasonLabels = r.j.reasonLabels || {}; HL.loaded = true;
   hlRender();
 }
 function hlView(v){
@@ -3056,10 +3066,26 @@ function hlView(v){
 }
 function hlRender(){
   const st = HL.stats;
-  $('hlKpis').innerHTML = [['Tổng học liệu', st.total], ['Đang hiển thị', st.published], ['Bản nháp', st.draft], ['Lượt xem', st.views], ['Tệp tải lên', st.uploads]].map(k => '<div class="kpi"><div class="v">' + (k[1] || 0) + '</div><div class="l">' + k[0] + '</div></div>').join('');
+  $('hlKpis').innerHTML = [['Tổng học liệu', st.total], ['Đang hiển thị', st.published], ['Bản nháp', st.draft], ['Lượt xem', st.views], ['Đánh giá 👍 / 👎', (st.up || 0) + ' / ' + (st.down || 0)], ['Tệp tải lên', st.uploads]].map(k => '<div class="kpi"><div class="v">' + (k[1] || 0) + '</div><div class="l">' + k[0] + '</div></div>').join('');
   const cur = $('hlFCat').value;
   $('hlFCat').innerHTML = '<option value="">Mọi danh mục</option>' + HL.cats.map(c => '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>').join(''); $('hlFCat').value = cur;
   hlRows();
+}
+function hlVoteCell(it){
+  if (!it.up && !it.down) return '<span class="small">Chưa có</span>';
+  const rs = Object.keys(it.reasons || {}).sort((a, b) => it.reasons[b] - it.reasons[a]).map(k => (HL.reasonLabels[k] || k) + ' (' + it.reasons[k] + ')').join(', ');
+  return '<span class="hlx-vt"><span class="u">👍 ' + (it.up || 0) + '</span><span class="d">👎 ' + (it.down || 0) + '</span></span>' + (rs ? '<span class="hlx-rs" title="Lí do học viên chọn khi bấm Chưa hữu ích">' + esc(rs) + '</span>' : '');
+}
+function hlExTitle(id){ const e = EXAMS.find(x => x.id === id); return e ? (e.title || e.id) : ''; }
+function hlExBadge(it){ const l = (it.exams || []).filter(hlExTitle); return l.length ? '<span class="hlx-exb" title="' + esc(l.map(hlExTitle).join(', ')) + '">📝 Gắn ' + l.length + ' bài kiểm tra</span>' : ''; }
+function hlExRender(){
+  const q = exNorm($('hlExQ').value), sel = HL.exSel;
+  const list = EXAMS.slice().sort((a, b) => (sel.indexOf(b.id) >= 0) - (sel.indexOf(a.id) >= 0) || (b.createdAt || 0) - (a.createdAt || 0))
+    .filter(e => !q || exNorm((e.title || '') + ' ' + e.id).indexOf(q) >= 0);
+  $('hlExList').innerHTML = list.length ? list.map(e => '<label><input type="checkbox" value="' + esc(e.id) + '"' + (sel.indexOf(e.id) >= 0 ? ' checked' : '') + '><span>' + esc(e.title || e.id) + '</span><small>' + esc(e.id) + (e.practice ? ' · thi thử' : '') + '</small></label>').join('')
+    : '<div class="small" style="padding:10px">' + (EXAMS.length ? 'Không có bài kiểm tra khớp từ khoá.' : 'Chưa có bài kiểm tra nào.') + '</div>';
+  const gone = sel.filter(id => !hlExTitle(id)).length;
+  $('hlExN').textContent = sel.length ? 'Đã chọn ' + sel.length + ' bài kiểm tra' + (gone ? ' (' + gone + ' bài đã bị xoá)' : '') + '.' : 'Chưa gắn vào bài kiểm tra nào.';
 }
 function hlSrcLabel(it){ const s = it.source || {}; return ({ upload:'Tệp tải lên', youtube:'YouTube', vimeo:'Vimeo', gdrive:'Google Drive', url:'Liên kết' })[s.kind] || ''; }
 function hlRows(){
@@ -3068,11 +3094,11 @@ function hlRows(){
   $('hlRows').innerHTML = l.length ? l.map(it => {
     const th = it.thumbUrl ? '<img src="' + esc(it.thumbUrl) + '" alt="" loading="lazy" onerror="this.remove()">' : (it.type === 'video' ? 'VIDEO' : 'PDF');
     const meta = it.type === 'video' ? (it.dur ? it.dur + ' phút' : '') : (it.pages ? it.pages + ' trang' : '');
-    return '<tr data-id="' + esc(it.id) + '"><td><div class="hlx-ti"><div class="hlx-th">' + th + '</div><div><b>' + esc(it.title) + '</b><span class="small">' + esc(it.desc || hlSrcLabel(it)) + '</span></div></div></td>' +
+    return '<tr data-id="' + esc(it.id) + '"><td><div class="hlx-ti"><div class="hlx-th">' + th + '</div><div><b>' + esc(it.title) + '</b><span class="small">' + esc(it.desc || hlSrcLabel(it)) + '</span>' + hlExBadge(it) + '</div></div></td>' +
       '<td>' + esc(hlCatName(it.cat)) + '</td><td><span class="badge">' + (it.type === 'video' ? 'Video' : 'PDF') + '</span><div class="small">' + esc([hlSrcLabel(it), meta].filter(Boolean).join(' · ')) + '</div></td>' +
       '<td><button type="button" class="badge ' + (it.status === 'draft' ? 'w' : 'y') + '" data-a="st" style="border:0;cursor:pointer" title="Bấm để đổi trạng thái">' + (it.status === 'draft' ? 'Bản nháp' : 'Hiển thị') + '</button> <button type="button" class="hlx-star' + (it.featured ? ' on' : '') + '" data-a="ft" title="Nổi bật" aria-pressed="' + !!it.featured + '">★</button></td>' +
-      '<td class="n">' + (it.views || 0) + '</td><td><div class="hlx-acts"><button type="button" class="btn ghost sm" data-a="pv">Xem thử</button><button type="button" class="btn ghost sm" data-a="ed">Sửa</button><button type="button" class="btn dghost sm" data-a="rm">Xoá</button></div></td></tr>';
-  }).join('') : '<tr><td colspan="6" class="small" style="padding:22px;text-align:center">' + (HL.items.length ? 'Không có học liệu khớp bộ lọc.' : 'Chưa có học liệu nào. Bấm “+ Thêm học liệu” để bắt đầu.') + '</td></tr>';
+      '<td class="n">' + (it.views || 0) + '</td><td>' + hlVoteCell(it) + '</td><td><div class="hlx-acts"><button type="button" class="btn ghost sm" data-a="pv">Xem thử</button><button type="button" class="btn ghost sm" data-a="ed">Sửa</button><button type="button" class="btn dghost sm" data-a="rm">Xoá</button></div></td></tr>';
+  }).join('') : '<tr><td colspan="7" class="small" style="padding:22px;text-align:center">' + (HL.items.length ? 'Không có học liệu khớp bộ lọc.' : 'Chưa có học liệu nào. Bấm “+ Thêm học liệu” để bắt đầu.') + '</td></tr>';
 }
 // ---- trình sửa ----
 function hlSetType(t){
@@ -3102,6 +3128,7 @@ function hlEditOpen(it){
   else hlSetMode('upload');
   if (it && it.thumb){ HL.thumb = it.thumb.kind === 'upload' ? { kind:'upload', blob: it.thumb.blob, mime: it.thumb.mime, id: it.id, v: it.updatedAt } : { kind:'url', url: it.thumb.url }; if (it.thumb.kind === 'url') $('hlThumbUrl').value = it.thumb.url; }
   hlThumbPaint(); hlFileInfo();
+  HL.exSel = it && Array.isArray(it.exams) ? it.exams.slice() : []; $('hlExQ').value = ''; hlExRender();
   $('hlList').classList.add('hide'); $('hlCats').classList.add('hide'); $('hlSub').classList.add('hide'); $('hlKpis').classList.add('hide'); $('hlEdit').classList.remove('hide');
   $('hlTitle').focus();
 }
@@ -3146,7 +3173,7 @@ $('hlSave').addEventListener('click', async () => {
   if (HL.mode === 'upload'){ if (!HL.file){ hlMsg('Hãy chọn tệp để tải lên, hoặc chuyển sang “Dán liên kết”.'); return; } source = { kind:'upload', blob:HL.file.blob, mime:HL.file.mime, size:HL.file.size, name:HL.file.name }; }
   else { const u = $('hlLink').value.trim(); if (!u){ hlMsg('Vui lòng dán liên kết.'); $('hlLink').focus(); return; } source = { kind:'link', url:u }; }
   const th = HL.thumb ? (HL.thumb.kind === 'upload' ? { kind:'upload', blob:HL.thumb.blob, mime:HL.thumb.mime } : { kind:'url', url:HL.thumb.url }) : null;
-  const item = { id:HL.editId || undefined, title, desc:$('hlDesc').value.trim(), cat:$('hlCat').value, type:HL.type, dur:+$('hlDur').value || 0, pages:+$('hlPages').value || 0, featured:$('hlFeat').checked, status:$('hlStatus').value, source, thumb:th };
+  const item = { id:HL.editId || undefined, title, desc:$('hlDesc').value.trim(), cat:$('hlCat').value, type:HL.type, dur:+$('hlDur').value || 0, pages:+$('hlPages').value || 0, featured:$('hlFeat').checked, status:$('hlStatus').value, source, thumb:th, exams:(HL.exSel || []).slice() };
   $('hlSave').disabled = true;
   const r = await api('POST', '/api/hoclieu-admin', { op:'saveItem', item });
   $('hlSave').disabled = false;
@@ -3154,6 +3181,8 @@ $('hlSave').addEventListener('click', async () => {
   await hlOpen(); hlView('list'); hlMsg('Đã lưu học liệu.', 'ok');
 });
 $('hlCancel').addEventListener('click', () => { hlMsg(''); hlView('list'); });
+$('hlExQ').addEventListener('input', hlExRender);
+$('hlExList').addEventListener('change', e => { const c = e.target; if (!c.matches('input[type=checkbox]')) return; HL.exSel = HL.exSel.filter(x => x !== c.value); if (c.checked) HL.exSel.push(c.value); hlExRender(); });
 $('hlAdd').addEventListener('click', () => { if (!HL.loaded) return; hlEditOpen(null); });
 $('hlSub').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (b) hlView(b.dataset.v); });
 $('hlTypeSeg').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (b){ hlSetType(b.dataset.t); if (HL.mode === 'upload' && HL.file){ HL.file = null; $('hlFile').value = ''; hlFileInfo(); } } });

@@ -14,8 +14,17 @@ function thumbOf(it) {
   if (it.source && it.source.kind === "youtube") return "https://i.ytimg.com/vi/" + it.source.id + "/hqdefault.jpg";
   return "";
 }
-function brief(it) {
-  return { id: it.id, title: it.title, desc: it.desc, cat: it.cat, type: it.type, dur: it.dur, pages: it.pages, featured: !!it.featured, views: it.views || 0, thumb: thumbOf(it), createdAt: it.createdAt };
+function brief(it, V, code, EX) {
+  const o = { id: it.id, title: it.title, desc: it.desc, cat: it.cat, type: it.type, dur: it.dur, pages: it.pages, featured: !!it.featured, views: it.views || 0, thumb: thumbOf(it), createdAt: it.createdAt };
+  if (V) { const v = hl.voteOf(V, it.id, code); o.up = v.up; o.down = v.down; o.mine = v.mine; }
+  if (EX) o.exams = (it.exams || []).filter((x) => EX[x]).map((x) => ({ id: x, title: EX[x] }));
+  return o;
+}
+// Tên các bài kiểm tra (để hiện "Tài liệu ôn tập cho bài …"); bài đã xoá thì bỏ qua
+async function examTitles() {
+  const out = {};
+  try { (await require("../_lib/quiz").getExams()).forEach((e) => { if (e && e.id) out[e.id] = e.title || e.examTitle || e.id; }); } catch (e) { /* bỏ qua */ }
+  return out;
 }
 function playOf(it, ttl) {
   const s = it.source || {};
@@ -39,8 +48,24 @@ module.exports = async function (context, req) {
     if (req.method === "POST" && req.body && req.body.op === "logout") { reply(context, 200, { ok: true }); CK.attach(context, CK.clearHl()); return; }
     const d = await hl.load();
     const pub = d.items.filter((x) => x.status !== "draft");
+    const me = CK.hlFromReq(req); // học viên đã xác thực khuôn mặt ở trang Học liệu
     if (req.method === "POST") {
       const b = req.body || {};
+      if (b.op === "vote") { // thích / không thích: mỗi mã NV một phiếu, bấm lại để bỏ
+        if (!me) return reply(context, 401, { ok: false, error: "Vui lòng xác thực khuôn mặt để đánh giá học liệu." });
+        const id = hl.clip(b.id, 40), v = b.v === "up" || b.v === "down" ? b.v : "", why = hl.REASONS[b.reason] ? b.reason : "";
+        if (!pub.some((x) => x.id === id)) return reply(context, 404, { ok: false, error: "Không tìm thấy học liệu này." });
+        const k = String(me.code).toUpperCase(); let res = null;
+        await store.update(hl.VOTES, (cur) => {
+          const c = cur && typeof cur === "object" ? cur : {}; c.items = c.items || {};
+          const x = (c.items[id] = c.items[id] || { u: {}, d: {}, r: {} }); x.u = x.u || {}; x.d = x.d || {}; x.r = x.r || {};
+          delete x.u[k]; delete x.d[k]; delete x.r[k];
+          if (v === "up") x.u[k] = Date.now();
+          if (v === "down") { x.d[k] = Date.now(); if (why) x.r[k] = why; }
+          res = hl.voteOf(c.items, id, k); return c;
+        });
+        return reply(context, 200, Object.assign({ ok: true }, res));
+      }
       if (b.op !== "view") return reply(context, 400, { ok: false, error: "Yêu cầu không hợp lệ." });
       const id = hl.clip(b.id, 40), key = ipOf(req) + "|" + id, now = Date.now();
       if (!pub.some((x) => x.id === id)) return reply(context, 404, { ok: false });
@@ -55,10 +80,12 @@ module.exports = async function (context, req) {
     if (id) {
       const it = pub.find((x) => x.id === id);
       if (!it) return reply(context, 404, { ok: false, error: "Không tìm thấy học liệu này." });
-      return reply(context, 200, { ok: true, item: Object.assign(brief(it), { play: playOf(it) }) });
+      const [V, EX] = await Promise.all([hl.loadVotes(), examTitles()]);
+      return reply(context, 200, { ok: true, item: Object.assign(brief(it, V, me && me.code, EX), { play: playOf(it) }) });
     }
     const cats = d.categories.map((c) => Object.assign({}, c, { count: pub.filter((x) => x.cat === c.id).length }));
-    return reply(context, 200, { ok: true, categories: cats, total: pub.length, items: pub.map(brief).sort((a, b) => b.createdAt - a.createdAt) });
+    const [V, EX] = await Promise.all([hl.loadVotes(), examTitles()]);
+    return reply(context, 200, { ok: true, categories: cats, total: pub.length, items: pub.map((it) => brief(it, V, me && me.code, EX)).sort((a, b) => b.createdAt - a.createdAt) });
   } catch (e) {
     context.log.error(e);
     return reply(context, 500, { ok: false, error: "Lỗi máy chủ." });

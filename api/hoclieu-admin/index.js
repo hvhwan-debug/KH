@@ -19,9 +19,12 @@ const handler = async function (context, req) {
       const op = (req.query && req.query.op) || "";
       const d = await hl.load();
       if (op === "list") {
+        const V = await hl.loadVotes();
         const items = d.items.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).map((it) => Object.assign(strip(it), { thumbUrl: (it.thumb && it.thumb.kind === "upload") ? "/api/hoclieu-file?id=" + it.id + "&k=thumb&v=" + (it.updatedAt || 0) : (it.thumb && it.thumb.url) || (it.source && it.source.kind === "youtube" ? "https://i.ytimg.com/vi/" + it.source.id + "/hqdefault.jpg" : "") }));
         const st = { total: items.length, published: items.filter((x) => x.status !== "draft").length, draft: items.filter((x) => x.status === "draft").length, views: items.reduce((a, x) => a + (x.views || 0), 0), uploads: items.filter((x) => x.source && x.source.kind === "upload").length };
-        return reply(context, 200, { ok: true, items, categories: d.categories, stats: st, limits: { video: hl.LIM.video, pdf: hl.LIM.pdf, thumb: hl.LIM.thumb } });
+        items.forEach((x) => { const v = hl.voteOf(V, x.id); x.up = v.up; x.down = v.down; x.reasons = hl.reasonsOf(V, x.id); });
+        st.up = items.reduce((a, x) => a + x.up, 0); st.down = items.reduce((a, x) => a + x.down, 0);
+        return reply(context, 200, { ok: true, items, categories: d.categories, stats: st, reasonLabels: hl.REASONS, limits: { video: hl.LIM.video, pdf: hl.LIM.pdf, thumb: hl.LIM.thumb } });
       }
       if (op === "preview") {
         const it = d.items.find((x) => x.id === hl.clip(req.query.id, 40));

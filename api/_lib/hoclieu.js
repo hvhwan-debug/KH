@@ -5,6 +5,8 @@ const { cfg } = require("./config");
 const store = require("./store");
 
 const INDEX = "hoclieu/index.json";
+const VOTES = "hoclieu/votes.json"; // { items: { <id>: { u: {<mã NV>: thời điểm}, d: {<mã NV>: thời điểm}, r: {<mã NV>: lí do} } } }
+const REASONS = { hard: "Khó hiểu", old: "Thông tin cũ / chưa đúng", irrelevant: "Không liên quan đến công việc", broken: "Lỗi hiển thị", long: "Quá dài" };
 const DEFAULT_CATS = [
   { id: "sp", name: "Kiến thức sản phẩm", icon: "box" },
   { id: "kn", name: "Kỹ năng bán hàng", icon: "chart" },
@@ -73,6 +75,7 @@ function cleanItem(raw, old) {
     pages: Math.max(0, Math.min(5000, Math.round(Number(b.pages) || 0))),
     featured: !!b.featured, status: b.status === "draft" ? "draft" : "published",
     views: (old && old.views) || 0,
+    exams: Array.isArray(b.exams) ? cleanExamIds(b.exams) : ((old && old.exams) || []),
     createdAt: (old && old.createdAt) || Date.now(), updatedAt: Date.now()
   };
   // nguồn
@@ -101,6 +104,24 @@ function cleanItem(raw, old) {
     if (old && old.thumb && old.thumb.kind === "upload") (it._drop = it._drop || []).push(old.thumb.blob);
   }
   return { item: it };
+}
+
+// Mã bài kiểm tra gắn với học liệu (tài liệu ôn tập cho bài đó)
+function cleanExamIds(list) {
+  const out = [];
+  (list || []).forEach((x) => { const id = clip(x, 40); if (/^[\w.-]{1,40}$/.test(id) && out.indexOf(id) < 0) out.push(id); });
+  return out.slice(0, 30);
+}
+// ---- thích / không thích ----
+async function loadVotes() { const v = (await store.get(VOTES)) || {}; return v.items && typeof v.items === "object" ? v.items : {}; }
+function voteOf(all, id, code) {
+  const v = all[id] || {}, u = v.u || {}, d = v.d || {}, k = String(code || "").toUpperCase();
+  return { up: Object.keys(u).length, down: Object.keys(d).length, mine: k ? (u[k] ? "up" : d[k] ? "down" : "") : "" };
+}
+function reasonsOf(all, id) {
+  const r = (all[id] || {}).r || {}, d = (all[id] || {}).d || {}, out = {};
+  Object.keys(d).forEach((k) => { const x = r[k]; if (x && REASONS[x]) out[x] = (out[x] || 0) + 1; });
+  return out;
 }
 
 // ---- chữ ký đường dẫn phát tệp ----
@@ -164,4 +185,4 @@ function magicOk(kind, buf, mime) {
 }
 const MIME = { video: ["video/mp4", "video/webm"], pdf: ["application/pdf"], thumb: ["image/jpeg", "image/png", "image/webp"] };
 
-module.exports = { load, cleanCats, cleanItem, parseLink, token, tokenOk, stage, commit, head, readRange, drop, magicOk, MIME, LIM, INDEX, DEFAULT_CATS, rid, clip };
+module.exports = { VOTES, REASONS, loadVotes, voteOf, reasonsOf, cleanExamIds, load, cleanCats, cleanItem, parseLink, token, tokenOk, stage, commit, head, readRange, drop, magicOk, MIME, LIM, INDEX, DEFAULT_CATS, rid, clip };
