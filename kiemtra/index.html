@@ -2222,11 +2222,21 @@ body.rs .stage{max-width:1500px;width:min(1500px,94vw);margin-left:auto;margin-r
   .rs-mp .sb u{display:inline-block;width:1.5px;height:1em;margin:0 10px;background:#9FB2CC;vertical-align:-2px}
   /* phần dưới */
   .rs-mob{display:block;margin:6px 0 0;padding:16px 14px 18px;border-radius:24px 24px 26px 26px;background:linear-gradient(180deg,#FFFFFF,#F4F8FF);box-shadow:0 -10px 24px -18px rgba(20,70,160,.5)}
-  .rs-tm{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .rs-tm div{display:flex;flex-direction:column;gap:7px;padding:13px 14px;border:1px solid #E1EAF6;border-radius:16px;background:#fff;box-shadow:0 8px 20px -16px rgba(20,70,160,.5)}
-  .rs-tm dt{display:flex;align-items:center;gap:8px;margin:0;font-size:11.5px;font-weight:700;color:#5A6C8F;letter-spacing:.01em}
-  .rs-tm dt svg{flex:0 0 auto;width:16px;height:16px;padding:5px;box-sizing:content-box;border-radius:8px;background:#EAF1FD;color:#1F6FE5}
-  .rs-tm dd{margin:0;font-size:14.5px;font-weight:800;color:#0B1F4B;line-height:1.3;overflow-wrap:anywhere}
+  /* 4 ô thời gian gộp thành MỘT thẻ liền: hàng trên là mốc giờ (bắt đầu → nộp), hàng dưới là hai chỉ số nổi bật */
+  .rs-tm{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #DCE7F7;border-radius:20px;background:#fff;overflow:hidden;box-shadow:0 12px 28px -20px rgba(20,70,160,.55)}
+  .rs-tm div{position:relative;display:flex;flex-direction:column;gap:6px;min-width:0;padding:14px 16px 15px;border:0;border-radius:0;background:none;box-shadow:none}
+  .rs-tm div:nth-child(odd){border-right:1px solid #E6EEF9}
+  .rs-tm div:nth-child(n+3){border-top:1px solid #E6EEF9}
+  .rs-tm div:last-child:nth-child(odd){grid-column:1/-1;border-right:0}
+  .rs-tm .tm-s,.rs-tm .tm-e{background:linear-gradient(180deg,#F4F8FF,#FFFFFF)}
+  .rs-tm dt{display:flex;align-items:center;gap:8px;margin:0;font-size:11.5px;font-weight:700;color:#5A6C8F;letter-spacing:.01em;line-height:1.25}
+  .rs-tm dt svg{flex:0 0 auto;width:15px;height:15px;padding:5px;box-sizing:content-box;border-radius:50%;background:#E4EEFD;color:#1F6FE5}
+  .rs-tm .tm-p dt svg{background:#FFF1D6;color:#C77A0A}
+  .rs-tm .tm-d dt svg{background:#E3F6EC;color:#168A4A}
+  .rs-tm dd{margin:0;font-size:14.5px;font-weight:800;color:#0B1F4B;line-height:1.3;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+  .rs-tm .tm-d dd,.rs-tm .tm-p dd{font-size:18px;letter-spacing:-.2px}
+  /* mũi tên nhỏ nối "bắt đầu" với "nộp bài" nằm đúng trên đường kẻ giữa */
+  .rs-tm .tm-s+.tm-e::before{content:"";position:absolute;left:-11px;top:50%;width:22px;height:22px;margin-top:-11px;border-radius:50%;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F6FE5' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12h12M13 7l5 5-5 5'/%3E%3C/svg%3E") center/12px no-repeat;border:1px solid #D3E2F8;box-shadow:0 3px 8px -4px rgba(20,70,160,.5);z-index:1}
   .rs-done{display:flex;align-items:center;gap:12px;margin-top:14px;padding:16px 16px 16px 12px;border-radius:18px;background:linear-gradient(100deg,#EAF9EF,#F3FBF5);border:1px solid #CDEFD8}
   .rs-done>svg{flex:0 0 auto;width:64px;height:64px;filter:drop-shadow(0 6px 10px rgba(20,140,70,.3))}
   .rs-done b{display:block;font-size:17px;font-weight:800;color:#147A3D}
@@ -4613,10 +4623,10 @@ function renderMob(r, ps, prac, c){
     (ok(r.wrong) && ok(r.blank) && r.total ? '<div class="bar" aria-hidden="true">' + [[r.score || 0, 'g'], [r.wrong, 'r'], [r.blank, 'b']].map(function(g){ return g[0] > 0 ? '<i class="' + g[1] + '" style="width:' + (g[0] / r.total * 100) + '%"></i>' : ''; }).join('') + '</div>' +
       '<p class="sb">Sai: ' + r.wrong + '<u></u>Bỏ trống: ' + r.blank + '</p>' : '');
   var rows = '';
-  if (r.startedAt) rows += '<div><dt>' + RS_ICO.play + 'Bắt đầu lúc</dt><dd>' + esc(fmtFull(r.startedAt).replace(',', '')) + '</dd></div>';
-  if (r.submittedAt) rows += '<div><dt>' + RS_ICO.flag + 'Nộp bài lúc</dt><dd>' + esc(fmtFull(r.submittedAt).replace(',', '')) + '</dd></div>';
-  if (r.durationSec != null) rows += '<div><dt>' + RS_ICO.clock + 'Thời gian hoàn thành</dt><dd>' + Math.floor(r.durationSec / 60) + ' phút ' + (r.durationSec % 60) + ' giây</dd></div>';
-  if (r.compliancePoints != null) rows += '<div><dt>' + RS_ICO.star + (prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ') + '</dt><dd>' + esc(r.compliancePoints) + ' điểm</dd></div>';
+  if (r.startedAt) rows += '<div class="tm-s"><dt>' + RS_ICO.play + 'Bắt đầu lúc</dt><dd>' + esc(fmtFull(r.startedAt).replace(',', '')) + '</dd></div>';
+  if (r.submittedAt) rows += '<div class="tm-e"><dt>' + RS_ICO.flag + 'Nộp bài lúc</dt><dd>' + esc(fmtFull(r.submittedAt).replace(',', '')) + '</dd></div>';
+  if (r.durationSec != null) rows += '<div class="tm-d"><dt>' + RS_ICO.clock + 'Thời gian hoàn thành</dt><dd>' + Math.floor(r.durationSec / 60) + ' phút ' + (r.durationSec % 60) + ' giây</dd></div>';
+  if (r.compliancePoints != null) rows += '<div class="tm-p"><dt>' + RS_ICO.star + (prac ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ') + '</dt><dd>' + esc(r.compliancePoints) + ' điểm</dd></div>';
   $('resTm').innerHTML = rows; $('resTm').classList.toggle('hide', !rows);
   var k = prac ? 'p' : ps === false ? 'n' : 'y';
   var t = prac ? ['Bài thi thử đã hoàn thành', 'Đây không phải thi chính thức. Xem chi tiết bài làm và học liệu gợi ý để chuẩn bị tốt hơn.']
