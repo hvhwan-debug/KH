@@ -51,7 +51,17 @@ h1.pg{margin:2px 0 4px;font-size:22px;font-weight:800;color:var(--navy);letter-s
 .bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 14px}
 .bar .sp{flex:1}
 /* bộ lọc */
-.flt{display:grid;grid-template-columns:minmax(220px,1.4fr) repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:14px 16px}
+.fbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px}
+.fbar .fs{flex:1 1 200px;min-width:170px}
+.fbar .fld input[type=search],.fbar .fld select{height:36px}
+.fbar .fld.h select{width:178px;min-width:0}
+.fbar .sp{flex:1}
+.fcount{font-weight:600;color:var(--navy);font-size:12.5px;white-space:nowrap}
+.fmore{display:none;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 12px;padding:12px 14px 14px;border-top:1px solid var(--line2);background:#FBFCFE;border-radius:0 0 var(--r) var(--r)}
+#fltCard.open .fmore{display:grid}
+.fchips{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 10px}.fchips:empty{display:none}
+.fchip{display:inline-flex;align-items:center;gap:6px;border:1px solid #CFE0F7;background:var(--soft);color:var(--brand-deep);border-radius:999px;padding:3px 6px 3px 11px;font-size:12px;font-weight:600;cursor:pointer}
+.fchip i{font-style:normal;width:16px;height:16px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:10px;color:var(--muted)}
 .fld{display:flex;flex-direction:column;gap:4px;min-width:0}
 .fld label{font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.01em}
 .fld input[type=search],.fld select{height:38px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:0 10px;width:100%;min-width:0}
@@ -60,7 +70,6 @@ h1.pg{margin:2px 0 4px;font-size:22px;font-weight:800;color:var(--navy);letter-s
 .chk{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--ink)}
 .chk input{width:16px;height:16px;accent-color:var(--brand)}
 .flt-foot .sp{flex:1}
-.fltTog{display:none}
 .fcount{font-weight:600;color:var(--navy)}
 /* KPI */
 .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-bottom:14px}
@@ -174,8 +183,8 @@ svg.ch text{font-family:inherit;fill:#5B6B86;font-size:11px}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0F2549;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;z-index:120;box-shadow:0 10px 30px rgba(0,0,0,.3)}
 /* responsive */
 @media(max-width:1180px){.kpis,.kpis6{grid-template-columns:repeat(3,minmax(0,1fr))}.c4,.c5,.c6,.c7,.c8{grid-column:span 12}}
-@media(max-width:700px){.fltTog{display:inline-flex}#fltCard:not(.open) .flt .fld:not(:first-child){display:none}main{padding:12px 12px 50px}.top-in{padding:9px 12px}.kpis,.kpis6{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi .v{font-size:22px}
-  .flt{grid-template-columns:1fr 1fr;padding:12px}.flt .fld:first-child{grid-column:1/-1}.card-h,.card-b{padding-left:14px;padding-right:14px}.hb-row{grid-template-columns:minmax(80px,110px) 1fr 48px}
+@media(max-width:700px){main{padding:12px 12px 50px}.top-in{padding:9px 12px}.kpis,.kpis6{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi .v{font-size:22px}
+  .fbar .fs{flex:1 1 100%}.fbar .fld.h{flex:1 1 calc(50% - 5px)}.fbar .fld.h select{width:100%;max-width:none}.card-h,.card-b{padding-left:14px;padding-right:14px}.hb-row{grid-template-columns:minmax(80px,110px) 1fr 48px}
   .ph-card{padding:14px}.tabs button{padding:10px 12px}}
 </style>
 <style id="sideCss">
@@ -396,19 +405,24 @@ a.nv{text-decoration:none}
     <p class="pgsub">Theo dõi năng lực, tiến bộ và nhu cầu đào tạo của toàn bộ nhân sự từ dữ liệu kiểm tra thực tế.</p></div>
     <a class="btn pg-mgmt" href="/kiemtra/admin#candidates" title="Thêm thí sinh, nhập danh sách từ Excel, đối chiếu HR, lịch sử đăng nhập, tài khoản thử nghiệm">👥 Quản lí danh sách thí sinh</a></div>
     <div class="card" id="fltCard">
-      <div class="flt" id="flt">
-        <div class="fld"><label for="fQ">Tìm theo tên hoặc mã nhân viên</label><input id="fQ" type="search" placeholder="Nhập tên hoặc mã NV…" autocomplete="off"></div>
+      <div class="fbar" id="flt">
+        <div class="fld fs"><label class="sr" for="fQ">Tìm theo tên hoặc mã nhân viên</label><input id="fQ" type="search" placeholder="Tìm tên hoặc mã NV…" autocomplete="off"></div>
+        <div class="fld h"><label class="sr" for="fExam">Bài kiểm tra / chương trình</label><select id="fExam"></select></div>
+        <div class="fld h"><label class="sr" for="fStatus">Trạng thái học tập</label><select id="fStatus"></select></div>
+        <button class="btn" type="button" id="fTog" aria-expanded="false" aria-controls="fMore">Bộ lọc khác ▾</button>
+        <label class="chk"><input type="checkbox" id="fLeft"> Gồm đã nghỉ việc</label>
+        <span class="sp"></span><span id="fCount" class="fcount"></span><button class="btn sm" type="button" id="fReset">Xoá lọc</button>
+      </div>
+      <div class="fchips" id="fChips"></div>
+      <div class="fmore" id="fMore">
         <div class="fld"><label for="fTime">Thời gian</label><select id="fTime"><option value="0">Tất cả</option><option value="30">30 ngày gần đây</option><option value="90">3 tháng gần đây</option><option value="180">6 tháng gần đây</option><option value="365">12 tháng gần đây</option></select></div>
-        <div class="fld"><label for="fExam">Bài kiểm tra / chương trình</label><select id="fExam"></select></div>
         <div class="fld"><label for="fDept">Phòng ban / bộ phận</label><select id="fDept"></select></div>
         <div class="fld"><label for="fTitle">Chức danh</label><select id="fTitle"></select></div>
         <div class="fld"><label for="fSeg">Nhóm ngành</label><select id="fSeg"></select></div>
         <div class="fld"><label for="fRegion">Miền</label><select id="fRegion"></select></div>
         <div class="fld"><label for="fProv">Tỉnh / thành</label><select id="fProv"></select></div>
         <div class="fld"><label for="fMgr">Quản lí (ASM)</label><select id="fMgr"></select></div>
-        <div class="fld"><label for="fStatus">Trạng thái học tập</label><select id="fStatus"><option value="">Tất cả</option><option value="ok">Đạt yêu cầu</option><option value="need">Cần đào tạo bổ sung</option><option value="none">Chưa kiểm tra</option></select></div>
       </div>
-      <div class="flt-foot"><label class="chk"><input type="checkbox" id="fLeft"> Gồm nhân sự đã nghỉ việc</label><button class="btn sm fltTog" type="button" id="fTog" aria-expanded="false" aria-controls="flt">Bộ lọc nâng cao ▾</button><span class="sp"></span><span id="fCount" class="fcount"></span><button class="btn sm" type="button" id="fReset">Xoá bộ lọc</button></div>
     </div>
     <div class="bar" style="margin-top:14px">
       <div class="seg" role="tablist" aria-label="Chế độ xem">
@@ -568,7 +582,7 @@ function fillFilters(){
   syncFilterInputs();
 }
 function syncStatusOpts(){
-  $('fStatus').innerHTML = opts([{ v:'ok', l:'Đạt yêu cầu' }, { v:'need', l:'Cần đào tạo bổ sung' }, { v:'none', l:'Chưa kiểm tra' }].concat(F.left ? [{ v:'left', l:'Đã nghỉ việc' }] : []), 'Tất cả');
+  $('fStatus').innerHTML = opts([{ v:'ok', l:'Đạt yêu cầu' }, { v:'need', l:'Cần đào tạo bổ sung' }, { v:'none', l:'Chưa kiểm tra' }].concat(F.left ? [{ v:'left', l:'Đã nghỉ việc' }] : []), 'Mọi trạng thái');
 }
 function syncFilterInputs(){
   $('fQ').value = F.q; $('fTime').value = F.time; $('fExam').value = F.exam; $('fDept').value = F.dept; $('fTitle').value = F.title; $('fSeg').value = F.seg;
@@ -580,8 +594,17 @@ function readFilters(){
 }
 function onFilter(){ var l = F.left; readFilters(); if (l !== F.left){ syncStatusOpts(); $('fStatus').value = F.status; } V.page = 1; V.sel = {}; refresh(); }
 function resetFilters(){ F = { q:'', time:'0', exam:'', dept:'', title:'', seg:'', region:'', prov:'', mgr:'', status:'', left:false }; syncStatusOpts(); syncFilterInputs(); V.page = 1; V.sel = {}; refresh(); }
-function nActive(){ return ['time', 'exam', 'dept', 'title', 'seg', 'region', 'prov', 'mgr', 'status'].filter(function(k){ return k === 'time' ? F.time !== '0' : !!F[k]; }).length + (F.left ? 1 : 0); }
-function updTog(){ var n = nActive(), o = $('fltCard').classList.contains('open'); $('fTog').textContent = 'Bộ lọc nâng cao' + (n ? ' (' + n + ')' : '') + (o ? ' ▴' : ' ▾'); }
+var MORE = ['time', 'dept', 'title', 'seg', 'region', 'prov', 'mgr'], MLBL = { time:'Thời gian', dept:'Phòng ban', title:'Chức danh', seg:'Ngành', region:'Miền', prov:'Tỉnh', mgr:'ASM' };
+function moreActive(){ return MORE.filter(function(k){ return k === 'time' ? F.time !== '0' : !!F[k]; }); }
+function nActive(){ return moreActive().length; }
+function updTog(){
+  var act = moreActive(), o = $('fltCard').classList.contains('open');
+  $('fTog').textContent = 'Bộ lọc khác' + (act.length ? ' (' + act.length + ')' : '') + (o ? ' ▴' : ' ▾');
+  $('fChips').innerHTML = act.map(function(k){
+    var v = k === 'time' ? $('fTime').options[$('fTime').selectedIndex].text : k === 'seg' ? SEGL[F.seg] : F[k];
+    return '<button type="button" class="fchip" data-fclr="' + k + '" title="Bỏ lọc này">' + esc(MLBL[k]) + ': ' + esc(v) + ' <i aria-hidden="true">✕</i></button>';
+  }).join('');
+}
 function filterActive(){ return !!(F.q || F.time !== '0' || F.exam || F.dept || F.title || F.seg || F.region || F.prov || F.mgr || F.status || F.left); }
 
 /* ====================== Biểu đồ (SVG / HTML thuần, không thư viện) ====================== */
@@ -1045,7 +1068,7 @@ function refresh(){
   M = compute();
   var total = S.C.filter(function(c){ return F.left || !c.left; }).length;
   updTog();
-  $('fCount').innerHTML = 'Đang xem <span class="fcount">' + M.view.length + '</span> / ' + total + ' nhân sự';
+  $('fCount').innerHTML = '<span class="fcount">' + M.view.length + '</span> / ' + total + ' nhân sự';
   if (V.tab === 'ov'){
     if (!M.base.length) $('secOv').innerHTML = '<div class="card"><div class="empty" style="padding:44px 14px"><b style="color:#0B2A5B;display:block;font-size:15px;margin-bottom:4px">Không có nhân sự nào phù hợp bộ lọc</b>' + (filterActive() ? '<button class="btn sm" type="button" data-reset="1">Xoá bộ lọc</button>' : 'Chưa có nhân sự trong hệ thống.') + '</div></div>';
     else renderOverview();
@@ -1095,6 +1118,7 @@ function bind(){
     var g = el.getAttribute('data-go'); if (g != null){ go(g); return; }
     if (el.hasAttribute('data-back')){ if (location.hash) location.hash = ''; else showMain(); return; }
     if (el.hasAttribute('data-reset')){ resetFilters(); return; }
+    if (el.hasAttribute('data-fclr')){ var fk = el.getAttribute('data-fclr'); F[fk] = fk === 'time' ? '0' : ''; syncFilterInputs(); V.page = 1; V.sel = {}; refresh(); return; }
     if (el.hasAttribute('data-retrydetail') && D){ openDetail(D.c.code, D.tab); return; }
     if (el.hasAttribute('data-sort')){ var k = el.getAttribute('data-sort'); V.sort = V.sort.k === k ? { k:k, d:-V.sort.d } : { k:k, d:(k === 'avg' || k === 'n' || k === 'act' || k === 'compl' || k === 'comp') ? -1 : 1 }; V.page = 1; renderList(); return; }
     if (el.hasAttribute('data-pg') && !el.disabled){ V.page = +el.getAttribute('data-pg'); renderList(); var st = $('secLs').getBoundingClientRect().top + window.scrollY - 70; window.scrollTo({ top:Math.max(0, st), behavior:'smooth' }); return; }
