@@ -155,6 +155,14 @@ button,input{font:inherit;color:inherit}
 .bbcard .field select:focus{outline:none;border-color:var(--brand);background-color:#fff;box-shadow:0 0 0 4px var(--brand-soft)}
 .bbcard .field select[aria-invalid=true]{border-color:var(--bad)}
 @media(max-width:480px){.bbcard{padding:26px 18px 20px;border-radius:20px}.bbcard .field{gap:6px!important}}
+.bbcard{position:relative}
+.bbcard .bbill{display:block;width:138px;height:auto;margin:0 auto 8px}
+.bbcard h2{font-size:22px;font-weight:800;color:#0B2A66}
+.bbcard .small{text-align:center}
+.bbclose{position:absolute;top:12px;right:12px;width:38px;height:38px;border:0;border-radius:50%;background:transparent;color:#7A8AA6;cursor:pointer;display:grid;place-items:center}
+.bbclose:hover{background:#EEF3FA;color:#14357A}.bbclose:focus-visible{outline:3px solid #9CD7FF}
+.bbclose svg{width:20px;height:20px}
+.bbmodal.bbx{display:none!important}
 .rgbox h2{font-size:16px;margin:0 0 14px;color:var(--ink)}
 .rgbox .rgdesc{font-size:13.5px;line-height:1.5;color:var(--muted);margin:0 0 16px}
 .rgbox .field{margin-bottom:16px}
@@ -2650,9 +2658,10 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
       </div>
       <div class="bbmodal hide" id="birthBox" role="dialog" aria-modal="true" aria-labelledby="bbTitle">
         <div class="bbcard">
-          <div class="bbic" aria-hidden="true">🎂</div>
-          <h2 id="bbTitle">Ngày sinh của bạn</h2>
-          <p class="small">Vui lòng nhập ngày sinh để tiếp tục.</p>
+          <button type="button" class="bbclose" id="btnBirthX" aria-label="Đóng"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          <svg class="bbill" viewBox="0 0 160 120" aria-hidden="true"><ellipse cx="80" cy="74" rx="62" ry="36" fill="#DCEBFF"/><rect x="42" y="26" width="76" height="70" rx="10" fill="#fff" stroke="#1F6FE5" stroke-width="3"/><path d="M42 36a10 10 0 0 1 10-10h56a10 10 0 0 1 10 10v12H42z" fill="#1F6FE5"/><rect x="58" y="16" width="6" height="18" rx="3" fill="#fff" stroke="#1F6FE5" stroke-width="2.5"/><rect x="96" y="16" width="6" height="18" rx="3" fill="#fff" stroke="#1F6FE5" stroke-width="2.5"/><g fill="#BFD9FA"><rect x="54" y="58" width="14" height="12" rx="3"/><rect x="73" y="58" width="14" height="12" rx="3"/><rect x="92" y="58" width="14" height="12" rx="3"/><rect x="54" y="76" width="14" height="12" rx="3"/><rect x="73" y="76" width="14" height="12" rx="3"/></g><circle cx="108" cy="86" r="18" fill="#3B8CF6"/><circle cx="108" cy="80" r="6" fill="#fff"/><path d="M96 97a12 9 0 0 1 24 0z" fill="#fff"/></svg>
+          <h2 id="bbTitle">Vui lòng nhập ngày sinh</h2>
+          <p class="small">Thông tin này giúp chúng tôi xác thực và quản lý tài khoản.</p>
           <div class="field" style="display:flex;gap:10px;margin:0">
             <div style="flex:1"><label for="inBirthDay">Ngày <span class="req">*</span></label><select id="inBirthDay"></select></div>
             <div style="flex:1"><label for="inBirthMonth">Tháng <span class="req">*</span></label><select id="inBirthMonth"></select></div>
@@ -3207,6 +3216,7 @@ function renderConfirm(){
   }
   var askBirth = c.needBirth;
   $('birthBox').classList.toggle('hide', !askBirth);
+  if (askBirth) $('birthBox').classList.remove('bbx');
   if (askBirth){
     if (!$('inBirthDay').options.length){
       var dOpts = '<option value="">—</option>', mOpts = '<option value="">—</option>';
@@ -3409,7 +3419,7 @@ $('btnStart').addEventListener('click', async function(){
     ST.cand.province = sv.j.province; ST.cand.region = sv.j.region; ST.cand.needRegion = false;
   }
   if (!$('birthBox').classList.contains('hide')){
-    if (!validateBirth()) return;
+    if (!validateBirth()){ $('birthBox').classList.remove('bbx'); return; } // đã bấm X mà chưa nhập: mở lại popup
   }
   PH.mode = 'exam';
   if (facePassOk()) return startWithFacePass();
@@ -5582,6 +5592,9 @@ function validateBirth(){
   msg('birthMsg','');
   return true;
 }
+function birthDismiss(){ $('birthBox').classList.add('bbx'); } // X: chỉ đóng tạm, bấm Bắt đầu mà chưa nhập sẽ hiện lại
+$('btnBirthX').addEventListener('click', birthDismiss);
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !$('birthBox').classList.contains('hide') && !$('birthBox').classList.contains('bbx')) birthDismiss(); });
 $('btnBirthOk').addEventListener('click', async function(){
   if (!validateBirth()) return;
   var btn = $('btnBirthOk'), lbl = btn.textContent;
@@ -5634,6 +5647,6 @@ if (ckGet() !== '0' && EXAM_ID && !$('scrCheck').classList.contains('hide')){
    Chuyển #birthBox ra thẳng <body> để luôn căn giữa theo màn hình. */
 (function(){ var b = document.getElementById('birthBox'); if (b && b.parentNode !== document.body) document.body.appendChild(b); })();
 </script>
-<script src="/kiemtra/birthask.js?v=2" defer></script>
+<script src="/kiemtra/birthask.js?v=3" defer></script>
 </body>
 </html>

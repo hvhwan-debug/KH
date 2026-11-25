@@ -24,7 +24,7 @@
       '.kba-msg{min-height:20px;margin:4px 0 8px;font-size:13px;font-weight:600;color:#D32F2F}' +
       '.kba-btn{display:block;width:100%;min-height:48px;border:0;border-radius:14px;font:800 16px inherit;cursor:pointer}' +
       '.kba-ok{background:linear-gradient(90deg,#2F8CF8,#1B57C9);color:#fff}.kba-ok:disabled{opacity:.6;cursor:default}' +
-      '.kba-later{margin-top:8px;background:transparent;color:#5D6F8E;font-weight:700;font-size:14px}' +
+      '.kba-card{position:relative}.kba-x{position:absolute;top:10px;right:10px;width:36px;height:36px;border:0;border-radius:50%;background:transparent;color:#7A8AA6;cursor:pointer;display:grid;place-items:center;padding:0}.kba-x:hover{background:#EEF3FA;color:#14357A}.kba-x svg{width:20px;height:20px}' +
       '.kba-note{margin-top:10px;font-size:11.5px;line-height:1.4;color:#7A8AA6}';
     document.head.appendChild(st);
   }
@@ -34,12 +34,11 @@
     css(); open = true;
     var ov = document.createElement('div'); ov.className = 'kba-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Cập nhật ngày sinh');
     var y0 = new Date().getFullYear() - 16;
-    ov.innerHTML = '<div class="kba-card"><div class="kba-ic" aria-hidden="true">🎂</div><h2>Chúng tôi muốn hiểu bạn hơn!</h2>' +
+    ov.innerHTML = '<div class="kba-card"><button type="button" class="kba-x" id="kbaLater" aria-label="Đóng"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="kba-ic" aria-hidden="true">🎂</div><h2>Chúng tôi muốn hiểu bạn hơn!</h2>' +
       '<p>Chia sẻ ngày sinh để chúng tôi cá nhân hoá trải nghiệm và dành tặng bạn những điều thú vị, bắt đầu từ lời chúc mừng đúng ngày sinh nhật của bạn.</p>' +
       '<div class="kba-row"><label>Ngày<select id="kbaD">' + opts(1, 31, '—') + '</select></label><label>Tháng<select id="kbaM">' + opts(1, 12, '—') + '</select></label><label>Năm<select id="kbaY">' + opts(y0, 1950, '—') + '</select></label></div>' +
       '<div class="kba-msg" id="kbaMsg" role="alert"></div>' +
       '<button type="button" class="kba-btn kba-ok" id="kbaSave">Lưu ngày sinh</button>' +
-      '<button type="button" class="kba-btn kba-later" id="kbaLater">Để sau</button>' +
       '<div class="kba-note">Ngày sinh chỉ dùng để gửi lời chúc mừng sinh nhật. Bạn có thể bỏ qua, hôm sau hệ thống sẽ hỏi lại.</div></div>';
     document.body.appendChild(ov);
     var $ = function(id){ return document.getElementById(id); };
