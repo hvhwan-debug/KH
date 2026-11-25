@@ -6930,9 +6930,12 @@ let PG = null, PG_F = 'doing', PG_P = '', PG_T = null, PG_INIT = null;
 const PG_LBL = { all:'Tất cả', doing:'Đang làm', done:'Hoàn thành', none:'Chưa làm' };
 const TOUCH = !!(window.matchMedia && matchMedia('(hover:none)').matches);
 let PG_SHOW = 10, PG_KEY = '';
+let PG_SEQ = 0;
 async function loadProgress(sel){
   if (sel !== undefined) PG_P = /^[a-z0-9][a-z0-9-]{0,39}$/i.test(sel || '') ? sel : '';
+  const mySeq = ++PG_SEQ, wantP = PG_P;
   const { j } = await api('GET', '/api/kt-admin?op=progress' + (PG_P ? '&period=' + encodeURIComponent(PG_P) : ''));
+  if (mySeq !== PG_SEQ || wantP !== PG_P) return; // có lần tải mới hơn (hoặc đã đổi đề): bỏ kết quả cũ, tránh hiện số của đề/kỳ khác
   if (!j || !j.ok){ $('pgCard').classList.add('hide'); if ($('resCard')) $('resCard').classList.remove('hide'); if ($('resSearch')) $('resSearch').classList.remove('hide'); return; }
   PG = j; $('pgCard').classList.remove('hide');
   if ($('resSearch')) $('resSearch').classList.add('hide'); // một ô tìm kiếm chung ở khung theo dõi, lọc cả bảng Bài đã nộp
@@ -7481,9 +7484,12 @@ const KPI_IC = {
   warn:'<svg class="k-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16.5 14.2c2.6.2 4.5 2.1 4.5 4.8"/></svg>',
   time:'<svg class="k-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>'
 };
+let DASH_SEQ = 0;
 async function loadDashboard(sel){
   const want = /^[a-z0-9][a-z0-9-]{0,39}$/i.test(sel||'') ? sel : ''; // cả mã tháng (2026-10) lẫn mã đề tự đặt (thi-thu)
+  const mySeq = ++DASH_SEQ;
   const { j } = await api('GET','/api/kt-admin?op=dashboard'+(want?'&period='+encodeURIComponent(want):''));
+  if (mySeq !== DASH_SEQ) return; // lần tải mới hơn đã/đang chạy: bỏ kết quả cũ
   if (!j.ok){ $('dashCard').classList.add('hide'); return; }
   DASH = j; $('dashCard').classList.remove('hide');
   if (j.period === j.currentPeriod) renderAdminHero(j);
@@ -7545,12 +7551,14 @@ async function assignPeriod(){
   if (!j.ok){ alert(j.error || 'Không gắn được kỳ.'); return; }
   loadResults();
 }
+let RES_SEQ = 0;
 async function loadResults(){
-  const selBefore = $('resPeriod').value;
+  const selBefore = $('resPeriod').value, mySeq = ++RES_SEQ;
+  loadDashboard(selBefore); loadProgress(selBefore); // gọi ngay, song song với danh sách bài nộp (trước đây chờ xong danh sách mới tải nên số liệu hiện muộn)
   const { j } = await api('GET','/api/kt-admin?op=results'+(selBefore?'&period='+encodeURIComponent(selBefore):''));
-  if (!j.ok) return;
+  if (mySeq !== RES_SEQ || !j || !j.ok) return;
+  if (selBefore && (j.periods || []).indexOf(selBefore) < 0) j.periods = (j.periods || []).concat([selBefore]); // đề tự đặt chưa có bài nộp vẫn phải giữ đang chọn
   const opts = (j.periods||[]).map(p => { const l = /^\d{4}-\d{2}$/.test(p) ? 'Tháng ' + p.slice(5) + '/' + p.slice(0,4) : p; return p === j.currentPeriod ? l + ' (hiện tại)' : l; });
-  loadDashboard(selBefore); loadProgress(selBefore);
   $('resPeriod').innerHTML = '<option value="">Tất cả các kỳ</option>' + (j.periods||[]).map((p,i) => '<option value="'+esc(p)+'" '+(p===selBefore?'selected':'')+'>'+esc(opts[i])+'</option>').join('');
   RESULTS = j.results || [];
   renderResults();
