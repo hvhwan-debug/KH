@@ -53,6 +53,8 @@ svg.i{width:1em;height:1em;flex:0 0 auto;fill:none;stroke:currentColor;stroke-wi
 .side{position:sticky;top:88px;padding:16px 14px;border-radius:24px;background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.9);box-shadow:0 20px 44px -28px rgba(20,70,160,.5)}
 .side button{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border:0;border-radius:12px;background:none;text-align:left;font-size:15px;font-weight:700;color:#1E3F73;cursor:pointer}
 .side button+button{margin-top:2px}
+/* màn chọn nhanh: thanh danh mục kéo dài đúng tới đáy các ô, các mục giãn đều */
+.side.fit{display:flex;flex-direction:column;justify-content:space-between}.side.fit button+button{margin-top:0}
 .side button svg.i{font-size:21px;color:#1B78E8}
 .side button span{flex:1;min-width:0}
 .side button em{font-style:normal;min-width:30px;padding:2px 8px;border-radius:99px;background:#E6F0FD;color:#1B5FC4;font-size:12.5px;font-weight:800;text-align:center}
@@ -399,7 +401,17 @@ function renderBan(){
   b.innerHTML = ic('bookmark') + '<span>Tài liệu ôn tập cho bài kiểm tra <b>' + esc(t || D.exam) + '</b></span><a class="x" href="' + location.pathname + '">Xem tất cả học liệu</a>';
   b.classList.remove('hide');
 }
-function renderAll(){ renderSide(); renderHub(); renderBan(); renderGrid(); }
+function renderAll(){ renderSide(); renderHub(); renderBan(); renderGrid(); fitSide(); }
+// Thanh danh mục bên trái cao bằng khối các ô danh mục (chỉ màn rộng, khi đang hiện các ô)
+function fitSide(){
+  var s = $('side'), h = $('hubW');
+  s.style.minHeight = ''; s.classList.remove('fit');
+  if (h.classList.contains('hide') || window.innerWidth <= 960) return;
+  var need = h.getBoundingClientRect().bottom - s.getBoundingClientRect().top;
+  if (need > s.offsetHeight){ s.style.minHeight = Math.round(need) + 'px'; s.classList.add('fit'); }
+}
+window.addEventListener('resize', function(){ clearTimeout(fitSide.t); fitSide.t = setTimeout(fitSide, 80); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitSide);
 function load(){
   req('/api/hoclieu').then(function(j){
     if (!j.ok){ $('grid').innerHTML = '<div class="empty" style="grid-column:1/-1"><b>Không tải được học liệu</b>Vui lòng thử lại sau ít phút.</div>'; return; }
