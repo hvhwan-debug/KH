@@ -604,7 +604,8 @@ body.pv-on .wrap,body.cert-on.pv-on .wrap{max-width:1440px!important;width:min(1
 .pv-ttl h1,.pv-who h2,.pv-who .sc b,.pv-info dd{color:#fff!important;text-shadow:0 1px 2px rgba(0,30,100,.35)}
 .pv-info dd.gold{color:#FFC94A!important}
 .pv-who p,.pv-who .sb,.pv-info dt{color:#E6F2FF!important}
-.pv-tag{left:auto;right:6%;top:-6px}
+.pv-tag{position:static!important;display:inline-flex;margin:0 0 6px;padding:3px 10px 3px 4px;gap:5px;font-size:12px;line-height:1.3}.pv-tag svg{width:15px;height:15px}
+.pv-ttl small{font-size:15px}.pv-art img{margin-top:0}
 @media(max-width:860px){.pv-top{grid-template-columns:1fr 1fr!important}.pv-who{border-left:0;padding-left:0}}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
@@ -785,9 +786,9 @@ function pvOpen(){
   $('pvWrap').innerHTML =
     '<div class="pv-head">' +
       '<div class="pv-ttl"><button type="button" class="pv-back" id="pvBack" aria-label="Quay lại trang kết quả"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>' +
-      '<div><small>Kết quả bài kiểm tra</small><h1 id="pvTitle" tabindex="-1">' + esc(j.title || r.title || '') + '</h1></div></div>' +
+      '<div><span class="pv-tag t-' + tk + '">' + PV_I.dot + esc(tag) + '</span><small>Kết quả bài kiểm tra</small><h1 id="pvTitle" tabindex="-1">' + esc(j.title || r.title || '') + '</h1></div></div>' +
       '<div class="pv-top">' +
-        '<div class="pv-art"><span class="pv-tag t-' + tk + '">' + PV_I.dot + esc(tag) + '</span><img src="/kiemtra/review-art.png" alt="" width="300" height="260"></div>' +
+        '<div class="pv-art"><img src="/kiemtra/review-art.png" alt="" width="300" height="260"></div>' +
         '<div class="pv-ring t-' + tier + '" role="img" aria-label="Tỉ lệ đúng ' + esc(pct) + '%" style="--p:' + Math.max(0, Math.min(100, pct)) + '"><div><b>' + esc(pct) + '%</b><span>Tỉ lệ đúng</span></div></div>' +
         '<div class="pv-who"><h2>' + esc(j.name || r.name || '') + '</h2><p>' + PV_I.user + 'Mã NV: ' + esc(j.code || r.code || '') + '</p>' +
           '<p class="sc"><b>' + nOk + '/' + tot + '</b> câu đúng</p><div class="bar" aria-hidden="true"><i class="g" style="width:' + w(nOk) + '%"></i><i class="r" style="width:' + w(nW) + '%"></i></div>' +
