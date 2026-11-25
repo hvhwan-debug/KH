@@ -42,6 +42,10 @@ function client(req) {
 // ---------- Danh mục thao tác: nhãn tiếng Việt + loại ----------
 // kind: change (thay đổi dữ liệu) | read (xem dữ liệu) | auth (đăng nhập/đăng xuất) | export (xuất file, in, AI) | denied (bị từ chối)
 const A = {
+  sales: {
+    GET: { list: ["Xem danh sách tháng số bán", "read"], month: ["Xem kết quả số bán", "read"] },
+    POST: { saveMonth: ["Cập nhật kết quả số bán", "change"], deleteMonth: ["Xoá kết quả số bán một tháng", "change"] }
+  },
   hoclieu: {
     GET: { list: ["Xem danh sách học liệu", "read"], preview: ["Xem thử học liệu", "read"] },
     POST: { saveItem: ["Lưu học liệu", "change"], deleteItem: ["Xoá học liệu", "change"], setFlag: ["Đăng / ẩn / đánh dấu nổi bật học liệu", "change"], saveCats: ["Lưu danh mục học liệu", "change"], upload: ["Tải tệp học liệu lên", "change"] }
@@ -118,6 +122,9 @@ function details(area, op, q, b, res, pre) {
     case "insight": case "paper": case "photo": case "profile": case "employee": d.code = q.code; if (q.id) d.attempt = q.id; if (q.period != null && op === "photo") d.period = q.period; break;
     case "result": d.attempt = q.id; if (r.attempt) { d.code = r.attempt.code; d.name = r.attempt.name; d.period = r.attempt.period || ""; } break;
     case "audit": d.day = q.day; break;
+    case "month": d.period = q.m; break;
+    case "saveMonth": d.period = b.data && b.data.month; d.count = r.count; d.file = s(b.data && b.data.fileName, 120); break;
+    case "deleteMonth": d.period = b.month; break;
     case "saveQuestion": { const qq = b.question || {}; d.question = s(qq.text, 100); if (qq.id) d.id = qq.id; if (typeof qq.period === "string") d.period = qq.period || "chưa gắn kỳ"; if (r.regrade && !r.regrade.failed) { d.regraded = r.regrade.changed; d.paperUpdated = r.regrade.paperUpdated; d.examined = r.regrade.examined; d.skipped = r.regrade.skipped; } break; }
     case "addQuestions": d.period = b.period; d.added = r.added; d.skipped = r.skipped; break;
     case "saveItem": { const it = b.item || {}; d.title = s(it.title, 100); if (it.id) d.id = it.id; d.type = it.type; break; }
