@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0B2A5B">
+<link rel="icon" href="/kiemtra/favicon.ico?v=2" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/kiemtra/favicon-32.png?v=2">
+<title>Hồ sơ học tập · Quản trị dữ liệu kiểm tra nhân sự</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--brand:#0A63C4;--brand-deep:#0B3F94;--navy:#0B2A5B;--ink:#0F2549;--muted:#5B6B86;--line:#E1E8F2;--line2:#EDF2F8;--bg:#F4F7FB;--card:#fff;--soft:#EAF2FD;
+  --ok:#16794A;--ok-bg:#E3F5EA;--ok-bar:#1FAE6B;--good-bar:#12905A;--warn:#8A5A00;--warn-bg:#FFF1D6;--warn-bar:#F0A93A;--bad:#C0332B;--bad-bg:#FDE8E7;--bad-bar:#E2574C;--none:#6B7A93;--none-bg:#EEF2F7;
+  --r:14px;--sh:0 1px 2px rgba(15,37,73,.05),0 6px 20px -10px rgba(15,37,73,.12)}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.hide{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+/* thanh trên */
+.top{position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid var(--line);}
+.top-in{max-width:1380px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:14px}
+.top img{width:36px;height:36px;object-fit:contain}
+.top .ttl{display:flex;flex-direction:column;line-height:1.25;min-width:0}.top .ttl b{font-size:16px;color:var(--navy);font-weight:800}.top .ttl span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .sp{flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:10px;padding:8px 13px;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;min-height:36px}
+.btn:hover{background:var(--soft);border-color:#C9DAF1}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}.btn.pri:hover{background:var(--brand-deep)}
+.btn.sm{padding:5px 10px;font-size:12.5px;min-height:30px;border-radius:8px}
+.btn.dng{color:var(--bad);border-color:#EBC3C0}.btn.dng:hover{background:var(--bad-bg)}
+.btn:disabled{opacity:.55;cursor:default}
+main{max-width:1380px;margin:0 auto;padding:18px 20px 60px}
+/* khung */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.card-h{display:flex;align-items:center;gap:10px;padding:14px 18px 0}
+.card-h h2{margin:0;font-size:15px;font-weight:700;color:var(--navy)}
+.card-h .sub{color:var(--muted);font-size:12.5px}
+.card-h .sp{flex:1}
+.card-b{padding:12px 18px 16px}
+h1.pg{margin:2px 0 4px;font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-.01em}
+.pgsub{margin:0 0 14px;color:var(--muted)}
+/* tab chính */
+.seg{display:inline-flex;background:#E9EFF7;border-radius:11px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:7px 15px;border-radius:9px;font-weight:600;color:var(--muted);cursor:pointer;font-size:13.5px}
+.seg button[aria-selected=true]{background:#fff;color:var(--navy);box-shadow:0 1px 4px rgba(15,37,73,.12)}
+.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 14px}
+.bar .sp{flex:1}
+/* bộ lọc */
+.flt{display:grid;grid-template-columns:minmax(220px,1.4fr) repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:14px 16px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld label{font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.01em}
+.fld input[type=search],.fld select{height:38px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:0 10px;width:100%;min-width:0}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px #DCEBFB}
+.flt-foot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:0 16px 14px;color:var(--muted);font-size:12.5px}
+.chk{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--ink)}
+.chk input{width:16px;height:16px;accent-color:var(--brand)}
+.flt-foot .sp{flex:1}
+.fltTog{display:none}
+.fcount{font-weight:600;color:var(--navy)}
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.kpi{padding:14px 16px;position:relative}
+.kpi .l{font-size:12px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:5px}
+.kpi .v{font-size:26px;font-weight:800;color:var(--navy);line-height:1.2;margin-top:4px;letter-spacing:-.02em}
+.kpi .v small{font-size:13px;font-weight:600;color:var(--muted);margin-left:2px}
+.kpi .s{font-size:12px;color:var(--muted);margin-top:2px}
+.kpi.ok .v{color:var(--ok)}.kpi.bad .v{color:var(--bad)}
+.tip{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:#E4ECF6;color:#5B6B86;font-size:10px;font-weight:700;cursor:help;flex:none}
+/* lưới phân tích */
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.c4{grid-column:span 4}.c5{grid-column:span 5}.c6{grid-column:span 6}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:span 12}
+.q{font-size:12.5px;color:var(--muted);margin:2px 0 0}
+/* thanh ngang */
+.hb{display:flex;flex-direction:column;gap:9px}
+.hb-row{display:grid;grid-template-columns:minmax(90px,150px) 1fr 54px;align-items:center;gap:10px;font-size:13px}
+.hb-row .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.hb-row .nm small{color:var(--muted);margin-left:4px}
+.hb-row .tr{height:10px;border-radius:6px;background:#EDF1F7;overflow:hidden;position:relative}
+.hb-row .tr i{display:block;height:100%;border-radius:6px}
+.hb-row .vv{text-align:right;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
+.hb-row a.nm,.hb-row button.nm{border:0;background:none;text-align:left;padding:0;cursor:pointer;color:var(--ink)}
+.hb-row a.nm:hover,.hb-row button.nm:hover{color:var(--brand);text-decoration:underline}
+.hb-row .tr i.g,.legend i.g{background:var(--good-bar)}.hb-row .tr i.o,.legend i.o{background:var(--ok-bar)}.hb-row .tr i.w,.legend i.w{background:var(--warn-bar)}.hb-row .tr i.r,.legend i.r{background:var(--bad-bar)}.hb-row .tr i.n{background:#B8C3D4}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:5px}.legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+/* chip */
+.chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.85}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}.chip.need{background:var(--bad-bg);color:var(--bad)}.chip.none{background:var(--none-bg);color:var(--none)}.chip.left{background:#EFE9F8;color:#6B4BA6}
+.chip.g{background:#DDF3E8;color:var(--good-bar)}.chip.o{background:var(--ok-bg);color:var(--ok)}.chip.w{background:var(--warn-bg);color:var(--warn)}.chip.r{background:var(--bad-bg);color:var(--bad)}
+.chip.plain::before{display:none}.chip.test{background:var(--warn-bg);color:var(--warn)}.chip.plain.test{font-weight:600}
+/* bảng */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{position:sticky;top:0;background:#F7F9FC;text-align:left;font-weight:700;font-size:12px;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;user-select:none}
+table.t th.s{cursor:pointer}table.t th.s:hover{color:var(--navy)}
+table.t th .ar{display:inline-block;width:10px;color:var(--brand)}
+table.t td{padding:10px 12px;border-bottom:1px solid var(--line2);vertical-align:middle}
+table.t tr:last-child td{border-bottom:0}
+table.t tbody tr:hover td{background:#F8FBFF}
+table.t tr.hid td:not(:last-child){opacity:.5}
+table.t .r{text-align:right;font-variant-numeric:tabular-nums}table.t th.r{text-align:right}
+table.t .nw{white-space:nowrap}
+table.t .nm{font-weight:700;color:var(--navy);border:0;background:none;padding:0;cursor:pointer;text-align:left}
+table.t .nm:hover{color:var(--brand);text-decoration:underline}
+table.t .code{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.av{width:34px;height:34px;border-radius:50%;background:#DCE9FA;color:#1452D2;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none;background-size:cover;background-position:center top;overflow:hidden}
+.av.has{color:transparent;font-size:0;box-shadow:0 0 0 2px #fff,0 0 0 3px #CFE0F7}
+.av.lg{width:72px;height:72px;font-size:26px}
+.pg-ft{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line2);color:var(--muted);font-size:12.5px}
+.pg-ft .sp{flex:1}
+.pg-ft select{height:30px;border:1px solid var(--line);border-radius:8px;padding:0 6px;background:#fff}
+.pgs{display:flex;gap:4px;align-items:center}
+.pgs button{min-width:30px;height:30px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;font-weight:600;color:var(--navy);padding:0 8px}
+.pgs button[disabled]{opacity:.4;cursor:default}.pgs button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.sel-bar{display:flex;align-items:center;gap:10px;padding:8px 16px;background:var(--soft);border-bottom:1px solid var(--line);font-size:13px;color:var(--navy);font-weight:600}
+.sel-bar .sp{flex:1}
+/* menu xuất */
+.menu{position:relative;display:inline-block}
+.menu-pop{position:absolute;right:0;top:calc(100% + 6px);min-width:260px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 40px -12px rgba(15,37,73,.28);padding:6px;z-index:40}
+.menu-pop button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--ink)}
+.menu-pop button:hover{background:var(--soft)}.menu-pop button small{display:block;color:var(--muted);font-size:11.5px}
+.menu-pop hr{border:0;border-top:1px solid var(--line2);margin:4px 0}
+/* trạng thái */
+.state{display:grid;place-items:center;text-align:center;padding:60px 20px;color:var(--muted)}
+.state b{display:block;color:var(--navy);font-size:16px;margin-bottom:4px}
+.spin{width:30px;height:30px;border-radius:50%;border:3px solid #D6E4F6;border-top-color:var(--brand);animation:sp 0.8s linear infinite;margin:0 auto 12px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.sk{background:linear-gradient(90deg,#EDF1F7 25%,#F6F8FB 50%,#EDF1F7 75%);background-size:200% 100%;animation:sh 1.2s infinite;border-radius:8px}
+@keyframes sh{to{background-position:-200% 0}}
+.empty{padding:26px 14px;text-align:center;color:var(--muted)}
+.msg{padding:10px 14px;border-radius:10px;font-size:13px;margin:0 0 12px}
+.msg.err{background:var(--bad-bg);color:var(--bad)}.msg.warn{background:var(--warn-bg);color:var(--warn)}.msg.info{background:var(--soft);color:var(--brand-deep)}
+/* chi tiết */
+.crumb{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:13px;color:var(--muted)}
+.crumb button{border:0;background:none;color:var(--brand);font-weight:600;cursor:pointer;padding:0}
+.ph-card{display:flex;gap:18px;align-items:center;padding:18px 20px;flex-wrap:wrap}
+.ph-card .who{flex:1;min-width:240px}
+.ph-card h1{margin:0;font-size:22px;color:var(--navy);font-weight:800;letter-spacing:-.01em}
+.ph-meta{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:6px;color:var(--muted);font-size:13px}
+.ph-meta b{color:var(--ink);font-weight:600}
+.ph-act{display:flex;gap:8px;flex-wrap:wrap}
+.kpis6{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:14px 0}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:0 0 14px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:11px 16px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;margin-bottom:-1px}
+.tabs button[aria-selected=true]{color:var(--brand-deep);border-bottom-color:var(--brand)}
+.tabs button:hover{color:var(--navy)}
+.dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px 22px}
+.dl div{min-width:0}.dl dt{font-size:11.5px;color:var(--muted);font-weight:600}.dl dd{margin:1px 0 0;font-weight:600;color:var(--ink);overflow-wrap:anywhere}
+.dl .na{color:#9AA7BC;font-weight:400}
+.sec-t{margin:18px 0 8px;font-size:13px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.04em}
+.ins{border-left:4px solid var(--brand);background:#F5F9FF;padding:12px 16px;border-radius:0 10px 10px 0;color:var(--ink);line-height:1.6}
+.ins b{color:var(--navy)}
+.lp{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line2)}
+.lp:last-child{border-bottom:0}.lp .n{width:28px;height:28px;border-radius:50%;background:var(--soft);color:var(--brand-deep);font-weight:800;display:grid;place-items:center;flex:none}
+.lp.urg .n{background:var(--bad-bg);color:var(--bad)}
+.prog{height:10px;border-radius:6px;background:#EDF1F7;overflow:hidden}.prog i{display:block;height:100%;background:var(--brand);border-radius:6px}
+.rowact{display:flex;gap:5px;flex-wrap:nowrap;justify-content:flex-end}
+/* biểu đồ */
+svg.ch text{font-family:inherit;fill:#5B6B86;font-size:11px}
+.hm{border-collapse:separate;border-spacing:3px;font-size:12px;width:100%}
+.hm th{font-weight:600;color:var(--muted);padding:4px 6px;text-align:center;font-size:11.5px;max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hm th.rl{text-align:left;max-width:150px}
+.hm td{height:34px;min-width:54px;text-align:center;border-radius:7px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+.hm td.e{background:#F1F4F9;color:#A3AFC2;font-weight:400}
+/* lớp phủ xem bài làm */
+#paperOv{position:fixed;inset:0;z-index:100;background:rgba(8,28,70,.55);display:grid;place-items:center;padding:14px}
+#paperOv iframe{width:min(980px,100%);height:min(92vh,900px);border:0;border-radius:16px;background:#fff;box-shadow:0 30px 80px -20px rgba(0,0,0,.5)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0F2549;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;z-index:120;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+/* responsive */
+@media(max-width:1180px){.kpis,.kpis6{grid-template-columns:repeat(3,minmax(0,1fr))}.c4,.c5,.c6,.c7,.c8{grid-column:span 12}}
+@media(max-width:700px){.fltTog{display:inline-flex}#fltCard:not(.open) .flt .fld:not(:first-child){display:none}main{padding:12px 12px 50px}.top-in{padding:9px 12px}.kpis,.kpis6{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi .v{font-size:22px}
+  .flt{grid-template-columns:1fr 1fr;padding:12px}.flt .fld:first-child{grid-column:1/-1}.card-h,.card-b{padding-left:14px;padding-right:14px}.hb-row{grid-template-columns:minmax(80px,110px) 1fr 48px}
+  .ph-card{padding:14px}.tabs button{padding:10px 12px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <img src="/kiemtra/logo-mark.png" alt="">
+  <div class="ttl"><b>Hồ sơ học tập</b><span>Quản trị dữ liệu kiểm tra nhân sự</span></div>
+  <div class="sp"></div>
+  <a class="btn" href="/kiemtra/admin#candidates" id="backAdmin">← Trang quản trị</a>
+</div></header>
+<main id="app">
+  <div id="stLoading" class="state"><div><div class="spin"></div><b>Đang tải dữ liệu nhân sự…</b>Hồ sơ, kết quả kiểm tra và cấu hình đánh giá</div></div>
+  <div id="stError" class="state hide"><div><b id="errT">Không tải được dữ liệu</b><span id="errM"></span><div style="margin-top:14px"><button class="btn pri" type="button" onclick="boot()">Thử lại</button></div></div></div>
+  <div id="stDenied" class="state hide"><div><b>Cần đăng nhập bằng tài khoản quản trị viên</b>Phân hệ này chứa dữ liệu nhân sự nên chỉ quản trị viên được xem.<div style="margin-top:14px"><a class="btn pri" href="/kiemtra/admin">Đến trang đăng nhập quản trị</a></div></div></div>
+
+  <!-- ============ MÀN CHÍNH: tổng quan + danh sách ============ -->
+  <div id="vMain" class="hide">
+    <h1 class="pg">Hồ sơ học tập</h1>
+    <p class="pgsub">Theo dõi năng lực, tiến bộ và nhu cầu đào tạo của toàn bộ nhân sự từ dữ liệu kiểm tra thực tế.</p>
+    <div class="card" id="fltCard">
+      <div class="flt" id="flt">
+        <div class="fld"><label for="fQ">Tìm theo tên hoặc mã nhân viên</label><input id="fQ" type="search" placeholder="Nhập tên hoặc mã NV…" autocomplete="off"></div>
+        <div class="fld"><label for="fTime">Thời gian</label><select id="fTime"><option value="0">Tất cả</option><option value="30">30 ngày gần đây</option><option value="90">3 tháng gần đây</option><option value="180">6 tháng gần đây</option><option value="365">12 tháng gần đây</option></select></div>
+        <div class="fld"><label for="fExam">Bài kiểm tra / chương trình</label><select id="fExam"></select></div>
+        <div class="fld"><label for="fDept">Phòng ban / bộ phận</label><select id="fDept"></select></div>
+        <div class="fld"><label for="fTitle">Chức danh</label><select id="fTitle"></select></div>
+        <div class="fld"><label for="fSeg">Nhóm ngành</label><select id="fSeg"></select></div>
+        <div class="fld"><label for="fRegion">Miền</label><select id="fRegion"></select></div>
+        <div class="fld"><label for="fProv">Tỉnh / thành</label><select id="fProv"></select></div>
+        <div class="fld"><label for="fMgr">Quản lí (ASM)</label><select id="fMgr"></select></div>
+        <div class="fld"><label for="fStatus">Trạng thái học tập</label><select id="fStatus"><option value="">Tất cả</option><option value="ok">Đạt yêu cầu</option><option value="need">Cần đào tạo bổ sung</option><option value="none">Chưa kiểm tra</option></select></div>
+      </div>
+      <div class="flt-foot"><label class="chk"><input type="checkbox" id="fLeft"> Gồm nhân sự đã nghỉ việc</label><button class="btn sm fltTog" type="button" id="fTog" aria-expanded="false" aria-controls="flt">Bộ lọc nâng cao ▾</button><span class="sp"></span><span id="fCount" class="fcount"></span><button class="btn sm" type="button" id="fReset">Xoá bộ lọc</button></div>
+    </div>
+    <div class="bar" style="margin-top:14px">
+      <div class="seg" role="tablist" aria-label="Chế độ xem">
+        <button type="button" role="tab" id="tabOv" aria-selected="true">Tổng quan &amp; phân tích</button>
+        <button type="button" role="tab" id="tabLs" aria-selected="false">Danh sách hồ sơ</button>
+      </div>
+      <span class="sp"></span>
+      <div class="menu" id="xlMenu"><button class="btn" type="button" id="xlBtn" aria-haspopup="menu" aria-expanded="false">⬇ Xuất Excel ▾</button><div class="menu-pop hide" id="xlPop" role="menu"></div></div>
+    </div>
+    <section id="secOv"></section>
+    <section id="secLs" class="hide"></section>
+  </div>
+
+  <!-- ============ TRANG CHI TIẾT ============ -->
+  <div id="vDetail" class="hide"></div>
+</main>
+<div id="paperOv" class="hide" role="dialog" aria-modal="true" aria-label="Bài làm"><iframe id="paperFrame" title="Bài làm" src="about:blank"></iframe></div>
+<div id="toast" class="hide" role="status" aria-live="polite"></div>
+<script>
+(function(){
+'use strict';
+/* ====================== Tiện ích ====================== */
+var $ = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+var norm = function(s){ return String(s == null ? '' : s).trim().toLowerCase(); };
+var fold = function(s){ return norm(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd'); };
+function vn(n, d){ if (n == null || isNaN(n)) return '–'; var p = Math.pow(10, d == null ? 1 : d); return (Math.round(n * p) / p).toString().replace('.', ','); }
+function pc(n){ return n == null || isNaN(n) ? '–' : vn(n) + '%'; }
+function pad(n){ return n < 10 ? '0' + n : '' + n; }
+function vnDate(ms){ if (!ms) return '–'; var d = new Date(ms + 7 * 3600e3); return pad(d.getUTCDate()) + '/' + pad(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear(); }
+function vnDT(ms){ if (!ms) return '–'; var d = new Date(ms + 7 * 3600e3); return pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ' ' + vnDate(ms); }
+function ago(ms){ if (!ms) return '–'; var d = Math.floor((Date.now() - ms) / 864e5); if (d <= 0) return 'Hôm nay'; if (d === 1) return 'Hôm qua'; if (d < 30) return d + ' ngày trước'; if (d < 365) return Math.floor(d / 30) + ' tháng trước'; return Math.floor(d / 365) + ' năm trước'; }
+function dur(sec){ if (sec == null) return '–'; return Math.floor(sec / 60) + ':' + pad(sec % 60); }
+function initials(n){ var p = String(n || '').trim().split(/\s+/); return ((p[p.length - 1] || '?').charAt(0) + (p.length > 1 ? p[0].charAt(0) : '')).toUpperCase(); }
+function toast(t){ var e = $('toast'); e.textContent = t; e.classList.remove('hide'); clearTimeout(toast._t); toast._t = setTimeout(function(){ e.classList.add('hide'); }, 2600); }
+async function api(method, path, body){
+  var r = await fetch(path, { method:method, headers:{ 'Content-Type':'application/json', 'X-Requested-With':'livotec' }, credentials:'same-origin', body: body ? JSON.stringify(body) : undefined });
+  var j = null; try { j = await r.json(); } catch (e) {}
+  return { s:r.status, j:j || {} };
+}
+var TIP = function(t){ return '<span class="tip" tabindex="0" title="' + esc(t) + '" aria-label="' + esc(t) + '">?</span>'; };
+
+/* ====================== Trạng thái toàn trang ====================== */
+var S = { C:[], by:{}, A:[], X:[], xById:{}, ST:{}, th:{ low:60, mid:70, high:90 }, cur:'', cat:{}, ph:{}, phOff:false, loaded:false };
+var F = { q:'', time:'0', exam:'', dept:'', title:'', seg:'', region:'', prov:'', mgr:'', status:'', left:false };
+var V = { tab:'ov', sort:{ k:'last', d:1 }, page:1, per:25, sel:{}, geo:'region', catExam:'' };
+var M = null; // kết quả tính toán theo bộ lọc hiện tại
+
+var REG = { bac:'Miền Bắc', nam:'Miền Nam' };
+function regionOf(c){ var r = norm(c.region); if (REG[r]) return REG[r]; if (/b[aắ]c/.test(r)) return 'Miền Bắc'; if (/nam/.test(r)) return 'Miền Nam'; var m = c.profile && c.profile.mien; return m ? String(m) : ''; }
+function deptOf(c){ var p = c.profile || {}; return p.phong || p.boPhan || p.khoi || p.donVi || ''; }
+var SEGN = { both:'both', ca_hai:'both', 'cả hai':'both', gia_dung:'gia_dung', 'gia dụng':'gia_dung', may_loc:'may_loc', 'máy lọc':'may_loc', 'máy lọc nước':'may_loc' };
+var SEGL = { both:'Cả hai ngành', gia_dung:'Gia dụng', may_loc:'Máy lọc nước' };
+function segOf(c){ return SEGN[norm(c.segment)] || 'both'; }
+var STL = { ok:'Đạt yêu cầu', need:'Cần đào tạo bổ sung', none:'Chưa kiểm tra', left:'Đã nghỉ việc' };
+var BL = { g:'Tốt', o:'Đạt', w:'Cần cải thiện', r:'Yếu' };
+function band(p){ var t = S.th; return p >= t.high ? 'g' : p >= t.mid ? 'o' : p >= t.low ? 'w' : 'r'; }
+function nextBand(p){ var t = S.th; return p < t.low ? t.low : p < t.mid ? t.mid : Math.min(100, t.high); }
+function xTitle(id){ var e = S.xById[id]; if (e && e.title && e.title !== id) return e.title; if (id === S.ST.examPeriod && S.ST.examTitle) return S.ST.examTitle; return id || '(chưa gắn đề)'; }
+function effX(e){ return Object.assign({}, S.ST, e); }
+
+/* ====================== Nạp dữ liệu thật ====================== */
+async function load(){
+  var rs = await Promise.all([ api('GET', '/api/kt-admin?op=candidates'), api('GET', '/api/kt-admin?op=results'), api('GET', '/api/kt-admin?op=exams'), api('GET', '/api/kt-admin?op=settings') ]);
+  if (rs.some(function(r){ return r.s === 401; })) return { denied:true };
+  if (rs.some(function(r){ return r.s === 403; })) return { denied:true };
+  for (var i = 0; i < rs.length; i++) if (!rs[i].j || !rs[i].j.ok) return { error:(rs[i].j && rs[i].j.error) || 'Máy chủ không phản hồi đúng.' };
+  build(rs[0].j, rs[1].j, rs[2].j, rs[3].j);
+  return { ok:true };
+}
+function build(c, r, x, s){
+  S.ST = s.settings || {};
+  var st = S.ST;
+  S.th = { low:(st.complianceLowMin != null ? st.complianceLowMin : 6) * 10, mid:(st.complianceMidMin != null ? st.complianceMidMin : 7) * 10, high:(st.complianceHighMin != null ? st.complianceHighMin : 9) * 10 };
+  S.C = (c.candidates || []).map(function(o){ o._k = norm(o.code); o._reg = regionOf(o); o._dept = deptOf(o); o._seg = segOf(o); o._fold = fold((o.name || '') + ' ' + (o.code || '')); return o; });
+  S.by = {}; S.C.forEach(function(o){ S.by[o._k] = o; });
+  S.A = (r.results || []).filter(function(a){ return a.status === 'submitted'; }).map(function(a){ a._k = norm(a.code); return a; });
+  S.X = x.exams || []; S.cur = x.currentPeriod || st.examPeriod || '';
+  S.xById = {}; S.X.forEach(function(e){ S.xById[e.id] = e; });
+  S.loaded = true;
+}
+
+/* ====================== Mô hình tính toán ====================== */
+function better(a, b){ if ((a.pct || 0) !== (b.pct || 0)) return (a.pct || 0) > (b.pct || 0); if ((a.score || 0) !== (b.score || 0)) return (a.score || 0) > (b.score || 0); return (a.submittedAt || 0) > (b.submittedAt || 0); }
+function asgMode(s){ var m = s && s.asgMode; if (m === 'pick' || m === 'exclude' || m === 'all') return m; var codes = (s && s.codes) || []; if (!codes.length) return 'all'; return s && s.codesExclude ? 'exclude' : 'pick'; }
+function inAud(e, c){ // đúng logic quiz.inAudience của máy chủ
+  if (c.left) return false;
+  var segs = e.segments || [], codes = (e.codes || []).map(norm);
+  if (segs.length && segs.indexOf(c._seg) < 0) return false;
+  var mode = asgMode(e); if (mode === 'all') return true;
+  var inList = codes.indexOf(c._k) >= 0;
+  return mode === 'pick' ? inList : !inList;
+}
+function timeCut(){ var d = +F.time; return d ? Date.now() - d * 864e5 : 0; }
+function scopeAtt(){ var cut = timeCut(); return S.A.filter(function(a){ return !a.practice && (!F.exam || (a.period || '') === F.exam) && (!cut || (a.submittedAt || 0) >= cut); }); }
+function scopeExams(att){ // các bài kiểm tra "được giao" dùng để tính tỉ lệ hoàn thành
+  var now = Date.now(), cut = timeCut(), have = {}; att.forEach(function(a){ have[a.period || ''] = 1; });
+  return S.X.filter(function(e){
+    var ef = effX(e); if (ef.practice) return false;
+    if (F.exam) return e.id === F.exam;
+    if (ef.openAt && ef.openAt > now && !have[e.id]) return false;
+    if (cut && !have[e.id] && (ef.openAt || e.createdAt || 0) < cut) return false;
+    return true;
+  }).map(effX);
+}
+function aggregate(c, mine, exams){
+  var byP = {}; mine.forEach(function(a){ var p = a.period || ''; if (!byP[p] || better(a, byP[p])) byP[p] = a; });
+  var per = Object.keys(byP).map(function(p){ return byP[p]; }).sort(function(a, b){ return (a.submittedAt || 0) - (b.submittedAt || 0); });
+  var sorted = mine.slice().sort(function(a, b){ return (b.submittedAt || 0) - (a.submittedAt || 0); });
+  var last = sorted[0] || null, curBest = per.length ? per[per.length - 1] : null;
+  var avg = per.length ? per.reduce(function(s, a){ return s + (a.pct || 0); }, 0) / per.length : null;
+  var best = per.length ? Math.max.apply(null, per.map(function(a){ return a.pct || 0; })) : null;
+  var delta = per.length >= 2 ? (per[per.length - 1].pct || 0) - (per[per.length - 2].pct || 0) : null;
+  var assigned = exams.filter(function(e){ return inAud(e, c); }), done = assigned.filter(function(e){ return byP[e.id] !== undefined; }).length;
+  var st = c.left ? 'left' : !mine.length ? 'none' : (curBest.passed === false || (curBest.pct || 0) < S.th.low ? 'need' : 'ok');
+  var chrono = mine.slice().sort(function(a, b){ return (a.submittedAt || 0) - (b.submittedAt || 0); });
+  var stuck = chrono.length >= 3 && (chrono[chrono.length - 1].pct || 0) <= (chrono[0].pct || 0) + 5 && (chrono[chrono.length - 1].pct || 0) < S.th.mid;
+  var lg = c.lastLogin && c.lastLogin.at || 0;
+  return { c:c, k:c._k, n:mine.length, per:per, avg:avg, best:best, lastP:last ? last.pct : null, lastAt:last ? last.submittedAt : 0, lastX:last ? (last.period || '') : '',
+    delta:delta, assigned:assigned.length, done:done, compl:assigned.length ? done / assigned.length * 100 : null, comp:last ? last.compliancePoints : null,
+    st:st, stuck:stuck, improved:delta != null && delta >= 10, act:Math.max(last ? last.submittedAt || 0 : 0, lg), curBest:curBest };
+}
+function empPass(c){
+  if (!F.left && c.left) return false;
+  if (F.q && c._fold.indexOf(fold(F.q)) < 0) return false;
+  if (F.dept && c._dept !== F.dept) return false;
+  if (F.title && (c.title || '') !== F.title) return false;
+  if (F.seg && c._seg !== F.seg) return false;
+  if (F.region && c._reg !== F.region) return false;
+  if (F.prov && (c.province || '') !== F.prov) return false;
+  if (F.mgr && (c.manager || '') !== F.mgr) return false;
+  return true;
+}
+function compute(){
+  var att = scopeAtt(), exams = scopeExams(att), byK = {};
+  att.forEach(function(a){ (byK[a._k] = byK[a._k] || []).push(a); });
+  var base = S.C.filter(empPass).map(function(c){ return aggregate(c, byK[c._k] || [], exams); });
+  var view = F.status ? base.filter(function(r){ return r.st === F.status; }) : base;
+  return { att:att, exams:exams, base:base, view:view };
+}
+
+/* ====================== Bộ lọc ====================== */
+function opts(list, all){ return '<option value="">' + esc(all) + '</option>' + list.map(function(v){ return '<option value="' + esc(v.v) + '">' + esc(v.l) + '</option>'; }).join(''); }
+function uniq(fn){ var m = {}; S.C.forEach(function(c){ var v = fn(c); if (v) m[v] = 1; }); return Object.keys(m).sort(function(a, b){ return a.localeCompare(b, 'vi'); }); }
+function fillFilters(){
+  var ex = S.X.filter(function(e){ return !effX(e).practice; }).map(function(e){ return { v:e.id, l:xTitle(e.id) + (e.id === S.cur ? ' (hiện tại)' : '') }; });
+  $('fExam').innerHTML = opts(ex, 'Tất cả bài kiểm tra');
+  $('fDept').innerHTML = opts(uniq(function(c){ return c._dept; }).map(function(v){ return { v:v, l:v }; }), 'Tất cả');
+  $('fTitle').innerHTML = opts(uniq(function(c){ return c.title; }).map(function(v){ return { v:v, l:v }; }), 'Tất cả');
+  $('fSeg').innerHTML = opts(['both', 'gia_dung', 'may_loc'].map(function(v){ return { v:v, l:SEGL[v] }; }), 'Tất cả');
+  $('fRegion').innerHTML = opts(uniq(function(c){ return c._reg; }).map(function(v){ return { v:v, l:v }; }), 'Tất cả');
+  $('fProv').innerHTML = opts(uniq(function(c){ return c.province; }).map(function(v){ return { v:v, l:v }; }), 'Tất cả');
+  $('fMgr').innerHTML = opts(uniq(function(c){ return c.manager; }).map(function(v){ return { v:v, l:v }; }), 'Tất cả');
+  syncStatusOpts();
+  syncFilterInputs();
+}
+function syncStatusOpts(){
+  $('fStatus').innerHTML = opts([{ v:'ok', l:'Đạt yêu cầu' }, { v:'need', l:'Cần đào tạo bổ sung' }, { v:'none', l:'Chưa kiểm tra' }].concat(F.left ? [{ v:'left', l:'Đã nghỉ việc' }] : []), 'Tất cả');
+}
+function syncFilterInputs(){
+  $('fQ').value = F.q; $('fTime').value = F.time; $('fExam').value = F.exam; $('fDept').value = F.dept; $('fTitle').value = F.title; $('fSeg').value = F.seg;
+  $('fRegion').value = F.region; $('fProv').value = F.prov; $('fMgr').value = F.mgr; $('fStatus').value = F.status; $('fLeft').checked = F.left;
+}
+function readFilters(){
+  F.q = $('fQ').value.trim(); F.time = $('fTime').value; F.exam = $('fExam').value; F.dept = $('fDept').value; F.title = $('fTitle').value; F.seg = $('fSeg').value;
+  F.region = $('fRegion').value; F.prov = $('fProv').value; F.mgr = $('fMgr').value; F.status = $('fStatus').value; F.left = $('fLeft').checked;
+}
+function onFilter(){ var l = F.left; readFilters(); if (l !== F.left){ syncStatusOpts(); $('fStatus').value = F.status; } V.page = 1; V.sel = {}; refresh(); }
+function resetFilters(){ F = { q:'', time:'0', exam:'', dept:'', title:'', seg:'', region:'', prov:'', mgr:'', status:'', left:false }; syncStatusOpts(); syncFilterInputs(); V.page = 1; V.sel = {}; refresh(); }
+function nActive(){ return ['time', 'exam', 'dept', 'title', 'seg', 'region', 'prov', 'mgr', 'status'].filter(function(k){ return k === 'time' ? F.time !== '0' : !!F[k]; }).length + (F.left ? 1 : 0); }
+function updTog(){ var n = nActive(), o = $('fltCard').classList.contains('open'); $('fTog').textContent = 'Bộ lọc nâng cao' + (n ? ' (' + n + ')' : '') + (o ? ' ▴' : ' ▾'); }
+function filterActive(){ return !!(F.q || F.time !== '0' || F.exam || F.dept || F.title || F.seg || F.region || F.prov || F.mgr || F.status || F.left); }
+
+/* ====================== Biểu đồ (SVG / HTML thuần, không thư viện) ====================== */
+function hbars(items, opt){
+  opt = opt || {};
+  if (!items.length) return '<div class="empty">Chưa có dữ liệu.</div>';
+  return '<div class="hb">' + items.map(function(it){
+    var b = it.v == null ? 'n' : band(it.v), w = it.v == null ? 0 : Math.max(2, Math.min(100, it.v));
+    var nm = it.href ? '<button type="button" class="nm" data-go="' + esc(it.href) + '" title="' + esc(it.label + (it.sub ? ' · ' + it.sub : '')) + '">' + esc(it.label) + (it.sub && !it.hideSub ? '<small>' + esc(it.sub) + '</small>' : '') + '</button>' : '<span class="nm" title="' + esc(it.label + (it.sub ? ' · ' + it.sub : '')) + '">' + esc(it.label) + (it.sub ? '<small>' + esc(it.sub) + '</small>' : '') + '</span>';
+    return '<div class="hb-row">' + nm + '<div class="tr"><i class="' + b + '" style="width:' + w + '%"></i></div><span class="vv">' + (it.v == null ? '–' : pc(it.v)) + '</span></div>';
+  }).join('') + '</div>' + (opt.noLegend ? '' : legend());
+}
+function legend(){ var t = S.th; return '<div class="legend"><span><i class="g"></i>Tốt ≥ ' + t.high + '%</span><span><i class="o"></i>Đạt ≥ ' + t.mid + '%</span><span><i class="w"></i>Cần cải thiện ≥ ' + t.low + '%</span><span><i class="r"></i>Yếu &lt; ' + t.low + '%</span></div>'; }
+function shortLabel(t){ t = String(t); var m = /^([A-Za-z0-9]{1,8})\s*[-–:]\s/.exec(t); if (m) return m[1]; return t.length > 13 ? t.slice(0, 12) + '…' : t; }
+function lineChart(pts, opt){
+  opt = opt || {};
+  if (!pts.length) return '<div class="empty">Chưa có dữ liệu để vẽ biểu đồ.</div>';
+  var W = 640, H = 236, pl = 38, pr = 14, pt = 24, pb = 40, iw = W - pl - pr, ih = H - pt - pb;
+  var x = function(i){ return pl + 26 + (pts.length > 1 ? i * (iw - 52) / (pts.length - 1) : (iw - 52) / 2); }, y = function(v){ return pt + ih - Math.max(0, Math.min(100, v)) / 100 * ih; };
+  var g = '', i;
+  [0, 25, 50, 75, 100].forEach(function(v){ g += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="#E6ECF4"/><text x="' + (pl - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + v + '</text>'; });
+  g += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(S.th.low) + '" y2="' + y(S.th.low) + '" stroke="#E2574C" stroke-dasharray="5 4"/>';
+  function path(key, col){ var d = '', started = false; pts.forEach(function(p, k){ if (p[key] == null) { started = false; return; } d += (started ? 'L' : 'M') + x(k) + ' ' + y(p[key]) + ' '; started = true; }); return d ? '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>' : ''; }
+  g += path('v2', '#E0A030') + path('v', '#0A63C4');
+  pts.forEach(function(p, k){
+    if (p.v2 != null) g += '<circle cx="' + x(k) + '" cy="' + y(p.v2) + '" r="3.6" fill="#fff" stroke="#E0A030" stroke-width="2"><title>' + esc(p.l + ' · ' + (opt.l2 || 'Trung bình đội') + ': ' + pc(p.v2)) + '</title></circle>';
+    if (p.v != null) g += '<circle cx="' + x(k) + '" cy="' + y(p.v) + '" r="4.2" fill="#0A63C4" stroke="#fff" stroke-width="1.6"><title>' + esc(p.l + ' · ' + (opt.l1 || 'Điểm TB') + ': ' + pc(p.v) + (p.n != null ? ' · ' + p.n + ' người' : '')) + '</title></circle>';
+    if (p.v != null) g += '<text x="' + x(k) + '" y="' + (y(p.v) - 9) + '" text-anchor="middle" style="fill:#0B2A5B;font-weight:700">' + vn(p.v, 0) + '</text>';
+    var lb = shortLabel(p.l);
+    g += '<text x="' + x(k) + '" y="' + (H - 16) + '" text-anchor="middle"><title>' + esc(p.l) + '</title>' + esc(lb) + '</text>';
+  });
+  return '<svg class="ch" viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="' + esc(opt.aria || 'Biểu đồ đường') + '">' + g + '</svg>' +
+    '<div class="legend"><span><i style="background:#0A63C4"></i>' + esc(opt.l1 || 'Điểm TB') + '</span>' + (pts.some(function(p){ return p.v2 != null; }) ? '<span><i style="background:#E0A030"></i>' + esc(opt.l2 || 'Trung bình đội') + '</span>' : '') + '<span><i style="background:none;border-top:2px dashed #E2574C;border-radius:0;height:0;width:14px"></i>Mốc chuẩn ' + S.th.low + '%</span></div>';
+}
+function donut(parts, centerTop, centerSub){
+  var total = parts.reduce(function(s, p){ return s + p.n; }, 0), R = 54, C = 2 * Math.PI * R, off = 0, segs = '';
+  if (!total) return '<div class="empty">Chưa có dữ liệu.</div>';
+  parts.forEach(function(p){ if (!p.n) return; var len = p.n / total * C; segs += '<circle r="' + R + '" cx="70" cy="70" fill="none" stroke="' + p.col + '" stroke-width="18" stroke-dasharray="' + len + ' ' + (C - len) + '" stroke-dashoffset="' + (-off) + '" transform="rotate(-90 70 70)"><title>' + esc(p.l + ': ' + p.n) + '</title></circle>'; off += len; });
+  return '<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap"><svg class="ch" viewBox="0 0 140 140" width="150" height="150" role="img" aria-label="Phân bố trạng thái học tập"><circle r="' + R + '" cx="70" cy="70" fill="none" stroke="#EDF1F7" stroke-width="18"/>' + segs +
+    '<text x="70" y="68" text-anchor="middle" style="fill:#0B2A5B;font-size:22px;font-weight:800">' + esc(centerTop) + '</text><text x="70" y="86" text-anchor="middle" style="font-size:10.5px">' + esc(centerSub) + '</text></svg>' +
+    '<div style="flex:1;min-width:150px;display:flex;flex-direction:column;gap:8px">' + parts.map(function(p){ return '<button type="button" class="nm" data-stat="' + esc(p.key) + '" style="display:flex;align-items:center;gap:8px;border:0;background:none;padding:0;cursor:pointer;text-align:left;font-size:13px"><i style="width:10px;height:10px;border-radius:3px;background:' + p.col + '"></i><span style="flex:1;color:#0F2549">' + esc(p.l) + '</span><b style="color:#0B2A5B">' + p.n + '</b><span style="color:#5B6B86;width:42px;text-align:right">' + vn(p.n / total * 100, 0) + '%</span></button>'; }).join('') + '</div></div>';
+}
+function heat(v){ // màu theo mốc hệ thống
+  var b = band(v); return { g:'#12905A', o:'#1FAE6B', w:'#F0A93A', r:'#E2574C' }[b];
+}
+
+/* ====================== TỔNG QUAN: chỉ số + phân tích ====================== */
+function kpi(l, tip, v, s, cls){ return '<div class="card kpi ' + (cls || '') + '"><div class="l">' + esc(l) + ' ' + TIP(tip) + '</div><div class="v">' + v + '</div><div class="s">' + s + '</div></div>'; }
+function renderKpis(){
+  var rows = M.base, has = rows.filter(function(r){ return r.n > 0; });
+  var tries = has.reduce(function(s, r){ return s + r.n; }, 0);
+  var avg = has.length ? has.reduce(function(s, r){ return s + r.avg; }, 0) / has.length : null;
+  var A = 0, D = 0; rows.forEach(function(r){ A += r.assigned; D += r.done; });
+  var ok = rows.filter(function(r){ return r.st === 'ok'; }).length, need = rows.filter(function(r){ return r.st === 'need'; }).length;
+  return '<div class="kpis">' +
+    kpi('Tổng nhân sự', 'Số nhân sự trong phạm vi bộ lọc hiện tại (không gồm người đã nghỉ việc trừ khi bạn tích chọn).', rows.length, has.length + ' người đã có kết quả') +
+    kpi('Tổng lượt kiểm tra', 'Số lượt làm bài chính thức đã nộp trong phạm vi bộ lọc. Bài thi thử, bài thử nghiệm và bài đã ẩn không tính.', tries, 'bài chính thức đã nộp') +
+    kpi('Điểm trung bình', 'Trung bình của điểm trung bình từng người. Mỗi người chỉ lấy lần làm điểm cao nhất của mỗi bài kiểm tra (cùng cách hệ thống xếp hạng).', avg == null ? '–' : vn(avg) + '<small>%</small>', 'toàn hệ thống') +
+    kpi('Tỉ lệ hoàn thành', 'Số bài kiểm tra đã làm / số bài kiểm tra được giao (theo đối tượng, nhóm ngành và danh sách của từng bài). Chỉ tính các bài đã mở.', A ? vn(D / A * 100, 0) + '<small>%</small>' : '–', A ? D + ' / ' + A + ' lượt được giao' : 'Chưa có bài được giao') +
+    kpi('Đạt yêu cầu', 'Kết quả của bài kiểm tra gần nhất không thấp hơn ngưỡng đạt (nếu đề có cài ngưỡng) và không dưới mốc chuẩn ' + S.th.low + '% của hệ thống.', ok, rows.length ? vn(ok / rows.length * 100, 0) + '% nhân sự' : '', 'ok') +
+    kpi('Cần đào tạo bổ sung', 'Kết quả bài kiểm tra gần nhất chưa đạt ngưỡng của đề, hoặc dưới mốc chuẩn ' + S.th.low + '% của hệ thống.', need, rows.length ? vn(need / rows.length * 100, 0) + '% nhân sự' : '', need ? 'bad' : '') +
+  '</div>';
+}
+function go(code){ location.hash = '#nv/' + encodeURIComponent(code); }
+function lowList(){
+  var r = M.base.filter(function(x){ return x.n > 0 && x.curBest; }).sort(function(a, b){ return (a.curBest.pct || 0) - (b.curBest.pct || 0); }).slice(0, 8);
+  if (!r.length) return '<div class="empty">Chưa có kết quả nào trong phạm vi lọc.</div>';
+  return hbars(r.map(function(x){ return { label:x.c.name || x.c.code, sub:x.c.code, hideSub:true, v:x.curBest.pct || 0, href:x.c.code }; }), { noLegend:true }) + '<div class="q" style="margin-top:8px">Kết quả của bài kiểm tra gần nhất, thấp nhất trước.</div>';
+}
+function geoBars(){
+  var key = V.geo, g = {};
+  M.base.forEach(function(x){ if (x.n < 1 || x.avg == null) return; var k = key === 'region' ? x.c._reg : (x.c.province || ''); if (!k) k = '(chưa có)'; var o = g[k] || (g[k] = { s:0, n:0 }); o.s += x.avg; o.n++; });
+  var items = Object.keys(g).map(function(k){ return { label:k, sub:g[k].n + ' người', v:g[k].s / g[k].n }; }).sort(function(a, b){ return a.v - b.v; });
+  return '<div class="seg" style="margin-bottom:12px"><button type="button" data-geo="region" aria-selected="' + (key === 'region') + '">Theo miền</button><button type="button" data-geo="province" aria-selected="' + (key === 'province') + '">Theo tỉnh</button></div>' +
+    (key === 'province' && items.length > 12 ? hbars(items.slice(0, 12), {}) + '<div class="q" style="margin-top:6px">Hiện 12 tỉnh thấp nhất trong ' + items.length + ' tỉnh.</div>' : hbars(items, {}));
+}
+function mgrTable(){
+  var g = {};
+  M.base.forEach(function(x){ var k = x.c.manager || '(chưa có quản lí)'; var o = g[k] || (g[k] = { n:0, need:0, s:0, m:0 }); o.n++; if (x.st === 'need') o.need++; if (x.avg != null){ o.s += x.avg; o.m++; } });
+  var rows = Object.keys(g).map(function(k){ var o = g[k]; return { k:k, n:o.n, need:o.need, avg:o.m ? o.s / o.m : null }; }).filter(function(r){ return r.need > 0; }).sort(function(a, b){ return b.need - a.need || b.need / b.n - a.need / a.n; }).slice(0, 8);
+  if (!rows.length) return '<div class="empty">Không có nhóm nào cần đào tạo bổ sung trong phạm vi lọc.</div>';
+  return '<div class="tw"><table class="t"><thead><tr><th>Quản lí (ASM)</th><th class="r">Nhân sự</th><th class="r">Cần đào tạo</th><th class="r">Tỉ lệ</th><th class="r">Điểm TB</th></tr></thead><tbody>' + rows.map(function(r){
+    return '<tr><td><button type="button" class="nm" data-mgr="' + esc(r.k) + '">' + esc(r.k) + '</button></td><td class="r">' + r.n + '</td><td class="r"><b style="color:#C0332B">' + r.need + '</b></td><td class="r">' + vn(r.need / r.n * 100, 0) + '%</td><td class="r">' + pc(r.avg) + '</td></tr>'; }).join('') + '</tbody></table></div><div class="q" style="margin-top:6px">Bấm tên quản lí để xem danh sách nhân sự cần đào tạo của nhóm đó.</div>';
+}
+function trendChart(){
+  var by = {};
+  M.base.forEach(function(x){ x.per.forEach(function(a){ var p = a.period || ''; var o = by[p] || (by[p] = { s:0, n:0, t:0 }); o.s += a.pct || 0; o.n++; o.t = Math.max(o.t, a.submittedAt || 0); }); });
+  var pts = Object.keys(by).map(function(p){ return { p:p, t:by[p].t, l:xTitle(p), v:by[p].s / by[p].n, n:by[p].n }; }).sort(function(a, b){ return a.t - b.t; }).slice(-8);
+  return lineChart(pts, { l1:'Điểm TB của người làm', aria:'Xu hướng điểm trung bình theo bài kiểm tra' });
+}
+function topLists(){
+  var imp = M.base.filter(function(x){ return x.improved; }).sort(function(a, b){ return b.delta - a.delta; }).slice(0, 6);
+  var stk = M.base.filter(function(x){ return x.stuck; }).sort(function(a, b){ return b.n - a.n; }).slice(0, 6);
+  var li = function(arr, f){ return arr.length ? '<div class="hb">' + arr.map(f).join('') + '</div>' : '<div class="empty">Không có trường hợp nào trong phạm vi lọc.</div>'; };
+  return { imp:li(imp, function(x){ return '<div class="hb-row" style="grid-template-columns:1fr auto auto"><button type="button" class="nm" data-go="' + esc(x.c.code) + '">' + esc(x.c.name || x.c.code) + '<small>' + esc(x.c.code) + '</small></button><span class="vv" style="color:#16794A">▲ +' + vn(x.delta, 0) + ' điểm %</span><span class="vv" style="color:#5B6B86;font-weight:500;width:auto">' + pc(x.per[x.per.length - 1].pct) + '</span></div>'; }),
+    stk:li(stk, function(x){ return '<div class="hb-row" style="grid-template-columns:1fr auto auto"><button type="button" class="nm" data-go="' + esc(x.c.code) + '">' + esc(x.c.name || x.c.code) + '<small>' + esc(x.c.code) + '</small></button><span class="vv" style="color:#C0332B">' + x.n + ' lượt</span><span class="vv" style="color:#5B6B86;font-weight:500;width:auto">' + pc(x.lastP) + '</span></div>'; }), nImp:imp.length, nStk:stk.length };
+}
+function heatmap(){
+  var cols = {}, mg = {};
+  M.base.forEach(function(x){ var m = x.c.manager || ''; if (!m) return; mg[m] = (mg[m] || 0) + 1; x.per.forEach(function(a){ var p = a.period || ''; cols[p] = Math.max(cols[p] || 0, a.submittedAt || 0); }); });
+  var cl = Object.keys(cols).sort(function(a, b){ return cols[a] - cols[b]; }).slice(-6), rl = Object.keys(mg).sort(function(a, b){ return mg[b] - mg[a]; }).slice(0, 10);
+  if (!cl.length || !rl.length) return '<div class="empty">Chưa đủ dữ liệu (cần nhân sự có quản lí và đã có kết quả).</div>';
+  var cell = {}; M.base.forEach(function(x){ var m = x.c.manager || ''; if (!m) return; x.per.forEach(function(a){ var k = m + '||' + (a.period || ''); var o = cell[k] || (cell[k] = { s:0, n:0 }); o.s += a.pct || 0; o.n++; }); });
+  return '<div class="tw"><table class="hm"><thead><tr><th class="rl">Quản lí (ASM)</th>' + cl.map(function(p){ return '<th title="' + esc(xTitle(p)) + '">' + esc(xTitle(p)) + '</th>'; }).join('') + '</tr></thead><tbody>' + rl.map(function(m){
+    return '<tr><th class="rl" title="' + esc(m) + '">' + esc(m) + '</th>' + cl.map(function(p){ var o = cell[m + '||' + p]; if (!o) return '<td class="e">–</td>'; var v = o.s / o.n; return '<td style="background:' + heat(v) + '" title="' + esc(m + ' · ' + xTitle(p) + ': ' + pc(v) + ' (' + o.n + ' người)') + '">' + vn(v, 0) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' + legend();
+}
+function catBox(){
+  var id = V.catExam, d = S.cat[id];
+  var exOpts = S.X.filter(function(e){ return !effX(e).practice && S.A.some(function(a){ return (a.period || '') === e.id; }); }).map(function(e){ return '<option value="' + esc(e.id) + '"' + (e.id === id ? ' selected' : '') + '>' + esc(xTitle(e.id)) + '</option>'; }).join('');
+  var head = '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><label for="catSel" class="q" style="margin:0">Bài kiểm tra:</label><select id="catSel" class="btn" style="min-height:34px;font-weight:600">' + (exOpts || '<option value="">Chưa có bài kiểm tra nào có kết quả</option>') + '</select></div>';
+  if (!id) return head + '<div class="empty">Chưa có bài kiểm tra nào có kết quả để phân tích chuyên đề.</div>';
+  if (!d) return head + '<div class="empty"><div class="spin"></div>Đang phân tích chuyên đề…</div>';
+  if (d.err) return head + '<div class="msg err">' + esc(d.err) + ' <button class="btn sm" type="button" data-catretry="1">Thử lại</button></div>';
+  if (!d.rows.length) return head + '<div class="empty">Bài này chưa có đủ dữ liệu theo từng chuyên đề.</div>';
+  var rows = d.rows.slice().sort(function(a, b){ return a.pct - b.pct; });
+  return head + hbars(rows.slice(0, 10).map(function(r){ return { label:r.cat, sub:r.q + ' câu', v:r.pct }; })) + '<div class="q" style="margin-top:8px">Tính trên ' + d.attempts + ' bài (lần nộp mới nhất của mỗi người). Chuyên đề thấp nhất ở trên cùng' + (rows.length > 10 ? ' · hiện 10/' + rows.length : '') + '.</div>';
+}
+async function loadCats(id){
+  if (!id || S.cat[id]) return;
+  var r; try { r = await api('GET', '/api/kt-admin?op=itemAnalysis&exam=' + encodeURIComponent(id)); } catch (e) { r = null; }
+  if (!r || !r.j || !r.j.ok){ S.cat[id] = { err:(r && r.j && r.j.error) || 'Không phân tích được chuyên đề của bài này.', rows:[] }; }
+  else {
+    var m = {}; (r.j.items || []).forEach(function(it){ var c = it.category || 'Chưa phân loại'; var o = m[c] || (m[c] = { n:0, ok:0, q:0 }); o.n += it.n || 0; o.ok += (it.pCorrect || 0) * (it.n || 0); o.q++; });
+    S.cat[id] = { attempts:(r.j.summary && r.j.summary.attempts) || 0, rows:Object.keys(m).filter(function(c){ return m[c].n > 0; }).map(function(c){ return { cat:c, q:m[c].q, n:m[c].n, pct:m[c].ok / m[c].n * 100 }; }) };
+  }
+  if (V.catExam === id && V.tab === 'ov' && $('catBox')) $('catBox').innerHTML = catBox();
+}
+function renderOverview(){
+  var T = topLists();
+  if (!V.catExam){ var withRes = S.X.filter(function(e){ return !effX(e).practice && S.A.some(function(a){ return (a.period || '') === e.id; }); }); V.catExam = F.exam && withRes.some(function(e){ return e.id === F.exam; }) ? F.exam : (withRes.some(function(e){ return e.id === S.cur; }) ? S.cur : (withRes[0] ? withRes[0].id : '')); }
+  var cnt = { ok:0, need:0, none:0, left:0 }; M.base.forEach(function(r){ cnt[r.st]++; });
+  var parts = [{ key:'ok', l:'Đạt yêu cầu', n:cnt.ok, col:'#1FAE6B' }, { key:'need', l:'Cần đào tạo bổ sung', n:cnt.need, col:'#E2574C' }, { key:'none', l:'Chưa kiểm tra', n:cnt.none, col:'#B8C3D4' }];
+  if (F.left) parts.push({ key:'left', l:'Đã nghỉ việc', n:cnt.left, col:'#8D6FC8' });
+  var h = renderKpis() + '<div class="grid">' +
+    '<div class="card c8"><div class="card-h"><h2>Xu hướng điểm theo bài kiểm tra</h2>' + TIP('Điểm trung bình của những người đã làm từng bài kiểm tra (mỗi người lấy lần điểm cao nhất của bài đó), theo thứ tự thời gian. Đường đỏ nét đứt là mốc chuẩn của hệ thống.') + '</div><div class="card-b">' + trendChart() + '</div></div>' +
+    '<div class="card c4"><div class="card-h"><h2>Trạng thái học tập</h2>' + TIP('Phân loại theo kết quả bài kiểm tra gần nhất của từng người trong phạm vi lọc. Bấm vào một dòng để xem danh sách.') + '</div><div class="card-b">' + donut(parts, String(M.base.length), 'nhân sự') + '</div></div>' +
+    '<div class="card c6"><div class="card-h"><h2>Nhân viên có kết quả thấp</h2></div><div class="card-b">' + lowList() + '</div></div>' +
+    '<div class="card c6"><div class="card-h"><h2>Năng lực trung bình theo khu vực</h2>' + TIP('Điểm trung bình của nhân sự theo miền hoặc tỉnh, khu vực thấp nhất ở trên cùng.') + '</div><div class="card-b">' + geoBars() + '</div></div>' +
+    '<div class="card c6"><div class="card-h"><h2>Chuyên đề có tỉ lệ đúng thấp nhất</h2>' + TIP('Tổng hợp từ phân tích câu hỏi của một bài kiểm tra: tỉ lệ trả lời đúng theo từng chuyên đề (mảng kiến thức).') + '</div><div class="card-b" id="catBox">' + catBox() + '</div></div>' +
+    '<div class="card c6"><div class="card-h"><h2>Nhóm cần đào tạo bổ sung</h2>' + TIP('Quản lí (ASM) có nhiều nhân sự cần đào tạo bổ sung nhất trong phạm vi lọc.') + '</div><div class="card-b">' + mgrTable() + '</div></div>' +
+    '<div class="card c6"><div class="card-h"><h2>Nhân sự tiến bộ</h2><span class="sub">' + T.nImp + ' người</span>' + TIP('Điểm của bài kiểm tra gần nhất cao hơn bài trước đó từ 10 điểm % trở lên.') + '</div><div class="card-b">' + T.imp + '</div></div>' +
+    '<div class="card c6"><div class="card-h"><h2>Kiểm tra nhiều lần nhưng chưa cải thiện</h2><span class="sub">' + T.nStk + ' người</span>' + TIP('Đã làm từ 3 lượt trở lên, lần gần nhất chỉ hơn lần đầu tối đa 5 điểm % và vẫn dưới mốc ' + S.th.mid + '%.') + '</div><div class="card-b">' + T.stk + '</div></div>' +
+    '<div class="card c12"><div class="card-h"><h2>Bản đồ nhiệt: quản lí × bài kiểm tra</h2>' + TIP('Điểm trung bình của nhân sự từng quản lí (ASM) ở mỗi bài kiểm tra gần đây (tối đa 10 quản lí đông nhân sự nhất, 6 bài gần nhất). Ô trống: chưa có ai làm.') + '</div><div class="card-b">' + heatmap() + '</div></div>' +
+  '</div>';
+  $('secOv').innerHTML = h;
+  if (V.catExam && !S.cat[V.catExam]) loadCats(V.catExam);
+}
+
+/* ====================== DANH SÁCH HỒ SƠ ====================== */
+V.sort = { k:'act', d:-1 };
+var COLS = [ { k:'sel' }, { k:'av' }, { k:'code', l:'Mã NV', s:1 }, { k:'name', l:'Họ và tên', s:1 }, { k:'dept', l:'Phòng ban / Bộ phận', s:1 }, { k:'title', l:'Chức danh', s:1 }, { k:'area', l:'Khu vực / Địa bàn', s:1 },
+  { k:'n', l:'Số lần KT', s:1, r:1, t:'Số lượt làm bài chính thức đã nộp trong phạm vi lọc.' }, { k:'avg', l:'Điểm TB', s:1, r:1, t:'Trung bình điểm của từng bài kiểm tra (mỗi bài lấy lần điểm cao nhất).' },
+  { k:'compl', l:'Hoàn thành', s:1, r:1, t:'Số bài đã làm / số bài được giao.' }, { k:'comp', l:'Tuân thủ', s:1, r:1, t:'Điểm tuân thủ của lần làm gần nhất.' }, { k:'st', l:'Trạng thái', s:1 }, { k:'act', l:'Hoạt động gần nhất', s:1, t:'Lần nộp bài hoặc đăng nhập gần nhất.' }, { k:'go' } ];
+function area(c){ return [c._reg, c.province].filter(Boolean).join(' · '); }
+function sortVal(r, k){
+  switch (k){
+    case 'code': return norm(r.c.code); case 'name': return fold(r.c.name || ''); case 'dept': return fold(r.c._dept); case 'title': return fold(r.c.title || ''); case 'area': return fold(area(r.c));
+    case 'n': return r.n; case 'avg': return r.avg; case 'compl': return r.compl; case 'comp': return r.comp; case 'st': return { need:0, ok:1, none:2, left:3 }[r.st]; case 'act': return r.act || null; default: return r.act;
+  }
+}
+function sortedView(){
+  var s = V.sort, rows = M.view.slice();
+  rows.sort(function(a, b){ var x = sortVal(a, s.k), y = sortVal(b, s.k);
+    var nx = x == null || x === '', ny = y == null || y === ''; if (nx && ny) return 0; if (nx) return 1; if (ny) return -1;
+    var c = typeof x === 'string' ? x.localeCompare(y, 'vi') : x - y; return c * s.d || (norm(a.c.code) < norm(b.c.code) ? -1 : 1); });
+  return rows;
+}
+function pageNums(cur, total){ var a = [], i; for (i = 1; i <= total; i++) if (i === 1 || i === total || Math.abs(i - cur) <= 1) a.push(i); var out = [], p = 0; a.forEach(function(i){ if (p && i - p > 1) out.push('…'); out.push(i); p = i; }); return out; }
+function renderList(){
+  var rows = sortedView(), total = rows.length, pages = Math.max(1, Math.ceil(total / V.per));
+  if (V.page > pages) V.page = pages;
+  var pageRows = rows.slice((V.page - 1) * V.per, V.page * V.per), nSel = Object.keys(V.sel).length;
+  if (!total){
+    $('secLs').innerHTML = '<div class="card"><div class="empty" style="padding:44px 14px"><b style="color:#0B2A5B;display:block;font-size:15px;margin-bottom:4px">Không có hồ sơ nào phù hợp</b>' + (filterActive() ? 'Thử nới lỏng bộ lọc hoặc <button class="btn sm" type="button" data-reset="1">xoá bộ lọc</button>.' : 'Chưa có nhân sự nào trong hệ thống.') + '</div></div>';
+    return;
+  }
+  var allOnPage = pageRows.every(function(r){ return V.sel[r.c.code]; });
+  var th = COLS.map(function(c){
+    if (c.k === 'sel') return '<th style="width:34px"><input type="checkbox" data-selpage="1" aria-label="Chọn cả trang"' + (allOnPage ? ' checked' : '') + '></th>';
+    if (!c.l) return '<th></th>';
+    var on = V.sort.k === c.k; return '<th class="' + (c.s ? 's ' : '') + (c.r ? 'r' : '') + '"' + (c.s ? ' data-sort="' + c.k + '" aria-sort="' + (on ? (V.sort.d > 0 ? 'ascending' : 'descending') : 'none') + '"' : '') + (c.t ? ' title="' + esc(c.t) + '"' : '') + '>' + esc(c.l) + '<span class="ar">' + (on ? (V.sort.d > 0 ? '▲' : '▼') : '') + '</span></th>';
+  }).join('');
+  var tr = pageRows.map(function(r){
+    var c = r.c, bnd = r.avg == null ? '' : band(r.avg);
+    return '<tr>' +
+      '<td><input type="checkbox" data-sel="' + esc(c.code) + '" aria-label="Chọn ' + esc(c.name || c.code) + '"' + (V.sel[c.code] ? ' checked' : '') + '></td>' +
+      '<td><div class="av" data-av="' + esc(c.code) + '">' + esc(initials(c.name || c.code)) + '</div></td>' +
+      '<td class="code nw">' + esc(c.code) + '</td>' +
+      '<td><button type="button" class="nm" data-go="' + esc(c.code) + '">' + esc(c.name || c.code) + '</button></td>' +
+      '<td>' + (esc(c._dept) || '<span style="color:#9AA7BC">–</span>') + '</td>' +
+      '<td class="nw">' + esc(c.title || '–') + '</td>' +
+      '<td>' + (esc(area(c)) || '<span style="color:#9AA7BC">–</span>') + '</td>' +
+      '<td class="r">' + r.n + '</td>' +
+      '<td class="r nw">' + (r.avg == null ? '–' : '<b>' + pc(r.avg) + '</b> <span class="chip plain ' + bnd + '" style="padding:1px 7px;font-size:11px">' + BL[bnd] + '</span>') + '</td>' +
+      '<td class="r nw">' + (r.compl == null ? '–' : vn(r.compl, 0) + '% <span style="color:#9AA7BC;font-size:11.5px">(' + r.done + '/' + r.assigned + ')</span>') + '</td>' +
+      '<td class="r">' + (r.comp == null ? '–' : r.comp) + '</td>' +
+      '<td><span class="chip ' + r.st + '">' + STL[r.st] + '</span></td>' +
+      '<td class="nw" title="' + esc(vnDT(r.act)) + '">' + (r.act ? ago(r.act) : '–') + '</td>' +
+      '<td><button type="button" class="btn sm" data-go="' + esc(c.code) + '">Xem chi tiết</button></td></tr>';
+  }).join('');
+  var pn = pageNums(V.page, pages).map(function(p){ return p === '…' ? '<span style="padding:0 4px">…</span>' : '<button type="button" data-pg="' + p + '" class="' + (p === V.page ? 'on' : '') + '">' + p + '</button>'; }).join('');
+  $('secLs').innerHTML = '<div class="card">' +
+    (nSel ? '<div class="sel-bar"><span>Đã chọn ' + nSel + ' nhân sự</span>' + (nSel < total ? '<button class="btn sm" type="button" data-selall="1">Chọn tất cả ' + total + ' kết quả lọc</button>' : '') + '<span class="sp"></span><button class="btn sm" type="button" data-selclear="1">Bỏ chọn</button><button class="btn sm pri" type="button" data-xl="sel">⬇ Xuất Excel đã chọn</button></div>' : '') +
+    '<div class="tw"><table class="t"><thead><tr>' + th + '</tr></thead><tbody>' + tr + '</tbody></table></div>' +
+    '<div class="pg-ft"><span>Hiện ' + ((V.page - 1) * V.per + 1) + '–' + Math.min(total, V.page * V.per) + ' / ' + total + ' hồ sơ</span><span class="sp"></span><label>Số dòng <select id="perSel">' + [25, 50, 100].map(function(n){ return '<option' + (n === V.per ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select></label>' +
+    '<div class="pgs"><button type="button" data-pg="' + (V.page - 1) + '"' + (V.page <= 1 ? ' disabled' : '') + ' aria-label="Trang trước">‹</button>' + pn + '<button type="button" data-pg="' + (V.page + 1) + '"' + (V.page >= pages ? ' disabled' : '') + ' aria-label="Trang sau">›</button></div></div></div>';
+  faces(pageRows.map(function(r){ return r.c.code; }));
+}
+
+/* ====================== Ảnh đại diện (chỉ tài khoản chủ xem được) ====================== */
+function applyFaces(root){
+  (root || document).querySelectorAll('.av[data-av]').forEach(function(el){ var u = S.ph[el.getAttribute('data-av')]; if (u && !el.classList.contains('has')){ el.style.backgroundImage = 'url(' + u + ')'; el.classList.add('has'); } });
+}
+async function faces(codes){
+  applyFaces();
+  if (S.phOff) return;
+  var need = codes.filter(function(c){ return !(c in S.ph); }); if (!need.length) return;
+  for (var i = 0; i < need.length && !S.phOff; i += 40){
+    var chunk = need.slice(i, i + 40), r; try { r = await api('POST', '/api/kt-admin', { op:'profilePhotos', codes:chunk }); } catch (e) { r = null; }
+    if (!r || !r.j || !r.j.ok){ S.phOff = true; break; }
+    chunk.forEach(function(c){ S.ph[c] = (r.j.thumbs && r.j.thumbs[c]) || ''; });
+    applyFaces();
+  }
+}
+
+/* ====================== TRANG CHI TIẾT HỒ SƠ ====================== */
+var D = null; // { c, P, agg, tab }
+var SECS = { overview:1, list:2 };
+function show(which, msg){
+  ['stLoading', 'stError', 'stDenied', 'vMain', 'vDetail'].forEach(function(id){ $(id).classList.add('hide'); });
+  var map = { loading:'stLoading', error:'stError', denied:'stDenied', main:'vMain', detail:'vDetail' };
+  $(map[which]).classList.remove('hide');
+  if (which === 'error' && msg) $('errM').textContent = msg;
+  if (which !== 'main') window.scrollTo(0, 0);
+}
+function allExams(att){ var now = Date.now(), have = {}; att.forEach(function(a){ have[a.period || ''] = 1; }); return S.X.map(effX).filter(function(e){ return !e.practice && (!e.openAt || e.openAt <= now || have[e.id]); }); }
+async function openDetail(code, tab){
+  var c = S.by[norm(code)];
+  show('detail');
+  if (!c){ $('vDetail').innerHTML = crumb('') + '<div class="card"><div class="state"><div><b>Không tìm thấy hồ sơ</b>Mã nhân viên “' + esc(code) + '” không có trong danh sách. Có thể nhân sự đã bị xoá hoặc đổi mã.</div></div></div>'; return; }
+  $('vDetail').innerHTML = crumb(c.name || c.code) + '<div class="card"><div class="card-b"><div class="sk" style="height:72px;margin-bottom:12px"></div><div class="sk" style="height:110px"></div></div></div>';
+  var r; try { r = await api('GET', '/api/kt-viewer?op=profile&code=' + encodeURIComponent(c.code)); } catch (e) { r = null; }
+  if (!r || !r.j || !r.j.ok){
+    $('vDetail').innerHTML = crumb(c.name || c.code) + '<div class="card"><div class="state"><div><b>Không tải được hồ sơ</b>' + esc((r && r.j && r.j.error) || 'Không kết nối được máy chủ.') + '<div style="margin-top:14px"><button class="btn pri" type="button" data-retrydetail="1">Thử lại</button></div></div></div></div>'; D = { c:c, tab:tab || 1, failed:true }; return;
+  }
+  var att = S.A.filter(function(a){ return a._k === c._k && !a.practice; });
+  D = { c:c, P:r.j, tab:tab || 1, att:att, agg:aggregate(c, att, allExams(att)) };
+  renderDetail();
+  faces([c.code]);
+}
+function crumb(name){ return '<div class="crumb"><button type="button" data-back="1">← Hồ sơ học tập</button><span>/</span><span>' + esc(name) + '</span></div>'; }
+function histOfficial(){ return (D.P.history || []).filter(function(x){ return !x.hidden && !x.practice && !x.test; }); }
+function attemptState(x){ return x.passed === true ? 'ok' : x.passed === false ? 'need' : ((x.pct || 0) < S.th.low ? 'need' : 'ok'); }
+function insight(){
+  var a = D.agg, P = D.P, nm = esc(D.c.name || D.c.code), t = [];
+  if (!a.n) return 'Nhân viên chưa có kết quả kiểm tra chính thức nào trong hệ thống.';
+  t.push('<b>' + nm + '</b> đã làm <b>' + a.n + '</b> lượt kiểm tra chính thức, điểm trung bình <b>' + pc(a.avg) + '</b> (' + BL[band(a.avg)] + '), điểm gần nhất <b>' + pc(a.lastP) + '</b>.');
+  if (a.delta != null) t.push(a.delta > 0 ? 'So với bài kiểm tra trước, điểm <b>tăng ' + vn(a.delta, 0) + ' điểm %</b>.' : a.delta < 0 ? 'So với bài kiểm tra trước, điểm <b>giảm ' + vn(-a.delta, 0) + ' điểm %</b>.' : 'Điểm không thay đổi so với bài kiểm tra trước.');
+  var cats = (P.categories || []).filter(function(c){ return c.pct != null; });
+  if (cats.length > 1){ var s = cats[cats.length - 1], w = cats[0]; t.push('Mảng làm tốt nhất: <b>' + esc(s.category) + ' (' + pc(s.pct) + ')</b>; cần cải thiện nhất: <b>' + esc(w.category) + ' (' + pc(w.pct) + ')</b>.'); }
+  else if (cats.length === 1) t.push('Mảng kiến thức đã đánh giá: <b>' + esc(cats[0].category) + ' (' + pc(cats[0].pct) + ')</b>.');
+  if ((P.repeatWrong || []).length) t.push('Có <b>' + P.repeatWrong.length + '</b> câu hỏi sai lặp lại từ 2 lần trở lên.');
+  t.push(a.st === 'need' ? 'Theo ngưỡng của hệ thống, nhân viên <b style="color:#C0332B">cần đào tạo bổ sung</b>.' : 'Theo ngưỡng của hệ thống, nhân viên <b style="color:#16794A">đang đạt yêu cầu</b>.');
+  if (a.stuck) t.push('Đã làm nhiều lượt nhưng điểm chưa cải thiện đáng kể.');
+  return t.join(' ');
+}
+function renderDetail(){
+  var c = D.c, P = D.P, a = D.agg, H = histOfficial(), hidden = (P.history || []).filter(function(x){ return x.hidden; }).length;
+  var meta = [['Mã NV', c.code], ['Chức danh', c.title], ['Khu vực', area(c)], ['Quản lí trực tiếp', c.manager], ['Nhóm ngành', SEGL[c._seg]]].filter(function(m){ return m[1]; })
+    .map(function(m){ return '<span>' + esc(m[0]) + ': <b>' + esc(m[1]) + '</b></span>'; }).join('');
+  var stateChip = c.left ? '<span class="chip left">Đã nghỉ việc</span>' : P.status === 'doing' ? '<span class="chip ok">Đang làm bài</span>' : '<span class="chip ok" style="background:#E8F0FB;color:#0B3F94">Đang làm việc</span>';
+  var d = a.delta;
+  var h = crumb(c.name || c.code) +
+    '<div class="card ph-card"><div class="av lg" data-av="' + esc(c.code) + '">' + esc(initials(c.name || c.code)) + '</div><div class="who"><h1>' + esc(c.name || c.code) + '</h1><div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">' + stateChip + '<span class="chip ' + a.st + '">' + STL[a.st] + '</span><span style="color:#5B6B86;font-size:12.5px">Hoạt động gần nhất: ' + (a.act ? ago(a.act) : '–') + '</span></div><div class="ph-meta">' + meta + '</div></div>' +
+    '<div class="ph-act"><button class="btn" type="button" data-xl="person">⬇ Xuất Excel hồ sơ</button></div></div>' +
+    '<div class="kpis6">' +
+      kpi('Điểm trung bình', 'Trung bình điểm của từng bài kiểm tra (mỗi bài lấy lần điểm cao nhất).', a.avg == null ? '–' : vn(a.avg) + '<small>%</small>', a.avg == null ? 'Chưa có kết quả' : BL[band(a.avg)]) +
+      kpi('Tổng lượt kiểm tra', 'Số lượt làm bài chính thức đã nộp (không gồm thi thử và bài đã ẩn).', a.n, hidden ? hidden + ' bài đang ẩn' : 'bài chính thức') +
+      kpi('Bài đã hoàn thành', 'Số bài kiểm tra đã làm / số bài kiểm tra được giao cho nhân viên này.', a.assigned ? a.done + '<small> / ' + a.assigned + '</small>' : '–', a.compl == null ? 'Chưa được giao bài' : vn(a.compl, 0) + '% hoàn thành') +
+      kpi('Điểm cao nhất', 'Điểm % cao nhất ở một bài kiểm tra.', a.best == null ? '–' : vn(a.best) + '<small>%</small>', '') +
+      kpi('Điểm gần nhất', 'Điểm % của lần làm bài nộp gần nhất.', a.lastP == null ? '–' : vn(a.lastP) + '<small>%</small>', a.lastAt ? vnDate(a.lastAt) : '', a.lastP != null && a.lastP < S.th.low ? 'bad' : '') +
+      kpi('Tiến bộ so với kỳ trước', 'Chênh lệch điểm % giữa bài kiểm tra gần nhất và bài ngay trước đó.', d == null ? '–' : (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + vn(Math.abs(d), 0) + '<small> điểm %</small>', d == null ? 'Cần ít nhất 2 bài' : '', d == null ? '' : d > 0 ? 'ok' : d < 0 ? 'bad' : '') +
+    '</div>' +
+    '<div class="tabs" role="tablist" aria-label="Phân tích hồ sơ">' + ['Tổng quan năng lực', 'Lịch sử kiểm tra', 'Phân tích kiến thức', 'Lộ trình học tập', 'Thông tin nhân sự'].map(function(t, i){ return '<button type="button" role="tab" data-dtab="' + (i + 1) + '" aria-selected="' + (D.tab === i + 1) + '">' + t + '</button>'; }).join('') + '</div>' +
+    '<div id="dtab"></div>';
+  $('vDetail').innerHTML = h;
+  renderTab();
+  applyFaces($('vDetail'));
+}
+function renderTab(){
+  var f = [null, tab1, tab2, tab3, tab4, tab5][D.tab] || tab1;
+  $('dtab').innerHTML = f();
+  document.querySelectorAll('#vDetail [data-dtab]').forEach(function(b){ b.setAttribute('aria-selected', String(+b.getAttribute('data-dtab') === D.tab)); });
+}
+/* --- Tab 1: Tổng quan năng lực --- */
+function tab1(){
+  var P = D.P, a = D.agg, H = histOfficial().slice().sort(function(x, y){ return (x.submittedAt || 0) - (y.submittedAt || 0); });
+  if (!H.length) return '<div class="card"><div class="empty" style="padding:40px 14px">' + (P.status === 'doing' ? 'Nhân viên đang làm bài, chưa có kết quả nào.' : 'Nhân viên chưa có kết quả kiểm tra chính thức nào.') + '</div></div>';
+  var pts = H.slice(-10).map(function(x){ return { l:vnDate(x.submittedAt), v:x.pct, v2:x.teamAvg }; });
+  var byP = {}; H.forEach(function(x){ var p = x.period || ''; var o = byP[p] || (byP[p] = { s:0, n:0, t:0 }); o.s += x.pct || 0; o.n++; o.t = Math.max(o.t, x.submittedAt || 0); });
+  var prog = Object.keys(byP).sort(function(x, y){ return byP[x].t - byP[y].t; }).map(function(p){ return { label:xTitle(p), sub:byP[p].n + ' lượt', v:byP[p].s / byP[p].n }; });
+  var cats = (P.categories || []).filter(function(c){ return c.pct != null; });
+  var strong = cats.slice().sort(function(x, y){ return y.pct - x.pct; }).slice(0, 3), weak = cats.slice().sort(function(x, y){ return x.pct - y.pct; }).slice(0, 3);
+  var cl = function(arr){ return arr.length ? hbars(arr.map(function(c){ return { label:c.category, sub:c.n + ' câu', v:c.pct }; }), { noLegend:true }) : '<div class="empty">Chưa có dữ liệu theo chuyên đề.</div>'; };
+  var A = a.assigned, done = a.done;
+  return '<div class="grid">' +
+    '<div class="card c8"><div class="card-h"><h2>Tiến bộ điểm số theo thời gian</h2>' + TIP('Điểm % từng lượt làm bài chính thức (xanh) và trung bình của đội cùng kỳ (vàng). Đường đỏ nét đứt là mốc chuẩn của hệ thống.') + '</div><div class="card-b">' + lineChart(pts, { l1:'Điểm của nhân viên', l2:'Trung bình đội cùng kỳ', aria:'Tiến bộ điểm số theo thời gian' }) + '</div></div>' +
+    '<div class="card c4"><div class="card-h"><h2>Tỉ lệ hoàn thành kiểm tra</h2></div><div class="card-b">' + (A ? '<div style="font-size:34px;font-weight:800;color:#0B2A5B;letter-spacing:-.02em">' + vn(a.compl, 0) + '<small style="font-size:16px;color:#5B6B86">%</small></div><div class="q" style="margin:2px 0 10px">' + done + ' / ' + A + ' bài kiểm tra được giao</div><div class="prog"><i style="width:' + Math.min(100, a.compl) + '%"></i></div>' : '<div class="empty">Chưa được giao bài kiểm tra nào.</div>') + '</div></div>' +
+    '<div class="card c6"><div class="card-h"><h2>Điểm trung bình từng chương trình</h2></div><div class="card-b">' + hbars(prog) + '</div></div>' +
+    '<div class="card c6"><div class="card-h"><h2>Nhận định tổng quan</h2>' + TIP('Nhận định được tổng hợp tự động từ dữ liệu kiểm tra thực tế của nhân viên theo các ngưỡng đang cấu hình trong hệ thống.') + '</div><div class="card-b"><div class="ins">' + insight() + '</div></div></div>' +
+    '<div class="card c6"><div class="card-h"><h2>Chuyên đề mạnh nhất</h2><span class="sub">từ ' + (P.papersRead || 0) + ' bài gần nhất</span></div><div class="card-b">' + cl(strong) + '</div></div>' +
+    '<div class="card c6"><div class="card-h"><h2>Chuyên đề cần cải thiện</h2></div><div class="card-b">' + cl(weak) + '</div></div></div>';
+}
+/* --- Tab 2: Lịch sử kiểm tra --- */
+function tab2(){
+  var all = (D.P.history || []).slice().sort(function(x, y){ return (y.submittedAt || 0) - (x.submittedAt || 0); });
+  if (!all.length) return '<div class="card"><div class="empty" style="padding:40px 14px">Chưa có lượt làm bài nào.</div></div>';
+  var cnt = {}, idx = {}; all.slice().sort(function(x, y){ return (x.submittedAt || 0) - (y.submittedAt || 0); }).forEach(function(x){ var p = x.period || ''; cnt[p] = (cnt[p] || 0) + 1; idx[x.id] = cnt[p]; });
+  var rows = all.map(function(x){
+    var st = attemptState(x), hid = !!x.hidden;
+    var chips = (hid ? ' <span class="chip plain test">Đã ẩn · không tính vào báo cáo</span>' : '') + (x.practice ? ' <span class="chip plain test">Thi thử</span>' : '') + (x.test ? ' <span class="chip plain test">Thử nghiệm</span>' : '');
+    return '<tr' + (hid ? ' class="hid"' : '') + '><td><b>' + esc(xTitle(x.period || '')) + '</b>' + chips + '</td><td class="nw">' + esc(vnDT(x.submittedAt)) + '</td><td class="r">' + (x.score == null ? '–' : x.score) + '</td><td class="r">' + (x.total == null ? '–' : x.total) + '</td>' +
+      '<td class="r"><b>' + pc(x.pct) + '</b></td><td class="r">' + (x.compliancePoints == null ? '–' : x.compliancePoints) + '</td><td class="r nw">' + dur(x.durationSec) + '</td><td class="r">' + idx[x.id] + '/' + cnt[x.period || ''] + '</td>' +
+      '<td><span class="chip ' + st + '">' + (st === 'ok' ? 'Đạt' : 'Chưa đạt') + '</span></td>' +
+      '<td><div class="rowact"><button class="btn sm" type="button" data-paper="' + esc(x.id) + '">Xem chi tiết</button>' + (x.test ? '' : '<button class="btn sm" type="button" data-hide="' + esc(x.id) + '" data-to="' + (hid ? '0' : '1') + '" title="' + (hid ? 'Tính lại vào báo cáo' : 'Không tính vào báo cáo, thống kê, xếp hạng; hoàn tác được') + '">' + (hid ? 'Hiện lại' : 'Ẩn') + '</button><button class="btn sm dng" type="button" data-del="' + esc(x.id) + '" title="Xoá hẳn bài làm này">Xoá</button>') + '</div></td></tr>';
+  }).join('');
+  return '<div class="card"><div class="card-h"><h2>Lịch sử các lượt kiểm tra</h2><span class="sub">' + all.length + ' lượt</span><span class="sp"></span></div><div class="tw" style="margin-top:8px"><table class="t"><thead><tr><th>Bài kiểm tra</th><th>Ngày thực hiện</th><th class="r">Số câu đúng</th><th class="r">Tổng số câu</th><th class="r">Tỉ lệ đúng</th><th class="r">Điểm tuân thủ</th><th class="r">Thời gian</th><th class="r" title="Lần làm thứ mấy trong cùng một bài kiểm tra">Lần làm</th><th>Kết quả</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div></div>' +
+    '<div class="q" style="margin-top:10px">“Ẩn” loại lượt làm bài khỏi báo cáo, xếp hạng và lịch sử của nhân viên nhưng vẫn khôi phục được. “Xoá” là xoá hẳn bài làm và ảnh xác nhận của lượt đó.</div>';
+}
+/* --- Tab 3: Phân tích kiến thức --- */
+function tab3(){
+  var P = D.P, cats = (P.categories || []).filter(function(c){ return c.pct != null; }).slice().sort(function(x, y){ return x.pct - y.pct; });
+  if (!cats.length) return '<div class="card"><div class="empty" style="padding:40px 14px">Chưa có dữ liệu theo mảng kiến thức (cần ít nhất một bài đã nộp có bản sao bài làm).</div></div>';
+  var good = cats.filter(function(c){ return c.pct >= S.th.mid; }).sort(function(x, y){ return y.pct - x.pct; }), bad = cats.filter(function(c){ return c.pct < S.th.mid; });
+  var list = function(arr, none){ return arr.length ? '<div class="hb">' + arr.map(function(c){ return '<div class="hb-row" style="grid-template-columns:1fr auto auto"><span class="nm">' + esc(c.category) + '</span><span class="chip ' + band(c.pct) + '">' + BL[band(c.pct)] + '</span><span class="vv" style="width:48px">' + pc(c.pct) + '</span></div>'; }).join('') + '</div>' : '<div class="empty">' + none + '</div>'; };
+  var rank = cats.map(function(c, i){ return '<tr><td class="r">' + (i + 1) + '</td><td>' + esc(c.category) + '</td><td class="r">' + c.n + '</td><td class="r"><b>' + pc(c.pct) + '</b></td><td class="r">' + (c.lastPct != null ? pc(c.lastPct) : '–') + '</td><td><span class="chip ' + band(c.pct) + '">' + BL[band(c.pct)] + '</span></td></tr>'; }).join('');
+  var rw = (P.repeatWrong || []).map(function(w){ return '<tr><td class="r"><b style="color:#C0332B">' + w.times + '×</b></td><td>' + esc(w.text) + '<div class="q">' + esc(w.category) + '</div></td><td>' + esc(w.answer) + '</td></tr>'; }).join('');
+  var lw = (P.lastWrong || []).map(function(w){ return '<tr><td>' + esc(w.text) + '<div class="q">' + esc(w.category) + '</div></td><td>' + esc(w.chosen == null ? 'Bỏ trống' : w.chosen) + '</td><td>' + esc(w.answer) + '</td></tr>'; }).join('');
+  return '<div class="grid">' +
+    '<div class="card c6"><div class="card-h"><h2>Tỉ lệ đúng theo nhóm kiến thức</h2><span class="sub">từ ' + (P.papersRead || 0) + ' bài gần nhất</span>' + TIP('Phân loại theo ngưỡng đang cấu hình của hệ thống: Tốt ≥ ' + S.th.high + '%, Đạt ≥ ' + S.th.mid + '%, Cần cải thiện ≥ ' + S.th.low + '%, Yếu dưới ' + S.th.low + '%.') + '</div><div class="card-b">' + hbars(cats.map(function(c){ return { label:c.category, sub:c.n + ' câu', v:c.pct }; })) + '</div></div>' +
+    '<div class="card c6"><div class="card-h"><h2>Bảng xếp hạng chuyên đề</h2><span class="sub">từ yếu đến mạnh</span></div><div class="tw"><table class="t"><thead><tr><th class="r">#</th><th>Chuyên đề</th><th class="r">Số câu</th><th class="r">Tỉ lệ đúng</th><th class="r">Gần nhất</th><th>Xếp loại</th></tr></thead><tbody>' + rank + '</tbody></table></div></div>' +
+    '<div class="card c6"><div class="card-h"><h2>Nhóm kiến thức đạt tốt</h2><span class="sub">từ ' + S.th.mid + '% trở lên</span></div><div class="card-b">' + list(good, 'Chưa có nhóm nào đạt từ ' + S.th.mid + '%.') + '</div></div>' +
+    '<div class="card c6"><div class="card-h"><h2>Nhóm kiến thức cần cải thiện</h2><span class="sub">dưới ' + S.th.mid + '%</span></div><div class="card-b">' + list(bad, 'Tất cả nhóm kiến thức đều đạt từ ' + S.th.mid + '%.') + '</div></div>' +
+    (rw ? '<div class="card c12"><div class="card-h"><h2>Câu hỏi sai lặp lại</h2><span class="sub">sai từ 2 lần trở lên</span></div><div class="tw"><table class="t"><thead><tr><th class="r">Số lần sai</th><th>Câu hỏi</th><th>Đáp án đúng</th></tr></thead><tbody>' + rw + '</tbody></table></div></div>' : '') +
+    (lw ? '<div class="card c12"><div class="card-h"><h2>Câu sai ở kỳ gần nhất</h2></div><div class="tw"><table class="t"><thead><tr><th>Câu hỏi</th><th>Đã chọn</th><th>Đáp án đúng</th></tr></thead><tbody>' + lw + '</tbody></table></div></div>' : '') + '</div>';
+}
+/* --- Tab 4: Lộ trình học tập --- */
+function tab4(){
+  var c = D.c, P = D.P, a = D.agg, now = Date.now(), H = histOfficial();
+  var exams = allExams(D.att), byP = {}; D.att.forEach(function(x){ var p = x.period || ''; (byP[p] = byP[p] || []).push(x); });
+  var joined = Object.keys(byP).map(function(p){ var l = byP[p].slice().sort(function(x, y){ return (x.submittedAt || 0) - (y.submittedAt || 0); }), bestA = l.reduce(function(m, x){ return !m || better(x, m) ? x : m; }, null), e = S.xById[p] && effX(S.xById[p]);
+    return { p:p, n:l.length, best:bestA.pct, first:l[0].pct, last:l[l.length - 1].pct, lastAt:l[l.length - 1].submittedAt, closeAt:e && e.closeAt, st:attemptState(bestA) }; }).sort(function(x, y){ return y.lastAt - x.lastAt; });
+  var pend = exams.filter(function(e){ return inAud(e, c) && !byP[e.id]; }).sort(function(x, y){ return (x.closeAt || 9e15) - (y.closeAt || 9e15); });
+  var weak = (P.categories || []).filter(function(x){ return x.pct != null && x.pct < S.th.mid; }).slice(0, 5);
+  var rep = {}; (P.repeatWrong || []).forEach(function(w){ rep[w.category] = (rep[w.category] || 0) + 1; });
+  var post = joined.filter(function(j){ return j.n >= 2; });
+  var tbl = joined.length ? '<div class="tw"><table class="t"><thead><tr><th>Chương trình / bài kiểm tra</th><th class="r">Số lượt</th><th class="r">Điểm cao nhất</th><th class="r">Lần gần nhất</th><th>Kết quả</th><th>Hạn hoàn thành</th></tr></thead><tbody>' + joined.map(function(j){ return '<tr><td><b>' + esc(xTitle(j.p)) + '</b></td><td class="r">' + j.n + '</td><td class="r"><b>' + pc(j.best) + '</b></td><td class="r">' + vnDate(j.lastAt) + '</td><td><span class="chip ' + j.st + '">' + (j.st === 'ok' ? 'Đạt' : 'Chưa đạt') + '</span></td><td class="nw">' + (j.closeAt ? vnDate(j.closeAt) : '–') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">Nhân viên chưa tham gia bài kiểm tra nào.</div>';
+  var pendH = pend.length ? pend.map(function(e){ var over = e.closeAt && e.closeAt < now; return '<div class="lp' + (over ? ' urg' : '') + '"><div class="n">!</div><div style="flex:1"><b>' + esc(xTitle(e.id)) + '</b> ' + (over ? '<span class="chip r">Quá hạn</span>' : '<span class="chip w">Cần hoàn thành</span>') + '<div class="q">' + (e.closeAt ? 'Hạn hoàn thành: <b>' + vnDT(e.closeAt) + '</b>' : 'Chưa đặt hạn hoàn thành') + ' · <a href="/kiemtra/?exam=' + encodeURIComponent(e.id) + '" target="_blank" rel="noopener">Đường dẫn làm bài</a></div></div></div>'; }).join('') : '<div class="empty">Nhân viên đã hoàn thành mọi bài kiểm tra được giao.</div>';
+  var weakH = weak.length ? weak.map(function(x, i){ var tg = nextBand(x.pct); return '<div class="lp' + (x.pct < S.th.low ? ' urg' : '') + '"><div class="n">' + (i + 1) + '</div><div style="flex:1"><b>' + esc(x.category) + '</b> <span class="chip ' + band(x.pct) + '">' + BL[band(x.pct)] + '</span><div class="q">Hiện đúng <b>' + pc(x.pct) + '</b> trên ' + x.n + ' câu · mục tiêu lần tới: ít nhất <b>' + tg + '%</b>' + (rep[x.category] ? ' · có <b>' + rep[x.category] + '</b> câu sai lặp lại, nên xem lại trước' : '') + '</div></div></div>'; }).join('') : '<div class="empty">' + ((P.categories || []).length ? 'Mọi nhóm kiến thức đều đạt từ ' + S.th.mid + '%, chưa cần học bổ sung.' : 'Chưa có dữ liệu theo nhóm kiến thức.') + '</div>';
+  var postH = post.length ? post.map(function(j){ var d = j.best - j.first; return '<div class="lp"><div class="n" style="background:' + (d > 0 ? '#E3F5EA;color:#16794A' : d < 0 ? '#FDE8E7;color:#C0332B' : '#EEF2F7;color:#5B6B86') + '">' + (d > 0 ? '▲' : d < 0 ? '▼' : '=') + '</div><div style="flex:1"><b>' + esc(xTitle(j.p)) + '</b><div class="q">Lần đầu <b>' + pc(j.first) + '</b> → cao nhất <b>' + pc(j.best) + '</b> sau ' + j.n + ' lượt (' + (d > 0 ? 'tăng ' : d < 0 ? 'giảm ' : 'không đổi ') + (d ? vn(Math.abs(d), 0) + ' điểm %' : '') + ')</div></div></div>'; }).join('') : '<div class="empty">Chưa có bài nào được làm lại để so sánh trước và sau đào tạo.</div>';
+  return '<div class="grid">' +
+    '<div class="card c12"><div class="card-h"><h2>Tiến độ học tập</h2></div><div class="card-b">' + (a.assigned ? '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap"><div style="font-size:30px;font-weight:800;color:#0B2A5B;letter-spacing:-.02em">' + a.done + '<small style="font-size:16px;color:#5B6B86"> / ' + a.assigned + ' bài</small></div><div style="flex:1;min-width:220px"><div class="prog"><i style="width:' + Math.min(100, a.compl) + '%"></i></div><div class="q" style="margin-top:4px">' + vn(a.compl, 0) + '% bài kiểm tra được giao đã hoàn thành</div></div></div>' : '<div class="empty">Chưa được giao bài kiểm tra nào.</div>') + '</div></div>' +
+    '<div class="card c6"><div class="card-h"><h2>Bài kiểm tra cần hoàn thành</h2><span class="sub">' + pend.length + ' bài</span></div><div class="card-b">' + pendH + '</div></div>' +
+    '<div class="card c6"><div class="card-h"><h2>Nội dung cần học bổ sung</h2>' + TIP('Các nhóm kiến thức dưới ' + S.th.mid + '% (mốc “Đạt” của hệ thống), yếu nhất trước. Mục tiêu là mốc xếp loại kế tiếp.') + '</div><div class="card-b">' + weakH + '<div style="margin-top:10px"><a class="btn sm" href="/kiemtra/hoclieu.html" target="_blank" rel="noopener">Mở kho học liệu ôn tập</a></div></div></div>' +
+    '<div class="card c12"><div class="card-h"><h2>Các chương trình đã tham gia</h2></div><div class="card-b" style="padding-top:6px">' + tbl + '</div></div>' +
+    '<div class="card c12"><div class="card-h"><h2>Kết quả đánh giá sau đào tạo</h2>' + TIP('So sánh điểm lần làm đầu tiên với điểm cao nhất ở những bài nhân viên đã làm lại nhiều lần.') + '</div><div class="card-b">' + postH + '</div></div></div>';
+}
+/* --- Tab 5: Thông tin nhân sự --- */
+var HRL = { donVi:'Đơn vị', khoi:'Khối', phong:'Phòng', boPhan:'Bộ phận', toNhom:'Tổ / nhóm', khuVucCon:'Khu vực con', noiLamViec:'Nơi làm việc', mien:'Miền', loaiNV:'Loại nhân viên', chucDanhGoc:'Chức danh gốc (HR)', quanLy:'Quản lý trực tiếp (HR)', tinhPhuTrach:'Tỉnh phụ trách',
+  trinhDo:'Trình độ', bangCap:'Bằng cấp', chuyenNganh:'Chuyên ngành', truong:'Trường', tapDoan:'Tập đoàn', hinhThuc:'Hình thức', hieuLuc:'Hiệu lực', msnvCu:'MSNV cũ', maChamCong:'Mã chấm công', vaoCongTy:'Ngày vào công ty', vaoLanDau:'Ngày vào lần đầu', kyHDChinhThuc:'Ngày kí HĐ chính thức' };
+function dl(pairs){ return '<dl class="dl">' + pairs.map(function(p){ var v = p[1]; return '<div><dt>' + esc(p[0]) + '</dt><dd>' + (v == null || v === '' ? '<span class="na">Chưa có</span>' : esc(v)) + '</dd></div>'; }).join('') + '</dl>'; }
+function tab5(){
+  var c = D.c, p = c.profile || null, lg = c.lastLogin;
+  var j = c.joinDate, prob = c.probation;
+  var org = p ? Object.keys(HRL).filter(function(k){ return p[k] != null && p[k] !== '' && ['trinhDo', 'bangCap', 'chuyenNganh', 'truong'].indexOf(k) < 0; }).map(function(k){ return [HRL[k], /^\d{4}-\d{2}-\d{2}$/.test(String(p[k])) ? vnDate(Date.parse(p[k])) : p[k]]; }) : [];
+  var edu = p ? ['trinhDo', 'bangCap', 'chuyenNganh', 'truong'].filter(function(k){ return p[k]; }).map(function(k){ return [HRL[k], p[k]]; }) : [];
+  var h = '<div class="card"><div class="card-b">' +
+    '<div class="sec-t" style="margin-top:0">Thông tin chung</div>' + dl([['Mã nhân viên', c.code], ['Họ và tên', c.name], ['Email', c.email], ['Số điện thoại', c.phone], ['Chức danh', c.title], ['Nhóm ngành', SEGL[c._seg]], ['Miền', c._reg], ['Tỉnh / thành', c.province], ['Quản lí (ASM)', c.manager], ['Tình trạng làm việc', c.left ? 'Đã nghỉ việc' + (c.leftAt ? ' (' + vnDate(c.leftAt) + ')' : '') : 'Đang làm việc'], ['Ngày vào làm', j ? vnDate(Date.parse(j) || j) : ''], ['Thử việc', prob && prob.from ? vnDate(Date.parse(prob.from)) + ' → ' + vnDate(Date.parse(prob.until)) : '']]) +
+    '<div class="sec-t">Thông tin tổ chức từ hệ thống HR</div>' + (org.length ? dl(org) : '<div class="msg info">Nhân sự này chưa có dữ liệu HR. Có thể nạp bằng chức năng “Đối chiếu” trong trang Thí sinh.</div>') +
+    (edu.length ? '<div class="sec-t">Học vấn</div>' + dl(edu) : '') +
+    '<div class="sec-t">Hoạt động trên hệ thống</div>' + dl([['Đăng nhập gần nhất', lg && lg.at ? vnDT(lg.at) : ''], ['Hình thức đăng nhập', lg && lg.method ? lg.method : ''], ['Số lượt đăng nhập', lg && lg.n ? lg.n : ''], ['Cập nhật hồ sơ HR lúc', p && p.at ? vnDT(p.at) : '']]) +
+  '</div></div><div class="q" style="margin-top:10px">Dữ liệu nhân sự chỉ hiển thị cho quản trị viên. Hệ thống không lưu giới tính, địa chỉ, quê quán hay tôn giáo trong hồ sơ.</div>';
+  return h;
+}
+
+/* ====================== Xuất Excel (ExcelJS, cùng cách trang quản trị đang dùng) ====================== */
+var xjsP = null;
+function loadExcelJS(){
+  if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+  if (!xjsP) xjsP = new Promise(function(ok, no){ var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js'; sc.onload = function(){ ok(window.ExcelJS); }; sc.onerror = function(){ xjsP = null; no(new Error('load')); }; document.head.appendChild(sc); });
+  return xjsP;
+}
+function sheetName(s){ return String(s || 'Sheet').replace(/[\[\]:*?\/\\]/g, ' ').trim().slice(0, 31) || 'Sheet'; }
+function addSheet(wb, used, name, headers, rows){
+  var nm = sheetName(name), i = 2; while (used[nm.toLowerCase()]) nm = sheetName(name).slice(0, 28) + ' ' + (i++); used[nm.toLowerCase()] = 1;
+  var ws = wb.addWorksheet(nm, { views:[{ state:'frozen', ySplit:1 }] });
+  ws.addRow(headers); rows.forEach(function(r){ ws.addRow(r); });
+  var hr = ws.getRow(1); hr.font = { bold:true, color:{ argb:'FFFFFFFF' } }; hr.alignment = { vertical:'middle', wrapText:true };
+  hr.eachCell(function(c){ c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF0B3F94' } }; });
+  headers.forEach(function(h, k){ var m = String(h).length; rows.forEach(function(r){ m = Math.max(m, String(r[k] == null ? '' : r[k]).length); }); ws.getColumn(k + 1).width = Math.min(44, Math.max(10, m + 2)); });
+  return ws;
+}
+var LIST_H = ['Mã NV', 'Họ và tên', 'Phòng ban / Bộ phận', 'Chức danh', 'Miền', 'Tỉnh / thành', 'Quản lí (ASM)', 'Số lần kiểm tra', 'Điểm TB (%)', 'Điểm cao nhất (%)', 'Điểm gần nhất (%)', 'Tỉ lệ hoàn thành (%)', 'Điểm tuân thủ (lần gần nhất)', 'Trạng thái học tập', 'Hoạt động gần nhất'];
+function listRow(r){ var c = r.c; return [c.code, c.name || '', c._dept, c.title || '', c._reg, c.province || '', c.manager || '', r.n, r.avg == null ? '' : Math.round(r.avg * 10) / 10, r.best == null ? '' : Math.round(r.best * 10) / 10, r.lastP == null ? '' : Math.round(r.lastP * 10) / 10, r.compl == null ? '' : Math.round(r.compl), r.comp == null ? '' : r.comp, STL[r.st], r.act ? vnDT(r.act) : '']; }
+function attRow(a){ var c = S.by[a._k] || {}; return [a.code, a.name || c.name || '', c.title || '', c._reg || '', c.province || '', c.manager || '', xTitle(a.period || ''), vnDT(a.submittedAt), a.score == null ? '' : a.score, a.total == null ? '' : a.total, a.pct == null ? '' : Math.round(a.pct * 10) / 10, a.compliancePoints == null ? '' : a.compliancePoints, a.durationSec == null ? '' : dur(a.durationSec), attemptState(a) === 'ok' ? 'Đạt' : 'Chưa đạt']; }
+var ATT_H = ['Mã NV', 'Họ và tên', 'Chức danh', 'Miền', 'Tỉnh / thành', 'Quản lí (ASM)', 'Bài kiểm tra', 'Nộp lúc', 'Số câu đúng', 'Tổng số câu', 'Tỉ lệ đúng (%)', 'Điểm tuân thủ', 'Thời gian làm bài', 'Kết quả'];
+async function exportXlsx(kind){
+  var btns = document.querySelectorAll('[data-xl],#xlBtn'); btns.forEach(function(b){ b.disabled = true; });
+  try {
+    var X = await loadExcelJS(), wb = new X.Workbook(), used = {}, file = 'ho-so-hoc-tap';
+    wb.creator = 'Hồ sơ học tập'; wb.created = new Date();
+    if (kind === 'person'){
+      var c = D.c, a = D.agg, P = D.P;
+      file = 'ho-so-' + norm(c.code);
+      addSheet(wb, used, 'Tổng quan', ['Chỉ tiêu', 'Giá trị'], [['Mã NV', c.code], ['Họ và tên', c.name || ''], ['Chức danh', c.title || ''], ['Miền', c._reg], ['Tỉnh / thành', c.province || ''], ['Quản lí (ASM)', c.manager || ''], ['Trạng thái học tập', STL[a.st]], ['Số lượt kiểm tra', a.n], ['Điểm TB (%)', a.avg == null ? '' : Math.round(a.avg * 10) / 10], ['Điểm cao nhất (%)', a.best == null ? '' : Math.round(a.best * 10) / 10], ['Điểm gần nhất (%)', a.lastP == null ? '' : Math.round(a.lastP * 10) / 10], ['Tỉ lệ hoàn thành (%)', a.compl == null ? '' : Math.round(a.compl)]]);
+      addSheet(wb, used, 'Lịch sử kiểm tra', ['Bài kiểm tra', 'Nộp lúc', 'Số câu đúng', 'Tổng số câu', 'Tỉ lệ đúng (%)', 'Điểm tuân thủ', 'Thời gian làm bài', 'Kết quả', 'Ghi chú'],
+        (P.history || []).slice().sort(function(x, y){ return (y.submittedAt || 0) - (x.submittedAt || 0); }).map(function(x){ return [xTitle(x.period || ''), vnDT(x.submittedAt), x.score == null ? '' : x.score, x.total == null ? '' : x.total, x.pct == null ? '' : Math.round(x.pct * 10) / 10, x.compliancePoints == null ? '' : x.compliancePoints, dur(x.durationSec), attemptState(x) === 'ok' ? 'Đạt' : 'Chưa đạt', [x.hidden ? 'Đã ẩn' : '', x.practice ? 'Thi thử' : '', x.test ? 'Thử nghiệm' : ''].filter(Boolean).join(', ')]; }));
+      addSheet(wb, used, 'Nhóm kiến thức', ['Chuyên đề', 'Số câu', 'Tỉ lệ đúng (%)', 'Gần nhất (%)', 'Xếp loại'], (P.categories || []).filter(function(x){ return x.pct != null; }).map(function(x){ return [x.category, x.n, x.pct, x.lastPct == null ? '' : x.lastPct, BL[band(x.pct)]]; }));
+    } else if (kind === 'exam'){
+      var ks = {}; M.view.forEach(function(r){ ks[r.k] = 1; });
+      var att = M.att.filter(function(a){ return ks[a._k]; }), by = {};
+      att.forEach(function(a){ var p = a.period || ''; (by[p] = by[p] || []).push(a); });
+      var ps = Object.keys(by); if (!ps.length) { toast('Không có lượt làm bài nào trong phạm vi lọc.'); return; }
+      file = F.exam ? 'ket-qua-' + F.exam : 'ket-qua-theo-bai-kiem-tra';
+      ps.forEach(function(p){ addSheet(wb, used, xTitle(p), ATT_H, by[p].sort(function(x, y){ return (y.submittedAt || 0) - (x.submittedAt || 0); }).map(attRow)); });
+    } else if (kind === 'region'){
+      var g = {}; M.view.forEach(function(r){ var k = r.c._reg || 'Chưa có miền'; (g[k] = g[k] || []).push(r); });
+      var ks2 = Object.keys(g).sort(); if (!ks2.length) { toast('Không có hồ sơ nào để xuất.'); return; }
+      file = 'ho-so-theo-khu-vuc';
+      addSheet(wb, used, 'Tổng hợp khu vực', ['Khu vực', 'Nhân sự', 'Đã có kết quả', 'Điểm TB (%)', 'Cần đào tạo bổ sung', 'Tỉ lệ cần đào tạo (%)'], ks2.map(function(k){ var l = g[k], h = l.filter(function(r){ return r.avg != null; }); return [k, l.length, h.length, h.length ? Math.round(h.reduce(function(s, r){ return s + r.avg; }, 0) / h.length * 10) / 10 : '', l.filter(function(r){ return r.st === 'need'; }).length, Math.round(l.filter(function(r){ return r.st === 'need'; }).length / l.length * 100)]; }));
+      ks2.forEach(function(k){ addSheet(wb, used, k, LIST_H, g[k].map(listRow)); });
+    } else {
+      var rows = kind === 'sel' ? M.view.filter(function(r){ return V.sel[r.c.code]; }) : M.view;
+      if (!rows.length) { toast('Không có hồ sơ nào để xuất.'); return; }
+      file = kind === 'sel' ? 'ho-so-da-chon' : 'ho-so-nhan-su';
+      addSheet(wb, used, 'Hồ sơ nhân sự', LIST_H, rows.map(listRow));
+    }
+    var buf = await wb.xlsx.writeBuffer(), a2 = document.createElement('a'), d = new Date(Date.now() + 7 * 3600e3);
+    a2.href = URL.createObjectURL(new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    a2.download = file + '-' + d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + '.xlsx';
+    document.body.appendChild(a2); a2.click(); setTimeout(function(){ URL.revokeObjectURL(a2.href); a2.remove(); }, 4000);
+    toast('Đã xuất file Excel.');
+  } catch (e) { toast('Không xuất được Excel. Kiểm tra kết nối mạng rồi thử lại.'); }
+  finally { btns.forEach(function(b){ b.disabled = false; }); }
+}
+function fillXlMenu(){
+  var n = M ? M.view.length : 0, s = Object.keys(V.sel).length, ne = M ? M.att.length : 0;
+  $('xlPop').innerHTML = '<button type="button" data-xl="view">Danh sách đang lọc<small>' + n + ' hồ sơ nhân sự</small></button>' +
+    '<button type="button" data-xl="sel"' + (s ? '' : ' disabled style="opacity:.45;cursor:default"') + '>Nhân sự đã chọn<small>' + (s ? s + ' hồ sơ' : 'Chọn ở tab “Danh sách hồ sơ”') + '</small></button><hr>' +
+    '<button type="button" data-xl="region">Theo khu vực<small>Mỗi miền một trang tính + tổng hợp</small></button>' +
+    '<button type="button" data-xl="exam">Theo bài kiểm tra / chương trình<small>' + (F.exam ? 'Kết quả của bài đang chọn' : 'Mỗi bài kiểm tra một trang tính') + ' · ' + ne + ' lượt</small></button>';
+}
+
+/* ====================== Điều hướng, sự kiện ====================== */
+function setTab(t){
+  V.tab = t; $('tabOv').setAttribute('aria-selected', String(t === 'ov')); $('tabLs').setAttribute('aria-selected', String(t === 'ls'));
+  $('secOv').classList.toggle('hide', t !== 'ov'); $('secLs').classList.toggle('hide', t !== 'ls');
+  refresh();
+}
+function refresh(){
+  M = compute();
+  var total = S.C.filter(function(c){ return F.left || !c.left; }).length;
+  updTog();
+  $('fCount').innerHTML = 'Đang xem <span class="fcount">' + M.view.length + '</span> / ' + total + ' nhân sự';
+  if (V.tab === 'ov'){
+    if (!M.base.length) $('secOv').innerHTML = '<div class="card"><div class="empty" style="padding:44px 14px"><b style="color:#0B2A5B;display:block;font-size:15px;margin-bottom:4px">Không có nhân sự nào phù hợp bộ lọc</b>' + (filterActive() ? '<button class="btn sm" type="button" data-reset="1">Xoá bộ lọc</button>' : 'Chưa có nhân sự trong hệ thống.') + '</div></div>';
+    else renderOverview();
+  } else renderList();
+  fillXlMenu();
+}
+function showMain(){ show('main'); setTab(V.tab); }
+function route(){
+  var h = ''; try { h = decodeURIComponent(location.hash.replace(/^#/, '')); } catch (e) { h = ''; }
+  var m = /^nv\/([^\/]+)(?:\/(\d))?$/.exec(h);
+  if (m) openDetail(m[1], +m[2] || 1); else if (S.loaded) showMain();
+}
+function openPaper(id){ $('paperFrame').src = '/kiemtra/quanli.html?profile=' + encodeURIComponent(D.c.code) + '&paper=' + encodeURIComponent(id); $('paperOv').classList.remove('hide'); document.body.style.overflow = 'hidden'; }
+function closePaper(){ $('paperOv').classList.add('hide'); $('paperFrame').src = 'about:blank'; document.body.style.overflow = ''; }
+async function reloadResults(){ var r = await api('GET', '/api/kt-admin?op=results'); if (r.j && r.j.ok){ S.A = (r.j.results || []).filter(function(a){ return a.status === 'submitted'; }).map(function(a){ a._k = norm(a.code); return a; }); M = null; } }
+async function attemptAction(btn){
+  var hb = btn.hasAttribute('data-hide'), id = btn.getAttribute(hb ? 'data-hide' : 'data-del');
+  var x = (D.P.history || []).filter(function(h){ return h.id === id; })[0]; if (!x) return;
+  var what = xTitle(x.period || '') + ' · ' + x.score + '/' + x.total + ' (' + pc(x.pct) + ') · nộp ' + vnDT(x.submittedAt);
+  if (!hb && !confirm('XOÁ HẲN lượt làm bài này?\n\n' + what + '\n\nBài làm và ảnh khuôn mặt của lượt này sẽ bị xoá khỏi hệ thống, không khôi phục được từ giao diện.\nNếu chỉ muốn loại khỏi báo cáo, hãy bấm “Ẩn” (hoàn tác được).')) return;
+  btn.disabled = true;
+  var r = await api('POST', '/api/kt-admin', hb ? { op:'hideAttempt', id:id, hidden:btn.getAttribute('data-to') === '1' } : { op:'deleteAttempt', id:id });
+  if (!r.j.ok){ btn.disabled = false; toast(r.j.error || 'Không thực hiện được, thử lại.'); return; }
+  toast(hb ? (btn.getAttribute('data-to') === '1' ? 'Đã ẩn lượt làm bài.' : 'Đã hiện lại lượt làm bài.') : 'Đã xoá lượt làm bài.');
+  var tab = D.tab; await reloadResults(); await openDetail(D.c.code, tab);
+}
+function bind(){
+  ['fQ'].forEach(function(id){ var t; $(id).addEventListener('input', function(){ clearTimeout(t); t = setTimeout(onFilter, 180); }); });
+  ['fTime', 'fExam', 'fDept', 'fTitle', 'fSeg', 'fRegion', 'fProv', 'fMgr', 'fStatus', 'fLeft'].forEach(function(id){ $(id).addEventListener('change', onFilter); });
+  $('fReset').addEventListener('click', resetFilters);
+  $('fTog').addEventListener('click', function(){ var o = $('fltCard').classList.toggle('open'); $('fTog').setAttribute('aria-expanded', String(o)); updTog(); });
+  $('tabOv').addEventListener('click', function(){ setTab('ov'); }); $('tabLs').addEventListener('click', function(){ setTab('ls'); });
+  $('xlBtn').addEventListener('click', function(e){ e.stopPropagation(); var p = $('xlPop'), open = p.classList.toggle('hide'); $('xlBtn').setAttribute('aria-expanded', String(!open)); });
+  document.addEventListener('click', function(e){ if (!e.target.closest('#xlMenu')){ $('xlPop').classList.add('hide'); $('xlBtn').setAttribute('aria-expanded', 'false'); } });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape'){ if (!$('paperOv').classList.contains('hide')) closePaper(); $('xlPop').classList.add('hide'); } });
+  window.addEventListener('hashchange', route);
+  window.addEventListener('message', function(ev){ if (ev.origin === location.origin && ev.data && ev.data.kt === 'closeProfile') closePaper(); });
+  document.addEventListener('change', function(e){
+    var t = e.target;
+    if (t.id === 'perSel'){ V.per = +t.value; V.page = 1; renderList(); }
+    else if (t.id === 'catSel'){ V.catExam = t.value; $('catBox').innerHTML = catBox(); loadCats(t.value); }
+    else if (t.hasAttribute && t.hasAttribute('data-sel')){ var k = t.getAttribute('data-sel'); if (t.checked) V.sel[k] = 1; else delete V.sel[k]; renderList(); fillXlMenu(); }
+    else if (t.hasAttribute && t.hasAttribute('data-selpage')){ var rows = sortedView().slice((V.page - 1) * V.per, V.page * V.per); rows.forEach(function(r){ if (t.checked) V.sel[r.c.code] = 1; else delete V.sel[r.c.code]; }); renderList(); fillXlMenu(); }
+  });
+  document.addEventListener('click', function(e){
+    var el = e.target.closest('button,[data-go],th[data-sort]'); if (!el) return;
+    var g = el.getAttribute('data-go'); if (g != null){ go(g); return; }
+    if (el.hasAttribute('data-back')){ if (location.hash) location.hash = ''; else showMain(); return; }
+    if (el.hasAttribute('data-reset')){ resetFilters(); return; }
+    if (el.hasAttribute('data-retrydetail') && D){ openDetail(D.c.code, D.tab); return; }
+    if (el.hasAttribute('data-sort')){ var k = el.getAttribute('data-sort'); V.sort = V.sort.k === k ? { k:k, d:-V.sort.d } : { k:k, d:(k === 'avg' || k === 'n' || k === 'act' || k === 'compl' || k === 'comp') ? -1 : 1 }; V.page = 1; renderList(); return; }
+    if (el.hasAttribute('data-pg') && !el.disabled){ V.page = +el.getAttribute('data-pg'); renderList(); var st = $('secLs').getBoundingClientRect().top + window.scrollY - 70; window.scrollTo({ top:Math.max(0, st), behavior:'smooth' }); return; }
+    if (el.hasAttribute('data-geo')){ V.geo = el.getAttribute('data-geo'); renderOverview(); return; }
+    if (el.hasAttribute('data-stat')){ F.status = el.getAttribute('data-stat'); syncFilterInputs(); V.page = 1; setTab('ls'); return; }
+    if (el.hasAttribute('data-mgr')){ F.mgr = el.getAttribute('data-mgr'); F.status = 'need'; syncFilterInputs(); V.page = 1; setTab('ls'); return; }
+    if (el.hasAttribute('data-catretry')){ delete S.cat[V.catExam]; $('catBox').innerHTML = catBox(); loadCats(V.catExam); return; }
+    if (el.hasAttribute('data-selall')){ M.view.forEach(function(r){ V.sel[r.c.code] = 1; }); renderList(); fillXlMenu(); return; }
+    if (el.hasAttribute('data-selclear')){ V.sel = {}; renderList(); fillXlMenu(); return; }
+    if (el.hasAttribute('data-xl')){ $('xlPop').classList.add('hide'); if (!el.disabled) exportXlsx(el.getAttribute('data-xl')); return; }
+    if (el.hasAttribute('data-dtab')){ D.tab = +el.getAttribute('data-dtab'); renderTab(); return; }
+    if (el.hasAttribute('data-paper')){ openPaper(el.getAttribute('data-paper')); return; }
+    if (el.hasAttribute('data-hide') || el.hasAttribute('data-del')){ attemptAction(el); return; }
+  });
+}
+var bound = false;
+async function boot(){
+  show('loading');
+  var me = null; try { me = (await api('GET', '/api/auth/me')).j; } catch (e) { me = null; }
+  if (!me || !me.loggedIn || !me.isAdmin){ show('denied'); return; }
+  var r; try { r = await load(); } catch (e) { r = { error:'Không kết nối được máy chủ, vui lòng thử lại.' }; }
+  if (r.denied){ show('denied'); return; }
+  if (r.error){ show('error', r.error); return; }
+  fillFilters(); if (!bound){ bind(); bound = true; }
+  M = null; route();
+}
+window.boot = boot;
+boot();
+})();
+</script>
+</body>
+</html>

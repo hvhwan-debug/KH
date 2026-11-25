@@ -860,7 +860,8 @@ function pvClose(){ try { parent.postMessage({ kt:'closeProfile' }, location.ori
 function pvOpen(){
   var key = PV_CODE.toLowerCase();
   var e = EMP.filter(function(x){ return String(x.code).toLowerCase() === key; })[0] || { code: PV_CODE, name: PV_CODE, email: '', segment: '' };
-  openProfile(e);
+  var pid = ''; try { pid = new URL(location.href).searchParams.get('paper') || ''; } catch(x){}
+  if (pid) openPaper(e, pid); else openProfile(e); // ?paper=ID: mở thẳng bài làm (dùng từ trang Hồ sơ học tập)
   // Khi mọi hộp thoại đã đóng thì báo cho trang admin đóng khung này
   var watch = new MutationObserver(function(){ if (!document.querySelector('.ov:not(.hide)')) pvClose(); });
   document.querySelectorAll('.ov').forEach(function(o){ watch.observe(o, { attributes:true, attributeFilter:['class'] }); });

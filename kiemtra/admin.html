@@ -1624,6 +1624,7 @@ body[data-tab="results"] .wrap,body[data-tab="analysis"] .wrap,body[data-tab="qu
 #tab-exams .excard .badge.n::before{background:#D8392C;box-shadow:0 0 0 3px rgba(216,57,44,.16)}
 /* Dòng cảnh báo "Chưa có câu hỏi riêng": khung nổi rõ thay vì chữ trơn */
 #tab-exams .excard .warn{display:flex;align-items:center;gap:6px;margin-top:2px;padding:8px 11px;border-radius:10px;background:#FFF4E0;border:1px solid #F3DBA0;color:#8A5200}
+a.nv{text-decoration:none}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -1701,7 +1702,8 @@ body[data-tab="results"] .wrap,body[data-tab="analysis"] .wrap,body[data-tab="qu
     <nav class="side-nav" aria-label="Mục chính">
       <div class="nv-grp">Vận hành</div>
       <button type="button" class="nv" data-nav="exams" onclick="switchTab('exams')" title="Đề thi"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg><span class="nv-l">Đề thi</span><span class="nv-cnt hide" id="nvExams"></span></button>
-      <button type="button" class="nv" data-nav="candidates" onclick="switchTab('candidates')" title="Hồ sơ học tập"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4 2 9l10 5 10-5z" fill="currentColor"/><path d="M6 11.2V16c0 1.6 2.7 3 6 3s6-1.4 6-3v-4.8"/><path d="M21 9.5V14"/></svg><span class="nv-l">Hồ sơ học tập</span><span class="nv-cnt hide" id="nvCand"></span></button>
+      <button type="button" class="nv" data-nav="candidates" onclick="switchTab('candidates')" title="Danh sách thí sinh, nhập danh sách, đối chiếu HR, lịch sử đăng nhập"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4 2 9l10 5 10-5z" fill="currentColor"/><path d="M6 11.2V16c0 1.6 2.7 3 6 3s6-1.4 6-3v-4.8"/><path d="M21 9.5V14"/></svg><span class="nv-l">Thí sinh</span><span class="nv-cnt hide" id="nvCand"></span></button>
+        <a class="nv" href="/kiemtra/hoso.html" title="Hồ sơ học tập: phân tích năng lực, tiến bộ và nhu cầu đào tạo của nhân sự"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="nv-l">Hồ sơ học tập</span></a>
       <button type="button" class="nv" data-nav="lookup" onclick="switchTab('lookup')" title="Tra cứu bài kiểm tra và lịch sử xem điểm"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><span class="nv-l">Tra cứu</span></button>
       <button type="button" class="nv" data-nav="notify" onclick="switchTab('notify')" title="Gửi thông báo và thư mời"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3.5a5.5 5.5 0 0 0-5.5 5.5v3.6L5 15.5h14l-1.5-2.9V9A5.5 5.5 0 0 0 12 3.5z" fill="currentColor"/><path d="M9.8 18.5a2.3 2.3 0 0 0 4.4 0"/></svg><span class="nv-l">Thông báo, thư mời</span></button>
       <button type="button" class="nv" data-nav="managerview" onclick="switchTab('managerview')" title="Quản lí"><svg class="ic" aria-hidden="true"><use href="#i-mgr"/></svg><span class="nv-l">Quản lí</span></button>
@@ -2342,8 +2344,8 @@ body[data-tab="results"] .wrap,body[data-tab="analysis"] .wrap,body[data-tab="qu
       </div>
       <div class="card" id="candListCard">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <h1 style="margin:0">Hồ sơ học tập (<span id="candCount">0</span>)</h1>
-          <div class="cand-hact"><button class="btn ghost sm" type="button" onclick="hrsToggle()">⇄ Đối chiếu file HR</button>
+          <h1 style="margin:0">Thí sinh (<span id="candCount">0</span>)</h1>
+          <div class="cand-hact"><a class="btn ghost sm" href="/kiemtra/hoso.html" title="Phân tích năng lực, tiến bộ và nhu cầu đào tạo">📊 Hồ sơ học tập</a><button class="btn ghost sm" type="button" onclick="hrsToggle()">⇄ Đối chiếu file HR</button>
           <button class="btn" type="button" onclick="$('candAddCard').classList.remove('hide');$('candAddCard').scrollIntoView({behavior:'smooth'});candAddMode('form');$('candNewCode').focus()">＋ Thêm thí sinh</button></div>
         </div>
         <div class="qfilter cfbar">
@@ -2571,7 +2573,7 @@ body[data-tab="results"] .wrap,body[data-tab="analysis"] .wrap,body[data-tab="qu
     <div id="tab-kai" class="tabpane hide">
       <div class="card" id="kaiCard">
         <h1>KAI — Yêu cầu truy cập trợ lí chính sách <span class="small" id="kaiCount"></span></h1>
-        <p class="small">Trợ lí KAI (tại <code>kh.io.vn/ai</code>) cho nhân viên tra cứu chính sách Karofi/Livotec. Khi mã nhân viên + email ai đó nhập không khớp danh sách Hồ sơ học tập, yêu cầu sẽ hiện ở đây để bạn duyệt.</p>
+        <p class="small">Trợ lí KAI (tại <code>kh.io.vn/ai</code>) cho nhân viên tra cứu chính sách Karofi/Livotec. Khi mã nhân viên + email ai đó nhập không khớp danh sách Thí sinh, yêu cầu sẽ hiện ở đây để bạn duyệt.</p>
         <button class="btn ghost sm" type="button" onclick="loadKaiPending()">Tải lại</button>
         <div id="kaiList"></div>
       </div>
@@ -2675,7 +2677,7 @@ body[data-tab="results"] .wrap,body[data-tab="analysis"] .wrap,body[data-tab="qu
           <div id="kaAddMsg"></div>
           <hr style="margin:16px 0;border:0;border-top:1px solid var(--line)">
           <h2 style="margin:0 0 4px;font-size:16px">Yêu cầu chờ duyệt</h2>
-          <p class="small" style="margin:0 0 6px">Mã nhân viên + email không khớp Hồ sơ học tập sẽ chờ bạn duyệt ở đây.</p>
+          <p class="small" style="margin:0 0 6px">Mã nhân viên + email không khớp danh sách Thí sinh sẽ chờ bạn duyệt ở đây.</p>
           <div id="kpList"></div>
           <hr style="margin:16px 0;border:0;border-top:1px solid var(--line)">
           <h2 style="margin:0 0 4px;font-size:16px">Đã được cấp quyền thủ công</h2>
@@ -5542,7 +5544,8 @@ function candSearchProvince(p){ $('candSearch').value = p; renderCandidates(); $
 function candToggle(btn){ var tr = btn.closest('tr'), open = tr.classList.toggle('open'); btn.textContent = open ? 'Thu gọn ▴' : 'Chi tiết ▾'; }
 let CANDIDATES = [];
 /* Hồ sơ học tập của một thí sinh: dùng lại hộp thoại hồ sơ của trang quản lí (quanli.html?profile=MÃ) */
-function openCandProfile(code){
+function openCandProfile(code){ location.href = '/kiemtra/hoso.html#nv/' + encodeURIComponent(code); } // trang hồ sơ học tập riêng (không còn cửa sổ nhỏ)
+function openCandProfilePopup(code){
   const ov = $('profOv'), fr = $('profFrame');
   fr.src = '/kiemtra/quanli.html?profile=' + encodeURIComponent(code);
   ov.classList.remove('hide');
