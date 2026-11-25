@@ -4682,9 +4682,17 @@ function renderImp(r, ps, prac){
     '<a class="im-go" href="' + (INFO && (INFO.materials || []).length ? matsUrl('') : '/kiemtra/hoclieu.html') + '" target="_blank" rel="noopener">' + RS_ICO.book + '<span>' + (INFO && (INFO.materials || []).length ? 'Ôn tập với tài liệu của bài này' : 'Xem học liệu') + '</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>';
 }
 function renderResult(r, already){
-  if (ST.cand && ST.cand.birth && window.BirthAsk) BirthAsk.ask(ST.cand.birth); // xin ngày sinh ở màn kết quả (nhắc nhẹ, bỏ qua được)
   ST.res = { r:r, already:already };
-  setTimeout(surveyPrompt, 900);
+  var freshSubmit = !already && !isPractice();
+  var askBirth = function(){ if (ST.cand && ST.cand.birth && window.BirthAsk) BirthAsk.ask(ST.cand.birth); }; // xin ngày sinh ở màn kết quả (nhắc nhẹ, bỏ qua được)
+  if (freshSubmit){
+    // Vừa nộp bài xong: ưu tiên hiện hộp chia sẻ kết quả qua Zalo trước; ngày sinh và khảo sát chờ đóng hộp mới hiện
+    afterShare = [askBirth, function(){ setTimeout(surveyPrompt, 300); }];
+    setTimeout(function(){
+      nudgeOpen(SHARE_NOW_TITLE, SHARE_NOW_DESC);
+      if (!$('nudgeBg').classList.contains('on')) nudgeFlush();
+    }, 700);
+  } else { askBirth(); setTimeout(surveyPrompt, 900); }
   renderTries(r.attempts);
   var prac = isPractice();
   var ps = (r.passed === true || r.passed === false) ? r.passed : null; // null = bài không có ngưỡng đạt
@@ -5128,10 +5136,16 @@ $('btnSave').addEventListener('click', async function(){
 // (phím PrintScreen / Ctrl-Cmd+Shift+S,3,4,5 / Win+Shift+S trên máy tính); không tự bật khi vừa có kết quả.
 // Luôn có thanh chia sẻ cố định khi nút chính đã cuộn khuất.
 var nudgeShown = false, nudgeBack = null, nudgeTimer = null;
+var NUDGE_DESC0 = '', afterShare = [];
+var SHARE_NOW_TITLE = 'Gửi kết quả cho quản lí';
+var SHARE_NOW_DESC = 'Bạn đã nộp bài xong. Bấm nút bên dưới để gửi <b>ảnh kết quả chính thức</b> cho quản lí qua Zalo. Đừng chụp màn hình vì ảnh dễ bị <b>cắt thiếu</b> mã minh chứng và thời gian xác nhận.';
+function nudgeFlush(){ var q = afterShare; afterShare = []; q.forEach(function(f){ try { f(); } catch(e){} }); }
 function resultOn(){ return !$('scrResult').classList.contains('hide'); }
-function nudgeOpen(title){
+function nudgeOpen(title, desc){
   if (!resultOn() || $('nudgeBg').classList.contains('on')) return;
   $('nudgeWhy').textContent = title || 'Đừng chụp màn hình nhé';
+  if (!NUDGE_DESC0) NUDGE_DESC0 = $('nudgeDesc').innerHTML;
+  $('nudgeDesc').innerHTML = desc || NUDGE_DESC0;
   nudgeBack = document.activeElement;
   $('nudgeBg').classList.add('on'); $('nudgeBg').setAttribute('aria-hidden', 'false');
   $('nudgeGo').focus({ preventScroll:true });
@@ -5139,6 +5153,7 @@ function nudgeOpen(title){
 function nudgeClose(){
   $('nudgeBg').classList.remove('on'); $('nudgeBg').setAttribute('aria-hidden', 'true');
   try { if (nudgeBack && nudgeBack.focus) nudgeBack.focus({ preventScroll:true }); } catch(e){}
+  nudgeFlush();
 }
 $('nudgeGo').addEventListener('click', function(){ nudgeClose(); $('btnZalo').click(); });
 $('nudgeSave').addEventListener('click', function(){ nudgeClose(); $('btnSave').click(); });
