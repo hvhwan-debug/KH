@@ -2621,6 +2621,7 @@ body[data-tab="results"] .main,body[data-tab="analysis"] .main,body[data-tab="qu
           <div><label>Email</label><input type="text" id="candEditEmail"></div>
           <div><label>Quản lí</label><select id="candEditMgrSel" onchange="mgrPick('candEditMgrSel','candEditManager')" aria-label="Chọn quản lí"></select><input type="text" id="candEditManager" class="hide" autocomplete="off" maxlength="100" placeholder="Gõ tên quản lí mới" style="margin-top:6px"></div>
           <div><label>Số điện thoại / Zalo</label><input type="text" id="candEditPhone" inputmode="tel" autocomplete="off" maxlength="20" placeholder="Chưa có"></div>
+          <div><label for="candEditBirth">Ngày sinh</label><input type="date" id="candEditBirth" min="1940-01-01"><div class="small" id="candEditBirthNote" style="margin-top:4px"></div></div>
           <div><label>Tỉnh/thành làm việc</label><select id="candEditProvince"><option value="">(chưa chọn — thí sinh bắt buộc tự chọn khi vào thi)</option></select></div>
           <div><label>Miền bán hàng</label><select id="candEditRegion"><option value="">(chưa chọn — thí sinh bắt buộc tự chọn khi vào thi)</option><option value="bac">Miền Bắc</option><option value="nam">Miền Nam</option></select></div>
           <div><label>Chức danh</label><input type="text" id="candEditTitle" list="titleList" autocomplete="off" maxlength="50" placeholder="PC"></div>
@@ -3317,7 +3318,7 @@ async function boot(){
     $('meEmail').textContent = j.email;
     $('meAv').textContent = String(j.email || '?').trim().charAt(0).toUpperCase() || '?';
     $('app').classList.remove('hide');
-    { const [t, id] = parseHash(); if (WS.indexOf(t) >= 0 && id) openExam(id, t); else switchTab(t || 'exams'); }
+    { const [t, id] = parseHash(); if (t === 'candidates' && id) PENDING_EDIT = id; if (WS.indexOf(t) >= 0 && id) openExam(id, t); else switchTab(t || 'exams'); }
     loadAll();
   } catch (e) {
     $('loginScreen').classList.remove('hide');
@@ -3646,6 +3647,7 @@ window.addEventListener('hashchange', () => {
   if ($('app').classList.contains('hide')) return;
   const [t, id] = parseHash(); if (TABS.indexOf(t) < 0) return;
   if (WS.indexOf(t) >= 0 && id && id !== CUR_EXAM) openExam(id, t); else switchTab(t);
+  if (t === 'candidates' && id) candDeepEdit(id);
 });
 function switchTab(t){
   if (t === 'logins'){ switchTab('candidates'); candView('logins'); return; } // lịch sử đăng nhập nằm trong Hồ sơ học tập
@@ -5873,7 +5875,7 @@ async function loadCandidates(){
   $('candCount').textContent = j.candidates.length;
   setNavCount('nvCand', j.candidates.length);
   CANDIDATES = j.candidates; CAND_LOADED = true; ASG_LITE = null;
-  renderCandidates(); if (typeof asgRender === 'function') asgRender(); if ($('candStatsCard') && !$('candStatsCard').classList.contains('hide')) candStatsRender();
+  renderCandidates(); if (PENDING_EDIT) candDeepRun(); if (typeof asgRender === 'function') asgRender(); if ($('candStatsCard') && !$('candStatsCard').classList.contains('hide')) candStatsRender();
   loadChangeRequests();
 }
 function resetCandFilters(){
@@ -6045,6 +6047,14 @@ function candFiltClear(){ $('candSearch').value = ''; ['candMgrF','candTitleF','
 function candFilter(id, v){ const el = $(id); if (!el) return; el.value = el.value === v ? '*' : v; if (el.selectedIndex < 0) el.value = '*'; renderCandidates(); el.scrollIntoView({behavior:'smooth', block:'center'}); }
 function candSearchProvince(p){ $('candSearch').value = p; renderCandidates(); $('candSearch').scrollIntoView({behavior:'smooth', block:'center'}); $('candSearch').focus(); }
 function candToggle(btn){ var tr = btn.closest('tr'), open = tr.classList.toggle('open'); btn.textContent = open ? 'Thu gọn ▴' : 'Chi tiết ▾'; }
+var PENDING_EDIT = ''; // địa chỉ #candidates/<mã NV>: mở thẳng form sửa của người đó (dùng từ trang Hồ sơ học tập)
+function candDeepEdit(id){ PENDING_EDIT = id; if (CAND_LOADED) candDeepRun(); }
+function candDeepRun(){
+  const id = String(PENDING_EDIT || '').trim().toLowerCase(); PENDING_EDIT = '';
+  if (!id) return;
+  const c = CANDIDATES.find(x => String(x.code).toLowerCase() === id);
+  if (c) editCandidateOpen(c.code); else msg('candMsg', 'Không tìm thấy thí sinh mã ' + id.toUpperCase() + ' trong danh sách thí sinh (có thể là tài khoản thử nghiệm, xem mục “🧪 Tài khoản thử nghiệm”).', 'err');
+}
 let CANDIDATES = [];
 /* Hồ sơ học tập của một thí sinh: dùng lại hộp thoại hồ sơ của trang quản lí (quanli.html?profile=MÃ) */
 function openCandProfile(code){ location.href = '/kiemtra/hoso.html#nv/' + encodeURIComponent(code); } // trang hồ sơ học tập riêng (không còn cửa sổ nhỏ)
@@ -6091,6 +6101,7 @@ function editCandidateOpen(code){
   $('candEditSegment').value = c.segment||'both';
   $('candEditTitle').value = c.title || 'PC';
   $('candEditPhone').value = c.phone || '';
+  { const hasY = /^\d{4}-\d{2}-\d{2}$/.test(c.birthDate || ''), bi = $('candEditBirth'); bi.value = hasY ? c.birthDate : ''; bi.dataset.orig = bi.value; $('candEditBirthNote').textContent = !hasY && c.birthDate ? 'Hiện chỉ có ngày/tháng (' + String(c.birthDate).replace(/^(\d{2})-(\d{2})$/, '$2/$1') + '), chưa có năm sinh.' : ''; }
   const pSel = $('candEditProvince');
   if (pSel.options.length < 2) pSel.innerHTML += PROVINCES_VN.slice().sort((a, b) => a.localeCompare(b, 'vi')).map(p => '<option value="' + esc(p) + '">' + esc(p) + '</option>').join('');
   pSel.value = c.province || ''; $('candEditRegion').value = c.region || '';
@@ -6269,9 +6280,9 @@ async function saveCandidateEdit(){
   const code = $('candEditCode').value;
   const email = $('candEditEmail').value.trim();
   if (!email){ msg('candEditMsg','Nhập email.'); return; }
-  const { j } = await api('POST','/api/kt-admin', {
-    op:'addCandidates', rows:[{ code, name: $('candEditName').value.trim(), email, manager: $('candEditManager').value.trim(), segment: $('candEditSegment').value, title: $('candEditTitle').value.trim() || 'PC', phone: $('candEditPhone').value.trim(), province: $('candEditProvince').value, region: $('candEditRegion').value }]
-  });
+  const row = { code, name: $('candEditName').value.trim(), email, manager: $('candEditManager').value.trim(), segment: $('candEditSegment').value, title: $('candEditTitle').value.trim() || 'PC', phone: $('candEditPhone').value.trim(), province: $('candEditProvince').value, region: $('candEditRegion').value };
+  const bi = $('candEditBirth'); if (bi.value !== (bi.dataset.orig || '')) row.birthDate = bi.value; // chỉ gửi khi đổi: không xoá nhầm ngày/tháng dữ liệu cũ
+  const { j } = await api('POST','/api/kt-admin', { op:'addCandidates', rows:[row] });
   if (!j.ok){ msg('candEditMsg', j.error, 'err'); return; }
   if ($('candEditTest').checked){ // tích "Tài khoản thử nghiệm": chuyển người này sang danh sách thử nghiệm
     const r = (await api('POST','/api/kt-admin', { op:'setTestMode', code, test:true })).j;

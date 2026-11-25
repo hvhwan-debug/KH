@@ -947,6 +947,8 @@ const handler = async function (context, req) {
           return { code: parts[0] || "", name: parts[1] || "", email: parts[2] || "", manager: parts[3] || "", segment: parts[4] || "", title: parts[5] || "", phone: parts[6] || "" };
         }).filter((r) => r.code && r.email);
       }
+      // Ngày sinh (sửa từ form quản trị): chỉ nhận dạng đủ ngày/tháng/năm hợp lệ; chuỗi rỗng = xoá
+      for (const r of rows) if (r && r.birthDate !== undefined && String(r.birthDate).trim() && !quiz.normBirthDate(r.birthDate, true)) return reply(context, 400, { ok: false, error: "Ngày sinh không hợp lệ (cần đủ ngày/tháng/năm, từ năm 1940, tối thiểu 15 tuổi)." });
       const list = await quiz.getCandidates();
       const byCode = {}, canonMgr = quiz.managerCanon(list); // tên quản lí gõ tay: không phân biệt hoa/thường, dấu, khoảng trắng
       list.forEach((c, i) => { byCode[quiz.normCode(c.code)] = i; });
@@ -963,6 +965,7 @@ const handler = async function (context, req) {
         // Tỉnh / miền: chỉ đổi khi có gửi (sửa từ form quản trị); chuỗi rỗng = xoá để thí sinh tự chọn lại khi vào thi
         if (r.province !== undefined) entry.province = require("../_lib/provinces").canonProvince(r.province);
         if (r.region !== undefined) entry.region = quiz.normRegion(r.region);
+        if (r.birthDate !== undefined) entry.birthDate = quiz.normBirthDate(r.birthDate, true); // "" = xoá ngày sinh
         if (r.profile !== undefined) { const pf = require("../_lib/profile").cleanProfile(r.profile); if (pf) entry.profile = pf; } // hồ sơ nhân sự: chỉ trường công việc đã làm sạch
         if (byCode[code] != null && skipExisting) { skipped++; return; }
         if (byCode[code] != null) {

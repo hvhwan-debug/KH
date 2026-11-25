@@ -201,6 +201,9 @@ svg.ch text{font-family:inherit;fill:#5B6B86;font-size:11px}
 #secLs table.t tbody tr:hover td:last-child{background:#F8FBFF}
 /* Bóng mờ hai mép báo hiệu còn nội dung để cuộn ngang */
 #secLs .tw{background:linear-gradient(to right,#fff 30%,rgba(255,255,255,0)) 0 0/36px 100% no-repeat local,linear-gradient(to left,#fff 30%,rgba(255,255,255,0)) 100% 0/36px 100% no-repeat local,linear-gradient(to right,rgba(15,37,80,.12),rgba(15,37,80,0)) 0 0/10px 100% no-repeat scroll,linear-gradient(to left,rgba(15,37,80,.12),rgba(15,37,80,0)) 100% 0/10px 100% no-repeat scroll}
+.ph-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+a.btn{text-decoration:none}
+a.btn:focus-visible{outline:2px solid #1D6FEA;outline-offset:2px}
 </style>
 <style id="sideCss">
 :root{--side-w:272px;--rail-w:78px}
@@ -1063,7 +1066,7 @@ function renderDetail(){
   var d = a.delta;
   var h = crumb(c.name || c.code) +
     '<div class="card ph-card"><div class="av lg" data-av="' + esc(c.code) + '">' + esc(initials(c.name || c.code)) + '</div><div class="who"><h1>' + esc(c.name || c.code) + '</h1><div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">' + stateChip + '<span class="chip ' + a.st + '">' + STL[a.st] + '</span><span style="color:#5B6B86;font-size:12.5px">Hoạt động gần nhất: ' + (a.act ? ago(a.act) + ' · <b style="font-weight:600;color:#2F4468">' + esc(vnDT(a.act)) + ' · ' + esc(actWhat(a)) + '</b>' : '–') + '</span></div><div class="ph-meta">' + meta + '</div></div>' +
-    '<div class="ph-act"><button class="btn" type="button" data-xl="person">⬇ Xuất Excel hồ sơ</button></div></div>' +
+    '<div class="ph-act"><a class="btn" href="/kiemtra/admin#candidates/' + encodeURIComponent(c.code) + '" title="Mở form sửa họ tên, email, quản lí, số điện thoại, ngày sinh, chức danh… của nhân sự này">✎ Sửa thông tin</a><button class="btn" type="button" data-xl="person">⬇ Xuất Excel hồ sơ</button></div></div>' +
     '<div class="kpis6">' +
       kpi('Điểm trung bình', 'Trung bình điểm của từng bài kiểm tra (mỗi bài lấy lần điểm cao nhất).', a.avg == null ? '–' : vn(a.avg) + '<small>%</small>', a.avg == null ? 'Chưa có kết quả' : BL[band(a.avg)]) +
       kpi('Tổng lượt kiểm tra', 'Số lượt làm bài chính thức đã nộp (không gồm thi thử và bài đã ẩn).', a.n, hidden ? hidden + ' bài đang ẩn' : 'bài chính thức') +
