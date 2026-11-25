@@ -12,24 +12,32 @@
   else if (/musical_ly|BytedanceWebview|TikTok/i.test(ua)) name = 'TikTok';
   if (!name){ if (lazy) window.inAppBlock = function(){ return false; }; return; }
 
-  var css = '#iaOv{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(160deg,#0B1F5C,#13317F);color:#fff;font-family:"Times New Roman",Arial,sans-serif;text-align:center}' +
-    '#iaOv .b{max-width:380px;width:100%}#iaOv h1{margin:0 0 10px;font-size:24px;line-height:1.25;color:#F5C451}' +
-    '#iaOv p{margin:0 0 20px;font-size:17px;line-height:1.5}' +
-    '#iaOv button{display:block;width:100%;border:0;border-radius:14px;padding:16px;font-size:18px;font-weight:700;cursor:pointer;font-family:inherit}' +
-    '#iaOv .go{background:#F5C451;color:#0B1F5C;margin-bottom:12px}#iaOv .cp{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35)}' +
-    '#iaOv .h{margin-top:18px;font-size:15px;text-align:left;display:none;background:rgba(255,255,255,.1);border-radius:12px;padding:12px 16px}' +
-    '#iaOv .m{margin-top:12px;font-size:15px;min-height:20px}';
+  // Giao diện giống màn mở đề kiểm tra: nền xanh nhạt gradient, thẻ trắng, biểu tượng + nút xanh gradient, phông Be Vietnam Pro
+  var css = '#iaOv{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;overflow:auto;' +
+      'font-family:\"Be Vietnam Pro\",system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;color:#0A2552;text-align:center;-webkit-font-smoothing:antialiased;' +
+      'background:radial-gradient(circle at 0% 14%,rgba(167,232,255,.65),transparent 55%),radial-gradient(circle at 100% 100%,rgba(75,155,255,.28),transparent 55%),linear-gradient(155deg,#eaf7ff 0%,#f8fcff 54%,#e1f6ff 100%)}' +
+    '#iaOv .b{box-sizing:border-box;width:100%;max-width:420px;padding:30px 22px 22px;border-radius:26px;background:rgba(255,255,255,.96);border:1px solid #e0ecfa;box-shadow:0 22px 65px rgba(22,75,133,.18);display:flex;flex-direction:column;align-items:center}' +
+    '#iaOv .ic{width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg,#0A63C4 0%,#10A6D0 100%);display:grid;place-items:center;box-shadow:0 16px 30px -14px rgba(10,99,196,.7);margin:0 0 18px}' +
+    '#iaOv h1{margin:0 0 8px;font-size:24px;line-height:1.25;font-weight:800;color:#0A2552}' +
+    '#iaOv p{margin:0 0 24px;font-size:15px;line-height:1.6;color:#4F6486;max-width:32ch}#iaOv p b{color:#0A2552}' +
+    '#iaOv button{display:flex;align-items:center;justify-content:center;width:100%;border:0;cursor:pointer;font-family:inherit}' +
+    '#iaOv .go{height:58px;border-radius:14px;font-size:16px;font-weight:800;color:#fff;background:linear-gradient(100deg,#0869df,#08b9d4);box-shadow:0 12px 25px rgba(8,120,232,.28);margin-bottom:6px}' +
+    '#iaOv .go:active{filter:brightness(.96)}' +
+    '#iaOv .cp{background:none;color:#0B3F94;font-weight:700;font-size:14.5px;padding:12px 16px}' +
+    '#iaOv .h{width:100%;box-sizing:border-box;margin-top:10px;font-size:13.5px;line-height:1.55;text-align:left;display:none;background:#E6F0FC;color:#33496E;border-radius:14px;padding:12px 16px}#iaOv .h b{color:#0A2552}' +
+    '#iaOv .m{margin-top:10px;font-size:13.5px;min-height:18px;color:#0B3F94;font-weight:600}';
 
   function build(){
     var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
     var ov = document.createElement('div'); ov.id = 'iaOv'; ov.setAttribute('role', 'alertdialog'); ov.setAttribute('aria-modal', 'true');
-    ov.innerHTML = '<div class="b"><h1>Mở bằng trình duyệt</h1>' +
-      '<p>Bạn đang mở trang này trong <b></b>. Để dùng camera và làm bài, bắt buộc phải mở bằng Chrome hoặc Safari.</p>' +
-      '<button type="button" class="go">Bấm để mở bằng trình duyệt</button>' +
+    ov.innerHTML = '<div class="b"><div class="ic" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.9 5.6 3.9 9S14.6 18.4 12 21c-2.6-2.6-3.9-5.6-3.9-9S9.4 5.6 12 3z"/></svg></div>' +
+      '<h1>Mở bằng trình duyệt</h1>' +
+      '<p>Để dùng camera và làm bài, hãy mở trang này bằng Chrome hoặc Safari thay vì <b></b>.</p>' +
+      '<button type="button" class="go">Mở trình duyệt</button>' +
       '<button type="button" class="cp">Sao chép link</button>' +
       '<div class="h">Nếu chưa tự mở được: bấm <b>⋯</b> ở góc trên bên phải, chọn <b>Mở bằng trình duyệt</b>, hoặc sao chép link rồi dán vào Chrome / Safari.</div>' +
       '<div class="m" role="status"></div></div>';
-    ov.querySelector('b').textContent = name;
+    ov.querySelector('p b').textContent = name;
     document.body.appendChild(ov);
     document.documentElement.style.overflow = 'hidden';
     var h = ov.querySelector('.h'), m = ov.querySelector('.m');
