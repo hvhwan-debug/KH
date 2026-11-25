@@ -1053,6 +1053,12 @@ table.rt{display:table;width:100%;border-collapse:separate;border-spacing:0;over
 #resDetailCard.rd-pop .rd-sticky{padding-right:50px}
 @keyframes rdIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
 @media(max-width:640px){#resDetailCard.rd-pop{top:0;width:100vw;max-height:100vh;border-radius:0}}
+.rd-pager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px}
+.rd-pager:empty{display:none}
+.rd-pager .rd-pos{flex:1;text-align:center;font-weight:700;color:var(--ink);line-height:1.25;min-width:0}
+.rd-pager .rd-pos small{display:block;font-weight:500;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rd-pager button[disabled]{opacity:.4;cursor:not-allowed}
+.rd-pager-b{position:sticky;bottom:-20px;z-index:5;margin:14px -4px 0;padding:10px 12px;background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:14px;box-shadow:0 -4px 16px rgba(10,37,82,.10)}
 
 .crq{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:10px;background:#fff}
 .crq-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
@@ -3191,7 +3197,9 @@ body[data-tab="results"] .main,body[data-tab="analysis"] .main,body[data-tab="qu
       <div class="card hide" id="resDetailCard">
         <button class="xclose" type="button" onclick="closeResDetail()" aria-label="Đóng">×</button>
         <h1>Chi tiết bài làm</h1>
+        <div class="rd-pager" id="rdPagerTop"></div>
         <div id="resDetail"></div>
+        <div class="rd-pager rd-pager-b" id="rdPagerBot"></div>
         <button class="btn ghost sm" style="margin-top:14px" onclick="closeResDetail()">Đóng</button>
       </div>
     </div>
@@ -8068,7 +8076,7 @@ function resRow(r, o){
     (o.sub ? '' : '<button type="button" class="rt-ib danger" title="Cho phép làm lại bài này" aria-label="Cho làm lại bài của ' + nm + '" onclick="resetAttempt(\'' + esc(r.code) + '\',\'' + esc(r.period || '') + '\')"><svg class="ic" aria-hidden="true"><use href="#i-redo"/></svg></button>') + '</div></td></tr>';
 }
 // Gộp bài nộp theo (đề, mã NV): mỗi người một dòng = lần điểm CAO NHẤT (chính thức); các lần làm xổ ra bên dưới.
-let RES_GROUPS = [], RES_OPEN = {};
+let RES_GROUPS = [], RES_OPEN = {}, RES_VIS = []; // RES_VIS: thứ tự các nhóm đang hiển thị sau khi lọc (mọi trang)
 const resBetter = (x, y) => !y || ((x.pct||0) !== (y.pct||0) ? (x.pct||0) > (y.pct||0) : (x.score||0) !== (y.score||0) ? (x.score||0) > (y.score||0) : (x.submittedAt||0) > (y.submittedAt||0));
 function resGroups(){
   const g = {}, out = [];
@@ -8150,6 +8158,7 @@ function filterResults(keep){
     const ok = (!q || tx.indexOf(q) >= 0) && (!mg || tx.indexOf(mg) >= 0) && (!noMgr || noMgr.some(c => c && tx.indexOf(c) >= 0)) && resMatch(G && G.best, fv.rf, fv.cf);
     vis[tr.dataset.g] = ok; if (ok) order.push(tr.dataset.g);
   });
+  RES_VIS = order.slice();
   const pages = Math.max(1, Math.ceil(order.length / resPg.size));
   if (resPg.page > pages) resPg.page = pages; if (resPg.page < 1) resPg.page = 1;
   const start = (resPg.page - 1) * resPg.size, show = {};
@@ -8278,11 +8287,45 @@ function rdCompare(L){
   const catTable = cats.length ? '<details class="cmp-cats" open><summary>Tỉ lệ đúng theo mảng kiến thức</summary><div class="cmp-tw"><table><thead><tr><th>Mảng</th>' + L.map(t => '<th>Lần ' + t.n + '</th>').join('') + '<th>Thay đổi</th></tr></thead><tbody>' + catRows + '</tbody></table></div><p class="small" style="margin:6px 0 0">Mỗi lần làm được phát bộ câu ngẫu nhiên khác nhau, nên so sánh theo mảng kiến thức thay vì từng câu.</p></details>' : '';
   return '<div class="cmp"><div class="cmp-h"><b>So sánh ' + L.length + ' lần làm</b><span class="cmp-lg"><i class="g"></i>Đúng <i class="r"></i>Sai <i class="b"></i>Bỏ trống</span></div>' + bars + chg + catTable + '</div>';
 }
+// ----- Chuyển qua lại giữa các thí sinh trong cửa sổ chi tiết (theo đúng thứ tự + bộ lọc đang hiện ở bảng) -----
+let RD_REQ = 0, RD_CUR = null;
+function rdNavPos(){
+  const gs = (RES_VIS && RES_VIS.length ? RES_VIS : RES_GROUPS.map((_, i) => String(i))).map(g => RES_GROUPS[+g]).filter(Boolean);
+  const idx = gs.findIndex(G => G.list.some(r => r.id === RD_CUR));
+  return { gs, idx };
+}
+function rdPagerRender(){
+  const { gs, idx } = rdNavPos(), t = $('rdPagerTop'), b = $('rdPagerBot');
+  if (!t || !b) return;
+  if (idx < 0){ t.innerHTML = b.innerHTML = ''; return; }
+  const nm = G => (G && (G.best.name || G.best.code)) || '';
+  const prev = gs[idx - 1], next = gs[idx + 1];
+  const html = '<button type="button" class="btn ghost sm" onclick="rdStep(-1)"' + (prev ? ' title="' + esc(nm(prev)) + '"' : ' disabled') + '>‹ Trước</button>' +
+    '<span class="rd-pos">Thí sinh ' + (idx + 1) + '/' + gs.length + '<small>' + esc(nm(gs[idx])) + '</small></span>' +
+    '<button type="button" class="btn ghost sm" onclick="rdStep(1)"' + (next ? ' title="' + esc(nm(next)) + '"' : ' disabled') + '>Sau ›</button>';
+  t.innerHTML = html; b.innerHTML = html;
+}
+function rdStep(d){
+  const { gs, idx } = rdNavPos(); if (idx < 0) return;
+  const G = gs[idx + d]; if (G) viewResult(G.best.id);
+}
+document.addEventListener('keydown', ev => {
+  const c = $('resDetailCard');
+  if (!c || c.classList.contains('hide') || document.getElementById('rdZoomOv')) return;
+  if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+  if (ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
+  const tg = ev.target && ev.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT') return;
+  ev.preventDefault(); rdStep(ev.key === 'ArrowLeft' ? -1 : 1);
+});
 async function viewResult(id){
+  const req = ++RD_REQ;
   const { j } = await api('GET','/api/kt-admin?op=result&id='+encodeURIComponent(id));
+  if (req !== RD_REQ) return; // đã bấm sang thí sinh khác trong lúc đang tải
   if (!j.ok){ alert(j.error); return; }
   const a = j.attempt, D = j.detail;
+  RD_CUR = id;
   openResDetail();
+  rdPagerRender();
   const st = d => d.ok ? 'ok' : (d.answered ? 'bad' : 'blank');
   const nOk = D.filter(d => st(d) === 'ok').length, nBad = D.filter(d => st(d) === 'bad').length, nBlank = D.filter(d => st(d) === 'blank').length;
   const pct = Number(a.pct) || 0, col = pct >= 80 ? 'var(--ok)' : pct >= 50 ? 'var(--warn)' : 'var(--bad)';
