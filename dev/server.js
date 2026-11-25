@@ -38,7 +38,7 @@ http.createServer(async (rq, rs) => {
     try { await r.fn(ctx, req); } catch (e) { console.error(e); ctx.res = { status: 500, body: "error" }; }
     const res = ctx.res || { status: 204 };
     const headers = Object.assign({}, res.headers);
-    const out = typeof res.body === "object" && res.body !== null ? JSON.stringify(res.body) : String(res.body == null ? "" : res.body);
+    const out = Buffer.isBuffer(res.body) ? res.body : typeof res.body === "object" && res.body !== null ? JSON.stringify(res.body) : String(res.body == null ? "" : res.body); // Buffer: gửi nguyên nhị phân (ảnh, PDF, video) như Azure
     rs.writeHead(res.status || 200, headers);
     return rs.end(out);
   }

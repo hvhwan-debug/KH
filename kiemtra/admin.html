@@ -1284,6 +1284,9 @@ table.hlx-t tbody tr:hover{background:#F5F9FF}
 .hlx-ti b{display:block;font-size:14px;line-height:1.35}.hlx-ti span.small{display:block;margin-top:2px;max-width:34em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hlx-star{border:0;background:none;font-size:18px;line-height:1;cursor:pointer;color:#C9D3E3;padding:2px 4px}.hlx-star.on{color:#F5A623}
 .hlx-acts{display:flex;gap:6px;flex-wrap:nowrap}
+.hlx-aibar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px;padding:12px 14px;border-radius:12px;background:linear-gradient(100deg,#F1F6FF,#F7F1FF);border:1px solid #DCE4FA;font-size:13.5px}
+.hlx-aibar b{color:#2A2F7A}.hlx-aibar .sp{flex:1}
+.hlx-th{position:relative}.hlx-th .ai{position:absolute;left:4px;bottom:4px;padding:0 5px;border-radius:5px;background:rgba(20,20,60,.72);color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.04em}
 .hlx-ex{margin-top:14px}.hlx-ex>label{display:block;font-weight:600;margin-bottom:6px}
 .hlx-exl{max-height:220px;overflow:auto;border:1px solid var(--line,#E1E8F2);border-radius:10px;margin-top:8px;padding:4px}
 .hlx-exl label{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;cursor:pointer;font-weight:500}
@@ -2531,6 +2534,7 @@ a.bb{text-decoration:none}
             <select id="hlFCat" aria-label="Lọc theo danh mục"><option value="">Mọi danh mục</option></select>
             <select id="hlFSt" aria-label="Lọc theo trạng thái"><option value="">Mọi trạng thái</option><option value="published">Đang hiển thị</option><option value="draft">Bản nháp</option></select>
           </div>
+          <div id="hlAiBar" class="hlx-aibar hide"></div>
           <div style="overflow-x:auto"><table class="hlx-t"><thead><tr><th>Học liệu</th><th>Danh mục</th><th>Loại</th><th>Trạng thái</th><th class="n">Lượt xem</th><th>Đánh giá</th><th>Thao tác</th></tr></thead><tbody id="hlRows"></tbody></table></div>
         </div>
 
@@ -2567,7 +2571,8 @@ a.bb{text-decoration:none}
                 <div style="flex:1;min-width:200px"><input type="file" id="hlThumbFile" accept="image/jpeg,image/png,image/webp" style="width:auto;max-width:100%">
                   <input type="url" id="hlThumbUrl" placeholder="hoặc dán link ảnh https://…" style="margin-top:8px">
                   <div class="small" style="margin-top:6px">JPG, PNG hoặc WebP, tối đa 4 MB. Video YouTube tự lấy ảnh bìa nếu để trống.</div>
-                  <button type="button" class="btn ghost sm" id="hlThumbClr" style="margin-top:8px">Bỏ ảnh bìa</button></div></div></div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn sm" id="hlAiBtn" title="AI vẽ ảnh minh hoạ theo tiêu đề và giới thiệu">✨ Tạo ảnh bằng AI</button><button type="button" class="btn ghost sm" id="hlThumbClr">Bỏ ảnh bìa</button></div>
+                  <div class="small" id="hlAiNote" style="margin-top:6px"></div></div></div></div>
             <label class="chk"><input type="checkbox" id="hlFeat"> Học liệu nổi bật (hiện ở đầu trang, tối đa 3 thẻ)</label>
             <div class="hlx-ex"><label>Gắn vào bài kiểm tra <span class="small">(tài liệu ôn tập: hiện cho thí sinh trước khi làm bài và ở màn kết quả của các bài được chọn)</span></label>
               <input type="search" id="hlExQ" placeholder="Tìm bài kiểm tra…" autocomplete="off">
@@ -3046,7 +3051,7 @@ $('auXlsx').addEventListener('click', async function(){
 });
 
 /* ===== Học liệu (quản trị) ===== */
-const HL = { items:[], cats:[], stats:{}, limits:{}, view:'list', type:'video', mode:'upload', file:null, thumb:null, editId:'', loaded:false, busy:false, exSel:[], reasonLabels:{} };
+const HL = { items:[], cats:[], stats:{}, limits:{}, view:'list', type:'video', mode:'upload', file:null, thumb:null, editId:'', loaded:false, busy:false, exSel:[], reasonLabels:{}, aiBusy:false };
 const HLC = 3 * 1024 * 1024;
 function hlMsg(t, c){ msg('hlMsg', t, c); }
 function hlBytes(n){ return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
@@ -3070,7 +3075,7 @@ function hlRender(){
   $('hlKpis').innerHTML = [['Tổng học liệu', st.total], ['Đang hiển thị', st.published], ['Bản nháp', st.draft], ['Lượt xem', st.views], ['Đánh giá 👍 / 👎', (st.up || 0) + ' / ' + (st.down || 0)], ['Tệp tải lên', st.uploads]].map(k => '<div class="kpi"><div class="v">' + (k[1] || 0) + '</div><div class="l">' + k[0] + '</div></div>').join('');
   const cur = $('hlFCat').value;
   $('hlFCat').innerHTML = '<option value="">Mọi danh mục</option>' + HL.cats.map(c => '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>').join(''); $('hlFCat').value = cur;
-  hlRows();
+  hlRows(); hlAiBarRender();
 }
 function hlVoteCell(it){
   if (!it.up && !it.down) return '<span class="small">Chưa có</span>';
@@ -3088,12 +3093,31 @@ function hlExRender(){
   const gone = sel.filter(id => !hlExTitle(id)).length;
   $('hlExN').textContent = sel.length ? 'Đã chọn ' + sel.length + ' bài kiểm tra' + (gone ? ' (' + gone + ' bài đã bị xoá)' : '') + '.' : 'Chưa gắn vào bài kiểm tra nào.';
 }
+// ---- ảnh minh hoạ AI ----
+function hlNoThumb(){ return HL.items.filter(it => !it.thumb && !(it.source && it.source.kind === 'youtube')); }
+function hlAiBarRender(){
+  const n = hlNoThumb().length, b = $('hlAiBar');
+  if (!n || HL.aiBusy){ if (!HL.aiBusy) b.classList.add('hide'); return; }
+  b.innerHTML = '<span>🖼️ <b>' + n + ' học liệu chưa có ảnh bìa.</b> Để AI vẽ ảnh minh hoạ theo tiêu đề và tự chèn vào.</span><span class="sp"></span><button type="button" class="btn sm" id="hlAiAll">✨ Tạo ảnh cho ' + n + ' học liệu</button>';
+  b.classList.remove('hide');
+}
+async function hlAiAll(){
+  const l = hlNoThumb(); if (!l.length) return;
+  HL.aiBusy = true; const b = $('hlAiBar'); let done = 0, art = 0, note = '';
+  for (const it of l){
+    b.innerHTML = '<span>✨ AI đang vẽ ảnh ' + (done + 1) + '/' + l.length + ': <b>' + esc(it.title) + '</b>… (mỗi ảnh khoảng 10–30 giây)</span>';
+    const r = await api('POST', '/api/hoclieu-admin', { op:'aiThumb', id: it.id });
+    if (r.j.ok){ done++; if (r.j.source !== 'ai'){ art++; note = r.j.note || note; } } else { note = r.j.error || 'Có ảnh chưa tạo được.'; break; }
+  }
+  HL.aiBusy = false; await hlOpen();
+  hlMsg('Đã chèn ảnh minh hoạ cho ' + done + ' học liệu.' + (art ? ' ' + art + ' ảnh là ảnh tự vẽ theo chủ đề. ' + note : ''), 'ok');
+}
 function hlSrcLabel(it){ const s = it.source || {}; return ({ upload:'Tệp tải lên', youtube:'YouTube', vimeo:'Vimeo', gdrive:'Google Drive', url:'Liên kết' })[s.kind] || ''; }
 function hlRows(){
   const q = exNorm($('hlQ').value), fc = $('hlFCat').value, fs = $('hlFSt').value;
   const l = HL.items.filter(it => (!q || exNorm(it.title).indexOf(q) >= 0) && (!fc || it.cat === fc) && (!fs || (fs === 'draft') === (it.status === 'draft')));
   $('hlRows').innerHTML = l.length ? l.map(it => {
-    const th = it.thumbUrl ? '<img src="' + esc(it.thumbUrl) + '" alt="" loading="lazy" onerror="this.remove()">' : (it.type === 'video' ? 'VIDEO' : 'PDF');
+    const th = it.thumbUrl ? '<img src="' + esc(it.thumbUrl) + '" alt="" loading="lazy" onerror="this.remove()">' + (it.thumb && it.thumb.gen ? '<span class="ai" title="' + (it.thumb.gen === 'ai' ? 'Ảnh do AI vẽ' : 'Ảnh minh hoạ tự vẽ') + '">' + (it.thumb.gen === 'ai' ? 'AI' : 'AUTO') + '</span>' : '') : (it.type === 'video' ? 'VIDEO' : 'PDF');
     const meta = it.type === 'video' ? (it.dur ? it.dur + ' phút' : '') : (it.pages ? it.pages + ' trang' : '');
     return '<tr data-id="' + esc(it.id) + '"><td><div class="hlx-ti"><div class="hlx-th">' + th + '</div><div><b>' + esc(it.title) + '</b><span class="small">' + esc(it.desc || hlSrcLabel(it)) + '</span>' + hlExBadge(it) + '</div></div></td>' +
       '<td>' + esc(hlCatName(it.cat)) + '</td><td><span class="badge">' + (it.type === 'video' ? 'Video' : 'PDF') + '</span><div class="small">' + esc([hlSrcLabel(it), meta].filter(Boolean).join(' · ')) + '</div></td>' +
@@ -3127,8 +3151,8 @@ function hlEditOpen(it){
   if (it && it.source && it.source.kind === 'upload'){ hlSetMode('upload'); HL.file = { kind:'upload', blob: it.source.blob, mime: it.source.mime, size: it.source.size, name: it.source.name }; }
   else if (it && it.source){ hlSetMode('link'); $('hlLink').value = it.source.link || it.source.url || ''; }
   else hlSetMode('upload');
-  if (it && it.thumb){ HL.thumb = it.thumb.kind === 'upload' ? { kind:'upload', blob: it.thumb.blob, mime: it.thumb.mime, id: it.id, v: it.updatedAt } : { kind:'url', url: it.thumb.url }; if (it.thumb.kind === 'url') $('hlThumbUrl').value = it.thumb.url; }
-  hlThumbPaint(); hlFileInfo();
+  if (it && it.thumb){ HL.thumb = it.thumb.kind === 'upload' ? { kind:'upload', blob: it.thumb.blob, mime: it.thumb.mime, id: it.id, v: it.updatedAt, gen: it.thumb.gen } : { kind:'url', url: it.thumb.url }; if (it.thumb.kind === 'url') $('hlThumbUrl').value = it.thumb.url; }
+  hlThumbPaint(); hlFileInfo(); $('hlAiNote').textContent = ''; $('hlAiBtn').textContent = '✨ Tạo ảnh bằng AI';
   HL.exSel = it && Array.isArray(it.exams) ? it.exams.slice() : []; $('hlExQ').value = ''; hlExRender();
   $('hlList').classList.add('hide'); $('hlCats').classList.add('hide'); $('hlSub').classList.add('hide'); $('hlKpis').classList.add('hide'); $('hlEdit').classList.remove('hide');
   $('hlTitle').focus();
@@ -3166,6 +3190,16 @@ $('hlThumbFile').addEventListener('change', async function(){
   HL.busy = false; $('hlSave').disabled = false;
 });
 $('hlThumbUrl').addEventListener('input', function(){ const u = this.value.trim(); if (/^https:\/\//i.test(u)){ HL.thumb = { kind:'url', url:u }; } else if (HL.thumb && HL.thumb.kind === 'url') HL.thumb = null; hlThumbPaint(); });
+$('hlAiBtn').addEventListener('click', async () => {
+  const title = $('hlTitle').value.trim(); if (!title){ hlMsg('Nhập tiêu đề trước để AI biết vẽ gì.'); $('hlTitle').focus(); return; }
+  const btn = $('hlAiBtn'); btn.disabled = true; HL.busy = true; $('hlSave').disabled = true; btn.textContent = '✨ AI đang vẽ… (10–30 giây)'; $('hlAiNote').textContent = '';
+  const r = await api('POST', '/api/hoclieu-admin', { op:'aiThumb', draft:{ title, desc:$('hlDesc').value.trim(), cat:$('hlCat').value, type:HL.type } });
+  btn.disabled = false; HL.busy = false; $('hlSave').disabled = false; btn.textContent = '✨ Vẽ lại bằng AI';
+  if (!r.j.ok){ hlMsg(r.j.error || 'Không tạo được ảnh.'); return; }
+  HL.thumb = { kind:'upload', blob:r.j.blob, mime:r.j.mime, preview:r.j.preview, gen:r.j.source }; $('hlThumbUrl').value = ''; $('hlThumbFile').value = ''; hlThumbPaint();
+  $('hlAiNote').textContent = (r.j.source === 'ai' ? 'Ảnh do AI vẽ. ' : '') + (r.j.note || '') + ' Bấm “Lưu học liệu” để dùng ảnh này.';
+});
+$('hlAiBar').addEventListener('click', e => { if (e.target.id === 'hlAiAll') hlAiAll(); });
 $('hlThumbClr').addEventListener('click', () => { HL.thumb = null; $('hlThumbFile').value = ''; $('hlThumbUrl').value = ''; hlThumbPaint(); });
 $('hlSave').addEventListener('click', async () => {
   if (HL.busy) return;
@@ -3173,13 +3207,18 @@ $('hlSave').addEventListener('click', async () => {
   let source;
   if (HL.mode === 'upload'){ if (!HL.file){ hlMsg('Hãy chọn tệp để tải lên, hoặc chuyển sang “Dán liên kết”.'); return; } source = { kind:'upload', blob:HL.file.blob, mime:HL.file.mime, size:HL.file.size, name:HL.file.name }; }
   else { const u = $('hlLink').value.trim(); if (!u){ hlMsg('Vui lòng dán liên kết.'); $('hlLink').focus(); return; } source = { kind:'link', url:u }; }
-  const th = HL.thumb ? (HL.thumb.kind === 'upload' ? { kind:'upload', blob:HL.thumb.blob, mime:HL.thumb.mime } : { kind:'url', url:HL.thumb.url }) : null;
+  const th = HL.thumb ? (HL.thumb.kind === 'upload' ? { kind:'upload', blob:HL.thumb.blob, mime:HL.thumb.mime, gen:HL.thumb.gen } : { kind:'url', url:HL.thumb.url }) : null;
   const item = { id:HL.editId || undefined, title, desc:$('hlDesc').value.trim(), cat:$('hlCat').value, type:HL.type, dur:+$('hlDur').value || 0, pages:+$('hlPages').value || 0, featured:$('hlFeat').checked, status:$('hlStatus').value, source, thumb:th, exams:(HL.exSel || []).slice() };
   $('hlSave').disabled = true;
   const r = await api('POST', '/api/hoclieu-admin', { op:'saveItem', item });
   $('hlSave').disabled = false;
   if (!r.j.ok){ hlMsg(r.j.error || 'Không lưu được.'); return; }
-  await hlOpen(); hlView('list'); hlMsg('Đã lưu học liệu.', 'ok');
+  await hlOpen(); hlView('list');
+  if (!th && !(r.j.item.source && r.j.item.source.kind === 'youtube')){ // chưa có ảnh bìa: AI tự vẽ và chèn
+    hlMsg('Đã lưu học liệu. ✨ AI đang vẽ ảnh minh hoạ…', 'ok');
+    const a = await api('POST', '/api/hoclieu-admin', { op:'aiThumb', id: r.j.item.id });
+    await hlOpen(); hlMsg(a.j.ok ? 'Đã lưu học liệu và chèn ảnh minh hoạ' + (a.j.source === 'ai' ? ' do AI vẽ.' : ' tự vẽ theo chủ đề.') : 'Đã lưu học liệu (chưa tạo được ảnh minh hoạ).', 'ok');
+  } else hlMsg('Đã lưu học liệu.', 'ok');
 });
 $('hlCancel').addEventListener('click', () => { hlMsg(''); hlView('list'); });
 $('hlExQ').addEventListener('input', hlExRender);

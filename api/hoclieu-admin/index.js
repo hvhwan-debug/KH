@@ -89,6 +89,24 @@ const handler = async function (context, req) {
       await hl.drop(names);
       return reply(context, 200, { ok: true });
     }
+    if (op === "aiThumb") { // ảnh minh hoạ do AI vẽ (hoặc tự vẽ khi chưa có AI) -> lưu làm ảnh bìa
+      const d = await hl.load(), id = hl.clip(b.id, 40), it = id ? d.items.find((x) => x.id === id) : null;
+      if (id && !it) return reply(context, 404, { ok: false, error: "Học liệu không còn." });
+      const src = it || (b.draft || {});
+      const title = hl.clip(src.title, 150); if (!title) return reply(context, 400, { ok: false, error: "Nhập tiêu đề trước để AI biết vẽ gì." });
+      const cat = d.categories.find((c) => c.id === src.cat);
+      let r;
+      try { r = await require("../_lib/aiimage").cover({ title, desc: hl.clip(src.desc, 600), catName: cat ? cat.name : "", type: src.type === "pdf" ? "pdf" : "video" }, { artOnly: !!b.artOnly }); }
+      catch (e) { context.log.error(e); return reply(context, 500, { ok: false, error: "Không tạo được ảnh minh hoạ." }); }
+      const name = "f/" + hl.rid(8);
+      await hl.stage(name, 0, r.buf); await hl.commit(name, 1, "image/jpeg");
+      if (it) {
+        let old = null;
+        await store.update(hl.INDEX, (cur) => { const c = cur || {}; (c.items || []).forEach((x) => { if (x.id === id) { if (x.thumb && x.thumb.kind === "upload") old = x.thumb.blob; x.thumb = { kind: "upload", blob: name, mime: "image/jpeg", gen: r.source }; x.updatedAt = Date.now(); } }); return c; });
+        if (old) await hl.drop([old]);
+      }
+      return reply(context, 200, { ok: true, blob: name, mime: "image/jpeg", source: r.source, note: r.note || "", preview: "data:image/jpeg;base64," + r.buf.toString("base64") });
+    }
     if (op === "saveCats") {
       const cats = hl.cleanCats(b.categories); let moved = 0;
       await store.update(hl.INDEX, (cur) => { const c = cur || {}; c.categories = cats; c.items = (c.items || []).map((x) => { if (!cats.some((k) => k.id === x.cat)) { moved++; return Object.assign({}, x, { cat: cats[0].id }); } return x; }); return c; });

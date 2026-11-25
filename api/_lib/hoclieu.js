@@ -96,6 +96,7 @@ function cleanItem(raw, old) {
   const t = b.thumb || {};
   if (t.kind === "upload" && /^f\/[a-f0-9]{16,}$/.test(clip(t.blob, 80))) {
     it.thumb = { kind: "upload", blob: clip(t.blob, 80), mime: clip(t.mime, 40) };
+    if (t.gen === "ai" || t.gen === "art") it.thumb.gen = t.gen;
     if (old && old.thumb && old.thumb.kind === "upload" && old.thumb.blob !== it.thumb.blob) (it._drop = it._drop || []).push(old.thumb.blob);
   } else if (t.kind === "url" && /^https:\/\//i.test(clip(t.url, 600))) {
     it.thumb = { kind: "url", url: clip(t.url, 600) };

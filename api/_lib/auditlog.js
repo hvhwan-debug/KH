@@ -52,7 +52,7 @@ const A = {
   },
   hoclieu: {
     GET: { list: ["Xem danh sách học liệu", "read"], preview: ["Xem thử học liệu", "read"] },
-    POST: { saveItem: ["Lưu học liệu", "change"], deleteItem: ["Xoá học liệu", "change"], setFlag: ["Đăng / ẩn / đánh dấu nổi bật học liệu", "change"], saveCats: ["Lưu danh mục học liệu", "change"], upload: ["Tải tệp học liệu lên", "change"] }
+    POST: { saveItem: ["Lưu học liệu", "change"], deleteItem: ["Xoá học liệu", "change"], setFlag: ["Đăng / ẩn / đánh dấu nổi bật học liệu", "change"], saveCats: ["Lưu danh mục học liệu", "change"], upload: ["Tải tệp học liệu lên", "change"], aiThumb: ["Tạo ảnh minh hoạ học liệu bằng AI", "change"] }
   },
   admin: {
     GET: {
