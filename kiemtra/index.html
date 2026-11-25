@@ -4790,7 +4790,8 @@ function scLayout(d){
   var c = document.createElement('canvas').getContext('2d'), W = SC.W, cx = SC.M, cw = W - 2*SC.M, P = cx + SC.PAD, R = cx + cw - SC.PAD;
   var L = { cx:cx, cy:SC.M, cw:cw, P:P, R:R };
   L.comp = false; // đã bỏ huy hiệu điểm tuân thủ (đặt ở góc/thay vòng tròn % trông mất thẩm mỹ) — điểm tuân thủ giờ chỉ hiện ở hàng thông số dạng chữ bên dưới
-  L.trophyX = L.comp ? cx + cw + 8 : cx + cw - 244; L.trophyB = L.comp ? L.cy : L.cy + 332;                       // vùng chiếc cúp (góc phải trên): chữ không được đè lên
+  L.art = !!(d.passed === false && !d.practice && d.failImg && d.failImg.width); // chỉ còn ảnh "Chưa đạt"; đã bỏ chiếc cúp vàng ở thẻ kết quả
+  L.trophyX = (L.comp || !L.art) ? cx + cw + 8 : cx + cw - 244; L.trophyB = (L.comp || !L.art) ? L.cy : L.cy + 332;                       // vùng chiếc cúp (góc phải trên): chữ không được đè lên
   L.titleLines = scWrap(c, d.title, '700 32px ' + SC.F, L.trophyX - P - 8, 2);
   L.pillY = L.cy + 134 + (L.titleLines.length - 1) * 44 + 30;
   L.ringR = 132; L.ringW = 22; L.ringO = L.ringR + L.ringW / 2;
@@ -4946,8 +4947,7 @@ function drawShareCard(ctx, W, H, d){
   var failArt = d.passed === false && !d.practice && d.failImg && d.failImg.width;
   if (L.comp){ /* huy hiệu điểm tuân thủ được vẽ ở chỗ ô tròn % (bên dưới) */ }
   else if (failArt){ var fW = 250, fH = fW * d.failImg.height / d.failImg.width; ctx.drawImage(d.failImg, cx + cw - 124 - fW / 2, L.cy + 214 + 150 - fH, fW, fH); }
-  else if (d.cupImg && d.cupImg.width){ var cupW = 268, cupH = cupW * d.cupImg.height / d.cupImg.width; ctx.drawImage(d.cupImg, cx + cw - 124 - cupW / 2, L.cy + 214 + 140 - cupH, cupW, cupH); }
-  else trophy(cx + cw - 124, L.cy + 214, .8);
+
   // ---- tiêu đề + nhãn trạng thái
   var xh = P + 10;
   rr(xh, cy + 58, 5, 28, 3); ctx.fillStyle = lg(0, cy + 58, 0, cy + 86, [[0, '#8FE3FF'], [1, '#2BA8FF']]); ctx.fill();
