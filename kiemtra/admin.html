@@ -1803,6 +1803,167 @@ body[data-tab="exams"] #hero:not(:has(.hm-bday:not(.hide),.hm-link)){display:non
 @media(max-width:600px){.exp-kpi{gap:10px}.exp-kpi .kc{padding:12px;gap:10px}.ki{width:38px;height:38px}.kv{font-size:22px}}
 @media(prefers-reduced-motion:reduce){#tab-exams *{transition:none!important}}
 @media(max-width:760px){#tab-exams .exseg{flex:0 0 auto}#tab-exams .exseg .btn{flex:0 0 auto}#tab-exams .exl-new{flex:1 1 auto;justify-content:center}}
+
+/* ===================== Chi tiết đề thi · Kết quả — Enterprise SaaS (redesign) =====================
+   Nền #F4F7FC · thẻ trắng bo 12–16px · navy #0B2A66 / xanh #1D6FEA · không banner, không gradient trang trí */
+body[data-tab="results"] .main,body[data-tab="analysis"] .main,body[data-tab="questions"] .main,body[data-tab="examset"] .main{background:#F4F7FC!important}
+/* ---- Đầu trang đề ---- */
+#exHead.card.exhead{padding:14px 20px 0!important;border:1px solid #E3EAF4;border-radius:16px;background:#fff;box-shadow:0 1px 2px rgba(16,42,100,.04),0 10px 24px -18px rgba(16,42,100,.2)}
+#exHead .exh-bc{display:flex;align-items:center;gap:4px;margin:0 0 10px;font-size:12.5px;color:#6B7B96}
+#exHead .exh-bc .back{margin:0;padding:2px 6px 2px 2px;border-radius:8px;color:#5B6B86;font-weight:600;font-size:12.5px}
+#exHead .exh-bc .back:hover{background:#EEF3FA;color:#0B2A66}
+#exHead .exh-bc .back .ic{width:16px;height:16px}
+#exHead .bc-sep{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#exHead .bc-cur{color:#0B2A66;font-weight:600}
+#exHead .exh-top{align-items:flex-start;gap:14px}
+#exHead .exh-id{gap:12px;flex:1 1 560px}
+#exHead .exh-tile{width:44px;height:44px;border-radius:12px;background:#E8F1FF!important;display:grid;place-items:center}
+#exHead .exh-tile svg{width:26px;height:26px}
+#exHead.card.exhead .exh-top h1{font-size:24px;line-height:1.25;font-weight:800;letter-spacing:-.01em;color:#0B2A66}
+#exHead .exh-suf{background:#E8F1FF;color:#1D5FD0}
+#exHead .exh-meta{gap:8px;margin-top:10px}
+#exHead .exh-chip{padding:5px 11px;border:1px solid #E3EAF4;border-radius:999px;background:#F8FAFD;color:#33466B;font-size:12.5px}
+#exHead .exh-chip b{color:#0B2A66}
+#exHead .exh-chip code{background:none;font-weight:700;color:#1D5FD0}
+#exHead .exh-btn:hover,#exHead .exh-tg:hover{background:#EEF4FF;border-color:#B9CCEA}
+#exHead .exh-link{background:#F8FAFD;border:1px solid #E3EAF4;border-radius:10px;padding:3px 4px 3px 10px;max-width:520px}
+#exHead .exh-link .btn{height:28px;padding:0 12px;border:1px solid #D9E3F1;border-radius:8px;background:#fff;color:#1D6FEA;font-weight:700;font-size:12.5px;box-shadow:none}
+#exHead .exh-act{gap:8px;justify-content:flex-end}
+#exHead .exh-act .btn{height:36px;padding:0 14px;border:1px solid #D9E3F1;border-radius:10px;background:#fff;color:#0B2A66;font-size:13px;font-weight:600;box-shadow:none}
+#exHead .exh-act .btn:hover{background:#F3F8FF;border-color:#B9CCEA}
+#exHead .exh-act .btn.dghost{color:#C8281D;border-color:#F0C9C3}
+#exHead .exh-act .btn.dghost:hover{background:#FEF1EF}
+#exHead .exh-act .btn:focus-visible,#exHead .exh-chip:focus-visible,#exHead .exh-link a:focus-visible{outline:2px solid #1D6FEA;outline-offset:2px}
+#exHead .exh-act .btn:disabled{opacity:.5;cursor:not-allowed}
+/* ---- Tabs chức năng (Kết quả / Phân tích / Câu hỏi / Cài đặt đề) ---- */
+#exHead .subnav.in{margin:12px -20px 0;padding:0 14px!important;gap:2px;border-top:1px solid #E3EAF4}
+#exHead .subnav.in button{display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 16px;border-radius:0;border-bottom:2px solid transparent;margin-bottom:-1px;color:#5B6B86;font-size:14px;font-weight:600;background:transparent}
+#exHead .subnav.in button:hover{color:#0B2A66;background:#F5F8FC}
+#exHead .subnav.in button.on{color:#1D6FEA;background:transparent;border-bottom-color:#1D6FEA}
+#exHead .subnav.in button:focus-visible{outline:2px solid #1D6FEA;outline-offset:-3px;border-radius:8px}
+#exHead .subnav.in .cnt{background:#E8F1FF;color:#1D6FEA;font-weight:700}
+/* ---- Tổng quan kết quả ---- */
+#tab-results #dashCard{border:1px solid #E3EAF4;border-radius:16px;padding:18px 20px;background:#fff;box-shadow:0 1px 2px rgba(16,42,100,.04),0 10px 24px -18px rgba(16,42,100,.2)}
+#tab-results #dashCard .dash-h h1{font-size:18px;font-weight:800;color:#0B2A66}
+#tab-results #dashCard .dash-h .small{display:none}
+#dashKpis{gap:16px;margin:14px 0 0}
+#dashKpis .kpi{display:flex;flex-direction:column;min-width:0;padding:16px 18px;border:1px solid #E3EAF4;border-radius:14px;background:#fff;box-shadow:none;position:relative}
+#dashKpis .kpi .l{padding-right:0;font-size:13px;font-weight:600;color:#5B6B86}
+#dashKpis .kpi .v{margin-top:6px;font-size:28px;line-height:1.15;font-weight:800;color:#0B2A66}
+#dashKpis .kpi .d{margin-top:6px;font-size:12.5px;font-weight:500;line-height:1.5;color:#6B7B96}
+#dashKpis .kpi .d.up{color:#16A05A;font-weight:600}#dashKpis .kpi .d.down{color:#D6453D;font-weight:600}
+#dashKpis .kpi .k-ic{position:absolute;top:16px;right:16px;width:22px;height:22px;stroke:#1D6FEA;opacity:.9}
+#dashKpis .k-ring{flex-direction:row;align-items:center;gap:16px;color:#0B2A66;border:1px solid #E3EAF4;background:#fff;padding:16px 18px}
+#dashKpis .k-ring .ring{width:92px;height:92px}
+#dashKpis .k-ring .trk{stroke:#E8EEF8;stroke-width:10}
+#dashKpis .k-ring .prg{stroke:#1D6FEA;stroke-width:10}
+#dashKpis .k-ring .rt-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+#dashKpis .k-ring .v{margin:0;font-size:34px;color:#0B2A66}
+#dashKpis .k-ring .v small{color:#0B2A66}
+#dashKpis .k-ring .l{margin:0;white-space:normal;font-size:13.5px;line-height:1.45;color:#33466B}
+#dashKpis .k-ring .l b{font-size:17px;color:#0B2A66}
+#dashKpis .k-ring .d{margin-top:8px;color:#6B7B96;font-weight:500;font-size:12.5px}
+#dashKpis .k-score{background:#fff}
+#dashKpis .kbar{height:8px;margin:10px 0 4px;border-radius:999px;background:#E8EEF8}
+#dashKpis .kbar i{background:#1D6FEA}
+#dashKpis .k-warn.calm{background:#F1FAF5;border-color:#CFE9DA}
+#dashKpis .k-warn.calm .v,#dashKpis .k-warn.calm .d{color:#12834A}
+#dashKpis .k-warn.alert{background:#FFF6EC;border-color:#F5D9B8}
+#dashKpis .k-warn.alert .v,#dashKpis .k-warn.alert .d{color:#B45309}
+#dashKpis .k-warn.alert .k-ic{stroke:#D97706}
+#dashKpis .k-time{background:#fff}
+#dashKpis .k-time .v{font-size:26px}
+/* ---- Skeleton ---- */
+.sk{position:relative;overflow:hidden;border-radius:8px;background:#EDF2F9;min-height:20px;width:100%}
+.sk::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);animation:skm 1.25s infinite}
+@keyframes skm{to{transform:translateX(100%)}}
+#dashKpis .kpi.skc{min-height:112px}#dashKpis .kpi.skc .sk{height:100%;min-height:78px}
+#resList tr.rt-sk td{padding:10px 8px;border:0}#resList tr.rt-sk .sk{height:44px}
+/* ---- Pill trạng thái + công cụ ---- */
+#pgCard .pg-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:18px 0 12px}
+#pgCard .pg-top .pg-tabs{margin:0;gap:8px}
+#pgCard .pg-tab{height:38px;padding:0 6px 0 14px;border:1px solid #D9E3F1;border-radius:999px;background:#fff;color:#33466B;font-size:13.5px;font-weight:600;box-shadow:none;transition:background .12s,border-color .12s}
+#pgCard .pg-tab:hover{background:#F3F8FF}
+#pgCard .pg-tab:focus-visible{outline:2px solid #1D6FEA;outline-offset:2px}
+#pgCard .pg-tab b{min-width:28px;padding:2px 8px;border-radius:999px;font-size:12.5px;font-weight:700}
+#pgCard .pg-tab.all b{background:#E3E9F5;color:#0B2A66}
+#pgCard .pg-tab.doing b{background:#E3F6EC;color:#12834A}
+#pgCard .pg-tab.done b{background:#E3EEFD;color:#1D5FD0}
+#pgCard .pg-tab.none b{background:#FDE7E4;color:#C8281D}
+#pgCard .pg-tab.on{box-shadow:none}
+#pgCard .pg-tab.all.on{background:#0B2A66;border-color:#0B2A66;color:#fff}#pgCard .pg-tab.all.on b{background:rgba(255,255,255,.2);color:#fff}
+#pgCard .pg-tab.doing.on{background:#EAF8F1;border-color:#2BB673;color:#12834A}
+#pgCard .pg-tab.done.on{background:#EAF2FF;border-color:#1D6FEA;color:#1D5FD0}
+#pgCard .pg-tab.none.on{background:#FFF1EF;border-color:#E5352B;color:#C8281D}
+#pgCard .pg-acts{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#pgCard #pgUpd{font-size:12px;color:#7B8AA5}
+#pgCard .pg-acts .btn.ghost{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px;border:1px solid #D9E3F1;border-radius:10px;background:#fff;color:#1D5FD0;font-size:13px;font-weight:700;box-shadow:none}
+#pgCard .pg-acts .btn.ghost:hover{background:#F3F8FF;border-color:#B9CCEA}
+#pgCard .pg-acts .btn.ghost:focus-visible{outline:2px solid #1D6FEA;outline-offset:2px}
+#pgCard .pg-acts .pg-ti{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#pgCard .pg-tools{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 14px}
+#pgCard .pg-tools input[type=search]{flex:1 1 300px;min-width:220px;height:42px;padding:0 14px 0 40px;border:1px solid #D9E3F1;border-radius:10px;background-color:#fff;font-size:14px;color:#0B2A66;box-shadow:none}
+#pgCard .pg-tools input[type=search]:focus{outline:0;border-color:#1D6FEA;box-shadow:0 0 0 3px rgba(29,111,234,.15)}
+#pgCard .pg-tools select{flex:0 1 190px;width:190px;height:42px;padding:0 34px 0 14px;border:1px solid #D9E3F1;border-radius:10px;background-color:#fff;font-size:13.5px;font-weight:500;color:#0B2A66;box-shadow:none}
+#pgCard .pg-tools select:hover{border-color:#B9CCEA}
+#pgCard .pg-tools select:focus{outline:0;border-color:#1D6FEA;box-shadow:0 0 0 3px rgba(29,111,234,.15)}
+#pgCard .pg-list{border:1px solid #E3EAF4;border-radius:12px;box-shadow:none;background:#fff}
+/* ---- Bảng danh sách kết quả ---- */
+#tab-results #resCard{border:1px solid #E3EAF4;border-radius:16px;padding:18px 20px;background:#fff;box-shadow:0 1px 2px rgba(16,42,100,.04),0 10px 24px -18px rgba(16,42,100,.2)}
+#tab-results #resCard h1{font-size:18px;font-weight:800;color:#0B2A66}
+#resCard .rt-tools .btn.ghost{height:36px;padding:0 12px;border:1px solid #D9E3F1;border-radius:10px;background:#fff;color:#0B2A66;font-size:13px;font-weight:600;box-shadow:none}
+#resCard .rt-tools .btn.ghost:hover{background:#F3F8FF;border-color:#B9CCEA}
+#resCard .rt-tools .btn.ghost:focus-visible{outline:2px solid #1D6FEA;outline-offset:2px}
+.rt-sortlbl{font-size:13px;color:#5B6B86;white-space:nowrap}
+#resCard .rt-sortsel{display:block;width:auto;min-width:160px;height:36px;padding:0 30px 0 12px;border:1px solid #D9E3F1;border-radius:10px;background-color:#fff;font-size:13px;font-weight:600;color:#0B2A66;box-shadow:none;cursor:pointer}
+#resCard .rt-wrap{margin-top:14px;overflow-x:auto;border:1px solid #E3EAF4;border-radius:12px}
+@media(min-width:861px){#resCard table.rt{min-width:880px}}
+#resCard table.rt{width:100%;border-collapse:separate;border-spacing:0}
+#resCard table.rt thead th{padding:11px 16px;background:#F5F8FC;border-bottom:1px solid #E3EAF4;color:#5B6B86;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+#resCard table.rt thead th button{font:inherit;font-weight:700;letter-spacing:inherit;text-transform:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:2px 4px;border-radius:6px}
+#resCard table.rt thead th button:hover{color:#0B2A66}
+#resCard table.rt thead th button:focus-visible{outline:2px solid #1D6FEA}
+#resCard table.rt thead th button[data-dir]{color:#1D6FEA}
+#resCard table.rt tbody td{padding:12px 16px;border-bottom:1px solid #EDF2F9;vertical-align:middle}
+#resCard table.rt tbody tr:last-child td{border-bottom:0}
+#resCard table.rt tbody tr.rt-main,#resCard table.rt tbody tr.rt-sub{transition:background .12s}
+#resCard table.rt tbody tr.rt-main:hover,#resCard table.rt tbody tr.rt-sub:hover{background:#F3F8FF}
+#resCard .rt-nm{font-weight:700;color:#0B2A66}
+#resCard .rs-top b{font-size:16px;color:#0B2A66}
+#resCard .rs-bar{height:6px;background:#E8EEF8}
+#resCard .rs-bar i{background:#1D6FEA}#resCard .rs-bar i.pass{background:#1D6FEA}#resCard .rs-bar i.fail{background:#E5603B}
+#resCard .ch{font-weight:600}
+#resCard .ch-n{background:#E8F1FF;color:#1D5FD0}
+#resCard .ch-w{background:#FFF3DC;color:#A8680A}
+#resCard .ch-d{background:#FDE7E4;color:#C8281D}
+#resCard .ch-ok{background:#E3F6EC;color:#12834A}
+#resCard .rt-ib{width:34px;height:34px;border:1px solid #D9E3F1;border-radius:8px;background:#fff;color:#33466B}
+#resCard .rt-ib:hover{background:#F3F8FF;border-color:#B9CCEA}
+#resCard .rt-ib:focus-visible{outline:2px solid #1D6FEA;outline-offset:1px}
+#resCard .rt-ib.danger{color:#C8281D}#resCard .rt-ib.danger:hover{background:#FEF1EF;border-color:#F0C9C3}
+#resCard .rt-empty{padding:34px 12px;color:#6B7B96}
+#resCard .rt-empty .btn{margin-left:8px}
+#resCard .rt-err{color:#C8281D}
+#resPager{padding:14px 2px 0}
+.pg-pinfo{font-size:13px;color:#5B6B86}
+/* ---- Responsive ---- */
+@media(max-width:1100px){#dashKpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:860px){
+  #exHead.card.exhead{padding:12px 14px 0!important}
+  #exHead .subnav.in{margin:10px -14px 0;overflow-x:auto;flex-wrap:nowrap}
+  #exHead .subnav.in button{flex:0 0 auto}
+  #pgCard .pg-tools select{flex:1 1 calc(50% - 5px);width:auto}
+  #pgCard .pg-tools input[type=search]{flex:1 1 100%}
+  #pgCard .pg-acts{width:100%}
+  #resCard .rt-sortlbl{display:none}
+}
+@media(max-width:600px){
+  #dashKpis{gap:10px}#dashKpis .kpi{padding:12px 14px}#dashKpis .k-ring .ring{width:76px;height:76px}#dashKpis .k-ring .v{font-size:28px}
+  #pgCard .pg-top .pg-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+  #pgCard .pg-tab{justify-content:space-between;padding-left:12px}
+  #pgCard .pg-acts .btn.ghost{flex:1 1 auto;justify-content:center}
+}
+@media(prefers-reduced-motion:reduce){.sk::after{animation:none}}
 </style>
 <link rel="stylesheet" href="/kiemtra/auth.css?v=1">
 <script src="/kiemtra/dt24.js?v=1"></script>
@@ -1931,7 +2092,7 @@ body[data-tab="exams"] #hero:not(:has(.hm-bday:not(.hide),.hm-link)){display:non
 
     <!-- Đầu trang của MỘT đề thi: mọi việc của đề (kết quả, câu hỏi, cài đặt) nằm dưới đây -->
     <div class="card exhead" id="exHead">
-      <button class="back" type="button" onclick="switchTab('exams')"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg><span>Tất cả đề thi</span></button>
+      <nav class="exh-bc" aria-label="Vị trí hiện tại"><button class="back" type="button" onclick="switchTab('exams')"><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg><span>Tất cả đề thi</span></button><svg class="bc-sep" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span class="bc-cur" aria-current="page">Chi tiết đề thi</span></nav>
       <div class="exh-top">
         <div class="exh-id">
           <div class="exh-tile" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="30" height="34" rx="6" fill="#E8F3FF" stroke="#2F7CF6" stroke-width="2.6"/><rect x="17" y="5" width="14" height="8" rx="3" fill="#fff" stroke="#2F7CF6" stroke-width="2.6"/><path d="m15.5 22 2.5 2.5 4-4.5M15.5 32l2.5 2.5 4-4.5" stroke="#1BB0E0" stroke-width="2.6"/><path d="M26 23h7M26 33h7" stroke="#2F7CF6" stroke-width="2.6"/></svg></div>
@@ -2988,35 +3149,42 @@ body[data-tab="exams"] #hero:not(:has(.hm-bday:not(.hide),.hm-link)){display:non
       <div class="card" id="dashCard">
         <div class="dash-h"><h1 id="dashTitle">Tổng quan kỳ</h1><p class="small" id="dashSub"></p></div>
         <div id="dashBanner"></div>
-        <div class="kpis" id="dashKpis"></div>
+        <div class="kpis" id="dashKpis"><div class="kpi skc"><div class="sk"></div></div><div class="kpi skc"><div class="sk"></div></div><div class="kpi skc"><div class="sk"></div></div><div class="kpi skc"><div class="sk"></div></div></div>
       </div>
       <div id="pgCard">
         <div class="pg-pulse hide" id="pgPulse" aria-hidden="true"></div>
-        <div class="pg-tabs" role="tablist" id="pgTabs"></div>
+        <div class="pg-top">
+          <div class="pg-tabs" role="tablist" id="pgTabs"></div>
+          <div class="pg-acts">
+            <span class="small" id="pgUpd"></span>
+            <button class="btn ghost sm pg-rf" type="button" onclick="loadProgress()" aria-label="Làm mới" title="Làm mới"><svg class="pg-ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg><span class="pg-rtxt">Làm mới</span></button>
+            <button class="btn ghost sm" type="button" id="pgCopy" onclick="pgCopy()" title="Sao chép danh sách người chưa làm, gom theo quản lí"><svg class="pg-ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>Sao chép danh sách</button>
+            <button class="btn ghost sm pg-xl" type="button" id="pgXlsx" aria-haspopup="menu" onclick="exportPick(this,'xlsx')" title="Xuất Excel: tổng hợp, danh sách đầy đủ, người cần nhắc, người dưới chuẩn"><svg class="pg-ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>Xuất Excel ▾</button>
+          </div>
+        </div>
         <div class="pg-tools">
-          <input type="search" id="pgSearch" placeholder="Tìm tên, mã NV, quản lí, tỉnh…" oninput="renderProgress();filterResults()" aria-label="Tìm thí sinh (lọc cả bảng Bài đã nộp bên dưới)">
-          <select id="pgMgr" onchange="renderProgress();filterResults()" aria-label="Lọc theo quản lí (lọc cả bảng Bài đã nộp bên dưới)"></select>
-          <button class="btn ghost sm pg-rf" type="button" onclick="loadProgress()" aria-label="Làm mới" title="Làm mới"><svg class="pg-ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg><span class="pg-rtxt">Làm mới</span></button>
-          <button class="btn ghost sm" type="button" id="pgCopy" onclick="pgCopy()"><svg class="pg-ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>Sao chép danh sách</button>
-          <button class="btn ghost sm pg-xl" type="button" id="pgXlsx" aria-haspopup="menu" onclick="exportPick(this,'xlsx')" title="Xuất Excel: tổng hợp, danh sách đầy đủ, người cần nhắc, người dưới chuẩn"><svg class="pg-ti" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>Xuất Excel ▾</button>
-          <span class="small" id="pgUpd"></span>
+          <input type="search" id="pgSearch" placeholder="Tìm tên, mã NV, quản lí, tỉnh/thành…" oninput="renderProgress();filterResults()" aria-label="Tìm thí sinh (lọc cả bảng kết quả bên dưới)">
+          <select id="pgMgr" onchange="renderProgress();filterResults()" aria-label="Lọc theo quản lí (lọc cả bảng kết quả bên dưới)"></select>
+          <select id="pgRes" onchange="renderProgress();filterResults()" aria-label="Lọc theo kết quả"><option value="">Kết quả: Tất cả</option><option value="ok">Đạt chuẩn</option><option value="weak">Dưới chuẩn</option></select>
+          <select id="pgComp" onchange="renderProgress();filterResults()" aria-label="Lọc theo tuân thủ"><option value="">Tuân thủ: Tất cả</option><option value="clean">Không cảnh báo</option><option value="warn">Có cảnh báo</option></select>
         </div>
         <div class="pg-list" id="pgList"></div>
       </div>
       <div class="card" id="resCard">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <h1 style="margin:0">Bài đã nộp (<span id="resCount">0</span>)<small class="rc-sub" id="resCountSub"></small></h1>
+          <h1 style="margin:0">Danh sách kết quả (<span id="resCount">0 người</span> đã nộp)<small class="rc-sub" id="resCountSub"></small></h1>
           <div class="rt-tools" style="display:flex;gap:8px;align-items:center">
             <select id="resPeriod" class="hide" onchange="loadResults()"></select>
             <input type="search" id="resSearch" placeholder="Tìm mã NV, tên, quản lí…" oninput="filterResults()" aria-label="Tìm kết quả">
-            <select id="resSort" class="rt-sortsel" onchange="resSortSel(this.value)" aria-label="Sắp xếp kết quả"><option value="time:desc">Mới nộp nhất</option><option value="score:desc">Điểm cao → thấp</option><option value="score:asc">Điểm thấp → cao</option><option value="name:asc">Tên A → Z</option><option value="time:asc">Nộp sớm nhất</option></select>
+            <label class="rt-sortlbl" for="resSort">Sắp xếp</label><select id="resSort" class="rt-sortsel" onchange="resSortSel(this.value)" aria-label="Sắp xếp kết quả"><option value="time:desc">Mới nộp nhất</option><option value="score:desc">Điểm cao → thấp</option><option value="score:asc">Điểm thấp → cao</option><option value="name:asc">Tên A → Z</option><option value="time:asc">Nộp sớm nhất</option></select>
             <button class="btn ghost sm" style="white-space:nowrap" type="button" aria-haspopup="menu" onclick="exportPick(this,'xlsx')">⬇ Xuất Excel ▾</button>
             <button class="btn ghost sm" style="white-space:nowrap" type="button" aria-haspopup="menu" onclick="exportPick(this,'drive','driveMsg')" title="Lưu file kết quả lên Google Drive">☁ Lưu vào Drive ▾</button>
             <button class="btn ghost sm" style="white-space:nowrap" type="button" id="faceScanBtn" onclick="faceScanRun(this)" title="Hệ thống đã tự động đối chiếu ở nền mỗi khi mở trang này; bấm nút này để quét ngay lập tức toàn bộ bài chưa đối chiếu, không cần chờ.">🧑 Đối chiếu khuôn mặt ngay</button>
           </div>
         </div>
         <div id="driveMsg"></div>
-        <div class="rt-wrap"><table class="rt" id="resTable"><thead><tr><th class="rt-who"><button type="button" data-rs="name" onclick="resSortBy('name')">Thí sinh <span class="ar">▲▼</span></button></th><th class="rt-res"><button type="button" data-rs="score" onclick="resSortBy('score')">Kết quả <span class="ar">▲▼</span></button></th><th class="rt-chips">Tuân thủ · Cảnh báo</th><th class="rt-time"><button type="button" data-rs="time" onclick="resSortBy('time')">Nộp lúc <span class="ar">▲▼</span></button></th><th class="rt-act"></th></tr></thead><tbody id="resList"></tbody></table></div>
+        <div class="rt-wrap"><table class="rt" id="resTable"><thead><tr><th class="rt-who"><button type="button" data-rs="name" onclick="resSortBy('name')">Thí sinh <span class="ar">▲▼</span></button></th><th class="rt-res"><button type="button" data-rs="score" onclick="resSortBy('score')">Kết quả <span class="ar">▲▼</span></button></th><th class="rt-chips">Tuân thủ · Cảnh báo</th><th class="rt-time"><button type="button" data-rs="time" onclick="resSortBy('time')">Nộp lúc <span class="ar">▲▼</span></button></th><th class="rt-act"></th></tr></thead><tbody id="resList"><tr class="rt-sk"><td colspan="5"><div class="sk"></div></td></tr><tr class="rt-sk"><td colspan="5"><div class="sk"></div></td></tr><tr class="rt-sk"><td colspan="5"><div class="sk"></div></td></tr><tr class="rt-sk"><td colspan="5"><div class="sk"></div></td></tr></tbody></table></div>
+        <div class="exp-pager" id="resPager"></div>
         <div class="panel hide" style="margin-top:14px"><details class="nd" id="dashNd"><summary id="dashNdSum">Chưa làm bài</summary><div class="ndg" id="dashNdList"></div></details></div>
       </div>
       <div class="card hide" id="resDetailCard">
@@ -3705,6 +3873,7 @@ function exWindow(e){
   if (e.closeAt){ const left = e.closeAt - now; return { text:'Đến ' + f(e.closeAt), sub:'còn ' + exRemain(left), cls: left < 3 * 3600e3 ? 'urgent' : left < 24 * 3600e3 ? 'soon' : '' }; }
   return { text:'Không giới hạn thời gian', sub:'', cls:'' };
 }
+const EXH_IC = { edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>' };
 function renderExHead(){
   if (EX_NEW){ $('ehTitle').textContent = 'Tạo đề thi mới'; $('ehMeta').innerHTML = '<span class="exh-note">Điền mã đề và tên đề, các ô khác để trống sẽ theo Cài đặt mặc định.</span>'; $('ehAct').innerHTML = ''; return; }
   const e = examById(CUR_EXAM) || { id: CUR_EXAM, title: CUR_EXAM };
@@ -3723,7 +3892,7 @@ function renderExHead(){
     '<span class="exh-br"></span><div class="exh-link">' + exIc('link') + '<a href="' + esc(link) + '" target="_blank" rel="noopener" title="Mở trang thí sinh">' + esc(link.replace(/^https?:\/\//, '')) + '</a><button class="btn ghost sm" type="button" onclick="copyText(\'' + esc(link) + '\', this)">Sao chép</button></div>';
   $('ehQ').textContent = qCountOf(e);
   renderExSum(e);
-  $('ehAct').innerHTML = (e.id !== EX_DEFAULT ? '<button class="btn ghost sm exh-b" onclick="setDefaultExamUI(\'' + esc(e.id) + '\')" title="Đề mặc định chỉ dùng trong trang quản trị; thí sinh vào bằng link hoặc mã đề">' + exIc('star') + 'Đặt làm đề mặc định</button>' : '') +
+  $('ehAct').innerHTML = '<button class="btn ghost sm exh-b" onclick="editExam(\'' + esc(e.id) + '\')" title="Chỉnh sửa thông tin đề">' + EXH_IC.edit + 'Chỉnh sửa</button><button class="btn ghost sm exh-b" onclick="switchTab(\'examset\')" title="Mở cài đặt của đề">' + exIc('set') + 'Cài đặt đề</button>' + (e.id !== EX_DEFAULT ? '<button class="btn ghost sm exh-b" onclick="setDefaultExamUI(\'' + esc(e.id) + '\')" title="Đề mặc định chỉ dùng trong trang quản trị; thí sinh vào bằng link hoặc mã đề">' + exIc('star') + 'Đặt làm đề mặc định</button>' : '') +
     (e.id !== EX_DEFAULT ? '<button class="btn dghost sm exh-b" onclick="deleteExamUI(\'' + esc(e.id) + '\')">' + exIc('trash') + 'Xoá đề</button>' : '');
 }
 // Tóm tắt toàn bộ cài đặt cơ bản của đề, ngay ở đầu trang đề (bấm "Xem cài đặt đề" để mở / đóng)
@@ -7186,7 +7355,7 @@ async function loadProgress(sel){
   if ($('resSearch')) $('resSearch').classList.add('hide'); // một ô tìm kiếm chung ở khung theo dõi, lọc cả bảng Bài đã nộp
   // Mở đúng tab cần chú ý: có người đang làm thì xem họ trước, không thì xem ai chưa làm
   const c0 = j.count || {};
-  if (PG_INIT !== PG_P || (PG_F === 'doing' && !c0.doing)){ PG_F = c0.doing ? 'doing' : 'none'; PG_INIT = PG_P; }
+  if (PG_INIT !== PG_P || (PG_F === 'doing' && !c0.doing)){ PG_F = c0.done ? 'done' : c0.doing ? 'doing' : 'none'; PG_INIT = PG_P; }
   const t = new Date(j.serverNow + 7 * 3600 * 1000), p = n => (n < 10 ? '0' : '') + n;
   $('pgUpd').textContent = 'Cập nhật: ' + p(t.getUTCHours()) + ':' + p(t.getUTCMinutes()) + ':' + p(t.getUTCSeconds()) + (j.count.doing ? ' · tự làm mới mỗi 30 giây' : '');
   // Lần đầu ô chọn còn rỗng (value ''), trước đây bị hiểu nhầm là "(chưa có quản lí)" nên ô hiện sai chữ. Người chưa có quản lí dùng giá trị riêng '__none__'.
@@ -7202,9 +7371,26 @@ async function loadProgress(sel){
 function pgSetF(f){
   PG_F = f; renderProgress(); // 3 tab: Đang làm / Hoàn thành / Chưa làm — mỗi lúc chỉ hiện đúng một danh sách
 }
+// Bộ lọc Kết quả / Tuân thủ dùng chung cho danh sách theo dõi và bảng kết quả (kết hợp được với ô tìm kiếm và quản lí).
+// Dưới chuẩn = tỉ lệ đúng thấp hơn ngưỡng tuân thủ thấp nhất của hệ thống (cùng cách tính với thẻ "Dưới chuẩn" và Excel).
+// Người chưa có bài nộp không khớp bộ lọc Kết quả / Tuân thủ.
+function resLowPct(){ return (typeof DASH !== 'undefined' && DASH && DASH.lowPct != null) ? DASH.lowPct : 60; }
+function resWarnOf(r){ const f = (r && r.flags) || {}, fid = (r && r.faceId) || null; return !!(f.shot || f.blur || (fid && (fid.s === 'mismatch' || fid.s === 'noface'))); }
+function resBestByCode(){ const m = {}; (RES_GROUPS || []).forEach(G => { const r = G.best; if (r && (!r.status || r.status === 'submitted')) m[String(r.code || '').toLowerCase()] = r; }); return m; }
+function resFilterVals(){ return { rf: ($('pgRes') || {}).value || '', cf: ($('pgComp') || {}).value || '' }; }
+function resMatch(r, rf, cf){
+  if (!rf && !cf) return true;
+  if (!r) return false;
+  const p = r.pct || 0, low = resLowPct();
+  if (rf === 'weak' && !(p < low)) return false;
+  if (rf === 'ok' && !(p >= low)) return false;
+  if (cf === 'warn' && !resWarnOf(r)) return false;
+  if (cf === 'clean' && resWarnOf(r)) return false;
+  return true;
+}
 function pgRows(){
-  const q = spNorm($('pgSearch').value || ''), m = $('pgMgr').value || '*';
-  return PG.list.filter(x => (m === '*' || (m === '__none__' ? !x.manager : (x.manager || '') === m)) && (!q || spNorm([x.name, x.code, x.manager, x.province, x.phone].join(' ')).indexOf(q) >= 0));
+  const q = spNorm($('pgSearch').value || ''), m = $('pgMgr').value || '*', fv = resFilterVals(), by = (fv.rf || fv.cf) ? resBestByCode() : null;
+  return PG.list.filter(x => (m === '*' || (m === '__none__' ? !x.manager : (x.manager || '') === m)) && (!q || spNorm([x.name, x.code, x.manager, x.province, x.phone].join(' ')).indexOf(q) >= 0) && (!by || resMatch(by[String(x.code || '').toLowerCase()], fv.rf, fv.cf)));
 }
 // Ô tròn đại diện: thay chữ cái bằng ảnh khuôn mặt (ảnh xác thực rõ nhất từ các bài đã làm, thu nhỏ 96px).
 // Chỉ tài khoản OWNER được xem (máy chủ trả 403 với người khác -> giữ chữ cái); người chưa từng làm bài nào thì chưa có ảnh -> giữ chữ cái.
@@ -7250,7 +7436,7 @@ function renderProgress(){
   $('pgCopy').classList.toggle('hide', PG_F !== 'none' || !L.length);
   $('pgList').dataset.f = PG_F;
   // Điện thoại: hiện 20 người một lần, bấm "Hiện thêm" để xem tiếp (không dùng khung cuộn lồng trong trang)
-  const MOB = true, pgKey = PG_F + '|' + ($('pgSearch').value || '') + '|' + ($('pgMgr').value || '*');
+  const MOB = true, pgKey = PG_F + '|' + ($('pgSearch').value || '') + '|' + ($('pgMgr').value || '*') + '|' + ($('pgRes').value || '') + '|' + ($('pgComp').value || '');
   if (pgKey !== PG_KEY){ PG_KEY = pgKey; PG_SHOW = 10; }
   const LV = MOB ? L.slice(0, PG_SHOW) : L;
   $('pgList').innerHTML = LV.map(x => {
@@ -7740,7 +7926,7 @@ async function loadDashboard(sel){
   if (!j.ok){ $('dashCard').classList.add('hide'); return; }
   DASH = j; $('dashCard').classList.remove('hide');
   if (j.period === j.currentPeriod) renderAdminHero(j);
-  $('dashTitle').textContent = 'Tổng quan';
+  $('dashTitle').textContent = 'Tổng quan kết quả';
   $('anaCard').classList.toggle('nodata', !j.submitted); $('anaSub').textContent = j.submitted ? 'Tính theo lần điểm cao nhất của mỗi nhân viên.' : 'Chưa có bài nộp nào, phần phân tích sẽ hiện khi có kết quả.';
   $('dashSub').textContent = (j.submitted ? '' : 'Chưa có bài nộp, phần phân tích sẽ hiện khi có kết quả. ') + 'Tính theo lần điểm cao nhất của mỗi nhân viên, trên danh sách thí sinh hiện có.';
   // Bài chưa gắn kỳ
@@ -7760,11 +7946,12 @@ async function loadDashboard(sel){
   const pos = v => Math.max(0, Math.min(100, Number(v) || 0)), has = j.avgPct != null && j.minPct != null && j.maxPct != null;
   const gauge = has
     ? '<div class="kbar" role="img" aria-label="Trung bình ' + pctTxt(j.avgPct) + '"><i style="width:' + pos(j.avgPct) + '%"></i></div>' : '';
+  const okN = Math.max(0, (j.submitted || 0) - lt), okRate = j.submitted ? Math.round(okN / j.submitted * 100) : null; // đạt chuẩn = không thuộc nhóm dưới ngưỡng
   $('dashKpis').innerHTML =
     '<div class="kpi k-ring"><svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="ovg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9BEBF7"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient></defs><circle class="trk" cx="60" cy="60" r="50"/><circle class="prg" cx="60" cy="60" r="50" style="stroke-dasharray:' + CIRC.toFixed(1) + ';--to:' + off.toFixed(1) + '"/></svg>' +
       '<div class="rt"><div class="rt-top"><div class="v">' + rate + '<small>%</small></div><div class="l"><b>' + j.submitted + ' / ' + j.candidates + ' thí sinh</b><br>đã nộp bài</div></div><div class="d">' + (left0 ? 'Còn ' + left0 + ' thí sinh chưa làm' : 'Đủ cả danh sách') + '</div></div></div>' +
-    '<div class="kpi k-score">' + KPI_IC.score + '<div class="l">Tỉ lệ đúng trung bình</div><div class="v">' + pctTxt(j.avgPct) + '</div>' + gauge + (has ? '<div class="d flat">Thấp nhất ' + pctTxt(j.minPct) + ' • Trung vị ' + pctTxt(j.medianPct) + '<br>Cao nhất ' + pctTxt(j.maxPct) + '</div>' : '') + delta + '</div>' +
-    '<div class="kpi k-warn' + (lt ? ' alert' : ' calm') + '">' + KPI_IC.warn + '<div class="l">Dưới chuẩn, cần đào tạo lại</div><div class="v">' + lt + '<small> người</small></div><div class="d flat">' + (lt ? '0 điểm tuân thủ' : 'Không có ai dưới chuẩn') + (j.prev ? ' · đề trước ' + j.prev.weak + ' người' : '') + '</div></div>' +
+    '<div class="kpi k-score">' + KPI_IC.score + '<div class="l">Tỷ lệ đạt chuẩn</div><div class="v">' + (okRate == null ? '–' : okRate + '<small>%</small>') + '</div>' + (okRate == null ? '' : '<div class="kbar" role="img" aria-label="Đạt chuẩn ' + okRate + '%"><i style="width:' + okRate + '%"></i></div>') + (has ? '<div class="d flat">Thấp nhất ' + pctTxt(j.minPct) + ' • Trung vị ' + pctTxt(j.medianPct) + ' • Cao nhất ' + pctTxt(j.maxPct) + '</div>' : '<div class="d flat">Chưa có bài nộp</div>') + (j.avgPct != null ? '<div class="d flat">Trung bình ' + pctTxt(j.avgPct) + '</div>' : '') + delta + '</div>' +
+    '<div class="kpi k-warn' + (lt ? ' alert' : ' calm') + '">' + KPI_IC.warn + '<div class="l">Dưới chuẩn, cần đào tạo lại</div><div class="v">' + lt + '<small> người</small></div><div class="d flat">' + (lt ? 'Dưới ' + j.lowPct + '% số câu đúng' : 'Không có ai dưới chuẩn') + (j.prev ? ' · đề trước ' + j.prev.weak + ' người' : '') + '</div></div>' +
     '<div class="kpi k-time">' + KPI_IC.time + '<div class="l">Thời gian làm bài trung bình</div><div class="v">' + (typeof j.avgDurationSec === 'number' && j.avgDurationSec > 0 ? Math.floor(j.avgDurationSec / 60) + '<small> phút </small>' + String(Math.round(j.avgDurationSec % 60)).padStart(2, '0') + '<small> giây</small>' : durTxt(j.avgDurationSec)) + '</div></div>';
   // Phân bố điểm tuân thủ
   const BC = ['var(--bad)','#E0A030','#5D86BB','var(--ok)'], tot = Math.max(1, j.submitted);
@@ -7803,7 +7990,8 @@ async function loadResults(){
   const selBefore = $('resPeriod').value, mySeq = ++RES_SEQ;
   loadDashboard(selBefore); loadProgress(selBefore); // gọi ngay, song song với danh sách bài nộp (trước đây chờ xong danh sách mới tải nên số liệu hiện muộn)
   const { j } = await api('GET','/api/kt-admin?op=results'+(selBefore?'&period='+encodeURIComponent(selBefore):''));
-  if (mySeq !== RES_SEQ || !j || !j.ok) return;
+  if (mySeq !== RES_SEQ) return;
+  if (!j || !j.ok){ $('resList').innerHTML = '<tr class="rt-emptyrow"><td colspan="5" class="rt-empty rt-err">Không tải được kết quả' + (j && j.error ? ': ' + esc(j.error) : '') + '. <button type="button" class="btn ghost sm" onclick="loadResults()">Thử lại</button></td></tr>'; return; }
   if (selBefore && (j.periods || []).indexOf(selBefore) < 0) j.periods = (j.periods || []).concat([selBefore]); // đề tự đặt chưa có bài nộp vẫn phải giữ đang chọn
   const opts = (j.periods||[]).map(p => { const l = /^\d{4}-\d{2}$/.test(p) ? 'Tháng ' + p.slice(5) + '/' + p.slice(0,4) : p; return p === j.currentPeriod ? l + ' (hiện tại)' : l; });
   $('resPeriod').innerHTML = '<option value="">Tất cả các kỳ</option>' + (j.periods||[]).map((p,i) => '<option value="'+esc(p)+'" '+(p===selBefore?'selected':'')+'>'+esc(opts[i])+'</option>').join('');
@@ -7896,7 +8084,8 @@ function renderResults(){
   $('resCount').textContent = people + ' người'; $('resCountSub').textContent = RESULTS.length !== people ? RESULTS.length + ' bài làm' + (multi ? ' · ' + multi + ' người làm nhiều lần' : '') : '';
   document.querySelectorAll('#resTable th button[data-rs]').forEach(b => { const on = b.dataset.rs === k; if (on) b.setAttribute('data-dir', dir > 0 ? 'asc' : 'desc'); else b.removeAttribute('data-dir'); b.querySelector('.ar').textContent = on ? (dir > 0 ? '▲' : '▼') : '▲▼'; });
   if ($('resSort')) $('resSort').value = k + ':' + (dir > 0 ? 'asc' : 'desc');
-  filterResults();
+  filterResults(true);
+  if (typeof PG !== 'undefined' && PG && typeof renderProgress === 'function') renderProgress(); // bộ lọc Kết quả / Tuân thủ của danh sách theo dõi cần dữ liệu bài nộp
 }
 function resToggle(ev, gi){
   ev.stopPropagation();
@@ -7905,24 +8094,59 @@ function resToggle(ev, gi){
   document.querySelectorAll('#resList tr.rt-sub[data-g="' + gi + '"]').forEach(tr => tr.classList.toggle('hide', !open));
   const b = document.querySelector('#resList tr.rt-main[data-g="' + gi + '"] .tries-t'); if (b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
 }
-function resSortBy(k){ if (RES_SORT.k === k) RES_SORT.d = -RES_SORT.d; else RES_SORT = { k, d: k === 'name' ? 1 : -1 }; renderResults(); }
-function resSortSel(v){ const x = String(v).split(':'); RES_SORT = { k: x[0], d: x[1] === 'asc' ? 1 : -1 }; renderResults(); }
+function resSortBy(k){ resPg.page = 1; if (RES_SORT.k === k) RES_SORT.d = -RES_SORT.d; else RES_SORT = { k, d: k === 'name' ? 1 : -1 }; renderResults(); }
+function resSortSel(v){ resPg.page = 1; const x = String(v).split(':'); RES_SORT = { k: x[0], d: x[1] === 'asc' ? 1 : -1 }; renderResults(); }
 function rtRow(ev, id){ if (ev.target.closest('button,a')) return; viewResult(id); }
 function rtCopy(btn){
   const t = btn.dataset.copy, done = () => { const o = btn.textContent; btn.textContent = 'Đã chép ✓'; setTimeout(() => { btn.textContent = o; }, 1300); };
   if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, () => prompt('Sao chép mã:', t)); else prompt('Sao chép mã:', t);
 }
-function filterResults(){
-  // Khi khung theo dõi đang hiện, ô tìm kiếm + bộ lọc quản lí ở đó lọc luôn bảng này (một nơi lọc chung)
+const resPg = { page:1, size:20 }; // phân trang bảng kết quả (theo người, các lần làm xổ ra cùng dòng chính)
+try { const sz = +localStorage.getItem('resSize'); if ([10,20,50,100].indexOf(sz) >= 0) resPg.size = sz; } catch (e) { /* bỏ qua */ }
+function resGo(p){ resPg.page = +p || 1; filterResults(true); }
+function resSetSize(n){ resPg.size = [10,20,50,100].indexOf(+n) >= 0 ? +n : 20; try { localStorage.setItem('resSize', String(resPg.size)); } catch (e) { /* bỏ qua */ } resPg.page = 1; filterResults(true); }
+function resClearFilters(){
+  ['pgSearch','resSearch'].forEach(id => { if ($(id)) $(id).value = ''; });
+  if ($('pgMgr')) $('pgMgr').value = '*'; if ($('pgRes')) $('pgRes').value = ''; if ($('pgComp')) $('pgComp').value = '';
+  if (PG) renderProgress(); filterResults();
+}
+function resRenderPager(total, pages){
+  const el = $('resPager'); if (!el) return;
+  if (!total){ el.innerHTML = ''; return; }
+  const cur = resPg.page, from = (cur - 1) * resPg.size + 1, to = Math.min(total, cur * resPg.size), nums = [];
+  for (let n = 1; n <= pages; n++){ if (n === 1 || n === pages || Math.abs(n - cur) <= 1) nums.push(n); else if (nums[nums.length - 1] !== '…') nums.push('…'); }
+  const chev = d => '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
+  el.innerHTML = '<div class="pg-pinfo">Hiển thị <b>' + from + '–' + to + '</b> trên <b>' + total + '</b> người</div>' +
+    '<div class="pg-ctl"><label class="pg-size">Số dòng/trang<select onchange="resSetSize(this.value)" aria-label="Số dòng mỗi trang">' + [10,20,50,100].map(n => '<option value="' + n + '"' + (n === resPg.size ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></label>' +
+    '<div class="pg-btns" role="navigation" aria-label="Phân trang"><button type="button" class="pg-b" ' + (cur <= 1 ? 'disabled ' : '') + 'onclick="resGo(' + (cur - 1) + ')" aria-label="Trang trước">' + chev('m15 18-6-6 6-6') + '</button>' +
+    nums.map(n => n === '…' ? '<span class="pg-dots">…</span>' : '<button type="button" class="pg-b"' + (n === cur ? ' aria-current="page"' : '') + ' onclick="resGo(' + n + ')" aria-label="Trang ' + n + '">' + n + '</button>').join('') +
+    '<button type="button" class="pg-b" ' + (cur >= pages ? 'disabled ' : '') + 'onclick="resGo(' + (cur + 1) + ')" aria-label="Trang sau">' + chev('m9 18 6-6-6-6') + '</button></div></div>';
+}
+function filterResults(keep){
+  if (keep !== true) resPg.page = 1;
+  // Khi khung theo dõi đang hiện, ô tìm kiếm + bộ lọc ở đó lọc luôn bảng này (một nơi lọc chung)
   const shared = $('pgCard') && !$('pgCard').classList.contains('hide');
   const q = ((shared ? ($('pgSearch') || {}).value : ($('resSearch') || {}).value) || '').trim().toLowerCase();
   const mv = shared && $('pgMgr') ? $('pgMgr').value : '*';
   const mg = mv && mv !== '*' && mv !== '__none__' ? String(mv).toLowerCase() : '';
   // "(chưa có quản lí)": giữ các dòng thuộc người không có quản lí (so theo mã NV)
   const noMgr = mv === '__none__' && PG && PG.list ? PG.list.filter(x => !x.manager).map(x => String(x.code || '').toLowerCase()) : null;
-  const vis = {};
-  document.querySelectorAll('#resList tr:not(.rt-sub)').forEach(tr => { const tx = tr.textContent.toLowerCase(), ok = (!q || tx.indexOf(q) >= 0) && (!mg || tx.indexOf(mg) >= 0) && (!noMgr || noMgr.some(c => c && tx.indexOf(c) >= 0)); tr.style.display = ok ? '' : 'none'; if (tr.dataset.g != null) vis[tr.dataset.g] = ok; });
-  document.querySelectorAll('#resList tr.rt-sub').forEach(tr => { tr.style.display = vis[tr.dataset.g] ? '' : 'none'; });
+  const fv = shared ? resFilterVals() : { rf: '', cf: '' };
+  const vis = {}, order = [];
+  document.querySelectorAll('#resList tr:not(.rt-sub)').forEach(tr => {
+    if (tr.dataset.g == null) return; // dòng trống / đang tải / không khớp: không phải một người
+    const G = RES_GROUPS[+tr.dataset.g], tx = tr.textContent.toLowerCase();
+    const ok = (!q || tx.indexOf(q) >= 0) && (!mg || tx.indexOf(mg) >= 0) && (!noMgr || noMgr.some(c => c && tx.indexOf(c) >= 0)) && resMatch(G && G.best, fv.rf, fv.cf);
+    vis[tr.dataset.g] = ok; if (ok) order.push(tr.dataset.g);
+  });
+  const pages = Math.max(1, Math.ceil(order.length / resPg.size));
+  if (resPg.page > pages) resPg.page = pages; if (resPg.page < 1) resPg.page = 1;
+  const start = (resPg.page - 1) * resPg.size, show = {};
+  order.slice(start, start + resPg.size).forEach(g => { show[g] = true; });
+  document.querySelectorAll('#resList tr[data-g]').forEach(tr => { tr.style.display = show[tr.dataset.g] ? '' : 'none'; });
+  const old = document.querySelector('#resList tr.rt-nomatch'); if (old) old.remove();
+  if (RES_GROUPS.length && !order.length) $('resList').insertAdjacentHTML('beforeend', '<tr class="rt-nomatch"><td colspan="5" class="rt-empty">Không có kết quả nào khớp bộ lọc. <button type="button" class="btn ghost sm" onclick="resClearFilters()">Xoá bộ lọc</button></td></tr>');
+  resRenderPager(order.length, pages);
 }
 async function resetAttempt(code, period){
   period = period || '';
