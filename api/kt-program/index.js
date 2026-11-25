@@ -34,7 +34,8 @@ const handler = async function (context, req) {
       if (op === "preview") { // xem trước email mời với một người mẫu
         const p = await P.get(String(q.id || ""));
         if (!p) return reply(context, 404, { ok: false, error: "Không tìm thấy chương trình." });
-        return reply(context, 200, { ok: true, html: P.inviteMail(p, { code: "T000000000", name: "Nguyễn Văn An" }).html });
+        const R = await P.regs(p.id), m = await P.inviteMail(p, { code: "T000000000", name: "Nguyễn Văn An" }, { taken: Object.keys(R.regs).length });
+        return reply(context, 200, { ok: true, html: m.previewHtml, subject: m.subject });
       }
       return reply(context, 400, { ok: false, error: "Thao tác không hợp lệ." });
     }
@@ -70,14 +71,15 @@ const handler = async function (context, req) {
       if (!codes.length) return reply(context, 400, { ok: false, error: "Chưa chọn người nhận." });
       if (codes.length > BATCH) return reply(context, 400, { ok: false, error: "Mỗi lần gửi tối đa " + BATCH + " người." });
       const byCode = {}; (await quiz.getCandidates()).forEach((c) => { byCode[P.up(c.code)] = c; });
+      const taken = Object.keys((await P.regs(p.id)).regs).length;
       const sent = [], failed = [];
       for (const code of codes) {
         const c = byCode[code];
         if (!c) { failed.push({ code, reason: "Không có trong danh sách nhân sự" }); continue; }
         if (!c.email) { failed.push({ code, reason: "Chưa có email" }); continue; }
-        const m = P.inviteMail(p, { code, name: c.name || "" });
+        const m = await P.inviteMail(p, { code, name: c.name || "" }, { taken });
         try {
-          const ok = await mail.send({ fromName: mail.KT_NAME, to: c.email, subject: m.subject, html: m.html, text: m.text });
+          const ok = await mail.send({ fromName: mail.KT_NAME, to: c.email, subject: m.subject, html: m.html, text: m.text, attachments: m.attachments });
           if (ok) sent.push({ code, name: c.name || "", email: c.email }); else failed.push({ code, reason: "Máy chủ chưa gửi được email" });
         } catch (e) { failed.push({ code, reason: "Gửi thất bại: " + String((e && e.message) || e).slice(0, 80) }); }
       }

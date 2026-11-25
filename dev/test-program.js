@@ -20,8 +20,9 @@ const tok = (m) => decodeURIComponent((m.html.match(/dangky\.html\?t=([^"&<]+)/)
   r = await call("POST", "/api/kt-program", { op: "send", id, codes: ["T030000475", "T030000526", "T030000535", "KHONGCO"] }, A);
   ok(r.j.ok && r.j.sent === 3 && r.j.failed.length === 1, "gửi 3 email, 1 mã không có trong danh sách");
   const mb = await box(), mB = mb.filter((x) => x.to === "bach@livotec.vn").pop(), mD = mb.filter((x) => x.to === "duy@livotec.vn").pop(), mT = mb.filter((x) => x.to === "tra@livotec.vn").pop();
-  ok(mB && /Mời tham gia: Khoá kỹ năng/.test(mB.subject) && /Xác nhận tham gia/.test(mB.html) && /Chào Đào Xuân Bách,/.test(mB.html), "email có tiêu đề, nút Xác nhận tham gia; tên khó đoán giới tính thì chào bằng họ tên");
-  ok(/Chào Chị Tra/.test(mT.html), "chào đúng 'Chị Tra'");
+  ok(mB && /mời bạn tham gia: Khoá kỹ năng/.test(mB.subject) && /Giữ chỗ của tôi/.test(mB.html) && /Chào Đào Xuân Bách,/.test(mB.html) && /cid:pghero/.test(mB.html) && (mB.attachments || []).some((a) => a.cid === "pghero"), "email có tiêu đề, nút Xác nhận tham gia; tên khó đoán giới tính thì chào bằng họ tên");
+  ok(/Chào Chị Tra/.test(mT.html) && /^🎓 Chị Tra ơi/.test(mT.subject), "chào và tiêu đề thư gọi đúng 'Chị Tra'");
+  ok(/Chỉ còn 2 chỗ/.test(mT.html) && /\(chỉ còn 2 chỗ\)$/.test(mT.subject) && !/đồng nghiệp đã đăng ký/.test(mT.html), "số chỗ thật (ít chỗ thì nhấn 'Chỉ còn'); chưa ai đăng ký thì không ghi 'đồng nghiệp đã đăng ký'");
   const tB = tok(mB), tD = tok(mD), tT = tok(mT);
   r = await call("GET", "/api/program-join?t=" + encodeURIComponent(tB)); ok(r.j.ok && r.j.state === "open" && r.j.name === "Đào Xuân Bách", "mở liên kết (GET) chỉ đọc, CHƯA đăng ký");
   r = await call("POST", "/api/program-join", { t: tB, op: "join" }, null, true); ok(r.s === 400 || r.s === 403, "POST thiếu header chống giả mạo bị từ chối");
@@ -42,7 +43,7 @@ const tok = (m) => decodeURIComponent((m.html.match(/dangky\.html\?t=([^"&<]+)/)
   r = await call("POST", "/api/program-join", { t: tD, op: "join" }); ok(r.j.state === "expired", "quá hạn đăng ký -> báo hết hạn");
   await call("POST", "/api/kt-program", { op: "save", program: Object.assign({}, r.j.program, { id, title: "Khoá kỹ năng tư vấn máy lọc nước", deadline: 0, capacity: 5 }) }, A);
   r = await call("POST", "/api/kt-program", { op: "removeReg", id, code: "T030000535" }, A); ok(r.j.ok, "quản trị gỡ một người");
-  r = await call("GET", "/api/kt-program?op=preview&id=" + id, null, A); ok(r.j.ok && /Nguyễn Văn An/.test(r.j.html), "xem trước email");
+  r = await call("GET", "/api/kt-program?op=preview&id=" + id, null, A); ok(r.j.ok && /Nguyễn Văn An/.test(r.j.html) && /data:image\/jpeg;base64/.test(r.j.html) && /🎓/.test(r.j.subject), "xem trước email (ảnh nhúng sẵn + tiêu đề thư)");
   r = await call("GET", "/api/kt-program?op=list", null, A); ok(r.j.programs[0].regs === 1 && r.j.programs[0].invited === 3, "danh sách chương trình có số đếm");
   const day = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10);
   r = await call("GET", "/api/kt-admin?op=audit&day=" + day, null, A); ok((r.j.items || []).some((x) => x.label === "Gửi email mời tham gia chương trình học"), "nhật ký ghi thao tác gửi mời");

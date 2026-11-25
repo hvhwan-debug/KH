@@ -155,4 +155,4 @@ async function cover(o, opt) {
   return { buf: await artImage(o), source: "art", note: aiConfigured() ? "" : "Máy chủ chưa bật quyền tạo ảnh AI nên đã dùng ảnh minh hoạ tự vẽ theo chủ đề." };
 }
 
-module.exports = { cover, artImage, themeOf, prompt, aiConfigured };
+module.exports = { cover, artImage, themeOf, prompt, aiConfigured, PAL };

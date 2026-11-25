@@ -487,17 +487,21 @@ table.t td input[type=checkbox],table.t th input[type=checkbox]{width:17px;heigh
   <h3 id="dlgT">Chương trình học</h3>
   <div class="frm">
     <div class="full"><label for="fT">Tên chương trình *</label><input id="fT" maxlength="150" placeholder="Ví dụ: Khoá kỹ năng tư vấn máy lọc nước, tháng 12"></div>
-    <div class="full"><label for="fD">Giới thiệu</label><textarea id="fD" maxlength="2000" placeholder="Nội dung, mục tiêu, đối tượng, quyền lợi khi tham gia…"></textarea></div>
+    <div class="full"><label for="fD">Giới thiệu & lợi ích</label><textarea id="fD" maxlength="2000" placeholder="Một câu hấp dẫn về chương trình.
+- Chốt đơn nhanh hơn với 3 câu hỏi khai thác nhu cầu
+- Xử lý 5 lời từ chối hay gặp nhất tại điểm bán
+- Nhận chứng nhận hoàn thành khoá học"></textarea><div class="hint">Mỗi dòng bắt đầu bằng dấu “-” sẽ hiện thành một lợi ích có dấu ✓ trong email. Viết theo hướng “học xong làm được gì”.</div></div>
     <div><label for="fW">Thời gian</label><input id="fW" maxlength="200" placeholder="8:30 – 11:30, thứ Bảy 06/12/2026"></div>
     <div><label for="fP">Địa điểm / hình thức</label><input id="fP" maxlength="200" placeholder="Văn phòng Hà Nội / Online qua Teams"></div>
     <div><label for="fDl">Hạn đăng ký</label><input id="fDl" type="datetime-local"><div class="hint">Giờ Việt Nam. Để trống = không giới hạn.</div></div>
     <div><label for="fC">Số chỗ tối đa</label><input id="fC" type="number" min="0" step="1" placeholder="Không giới hạn"><div class="hint">Đủ chỗ thì hệ thống tự ngừng nhận.</div></div>
-    <div class="full"><label for="fCt">Người liên hệ</label><input id="fCt" maxlength="200" placeholder="Phòng Đào tạo · 0901 234 567"></div>
+    <div><label for="fSp">Người chia sẻ / giảng viên</label><input id="fSp" maxlength="150" placeholder="Anh Nguyễn Ngọc Hiếu, ASM xuất sắc 2025"></div>
+    <div><label for="fCt">Người liên hệ</label><input id="fCt" maxlength="200" placeholder="Phòng Đào tạo · 0901 234 567"></div>
   </div>
   <div id="dlgMsg"></div>
   <div class="ov-f"><button class="btn" type="button" id="dlgNo">Huỷ</button><button class="btn pri" type="button" id="dlgOk">Lưu</button></div>
 </div></div>
-<div id="pv" class="ov hide" role="dialog" aria-modal="true"><div class="ov-box" style="max-width:760px"><h3>Xem trước email mời</h3><iframe class="pv-frame" id="pvF" title="Xem trước email" sandbox=""></iframe><div class="ov-f"><button class="btn" type="button" id="pvX">Đóng</button></div></div></div>
+<div id="pv" class="ov hide" role="dialog" aria-modal="true"><div class="ov-box" style="max-width:760px"><h3>Xem trước email mời</h3><div id="pvS" style="font-size:13px;color:var(--muted);margin:-6px 0 10px"></div><iframe class="pv-frame" id="pvF" title="Xem trước email" sandbox=""></iframe><div class="ov-f"><button class="btn" type="button" id="pvX">Đóng</button></div></div></div>
 <div id="toast" class="hide" role="status" aria-live="polite"></div>
 <script>
 (function(){
@@ -551,7 +555,7 @@ function renderDetail(){
   $('dTitle').textContent = p.title;
   $('dChips').innerHTML = '<span class="chip ' + s[1] + '">' + s[0] + '</span>';
   $('bToggle').textContent = p.status === 'closed' ? 'Mở lại đăng ký' : 'Đóng đăng ký';
-  var rows = [['Thời gian', p.when], ['Địa điểm / hình thức', p.where], ['Hạn đăng ký', p.deadline ? vn(p.deadline) : 'Không giới hạn'], ['Số chỗ', p.capacity ? p.capacity + ' người' : 'Không giới hạn'], ['Liên hệ', p.contact]].filter(function(x){ return x[1]; });
+  var rows = [['Thời gian', p.when], ['Địa điểm / hình thức', p.where], ['Hạn đăng ký', p.deadline ? vn(p.deadline) : 'Không giới hạn'], ['Số chỗ', p.capacity ? p.capacity + ' người' : 'Không giới hạn'], ['Người chia sẻ', p.speaker], ['Liên hệ', p.contact]].filter(function(x){ return x[1]; });
   $('dInfo').innerHTML = rows.map(function(x){ return '<div><span>' + x[0] + '</span><b>' + esc(x[1]) + '</b></div>'; }).join('') + (p.desc ? '<div style="grid-column:1/-1"><span>Giới thiệu</span><div style="white-space:pre-line">' + esc(p.desc) + '</div></div>' : '');
   var resp = Object.keys(S.invited).filter(function(k){ return S.regs[k]; }).length;
   $('dKpi').innerHTML = [['Đã mời', nInv, ''], ['Đã đăng ký', nReg + (p.capacity ? '<small>/' + p.capacity + '</small>' : ''), p.capacity ? 'Còn ' + Math.max(0, p.capacity - nReg) + ' chỗ' : ''],
@@ -628,11 +632,11 @@ async function send(){
 function openForm(p){
   S.editId = p ? p.id : ''; $('dlgT').textContent = p ? 'Sửa chương trình' : 'Tạo chương trình học'; $('dlgMsg').innerHTML = '';
   $('fT').value = p ? p.title : ''; $('fD').value = p ? p.desc || '' : ''; $('fW').value = p ? p.when || '' : ''; $('fP').value = p ? p.where || '' : '';
-  $('fDl').value = p ? toLocal(p.deadline) : ''; $('fC').value = p && p.capacity ? p.capacity : ''; $('fCt').value = p ? p.contact || '' : '';
+  $('fDl').value = p ? toLocal(p.deadline) : ''; $('fC').value = p && p.capacity ? p.capacity : ''; $('fCt').value = p ? p.contact || '' : ''; $('fSp').value = p ? p.speaker || '' : '';
   $('dlg').classList.remove('hide'); $('fT').focus();
 }
 async function saveForm(){
-  var prog = { id: S.editId || undefined, title: $('fT').value.trim(), desc: $('fD').value.trim(), when: $('fW').value.trim(), where: $('fP').value.trim(), deadline: fromLocal($('fDl').value), capacity: +$('fC').value || 0, contact: $('fCt').value.trim(), status: S.editId && S.cur ? S.cur.status : 'open' };
+  var prog = { id: S.editId || undefined, title: $('fT').value.trim(), desc: $('fD').value.trim(), when: $('fW').value.trim(), where: $('fP').value.trim(), deadline: fromLocal($('fDl').value), capacity: +$('fC').value || 0, contact: $('fCt').value.trim(), speaker: $('fSp').value.trim(), status: S.editId && S.cur ? S.cur.status : 'open' };
   if (!prog.title){ $('dlgMsg').innerHTML = '<div class="msg r">Vui lòng nhập tên chương trình.</div>'; return; }
   $('dlgOk').disabled = true; var r = await api('POST', '/api/kt-program', { op:'save', program:prog }); $('dlgOk').disabled = false;
   if (!r.j.ok){ $('dlgMsg').innerHTML = '<div class="msg r">' + esc(r.j.error || 'Không lưu được.') + '</div>'; return; }
@@ -658,7 +662,7 @@ $('back').addEventListener('click', function(e){ e.preventDefault(); location.ha
 $('plist').addEventListener('click', function(e){ var b = e.target.closest('[data-id]'); if (b) location.hash = '#p/' + b.dataset.id; });
 $('bToggle').addEventListener('click', async function(){ var r = await api('POST', '/api/kt-program', { op:'setStatus', id:S.cur.id, status: S.cur.status === 'closed' ? 'open' : 'closed' }); if (r.j.ok){ toast(r.j.program.status === 'closed' ? 'Đã đóng đăng ký.' : 'Đã mở lại đăng ký.'); openDetail(S.cur.id); } else toast(r.j.error || 'Lỗi.'); });
 $('bDel').addEventListener('click', async function(){ if (!confirm('Xoá chương trình "' + S.cur.title + '" và toàn bộ danh sách đăng ký? Liên kết trong các email đã gửi sẽ không dùng được nữa.')) return; var r = await api('POST', '/api/kt-program', { op:'delete', id:S.cur.id }); if (r.j.ok){ toast('Đã xoá chương trình.'); location.hash = ''; } else toast(r.j.error || 'Lỗi.'); });
-$('bPrev').addEventListener('click', async function(){ var r = await api('GET', '/api/kt-program?op=preview&id=' + encodeURIComponent(S.cur.id)); if (!r.j.ok) return toast(r.j.error || 'Lỗi.'); $('pvF').srcdoc = r.j.html; $('pv').classList.remove('hide'); });
+$('bPrev').addEventListener('click', async function(){ var r = await api('GET', '/api/kt-program?op=preview&id=' + encodeURIComponent(S.cur.id)); if (!r.j.ok) return toast(r.j.error || 'Lỗi.'); $('pvF').srcdoc = r.j.html; $('pvS').innerHTML = 'Tiêu đề thư: <b style="color:var(--ink)">' + esc(r.j.subject || '') + '</b>'; $('pv').classList.remove('hide'); });
 $('pvX').addEventListener('click', function(){ $('pv').classList.add('hide'); });
 document.querySelector('.tabs2').addEventListener('click', function(e){ var b = e.target.closest('button[data-t]'); if (!b) return; document.querySelectorAll('.tabs2 button').forEach(function(x){ x.classList.toggle('on', x === b); }); $('pInv').classList.toggle('hide', b.dataset.t !== 'inv'); $('pReg').classList.toggle('hide', b.dataset.t !== 'reg'); });
 ['fq'].forEach(function(id){ $(id).addEventListener('input', renderInv); });
