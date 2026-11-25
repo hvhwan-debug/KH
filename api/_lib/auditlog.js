@@ -43,7 +43,7 @@ function client(req) {
 // kind: change (thay đổi dữ liệu) | read (xem dữ liệu) | auth (đăng nhập/đăng xuất) | export (xuất file, in, AI) | denied (bị từ chối)
 const A = {
   sales: {
-    GET: { list: ["Xem danh sách tháng số bán", "read"], month: ["Xem kết quả số bán", "read"] },
+    GET: { list: ["Xem danh sách tháng số bán", "read"], month: ["Xem kết quả số bán", "read"], byEmp: ["Xem kết quả kinh doanh trong hồ sơ học tập", "read"] },
     POST: { saveMonth: ["Cập nhật kết quả số bán", "change"], deleteMonth: ["Xoá kết quả số bán một tháng", "change"] }
   },
   hoclieu: {

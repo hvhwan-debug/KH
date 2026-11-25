@@ -62,6 +62,18 @@ module.exports = require("../_lib/auditlog").wrap(async function (context, req) 
         const months = Object.keys(all).sort().reverse().map((m) => summary(all[m]));
         return reply(context, 200, { ok: true, months });
       }
+      if (op === "byEmp") { // cho trang Hồ sơ học tập: kết quả từng tháng của mỗi mã NV
+        const months = Object.keys(all).sort(), emp = {};
+        months.forEach((m) => {
+          const d = all[m];
+          d.rows.forEach((r) => {
+            if (!r.code) return;
+            (emp[r.code] = emp[r.code] || []).push({ month: m, target: r.target, actual: r.actual || 0, asmName: r.asmName, kv: r.kv,
+              npp: r.nppName, mien: r.mien, elapsed: d.elapsed });
+          });
+        });
+        return reply(context, 200, { ok: true, months, emp });
+      }
       if (op === "month") {
         const m = s(q.m, 7);
         if (!all[m]) return reply(context, 404, { ok: false, error: "Chưa có dữ liệu tháng này." });

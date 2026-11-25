@@ -472,7 +472,7 @@ async function api(method, path, body){
 var TIP = function(t){ return '<span class="tip" tabindex="0" title="' + esc(t) + '" aria-label="' + esc(t) + '">?</span>'; };
 
 /* ====================== Trạng thái toàn trang ====================== */
-var S = { C:[], by:{}, A:[], X:[], xById:{}, ST:{}, th:{ low:60, mid:70, high:90 }, cur:'', cat:{}, ph:{}, phOff:false, loaded:false };
+var S = { C:[], by:{}, A:[], X:[], xById:{}, ST:{}, th:{ low:60, mid:70, high:90 }, cur:'', cat:{}, ph:{}, phOff:false, loaded:false, SB:{}, SBm:[] };
 var F = { q:'', time:'0', exam:'', dept:'', title:'', seg:'', region:'', prov:'', mgr:'', status:'', left:false };
 var V = { tab:'ov', sort:{ k:'last', d:1 }, page:1, per:25, sel:{}, geo:'region', catExam:'' };
 var M = null; // kết quả tính toán theo bộ lọc hiện tại
@@ -497,6 +497,7 @@ async function load(){
   if (rs.some(function(r){ return r.s === 403; })) return { denied:true };
   for (var i = 0; i < rs.length; i++) if (!rs[i].j || !rs[i].j.ok) return { error:(rs[i].j && rs[i].j.error) || 'Máy chủ không phản hồi đúng.' };
   build(rs[0].j, rs[1].j, rs[2].j, rs[3].j);
+  await loadSales();
   return { ok:true };
 }
 function build(c, r, x, s){
@@ -512,6 +513,23 @@ function build(c, r, x, s){
   var nc = $('nvCand'); if (nc){ nc.textContent = S.C.length; nc.classList.remove('hide'); }
   var ne = $('nvExams'); if (ne && S.X.length){ ne.textContent = S.X.length; ne.classList.remove('hide'); }
 }
+
+/* ====================== Kết quả kinh doanh (từ trang Kết quả số bán, ghép theo Mã NV) ====================== */
+async function loadSales(){
+  S.SB = {}; S.SBm = [];
+  var r; try { r = await api('GET', '/api/kt-sales?op=byEmp'); } catch (e) { r = null; }
+  if (!r || !r.j || !r.j.ok) return;
+  S.SBm = r.j.months || [];
+  Object.keys(r.j.emp || {}).forEach(function(k){ S.SB[norm(k)] = r.j.emp[k]; });
+}
+function kdList(c){ return (c && S.SB[c._k || norm(c.code)]) || []; }
+function kdLast(c){ var l = kdList(c); return l.length ? l[l.length - 1] : null; }
+function kdHt(x){ return x && x.target ? (x.actual || 0) / x.target * 100 : null; }
+function kdMon(m){ return 'T' + (+m.slice(5)) + '/' + m.slice(0, 4); }
+function kdMoney(n){ return n == null ? '–' : Math.round(n).toLocaleString('vi-VN'); }
+function kdShort(n){ if (n == null) return '–'; var a = Math.abs(n); if (a >= 1e9) return (n / 1e9).toLocaleString('vi-VN', { maximumFractionDigits:2 }) + ' tỷ'; if (a >= 1e6) return (n / 1e6).toLocaleString('vi-VN', { maximumFractionDigits:1 }) + ' tr'; return kdMoney(n); }
+function kdCls(x){ var h = kdHt(x); if (h == null) return 'none'; if (h >= 100) return 'g'; if (x.elapsed != null && h >= x.elapsed * 100) return 'o'; return h > 0 ? 'w' : 'r'; }
+function kdText(x){ if (!x) return ''; var h = kdHt(x); return (h == null ? 'Chưa có chỉ tiêu' : vn(h, 0) + '%') + ' · ' + kdShort(x.actual) + (x.target ? ' / ' + kdShort(x.target) : '') + ' (' + kdMon(x.month) + ')'; }
 
 /* ====================== Mô hình tính toán ====================== */
 function better(a, b){ if ((a.pct || 0) !== (b.pct || 0)) return (a.pct || 0) > (b.pct || 0); if ((a.score || 0) !== (b.score || 0)) return (a.score || 0) > (b.score || 0); return (a.submittedAt || 0) > (b.submittedAt || 0); }
@@ -763,12 +781,12 @@ function renderOverview(){
 V.sort = { k:'act', d:-1 };
 var COLS = [ { k:'sel' }, { k:'av' }, { k:'code', l:'Mã NV', s:1 }, { k:'name', l:'Họ và tên', s:1 }, { k:'dept', l:'Phòng ban / Bộ phận', s:1 }, { k:'title', l:'Chức danh', s:1 }, { k:'area', l:'Khu vực / Địa bàn', s:1 },
   { k:'n', l:'Số lần KT', s:1, r:1, t:'Số lượt làm bài chính thức đã nộp trong phạm vi lọc.' }, { k:'avg', l:'Điểm TB', s:1, r:1, t:'Trung bình điểm của từng bài kiểm tra (mỗi bài lấy lần điểm cao nhất).' },
-  { k:'compl', l:'Hoàn thành', s:1, r:1, t:'Số bài đã làm / số bài được giao.' }, { k:'comp', l:'Tuân thủ', s:1, r:1, t:'Điểm tuân thủ của lần làm gần nhất.' }, { k:'st', l:'Trạng thái', s:1 }, { k:'act', l:'Hoạt động gần nhất', s:1, t:'Lần nộp bài hoặc đăng nhập gần nhất.' }, { k:'go' } ];
+  { k:'compl', l:'Hoàn thành', s:1, r:1, t:'Số bài đã làm / số bài được giao.' }, { k:'comp', l:'Tuân thủ', s:1, r:1, t:'Điểm tuân thủ của lần làm gần nhất.' }, { k:'kd', l:'Kết quả KD', s:1, r:1, t:'Tỉ lệ hoàn thành chỉ tiêu doanh số (Thực đạt ÷ Chỉ tiêu) của tháng gần nhất có dữ liệu, lấy từ trang Kết quả số bán.' }, { k:'st', l:'Trạng thái', s:1 }, { k:'act', l:'Hoạt động gần nhất', s:1, t:'Lần nộp bài hoặc đăng nhập gần nhất.' }, { k:'go' } ];
 function area(c){ return [c._reg, c.province].filter(Boolean).join(' · '); }
 function sortVal(r, k){
   switch (k){
     case 'code': return norm(r.c.code); case 'name': return fold(r.c.name || ''); case 'dept': return fold(r.c._dept); case 'title': return fold(r.c.title || ''); case 'area': return fold(area(r.c));
-    case 'n': return r.n; case 'avg': return r.avg; case 'compl': return r.compl; case 'comp': return r.comp; case 'st': return { need:0, ok:1, none:2, left:3 }[r.st]; case 'act': return r.act || null; default: return r.act;
+    case 'n': return r.n; case 'avg': return r.avg; case 'compl': return r.compl; case 'comp': return r.comp; case 'kd': var kx = kdLast(r.c); return kx ? (kdHt(kx) == null ? -1 : kdHt(kx)) : null; case 'st': return { need:0, ok:1, none:2, left:3 }[r.st]; case 'act': return r.act || null; default: return r.act;
   }
 }
 function sortedView(){
@@ -807,6 +825,7 @@ function renderList(){
       '<td class="r nw">' + (r.avg == null ? '–' : '<b>' + pc(r.avg) + '</b> <span class="chip plain ' + bnd + '" style="padding:1px 7px;font-size:11px">' + BL[bnd] + '</span>') + '</td>' +
       '<td class="r nw">' + (r.compl == null ? '–' : vn(r.compl, 0) + '% <span style="color:#9AA7BC;font-size:11.5px">(' + r.done + '/' + r.assigned + ')</span>') + '</td>' +
       '<td class="r">' + (r.comp == null ? '–' : r.comp) + '</td>' +
+      (function(){ var x = kdLast(c), h = kdHt(x); return '<td class="r nw"' + (x ? ' title="' + esc(kdText(x)) + '"' : '') + '>' + (!x ? '<span style="color:#9AA7BC">–</span>' : '<span class="chip plain ' + kdCls(x) + '" style="padding:1px 8px">' + (h == null ? 'Chưa có CT' : vn(h, 0) + '%') + '</span> <span style="color:#9AA7BC;font-size:11.5px">' + kdMon(x.month) + '</span>'); })() + '</td>' +
       '<td><span class="chip ' + r.st + '">' + STL[r.st] + '</span></td>' +
       '<td class="nw" title="' + esc(vnDT(r.act)) + '">' + (r.act ? ago(r.act) : '–') + '</td>' +
       '<td><button type="button" class="btn sm" data-go="' + esc(c.code) + '">Xem chi tiết</button></td></tr>';
@@ -879,7 +898,7 @@ function insight(){
 }
 function renderDetail(){
   var c = D.c, P = D.P, a = D.agg, H = histOfficial(), hidden = (P.history || []).filter(function(x){ return x.hidden; }).length;
-  var meta = [['Mã NV', c.code], ['Chức danh', c.title], ['Khu vực', area(c)], ['Quản lí trực tiếp', c.manager], ['Nhóm ngành', SEGL[c._seg]]].filter(function(m){ return m[1]; })
+  var meta = [['Mã NV', c.code], ['Chức danh', c.title], ['Khu vực', area(c)], ['Quản lí trực tiếp', c.manager], ['Nhóm ngành', SEGL[c._seg]], ['Kết quả kinh doanh', kdText(kdLast(c))]].filter(function(m){ return m[1]; })
     .map(function(m){ return '<span>' + esc(m[0]) + ': <b>' + esc(m[1]) + '</b></span>'; }).join('');
   var stateChip = c.left ? '<span class="chip left">Đã nghỉ việc</span>' : P.status === 'doing' ? '<span class="chip ok">Đang làm bài</span>' : '<span class="chip ok" style="background:#E8F0FB;color:#0B3F94">Đang làm việc</span>';
   var d = a.delta;
@@ -894,14 +913,14 @@ function renderDetail(){
       kpi('Điểm gần nhất', 'Điểm % của lần làm bài nộp gần nhất.', a.lastP == null ? '–' : vn(a.lastP) + '<small>%</small>', a.lastAt ? vnDate(a.lastAt) : '', a.lastP != null && a.lastP < S.th.low ? 'bad' : '') +
       kpi('Tiến bộ so với kỳ trước', 'Chênh lệch điểm % giữa bài kiểm tra gần nhất và bài ngay trước đó.', d == null ? '–' : (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + vn(Math.abs(d), 0) + '<small> điểm %</small>', d == null ? 'Cần ít nhất 2 bài' : '', d == null ? '' : d > 0 ? 'ok' : d < 0 ? 'bad' : '') +
     '</div>' +
-    '<div class="tabs" role="tablist" aria-label="Phân tích hồ sơ">' + ['Tổng quan năng lực', 'Lịch sử kiểm tra', 'Phân tích kiến thức', 'Lộ trình học tập', 'Thông tin nhân sự'].map(function(t, i){ return '<button type="button" role="tab" data-dtab="' + (i + 1) + '" aria-selected="' + (D.tab === i + 1) + '">' + t + '</button>'; }).join('') + '</div>' +
+    '<div class="tabs" role="tablist" aria-label="Phân tích hồ sơ">' + ['Tổng quan năng lực', 'Lịch sử kiểm tra', 'Phân tích kiến thức', 'Lộ trình học tập', 'Thông tin nhân sự', 'Kết quả kinh doanh'].map(function(t, i){ return '<button type="button" role="tab" data-dtab="' + (i + 1) + '" aria-selected="' + (D.tab === i + 1) + '">' + t + '</button>'; }).join('') + '</div>' +
     '<div id="dtab"></div>';
   $('vDetail').innerHTML = h;
   renderTab();
   applyFaces($('vDetail'));
 }
 function renderTab(){
-  var f = [null, tab1, tab2, tab3, tab4, tab5][D.tab] || tab1;
+  var f = [null, tab1, tab2, tab3, tab4, tab5, tab6][D.tab] || tab1;
   $('dtab').innerHTML = f();
   document.querySelectorAll('#vDetail [data-dtab]').forEach(function(b){ b.setAttribute('aria-selected', String(+b.getAttribute('data-dtab') === D.tab)); });
 }
@@ -996,6 +1015,26 @@ function tab5(){
   return h;
 }
 
+/* --- Tab 6: Kết quả kinh doanh --- */
+function tab6(){
+  var c = D.c, l = kdList(c).slice().reverse(), x = l[0];
+  if (!x) return '<div class="card"><div class="empty" style="padding:40px 14px">Chưa có kết quả kinh doanh của mã NV <b>' + esc(c.code) + '</b>' + (S.SBm.length ? ' trong các tháng đã cập nhật (' + S.SBm.map(kdMon).join(', ') + ').' : '. Hãy tải file Salerep ở trang Kết quả số bán.') + '<div style="margin-top:12px"><a class="btn sm" href="/kiemtra/soban.html">Mở trang Kết quả số bán</a></div></div></div>';
+  var h = kdHt(x), p = l[1], dl = p && p.actual ? ((x.actual || 0) - p.actual) / p.actual * 100 : null;
+  var kc = h == null ? '' : h >= 100 ? 'ok' : (x.elapsed != null && h < x.elapsed * 100 ? 'bad' : '');
+  var rows = l.map(function(r, i){ var hh = kdHt(r), pv = l[i + 1], d = pv && pv.actual ? ((r.actual || 0) - pv.actual) / pv.actual * 100 : null;
+    return '<tr><td><a href="/kiemtra/soban.html#' + esc(r.month) + '"><b>' + esc(kdMon(r.month)) + '</b></a></td><td class="r nw">' + kdMoney(r.target) + '</td><td class="r nw">' + kdMoney(r.actual) + '</td>' +
+      '<td class="r"><span class="chip plain ' + kdCls(r) + '">' + (hh == null ? 'Chưa có CT' : vn(hh, 0) + '%') + '</span></td><td class="r nw">' + (d == null ? '–' : '<span style="color:' + (d >= 0 ? '#16794A' : '#C0332B') + ';font-weight:700">' + (d >= 0 ? '▲ ' : '▼ ') + vn(Math.abs(d), 0) + '%</span>') + '</td>' +
+      '<td class="nw">' + esc(r.asmName || '–') + '</td><td class="nw">' + esc(r.kv || '') + '</td><td>' + esc(r.npp || '') + '</td></tr>'; }).join('');
+  return '<div class="kpis6" style="grid-template-columns:repeat(4,minmax(0,1fr))">' +
+      kpi('Hoàn thành chỉ tiêu ' + kdMon(x.month), 'Thực đạt ÷ Chỉ tiêu, không chặn ở 100%.', h == null ? '–' : vn(h, 0) + '<small>%</small>', x.elapsed != null ? 'Thời gian đã qua ' + vn(x.elapsed * 100, 0) + '%' : '', kc) +
+      kpi('Thực đạt', 'Doanh số thực đạt trong tháng.', kdShort(x.actual), kdMoney(x.actual) + ' đ') +
+      kpi('Chỉ tiêu', 'Chỉ tiêu doanh số được giao trong tháng.', kdShort(x.target), x.target ? kdMoney(x.target) + ' đ' : 'Chưa được giao chỉ tiêu') +
+      kpi('So với tháng trước', 'Mức tăng / giảm thực đạt so với tháng liền trước có dữ liệu.', dl == null ? '–' : (dl >= 0 ? '▲ ' : '▼ ') + vn(Math.abs(dl), 0) + '<small>%</small>', p ? kdMon(p.month) + ': ' + kdShort(p.actual) : 'Chưa có tháng trước', dl == null ? '' : dl >= 0 ? 'ok' : 'bad') +
+    '</div><div class="card"><div class="card-h"><h2>Kết quả kinh doanh theo tháng</h2><span class="sub">' + l.length + ' tháng</span><span class="sp"></span><a class="btn sm" href="/kiemtra/soban.html#' + esc(x.month) + '">Xem cả đội ' + esc(kdMon(x.month)) + '</a></div>' +
+    '<div class="tw" style="margin-top:8px"><table class="t"><thead><tr><th>Tháng</th><th class="r">Chỉ tiêu</th><th class="r">Thực đạt</th><th class="r">%HT</th><th class="r">So tháng trước</th><th>ASM</th><th>KV</th><th>NPP</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>' +
+    '<div class="q" style="margin-top:10px">Số liệu lấy từ file Salerep GT đã tải lên ở trang Kết quả số bán, ghép với hồ sơ theo Mã NV.</div>';
+}
+
 /* ====================== Xuất Excel (ExcelJS, cùng cách trang quản trị đang dùng) ====================== */
 var xjsP = null;
 function loadExcelJS(){
@@ -1013,8 +1052,8 @@ function addSheet(wb, used, name, headers, rows){
   headers.forEach(function(h, k){ var m = String(h).length; rows.forEach(function(r){ m = Math.max(m, String(r[k] == null ? '' : r[k]).length); }); ws.getColumn(k + 1).width = Math.min(44, Math.max(10, m + 2)); });
   return ws;
 }
-var LIST_H = ['Mã NV', 'Họ và tên', 'Phòng ban / Bộ phận', 'Chức danh', 'Miền', 'Tỉnh / thành', 'Quản lí (ASM)', 'Số lần kiểm tra', 'Điểm TB (%)', 'Điểm cao nhất (%)', 'Điểm gần nhất (%)', 'Tỉ lệ hoàn thành (%)', 'Điểm tuân thủ (lần gần nhất)', 'Trạng thái học tập', 'Hoạt động gần nhất'];
-function listRow(r){ var c = r.c; return [c.code, c.name || '', c._dept, c.title || '', c._reg, c.province || '', c.manager || '', r.n, r.avg == null ? '' : Math.round(r.avg * 10) / 10, r.best == null ? '' : Math.round(r.best * 10) / 10, r.lastP == null ? '' : Math.round(r.lastP * 10) / 10, r.compl == null ? '' : Math.round(r.compl), r.comp == null ? '' : r.comp, STL[r.st], r.act ? vnDT(r.act) : '']; }
+var LIST_H = ['Mã NV', 'Họ và tên', 'Phòng ban / Bộ phận', 'Chức danh', 'Miền', 'Tỉnh / thành', 'Quản lí (ASM)', 'Số lần kiểm tra', 'Điểm TB (%)', 'Điểm cao nhất (%)', 'Điểm gần nhất (%)', 'Tỉ lệ hoàn thành (%)', 'Điểm tuân thủ (lần gần nhất)', 'Trạng thái học tập', 'Hoạt động gần nhất', 'Kết quả KD - tháng', 'Chỉ tiêu', 'Thực đạt', '%HT'];
+function listRow(r){ var c = r.c; return [c.code, c.name || '', c._dept, c.title || '', c._reg, c.province || '', c.manager || '', r.n, r.avg == null ? '' : Math.round(r.avg * 10) / 10, r.best == null ? '' : Math.round(r.best * 10) / 10, r.lastP == null ? '' : Math.round(r.lastP * 10) / 10, r.compl == null ? '' : Math.round(r.compl), r.comp == null ? '' : r.comp, STL[r.st], r.act ? vnDT(r.act) : ''].concat((function(){ var x = kdLast(c), h = kdHt(x); return x ? [kdMon(x.month), x.target == null ? '' : x.target, x.actual || 0, h == null ? '' : Math.round(h * 10) / 10] : ['', '', '', '']; })()); }
 function attRow(a){ var c = S.by[a._k] || {}; return [a.code, a.name || c.name || '', c.title || '', c._reg || '', c.province || '', c.manager || '', xTitle(a.period || ''), vnDT(a.submittedAt), a.score == null ? '' : a.score, a.total == null ? '' : a.total, a.pct == null ? '' : Math.round(a.pct * 10) / 10, a.compliancePoints == null ? '' : a.compliancePoints, a.durationSec == null ? '' : dur(a.durationSec), attemptState(a) === 'ok' ? 'Đạt' : 'Chưa đạt']; }
 var ATT_H = ['Mã NV', 'Họ và tên', 'Chức danh', 'Miền', 'Tỉnh / thành', 'Quản lí (ASM)', 'Bài kiểm tra', 'Nộp lúc', 'Số câu đúng', 'Tổng số câu', 'Tỉ lệ đúng (%)', 'Điểm tuân thủ', 'Thời gian làm bài', 'Kết quả'];
 async function exportXlsx(kind){
@@ -1025,7 +1064,8 @@ async function exportXlsx(kind){
     if (kind === 'person'){
       var c = D.c, a = D.agg, P = D.P;
       file = 'ho-so-' + norm(c.code);
-      addSheet(wb, used, 'Tổng quan', ['Chỉ tiêu', 'Giá trị'], [['Mã NV', c.code], ['Họ và tên', c.name || ''], ['Chức danh', c.title || ''], ['Miền', c._reg], ['Tỉnh / thành', c.province || ''], ['Quản lí (ASM)', c.manager || ''], ['Trạng thái học tập', STL[a.st]], ['Số lượt kiểm tra', a.n], ['Điểm TB (%)', a.avg == null ? '' : Math.round(a.avg * 10) / 10], ['Điểm cao nhất (%)', a.best == null ? '' : Math.round(a.best * 10) / 10], ['Điểm gần nhất (%)', a.lastP == null ? '' : Math.round(a.lastP * 10) / 10], ['Tỉ lệ hoàn thành (%)', a.compl == null ? '' : Math.round(a.compl)]]);
+      addSheet(wb, used, 'Tổng quan', ['Chỉ tiêu', 'Giá trị'], [['Mã NV', c.code], ['Họ và tên', c.name || ''], ['Chức danh', c.title || ''], ['Miền', c._reg], ['Tỉnh / thành', c.province || ''], ['Quản lí (ASM)', c.manager || ''], ['Trạng thái học tập', STL[a.st]], ['Số lượt kiểm tra', a.n], ['Điểm TB (%)', a.avg == null ? '' : Math.round(a.avg * 10) / 10], ['Điểm cao nhất (%)', a.best == null ? '' : Math.round(a.best * 10) / 10], ['Điểm gần nhất (%)', a.lastP == null ? '' : Math.round(a.lastP * 10) / 10], ['Tỉ lệ hoàn thành (%)', a.compl == null ? '' : Math.round(a.compl)], ['Kết quả kinh doanh', kdText(kdLast(c))]]);
+      if (kdList(c).length) addSheet(wb, used, 'Kết quả kinh doanh', ['Tháng', 'Chỉ tiêu', 'Thực đạt', '%HT', 'ASM', 'KV', 'NPP'], kdList(c).slice().reverse().map(function(x){ var h = kdHt(x); return [kdMon(x.month), x.target == null ? '' : x.target, x.actual || 0, h == null ? '' : Math.round(h * 10) / 10, x.asmName || '', x.kv || '', x.npp || '']; }));
       addSheet(wb, used, 'Lịch sử kiểm tra', ['Bài kiểm tra', 'Nộp lúc', 'Số câu đúng', 'Tổng số câu', 'Tỉ lệ đúng (%)', 'Điểm tuân thủ', 'Thời gian làm bài', 'Kết quả', 'Ghi chú'],
         (P.history || []).slice().sort(function(x, y){ return (y.submittedAt || 0) - (x.submittedAt || 0); }).map(function(x){ return [xTitle(x.period || ''), vnDT(x.submittedAt), x.score == null ? '' : x.score, x.total == null ? '' : x.total, x.pct == null ? '' : Math.round(x.pct * 10) / 10, x.compliancePoints == null ? '' : x.compliancePoints, dur(x.durationSec), attemptState(x) === 'ok' ? 'Đạt' : 'Chưa đạt', [x.hidden ? 'Đã ẩn' : '', x.practice ? 'Thi thử' : '', x.test ? 'Thử nghiệm' : ''].filter(Boolean).join(', ')]; }));
       addSheet(wb, used, 'Nhóm kiến thức', ['Chuyên đề', 'Số câu', 'Tỉ lệ đúng (%)', 'Gần nhất (%)', 'Xếp loại'], (P.categories || []).filter(function(x){ return x.pct != null; }).map(function(x){ return [x.category, x.n, x.pct, x.lastPct == null ? '' : x.lastPct, BL[band(x.pct)]]; }));
