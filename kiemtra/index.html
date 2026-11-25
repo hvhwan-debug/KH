@@ -3428,16 +3428,17 @@ $('btnStart').addEventListener('click', async function(){
 });
 // Vé đăng nhập bằng khuôn mặt giữ trong sessionStorage của tab: tải lại trang (F5) sau khi đăng nhập vẫn không phải quét lại
 // Vé "vừa đăng nhập bằng khuôn mặt" (15 phút): kt-check bỏ bước chống dò cho đúng mã NV này
+var FP_MS = 7.5 * 3600 * 1000; // vé đăng nhập khuôn mặt: 7,5 giờ (máy chủ cho 8 giờ) — đã đăng nhập bằng khuôn mặt thì không quét lại
 function flSet(v){ ST.fl = v; try { if (v) sessionStorage.setItem('kt_fl', JSON.stringify(v)); else sessionStorage.removeItem('kt_fl'); } catch (e) {} }
-try { var fl0 = JSON.parse(sessionStorage.getItem('kt_fl') || 'null'); if (fl0 && fl0.token && Date.now() - fl0.at < 14 * 60 * 1000) ST.fl = fl0; } catch (e) {}
-function flFor(code){ var f = ST.fl; return f && f.token && Date.now() - f.at < 14 * 60 * 1000 && f.code.toUpperCase() === String(code || '').trim().toUpperCase() ? f.token : undefined; }
+try { var fl0 = JSON.parse(sessionStorage.getItem('kt_fl') || 'null'); if (fl0 && fl0.token && Date.now() - fl0.at < FP_MS) ST.fl = fl0; } catch (e) {}
+function flFor(code){ var f = ST.fl; return f && f.token && Date.now() - f.at < FP_MS && f.code.toUpperCase() === String(code || '').trim().toUpperCase() ? f.token : undefined; }
 function fpSet(v){ ST.fp = v; try { if (v) sessionStorage.setItem('kt_fp', JSON.stringify(v)); else sessionStorage.removeItem('kt_fp'); } catch (e) {} }
-try { var fp0 = JSON.parse(sessionStorage.getItem('kt_fp') || 'null'); if (fp0 && fp0.token && Date.now() - fp0.at < 14 * 60 * 1000) ST.fp = fp0; } catch (e) {}
+try { var fp0 = JSON.parse(sessionStorage.getItem('kt_fp') || 'null'); if (fp0 && fp0.token && Date.now() - fp0.at < FP_MS) ST.fp = fp0; } catch (e) {}
 // Đã đăng nhập bằng khuôn mặt (cài đặt hệ thống): không quét mặt lần hai, dùng ảnh lúc đăng nhập làm ảnh xác nhận
 function facePassOk(){
   var f = ST.fp;
-  if (!f || !f.token || !f.photo || !ST.exam || !ST.exam.faceLoginSkip || !ST.cand) return false;
-  if (Date.now() - f.at > 14 * 60 * 1000){ fpSet(null); return false; } // máy chủ cho 15 phút
+  if (!f || !f.token || !f.photo || !ST.cand) return false;
+  if (Date.now() - f.at > FP_MS){ fpSet(null); return false; } // máy chủ cho 8 giờ
   return f.code.trim().toUpperCase() === String(ST.cand.inCode || '').trim().toUpperCase();
 }
 async function startWithFacePass(){ // vào thẳng bài từ màn xác nhận: không mở màn quét / xác thực khuôn mặt lần hai
@@ -3456,7 +3457,6 @@ async function startWithFacePass(){ // vào thẳng bài từ màn xác nhận: 
   if (!j.ok && j.needRegion){ ST.cand.needRegion = true; renderConfirm(); msg('regionMsg', j.error); return; }
   if (!j.ok && j.needBirth){ ST.cand.needBirth = true; renderConfirm(); msg('birthMsg', j.error); return; }
   if (!j.ok){ msg('startMsg', j.error || 'Không thể bắt đầu bài kiểm tra.'); return; }
-  fpSet(null);
   if (!ST.cand.birthDate && ST.birthNew) ST.cand.birthDate = ST.birthNew;
   if (j.identity === 'mismatch') ST.identityWarn = true; // vẫn cho làm bài; hiện cảnh báo ở đầu màn làm bài như cũ
   if (!ST.cand.phone && ST.phoneNew) ST.cand.phone = ST.phoneNew;
@@ -4162,7 +4162,6 @@ async function startExam(passToken){ // passToken: vé đăng nhập bằng khu�
   }
   await aiVerifyEnd(res); // giữ nút khoá trong lúc hiện kết quả, tránh bấm lần hai
   START_BUSY = false; btn.disabled = false; btn.textContent = label;
-  if (res && res.j && res.j.ok) fpSet(null); // vé chỉ dùng cho lần bắt đầu này
   if (!res){ msg('photoMsg','Không kết nối được máy chủ, vui lòng thử lại.'); if (passToken) $('btnPhotoRetry').classList.remove('hide'); return; } // không có ảnh quét mới: chỉ cho quét lại
   if (!res.j.ok && res.j.needPhone){ photoStop(); show('confirm'); msg('phoneMsg', res.j.error); return; }
   if (!res.j.ok && res.j.needRegion){ photoStop(); ST.cand.needRegion = true; renderConfirm(); msg('regionMsg', res.j.error); return; }

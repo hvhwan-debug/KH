@@ -9,7 +9,8 @@
 const crypto = require("crypto");
 const session = require("./session");
 
-const TTL_MS = Math.max(1, Math.min(120, Number(process.env.FACE_PASS_TTL_MIN) || 15)) * 60 * 1000;
+// Vé đăng nhập bằng khuôn mặt có hiệu lực 8 giờ (mặc định): đã đăng nhập bằng khuôn mặt thì không bị yêu cầu quét lại trong phiên làm việc.
+const TTL_MS = Math.max(1, Math.min(1440, Number(process.env.FACE_PASS_TTL_MIN) || 480)) * 60 * 1000;
 
 const enabled = () => String(process.env.FACE_PASS || "on").toLowerCase() !== "off";
 const hashOf = (photo) => crypto.createHash("sha256").update(String(photo || "")).digest("base64url");
@@ -44,7 +45,7 @@ function peek(token, code) {
 // VÉ "VỪA ĐĂNG NHẬP BẰNG KHUÔN MẶT" (luôn cấp, kể cả khi FACE_PASS=off): chỉ dùng để kt-check biết lần kiểm tra mã NV + email này
 // đến từ đăng nhập khuôn mặt -> KHÔNG bắt xác thực khuôn mặt thêm lần nữa vì chống dò (đã nhập sai nhiều lần).
 // Gắn với mã nhân viên được nhận diện, hạn 15 phút. Không thay cho ảnh xác nhận lúc bắt đầu làm bài.
-const LOGIN_TTL_MS = 15 * 60 * 1000;
+const LOGIN_TTL_MS = TTL_MS;
 function issueLogin(code) {
   if (!code) return "";
   return session.sign({ k: "flogin", c: norm(code), at: Date.now(), exp: Date.now() + LOGIN_TTL_MS });
