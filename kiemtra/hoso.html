@@ -479,6 +479,8 @@ function vn(n, d){ if (n == null || isNaN(n)) return '–'; var p = Math.pow(10,
 function pc(n){ return n == null || isNaN(n) ? '–' : vn(n) + '%'; }
 function pad(n){ return n < 10 ? '0' + n : '' + n; }
 function vnDate(ms){ if (!ms) return '–'; var d = new Date(ms + 7 * 3600e3); return pad(d.getUTCDate()) + '/' + pad(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear(); }
+var LG_METHOD = { face:'Khuôn mặt', manual:'Mã nhân viên + email', manual_face:'Mã nhân viên + email + khuôn mặt' };
+function lgMethod(m){ return LG_METHOD[m] || (m ? String(m) : 'Không rõ'); }
 function vnDT(ms){ if (!ms) return '–'; var d = new Date(ms + 7 * 3600e3); return pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ' ' + vnDate(ms); }
 function ago(ms){ if (!ms) return '–'; var d = Math.floor((Date.now() - ms) / 864e5); if (d <= 0) return 'Hôm nay'; if (d === 1) return 'Hôm qua'; if (d < 30) return d + ' ngày trước'; if (d < 365) return Math.floor(d / 30) + ' tháng trước'; return Math.floor(d / 365) + ' năm trước'; }
 function dur(sec){ if (sec == null) return '–'; return Math.floor(sec / 60) + ':' + pad(sec % 60); }
@@ -1045,7 +1047,7 @@ function renderDetail(){
   var stateChip = c.left ? '<span class="chip left">Đã nghỉ việc</span>' : P.status === 'doing' ? '<span class="chip ok">Đang làm bài</span>' : '<span class="chip ok" style="background:#E8F0FB;color:#0B3F94">Đang làm việc</span>';
   var d = a.delta;
   var h = crumb(c.name || c.code) +
-    '<div class="card ph-card"><div class="av lg" data-av="' + esc(c.code) + '">' + esc(initials(c.name || c.code)) + '</div><div class="who"><h1>' + esc(c.name || c.code) + '</h1><div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">' + stateChip + '<span class="chip ' + a.st + '">' + STL[a.st] + '</span><span style="color:#5B6B86;font-size:12.5px">Hoạt động gần nhất: ' + (a.act ? ago(a.act) + ' · <b style="font-weight:600;color:#2F4468">' + esc(vnDT(a.act)) + '</b>' : '–') + '</span></div><div class="ph-meta">' + meta + '</div></div>' +
+    '<div class="card ph-card"><div class="av lg" data-av="' + esc(c.code) + '">' + esc(initials(c.name || c.code)) + '</div><div class="who"><h1>' + esc(c.name || c.code) + '</h1><div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">' + stateChip + '<span class="chip ' + a.st + '">' + STL[a.st] + '</span><span style="color:#5B6B86;font-size:12.5px">Hoạt động gần nhất: ' + (a.act ? ago(a.act) + ' · <b style="font-weight:600;color:#2F4468">' + esc(vnDT(a.act)) + ' · ' + (c.lastLogin && c.lastLogin.at && c.lastLogin.at >= a.act - 1000 ? esc(lgMethod(c.lastLogin.method)) : 'Nộp bài') + '</b>' : '–') + '</span></div><div class="ph-meta">' + meta + '</div></div>' +
     '<div class="ph-act"><button class="btn" type="button" data-xl="person">⬇ Xuất Excel hồ sơ</button></div></div>' +
     '<div class="kpis6">' +
       kpi('Điểm trung bình', 'Trung bình điểm của từng bài kiểm tra (mỗi bài lấy lần điểm cao nhất).', a.avg == null ? '–' : vn(a.avg) + '<small>%</small>', a.avg == null ? 'Chưa có kết quả' : BL[band(a.avg)]) +
@@ -1152,7 +1154,7 @@ function tab5(){
     '<div class="sec-t" style="margin-top:0">Thông tin chung</div>' + dl([['Mã nhân viên', c.code], ['Họ và tên', c.name], ['Email', c.email], ['Số điện thoại', c.phone], ['Chức danh', c.title], ['Nhóm ngành', SEGL[c._seg]], ['Miền', c._reg], ['Tỉnh / thành', c.province], ['Quản lí (ASM)', c.manager], ['Tình trạng làm việc', c.left ? 'Đã nghỉ việc' + (c.leftAt ? ' (' + vnDate(c.leftAt) + ')' : '') : 'Đang làm việc'], ['Ngày vào làm', j ? vnDate(Date.parse(j) || j) : ''], ['Thử việc', prob && prob.from ? vnDate(Date.parse(prob.from)) + ' → ' + vnDate(Date.parse(prob.until)) : '']]) +
     '<div class="sec-t">Thông tin tổ chức từ hệ thống HR</div>' + (org.length ? dl(org) : '<div class="msg info">Nhân sự này chưa có dữ liệu HR. Có thể nạp bằng chức năng “Đối chiếu” trong trang Thí sinh.</div>') +
     (edu.length ? '<div class="sec-t">Học vấn</div>' + dl(edu) : '') +
-    '<div class="sec-t">Hoạt động trên hệ thống</div>' + dl([['Đăng nhập gần nhất', lg && lg.at ? vnDT(lg.at) : ''], ['Hình thức đăng nhập', lg && lg.method ? lg.method : ''], ['Số lượt đăng nhập', lg && lg.n ? lg.n : ''], ['Cập nhật hồ sơ HR lúc', p && p.at ? vnDT(p.at) : '']]) +
+    '<div class="sec-t">Hoạt động trên hệ thống</div>' + dl([['Đăng nhập gần nhất', lg && lg.at ? vnDT(lg.at) + ' · ' + lgMethod(lg.method) : ''], ['Hình thức đăng nhập', lg && lg.at ? lgMethod(lg.method) : ''], ['Số lượt đăng nhập', lg && lg.n ? lg.n : ''], ['Cập nhật hồ sơ HR lúc', p && p.at ? vnDT(p.at) : '']]) +
   '</div></div><div class="q" style="margin-top:10px">Dữ liệu nhân sự chỉ hiển thị cho quản trị viên. Hệ thống không lưu giới tính, địa chỉ, quê quán hay tôn giáo trong hồ sơ.</div>';
   return h;
 }
