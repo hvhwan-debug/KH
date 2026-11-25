@@ -481,6 +481,7 @@ function pad(n){ return n < 10 ? '0' + n : '' + n; }
 function vnDate(ms){ if (!ms) return '–'; var d = new Date(ms + 7 * 3600e3); return pad(d.getUTCDate()) + '/' + pad(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear(); }
 var LG_METHOD = { face:'Khuôn mặt', manual:'Mã nhân viên + email', manual_face:'Mã nhân viên + email + khuôn mặt' };
 function lgMethod(m){ return LG_METHOD[m] || (m ? String(m) : 'Không rõ'); }
+function actWhat(a){ var lg = a && a.c && a.c.lastLogin; return lg && lg.at && lg.at >= (a.act || 0) - 1000 ? lgMethod(lg.method) : 'Nộp bài'; }
 function vnDT(ms){ if (!ms) return '–'; var d = new Date(ms + 7 * 3600e3); return pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ' ' + vnDate(ms); }
 function ago(ms){ if (!ms) return '–'; var d = Math.floor((Date.now() - ms) / 864e5); if (d <= 0) return 'Hôm nay'; if (d === 1) return 'Hôm qua'; if (d < 30) return d + ' ngày trước'; if (d < 365) return Math.floor(d / 30) + ' tháng trước'; return Math.floor(d / 365) + ' năm trước'; }
 function dur(sec){ if (sec == null) return '–'; return Math.floor(sec / 60) + ':' + pad(sec % 60); }
@@ -968,7 +969,7 @@ function renderList(){
       '<td class="r">' + (r.comp == null ? '–' : r.comp) + '</td>' +
       (function(){ var x = kdLast(c), h = kdHt(x); return '<td class="r nw"' + (x ? ' title="' + esc(kdText(x)) + '"' : '') + '>' + (!x ? '<span style="color:#9AA7BC">–</span>' : '<span class="chip plain ' + kdCls(x) + '" style="padding:1px 8px">' + (h == null ? 'Chưa có CT' : vn(h, 0) + '%') + '</span> <span style="color:#9AA7BC;font-size:11.5px">' + kdMon(x.month) + '</span>'); })() + '</td>' +
       '<td><span class="chip ' + r.st + '">' + STL[r.st] + '</span></td>' +
-      '<td class="nw" title="' + esc(vnDT(r.act)) + '">' + (r.act ? ago(r.act) + '<br><small style="color:#7A8AA5;font-size:11.5px">' + esc(vnDT(r.act)) + '</small>' : '–') + '</td>' +
+      '<td class="nw" title="' + esc(vnDT(r.act)) + '">' + (r.act ? ago(r.act) + '<br><small style="color:#7A8AA5;font-size:11.5px">' + esc(vnDT(r.act)) + ' · ' + esc(actWhat(r)) + '</small>' : '–') + '</td>' +
       '<td><button type="button" class="btn sm" data-go="' + esc(c.code) + '">Xem chi tiết</button></td></tr>';
   }).join('');
   var pn = pageNums(V.page, pages).map(function(p){ return p === '…' ? '<span style="padding:0 4px">…</span>' : '<button type="button" data-pg="' + p + '" class="' + (p === V.page ? 'on' : '') + '">' + p + '</button>'; }).join('');
@@ -1047,7 +1048,7 @@ function renderDetail(){
   var stateChip = c.left ? '<span class="chip left">Đã nghỉ việc</span>' : P.status === 'doing' ? '<span class="chip ok">Đang làm bài</span>' : '<span class="chip ok" style="background:#E8F0FB;color:#0B3F94">Đang làm việc</span>';
   var d = a.delta;
   var h = crumb(c.name || c.code) +
-    '<div class="card ph-card"><div class="av lg" data-av="' + esc(c.code) + '">' + esc(initials(c.name || c.code)) + '</div><div class="who"><h1>' + esc(c.name || c.code) + '</h1><div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">' + stateChip + '<span class="chip ' + a.st + '">' + STL[a.st] + '</span><span style="color:#5B6B86;font-size:12.5px">Hoạt động gần nhất: ' + (a.act ? ago(a.act) + ' · <b style="font-weight:600;color:#2F4468">' + esc(vnDT(a.act)) + ' · ' + (c.lastLogin && c.lastLogin.at && c.lastLogin.at >= a.act - 1000 ? esc(lgMethod(c.lastLogin.method)) : 'Nộp bài') + '</b>' : '–') + '</span></div><div class="ph-meta">' + meta + '</div></div>' +
+    '<div class="card ph-card"><div class="av lg" data-av="' + esc(c.code) + '">' + esc(initials(c.name || c.code)) + '</div><div class="who"><h1>' + esc(c.name || c.code) + '</h1><div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">' + stateChip + '<span class="chip ' + a.st + '">' + STL[a.st] + '</span><span style="color:#5B6B86;font-size:12.5px">Hoạt động gần nhất: ' + (a.act ? ago(a.act) + ' · <b style="font-weight:600;color:#2F4468">' + esc(vnDT(a.act)) + ' · ' + esc(actWhat(a)) + '</b>' : '–') + '</span></div><div class="ph-meta">' + meta + '</div></div>' +
     '<div class="ph-act"><button class="btn" type="button" data-xl="person">⬇ Xuất Excel hồ sơ</button></div></div>' +
     '<div class="kpis6">' +
       kpi('Điểm trung bình', 'Trung bình điểm của từng bài kiểm tra (mỗi bài lấy lần điểm cao nhất).', a.avg == null ? '–' : vn(a.avg) + '<small>%</small>', a.avg == null ? 'Chưa có kết quả' : BL[band(a.avg)]) +
@@ -1198,7 +1199,7 @@ function addSheet(wb, used, name, headers, rows){
   return ws;
 }
 var LIST_H = ['Mã NV', 'Họ và tên', 'Phòng ban / Bộ phận', 'Chức danh', 'Miền', 'Tỉnh / thành', 'Quản lí (ASM)', 'Số lần kiểm tra', 'Điểm TB (%)', 'Điểm cao nhất (%)', 'Điểm gần nhất (%)', 'Tỉ lệ hoàn thành (%)', 'Điểm tuân thủ (lần gần nhất)', 'Trạng thái học tập', 'Hoạt động gần nhất', 'Kết quả KD - tháng', 'Chỉ tiêu', 'Thực đạt', '%HT'];
-function listRow(r){ var c = r.c; return [c.code, c.name || '', c._dept, c.title || '', c._reg, c.province || '', c.manager || '', r.n, r.avg == null ? '' : Math.round(r.avg * 10) / 10, r.best == null ? '' : Math.round(r.best * 10) / 10, r.lastP == null ? '' : Math.round(r.lastP * 10) / 10, r.compl == null ? '' : Math.round(r.compl), r.comp == null ? '' : r.comp, STL[r.st], r.act ? vnDT(r.act) : ''].concat((function(){ var x = kdLast(c), h = kdHt(x); return x ? [kdMon(x.month), x.target == null ? '' : x.target, x.actual || 0, h == null ? '' : Math.round(h * 10) / 10] : ['', '', '', '']; })()); }
+function listRow(r){ var c = r.c; return [c.code, c.name || '', c._dept, c.title || '', c._reg, c.province || '', c.manager || '', r.n, r.avg == null ? '' : Math.round(r.avg * 10) / 10, r.best == null ? '' : Math.round(r.best * 10) / 10, r.lastP == null ? '' : Math.round(r.lastP * 10) / 10, r.compl == null ? '' : Math.round(r.compl), r.comp == null ? '' : r.comp, STL[r.st], r.act ? vnDT(r.act) + ' · ' + actWhat(r) : ''].concat((function(){ var x = kdLast(c), h = kdHt(x); return x ? [kdMon(x.month), x.target == null ? '' : x.target, x.actual || 0, h == null ? '' : Math.round(h * 10) / 10] : ['', '', '', '']; })()); }
 function attRow(a){ var c = S.by[a._k] || {}; return [a.code, a.name || c.name || '', c.title || '', c._reg || '', c.province || '', c.manager || '', xTitle(a.period || ''), vnDT(a.submittedAt), a.score == null ? '' : a.score, a.total == null ? '' : a.total, a.pct == null ? '' : Math.round(a.pct * 10) / 10, a.compliancePoints == null ? '' : a.compliancePoints, a.durationSec == null ? '' : dur(a.durationSec), attemptState(a) === 'ok' ? 'Đạt' : 'Chưa đạt']; }
 var ATT_H = ['Mã NV', 'Họ và tên', 'Chức danh', 'Miền', 'Tỉnh / thành', 'Quản lí (ASM)', 'Bài kiểm tra', 'Nộp lúc', 'Số câu đúng', 'Tổng số câu', 'Tỉ lệ đúng (%)', 'Điểm tuân thủ', 'Thời gian làm bài', 'Kết quả'];
 async function exportXlsx(kind){
