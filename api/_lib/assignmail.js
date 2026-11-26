@@ -4,6 +4,7 @@
 // Thiết kế: Modern Corporate / Premium EdTech / Minimalist — xanh dương chủ đạo, nền trắng/xám nhạt, card rõ ràng.
 const { supportLine } = require("./supportline");
 const { honorific } = require("./honorific");
+let cfgFn = null; try { cfgFn = require("./config").cfg; } catch (e) { cfgFn = null; }
 const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 const FONT = "'Be Vietnam Pro','Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
@@ -35,173 +36,204 @@ const defaultNote = (h) => "Kết quả bài kiểm tra giúp đánh giá mức 
 const defaultClosing = (h) => "Đề nghị " + h + " sắp xếp thời gian làm bài nghiêm túc và hoàn thành đúng thời hạn.";
 const fill = (t, h) => String(t || "").replace(/\{xung_ho\}/gi, h).trim();
 
-// opts: { name, org, title, description, format, questions, duration, attempts, openMs, deadlineMs, ctaUrl, note, closing, manager, replaces }
+// Mẫu dùng chung cho "mời làm bài kiểm tra" (kind = "exam", mặc định) và "thông báo phát hành khóa học" (kind = "course").
+// Cùng một bố cục, chỉ đổi nội dung theo loại: nhãn đầu thư, 3 ô thông số, nút bấm, các bước, lời nhắn.
+// opts: { kind, name, org, title, description, format, questions, duration, attempts, lessons, tiles:[{icon,k,v}], openMs, deadlineMs,
+//         ctaUrl, note, closing, manager, replaces, materials:[{title,type,url}] }
 // (audience: tên cũ của description, vẫn nhận để tương thích)
-// replaces = true: thư gửi lại, thay thế thông báo đã gửi trước đó (có dòng báo bỏ qua thư cũ, tiêu đề có [Cập nhật])
+// replaces = true: thư gửi lại thay thế thông báo trước (tiêu đề có [Cập nhật], nhãn "Thông báo cập nhật")
+const defaultCourseNote = (h) => "Nội dung khóa học giúp " + h + " cập nhật kiến thức, kỹ năng cần thiết và áp dụng ngay vào công việc hằng ngày.";
+const defaultCourseClosing = (h) => "Đề nghị " + h + " sắp xếp thời gian học và hoàn thành đúng thời hạn.";
+const IC = { navy: "#0B1F4B", blue: "#1559C4", sky: "#3B82F6", pill: "#DAE8FB", tile: "#F3F8FF", tileLine: "#D6E4F7", panel: "#EEF5FD" };
+
 function build(opts) {
   opts = opts || {};
+  const isCourse = opts.kind === "course";
   const name = properName(opts.name);
   const org = opts.org || "Đào tạo Kinh doanh";
-  const title = String(opts.title || "Bài kiểm tra").trim();
+  const title = String(opts.title || (isCourse ? "Khóa học" : "Bài kiểm tra")).trim();
   const description = String(opts.description || opts.audience || "").trim().slice(0, 500);
-  const format = opts.format || "Trắc nghiệm trực tuyến";
+  const format = opts.format || (isCourse ? "Học trực tuyến" : "Trắc nghiệm trực tuyến");
   const deadline = opts.deadlineMs ? vnDeadline(opts.deadlineMs) : "";
-  const opensLater = opts.openMs && opts.openMs > Date.now() ? vnDeadline(opts.openMs) : ""; // đề chưa mở: báo giờ mở để thí sinh không vào sớm rồi tưởng lỗi
+  const opensLater = opts.openMs && opts.openMs > Date.now() ? vnDeadline(opts.openMs) : ""; // chưa mở: báo giờ mở để người nhận không vào sớm rồi tưởng lỗi
   const questions = opts.questions ? String(opts.questions) + " câu" : "", duration = String(opts.duration || ""), attempts = String(opts.attempts || "");
   // Xưng hô theo tên: Anh / Chị; không chắc thì giữ "Anh/Chị" (opts.honorific cho phép chỉ định tay)
   const hon = ["Anh", "Chị", "Anh/Chị"].indexOf(opts.honorific) >= 0 ? opts.honorific : honorific(opts.name);
-  const subject = (opts.replaces ? "[Cập nhật] " : "") + hon + " có bài kiểm tra mới: " + title;   // cùng cách xưng hô với nội dung thư
-  const note = fill(opts.note, hon) || defaultNote(hon);
-  const closing = fill(opts.closing, hon) || defaultClosing(hon);
+  const subject = (opts.replaces ? "[Cập nhật] " : "") + (isCourse ? "Khóa học mới dành cho " + hon + ": " + title : hon + " có bài kiểm tra mới: " + title);   // cùng cách xưng hô với nội dung thư
+  const note = fill(opts.note, hon) || (isCourse ? defaultCourseNote(hon) : defaultNote(hon));
+  const closing = fill(opts.closing, hon) || (isCourse ? defaultCourseClosing(hon) : defaultClosing(hon));
   const ctaUrl = /^https?:\/\//i.test(opts.ctaUrl || "") ? opts.ctaUrl : "#";
   const support = supportLine(opts.manager);
-  const replaceNote = "";   // đã bỏ dòng "thay thế thông báo trước, bỏ qua email cũ"; thư cập nhật vẫn có nhãn [Cập nhật] ở tiêu đề và "Thông báo cập nhật" ở đầu thư
+  const shortUrl = ctaUrl.replace(/^https?:\/\//, "");
+  const base = String((cfgFn && cfgFn().appUrl) || "https://kh.io.vn").replace(/\/+$/, "");
+  const img = (n, w, extra) => '<img src="' + base + "/mail-assets/" + n + '.png" width="' + w + '" height="' + w + '" alt="" style="display:block;width:' + w + "px;height:" + w + "px;border:0;" + (extra || "") + '">';
 
   const guide = opensLater
-    ? hon + " vui lòng nhấn nút bên dưới để vào trang làm bài từ " + opensLater + (deadline ? " và hoàn thành trước " + deadline : "") + ". Trước giờ mở đề, trang sẽ hiện đồng hồ đếm ngược."
-    : hon + " vui lòng nhấn nút bên dưới để truy cập hệ thống và hoàn thành bài kiểm tra" + (deadline ? " trước thời hạn quy định." : ".");
+    ? hon + " vui lòng nhấn nút bên dưới để vào trang " + (isCourse ? "học" : "làm bài") + " từ " + opensLater + (deadline ? " và hoàn thành trước " + deadline : "") + ". Trước giờ mở, trang sẽ hiện đồng hồ đếm ngược."
+    : hon + " vui lòng nhấn nút bên dưới để truy cập hệ thống và hoàn thành " + (isCourse ? "khóa học" : "bài kiểm tra") + (deadline ? " trước thời hạn quy định." : ".");
   const days = opts.deadlineMs ? Math.ceil((opts.deadlineMs - Date.now()) / 86400000) : null;
   const left = days == null ? "" : days <= 0 ? "Hết hạn hôm nay" : days === 1 ? "Còn 1 ngày" : "Còn " + days + " ngày";
   const F = "font-family:" + FONT + ";";
   const T = (inner, attrs, style) => '<table role="presentation" cellpadding="0" cellspacing="0" border="0"' + (attrs ? " " + attrs : "") + (style ? ' style="' + style + '"' : "") + ">" + inner + "</table>";
-  const shortUrl = ctaUrl.replace(/^https?:\/\//, "");
 
-  // ---- Đầu thư: biểu tượng + tên hệ thống | đơn vị gửi ----
+  // ---- Đầu thư: biểu tượng + tên hệ thống ----
   const brand =
-    '<tr><td class="px" style="padding:24px 28px 18px;">' + T("<tr>" +
-      '<td width="42" height="42" align="center" valign="middle" bgcolor="' + C.brand + '" style="width:42px;height:42px;border-radius:12px;background:' + C.brand + ';background-image:linear-gradient(145deg,' + C.brand2 + ',' + C.deep + ');' + F + 'font-size:20px;font-weight:800;color:#ffffff;">&#10003;</td>' +
-      '<td style="padding-left:12px;' + F + 'font-size:14px;line-height:19px;font-weight:800;color:' + C.navy + ';">Hệ thống kiểm tra<br>đánh giá trực tuyến</td>' +
-      '<td class="org" align="right" valign="middle" style="' + F + '"><span style="display:inline-block;padding:6px 12px;border-radius:999px;background:' + C.soft + ';border:1px solid ' + C.line + ';font-size:12px;font-weight:700;color:' + C.deep + ';white-space:nowrap;">' + esc(org) + "</span></td>" +
+    '<tr><td class="px" style="padding:26px 28px 0;' + F + '">' + T("<tr>" +
+      '<td width="62" valign="middle" style="width:62px;">' + img("ic-laptop", 46) + "</td>" +
+      '<td valign="middle" style="' + F + '"><span style="display:inline-block;padding:4px 14px;border-radius:999px;background:' + IC.pill + ";font-size:14px;line-height:20px;font-weight:700;color:" + IC.blue + ';">Hệ thống Kiểm tra</span>' +
+      '<div style="font-size:21px;line-height:27px;font-weight:800;color:' + IC.navy + ';padding-top:4px;">Đánh giá trực tuyến</div></td></tr>', 'width="100%"') +
+    '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;"><tr><td width="46" height="3" bgcolor="' + IC.navy + '" style="width:46px;height:3px;line-height:3px;font-size:0;background:' + IC.navy + ';border-radius:3px;">&nbsp;</td></tr></table></td></tr>';
+
+  // ---- Tên + mô tả (trái) | hình laptop (phải) ----
+  const eyebrow = opts.replaces ? "Thông báo cập nhật" : isCourse ? "Khóa học mới" : "Bài kiểm tra mới";
+  const heroRow =
+    '<tr><td style="padding:0;">' + T("<tr>" +
+      '<td class="hl px" valign="top" style="padding:26px 0 26px 28px;' + F + '">' +
+        '<div style="font-size:16px;line-height:22px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:' + IC.sky + ';">' + eyebrow + "</div>" +
+        '<div class="h1" style="font-size:31px;line-height:38px;font-weight:800;letter-spacing:-.015em;color:' + IC.navy + ';padding-top:8px;">' + esc(title) + "</div>" +
+        (description ? '<div style="font-size:15px;line-height:23px;color:#4B5B78;padding-top:12px;">' + esc(description) + "</div>" : "") + "</td>" +
+      '<td class="hr" width="250" valign="bottom" align="right" style="width:250px;padding:0;">' +
+        '<img src="' + base + '/mail-assets/hero-laptop.png" width="250" alt="" style="display:block;width:250px;height:auto;border:0;"></td>' +
     "</tr>", 'width="100%"') + "</td></tr>";
 
-  // ---- Dải chính: xanh đêm, ánh sáng toả góc phải, tên bài + hạn chót ----
-  const whenLabel = opensLater ? "Mở đề lúc" : "Hạn hoàn thành";
+  // ---- Dải hạn chót / giờ mở ----
+  const whenLabel = opensLater ? "Mở lúc" : (isCourse ? "Hoàn thành trước" : "Hạn hoàn thành");
   const whenValue = opensLater || deadline;
-  const whenBox = whenValue
-    ? '<div style="height:18px;line-height:18px;font-size:0;">&nbsp;</div>' +
-      T("<tr>" + '<td style="padding:12px 16px;' + F + '">' +
-        '<div style="font-size:11px;line-height:15px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9FC3FF;">' + whenLabel + "</div>" +
-        '<div style="font-size:16px;line-height:23px;font-weight:800;color:#ffffff;padding-top:3px;">' + esc(whenValue) + "</div>" +
-        (opensLater && deadline ? '<div style="font-size:13px;line-height:18px;color:#C9DCFF;padding-top:2px;">Hạn hoàn thành: ' + esc(deadline) + "</div>" : "") + "</td>" +
-        (left && !opensLater ? '<td align="right" valign="middle" style="padding:12px 14px 12px 0;' + F + '"><span style="display:inline-block;padding:6px 12px;border-radius:999px;background:' + (days != null && days <= 2 ? "#FF5A6A" : "#FFC53D") + ';font-size:13px;font-weight:800;color:' + (days != null && days <= 2 ? "#ffffff" : "#3A2600") + ';white-space:nowrap;">' + esc(left) + "</span></td>" : "") +
-        "</tr>", 'width="100%" bgcolor="#123A86"', "background:#123A86;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);border-radius:14px;border-collapse:separate;")
+  const wm = String(whenValue).match(/^(.*?)\s*\((.*)\)\s*$/), whenMain = wm ? wm[1] : whenValue, whenSub = wm ? "(" + wm[2] + ")" : "";
+  const urgent = days != null && days <= 1;
+  const bannerBlock = whenValue
+    ? '<tr><td class="px" style="padding:6px 28px 0;">' + T("<tr>" +
+        '<td width="74" valign="middle" align="center" style="width:74px;padding:16px 0 16px 18px;">' + img("ic-calendar-w", 46) + "</td>" +
+        '<td valign="middle" style="padding:16px 14px 16px 12px;' + F + '">' +
+          '<div style="font-size:14px;line-height:19px;color:#CFE0FF;">' + whenLabel + "</div>" +
+          '<div class="bv" style="font-size:20px;line-height:27px;font-weight:800;color:#ffffff;padding-top:1px;">' + esc(whenMain) + "</div>" +
+          (whenSub ? '<div style="font-size:14px;line-height:20px;font-weight:600;color:#DCE9FF;">' + esc(whenSub) + "</div>" : "") + "</td>" +
+        (left && !opensLater ? '<td class="bp" width="1" style="width:1px;padding:14px 0;"><div style="width:1px;height:62px;background:#5C86D0;font-size:0;line-height:0;">&nbsp;</div></td>' +
+          '<td class="bp" align="center" valign="middle" style="padding:0 18px;' + F + '"><span style="display:inline-block;padding:10px 18px 10px 14px;border-radius:999px;background:' + (urgent ? "#FFE9DF" : "#E4F0FF") + ';font-size:17px;line-height:22px;font-weight:800;color:' + (urgent ? "#C2410C" : "#1559C4") + ';white-space:nowrap;">' +
+          '<img src="' + base + '/mail-assets/ic-clock.png" width="22" height="22" alt="" style="vertical-align:middle;border:0;width:22px;height:22px;"> <span style="vertical-align:middle;">&nbsp;' + esc(left) + "</span></span></td>" : "") +
+      "</tr>", 'width="100%" bgcolor="#0B4DB5"', "background:#0B4DB5;background-image:linear-gradient(100deg,#0A3F95 0%,#0B56C4 100%);border-radius:18px;border-collapse:separate;") + "</td></tr>"
     : "";
-  const hero =
-    '<tr><td class="hx" style="padding:0 16px;">' +
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' + C.deep + '" style="background:' + C.deep + ';background-image:radial-gradient(420px 260px at 100% 0%,rgba(120,190,255,.55) 0%,rgba(120,190,255,0) 70%),radial-gradient(300px 200px at 0% 100%,rgba(46,123,240,.45) 0%,rgba(46,123,240,0) 70%),linear-gradient(140deg,#071A3E 0%,' + C.deep + ' 55%,' + C.brand + ' 100%);border-radius:20px;border-collapse:separate;">' +
-    '<tr><td class="hp" style="padding:28px 28px 26px;' + F + '">' +
-    '<span style="display:inline-block;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);font-size:11px;line-height:15px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#ffffff;">' + (opts.replaces ? "Thông báo cập nhật" : "Bài kiểm tra mới") + "</span>" +
-    '<div class="h1" style="font-size:25px;line-height:33px;font-weight:800;letter-spacing:-.01em;color:#ffffff;padding-top:14px;">' + esc(title) + "</div>" +
-    (description ? '<div style="font-size:15px;line-height:22px;color:#CFE0FF;padding-top:8px;">' + esc(description) + "</div>" : "") +
-    whenBox +
-    "</td></tr></table></td></tr>";
 
   // ---- Lời chào ----
   const greetBlock =
-    '<tr><td class="px" style="padding:26px 28px 0;' + F + '">' +
-    '<div style="font-size:18px;line-height:26px;font-weight:800;color:' + C.navy + ';">Chào ' + hon + (name ? " " + esc(name) : "") + ",</div>" +
-    '<div style="font-size:15px;line-height:23px;color:' + C.body + ';padding-top:6px;">' + esc(org) + " thông báo " + hon + ' đã được giao bài kiểm tra <b style="color:' + C.ink + ';">\u201c' + esc(title) + '\u201d</b>. Thông tin chi tiết ở bên dưới.</div>' +
-    "</td></tr>";
+    '<tr><td class="px" style="padding:24px 28px 0;' + F + '">' +
+    '<div style="font-size:19px;line-height:26px;font-weight:800;color:' + IC.navy + ';">Chào ' + hon + (name ? " " + esc(name) : "") + ",</div>" +
+    '<div style="font-size:15px;line-height:24px;color:' + C.body + ';padding-top:6px;">' + esc(org) + " thông báo " +
+    (isCourse ? 'khóa học <b style="color:' + C.ink + ';">\u201c' + esc(title) + "\u201d</b> vừa được phát hành dành cho " + hon + "." : hon + ' đã được giao bài kiểm tra <b style="color:' + C.ink + ';">\u201c' + esc(title) + "\u201d</b>.") +
+    " Thông tin chi tiết như sau:</div></td></tr>";
 
-  const replaceBlock = replaceNote
-    ? '<tr><td class="px" style="padding:14px 28px 0;' + F + '"><div style="font-size:13px;line-height:20px;color:#7A4B00;background:#FFF6E0;border:1px solid #F0D58A;border-radius:12px;padding:11px 14px;">' + esc(replaceNote) + "</div></td></tr>"
-    : "";
-
-  // ---- Ba ô thông số: số câu | thời gian | số lượt ----
-  const tiles = [questions && { k: "Số câu hỏi", v: questions }, duration && { k: "Thời gian làm bài", v: duration }, attempts && { k: "Số lượt làm", v: attempts }].filter(Boolean);
+  // ---- Ba ô thông số ----
+  const tiles = (Array.isArray(opts.tiles) && opts.tiles.length ? opts.tiles.filter((x) => x && x.k && x.v)
+    : isCourse ? [opts.lessons && { icon: "book", k: "Số bài học", v: String(opts.lessons) }, duration && { icon: "timer", k: "Thời lượng", v: duration }, { icon: "laptop", k: "Hình thức", v: format }]
+    : [questions && { icon: "doc", k: "Số câu hỏi", v: questions }, duration && { icon: "timer", k: "Thời gian làm bài", v: duration }, attempts && { icon: "refresh", k: "Số lượt làm", v: attempts }]).filter(Boolean).slice(0, 4);
   const tw = tiles.length ? Math.floor(100 / tiles.length) : 100;
   const tileBlock = tiles.length
-    ? '<tr><td class="px" style="padding:22px 28px 0;">' + T("<tr>" + tiles.map((x, i) =>
+    ? '<tr><td class="px" style="padding:20px 28px 0;">' + T("<tr>" + tiles.map((x, i) =>
         '<td class="tile" width="' + tw + '%" valign="top" style="padding:0 ' + (i < tiles.length - 1 ? 5 : 0) + "px 0 " + (i ? 5 : 0) + 'px;">' +
-        T("<tr><td style=\"padding:14px 14px 13px;" + F + "\">" +
-          '<div style="font-size:12px;line-height:16px;font-weight:600;color:' + C.muted + ';">' + esc(x.k) + "</div>" +
-          '<div class="tv" style="font-size:16px;line-height:22px;font-weight:800;color:' + C.navy + ';padding-top:4px;">' + esc(x.v) + "</div></td></tr>",
-          'width="100%" bgcolor="' + C.soft + '"', "background:" + C.soft + ";background-image:linear-gradient(160deg,#F7FAFF,#EDF3FC);border:1px solid " + C.line + ";border-radius:14px;border-collapse:separate;") +
-        "</td>").join("") + "</tr>", 'width="100%"') +
-      '<div style="' + F + 'font-size:13px;line-height:18px;color:' + C.muted + ';padding-top:10px;">Hình thức: <b style="color:' + C.ink + ';">' + esc(format) + "</b></div></td></tr>"
+        T('<tr><td width="52" valign="middle" style="width:52px;padding:15px 0 15px 14px;">' + img("ic-" + (x.icon || "doc"), 36) + "</td>" +
+          '<td valign="middle" style="padding:13px 10px 13px 8px;' + F + '"><div style="font-size:13px;line-height:18px;color:' + C.muted + ';">' + esc(x.k) + "</div>" +
+          '<div class="tv" style="font-size:18px;line-height:24px;font-weight:800;color:' + IC.navy + ';padding-top:2px;">' + esc(x.v) + "</div></td></tr>",
+          'width="100%" bgcolor="' + IC.tile + '"', "background:" + IC.tile + ";border:1px solid " + IC.tileLine + ";border-radius:16px;border-collapse:separate;") +
+        "</td>").join("") + "</tr>", 'width="100%"') + "</td></tr>"
     : "";
 
-  // ---- Nút vào làm bài ----
+  // ---- Nút bấm + đường dẫn ----
+  const ctaText = opensLater ? (isCourse ? "Mở trang học" : "Mở trang làm bài") : (isCourse ? "Vào học ngay" : "Vào làm bài ngay");
   const cta =
     '<tr><td align="center" class="px" style="padding:26px 28px 0;' + F + '">' +
-    T('<tr><td align="center" bgcolor="' + C.brand + '" style="border-radius:14px;background:' + C.brand + ';background-image:linear-gradient(100deg,' + C.deep + ' 0%,' + C.brand + ' 45%,' + C.brand2 + ' 100%);box-shadow:0 14px 28px -14px rgba(21,89,196,.95);">' +
-      '<a class="btn" href="' + esc(ctaUrl) + '" target="_blank" style="display:inline-block;padding:16px 54px;' + F + 'font-size:16px;line-height:22px;font-weight:800;color:#ffffff;text-decoration:none;border-radius:14px;white-space:nowrap;">' + (opensLater ? "Mở trang làm bài" : "Vào làm bài ngay") + " &#8594;</a></td></tr>", 'class="ctat" align="center"') +
-    '<div style="font-size:12px;line-height:18px;color:' + C.muted + ';padding-top:10px;">Hoặc mở đường dẫn: <a href="' + esc(ctaUrl) + '" target="_blank" style="color:' + C.brand + ';text-decoration:none;font-weight:600;">' + esc(shortUrl) + "</a></div>" +
+    T('<tr><td align="center" bgcolor="#1559C4" style="border-radius:999px;background:#1559C4;background-image:linear-gradient(100deg,#0F4BB0 0%,#2E7BF0 100%);box-shadow:0 12px 24px -12px rgba(21,89,196,.9);">' +
+      '<a class="btn" href="' + esc(ctaUrl) + '" target="_blank" style="display:inline-block;padding:17px 64px;' + F + 'font-size:19px;line-height:26px;font-weight:800;color:#ffffff;text-decoration:none;border-radius:999px;white-space:nowrap;">' + ctaText + " &#8594;</a></td></tr>", 'class="ctat" align="center"') +
+    '<div style="font-size:13px;line-height:20px;color:' + C.muted + ';padding-top:12px;"><img src="' + base + '/mail-assets/ic-link.png" width="16" height="16" alt="" style="vertical-align:middle;border:0;width:16px;height:16px;"> Hoặc truy cập: <a href="' + esc(ctaUrl) + '" target="_blank" style="color:' + C.brand + ';text-decoration:underline;word-break:break-all;">' + esc(shortUrl) + "</a></div>" +
     "</td></tr>";
 
-  // ---- Ba bước thực hiện ----
+  // ---- Hướng dẫn thực hiện (3 bước) ----
   const steps = [
-    ["Mở đường dẫn", opensLater ? "Từ " + opensLater.replace(/\s*\(.*\)$/, "") + ", bằng Chrome hoặc Safari" : "Bằng Chrome hoặc Safari, không mở trong Zalo/Facebook"],
-    ["Đăng nhập", "Xác thực danh tính theo hướng dẫn trên màn hình"],
-    ["Làm bài và nộp", deadline ? "Nộp trước khi hết hạn (xem phía trên)" : "Nộp bài khi làm xong"]
+    ["laptop", "Mở đường dẫn", opensLater ? "Từ " + opensLater.replace(/\s*\(.*\)$/, "") + ", bằng Chrome hoặc Safari" : "Bằng Chrome hoặc Safari, không mở trong Zalo/Facebook"],
+    ["user", "Đăng nhập", "Xác thực danh tính theo hướng dẫn trên màn hình"],
+    ["check", isCourse ? "Học và hoàn thành" : "Làm bài và nộp", isCourse ? (deadline ? "Hoàn thành trước thời hạn" : "Học hết nội dung khóa học") : (deadline ? "Nhấn Nộp bài trước khi hết hạn" : "Nhấn Nộp bài khi hoàn thành")]
   ];
+  const stepCells = steps.map((x, i) =>
+    '<td class="st" width="31%" valign="top" style="padding:0;' + F + '">' + T("<tr>" +
+      '<td width="40" valign="top" style="width:40px;padding-top:30px;"><div style="width:30px;height:30px;line-height:30px;border-radius:15px;text-align:center;background:#2E7BF0;background-image:linear-gradient(145deg,#4A93F7,#1559C4);' + F + 'font-size:15px;font-weight:800;color:#ffffff;">' + (i + 1) + "</div></td>" +
+      '<td valign="top" style="' + F + '"><div style="padding-bottom:4px;">' + img("ic-" + x[0], 30) + '</div><div style="font-size:16px;line-height:21px;font-weight:800;color:' + IC.navy + ';">' + esc(x[1]) + '</div><div style="font-size:13px;line-height:19px;color:' + C.muted + ';padding-top:2px;">' + esc(x[2]) + "</div></td></tr>", 'width="100%"') + "</td>").join(
+    '<td class="sc" width="3%" valign="middle" align="center" style="padding:30px 0 0;">' + img("ic-chevron", 18, "margin:0 auto;opacity:.6;") + "</td>");
   const stepBlock =
     '<tr><td class="px" style="padding:26px 28px 0;' + F + '">' +
-    '<div style="font-size:15px;line-height:21px;font-weight:800;color:' + C.navy + ';padding-bottom:12px;">Hướng dẫn thực hiện</div>' +
-    steps.map((x, i) => T("<tr>" +
-      '<td width="34" valign="top" style="padding:' + (i ? 12 : 0) + 'px 0 0;"><div style="width:28px;height:28px;line-height:28px;border-radius:14px;text-align:center;background:' + C.brand + ';background-image:linear-gradient(145deg,' + C.brand2 + ',' + C.deep + ');' + F + 'font-size:13px;font-weight:800;color:#ffffff;">' + (i + 1) + "</div></td>" +
-      '<td valign="top" style="padding:' + (i ? 12 : 0) + 'px 0 0 10px;' + F + '"><div style="font-size:14px;line-height:20px;font-weight:700;color:' + C.ink + ';">' + esc(x[0]) + '</div><div style="font-size:13px;line-height:19px;color:' + C.muted + ';">' + esc(x[1]) + "</div></td>" +
-      "</tr>", 'width="100%"')).join("") +
-    "</td></tr>";
+    '<div style="border-top:1px solid ' + C.line + ';font-size:0;line-height:0;height:1px;">&nbsp;</div>' +
+    '<div style="padding:20px 0 4px;"><img src="' + base + '/mail-assets/accent.png" width="40" height="22" alt="" style="vertical-align:middle;border:0;"> <span style="font-size:20px;line-height:26px;font-weight:800;color:' + IC.navy + ';vertical-align:middle;">&nbsp;Hướng dẫn thực hiện</span></div>' +
+    T("<tr>" + stepCells + "</tr>", 'width="100%"') + "</td></tr>";
 
-  // ---- Tài liệu ôn tập gắn với đề (nếu có) — thay cho việc hiện ở màn bắt đầu làm bài ----
+  // ---- Tài liệu ôn tập / học liệu gắn kèm (nếu có) ----
   const materials = Array.isArray(opts.materials) ? opts.materials.filter((m) => m && m.url && m.title) : [];
+  const matTitle = isCourse ? "Tài liệu của khóa học" : "Tài liệu ôn tập cho bài này";
+  const matDesc = isCourse ? "Nên xem trước khi học. Mở ở trang Học liệu (cần xác thực khuôn mặt)." : "Nên xem trước tài liệu bài. Mở ở trang Học liệu (cần xác thực khuôn mặt).";
   const materialsBlock = materials.length
-    ? '<tr><td class="px" style="padding:22px 28px 0;' + F + '">' +
-      T('<tr><td style="padding:16px 18px;' + F + '">' +
-        '<div style="font-size:14px;line-height:20px;font-weight:800;color:' + C.navy + ';padding-bottom:8px;">\uD83D\uDCDA Tài liệu ôn tập cho bài này</div>' +
-        '<div style="font-size:13px;line-height:19px;color:' + C.muted + ';padding-bottom:10px;">Nên xem trước khi làm bài. Mở ở trang Học liệu (cần xác thực khuôn mặt).</div>' +
-        materials.map((m) => '<div style="padding:5px 0;"><a href="' + esc(m.url) + '" target="_blank" style="font-size:14px;line-height:19px;font-weight:700;color:' + C.brand + ';text-decoration:none;">' + (m.type === "video" ? "\u25B6 " : "\uD83D\uDCC4 ") + esc(m.title) + "</a></div>").join("") +
-        "</td></tr>", 'width="100%" bgcolor="' + C.soft + '"', "background:" + C.soft + ";border:1px solid " + C.line + ";border-radius:14px;border-collapse:separate;") +
-      "</td></tr>"
+    ? '<tr><td class="px" style="padding:24px 28px 0;' + F + '">' + T("<tr>" +
+        '<td class="mc" width="50%" valign="middle" style="padding:18px 8px 18px 18px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td width="62" valign="top" style="width:62px;">' + img("ic-book", 46) + "</td>" +
+          '<td valign="top" style="' + F + '"><div style="font-size:18px;line-height:24px;font-weight:800;color:' + IC.navy + ';">' + matTitle + '</div><div style="font-size:13px;line-height:19px;color:' + C.muted + ';padding-top:4px;">' + matDesc + "</div></td></tr></table></td>" +
+        '<td class="mc" width="50%" valign="middle" style="padding:14px 14px 14px 0;">' + materials.map((m, i) => T("<tr>" +
+          '<td width="30" valign="middle" style="width:30px;padding:10px 0 10px 12px;">' + img(m.type === "video" ? "ic-play" : "ic-doc", 20) + "</td>" +
+          '<td valign="middle" style="padding:10px 6px;' + F + '"><a href="' + esc(m.url) + '" target="_blank" style="font-size:14px;line-height:19px;font-weight:700;color:' + C.brand + ';text-decoration:none;">' + esc(m.title) + "</a></td>" +
+          '<td width="26" valign="middle" style="width:26px;padding:10px 12px 10px 0;">' + img("ic-arrow", 16) + "</td></tr>", 'width="100%" bgcolor="#ffffff"', "background:#ffffff;border-radius:12px;border-collapse:separate;" + (i ? "margin-top:8px;" : ""))).join("") + "</td></tr>",
+        'width="100%" bgcolor="' + IC.panel + '"', "background:" + IC.panel + ";border:1px solid " + IC.tileLine + ";border-radius:18px;border-collapse:separate;") + "</td></tr>"
     : "";
 
-  // ---- Ý nghĩa kết quả + lời nhắc + chữ ký ----
-  const closingBlock =
-    '<tr><td class="px" style="padding:26px 28px 0;' + F + '">' +
-    T('<tr><td style="padding:16px 18px;border-left:4px solid ' + C.brand + ';' + F + '">' +
-      '<div style="font-size:15px;line-height:22px;color:' + C.body + ';">' + esc(note) + "</div>" +
-      '<div style="font-size:15px;line-height:22px;font-weight:700;color:' + C.ink + ';padding-top:10px;">' + esc(closing) + "</div></td></tr>",
-      'width="100%" bgcolor="' + C.soft + '"', "background:" + C.soft + ";border-radius:0 14px 14px 0;border-collapse:separate;") +
-    '<div style="font-size:15px;line-height:22px;color:' + C.body + ';padding-top:22px;">Trân trọng,</div>' +
-    '<div style="font-size:15px;line-height:22px;font-weight:800;color:' + C.navy + ';">' + esc(org) + "</div>" +
-    '<div style="font-size:13px;line-height:19px;color:' + C.muted + ';padding-top:12px;">' + esc(support) + "</div>" +
-    "</td></tr>";
+  // ---- Ý nghĩa + lời nhắc (khung cam nhạt) ----
+  const noteBlock =
+    '<tr><td class="px" style="padding:22px 28px 0;' + F + '">' + T("<tr>" +
+      '<td width="50" valign="middle" style="width:50px;padding:16px 0 16px 16px;">' + img("ic-info", 30) + "</td>" +
+      '<td class="nc" valign="middle" style="padding:14px 14px 14px 10px;' + F + 'font-size:13.5px;line-height:21px;color:#5A4B33;">' + esc(note) + "</td>" +
+      '<td class="nc" width="38%" valign="middle" style="padding:14px 18px 14px 16px;border-left:1px solid #F3D9A8;' + F + 'font-size:14px;line-height:21px;font-weight:800;color:#B45309;">' + esc(closing) + "</td></tr>",
+      'width="100%" bgcolor="#FFF6E6"', "background:#FFF6E6;border:1px solid #F8E3BC;border-radius:16px;border-collapse:separate;") + "</td></tr>";
 
-  // ---- Chân thư: dải xanh đêm ----
+  // ---- Hỗ trợ ----
+  const supportBlock =
+    '<tr><td class="px" style="padding:22px 28px 0;' + F + '">' + T("<tr>" +
+      '<td width="58" valign="top" style="width:58px;">' + img("ic-headset", 40) + "</td>" +
+      '<td valign="top" style="' + F + '"><div style="font-size:18px;line-height:24px;font-weight:800;color:' + IC.navy + ';">' + esc(org) + '</div><div style="font-size:14px;line-height:21px;color:' + C.muted + ';padding-top:2px;">' + esc(support) + "</div></td></tr>", 'width="100%"') + "</td></tr>";
+
+  // ---- Chân thư: nền xanh đậm + sóng ----
+  const wave = base + "/mail-assets/mail-wave.png";
   const footer =
-    '<tr><td style="padding:28px 0 0;"></td></tr>' +
-    '<tr><td align="center" bgcolor="' + C.navy + '" style="background:' + C.navy + ';background-image:linear-gradient(140deg,#071A3E,' + C.deep + ');padding:20px 24px 22px;' + F + '">' +
-    '<div style="font-size:13px;line-height:19px;font-weight:800;color:#ffffff;letter-spacing:.02em;">Hệ thống Kiểm tra &amp; Đánh giá Trực tuyến</div>' +
-    '<div style="font-size:12px;line-height:18px;color:#9FB6DD;padding-top:6px;">Email được gửi tự động, vui lòng không trả lời email này.<br>Mọi thắc mắc về bài kiểm tra, vui lòng liên hệ ' + esc(org) + ".</div>" +
-    "</td></tr>";
+    '<tr><td style="padding:26px 0 0;font-size:0;line-height:0;">&nbsp;</td></tr>' +
+    '<tr><td class="ft" bgcolor="#0B3F94" background="' + wave + '" style="background-color:#0B3F94;background-image:url(' + wave + ');background-repeat:no-repeat;background-position:center bottom;background-size:100% auto;padding:26px 28px 120px;' + F + '">' + T("<tr>" +
+      '<td width="62" valign="top" style="width:62px;">' + img("ic-book-w", 44) + "</td>" +
+      '<td valign="top" style="' + F + '"><div style="font-size:18px;line-height:24px;font-weight:800;color:#ffffff;">Hệ thống Đào tạo &amp; Đánh giá Trực tuyến</div>' +
+      '<div style="font-size:13px;line-height:20px;color:#CFE0FF;padding-top:4px;">Nơi nâng cao kiến thức, rèn luyện năng lực và tuân thủ đào tạo, đồng hành cùng đội ngũ Kinh doanh phát triển bền vững.</div>' +
+      '<div style="font-size:12px;line-height:18px;color:#A9C2EE;padding-top:8px;">Email được gửi tự động, vui lòng không trả lời email này.</div></td></tr>', 'width="100%"') + "</td></tr>";
 
   const html =
     '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="x-apple-disable-message-reformatting">' +
     '<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>' + esc(subject) + "</title>" +
     "<style>table{border-collapse:collapse}a{color:" + C.brand + "}" +
     "@media only screen and (max-width:560px){.wrap{padding:0!important}.card{border-radius:0!important;border-left:0!important;border-right:0!important}" +
-    ".px{padding-left:18px!important;padding-right:18px!important}.hx{padding:0 10px!important}.hp{padding:22px 18px 20px!important}.h1{font-size:21px!important;line-height:28px!important}" +
-    ".org{display:none!important}.tile{padding:0 3px!important}.tile td{padding:11px 10px!important}.tv{font-size:14px!important;line-height:19px!important}.ctat{width:100%!important}.btn{padding:15px 20px!important;display:block!important}}</style></head>" +
-    '<body style="margin:0;padding:0;background:' + C.page + ';-webkit-text-size-adjust:100%">' +
-    '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:' + C.page + '">' + esc(title) + (deadline ? " · Hạn " + esc(deadline) : "") + "&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>" +
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' + C.page + '" style="background:' + C.page + '"><tr><td class="wrap" align="center" style="padding:30px 12px">' +
-    '<table role="presentation" class="card" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="max-width:600px;width:100%;background:#ffffff;border:1px solid ' + C.line + ';border-radius:22px;border-collapse:separate;overflow:hidden;box-shadow:0 24px 50px -28px rgba(10,31,68,.45)">' +
-    brand + hero + greetBlock + replaceBlock + tileBlock + cta + stepBlock + materialsBlock + closingBlock + footer +
+    ".px{padding-left:18px!important;padding-right:18px!important}.hl{padding:22px 18px 8px 18px!important;display:block!important;width:100%!important}.hr{display:none!important}.h1{font-size:25px!important;line-height:31px!important}" +
+    ".tile{display:block!important;width:100%!important;padding:0 0 8px!important}.tv{font-size:17px!important}.bp{display:none!important}.bv{font-size:18px!important}" +
+    ".st{display:block!important;width:100%!important;padding:0 0 14px!important}.sc{display:none!important}.mc{display:block!important;width:100%!important;padding:12px!important}.nc{display:block!important;width:auto!important;border-left:0!important;padding:4px 14px 12px!important}" +
+    ".ctat{width:100%!important}.btn{padding:16px 20px!important;display:block!important}.ft{padding:22px 18px 100px!important}}</style></head>" +
+    '<body style="margin:0;padding:0;background:#EAF2FC;-webkit-text-size-adjust:100%">' +
+    '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:#EAF2FC">' + esc(title) + (deadline ? " · Hạn " + esc(deadline) : "") + "&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>" +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#EAF2FC" style="background:#EAF2FC"><tr><td class="wrap" align="center" style="padding:28px 12px">' +
+    '<table role="presentation" class="card" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="max-width:600px;width:100%;background:#ffffff;background-image:linear-gradient(180deg,#E3EFFF 0,#F6FAFF 280px,#ffffff 420px);border:1px solid #D9E6F7;border-radius:22px;border-collapse:separate;overflow:hidden;box-shadow:0 24px 50px -30px rgba(10,31,68,.5)">' +
+    brand + heroRow + bannerBlock + greetBlock + tileBlock + cta + stepBlock + materialsBlock + noteBlock + supportBlock + footer +
     "</table></td></tr></table></body></html>";
 
-  const textRows = [
+  const kindLabel = isCourse ? "KHÓA HỌC" : "BÀI KIỂM TRA";
+  const textRows = (isCourse ? [
+    description ? "- Nội dung: " + description : "", "- Hình thức: " + format, opts.lessons ? "- Số bài học: " + opts.lessons : "", duration ? "- Thời lượng: " + duration : "",
+    opensLater ? "- Mở lúc: " + opensLater : "", deadline ? "- Hoàn thành trước: " + deadline : ""
+  ] : [
     description ? "- Nội dung: " + description : "", "- Hình thức: " + format, questions ? "- Số câu hỏi: " + questions : "", duration ? "- Thời gian làm bài: " + duration : "",
     attempts ? "- Số lượt làm: " + attempts : "", opensLater ? "- Mở đề lúc: " + opensLater : "", deadline ? "- Thời hạn hoàn thành: " + deadline : ""
-  ].filter((x) => x !== "");
+  ]).filter((x) => x !== "");
   const text = [
     "Chào " + hon + (name ? " " + name : "") + ",",
-    org + " thông báo " + hon + " đã được giao bài kiểm tra: \u201c" + title + "\u201d.", ...(replaceNote ? [replaceNote] : []), "",
-    "THÔNG TIN BÀI KIỂM TRA", ...textRows, "",
+    isCourse ? org + " thông báo khóa học \u201c" + title + "\u201d vừa được phát hành dành cho " + hon + "." : org + " thông báo " + hon + " đã được giao bài kiểm tra: \u201c" + title + "\u201d.", "",
+    "THÔNG TIN " + kindLabel, ...textRows, "",
     "HƯỚNG DẪN THỰC HIỆN",
     guide,
     ctaUrl, "",
-    ...(materials.length ? ["TÀI LIỆU ÔN TẬP CHO BÀI NÀY (nên xem trước, mở ở trang Học liệu):", ...materials.map((m) => "- " + m.title + ": " + m.url), ""] : []),
+    ...(materials.length ? [(isCourse ? "TÀI LIỆU CỦA KHÓA HỌC" : "TÀI LIỆU ÔN TẬP CHO BÀI NÀY") + " (nên xem trước, mở ở trang Học liệu):", ...materials.map((m) => "- " + m.title + ": " + m.url), ""] : []),
     note, closing, "",
     support, "",
     "Trân trọng,", org, "",
@@ -211,4 +243,4 @@ function build(opts) {
   return { subject, html, text };
 }
 
-module.exports = { build, defaultNote, defaultClosing };
+module.exports = { build, defaultNote, defaultClosing, defaultCourseNote, defaultCourseClosing };
