@@ -46,15 +46,15 @@ function build(opts) {
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' + C.page + '"><tr><td align="center" style="padding:28px 14px">' +
     '<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#fff;border:1px solid ' + C.line + ';border-radius:16px;border-collapse:separate;overflow:hidden">' +
     '<tr><td style="background:' + C.navy + ';padding:22px 28px;font-family:' + FONT + ';font-size:18px;font-weight:800;color:#fff">Nhắc làm bài kiểm tra</td></tr>' +
-    '<tr><td style="padding:24px 28px 0;font-family:' + FONT + ';font-size:14.5px;line-height:1.75;color:' + C.body + '">' +
+    '<tr><td style="padding:24px 28px 0;font-family:' + FONT + ';font-size:15px;line-height:1.75;color:' + C.body + '">' +
     '<div>Thân gửi: <b style="color:' + C.ink + '">' + esc(name) + '</b>,</div>' +
     '<div style="margin-top:8px">' + esc(hon) + ' hiện có bài kiểm tra <b style="color:' + C.ink + '">“' + esc(title) + '”</b> chưa hoàn thành.</div></td></tr>' +
-    '<tr><td style="padding:16px 28px 0;font-family:' + FONT + '"><div style="background:' + C.warnBg + ';border:1px solid ' + C.warnLine + ';border-radius:12px;padding:12px 16px;font-size:14px;line-height:1.7;color:' + C.warnInk + '">' +
+    '<tr><td style="padding:16px 28px 0;font-family:' + FONT + '"><div style="background:' + C.warnBg + ';border:1px solid ' + C.warnLine + ';border-radius:12px;padding:12px 16px;font-size:15px;line-height:1.7;color:' + C.warnInk + '">' +
     'Bài kiểm tra sẽ kết thúc vào lúc <b>' + esc(p.time) + '</b> ngày <b>' + esc(p.date) + '</b> <span style="color:' + C.muted + '">(' + esc(left) + ')</span>.</div></td></tr>' +
-    '<tr><td style="padding:16px 28px 0;font-family:' + FONT + ';font-size:14.5px;line-height:1.75;color:' + C.body + '">' + esc(l3) + '</td></tr>' +
+    '<tr><td style="padding:16px 28px 0;font-family:' + FONT + ';font-size:15px;line-height:1.75;color:' + C.body + '">' + esc(l3) + '</td></tr>' +
     '<tr><td align="center" style="padding:22px 28px 4px"><a href="' + esc(ctaUrl) + '" target="_blank" style="display:inline-block;padding:14px 40px;background:' + C.brand + ';border-radius:12px;font-family:' + FONT + ';font-size:15px;font-weight:800;color:#fff;text-decoration:none">VÀO LÀM BÀI</a></td></tr>' +
-    '<tr><td style="padding:20px 28px 26px;font-family:' + FONT + ';font-size:14px;line-height:1.75;color:' + C.body + '">Trân trọng!</td></tr>' +
-    '<tr><td style="padding:0 28px 22px;font-family:' + FONT + ';font-size:11px;color:#9AA7BD;text-align:center">Đây là email được gửi tự động. Vui lòng không trả lời email này.</td></tr>' +
+    '<tr><td style="padding:20px 28px 26px;font-family:' + FONT + ';font-size:15px;line-height:1.75;color:' + C.body + '">Trân trọng!</td></tr>' +
+    '<tr><td style="padding:0 28px 22px;font-family:' + FONT + ';font-size:12px;color:#9AA7BD;text-align:center">Đây là email được gửi tự động. Vui lòng không trả lời email này.</td></tr>' +
     '</table></td></tr></table></body></html>';
 
   const text = ["Thân gửi: " + name + ",", l1, l2, l3, ctaUrl, "", "Trân trọng!", "", "-- Đây là email được gửi tự động. Vui lòng không trả lời email này."].join("\n");

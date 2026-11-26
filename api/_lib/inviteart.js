@@ -147,8 +147,8 @@ async function infoCard(p, st) {
   const m = createCanvas(10, 10).getContext("2d"), TW = W - PADX * 2 - 92;
   rows.forEach((r) => {
     if (r.banner) { r.h = 74; return; }
-    m.font = F(700, 28); r.ml = wrap(m, r.main, TW - (r.hot ? 0 : 0)); m.font = F(400, 22); r.sl = r.sub ? wrap(m, r.sub, TW) : [];
-    r.h = 30 + 24 + r.ml.length * 36 + r.sl.length * 30 + (r.hot ? 32 : 0) + 22;
+    m.font = F(700, 24); r.ml = wrap(m, r.main, TW); m.font = F(400, 20); r.sl = r.sub ? wrap(m, r.sub, TW) : [];
+    r.h = 26 + 24 + r.ml.length * 32 + r.sl.length * 28 + (r.hot ? 32 : 0) + 20;
   });
   const H = 24 + rows.reduce((a, r) => a + r.h, 0) + 14;
   const cv = createCanvas(W, H), c = cv.getContext("2d");
@@ -156,14 +156,14 @@ async function infoCard(p, st) {
   let y = 24;
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];
-    if (r.banner) { rr(c, PADX, y + 8, W - PADX * 2, 56, 14); c.fillStyle = r.banner[2]; c.fill(); c.fillStyle = r.banner[1]; c.font = F(800, 26); c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(r.banner[0], W / 2, y + 37); c.textAlign = "left"; y += r.h; continue; }
+    if (r.banner) { rr(c, PADX, y + 8, W - PADX * 2, 56, 14); c.fillStyle = r.banner[2]; c.fill(); c.fillStyle = r.banner[1]; c.font = F(800, 24); c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(r.banner[0], W / 2, y + 37); c.textAlign = "left"; y += r.h; continue; }
     if (i && !rows[i - 1].banner) { c.fillStyle = "#DCE6F4"; c.fillRect(PADX, y, W - PADX * 2, 2); }
-    const img = await loadImage(I[r.ic]); c.drawImage(img, PADX, y + 30, 60, 60);
-    let ty = y + 30; c.textBaseline = "top"; const X = PADX + 92;
-    c.fillStyle = "#6B7A96"; c.font = F(600, 19); c.fillText(r.label, X, ty); ty += 28;
-    c.fillStyle = NAVY; c.font = F(700, 28); r.ml.forEach((l) => { c.fillText(l, X, ty); ty += 36; });
-    c.fillStyle = "#33425E"; c.font = F(400, 22); r.sl.forEach((l) => { c.fillText(l, X, ty + 2); ty += 30; });
-    if (r.hot) { c.font = F(700, 21); const tw = c.measureText(r.hot).width + 24; rr(c, X, ty + 4, tw, 30, 15); c.fillStyle = "#FFEDD5"; c.fill(); c.fillStyle = "#C2410C"; c.fillText(r.hot, X + 12, ty + 8); }
+    const img = await loadImage(I[r.ic]); c.drawImage(img, PADX, y + 26, 54, 54);
+    let ty = y + 26; c.textBaseline = "top"; const X = PADX + 92;
+    c.fillStyle = "#6B7A96"; c.font = F(600, 17); c.fillText(r.label, X, ty); ty += 26;
+    c.fillStyle = NAVY; c.font = F(700, 24); r.ml.forEach((l) => { c.fillText(l, X, ty); ty += 32; });
+    c.fillStyle = "#33425E"; c.font = F(400, 20); r.sl.forEach((l) => { c.fillText(l, X, ty + 2); ty += 28; });
+    if (r.hot) { c.font = F(700, 19); const tw = c.measureText(r.hot).width + 24; rr(c, X, ty + 4, tw, 30, 15); c.fillStyle = "#FFEDD5"; c.fill(); c.fillStyle = "#C2410C"; c.fillText(r.hot, X + 12, ty + 8); }
     y += r.h;
   }
   return cv.encode("png");

@@ -60,7 +60,7 @@ function layout(o) {
   const cta = o.cta
     ? '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 4px"><tr><td align="center" bgcolor="#067A8C" style="border-radius:12px;background:linear-gradient(135deg,#02A79E,#067A8C)">' +
       '<a href="' + esc(o.ctaUrl) + '" target="_blank" style="display:inline-block;padding:13px 28px;font-family:' + FONT + ';font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px">' + esc(o.cta) + "</a></td></tr></table>" +
-      '<div style="margin-top:10px;font-size:11.5px;line-height:1.5;color:#7A8E8B;word-break:break-all">Nếu nút không bấm được, sao chép liên kết này vào trình duyệt:<br><a href="' + esc(o.ctaUrl) + '" style="color:#067A8C;text-decoration:underline">' + esc(o.ctaUrl) + "</a></div>"
+      '<div style="margin-top:10px;font-size:12px;line-height:1.5;color:#7A8E8B;word-break:break-all">Nếu nút không bấm được, sao chép liên kết này vào trình duyệt:<br><a href="' + esc(o.ctaUrl) + '" style="color:#067A8C;text-decoration:underline">' + esc(o.ctaUrl) + "</a></div>"
     : "";
   const foot = o.footer ? esc(o.footer) : o.unsub
     ? "Email tự động, số liệu chỉ mang tính tham khảo, tính từ các số bạn tự nhập; không phải cam kết hay chỉ tiêu chính thức.<br>" +
@@ -85,7 +85,7 @@ function layout(o) {
     tiles + code + secs + cta +
     "</td></tr>" +
     '<tr><td class="fpad" style="background:#F6F9FA;border-top:1px solid #E3EBEE;padding:16px 30px 20px;font-size:12px;line-height:1.6;color:#6A7C80">' + foot +
-    '<div style="margin-top:10px;font-size:11.5px;color:#9AABAF">© ' + esc(o.brand || "Livotec") + (o.brandSub ? " · " + esc(o.brandSub) : " · Trợ lí thiết lập kế hoạch bán hàng kênh GT") + '</div></td></tr>' +
+    '<div style="margin-top:10px;font-size:12px;color:#9AABAF">© ' + esc(o.brand || "Livotec") + (o.brandSub ? " · " + esc(o.brandSub) : " · Trợ lí thiết lập kế hoạch bán hàng kênh GT") + '</div></td></tr>' +
     "</table></td></tr></table></body></html>";
   const text = [
     "[" + t.label + "] " + o.title, "",

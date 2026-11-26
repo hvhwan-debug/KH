@@ -2471,6 +2471,7 @@ body[data-tab="results"] .main,body[data-tab="analysis"] .main,body[data-tab="qu
         <div id="qFillWrap" class="hide">
           <label>Các đáp án được chấp nhận (mỗi dòng một đáp án)</label>
           <textarea id="qAccepted" style="min-height:70px" placeholder="220&#10;220 V"></textarea>
+<div class="hint" style="font-size:12.5px;color:var(--muted,#6B7A96);margin-top:4px">Mỗi dòng là một cách viết đúng khác nhau. Trong đề, mỗi chỗ trống (<b>.....</b> hoặc <b>…</b>) sẽ thành một ô để thí sinh bấm vào điền. Câu có nhiều chỗ trống: viết đủ đáp án <b>theo thứ tự, trên cùng một dòng</b>, ngăn bằng dấu <b>/</b> (vd: <b>độc quyền / 71</b>).</div>
           <p class="small">Hệ thống bỏ qua chữ hoa/thường, khoảng trắng thừa và dấu câu ở hai đầu; 1,5 và 1.5 coi là như nhau. Chữ có dấu tiếng Việt vẫn phải đúng dấu, nên hãy thêm cả cách viết không dấu nếu muốn chấp nhận.</p>
         </div>
         <label>Giải thích đáp án (tuỳ chọn)</label>
@@ -5274,11 +5275,14 @@ function qFormGo(d){
 }
 // Xem trước hình minh hoạ ngay khi dán link; báo sớm nếu link sai dạng hoặc hình không mở được
 function qImgPreview(){
-  const box = $('qImgPrev'), u = $('qImage').value.trim();
+  const box = $('qImgPrev'); let u = $('qImage').value.trim();
   if (!u){ box.innerHTML = ''; return; }
+  // Link Google Drive dạng xem file (…/file/d/ID/view…, open?id=ID, uc?id=ID) -> tự đổi sang link ảnh trực tiếp
+  const gd = u.match(/^https:\/\/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:[^#]*&)?id=)([\w-]{10,})/);
+  if (gd){ u = 'https://drive.google.com/thumbnail?id=' + gd[1] + '&sz=w1600'; $('qImage').value = u; }
   if (!/^https:\/\/[^\s"'<>]{4,490}$/.test(u)){ box.innerHTML = '<span style="color:var(--bad)">Link phải bắt đầu bằng https:// và không chứa khoảng trắng.</span>'; return; }
   box.innerHTML = '<img alt="Xem trước hình" referrerpolicy="no-referrer" style="max-width:100%;max-height:160px;object-fit:contain;border-radius:10px;border:1px solid var(--line)">';
-  const im = box.firstChild; im.onerror = () => { box.innerHTML = '<span style="color:var(--warn)">Chưa mở được hình từ link này. Hãy kiểm tra link là ảnh trực tiếp (kết thúc .jpg, .png, .webp…) và được chia sẻ công khai.</span>'; };
+  const im = box.firstChild; im.onerror = () => { box.innerHTML = '<span style="color:var(--warn)">Chưa mở được hình từ link này. Hãy kiểm tra link là ảnh trực tiếp (.jpg, .png, .webp…) hoặc ảnh Google Drive đã chia sẻ “Bất kỳ ai có đường liên kết”.</span>'; };
   im.src = u;
 }
 function clearQForm(){
@@ -7765,7 +7769,7 @@ async function exportBehaviorXlsx(sharedWb, sharedE, silent){
     if (to + bl >= 3){ tags.push('Bỏ lỡ câu'); notes.push((to + bl) + ' câu hết giờ / bỏ trống'); }
     if (h1.length >= 3 && h2.length >= 3 && mean(h2) >= 1.4 * mean(h1)){ tags.push('Tụt nhịp cuối bài'); notes.push('Nửa sau chọn chậm hơn nửa đầu ' + Math.round((mean(h2) / mean(h1) - 1) * 100) + '%'); }
     if (changes != null && n && changes >= 0.3 * n){ tags.push('Hay đổi đáp án'); notes.push(changes + ' lần đổi đáp án → thiếu chắc chắn'); }
-    if (blur >= 5){ tags.push('Cần xác minh rời trang'); notes.push('Rời trang ' + blur + ' lần' + (blurQs.length ? ' (ở câu ' + blurQs.slice(0, 8).join(', ') + ')' : '') + (pct >= 85 ? ', điểm cao' : '')); }
+    if (blur >= 3){ tags.push('Cần xem lại: rời trang'); notes.push((pct >= 85 ? 'Điểm cao nhưng r' : 'R') + 'ời trang ' + blur + ' lần' + (blurQs.length ? ' (ở câu ' + blurQs.slice(0, 8).join(', ') + ')' : '') + (pct >= 85 ? ' → nên xem lại bài' : '')); }
     if (pct < 75){ const sa = acc(slow); tags.push('Hổng kiến thức'); notes.push('Đúng ' + pct + '% (dưới 75%)' + (sa != null && slow.length >= 3 && sa < 0.7 ? '; dành nhiều thời gian vẫn sai nhiều → thiếu kiến thức, không phải do vội' : '')); }
     if (!tags.length){
       if (mF != null && mF < 0.25 && pct >= 85){ tags.push('Nhanh & chắc'); notes.push('Trung vị ' + Math.round(mdn) + ' giây/câu, đúng ' + pct + '%'); }

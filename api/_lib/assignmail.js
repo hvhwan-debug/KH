@@ -43,7 +43,6 @@ function build(opts) {
   const name = properName(opts.name);
   const org = opts.org || "Đào tạo Kinh doanh";
   const title = String(opts.title || "Bài kiểm tra").trim();
-  const subject = (opts.replaces ? "[Cập nhật] " : "") + "Bạn có bài kiểm tra mới: " + title;
   const description = String(opts.description || opts.audience || "").trim().slice(0, 500);
   const format = opts.format || "Trắc nghiệm trực tuyến";
   const deadline = opts.deadlineMs ? vnDeadline(opts.deadlineMs) : "";
@@ -51,11 +50,12 @@ function build(opts) {
   const questions = opts.questions ? String(opts.questions) + " câu" : "", duration = String(opts.duration || ""), attempts = String(opts.attempts || "");
   // Xưng hô theo tên: Anh / Chị; không chắc thì giữ "Anh/Chị" (opts.honorific cho phép chỉ định tay)
   const hon = ["Anh", "Chị", "Anh/Chị"].indexOf(opts.honorific) >= 0 ? opts.honorific : honorific(opts.name);
+  const subject = (opts.replaces ? "[Cập nhật] " : "") + hon + " có bài kiểm tra mới: " + title;   // cùng cách xưng hô với nội dung thư
   const note = fill(opts.note, hon) || defaultNote(hon);
   const closing = fill(opts.closing, hon) || defaultClosing(hon);
   const ctaUrl = /^https?:\/\//i.test(opts.ctaUrl || "") ? opts.ctaUrl : "#";
   const support = supportLine(opts.manager);
-  const replaceNote = opts.replaces ? "Email này thay thế thông báo đã gửi trước đó. Vui lòng dùng thông tin trong email này và bỏ qua email cũ." : "";
+  const replaceNote = "";   // đã bỏ dòng "thay thế thông báo trước, bỏ qua email cũ"; thư cập nhật vẫn có nhãn [Cập nhật] ở tiêu đề và "Thông báo cập nhật" ở đầu thư
 
   const guide = opensLater
     ? hon + " vui lòng nhấn nút bên dưới để vào trang làm bài từ " + opensLater + (deadline ? " và hoàn thành trước " + deadline : "") + ". Trước giờ mở đề, trang sẽ hiện đồng hồ đếm ngược."
@@ -82,8 +82,8 @@ function build(opts) {
       T("<tr>" + '<td style="padding:12px 16px;' + F + '">' +
         '<div style="font-size:11px;line-height:15px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9FC3FF;">' + whenLabel + "</div>" +
         '<div style="font-size:16px;line-height:23px;font-weight:800;color:#ffffff;padding-top:3px;">' + esc(whenValue) + "</div>" +
-        (opensLater && deadline ? '<div style="font-size:12.5px;line-height:18px;color:#C9DCFF;padding-top:2px;">Hạn hoàn thành: ' + esc(deadline) + "</div>" : "") + "</td>" +
-        (left && !opensLater ? '<td align="right" valign="middle" style="padding:12px 14px 12px 0;' + F + '"><span style="display:inline-block;padding:6px 12px;border-radius:999px;background:' + (days != null && days <= 2 ? "#FF5A6A" : "#FFC53D") + ';font-size:12.5px;font-weight:800;color:' + (days != null && days <= 2 ? "#ffffff" : "#3A2600") + ';white-space:nowrap;">' + esc(left) + "</span></td>" : "") +
+        (opensLater && deadline ? '<div style="font-size:13px;line-height:18px;color:#C9DCFF;padding-top:2px;">Hạn hoàn thành: ' + esc(deadline) + "</div>" : "") + "</td>" +
+        (left && !opensLater ? '<td align="right" valign="middle" style="padding:12px 14px 12px 0;' + F + '"><span style="display:inline-block;padding:6px 12px;border-radius:999px;background:' + (days != null && days <= 2 ? "#FF5A6A" : "#FFC53D") + ';font-size:13px;font-weight:800;color:' + (days != null && days <= 2 ? "#ffffff" : "#3A2600") + ';white-space:nowrap;">' + esc(left) + "</span></td>" : "") +
         "</tr>", 'width="100%" bgcolor="#123A86"', "background:#123A86;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.22);border-radius:14px;border-collapse:separate;")
     : "";
   const hero =
@@ -92,7 +92,7 @@ function build(opts) {
     '<tr><td class="hp" style="padding:28px 28px 26px;' + F + '">' +
     '<span style="display:inline-block;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);font-size:11px;line-height:15px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#ffffff;">' + (opts.replaces ? "Thông báo cập nhật" : "Bài kiểm tra mới") + "</span>" +
     '<div class="h1" style="font-size:25px;line-height:33px;font-weight:800;letter-spacing:-.01em;color:#ffffff;padding-top:14px;">' + esc(title) + "</div>" +
-    (description ? '<div style="font-size:14.5px;line-height:22px;color:#CFE0FF;padding-top:8px;">' + esc(description) + "</div>" : "") +
+    (description ? '<div style="font-size:15px;line-height:22px;color:#CFE0FF;padding-top:8px;">' + esc(description) + "</div>" : "") +
     whenBox +
     "</td></tr></table></td></tr>";
 
@@ -100,7 +100,7 @@ function build(opts) {
   const greetBlock =
     '<tr><td class="px" style="padding:26px 28px 0;' + F + '">' +
     '<div style="font-size:18px;line-height:26px;font-weight:800;color:' + C.navy + ';">Chào ' + hon + (name ? " " + esc(name) : "") + ",</div>" +
-    '<div style="font-size:14.5px;line-height:23px;color:' + C.body + ';padding-top:6px;">' + esc(org) + " thông báo " + hon + ' đã được giao bài kiểm tra <b style="color:' + C.ink + ';">\u201c' + esc(title) + '\u201d</b>. Thông tin chi tiết ở bên dưới.</div>' +
+    '<div style="font-size:15px;line-height:23px;color:' + C.body + ';padding-top:6px;">' + esc(org) + " thông báo " + hon + ' đã được giao bài kiểm tra <b style="color:' + C.ink + ';">\u201c' + esc(title) + '\u201d</b>. Thông tin chi tiết ở bên dưới.</div>' +
     "</td></tr>";
 
   const replaceBlock = replaceNote
@@ -118,7 +118,7 @@ function build(opts) {
           '<div class="tv" style="font-size:16px;line-height:22px;font-weight:800;color:' + C.navy + ';padding-top:4px;">' + esc(x.v) + "</div></td></tr>",
           'width="100%" bgcolor="' + C.soft + '"', "background:" + C.soft + ";background-image:linear-gradient(160deg,#F7FAFF,#EDF3FC);border:1px solid " + C.line + ";border-radius:14px;border-collapse:separate;") +
         "</td>").join("") + "</tr>", 'width="100%"') +
-      '<div style="' + F + 'font-size:12.5px;line-height:18px;color:' + C.muted + ';padding-top:10px;">Hình thức: <b style="color:' + C.ink + ';">' + esc(format) + "</b></div></td></tr>"
+      '<div style="' + F + 'font-size:13px;line-height:18px;color:' + C.muted + ';padding-top:10px;">Hình thức: <b style="color:' + C.ink + ';">' + esc(format) + "</b></div></td></tr>"
     : "";
 
   // ---- Nút vào làm bài ----
@@ -150,8 +150,8 @@ function build(opts) {
     ? '<tr><td class="px" style="padding:22px 28px 0;' + F + '">' +
       T('<tr><td style="padding:16px 18px;' + F + '">' +
         '<div style="font-size:14px;line-height:20px;font-weight:800;color:' + C.navy + ';padding-bottom:8px;">\uD83D\uDCDA Tài liệu ôn tập cho bài này</div>' +
-        '<div style="font-size:12.5px;line-height:19px;color:' + C.muted + ';padding-bottom:10px;">Nên xem trước khi làm bài. Mở ở trang Học liệu (cần xác thực khuôn mặt).</div>' +
-        materials.map((m) => '<div style="padding:5px 0;"><a href="' + esc(m.url) + '" target="_blank" style="font-size:13.5px;line-height:19px;font-weight:700;color:' + C.brand + ';text-decoration:none;">' + (m.type === "video" ? "\u25B6 " : "\uD83D\uDCC4 ") + esc(m.title) + "</a></div>").join("") +
+        '<div style="font-size:13px;line-height:19px;color:' + C.muted + ';padding-bottom:10px;">Nên xem trước khi làm bài. Mở ở trang Học liệu (cần xác thực khuôn mặt).</div>' +
+        materials.map((m) => '<div style="padding:5px 0;"><a href="' + esc(m.url) + '" target="_blank" style="font-size:14px;line-height:19px;font-weight:700;color:' + C.brand + ';text-decoration:none;">' + (m.type === "video" ? "\u25B6 " : "\uD83D\uDCC4 ") + esc(m.title) + "</a></div>").join("") +
         "</td></tr>", 'width="100%" bgcolor="' + C.soft + '"', "background:" + C.soft + ";border:1px solid " + C.line + ";border-radius:14px;border-collapse:separate;") +
       "</td></tr>"
     : "";
@@ -160,12 +160,12 @@ function build(opts) {
   const closingBlock =
     '<tr><td class="px" style="padding:26px 28px 0;' + F + '">' +
     T('<tr><td style="padding:16px 18px;border-left:4px solid ' + C.brand + ';' + F + '">' +
-      '<div style="font-size:14px;line-height:22px;color:' + C.body + ';">' + esc(note) + "</div>" +
-      '<div style="font-size:14px;line-height:22px;font-weight:700;color:' + C.ink + ';padding-top:10px;">' + esc(closing) + "</div></td></tr>",
+      '<div style="font-size:15px;line-height:22px;color:' + C.body + ';">' + esc(note) + "</div>" +
+      '<div style="font-size:15px;line-height:22px;font-weight:700;color:' + C.ink + ';padding-top:10px;">' + esc(closing) + "</div></td></tr>",
       'width="100%" bgcolor="' + C.soft + '"', "background:" + C.soft + ";border-radius:0 14px 14px 0;border-collapse:separate;") +
-    '<div style="font-size:14px;line-height:22px;color:' + C.body + ';padding-top:22px;">Trân trọng,</div>' +
+    '<div style="font-size:15px;line-height:22px;color:' + C.body + ';padding-top:22px;">Trân trọng,</div>' +
     '<div style="font-size:15px;line-height:22px;font-weight:800;color:' + C.navy + ';">' + esc(org) + "</div>" +
-    '<div style="font-size:12.5px;line-height:19px;color:' + C.muted + ';padding-top:12px;">' + esc(support) + "</div>" +
+    '<div style="font-size:13px;line-height:19px;color:' + C.muted + ';padding-top:12px;">' + esc(support) + "</div>" +
     "</td></tr>";
 
   // ---- Chân thư: dải xanh đêm ----
@@ -173,7 +173,7 @@ function build(opts) {
     '<tr><td style="padding:28px 0 0;"></td></tr>' +
     '<tr><td align="center" bgcolor="' + C.navy + '" style="background:' + C.navy + ';background-image:linear-gradient(140deg,#071A3E,' + C.deep + ');padding:20px 24px 22px;' + F + '">' +
     '<div style="font-size:13px;line-height:19px;font-weight:800;color:#ffffff;letter-spacing:.02em;">Hệ thống Kiểm tra &amp; Đánh giá Trực tuyến</div>' +
-    '<div style="font-size:11.5px;line-height:18px;color:#9FB6DD;padding-top:6px;">Email được gửi tự động, vui lòng không trả lời email này.<br>Mọi thắc mắc về bài kiểm tra, vui lòng liên hệ ' + esc(org) + ".</div>" +
+    '<div style="font-size:12px;line-height:18px;color:#9FB6DD;padding-top:6px;">Email được gửi tự động, vui lòng không trả lời email này.<br>Mọi thắc mắc về bài kiểm tra, vui lòng liên hệ ' + esc(org) + ".</div>" +
     "</td></tr>";
 
   const html =

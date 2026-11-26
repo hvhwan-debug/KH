@@ -401,6 +401,9 @@ button,input{font:inherit;color:inherit}
 .qhint{font-size:13px;font-weight:600;color:var(--brand-deep,#0B3F94);background:var(--brand-soft,#E3EBF5);border-radius:10px;padding:7px 12px;margin:0 0 12px;display:inline-block}
 .fillin{width:100%;font:inherit;font-size:17px;padding:14px 16px;border:1.5px solid var(--line);border-radius:14px;background:#fff;outline:0;transition:border-color .15s,box-shadow .15s}
 .fillin:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.fillblank{font:inherit;font-weight:700;color:var(--brand-deep,#0B3F94);width:9ch;min-width:7ch;max-width:100%;padding:2px 8px;margin:0 3px;border:0;border-bottom:2.5px solid var(--brand,#1559C4);border-radius:8px 8px 0 0;background:var(--brand-soft,#E3EBF5);outline:0;text-align:center;vertical-align:baseline}
+.fillblank::placeholder{color:#8EA2C6;font-weight:600}
+.fillblank:focus{background:#fff;box-shadow:0 0 0 3px var(--brand-soft,#E3EBF5)}
 .keys{font-size:12px;color:var(--muted);margin:14px 0 0;text-align:center}
 @media(hover:none){.keys{display:none}}
 .net{position:sticky;top:8px;z-index:5;margin:0}
@@ -4214,8 +4217,40 @@ function loadQuestion(s){
   var qt = ST.q.type || 'single';
   $('qOpts').setAttribute('role', qt === 'multi' ? 'group' : (qt === 'fill' ? 'group' : 'radiogroup'));
   if (qt === 'fill'){
-    $('qOpts').innerHTML = '<p class="qhint">Nhập câu trả lời của bạn</p><input type="text" class="fillin" id="fillIn" maxlength="200" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ đáp án…" aria-labelledby="qText">';
-    $('fillIn').addEventListener('input', function(){ if (QB && QB.first == null) QB.first = performance.now() - QB.t0; ST.text = this.value; $('btnNext').disabled = !hasAnswer(); });
+    var BLANK_RE = /(?:\.{3,}|\u2026+|_{3,})/g;
+    var qParts = String(ST.q.text || '').split(BLANK_RE), nBlank = qParts.length - 1;
+    if (nBlank >= 1){
+      // Mỗi chỗ trống trong câu là một ô nhập: bấm vào và gõ ngay tại chỗ
+      var qt0 = $('qText'); qt0.textContent = '';
+      qParts.forEach(function(part, k){
+        if (part) qt0.appendChild(document.createTextNode(part));
+        if (k < nBlank){
+          var inp = document.createElement('input');
+          inp.type = 'text'; inp.className = 'fillblank'; inp.maxLength = 100; inp.autocomplete = 'off'; inp.spellcheck = false;
+          inp.setAttribute('autocapitalize','off'); inp.setAttribute('data-k', k);
+          inp.setAttribute('aria-label', 'Chỗ trống ' + (k + 1) + (nBlank > 1 ? ' trên ' + nBlank : ''));
+          inp.placeholder = nBlank > 1 ? String(k + 1) : '…';
+          inp.addEventListener('input', function(){
+            var vs = Array.prototype.map.call($('qText').querySelectorAll('input.fillblank'), function(x){ return x.value.trim(); });
+            this.style.width = Math.max(7, Math.min(32, this.value.length + 2)) + 'ch';
+            if (QB && QB.first == null) QB.first = performance.now() - QB.t0;
+            ST.text = vs.some(function(v){ return v; }) ? vs.join(' / ') : '';
+            $('btnNext').disabled = !hasAnswer();
+          });
+          inp.addEventListener('keydown', function(e){
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            var all = $('qText').querySelectorAll('input.fillblank'), n = Number(this.getAttribute('data-k')) + 1;
+            if (n < all.length) all[n].focus(); else if (!$('btnNext').disabled) $('btnNext').click();
+          });
+          qt0.appendChild(inp);
+        }
+      });
+      $('qOpts').innerHTML = '<p class="qhint">' + (nBlank > 1 ? 'Bấm vào từng chỗ trống trong câu để điền (' + nBlank + ' chỗ)' : 'Bấm vào chỗ trống trong câu để điền') + '</p>';
+    } else {
+      $('qOpts').innerHTML = '<p class="qhint">Nhập câu trả lời của bạn (có thể gồm nhiều từ)</p><input type="text" class="fillin" id="fillIn" maxlength="200" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Gõ đáp án…" aria-labelledby="qText">';
+      $('fillIn').addEventListener('input', function(){ if (QB && QB.first == null) QB.first = performance.now() - QB.t0; ST.text = this.value; $('btnNext').disabled = !hasAnswer(); });
+    }
   } else {
     $('qOpts').innerHTML = (qt === 'multi' ? '<p class="qhint">Chọn TẤT CẢ đáp án đúng</p>' : '') + ST.q.options.map(function(o,i){
       return '<button type="button" class="opt" role="'+(qt === 'multi' ? 'checkbox' : 'radio')+'" aria-checked="false" data-i="'+i+'"><span class="k">'+letters.charAt(i)+'</span><span class="x">'+esc(o)+'</span></button>';
@@ -4225,7 +4260,7 @@ function loadQuestion(s){
   $('btnNext').disabled = true;
   msg('quizMsg','');
   autoNotice(s); startTimer(s.remainingMs);
-  var fi = $('fillIn'); if (fi) fi.focus({preventScroll:true}); else $('qText').focus({preventScroll:true});
+  var fi = $('fillIn') || $('qText').querySelector('input.fillblank'); if (fi) fi.focus({preventScroll:true}); else $('qText').focus({preventScroll:true});
 }
 
 // Hành vi trong từng câu (chỉ để phân tích, không ảnh hưởng điểm): lần chọn đầu sau bao lâu, số lần đổi đáp án,
@@ -5264,7 +5299,16 @@ function shieldOff(){
   $('shield').classList.remove('on');
 }
 function goAway(){ if (!ST.quizOn) return; if (!away){ away = true; ST.flags.blur++; if (QB){ QB.blur++; QB.awayT = performance.now(); } } shieldOn(AWAY_MSG); }
-function comeBack(){ if (QB && QB.awayT){ QB.away += performance.now() - QB.awayT; QB.awayT = null; } away = false; shieldOff(); }
+var BLUR_WARN_AT = 3;   // từ lần rời thứ 3 bài làm được đánh dấu cho quản lí xem lại (khớp ngưỡng trong trang quản trị)
+function comeBack(){
+  var was = away;
+  if (QB && QB.awayT){ QB.away += performance.now() - QB.awayT; QB.awayT = null; }
+  away = false;
+  if (was && ST.quizOn){
+    var n = (ST.flags && ST.flags.blur) || 1;
+    shieldOn('Đã ghi nhận lần rời khỏi màn hình bài thi thứ ' + n + '. ' + (n >= BLUR_WARN_AT ? 'Bài làm sẽ được đánh dấu để quản lí xem lại. ' : 'Từ lần thứ ' + BLUR_WARN_AT + ', bài làm sẽ được đánh dấu để quản lí xem lại. ') + 'Vui lòng không mở tài liệu hoặc ứng dụng khác khi đang làm bài.', 4500);
+  } else shieldOff();
+}
 function shotAttempt(why){
   if (!ST.quizOn) return;
   ST.flags.shot++; if (QB) QB.shot++;

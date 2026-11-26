@@ -24,7 +24,7 @@ function cardHtml(name) {
   const full = String(name || "").trim(), given = full.split(/\s+/).pop() || full;
   const hon = honorific(full), who = (hon + " " + given).trim();      // "Anh Hoan" / "Chị Thảo" / "Anh/Chị Tài" khi chưa chắc
   const para = (ic, text) => '<tr><td width="56" valign="top" style="padding:0 12px 16px 0"><img src="' + img(ic) + '" width="44" alt="" style="display:block;border:0;width:44px;height:auto"></td>' +
-    '<td valign="top" style="padding:0 0 16px;font-family:' + F + ';font-size:14.5px;line-height:1.7;color:#1E2B45">' + text + '</td></tr>';
+    '<td valign="top" style="padding:0 0 16px;font-family:' + F + ';font-size:15px;line-height:1.7;color:#1E2B45">' + text + '</td></tr>';
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#EAF3FF"><tr><td align="center" style="padding:20px 10px">' +
     '<table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:640px;border-radius:20px">' +
     // Đầu thư
@@ -34,7 +34,7 @@ function cardHtml(name) {
     // Thân thư trên ảnh nền
     '<tr><td background="' + img("email-bg-birthday.jpg") + '" bgcolor="#E6F1FF" valign="top" style="background-color:#E6F1FF;background-image:url(' + img("email-bg-birthday.jpg") + ');background-size:cover;background-position:center bottom;background-repeat:no-repeat;border-radius:0 0 20px 20px;padding:26px 0 50px">' +
     '<div style="text-align:center"><img src="' + img("bd-title.png") + '" width="380" alt="Chúc mừng Sinh nhật!" style="border:0;max-width:92%;width:380px;height:auto"></div>' +
-    '<div style="font-family:' + F + ';font-size:22px;color:#111C33;padding:16px 32px 14px">Xin chào <span style="color:#1D6FEA;font-weight:800">' + esc(who) + ',</span></div>' +
+    '<div style="font-family:' + F + ';font-size:20px;color:#111C33;padding:16px 32px 14px">Xin chào <span style="color:#1D6FEA;font-weight:800">' + esc(who) + ',</span></div>' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
     '<td valign="top" style="padding:0 6px 0 32px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
     para("bd-ic1.png", "Mỗi tuổi mới là một chương mới của hành trình trưởng thành. Mỗi trải nghiệm là một bài học, mỗi thử thách là một cơ hội để khám phá những giới hạn mới của bản thân.") +
@@ -51,7 +51,7 @@ function cardHtml(name) {
     // Nút
     '<table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#1D6FEA" style="background-color:#1D6FEA;background-image:linear-gradient(180deg,#2F86FF,#1558D8);border-radius:999px">' +
     '<a href="' + esc(base) + '" target="_blank" style="display:inline-block;padding:15px 40px;font-family:' + F + ';font-size:17px;font-weight:700;color:#FFFFFF;text-decoration:none;border-radius:999px">&#8599;&nbsp; Truy cập hệ thống</a></td></tr></table>' +
-    '<div style="font-family:' + F + ';font-size:12.5px;color:#5B6B86;text-align:center;padding-top:20px">— Đào tạo Kinh doanh —</div>' +
+    '<div style="font-family:' + F + ';font-size:13px;color:#5B6B86;text-align:center;padding-top:20px">— Đào tạo Kinh doanh —</div>' +
     '</td></tr></table></td></tr></table>';
 }
 function cardText(name) {

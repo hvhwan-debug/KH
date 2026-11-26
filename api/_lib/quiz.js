@@ -153,6 +153,11 @@ function normText(s) {
   t = t.replace(/(\d),(\d)/g, "$1.$2");            // 1,5 == 1.5
   return t.replace(/^[\s"'“”‘’.,;:!?()\[\]-]+|[\s"'“”‘’.,;:!?()\[\]-]+$/g, "");
 }
+// Nhiều chỗ trống: thí sinh có thể ngăn các đáp án bằng / , ; | (vd "độc quyền, 71" == "độc quyền / 71"). Dấu phẩy giữa hai chữ số (1,5) giữ nguyên.
+function normMulti(s) {
+  const t = String(s == null ? "" : s).normalize("NFC").replace(/(\d),(\d)/g, "$1.$2");
+  return t.split(/\s*[\/|;,]\s*/).map(normText).filter(Boolean).join(" / ");
+}
 // Làm sạch dữ liệu câu hỏi nhập từ quản trị viên theo từng loại. Trả về { error } hoặc { fields }.
 function normalizeQuestionInput(q) {
   q = q || {};
@@ -185,7 +190,7 @@ function gradeAnswer(q, ans, order) {
     const given = ans && typeof ans.text === "string" ? ans.text.trim() : "";
     const accepted = q.accepted || [];
     if (!given) return { state: "blank", ok: false, chosenText: "(không trả lời)", correctText: accepted.join(" / "), chosenOrig: [] };
-    const n = normText(given), ok = accepted.some((a) => normText(a) === n);
+    const n = normText(given), nm = normMulti(given), ok = accepted.some((a) => normText(a) === n || (/[\/|;,]/.test(a + given) && normMulti(a) === nm));
     return { state: ok ? "correct" : "wrong", ok, chosenText: given, correctText: accepted.join(" / "), chosenOrig: [] };
   }
   const ord = order || (q.options || []).map((_, i) => i);

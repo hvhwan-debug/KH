@@ -195,13 +195,13 @@ async function inviteMail(p, cand, stats) {
   const when = splitPipe(p.when), where = splitPipe(p.where);
   const tile = (ic, label, v) => '<td class="tl" width="50%" valign="top" style="padding:0 6px 12px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' + C.tile + ';border-radius:14px"><tr>' +
     '<td width="64" valign="top" style="padding:20px 0 18px 20px">' + img(ic, 44) + '</td><td valign="top" style="padding:20px 18px 18px 14px">' +
-    '<div style="font-size:12.5px;letter-spacing:.06em;color:' + C.muted + ';text-transform:uppercase">' + label + '</div>' +
+    '<div style="font-size:13px;letter-spacing:.06em;color:' + C.muted + ';text-transform:uppercase">' + label + '</div>' +
     '<div style="margin-top:4px;font-size:17px;font-weight:800;color:' + C.navy + ';line-height:1.35">' + esc(v.main) + '</div>' +
-    (v.sub ? '<div style="margin-top:3px;font-size:13.5px;color:' + C.body + ';line-height:1.45">' + esc(v.sub) + '</div>' : '') + '</td></tr></table></td>';
+    (v.sub ? '<div style="margin-top:3px;font-size:14px;color:' + C.body + ';line-height:1.45">' + esc(v.sub) + '</div>' : '') + '</td></tr></table></td>';
   const tiles = [when.main ? tile("calendar", "Thời gian", when) : "", where.main ? tile("pin", "Hình thức / địa điểm", where) : ""].filter(Boolean);
   const gains = (D.gains.length ? D.gains : REASONS_DEFAULT).slice(0, 4), gIc = ["bulb", "chart", "group", "target"];
   const reason = (g, i) => '<td class="rs" width="' + Math.floor(100 / gains.length) + '%" valign="top" align="center" style="padding:6px 10px 4px;' + (i ? 'border-left:1px solid #D5E1F2;' : '') + '">' +
-    '<div style="width:46px;margin:0 auto">' + img(gIc[i], 46) + '</div><div style="margin-top:12px;font-size:13.5px;line-height:1.5;color:' + C.ink + '">' + esc(g) + '</div></td>';
+    '<div style="width:46px;margin:0 auto">' + img(gIc[i], 46) + '</div><div style="margin-top:12px;font-size:14px;line-height:1.5;color:' + C.ink + '">' + esc(g) + '</div></td>';
   const named = /^(chương trình|khoá|khóa|lớp|buổi|hội thảo|workshop)(?=\s|$)/i.test(String(p.title).normalize("NFC").trim()); // (\b không dùng được với chữ có dấu) // tên đã nói rõ loại: không lặp "chương trình"
   const intro = esc(org) + ' trân trọng mời ' + esc(np.call) + (live ? ' đăng ký tham gia chương trình đào tạo dưới đây.' : ' đăng ký tham gia ' + (named ? '' : 'chương trình ') + '<b style="color:' + C.navy + '">' + esc(p.title) + '</b>.') +
     (D.intro.length ? '<br>' + D.intro.map(esc).join('<br>') : '');
@@ -224,25 +224,25 @@ async function inviteMail(p, cand, stats) {
     '<tr><td class="pad" style="padding:30px 36px 6px;font-size:16px;line-height:1.65;color:' + C.ink + '">Chào ' + esc(np.call) + ',<br>' + intro + '</td></tr>' +
     // thẻ thông tin: ảnh do máy chủ vẽ lúc mở thư (thời gian, hình thức, đối tượng, người chia sẻ, hạn, số chỗ, liên hệ, trạng thái)
     (infoSrc ? '<tr><td class="pad" style="padding:18px 36px 0"><img src="' + esc(infoSrc) + '" width="560" alt="' + esc(infoAlt) + '" style="display:block;width:100%;max-width:560px;height:auto;border:0;border-radius:14px;font-size:14px;line-height:1.6;color:' + C.body + '">' +
-      (live ? '<div style="margin-top:8px;font-size:11.5px;color:#98A6BE">ⓘ Thông tin luôn cập nhật theo hệ thống. Không thấy hình? Bấm “Hiển thị hình ảnh” hoặc mở trang đăng ký.</div>' : '') + '</td></tr>'
+      '</td></tr>'
       : (tiles.length ? '<tr><td class="tls" style="padding:16px 30px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' + tiles.join("") + '</tr></table></td></tr>' : '')) +
     // nút
     '<tr><td align="center" style="padding:26px 20px 6px"><table role="presentation" cellpadding="0" cellspacing="0" class="cta"><tr><td align="center" bgcolor="' + C.brand + '" style="border-radius:40px;background:' + C.brand + ';background:linear-gradient(180deg,#1E6AD8,#1152B8)">' +
       '<a href="' + esc(url) + '" target="_blank" style="display:inline-block;padding:20px 54px;font-family:' + FF + ';font-size:18px;font-weight:800;letter-spacing:.02em;color:#ffffff;text-decoration:none;border-radius:40px">ĐĂNG KÝ THAM GIA NGAY &nbsp;&rarr;</a></td></tr></table>' +
-      (p.deadline && !infoSrc ? '<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr><td valign="middle" style="padding-right:8px">' + img("clock", 20) + '</td><td valign="middle" style="font-size:14.5px;color:' + C.body + '">Thời hạn đăng ký: <b style="color:' + C.navy + '">trước ' + vnTime(p.deadline).replace(" ngày ", " ngày ") + '</b>' + (leftText(p.deadline) ? ' <span style="color:#C2410C;font-weight:700">(' + leftText(p.deadline) + ')</span>' : '') + '</td></tr></table>' : '') +
-      (seats && !infoSrc ? '<div style="margin-top:8px;font-size:13.5px;color:' + C.muted + '">' + seats + '</div>' : '') +
-      '<div style="margin-top:6px;font-size:12.5px;color:' + C.muted + '">Chỉ cần 1 lần bấm · không cần đăng nhập</div></td></tr>' +
+      (p.deadline && !infoSrc ? '<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px"><tr><td valign="middle" style="padding-right:8px">' + img("clock", 20) + '</td><td valign="middle" style="font-size:15px;color:' + C.body + '">Thời hạn đăng ký: <b style="color:' + C.navy + '">trước ' + vnTime(p.deadline).replace(" ngày ", " ngày ") + '</b>' + (leftText(p.deadline) ? ' <span style="color:#C2410C;font-weight:700">(' + leftText(p.deadline) + ')</span>' : '') + '</td></tr></table>' : '') +
+      (seats && !infoSrc ? '<div style="margin-top:8px;font-size:14px;color:' + C.muted + '">' + seats + '</div>' : '') +
+      '</td></tr>' +
     // vì sao nên tham gia
     '<tr><td class="pad" style="padding:26px 30px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' + C.tile + ';border-radius:16px"><tr><td style="padding:22px 18px 22px">' +
       '<div style="padding:0 14px 14px;font-size:18px;font-weight:800;color:' + C.navy + '">VÌ SAO NÊN THAM GIA?</div>' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' + gains.map(reason).join("") + '</tr></table></td></tr></table></td></tr>' +
     // liên hệ
     ((p.phone || p.email || p.contact) && !infoSrc ? '<tr><td class="pad" style="padding:24px 36px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ' + C.line + '"><tr><td style="padding-top:18px"><table role="presentation" cellpadding="0" cellspacing="0" class="ft"><tr>' +
-      '<td valign="middle" style="padding-right:16px">' + img("phone", 52) + '</td><td valign="middle" style="font-size:13.5px;line-height:1.7;color:' + C.body + '">Mọi thắc mắc vui lòng liên hệ: <b style="color:' + C.navy + '">' + esc(contactName) + '</b><br>' +
+      '<td valign="middle" style="padding-right:16px">' + img("phone", 52) + '</td><td valign="middle" style="font-size:14px;line-height:1.7;color:' + C.body + '">Mọi thắc mắc vui lòng liên hệ: <b style="color:' + C.navy + '">' + esc(contactName) + '</b><br>' +
       [p.phone ? 'Điện thoại: <b style="color:' + C.navy + '">' + esc(p.phone) + '</b>' : '', p.email ? 'Email: <a href="mailto:' + esc(p.email) + '" style="color:' + C.brand + ';font-weight:700;text-decoration:none">' + esc(p.email) + '</a>' : ''].filter(Boolean).join(' &nbsp;|&nbsp; ') +
       '</td></tr></table></td></tr></table></td></tr>' : '') +
     // ký tên
-    '<tr><td class="pad" style="padding:22px 36px 8px;font-size:14.5px;line-height:1.6;color:' + C.ink + '">Trân trọng,<br><b style="color:' + C.navy + '">' + esc(org) + '</b></td></tr>' +
+    '<tr><td class="pad" style="padding:22px 36px 8px;font-size:15px;line-height:1.6;color:' + C.ink + '">Trân trọng,<br><b style="color:' + C.navy + '">' + esc(org) + '</b></td></tr>' +
     // chân thư: xưng hô trang trọng "Anh/Chị <họ tên>" (chắc chắn thì "Anh"/"Chị"), liên kết dự phòng dạng chữ
     '<tr><td class="pad" style="padding:14px 36px 26px"><div style="border-top:1px solid ' + C.line + ';padding-top:14px;font-size:12px;line-height:1.7;color:#7C8AA5">' +
       'Thư mời này được gửi riêng đến ' + esc(fm.to) + ' (Mã nhân viên: ' + esc(cand.code) + '). Vui lòng không chuyển tiếp email này cho người khác.<br>' +
