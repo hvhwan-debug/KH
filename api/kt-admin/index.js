@@ -300,6 +300,10 @@ const handler = async function (context, req) {
         const a = H.analyze(await H.gather({ period: per }));
         return reply(context, 200, { ok: true, analysis: a, summary: H.aiSummary(a) });
       }
+      if (op === "hrCompetency") { // hồ sơ năng lực toàn hệ thống (mọi bài kiểm tra, số bán, KAI, học liệu, kho tri thức); lưu tạm 20 phút
+        const rq = req.query || {};
+        return reply(context, 200, Object.assign({ ok: true }, await require("../_lib/hrcompetency").build({ refresh: rq.refresh === "1" })));
+      }
       if (op === "hrDims") { // nhận định theo từng người / quản lí / tỉnh / ngành (luật minh bạch), chỉ quản trị viên
         const rq = req.query || {}, per = typeof rq.period === "string" ? rq.period.slice(0, 40) : undefined;
         return reply(context, 200, Object.assign({ ok: true }, await require("../_lib/hrdims").build({ period: per })));
@@ -995,6 +999,10 @@ const handler = async function (context, req) {
     }
 
     // Gắn / cập nhật HỒ SƠ NHÂN SỰ cho người đã có trong danh sách (chỉ sửa trường profile, không đụng email, tên, chức danh...)
+    if (op === "hrCompetencyAi") { // AI: toàn hệ thống / đối tượng / quản lí / tỉnh / ngành / từng người; máy chủ tự dựng dữ liệu ẩn danh
+      const r = await require("../_lib/hrcompetency").ai({ kind: String(b.kind || ""), key: String(b.key || "").slice(0, 60) });
+      return reply(context, r.ok ? 200 : 502, r);
+    }
     if (op === "hrDimsAi") { // nhận định bằng AI cho một người hoặc từng nhóm; máy chủ tự dựng dữ liệu, không nhận số liệu từ trình duyệt
       const r = await require("../_lib/hrdims").ai({ kind: String(b.kind || ""), key: String(b.key || "").slice(0, 60), period: typeof b.period === "string" ? b.period.slice(0, 40) : undefined });
       return reply(context, r.ok ? 200 : 502, r);

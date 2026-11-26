@@ -209,6 +209,14 @@ a.btn:focus-visible{outline:2px solid #1D6FEA;outline-offset:2px}
 #secWf .wf>summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:15px}
 #secWf .small{font-size:12.5px;color:var(--muted)}
 #secWf .wf>p.small{margin:8px 0 10px}
+#secWf .v-src{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:10px}
+#secWf .v-src>div{display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center;background:#F6F9FE;border:1px solid #E3EBF7;border-radius:12px;padding:8px 10px}
+#secWf .v-src span{grid-row:span 2;font-size:20px}#secWf .v-src b{font-size:15px;color:var(--navy)}#secWf .v-src small{font-size:11.5px;color:var(--muted)}
+#secWf .v-quad{display:grid;grid-template-columns:1fr 1fr;gap:8px}#secWf .v-quad>div{border:2px solid;border-radius:12px;padding:12px;text-align:center}#secWf .v-quad b{display:block;font-size:26px}#secWf .v-quad span{font-size:12.5px}
+#secWf .v-cov{display:grid;grid-template-columns:minmax(150px,38%) 1fr;gap:12px;padding:8px 0;border-bottom:1px dashed var(--line)}#secWf .v-cov:last-child{border-bottom:0}
+#secWf .v-cb{display:grid;gap:3px}#secWf .v-cb>div{display:grid;grid-template-columns:78px 1fr 34px;gap:6px;align-items:center;font-size:12px}#secWf .v-cb small{color:var(--muted)}
+#secWf .v-cb i{height:8px;border-radius:4px;background:#EEF2F8;display:block}#secWf .v-cb i span{display:block;height:100%;border-radius:4px}#secWf .v-cb b{text-align:right}
+#secWf .v-warn{font-size:11.5px;color:#B45309;margin-top:3px}
 #secWf .v-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:12px 0}
 #secWf .v-kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
 #secWf .v-kv{font-size:26px;font-weight:800;line-height:1.15;margin:2px 0}
@@ -535,23 +543,22 @@ table.t.pl-act td{vertical-align:top;font-size:13px}
     </div>
     <section id="secOv"></section>
     <section id="secWf">
-      <details class="card wf" id="dmCard" open>
-        <summary>🧭 Nhận định theo từng người, quản lí, tỉnh, ngành <span class="small" id="dmSum"></span></summary>
-        <p class="small">Kênh GT · <b>SR GT1 / Ngành 1</b>: máy lọc nước Karofi, Livotec · <b>SR GT2 / Ngành 2</b>: điện gia dụng Livotec (điều hòa, bếp từ, bình nước nóng…) · PC, PG, ASM, RSM theo phạm vi được phân công. Đối tượng xếp theo chức danh và ngành trong hồ sơ; SR chưa rõ ngành được ghi riêng, không đoán. Nhận định theo luật hiện ngay từ điểm kiểm tra, xu hướng so với kỳ trước, mảng kiến thức yếu, số lần rời màn hình, thâm niên và % chỉ tiêu bán (nếu có). Bấm <b>✨ AI</b> để AI viết nhận định chi tiết; AI chỉ nhận mã ẩn danh và số liệu, không nhận tên, email, SĐT, tuổi. Nhận định là gợi ý để quản lí kiểm chứng, không dùng để quyết định nhân sự.</p>
-        <div class="wf-act"><select id="dmPeriod" aria-label="Đề / kỳ"><option value="">Kỳ có nhiều bài nhất</option></select><button class="btn sm pri" type="button" onclick="dmRun()">Tải nhận định</button></div>
-        <div id="dmBody"></div>
+      <details class="card wf" id="cpCard" open>
+        <summary>🧠 Năng lực toàn hệ thống và khuyến nghị <span class="small" id="cpSum"></span></summary>
+        <p class="small">Tổng hợp từ <b>toàn bộ dữ liệu hiện có</b>: mọi kỳ kiểm tra (bài gần đây tính nặng hơn), điểm theo từng mảng năng lực, số bán mọi tháng, câu hỏi nhân viên gửi Trợ lí KAI, chương trình học, học liệu, ngân hàng câu hỏi và kho tri thức sản phẩm, chính sách, thị trường. Khung năng lực: sản phẩm ngành 1 (máy lọc nước), sản phẩm ngành 2 (điện gia dụng), kỹ năng bán và tư vấn, thị trường và đối thủ, chính sách và quy trình. Mảng chuyên sâu của ngành kia không bị tính vào năng lực của người chỉ bán một ngành.</p>
+        <div class="wf-act"><button class="btn sm pri" type="button" onclick="cpRun()">Tải phân tích</button><button class="btn sm" type="button" onclick="cpRun(true)">↻ Làm mới dữ liệu</button><button class="btn sm" type="button" id="cpAiBtn" onclick="cpAiSys()" disabled>✨ AI khuyến nghị năng lực toàn hệ thống</button></div>
+        <div id="cpBody"></div><div id="cpAiBody"></div>
+      </details>
+      <details class="card wf" id="cdCard" open>
+        <summary>🧭 Nhận định năng lực theo đối tượng, quản lí, tỉnh, ngành, từng người <span class="small" id="cdSum"></span></summary>
+        <p class="small">Cùng nguồn dữ liệu toàn hệ thống ở trên. Nhận định theo luật hiện ngay; bấm <b>✨ AI</b> để AI viết nhận định chi tiết (AI chỉ nhận mã ẩn danh và số liệu, không nhận tên, email, SĐT, tuổi). Là gợi ý để quản lí kiểm chứng, không dùng để quyết định nhân sự.</p>
+        <div id="cdBody"><div class="small">Bấm <b>Tải phân tích</b> ở khối trên.</div></div>
       </details>
       <details class="card wf" id="hrDiscCard">
         <summary>🔎 Rà soát dữ liệu nhân sự <span class="small" id="hrDiscSum"></span></summary>
         <p class="small">Cho biết hệ thống đang có những nguồn dữ liệu nào, trường nào đã điền / còn thiếu, dữ liệu nào sai hoặc trùng, những phân tích nào làm được với số người thật, và các trường nên bổ sung. Chỉ <b>đếm dữ liệu có sẵn</b>, không tự điền hay suy đoán thông tin chưa xác minh. Chỉ quản trị viên xem.</p>
         <div class="wf-act"><button class="btn sm pri" type="button" onclick="hrDiscRun()">Chạy rà soát</button><button class="btn sm" type="button" onclick="hrMissingCsv()">Tải danh sách nhân sự thiếu dữ liệu (CSV)</button></div>
         <div id="hrDiscBody"></div>
-      </details>
-      <details class="card wf" id="hrAnCard">
-        <summary>📊 Phân tích nhân lực và khuyến nghị đào tạo <span class="small" id="hrAnSum"></span></summary>
-        <p class="small">Phân tích điểm kiểm tra chính thức của một đề / kỳ: bản đồ khoảng cách năng lực theo chức danh, quan hệ giữa các biến (kèm cỡ mẫu), phân nhóm nhân sự và ma trận đào tạo. Chỉ hiện số liệu <b>tổng hợp</b>, nhóm dưới 5 người bị ẩn. Nút <b>Khuyến nghị bằng AI</b> chỉ gửi cho AI bản tóm tắt ẩn danh (không tên, mã, email, độ tuổi).</p>
-        <div class="wf-act"><select id="hrAnPeriod" aria-label="Đề / kỳ"><option value="">Kỳ có nhiều bài nhất</option></select><button class="btn sm pri" type="button" onclick="hrAnRun()">Phân tích dữ liệu</button><button class="btn sm" type="button" id="hrAiBtn" onclick="hrAiRun()" disabled>✨ Khuyến nghị bằng AI</button></div>
-        <div id="hrAnBody"></div><div id="hrAiBody"></div>
       </details>
     </section>
     <section id="secLs" class="hide"></section>
@@ -1683,6 +1690,109 @@ function dmCsv(){
   a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' })); a.download = 'nhan-dinh-nhan-su-' + (DM.d.meta.period || 'ky') + '.csv'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
 window.dmRun = dmRun; window.dmTab = dmTab; window.dmAi = dmAi; window.dmCsv = dmCsv; window.dmRender = dmRender; window.DMF = DMF; window.DM = DM;
+
+// ===== Năng lực toàn hệ thống (mọi dữ liệu, không theo kỳ) =====
+var CP = { d:null, tab:'audiences', ai:{ audiences:{}, managers:{}, provinces:{}, segments:{}, person:{} }, f:{ q:'', mgr:'', prov:'', seg:'', aud:'' }, show:30 };
+const CPLV = { 'Thành thạo':['#E3F5EA','#17794A'], 'Vững':['#E8F1FE','#1F66E0'], 'Đạt cơ bản':['#FFF4DE','#B45309'], 'Cần củng cố':['#FDE8E8','#B42318'], 'Cần đào tạo lại':['#FBD5D1','#8A1C12'], 'Chưa có dữ liệu':['#EEF2F8','#5B6B86'] };
+const CPORD = ['Cần đào tạo lại', 'Cần củng cố', 'Đạt cơ bản', 'Vững', 'Thành thạo'];
+function cpLine(tr){ if (tr.length < 2) return '<div class="small">Cần ít nhất 2 tháng có bài kiểm tra.</div>';
+  const W = 560, H = 170, P = 30, xs = (i) => P + i * (W - 2 * P) / (tr.length - 1), ys = (v) => H - 24 - (Math.max(0, Math.min(100, v)) / 100) * (H - 44);
+  const pts = tr.map((t, i) => xs(i) + ',' + ys(t.pct)).join(' ');
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto" role="img" aria-label="Xu hướng điểm theo tháng">' + [0, 50, 100].map(v => '<line x1="' + P + '" x2="' + (W - P) + '" y1="' + ys(v) + '" y2="' + ys(v) + '" stroke="#E6ECF5"/><text x="4" y="' + (ys(v) + 4) + '" font-size="10" fill="#8A97AD">' + v + '</text>').join('') +
+    '<polyline points="' + pts + '" fill="none" stroke="#2F6FE5" stroke-width="2.5"/>' + tr.map((t, i) => '<circle cx="' + xs(i) + '" cy="' + ys(t.pct) + '" r="4" fill="' + vCol(t.pct) + '"><title>' + t.month + ': ' + t.pct + '% (' + t.n + ' bài)</title></circle><text x="' + xs(i) + '" y="' + (ys(t.pct) - 9) + '" font-size="10.5" text-anchor="middle" fill="#0B2A5B" font-weight="700">' + Math.round(t.pct) + '</text><text x="' + xs(i) + '" y="' + (H - 6) + '" font-size="10" text-anchor="middle" fill="#8A97AD">' + t.month.slice(5) + '/' + t.month.slice(2, 4) + '</text>').join('') + '</svg>'; }
+async function cpRun(refresh){
+  const box = $('cpBody'); box.innerHTML = '<div class="small" style="margin-top:10px">Đang tổng hợp toàn bộ dữ liệu (lần đầu có thể mất 10 đến 30 giây)…</div>'; $('cpAiBody').innerHTML = ''; $('cpAiBtn').disabled = true;
+  const { j } = await api('GET', '/api/kt-admin?op=hrCompetency' + (refresh ? '&refresh=1' : ''));
+  if (!j.ok){ box.innerHTML = '<div class="msg err" style="margin-top:10px">' + esc(j.error || 'Không tổng hợp được.') + '</div>'; return; }
+  CP.d = j; CP.ai = { audiences:{}, managers:{}, provinces:{}, segments:{}, person:{} };
+  const m = j.meta, S = j.system, AN = {}; j.areas.forEach(a => { AN[a.id] = a.name; });
+  let out = '<div class="small" style="margin-top:10px">Cập nhật lúc ' + new Date(j.cachedAt).toLocaleString('vi-VN') + (j.cached ? ' (bản lưu tạm, bấm ↻ để tính lại)' : '') + '</div>';
+  if (m.catMissing) out += '<div class="msg warn" style="margin-top:8px">Còn ' + m.catMissing + ' bài chưa đọc được điểm theo mảng do giới hạn thời gian; bấm ↻ Làm mới để đọc tiếp.</div>';
+  out += '<div class="v-src">' + [['📝', m.attempts + ' bài', m.periods + ' kỳ kiểm tra'], ['👥', m.tested + '/' + m.population, 'nhân sự có bài'], ['🛒', m.salesMonths + ' tháng', 'số bán'], ['💬', m.kaiQuestions, 'câu hỏi gửi KAI'], ['📚', m.materials, 'học liệu'], ['❓', m.questionBank, 'câu hỏi ngân hàng'], ['🗂️', m.kbDocs, 'tài liệu kho tri thức'], ['🎓', m.programs, 'chương trình học']].map(x => '<div><span>' + x[0] + '</span><b>' + x[1] + '</b><small>' + x[2] + '</small></div>').join('') + '</div>';
+  out += '<div class="v-kpis">' + vKpi('Chỉ số năng lực TB', (S.index == null ? '–' : S.index + '%'), 'trọng số thời gian, mọi kỳ', vCol(S.index)) + vKpi('Dưới 60%', S.below60 + ' người', 'cần củng cố / đào tạo lại', '#E5484D') + vKpi('Chưa có bài nào', S.notTested + ' người', 'chưa đánh giá được', '#D9771F') + vKpi('Bài gần nhất > 4 tháng', S.staleTests + ' người', 'dữ liệu năng lực đã cũ', '#8B5CF6') + '</div>';
+  const lv = S.levels, tot = CPORD.reduce((a, k) => a + (lv[k] || 0), 0) || 1;
+  out += '<div class="v-grid"><div class="v-card">' + vSec('🧩', 'Bản đồ năng lực toàn hệ thống', 'Điểm TB theo mảng năng lực (chỉ tính mảng thuộc ngành của từng người)') + vBars(S.areaMap.map(a => ({ name: a.name, v: a.pct, n: a.people, sub: a.weakPeople + ' người dưới 60%' })), { pass: 60, avg: S.index }) + '</div>' +
+    '<div class="v-card">' + vSec('📶', 'Phân bố mức năng lực', 'Theo chỉ số năng lực của từng người') + '<div class="v-stack">' + CPORD.filter(k => lv[k]).map(k => '<span style="width:' + (100 * lv[k] / tot) + '%;background:' + CPLV[k][1] + '" title="' + k + ': ' + lv[k] + '"></span>').join('') + '</div><div class="v-leg">' + CPORD.filter(k => lv[k]).map(k => '<div><i style="background:' + CPLV[k][1] + '"></i>' + k + ' <b>' + lv[k] + '</b></div>').join('') + '</div>' +
+    '<div style="margin-top:14px">' + vSec('📈', 'Xu hướng điểm theo tháng', 'Mọi bài kiểm tra chính thức') + cpLine(S.trend) + '</div></div></div>';
+  const AC = j.areas.filter(a => S.audRows.some(r => r.cells[a.id]));
+  if (S.audRows.length && AC.length) out += '<div class="v-card" style="margin-top:12px">' + vSec('🔥', 'Năng lực theo đối tượng đào tạo', 'SR GT1, SR GT2, PC, PG, ASM, RSM × mảng năng lực · ô trống = dưới 3 người') +
+    '<div class="v-heat" style="grid-template-columns:minmax(150px,200px) repeat(' + AC.length + ',minmax(90px,1fr))"><div></div>' + AC.map(a => '<div class="v-hh" title="' + esc(a.name) + '">' + esc(a.name) + '</div>').join('') +
+    S.audRows.map(r => '<div class="v-hr"><b>' + esc(r.audience) + '</b>&nbsp;<span class="small">' + r.people + '</span></div>' + AC.map(a => r.cells[a.id] ? '<div class="v-hx" style="background:' + vHeat(r.cells[a.id].pct) + '"><b>' + r.cells[a.id].pct + '%</b><span>' + r.cells[a.id].n + ' người</span></div>' : '<div class="v-hx" style="background:#F4F6FA"><span>–</span></div>').join('')).join('') + '</div></div>';
+  const Q = S.quad, QC = { 'Kiến thức tốt · bán tốt':'#22A35E', 'Kiến thức tốt · bán chưa đạt':'#F2B630', 'Kiến thức chưa vững · bán tốt':'#4F8EF7', 'Cả hai cần cải thiện':'#E5484D' };
+  out += '<div class="v-grid"><div class="v-card">' + vSec('🛒', 'Kiến thức × kết quả bán', S.quadN ? S.quadN + ' người có cả điểm và số bán · kiến thức tốt = chỉ số ≥ 70%, bán tốt = TB 3 tháng ≥ 100%' : 'Chưa có số bán để đối chiếu') +
+    (S.quadN ? '<div class="v-quad">' + Object.keys(QC).map(k => '<div style="border-color:' + QC[k] + '"><b style="color:' + QC[k] + '">' + Q[k] + '</b><span>' + k + '</span></div>').join('') + '</div><div class="small" style="margin-top:8px">“Kiến thức tốt · bán chưa đạt”: nên xem kỹ năng bán và yếu tố ngoài năng lực (hàng, giá, điểm bán) trước khi tăng đào tạo kiến thức.</div>' : '') + '</div>' +
+    '<div class="v-card">' + vSec('🌐', 'Độ phủ sản phẩm và thị trường trong đào tạo', 'Câu hỏi kiểm tra · học liệu · tài liệu kho tri thức · câu nhân viên hỏi KAI') +
+    S.coverage.map(c => { const mx = Math.max(1, c.questions, c.materials, c.kbDocs, c.kaiAsks), bar = (v, col) => '<span style="width:' + Math.max(1, 100 * v / mx) + '%;background:' + col + '"></span>';
+      return '<div class="v-cov"><div><b>' + esc(c.area) + '</b>' + (c.notes.length ? '<div class="v-warn">⚠ ' + c.notes.map(esc).join(' · ') + '</div>' : '') + '</div><div class="v-cb">' +
+        [['Câu hỏi', c.questions, '#2F6FE5'], ['Học liệu', c.materials, '#22A35E'], ['Kho tri thức', c.kbDocs, '#8B5CF6'], ['Hỏi KAI', c.kaiAsks, '#F08A4B']].map(x => '<div><small>' + x[0] + '</small><i>' + bar(x[1], x[2]) + '</i><b>' + x[1] + '</b></div>').join('') + '</div></div>'; }).join('') + '</div></div>';
+  box.innerHTML = out; $('cpAiBtn').disabled = false;
+  $('cpSum').textContent = '· ' + m.tested + ' người có bài · ' + m.attempts + ' bài · ' + m.periods + ' kỳ';
+  $('cdSum').textContent = '· ' + m.population + ' nhân sự'; cdRender();
+}
+async function cpAiSys(){
+  const box = $('cpAiBody'), btn = $('cpAiBtn'); btn.disabled = true; box.innerHTML = '<div class="small" style="margin-top:14px">AI đang phân tích toàn bộ hồ sơ năng lực (khoảng 15 đến 30 giây)…</div>';
+  const { j } = await api('POST', '/api/kt-admin', { op:'hrCompetencyAi', kind:'system' }); btn.disabled = false;
+  if (!j.ok){ box.innerHTML = '<div class="msg err" style="margin-top:12px">' + esc(j.error || 'AI lỗi.') + '</div>'; return; }
+  const r = j.report, cf = { 'cao':['#E3F5EA','#17794A'], 'vừa':['#FFF4DE','#B45309'], 'thấp':['#FDE8E8','#B42318'] }, ul = (a) => '<ul class="v-ul">' + a.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+  let out = '<div class="v-ai"><div style="font-weight:800;font-size:16px">✨ Khuyến nghị năng lực của AI</div><div class="small" style="margin:2px 0 10px">AI viết từ hồ sơ năng lực toàn hệ thống ở trên, có thể sai sót: quản lí đối chiếu số liệu và xác nhận trước khi áp dụng.</div><div class="v-card v-sum">' + esc(r.tom_tat) + '</div>';
+  if (r.phat_hien.length) out += vSec('💡', 'Phát hiện chính') + '<div class="v-grid">' + r.phat_hien.map(x => '<div class="v-card"><span class="dm-pill" style="background:' + cf[x.do_tin_cay][0] + ';color:' + cf[x.do_tin_cay][1] + '">tin cậy ' + esc(x.do_tin_cay) + '</span><div style="margin:6px 0;font-weight:600">' + esc(x.noi_dung) + '</div><div class="small">📎 ' + esc(x.bang_chung) + '</div></div>').join('') + '</div>';
+  if (r.khuyen_nghi_nang_luc.length) out += vSec('🎯', 'Khuyến nghị năng lực theo đối tượng') + '<div class="v-grid">' + r.khuyen_nghi_nang_luc.map(x => '<div class="v-card v-seg" style="border-top:4px solid #4F8EF7"><b>' + esc(x.doi_tuong) + '</b> <span class="dm-pill" style="background:#EEF2FF;color:#4338CA">' + esc(x.loai) + '</span><div style="margin:6px 0;font-weight:600">' + esc(x.nang_luc) + '</div><div class="small">' + esc(x.hien_trang) + '</div><div class="v-plan"><div><span>✅</span><div><b>Đề xuất</b>' + esc(x.de_xuat) + '</div></div><div><span>📈</span><div><b>Đo kết quả</b>' + esc(x.do_luong) + '</div></div></div></div>').join('') + '</div>';
+  const side = [['🌐', 'Sản phẩm và thị trường', r.san_pham_thi_truong], ['🧾', 'Dữ liệu cần bổ sung', r.du_lieu_can_bo_sung]].filter(x => x[2].length);
+  if (side.length) out += '<div class="v-grid" style="margin-top:12px">' + side.map(x => '<div class="v-card">' + vSec(x[0], x[1]) + ul(x[2]) + '</div>').join('') + '</div>';
+  box.innerHTML = out + '</div>';
+}
+function cdTab(t){ CP.tab = t; cdRender(); }
+function CDF(k, v){ CP.f[k] = v; CP.show = 30; cdRender(); if (k === 'q'){ const e = $('cdQ'); if (e){ e.focus(); e.setSelectionRange(v.length, v.length); } } }
+function cdGroups(kind){
+  const L = CP.d[kind], A = CP.ai[kind], lab = { audiences:'Đối tượng', managers:'Quản lí', provinces:'Tỉnh / thành', segments:'Ngành' }[kind], S = CP.d.system;
+  const chip = (t, c) => '<span class="dm-c" style="background:' + c[0] + ';color:' + c[1] + '">' + t + '</span>';
+  return '<div class="wf-act" style="margin-bottom:10px"><button class="btn sm pri" type="button" onclick="cdAi(\'' + kind + '\')">✨ AI nhận định tất cả ' + lab.toLowerCase() + '</button><span class="small">Nhóm từ 3 người có bài mới gửi AI</span></div>' +
+    '<div class="v-card" style="margin-bottom:12px">' + vSec('📊', 'Chỉ số năng lực theo ' + lab.toLowerCase()) + vBars(L.filter(g => g.index != null).map(g => ({ name: g.name, v: g.index, n: g.tested, sub: g.below60 + ' dưới 60%' })), { pass: 60, avg: S.index }) + '</div>' +
+    '<div class="v-grid">' + L.map(g => '<div class="v-card v-seg" style="border-top:4px solid ' + vCol(g.index) + '"><div style="display:flex;justify-content:space-between;gap:10px"><div><b style="font-size:15px">' + esc(g.name) + '</b><div class="small">' + g.tested + '/' + g.n + ' người có bài' + (g.reliable ? '' : ' · tham khảo') + '</div></div><div class="v-kv" style="color:' + vCol(g.index) + '">' + (g.index == null ? '–' : g.index + '%') + '</div></div>' +
+      '<div class="v-chips">' + (g.below60 ? chip(g.below60 + ' dưới 60%', ['#FDE8E8', '#B42318']) : '') + (g.trend != null ? chip((g.trend >= 0 ? '▲ +' : '▼ ') + g.trend + ' từ bài đầu', g.trend >= 0 ? ['#E3F5EA', '#17794A'] : ['#FDE8E8', '#B42318']) : '') + (g.salesAvg != null ? chip('🛒 ' + g.salesAvg + '% chỉ tiêu', g.salesAvg >= 100 ? ['#E3F5EA', '#17794A'] : ['#FFF4DE', '#B45309']) : '') + (g.kaiUsers ? chip('💬 ' + g.kaiUsers + ' người dùng KAI', ['#F3EEFF', '#6D28D9']) : '') + '</div>' +
+      (g.areas.length ? '<div style="margin-top:10px">' + vBars(g.areas.map(a => ({ name: a.name, v: a.pct, n: a.people })), {}) + '</div>' : '') +
+      '<div class="v-plan"><div><span>✅</span><div><b>Đề xuất</b>' + g.actions.map(esc).join('<br>') + '</div></div></div>' + dmAiHtml(A[g.name]) + '</div>').join('') + '</div>';
+}
+function cdPeople(){
+  const P = CP.d.people, f = CP.f, opt = (arr, v, all) => '<option value="">' + all + '</option>' + Array.from(new Set(arr)).sort().map(x => '<option' + (x === v ? ' selected' : '') + '>' + esc(x) + '</option>').join('');
+  const fold = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
+  const list = P.filter(p => (!f.q || fold(p.name + ' ' + p.code).indexOf(fold(f.q)) >= 0) && (!f.mgr || p.manager === f.mgr) && (!f.prov || p.province === f.prov) && (!f.seg || p.segmentLabel === f.seg) && (!f.aud || p.audience === f.aud));
+  return '<div class="dm-f"><input id="cdQ" placeholder="Tìm tên hoặc mã NV…" value="' + esc(f.q) + '" oninput="CDF(\'q\',this.value)">' +
+    '<select onchange="CDF(\'aud\',this.value)" aria-label="Đối tượng">' + opt(P.map(p => p.audience), f.aud, 'Mọi đối tượng') + '</select>' +
+    '<select onchange="CDF(\'mgr\',this.value)" aria-label="Quản lí">' + opt(P.map(p => p.manager), f.mgr, 'Mọi quản lí') + '</select>' +
+    '<select onchange="CDF(\'prov\',this.value)" aria-label="Tỉnh">' + opt(P.map(p => p.province), f.prov, 'Mọi tỉnh') + '</select>' +
+    '<select onchange="CDF(\'seg\',this.value)" aria-label="Ngành">' + opt(P.map(p => p.segmentLabel), f.seg, 'Mọi ngành') + '</select>' +
+    '<button class="btn sm" type="button" onclick="cdCsv()">⬇ Tải CSV</button><span class="small" style="align-self:center">' + list.length + ' người · chỉ số thấp lên trước</span></div>' +
+    '<div class="v-grid">' + list.slice(0, CP.show).map(p => { const lvc = CPLV[p.level] || CPLV['Chưa có dữ liệu'];
+      return '<div class="v-card v-seg" style="border-top:4px solid ' + (p.index == null ? '#C9D3E3' : vCol(p.index)) + '"><div style="display:flex;justify-content:space-between;gap:10px"><div style="min-width:0"><b style="font-size:14.5px">' + esc(p.name || p.code) + '</b><div class="small">' + esc(p.code) + ' · ' + esc(p.audience) + '</div><div class="small">' + esc(p.manager) + ' · ' + esc(p.province) + '</div></div>' +
+        '<div style="text-align:right;flex:0 0 auto"><div class="v-kv" style="color:' + (p.index == null ? '#8A97AD' : vCol(p.index)) + '">' + (p.index == null ? '–' : p.index + '%') + '</div><div class="small">' + p.tests + ' bài' + (p.sales ? ' · 🛒 ' + p.sales.avg3 + '%' : '') + '</div></div></div>' +
+        '<div style="margin-top:6px">' + dmPill(p.level, lvc) + '</div>' +
+        (p.areas.filter(a => !a.offScope).length ? '<div style="margin-top:10px">' + vBars(p.areas.filter(a => !a.offScope).map(a => ({ name: a.name, v: a.pct, sub: a.n + ' câu · ' + a.conf })), {}) + '</div>' : '') +
+        '<div class="small" style="margin-top:8px">' + p.rules.notes.map(esc).join(' ') + '</div>' +
+        '<div class="v-plan"><div><span>✅</span><div><b>Đề xuất</b>' + p.rules.actions.map(esc).join('<br>') + '</div></div>' + (p.rules.recs.length ? '<div><span>📚</span><div><b>Học liệu gợi ý</b>' + p.rules.recs.map(x => esc(x.title)).join('<br>') + '</div></div>' : '') + '</div>' +
+        dmAiHtml(CP.ai.person[p.code]) + '<div style="margin-top:10px;text-align:right"><button class="btn sm" type="button" onclick="cdAi(\'person\',\'' + esc(p.code).replace(/'/g, '') + '\')">✨ AI nhận định người này</button></div></div>'; }).join('') + '</div>' +
+    (list.length > CP.show ? '<div style="text-align:center;margin-top:12px"><button class="btn sm" type="button" onclick="CP.show+=30;cdRender()">Xem thêm (' + (list.length - CP.show) + ' người)</button></div>' : '');
+}
+function cdRender(){
+  if (!CP.d) return; const T = [['audiences','Theo đối tượng'],['managers','Theo quản lí'],['provinces','Theo tỉnh'],['segments','Theo ngành'],['people','Từng người']];
+  $('cdBody').innerHTML = '<div class="dm-tabs" role="tablist">' + T.map(t => '<button type="button" role="tab" aria-selected="' + (CP.tab === t[0]) + '" onclick="cdTab(\'' + t[0] + '\')">' + t[1] + '</button>').join('') + '</div>' + (CP.tab === 'people' ? cdPeople() : cdGroups(CP.tab));
+}
+async function cdAi(kind, key){
+  const store = CP.ai[kind];
+  if (kind === 'person') store[key] = { loading:true }; else CP.d[kind].forEach(g => { if (g.tested >= 3) store[g.name] = { loading:true }; });
+  cdRender();
+  const { j } = await api('POST', '/api/kt-admin', { op:'hrCompetencyAi', kind, key });
+  if (!j.ok){ Object.keys(store).forEach(k => { if (store[k].loading) store[k] = { error: j.error || 'AI lỗi.' }; }); cdRender(); return; }
+  Object.keys(store).forEach(k => { if (store[k].loading) delete store[k]; }); j.items.forEach(x => { store[x.key] = x; }); cdRender();
+}
+function cdCsv(){
+  const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"', A = CP.ai.person, AR = CP.d.areas;
+  const head = ['Mã NV','Họ tên','Đối tượng','Quản lí','Tỉnh','Ngành','Số bài','Chỉ số năng lực','Mức'].concat(AR.map(a => a.name)).concat(['Chỉ tiêu bán TB 3 tháng','Nhận định','Đề xuất','Học liệu gợi ý','Nhận định AI']);
+  const rows = CP.d.people.map(p => [p.code, p.name, p.audience, p.manager, p.province, p.segmentLabel, p.tests, p.index, p.level].concat(AR.map(a => { const x = p.areas.find(z => z.id === a.id); return x && !x.offScope ? x.pct : ''; })).concat([p.sales ? p.sales.avg3 : '', p.rules.notes.join(' '), p.rules.actions.join(' '), p.rules.recs.map(r => r.title).join('; '), A[p.code] && A[p.code].nhan_dinh ? A[p.code].nhan_dinh + ' Đề xuất: ' + A[p.code].de_xuat.join('; ') : '']));
+  const csv = '\ufeff' + [head].concat(rows).map(r => r.map(q).join(',')).join('\r\n'), a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' })); a.download = 'ho-so-nang-luc-toan-he-thong.csv'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+window.cpRun = cpRun; window.cpAiSys = cpAiSys; window.cdTab = cdTab; window.CDF = CDF; window.cdAi = cdAi; window.cdCsv = cdCsv; window.cdRender = cdRender; window.CP = CP;
 window.hrDiscRun = hrDiscRun; window.hrMissingCsv = hrMissingCsv; window.hrAnRun = hrAnRun; window.hrAiRun = hrAiRun;
 })();
 </script>
