@@ -5846,7 +5846,7 @@ function taRow(a){
     '<input type="text" placeholder="Quản lí (tuỳ chọn)" value="' + esc(a.manager || '') + '"><input type="text" placeholder="Chức danh (tuỳ chọn)" value="' + esc(a.title || '') + '"><input type="text" placeholder="SĐT (tuỳ chọn)" value="' + esc(a.phone || '') + '">' +
     '<select aria-label="Ngành"><option value="both"' + (a.segment === 'both' || !a.segment ? ' selected' : '') + '>Cả hai ngành</option><option value="gia_dung"' + (a.segment === 'gia_dung' ? ' selected' : '') + '>Gia dụng</option><option value="may_loc"' + (a.segment === 'may_loc' ? ' selected' : '') + '>Máy lọc nước</option></select>' +
     '<select aria-label="Miền"><option value=""' + (!a.region ? ' selected' : '') + '>Miền: tự chọn</option><option value="bac"' + (a.region === 'bac' ? ' selected' : '') + '>Miền Bắc</option><option value="nam"' + (a.region === 'nam' ? ' selected' : '') + '>Miền Nam</option></select>' +
-    '<span class="ta-act"><label class="ta-face" style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;white-space:nowrap;margin-right:4px" title="Chỉ áp dụng cho tài khoản thử nghiệm: vào làm bài không cần chụp / quét khuôn mặt. Bài làm vẫn không tính vào kết quả."><input type="checkbox"' + (a.skipFace ? ' checked' : '') + '> Bỏ qua quét mặt</label>' + (a.code ? '<button class="btn ghost sm" type="button" onclick="openCandProfile(\'' + esc(a.code) + '\')" title="Xem hồ sơ học tập: kết quả các bài đã làm, chẩn đoán, ảnh" aria-label="Hồ sơ học tập">📋</button>' : '') + (a.code ? '<button class="btn ghost sm" type="button" onclick="taToCand(\'' + esc(a.code) + '\')" title="Bỏ tích thử nghiệm: trả về danh sách thí sinh thường" aria-label="Trả về thí sinh thường">↩</button>' : '') +
+    '<span class="ta-act">' + (a.code ? '<button class="btn ghost sm" type="button" onclick="openCandProfile(\'' + esc(a.code) + '\')" title="Xem hồ sơ học tập: kết quả các bài đã làm, chẩn đoán, ảnh" aria-label="Hồ sơ học tập">📋</button>' : '') + (a.code ? '<button class="btn ghost sm" type="button" onclick="taToCand(\'' + esc(a.code) + '\')" title="Bỏ tích thử nghiệm: trả về danh sách thí sinh thường" aria-label="Trả về thí sinh thường">↩</button>' : '') +
     '<button class="btn dghost sm" type="button" onclick="this.closest(\'.ta-row\').remove()" title="Xoá dòng (nếu vốn là thí sinh thật thì được trả về danh sách thí sinh)" aria-label="Xoá dòng">✕</button></span></div>';
 }
 function taRender(list){
@@ -5866,7 +5866,7 @@ async function loadTestAccounts(){
 async function taSave(){
   const accounts = Array.from(document.querySelectorAll('#taRows .ta-row')).map(r => {
     const i = r.querySelectorAll('input'), sel = r.querySelectorAll('select');
-    return { code: i[0].value.trim(), email: i[1].value.trim(), name: i[2].value.trim(), manager: i[3].value.trim(), title: i[4].value.trim(), phone: i[5].value.trim(), segment: sel[0].value, region: sel[1].value, skipFace: !!(r.querySelector('.ta-face input') || {}).checked };
+    return { code: i[0].value.trim(), email: i[1].value.trim(), name: i[2].value.trim(), manager: i[3].value.trim(), title: i[4].value.trim(), phone: i[5].value.trim(), segment: sel[0].value, region: sel[1].value };
   }).filter(a => a.code || a.email);
   const { j } = await api('POST', '/api/kt-admin', { op: 'saveTestAccounts', accounts });
   if (!j.ok){ msg('taMsg', j.error || 'Không lưu được.', 'err'); return; }

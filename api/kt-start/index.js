@@ -93,7 +93,8 @@ module.exports = async function (context, req) {
       var faceCheck = null;
       const newId = quiz.genId();
       let idr = { rec: null, faceDesc: null, status: null, block: false };
-      const skipFace = !!(found.test && found.skipFace); // chỉ tài khoản thử nghiệm do quản trị bật; thí sinh thật không bao giờ được bỏ qua
+      // Chỉ khi: tài khoản thử nghiệm + trình duyệt quản trị viên đã đăng nhập + người đó chủ động chọn bỏ qua ở màn xác nhận. Thí sinh thật không bao giờ bỏ qua được.
+      const skipFace = !!(found.test && b.testSkip && b.testSkip.face === true && require("../_lib/testrole").isAdminReq(req));
       if (skipFace) {
         faceCheck = { status: "test_skip", by: "testaccount", at: now0() };
       } else {

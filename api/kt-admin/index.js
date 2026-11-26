@@ -1156,7 +1156,7 @@ const handler = async function (context, req) {
         // Giữ lại số điện thoại / tỉnh / bài thử gần nhất đã có; đổi email thì vẫn giữ (cùng một tài khoản theo mã).
         out.push(Object.assign({}, old, { code, email, name: String(r.name || "").trim().slice(0, 80) || "Tài khoản thử nghiệm",
           manager: String(r.manager || "").trim().slice(0, 80), title: quiz.normTitle(r.title) || "", phone: String(r.phone || "").trim().slice(0, 30),
-          segment: quiz.normSegment(r.segment), region: quiz.normRegion(r.region) || old.region || "", skipFace: r.skipFace === true }));
+          segment: quiz.normSegment(r.segment), region: quiz.normRegion(r.region) || old.region || ""}));
       }
       await quiz.saveTestAccounts(out);
       // Dòng bị xoá mà vốn là thí sinh thật (đã tích "Tài khoản thử nghiệm") thì trả về danh sách thí sinh, không để mất người
