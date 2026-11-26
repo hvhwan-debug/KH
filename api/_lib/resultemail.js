@@ -106,7 +106,7 @@ function build(attempt, settings, advice, opts) {
     td("font-size:15px;line-height:20px;font-weight:bold;color:" + NV + ";text-align:left;", "Hệ thống kiểm tra<br>đánh giá trực tuyến") + "</tr>", 'align="center"', "margin:0 auto;"), "pad", "padding-top:24px;text-align:center;");
 
   // ---- 2. Lời chào + gạch nhấn
-  const hello = row('<div style="font-family:' + TF + ";font-size:24px;line-height:30px;font-weight:800;color:" + NV + ';">Xin chào ' + esc(m.greet) + ",</div>" +
+  const hello = row('<div style="font-family:' + TF + ";font-size:19px;line-height:26px;font-weight:800;color:" + NV + ';">Xin chào ' + esc(m.greet) + ",</div>" +
     '<div style="font-family:' + TF + ";font-size:15px;line-height:22px;color:" + GR + ';padding-top:4px;">Đây là kết quả bài kiểm tra của ' + m.me + '.</div>' +
     '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;"><tr><td width="46" height="4" bgcolor="' + BL + '" style="width:46px;height:4px;line-height:4px;font-size:0;background:' + BL + ';border-radius:3px;">&nbsp;</td></tr></table>', "pad", "padding-top:26px;padding-bottom:20px;");
 

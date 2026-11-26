@@ -34,7 +34,7 @@ function cardHtml(name) {
     // Thân thư trên ảnh nền
     '<tr><td background="' + img("email-bg-birthday.jpg") + '" bgcolor="#E6F1FF" valign="top" style="background-color:#E6F1FF;background-image:url(' + img("email-bg-birthday.jpg") + ');background-size:cover;background-position:center bottom;background-repeat:no-repeat;border-radius:0 0 20px 20px;padding:26px 0 50px">' +
     '<div style="text-align:center"><img src="' + img("bd-title.png") + '" width="380" alt="Chúc mừng Sinh nhật!" style="border:0;max-width:92%;width:380px;height:auto"></div>' +
-    '<div style="font-family:' + F + ';font-size:20px;color:#111C33;padding:16px 32px 14px">Xin chào <span style="color:#1D6FEA;font-weight:800">' + esc(who) + ',</span></div>' +
+    '<div style="font-family:' + F + ';font-size:19px;color:#111C33;padding:16px 32px 14px">Xin chào <span style="color:#1D6FEA;font-weight:800">' + esc(who) + ',</span></div>' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
     '<td valign="top" style="padding:0 6px 0 32px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
     para("bd-ic1.png", "Mỗi tuổi mới là một chương mới của hành trình trưởng thành. Mỗi trải nghiệm là một bài học, mỗi thử thách là một cơ hội để khám phá những giới hạn mới của bản thân.") +
