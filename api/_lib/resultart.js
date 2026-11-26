@@ -27,7 +27,8 @@ async function card(attempt, settings) {
   const probe = lib.createCanvas(10, 10).getContext("2d");
   // tên đề trên dải xanh: tối đa 2 dòng
   probe.font = F(800, 18); const tLines = wrap(probe, m.t.main, W - 40).slice(0, 2);
-  const bandH = 30 + tLines.length * 24, bodyH = 176, timesH = 58 + 44, gap = 16, tipH = lead1 ? 84 : 0;
+  const aw = E.awayInfo(attempt), awayLine = aw.n > 0 && aw.ms > 0;
+  const bandH = 30 + tLines.length * 24, bodyH = 176, timesH = 58 + 44 + (awayLine ? 22 : 0), gap = 16, tipH = lead1 ? 84 : 0;
   const H = bandH + bodyH + timesH + (lead1 ? gap + tipH : 0) + 2;
   const cv = lib.createCanvas(W * S, H * S), c = cv.getContext("2d"); c.scale(S, S); c.lineCap = "round"; c.lineJoin = "round";
   c.textBaseline = "alphabetic"; c.textAlign = "left";
@@ -76,14 +77,15 @@ async function card(attempt, settings) {
     if (i < cells.length - 1) { c.fillStyle = "#D7E4F8"; c.fillRect(x0 + cw, ty - 2, 1, 36); }
   }
   // số lần thoát khỏi màn hình khi làm bài (ghi nhận lúc thí sinh rời tab / chuyển ứng dụng rồi quay lại)
-  const leaves = Math.max(0, Math.round(Number(attempt.flags && attempt.flags.blur) || 0)), warnL = leaves >= 3, ly = ty + 44;
-  c.save(); rr(c, 14, ly - 6, W - 28, 38, 14); c.fillStyle = warnL ? "#FFF4E0" : "#F0F6FF"; c.fill(); c.restore();
+  const leaves = aw.n, warnL = leaves >= 3, ly = ty + 44;
+  c.save(); rr(c, 14, ly - 6, W - 28, 38 + (awayLine ? 22 : 0), 14); c.fillStyle = warnL ? "#FFF4E0" : "#F0F6FF"; c.fill(); c.restore();
   const lcol = warnL ? "#B45309" : BL, lparts = [{ t: "Số lần thoát khỏi màn hình khi làm bài: ", f: F(400, 14), c: GR }, { t: leaves + " lần", f: F(800, 14), c: lcol }];
   const lw = runsW(c, lparts), lx = 14 + (W - 28 - (26 + lw)) / 2;
   c.save(); c.strokeStyle = lcol; c.lineWidth = 1.8; c.beginPath(); c.moveTo(lx + 1, ly + 14); c.quadraticCurveTo(lx + 11, ly + 3, lx + 21, ly + 14); c.quadraticCurveTo(lx + 11, ly + 25, lx + 1, ly + 14); c.stroke();
   c.beginPath(); c.arc(lx + 11, ly + 14, 3.2, 0, Math.PI * 2); c.stroke();
   if (leaves > 0) { c.beginPath(); c.moveTo(lx + 3, ly + 24); c.lineTo(lx + 19, ly + 4); c.stroke(); } c.restore();
   runs(c, lx + 28, ly + 19, lparts);
+  if (awayLine) { const sp = [{ t: "Tổng thời gian rời khỏi màn hình: ", f: F(400, 13), c: GR }, { t: E.secsText(aw.ms), f: F(700, 13), c: warnL ? "#B45309" : NV }]; runs(c, 14 + (W - 28 - runsW(c, sp)) / 2, ly + 38, sp); }
   // hộp nhận xét theo đạt / chưa đạt
   if (lead1) {
     const by = cardH + gap;

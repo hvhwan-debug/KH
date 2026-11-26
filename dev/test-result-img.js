@@ -42,5 +42,14 @@ const call = async (q) => { const ctx = { log: Object.assign(() => {}, { error: 
   ok(/Số lần thoát khỏi màn hình khi làm bài/.test(m3.html) && />2 lần</.test(m3.html) && /thoát khỏi màn hình khi làm bài: 2 lần/.test(m3.text), "thẻ tĩnh và bản chữ cũng ghi số lần thoát khỏi màn hình");
   const m4 = build(Object.assign({}, at, { flags: undefined }), { examTitle: "Kiểm tra định kì" }, null, {});
   ok(/>0 lần</.test(m4.html), "bài không có dữ liệu cờ: ghi 0 lần, không lỗi");
+  // tổng thời gian rời khỏi màn hình (cộng từ nhật ký sự kiện)
+  const evs = [{ k: "tab", t: now - 500000, ms: 28000 }, { k: "tab", t: now - 400000, ms: 54000 }, { k: "blur", t: now - 300000, ms: 22000 }, { k: "net", t: now - 200000, ms: 99000 }];
+  const m5 = build(Object.assign({}, at, { flags: { blur: 3 }, events: evs }), { examTitle: "Kiểm tra định kì" }, null, {});
+  ok(/Tổng thời gian rời khỏi màn hình:[^<]*<b[^>]*>1 phút 44 giây</.test(m5.html) && /tổng thời gian rời: 1 phút 44 giây/.test(m5.text), "tổng thời gian rời = tab + blur (28+54+22 = 104 giây), không tính mất mạng");
+  const m6 = build(Object.assign({}, at, { flags: { blur: 0 }, events: evs }), { examTitle: "Kiểm tra định kì" }, null, {});
+  ok(m6.html.indexOf("Tổng thời gian rời") < 0, "0 lần: không hiện dòng tổng thời gian");
+  at.flags = { blur: 3 }; at.events = evs; await quiz.putAttempt(at); r = await call({ a: "att1", s }); const hAw = crypto.createHash("md5").update(r.body).digest("hex");
+  at.events = []; await quiz.putAttempt(at); r = await call({ a: "att1", s }); const hNo = crypto.createHash("md5").update(r.body).digest("hex");
+  ok(hAw !== hNo, "ảnh sống đổi theo tổng thời gian rời");
   console.log("\n" + pass + " pass, " + fail + " fail"); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

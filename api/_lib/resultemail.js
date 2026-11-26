@@ -78,6 +78,13 @@ const K = { navy: "#0F2A5C", ink: "#1B2F55", body: "#3A4C6E", muted: "#5D6F8E", 
 const lc1 = (s) => { const v = String(s || ""), w = v.split(/\s+/)[0] || ""; return w.length > 1 && w === w.toLocaleUpperCase("vi-VN") ? v : v.charAt(0).toLocaleLowerCase("vi-VN") + v.slice(1); };
 // Lời khuyên (advice.js) viết sẵn với "bạn": đổi theo cách xưng hô của thư, giữ nguyên "bạn bè"
 const pron = (txt, m) => String(txt == null ? "" : txt).replace(/(?<![\p{L}])([Bb])ạn(?![\p{L}])(?! bè)/gu, (x, c) => (c === "B" ? m.Me : m.me));
+// Số lần và tổng thời gian rời khỏi màn hình khi làm bài: số lần từ cờ blur; thời gian cộng từ nhật ký sự kiện (chuyển tab / thu nhỏ / sang cửa sổ khác)
+function awayInfo(attempt) {
+  const n = Math.max(0, Math.round(Number(attempt && attempt.flags && attempt.flags.blur) || 0));
+  const ms = (attempt && Array.isArray(attempt.events) ? attempt.events : []).filter((e) => e && (e.k === "tab" || e.k === "min" || e.k === "blur")).reduce((a, e) => a + (Number(e.ms) || 0), 0);
+  return { n, ms };
+}
+function secsText(ms) { const t = Math.max(1, Math.round(ms / 1000)), m = Math.floor(t / 60), r = t % 60; return m ? m + " phút " + (r < 10 ? "0" : "") + r + " giây" : t + " giây"; }
 // Hai dòng nhận xét theo kết quả đạt / chưa đạt (dùng cho cả thư tĩnh và ảnh kết quả "sống" của resultart.js)
 function leads(m, pass) {
   const lead1 = m.ps === false ? "Kết quả chưa đạt yêu cầu" + (pass ? " (" + pass + "%)" : "") + "." : m.ps === true ? "Chúc mừng " + m.me + " đã đạt yêu cầu" + (pass ? " (" + pass + "%)" : "") + "." : "";
@@ -127,7 +134,7 @@ function build(attempt, settings, advice, opts) {
     '<div style="white-space:nowrap;"><span class="big-score" style="font-size:42px;line-height:48px;font-weight:800;color:' + BL + ';">' + esc(score) + "/" + esc(total) + '</span><span style="font-size:16px;font-weight:700;color:' + NV + ';"> câu đúng</span></div>' +
     '<div style="font-size:15px;line-height:22px;color:' + GR + ';padding-top:2px;">Tỉ lệ đúng: <b style="color:' + BL + ';">' + esc(attempt.pct) + "%</b></div>" +
     '<div style="padding-top:12px;">' + statusPill + "</div></td></tr></table>";
-  const leaves = Math.max(0, Math.round(Number(attempt.flags && attempt.flags.blur) || 0));
+  const away = awayInfo(attempt), leaves = away.n;
   const tm = m.when.split(" "), tmT = (tm[0] || "").replace(/:\d{2}$/, ""), tmD = tm[1] || "";
   const ic = (k, w) => (art[k] ? '<td width="' + (w + 8) + '" valign="middle" style="width:' + (w + 8) + 'px;padding-right:8px;">' + img(k, w, w, "") + "</td>" : "");
   const cell = (k, inner, last) => '<td valign="middle" align="center" style="padding:11px 8px;' + (last ? "" : "border-right:1px solid #D7E4F8;") + 'font-family:' + TF + ';">' + T("<tr>" + ic(k, 22) + td("font-size:14px;line-height:20px;color:" + GR + ";white-space:nowrap;", inner, 'valign="middle"') + "</tr>", 'align="center"') + "</td>";
@@ -135,7 +142,7 @@ function build(attempt, settings, advice, opts) {
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F0F6FF" style="background:#F0F6FF;border-radius:14px;border-collapse:separate;"><tr>' +
     (m.dur != null ? cell("ic-clock", "Làm bài trong: <b style=\"color:" + BL + '">' + esc(clock(m.dur)) + "</b>", false) : "") +
     cell("ic-cal", "Nộp lúc: <b style=\"color:" + BL + '">' + esc(tmT) + "</b> <b style=\"color:" + NV + '">- ' + esc(tmD) + "</b>", true) + "</tr>" +
-    '<tr><td colspan="2" align="center" style="padding:9px 10px 11px;border-top:1px solid #D7E4F8;font-family:' + TF + ';font-size:14px;line-height:20px;color:' + GR + ';">Số lần thoát khỏi màn hình khi làm bài: <b style="color:' + (leaves >= 3 ? "#B45309" : BL) + ';">' + leaves + ' lần</b></td></tr></table></td></tr></table>';
+    '<tr><td colspan="2" align="center" style="padding:9px 10px 11px;border-top:1px solid #D7E4F8;font-family:' + TF + ';font-size:14px;line-height:20px;color:' + GR + ';">Số lần thoát khỏi màn hình khi làm bài: <b style="color:' + (leaves >= 3 ? "#B45309" : BL) + ';">' + leaves + ' lần</b>' + (leaves > 0 && away.ms > 0 ? '<br><span style="font-size:13px;">Tổng thời gian rời khỏi màn hình: <b style="color:' + NV + ';">' + secsText(away.ms) + '</b></span>' : '') + '</td></tr></table></td></tr></table>';
   const resultCard = row(T("<tr>" + td("padding:0;", band + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="background:#FFFFFF;"><tr><td>' + body + times + "</td></tr></table>") + "</tr>",
     'width="100%" bgcolor="#FFFFFF"', "background:#FFFFFF;border:1px solid #DCE8FA;border-radius:20px;border-collapse:separate;overflow:hidden;box-shadow:0 10px 28px rgba(31,102,224,.13);"));
 
@@ -211,7 +218,8 @@ function textOf(attempt, settings, m, cardNote) {
   L.push("- Kết quả: " + (m.ps === null ? "ĐÃ HOÀN THÀNH" : m.ps ? "ĐẠT" : "CHƯA ĐẠT") + " · " + (attempt.score || 0) + "/" + m.total + " câu đúng (" + attempt.pct + "%)");
   if (compliance != null) L.push("- " + (t.practice ? "Điểm tuân thủ (nếu thi thật): " : "Điểm tuân thủ: ") + compliance + " điểm");
   L.push("- " + (m.dur != null ? "Làm bài trong " + clock(m.dur) + " · " : "") + "Nộp lúc " + m.whenShort);
-  L.push("- Số lần thoát khỏi màn hình khi làm bài: " + Math.max(0, Math.round(Number(attempt.flags && attempt.flags.blur) || 0)) + " lần");
+  const aw = awayInfo(attempt);
+  L.push("- Số lần thoát khỏi màn hình khi làm bài: " + aw.n + " lần" + (aw.n > 0 && aw.ms > 0 ? " (tổng thời gian rời: " + secsText(aw.ms) + ")" : ""));
   if (m.ps === false) { L.push("", "Kết quả chưa đạt yêu cầu" + (pass ? " (" + pass + "%)" : "") + ". " + m.Me + " nên ôn lại học liệu rồi làm lại."); if ((a.actions || [])[0]) L.push("Nên làm: " + pron(a.actions[0], m)); }
   else if (m.ps === true) L.push("", "Chúc mừng " + m.me + " đã đạt yêu cầu" + (pass ? " (" + pass + "%)" : "") + ". Hãy tiếp tục phát huy!");
   L.push("", m.ps === true ? "Xem kết quả chi tiết: " + m.url : "Học liệu ôn tập: " + base + "/kiemtra/hoclieu.html", m.ps === true ? "" : "Xem kết quả chi tiết: " + m.url);
@@ -226,4 +234,4 @@ function artSpec(attempt, settings) {
   return { comp: !settings.practice && [0, 10, 15, 20].indexOf(cp) >= 0 ? cp : null, pct: p, state: settings.practice ? null : ps, color: ps === false ? K.red : ps === true ? K.green : p >= 80 ? K.green : p >= 60 ? K.amber : K.red };
 }
 
-module.exports = { build, model, esc, artSpec, leads, clock };
+module.exports = { build, model, esc, artSpec, leads, clock, awayInfo, secsText };
