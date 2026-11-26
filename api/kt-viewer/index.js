@@ -319,23 +319,11 @@ const handler = async function (context, req) {
     // không tính "chưa làm", không vào thi; giống quản trị viên đánh dấu ở kt-admin op=setEmployment); left=false -> còn làm.
     // Không xoá hồ sơ / kết quả cũ. Mỗi lần bấm đều ghi lại người xác nhận và thời điểm (work) để biết đã rà soát tới đâu.
     if (op === "setEmployment") {
-      if (b.clear === true) { // hoàn tác về "chưa xác nhận" (vẫn ghi nhật ký)
-        const c = all[i], next = Object.assign({}, c); delete next.left; delete next.leftAt; delete next.work;
-        next.audit = (c.audit || []).concat([Object.assign({ at: Date.now(), kind: "edit", changes: { work: { from: c.left ? "đã nghỉ việc" : "đang làm việc", to: "chưa xác nhận (hoàn tác)" } } }, who)]).slice(-AUDIT_MAX);
-        all[i] = next; await quiz.saveCandidates(all);
-        return reply(context, 200, { ok: true, employee: empView(next), changed: !!c.left });
-      }
-      if (typeof b.left !== "boolean") return reply(context, 400, { ok: false, error: "Yêu cầu không hợp lệ." });
-      const c = all[i], left = b.left, now = Date.now();
-      const next = Object.assign({}, c, { work: Object.assign({ status: left ? "left" : "active", at: now }, who) });
-      if (left) { next.left = true; next.leftAt = c.left ? (c.leftAt || now) : now; } else { delete next.left; delete next.leftAt; }
-      const entry = Object.assign({ at: now, kind: "edit" }, who);
-      if (!!c.left !== left) entry.changes = { work: { from: c.left ? "đã nghỉ việc" : "đang làm việc", to: left ? "đã nghỉ việc" : "đang làm việc" } };
-      else entry.kind = "confirm";
-      next.audit = (c.audit || []).concat([entry]).slice(-AUDIT_MAX);
+      if (b.clear !== true && typeof b.left !== "boolean") return reply(context, 400, { ok: false, error: "Yêu cầu không hợp lệ." });
+      const { next, changed } = require("../_lib/worklink").applyEmployment(all[i], b.clear === true ? { clear: true } : { left: b.left }, who);
       all[i] = next;
       await quiz.saveCandidates(all);
-      return reply(context, 200, { ok: true, employee: empView(next), changed: !!c.left !== left });
+      return reply(context, 200, { ok: true, employee: empView(next), changed });
     }
 
     if (op === "confirmEmployee") {

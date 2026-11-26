@@ -76,6 +76,23 @@ input{font:inherit;color:inherit}
 .empty b{display:block;color:var(--ok);font-size:17px;margin-bottom:4px}
 .bulk{margin-top:12px;width:100%;border:1.5px dashed var(--ok);background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:12px;font-weight:700}
 .ro{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:13.5px;margin-top:10px}
+.exp{display:inline-block;margin-top:6px;font-size:12.5px;font-weight:600;color:var(--brand-deep);background:var(--brand-soft);border-radius:99px;padding:3px 10px}
+.exp.soon{color:var(--warn);background:var(--warn-soft)}
+.adm{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:0 14px}
+.adm summary{cursor:pointer;font-weight:700;padding:12px 0;list-style:none;display:flex;align-items:center;gap:8px}
+.adm summary::-webkit-details-marker{display:none}
+.adm summary::after{content:'';margin-left:auto;width:7px;height:7px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg)}
+.adm[open] summary::after{transform:rotate(-135deg)}
+.adm .frm{display:grid;grid-template-columns:1fr 150px;gap:8px;margin-bottom:8px}
+.adm select,.adm input[type=date]{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px;background:#fff;font:inherit;color:inherit}
+.adm .lbl{font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:3px}
+.lk{border-top:1px solid var(--line);padding:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.lk .nm{flex:1;min-width:150px}.lk .nm b{display:block}.lk .nm small{color:var(--muted);font-size:12.5px}
+.lk.off{opacity:.55}
+.sbtn{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:7px 11px;font-weight:700;font-size:13px;color:var(--ink)}
+.sbtn.pri{background:var(--brand);border-color:var(--brand);color:#fff}.sbtn.del{color:var(--bad)}
+.newlk{background:var(--ok-soft);border-radius:10px;padding:10px 12px;margin:4px 0 10px;font-size:13.5px;word-break:break-all}
+@media(max-width:480px){.adm .frm{grid-template-columns:1fr}}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(140%);background:var(--ink);color:#fff;border-radius:12px;padding:11px 14px;
   display:flex;gap:14px;align-items:center;font-size:14px;width:max-content;max-width:calc(100% - 24px);transition:transform .25s ease;z-index:20;box-shadow:0 8px 24px rgba(10,37,82,.25)}
 .toast.on{transform:translateX(-50%) translateY(0)}
@@ -106,12 +123,29 @@ input{font:inherit;color:inherit}
     <button class="btn block" type="button" id="deniedOut">Đăng nhập tài khoản khác</button>
   </section>
 
+  <section class="card auth hide" id="expiredScreen">
+    <img src="/kiemtra/logo.png" alt="Hệ thống kiểm tra đánh giá trực tuyến">
+    <h1>Link không dùng được</h1>
+    <p class="lead" id="expiredMsg"></p>
+  </section>
+
   <main class="hide" id="app">
     <div class="top">
       <div class="who">
         <h1>Xác nhận nhân sự<small id="meName"></small></h1>
         <button class="out" type="button" id="logoutBtn">Đăng xuất</button>
       </div>
+      <span class="exp hide" id="expTag"></span>
+      <details class="adm hide" id="admBox">
+        <summary>Tạo link cho quản lí</summary>
+        <div class="frm">
+          <div><div class="lbl">Quản lí</div><select id="lkMgr"></select></div>
+          <div><div class="lbl">Dùng được đến hết ngày</div><input type="date" id="lkUntil"></div>
+        </div>
+        <button class="sbtn pri" type="button" id="lkCreate" style="margin-bottom:10px">Tạo link</button>
+        <div id="lkNew"></div>
+        <div id="lkList"></div>
+      </details>
       <div class="prog">
         <div class="line"><b id="pDone">0</b><span class="of" id="pOf">/ 0 người đã xác nhận tháng này</span>
           <span class="stat">Còn làm <i id="pAct" style="color:var(--ok)">0</i> · Đã nghỉ <i id="pLeft" style="color:var(--bad)">0</i></span></div>
@@ -136,14 +170,17 @@ input{font:inherit;color:inherit}
 'use strict';
 var $ = function(id){ return document.getElementById(id); };
 var EMP = [], CAN = false, FILTER = 'todo', NOW_OFF = 0, MULTI = false, BUSY = {};
+/* Link theo quản lí: /kiemtra/xacnhan.html#t=MÃ (mã nằm sau dấu # nên không gửi lên máy chủ trong địa chỉ trang) */
+var TOKEN = (function(){ var m = /[#&]t=([A-Za-z0-9_-]{30,40})/.exec(location.hash || ''); return m ? m[1] : ''; })();
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
 function msg(id, t, kind){ var el = $(id); el.className = t ? 'msg ' + (kind || 'err') : ''; el.textContent = t || ''; }
 async function api(method, path, body){
-  var r = await fetch(path, { method: method, headers: { 'Content-Type':'application/json', 'X-Requested-With':'livotec' }, credentials:'same-origin', body: body ? JSON.stringify(body) : undefined });
+  var h = { 'Content-Type':'application/json', 'X-Requested-With':'livotec' }; if (TOKEN && path.indexOf('/api/kt-worklink') === 0) h['X-Link-Token'] = TOKEN;
+  var r = await fetch(path, { method: method, headers: h, credentials:'same-origin', body: body ? JSON.stringify(body) : undefined });
   var j = {}; try { j = await r.json(); } catch(e){}
   return { s: r.status, j: j };
 }
-function show(which){ ['loginScreen','deniedScreen','app'].forEach(function(id){ $(id).classList.toggle('hide', id !== which); }); }
+function show(which){ ['loginScreen','deniedScreen','expiredScreen','app'].forEach(function(id){ $(id).classList.toggle('hide', id !== which); }); }
 
 /* Giờ Việt Nam: xác nhận "còn làm" có hiệu lực trong tháng hiện tại; sang tháng mới cần bấm lại */
 function vnMonth(ms){ return new Date(ms + 7 * 3600 * 1000).toISOString().slice(0, 7); }
@@ -174,7 +211,21 @@ $('logoutBtn').addEventListener('click', logout);
 $('deniedOut').addEventListener('click', logout);
 
 /* ---------- Danh sách ---------- */
+async function bootLink(){
+  var r; try { r = await api('GET', '/api/kt-worklink'); } catch(e){ r = null; }
+  if (!r){ $('expiredMsg').textContent = 'Không kết nối được máy chủ, thử tải lại trang.'; show('expiredScreen'); return; }
+  if (!r.j.ok){ $('expiredMsg').textContent = r.j.error || 'Link không hợp lệ.'; show('expiredScreen'); return; }
+  EMP = r.j.employees || []; CAN = true; NOW_OFF = (r.j.serverNow || Date.now()) - Date.now(); MULTI = false;
+  $('meName').textContent = 'Nhân viên của ' + r.j.link.manager + ' · ' + EMP.length + ' người';
+  $('logoutBtn').classList.add('hide');
+  var left = r.j.link.exp - (Date.now() + NOW_OFF), tag = $('expTag');
+  tag.textContent = 'Link dùng được đến hết ngày ' + vnDate(r.j.link.exp) + (left < 2 * 86400000 ? ' (sắp hết hạn)' : '');
+  tag.classList.toggle('soon', left < 2 * 86400000); tag.classList.remove('hide');
+  if (!EMP.some(function(e){ return stateOf(e) === 'todo'; })) setFilter('all', true);
+  show('app'); render();
+}
 async function boot(){
+  if (TOKEN) return bootLink();
   var me; try { me = (await api('GET', '/api/auth/me')).j; } catch(e){ show('loginScreen'); msg('authMsg', 'Không kết nối được máy chủ, thử tải lại trang.'); return; }
   if (!me.loggedIn){ show('loginScreen'); return; }
   var r = await api('GET', '/api/kt-viewer?op=workStatus');
@@ -184,6 +235,7 @@ async function boot(){
   MULTI = new Set(EMP.map(function(e){ return String(e.manager || '').toLowerCase(); })).size > 1;
   $('meName').textContent = r.j.viewer.name + ' · ' + EMP.length + ' nhân viên';
   $('roNote').classList.toggle('hide', CAN);
+  if (r.j.viewer.isAdmin){ $('admBox').classList.remove('hide'); loadLinks(); }
   if (!EMP.some(function(e){ return stateOf(e) === 'todo'; })) setFilter('all', true);
   show('app'); render();
 }
@@ -241,8 +293,9 @@ async function setWork(e, left, withUndo, clear){
   BUSY[e.code] = 1;
   if (clear){ e.left = false; e.work = null; } else { e.left = left; e.work = { status: left ? 'left' : 'active', byName: 'Bạn', at: Date.now() + NOW_OFF }; }
   render();
-  var body = { op: 'setEmployment', code: e.code }; if (clear) body.clear = true; else body.left = left;
-  var r; try { r = await api('POST', '/api/kt-viewer', body); } catch(x){ r = null; }
+  var body = TOKEN ? { code: e.code } : { op: 'setEmployment', code: e.code }; if (clear) body.clear = true; else body.left = left;
+  var r; try { r = await api('POST', TOKEN ? '/api/kt-worklink' : '/api/kt-viewer', body); } catch(x){ r = null; }
+  if (r && r.s === 410){ $('expiredMsg').textContent = r.j.error; show('expiredScreen'); return false; }
   delete BUSY[e.code];
   if (!r || !r.j.ok){ Object.assign(e, prev); render(); toast((r && r.j.error) || 'Không lưu được, kiểm tra mạng rồi bấm lại.'); return false; }
   Object.assign(e, { left: r.j.employee.left, work: r.j.employee.work, leftAt: r.j.employee.left ? (prev.leftAt || Date.now()) : 0 }); render();
@@ -265,6 +318,49 @@ $('bulkBtn').addEventListener('click', async function(){
   }
   b.disabled = false; render();
   toast('Đã xác nhận ' + okN + ' người còn làm' + (okN < todo.length ? ', ' + (todo.length - okN) + ' người chưa lưu được' : ''));
+});
+
+/* ---------- Quản trị viên: tạo / thu hồi link theo quản lí ---------- */
+var LINKS = [];
+function dayStr(ms){ return new Date(ms + 7 * 3600 * 1000).toISOString().slice(0, 10); }
+function linkUrl(t){ return location.origin + '/kiemtra/xacnhan.html#t=' + t; }
+async function loadLinks(){
+  var r = await api('GET', '/api/kt-worklink?op=links'); if (!r.j.ok) return;
+  var now = Date.now() + NOW_OFF, sel = $('lkMgr'), cur = sel.value;
+  sel.innerHTML = r.j.managers.map(function(m){ return '<option value="' + esc(m.name) + '">' + esc(m.name) + ' (' + m.count + ' người)</option>'; }).join('');
+  if (cur) sel.value = cur;
+  var d = $('lkUntil'); d.min = dayStr(now); d.max = dayStr(now + (r.j.maxDays || 90) * 86400000); if (!d.value) d.value = dayStr(now + 7 * 86400000);
+  LINKS = r.j.links || []; renderLinks();
+}
+function renderLinks(){
+  var lab = { active: 'Đang dùng được', expired: 'Đã hết hạn', revoked: 'Đã thu hồi' };
+  $('lkList').innerHTML = LINKS.map(function(l){
+    return '<div class="lk' + (l.state === 'active' ? '' : ' off') + '"><div class="nm"><b>' + esc(l.manager) + '</b><small>' + lab[l.state] + ' · hết hạn ' + vnDate(l.exp) + '</small></div>' +
+      (l.state === 'active' ? '<button class="sbtn" type="button" data-copy="' + esc(l.token) + '">Sao chép link</button><button class="sbtn del" type="button" data-rev="' + esc(l.id) + '">Thu hồi</button>' : '') + '</div>';
+  }).join('') || '<p class="lead" style="margin:4px 0 12px">Chưa có link nào.</p>';
+}
+async function copyLink(t){
+  var u = linkUrl(t);
+  try { await navigator.clipboard.writeText(u); toast('Đã sao chép link, dán vào Zalo gửi quản lí.'); }
+  catch(e){ prompt('Sao chép link này:', u); }
+}
+$('lkCreate').addEventListener('click', async function(){
+  var b = this; b.disabled = true;
+  var r = await api('POST', '/api/kt-worklink', { op: 'create', manager: $('lkMgr').value, until: $('lkUntil').value });
+  b.disabled = false;
+  if (!r.j.ok){ toast(r.j.error || 'Không tạo được link.'); return; }
+  var l = r.j.link;
+  $('lkNew').innerHTML = '<div class="newlk"><b>Link cho ' + esc(l.manager) + '</b> (đến hết ngày ' + vnDate(l.exp) + ')<br>' + esc(linkUrl(l.token)) +
+    '<div style="margin-top:8px"><button class="sbtn pri" type="button" data-copy="' + esc(l.token) + '">Sao chép link</button></div></div>';
+  copyLink(l.token); loadLinks();
+});
+$('admBox').addEventListener('click', async function(ev){
+  var c = ev.target.closest('[data-copy]'); if (c){ copyLink(c.dataset.copy); return; }
+  var v = ev.target.closest('[data-rev]'); if (!v) return;
+  var l = LINKS.filter(function(x){ return x.id === v.dataset.rev; })[0];
+  if (!l || !confirm('Thu hồi link của ' + l.manager + '? Link sẽ ngừng dùng được ngay.')) return;
+  var r = await api('POST', '/api/kt-worklink', { op: 'revoke', id: l.id });
+  if (r.j.ok){ $('lkNew').innerHTML = ''; toast('Đã thu hồi link của ' + l.manager); loadLinks(); } else toast(r.j.error || 'Không thu hồi được.');
 });
 
 var tt = null;
