@@ -300,6 +300,10 @@ const handler = async function (context, req) {
         const a = H.analyze(await H.gather({ period: per }));
         return reply(context, 200, { ok: true, analysis: a, summary: H.aiSummary(a) });
       }
+      if (op === "hrDims") { // nhận định theo từng người / quản lí / tỉnh / ngành (luật minh bạch), chỉ quản trị viên
+        const rq = req.query || {}, per = typeof rq.period === "string" ? rq.period.slice(0, 40) : undefined;
+        return reply(context, 200, Object.assign({ ok: true }, await require("../_lib/hrdims").build({ period: per })));
+      }
       if (op === "hrDiscovery") { const D = require("../_lib/hrdiscovery"); return reply(context, 200, { ok: true, report: D.build(await D.load()) }); } // rà soát dữ liệu nhân sự: chỉ số tổng hợp, quản trị viên xem
       if (op === "changeRequests") return reply(context, 200, { ok: true, requests: (await require("../_lib/changereq").getAll()).filter((r) => r.status === "pending") });
       if (op === "notifyData") {
@@ -991,6 +995,10 @@ const handler = async function (context, req) {
     }
 
     // Gắn / cập nhật HỒ SƠ NHÂN SỰ cho người đã có trong danh sách (chỉ sửa trường profile, không đụng email, tên, chức danh...)
+    if (op === "hrDimsAi") { // nhận định bằng AI cho một người hoặc từng nhóm; máy chủ tự dựng dữ liệu, không nhận số liệu từ trình duyệt
+      const r = await require("../_lib/hrdims").ai({ kind: String(b.kind || ""), key: String(b.key || "").slice(0, 60), period: typeof b.period === "string" ? b.period.slice(0, 40) : undefined });
+      return reply(context, r.ok ? 200 : 502, r);
+    }
     if (op === "hrAi") { // khuyến nghị đào tạo bằng AI (giai đoạn 4): chỉ nhận bản tóm tắt tổng hợp ẩn danh, đã lọc lại ở máy chủ
       const r = await require("../_lib/hrai").report(b.summary);
       return reply(context, r.ok ? 200 : 502, r);
