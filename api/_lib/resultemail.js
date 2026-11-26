@@ -142,12 +142,22 @@ function build(attempt, settings, advice, opts) {
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F0F6FF" style="background:#F0F6FF;border-radius:14px;border-collapse:separate;"><tr>' +
     (m.dur != null ? cell("ic-clock", "Làm bài trong: <b style=\"color:" + BL + '">' + esc(clock(m.dur)) + "</b>", false) : "") +
     cell("ic-cal", "Nộp lúc: <b style=\"color:" + BL + '">' + esc(tmT) + "</b> <b style=\"color:" + NV + '">- ' + esc(tmD) + "</b>", true) + "</tr>" +
-    '<tr><td colspan="2" align="center" style="padding:9px 10px 11px;border-top:1px solid #D7E4F8;font-family:' + TF + ';font-size:14px;line-height:20px;color:' + GR + ';">Số lần thoát khỏi màn hình khi làm bài: <b style="color:' + (leaves >= 3 ? "#B45309" : BL) + ';">' + leaves + ' lần</b>' + (leaves > 0 && away.ms > 0 ? '<br><span style="font-size:13px;">Tổng thời gian rời khỏi màn hình: <b style="color:' + NV + ';">' + secsText(away.ms) + '</b></span>' : '') + '</td></tr></table></td></tr></table>';
+    '<tr><td colspan="2" align="center" style="padding:9px 10px 11px;border-top:1px solid #D7E4F8;font-family:' + TF + ';font-size:14px;line-height:20px;color:' + GR + ';">Số lần thoát khỏi màn hình khi làm bài: <b style="color:' + (leaves >= 3 ? "#B45309" : BL) + ';">' + leaves + ' lần</b></td></tr></table></td></tr></table>';
   const resultCard = row(T("<tr>" + td("padding:0;", band + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="background:#FFFFFF;"><tr><td>' + body + times + "</td></tr></table>") + "</tr>",
     'width="100%" bgcolor="#FFFFFF"', "background:#FFFFFF;border:1px solid #DCE8FA;border-radius:20px;border-collapse:separate;overflow:hidden;box-shadow:0 10px 28px rgba(31,102,224,.13);"));
 
   // Thẻ kết quả "sống" (api/result-img): ảnh vẽ lại từ dữ liệu mới nhất mỗi lần mở thư; alt là bản chụp lúc gửi. Không có opts.live thì dùng thẻ tĩnh như cũ.
-  const liveRow = opts.live ? row('<img src="' + esc(opts.live) + '" width="504" alt="' + esc(t.main + ": " + score + "/" + total + " câu đúng (" + attempt.pct + "%) · " + m.status) + '" style="display:block;width:100%;max-width:504px;height:auto;border:0;border-radius:20px;">') : "";
+  const liveBase = opts.live ? String(opts.live).replace(/\/api\/result-img.*$/, "") : "";
+  const diem10 = String(Math.round(Math.max(0, Math.min(100, Number(attempt.pct) || 0))) / 10).replace(".", ",");
+  const liveRow = opts.live ? '<tr><td class="lv" style="padding:0 10px;font-size:0;line-height:0;"><img src="' + esc(opts.live) + '" width="540" alt="' + esc("Kết quả " + diem10 + " / 10 · " + (m.ps === true ? "Đạt yêu cầu" : m.ps === false ? "Chưa đạt yêu cầu" : "Đã hoàn thành") + " · Số câu đúng " + score + " / " + total) + '" style="display:block;width:100%;max-width:540px;height:auto;border:0;"></td></tr>' : "";
+  // Mẫu "Kết quả bài kiểm tra" (khi có ảnh sống): ảnh đầu thư + lời chào + ảnh kết quả + lời cảm ơn + nút "Xem lại bài làm"
+  const headLive = opts.live ? '<tr><td style="padding:0;font-size:0;line-height:0;"><img src="' + esc(liveBase) + '/mail-assets/rs-header.jpg" width="560" alt="Kết quả bài kiểm tra" style="display:block;width:100%;max-width:560px;height:auto;border:0;"></td></tr>' : "";
+  const helloLive = opts.live ? row('<div style="font-family:' + TF + ";font-size:19px;line-height:26px;font-weight:800;color:" + NV + ';">Xin chào ' + esc(m.greet) + ",</div>" +
+    '<div style="font-family:' + TF + ";font-size:15.5px;line-height:24px;color:" + GR + ';padding-top:8px;">' + m.Me + ' đã hoàn thành bài kiểm tra <b style="color:' + BL + ';">\u201c' + esc(t.main) + '\u201d</b>.<br>Dưới đây là kết quả của ' + m.me + ":</div>", "pad", "padding-top:22px;padding-bottom:16px;") : "";
+  const thanksLive = opts.live ? gap(18) + row('<div style="font-family:' + TF + ";font-size:14.5px;line-height:22px;color:" + K.ink + ';text-align:center;">Cảm ơn ' + m.me + ' đã tham gia bài kiểm tra.<br>Hãy tiếp tục cập nhật kiến thức và tham gia các chương trình đào tạo tiếp theo.</div>', "pad", "text-align:center;") : "";
+  const ctaLive = opts.live ? gap(18) + '<tr><td align="center" class="pad" style="padding:0 28px;">' +
+    T("<tr>" + '<td align="center" bgcolor="#1F66E0" style="background:#1F66E0;background-image:linear-gradient(90deg,#2F8CF8,#1B57C9);border-radius:32px;box-shadow:0 8px 18px rgba(31,102,224,.32);">' +
+      '<a href="' + esc(m.url) + '" target="_blank" style="display:block;padding:16px 48px;font-family:' + TF + ';font-size:17px;line-height:24px;font-weight:bold;color:#ffffff;text-decoration:none;white-space:nowrap;">Xem lại bài làm &nbsp;&#8250;</a></td></tr>', 'class="cta" align="center"', "margin:0 auto;") + "</td></tr>" : "";
   const practiceNote = t.practice
     ? gap(14) + row('<div style="font-family:' + TF + ';font-size:13px;line-height:19px;color:#6b4a00;"><b>Bài thi thử, không phải kỳ kiểm tra chính thức.</b> ' +
         (compliance != null ? "Điểm tuân thủ chỉ để " + m.me + " hình dung nếu thi thật, không được ghi nhận." : "Kết quả không được ghi nhận chính thức.") + "</div>")
@@ -189,7 +199,7 @@ function build(attempt, settings, advice, opts) {
     '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:#EEF4FD">' + esc(pre) + "&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>" +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#EEF4FD" style="width:100%;background:#EEF4FD;"><tr><td align="center" class="outer" style="padding:18px 10px;">' +
     '<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" class="shell" align="center" bgcolor="#FFFFFF" style="margin:0 auto;width:100%;max-width:560px;background:#FFFFFF;background-image:linear-gradient(180deg,#FFFFFF 0%,#F2F8FF 100%);border-radius:22px;border-collapse:separate;overflow:hidden;text-align:left;">' +
-    brand + hello + (liveRow || resultCard) + practiceNote + (liveRow ? "" : tipBox) + doBox + cta + foot +
+    (opts.live ? headLive + helloLive + liveRow + practiceNote + thanksLive + ctaLive : brand + hello + resultCard + practiceNote + tipBox + doBox + cta) + foot +
     "</table></td></tr></table></body></html>";
 
   return { subject: m.subject, html: harden(html), text: textOf(attempt, settings, m, cardNote) };
@@ -219,7 +229,7 @@ function textOf(attempt, settings, m, cardNote) {
   if (compliance != null) L.push("- " + (t.practice ? "Điểm tuân thủ (nếu thi thật): " : "Điểm tuân thủ: ") + compliance + " điểm");
   L.push("- " + (m.dur != null ? "Làm bài trong " + clock(m.dur) + " · " : "") + "Nộp lúc " + m.whenShort);
   const aw = awayInfo(attempt);
-  L.push("- Số lần thoát khỏi màn hình khi làm bài: " + aw.n + " lần" + (aw.n > 0 && aw.ms > 0 ? " (tổng thời gian rời: " + secsText(aw.ms) + ")" : ""));
+  L.push("- Số lần rời khỏi bài: " + aw.n + " lần");
   if (m.ps === false) { L.push("", "Kết quả chưa đạt yêu cầu" + (pass ? " (" + pass + "%)" : "") + ". " + m.Me + " nên ôn lại học liệu rồi làm lại."); if ((a.actions || [])[0]) L.push("Nên làm: " + pron(a.actions[0], m)); }
   else if (m.ps === true) L.push("", "Chúc mừng " + m.me + " đã đạt yêu cầu" + (pass ? " (" + pass + "%)" : "") + ". Hãy tiếp tục phát huy!");
   L.push("", m.ps === true ? "Xem kết quả chi tiết: " + m.url : "Học liệu ôn tập: " + base + "/kiemtra/hoclieu.html", m.ps === true ? "" : "Xem kết quả chi tiết: " + m.url);

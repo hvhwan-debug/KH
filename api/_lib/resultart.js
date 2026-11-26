@@ -1,104 +1,100 @@
-// Thẻ KẾT QUẢ "sống" trong email kết quả: ảnh được vẽ lại từ dữ liệu bài làm mới nhất mỗi lần người nhận mở thư
-// (điểm, tỉ lệ đúng, ĐẠT / CHƯA ĐẠT, giờ làm bài, nhận xét), nên nếu quản trị sửa đáp án và chấm lại thì thư đã gửi cũng đổi theo.
-// Gồm: dải tên đề + vòng tỉ lệ / huy hiệu điểm tuân thủ + điểm + trạng thái + hàng giờ giấc + hộp nhận xét.
-// Chỉ có điểm và tên đề, KHÔNG có nội dung câu hỏi hay đáp án (đề dùng nhiều ngày). Phục vụ qua api/result-img (có chữ ký).
+// Thẻ KẾT QUẢ "sống" trong email kết quả (mẫu "Kết quả bài kiểm tra"): ảnh được vẽ lại từ dữ liệu bài làm mới nhất mỗi lần người nhận
+// mở thư (điểm trên thang 10, ĐẠT / CHƯA ĐẠT, số câu đúng, thời gian làm bài, số lần rời khỏi bài, ngày hoàn thành), nên nếu quản trị sửa
+// đáp án và chấm lại thì thư đã gửi cũng đổi theo. Chỉ có điểm và thông số, KHÔNG có nội dung câu hỏi hay đáp án (đề dùng nhiều ngày).
+// Phục vụ qua api/result-img (có chữ ký).
 const path = require("path");
-const quiz = require("./quiz");
 const art = require("./mailart");
 const E = require("./resultemail");
 const F = (w, s) => w + " " + s + 'px "Be Vietnam Pro"';
-const BL = "#1F66E0", NV = "#14357A", GR = "#4A5B7D";
-const W = 504, S = 2;
+const NAVY = "#0B3F94", INK = "#14357A", MUTED = "#4A5B7D", BLUE = "#1F66E0";
+const W = 540, S = 2;
 
-function wrap(c, text, maxW) {
-  const words = String(text || "").split(/\s+/).filter(Boolean), lines = []; let cur = "";
-  words.forEach((w) => { const t = cur ? cur + " " + w : w; if (c.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; });
-  if (cur) lines.push(cur);
-  return lines;
+const imgs = {};
+async function asset(lib, file) {
+  if (imgs[file] !== undefined) return imgs[file];
+  try { imgs[file] = await lib.loadImage(path.join(__dirname, "assets", file)); } catch (e) { imgs[file] = null; }
+  return imgs[file];
 }
-// Vẽ liền nhiều đoạn chữ khác kiểu trên cùng một dòng; trả về x cuối
-function runs(c, x, y, parts) { parts.forEach((p) => { c.font = p.f; c.fillStyle = p.c; c.fillText(p.t, x, y); x += c.measureText(p.t).width; }); return x; }
-function runsW(c, parts) { let w = 0; parts.forEach((p) => { c.font = p.f; w += c.measureText(p.t).width; }); return w; }
+// Điểm trên thang 10 theo tỉ lệ đúng: 90% -> "9", 95% -> "9,5", 87% -> "8,7"
+function score10(pct) { const v = Math.round(Math.max(0, Math.min(100, Number(pct) || 0))) / 10; return String(v).replace(".", ","); }
+function dateOf(m) { return String(m.when || "").split(" ")[1] || ""; }
+function durText(sec) {
+  const t = Math.max(0, Math.round(sec || 0)), h = Math.floor(t / 3600), mi = Math.floor((t % 3600) / 60), s = t % 60;
+  if (h) return h + " giờ " + (mi < 10 ? "0" : "") + mi + " phút";
+  return mi ? mi + " phút " + (s < 10 ? "0" : "") + s + " giây" : s + " giây";
+}
+function wrap2(c, text, font, maxW) {
+  c.font = font; if (c.measureText(text).width <= maxW) return [text];
+  const w = text.split(" "); let best = null, bestW = Infinity;
+  for (let i = 1; i < w.length; i++) { const a = w.slice(0, i).join(" "), b = w.slice(i).join(" "), wa = c.measureText(a).width, wb = c.measureText(b).width, mx = Math.max(wa, wb); if (mx < bestW) { bestW = mx; best = [a, b]; } }
+  return best || [text];
+}
+
+// Biểu tượng nét xanh (vẽ tay): clipboard-check, đồng hồ, màn hình, lịch
+function icon(c, kind, x, y, s, col) {
+  c.save(); c.translate(x, y); c.scale(s / 32, s / 32); c.strokeStyle = col; c.lineWidth = 2.4; c.lineCap = "round"; c.lineJoin = "round"; c.beginPath();
+  if (kind === "clip") { art.rr(c, 4, 6, 24, 24, 4); c.stroke(); art.rr(c, 11, 2, 10, 7, 2.5); c.stroke(); c.beginPath(); c.moveTo(10.5, 19); c.lineTo(14.5, 23); c.lineTo(22, 14.5); c.stroke(); }
+  else if (kind === "clock") { c.arc(16, 16, 13, 0, Math.PI * 2); c.stroke(); c.beginPath(); c.moveTo(16, 8); c.lineTo(16, 16.5); c.lineTo(21.5, 19.5); c.stroke(); }
+  else if (kind === "monitor") { art.rr(c, 2.5, 4, 27, 18, 3); c.stroke(); c.beginPath(); c.moveTo(11, 28); c.lineTo(21, 28); c.moveTo(16, 22); c.lineTo(16, 28); c.stroke(); }
+  else { art.rr(c, 3.5, 6, 25, 22, 4); c.stroke(); c.beginPath(); c.moveTo(3.5, 13); c.lineTo(28.5, 13); c.moveTo(10, 2.5); c.lineTo(10, 9); c.moveTo(22, 2.5); c.lineTo(22, 9); c.stroke(); }
+  c.restore();
+}
 
 async function card(attempt, settings) {
   const lib = art.load(), rr = art.rr, lin = art.lin;
-  const m = E.model(attempt, settings, null), spec = E.artSpec(attempt, settings);
-  const pass = quiz.passScoreOf(settings) || null, { lead1, lead2 } = E.leads(m, pass);
-  const probe = lib.createCanvas(10, 10).getContext("2d");
-  // tên đề trên dải xanh: tối đa 2 dòng
-  probe.font = F(800, 18); const tLines = wrap(probe, m.t.main, W - 40).slice(0, 2);
-  const aw = E.awayInfo(attempt), awayLine = aw.n > 0 && aw.ms > 0;
-  const bandH = 30 + tLines.length * 24, bodyH = 176, timesH = 58 + 44 + (awayLine ? 22 : 0), gap = 16, tipH = lead1 ? 84 : 0;
-  const H = bandH + bodyH + timesH + (lead1 ? gap + tipH : 0) + 2;
-  const cv = lib.createCanvas(W * S, H * S), c = cv.getContext("2d"); c.scale(S, S); c.lineCap = "round"; c.lineJoin = "round";
-  c.textBaseline = "alphabetic"; c.textAlign = "left";
-  const cardH = bandH + bodyH + timesH;
-  // khung thẻ
-  c.save(); c.shadowColor = "rgba(31,102,224,.16)"; c.shadowBlur = 14; c.shadowOffsetY = 5; rr(c, 1, 1, W - 2, cardH - 2, 20); c.fillStyle = "#FFFFFF"; c.fill(); c.restore();
-  c.save(); rr(c, 1, 1, W - 2, cardH - 2, 20); c.clip();
-  c.fillStyle = lin(c, 0, 0, W, bandH, ["#1B5FD9", "#3B8CF6"]); c.fillRect(0, 0, W, bandH);
-  c.fillStyle = "#FFFFFF"; c.font = F(800, 18); c.textAlign = "center"; tLines.forEach((l, i) => c.fillText(l, W / 2, 30 + i * 24)); c.textAlign = "left";
-  // vạch dọc giữa hình và điểm
-  const splitX = Math.round(W * 0.44); c.fillStyle = "#D7E4F8"; c.fillRect(splitX, bandH + 18, 1, bodyH - 36);
-  // hình bên trái: huy hiệu điểm tuân thủ (nếu có) hoặc vòng tỉ lệ đúng
-  const cx = splitX / 2 + 4, cy = bandH + bodyH / 2;
-  try {
-    if (spec.comp != null) { const b = await art.heroFrom("compliance-" + spec.comp + ".webp"); if (b) { const im = await lib.loadImage(b); c.drawImage(im, cx - 92, cy - 70.5, 184, 141); } }
-    else { const im = await lib.loadImage(await art.ring(spec.pct, spec.color)); c.drawImage(im, cx - 60, cy - 60, 120, 120); }
-  } catch (e) { c.fillStyle = BL; c.font = F(800, 38); c.textAlign = "center"; c.fillText(Math.round(spec.pct) + "%", cx, cy + 12); c.textAlign = "left"; }
-  // điểm + tỉ lệ + trạng thái
-  const rx = splitX + 22, total = m.total || 0, score = attempt.score || 0;
-  const sTop = bandH + 24;
-  const sc = [{ t: score + "/" + total, f: F(800, 46), c: BL }, { t: " câu đúng", f: F(700, 17), c: NV }];
-  runs(c, rx, sTop + 40, sc);
-  runs(c, rx, sTop + 68, [{ t: "Tỉ lệ đúng: ", f: F(400, 16), c: GR }, { t: attempt.pct + "%", f: F(700, 16), c: BL }]);
-  const sp = m.t.practice ? { bg: "#FFF1D6", fg: "#8A5200", mbg: "#D68F1E", mark: "!" } : m.ps === false ? { bg: "#FDE8E8", fg: "#D32F2F", mbg: "#E53935", mark: "x" } : m.ps === true ? { bg: "#E3F5EA", fg: "#17794A", mbg: "#18A957", mark: "v" } : { bg: "#E8F0FE", fg: BL, mbg: BL, mark: "v" };
-  c.font = F(800, 15); const stW = c.measureText(m.status).width, pillW = 10 + 24 + 9 + stW + 16, pillY = sTop + 82;
-  rr(c, rx, pillY, pillW, 38, 12); c.fillStyle = sp.bg; c.fill();
-  c.beginPath(); c.arc(rx + 22, pillY + 19, 12, 0, Math.PI * 2); c.fillStyle = sp.mbg; c.fill();
-  c.strokeStyle = "#FFFFFF"; c.fillStyle = "#FFFFFF"; c.lineWidth = 2.6; c.beginPath();
-  const mx = rx + 22, my = pillY + 19;
-  if (sp.mark === "v") { c.moveTo(mx - 5, my + 0.5); c.lineTo(mx - 1.5, my + 4); c.lineTo(mx + 5.5, my - 4); c.stroke(); }
+  const m = E.model(attempt, settings, null), spec = E.artSpec(attempt, settings), aw = E.awayInfo(attempt);
+  const cv = lib.createCanvas(W * S, 330 * S), c = cv.getContext("2d"); c.scale(S, S); c.lineCap = "round"; c.lineJoin = "round"; c.textBaseline = "alphabetic"; c.textAlign = "left";
+  // ---- khung kết quả
+  const BH = 190;
+  c.save(); c.shadowColor = "rgba(31,102,224,.14)"; c.shadowBlur = 16; c.shadowOffsetY = 5; rr(c, 2, 2, W - 4, BH - 4, 28); c.fillStyle = lin(c, 0, 0, W, BH, ["#E1EEFD", "#F4F9FF"]); c.fill(); c.restore();
+  rr(c, 2, 2, W - 4, BH - 4, 28); c.lineWidth = 1.5; c.strokeStyle = "#D3E3F8"; c.stroke();
+  // hình bên trái: huy hiệu điểm tuân thủ (nếu có) / ảnh "Chưa đạt" / cúp
+  const vx = 126, vy = BH / 2;
+  let vis = null, vw = 160;
+  if (spec.comp != null) { vis = await asset(lib, "compliance-" + spec.comp + ".webp"); vw = 196; }
+  else if (m.ps === false && !m.t.practice) { vis = await asset(lib, "fail-photo.webp"); vw = 176; }
+  else { vis = await asset(lib, "rs-trophy.png"); vw = 168; }
+  if (vis) { const k = vw / vis.width, h = vis.height * k; c.drawImage(vis, vx - vw / 2, vy - h / 2 + 4, vw, h); }
+  c.fillStyle = "#BFD3EE"; c.fillRect(264, 34, 1.5, BH - 68);
+  // điểm + trạng thái
+  const rx = 292;
+  c.fillStyle = "#1B2F55"; c.font = F(500, 19); c.fillText("Kết quả", rx, 56);
+  c.fillStyle = NAVY; c.font = F(800, 60); c.fillText(score10(attempt.pct), rx, 122);
+  const sw = c.measureText(score10(attempt.pct)).width; c.font = F(800, 60); c.fillText(" / 10", rx + sw, 122);
+  const sp = m.t.practice ? { t: "Thi thử" + (m.ps === null ? "" : m.ps ? " · Đạt" : " · Chưa đạt"), bg: "#FFF1D6", fg: "#8A5200", mbg: "#D68F1E", mark: "!" }
+    : m.ps === false ? { t: "Chưa đạt yêu cầu", bg: "#FDE4E4", fg: "#C62828", mbg: "#E53935", mark: "x" }
+    : m.ps === true ? { t: "Đạt yêu cầu", bg: "#D5F1E0", fg: "#17794A", mbg: "#18A957", mark: "v" } : { t: "Đã hoàn thành", bg: "#DEEAFD", fg: BLUE, mbg: BLUE, mark: "v" };
+  c.font = F(800, 18); const pw = 14 + 26 + 10 + c.measureText(sp.t).width + 22, py = 138;
+  rr(c, rx - 4, py, pw, 38, 19); c.fillStyle = sp.bg; c.fill();
+  const mx = rx - 4 + 14 + 13, my = py + 19; c.beginPath(); c.arc(mx, my, 13, 0, Math.PI * 2); c.fillStyle = sp.mbg; c.fill();
+  c.strokeStyle = "#FFFFFF"; c.fillStyle = "#FFFFFF"; c.lineWidth = 2.8; c.beginPath();
+  if (sp.mark === "v") { c.moveTo(mx - 5.5, my + 0.5); c.lineTo(mx - 1.5, my + 4.5); c.lineTo(mx + 6, my - 4.5); c.stroke(); }
   else if (sp.mark === "x") { c.moveTo(mx - 4.5, my - 4.5); c.lineTo(mx + 4.5, my + 4.5); c.moveTo(mx + 4.5, my - 4.5); c.lineTo(mx - 4.5, my + 4.5); c.stroke(); }
-  else { c.font = F(800, 15); c.textAlign = "center"; c.fillText("!", mx, my + 5.5); c.textAlign = "left"; }
-  c.fillStyle = sp.fg; c.font = F(800, 15); c.fillText(m.status, rx + 10 + 24 + 9, pillY + 24.5);
-  c.restore();
-  // hàng giờ giấc
-  const ty = bandH + bodyH, tmParts = String(m.when || "").split(" "), tmT = (tmParts[0] || "").replace(/:\d{2}$/, ""), tmD = tmParts[1] || "";
-  c.save(); rr(c, 14, ty - 6, W - 28, 44, 14); c.fillStyle = "#F0F6FF"; c.fill(); c.restore();
-  const cells = [];
-  if (m.dur != null) cells.push({ ic: "clock", parts: [{ t: "Làm bài trong: ", f: F(400, 14), c: GR }, { t: E.clock ? E.clock(m.dur) : clockOf(m.dur), f: F(700, 14), c: BL }] });
-  cells.push({ ic: "cal", parts: [{ t: "Nộp lúc: ", f: F(400, 14), c: GR }, { t: tmT, f: F(700, 14), c: BL }, { t: " - " + tmD, f: F(700, 14), c: NV }] });
-  const cw = (W - 28) / cells.length;
-  for (let i = 0; i < cells.length; i++) {
-    const x0 = 14 + i * cw, tw = runsW(c, cells[i].parts), ix = x0 + (cw - (24 + tw)) / 2;
-    const im = await lib.loadImage(await art.icon(cells[i].ic)); c.drawImage(im, ix, ty + 5, 22, 22);
-    runs(c, ix + 26, ty + 21, cells[i].parts);
-    if (i < cells.length - 1) { c.fillStyle = "#D7E4F8"; c.fillRect(x0 + cw, ty - 2, 1, 36); }
-  }
-  // số lần thoát khỏi màn hình khi làm bài (ghi nhận lúc thí sinh rời tab / chuyển ứng dụng rồi quay lại)
-  const leaves = aw.n, warnL = leaves >= 3, ly = ty + 44;
-  c.save(); rr(c, 14, ly - 6, W - 28, 38 + (awayLine ? 22 : 0), 14); c.fillStyle = warnL ? "#FFF4E0" : "#F0F6FF"; c.fill(); c.restore();
-  const lcol = warnL ? "#B45309" : BL, lparts = [{ t: "Số lần thoát khỏi màn hình khi làm bài: ", f: F(400, 14), c: GR }, { t: leaves + " lần", f: F(800, 14), c: lcol }];
-  const lw = runsW(c, lparts), lx = 14 + (W - 28 - (26 + lw)) / 2;
-  c.save(); c.strokeStyle = lcol; c.lineWidth = 1.8; c.beginPath(); c.moveTo(lx + 1, ly + 14); c.quadraticCurveTo(lx + 11, ly + 3, lx + 21, ly + 14); c.quadraticCurveTo(lx + 11, ly + 25, lx + 1, ly + 14); c.stroke();
-  c.beginPath(); c.arc(lx + 11, ly + 14, 3.2, 0, Math.PI * 2); c.stroke();
-  if (leaves > 0) { c.beginPath(); c.moveTo(lx + 3, ly + 24); c.lineTo(lx + 19, ly + 4); c.stroke(); } c.restore();
-  runs(c, lx + 28, ly + 19, lparts);
-  if (awayLine) { const sp = [{ t: "Tổng thời gian rời khỏi màn hình: ", f: F(400, 13), c: GR }, { t: E.secsText(aw.ms), f: F(700, 13), c: warnL ? "#B45309" : NV }]; runs(c, 14 + (W - 28 - runsW(c, sp)) / 2, ly + 38, sp); }
-  // hộp nhận xét theo đạt / chưa đạt
-  if (lead1) {
-    const by = cardH + gap;
-    c.save(); rr(c, 1, by, W - 2, tipH, 16); c.fillStyle = "#EAF2FF"; c.fill(); c.lineWidth = 1; c.strokeStyle = "#D6E5FA"; c.stroke(); c.restore();
-    c.fillStyle = "#C9DAF5"; c.fillRect(73, by + 14, 1, tipH - 28);
-    try { const im = await lib.loadImage(await art.bookBlue()); c.drawImage(im, 16, by + (tipH - 42) / 2, 42, 42); } catch (e) { /* thiếu biểu tượng: bỏ qua */ }
-    c.font = F(800, 16); const l1 = wrap(c, lead1, W - 110).slice(0, 2); c.font = F(400, 15); const l2 = wrap(c, lead2, W - 110).slice(0, 2);
-    const th = l1.length * 23 + l2.length * 22; let yy = by + (tipH - th) / 2 + 17;
-    c.fillStyle = NV; c.font = F(800, 16); l1.forEach((l) => { c.fillText(l, 90, yy); yy += 23; });
-    c.fillStyle = GR; c.font = F(400, 15); l2.forEach((l) => { c.fillText(l, 90, yy); yy += 22; });
-  }
-  return { png: await cv.encode("png"), width: W, height: H };
+  else { c.font = F(800, 17); c.textAlign = "center"; c.fillText("!", mx, my + 6); c.textAlign = "left"; }
+  c.fillStyle = sp.fg; c.font = F(800, 18); c.fillText(sp.t, mx + 13 + 10, py + 25);
+  // ---- hàng 4 ô thông tin (không có khung ghi chú)
+  const CY = BH + 16, CH = 124, total = m.total || 0, score = attempt.score || 0, leaves = aw.n, redL = leaves >= 4;
+  rr(c, 2, CY, W - 4, CH, 22); c.fillStyle = "#F0F6FD"; c.fill();
+  const cells = [
+    { ic: "clip", k: "Số câu đúng", v: score + " / " + total },
+    { ic: "clock", k: "Thời gian làm bài", v: m.dur != null ? durText(m.dur) : "—" },
+    { ic: "monitor", k: "Số lần rời khỏi bài", v: leaves + " lần", hl: true, col: redL ? "#D92D20" : null },
+    { ic: "cal", k: "Ngày hoàn thành", v: dateOf(m) || "—" }
+  ];
+  const cw = (W - 12) / 4;
+  cells.forEach((q, i) => {
+    const x0 = 6 + i * cw, cxm = x0 + cw / 2;
+    if (q.hl) { rr(c, x0 + 3, CY + 6, cw - 6, CH - 12, 18); c.fillStyle = redL ? "#FCE3E0" : "#D9EAFB"; c.fill(); }
+    else if (i && i !== 2) { c.fillStyle = "#D3E1F3"; c.fillRect(x0, CY + 22, 1.5, CH - 44); }
+    icon(c, q.ic, cxm - 15, CY + 14, 30, q.col || BLUE);
+    let ks = 13.5; c.font = F(500, ks); while (ks > 11 && c.measureText(q.k).width > cw - 14) { ks -= 0.5; c.font = F(500, ks); }
+    c.textAlign = "center"; c.fillStyle = MUTED; c.fillText(q.k, cxm, CY + 66);
+    let vs = 18; const font = (s) => F(800, s); let lines = wrap2(c, q.v, font(vs), cw - 16);
+    while (vs > 13 && lines.some((l) => { c.font = font(vs); return c.measureText(l).width > cw - 14; })) { vs -= 1; lines = wrap2(c, q.v, font(vs), cw - 16); }
+    c.fillStyle = q.col || INK; c.font = font(vs); lines.forEach((l, j) => c.fillText(l, cxm, CY + 90 + j * (vs + 4)));
+    c.textAlign = "left";
+  });
+  return { png: await cv.encode("png"), width: W, height: 330 };
 }
-function clockOf(sec) { const s = Math.max(0, Math.round(sec)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
 
-module.exports = { card };
+module.exports = { card, score10 };
