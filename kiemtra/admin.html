@@ -2471,7 +2471,8 @@ body[data-tab="results"] .main,body[data-tab="analysis"] .main,body[data-tab="qu
         <div id="qFillWrap" class="hide">
           <label>Các đáp án được chấp nhận (mỗi dòng một đáp án)</label>
           <textarea id="qAccepted" style="min-height:70px" placeholder="220&#10;220 V"></textarea>
-<div class="hint" style="font-size:12.5px;color:var(--muted,#6B7A96);margin-top:4px">Mỗi dòng là một cách viết đúng khác nhau. Trong đề, mỗi chỗ trống (<b>.....</b> hoặc <b>…</b>) sẽ thành một ô để thí sinh bấm vào điền. Câu có nhiều chỗ trống: viết đủ đáp án <b>theo thứ tự, trên cùng một dòng</b>, ngăn bằng dấu <b>/</b> (vd: <b>độc quyền / 71</b>).</div>
+<div class="hint" style="font-size:12.5px;color:var(--muted,#6B7A96);margin-top:4px"><b>Câu 1 chỗ trống:</b> mỗi dòng là một cách viết đúng khác nhau. <b>Câu nhiều chỗ trống:</b> mỗi chỗ một dòng, <b>theo thứ tự chỗ trống trong đề</b> (số dòng = số chỗ trống), hoặc viết cả cụm trên một dòng ngăn bằng <b>/</b> (vd: <b>độc quyền / 71</b>). Chỗ trống trong đề nhận diện bằng <b>.....</b> (từ 3 dấu chấm), <b>…</b> hoặc <b>___</b>; mỗi chỗ sẽ thành một ô để thí sinh bấm vào điền.</div>
+<div id="qBlankInfo" class="small" style="margin-top:6px"></div>
           <p class="small">Hệ thống bỏ qua chữ hoa/thường, khoảng trắng thừa và dấu câu ở hai đầu; 1,5 và 1.5 coi là như nhau. Chữ có dấu tiếng Việt vẫn phải đúng dấu, nên hãy thêm cả cách viết không dấu nếu muốn chấp nhận.</p>
         </div>
         <label>Giải thích đáp án (tuỳ chọn)</label>
@@ -5285,11 +5286,29 @@ function qImgPreview(){
   const im = box.firstChild; im.onerror = () => { box.innerHTML = '<span style="color:var(--warn)">Chưa mở được hình từ link này. Hãy kiểm tra link là ảnh trực tiếp (.jpg, .png, .webp…) hoặc ảnh Google Drive đã chia sẻ “Bất kỳ ai có đường liên kết”.</span>'; };
   im.src = u;
 }
+
+// Báo ngay số chỗ trống hệ thống nhận diện trong đề và cách đối chiếu với các dòng đáp án (câu điền khuyết)
+function qBlankHint(){
+  var box = $('qBlankInfo'); if (!box) return;
+  if ($('qType').value !== 'fill'){ box.innerHTML = ''; return; }
+  var nb = (String($('qText').value || '').match(/(?:\.{3,}|\u2026+|_{3,})/g) || []).length;
+  var lines = String($('qAccepted').value || '').split(/\r?\n/).map(function(x){ return x.trim(); }).filter(Boolean);
+  var ok = function(t){ return '<span style="color:var(--ok,#17794A)">✓ ' + t + '</span>'; }, warn = function(t){ return '<span style="color:var(--warn,#B45309)">⚠ ' + t + '</span>'; };
+  if (!nb){ box.innerHTML = warn('Chưa thấy chỗ trống nào trong đề (dùng ..... hoặc … hoặc ___). Thí sinh sẽ thấy một ô nhập chung dưới câu hỏi.'); return; }
+  if (nb === 1){ box.innerHTML = ok('Nhận diện 1 chỗ trống' + (lines.length ? ' · ' + lines.length + ' cách viết đúng được chấp nhận.' : '.')); return; }
+  var isPos = lines.length === nb && !lines.some(function(x){ return /[\/|;]/.test(x); });
+  var oneLine = lines.length === 1 && /[\/|;]/.test(lines[0]);
+  if (isPos) box.innerHTML = ok('Nhận diện ' + nb + ' chỗ trống · ' + nb + ' dòng đáp án → chấm theo thứ tự: ' + lines.map(function(x, i){ return 'chỗ ' + (i + 1) + ' = “' + esc(x) + '”'; }).join(', ') + '.');
+  else if (oneLine){ var parts = lines[0].split(/\s*[\/|;]\s*/).filter(Boolean); box.innerHTML = parts.length === nb ? ok('Nhận diện ' + nb + ' chỗ trống · 1 dòng gồm ' + parts.length + ' phần ngăn bằng “/” → chấm theo thứ tự.') : warn('Đề có ' + nb + ' chỗ trống nhưng dòng đáp án có ' + parts.length + ' phần. Hãy nhập đủ ' + nb + ' phần.'); }
+  else box.innerHTML = warn('Đề có ' + nb + ' chỗ trống nhưng đang có ' + lines.length + ' dòng đáp án. Hãy nhập ' + nb + ' dòng (mỗi chỗ một dòng, theo thứ tự) hoặc 1 dòng ngăn bằng “/”.');
+}
+document.addEventListener('input', function(e){ var id = e.target && e.target.id; if (id === 'qText' || id === 'qAccepted') qBlankHint(); });
+document.addEventListener('change', function(e){ if (e.target && e.target.id === 'qType') qBlankHint(); });
 function clearQForm(){
   $('qRegradeBtn').classList.add('hide');
   $('qEditId').value=''; $('qText').value=''; $('qCategory').value='';
   $('qDifficulty').value=''; $('qTags').value=''; $('qExplain').value=''; $('qImage').value=''; qImgPreview(); if ($('qBank').options.length) $('qBank').value = $('qBank').dataset.last || 'default';
-  $('qType').value='single'; $('qAccepted').value=''; $('qOptsWrap').classList.remove('hide'); $('qFillWrap').classList.add('hide'); $('qAddOptBtn').classList.remove('hide');
+  $('qType').value='single'; $('qAccepted').value=''; setTimeout(qBlankHint, 0); $('qOptsWrap').classList.remove('hide'); $('qFillWrap').classList.add('hide'); $('qAddOptBtn').classList.remove('hide');
   $('qOptsLabel').textContent='Các phương án trả lời (bấm ô “✓ Đúng” ở đầu dòng để chọn đáp án đúng)';
   $('qOptsEdit').innerHTML=''; $('qFormTitle').textContent='Thêm câu hỏi mới vào ' + qPerLabel(QP || '').toLowerCase();
   if ($('qPeriod').options.length) $('qPeriod').value = QP || '';
@@ -5607,7 +5626,7 @@ function editQuestion(id){
   $('qOptsLabel').textContent = t === 'multi' ? 'Các phương án trả lời (tick ô “✓ Đúng” của TẤT CẢ đáp án đúng)' : 'Các phương án trả lời (bấm ô “✓ Đúng” ở đầu dòng để chọn đáp án đúng)';
   if (t === 'fill') $('qAccepted').value = (q.accepted || []).join('\n');
   else (q.options || []).forEach((o,i) => addOptRow(t === 'multi' ? (q.correctIndexes || []).indexOf(i) >= 0 : i === q.correctIndex, o));
-  qMoreSync(!!(q.category || q.difficulty || (q.tags || []).length)); qNavSync(id); qSnap();
+  qMoreSync(!!(q.category || q.difficulty || (q.tags || []).length)); qNavSync(id); qSnap(); qBlankHint();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 async function toggleQuestion(id){
