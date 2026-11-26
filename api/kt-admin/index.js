@@ -296,7 +296,7 @@ const handler = async function (context, req) {
       if (op === "driveStatus") return reply(context, 200, Object.assign({ ok: true }, await require("../_lib/gdrive").status()));
       if (op === "testAccounts") return reply(context, 200, { ok: true, accounts: await quiz.getTestAccounts() });
       if (op === "hrAnalytics") { // phân tích nhân lực (giai đoạn 3): chỉ số tổng hợp, không có tên / mã / email
-        const H = require("../_lib/hranalytics"), per = typeof q.period === "string" ? q.period.slice(0, 40) : undefined;
+        const H = require("../_lib/hranalytics"), rq = req.query || {}, per = typeof rq.period === "string" ? rq.period.slice(0, 40) : undefined;
         const a = H.analyze(await H.gather({ period: per }));
         return reply(context, 200, { ok: true, analysis: a, summary: H.aiSummary(a) });
       }
