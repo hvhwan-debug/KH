@@ -18,6 +18,7 @@ const AUDIT_MAX = 30;
 const empView = (c) => ({
   code: c.code, name: c.name || "", email: c.email || "", manager: c.manager || "", phone: require("../_lib/phone").normPhone(c.phone), title: quiz.titleOf(c), segment: quiz.normSegment(c.segment), probation: probationOf(c.code, undefined, c.joinDate), joinDate: joinDateOf(c.code, c.joinDate),
   left: !!c.left,
+  work: c.work ? { status: c.work.status, by: c.work.by, byName: c.work.byName || c.work.by, at: c.work.at } : null,
   confirmed: c.confirmed ? { by: c.confirmed.by, byName: c.confirmed.byName || c.confirmed.by, at: c.confirmed.at } : null
 });
 
@@ -63,6 +64,14 @@ const handler = async function (context, req) {
     if (req.method === "GET") {
       const op = (req.query && req.query.op) || "";
       if (op === "me") return reply(context, 200, { ok: true, viewer: { email: viewer.email, name: viewer.name || "", scopes: viewer.scopes || [], isAdmin: !!viewer.isAdmin, perms: P, canViewPhoto: perms.canViewPhoto(viewer) }, serverNow: Date.now() });
+      // Trang xác nhận nhân sự (/kiemtra/xacnhan.html): danh sách gọn nhân viên thuộc phạm vi để quản lí bấm "Còn làm" / "Đã nghỉ".
+      if (op === "workStatus") {
+        if (!P.viewResults && !P.editEmployees) return noPerm("xem nhân viên");
+        const list = mine.map((c) => ({ code: c.code, name: c.name || "", title: quiz.titleOf(c), manager: c.manager || "", left: !!c.left, leftAt: c.leftAt || 0,
+          work: c.work ? { status: c.work.status, byName: c.work.byName || c.work.by, at: c.work.at } : null }))
+          .sort((a, b) => String(a.manager).localeCompare(String(b.manager), "vi") || String(a.name).localeCompare(String(b.name), "vi"));
+        return reply(context, 200, { ok: true, viewer: { name: viewer.name || viewer.email, email: viewer.email, isAdmin: !!viewer.isAdmin }, canEdit: !!P.editEmployees, employees: list, serverNow: Date.now() });
+      }
       if (op === "employees") {
         if (!P.viewResults) return noPerm("xem nhân viên & kết quả");
         const settings = await quiz.getSettings();
@@ -241,11 +250,11 @@ const handler = async function (context, req) {
     const all = await quiz.getCandidates();
     const i = all.findIndex((x) => quiz.normCode(x.code) === quiz.normCode(b.code));
     // Chỉ thao tác được trên nhân viên thuộc phạm vi của mình
-    if (["updateEmployee", "confirmEmployee", "deleteEmployee"].indexOf(op) >= 0 && (i < 0 || !quiz.inScope(viewer, all[i]))) {
+    if (["updateEmployee", "confirmEmployee", "deleteEmployee", "setEmployment"].indexOf(op) >= 0 && (i < 0 || !quiz.inScope(viewer, all[i]))) {
       return reply(context, 404, { ok: false, error: "Không tìm thấy nhân viên trong phạm vi của bạn." });
     }
     const who = { by: viewer.email, byName: viewer.name || viewer.email };
-    if (op === "addEmployee" || op === "updateEmployee" || op === "confirmEmployee") { if (!P.editEmployees) return noPerm("thêm / sửa / xác nhận nhân viên"); }
+    if (op === "addEmployee" || op === "updateEmployee" || op === "confirmEmployee" || op === "setEmployment") { if (!P.editEmployees) return noPerm("thêm / sửa / xác nhận nhân viên"); }
     if (op === "deleteEmployee" && !P.deleteEmployees) return noPerm("xoá nhân viên");
 
     // Thêm nhân viên mới vào phạm vi của mình. Quản trị viên (scopes rỗng) phải tự nêu rõ quản lí phụ trách qua b.scope.
@@ -304,6 +313,29 @@ const handler = async function (context, req) {
       all[i] = next;
       await quiz.saveCandidates(all);
       return reply(context, 200, { ok: true, employee: empView(next), needReconfirm: true });
+    }
+
+    // Quản lí xác nhận tình trạng làm việc của nhân viên mình: left=true -> đã nghỉ việc (không gán đề, không thông báo,
+    // không tính "chưa làm", không vào thi; giống quản trị viên đánh dấu ở kt-admin op=setEmployment); left=false -> còn làm.
+    // Không xoá hồ sơ / kết quả cũ. Mỗi lần bấm đều ghi lại người xác nhận và thời điểm (work) để biết đã rà soát tới đâu.
+    if (op === "setEmployment") {
+      if (b.clear === true) { // hoàn tác về "chưa xác nhận" (vẫn ghi nhật ký)
+        const c = all[i], next = Object.assign({}, c); delete next.left; delete next.leftAt; delete next.work;
+        next.audit = (c.audit || []).concat([Object.assign({ at: Date.now(), kind: "edit", changes: { work: { from: c.left ? "đã nghỉ việc" : "đang làm việc", to: "chưa xác nhận (hoàn tác)" } } }, who)]).slice(-AUDIT_MAX);
+        all[i] = next; await quiz.saveCandidates(all);
+        return reply(context, 200, { ok: true, employee: empView(next), changed: !!c.left });
+      }
+      if (typeof b.left !== "boolean") return reply(context, 400, { ok: false, error: "Yêu cầu không hợp lệ." });
+      const c = all[i], left = b.left, now = Date.now();
+      const next = Object.assign({}, c, { work: Object.assign({ status: left ? "left" : "active", at: now }, who) });
+      if (left) { next.left = true; next.leftAt = c.left ? (c.leftAt || now) : now; } else { delete next.left; delete next.leftAt; }
+      const entry = Object.assign({ at: now, kind: "edit" }, who);
+      if (!!c.left !== left) entry.changes = { work: { from: c.left ? "đã nghỉ việc" : "đang làm việc", to: left ? "đã nghỉ việc" : "đang làm việc" } };
+      else entry.kind = "confirm";
+      next.audit = (c.audit || []).concat([entry]).slice(-AUDIT_MAX);
+      all[i] = next;
+      await quiz.saveCandidates(all);
+      return reply(context, 200, { ok: true, employee: empView(next), changed: !!c.left !== left });
     }
 
     if (op === "confirmEmployee") {

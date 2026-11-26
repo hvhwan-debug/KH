@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0A63C4">
+<link rel="icon" href="/kiemtra/favicon.ico?v=2" sizes="any">
+<link rel="apple-touch-icon" href="/kiemtra/apple-touch-icon.png?v=2">
+<title>Xác nhận nhân sự - Còn làm / Đã nghỉ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--brand:#0A63C4;--brand-deep:#0B3F94;--brand-soft:#E6F0FC;--ink:#0A2552;--muted:#4F6486;--line:#D8E2F0;--bg:#F2F4F7;--card:#fff;
+  --ok:#17794A;--ok-soft:#DDF1E6;--bad:#B3261E;--bad-soft:#FBE3E0;--warn:#8A5500;--warn-soft:#FBEBC8}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5;
+  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+.hide{display:none!important}
+.wrap{max-width:720px;margin:0 auto;padding:16px 14px 90px}
+button{font:inherit;cursor:pointer}
+input{font:inherit;color:inherit}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+.auth{max-width:420px;margin:8vh auto 0}
+.auth img{height:38px;display:block;margin-bottom:14px}
+.auth h1{font-size:22px;margin:0 0 4px}
+.lead{color:var(--muted);margin:0 0 18px;font-size:14px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+.field input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;background:#fff}
+.field input:focus{outline:none;border-color:var(--brand)}
+.btn{border:0;border-radius:10px;background:var(--brand);color:#fff;font-weight:700;padding:12px 16px;min-height:46px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.6;cursor:default}
+.linkbtn{border:0;background:none;color:var(--brand);font-weight:600;padding:8px 0;margin-top:6px}
+.msg{margin-top:10px;font-size:14px;border-radius:10px;padding:9px 12px}
+.msg.err{background:var(--bad-soft);color:var(--bad)}.msg.info{background:var(--brand-soft);color:var(--brand-deep)}
+/* thanh trên */
+.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:12px 0 10px;margin:-16px 0 0}
+.who{display:flex;align-items:center;gap:10px}
+.who h1{font-size:19px;margin:0;flex:1;min-width:0}
+.who small{display:block;font-size:13px;color:var(--muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.out{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 12px;color:var(--muted);font-weight:600;font-size:13px}
+.prog{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.prog .line{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.prog b{font-size:26px;font-variant-numeric:tabular-nums;line-height:1}
+.prog .of{color:var(--muted);font-size:14px}
+.prog .stat{margin-left:auto;font-size:13px;color:var(--muted)}
+.prog .stat i{font-style:normal;font-weight:700}
+.bar{height:8px;border-radius:99px;background:#E7ECF3;margin-top:10px;overflow:hidden}
+.bar span{display:block;height:100%;background:var(--ok);border-radius:99px;transition:width .35s ease}
+.tabs{display:flex;gap:6px;margin-top:10px;overflow-x:auto;scrollbar-width:none}
+.tabs button{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:6px 13px;font-size:13.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+.tabs button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.search{margin-top:10px;width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff}
+.search:focus{outline:none;border-color:var(--brand)}
+/* danh sách */
+.grp{font-size:13px;font-weight:700;color:var(--muted);margin:18px 2px 6px}
+.row{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px 12px;margin-bottom:8px;border-left:5px solid var(--line)}
+.row.active{border-left-color:var(--ok)}.row.left{border-left-color:var(--bad);background:#FFFBFA}
+.row .nm{flex:1;min-width:0}
+.row .nm b{display:block;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .nm small{display:block;color:var(--muted);font-size:12.5px}
+.row .nm small.st{font-weight:600}
+.row.active .nm small.st{color:var(--ok)}.row.left .nm small.st{color:var(--bad)}
+.pick{display:flex;gap:6px;flex-shrink:0}
+.pick button{border:1.5px solid var(--line);background:#fff;border-radius:10px;min-height:44px;padding:0 12px;font-weight:700;font-size:14px;color:var(--muted)}
+.pick .y[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+.pick .n[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+.pick .y:not([aria-pressed="true"]):hover{border-color:var(--ok);color:var(--ok)}
+.pick .n:not([aria-pressed="true"]):hover{border-color:var(--bad);color:var(--bad)}
+.pick button:disabled{opacity:.5}
+.empty{text-align:center;color:var(--muted);padding:34px 10px;background:#fff;border:1px dashed var(--line);border-radius:14px}
+.empty b{display:block;color:var(--ok);font-size:17px;margin-bottom:4px}
+.bulk{margin-top:12px;width:100%;border:1.5px dashed var(--ok);background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:12px;font-weight:700}
+.ro{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:13.5px;margin-top:10px}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(140%);background:var(--ink);color:#fff;border-radius:12px;padding:11px 14px;
+  display:flex;gap:14px;align-items:center;font-size:14px;width:max-content;max-width:calc(100% - 24px);transition:transform .25s ease;z-index:20;box-shadow:0 8px 24px rgba(10,37,82,.25)}
+.toast.on{transform:translateX(-50%) translateY(0)}
+.toast button{border:0;background:none;color:#8CC4FF;font-weight:700;padding:4px 2px}
+@media(max-width:420px){.pick button{padding:0 10px;font-size:13.5px}.row{padding:10px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section class="card auth hide" id="loginScreen">
+    <img src="/kiemtra/logo.png" alt="Hệ thống kiểm tra đánh giá trực tuyến">
+    <h1>Xác nhận nhân sự</h1>
+    <p class="lead">Đăng nhập bằng tài khoản quản lí để xác nhận nhân viên nào còn làm, ai đã nghỉ việc.</p>
+    <form id="authForm" novalidate>
+      <div class="field"><label for="aEmail">Email công ty</label><input id="aEmail" type="email" autocomplete="email" inputmode="email" placeholder="ten@congty.vn"></div>
+      <div class="field"><label for="aPass">Mật khẩu</label><input id="aPass" type="password" autocomplete="current-password"></div>
+      <div class="field hide" id="fOtp"><label for="aOtp">Mã xác minh (đã gửi qua email)</label><input id="aOtp" inputmode="numeric" autocomplete="one-time-code" placeholder="6 số"></div>
+      <button class="btn block" id="authBtn" type="submit">Đăng nhập</button>
+      <div id="authMsg" role="alert"></div>
+      <a class="linkbtn" href="/kiemtra/quanli.html" style="display:inline-block;text-decoration:none">Quên mật khẩu?</a>
+    </form>
+  </section>
+
+  <section class="card auth hide" id="deniedScreen">
+    <h1>Chưa có quyền quản lí</h1>
+    <p class="lead">Tài khoản <b id="deniedEmail"></b> chưa được cấp quyền quản lí nhân viên. Hãy liên hệ quản trị viên.</p>
+    <button class="btn block" type="button" id="deniedOut">Đăng nhập tài khoản khác</button>
+  </section>
+
+  <main class="hide" id="app">
+    <div class="top">
+      <div class="who">
+        <h1>Xác nhận nhân sự<small id="meName"></small></h1>
+        <button class="out" type="button" id="logoutBtn">Đăng xuất</button>
+      </div>
+      <div class="prog">
+        <div class="line"><b id="pDone">0</b><span class="of" id="pOf">/ 0 người đã xác nhận tháng này</span>
+          <span class="stat">Còn làm <i id="pAct" style="color:var(--ok)">0</i> · Đã nghỉ <i id="pLeft" style="color:var(--bad)">0</i></span></div>
+        <div class="bar"><span id="pBar" style="width:0"></span></div>
+      </div>
+      <div class="ro hide" id="roNote">Tài khoản của bạn chỉ có quyền xem, chưa được cấp quyền xác nhận nhân viên. Hãy liên hệ quản trị viên.</div>
+      <div class="tabs" role="group" aria-label="Lọc danh sách">
+        <button type="button" data-f="todo" aria-pressed="true">Chưa xác nhận</button>
+        <button type="button" data-f="active" aria-pressed="false">Còn làm</button>
+        <button type="button" data-f="left" aria-pressed="false">Đã nghỉ</button>
+        <button type="button" data-f="all" aria-pressed="false">Tất cả</button>
+      </div>
+      <input class="search" id="q" type="search" placeholder="Tìm theo tên hoặc mã nhân viên" autocomplete="off">
+    </div>
+    <div id="list"></div>
+    <button class="bulk hide" type="button" id="bulkBtn"></button>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastTxt"></span><button type="button" id="undoBtn">Hoàn tác</button></div>
+
+<script>
+'use strict';
+var $ = function(id){ return document.getElementById(id); };
+var EMP = [], CAN = false, FILTER = 'todo', NOW_OFF = 0, MULTI = false, BUSY = {};
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+function msg(id, t, kind){ var el = $(id); el.className = t ? 'msg ' + (kind || 'err') : ''; el.textContent = t || ''; }
+async function api(method, path, body){
+  var r = await fetch(path, { method: method, headers: { 'Content-Type':'application/json', 'X-Requested-With':'livotec' }, credentials:'same-origin', body: body ? JSON.stringify(body) : undefined });
+  var j = {}; try { j = await r.json(); } catch(e){}
+  return { s: r.status, j: j };
+}
+function show(which){ ['loginScreen','deniedScreen','app'].forEach(function(id){ $(id).classList.toggle('hide', id !== which); }); }
+
+/* Giờ Việt Nam: xác nhận "còn làm" có hiệu lực trong tháng hiện tại; sang tháng mới cần bấm lại */
+function vnMonth(ms){ return new Date(ms + 7 * 3600 * 1000).toISOString().slice(0, 7); }
+function vnDate(ms){ var d = new Date(ms + 7 * 3600 * 1000); return ('0' + d.getUTCDate()).slice(-2) + '/' + ('0' + (d.getUTCMonth() + 1)).slice(-2) + '/' + d.getUTCFullYear(); }
+function thisMonth(){ return vnMonth(Date.now() + NOW_OFF); }
+function stateOf(e){
+  if (e.left) return 'left';
+  if (e.work && e.work.status === 'active' && vnMonth(e.work.at) === thisMonth()) return 'active';
+  return 'todo';
+}
+
+/* ---------- Đăng nhập (dùng chung tài khoản quản lí của trang Quản lí) ---------- */
+$('authForm').addEventListener('submit', async function(ev){
+  ev.preventDefault(); msg('authMsg', '');
+  var body = { email: $('aEmail').value.trim(), password: $('aPass').value };
+  if (!body.email || !body.password){ msg('authMsg', 'Nhập email và mật khẩu.'); return; }
+  if (!$('fOtp').classList.contains('hide')) body.otp = $('aOtp').value.trim();
+  var b = $('authBtn'); b.disabled = true; b.textContent = 'Đang xử lý…';
+  var r; try { r = await api('POST', '/api/auth/request', body); } catch(e){ r = null; }
+  b.disabled = false; b.textContent = 'Đăng nhập';
+  if (!r){ msg('authMsg', 'Không kết nối được máy chủ, vui lòng thử lại.'); return; }
+  if (r.j.ok && r.j.needsOtp){ $('fOtp').classList.remove('hide'); $('aOtp').focus(); msg('authMsg', 'Mã xác minh đã gửi tới ' + r.j.email + '. Nhập mã rồi bấm Đăng nhập.', 'info'); return; }
+  if (!r.j.ok){ msg('authMsg', r.j.error || 'Đăng nhập thất bại.'); return; }
+  boot();
+});
+async function logout(){ try { await api('POST', '/api/auth/logout', {}); } catch(e){} location.reload(); }
+$('logoutBtn').addEventListener('click', logout);
+$('deniedOut').addEventListener('click', logout);
+
+/* ---------- Danh sách ---------- */
+async function boot(){
+  var me; try { me = (await api('GET', '/api/auth/me')).j; } catch(e){ show('loginScreen'); msg('authMsg', 'Không kết nối được máy chủ, thử tải lại trang.'); return; }
+  if (!me.loggedIn){ show('loginScreen'); return; }
+  var r = await api('GET', '/api/kt-viewer?op=workStatus');
+  if (r.s === 401){ show('loginScreen'); return; }
+  if (r.s === 403 || !r.j.ok){ $('deniedEmail').textContent = me.email || ''; show('deniedScreen'); return; }
+  EMP = r.j.employees || []; CAN = !!r.j.canEdit; NOW_OFF = (r.j.serverNow || Date.now()) - Date.now();
+  MULTI = new Set(EMP.map(function(e){ return String(e.manager || '').toLowerCase(); })).size > 1;
+  $('meName').textContent = r.j.viewer.name + ' · ' + EMP.length + ' nhân viên';
+  $('roNote').classList.toggle('hide', CAN);
+  if (!EMP.some(function(e){ return stateOf(e) === 'todo'; })) setFilter('all', true);
+  show('app'); render();
+}
+function setFilter(f, quiet){
+  FILTER = f;
+  document.querySelectorAll('.tabs button').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.f === f)); });
+  if (!quiet) render();
+}
+document.querySelector('.tabs').addEventListener('click', function(ev){ var b = ev.target.closest('button[data-f]'); if (b) setFilter(b.dataset.f); });
+$('q').addEventListener('input', render);
+
+function render(){
+  var n = { todo:0, active:0, left:0 };
+  EMP.forEach(function(e){ n[stateOf(e)]++; });
+  var total = EMP.length, done = n.active + n.left;
+  $('pDone').textContent = done; $('pOf').textContent = '/ ' + total + ' người đã xác nhận tháng này';
+  $('pAct').textContent = n.active; $('pLeft').textContent = n.left;
+  $('pBar').style.width = total ? (done * 100 / total) + '%' : '0';
+  document.querySelector('.tabs [data-f="todo"]').textContent = 'Chưa xác nhận (' + n.todo + ')';
+
+  var needle = $('q').value.trim().toLowerCase();
+  var rows = EMP.filter(function(e){ return (FILTER === 'all' || stateOf(e) === FILTER) && (!needle || (e.name + ' ' + e.code).toLowerCase().indexOf(needle) >= 0); });
+  var html = '', lastMgr = null;
+  rows.forEach(function(e){
+    if (MULTI && e.manager !== lastMgr){ lastMgr = e.manager; html += '<div class="grp">' + esc(e.manager || 'Chưa có quản lí') + '</div>'; }
+    var st = stateOf(e), stTxt = '';
+    if (st === 'left') stTxt = 'Đã nghỉ việc' + (e.work && e.work.status === 'left' ? ' · ' + esc(e.work.byName) + ' xác nhận ' + vnDate(e.work.at) : (e.leftAt ? ' từ ' + vnDate(e.leftAt) : ''));
+    else if (st === 'active') stTxt = 'Còn làm · xác nhận ' + vnDate(e.work.at);
+    else if (e.work && e.work.status === 'active') stTxt = 'Lần xác nhận trước: ' + vnDate(e.work.at);
+    html += '<div class="row ' + st + '" data-code="' + esc(e.code) + '"><div class="nm"><b>' + esc(e.name || e.code) + '</b><small>' + esc(e.code) + (e.title ? ' · ' + esc(e.title) : '') + '</small>' +
+      (stTxt ? '<small class="st">' + stTxt + '</small>' : '') + '</div>' +
+      '<div class="pick"><button type="button" class="y" data-v="0" aria-pressed="' + (st === 'active') + '"' + (CAN && !BUSY[e.code] ? '' : ' disabled') + '>Còn làm</button>' +
+      '<button type="button" class="n" data-v="1" aria-pressed="' + (st === 'left') + '"' + (CAN && !BUSY[e.code] ? '' : ' disabled') + '>Đã nghỉ</button></div></div>';
+  });
+  if (!rows.length){
+    html = FILTER === 'todo' && !needle && total ? '<div class="empty"><b>Đã xác nhận đủ cả nhóm</b>Cảm ơn anh/chị. Tháng sau mở lại link này để xác nhận tiếp.</div>'
+      : '<div class="empty">' + (total ? 'Không có nhân viên nào trong mục này.' : 'Chưa có nhân viên nào thuộc phạm vi quản lí của bạn.') + '</div>';
+  }
+  $('list').innerHTML = html;
+  var bulk = $('bulkBtn'), todoShown = rows.filter(function(e){ return stateOf(e) === 'todo'; }).length;
+  bulk.classList.toggle('hide', !CAN || FILTER !== 'todo' || todoShown < 2);
+  bulk.textContent = 'Tất cả ' + todoShown + ' người còn lại vẫn đang làm';
+}
+
+$('list').addEventListener('click', function(ev){
+  var b = ev.target.closest('.pick button'); if (!b || b.disabled) return;
+  var code = b.closest('.row').dataset.code, left = b.dataset.v === '1';
+  var e = EMP.filter(function(x){ return x.code === code; })[0]; if (!e) return;
+  if (left === !!e.left && (left || stateOf(e) === 'active')) return; // đã đúng trạng thái
+  setWork(e, left, true);
+});
+
+async function setWork(e, left, withUndo, clear){
+  var prev = { left: e.left, leftAt: e.leftAt, work: e.work };
+  BUSY[e.code] = 1;
+  if (clear){ e.left = false; e.work = null; } else { e.left = left; e.work = { status: left ? 'left' : 'active', byName: 'Bạn', at: Date.now() + NOW_OFF }; }
+  render();
+  var body = { op: 'setEmployment', code: e.code }; if (clear) body.clear = true; else body.left = left;
+  var r; try { r = await api('POST', '/api/kt-viewer', body); } catch(x){ r = null; }
+  delete BUSY[e.code];
+  if (!r || !r.j.ok){ Object.assign(e, prev); render(); toast((r && r.j.error) || 'Không lưu được, kiểm tra mạng rồi bấm lại.'); return false; }
+  Object.assign(e, { left: r.j.employee.left, work: r.j.employee.work, leftAt: r.j.employee.left ? (prev.leftAt || Date.now()) : 0 }); render();
+  if (withUndo) toast((e.name || e.code) + (left ? ': đã nghỉ việc' : ': còn làm'), function(){ undo(e, prev); });
+  return true;
+}
+async function undo(e, prev){
+  var wasTodo = stateOf(prev) === 'todo';
+  if (await setWork(e, !!prev.left, false, wasTodo)) toast('Đã hoàn tác');
+}
+
+$('bulkBtn').addEventListener('click', async function(){
+  var needle = $('q').value.trim().toLowerCase();
+  var todo = EMP.filter(function(e){ return stateOf(e) === 'todo' && (!needle || (e.name + ' ' + e.code).toLowerCase().indexOf(needle) >= 0); });
+  if (!todo.length || !confirm('Xác nhận ' + todo.length + ' người này vẫn đang làm việc?')) return;
+  var b = this; b.disabled = true; var okN = 0;
+  for (var i = 0; i < todo.length; i++){ // lần lượt từng người để không ghi đè lẫn nhau
+    b.textContent = 'Đang lưu ' + (i + 1) + '/' + todo.length + '…';
+    if (await setWork(todo[i], false, false)) okN++;
+  }
+  b.disabled = false; render();
+  toast('Đã xác nhận ' + okN + ' người còn làm' + (okN < todo.length ? ', ' + (todo.length - okN) + ' người chưa lưu được' : ''));
+});
+
+var tt = null;
+function toast(text, onUndo){
+  $('toastTxt').textContent = text;
+  var u = $('undoBtn'); u.classList.toggle('hide', !onUndo); u.onclick = onUndo ? function(){ $('toast').classList.remove('on'); onUndo(); } : null;
+  $('toast').classList.add('on'); clearTimeout(tt); tt = setTimeout(function(){ $('toast').classList.remove('on'); }, onUndo ? 6000 : 3000);
+}
+boot();
+</script>
+</body>
+</html>
