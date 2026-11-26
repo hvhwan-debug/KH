@@ -68,7 +68,7 @@ function cardData(attempt, settings, now) {
     passed: ps === true || ps === false ? ps : null, pct: attempt.pct == null ? 0 : attempt.pct, score: attempt.score, total,
     compliance: attempt.compliancePoints, passScore: quiz.passScoreOf(settings),
     clock: dur != null ? fmtClock(dur) : "", wrong: attempt.wrong, blank: attempt.blank, proof: quiz.proofCode(attempt.id),
-    manager: attempt.manager || "", away: Math.max(0, Math.round(Number(attempt.flags && attempt.flags.blur) || 0)),
+    manager: attempt.manager || "", away: Math.max(0, Math.round(Number(attempt.flags && attempt.flags.blur) || 0)), awayText: require("./resultemail").awayMinText(require("./resultemail").awayInfo(attempt).ms),
     startedText: attempt.startedAt ? fmtFull(attempt.startedAt) : "", submittedText: attempt.submittedAt ? fmtFull(attempt.submittedAt) : "",
     stampText: fmtFull(now || Date.now()), host: host + "/kiemtra",
     qr: qrMatrix(url), avgSec: dur != null && total ? Math.round(dur / total) : null, cats: []

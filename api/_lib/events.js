@@ -39,4 +39,9 @@ function summary(attempt) {
   (attempt && Array.isArray(attempt.events) ? attempt.events : []).forEach((e) => { const s = (out[e.k] = out[e.k] || { n: 0, ms: 0 }); s.n++; s.ms += e.ms || 0; });
   return out;
 }
-module.exports = { KINDS, LABEL, push, ingest, summary };
+// Tổng thời gian rời khỏi màn hình khi làm bài (giây): chuyển tab + thu nhỏ + sang cửa sổ khác; không tính mất mạng / thoát toàn màn hình
+function awaySec(attempt) {
+  const ms = (attempt && Array.isArray(attempt.events) ? attempt.events : []).filter((e) => e && (e.k === "tab" || e.k === "min" || e.k === "blur")).reduce((a, e) => a + (Number(e.ms) || 0), 0);
+  return Math.round(ms / 1000);
+}
+module.exports = { KINDS, LABEL, push, ingest, summary, awaySec };

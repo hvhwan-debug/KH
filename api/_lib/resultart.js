@@ -25,6 +25,7 @@ function durText(sec) {
 }
 function wrap2(c, text, font, maxW) {
   c.font = font; if (c.measureText(text).width <= maxW) return [text];
+  const pi = text.indexOf(" ("); if (pi > 0) { const a1 = text.slice(0, pi), b1 = text.slice(pi + 1); if (c.measureText(a1).width <= maxW && c.measureText(b1).width <= maxW) return [a1, b1]; } // giữ nguyên cụm trong ngoặc, vd "4 lần" / "(4 phút)"
   const w = text.split(" "); let best = null, bestW = Infinity;
   for (let i = 1; i < w.length; i++) { const a = w.slice(0, i).join(" "), b = w.slice(i).join(" "), wa = c.measureText(a).width, wb = c.measureText(b).width, mx = Math.max(wa, wb); if (mx < bestW) { bestW = mx; best = [a, b]; } }
   return best || [text];
@@ -78,7 +79,7 @@ async function card(attempt, settings) {
   const cells = [
     { ic: "clip", k: "Số câu đúng", v: score + " / " + total },
     { ic: "clock", k: "Thời gian làm bài", v: m.dur != null ? durText(m.dur) : "—" },
-    { ic: "monitor", k: "Số lần rời khỏi bài", v: leaves + " lần", hl: true, col: redL ? "#D92D20" : null },
+    { ic: "monitor", k: "Số lần rời khỏi bài", v: leaves + " lần" + (leaves > 0 && E.awayMinText(aw.ms) ? " (" + E.awayMinText(aw.ms) + ")" : ""), hl: true, col: redL ? "#D92D20" : null },
     { ic: "cal", k: "Ngày hoàn thành", v: dateOf(m) || "—" }
   ];
   const cw = (W - 12) / 4;

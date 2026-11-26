@@ -8,6 +8,11 @@ const mk = (n) => ({ id: "a1", name: "Tổng Khánh Linh", code: "T1", total: 10
 const st = { examTitle: "Kiểm tra định kì" };
 (async () => {
   ok(sc.cardData(mk(4), st).away === 4 && sc.cardData(mk(0), st).away === 0 && sc.cardData(mk(null), st).away === 0, "cardData.away lấy từ cờ rời màn hình, thiếu dữ liệu thì 0");
+  const ev = [{ k: "tab", t: now - 100000, ms: 90000 }, { k: "blur", t: now - 50000, ms: 100000 }];
+  const withEv = Object.assign({}, mk(4), { events: ev });
+  ok(sc.cardData(withEv, st).awayText === "3 phút" && sc.cardData(mk(4), st).awayText === "", "thẻ kết quả: awayText = '3 phút' (90+100 = 190 giây), không có dữ liệu thời gian thì để trống");
+  const pa = (await sc.renderPng(withEv, st, now)).toString("base64"), pb = (await sc.renderPng(mk(4), st, now)).toString("base64");
+  ok(pa !== pb, "thẻ kết quả vẽ thêm '(3 phút)' khi có dữ liệu thời gian");
   const h = async (n) => { const png = await sc.renderPng(mk(n), st, now); return { len: png.length, h: png.readUInt32BE(20), same: png.toString("base64") }; };
   const a0 = await h(0), a3 = await h(3), a4 = await h(4), a9 = await h(9);
   ok(a0.h === a3.h, "0–3 lần: thẻ giữ nguyên kích thước, không có dòng nhỏ");

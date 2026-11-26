@@ -233,7 +233,7 @@ function drawShareCard(ctx, W, H, d){
     txt(t1, nx, sb + 80, 21, 500, 'rgba(255,255,255,.92)'); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(nx + wsa + 16, sb + 64); ctx.lineTo(nx + wsa + 16, sb + 84); ctx.stroke(); txt(t2, nx + wsa + 32, sb + 80, 21, 500, 'rgba(255,255,255,.92)');
     if (L.comp){ var wsb = width(t2, '500 21px ' + F), px = nx + wsa + 32 + wsb + 16; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px, sb + 64); ctx.lineTo(px, sb + 84); ctx.stroke(); txt('Tỉ lệ đúng: ' + pct + '%', px + 16, sb + 80, 21, 700, '#fff'); }
   } else if (L.comp){ txt('Tỉ lệ đúng: ' + pct + '%', nx, sb + 52, 24, 700, '#fff'); }
-  if (L.awayLine){ var ayb = L.hasBar ? sb + 116 : sb + 56, al = 'Số lần rời khỏi màn hình khi đang làm bài: ', aw0 = width(al, '500 19px ' + F); txt(al, nx, ayb, 19, 500, 'rgba(255,255,255,.88)'); txt(d.away + ' lần', nx + aw0, ayb, 19, 800, '#FFA89B'); }
+  if (L.awayLine){ var ayb = L.hasBar ? sb + 116 : sb + 56, al = 'Số lần rời khỏi màn hình khi đang làm bài: ', aw0 = width(al, '500 19px ' + F); txt(al, nx, ayb, 19, 500, 'rgba(255,255,255,.88)'); txt(d.away + ' lần' + (d.awayText ? ' (' + d.awayText + ')' : ''), nx + aw0, ayb, 19, 800, '#FFA89B'); }
   // ---- chỉ số phụ (khung trắng)
   var cols = [];
   if (d.compliance != null) cols.push(['target', d.compliance + ' điểm', d.practice ? 'Tuân thủ nếu thi thật' : 'Điểm tuân thủ', '#A35F0B']);

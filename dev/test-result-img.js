@@ -48,5 +48,17 @@ const call = async (q) => { const ctx = { log: Object.assign(() => {}, { error: 
   ok(m5.html.indexOf("Tổng thời gian") < 0 && m5.html.indexOf("Lưu ý") < 0 && m5.text.indexOf("Tổng thời gian") < 0, "email không có khung Lưu ý và không ghi tổng thời gian rời");
   ok(/Số lần rời khỏi bài: 3 lần/.test(m5.text), "bản chữ ghi 'Số lần rời khỏi bài: 3 lần'");
   ok(m5.html.indexOf("rs-header.jpg") > 0 && m5.html.indexOf("Xem lại bài làm") > 0, "mẫu mới: ảnh đầu thư 'Kết quả bài kiểm tra' + nút 'Xem lại bài làm'");
+  // "(N phút)" cạnh số lần rời khỏi màn hình
+  const ev3 = [{ k: "tab", t: now - 500000, ms: 28000 }, { k: "tab", t: now - 400000, ms: 54000 }, { k: "blur", t: now - 300000, ms: 22000 }, { k: "net", t: now - 200000, ms: 99000 }];
+  const mA = build(Object.assign({}, at, { flags: { blur: 3 }, events: ev3 }), { examTitle: "Kiểm tra định kì" }, null, {});
+  ok(/3 lần<\/b> <span[^>]*>\(2 phút\)</.test(mA.html) && /Số lần rời khỏi bài: 3 lần \(2 phút\)/.test(mA.text), "ghi '(2 phút)' cạnh số lần (28+54+22 = 104 giây ≈ 2 phút; mất mạng không tính)");
+  const mB = build(Object.assign({}, at, { flags: { blur: 1 }, events: [{ k: "tab", t: now - 1000, ms: 20000 }] }), { examTitle: "Kiểm tra định kì" }, null, {});
+  ok(/\(dưới 1 phút\)/.test(mB.html) && /\(dưới 1 phút\)/.test(mB.text), "dưới 60 giây ghi '(dưới 1 phút)'");
+  const mC = build(Object.assign({}, at, { flags: { blur: 2 }, events: [] }), { examTitle: "Kiểm tra định kì" }, null, {});
+  const mD = build(Object.assign({}, at, { flags: { blur: 0 }, events: ev3 }), { examTitle: "Kiểm tra định kì" }, null, {});
+  ok(!/\(\d+ phút\)|dưới 1 phút/.test(mC.html + mD.html) && !/\(\d+ phút\)/.test(mC.text), "không có dữ liệu thời gian, hoặc 0 lần: không ghi ngoặc");
+  at.flags = { blur: 3 }; at.events = []; await quiz.putAttempt(at); r = await call({ a: "att1", s }); const hm0 = crypto.createHash("md5").update(r.body).digest("hex");
+  at.events = ev3; await quiz.putAttempt(at); r = await call({ a: "att1", s }); const hm1 = crypto.createHash("md5").update(r.body).digest("hex");
+  ok(hm0 !== hm1, "ảnh sống trong email đổi theo số phút rời");
   console.log("\n" + pass + " pass, " + fail + " fail"); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
