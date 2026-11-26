@@ -34,5 +34,13 @@ const call = async (q) => { const ctx = { log: Object.assign(() => {}, { error: 
   ok(m1.html.indexOf(live.replace(/&/g, "&amp;")) > 0 && m1.html.indexOf("Chúc mừng") < 0, "email dùng ảnh sống và không còn hộp nhận xét tĩnh");
   const m2 = build(at, { examTitle: "Kiểm tra định kì", passEnabled: true, passScore: 60 }, null, {});
   ok(m2.html.indexOf("result-img") < 0 && m2.html.indexOf("Chúc mừng") > 0, "không có live: giữ thẻ tĩnh như cũ");
+  // số lần thoát khỏi màn hình khi làm bài
+  at.flags = { blur: 0 }; await quiz.putAttempt(at); r = await call({ a: "att1", s }); const h0 = crypto.createHash("md5").update(r.body).digest("hex");
+  at.flags = { blur: 4 }; await quiz.putAttempt(at); r = await call({ a: "att1", s }); const h4 = crypto.createHash("md5").update(r.body).digest("hex");
+  ok(r.status === 200 && h0 !== h4, "ảnh sống đổi theo số lần thoát khỏi màn hình (0 -> 4 lần)");
+  const m3 = build(Object.assign({}, at, { flags: { blur: 2 } }), { examTitle: "Kiểm tra định kì" }, null, {});
+  ok(/Số lần thoát khỏi màn hình khi làm bài/.test(m3.html) && />2 lần</.test(m3.html) && /thoát khỏi màn hình khi làm bài: 2 lần/.test(m3.text), "thẻ tĩnh và bản chữ cũng ghi số lần thoát khỏi màn hình");
+  const m4 = build(Object.assign({}, at, { flags: undefined }), { examTitle: "Kiểm tra định kì" }, null, {});
+  ok(/>0 lần</.test(m4.html), "bài không có dữ liệu cờ: ghi 0 lần, không lỗi");
   console.log("\n" + pass + " pass, " + fail + " fail"); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
