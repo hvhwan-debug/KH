@@ -32,8 +32,9 @@ const DEFAULT_SETTINGS = {
   // Điểm tuân thủ học tập: quy đổi từ tỉ lệ đúng (thang điểm 10) sang một mốc điểm cố định
   // (mặc định theo quy tắc kiểm tra định kỳ PC: <6 → 0, 6-6.99 → 10, 7-8.99 → 15, >=9 → 20).
   // Bắt buộc khai ngày, tháng, năm sinh trước khi làm bài, để hệ thống chúc mừng sinh nhật.
-  // Mặc định TẮT: chỉ bật khi quản trị viên chủ động chọn trong Cài đặt, tránh chặn nhầm ai khi chưa sẵn sàng.
-  requireBirthDate: false,
+  // Mặc định BẬT: hồ sơ chưa có ngày sinh (đủ năm) thì hỏi ở màn xác nhận trước khi làm bài; đã có thì bỏ qua.
+  // Quản trị viên vẫn tắt được trong Cài đặt. (Số điện thoại cũng vậy: đã có trong hồ sơ thì không hỏi lại.)
+  requireBirthDate: true,
   // Nhắc nhẹ xin ngày sinh khi nhân viên vào Học liệu / tra cứu / làm bài xong (bỏ qua được, hỏi lại hôm sau). Mặc định BẬT.
   askBirthDate: true,
   // Màn kết quả chỉ hiện "Đã hoàn thành bài kiểm tra", ẩn điểm số/chi tiết bài làm — hạn chế chụp màn hình chia sẻ

@@ -18,7 +18,7 @@ const OTHER = "data:image/jpeg;base64," + Buffer.from("anh-khac").toString("base
 (async () => {
   const qs = []; for (let i = 0; i < 12; i++) qs.push({ id: "q" + i, text: "Câu " + i, category: "Gia dụng", options: ["A", "B", "C", "D"], correctIndex: 0, active: true });
   await quiz.saveQuestions(qs);
-  await quiz.saveCandidates([{ code: "NV1", name: "A", email: "a@x.vn", segment: "both", phone: "0912345678", province: "Hà Nội", region: "bac" }, { code: "NV2", name: "B", email: "b@x.vn", segment: "both", phone: "0912345679", province: "Hà Nội", region: "bac" }]);
+  await quiz.saveCandidates([{ code: "NV1", name: "A", email: "a@x.vn", segment: "both", phone: "0912345678", birthDate: "1995-03-12", province: "Hà Nội", region: "bac" }, { code: "NV2", name: "B", email: "b@x.vn", segment: "both", phone: "0912345679", birthDate: "1996-04-20", province: "Hà Nội", region: "bac" }]);
   await quiz.saveSettings({ examTitle: "T", questionCount: 5, bothGiaDungCount: 2, secondsPerQuestion: 30, sharedUniform: true });
   ok((await quiz.upsertExam({ id: "de-a", title: "Đề A", questionCount: 5, sharedUniform: true })).ok, "tạo đề A");
   ok((await quiz.upsertExam({ id: "de-b", title: "Đề B", questionCount: 5, sharedUniform: true, faceLoginSkip: false })).ok, "tạo đề B (cố gửi faceLoginSkip:false)");
