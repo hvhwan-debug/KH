@@ -158,6 +158,16 @@ function normMulti(s) {
   const t = String(s == null ? "" : s).normalize("NFC").replace(/(\d),(\d)/g, "$1.$2");
   return t.split(/\s*[\/|;,]\s*/).map(normText).filter(Boolean).join(" / ");
 }
+// Câu nhiều chỗ trống mà quản trị nhập MỖI CHỖ MỘT DÒNG (vd 2 chỗ: dòng 1 "độc quyền", dòng 2 "71"): hiểu theo thứ tự chỗ trống,
+// thí sinh điền "độc quyền / 71" (hoặc ngăn bằng , ; |) là đúng. Chỉ áp dụng khi số dòng bằng số chỗ trống trong đề và không dòng nào chứa dấu ngăn.
+const BLANK_RE = /(?:\.{3,}|\u2026+|_{3,})/g;
+function blanksIn(text) { return (String(text || "").match(BLANK_RE) || []).length; }
+function positionalMode(q, accepted) { const nb = blanksIn(q && q.text); return nb >= 2 && accepted.length === nb && !accepted.some((a) => /[\/|;]/.test(a)); }
+function positionalOk(q, given, accepted) {
+  const nb = blanksIn(q && q.text);
+  const parts = String(given).normalize("NFC").replace(/(\d),(\d)/g, "$1.$2").split(/\s*[\/|;,]\s*/).map(normText);
+  return parts.length === nb && parts.every((v, i) => v && v === normText(accepted[i]));
+}
 // Làm sạch dữ liệu câu hỏi nhập từ quản trị viên theo từng loại. Trả về { error } hoặc { fields }.
 function normalizeQuestionInput(q) {
   q = q || {};
@@ -190,7 +200,7 @@ function gradeAnswer(q, ans, order) {
     const given = ans && typeof ans.text === "string" ? ans.text.trim() : "";
     const accepted = q.accepted || [];
     if (!given) return { state: "blank", ok: false, chosenText: "(không trả lời)", correctText: accepted.join(" / "), chosenOrig: [] };
-    const n = normText(given), nm = normMulti(given), ok = accepted.some((a) => normText(a) === n || (/[\/|;,]/.test(a + given) && normMulti(a) === nm));
+    const n = normText(given), nm = normMulti(given), ok = positionalMode(q, accepted) ? positionalOk(q, given, accepted) : accepted.some((a) => normText(a) === n || (/[\/|;,]/.test(a + given) && normMulti(a) === nm));
     return { state: ok ? "correct" : "wrong", ok, chosenText: given, correctText: accepted.join(" / "), chosenOrig: [] };
   }
   const ord = order || (q.options || []).map((_, i) => i);
