@@ -133,7 +133,7 @@ input{font:inherit;color:inherit}
     <div class="top">
       <div class="who">
         <h1>Xác nhận nhân sự<small id="meName"></small></h1>
-        <button class="out" type="button" id="logoutBtn">Đăng xuất</button>
+        <a class="out hide" id="backAdm" href="/kiemtra/admin.html" style="text-decoration:none">← Quản trị</a><button class="out" type="button" id="logoutBtn">Đăng xuất</button>
       </div>
       <span class="exp hide" id="expTag"></span>
       <details class="adm hide" id="admBox">
@@ -235,7 +235,7 @@ async function boot(){
   MULTI = new Set(EMP.map(function(e){ return String(e.manager || '').toLowerCase(); })).size > 1;
   $('meName').textContent = r.j.viewer.name + ' · ' + EMP.length + ' nhân viên';
   $('roNote').classList.toggle('hide', CAN);
-  if (r.j.viewer.isAdmin){ $('admBox').classList.remove('hide'); loadLinks(); }
+  if (r.j.viewer.isAdmin){ $('admBox').classList.remove('hide'); $('backAdm').classList.remove('hide'); loadLinks(); }
   if (!EMP.some(function(e){ return stateOf(e) === 'todo'; })) setFilter('all', true);
   show('app'); render();
 }
