@@ -8,8 +8,9 @@
 const quiz = require("./quiz");
 const H = require("./hranalytics");
 const llm = require("./llm");
+const CTX = require("./hrcontext");
 
-const SEG = { may_loc: "Ngành 1 · Máy lọc nước (Karofi, Livotec)", gia_dung: "Ngành 2 · Gia dụng Livotec", both: "Cả hai ngành" };
+const SEG = { may_loc: "Ngành 1 · Máy lọc nước (Karofi, Livotec)", gia_dung: "Ngành 2 · Điện gia dụng Livotec", both: "Cả hai ngành" };
 const r1 = (v) => (v == null ? null : Math.round(v * 10) / 10);
 const mean = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
 const median = (a) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
@@ -40,6 +41,7 @@ function personRules(p, pass) {
   if (p.leaves >= 4) { out.notes.push("Rời màn hình " + p.leaves + " lần khi làm bài (tín hiệu, không phải bằng chứng)."); out.actions.push("Quản lí trao đổi cởi mở về cách làm bài, nhắc lại quy định."); }
   if (p.pct >= 90 && p.leaves < 4) out.actions.push("Có thể làm người chia sẻ kinh nghiệm cho đồng nghiệp.");
   if (!out.actions.length) out.actions.push(p.pct >= pass ? "Tự học nâng cao ở mảng điểm thấp nhất." : "Ôn tập theo học liệu và làm lại bài kiểm tra.");
+  if (p.needs && p.needs.length && p.pct < Math.max(pass, 70)) out.actions.push("Trọng tâm theo vị trí " + String(p.audience || "").split(" · ")[0] + ": " + p.needs.slice(0, 2).join("; ") + ".");
   return out;
 }
 
@@ -80,7 +82,7 @@ async function build(opt) {
   const people = d.rows.map((r) => {
     const c = byCode.get(r.key) || {}, pv = prevOf.get(r.key);
     const p = { code: c.code || r.key, name: c.name || "", title: r.title, manager: String(c.manager || "").trim() || "(Chưa có quản lí)",
-      province: PROV().canonProvince(c.province) || "(Chưa rõ tỉnh)", region: r.region, segment: quiz.normSegment(c.segment), pct: r.pct,
+      province: PROV().canonProvince(c.province) || "(Chưa rõ tỉnh)", region: r.region, segment: quiz.normSegment(c.segment), audience: CTX.audienceOf({ title: c.title, segment: quiz.normSegment(c.segment) }), needs: CTX.needsOf({ title: c.title, segment: quiz.normSegment(c.segment) }), pct: r.pct,
       prev: pv ? r1(pv.pct) : null, leaves: r.leaves, tenure: r.tenure, sales: r.sales, weak: weakCats(r.cats, 1).slice(0, 4), cats: r.cats };
     p.rules = personRules(p, pass); return p;
   }).sort((a, b) => a.pct - b.pct);
@@ -88,7 +90,7 @@ async function build(opt) {
   const dim = (keyFn, label) => { const m = {}; people.forEach((p) => { const k = keyFn(p); (m[k] = m[k] || []).push(p); }); return Object.keys(m).map((k) => groupStat(label ? label(k) : k, m[k], overallMean, pass)).sort((a, b) => (a.mean || 0) - (b.mean || 0)); };
   const out = {
     meta: { period: d.period, examTitle: d.examTitle, periods: d.periods, passScore: pass, analysed: people.length, overallMean, channel: "Kênh GT", truncated: d.truncated },
-    managers: dim((p) => p.manager), provinces: dim((p) => p.province), segments: dim((p) => p.segment, (k) => SEG[k] || k),
+    managers: dim((p) => p.manager), provinces: dim((p) => p.province), segments: dim((p) => p.segment, (k) => SEG[k] || k), audiences: dim((p) => p.audience),
     people: people.map((p) => { const o = Object.assign({}, p, { segmentLabel: SEG[p.segment] || p.segment }); delete o.cats; return o; })
   };
   return out;
@@ -104,10 +106,10 @@ const SYSTEM = [
   "Không đề xuất quyết định bất lợi về nhân sự (kỷ luật, hạ bậc, cho nghỉ). Rời màn hình chỉ là tín hiệu để quản lí trao đổi, không phải bằng chứng gian lận.",
   "Không mặc định mọi vấn đề giải quyết bằng đào tạo: khi điểm kiến thức tốt mà kết quả bán thấp, nêu khả năng do kỹ năng bán hoặc yếu tố ngoài năng lực (hàng, giá, điểm bán) cần quản lí kiểm chứng.",
   "Chỉ trả về MỘT đối tượng JSON hợp lệ: {\"items\":[{\"id\":string,\"nhan_dinh\":string,\"diem_manh\":[string],\"can_cai_thien\":[string],\"de_xuat\":[string],\"do_tin_cay\":\"cao|vừa|thấp\"}]}. Mỗi phần tử ứng với đúng một id trong dữ liệu; nhan_dinh 2 đến 4 câu; mỗi mảng tối đa 3 ý."
-].join(" ");
+].join(" ") + " " + CTX.CONTEXT;
 
-function aiPerson(p, i) { return { id: "NV" + (i + 1), chuc_danh: p.title, nganh: SEG[p.segment] || p.segment, khu_vuc: p.region, diem: p.pct, diem_ky_truoc: p.prev, mang_kien_thuc: p.weak.map((w) => ({ mang: w.category, ty_le_dung: w.pct, so_cau: w.n })), so_lan_roi_man_hinh: p.leaves, tham_nien_thang: p.tenure, hoan_thanh_chi_tieu_ban: p.sales }; }
-function aiGroup(g, i, kind) { return { id: (kind === "managers" ? "QL" : kind === "provinces" ? "TINH" : "NGANH") + (i + 1), ten: kind === "managers" ? undefined : g.name, so_nguoi: g.n, diem_tb: g.mean, trung_vi: g.median, ty_le_duoi_muc_dat: g.belowPct, xu_huong_so_ky_truoc: g.trend, hoan_thanh_chi_tieu_ban_tb: g.salesMean, so_nguoi_co_so_ban: g.salesN, so_nguoi_roi_man_hinh_tu_4: g.leaves4, mang_yeu: g.weak.map((w) => w.category + " " + w.pct + "%") }; }
+function aiPerson(p, i) { return { id: "NV" + (i + 1), chuc_danh: p.title, doi_tuong_dao_tao: p.audience, nganh: SEG[p.segment] || p.segment, khu_vuc: p.region, diem: p.pct, diem_ky_truoc: p.prev, mang_kien_thuc: p.weak.map((w) => ({ mang: w.category, ty_le_dung: w.pct, so_cau: w.n })), so_lan_roi_man_hinh: p.leaves, tham_nien_thang: p.tenure, hoan_thanh_chi_tieu_ban: p.sales }; }
+function aiGroup(g, i, kind) { return { id: (kind === "managers" ? "QL" : kind === "provinces" ? "TINH" : kind === "audiences" ? "DT" : "NGANH") + (i + 1), ten: kind === "managers" ? undefined : g.name, so_nguoi: g.n, diem_tb: g.mean, trung_vi: g.median, ty_le_duoi_muc_dat: g.belowPct, xu_huong_so_ky_truoc: g.trend, hoan_thanh_chi_tieu_ban_tb: g.salesMean, so_nguoi_co_so_ban: g.salesN, so_nguoi_roi_man_hinh_tu_4: g.leaves4, mang_yeu: g.weak.map((w) => w.category + " " + w.pct + "%") }; }
 
 // kind: managers | provinces | segments | person ; key: tên nhóm hoặc mã NV
 async function ai(opt) {
@@ -116,13 +118,13 @@ async function ai(opt) {
   if (kind === "person") {
     const p = data.people.find((x) => quiz.normCode(x.code) === quiz.normCode(opt.key)); if (!p) return { ok: false, error: "Không tìm thấy nhân sự này trong kỳ đã chọn." };
     list = [p]; payload = [aiPerson(p, 0)];
-  } else if (kind === "managers" || kind === "provinces" || kind === "segments") {
+  } else if (kind === "managers" || kind === "provinces" || kind === "segments" || kind === "audiences") {
     list = data[kind].filter((g) => g.n >= 3).slice(0, 40); if (!list.length) return { ok: false, error: "Chưa có nhóm nào đủ 3 người để nhận định." };
     payload = list.map((g, i) => aiGroup(g, i, kind));
   } else return { ok: false, error: "Loại nhận định không hợp lệ." };
   ids = payload.map((x) => x.id);
   const user = "Kỳ: " + s(data.meta.examTitle, 120) + ". Kênh GT. Mức đạt: " + data.meta.passScore + "%. Điểm TB chung: " + data.meta.overallMean + "%.\n" +
-    "Đối tượng: " + (kind === "person" ? "một nhân sự (mã ẩn danh)" : kind === "managers" ? "từng đội của quản lí (tên quản lí được ẩn)" : kind === "provinces" ? "từng tỉnh/thành" : "từng ngành hàng") + ".\n" +
+    "Đối tượng: " + (kind === "person" ? "một nhân sự (mã ẩn danh)" : kind === "managers" ? "từng đội của quản lí (tên quản lí được ẩn)" : kind === "provinces" ? "từng tỉnh/thành" : kind === "audiences" ? "từng đối tượng đào tạo (so sánh SR GT1 với SR GT2 và giữa các chức danh)" : "từng ngành hàng") + ".\n" +
     "Dữ liệu (JSON):\n" + JSON.stringify(payload) + "\n\nViết nhận định cho TỪNG id.";
   let text; try { text = await llm.chat([{ role: "system", content: SYSTEM }, { role: "user", content: user }], { temperature: 0.3, max_tokens: kind === "person" ? 900 : Math.min(4000, 400 + payload.length * 260), task: "hr-dims", json: true, timeoutMs: 28000 }); }
   catch (e) { return { ok: false, error: "AI tạm thời không khả dụng, vui lòng thử lại sau." }; }

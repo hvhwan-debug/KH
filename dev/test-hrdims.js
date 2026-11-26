@@ -27,7 +27,7 @@ async function call(method, query, body) {
   ok(d.people.find((p) => p.code === "NV10").prev === 55 && /Tiến bộ \+5/.test(d.people.find((p) => p.code === "NV10").rules.notes.join(" ")), "so sánh với kỳ trước (+5 điểm)");
   ok(d.managers.length === 2 && d.managers.every((g) => g.n === 15 && g.notes.length && g.actions.length), "theo quản lí: 2 đội, mỗi đội 15 người, có nhận định");
   ok(d.provinces.length === 3 && d.segments.length === 3, "theo tỉnh (3) và theo ngành (3)");
-  ok(d.segments.some((g) => /Ngành 1 · Máy lọc nước \(Karofi, Livotec\)/.test(g.name)) && d.segments.some((g) => /Ngành 2 · Gia dụng Livotec/.test(g.name)), "nhãn ngành: Ngành 1 máy lọc (Karofi, Livotec), Ngành 2 gia dụng Livotec");
+  ok(d.segments.some((g) => /Ngành 1 · Máy lọc nước \(Karofi, Livotec\)/.test(g.name)) && d.segments.some((g) => /Ngành 2 · Điện gia dụng Livotec/.test(g.name)), "nhãn ngành: Ngành 1 máy lọc (Karofi, Livotec), Ngành 2 gia dụng Livotec");
   ok(/Rời màn hình 6 lần/.test(d.people.find((p) => p.code === "NV5").rules.notes.join(" ")), "người rời màn hình nhiều: ghi là tín hiệu");
   // AI: máy chủ tự dựng dữ liệu, không gửi tên / email / tuổi
   let sent = ""; llm.chat = async (m) => { sent = m[1].content; const ids = (sent.match(/"id":"([A-Z]+\d+)"/g) || []).map((x) => x.slice(6, -1)); return JSON.stringify({ items: ids.map((id) => ({ id, nhan_dinh: "Nhận định " + id, diem_manh: ["a"], can_cai_thien: ["b"], de_xuat: ["c"], do_tin_cay: "vừa" })) }); };
@@ -38,6 +38,12 @@ async function call(method, query, body) {
   ok(a.s === 200 && a.j.items[0].key === "NV7" && !/Người 7|n7@/.test(sent), "AI từng người: gắn đúng mã, không gửi tên");
   a = await call("POST", {}, { op: "hrDimsAi", kind: "segments", period: "k2" }); ok(a.s === 200 && a.j.items.length === 3, "AI theo ngành");
   a = await call("POST", {}, { op: "hrDimsAi", kind: "provinces", period: "k2" }); ok(a.s === 200 && a.j.items.length === 3, "AI theo tỉnh");
+  // đối tượng đào tạo (hồ sơ đối tượng Karofi – Livotec)
+  const C = require("../api/_lib/hrcontext");
+  ok(C.audienceKey("SR", "may_loc") === "GT1" && C.audienceKey("SR", "gia_dung") === "GT2" && C.audienceKey("SR", "both") === "SR", "SR + ngành: máy lọc = GT1, gia dụng = GT2, chưa rõ ngành thì không đoán");
+  ok(C.audienceKey("SR 1", "both") === "GT1" && C.audienceKey("SR GT2", "") === "GT2" && C.audienceKey("PC", "may_loc") === "PC" && C.audienceKey("ASM", "") === "ASM" && C.audienceKey("RSM", "") === "RSM" && C.audienceKey("PG", "") === "PG", "nhận đúng SR 1 / SR GT2 / PC / PG / ASM / RSM");
+  ok(d.audiences && d.audiences.length >= 1 && d.people.every((p) => p.audience), "có nhóm theo đối tượng, mỗi người có đối tượng");
+  a = await call("POST", {}, { op: "hrDimsAi", kind: "audiences", period: "k2" }); ok(a.s === 200 && a.j.items.length >= 1 && /SR GT1|Karofi/.test(require("../api/_lib/hrdims").SYSTEM), "AI theo đối tượng; lời nhắc AI có hồ sơ đối tượng đào tạo");
   a = await call("POST", {}, { op: "hrDimsAi", kind: "xyz" }); ok(a.s === 502 && !a.j.ok, "loại không hợp lệ bị từ chối");
   console.log("\n" + pass + " pass, " + fail + " fail"); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

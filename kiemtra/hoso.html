@@ -537,7 +537,7 @@ table.t.pl-act td{vertical-align:top;font-size:13px}
     <section id="secWf">
       <details class="card wf" id="dmCard" open>
         <summary>🧭 Nhận định theo từng người, quản lí, tỉnh, ngành <span class="small" id="dmSum"></span></summary>
-        <p class="small">Kênh GT · <b>Ngành 1</b>: máy lọc nước (Karofi, Livotec) · <b>Ngành 2</b>: gia dụng Livotec. Nhận định theo luật hiện ngay từ điểm kiểm tra, xu hướng so với kỳ trước, mảng kiến thức yếu, số lần rời màn hình, thâm niên và % chỉ tiêu bán (nếu có). Bấm <b>✨ AI</b> để AI viết nhận định chi tiết; AI chỉ nhận mã ẩn danh và số liệu, không nhận tên, email, SĐT, tuổi. Nhận định là gợi ý để quản lí kiểm chứng, không dùng để quyết định nhân sự.</p>
+        <p class="small">Kênh GT · <b>SR GT1 / Ngành 1</b>: máy lọc nước Karofi, Livotec · <b>SR GT2 / Ngành 2</b>: điện gia dụng Livotec (điều hòa, bếp từ, bình nước nóng…) · PC, PG, ASM, RSM theo phạm vi được phân công. Đối tượng xếp theo chức danh và ngành trong hồ sơ; SR chưa rõ ngành được ghi riêng, không đoán. Nhận định theo luật hiện ngay từ điểm kiểm tra, xu hướng so với kỳ trước, mảng kiến thức yếu, số lần rời màn hình, thâm niên và % chỉ tiêu bán (nếu có). Bấm <b>✨ AI</b> để AI viết nhận định chi tiết; AI chỉ nhận mã ẩn danh và số liệu, không nhận tên, email, SĐT, tuổi. Nhận định là gợi ý để quản lí kiểm chứng, không dùng để quyết định nhân sự.</p>
         <div class="wf-act"><select id="dmPeriod" aria-label="Đề / kỳ"><option value="">Kỳ có nhiều bài nhất</option></select><button class="btn sm pri" type="button" onclick="dmRun()">Tải nhận định</button></div>
         <div id="dmBody"></div>
       </details>
@@ -1557,6 +1557,7 @@ async function hrAnRun(){
   out += '</div>';
   // 2. chức danh / khu vực / thâm niên / học vấn
   out += '<div class="v-grid">';
+  if ((a.byAudience || []).length) out += '<div class="v-card">' + vSec('🎯', 'Điểm theo đối tượng đào tạo', 'SR GT1 (máy lọc nước) · SR GT2 (điện gia dụng) · PC · PG · ASM · RSM') + vBars(a.byAudience.map(t => ({ name: t.name, v: t.mean, n: t.n, sub: t.belowPct + '% dưới đạt' })), { pass, avg: o.mean }) + (a.byAudience.some(t => (t.weakest || []).length) ? '<div style="margin-top:10px">' + a.byAudience.filter(t => (t.weakest || []).length).map(t => '<div class="small" style="margin-top:6px"><b>' + esc(t.name.split(' · ')[0]) + '</b> yếu ở:</div><div class="v-chips" style="margin-top:4px">' + t.weakest.map(w => '<span style="background:' + vHeat(w.pct) + '">' + esc(w.category) + ' <b>' + w.pct + '%</b></span>').join('') + '</div>').join('') + '</div>' : '') + '</div>';
   out += '<div class="v-card">' + vSec('🏷️', 'Điểm theo chức danh') + vBars(a.byTitle.map(t => ({ name: t.name, v: t.mean, n: t.n, sub: t.belowPct + '% dưới đạt' })), { pass, avg: o.mean }) + '</div>';
   out += '<div class="v-card">' + vSec('🗺️', 'Điểm theo khu vực') + vBars(a.byRegion.map(t => ({ name: t.name, v: t.mean, n: t.n, sub: t.belowPct + '% dưới đạt' })), { pass, avg: o.mean }) + '</div>';
   if (a.tenureBands.length) out += '<div class="v-card">' + vSec('⏳', 'Điểm theo thâm niên', 'Trung vị') + vBars(a.tenureBands.map(b => ({ name: b.name, v: b.median, n: b.n, sub: b.belowPct + '% dưới đạt' })), { pass, avg: o.mean }) + '</div>';
@@ -1604,7 +1605,7 @@ async function hrAiRun(){
 }
 
 // ----- Nhận định theo từng người / quản lí / tỉnh / ngành -----
-var DM = { d:null, tab:'managers', ai:{ managers:{}, provinces:{}, segments:{}, person:{} }, f:{ q:'', mgr:'', prov:'', seg:'' }, show:50 };
+var DM = { d:null, tab:'audiences', ai:{ audiences:{}, managers:{}, provinces:{}, segments:{}, person:{} }, f:{ q:'', mgr:'', prov:'', seg:'' }, show:50 };
 const dmLv = { 'Tốt':['#E3F5EA','#17794A'], 'Đạt':['#E8F1FE','#1F66E0'], 'Đạt mức tối thiểu':['#FFF4DE','#B45309'], 'Chưa đạt':['#FDE8E8','#B42318'], 'Cần hỗ trợ ngay':['#FBD5D1','#8A1C12'] };
 const dmPill = (t, c) => '<span class="dm-pill" style="background:' + c[0] + ';color:' + c[1] + '">' + esc(t) + '</span>';
 const dmList = (a) => a && a.length ? '<ul>' + a.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' : '';
@@ -1615,7 +1616,7 @@ async function dmRun(){
   const box = $('dmBody'); box.innerHTML = '<div class="small" style="margin-top:10px">Đang tính nhận định (có thể mất vài giây)…</div>';
   const per = $('dmPeriod').value, { j } = await api('GET', '/api/kt-admin?op=hrDims' + (per ? '&period=' + encodeURIComponent(per) : ''));
   if (!j.ok){ box.innerHTML = '<div class="msg err" style="margin-top:10px">' + esc(j.error || 'Không tải được nhận định.') + '</div>'; return; }
-  DM.d = j; DM.ai = { managers:{}, provinces:{}, segments:{}, person:{} }; DM.show = 50;
+  DM.d = j; DM.ai = { audiences:{}, managers:{}, provinces:{}, segments:{}, person:{} }; DM.show = 50;
   const m = j.meta, sel = $('dmPeriod');
   sel.innerHTML = '<option value="">Kỳ có nhiều bài nhất</option>' + m.periods.map(p => '<option value="' + esc(p.period) + '"' + (p.period === m.period && per ? ' selected' : '') + '>' + esc(p.period || '(chưa gắn đề)') + ' · ' + p.n + ' bài</option>').join('');
   $('dmSum').textContent = '· ' + (m.examTitle || m.period) + ' · ' + m.analysed + ' người';
@@ -1623,7 +1624,7 @@ async function dmRun(){
 }
 function dmTab(t){ DM.tab = t; dmRender(); }
 function dmGroups(kind){
-  const L = DM.d[kind], A = DM.ai[kind], lab = { managers:'Quản lí', provinces:'Tỉnh / thành', segments:'Ngành' }[kind], m = DM.d.meta;
+  const L = DM.d[kind], A = DM.ai[kind], lab = { managers:'Quản lí', provinces:'Tỉnh / thành', segments:'Ngành', audiences:'Đối tượng' }[kind], m = DM.d.meta;
   const chip = (t, c) => '<span class="dm-c" style="background:' + c[0] + ';color:' + c[1] + '">' + t + '</span>';
   return '<div class="wf-act" style="margin-bottom:10px"><button class="btn sm pri" type="button" onclick="dmAi(\'' + kind + '\')">✨ AI nhận định tất cả ' + lab.toLowerCase() + '</button><span class="small">Nhóm từ 3 người mới gửi AI · xếp từ điểm TB thấp đến cao</span></div>' +
     '<div class="v-card" style="margin-bottom:12px">' + vSec('📊', 'So sánh điểm trung bình theo ' + lab.toLowerCase()) + vBars(L.map(g => ({ name: g.name, v: g.mean, n: g.n, sub: g.belowPct + '% dưới đạt' })), { pass: m.passScore, avg: m.overallMean }) + '</div>' +
@@ -1648,7 +1649,7 @@ function dmPeople(){
     '<button class="btn sm" type="button" onclick="dmCsv()">⬇ Tải CSV nhận định</button></div>' +
     '<div class="v-stack" style="margin:4px 0 6px">' + order.filter(k => cnt[k]).map(k => '<span style="width:' + (100 * cnt[k] / list.length) + '%;background:' + dmLv[k][1] + '" title="' + k + ': ' + cnt[k] + '"></span>').join('') + '</div>' +
     '<div class="v-leg" style="margin:0 0 12px">' + order.filter(k => cnt[k]).map(k => '<div><i style="background:' + dmLv[k][1] + '"></i>' + k + ' <b>' + cnt[k] + '</b></div>').join('') + '<div class="small">' + list.length + ' người · điểm thấp lên trước</div></div>' +
-    '<div class="v-grid">' + list.slice(0, DM.show).map(p => '<div class="v-card v-seg" style="border-top:4px solid ' + vCol(p.pct) + '"><div style="display:flex;justify-content:space-between;gap:10px"><div style="min-width:0"><b style="font-size:14.5px">' + esc(p.name || p.code) + '</b><div class="small">' + esc(p.code) + ' · ' + esc(p.title) + ' · ' + esc(p.manager) + '</div><div class="small">' + esc(p.province) + ' · ' + esc(p.segmentLabel) + '</div></div>' +
+    '<div class="v-grid">' + list.slice(0, DM.show).map(p => '<div class="v-card v-seg" style="border-top:4px solid ' + vCol(p.pct) + '"><div style="display:flex;justify-content:space-between;gap:10px"><div style="min-width:0"><b style="font-size:14.5px">' + esc(p.name || p.code) + '</b><div class="small">' + esc(p.code) + ' · ' + esc(p.audience || p.title) + ' · ' + esc(p.manager) + '</div><div class="small">' + esc(p.province) + ' · ' + esc(p.segmentLabel) + '</div></div>' +
       '<div style="text-align:right;flex:0 0 auto"><div class="v-kv" style="color:' + vCol(p.pct) + '">' + p.pct + '%</div>' + (p.prev != null ? '<div class="small">' + (p.pct >= p.prev ? '▲' : '▼') + ' kỳ trước ' + p.prev + '%</div>' : '') + '</div></div>' +
       '<div class="v-bt" style="margin:10px 0 8px"><i class="v-mk" style="left:' + pass + '%"></i><span style="width:' + p.pct + '%;background:' + vCol(p.pct) + '"></span></div>' +
       dmPill(p.rules.level, dmLv[p.rules.level] || ['#eee', '#333']) + (p.weak.length ? '<div class="v-chips">' + p.weak.slice(0, 3).map(w => '<span style="background:' + vHeat(w.pct) + '">' + esc(w.category) + ' <b>' + w.pct + '%</b></span>').join('') + '</div>' : '') +
@@ -1659,7 +1660,7 @@ function dmPeople(){
 }
 function DMF(k, v){ DM.f[k] = v; DM.show = 50; dmRender(); if (k === 'q'){ const e = $('dmQ'); if (e){ e.focus(); e.setSelectionRange(v.length, v.length); } } }
 function dmRender(){
-  if (!DM.d) return; const T = [['managers','Theo quản lí'],['provinces','Theo tỉnh'],['segments','Theo ngành'],['people','Từng người']];
+  if (!DM.d) return; const T = [['audiences','Theo đối tượng'],['managers','Theo quản lí'],['provinces','Theo tỉnh'],['segments','Theo ngành'],['people','Từng người']];
   $('dmBody').innerHTML = (DM.d.meta.truncated ? '<div class="msg warn" style="margin-top:10px">Chưa đọc hết điểm theo mảng kiến thức do giới hạn thời gian; mảng yếu dựa trên phần đã đọc.</div>' : '') +
     '<div class="small" style="margin-top:10px">Điểm TB chung <b>' + DM.d.meta.overallMean + '%</b> · mức đạt ' + DM.d.meta.passScore + '% · ' + DM.d.meta.channel + '</div>' +
     '<div class="dm-tabs" role="tablist">' + T.map(t => '<button type="button" role="tab" aria-selected="' + (DM.tab === t[0]) + '" onclick="dmTab(\'' + t[0] + '\')">' + t[1] + '</button>').join('') + '</div>' +
@@ -1676,8 +1677,8 @@ async function dmAi(kind, key){
 }
 function dmCsv(){
   const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"', A = DM.ai.person;
-  const head = ['Mã NV','Họ tên','Chức danh','Quản lí','Tỉnh','Ngành','Điểm','Kỳ trước','Mức','Nhận định','Đề xuất','Nhận định AI'];
-  const rows = DM.d.people.map(p => [p.code, p.name, p.title, p.manager, p.province, p.segmentLabel, p.pct, p.prev, p.rules.level, p.rules.notes.join(' '), p.rules.actions.join(' '), A[p.code] && A[p.code].nhan_dinh ? A[p.code].nhan_dinh + ' Đề xuất: ' + A[p.code].de_xuat.join('; ') : '']);
+  const head = ['Mã NV','Họ tên','Chức danh','Đối tượng','Quản lí','Tỉnh','Ngành','Điểm','Kỳ trước','Mức','Nhận định','Đề xuất','Nhận định AI'];
+  const rows = DM.d.people.map(p => [p.code, p.name, p.title, p.audience, p.manager, p.province, p.segmentLabel, p.pct, p.prev, p.rules.level, p.rules.notes.join(' '), p.rules.actions.join(' '), A[p.code] && A[p.code].nhan_dinh ? A[p.code].nhan_dinh + ' Đề xuất: ' + A[p.code].de_xuat.join('; ') : '']);
   const csv = '\ufeff' + [head].concat(rows).map(r => r.map(q).join(',')).join('\r\n'), a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' })); a.download = 'nhan-dinh-nhan-su-' + (DM.d.meta.period || 'ky') + '.csv'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }

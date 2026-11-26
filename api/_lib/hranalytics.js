@@ -6,6 +6,7 @@
 // KHÔNG đưa cho AI và không dùng để xếp hạng hay quyết định nhân sự.
 const quiz = require("./quiz");
 const profile = require("./profile");
+const CTX = require("./hrcontext");
 
 const MIN_SHOW = 5, MIN_RELIABLE = 10, MIN_CONCLUDE = 30;
 const fold = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
@@ -63,7 +64,7 @@ async function gather(opt) {
   } catch (e) { /* không có số bán */ }
   const rows = Array.from(best.entries()).map(([k, r]) => {
     const c = byCode.get(k), p = c.profile || {}, since = p.vaoLanDau || p.vaoCongTy;
-    return { key: k, id: r.id, title: quiz.titleOf(c) || "PC", region: REGION[quiz.normRegion(c.region || "")] || REGION[quiz.normRegion(p.mien || "")] || "Chưa rõ", pct: Number(r.pct), leaves: (r.flags && r.flags.blur) || 0,
+    return { key: k, id: r.id, title: quiz.titleOf(c) || "PC", aud: CTX.audienceOf({ title: c.title, segment: quiz.normSegment(c.segment) }), region: REGION[quiz.normRegion(c.region || "")] || REGION[quiz.normRegion(p.mien || "")] || "Chưa rõ", pct: Number(r.pct), leaves: (r.flags && r.flags.blur) || 0,
       tenure: since ? profile.monthsSince(since, now) : null, age: Number.isInteger(p.namSinh) ? yr - p.namSinh : null, edu: eduOf(p), sales: sales.has(k) ? sales.get(k) : null, cats: null };
   });
   // điểm theo mảng kiến thức: đọc từng bài (có giới hạn thời gian; bài chưa đọc được thì bỏ khỏi bản đồ năng lực, vẫn tính ở các phần khác)
@@ -80,6 +81,9 @@ function analyze(d) {
   const hist = [["Dưới 50", 0, 50], ["50 đến 59", 50, 60], ["60 đến 69", 60, 70], ["70 đến 79", 70, 80], ["80 đến 89", 80, 90], ["90 đến 100", 90, 101]].map(([l, a, b]) => ({ label: l, n: scores.filter((v) => v >= a && v < b).length }));
   const overview = { n: N, mean: r1(mean(scores)), median: r1(median(scores)), passScore: pass, belowPass: scores.filter((v) => v < pass).length, belowPassPct: N ? r1(100 * scores.filter((v) => v < pass).length / N) : 0, hist };
   const byTitle = gstat(group((r) => r.title)), byRegion = gstat(group((r) => r.region));
+  // theo đối tượng đào tạo (SR GT1 / SR GT2 / PC / PG / ASM / RSM) kèm mảng yếu nhất của từng đối tượng
+  const byAudience = gstat(group((r) => r.aud)).map((g) => { const cs = {}; rows.filter((r) => r.aud === g.name && r.cats).forEach((r) => Object.keys(r.cats).forEach((c) => { const x = cs[c] = cs[c] || { n: 0, ok: 0, emp: 0 }; x.n += r.cats[c].n; x.ok += r.cats[c].ok; x.emp++; }));
+    g.weakest = Object.keys(cs).filter((c) => cs[c].emp >= MIN_SHOW).map((c) => ({ category: c, pct: r1(100 * cs[c].ok / cs[c].n) })).filter((w) => w.pct < 80).sort((a, b) => a.pct - b.pct).slice(0, 3); return g; });
   // bản đồ khoảng cách năng lực
   const withCats = rows.filter((r) => r.cats), catAll = {};
   withCats.forEach((r) => Object.keys(r.cats).forEach((c) => { const x = catAll[c] = catAll[c] || { n: 0, ok: 0, emp: 0 }; x.n += r.cats[c].n; x.ok += r.cats[c].ok; x.emp++; }));
@@ -123,13 +127,14 @@ function analyze(d) {
   const notes = [];
   if (d.truncated) notes.push("Mới đọc được điểm theo mảng của " + d.catRead + "/" + N + " bài do giới hạn thời gian; bản đồ năng lực dựa trên phần đã đọc.");
   if (N < MIN_CONCLUDE) notes.push("Kỳ này chỉ có " + N + " nhân sự có điểm (dưới " + MIN_CONCLUDE + "): các quan hệ giữa biến chỉ mang tính mô tả, chưa kết luận.");
-  return { meta: { period: d.period, examTitle: d.examTitle, periods: d.periods, generatedAt: d.now, population: d.population, analysed: N, coverageCats: d.catRead }, overview, byTitle, byRegion, gapMap, priorities, relations, tenureBands, eduGroups, segments, matrix, notes };
+  return { byAudience, meta: { period: d.period, examTitle: d.examTitle, periods: d.periods, generatedAt: d.now, population: d.population, analysed: N, coverageCats: d.catRead }, overview, byTitle, byRegion, gapMap, priorities, relations, tenureBands, eduGroups, segments, matrix, notes };
 }
 
 // Tóm tắt ĐƯA CHO AI: chỉ số tổng hợp ẩn danh; BỎ độ tuổi và mọi quan hệ nhạy cảm; không có tên / mã / email
 function aiSummary(a) {
   return { ky: a.meta.examTitle, so_nhan_su_co_diem: a.meta.analysed, tong_quan: { diem_tb: a.overview.mean, trung_vi: a.overview.median, muc_dat: a.overview.passScore, ty_le_duoi_muc_dat: a.overview.belowPassPct },
-    theo_chuc_danh: a.byTitle.map((t) => ({ chuc_danh: t.name, n: t.n, diem_tb: t.mean, ty_le_duoi_muc_dat: t.belowPct })), theo_khu_vuc: a.byRegion.map((t) => ({ khu_vuc: t.name, n: t.n, diem_tb: t.mean, ty_le_duoi_muc_dat: t.belowPct })),
+    theo_chuc_danh: a.byTitle.map((t) => ({ chuc_danh: t.name, n: t.n, diem_tb: t.mean, ty_le_duoi_muc_dat: t.belowPct })), theo_doi_tuong: (a.byAudience || []).map((t) => ({ doi_tuong: t.name, n: t.n, diem_tb: t.mean, ty_le_duoi_muc_dat: t.belowPct, mang_yeu: (t.weakest || []).map((w) => w.category + " " + w.pct + "%") })),
+    theo_khu_vuc: a.byRegion.map((t) => ({ khu_vuc: t.name, n: t.n, diem_tb: t.mean, ty_le_duoi_muc_dat: t.belowPct })),
     uu_tien_dao_tao: a.priorities.map((p) => ({ chuc_danh: p.title, n: p.n, mang_yeu: p.items.map((i) => ({ mang: i.category, diem: i.pct, chenh_lech_so_voi_chung: i.gap, so_nguoi: i.emp, tin_cay: i.reliable ? "đủ" : "thấp" })) })),
     quan_he: a.relations.filter((r) => !r.sensitive).map((r) => ({ ten: r.name, n: r.n, muc_mau: r.status === "ok" ? "đủ để kết luận" : r.status === "low" ? "chỉ mô tả" : "chưa đủ", rho: r.rho == null ? null : r.rho, y_nghia_thong_ke: r.significant })),
     theo_tham_nien: a.tenureBands.map((b) => ({ nhom: b.name, n: b.n, trung_vi: b.median, ty_le_duoi_muc_dat: b.belowPct })),

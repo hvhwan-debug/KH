@@ -2,6 +2,7 @@
 // viết nhận định, khoảng cách năng lực, kế hoạch đào tạo, khuyến nghị quản trị. Không gửi tên, mã, email, độ tuổi hay dữ liệu từng người.
 // Luật cứng nằm trong lời nhắc: chỉ dựa trên số liệu được cung cấp, không kết luận nhân quả, tôn trọng ngưỡng cỡ mẫu, không gắn nhãn cá nhân.
 const llm = require("./llm");
+const CTX = require("./hrcontext");
 
 const SYSTEM = [
   "Bạn là chuyên gia phân tích nhân lực (HR Analytics) và phát triển năng lực (L&D) cho đội ngũ kinh doanh kênh GT ngành máy lọc nước và gia dụng. Viết tiếng Việt chuyên nghiệp, ngắn gọn, dùng ngôi trung tính (không xưng \"bạn\", không xưng \"tôi\").",
@@ -13,6 +14,7 @@ const SYSTEM = [
   "Không mặc định mọi vấn đề hiệu suất giải quyết được bằng đào tạo: với mỗi khoảng cách, phân loại: thiếu kiến thức / thiếu kỹ năng / thiếu kinh nghiệm thực hành / chưa ứng dụng được / nguyên nhân ngoài năng lực (hệ thống, chính sách, công cụ) / chưa đủ dữ liệu để xác định.",
   "Chỉ trả về MỘT đối tượng JSON hợp lệ, không kèm chữ nào khác, đúng cấu trúc: {\"tom_tat\":string,\"phat_hien\":[{\"noi_dung\":string,\"bang_chung\":string,\"do_tin_cay\":\"cao|vừa|thấp\"}],\"khoang_cach_nang_luc\":[{\"doi_tuong\":string,\"khoang_cach\":string,\"loai\":string,\"bang_chung\":string}],\"ke_hoach_dao_tao\":[{\"doi_tuong\":string,\"nhu_cau\":string,\"noi_dung\":string,\"phuong_phap\":string,\"thoi_luong\":string,\"hinh_thuc\":string,\"kpi\":string}],\"khuyen_nghi_quan_tri\":[string],\"du_lieu_can_bo_sung\":[string],\"han_che\":[string]}. Tối đa 6 mục mỗi danh sách."
 ].join(" ");
+const SYSTEM_FULL = SYSTEM + " " + CTX.CONTEXT + " Có so sánh theo đối tượng đào tạo (theo_doi_tuong) thì so sánh SR GT1 với SR GT2 và giữa các chức danh, kèm cỡ mẫu.";
 
 const s = (v, n) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, n);
 const arr = (v, max, fn) => (Array.isArray(v) ? v.slice(0, max).map(fn).filter(Boolean) : []);
@@ -44,6 +46,7 @@ function cleanSummary(x) {
     ky: s(x.ky, 120), so_nhan_su_co_diem: num(x.so_nhan_su_co_diem),
     tong_quan: { diem_tb: num(x.tong_quan && x.tong_quan.diem_tb), trung_vi: num(x.tong_quan && x.tong_quan.trung_vi), muc_dat: num(x.tong_quan && x.tong_quan.muc_dat), ty_le_duoi_muc_dat: num(x.tong_quan && x.tong_quan.ty_le_duoi_muc_dat) },
     theo_chuc_danh: L(x.theo_chuc_danh, 12, (t) => ({ chuc_danh: s(t && t.chuc_danh, 40), n: num(t && t.n), diem_tb: num(t && t.diem_tb), ty_le_duoi_muc_dat: num(t && t.ty_le_duoi_muc_dat) })),
+    theo_doi_tuong: L(x.theo_doi_tuong, 10, (t) => ({ doi_tuong: s(t && t.doi_tuong, 60), n: num(t && t.n), diem_tb: num(t && t.diem_tb), ty_le_duoi_muc_dat: num(t && t.ty_le_duoi_muc_dat), mang_yeu: L(t && t.mang_yeu, 3, (m) => s(m, 100)) })),
     theo_khu_vuc: L(x.theo_khu_vuc, 8, (t) => ({ khu_vuc: s(t && t.khu_vuc, 40), n: num(t && t.n), diem_tb: num(t && t.diem_tb), ty_le_duoi_muc_dat: num(t && t.ty_le_duoi_muc_dat) })),
     uu_tien_dao_tao: L(x.uu_tien_dao_tao, 12, (p) => ({ chuc_danh: s(p && p.chuc_danh, 40), n: num(p && p.n), mang_yeu: L(p && p.mang_yeu, 3, (m) => ({ mang: s(m && m.mang, 80), diem: num(m && m.diem), chenh_lech_so_voi_chung: num(m && m.chenh_lech_so_voi_chung), so_nguoi: num(m && m.so_nguoi), tin_cay: s(m && m.tin_cay, 10) })) })),
     quan_he: L(x.quan_he, 8, (r) => ({ ten: s(r && r.ten, 120), n: num(r && r.n), muc_mau: s(r && r.muc_mau, 30), rho: num(r && r.rho), y_nghia_thong_ke: r && typeof r.y_nghia_thong_ke === "boolean" ? r.y_nghia_thong_ke : null })),
@@ -58,7 +61,7 @@ async function report(summaryIn) {
   const summary = cleanSummary(summaryIn);
   if (!summary || !summary.so_nhan_su_co_diem) return { ok: false, error: "Chưa có số liệu để phân tích." };
   const user = "Dữ liệu tổng hợp ẩn danh (JSON):\n" + JSON.stringify(summary) + "\n\nHãy lập: tóm tắt điều hành, các phát hiện chính (kèm bằng chứng và độ tin cậy), khoảng cách năng lực theo nhóm (kèm phân loại nguyên nhân), kế hoạch đào tạo (đối tượng, nhu cầu, nội dung, phương pháp, thời lượng, hình thức, KPI đánh giá), khuyến nghị quản trị, dữ liệu cần bổ sung và hạn chế.";
-  let text; try { text = await llm.chat([{ role: "system", content: SYSTEM }, { role: "user", content: user }], { temperature: 0.3, max_tokens: 2200, task: "hr-analytics", json: true, timeoutMs: 26000 }); } catch (e) { return { ok: false, error: "AI tạm thời không khả dụng, vui lòng thử lại sau." }; }
+  let text; try { text = await llm.chat([{ role: "system", content: SYSTEM_FULL }, { role: "user", content: user }], { temperature: 0.3, max_tokens: 2200, task: "hr-analytics", json: true, timeoutMs: 26000 }); } catch (e) { return { ok: false, error: "AI tạm thời không khả dụng, vui lòng thử lại sau." }; }
   const out = clean(parse(text));
   if (!out) return { ok: false, error: "AI trả về kết quả không đọc được, vui lòng thử lại." };
   return { ok: true, report: out };
