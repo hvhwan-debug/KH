@@ -612,6 +612,31 @@ body.exam #wm{display:block}
 #shield{position:fixed;inset:0;z-index:9999;background:#000;color:#fff;display:none;align-items:center;justify-content:center;text-align:center;padding:28px;font-size:16px;font-weight:600;line-height:1.6}
 #shield.on{display:flex}
 #shield svg{display:block;margin:0 auto 14px;opacity:.9}
+/* Popup khi thí sinh rời khỏi màn hình bài thi rồi quay lại (ghi nhận số lần) */
+.lvp{position:fixed;left:0;right:0;top:0;bottom:0;z-index:10000;display:none;-webkit-box-align:center;-webkit-box-pack:center;align-items:center;justify-content:center;padding:18px;background:rgba(8,24,60,.9);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.lvp.on{display:-webkit-box;display:flex}
+.lvc{position:relative;width:100%;max-width:820px;border-radius:30px;padding:34px 36px 30px;background:linear-gradient(180deg,#fff,#F4F9FF);box-shadow:0 30px 70px -20px rgba(4,20,70,.6);color:#0B2A66}
+.lvx{position:absolute;right:18px;top:16px;width:36px;height:36px;border:0;border-radius:50%;background:transparent;color:#4B5B78;font-size:26px;line-height:34px;cursor:pointer;padding:0}
+.lvx:hover{background:#EEF3FB}
+.lvm{display:-webkit-box;display:flex;-webkit-box-align:center;align-items:center}
+.lvi{-webkit-box-flex:0;flex:0 0 31%;max-width:250px;padding-right:20px;margin-right:24px;border-right:1px solid #CFE0F6}
+.lvi svg{display:block;width:100%;height:auto}
+.lvt{-webkit-box-flex:1;flex:1 1 auto;min-width:0}
+.lvt h2{margin:0;font-size:27px;line-height:1.28;font-weight:800;color:#0B2A66}
+.lvt .lvs{margin:8px 0 0;font-size:16px;line-height:1.5;color:#3B4A6A}
+.lvp-pill{display:-webkit-box;display:flex;-webkit-box-align:center;align-items:center;margin-top:16px;padding:9px 40px 9px 18px;border-radius:999px;background:#E9F2FC}
+.lvp-pill svg{-webkit-box-flex:0;flex:0 0 auto;margin-right:12px}
+.lvp-pill .lvd{-webkit-box-flex:0;flex:0 0 1px;width:1px;height:30px;background:#BCD0EC;margin-right:14px}
+.lvp-pill .lvl{-webkit-box-flex:0;flex:0 0 auto;margin-right:12px;font-size:16px;font-weight:600;color:#12294F}
+.lvp-pill b{-webkit-box-flex:0;flex:0 0 auto;padding:6px 22px;border-radius:999px;background:#fff;color:#1565E8;font-size:24px;line-height:1.2;font-weight:800;box-shadow:0 4px 12px -4px rgba(21,101,232,.35)}
+.lvn{display:-webkit-box;display:flex;-webkit-box-align:start;align-items:flex-start;margin:20px 0 0;font-size:15.5px;line-height:1.55;font-style:italic;color:#34456A}
+.lvn svg{-webkit-box-flex:0;flex:0 0 auto;margin:3px 10px 0 0}
+.lvn span{display:block}
+.lvn em{display:block;margin-top:2px;font-style:normal;font-weight:700;color:#0B2A66}
+.lvb{display:block;margin:22px auto 0;padding:15px 44px;border:0;border-radius:999px;background:#1565E8;background-image:linear-gradient(95deg,#12A6F5 0%,#0B47C9 100%);color:#fff;font:inherit;font-size:20px;font-weight:800;cursor:pointer;box-shadow:0 14px 24px -12px rgba(11,71,201,.8)}
+.lvb:focus{outline:3px solid #9CC6FF;outline-offset:3px}
+@media(max-width:640px){.lvc{padding:26px 18px 22px;border-radius:24px}.lvm{display:block}.lvi{max-width:150px;margin:0 auto 10px;padding:0;border:0}.lvt h2{font-size:19px}.lvt .lvs{font-size:14.5px}.lvp-pill{padding:8px 8px 8px 12px}.lvp-pill{padding-right:8px}.lvp-pill .lvl{font-size:13.5px;margin-right:8px}.lvp-pill b{font-size:19px;padding:5px 14px}.lvn{font-size:14px}.lvb{width:100%;padding:14px 20px;font-size:18px}}
+
 @media print{.wrap,#wm{display:none!important}body::after{content:'Không được in nội dung bài thi.';display:block;padding:40px;font-size:18px;color:#000}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
@@ -2962,6 +2987,28 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
 </div>
 
 <div id="wm" aria-hidden="true"></div>
+<div id="leavePop" class="lvp" role="dialog" aria-modal="true" aria-labelledby="lvpT"><div class="lvc">
+<button type="button" class="lvx" id="lvpX" aria-label="Đóng">&times;</button>
+<div class="lvm">
+<div class="lvi"><svg viewBox="0 0 260 230" aria-hidden="true"><defs><linearGradient id="lvg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2F9BFF"/><stop offset="1" stop-color="#0B52D4"/></linearGradient></defs>
+<ellipse cx="150" cy="112" rx="104" ry="100" fill="#D9EDFF" opacity=".75"/><ellipse cx="96" cy="140" rx="84" ry="72" fill="#E6F2FF"/>
+<rect x="26" y="50" width="176" height="124" rx="14" fill="#fff" stroke="#BCD6F8" stroke-width="1.5"/>
+<path d="M26 64a14 14 0 0 1 14-14h148a14 14 0 0 1 14 14v12H26z" fill="url(#lvg1)"/>
+<circle cx="42" cy="63" r="4" fill="#fff"/><circle cx="55" cy="63" r="4" fill="#fff"/><circle cx="68" cy="63" r="4" fill="#fff"/><rect x="152" y="59" width="36" height="8" rx="4" fill="#fff" opacity=".85"/>
+<rect x="44" y="92" width="104" height="9" rx="4.5" fill="#CFE2FA"/><rect x="44" y="110" width="84" height="9" rx="4.5" fill="#D9E8FB"/><rect x="44" y="128" width="58" height="9" rx="4.5" fill="#D9E8FB"/>
+<rect x="150" y="92" width="64" height="60" rx="14" fill="#fff" stroke="#D6E6FB"/>
+<path d="M170 128v-14a3 3 0 0 1 3-3h14M181 111h14v14M195 111l-16 16" fill="none" stroke="#1D74F2" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="84" y="150" width="30" height="6" rx="3" fill="#FFC83D"/><rect x="92" y="163" width="22" height="6" rx="3" fill="#FFC83D"/>
+<circle cx="146" cy="170" r="44" fill="url(#lvg1)"/><circle cx="146" cy="170" r="34" fill="#fff"/><rect x="136" y="120" width="20" height="9" rx="3.5" fill="#1D6BE8"/><rect x="143" y="126" width="6" height="8" fill="#1D6BE8"/>
+<path d="M146 170v-20M146 170l15 9" stroke="#1559C4" stroke-width="5" stroke-linecap="round" fill="none"/><circle cx="146" cy="170" r="4" fill="#1559C4"/>
+<path d="M146 140v4M146 196v4M116 170h4M172 170h4" stroke="#9FB9E6" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+<div class="lvt"><h2 id="lvpT">Để tiết kiệm thời gian và đảm bảo trải nghiệm làm bài liền mạch,</h2>
+<p class="lvs">hệ thống ghi nhận bạn vừa rời khỏi màn hình bài kiểm tra.</p>
+<div class="lvp-pill"><svg width="34" height="30" viewBox="0 0 34 30" fill="none" stroke="#1D74F2" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="30" height="20" rx="3"/><path d="M12 28h10M17 22v6"/></svg><i class="lvd"></i><span class="lvl">Số lần được ghi nhận:</span><b id="lvpN">01 lần</b></div></div>
+</div>
+<p class="lvn"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M3 22C3 10 11 3 23 3c0 12-7 20-18 20z" fill="#9CCBFA"/><path d="M5 21C9 14 14 10 20 7" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg><span>Bạn vui lòng quay lại màn hình và tiếp tục làm bài để hoàn thành bài kiểm tra một cách nhanh chóng và trọn vẹn nhé!<em>Cảm ơn bạn đã phối hợp!</em></span></p>
+<button type="button" class="lvb" id="lvpGo">Quay lại làm bài &#8594;</button>
+</div></div>
 <div id="shield" role="alert"><div><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.2 8 8 9 4.8-1 8-4.5 8-9V6z"/><path d="M9.5 12.5l2 2 3.5-4"/></svg><div id="shieldMsg"></div></div></div>
 
 <div class="nudge-bg" id="nudgeBg" aria-hidden="true">
@@ -5334,10 +5381,26 @@ function comeBack(){
   if (QB && QB.awayT){ QB.away += performance.now() - QB.awayT; QB.awayT = null; }
   away = false;
   if (was && ST.quizOn){
-    var n = (ST.flags && ST.flags.blur) || 1;
-    shieldOn('Đã ghi nhận lần rời khỏi màn hình bài thi thứ ' + n + '. ' + (n >= BLUR_WARN_AT ? 'Bài làm sẽ được đánh dấu để quản lí xem lại. ' : 'Từ lần thứ ' + BLUR_WARN_AT + ', bài làm sẽ được đánh dấu để quản lí xem lại. ') + 'Vui lòng không mở tài liệu hoặc ứng dụng khác khi đang làm bài.', 4500);
-  } else shieldOff();
+    // popup ghi nhận lần rời màn hình (số lần lấy từ ST.flags.blur, cùng con số gửi trong email kết quả)
+    leavePopOpen((ST.flags && ST.flags.blur) || 1);
+  }
+  shieldOff();
 }
+
+function leavePopOpen(n){
+  var p = $('leavePop'); if (!p) return;
+  $('lvpN').textContent = (n < 10 ? '0' : '') + n + ' lần';
+  p.classList.add('on'); ST.leaveOpen = true;
+  try { $('lvpGo').focus({ preventScroll: true }); } catch (e) {}
+}
+function leavePopClose(){
+  var p = $('leavePop'); if (p) p.classList.remove('on');
+  ST.leaveOpen = false; shieldOff();
+  var q = $('qText'); if (q) { try { q.focus({ preventScroll: true }); } catch (e) {} }
+}
+$('lvpGo').addEventListener('click', leavePopClose);
+$('lvpX').addEventListener('click', leavePopClose);
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && ST.leaveOpen) leavePopClose(); });
 function shotAttempt(why){
   if (!ST.quizOn || ST.noShield) return;
   ST.flags.shot++; if (QB) QB.shot++;
