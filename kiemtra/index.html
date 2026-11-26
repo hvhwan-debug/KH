@@ -403,11 +403,23 @@ button,input{font:inherit;color:inherit}
 .fillin:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
 .fillblank{font:inherit;font-weight:700;color:var(--brand-deep,#0B3F94);width:9ch;min-width:7ch;max-width:100%;padding:2px 8px;margin:0 3px;border:0;border-bottom:2.5px solid var(--brand,#1559C4);border-radius:8px 8px 0 0;background:var(--brand-soft,#E3EBF5);outline:0;text-align:center;vertical-align:baseline}
 .fillblank::placeholder{color:#8EA2C6;font-weight:600}
-.trole{margin:0 0 14px;padding:14px 16px;border:1.5px dashed #9DB8E8;border-radius:14px;background:#F3F8FF;text-align:left}
-.trole .trt{font-weight:800;color:var(--brand-deep,#0B3F94);margin-bottom:8px;font-size:14.5px}
-.trole label{display:flex;gap:8px;align-items:flex-start;font-size:14px;line-height:1.45;margin:6px 0;cursor:pointer}
-.trole input{margin-top:3px;flex:0 0 auto}
-.trole .trc{margin:6px 0 0 26px;padding:8px 12px;background:#fff;border:1px solid #D6E4F7;border-radius:10px}
+.trp{position:fixed;left:0;right:0;top:0;bottom:0;z-index:10001;display:none;-webkit-box-align:center;-webkit-box-pack:center;align-items:center;justify-content:center;padding:18px;background:rgba(8,24,60,.78);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.trp.on{display:-webkit-box;display:flex}
+.trpc{width:100%;max-width:480px;max-height:92vh;overflow:auto;border-radius:22px;padding:24px 24px 22px;background:#fff;box-shadow:0 30px 70px -20px rgba(4,20,70,.6);text-align:left;color:#0B2A66}
+.trpt{font-size:20px;font-weight:800}
+.trpq{margin:6px 0 14px;font-size:15px;color:#3B4A6A}
+.trpo{display:-webkit-box;display:flex;gap:12px;align-items:flex-start;margin:0 0 10px;padding:13px 14px;border:1.5px solid #D6E4F7;border-radius:14px;background:#F8FBFF;cursor:pointer}
+.trpo.on{border-color:#1565E8;background:#EAF3FF;box-shadow:0 0 0 3px rgba(21,101,232,.12)}
+.trpo input{margin-top:4px;flex:0 0 auto}
+.trpo b{display:block;font-size:16px}
+.trpo i{display:block;margin-top:2px;font-style:normal;font-size:13.5px;line-height:1.45;color:#4B5B78}
+.trpk{margin:0 0 12px 8px;padding:10px 14px;background:#fff;border:1px solid #D6E4F7;border-radius:12px}
+.trpk label{display:-webkit-box;display:flex;gap:8px;align-items:flex-start;font-size:14px;line-height:1.45;margin:6px 0;cursor:pointer}
+.trpk input{margin-top:3px;flex:0 0 auto}
+.trgo{display:block;width:100%;margin-top:6px;padding:14px 20px;border:0;border-radius:999px;background:#1565E8;background-image:linear-gradient(95deg,#12A6F5,#0B47C9);color:#fff;font:inherit;font-size:17px;font-weight:800;cursor:pointer}
+.trgo:focus{outline:3px solid #9CC6FF;outline-offset:2px}
+.trchip{display:-webkit-box;display:flex;gap:10px;-webkit-box-align:center;align-items:center;-webkit-box-pack:justify;justify-content:space-between;margin:0 0 12px;padding:10px 14px;border:1.5px dashed #9DB8E8;border-radius:12px;background:#F3F8FF;font-size:14px;color:#0B2A66;text-align:left}
+.trchip button{flex:0 0 auto;border:0;border-radius:999px;padding:6px 14px;background:#1565E8;color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 .fillblank:focus{background:#fff;box-shadow:0 0 0 3px var(--brand-soft,#E3EBF5)}
 .keys{font-size:12px;color:var(--muted);margin:14px 0 0;text-align:center}
 @media(hover:none){.keys{display:none}}
@@ -3247,26 +3259,44 @@ var KIC = {
 var KI = function(k){ return '<i class="ki"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + KIC[k] + '</svg></i>'; };
 var RI = function(k){ return '<i class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + KIC[k] + '</svg></i>'; };
 
-// Tài khoản thử nghiệm + trình duyệt quản trị: hỏi vai trò. Thí sinh = đầy đủ mọi chức năng. Quản trị viên = chọn chức năng muốn thử (bỏ tích để bỏ qua).
-// Máy chủ chỉ chấp nhận bỏ qua khi đúng là tài khoản thử nghiệm VÀ trình duyệt đang đăng nhập quản trị viên (kt-start).
-function testRoleRender(){
-  var c = ST.cand, box = $('testRoleBox');
-  if (!c || !c.testChoice){ if (box) box.remove(); ST.testRole = null; ST.noShield = false; return; }
-  var t = ST.testRole = ST.testRole || { role: 'cand', face: true, shield: true };
-  if (!box){ box = document.createElement('div'); box.id = 'testRoleBox'; box.className = 'trole'; $('btnStart').parentNode.insertBefore(box, $('btnStart')); }
-  box.innerHTML = '<div class="trt">🧪 Tài khoản thử nghiệm: bạn muốn thử ở vai trò nào?</div>' +
-    '<label class="tro"><input type="radio" name="trole" value="cand"' + (t.role === 'cand' ? ' checked' : '') + '><span><b>Thí sinh</b>: đầy đủ mọi chức năng như thí sinh thật (quét khuôn mặt, che màn hình khi rời tab…)</span></label>' +
-    '<label class="tro"><input type="radio" name="trole" value="admin"' + (t.role === 'admin' ? ' checked' : '') + '><span><b>Quản trị viên</b>: chọn chức năng muốn thử, bỏ tích chức năng muốn bỏ qua</span></label>' +
-    '<div class="trc' + (t.role === 'admin' ? '' : ' hide') + '" id="trChecks">' +
-      '<label><input type="checkbox" id="trFace"' + (t.face ? ' checked' : '') + '> Quét khuôn mặt + thử thách quay mặt</label>' +
-      '<label><input type="checkbox" id="trShield"' + (t.shield ? ' checked' : '') + '> Che màn hình khi rời tab, chặn chụp / sao chép</label></div>';
+// Tài khoản thử nghiệm + trình duyệt quản trị: hiện POPUP hỏi vai trò ngay khi vào màn xác nhận. Thí sinh = đầy đủ mọi chức năng.
+// Quản trị viên = chọn chức năng muốn thử (bỏ tích để bỏ qua). Máy chủ chỉ chấp nhận bỏ qua khi đúng là tài khoản thử nghiệm VÀ
+// trình duyệt đang đăng nhập quản trị viên (kt-start). Sau khi chọn, một dòng tóm tắt + nút "Đổi" nằm cạnh nút Bắt đầu.
+function testRoleSummary(t){
+  if (t.role !== 'admin') return 'Thí sinh (đầy đủ chức năng)';
+  return 'Quản trị viên' + (t.face ? '' : ' · bỏ qua quét mặt') + (t.shield ? '' : ' · bỏ qua che màn hình');
+}
+function testRolePopOpen(){
+  var t = ST.testRole, pop = $('testRolePop');
+  if (!t) return;
+  if (!pop){ pop = document.createElement('div'); pop.id = 'testRolePop'; pop.className = 'trp'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-modal', 'true'); pop.setAttribute('aria-labelledby', 'trpT'); document.body.appendChild(pop); }
+  pop.innerHTML = '<div class="trpc"><div class="trpt" id="trpT">🧪 Tài khoản thử nghiệm</div><p class="trpq">Bạn muốn thử hệ thống ở vai trò nào?</p>' +
+    '<label class="trpo' + (t.role === 'cand' ? ' on' : '') + '"><input type="radio" name="trole" value="cand"' + (t.role === 'cand' ? ' checked' : '') + '><span><b>Thí sinh</b><i>Đầy đủ mọi chức năng như thí sinh thật: quét khuôn mặt, che màn hình khi rời tab…</i></span></label>' +
+    '<label class="trpo' + (t.role === 'admin' ? ' on' : '') + '"><input type="radio" name="trole" value="admin"' + (t.role === 'admin' ? ' checked' : '') + '><span><b>Quản trị viên</b><i>Chọn chức năng muốn thử, bỏ tích chức năng muốn bỏ qua.</i></span></label>' +
+    '<div class="trpk' + (t.role === 'admin' ? '' : ' hide') + '" id="trChecks"><label><input type="checkbox" id="trFace"' + (t.face ? ' checked' : '') + '> Quét khuôn mặt + thử thách quay mặt</label>' +
+    '<label><input type="checkbox" id="trShield"' + (t.shield ? ' checked' : '') + '> Che màn hình khi rời tab, chặn chụp / sao chép</label></div>' +
+    '<button type="button" class="trgo" id="trGo">Tiếp tục</button></div>';
   var sync = function(){
-    var r = box.querySelector('input[name="trole"]:checked');
+    var r = pop.querySelector('input[name="trole"]:checked');
     t.role = r ? r.value : 'cand'; t.face = $('trFace').checked; t.shield = $('trShield').checked;
     $('trChecks').classList.toggle('hide', t.role !== 'admin');
-    ST.noShield = t.role === 'admin' && !t.shield;
+    Array.prototype.forEach.call(pop.querySelectorAll('.trpo'), function(l){ l.classList.toggle('on', l.querySelector('input').checked); });
   };
-  box.addEventListener('change', sync); sync();
+  pop.addEventListener('change', sync);
+  $('trGo').onclick = function(){ sync(); t.done = true; pop.classList.remove('on'); testRoleRender(); try { $('btnStart').focus({ preventScroll: true }); } catch (e) {} };
+  pop.classList.add('on');
+  try { $('trGo').focus({ preventScroll: true }); } catch (e) {}
+}
+function testRoleRender(){
+  var c = ST.cand, pop = $('testRolePop'), chip = $('testRoleChip');
+  if (!c || !c.testChoice){ if (pop) pop.remove(); if (chip) chip.remove(); ST.testRole = null; ST.noShield = false; ST.testRoleFor = ''; return; }
+  if (ST.testRoleFor !== c.inCode){ ST.testRole = null; ST.testRoleFor = c.inCode; }
+  var t = ST.testRole = ST.testRole || { role: 'cand', face: true, shield: true, done: false };
+  if (!chip){ chip = document.createElement('div'); chip.id = 'testRoleChip'; chip.className = 'trchip'; $('btnStart').parentNode.insertBefore(chip, $('btnStart')); }
+  chip.innerHTML = '<span>🧪 Đang thử với vai trò: <b>' + esc(testRoleSummary(t)) + '</b></span><button type="button" id="trChange">Đổi</button>';
+  $('trChange').onclick = testRolePopOpen;
+  ST.noShield = t.role === 'admin' && !t.shield;
+  if (!t.done) testRolePopOpen();
 }
 function renderConfirm(){
   var c = ST.cand, x = ST.exam;
