@@ -245,4 +245,4 @@ async function render(pct, state, ringColor, comp) {
   return { atts, cid };
 }
 
-module.exports = { render, hero };
+module.exports = { render, hero, load, ring, icon, bookBlue, heroFrom, rr, lin };

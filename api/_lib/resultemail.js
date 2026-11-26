@@ -78,6 +78,12 @@ const K = { navy: "#0F2A5C", ink: "#1B2F55", body: "#3A4C6E", muted: "#5D6F8E", 
 const lc1 = (s) => { const v = String(s || ""), w = v.split(/\s+/)[0] || ""; return w.length > 1 && w === w.toLocaleUpperCase("vi-VN") ? v : v.charAt(0).toLocaleLowerCase("vi-VN") + v.slice(1); };
 // Lời khuyên (advice.js) viết sẵn với "bạn": đổi theo cách xưng hô của thư, giữ nguyên "bạn bè"
 const pron = (txt, m) => String(txt == null ? "" : txt).replace(/(?<![\p{L}])([Bb])ạn(?![\p{L}])(?! bè)/gu, (x, c) => (c === "B" ? m.Me : m.me));
+// Hai dòng nhận xét theo kết quả đạt / chưa đạt (dùng cho cả thư tĩnh và ảnh kết quả "sống" của resultart.js)
+function leads(m, pass) {
+  const lead1 = m.ps === false ? "Kết quả chưa đạt yêu cầu" + (pass ? " (" + pass + "%)" : "") + "." : m.ps === true ? "Chúc mừng " + m.me + " đã đạt yêu cầu" + (pass ? " (" + pass + "%)" : "") + "." : "";
+  const lead2 = m.ps === false ? m.Me + " nên ôn lại học liệu rồi làm lại." : m.ps === true ? "Hãy tiếp tục phát huy!" : "";
+  return { lead1, lead2 };
+}
 function build(attempt, settings, advice, opts) {
   opts = opts || {};
   const cardNote = !!opts.card, qrCid = opts.qrCid ? String(opts.qrCid).replace(/[^\w.@-]/g, "") : "";
@@ -131,6 +137,8 @@ function build(attempt, settings, advice, opts) {
   const resultCard = row(T("<tr>" + td("padding:0;", band + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="background:#FFFFFF;"><tr><td>' + body + times + "</td></tr></table>") + "</tr>",
     'width="100%" bgcolor="#FFFFFF"', "background:#FFFFFF;border:1px solid #DCE8FA;border-radius:20px;border-collapse:separate;overflow:hidden;box-shadow:0 10px 28px rgba(31,102,224,.13);"));
 
+  // Thẻ kết quả "sống" (api/result-img): ảnh vẽ lại từ dữ liệu mới nhất mỗi lần mở thư; alt là bản chụp lúc gửi. Không có opts.live thì dùng thẻ tĩnh như cũ.
+  const liveRow = opts.live ? row('<img src="' + esc(opts.live) + '" width="504" alt="' + esc(t.main + ": " + score + "/" + total + " câu đúng (" + attempt.pct + "%) · " + m.status) + '" style="display:block;width:100%;max-width:504px;height:auto;border:0;border-radius:20px;">') : "";
   const practiceNote = t.practice
     ? gap(14) + row('<div style="font-family:' + TF + ';font-size:13px;line-height:19px;color:#6b4a00;"><b>Bài thi thử, không phải kỳ kiểm tra chính thức.</b> ' +
         (compliance != null ? "Điểm tuân thủ chỉ để " + m.me + " hình dung nếu thi thật, không được ghi nhận." : "Kết quả không được ghi nhận chính thức.") + "</div>")
@@ -138,8 +146,7 @@ function build(attempt, settings, advice, opts) {
 
   // ---- 4. Hộp gợi ý (sách) + "Nên làm" (bóng đèn)
   const act = (a.actions || [])[0];
-  const lead1 = m.ps === false ? "Kết quả chưa đạt yêu cầu" + (pass ? " (" + pass + "%)" : "") + "." : m.ps === true ? "Chúc mừng " + m.me + " đã đạt yêu cầu" + (pass ? " (" + pass + "%)" : "") + "." : "";
-  const lead2 = m.ps === false ? m.Me + " nên ôn lại học liệu rồi làm lại." : m.ps === true ? "Hãy tiếp tục phát huy!" : "";
+  const { lead1, lead2 } = leads(m, pass);
   const tipBox = lead1 ? gap(16) + row(T("<tr>" + (art["ic-book"] ? '<td class="bk" width="72" align="center" valign="middle" style="width:72px;padding:14px 0;border-right:1px solid #C9DAF5;">' + img("ic-book", 42, 42, "", "margin:0 auto;") + "</td>" : "") +
       td("padding:14px 18px;", '<div style="font-size:16px;line-height:23px;font-weight:800;color:' + NV + ';">' + esc(lead1) + '</div><div style="font-size:15px;line-height:22px;color:' + GR + ';">' + esc(lead2) + "</div>", 'valign="middle"') + "</tr>",
       'width="100%" bgcolor="#EAF2FF"', "background:#EAF2FF;border:1px solid #D6E5FA;border-radius:16px;border-collapse:separate;")) : "";
@@ -173,7 +180,7 @@ function build(attempt, settings, advice, opts) {
     '<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:#EEF4FD">' + esc(pre) + "&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>" +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#EEF4FD" style="width:100%;background:#EEF4FD;"><tr><td align="center" class="outer" style="padding:18px 10px;">' +
     '<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" class="shell" align="center" bgcolor="#FFFFFF" style="margin:0 auto;width:100%;max-width:560px;background:#FFFFFF;background-image:linear-gradient(180deg,#FFFFFF 0%,#F2F8FF 100%);border-radius:22px;border-collapse:separate;overflow:hidden;text-align:left;">' +
-    brand + hello + resultCard + practiceNote + tipBox + doBox + cta + foot +
+    brand + hello + (liveRow || resultCard) + practiceNote + (liveRow ? "" : tipBox) + doBox + cta + foot +
     "</table></td></tr></table></body></html>";
 
   return { subject: m.subject, html: harden(html), text: textOf(attempt, settings, m, cardNote) };
@@ -216,4 +223,4 @@ function artSpec(attempt, settings) {
   return { comp: !settings.practice && [0, 10, 15, 20].indexOf(cp) >= 0 ? cp : null, pct: p, state: settings.practice ? null : ps, color: ps === false ? K.red : ps === true ? K.green : p >= 80 ? K.green : p >= 60 ? K.amber : K.red };
 }
 
-module.exports = { build, model, esc, artSpec };
+module.exports = { build, model, esc, artSpec, leads, clock };
