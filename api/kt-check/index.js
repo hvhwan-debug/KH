@@ -67,7 +67,8 @@ async function handler(context, req) {
     // Bước chống dò chỉ áp dụng khi tự nhập mã nhân viên + email.
     const FP = require("../_lib/facepass");
     const viaFace = viaCookie || FP.loginOk(b.faceLogin, code) || FP.peek(b.facePass, code);
-    const needFace = !b.saveRegion && !b.saveBirth && !viaFace && needFaceFor(req);
+    const taSkip = await quiz.findTestAccount(code, email); // tài khoản thử nghiệm do quản trị bật "bỏ qua quét mặt"
+    const needFace = !b.saveRegion && !b.saveBirth && !viaFace && !(taSkip && taSkip.skipFace) && needFaceFor(req);
     const selfie = needFace && typeof b.selfie === "string" ? b.selfie : "";
     if (needFace) {
       if (!selfie) return reply(context, 428, { ok: false, needFace: true, error: "Bạn đã nhập sai nhiều lần. Để tiếp tục, hãy xác thực khuôn mặt." });
@@ -157,7 +158,7 @@ async function handler(context, req) {
       return reply(context, 404, { ok: false, error: "Không tìm thấy đề thi này. Hãy kiểm tra lại đường link hoặc liên hệ quản trị viên." });
     }
     const settings = await quiz.getExamSettings(examId);
-    const candidate = { code: found.code, name: found.name, email: found.email, manager: found.manager || "", phone: require("../_lib/phone").normPhone(found.phone), segment: quiz.normSegment(found.segment), title: quiz.titleOf(found),
+    const candidate = { faceSkip: !!(found.test && found.skipFace), code: found.code, name: found.name, email: found.email, manager: found.manager || "", phone: require("../_lib/phone").normPhone(found.phone), segment: quiz.normSegment(found.segment), title: quiz.titleOf(found),
       province: require("../_lib/provinces").canonProvince(found.province) || "", region: quiz.normRegion(found.region) };
     // PC chưa có tỉnh/miền: phải chọn ở màn xác nhận trước khi làm bài (miền quyết định bộ đề sản phẩm)
     candidate.needRegion = quiz.needsRegion(found) && !(candidate.province && candidate.region);

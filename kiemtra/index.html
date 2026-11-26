@@ -3196,6 +3196,7 @@ var KI = function(k){ return '<i class="ki"><svg viewBox="0 0 24 24" fill="none"
 var RI = function(k){ return '<i class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + KIC[k] + '</svg></i>'; };
 function renderConfirm(){
   var c = ST.cand, x = ST.exam;
+  if (c && c.faceSkip) msg('startMsg', 'Tài khoản thử nghiệm: bỏ qua bước quét khuôn mặt. Bài làm không tính vào kết quả.', 'ok');
   $('scrConfirm').classList.remove('nt-open'); $('btnRulesTg').setAttribute('aria-expanded', 'false'); $('btnRulesTg').firstChild.textContent = 'Xem thể lệ làm bài';
   $('confirmBox').innerHTML =
     '<div><dt>'+KI('name')+'Họ và tên</dt><dd>'+esc(c.name||'(chưa rõ)')+'</dd></div>'+
@@ -3425,6 +3426,7 @@ $('btnStart').addEventListener('click', async function(){
     if (!validateBirth()){ $('birthBox').classList.remove('bbx'); return; } // đã bấm X mà chưa nhập: mở lại popup
   }
   PH.mode = 'exam';
+  if (ST.cand.faceSkip) return startWithFacePass(true); // tài khoản thử nghiệm được quản trị bật bỏ qua quét mặt: vào thẳng bài
   if (facePassOk()) return startWithFacePass();
   show('photo');
   photoInit();
@@ -3444,13 +3446,13 @@ function facePassOk(){
   if (Date.now() - f.at > FP_MS){ fpSet(null); return false; } // máy chủ cho 8 giờ
   return f.code.trim().toUpperCase() === String(ST.cand.inCode || '').trim().toUpperCase();
 }
-async function startWithFacePass(){ // vào thẳng bài từ màn xác nhận: không mở màn quét / xác thực khuôn mặt lần hai
+async function startWithFacePass(skip){ // vào thẳng bài từ màn xác nhận: không mở màn quét / xác thực khuôn mặt lần hai (skip = tài khoản thử nghiệm bỏ qua quét mặt)
   var btn = $('btnStart'), label = btn.textContent;
   if (START_BUSY) return; START_BUSY = true;
   btn.disabled = true; btn.textContent = 'Đang chuẩn bị đề…'; msg('startMsg', '');
   if (!DEV.loc && LOC.p) await Promise.race([LOC.p, aiDelay(3000)]); // đang lấy vị trí (xin từ lúc vào trang): chờ tối đa 3 giây
-  ST.identityWarn = false; PH.dataUrl = ST.fp.photo; PH.face = null; PH.live = null;
-  var res, body = { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, facePass: ST.fp.token, device: DEV, examId:EXAM_ID, phone: ST.cand.phone || ST.phoneNew || '', province: (ST.rgNew && ST.rgNew.province) || '', region: (ST.rgNew && ST.rgNew.region) || '', birthDate: ST.birthNew || '' };
+  ST.identityWarn = false; PH.dataUrl = skip ? '' : ST.fp.photo; PH.face = null; PH.live = null;
+  var res, body = { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, facePass: skip ? undefined : ST.fp.token, device: DEV, examId:EXAM_ID, phone: ST.cand.phone || ST.phoneNew || '', province: (ST.rgNew && ST.rgNew.province) || '', region: (ST.rgNew && ST.rgNew.region) || '', birthDate: ST.birthNew || '' };
   try { res = await api('/api/kt-start', body); } catch(e){ res = null; }
   START_BUSY = false; btn.disabled = false; btn.textContent = label;
   var j = res && res.j;

@@ -90,6 +90,13 @@ module.exports = async function (context, req) {
     if (!attempt) {
       // Đã đăng nhập bằng khuôn mặt (có vé hợp lệ, hệ thống bật FACE_PASS): ảnh lúc đăng nhập là ảnh xác nhận, không quét lần hai.
       // Vé không hợp lệ / hết hạn / đề tắt tuỳ chọn -> báo trình duyệt mở camera quét như bình thường.
+      var faceCheck = null;
+      const newId = quiz.genId();
+      let idr = { rec: null, faceDesc: null, status: null, block: false };
+      const skipFace = !!(found.test && found.skipFace); // chỉ tài khoản thử nghiệm do quản trị bật; thí sinh thật không bao giờ được bỏ qua
+      if (skipFace) {
+        faceCheck = { status: "test_skip", by: "testaccount", at: now0() };
+      } else {
       let fpass = null;
       if (b.facePass) {
         const fp = settings.faceLoginSkip ? require("../_lib/facepass").verify(b.facePass, found.code, photo) : { ok: false, reason: "exam-off" };
@@ -98,7 +105,6 @@ module.exports = async function (context, req) {
       }
       if (!photo) return reply(context, 400, { ok: false, error: "Cần chụp ảnh xác nhận trước khi bắt đầu làm bài." });
       // AI kiểm tra ảnh có đúng một khuôn mặt người; không đạt -> không cho vào làm bài
-      var faceCheck = null;
       if (fpass) {
         // Kiểm tra chụp trực tiếp + thử thách quay mặt + nhận diện 1-N đã đạt ở kt-facelogin cho ĐÚNG ảnh này (vé gắn dấu băm ảnh)
         faceCheck = { status: "ok", by: "faceLogin", at: now0(), faceLogin: fpass.rec, liveness: { ok: true, via: "faceLogin" } };
@@ -117,10 +123,10 @@ module.exports = async function (context, req) {
         liveOk = !!lv.ok;
       }
       // Đối chiếu với các lần làm bài trước của chính tài khoản này: khác người thì ghi nhận + email cảnh báo (FACE_IDENTITY: warn | block | off)
-      const newId = quiz.genId();
-      const idr = await require("../_lib/startid").run({ req, photo, found, settings, attemptId: newId, now, enrolOk: liveOk });
+      idr = await require("../_lib/startid").run({ req, photo, found, settings, attemptId: newId, now, enrolOk: liveOk });
       idStatus = idr.status;
       if (idr.block) return reply(context, 422, { ok: false, faceRejected: true, identityMismatch: true, error: "Khuôn mặt không khớp với ảnh đã lưu của tài khoản này. Sự việc đã được ghi nhận và báo quản trị viên. Hãy liên hệ quản lý hoặc quản trị viên." });
+      }
       const segment = quiz.normSegment(found.segment);
       // Phân bổ đề: dùng DUY NHẤT quiz.planExam (khống chế số câu, trần cứng, không bao giờ phát cả ngân hàng)
       const plan = quiz.planExam(allQuestions, settings, segment, found.region);
