@@ -204,6 +204,13 @@ svg.ch text{font-family:inherit;fill:#5B6B86;font-size:11px}
 .ph-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 a.btn{text-decoration:none}
 a.btn:focus-visible{outline:2px solid #1D6FEA;outline-offset:2px}
+#secWf{display:grid;gap:12px;margin-top:14px}
+#secWf .wf{padding:14px 18px}
+#secWf .wf>summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:15px}
+#secWf .small{font-size:12.5px;color:var(--muted)}
+#secWf .wf>p.small{margin:8px 0 10px}
+#secWf .wf-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#secWf select{max-width:280px;border:1px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit;font-size:13px;background:#fff}
 </style>
 <style id="sideCss">
 :root{--side-w:272px;--rail-w:78px}
@@ -475,6 +482,20 @@ table.t.pl-act td{vertical-align:top;font-size:13px}
       <div class="menu" id="xlMenu"><button class="btn" type="button" id="xlBtn" aria-haspopup="menu" aria-expanded="false">⬇ Xuất Excel ▾</button><div class="menu-pop hide" id="xlPop" role="menu"></div></div>
     </div>
     <section id="secOv"></section>
+    <section id="secWf">
+      <details class="card wf" id="hrDiscCard">
+        <summary>🔎 Rà soát dữ liệu nhân sự <span class="small" id="hrDiscSum"></span></summary>
+        <p class="small">Cho biết hệ thống đang có những nguồn dữ liệu nào, trường nào đã điền / còn thiếu, dữ liệu nào sai hoặc trùng, những phân tích nào làm được với số người thật, và các trường nên bổ sung. Chỉ <b>đếm dữ liệu có sẵn</b>, không tự điền hay suy đoán thông tin chưa xác minh. Chỉ quản trị viên xem.</p>
+        <div class="wf-act"><button class="btn sm pri" type="button" onclick="hrDiscRun()">Chạy rà soát</button><button class="btn sm" type="button" onclick="hrMissingCsv()">Tải danh sách nhân sự thiếu dữ liệu (CSV)</button></div>
+        <div id="hrDiscBody"></div>
+      </details>
+      <details class="card wf" id="hrAnCard">
+        <summary>📊 Phân tích nhân lực và khuyến nghị đào tạo <span class="small" id="hrAnSum"></span></summary>
+        <p class="small">Phân tích điểm kiểm tra chính thức của một đề / kỳ: bản đồ khoảng cách năng lực theo chức danh, quan hệ giữa các biến (kèm cỡ mẫu), phân nhóm nhân sự và ma trận đào tạo. Chỉ hiện số liệu <b>tổng hợp</b>, nhóm dưới 5 người bị ẩn. Nút <b>Khuyến nghị bằng AI</b> chỉ gửi cho AI bản tóm tắt ẩn danh (không tên, mã, email, độ tuổi).</p>
+        <div class="wf-act"><select id="hrAnPeriod" aria-label="Đề / kỳ"><option value="">Kỳ có nhiều bài nhất</option></select><button class="btn sm pri" type="button" onclick="hrAnRun()">Phân tích dữ liệu</button><button class="btn sm" type="button" id="hrAiBtn" onclick="hrAiRun()" disabled>✨ Khuyến nghị bằng AI</button></div>
+        <div id="hrAnBody"></div><div id="hrAiBody"></div>
+      </details>
+    </section>
     <section id="secLs" class="hide"></section>
   </div>
 
@@ -1273,7 +1294,7 @@ function fillXlMenu(){
 /* ====================== Điều hướng, sự kiện ====================== */
 function setTab(t){
   V.tab = t; $('tabOv').setAttribute('aria-selected', String(t === 'ov')); $('tabLs').setAttribute('aria-selected', String(t === 'ls'));
-  $('secOv').classList.toggle('hide', t !== 'ov'); $('secLs').classList.toggle('hide', t !== 'ls');
+  $('secOv').classList.toggle('hide', t !== 'ov'); $('secWf').classList.toggle('hide', t !== 'ov'); $('secLs').classList.toggle('hide', t !== 'ls');
   refresh();
 }
 function refresh(){
@@ -1379,6 +1400,102 @@ boot();
   function sync(){ var c = document.documentElement.classList.contains('sidec'); b.setAttribute('aria-pressed', String(c)); var t = c ? 'Mở rộng menu' : 'Thu gọn menu'; b.title = t; b.setAttribute('aria-label', t); }
   b.addEventListener('click', function(){ var c = document.documentElement.classList.toggle('sidec'); try { localStorage.setItem('kt_side_collapsed', c ? '1' : '0'); } catch (e) {} sync(); });
   sync();
+})();
+</script>
+<script>
+/* ===== Workforce Intelligence (chuyển từ admin.html sang trang Hồ sơ học tập) ===== */
+(function(){
+var $ = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+async function api(method, path, body){
+  var r = await fetch(path, { method:method, headers:{ 'Content-Type':'application/json', 'X-Requested-With':'livotec' }, credentials:'same-origin', body: body ? JSON.stringify(body) : undefined });
+  var j = null; try { j = await r.json(); } catch (e) {}
+  return { s:r.status, j:j || {} };
+}
+// ----- Rà soát dữ liệu nhân sự (số tổng hợp từ máy chủ; không tự điền thông tin) -----
+async function hrDiscRun(){
+  const box = $('hrDiscBody'); box.innerHTML = '<div class="small" style="margin-top:10px">Đang rà soát…</div>';
+  const { j } = await api('GET', '/api/kt-admin?op=hrDiscovery');
+  if (!j.ok){ box.innerHTML = '<div class="msg err">' + esc(j.error || 'Không rà soát được.') + '</div>'; return; }
+  const r = j.report, P = r.population, ST = { ok: ['#E3F5EA', '#17794A', '✓ Đủ mẫu'], low: ['#FFF4DE', '#B45309', '⚠ Ít mẫu, chỉ mô tả'], no: ['#FDE8E8', '#B42318', '✕ Chưa đủ dữ liệu'] };
+  const bar = (v) => '<span style="display:inline-block;width:90px;height:8px;border-radius:6px;background:#E3EAF5;vertical-align:middle;margin-right:6px"><span style="display:block;height:8px;border-radius:6px;width:' + Math.min(100, v) + '%;background:' + (v >= 80 ? '#18A957' : v >= 40 ? '#F5A524' : '#E5383B') + '"></span></span>' + v + '%';
+  const tbl = (head, rows) => '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr>' + head.map(h => '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--line,#E1E8F3);white-space:nowrap">' + h + '</th>').join('') + '</tr></thead><tbody>' + rows.map(c => '<tr>' + c.map(x => '<td style="padding:6px 8px;border-bottom:1px solid #EEF2F8;vertical-align:top">' + x + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
+  const h = (t) => '<h3 style="margin:18px 0 6px;font-size:15px">' + t + '</h3>';
+  let out = '<div class="small" style="margin-top:10px">Tổng ' + P.total + ' dòng nhân sự: <b>' + P.active + ' đang làm việc</b>, ' + P.left + ' đã nghỉ. Tỉ lệ điền tính trên số người đang làm việc.</div>';
+  out += h('1. Nguồn dữ liệu đã truy cập') + tbl(['Nguồn', 'Trạng thái', 'Số lượng', 'Ghi chú'], r.sources.map(x => [esc(x.name), x.ok ? '<span style="color:#17794A">✓ Có dữ liệu</span>' : '<span style="color:#B42318">✕ Chưa có</span>', x.n, esc(x.note)]));
+  const groups = {}; r.fields.forEach(f => { (groups[f.group] = groups[f.group] || []).push(f); });
+  out += h('2. Trường dữ liệu hiện có và tỉ lệ điền') + Object.keys(groups).map(g => '<div style="margin:8px 0 2px;font-weight:700;font-size:13px">' + esc(g) + '</div>' + tbl(['Trường', 'Đã điền', 'Tỉ lệ', 'Nằm ở'], groups[g].map(f => [esc(f.label), f.filled + '/' + P.active, bar(f.pct), '<span class="small">' + esc(f.where) + '</span>']))).join('');
+  out += h('3. Trường còn thiếu, đề xuất bổ sung (hệ thống không tự điền)') + tbl(['Trường đề xuất', 'Vì sao cần', 'Cách bổ sung'], r.proposed.map(x => [esc(x.label), esc(x.why), esc(x.how)]));
+  out += h('4. Chất lượng dữ liệu') + (r.issues.length ? tbl(['Vấn đề', 'Số lượng', 'Ghi chú'], r.issues.map(x => [esc(x.label), '<b>' + x.n + '</b>', esc(x.note)])) : '<div class="small">Không phát hiện vấn đề nào.</div>');
+  out += h('5. Phân tích làm được với dữ liệu hiện có') + tbl(['Phân tích', 'Số người', 'Mức độ tin cậy', 'Cần thêm'], r.analyses.map(a => [esc(a.name), a.n, '<span style="padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;background:' + ST[a.status][0] + ';color:' + ST[a.status][1] + '">' + ST[a.status][2] + '</span>', esc(a.need)]));
+  out += h('6. Giới hạn dữ liệu và quyền truy cập') + '<ul style="margin:0;padding-left:20px;font-size:13px;line-height:1.6">' + r.limits.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+  box.innerHTML = out;
+  $('hrDiscSum').textContent = '· ' + r.issues.reduce((a, x) => a + (x.n > 0 ? 1 : 0), 0) + ' vấn đề dữ liệu cần xem';
+}
+// Danh sách nhân sự đang làm việc còn thiếu trường quan trọng: để người có thẩm quyền điền (CSV mở bằng Excel). Không điền thay.
+async function hrMissingCsv(){
+  const rc = await api('GET', '/api/kt-admin?op=candidates'); const CANDIDATES = (rc.j && rc.j.candidates) || [];
+  const F = [['namSinh', 'Năm sinh'], ['trinhDo', 'Trình độ'], ['bangCap', 'Bằng cấp'], ['chuyenNganh', 'Chuyên ngành'], ['vaoCongTy', 'Ngày vào công ty (YYYY-MM-DD)'], ['chucDanhGoc', 'Chức danh gốc']];
+  const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const rows = [];
+  (CANDIDATES || []).filter(c => !c.left).forEach(c => {
+    const p = c.profile || {}, miss = F.filter(f => p[f[0]] == null || String(p[f[0]]).trim() === '');
+    if (!miss.length) return;
+    rows.push([c.code, c.name, c.manager || '', c.title || ''].concat(F.map(f => p[f[0]] == null ? '' : p[f[0]])).concat([miss.map(f => f[1]).join('; ')]));
+  });
+  if (!rows.length){ alert('Không có nhân sự nào thiếu các trường này.'); return; }
+  const head = ['Mã NV', 'Họ tên', 'Quản lí', 'Chức danh'].concat(F.map(f => f[1])).concat(['Còn thiếu']);
+  const csv = '\ufeff' + [head].concat(rows).map(r => r.map(q).join(',')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'nhan-su-thieu-du-lieu.csv'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+// ----- Phân tích nhân lực (số tổng hợp) + khuyến nghị đào tạo bằng AI -----
+var HR_AN = null;
+const hrTbl = (head, rows) => '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr>' + head.map(h => '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--line,#E1E8F3);white-space:nowrap">' + h + '</th>').join('') + '</tr></thead><tbody>' + rows.map(c => '<tr>' + c.map(x => '<td style="padding:6px 8px;border-bottom:1px solid #EEF2F8;vertical-align:top">' + x + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
+const hrH = (t) => '<h3 style="margin:18px 0 6px;font-size:15px">' + t + '</h3>';
+const hrBadge = (st) => { const m = { ok: ['#E3F5EA', '#17794A', '✓ Đủ để kết luận'], low: ['#FFF4DE', '#B45309', '⚠ Ít mẫu, chỉ mô tả'], no: ['#FDE8E8', '#B42318', '✕ Chưa đủ'] }[st]; return '<span style="padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;background:' + m[0] + ';color:' + m[1] + '">' + m[2] + '</span>'; };
+function hrCellColor(gap){ return gap == null ? '#fff' : gap <= -10 ? '#FBD5D1' : gap <= -5 ? '#FDE7C7' : gap >= 5 ? '#D5F1E0' : '#F1F5FB'; }
+async function hrAnRun(){
+  const box = $('hrAnBody'); box.innerHTML = '<div class="small" style="margin-top:10px">Đang phân tích (có thể mất vài giây)…</div>'; $('hrAiBody').innerHTML = ''; $('hrAiBtn').disabled = true;
+  const per = $('hrAnPeriod').value;
+  const { j } = await api('GET', '/api/kt-admin?op=hrAnalytics' + (per ? '&period=' + encodeURIComponent(per) : ''));
+  if (!j.ok){ box.innerHTML = '<div class="msg err">' + esc(j.error || 'Không phân tích được.') + '</div>'; return; }
+  HR_AN = j; const a = j.analysis, o = a.overview, sel = $('hrAnPeriod'), cur = a.meta.period;
+  sel.innerHTML = '<option value="">Kỳ có nhiều bài nhất</option>' + a.meta.periods.map(p => '<option value="' + esc(p.period) + '"' + (p.period === cur && per ? ' selected' : '') + '>' + esc(p.period || '(chưa gắn kỳ)') + ' · ' + p.n + ' bài</option>').join('');
+  let out = '<div class="small" style="margin-top:10px">Đề / kỳ: <b>' + esc(a.meta.examTitle || cur || '(chưa gắn kỳ)') + '</b> · phân tích <b>' + a.meta.analysed + '</b> nhân sự đang làm việc có điểm (trên ' + a.meta.population + ' người) · ngưỡng kết luận từ 30 người, nhóm dưới 5 người bị ẩn.</div>';
+  (a.notes || []).forEach(n => { out += '<div class="msg warn" style="margin-top:8px">' + esc(n) + '</div>'; });
+  out += hrH('1. Tổng quan') + '<div class="small">Điểm trung bình <b>' + o.mean + '%</b> · trung vị <b>' + o.median + '%</b> · mức đạt ' + o.passScore + '% · dưới mức đạt <b>' + o.belowPass + '</b> người (' + o.belowPassPct + '%).</div>' + hrTbl(o.hist.map(h => h.label), [o.hist.map(h => '<b>' + h.n + '</b>')]);
+  out += hrH('2. Theo chức danh và khu vực') + hrTbl(['Nhóm', 'Số người', 'Điểm TB', 'Trung vị', 'Dưới mức đạt'], a.byTitle.concat(a.byRegion).map(t => [esc(t.name), t.n, t.mean + '%', t.median + '%', t.below + ' (' + t.belowPct + '%)']));
+  const G = a.gapMap;
+  out += hrH('3. Bản đồ khoảng cách năng lực (% trả lời đúng; nền đỏ = thấp hơn mức chung ≥ 10 điểm)') + (G.categories.length && G.titles.length ? hrTbl(['Chức danh'].concat(G.categories.map(c => esc(c))), [['<b>Mức chung</b>'].concat(G.categories.map(c => '<b>' + G.overall[c] + '%</b>'))].concat(G.cells.map(r => ['<b>' + esc(r.title) + '</b>'].concat(r.values.map(v => v ? '<div style="background:' + hrCellColor(v.gap) + ';border-radius:6px;padding:3px 6px;display:inline-block' + (v.reliable ? '' : ';opacity:.65') + '">' + v.pct + '% <span class="small">(' + (v.gap > 0 ? '+' : '') + v.gap + '; ' + v.emp + ' người' + (v.reliable ? '' : ', mẫu thấp') + ')</span></div>' : '<span class="small">ẩn (dưới 5)</span>'))))) : '<div class="small">Chưa đủ dữ liệu theo mảng kiến thức (cần bài làm có lưu bản sao và ít nhất 5 người mỗi nhóm).</div>');
+  out += hrH('4. Ưu tiên đào tạo: 3 mảng thấp nhất của từng chức danh') + hrTbl(['Chức danh', 'Mảng', 'Điểm', 'So với chung', 'Người dưới 60% ở mảng này'], a.priorities.flatMap(p => p.items.map((i, k) => [k ? '' : '<b>' + esc(p.title) + '</b> (' + p.n + ')', esc(i.category), i.pct + '%', (i.gap > 0 ? '+' : '') + i.gap, i.lowEmp + (i.reliable ? '' : ' <span class="small">(mẫu thấp)</span>')])));
+  out += hrH('5. Quan hệ giữa các biến (tương quan hạng Spearman; KHÔNG phải nhân quả)') + hrTbl(['Quan hệ', 'Số người', 'Hệ số', 'Nhận xét', 'Mức tin cậy'], a.relations.map(r => [esc(r.name) + (r.note ? '<div class="small">' + esc(r.note) + '</div>' : ''), r.n, r.rho == null ? '—' : r.rho, r.rho == null ? '—' : esc(r.strength + ', ' + r.direction) + (r.significant === true ? '; có ý nghĩa thống kê' : r.significant === false ? '; chưa có ý nghĩa thống kê' : ''), hrBadge(r.status)]));
+  if (a.tenureBands.length) out += '<div style="margin:10px 0 2px;font-weight:700;font-size:13px">Điểm theo thâm niên</div>' + hrTbl(['Nhóm', 'Số người', 'Điểm trung vị', 'Dưới mức đạt'], a.tenureBands.map(b => [esc(b.name), b.n, b.median + '%', b.belowPct + '%']));
+  if (a.eduGroups.length) out += '<div style="margin:10px 0 2px;font-weight:700;font-size:13px">Điểm theo trình độ học vấn (không dùng để đánh giá cá nhân)</div>' + hrTbl(['Nhóm', 'Số người', 'Điểm trung vị', 'Dưới mức đạt'], a.eduGroups.map(b => [esc(b.name), b.n, b.median + '%', b.belowPct + '%']));
+  out += hrH('6. Phân nhóm nhân sự (theo luật minh bạch, chỉ nhóm, không gắn nhãn từng người)') + hrTbl(['Nhóm', 'Tiêu chí', 'Số người', 'Tỉ trọng', 'Chức danh chính', 'Mảng thấp nhất'], a.segments.filter(x => x.shown).map(x => [esc(x.name), '<span class="small">' + esc(x.rule) + '</span>', '<b>' + x.n + '</b>', x.share + '%', esc(x.titles.join(', ')), esc(x.weakest.map(w => w.category + ' ' + w.pct + '%').join('; ') || '—')]));
+  out += hrH('7. Ma trận đào tạo gợi ý (theo luật; quản lí xác nhận trước khi áp dụng)') + (a.matrix.length ? hrTbl(['Đối tượng', 'Nhu cầu', 'Nội dung', 'Phương pháp', 'Thời lượng', 'Hình thức', 'KPI đánh giá'], a.matrix.map(m => [esc(m.audience), esc(m.need), esc(m.content), esc(m.method), esc(m.duration), esc(m.format), esc(m.kpi)])) : '<div class="small">Chưa đủ nhóm có từ 5 người để lập ma trận.</div>');
+  box.innerHTML = out; $('hrAiBtn').disabled = false;
+  $('hrAnSum').textContent = '· ' + a.meta.analysed + ' nhân sự có điểm';
+}
+async function hrAiRun(){
+  if (!HR_AN) return; const box = $('hrAiBody'), btn = $('hrAiBtn'); btn.disabled = true;
+  box.innerHTML = '<div class="small" style="margin-top:14px">AI đang viết nhận định và khuyến nghị (khoảng 10 đến 25 giây)…</div>';
+  const { j } = await api('POST', '/api/kt-admin', { op: 'hrAi', summary: HR_AN.summary });
+  btn.disabled = false;
+  if (!j.ok){ box.innerHTML = '<div class="msg err" style="margin-top:12px">' + esc(j.error || 'Không tạo được khuyến nghị.') + '</div>'; return; }
+  const r = j.report, li = (a) => (a || []).map(x => '<li>' + esc(x) + '</li>').join('');
+  const cf = { 'cao': '#17794A', 'vừa': '#B45309', 'thấp': '#B42318' };
+  let out = '<div style="margin-top:16px;padding:14px 16px;border:1.5px solid #CFE0F7;border-radius:14px;background:#F6FAFF"><div style="font-weight:800;font-size:16px">✨ Nhận định và khuyến nghị của AI</div><div class="small" style="margin:2px 0 8px">Do AI viết từ số liệu tổng hợp ở trên, có thể sai sót: quản lí cần đối chiếu số liệu và xác nhận trước khi áp dụng. Không dùng để quyết định bất lợi về nhân sự.</div>';
+  if (r.tom_tat) out += hrH('Tóm tắt điều hành') + '<div style="font-size:14px;line-height:1.6">' + esc(r.tom_tat) + '</div>';
+  if (r.phat_hien.length) out += hrH('Phát hiện chính') + hrTbl(['Nhận định', 'Bằng chứng', 'Độ tin cậy'], r.phat_hien.map(x => [esc(x.noi_dung), esc(x.bang_chung), '<b style="color:' + cf[x.do_tin_cay] + '">' + esc(x.do_tin_cay) + '</b>']));
+  if (r.khoang_cach_nang_luc.length) out += hrH('Khoảng cách năng lực') + hrTbl(['Đối tượng', 'Khoảng cách', 'Loại', 'Bằng chứng'], r.khoang_cach_nang_luc.map(x => [esc(x.doi_tuong), esc(x.khoang_cach), esc(x.loai), esc(x.bang_chung)]));
+  if (r.ke_hoach_dao_tao.length) out += hrH('Kế hoạch đào tạo') + hrTbl(['Đối tượng', 'Nhu cầu', 'Nội dung', 'Phương pháp', 'Thời lượng', 'Hình thức', 'KPI'], r.ke_hoach_dao_tao.map(x => [esc(x.doi_tuong), esc(x.nhu_cau), esc(x.noi_dung), esc(x.phuong_phap), esc(x.thoi_luong), esc(x.hinh_thuc), esc(x.kpi)]));
+  if (r.khuyen_nghi_quan_tri.length) out += hrH('Khuyến nghị quản trị') + '<ul style="margin:0;padding-left:20px;font-size:13.5px;line-height:1.6">' + li(r.khuyen_nghi_quan_tri) + '</ul>';
+  if (r.du_lieu_can_bo_sung.length) out += hrH('Dữ liệu cần bổ sung') + '<ul style="margin:0;padding-left:20px;font-size:13.5px;line-height:1.6">' + li(r.du_lieu_can_bo_sung) + '</ul>';
+  if (r.han_che.length) out += hrH('Hạn chế') + '<ul style="margin:0;padding-left:20px;font-size:13.5px;line-height:1.6">' + li(r.han_che) + '</ul>';
+  box.innerHTML = out + '</div>';
+}
+window.hrDiscRun = hrDiscRun; window.hrMissingCsv = hrMissingCsv; window.hrAnRun = hrAnRun; window.hrAiRun = hrAiRun;
 })();
 </script>
 </body>
