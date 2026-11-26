@@ -295,6 +295,7 @@ const handler = async function (context, req) {
       }
       if (op === "driveStatus") return reply(context, 200, Object.assign({ ok: true }, await require("../_lib/gdrive").status()));
       if (op === "testAccounts") return reply(context, 200, { ok: true, accounts: await quiz.getTestAccounts() });
+      if (op === "hrDiscovery") { const D = require("../_lib/hrdiscovery"); return reply(context, 200, { ok: true, report: D.build(await D.load()) }); } // rà soát dữ liệu nhân sự: chỉ số tổng hợp, quản trị viên xem
       if (op === "changeRequests") return reply(context, 200, { ok: true, requests: (await require("../_lib/changereq").getAll()).filter((r) => r.status === "pending") });
       if (op === "notifyData") {
         // Dữ liệu cho màn Gửi thông báo: thí sinh thuộc đối tượng của đề, đã làm / chưa làm, số điện thoại, liên kết kết quả
@@ -995,7 +996,8 @@ const handler = async function (context, req) {
         if (i == null) { notFound++; return; }
         const pf = require("../_lib/profile").cleanProfile(r.profile);
         if (!pf) { invalid++; return; }
-        list[i] = Object.assign({}, list[i], { profile: pf }); updated++;
+        // Gộp vào hồ sơ hiện có: chỉ cập nhật các trường được gửi, KHÔNG xoá trường đã có khi file nhập chỉ có vài cột (b.replace = true mới thay cả hồ sơ)
+        list[i] = Object.assign({}, list[i], { profile: b.replace === true ? pf : Object.assign({}, list[i].profile || {}, pf) }); updated++;
       });
       if (updated) await quiz.saveCandidates(list);
       return reply(context, 200, { ok: true, updated, notFound, invalid });
