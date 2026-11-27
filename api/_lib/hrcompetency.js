@@ -26,7 +26,19 @@ const AREAS = [
   ["gn", "Kiến thức chung", /.*/]
 ];
 const AREA_NAME = Object.fromEntries(AREAS.map((a) => [a[0], a[1]]));
-function areaOf(text) { const t = fold(text); for (const a of AREAS) if (a[2].test(t)) return a[0]; return "gn"; }
+// Gắn THỦ CÔNG danh mục câu hỏi → mảng năng lực (khi tên danh mục không khớp từ khoá nên bị xếp vào "Kiến thức chung" và không được tính).
+// Lưu ở kt/hr-areamap.json: { map: { "<tên danh mục viết thường, bỏ dấu>": "n1" } }. Mặc định rỗng = hành vi cũ.
+const AREA_MAP_KEY = "kt/hr-areamap.json"; let OVR = {};
+function areaOf(text) { const t = fold(text); if (OVR[t]) return OVR[t]; for (const a of AREAS) if (a[2].test(t)) return a[0]; return "gn"; }
+async function getAreaMap() { const d = await store.get(AREA_MAP_KEY).catch(() => null), m = (d && d.map) || {}, out = {}; Object.keys(m).forEach((k) => { if (AREA_NAME[m[k]]) out[k] = m[k]; }); return out; }
+async function setAreaMap(entries, by) { // entries: { "Tên danh mục": "n1" | "" (bỏ gắn thủ công) }
+  const cur = await getAreaMap();
+  Object.keys(entries || {}).forEach((name) => { const k = fold(name), v = entries[name]; if (!k) return; if (v === "" || v == null) delete cur[k]; else if (AREA_NAME[v]) cur[k] = v; });
+  await store.put(AREA_MAP_KEY, { map: cur, updatedAt: Date.now(), by: String(by || "").toLowerCase() }); OVR = cur;
+  await store.del(CACHE_KEY).catch(() => {}); // hồ sơ năng lực đang lưu tạm 20 phút: bỏ để tính lại theo cách gắn mới
+  for (const m of [3, 6, 12]) await store.del(cacheKeyOf({ months: m })).catch(() => {});
+  return cur;
+}
 const SEG_AREA = { may_loc: ["n2"], gia_dung: ["n1"] }; // mảng chuyên sâu của ngành KHÁC (không tính vào chỉ số năng lực của người chỉ bán một ngành)
 
 function addCats(dst, cats, w) { Object.keys(cats || {}).forEach((c) => { const a = areaOf(c), x = dst[a] = dst[a] || { n: 0, ok: 0, wn: 0, wok: 0, raw: {} }; x.n += cats[c].n; x.ok += cats[c].ok; x.wn += w * cats[c].n; x.wok += w * cats[c].ok; const rr = x.raw[c] = x.raw[c] || { n: 0, ok: 0 }; rr.n += cats[c].n; rr.ok += cats[c].ok; }); }
@@ -43,9 +55,9 @@ async function loadCatCache(index, budgetMs) {
 }
 
 async function compute(opt) {
-  opt = opt || {}; const now = opt.now || Date.now(), yr = new Date(now).getFullYear();
+  opt = opt || {}; OVR = await getAreaMap(); const now = opt.now || Date.now(), yr = new Date(now).getFullYear();
   const cands = (await quiz.getCandidates()).filter((c) => !quiz.isLeft(c)), byCode = new Map(cands.map((c) => [quiz.normCode(c.code), c]));
-  const index = (await quiz.getIndex()).filter((r) => r && r.status === "submitted" && r.pct != null && isFinite(Number(r.pct)) && byCode.has(quiz.normCode(r.code)));
+  const index = (await quiz.getIndex()).filter((r) => r && r.status === "submitted" && r.pct != null && isFinite(Number(r.pct)) && byCode.has(quiz.normCode(r.code)) && (!opt.months || (r.submittedAt || 0) >= now - Number(opt.months) * 30 * 864e5));
   const { cache, missing } = await loadCatCache(index, opt.budgetMs || 20000);
   // số bán mọi tháng
   const sales = new Map(); let salesMonths = [];
@@ -118,10 +130,15 @@ async function compute(opt) {
     if (c.kaiAsks >= 10 && c.materials < 2) notes.push("Nhân viên hỏi KAI nhiều nhưng học liệu còn ít");
     return Object.assign({}, c, { notes });
   });
+  // danh mục câu hỏi mà từng vị trí đã làm + mảng năng lực hệ thống gắn cho chúng: để phát hiện danh mục bị xếp nhầm vào "Kiến thức chung"
+  const catAgg = {};
+  index.forEach((r) => { const c = byCode.get(quiz.normCode(r.code)); if (!c) return; const label = CTX.audienceOf({ title: c.title, segment: quiz.normSegment(c.segment) }), cats = cache[r.id] || {}, A = catAgg[label] = catAgg[label] || {};
+    Object.keys(cats).forEach((cat) => { const o = A[cat] = A[cat] || { n: 0, area: areaOf(cat) }; o.n += cats[cat].n; }); });
+  const catMap = Object.fromEntries(Object.keys(catAgg).map((label) => [label, Object.keys(catAgg[label]).map((cat) => ({ name: cat, n: catAgg[label][cat].n, area: catAgg[label][cat].area })).sort((a, b) => b.n - a.n).slice(0, 20)]));
   return {
     meta: { generatedAt: now, population: people.length, tested: tested.length, attempts: index.length, periods: new Set(index.map((r) => r.period || "")).size, salesMonths: salesMonths.length, kaiQuestions: kaiTotal, programs: progCount, materials: hlItems.length, questionBank: qs.length, kbDocs: (kb || []).length, catMissing: missing, halfLifeDays: HALF_DAYS },
     system: { index: r1(mean(tested.map((p) => p.index))), below60: tested.filter((p) => p.index < 60).length, notTested: people.length - tested.length, staleTests: tested.filter((p) => now - (p.lastAt || 0) > 120 * 864e5).length,
-      areaMap, trend, audRows, quad, quadN: both.length, coverage: gaps, kaiEngaged: people.filter((p) => p.kai.n90 > 0).length, levels: countBy(tested, (p) => p.level) },
+      areaMap, trend, audRows, quad, quadN: both.length, coverage: gaps, kaiEngaged: people.filter((p) => p.kai.n90 > 0).length, levels: countBy(tested, (p) => p.level), catMap },
     audiences: groups((p) => p.audience), managers: groups((p) => p.manager), provinces: groups((p) => p.province), segments: groups((p) => SEGL[p.segment] || p.segment),
     people: people.map((p) => Object.assign({}, p, { segmentLabel: SEGL[p.segment] || p.segment, areas: p.areas.map((a) => Object.assign({}, a)) })).sort((a, b) => (a.index == null) - (b.index == null) || (a.index || 0) - (b.index || 0)),
     areas: AREAS.map((a) => ({ id: a[0], name: a[1] }))
@@ -178,13 +195,17 @@ function personRules(p, hl, now) {
   return { notes, actions, recs };
 }
 
+// Phạm vi dữ liệu: opt.months (3 / 6 / 12) chỉ tính các bài làm trong N tháng gần nhất; mỗi phạm vi lưu tạm riêng 20 phút
+const cacheKeyOf = (opt) => (opt && Number(opt.months) > 0 ? CACHE_KEY.replace(".json", "-" + Math.round(Number(opt.months)) + "m.json") : CACHE_KEY);
 async function build(opt) {
-  opt = opt || {};
-  if (!opt.refresh) { const c = await store.get(CACHE_KEY).catch(() => null); if (c && c.data && Date.now() - (c.at || 0) < CACHE_MS) return Object.assign({ cached: true, cachedAt: c.at }, c.data); }
+  opt = opt || {}; const key = cacheKeyOf(opt);
+  if (!opt.refresh) { const c = await store.get(key).catch(() => null); if (c && c.data && Date.now() - (c.at || 0) < CACHE_MS) return Object.assign({ cached: true, cachedAt: c.at }, c.data); }
   const data = await compute(opt);
-  await store.put(CACHE_KEY, { at: Date.now(), data }).catch(() => {});
+  await store.put(key, { at: Date.now(), data }).catch(() => {});
   return Object.assign({ cached: false, cachedAt: Date.now() }, data);
 }
+// Đọc bản đã tính gần nhất (không tính lại, không tốn thời gian): dùng để chụp số liệu nền khi lưu kế hoạch
+async function peek() { const c = await store.get(CACHE_KEY).catch(() => null); return c && c.data ? c.data : null; }
 
 // ---------- AI ----------
 const llm = require("./llm");
@@ -244,4 +265,4 @@ async function ai(opt) {
   return { ok: true, kind, items };
 }
 
-module.exports = { build, compute, ai, areaOf, AREAS, level, personRules, groupStat, RULES };
+module.exports = { build, peek, compute, ai, areaOf, getAreaMap, setAreaMap, AREA_NAME, AREAS, level, personRules, groupStat, RULES };
