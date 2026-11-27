@@ -1978,6 +1978,7 @@ body[data-tab="results"] .main,body[data-tab="analysis"] .main,body[data-tab="qu
 <script src="/kiemtra/hrsync.js?v=1"></script>
 <script src="/kiemtra/docread.js?v=1"></script>
 <script src="/kiemtra/notify.js?v=14"></script>
+<script src="/kiemtra/trainplan.js?v=1"></script>
 <script>try{if(localStorage.getItem("kt_side_collapsed")==="1")document.documentElement.classList.add("sidec")}catch(e){}</script>
 <link rel="stylesheet" href="/kiemtra/sidebar.css?v=2">
 </head>
@@ -2058,6 +2059,7 @@ body[data-tab="results"] .main,body[data-tab="analysis"] .main,body[data-tab="qu
       <button type="button" class="nv" data-nav="managerview" onclick="switchTab('managerview')" title="Quản lí"><svg class="ic" aria-hidden="true"><use href="#i-mgr"/></svg><span class="nv-l">Quản lí</span></button>
       <button type="button" class="nv" data-nav="kai" onclick="switchTab('kai')" title="Trợ lí KAI: tài liệu và người dùng"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M11 3.5c.5 4.2 2.3 6 6.5 6.5-4.2.5-6 2.3-6.5 6.5-.5-4.2-2.3-6-6.5-6.5 4.2-.5 6-2.3 6.5-6.5z" fill="currentColor"/><path d="M18.5 15.5c.2 1.6.9 2.3 2.5 2.5-1.6.2-2.3.9-2.5 2.5-.2-1.6-.9-2.3-2.5-2.5 1.6-.2 2.3-.9 2.5-2.5z" fill="currentColor" stroke-width="1"/></svg><span class="nv-l">Trợ lí KAI</span></button>
       <button type="button" class="nv" data-nav="hoclieu" onclick="switchTab('hoclieu')" title="Học liệu: tài liệu và video cho học viên"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 5.5C6 4 9 4.2 12 6c3-1.8 6-2 9-.5V19c-3-1.5-6-1.3-9 .5-3-1.8-6-2-9-.5z" fill="currentColor"/><path d="M12 6v13.5" class="cut"/></svg><span class="nv-l">Học liệu</span></button>
+      <button type="button" class="nv" data-nav="trainplan" onclick="switchTab('trainplan')" title="Kế hoạch đào tạo: AI phân tích năng lực và lập kế hoạch theo tháng"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/></svg><span class="nv-l">Kế hoạch đào tạo</span></button>
       <div class="nv-grp">Hệ thống</div>
       <button type="button" class="nv" data-nav="sys" onclick="switchTab('settings')" title="Cài đặt"><svg class="ic" aria-hidden="true" viewBox="0 0 24 24"><path d="M10.3 2.8h3.4l.5 2.4 1.8.8 2.1-1.3 2.4 2.4-1.3 2.1.8 1.8 2.4.5v3.4l-2.4.5-.8 1.8 1.3 2.1-2.4 2.4-2.1-1.3-1.8.8-.5 2.4h-3.4l-.5-2.4-1.8-.8-2.1 1.3-2.4-2.4 1.3-2.1-.8-1.8-2.4-.5v-3.4l2.4-.5.8-1.8-1.3-2.1 2.4-2.4 2.1 1.3 1.8-.8z" fill="currentColor" stroke-width="1.2"/><circle cx="12" cy="12" r="3" class="cutf"/></svg><span class="nv-l">Cài đặt</span></button>
       <div class="subnav sysnav sysnav-side hide" aria-label="Mục cài đặt">
@@ -2961,6 +2963,9 @@ body[data-tab="results"] .main,body[data-tab="analysis"] .main,body[data-tab="qu
         <div id="hlMsg"></div>
       </div>
     </div>
+    <div id="tab-trainplan" class="tabpane hide">
+      <div class="card" id="tpRoot"></div>
+    </div>
     <div id="tab-kai" class="tabpane hide">
       <div class="card" id="kaiCard">
         <h1>KAI — Yêu cầu truy cập trợ lí chính sách <span class="small" id="kaiCount"></span></h1>
@@ -3662,7 +3667,7 @@ $('hlCatSave').addEventListener('click', async () => {
   if (!r.j.ok) return hlMsg(r.j.error || 'Không lưu được.');
   await hlOpen(); hlView('cats'); hlMsg('Đã lưu danh mục' + (r.j.moved ? ' (' + r.j.moved + ' học liệu chuyển sang danh mục đầu tiên)' : '') + '.', 'ok');
 });
-const TABS = ['exams','lookup','candidates','managerview','notify','kai','hoclieu','results','analysis','questions','examset','settings','viewers','banks','audit'];
+const TABS = ['exams','lookup','candidates','managerview','notify','kai','hoclieu','trainplan','results','analysis','questions','examset','settings','viewers','banks','audit'];
 const WS = ['results','analysis','questions','examset'], SYS = ['settings','viewers','banks','audit'];
 let CUR_EXAM = null, EX_NEW = false, EX_DEFAULT = '';
 // Địa chỉ dạng #exams, #candidates, #settings… hoặc #results/<mã đề>, #questions/<mã đề>, #examset/<mã đề>
@@ -3682,7 +3687,7 @@ function switchTab(t){
   const inWs = WS.indexOf(t) >= 0, inSys = SYS.indexOf(t) >= 0;
   const navKey = inWs ? 'exams' : inSys ? 'sys' : t;
   document.querySelectorAll('[data-nav]').forEach(b => { const on = b.dataset.nav === navKey; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-  const tb = $('tbTitle'); if (tb) tb.textContent = inWs ? 'Đề thi' : inSys ? 'Cài đặt' : ({ exams:'Đề thi', lookup:'Tra cứu', candidates:'Danh sách thí sinh', notify:'Thông báo, thư mời', managerview:'Quản lí', kai:'Trợ lí KAI', hoclieu:'Học liệu' })[t] || 'Quản trị bài kiểm tra';
+  const tb = $('tbTitle'); if (tb) tb.textContent = inWs ? 'Đề thi' : inSys ? 'Cài đặt' : ({ exams:'Đề thi', lookup:'Tra cứu', candidates:'Danh sách thí sinh', notify:'Thông báo, thư mời', managerview:'Quản lí', kai:'Trợ lí KAI', hoclieu:'Học liệu', trainplan:'Kế hoạch đào tạo' })[t] || 'Quản trị bài kiểm tra';
   document.querySelectorAll('.sysnav').forEach(el => el.classList.toggle('hide', !inSys));
   $('exHead').classList.toggle('hide', !inWs);
   $('exNav').classList.toggle('hide', EX_NEW);
@@ -3697,6 +3702,7 @@ function switchTab(t){
   if (t === 'kai') kaixOpen();
   if (t === 'kai' && prevTab !== 'kai') loadKaiPending();
   if (t === 'hoclieu') hlOpen();
+  if (t === 'trainplan') tpOpen();
   if (t === 'audit') { loadAudit(); loadFaceRejections(); loadEntryLog(); }
   if (t === 'managerview' && $('mvFrame').src === 'about:blank') $('mvFrame').src = '/kiemtra/quanli.html';
   if (inWs) renderExHead();
