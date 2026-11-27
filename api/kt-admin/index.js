@@ -304,6 +304,15 @@ const handler = async function (context, req) {
         const rq = req.query || {};
         return reply(context, 200, Object.assign({ ok: true }, await require("../_lib/hrcompetency").build({ refresh: rq.refresh === "1" })));
       }
+      if (op === "trainPlanGet") { // kế hoạch đào tạo tháng đã lưu + danh sách các tháng đã có
+        const TP = require("../_lib/trainplan"), rq = req.query || {};
+        return reply(context, 200, { ok: true, plan: await TP.get(rq.month), months: await TP.list() });
+      }
+      if (op === "trainPlanAnalysis") { // khoảng cách năng lực theo vị trí (luật minh bạch, không dùng AI)
+        const TP = require("../_lib/trainplan"), rq = req.query || {}, m = typeof rq.month === "string" ? rq.month.slice(0, 7) : "";
+        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(m)) return reply(context, 400, { ok: false, error: "Tháng không hợp lệ." });
+        return reply(context, 200, { ok: true, analysis: TP.analyse(await require("../_lib/hrcompetency").build({ refresh: rq.refresh === "1" }), m), req: TP.REQ });
+      }
       if (op === "hrDims") { // nhận định theo từng người / quản lí / tỉnh / ngành (luật minh bạch), chỉ quản trị viên
         const rq = req.query || {}, per = typeof rq.period === "string" ? rq.period.slice(0, 40) : undefined;
         return reply(context, 200, Object.assign({ ok: true }, await require("../_lib/hrdims").build({ period: per })));
@@ -1039,6 +1048,18 @@ const handler = async function (context, req) {
     if (op === "hrDimsAi") { // nhận định bằng AI cho một người hoặc từng nhóm; máy chủ tự dựng dữ liệu, không nhận số liệu từ trình duyệt
       const r = await require("../_lib/hrdims").ai({ kind: String(b.kind || ""), key: String(b.key || "").slice(0, 60), period: typeof b.period === "string" ? b.period.slice(0, 40) : undefined });
       return reply(context, r.ok ? 200 : 502, r);
+    }
+    if (op === "trainPlanGenerate") { // AI (hoặc luật) lập kế hoạch đào tạo tháng từ khoảng cách năng lực; chưa lưu, quản trị viên xem và sửa rồi mới lưu
+      const r = await require("../_lib/trainplan").generate({ month: String(b.month || ""), mode: b.mode === "rules" ? "rules" : "ai", refresh: b.refresh === true });
+      return reply(context, r.ok ? 200 : 400, r);
+    }
+    if (op === "trainPlanSave" || op === "trainPlanDelete") { // lưu / xoá kế hoạch đào tạo của một tháng
+      const TP = require("../_lib/trainplan");
+      try {
+        if (op === "trainPlanDelete") { await TP.remove(String(b.month || ""), u.email); return reply(context, 200, { ok: true }); }
+        const plan = await TP.save(String(b.month || ""), b, u.email);
+        return reply(context, 200, { ok: true, plan });
+      } catch (e) { return reply(context, 400, { ok: false, error: e.message }); }
     }
     if (op === "hrAi") { // khuyến nghị đào tạo bằng AI (giai đoạn 4): chỉ nhận bản tóm tắt tổng hợp ẩn danh, đã lọc lại ở máy chủ
       const r = await require("../_lib/hrai").report(b.summary);
