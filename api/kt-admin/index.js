@@ -306,12 +306,12 @@ const handler = async function (context, req) {
       }
       if (op === "trainPlanGet") { // kế hoạch đào tạo tháng đã lưu + danh sách các tháng đã có
         const TP = require("../_lib/trainplan"), rq = req.query || {};
-        return reply(context, 200, { ok: true, plan: await TP.get(rq.month), months: await TP.list() });
+        return reply(context, 200, { ok: true, plan: await TP.get(rq.month), months: await TP.list(), biz: await TP.getBiz(rq.month), sales: await TP.salesContext(String(rq.month || "").slice(0, 7)) });
       }
       if (op === "trainPlanAnalysis") { // khoảng cách năng lực theo vị trí (luật minh bạch, không dùng AI)
         const TP = require("../_lib/trainplan"), rq = req.query || {}, m = typeof rq.month === "string" ? rq.month.slice(0, 7) : "";
         if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(m)) return reply(context, 400, { ok: false, error: "Tháng không hợp lệ." });
-        return reply(context, 200, { ok: true, analysis: TP.analyse(await require("../_lib/hrcompetency").build({ refresh: rq.refresh === "1" }), m), req: TP.REQ });
+        return reply(context, 200, { ok: true, analysis: TP.analyse(await require("../_lib/hrcompetency").build({ refresh: rq.refresh === "1" }), m, { biz: await TP.getBiz(m), sales: await TP.salesContext(m) }), req: TP.REQ });
       }
       if (op === "hrDims") { // nhận định theo từng người / quản lí / tỉnh / ngành (luật minh bạch), chỉ quản trị viên
         const rq = req.query || {}, per = typeof rq.period === "string" ? rq.period.slice(0, 40) : undefined;
@@ -1052,6 +1052,9 @@ const handler = async function (context, req) {
     if (op === "trainPlanGenerate") { // AI (hoặc luật) lập kế hoạch đào tạo tháng từ khoảng cách năng lực; chưa lưu, quản trị viên xem và sửa rồi mới lưu
       const r = await require("../_lib/trainplan").generate({ month: String(b.month || ""), mode: b.mode === "rules" ? "rules" : "ai", refresh: b.refresh === true });
       return reply(context, r.ok ? 200 : 400, r);
+    }
+    if (op === "trainPlanBizSave") { // mục tiêu kinh doanh và chiến lược của tháng: đầu vào bắt buộc để lập kế hoạch đào tạo
+      try { return reply(context, 200, { ok: true, biz: await require("../_lib/trainplan").saveBiz(String(b.month || ""), b, u.email) }); } catch (e) { return reply(context, 400, { ok: false, error: e.message }); }
     }
     if (op === "trainPlanSave" || op === "trainPlanDelete") { // lưu / xoá kế hoạch đào tạo của một tháng
       const TP = require("../_lib/trainplan");
