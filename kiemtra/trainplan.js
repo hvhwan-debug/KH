@@ -3,7 +3,7 @@
    Dùng các hàm có sẵn của admin.html: $, esc, api, msg. Dữ liệu nhân sự chỉ ở máy chủ; trang này chỉ nhận số liệu tổng hợp theo vị trí. */
 (function () {
   'use strict';
-  var TP = { month: '', rows: [], source: 'manual', status: 'draft', dirty: false, biz: { goals: [], strategy: [] }, sales: null, bizDirty: false, approval: { status: 'draft', approver: '', note: '', decidedAt: null }, sendBefore: 3, analysis: null, months: [], busy: false, inited: false };
+  var TP = { month: '', rows: [], source: 'manual', status: 'draft', dirty: false, biz: { goals: [], strategy: [] }, sales: null, bizDirty: false, approval: { status: 'draft', approver: '', note: '', decidedAt: null }, sendBefore: 3, flow: null, analysis: null, months: [], busy: false, inited: false };
   var COLS = [['stt', 'STT', 46], ['doiTuong', 'Đối tượng', 90], ['nganh', 'Ngành', 120], ['tenChuongTrinh', 'Tên chương trình', 200], ['noiDung', 'Nội dung chính', 320], ['mucTieu', 'Mục tiêu', 230],
     ['phuongPhap', 'Phương pháp', 150], ['thoiLuong', 'Thời lượng', 86], ['phuTrach', 'Phụ trách', 96], ['thoiGian', 'Thời gian tổ chức', 138], ['guiTruoc', 'Hạn gửi nội dung cho người duyệt', 130], ['tanSuat', 'Tần suất', 150], ['ghiChu', 'Ghi chú', 230], ['mucTieuKd', 'Gắn mục tiêu kinh doanh', 230], ['chiSoDo', 'Chỉ số đo hiệu quả', 230], ['coSo', 'Cơ sở số liệu', 230]];
   var SRC = { ai: 'AI lập', rules: 'Lập theo luật', manual: 'Nhập tay' };
@@ -46,7 +46,7 @@
       + '#tpRoot table.tp-plan textarea,#tpRoot table.tp-plan input{width:100%;box-sizing:border-box;border:1px solid transparent;background:transparent;font:inherit;font-size:13px;padding:5px 6px;border-radius:6px;resize:vertical}'
       + '#tpRoot table.tp-plan textarea:hover,#tpRoot table.tp-plan input:hover{border-color:#cfd8e6}#tpRoot table.tp-plan textarea:focus,#tpRoot table.tp-plan input:focus{border-color:#1B78E8;background:#f5faff;outline:none}'
       + '#tpRoot table.tp-plan td.stt{text-align:center;font-weight:700;vertical-align:middle}#tpRoot table.tp-plan td.act{text-align:center;vertical-align:middle;width:36px}'
-      + '#tpRoot .tp-off input{color:#B42318;font-weight:700}#tpRoot .tp-bad input[type=time]{color:#B42318;font-weight:700;background:#FEE4E2}#tpRoot td.gui{text-align:center;vertical-align:middle;color:#475569;font-size:12.5px}#tpRoot .tp-ap{border:1px solid var(--line,#dbe3ee);border-radius:14px;padding:12px 14px;margin-top:12px;background:#fff}#tpRoot .tp-ap .tp-apg{display:grid;grid-template-columns:150px 1fr 110px;gap:10px;align-items:start}@media(max-width:800px){#tpRoot .tp-ap .tp-apg{grid-template-columns:1fr}}#tpRoot .tp-ap label{font-size:13px;font-weight:700;color:#29466e;display:block}#tpRoot .tp-ap input,#tpRoot .tp-ap select,#tpRoot .tp-ap textarea{width:100%;box-sizing:border-box;margin-top:4px;padding:7px 9px;border:1px solid var(--line,#dbe3ee);border-radius:10px;font:inherit;font-size:13px;font-weight:400}#tpRoot .tp-empty{padding:26px;text-align:center;color:#5b6b85}';
+      + '#tpRoot .tp-off input{color:#B42318;font-weight:700}#tpRoot .tp-bad input[type=time]{color:#B42318;font-weight:700;background:#FEE4E2}#tpRoot td.gui{text-align:center;vertical-align:middle;color:#475569;font-size:12.5px}#tpRoot .tp-fl{border:1px solid #BFD6F5;background:#F8FBFF;border-radius:14px;padding:12px 14px;margin-top:14px}#tpRoot table.tp-fb{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;background:#fff}#tpRoot table.tp-fb th,#tpRoot table.tp-fb td{border:1px solid #d5dce8;padding:7px 8px;vertical-align:top;text-align:left}#tpRoot table.tp-fb th{background:#EAF2FD;color:#0B1F4B}#tpRoot .tp-fb .b{display:block;margin:4px 0 0}#tpRoot .tp-ap{border:1px solid var(--line,#dbe3ee);border-radius:14px;padding:12px 14px;margin-top:12px;background:#fff}#tpRoot .tp-ap .tp-apg{display:grid;grid-template-columns:150px 1fr 110px;gap:10px;align-items:start}@media(max-width:800px){#tpRoot .tp-ap .tp-apg{grid-template-columns:1fr}}#tpRoot .tp-ap label{font-size:13px;font-weight:700;color:#29466e;display:block}#tpRoot .tp-ap input,#tpRoot .tp-ap select,#tpRoot .tp-ap textarea{width:100%;box-sizing:border-box;margin-top:4px;padding:7px 9px;border:1px solid var(--line,#dbe3ee);border-radius:10px;font:inherit;font-size:13px;font-weight:400}#tpRoot .tp-empty{padding:26px;text-align:center;color:#5b6b85}';
     document.head.appendChild(st);
   }
 
@@ -60,7 +60,7 @@
       + '<button type="button" class="btn ghost sm" data-tp-act="rules" title="Lập theo luật từ bản phân tích, không dùng AI">Lập theo luật</button></div></div>'
       + '<div class="tp-chips" id="tpChips"></div><div id="tpMsg"></div><div id="tpBiz"></div><div id="tpAnalysis"></div>'
       + '<div class="tp-sec">Bảng kế hoạch đào tạo</div><div id="tpPlan"></div>'
-      + '<div id="tpApprove"></div><div class="tp-bar" style="margin-top:10px"><button type="button" class="btn sm" data-tp-act="save">Lưu kế hoạch</button>'
+      + '<div id="tpApprove"></div><div id="tpFlow"></div><div class="tp-bar" style="margin-top:10px"><button type="button" class="btn sm" data-tp-act="save">Lưu kế hoạch</button>'
       + '<button type="button" class="btn ghost sm" data-tp-act="add">+ Thêm dòng</button><button type="button" class="btn ghost sm" data-tp-act="csv">Xuất CSV</button>'
       + '<button type="button" class="btn ghost sm danger" data-tp-act="del">Xoá kế hoạch tháng này</button><span class="small" id="tpState"></span></div>';
     r.addEventListener('click', onClick); r.addEventListener('input', onInput); r.addEventListener('change', onInput);
@@ -91,6 +91,25 @@
       + '<label>Gửi nội dung trước (ngày làm việc)<input id="tpSendBefore" type="number" min="0" max="15" value="' + ea(TP.sendBefore) + '"></label></div>'
       + '<label style="margin-top:8px">Ý kiến phê duyệt<textarea id="tpApNote" rows="3" placeholder="Ghi lại ý kiến, lưu ý của người phê duyệt (khung giờ, nội dung cần gửi trước, trọng tâm của tháng…)">' + esc(A.note) + '</textarea></label>'
       + '<div class="small" style="margin-top:6px">' + (A.decidedAt ? 'Ngày ' + (A.status === 'rejected' ? 'không duyệt' : 'duyệt') + ': ' + esc(new Date(A.decidedAt).toLocaleString('vi-VN')) + ' · ' : '') + 'Nội dung từng chương trình cần gửi cho người phê duyệt trước buổi học để đánh giá mức độ chuẩn bị; cột “Hạn gửi nội dung” tính theo số ngày làm việc ở trên.</div></div>';
+  }
+  function fl(k, i, label, cls) { return '<button type="button" class="btn ' + (cls || 'ghost') + ' sm b" data-tp-act="flowbtn" data-tp-flow="' + k + '" data-i="' + i + '">' + label + '</button>'; }
+  function renderFlow() {
+    var el = document.getElementById('tpFlow'); if (!el) return; var F = TP.flow, saved = TP.months.some(function (m) { return m.month === TP.month; });
+    var head = '<div class="tp-fl"><div class="tp-sec" style="margin-top:0">Luồng đào tạo</div><div class="small" style="max-width:70em">Từ bảng kế hoạch đã lưu, hệ thống tự tạo cho từng chương trình: <b>chương trình đăng ký</b> (người nhận bấm 1 nút trong email), <b>bài kiểm tra sau đào tạo</b> (đề riêng, chỉ đúng người của chương trình; câu hỏi AI chỉ soạn từ tài liệu có thật và để ở dạng nháp) và <b>khảo sát sau buổi học</b> (nháp). '
+      + '<b>Tạo luồng không gửi email nào.</b> Mỗi lần gửi thư đều có bước xem trước đúng số người và xác nhận, và chỉ gửi khi kế hoạch ở trạng thái “Đã duyệt” và chưa sửa sau khi duyệt.</div>'
+      + '<div class="tp-bar" style="margin:10px 0"><button type="button" class="btn sm" data-tp-act="flow"' + (saved && !TP.dirty ? '' : ' disabled title="Hãy lưu kế hoạch trước"') + '>🚀 ' + (F && F.created ? 'Cập nhật luồng đào tạo từ kế hoạch' : 'Tạo luồng đào tạo từ kế hoạch này') + '</button>'
+      + (F && F.created ? '<button type="button" class="btn ghost sm" data-tp-act="qall">Soạn câu hỏi nháp cho tất cả chương trình</button>' : '') + (saved ? '' : '<span class="small">Chưa có kế hoạch đã lưu cho tháng này.</span>') + '</div>';
+    if (!F || !F.created) { el.innerHTML = head + '</div>'; return; }
+    var gate = F.gate ? '<div class="msg warn" style="margin:0 0 8px">Chưa thể gửi thư: ' + esc(F.gate.error) + '</div>' : '<div class="msg ok" style="margin:0 0 8px">Kế hoạch đã duyệt: có thể gửi thư (mỗi lần đều xem trước và xác nhận).</div>';
+    el.innerHTML = head + gate + '<table class="tp-fb"><thead><tr><th>#</th><th>Chương trình</th><th>Người nhận</th><th>Thư mời đăng ký</th><th>Bài kiểm tra sau đào tạo</th><th>Khảo sát</th></tr></thead><tbody>'
+      + F.items.map(function (x, i) {
+        var pr = x.program, ex = x.exam, rc = x.recipients, sv = x.survey;
+        return '<tr><td>' + (i + 1) + '</td><td><b>' + esc(x.title) + '</b><div class="small">' + esc(x.audience) + (x.date ? ' · ' + esc(dmy(x.date)) + ' ' + esc(x.gio || '') : '') + '</div>' + (x.error ? '<div class="msg err" style="margin:4px 0 0">' + esc(x.error) + '</div>' : '') + '</td>'
+          + '<td>' + (rc && rc.total != null ? rc.total + ' người<div class="small">' + rc.noEmail + ' chưa có email</div>' : esc((rc && rc.error) || '—')) + '</td>'
+          + '<td>' + (pr ? 'Đã mời ' + pr.invited + ' · đăng ký ' + pr.regs + (pr.cancels ? ' · huỷ ' + pr.cancels : '') + fl('invite', i, 'Xem trước &amp; gửi thư mời', 'sm') : '—') + '</td>'
+          + '<td>' + (ex ? 'Câu nháp ' + ex.drafts + ' · đã bật ' + ex.active + '<div class="small">Đã gửi thư làm bài ' + ex.invited + ' · nhắc ' + ex.reminded + '</div>' + fl('gen', i, 'Soạn câu hỏi nháp (AI)') + fl('exam', i, 'Gửi thư làm bài') + fl('remind', i, 'Nhắc làm bài') : '—') + '</td>'
+          + '<td>' + (sv ? (sv.open ? 'Đang mở' : 'Nháp (chưa mở)') + '<div class="small"><a href="' + ea(sv.url) + '" target="_blank" rel="noopener">Mở khảo sát</a></div>' : '—') + '</td></tr>';
+      }).join('') + '</tbody></table><div class="small" style="margin-top:6px">Câu hỏi nháp: vào Ngân hàng câu hỏi của đề <code>dt-' + esc(TP.month) + '-N</code> để xem lại và bật. Khảo sát: mở ở trang Khảo sát khi sẵn sàng. Xoá kế hoạch KHÔNG xoá chương trình, đề và khảo sát đã tạo (có thể đã có người đăng ký).</div></div>';
   }
   function renderState() {
     var el = document.getElementById('tpState'); if (!el) return;
@@ -133,7 +152,7 @@
     el.innerHTML = '<div class="tp-wrap">' + head + '<div style="overflow-x:auto"><table class="tp-plan"><thead><tr>' + ths + '</tr></thead><tbody>' + body + '</tbody></table></div></div>';
     renderState();
   }
-  function renderAll() { var m = document.getElementById('tpMonth'); if (m) m.value = TP.month; renderChips(); renderBiz(); renderAnalysis(); renderPlan(); renderApprove(); renderState(); }
+  function renderAll() { var m = document.getElementById('tpMonth'); if (m) m.value = TP.month; renderChips(); renderBiz(); renderAnalysis(); renderPlan(); renderApprove(); renderFlow(); renderState(); }
 
   function onInput(e) {
     if (e.target && (e.target.id === 'tpGoals' || e.target.id === 'tpStrat' || e.target.id === 'tpFocus')) { TP.bizDirty = true; return; }
@@ -144,7 +163,7 @@
     var t = e.target, i = t.getAttribute && t.getAttribute('data-i'), f = t.getAttribute && t.getAttribute('data-f'); if (i == null || !f || !TP.rows[+i]) return;
     var v = t.value;
     TP.rows[+i][f] = f === 'noiDung' ? v.split('\n').map(function (x) { return x.replace(/^[\s•\-–*]+/, '').trim(); }).filter(Boolean) : v;
-    if (!TP.dirty || f === 'thoiGian') { TP.dirty = true; renderState(); }
+    if (!TP.dirty || f === 'thoiGian') { var was = TP.dirty; TP.dirty = true; renderState(); if (!was) renderFlow(); }
     if ((f === 'thoiGian' || f === 'gio' || f === 'thoiLuong') && e.type === 'change') renderPlan();
   }
   function onClick(e) {
@@ -153,7 +172,7 @@
     if (b.hasAttribute('data-tp-del')) { TP.rows.splice(+b.getAttribute('data-tp-del'), 1); TP.dirty = true; renderPlan(); return; }
     var a = b.getAttribute('data-tp-act');
     if (a === 'analyze') analyze(true); else if (a === 'ai') generate('ai'); else if (a === 'rules') generate('rules');
-    else if (a === 'biz') saveBiz(false); else if (a === 'save') save(); else if (a === 'add') { TP.rows.push(emptyRow()); TP.dirty = true; renderPlan(); } else if (a === 'csv') exportCsv(); else if (a === 'del') removePlan();
+    else if (a === 'flowbtn') flowAct(b.getAttribute('data-tp-flow'), +b.getAttribute('data-i')); else if (a === 'flow') createFlow(); else if (a === 'qall') genAll(); else if (a === 'biz') saveBiz(false); else if (a === 'save') save(); else if (a === 'add') { TP.rows.push(emptyRow()); TP.dirty = true; renderPlan(); } else if (a === 'csv') exportCsv(); else if (a === 'del') removePlan();
   }
   function confirmLose() { return !TP.dirty || confirm('Có thay đổi chưa lưu trong bảng kế hoạch. Bỏ các thay đổi này?'); }
 
@@ -164,7 +183,7 @@
     var r = await api('GET', '/api/kt-admin?op=trainPlanGet&month=' + encodeURIComponent(m));
     if (!r.j.ok) { say(r.j.error || 'Không tải được kế hoạch.'); return; }
     TP.months = r.j.months || []; TP.biz = r.j.biz || { goals: [], strategy: [] }; TP.sales = r.j.sales || null; TP.bizDirty = false; var p = r.j.plan;
-    TP.approval = p && p.approval ? p.approval : { status: 'draft', approver: '', note: '', decidedAt: null }; TP.sendBefore = p && p.sendBefore != null ? p.sendBefore : 3; TP.rows = p ? p.rows : []; TP.source = p ? p.source : 'manual'; TP.status = p ? p.status : 'draft'; TP.dirty = false; renderAll();
+    TP.approval = p && p.approval ? p.approval : { status: 'draft', approver: '', note: '', decidedAt: null }; TP.sendBefore = p && p.sendBefore != null ? p.sendBefore : 3; TP.rows = p ? p.rows : []; TP.source = p ? p.source : 'manual'; TP.status = p ? p.status : 'draft'; TP.dirty = false; TP.flow = null; renderAll(); await loadFlow();
   }
   function bizFromForm() {
     function raw(id) { var el = document.getElementById(id); return el ? el.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean) : []; }
@@ -199,18 +218,18 @@
   }
   async function save() {
     if (!TP.rows.length) { say('Chưa có dòng kế hoạch nào để lưu.'); return; }
-    lock(true);
+    var wanted = TP.approval.status; lock(true);
     try {
       var r = await api('POST', '/api/kt-admin', { op: 'trainPlanSave', month: TP.month, status: 'final', source: TP.source, rows: TP.rows, approval: TP.approval, sendBefore: TP.sendBefore });
       if (!r.j.ok) { say(r.j.error || 'Không lưu được.'); return; }
-      TP.rows = r.j.plan.rows; TP.approval = r.j.plan.approval; TP.sendBefore = r.j.plan.sendBefore; TP.dirty = false; TP.status = 'final';
+      var down = wanted === 'approved' && r.j.plan.approval.status !== 'approved'; TP.rows = r.j.plan.rows; TP.approval = r.j.plan.approval; TP.sendBefore = r.j.plan.sendBefore; TP.dirty = false; TP.status = 'final';
       var l = await api('GET', '/api/kt-admin?op=trainPlanGet&month=' + encodeURIComponent(TP.month)); if (l.j.ok) TP.months = l.j.months || [];
-      renderAll(); var bad = TP.rows.filter(function (x) { return timeOk(x.gio, durMin(x.thoiLuong)) === false; }).length;
-      say('Đã lưu kế hoạch đào tạo tháng ' + mLabel(TP.month) + '.' + (bad ? ' Lưu ý: ' + bad + ' buổi nằm ngoài khung giờ cho phép (08:00–09:30 hoặc từ 17:00).' : ''), bad ? 'warn' : 'ok');
+      renderAll(); await loadFlow(); var bad = TP.rows.filter(function (x) { return timeOk(x.gio, durMin(x.thoiLuong)) === false; }).length;
+      say('Đã lưu kế hoạch đào tạo tháng ' + mLabel(TP.month) + '.' + (down ? ' Nội dung đã thay đổi sau khi duyệt nên kế hoạch chuyển về “Chờ duyệt”: cần duyệt lại trước khi gửi thư.' : '') + (bad ? ' Lưu ý: ' + bad + ' buổi nằm ngoài khung giờ cho phép (08:00–09:30 hoặc từ 17:00).' : ''), bad || down ? 'warn' : 'ok');
     } finally { lock(false); }
   }
   async function removePlan() {
-    if (!TP.months.some(function (m) { return m.month === TP.month; })) { TP.rows = []; TP.dirty = false; renderAll(); return; }
+    if (!TP.months.some(function (m) { return m.month === TP.month; })) { TP.rows = []; TP.dirty = false; TP.flow = null; renderAll(); return; }
     if (!confirm('Xoá kế hoạch đào tạo tháng ' + mLabel(TP.month) + ' khỏi hệ thống?')) return;
     lock(true);
     try {
@@ -220,6 +239,60 @@
     } finally { lock(false); }
   }
   function csvCell(v) { v = String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; }
+  async function loadFlow() {
+    var m = TP.month, r = await api('GET', '/api/kt-admin?op=trainFlowStatus&month=' + encodeURIComponent(m));
+    if (r.j.ok && m === TP.month) { TP.flow = r.j; renderFlow(); }
+  }
+  async function createFlow() {
+    if (TP.dirty) { say('Hãy lưu kế hoạch trước khi tạo luồng.', 'warn'); return; }
+    if (!confirm('Tạo (hoặc cập nhật) luồng đào tạo tháng ' + mLabel(TP.month) + ' từ kế hoạch đã lưu?\n\nHệ thống sẽ tạo chương trình đăng ký, đề kiểm tra và khảo sát (nháp) cho từng chương trình.\nKHÔNG gửi email nào ở bước này.')) return;
+    lock(true); say('Đang tạo luồng đào tạo…', 'ok');
+    try {
+      var r = await api('POST', '/api/kt-admin', { op: 'trainFlowCreate', month: TP.month });
+      if (!r.j.ok) { say(r.j.error || 'Không tạo được luồng.', r.j.code === 'no_plan' ? 'warn' : 'err'); return; }
+      TP.flow = r.j.status; renderFlow();
+      var pb = r.j.problems || [];
+      say(pb.length ? 'Đã tạo luồng, nhưng ' + pb.length + ' chương trình cần xử lý: ' + pb.map(function (x) { return x.title + ' — ' + x.error; }).join(' · ') : 'Đã tạo luồng đào tạo cho ' + TP.flow.items.length + ' chương trình. Chưa gửi email nào.', pb.length ? 'warn' : 'ok');
+    } finally { lock(false); }
+  }
+  async function genOne(i) {
+    var r = await api('POST', '/api/kt-admin', { op: 'trainFlowQuestions', month: TP.month, index: i });
+    if (!r.j.ok) return { ok: false, text: r.j.error || 'Không soạn được câu hỏi.' };
+    return { ok: true, n: r.j.generated || 0, text: r.j.generated ? 'Đã soạn ' + r.j.generated + ' câu hỏi NHÁP từ tài liệu: ' + (r.j.sources || []).join('; ') + '. Hãy xem lại và bật câu hỏi trong Ngân hàng câu hỏi.' : (r.j.note || 'Không có câu mới.') };
+  }
+  async function genAll() {
+    if (!TP.flow || !TP.flow.created) return; lock(true); var n = 0, notes = [];
+    try {
+      for (var i = 0; i < TP.flow.items.length; i++) { if (!TP.flow.items[i].examId && !TP.flow.items[i].exam) continue; say('Đang soạn câu hỏi nháp… chương trình ' + (i + 1) + '/' + TP.flow.items.length, 'ok'); var g = await genOne(i); if (g.ok) n += g.n; else notes.push((i + 1) + ': ' + g.text); }
+      await loadFlow(); say('Đã soạn ' + n + ' câu hỏi nháp cho các chương trình có tài liệu nguồn.' + (notes.length ? ' Lỗi: ' + notes.join(' · ') : ' Chương trình chưa có tài liệu nguồn được bỏ qua (xem ghi chú ở từng dòng khi bấm soạn riêng).'), notes.length ? 'warn' : 'ok');
+    } finally { lock(false); }
+  }
+  // Gửi thư có chốt chặn: xem trước đúng số người → hộp xác nhận nêu rõ số người → gửi theo đợt kèm đúng số đã xem
+  async function sendFlow(op, extra, i, label) {
+    var title = TP.flow.items[i].title, base = Object.assign({ op: op, month: TP.month, index: i }, extra);
+    var d = await api('POST', '/api/kt-admin', Object.assign({ mode: 'dry' }, base));
+    if (!d.j.ok) { say(d.j.error || 'Không xem trước được.', 'warn'); return; }
+    var s = d.j.stats, expect = op === 'trainFlowInvite' ? s.withEmail : s.audience, before = s.alreadyInvited || s.alreadyResent || s.alreadyReminded || 0;
+    if (!s.pending) { say('Không còn ai cần gửi cho “' + title + '” (' + before + ' người đã nhận trước đó' + (s.noEmail ? ', ' + s.noEmail + ' người chưa có email' : '') + ').', 'ok'); return; }
+    if (!confirm(label + ': ' + title + '\n\n• Đối tượng: ' + s.audience + ' người (' + s.noEmail + ' chưa có email)\n• Đã gửi trước đó: ' + before + ' người\n• SẼ GỬI NGAY: ' + s.pending + ' người' + (d.j.sample && d.j.sample.length ? '\n• Ví dụ: ' + d.j.sample.join(', ') : '') + '\n\nBấm OK để gửi.')) return;
+    var sent = 0, guard = 0, r;
+    do {
+      r = await api('POST', '/api/kt-admin', Object.assign({ mode: 'send', expect: expect }, base));
+      if (!r.j.ok) { say((sent ? 'Đã gửi ' + sent + ' người rồi dừng: ' : '') + (r.j.error || 'Gửi không thành công.'), 'err'); break; }
+      sent += r.j.sent || 0; say('Đang gửi… ' + sent + '/' + s.pending, 'ok');
+    } while (r.j.remaining > 0 && r.j.sent > 0 && ++guard < 100);
+    await loadFlow();
+    if (r && r.j.ok) say('Đã gửi ' + sent + ' thư “' + label.toLowerCase() + '” cho “' + title + '”' + ((r.j.failed || []).length ? ' · ' + r.j.failed.length + ' thư lỗi' : '') + '.', (r.j.failed || []).length ? 'warn' : 'ok');
+  }
+  async function flowAct(k, i) {
+    if (!TP.flow || !TP.flow.items[i]) return; lock(true);
+    try {
+      if (k === 'gen') { say('AI đang soạn câu hỏi từ tài liệu…', 'ok'); var g = await genOne(i); await loadFlow(); say(g.text, g.ok && g.n ? 'ok' : 'warn'); }
+      else if (k === 'invite') await sendFlow('trainFlowInvite', {}, i, 'Gửi thư mời đăng ký');
+      else if (k === 'exam') await sendFlow('trainFlowExam', { kind: 'invite' }, i, 'Gửi thư làm bài kiểm tra');
+      else if (k === 'remind') await sendFlow('trainFlowExam', { kind: 'remind' }, i, 'Nhắc làm bài kiểm tra');
+    } finally { lock(false); }
+  }
   function exportCsv() {
     if (!TP.rows.length) { say('Chưa có dòng kế hoạch nào để xuất.'); return; }
     var head = ['STT', 'Đối tượng', 'Ngành', 'Tên chương trình', 'Nội dung chính', 'Mục tiêu', 'Phương pháp', 'Thời lượng', 'Phụ trách', 'Thời gian tổ chức', 'Hạn gửi nội dung cho người duyệt', 'Tần suất', 'Ghi chú', 'Gắn mục tiêu kinh doanh', 'Chỉ số đo hiệu quả', 'Cơ sở số liệu'];

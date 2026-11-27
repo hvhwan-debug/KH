@@ -7,6 +7,7 @@
 //    mảng nằm trong chiến lược được ưu tiên hơn, và mỗi chương trình phải nêu góp phần vào mục tiêu nào và đo bằng chỉ số nào.
 //  - Không có AI (hoặc AI lỗi): lập kế hoạch theo luật từ cùng bản phân tích.
 //  - Mỗi tháng một tệp kt/trainplan/YYYY-MM.json trong kho lưu trữ (KHÔNG để số liệu nhân sự trong repo vì repo công khai).
+const crypto = require("crypto");
 const store = require("./store");
 const CTX = require("./hrcontext");
 const llm = require("./llm");
@@ -247,6 +248,11 @@ async function generate(opt) {
   return { ok: true, source, rows, analysis: an, notes, warning };
 }
 
+// Mã băm nội dung kế hoạch tại thời điểm duyệt: sửa nội dung SAU khi đã duyệt thì mã đổi → phải duyệt lại mới được gửi thư
+function rowsHash(rows) {
+  return crypto.createHash("sha1").update(JSON.stringify((rows || []).map((r) => [r.doiTuong, r.tenChuongTrinh, r.noiDung, r.mucTieu, r.phuongPhap, r.thoiLuong, r.thoiGian, r.gio]))).digest("hex").slice(0, 16);
+}
+
 // ---------- lưu trữ theo tháng ----------
 async function get(month) { month = s(month, 7); if (!MONTH.test(month)) return null; const d = await store.get(PREFIX + month + ".json").catch(() => null); return d && !d.deleted ? d : null; }
 async function list() {
@@ -257,12 +263,15 @@ async function save(month, body, by) {
   month = s(month, 7); if (!MONTH.test(month)) throw new Error("Tháng không hợp lệ.");
   const doc = { v: 1, month, status: body && body.status === "final" ? "final" : "draft", source: ["ai", "rules", "manual"].indexOf(body && body.source) >= 0 ? body.source : "manual", rows: cleanRows(body && body.rows, month), updatedAt: Date.now(), by: String(by || "").toLowerCase() };
   const biz = await getBiz(month); doc.biz = { goals: biz.goals, strategy: biz.strategy, focus: biz.focus };
-  const prev = await get(month), A = (body && body.approval) || {}, st = ["draft", "pending", "approved", "rejected"].indexOf(A.status) >= 0 ? A.status : "draft", decided = st === "approved" || st === "rejected";
-  doc.approval = { status: st, approver: s(A.approver, 80), note: s(A.note, 1500), recordedBy: doc.by,
+  const prev = await get(month), A = (body && body.approval) || {}, hash = rowsHash(doc.rows), prevOk = !!(prev && prev.approval && prev.approval.status === "approved");
+  let st = ["draft", "pending", "approved", "rejected"].indexOf(A.status) >= 0 ? A.status : "draft";
+  if (st === "approved" && prevOk && prev.approval.hash !== hash) st = "pending"; // đã duyệt mà nội dung đổi: không tự coi là còn được duyệt
+  const decided = st === "approved" || st === "rejected";
+  doc.approval = { status: st, approver: s(A.approver, 80), note: s(A.note, 1500), recordedBy: doc.by, hash: st === "approved" ? hash : null,
     decidedAt: decided ? (prev && prev.approval && prev.approval.status === st && prev.approval.decidedAt ? prev.approval.decidedAt : Date.now()) : null };
   const sb = Math.round(Number(body && body.sendBefore)); doc.sendBefore = isFinite(sb) ? Math.min(15, Math.max(0, sb)) : 3; // gửi nội dung cho người phê duyệt trước buổi học N ngày làm việc
   await store.put(PREFIX + month + ".json", doc); return doc;
 }
 async function remove(month, by) { month = s(month, 7); if (!MONTH.test(month)) throw new Error("Tháng không hợp lệ."); await store.put(PREFIX + month + ".json", { v: 1, month, deleted: true, updatedAt: Date.now(), by: String(by || "").toLowerCase() }); }
 
-module.exports = { parseFocus, durMin, timeOk, slotFor, getBiz, saveBiz, salesContext, analyse, rulePlan, generate, get, list, save, remove, cleanRows, workdays, REQ, AREA_NAME };
+module.exports = { SHORT, rowsHash, parseFocus, durMin, timeOk, slotFor, getBiz, saveBiz, salesContext, analyse, rulePlan, generate, get, list, save, remove, cleanRows, workdays, REQ, AREA_NAME };

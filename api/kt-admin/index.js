@@ -308,6 +308,9 @@ const handler = async function (context, req) {
         const TP = require("../_lib/trainplan"), rq = req.query || {};
         return reply(context, 200, { ok: true, plan: await TP.get(rq.month), months: await TP.list(), biz: await TP.getBiz(rq.month), sales: await TP.salesContext(String(rq.month || "").slice(0, 7)) });
       }
+      if (op === "trainFlowStatus") { // bảng theo dõi luồng đào tạo của tháng (chương trình, người nhận, đã mời / đăng ký, câu hỏi, khảo sát)
+        const rq = req.query || {}; return reply(context, 200, Object.assign({ ok: true }, await require("../_lib/trainflow").status(String(rq.month || ""))));
+      }
       if (op === "trainPlanAnalysis") { // khoảng cách năng lực theo vị trí (luật minh bạch, không dùng AI)
         const TP = require("../_lib/trainplan"), rq = req.query || {}, m = typeof rq.month === "string" ? rq.month.slice(0, 7) : "";
         if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(m)) return reply(context, 400, { ok: false, error: "Tháng không hợp lệ." });
@@ -1055,6 +1058,15 @@ const handler = async function (context, req) {
     }
     if (op === "trainPlanBizSave") { // mục tiêu kinh doanh và chiến lược của tháng: đầu vào bắt buộc để lập kế hoạch đào tạo
       try { return reply(context, 200, { ok: true, biz: await require("../_lib/trainplan").saveBiz(String(b.month || ""), b, u.email) }); } catch (e) { return reply(context, 400, { ok: false, error: e.message }); }
+    }
+    if (op === "trainFlowCreate" || op === "trainFlowQuestions" || op === "trainFlowInvite" || op === "trainFlowExam") { // luồng đào tạo: tạo (không gửi email) / soạn câu hỏi nháp / gửi thư có xem trước + xác nhận
+      const TF = require("../_lib/trainflow"), m = String(b.month || ""), ix = Math.max(0, parseInt(b.index, 10) || 0), by = String(u.email).toLowerCase();
+      let r;
+      if (op === "trainFlowCreate") r = await TF.createFlow(m, by);
+      else if (op === "trainFlowQuestions") r = await TF.genQuestions(m, ix, { count: b.count });
+      else if (op === "trainFlowInvite") r = await TF.inviteProgram(m, ix, { mode: b.mode === "send" ? "send" : "dry", expect: b.expect });
+      else r = await TF.examMail(m, ix, { kind: b.kind === "remind" ? "remind" : "invite", mode: b.mode === "send" ? "send" : "dry", expect: b.expect });
+      return reply(context, r.ok ? 200 : 400, r);
     }
     if (op === "trainPlanSave" || op === "trainPlanDelete") { // lưu / xoá kế hoạch đào tạo của một tháng
       const TP = require("../_lib/trainplan");
