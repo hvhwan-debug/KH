@@ -2,7 +2,7 @@
 // (xem _lib/birthask.js). Chỉ điền chỗ còn thiếu: ngày sinh đã khai đủ năm thì không ghi đè qua đường này.
 const { reply, guardConfigured, requireAjax } = require("../_lib/http");
 
-module.exports = async function (context, req) {
+const handler = async function (context, req) {
   try {
     if (guardConfigured(context)) return;
     if (!requireAjax(context, req)) return;
@@ -28,3 +28,6 @@ module.exports = async function (context, req) {
     return reply(context, 500, { ok: false, error: "Không lưu được. Thử lại sau." });
   }
 };
+
+// Thông tin nhân viên tự cập nhật ở đây được ghi vào lịch sử thay đổi của chính họ (xem _lib/personlog.js)
+module.exports = require("../_lib/personlog").bind(handler, { by: "self", byName: "Nhân viên (tự nhập ngày sinh)", role: "self" });

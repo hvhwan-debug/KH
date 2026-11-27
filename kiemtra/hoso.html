@@ -159,6 +159,27 @@ table.t .code{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-n
 .tabs button{border:0;background:none;padding:11px 16px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;margin-bottom:-1px}
 .tabs button[aria-selected=true]{color:var(--brand-deep);border-bottom-color:var(--brand)}
 .tabs button:hover{color:var(--navy)}
+/* tab Lịch sử thay đổi */
+.ch-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.ch-bar button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer}
+.ch-bar button[aria-pressed=true]{background:#E8F0FB;border-color:#B9CFF0;color:#0B3F94}
+.ch-day{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px}
+.ch-day:first-child{margin-top:0}
+.ch-it{display:grid;grid-template-columns:62px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--line2)}
+.ch-day+.ch-it{border-top:0}
+.ch-t{font-weight:700;color:var(--navy);font-size:13px;padding-top:1px}
+.ch-h{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13px}
+.ch-k{border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:700;background:#EEF2F7;color:#43536E}
+.ch-k.edit{background:#E8F0FB;color:#0B3F94}.ch-k.create{background:#E3F5EA;color:#16794A}.ch-k.delete{background:#FDE8E7;color:#C0332B}.ch-k.action{background:#FFF4E0;color:#9A5B00}.ch-k.confirm{background:#EAF7F4;color:#1E7A66}
+.ch-by{color:var(--muted)}.ch-by b{color:#2F4468}
+.ch-ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:4px;font-size:13px}
+.ch-ul li{display:flex;gap:6px;flex-wrap:wrap;align-items:baseline}
+.ch-ul .f{color:var(--muted);min-width:130px}
+.ch-ul .o{color:#9A2A22;text-decoration:line-through;text-decoration-color:rgba(192,51,43,.45)}
+.ch-ul .n{color:#14532D;font-weight:700}
+.ch-ul .e{color:#9AA7BD;font-style:italic}
+.ch-ev{font-size:13px;margin-top:6px;color:#2F4468}
+.ch-old{opacity:.85}
 .dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px 22px}
 .dl div{min-width:0}.dl dt{font-size:11.5px;color:var(--muted);font-weight:600}.dl dd{margin:1px 0 0;font-weight:600;color:var(--ink);overflow-wrap:anywhere}
 .dl .na{color:#9AA7BC;font-weight:400}
@@ -1174,14 +1195,14 @@ function renderDetail(){
       kpi('Điểm gần nhất', 'Điểm % của lần làm bài nộp gần nhất.', a.lastP == null ? '–' : vn(a.lastP) + '<small>%</small>', a.lastAt ? vnDate(a.lastAt) : '', a.lastP != null && a.lastP < S.th.low ? 'bad' : '') +
       kpi('Tiến bộ so với kỳ trước', 'Chênh lệch điểm % giữa bài kiểm tra gần nhất và bài ngay trước đó.', d == null ? '–' : (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + vn(Math.abs(d), 0) + '<small> điểm %</small>', d == null ? 'Cần ít nhất 2 bài' : '', d == null ? '' : d > 0 ? 'ok' : d < 0 ? 'bad' : '') +
     '</div>' +
-    '<div class="tabs" role="tablist" aria-label="Phân tích hồ sơ">' + ['Tổng quan năng lực', 'Lịch sử kiểm tra', 'Phân tích kiến thức', 'Lộ trình học tập', 'Thông tin nhân sự', 'Kết quả kinh doanh'].map(function(t, i){ return '<button type="button" role="tab" data-dtab="' + (i + 1) + '" aria-selected="' + (D.tab === i + 1) + '">' + t + '</button>'; }).join('') + '</div>' +
+    '<div class="tabs" role="tablist" aria-label="Phân tích hồ sơ">' + ['Tổng quan năng lực', 'Lịch sử kiểm tra', 'Phân tích kiến thức', 'Lộ trình học tập', 'Thông tin nhân sự', 'Kết quả kinh doanh', 'Lịch sử thay đổi'].map(function(t, i){ return '<button type="button" role="tab" data-dtab="' + (i + 1) + '" aria-selected="' + (D.tab === i + 1) + '">' + t + '</button>'; }).join('') + '</div>' +
     '<div id="dtab"></div>';
   $('vDetail').innerHTML = h;
   renderTab();
   applyFaces($('vDetail'));
 }
 function renderTab(){
-  var f = [null, tab1, tab2, tab3, tab4, tab5, tab6][D.tab] || tab1;
+  var f = [null, tab1, tab2, tab3, tab4, tab5, tab6, tab7][D.tab] || tab1;
   $('dtab').innerHTML = f();
   document.querySelectorAll('#vDetail [data-dtab]').forEach(function(b){ b.setAttribute('aria-selected', String(+b.getAttribute('data-dtab') === D.tab)); });
 }
@@ -1276,6 +1297,49 @@ function tab5(){
     '<div class="sec-t">Hoạt động trên hệ thống</div>' + dl([['Đăng nhập gần nhất', lg && lg.at ? vnDT(lg.at) + ' · ' + lgMethod(lg.method) : ''], ['Hình thức đăng nhập', lg && lg.at ? lgMethod(lg.method) : ''], ['Số lượt đăng nhập', lg && lg.n ? lg.n : ''], ['Cập nhật hồ sơ HR lúc', p && p.at ? vnDT(p.at) : '']]) +
   '</div></div><div class="q" style="margin-top:10px">Dữ liệu nhân sự chỉ hiển thị cho quản trị viên. Hệ thống không lưu giới tính, địa chỉ, quê quán hay tôn giáo trong hồ sơ.</div>';
   return h;
+}
+
+/* --- Tab 7: Lịch sử thay đổi (ai sửa gì, lúc nào trên hồ sơ của nhân sự này) --- */
+var CH_F = { code:'Mã NV', name:'Họ tên', email:'Email', phone:'Số điện thoại', title:'Chức danh', segment:'Nhóm ngành', manager:'Quản lí trực tiếp', region:'Miền', province:'Tỉnh / thành', birthDate:'Ngày sinh', work:'Tình trạng làm việc', left:'Tình trạng làm việc', admin:'Cập nhật' };
+var CH_K = { create:'Tạo mới', edit:'Sửa thông tin', confirm:'Xác nhận', delete:'Xoá', action:'Kết quả kiểm tra' };
+var CH_R = { admin:'Quản trị viên', manager:'Quản lí', self:'Nhân viên', system:'Hệ thống' };
+var CH_D = { period:'Kỳ', score:'Điểm', removed:'Số bài đã xoá', attempt:'Mã bài' };
+function chGroup(x){ if (x.kind === 'action') return 'result'; if (x.kind === 'create' || x.kind === 'delete') return 'info'; var c = x.changes || []; if (c.some(function(y){ return y.f === 'left' || y.f === 'work'; }) || (!c.length && (x.events || []).some(function(e){ return /tình trạng/i.test(e); }))) return 'status'; return 'info'; }
+function chNorm(x, legacy){ // gộp định dạng cũ (audit trên hồ sơ) về cùng dạng với lịch sử mới
+  if (!legacy) return x;
+  var ch = [], ev = [], c = x.changes || {};
+  Object.keys(c).forEach(function(k){ var v = c[k] || {}; if (k === 'admin') ev.push(String(v.to || '')); else ch.push({ f:k, l:CH_F[k] || k, from:k === 'segment' ? (SEGL[v.from] || v.from) : v.from, to:k === 'segment' ? (SEGL[v.to] || v.to) : v.to }); });
+  if (x.kind === 'create') ev.push('Thêm vào danh sách nhân sự');
+  if (x.kind === 'confirm') ev.push('Xác nhận thông tin / tình trạng làm việc');
+  return { at:x.at, kind:x.kind, by:x.by, byName:x.byName, changes:ch, events:ev, legacy:true };
+}
+async function loadHist(){
+  if (!D || D.hist === 'loading') return; var code = D.c.code; D.hist = 'loading';
+  var r; try { r = await api('GET', '/api/kt-admin?op=personHistory&code=' + encodeURIComponent(code)); } catch (e) { r = null; }
+  if (!D || D.c.code !== code) return;
+  D.hist = r && r.j && r.j.ok ? (r.j.items || []).map(function(x){ return chNorm(x, false); }).concat((r.j.legacy || []).map(function(x){ return chNorm(x, true); })).sort(function(a, b){ return (b.at || 0) - (a.at || 0); }) : { error:(r && r.j && r.j.error) || 'Không kết nối được máy chủ.' };
+  if (D.tab === 7) renderTab();
+}
+function tab7(){
+  if (!D.hist || D.hist === 'loading'){ if (!D.hist) setTimeout(loadHist, 0); return '<div class="card"><div class="card-b"><div class="sk" style="height:60px;margin-bottom:10px"></div><div class="sk" style="height:60px;margin-bottom:10px"></div><div class="sk" style="height:60px"></div></div></div>'; }
+  if (D.hist.error) return '<div class="card"><div class="state"><div><b>Không tải được lịch sử thay đổi</b>' + esc(D.hist.error) + '<div style="margin-top:14px"><button class="btn pri" type="button" data-chreload="1">Thử lại</button></div></div></div></div>';
+  var fl = D.chF || 'all', all = D.hist, cnt = { all:all.length, info:0, status:0, result:0 };
+  all.forEach(function(x){ cnt[chGroup(x)]++; });
+  var list = fl === 'all' ? all : all.filter(function(x){ return chGroup(x) === fl; });
+  var bar = '<div class="ch-bar">' + [['all', 'Tất cả'], ['info', 'Thông tin cá nhân & công việc'], ['status', 'Tình trạng làm việc'], ['result', 'Kết quả kiểm tra']].map(function(b){ return '<button type="button" data-chf="' + b[0] + '" aria-pressed="' + (fl === b[0]) + '">' + b[1] + ' · ' + cnt[b[0]] + '</button>'; }).join('') + '<span class="sp" style="flex:1"></span><button type="button" data-chreload="1" title="Tải lại">↻ Tải lại</button></div>';
+  if (!list.length) return '<div class="card"><div class="card-h"><h2>Lịch sử thay đổi</h2>' + TIP('Mọi lần thêm, sửa, xác nhận thông tin, đổi tình trạng làm việc của nhân sự này và các thao tác lên kết quả kiểm tra (ẩn, xoá bài, cho làm lại): ai làm, lúc nào, giá trị cũ → mới.') + '</div><div class="card-b">' + bar + '<div class="empty" style="padding:30px 14px">' + (all.length ? 'Không có thay đổi nào thuộc nhóm này.' : 'Chưa ghi nhận thay đổi nào trên hồ sơ của nhân sự này.') + '</div></div></div>';
+  var day = '', rows = list.map(function(x){
+    var d = vnDate(x.at), h = '';
+    if (d !== day){ day = d; h += '<div class="ch-day">' + esc(d) + ' · ' + esc(ago(x.at)) + '</div>'; }
+    var hm = vnDT(x.at).slice(0, 5), role = CH_R[x.role] || '';
+    var chs = (x.changes || []).map(function(c){ var o = c.from === '' || c.from == null ? '<span class="e">(trống)</span>' : '<span class="o">' + esc(c.from) + '</span>', n = c.to === '' || c.to == null ? '<span class="e">(trống)</span>' : '<span class="n">' + esc(c.to) + '</span>'; return '<li><span class="f">' + esc(c.l || CH_F[c.f] || c.f) + '</span>' + o + ' → ' + n + '</li>'; }).join('');
+    var det = x.details ? Object.keys(x.details).map(function(k){ return (CH_D[k] || k) + ': ' + (k === 'period' ? xTitle(x.details[k] === 'chưa gắn kỳ' ? '' : x.details[k]) : x.details[k]); }).join(' · ') : '';
+    var evs = (x.events || []).filter(Boolean).map(function(e){ return '<div class="ch-ev">• ' + esc(e) + (det ? ' <span class="q">(' + esc(det) + ')</span>' : '') + '</div>'; }).join('');
+    return h + '<div class="ch-it' + (x.legacy ? ' ch-old' : '') + '"><div class="ch-t">' + esc(hm) + '</div><div><div class="ch-h"><span class="ch-k ' + esc(x.kind || '') + '">' + esc(CH_K[x.kind] || 'Thay đổi') + '</span><span class="ch-by">bởi <b>' + esc(x.byName || x.by || 'Không rõ') + '</b>' + (role && x.byName !== role ? ' · ' + esc(role) : '') + (x.by && x.by !== 'self' && x.by !== 'system' && x.by !== x.byName ? ' · ' + esc(x.by) : '') + '</span>' + (x.via ? '<span class="q">· ' + esc(x.via) + '</span>' : '') + '</div>' + (chs ? '<ul class="ch-ul">' + chs + '</ul>' : '') + evs + '</div></div>';
+  }).join('');
+  var old = all.some(function(x){ return x.legacy; });
+  return '<div class="card"><div class="card-h"><h2>Lịch sử thay đổi</h2><span class="sub">' + all.length + ' lần</span>' + TIP('Mọi lần thêm, sửa, xác nhận thông tin, đổi tình trạng làm việc của nhân sự này và các thao tác lên kết quả kiểm tra (ẩn, xoá bài, cho làm lại): ai làm, lúc nào, giá trị cũ → mới.') + '</div><div class="card-b">' + bar + rows +
+    (old ? '<div class="q" style="margin-top:12px">Các dòng mờ là lịch sử ghi trước khi có tính năng này, chỉ lưu tối đa 30 lần gần nhất và có thể thiếu chi tiết giá trị cũ → mới.</div>' : '') + '</div></div>';
 }
 
 /* --- Tab 6: Kết quả kinh doanh --- */
@@ -1441,6 +1505,8 @@ function bind(){
     if (el.hasAttribute('data-selclear')){ V.sel = {}; renderList(); fillXlMenu(); return; }
     if (el.hasAttribute('data-xl')){ $('xlPop').classList.add('hide'); if (!el.disabled) exportXlsx(el.getAttribute('data-xl')); return; }
     if (el.hasAttribute('data-dtab')){ D.tab = +el.getAttribute('data-dtab'); renderTab(); return; }
+    if (el.hasAttribute('data-chf')){ D.chF = el.getAttribute('data-chf'); renderTab(); return; }
+    if (el.hasAttribute('data-chreload')){ D.hist = null; renderTab(); return; }
     if (el.hasAttribute('data-paper')){ openPaper(el.getAttribute('data-paper')); return; }
     if (el.hasAttribute('data-hide') || el.hasAttribute('data-del')){ attemptAction(el); return; }
   });

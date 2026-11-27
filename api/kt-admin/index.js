@@ -434,6 +434,16 @@ const handler = async function (context, req) {
           .map((r) => { const c = candBy[quiz.normCode(r.code)]; return Object.assign({}, r, { passed: quiz.passState(r.pct, st), title: c ? quiz.titleOf(c) : "", segment: c ? quiz.normSegment(c.segment) : (r.segment || ""), verify: r.status === "submitted" ? quiz.verifyToken(r.id) : "", probation: require("../_lib/probation").probationOf(r.code, r.submittedAt || Date.now(), c && c.joinDate) }); }); // passed: luôn theo cài đặt hiện tại (null = bài không có ngưỡng); title: chức danh hiện tại của nhân viên
         return reply(context, 200, { ok: true, results: list, periods, currentPeriod: st.examPeriod });
       }
+      if (op === "personHistory") {
+        // Lịch sử thay đổi của MỘT nhân sự: bản ghi riêng theo người (mới) + dòng audit cũ trên hồ sơ (trước khi có tính năng này)
+        const code = String(req.query.code || "").trim().slice(0, 60);
+        if (!code) return reply(context, 400, { ok: false, error: "Thiếu mã nhân viên." });
+        const items = await require("../_lib/personlog").read(code, 500);
+        const c = (await quiz.getCandidates()).find((x) => quiz.normCode(x.code) === quiz.normCode(code));
+        const first = items.length ? items[items.length - 1].at : Infinity;
+        const legacy = ((c && c.audit) || []).filter((x) => x && (x.at || 0) < first - 2000).slice().reverse();
+        return reply(context, 200, { ok: true, code, items, legacy });
+      }
       if (op === "audit") {
         // Nhật ký thao tác theo ngày (giờ Việt Nam). Chỉ quản trị viên xem được; không có thao tác xoá.
         const al = require("../_lib/auditlog");

@@ -231,7 +231,7 @@ async function handler(context, req) {
 };
 
 // Sau khi vào thành công (có thông tin thí sinh): nếu thí sinh đã đồng ý cookie (có kt_bid) thì ghi nhớ phiên 2 giờ
-module.exports = async function (context, req) {
+const ktCheckMain = async function (context, req) {
   await handler(context, req);
   try {
     const b = req.body || {}, r = context.res, CK = require("../_lib/candcookie");
@@ -241,3 +241,6 @@ module.exports = async function (context, req) {
     }
   } catch (e) { /* không chặn luồng chính */ }
 };
+
+// Thông tin nhân viên tự cập nhật ở đây được ghi vào lịch sử thay đổi của chính họ (xem _lib/personlog.js)
+module.exports = require("../_lib/personlog").bind(ktCheckMain, { by: "self", byName: "Nhân viên (tự nhập khi vào làm bài)", role: "self" });

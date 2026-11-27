@@ -594,7 +594,12 @@ async function testAttemptByProof(proof) {
   for (const t of await getTestAccounts()) { const h = (t.attempts || []).find((x) => String(x.proof || "").toUpperCase() === want); if (h) return h.id; }
   return null;
 }
-async function saveCandidates(list) { await store.put(C_KEY, list); }
+// Lưu danh sách thí sinh + ghi lịch sử thay đổi theo từng người (so với bản đang lưu; xem _lib/personlog.js)
+async function saveCandidates(list) {
+  let prev = null; try { prev = await store.get(C_KEY); } catch (e) { prev = null; }
+  await store.put(C_KEY, list);
+  if (Array.isArray(prev)) { try { await require("./personlog").record(prev, list); } catch (e) { /* không chặn thao tác chính */ } }
+}
 
 async function getSettings() {
   return Object.assign({}, DEFAULT_SETTINGS, (await store.get(S_KEY)) || {});

@@ -29,7 +29,7 @@ async function logView(req, attempt, result, why, detail) {
   } catch (e) { /* không chặn luồng chính */ }
 }
 
-module.exports = async function (context, req) {
+const handler = async function (context, req) {
   const reply = require("../_lib/entrylog").wrap(req, "paper", __reply); // lỗi / lần vào không được -> nhật ký
   try {
     if (guardConfigured(context)) return;
@@ -160,3 +160,6 @@ module.exports = async function (context, req) {
     return reply(context, 500, { ok: false, error: "Có lỗi xảy ra, thử lại sau." });
   }
 };
+
+// Thông tin nhân viên tự cập nhật ở đây được ghi vào lịch sử thay đổi của chính họ (xem _lib/personlog.js)
+module.exports = require("../_lib/personlog").bind(handler, { by: "self", byName: "Nhân viên (tự nhập khi xem lại bài)", role: "self" });

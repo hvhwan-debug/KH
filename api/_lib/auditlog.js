@@ -9,6 +9,7 @@ const { isAdmin } = require("./config");
 const { userFromReq } = require("./session");
 const quiz = require("./quiz");
 const device = require("./device");
+const personlog = require("./personlog");
 
 const PREFIX = "kt/audit/";
 const s = (v, n) => String(v == null ? "" : v).replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, n || 120);
@@ -59,7 +60,7 @@ const A = {
       questions: ["Xem ngân hàng đề", "read"], questionsBackup: ["Xem bản sao lưu ngân hàng đề", "read"], deleteAllPreview: ["Mở bước xoá toàn bộ ngân hàng đề", "read"],
       viewers: ["Xem danh sách quản lí", "read"], candidates: ["Xem danh sách thí sinh", "read"], settings: ["Xem cài đặt", "read"],
       results: ["Xem bảng kết quả", "read"], result: ["Xem chi tiết bài làm (ảnh, thiết bị, vị trí)", "read"], dashboard: ["Xem dashboard đánh giá", "read"],
-      audit: ["Xem nhật ký thao tác", "read"], banks: ["Xem ngân hàng câu hỏi", "read"], exams: ["Xem danh sách đề thi", "read"],
+      audit: ["Xem nhật ký thao tác", "read"], personHistory: ["Xem lịch sử thay đổi của nhân sự", "read"], banks: ["Xem ngân hàng câu hỏi", "read"], exams: ["Xem danh sách đề thi", "read"],
       previewBlueprint: ["Kiểm tra cấu trúc đề", "read"], itemAnalysis: ["Xem phân tích chất lượng câu hỏi", "read"], cohortInsight: ["Xem chẩn đoán hành vi cả nhóm", "read"], aiCheck: ["Kiểm tra kết nối AI", "read"]
     },
     POST: {
@@ -87,6 +88,8 @@ const A = {
     }
   }
 };
+// Thao tác lên kết quả của một người: ghi thêm vào lịch sử thay đổi của người đó
+const PERSON_OPS = { hideAttempt: "Ẩn / hiện bài làm", deleteAttempt: "Xoá một bài làm đã nộp", resetAttempt: "Cho làm lại (xoá kết quả kỳ)" };
 // Sự kiện phía trình duyệt (không đi qua API dữ liệu) được phép ghi
 const EVENTS = {
   exportExcel: "Tải file Excel", exportDrive: "Lưu file lên Google Drive", exportCsv: "Tải file CSV", printPaper: "In / lưu PDF bài làm",
@@ -123,7 +126,7 @@ function details(area, op, q, b, res, pre) {
     case "employees": d.period = r.period != null ? r.period : q.period; d.count = Array.isArray(r.employees) ? r.employees.length : undefined; break;
     case "results": case "dashboard": d.period = q.period || (r.period || "tất cả các kỳ"); if (Array.isArray(r.results)) d.count = r.results.length; break;
     case "teamInsight": case "cohortInsight": d.period = q.period || "kỳ hiện tại"; break;
-    case "insight": case "paper": case "photo": case "profile": case "employee": d.code = q.code; if (q.id) d.attempt = q.id; if (q.period != null && op === "photo") d.period = q.period; break;
+    case "insight": case "paper": case "photo": case "profile": case "employee": case "personHistory": d.code = q.code; if (q.id) d.attempt = q.id; if (q.period != null && op === "photo") d.period = q.period; break;
     case "result": d.attempt = q.id; if (r.attempt) { d.code = r.attempt.code; d.name = r.attempt.name; d.period = r.attempt.period || ""; } break;
     case "audit": d.day = q.day; break;
     case "month": d.period = q.m; break;
@@ -216,7 +219,19 @@ function wrap(handler, area) {
     }
     const meta = (A[area] && A[area][method] && A[area][method][op]) || null;
     const pre = meta && meta[1] === "change" ? await before(area, op, b) : {};
-    await handler(context, req);
+    // Chạy thao tác trong ngữ cảnh "ai đang làm" để lịch sử từng nhân sự (personlog) ghi đúng người thao tác
+    const actor = u && u.email ? { by: s(u.email, 120).toLowerCase(), byName: await nameOf(u.email, u.name).catch(() => s(u.email, 120)), role: isAdmin(u.email) ? "admin" : "manager" } : null;
+    if (actor) await personlog.run(actor, () => handler(context, req)); else await handler(context, req);
+    try { // Thao tác lên KẾT QUẢ của một người (không đổi hồ sơ) -> ghi thêm vào lịch sử của người đó
+      const r0 = (context.res && context.res.body) || {}, st0 = (context.res && context.res.status) || 200;
+      if (actor && st0 < 400 && r0.ok !== false && PERSON_OPS[op]) {
+        const code = op === "resetAttempt" ? b.code : r0.code;
+        const det = op === "resetAttempt" ? { period: typeof b.period === "string" ? (b.period || "chưa gắn kỳ") : "mọi kỳ", removed: r0.removed }
+          : { period: r0.period || "chưa gắn kỳ", score: r0.score, attempt: b.id };
+        const lbl = op === "hideAttempt" ? (r0.hidden ? "Ẩn một bài làm khỏi báo cáo" : "Hiện lại một bài làm đã ẩn") : PERSON_OPS[op];
+        await personlog.action(code, lbl, det, actor);
+      }
+    } catch (e) { /* bỏ qua */ }
     try {
       if (!u || !u.email || !op) return;           // chưa đăng nhập: không có người để ghi
       const res = context.res || {}, status = res.status || 200;
