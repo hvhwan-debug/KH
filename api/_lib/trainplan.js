@@ -35,15 +35,38 @@ const SHORT = { GT1: "SR 1", GT2: "SR 2", SR: "SR", PC: "PC", PG: "PG", ASM: "AS
 const NGANH = { GT1: "1", GT2: "2", SR: "Chung", PC: "Gia dụng & Thiết bị gia đình", PG: "Chung", ASM: "Chung", RSM: "Chung", OTHER: "Chung" };
 const keyOfLabel = (label) => Object.keys(CTX.AUD).find((k) => CTX.AUD[k] === label) || "OTHER";
 
+// ---------- giờ học: không làm gián đoạn giờ bán của SR, PC ----------
+// Chỉ xếp đầu ngày (bắt đầu từ 08:00, kết thúc trước 09:30) hoặc cuối ngày (bắt đầu từ 17:00) — theo ý kiến người phê duyệt.
+function durMin(v) { const m = /(\d+(?:[.,]\d+)?)/.exec(String(v || "")); if (!m) return 90; const n = parseFloat(m[1].replace(",", ".")); return /giờ|gio|\d\s*h\b/i.test(String(v)) ? Math.round(n * 60) : Math.round(n); }
+function hm(g) { const m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(g || "")); return m ? +m[1] * 60 + +m[2] : null; }
+function timeOk(gio, dur) { const a = hm(gio); if (a == null) return null; return a >= 17 * 60 || (a >= 8 * 60 && a + dur <= 9 * 60 + 30); }
+function slotFor(dur) { return dur <= 90 ? "08:00" : "17:15"; }
+function fixTimes(rows) { rows.forEach((r) => { if (timeOk(r.gio, durMin(r.thoiLuong)) !== true) r.gio = slotFor(durMin(r.thoiLuong)); }); return rows; }
+
+// ---------- sản phẩm trọng tâm theo vị trí ("PC: M25, BNN") ----------
+const PRODUCT_AREAS = ["n1", "n2", "sp"];
+function parseFocus(v) {
+  const a = Array.isArray(v) ? v : String(v || "").split(/\n+/), by = {};
+  a.forEach((x) => {
+    let label, prods;
+    if (x && typeof x === "object") { label = x.audience || x.short || x.key || ""; prods = Array.isArray(x.products) ? x.products : String(x.products || "").split(/[,;，、]/); }
+    else { const m = /^\s*([^:：]+)[:：]\s*(.+)$/.exec(String(x).replace(/^[\s•\-–*]+/, "")); if (!m) return; label = m[1]; prods = m[2].split(/[,;，、]/); }
+    const key = Object.keys(SHORT).indexOf(String(label)) >= 0 ? String(label) : CTX.audienceKey(s(label, 40), ""); if (!key || key === "OTHER") return;
+    const list = prods.map((p) => s(p, 40)).filter(Boolean), o = by[key] = by[key] || { key, short: SHORT[key], products: [] };
+    list.forEach((p) => { if (o.products.map((z) => z.toLowerCase()).indexOf(p.toLowerCase()) < 0 && o.products.length < 6) o.products.push(p); });
+  });
+  return Object.values(by).filter((f) => f.products.length).slice(0, 8);
+}
+
 // ---------- mục tiêu kinh doanh & chiến lược của tháng + kết quả bán ----------
 function cleanList(v) { const a = Array.isArray(v) ? v : String(v || "").split(/\n+/); return a.map((x) => s(String(x).replace(/^[\s•\-–*]+/, ""), 240)).filter(Boolean).slice(0, 8); }
 async function getBiz(month) {
   month = s(month, 7); const d = MONTH.test(month) ? await store.get(BIZ + month + ".json").catch(() => null) : null;
-  return { month, goals: (d && d.goals) || [], strategy: (d && d.strategy) || [], updatedAt: (d && d.updatedAt) || 0, by: (d && d.by) || "" };
+  return { month, goals: (d && d.goals) || [], strategy: (d && d.strategy) || [], focus: (d && d.focus) || [], updatedAt: (d && d.updatedAt) || 0, by: (d && d.by) || "" };
 }
 async function saveBiz(month, body, by) {
   month = s(month, 7); if (!MONTH.test(month)) throw new Error("Tháng không hợp lệ.");
-  const d = { v: 1, month, goals: cleanList(body && body.goals), strategy: cleanList(body && body.strategy), updatedAt: Date.now(), by: String(by || "").toLowerCase() };
+  const d = { v: 1, month, goals: cleanList(body && body.goals), strategy: cleanList(body && body.strategy), focus: parseFocus(body && body.focus), updatedAt: Date.now(), by: String(by || "").toLowerCase() };
   await store.put(BIZ + month + ".json", d); return d;
 }
 // Kết quả bán toàn đội của tháng gần nhất có dữ liệu (không sau tháng lập kế hoạch nếu có), dùng làm bối cảnh mục tiêu kinh doanh
@@ -59,7 +82,7 @@ function bizLink(biz, areaId) { const items = (biz.strategy || []).concat(biz.go
 
 // ---------- phân tích khoảng cách năng lực ----------
 function analyse(data, month, ctx) {
-  ctx = ctx || {}; const biz = ctx.biz || { goals: [], strategy: [] }, items = (biz.strategy || []).concat(biz.goals || []), by = {};
+  ctx = ctx || {}; const biz = ctx.biz || { goals: [], strategy: [] }, fmap = Object.fromEntries((biz.focus || []).map((f) => [f.key, f.products])), items = (biz.strategy || []).concat(biz.goals || []), by = {};
   data.people.forEach((p) => {
     const k = keyOfLabel(p.audience), A = by[k] = by[k] || { key: k, label: CTX.AUD[k], short: SHORT[k], people: 0, tested: 0, idx: [], req: {}, topics: {} };
     A.people++; if (!p.tests) return;
@@ -75,21 +98,21 @@ function analyse(data, month, ctx) {
   const cover = {}; ((data.system && data.system.coverage) || []).forEach((c) => { cover[c.area] = c; });
   const audiences = Object.keys(by).map((k) => {
     const A = by[k], grp = (data.audiences || []).find((g) => g.name === A.label) || {}, req = REQ[k] || {};
-    const sw = grp.salesAvg == null ? 1 : Math.min(2, Math.max(1, 1 + (100 - grp.salesAvg) / 100)); // vị trí đang hụt chỉ tiêu bán thì ưu tiên cao hơn (tối đa gấp đôi)
+    const fp = fmap[k] || [], sw = grp.salesAvg == null ? 1 : Math.min(2, Math.max(1, 1 + (100 - grp.salesAvg) / 100)); // vị trí đang hụt chỉ tiêu bán thì ưu tiên cao hơn (tối đa gấp đôi)
     const reqs = Object.keys(req).map((id) => {
       const R = A.req[id], assessed = R ? R.pcts.length : 0, avg = R ? r1(mean(R.pcts)) : null, min = req[id];
       const status = assessed < 3 ? "thiếu dữ liệu" : (avg < min || R.gap / assessed >= 0.4) ? "cần đào tạo" : "đạt";
       const topics = Object.values(A.topics).filter((t) => t.area === id && t.n >= Math.min(2, assessed || 1)).map((t) => ({ name: t.name, pct: Math.round(t.sum / t.n), people: t.n }))
         .filter((t) => t.pct < 65).sort((a, b) => a.pct - b.pct).slice(0, 3);
-      const cv = cover[AREA_NAME[id]] || {}, hits = items.filter((x) => areaOfText(x) === id); // mảng nằm trong chiến lược / mục tiêu của tháng
+      const cv = cover[AREA_NAME[id]] || {}, hits = items.filter((x) => areaOfText(x) === id).concat(fp.length && PRODUCT_AREAS.indexOf(id) >= 0 ? ["Sản phẩm trọng tâm: " + fp.join(", ")] : []); // mảng nằm trong chiến lược / mục tiêu / sản phẩm trọng tâm của tháng
       return { area: id, areaName: AREA_NAME[id], min, avg, assessed, gapPeople: R ? R.gap : 0, status, topics, materials: cv.materials == null ? null : cv.materials, questions: cv.questions == null ? null : cv.questions,
         priority: status === "cần đào tạo" ? Math.round((R ? R.gap : 0) * Math.max(5, min - (avg || 0)) * sw * (hits.length ? 1.5 : 1)) : 0, strategyHits: hits };
     }).sort((a, b) => b.priority - a.priority);
     return { key: k, label: A.label, short: A.short, nganh: NGANH[k], people: A.people, tested: A.tested, index: r1(mean(A.idx)), salesAvg: grp.salesAvg == null ? null : grp.salesAvg, below60: grp.below60 || 0,
-      needs: CTX.NEEDS[k] || [], reqs, gaps: reqs.filter((x) => x.status === "cần đào tạo").length, reliable: A.tested >= 10, salesWeight: Math.round(sw * 100) / 100,
+      needs: CTX.NEEDS[k] || [], reqs, gaps: reqs.filter((x) => x.status === "cần đào tạo").length, reliable: A.tested >= 10, focus: fp, salesWeight: Math.round(sw * 100) / 100,
       note: !reqs.some((x) => x.status === "cần đào tạo") && grp.salesAvg != null && grp.salesAvg < 85 ? "Năng lực đạt yêu cầu nhưng bán TB 3 tháng chỉ " + grp.salesAvg + "%: đào tạo kiến thức chưa phải đòn bẩy chính; nên rà yếu tố ngoài đào tạo (hàng, giá, điểm bán) và coaching tại điểm bán." : "" };
   }).sort((a, b) => b.gaps - a.gaps || b.people - a.people);
-  return { month, generatedAt: Date.now(), meta: { population: (data.meta && data.meta.population) || data.people.length, tested: (data.meta && data.meta.tested) || 0 }, biz: { goals: biz.goals || [], strategy: biz.strategy || [] }, sales: ctx.sales || null, audiences };
+  return { month, generatedAt: Date.now(), meta: { population: (data.meta && data.meta.population) || data.people.length, tested: (data.meta && data.meta.tested) || 0 }, biz: { goals: biz.goals || [], strategy: biz.strategy || [], focus: biz.focus || [] }, sales: ctx.sales || null, audiences };
 }
 
 // ---------- lịch: các ngày làm việc (T2–T6) rải đều trong tháng ----------
@@ -111,7 +134,7 @@ function cleanRow(r, month) {
     stt: 0, doiTuong: s(r.doiTuong, 40), nganh: s(r.nganh, 60), tenChuongTrinh: s(r.tenChuongTrinh, 160),
     noiDung: nd.map((x) => s(String(x).replace(/^[\s•\-–*]+/, ""), 240)).filter(Boolean).slice(0, 8),
     mucTieu: s(r.mucTieu, 400), phuongPhap: s(r.phuongPhap, 120), thoiLuong: s(r.thoiLuong, 40), phuTrach: s(r.phuTrach, 60),
-    thoiGian: date, tanSuat: s(r.tanSuat, 100), ghiChu: s(r.ghiChu, 500), coSo: s(r.coSo, 400), mucTieuKd: s(r.mucTieuKd, 300), chiSoDo: s(r.chiSoDo, 300)
+    thoiGian: date, gio: hm(r.gio) == null ? "" : String(r.gio), tanSuat: s(r.tanSuat, 100), ghiChu: s(r.ghiChu, 500), coSo: s(r.coSo, 400), mucTieuKd: s(r.mucTieuKd, 300), chiSoDo: s(r.chiSoDo, 300)
   };
 }
 function cleanRows(rows, month) {
@@ -137,17 +160,39 @@ function rulePlan(an, opt) {
   opt = opt || {}; const max = Math.min(opt.max || 8, 12), cand = [];
   an.audiences.forEach((a) => a.reqs.forEach((g) => { if (g.status === "cần đào tạo") cand.push({ a, g }); }));
   cand.sort((x, y) => y.g.priority - x.g.priority);
-  const pick = cand.slice(0, max), dates = spread(an.month, pick.length);
-  return pick.map((c, i) => {
+  const pick = cand.slice(0, max);
+  const gapRows = pick.map((c) => {
     const t = TPL[c.g.area] || TPL.sp, a = c.a, g = c.g, link = bizLink(an.biz || {}, g.area), weak = g.topics.map((x) => "Củng cố chủ đề yếu: " + x.name + " (TB " + x.pct + "%)");
     return { doiTuong: a.short, nganh: a.nganh, tenChuongTrinh: t.ten + (a.key === "GT1" || a.key === "GT2" ? " · " + a.short : ""), noiDung: weak.concat(t.nd).slice(0, 6),
       mucTieu: "Nâng điểm " + g.areaName.toLowerCase() + " của " + a.short + " từ " + (g.avg == null ? "?" : g.avg) + "% lên tối thiểu " + g.min + "% ở kỳ kiểm tra kế tiếp.",
-      phuongPhap: t.pp, thoiLuong: DEFAULT_DURATION, phuTrach: DEFAULT_OWNER, thoiGian: dates[i], tanSuat: DEFAULT_FREQ,
+      phuongPhap: t.pp, thoiLuong: DEFAULT_DURATION, phuTrach: DEFAULT_OWNER, thoiGian: "", tanSuat: DEFAULT_FREQ,
       mucTieuKd: link ? "Góp phần vào: " + link : "",
       chiSoDo: "Điểm mảng " + g.areaName.toLowerCase() + " của " + a.short + " ≥ " + g.min + "% ở kỳ kiểm tra kế tiếp" + (a.salesAvg != null ? "; % hoàn thành chỉ tiêu bán của " + a.short + " (hiện " + a.salesAvg + "%)" : ""),
       ghiChu: (g.strategyHits.length ? "Ưu tiên chiến lược. " : "") + (g.materials === 0 ? "Chưa có học liệu cho mảng này: cần bổ sung học liệu trước buổi học." : g.materials ? "Đã có " + g.materials + " học liệu liên quan để học viên ôn." : ""),
       coSo: basis(a, g) };
   });
+  const rows = gapRows.concat(((an.biz && an.biz.focus) || []).map((f) => focusRow(an, f)));
+  const dates = spread(an.month, rows.length); rows.forEach((r, i) => { r.thoiGian = dates[i]; });
+  return fixTimes(rows);
+}
+// Chương trình riêng cho sản phẩm trọng tâm của một vị trí (dù chưa có khoảng cách năng lực): nội dung gắn thực tế bán hàng, không nêu thông số tự đặt
+function focusRow(an, f) {
+  const a = an.audiences.find((x) => x.key === f.key) || { key: f.key, short: f.short, nganh: NGANH[f.key], salesAvg: null }, P = f.products.join(", ");
+  return { doiTuong: a.short, nganh: a.nganh, tenChuongTrinh: "Sản phẩm trọng tâm tháng: " + P + " · " + a.short,
+    noiDung: ["Đặc điểm, lợi ích chính và nhóm khách hàng phù hợp của " + P + " (theo tài liệu sản phẩm chính thức)", "Kỹ thuật tư vấn và so sánh với giải pháp khách đang cân nhắc", "Xử lý các câu hỏi và từ chối thường gặp khi bán " + P, "Thực hành tình huống thực tế tại điểm bán; chia sẻ ca bán thành công trong tháng"],
+    mucTieu: a.short + " tư vấn và bán tốt " + P + " trong tháng, tăng số lượng bán nhóm sản phẩm trọng tâm.", phuongPhap: "Đào tạo trực tuyến + Giải case thực tế", thoiLuong: DEFAULT_DURATION, phuTrach: DEFAULT_OWNER, thoiGian: "", tanSuat: DEFAULT_FREQ,
+    ghiChu: "Theo chỉ đạo sản phẩm trọng tâm của tháng. Gửi nội dung cho người phê duyệt trước buổi học.",
+    mucTieuKd: (an.biz && (an.biz.goals[0] || an.biz.strategy[0])) ? "Góp phần vào: " + (an.biz.goals[0] || an.biz.strategy[0]) : "",
+    chiSoDo: "Số lượng và doanh số bán " + P + " của " + a.short + (a.salesAvg != null ? "; % hoàn thành chỉ tiêu bán (hiện " + a.salesAvg + "%)" : "") + " theo báo cáo bán hàng", coSo: "Sản phẩm trọng tâm của " + a.short + " do người phê duyệt chỉ đạo: " + P + "." };
+}
+// Hoàn thiện kế hoạch (AI hoặc luật): bảo đảm mỗi vị trí có sản phẩm trọng tâm đều có chương trình riêng, đủ ngày, đúng khung giờ
+function finalize(an, rows) {
+  ((an.biz && an.biz.focus) || []).forEach((f) => {
+    const has = rows.some((r) => r.doiTuong === f.short && f.products.some((p) => (r.tenChuongTrinh + " " + (r.noiDung || []).join(" ")).toLowerCase().indexOf(p.toLowerCase()) >= 0));
+    if (!has) rows.push(focusRow(an, f));
+  });
+  const dates = spread(an.month, rows.length); rows.forEach((r, i) => { if (!r.thoiGian) r.thoiGian = dates[i]; });
+  return fixTimes(rows);
 }
 
 // ---------- AI ----------
@@ -159,15 +204,17 @@ const RULES = [
   "Mỗi chương trình có mục tiêu đo được (gắn với con số hiện trạng và ngưỡng yêu cầu), phương pháp phù hợp, thời lượng thực tế (45–120 phút), và \"co_so\" ghi con số làm bằng chứng. Nếu mảng chưa có học liệu thì ghi chú cần bổ sung học liệu.",
   "BÁM SÁT MỤC TIÊU KINH DOANH: kế hoạch phải phục vụ \"muc_tieu_kinh_doanh\" và \"chien_luoc\" được cung cấp (và kết quả bán nếu có). Mỗi chương trình phải điền \"muc_tieu_kd\" (góp phần vào mục tiêu / ưu tiên chiến lược nào, nêu đúng theo dữ liệu, không thêm mục tiêu mới) và \"chi_so_do\" (chỉ số đo hiệu quả: điểm mảng năng lực và chỉ số kinh doanh như % hoàn thành chỉ tiêu của vị trí đó).",
   "Ưu tiên vị trí đang hụt chỉ tiêu bán và mảng nằm trong chiến lược (đã phản ánh ở \"uu_tien\"). Nếu một vị trí năng lực đã đạt mà bán vẫn thấp (\"nhan_xet\"), KHÔNG tạo thêm chương trình kiến thức; nêu nguyên nhân có thể nằm ngoài đào tạo ở ghi chú của chương trình liên quan hoặc bỏ qua. Không khẳng định đào tạo sẽ chắc chắn tăng doanh số: chỉ nói kỳ vọng góp phần.",
+    "SẢN PHẨM TRỌNG TÂM THEO VỊ TRÍ: nếu một vị trí có \"san_pham_trong_tam\" thì BẮT BUỘC có ít nhất một chương trình riêng về đúng các sản phẩm đó cho vị trí đó (dù chưa có khoảng cách năng lực): đặc điểm và lợi ích (chỉ nêu tên nội dung cần học, không bịa thông số), kỹ thuật tư vấn và so sánh, xử lý từ chối, thực hành tình huống thực tế tại điểm bán.",
+  "GIỜ HỌC: không làm gián đoạn giờ bán của SR và PC; chỉ xếp đầu ngày (bắt đầu từ 08:00 và kết thúc trước 09:30, tối đa 90 phút) hoặc cuối ngày (bắt đầu từ 17:00); điền \"gio\" là giờ bắt đầu dạng HH:MM. Nội dung phải gắn liền thực tế bán hàng (tình huống, ca thực tế tại điểm bán) và đủ cụ thể để gửi cho người phê duyệt đánh giá mức độ chuẩn bị trước buổi học.",
   "Không đề xuất quyết định bất lợi về nhân sự. Nhóm dưới 10 người có bài chỉ là tín hiệu: nói rõ trong ghi chú."
 ].join(" ") + " " + CTX.CONTEXT;
-const FMT = " Chỉ trả về MỘT JSON: {\"chuong_trinh\":[{\"vi_tri\":string(khóa vị trí đúng như dữ liệu),\"ten\":string,\"noi_dung\":[string](3 đến 6 ý),\"muc_tieu\":string,\"phuong_phap\":string,\"thoi_luong\":string,\"ngay\":number(ngày trong tháng, ngày làm việc T2–T6),\"tan_suat\":string,\"ghi_chu\":string,\"co_so\":string,\"muc_tieu_kd\":string,\"chi_so_do\":string}]}.";
+const FMT = " Chỉ trả về MỘT JSON: {\"chuong_trinh\":[{\"vi_tri\":string(khóa vị trí đúng như dữ liệu),\"ten\":string,\"noi_dung\":[string](3 đến 6 ý),\"muc_tieu\":string,\"phuong_phap\":string,\"thoi_luong\":string,\"ngay\":number(ngày trong tháng, ngày làm việc T2–T6),\"tan_suat\":string,\"ghi_chu\":string,\"co_so\":string,\"muc_tieu_kd\":string,\"chi_so_do\":string,\"gio\":string(HH:MM)}]}.";
 function parseJson(text) { const t = String(text || ""), a = t.indexOf("{"), b = t.lastIndexOf("}"); if (a < 0 || b < a) return null; try { return JSON.parse(t.slice(a, b + 1)); } catch (e) { return null; } }
 
 async function aiPlan(an) {
   const payload = { thang: an.month, muc_tieu_kinh_doanh: an.biz.goals, chien_luoc: an.biz.strategy,
     ket_qua_ban_hang: an.sales ? { thang: an.sales.month, chi_tieu: an.sales.target, thuc_dat: an.sales.actual, ty_le_hoan_thanh: an.sales.pct, ty_le_thoi_gian_ban: an.sales.elapsed } : null, quy_mo: { nhan_su: an.meta.population, co_bai: an.meta.tested },
-    vi_tri: an.audiences.filter((a) => a.tested > 0).map((a) => ({ khoa: a.key, ten: a.label, nganh: a.nganh, so_nguoi: a.people, co_bai: a.tested, chi_so_tb: a.index, ban_tb_3_thang: a.salesAvg, tin_cay: a.reliable ? "đủ" : "thấp (dưới 10 người có bài)",
+    vi_tri: an.audiences.filter((a) => a.tested > 0 || a.focus.length).map((a) => ({ khoa: a.key, san_pham_trong_tam: a.focus.length ? a.focus : undefined, ten: a.label, nganh: a.nganh, so_nguoi: a.people, co_bai: a.tested, chi_so_tb: a.index, ban_tb_3_thang: a.salesAvg, tin_cay: a.reliable ? "đủ" : "thấp (dưới 10 người có bài)",
       yeu_cau_cong_viec: a.needs, nhan_xet: a.note || undefined, nang_luc: a.reqs.map((g) => ({ mang: g.areaName, yeu_cau_toi_thieu: g.min, hien_trang_tb: g.avg, so_nguoi_do: g.assessed, so_nguoi_duoi_nguong: g.gapPeople, trang_thai: g.status, uu_tien: g.priority,
         chu_de_yeu: g.topics.map((t) => t.name + " " + t.pct + "%"), thuoc_chien_luoc: g.strategyHits, hoc_lieu_hien_co: g.materials, cau_hoi_kiem_tra: g.questions })) })) };
   const user = "Phân tích khoảng cách năng lực (JSON, ẩn danh):\n" + JSON.stringify(payload) + "\n\nLập kế hoạch đào tạo tháng " + an.month.slice(5) + "/" + an.month.slice(0, 4) + ".";
@@ -178,7 +225,7 @@ async function aiPlan(an) {
     const a = keys[s(x && x.vi_tri, 10)]; if (!a) return null;
     const d = Math.round(Number(x.ngay)), iso = an.month + "-" + pad(d), fb = spread(an.month, 12)[i];
     return { doiTuong: a.short, nganh: a.nganh, tenChuongTrinh: s(x.ten, 160), noiDung: (Array.isArray(x.noi_dung) ? x.noi_dung : []).slice(0, 8), mucTieu: s(x.muc_tieu, 400), phuongPhap: s(x.phuong_phap, 120) || DEFAULT_METHOD,
-      thoiLuong: s(x.thoi_luong, 40) || DEFAULT_DURATION, phuTrach: DEFAULT_OWNER, thoiGian: W.indexOf(iso) >= 0 ? iso : fb, tanSuat: s(x.tan_suat, 100) || DEFAULT_FREQ, ghiChu: s(x.ghi_chu, 500), coSo: s(x.co_so, 400),
+      thoiLuong: s(x.thoi_luong, 40) || DEFAULT_DURATION, phuTrach: DEFAULT_OWNER, thoiGian: W.indexOf(iso) >= 0 ? iso : fb, gio: s(x.gio, 5), tanSuat: s(x.tan_suat, 100) || DEFAULT_FREQ, ghiChu: s(x.ghi_chu, 500), coSo: s(x.co_so, 400),
       mucTieuKd: s(x.muc_tieu_kd, 300) || (bizLink(an.biz, "") ? "Góp phần vào: " + bizLink(an.biz, "") : ""), chiSoDo: s(x.chi_so_do, 300) || "Điểm mảng năng lực ≥ ngưỡng yêu cầu ở kỳ kiểm tra kế tiếp" };
   }).filter((r) => r && r.tenChuongTrinh && r.noiDung.length);
   if (!rows.length) throw new Error("AI chưa lập được chương trình nào.");
@@ -189,14 +236,14 @@ async function aiPlan(an) {
 async function generate(opt) {
   opt = opt || {}; const month = s(opt.month, 7); if (!MONTH.test(month)) return { ok: false, error: "Tháng không hợp lệ." };
   const biz = await getBiz(month);
-  if (!biz.goals.length && !biz.strategy.length) return { ok: false, code: "need_biz", error: "Hãy nhập mục tiêu kinh doanh hoặc chiến lược của tháng trước khi lập kế hoạch đào tạo, để kế hoạch bám sát mục tiêu." };
+  if (!biz.goals.length && !biz.strategy.length && !biz.focus.length) return { ok: false, code: "need_biz", error: "Hãy nhập mục tiêu kinh doanh hoặc chiến lược của tháng trước khi lập kế hoạch đào tạo, để kế hoạch bám sát mục tiêu." };
   const an = analyse(await require("./hrcompetency").build({ refresh: opt.refresh === true }), month, { biz, sales: await salesContext(month) });
   const notes = an.audiences.filter((a) => a.note).map((a) => a.short + ": " + a.note);
-  if (!an.audiences.some((a) => a.gaps > 0)) return { ok: true, source: "rules", rows: [], analysis: an, notes, warning: "Chưa phát hiện khoảng cách năng lực cần đào tạo (hoặc chưa đủ dữ liệu kiểm tra)." };
+  if (!an.audiences.some((a) => a.gaps > 0) && !an.biz.focus.length) return { ok: true, source: "rules", rows: [], analysis: an, notes, warning: "Chưa phát hiện khoảng cách năng lực cần đào tạo (hoặc chưa đủ dữ liệu kiểm tra)." };
   let rows = null, source = "rules", warning = "";
   if (opt.mode !== "rules") { try { rows = await aiPlan(an); source = "ai"; } catch (e) { warning = "AI tạm thời không khả dụng nên kế hoạch được lập theo luật từ bản phân tích."; } }
   if (!rows) rows = rulePlan(an);
-  try { rows = cleanRows(rows, month); } catch (e) { return { ok: false, error: e.message }; }
+  try { rows = cleanRows(finalize(an, rows), month); } catch (e) { return { ok: false, error: e.message }; }
   return { ok: true, source, rows, analysis: an, notes, warning };
 }
 
@@ -209,9 +256,13 @@ async function list() {
 async function save(month, body, by) {
   month = s(month, 7); if (!MONTH.test(month)) throw new Error("Tháng không hợp lệ.");
   const doc = { v: 1, month, status: body && body.status === "final" ? "final" : "draft", source: ["ai", "rules", "manual"].indexOf(body && body.source) >= 0 ? body.source : "manual", rows: cleanRows(body && body.rows, month), updatedAt: Date.now(), by: String(by || "").toLowerCase() };
-  const biz = await getBiz(month); doc.biz = { goals: biz.goals, strategy: biz.strategy };
+  const biz = await getBiz(month); doc.biz = { goals: biz.goals, strategy: biz.strategy, focus: biz.focus };
+  const prev = await get(month), A = (body && body.approval) || {}, st = ["draft", "pending", "approved", "rejected"].indexOf(A.status) >= 0 ? A.status : "draft", decided = st === "approved" || st === "rejected";
+  doc.approval = { status: st, approver: s(A.approver, 80), note: s(A.note, 1500), recordedBy: doc.by,
+    decidedAt: decided ? (prev && prev.approval && prev.approval.status === st && prev.approval.decidedAt ? prev.approval.decidedAt : Date.now()) : null };
+  const sb = Math.round(Number(body && body.sendBefore)); doc.sendBefore = isFinite(sb) ? Math.min(15, Math.max(0, sb)) : 3; // gửi nội dung cho người phê duyệt trước buổi học N ngày làm việc
   await store.put(PREFIX + month + ".json", doc); return doc;
 }
 async function remove(month, by) { month = s(month, 7); if (!MONTH.test(month)) throw new Error("Tháng không hợp lệ."); await store.put(PREFIX + month + ".json", { v: 1, month, deleted: true, updatedAt: Date.now(), by: String(by || "").toLowerCase() }); }
 
-module.exports = { getBiz, saveBiz, salesContext, analyse, rulePlan, generate, get, list, save, remove, cleanRows, workdays, REQ, AREA_NAME };
+module.exports = { parseFocus, durMin, timeOk, slotFor, getBiz, saveBiz, salesContext, analyse, rulePlan, generate, get, list, save, remove, cleanRows, workdays, REQ, AREA_NAME };

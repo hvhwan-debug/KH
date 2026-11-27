@@ -89,12 +89,47 @@ const q = (cat, good, n) => Array.from({ length: n }, (_, i) => ({ category: cat
   r = await call("POST", {}, { op: "trainPlanGenerate", month, mode: "ai" });
   ok(r.s === 200 && r.j.source === "rules", "AI trả rác: dùng luật");
 
+  // 3b) GÓP Ý PHÊ DUYỆT: khung giờ học, sản phẩm trọng tâm theo vị trí, hạn gửi nội dung
+  ok(TP.durMin("90 phút") === 90 && TP.durMin("1,5 giờ") === 90 && TP.durMin("2h") === 120 && TP.durMin("") === 90, "đọc thời lượng: 90 phút / 1,5 giờ / 2h / trống");
+  ok(TP.timeOk("08:00", 90) === true && TP.timeOk("08:30", 90) === false && TP.timeOk("17:00", 120) === true && TP.timeOk("12:00", 60) === false && TP.timeOk("07:30", 60) === false && TP.timeOk("", 90) === null, "khung giờ hợp lệ: đầu ngày 08:00–09:30 hoặc từ 17:00; còn lại sai");
+  ok(TP.slotFor(90) === "08:00" && TP.slotFor(120) === "17:15", "buổi ≤ 90 phút xếp đầu ngày, dài hơn xếp cuối ngày");
+  const pf = TP.parseFocus("PC: M25, BNN\n• SR 1: M25, kiềm\nSR GT1: m25; Kiềm\nSR 2: BNN, Bếp đôi\nxyz: abc\nkhông có dấu hai chấm");
+  ok(pf.length === 3 && pf.find((f) => f.key === "PC").products.join() === "M25,BNN" && pf.find((f) => f.key === "GT1").products.join() === "M25,kiềm" && pf.find((f) => f.key === "GT2").products.join() === "BNN,Bếp đôi", "đọc sản phẩm trọng tâm theo vị trí: gộp trùng, bỏ vị trí lạ và dòng sai cú pháp");
+  r = await call("POST", {}, { op: "trainPlanBizSave", month, goals: ["Đạt chỉ tiêu bán T12: 4,4 tỷ", "Tăng độ phủ điểm bán"], strategy: ["Tăng cường kỹ năng tư vấn và chốt đơn tại điểm bán"], focus: "PC: M25, BNN\nSR 1: M25, kiềm\nSR 2: BNN, Bếp đôi" });
+  ok(r.s === 200 && r.j.biz.focus.length === 3 && r.j.biz.focus.find((f) => f.key === "GT2").short === "SR 2", "lưu sản phẩm trọng tâm theo vị trí");
+  r = await call("GET", { op: "trainPlanAnalysis", month });
+  const fg1 = r.j.analysis.audiences.find((a) => a.key === "GT1"), n1 = fg1.reqs.find((g) => g.area === "n1");
+  ok(fg1.focus.join() === "M25,kiềm" && n1.strategyHits.indexOf("Sản phẩm trọng tâm: M25, kiềm") >= 0, "phân tích: mảng sản phẩm của SR 1 được đánh dấu trọng tâm (M25, kiềm)");
+  r = await call("POST", {}, { op: "trainPlanGenerate", month, mode: "rules" });
+  const fr = (k, p) => r.j.rows.find((x) => x.doiTuong === k && new RegExp(p).test(x.tenChuongTrinh));
+  ok(r.s === 200 && fr("PC", "M25, BNN") && fr("SR 1", "M25, kiềm") && fr("SR 2", "BNN, Bếp đôi"), "lập theo luật: PC, SR 1, SR 2 đều có chương trình sản phẩm trọng tâm (kể cả PC không có khoảng cách năng lực)");
+  ok(r.j.rows.every((x) => /^\d\d:\d\d$/.test(x.gio) && TP.timeOk(x.gio, TP.durMin(x.thoiLuong)) === true), "mọi buổi đều nằm trong khung giờ đầu ngày hoặc cuối ngày");
+  ok(/Góp phần vào/.test(fr("PC", "M25").mucTieuKd) && /BNN/.test(fr("SR 2", "BNN").chiSoDo) && /thực tế/.test(fr("PC", "M25").noiDung.join(" ")) && /phê duyệt/.test(fr("PC", "M25").ghiChu), "chương trình trọng tâm: gắn mục tiêu kinh doanh, chỉ số đo, nội dung thực tế, nhắc gửi người phê duyệt");
+  llm.chat = async () => JSON.stringify({ chuong_trinh: [
+    { vi_tri: "GT1", ten: "Tư vấn M25 và máy lọc kiềm cho SR 1", noi_dung: ["Lợi ích M25", "Tình huống thực tế"], muc_tieu: "x", thoi_luong: "90 phút", gio: "12:00", ngay: 8 },
+    { vi_tri: "GT2", ten: "Kỹ năng bán điện gia dụng", noi_dung: ["Tư vấn"], muc_tieu: "y", thoi_luong: "2 giờ", gio: "09:00", ngay: 9 }] });
+  r = await call("POST", {}, { op: "trainPlanGenerate", month, mode: "ai" });
+  const ai1 = r.j.rows.find((x) => /M25 và máy lọc kiềm/.test(x.tenChuongTrinh)), ai2 = r.j.rows.find((x) => /Kỹ năng bán điện gia dụng/.test(x.tenChuongTrinh));
+  ok(r.j.source === "ai" && ai1.gio === "08:00" && ai2.gio === "17:15", "AI xếp giờ sai (12:00; 2 giờ lúc 09:00): máy chủ sửa về 08:00 và 17:15");
+  ok(r.j.rows.length === 4 && r.j.rows.some((x) => x.doiTuong === "PC" && /M25, BNN/.test(x.tenChuongTrinh)) && r.j.rows.some((x) => x.doiTuong === "SR 2" && /BNN, Bếp đôi/.test(x.tenChuongTrinh)) && !r.j.rows.some((x) => x.doiTuong === "SR 1" && /Sản phẩm trọng tâm tháng/.test(x.tenChuongTrinh)), "AI bỏ sót sản phẩm trọng tâm của PC và SR 2: tự bổ sung; SR 1 đã có (nhắc M25, kiềm) nên không thêm trùng");
+  ok(r.j.rows.every((x) => /^2026-12-\d\d$/.test(x.thoiGian) && x.gio), "mọi dòng (kể cả dòng bổ sung) đều có ngày và giờ");
+  ok(/san_pham_trong_tam/.test(sent) && /GIỜ HỌC/.test(sent) && /SẢN PHẨM TRỌNG TÂM THEO VỊ TRÍ/.test(sent), "AI nhận sản phẩm trọng tâm theo vị trí và luật khung giờ");
+  llm.chat = async () => { throw new Error("down"); };
+
   // 4) lưu / đọc / liệt kê / xoá
   const save = await call("POST", {}, { op: "trainPlanSave", month, status: "final", source: "ai", rows: [{ tenChuongTrinh: "  Bài A  ", mucTieuKd: "Mục tiêu KD A", chiSoDo: "KPI A", noiDung: "Ý 1\nÝ 2", thoiGian: "2026-12-05", doiTuong: "SR 1" }, { tenChuongTrinh: "", noiDung: ["bỏ"] }, { tenChuongTrinh: "Bài B", thoiGian: "30/11/2026" }, { tenChuongTrinh: "Bài C", thoiGian: "2026-11-30" }] });
   ok(save.s === 200 && save.j.plan.rows.length === 3 && save.j.plan.rows[0].stt === 1 && save.j.plan.rows[2].stt === 3 && save.j.plan.rows[0].noiDung.length === 2, "lưu: bỏ dòng không tên, đánh lại STT, tách nội dung theo dòng");
   ok(save.j.plan.rows[0].tenChuongTrinh === "Bài A" && save.j.plan.rows[1].thoiGian === "" && save.j.plan.rows[2].thoiGian === "2026-11-30", "lưu: cắt khoảng trắng; ngày sai định dạng bị bỏ, ngày hợp lệ do người dùng nhập được giữ nguyên");
   ok(save.j.plan.rows[0].mucTieuKd === "Mục tiêu KD A" && save.j.plan.rows[0].chiSoDo === "KPI A" && save.j.plan.biz.goals.length === 2 && save.j.plan.biz.strategy.length === 1, "lưu: giữ cột mục tiêu kinh doanh / chỉ số đo, chụp lại mục tiêu & chiến lược đã dùng");
   r = await call("GET", { op: "trainPlanGet", month }); ok(r.j.plan && r.j.plan.status === "final" && r.j.months.length === 1 && r.j.months[0].month === month && r.j.months[0].count === 3, "đọc lại + danh sách tháng");
+  // phê duyệt + hạn gửi nội dung
+  const ap = (o) => call("POST", {}, Object.assign({ op: "trainPlanSave", month, rows: [{ tenChuongTrinh: "Bài A" }] }, o));
+  r = await ap({ approval: { status: "approved", approver: "Phạm Đức", note: "Gửi nội dung trước để đánh giá chuẩn bị", }, sendBefore: 3 });
+  const dAt = r.j.plan.approval.decidedAt;
+  ok(r.s === 200 && r.j.plan.approval.status === "approved" && r.j.plan.approval.approver === "Phạm Đức" && typeof dAt === "number" && r.j.plan.sendBefore === 3 && r.j.plan.approval.recordedBy === "admin@x.vn", "lưu phê duyệt: người duyệt, ý kiến, ngày duyệt, người ghi nhận, hạn gửi 3 ngày");
+  r = await ap({ approval: { status: "approved", approver: "Phạm Đức" }, sendBefore: 3 }); ok(r.j.plan.approval.decidedAt === dAt, "lưu lại cùng trạng thái đã duyệt: giữ nguyên ngày duyệt");
+  r = await ap({ approval: { status: "pending" }, sendBefore: 99 }); ok(r.j.plan.approval.status === "pending" && r.j.plan.approval.decidedAt === null && r.j.plan.sendBefore === 15, "chuyển sang chờ duyệt: bỏ ngày duyệt; hạn gửi tối đa 15 ngày");
+  r = await ap({ approval: { status: "hack" } }); ok(r.j.plan.approval.status === "draft" && r.j.plan.sendBefore === 3, "trạng thái lạ → nháp; không nhập hạn gửi → mặc định 3 ngày");
   r = await call("POST", {}, { op: "trainPlanSave", month: "abc", rows: [{ tenChuongTrinh: "x" }] }); ok(r.s === 400, "lưu tháng không hợp lệ bị từ chối");
   r = await call("POST", {}, { op: "trainPlanSave", month, rows: [] }); ok(r.s === 400, "lưu không có dòng nào bị từ chối");
   r = await call("POST", {}, { op: "trainPlanDelete", month }); ok(r.s === 200, "xoá kế hoạch tháng");
