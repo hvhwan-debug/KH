@@ -446,12 +446,12 @@ table.t tr.clk{cursor:pointer}
       <div><h1 class="pg" id="pgTitle">Kết quả số bán</h1><p class="pgsub" id="pgSub">Tải file Salerep GT hằng tháng để cập nhật.</p></div>
       <div class="sb-act">
         <label class="sr" for="mSel">Tháng</label><select id="mSel" class="msel"></select>
-        <button class="btn pri" type="button" id="upBtn">⬆ Cập nhật từ file Salerep</button>
+        <button class="btn pri" type="button" id="upBtn"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg> Cập nhật từ file Salerep</button>
         <input type="file" id="upFile" accept=".xlsx" class="hide">
       </div>
     </div>
 
-    <div id="empty" class="card hide"><div class="state"><div><b>Chưa có dữ liệu số bán</b>Chọn file "LIVOTEC_DS_ST_Salerep_GT_tháng_…xlsx" (sheet KQ SM) để đưa kết quả tháng vào hệ thống.<div style="margin-top:14px"><button class="btn pri" type="button" data-up>⬆ Chọn file Salerep</button></div></div></div></div>
+    <div id="empty" class="card hide"><div class="state"><div><b>Chưa có dữ liệu số bán</b>Chọn file "LIVOTEC_DS_ST_Salerep_GT_tháng_…xlsx" (sheet KQ SM) để đưa kết quả tháng vào hệ thống.<div style="margin-top:14px"><button class="btn pri" type="button" data-up><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg> Chọn file Salerep</button></div></div></div></div>
 
     <div id="content" class="hide">
       <div class="card hero">
@@ -471,7 +471,7 @@ table.t tr.clk{cursor:pointer}
       </div>
 
       <div class="card" style="margin-top:14px">
-        <div class="card-h"><h2>Chi tiết nhân viên</h2><span class="sub" id="lsCount"></span><span class="sp"></span><button class="btn sm" type="button" id="csvBtn">⬇ Tải CSV</button></div>
+        <div class="card-h"><h2>Chi tiết nhân viên</h2><span class="sub" id="lsCount"></span><span class="sp"></span><button class="btn sm" type="button" id="csvBtn"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg> Tải CSV</button></div>
         <div class="fbar">
           <div class="fld fs"><label class="sr" for="fQ">Tìm</label><input id="fQ" type="search" placeholder="Tìm tên, mã NV, NPP…" autocomplete="off"></div>
           <div class="fld h"><label class="sr" for="fMien">Miền</label><select id="fMien"></select></div>
@@ -568,7 +568,7 @@ function render(){
   $('hSub').innerHTML = esc(short(A.actual)) + ' / ' + esc(short(A.target)) + ' chỉ tiêu' + (el != null ? ' · thời gian đã qua ' + pct(el, 0) : '');
   $('hBar').querySelector('i').style.width = Math.min(100, (A.ht || 0) * 100) + '%';
   var tk = $('hBar').querySelector('.tick'); tk.style.display = el != null ? '' : 'none'; if (el != null) tk.style.left = (el * 100) + '%';
-  $('hLeg').innerHTML = el != null ? '<span>0%</span><span>' + (A.ht != null && A.ht >= el ? '✓ Vượt tiến độ thời gian' : 'Vạch vàng = tiến độ thời gian') + '</span><span>100%</span>' : '';
+  $('hLeg').innerHTML = el != null ? '<span>0%</span><span>' + (A.ht != null && A.ht >= el ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Vượt tiến độ thời gian' : 'Vạch vàng = tiến độ thời gian') + '</span><span>100%</span>' : '';
   var k = [
     ['Thực đạt', short(A.actual), P ? delta(A.actual, P.actual) + ' so với ' + mLabel(S.prev.month).toLowerCase() : money(A.actual) + ' đ'],
     ['Chỉ tiêu', short(A.target), A.withT + '/' + A.n + ' nhân viên có chỉ tiêu'],

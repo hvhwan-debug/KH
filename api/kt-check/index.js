@@ -114,8 +114,8 @@ async function handler(context, req) {
       try { const u = require("../_lib/session").userFromReq(req); adminHere = !!(u && u.email && require("../_lib/config").isAdmin(u.email)); } catch (e) { adminHere = false; }
       const near = adminHere ? await quiz.testNearMiss(code, email) : null;
       if (near) return reply(context, 404, { ok: false, faceNext: needFaceFor(req), error: near.by === "code"
-        ? "[Chỉ quản trị viên thấy] Mã này thuộc một tài khoản thử nghiệm nhưng email chưa khớp. Xem lại ở Cài đặt → Tài khoản thử nghiệm."
-        : "[Chỉ quản trị viên thấy] Email này thuộc một tài khoản thử nghiệm nhưng mã chưa khớp. Xem lại ở Cài đặt → Tài khoản thử nghiệm." });
+        ? "[Chỉ quản trị viên thấy] Mã này thuộc một tài khoản thử nghiệm nhưng email chưa khớp. Xem lại ở Cài đặt <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> Tài khoản thử nghiệm."
+        : "[Chỉ quản trị viên thấy] Email này thuộc một tài khoản thử nghiệm nhưng mã chưa khớp. Xem lại ở Cài đặt <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> Tài khoản thử nghiệm." });
       return reply(context, 404, { ok: false, face, faceNext: needFaceFor(req), error: "Không tìm thấy thông tin khớp với mã nhân viên và email đã nhập. Kiểm tra lại hoặc liên hệ quản trị viên." + (needFaceFor(req) && !needFace ? " Lần thử tiếp theo cần xác thực khuôn mặt." : "") });
     }
 

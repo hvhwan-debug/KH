@@ -72,7 +72,7 @@
   }
   var segmentOf = function (title) { return title === 'SR 1' ? 'may_loc' : title === 'SR 2' ? 'gia_dung' : 'both'; };
 
-  /* sheets: [{ name, rows }] → { records, problems, sheet } */
+  /* sheets: [{ name, rows }] <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> { records, problems, sheet } */
   function parseReport(sheets) {
     var problems = [];
     for (var s = 0; s < sheets.length; s++) {

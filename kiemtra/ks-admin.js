@@ -197,7 +197,7 @@ function drawEditor(){
   paneS.appendChild(h('div',{class:'row'},cb(S,'open','Đang mở nhận trả lời'),cb(S,'showProgress','Hiện thanh tiến độ')));
   paneA.appendChild(h('div',{id:'aud'}));
   paneQ.appendChild(aiCard());
-  paneQ.appendChild(h('div',{class:'warn',style:'background:var(--soft)'},h('strong',null,'Bấm vào chữ của từng câu để sửa. '),'Dùng ↑ ↓ để đổi thứ tự, ⧉ để nhân đôi, ✕ để xoá, chọn "Bắt buộc" nếu cần. Mở mục "Logic" để đặt điều kiện hiện câu. Mỗi "Tiêu đề trang" bắt đầu một trang mới.'));
+  paneQ.appendChild(h('div',{class:'warn',style:'background:var(--soft)'},h('strong',null,'Bấm vào chữ của từng câu để sửa. '),'Dùng <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M12 19V5\"/><path d=\"M5 12l7-7 7 7\"/></svg> <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M12 5v14\"/><path d=\"M19 12l-7 7-7-7\"/></svg> để đổi thứ tự, ⧉ để nhân đôi, <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M18 6 6 18\"/><path d=\"M6 6l12 12\"/></svg> để xoá, chọn "Bắt buộc" nếu cần. Mở mục "Logic" để đặt điều kiện hiện câu. Mỗi "Tiêu đề trang" bắt đầu một trang mới.'));
   paneQ.appendChild(h('div',{id:'qs'}));
   var addSel=h('select',{id:'addType',style:'width:auto'});TYPES.forEach(function(t){addSel.appendChild(h('option',{value:t[0]},t[1]))});
   paneQ.appendChild(h('div',{class:'row',style:'margin-top:10px;justify-content:flex-start'},addSel,
@@ -219,7 +219,7 @@ var AI={stop:null,open:false,busy:false,prompt:'',count:'8',logic:true,draft:nul
 var KIND={dan_dat:'Dẫn dắt',hai_y:'Hai ý trong một câu',mo_ho:'Mơ hồ',lua_chon:'Lựa chọn',trung:'Trùng ý',qua_dai:'Quá dài',nhay_cam:'Nhạy cảm',thieu_cau:'Thiếu câu',khac:'Lưu ý'};
 function aiCard(){
   var card=h('div',{class:'qcard',id:'aiCard',style:'background:var(--soft);margin-top:0;border-style:solid'});
-  card.appendChild(h('div',{class:'qh'},h('strong',null,'✦ Trợ lý AI'),h('span',{class:'sp'}),
+  card.appendChild(h('div',{class:'qh'},h('strong',null,'<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8\"/></svg> Trợ lý AI'),h('span',{class:'sp'}),
     h('button',{class:'sm',onclick:function(){AI.open=!AI.open;drawAiPanel()}},'Soạn câu hỏi bằng AI'),
     h('button',{class:'sm',id:'aiRevBtn',onclick:aiReview},'Rà soát câu hỏi')));
   card.appendChild(h('p',{class:'note',style:'margin:0'},'AI chỉ đề xuất. Bạn xem, sửa rồi mới lưu; không có gì được tự động lưu.'));
@@ -238,11 +238,11 @@ function drawAiPanel(){
   var cs=h('select',{style:'width:auto','aria-label':'Số câu hỏi',onchange:function(){AI.count=this.value}});
   [5,8,10,15,20].forEach(function(n){cs.appendChild(h('option',{value:n},n+' câu hỏi'))});cs.value=AI.count;
   var fi=h('input',{type:'file',id:'aiFile',accept:'.docx,.xlsx,.pptx,.pdf,.png,.jpg,.jpeg,.txt,.md,.csv',style:'display:none',onchange:function(){var f=this.files&&this.files[0];this.value='';if(f)aiAttach(f)}});
-  var chip=AI.doc?h('span',{class:'badge',style:'margin-left:0'},'📎 '+AI.doc.name+' · '+AI.doc.text.length.toLocaleString('vi-VN')+' ký tự'+(AI.doc.text.length>14000?' (chỉ dùng khoảng 14.000 ký tự đầu)':''),
-    h('button',{class:'sm','aria-label':'Gỡ tài liệu',style:'margin-left:6px;padding:0 6px',onclick:function(){AI.doc=null;drawAiPanel()}},'✕')):null;
+  var chip=AI.doc?h('span',{class:'badge',style:'margin-left:0'},'<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M21.4 11.5 12 20.9a5 5 0 0 1-7-7l8.5-8.5a3.5 3.5 0 0 1 5 5L10 18.9a2 2 0 0 1-2.8-2.8l7.8-7.8\"/></svg> '+AI.doc.name+' · '+AI.doc.text.length.toLocaleString('vi-VN')+' ký tự'+(AI.doc.text.length>14000?' (chỉ dùng khoảng 14.000 ký tự đầu)':''),
+    h('button',{class:'sm','aria-label':'Gỡ tài liệu',style:'margin-left:6px;padding:0 6px',onclick:function(){AI.doc=null;drawAiPanel()}},'<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M18 6 6 18\"/><path d=\"M6 6l12 12\"/></svg>')):null;
   el.appendChild(h('div',{style:'margin-top:10px'},ta,
     h('div',{class:'row',style:'margin-top:8px;align-items:center;justify-content:flex-start'},
-      h('button',{class:'nf',onclick:function(){fi.click()}},'📎 Đính kèm tài liệu'),fi,chip,
+      h('button',{class:'nf',onclick:function(){fi.click()}},'<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M21.4 11.5 12 20.9a5 5 0 0 1-7-7l8.5-8.5a3.5 3.5 0 0 1 5 5L10 18.9a2 2 0 0 1-2.8-2.8l7.8-7.8\"/></svg> Đính kèm tài liệu'),fi,chip,
       AI.stop?h('button',{class:'nf',onclick:function(){AI.stop()}},'Dừng nhận dạng'):null,
       h('span',{class:'note nf',style:'flex:1 1 220px'},'Hoặc kéo thả file vào hộp này. Word, PDF, Excel, PowerPoint, ảnh scan (tự nhận dạng chữ)… AI chỉ dùng làm căn cứ nội dung; email, số điện thoại trong tài liệu bị xoá trước khi gửi.')),
     h('div',{class:'row',style:'margin-top:8px;align-items:center;justify-content:flex-start'},cs,
@@ -253,7 +253,7 @@ function drawAiPanel(){
 function aiAttach(file){
   var ac=typeof AbortController!=='undefined'?new AbortController():null;
   AI.stop=ac?function(){ac.abort()}:null;drawAiPanel();aiSay('Đang đọc “'+file.name+'”…');
-  DocRead.read(file,{signal:ac&&ac.signal,onProgress:function(t){aiSay(t)}}).then(function(d){AI.doc={name:file.name,text:d.text};AI.stop=null;drawAiPanel();aiSay(d.warn?'⚠ '+d.warn:'',!!d.warn)})
+  DocRead.read(file,{signal:ac&&ac.signal,onProgress:function(t){aiSay(t)}}).then(function(d){AI.doc={name:file.name,text:d.text};AI.stop=null;drawAiPanel();aiSay(d.warn?'<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/></svg> '+d.warn:'',!!d.warn)})
   .catch(function(e){AI.stop=null;drawAiPanel();aiSay(e.userMessage||'Không đọc được file này.',true)});
 }
 function aiDraft(){
@@ -270,7 +270,7 @@ function drawAiOut(){
   if(AI.draft){
     var d=AI.draft,nq=d.questions.filter(function(q){return q.type!=='section'}).length;
     var list=h('div',{style:'max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--card);margin:8px 0'});
-    d.questions.forEach(function(q,i){list.appendChild(h('div',{style:'margin:4px 0;font-size:14px'+(q.type==='section'?';font-weight:700':'')},(i+1)+'. ',h('span',{class:'note'},q.type==='section'?'[Trang] ':'['+typeName(q.type)+'] '),q.text,q.showIf?h('span',{class:'note'},'  ↳ có điều kiện hiện'):null))});
+    d.questions.forEach(function(q,i){list.appendChild(h('div',{style:'margin:4px 0;font-size:14px'+(q.type==='section'?';font-weight:700':'')},(i+1)+'. ',h('span',{class:'note'},q.type==='section'?'[Trang] ':'['+typeName(q.type)+'] '),q.text,q.showIf?h('span',{class:'note'},'  <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M15 10l5 5-5 5\"/><path d=\"M4 4v7a4 4 0 0 0 4 4h12\"/></svg> có điều kiện hiện'):null))});
     el.appendChild(h('div',{style:'margin-top:10px'},h('strong',null,'AI đã soạn '+nq+' câu hỏi'+(d.title?' — "'+d.title+'"':'')),list,
       h('div',{class:'row',style:'justify-content:flex-start'},
         h('button',{class:'p nf',onclick:aiReplace},'Thay toàn bộ câu hỏi hiện tại'),
@@ -470,13 +470,13 @@ function qCard(q,i){
   TYPES.forEach(function(t){ts.appendChild(h('option',{value:t[0]},t[1]))});ts.value=q.type;
   card.appendChild(h('div',{class:'qh'},h('span',{class:'no'},(i+1)+'.'),ts,h('span',{class:'sp'}),
     sec?null:cb(q,'required','Bắt buộc'),
-    h('button',{class:'sm',title:'Chuyển lên','aria-label':'Chuyển lên',disabled:i===0,onclick:function(){var t=Q[i];Q[i]=Q[i-1];Q[i-1]=t;drawQs()}},'↑'),
-    h('button',{class:'sm',title:'Chuyển xuống','aria-label':'Chuyển xuống',disabled:i===Q.length-1,onclick:function(){var t=Q[i];Q[i]=Q[i+1];Q[i+1]=t;drawQs()}},'↓'),
+    h('button',{class:'sm',title:'Chuyển lên','aria-label':'Chuyển lên',disabled:i===0,onclick:function(){var t=Q[i];Q[i]=Q[i-1];Q[i-1]=t;drawQs()}},'<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M12 19V5\"/><path d=\"M5 12l7-7 7 7\"/></svg>'),
+    h('button',{class:'sm',title:'Chuyển xuống','aria-label':'Chuyển xuống',disabled:i===Q.length-1,onclick:function(){var t=Q[i];Q[i]=Q[i+1];Q[i+1]=t;drawQs()}},'<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M12 5v14\"/><path d=\"M19 12l-7 7-7-7\"/></svg>'),
     h('button',{class:'sm',title:'Nhân đôi','aria-label':'Nhân đôi câu hỏi',onclick:function(){var c2=clone(q);c2.id=newId();Q.splice(i+1,0,c2);drawQs()}},'⧉'),
     h('button',{class:'sm d',title:'Xoá','aria-label':'Xoá câu hỏi',onclick:function(){
       var used=Q.some(function(o){return ['showIf','endIf'].some(function(k){return o[k]&&o[k].rules.some(function(r){return r.q===q.id})})});
       if(used&&!confirm('Có câu khác dùng câu này làm điều kiện logic. Xoá thì các điều kiện đó cũng bị gỡ. Tiếp tục?'))return;
-      if(Q.length===1){alert('Cần ít nhất một câu hỏi.');return}Q.splice(i,1);drawQs()}},'✕')));
+      if(Q.length===1){alert('Cần ít nhất một câu hỏi.');return}Q.splice(i,1);drawQs()}},'<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M18 6 6 18\"/><path d=\"M6 6l12 12\"/></svg>')));
   card.appendChild(tin(q,'text',sec?'Tiêu đề trang':'Nội dung câu hỏi',500));
   card.appendChild(h('div',{style:'height:6px'}));
   card.appendChild(tin(q,'help',sec?'Mô tả trang (tuỳ chọn)':'Gợi ý dưới câu hỏi (tuỳ chọn)',500));
@@ -568,7 +568,7 @@ function logicBlock(q,i,key,title){
       opsFor(tq.type).forEach(function(o){os.appendChild(h('option',{value:o},OPNAME[o]))});os.value=r.op;
       if(opsFor(tq.type).indexOf(r.op)<0){r.op=opsFor(tq.type)[0];os.value=r.op}
       det.appendChild(h('div',{class:'rule'},qs,os,needsVal(r.op)?valueControl(r,tq):null,
-        h('button',{class:'sm d','aria-label':'Gỡ điều kiện',onclick:function(){q[key].rules.splice(ri,1);if(!q[key].rules.length)delete q[key];drawQs()}},'✕')));
+        h('button',{class:'sm d','aria-label':'Gỡ điều kiện',onclick:function(){q[key].rules.splice(ri,1);if(!q[key].rules.length)delete q[key];drawQs()}},'<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M18 6 6 18\"/><path d=\"M6 6l12 12\"/></svg>')));
     });
   }
   det.appendChild(h('button',{class:'sm',onclick:addRule},'＋ Thêm điều kiện'));
@@ -652,7 +652,7 @@ function drawResults(){
     kpi(fmtDur(avg),'Thời gian làm trung bình'),
     kpi(rows.length?fmtTime(rows[rows.length-1].submittedAt):'—','Phiếu gần nhất')));
   var tabs=h('div',{class:'tabs'});
-  [['sum','Tổng hợp theo câu hỏi'],['rows','Từng phiếu ('+rows.length+')']].concat(R.staff?[['prog','Tiến độ theo nhân sự ('+R.staff.filter(function(x){return !x.done}).length+' chưa trả lời)']]:[]).concat([['ai','✦ Phân tích AI']]).forEach(function(t){
+  [['sum','Tổng hợp theo câu hỏi'],['rows','Từng phiếu ('+rows.length+')']].concat(R.staff?[['prog','Tiến độ theo nhân sự ('+R.staff.filter(function(x){return !x.done}).length+' chưa trả lời)']]:[]).concat([['ai','<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8\"/></svg> Phân tích AI']]).forEach(function(t){
     tabs.appendChild(h('button',{class:R.tab===t[0]?'on':'',onclick:function(){R.tab=t[0];drawResults()}},t[1]))});
   box.appendChild(tabs);
   if(R.tab==='prog'&&R.staff){box.appendChild(progress());return}

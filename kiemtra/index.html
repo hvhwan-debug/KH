@@ -1247,7 +1247,7 @@ body.introbg .btn.go:active{transform:scale(.99)}
    3) Màn làm bài: bỏ thanh "các bước" (đã có số câu + thanh tiến độ), đáp án rộng hơn, nút "Câu tiếp theo" luôn dính đáy
       màn hình trong tầm ngón cái, không phải cuộn xuống tìm nút khi đang bị tính giờ. */
 @media(max-width:560px){
-  /* Menu gọn: nút ☰, bấm mới mở danh sách xổ xuống (Xác thực kết quả, Lịch sử làm bài, Hướng dẫn, Hỗ trợ) */
+  /* Menu gọn: nút <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M3 6h18M3 12h18M3 18h18"/></svg>, bấm mới mở danh sách xổ xuống (Xác thực kết quả, Lịch sử làm bài, Hướng dẫn, Hỗ trợ) */
   body.introbg .lp-burger{display:grid}
   body.introbg .lp-nav{display:none;position:absolute;top:calc(100% + 6px);right:12px;z-index:50;flex-direction:column;gap:2px;min-width:230px;padding:6px;
     background:#fff;border:1px solid rgba(41,70,110,.14);border-radius:16px;box-shadow:0 18px 40px -14px rgba(10,37,82,.4)}
@@ -2250,8 +2250,35 @@ body.hide-score .rs-art,body.hide-score .ring,body.hide-score .thr,body.hide-sco
 body.hide-score .stats,body.hide-score .bk,body.hide-score .rs-mp,body.hide-score #resTm,
 body.hide-score .rs-tabs,body.hide-score #btnMore,body.hide-score .rs-links,
 body.hide-score #pnImp,body.hide-score #pnTries,body.hide-score #pnAdv,
-body.hide-score dl.kv#resDetails,body.hide-score #resProof{display:none!important}
+body.hide-score dl.kv#resDetails,body.hide-score #resProof,
+body.hide-score #resSumH1{display:none!important}
 body.hide-score .rs-det,body.hide-score #pnRcpt{display:block!important}
+/* ===== Màn hình hoàn thành đơn giản (hide-score): 1 thẻ căn giữa, có minh hoạ + tiêu đề lớn ===== */
+.hs-art,.hs-head{display:none}
+body.hide-score #scrResult .rs-wrap{display:block;max-width:560px;margin:0 auto}
+body.hide-score .rs-sum,body.hide-score .rs-det{border-radius:26px}
+body.hide-score .rs-det{margin-top:16px}
+body.hide-score .rs-top{text-align:center;display:flex;flex-direction:column;align-items:center;padding:28px 24px 30px;background:linear-gradient(135deg,#0A4FD3,#1678F2 58%,#3A9BFF)!important;color:#fff!important;min-height:0!important}
+body.hide-score .rs-kick{display:inline-flex;align-items:center;gap:8px;padding:6px 16px 6px 10px;border-radius:999px;background:rgba(255,255,255,.18);font-size:12.5px;font-weight:800;letter-spacing:.08em;margin-bottom:16px}
+body.hide-score .rs-kick::before{content:'';width:5px;height:16px;border-radius:3px;background:#fff}
+body.hide-score .rs-brand{flex-direction:column;text-align:center;max-width:100%}
+body.hide-score .rs-ic{display:none}
+body.hide-score .rs-brand b{font-size:26px;line-height:1.3;text-align:center;color:#fff!important}
+body.hide-score .rs-brand small{display:none}
+body.hide-score .hs-art{display:block;width:min(70%,220px);margin:18px auto 6px}
+body.hide-score .hs-art svg{width:100%;height:auto;display:block}
+body.hide-score #resBadge{margin-top:4px}
+body.hide-score #resBadge .badge{font-size:16px;padding:10px 24px 10px 16px;border:2px solid currentColor;box-shadow:none}
+body.hide-score .hs-head{display:block;margin-top:18px}
+body.hide-score .hs-head h1{font-size:22px;font-weight:800;color:#fff;margin:0 0 8px;line-height:1.35}
+body.hide-score .hs-head p{font-size:14.5px;color:rgba(255,255,255,.92);margin:0;line-height:1.6;max-width:400px;margin-inline:auto}
+body.hide-score .rs-who{justify-content:center;flex-direction:column;text-align:center;margin-bottom:4px}
+body.hide-score .rs-who>div{text-align:center}
+body.hide-score .rs-who>div b,body.hide-score .rs-who>div span{text-align:center}
+body.hide-score .rs-sub{margin:4px auto 0;justify-content:center;text-align:center}
+@media (max-width:640px){
+  body.hide-score .hs-head h1{font-size:19px}
+}
 @media(max-width:860px){
   body.rs .stage{width:100%;padding:0 10px}
   #scrResult .rs-wrap{gap:12px;margin-top:-20px;position:relative;z-index:3}
@@ -2300,7 +2327,7 @@ body.hide-score .rs-det,body.hide-score #pnRcpt{display:block!important}
   .rs-mp .sb u{display:inline-block;width:1.5px;height:1em;margin:0 10px;background:#9FB2CC;vertical-align:-2px}
   /* phần dưới */
   .rs-mob{display:block;margin:6px 0 0;padding:16px 14px 18px;border-radius:24px 24px 26px 26px;background:linear-gradient(180deg,#FFFFFF,#F4F8FF);box-shadow:0 -10px 24px -18px rgba(20,70,160,.5)}
-  /* 4 ô thời gian gộp thành MỘT thẻ liền: hàng trên là mốc giờ (bắt đầu → nộp), hàng dưới là hai chỉ số nổi bật */
+  /* 4 ô thời gian gộp thành MỘT thẻ liền: hàng trên là mốc giờ (bắt đầu <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> nộp), hàng dưới là hai chỉ số nổi bật */
   .rs-tm{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #DCE7F7;border-radius:20px;background:#fff;overflow:hidden;box-shadow:0 12px 28px -20px rgba(20,70,160,.55)}
   .rs-tm div{position:relative;display:flex;flex-direction:column;gap:6px;min-width:0;padding:14px 16px 15px;border:0;border-radius:0;background:none;box-shadow:none}
   .rs-tm div:nth-child(odd){border-right:1px solid #E6EEF9}
@@ -2822,7 +2849,7 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
       <div class="locline" id="locLine" role="status"></div>
       <div id="photoMsg" role="alert"></div>
       <button class="btn go" id="btnCapture" type="button" style="margin-top:16px">Chụp và phân tích khuôn mặt</button>
-      <button class="btn go hide" id="btnPhotoOk" type="button" style="margin-top:16px">✓ Dùng ảnh này, bắt đầu làm bài</button>
+      <button class="btn go hide" id="btnPhotoOk" type="button" style="margin-top:16px"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Dùng ảnh này, bắt đầu làm bài</button>
       <button class="btn ghost hide" id="btnPhotoRetry" type="button">Chụp lại</button>
       <button class="btn ghost" id="btnPhotoBack" type="button">Quay lại</button>
       <ul class="ai-tips" aria-label="Mẹo quét nhanh">
@@ -2835,7 +2862,7 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
 
     <!-- 3. Làm bài -->
     <section class="card hide" id="scrQuiz">
-      <div class="idwarn hide" id="idWarn" role="alert"><b aria-hidden="true">⚠</b><span>Khuôn mặt chưa khớp với ảnh đã lưu ở các lần làm bài trước của tài khoản này. Sự việc đã được ghi nhận và báo quản trị viên.</span><button type="button" id="idWarnX" aria-label="Đóng thông báo">×</button></div>
+      <div class="idwarn hide" id="idWarn" role="alert"><b aria-hidden="true"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></b><span>Khuôn mặt chưa khớp với ảnh đã lưu ở các lần làm bài trước của tài khoản này. Sự việc đã được ghi nhận và báo quản trị viên.</span><button type="button" id="idWarnX" aria-label="Đóng thông báo">×</button></div>
       <div class="qexam" id="qExam"><div class="qe-t"><span class="qe-k">Bài kiểm tra</span><b id="qeTitle"></b><span class="qe-d" id="qeDate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><i id="qeDateT"></i></span></div><svg class="qe-clip" viewBox="0 0 120 130" aria-hidden="true"><g transform="rotate(12 60 65)"><rect x="18" y="16" width="84" height="100" rx="12" fill="#fff"/><rect x="18" y="16" width="84" height="100" rx="12" fill="none" stroke="#BFD9FF" stroke-width="3"/><rect x="40" y="6" width="40" height="20" rx="8" fill="#1B6FF0"/><circle cx="60" cy="14" r="4" fill="#fff"/><g fill="none" stroke="#17B890" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M30 46l6 6 11-12M30 72l6 6 11-12M30 98l6 6 11-12"/></g><g stroke="#9CC4F5" stroke-width="5" stroke-linecap="round"><path d="M58 46h30M58 72h30M58 98h22"/></g></g></svg></div>
       <div class="qstat" id="qStat"><div class="qs-t"><span class="qs-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2h5"/></svg></span><span class="qs-l"><i id="qsLbl">Thời gian còn lại</i><b id="qsClock">0:00</b></span></div><span class="qs-sep" aria-hidden="true"></span><div class="qs-p"><span class="qs-l2">Đã làm: <b id="qsDone">0/0</b></span><span class="qs-bar" aria-hidden="true"><i id="qsBar"></i></span><em id="qsPct">0%</em></div></div>
       <div class="qcard">
@@ -2873,9 +2900,11 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
             <img class="rs-art" src="/kiemtra/rs-art.png" alt="" width="260" height="200" aria-hidden="true">
             <span class="rs-kick" aria-hidden="true">KẾT QUẢ BÀI KIỂM TRA</span>
             <div class="rs-brand"><span class="rs-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4.5" width="14" height="17" rx="2.5"/><path d="M9 3h6v3H9z"/><path d="m8 11 1.3 1.3L11.5 10M13.5 11H16M8 16l1.3 1.3 2.2-2.3M13.5 16H16"/></svg></span><div><b id="rvTitle">Bài kiểm tra</b><small><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 2.5 2.5L16 9"/></svg>Kết quả bài kiểm tra</small></div></div>
+            <div class="hs-art" id="hsArt" aria-hidden="true"><svg viewBox="0 0 160 130"><defs><linearGradient id="hsG1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#BFE0FF"/><stop offset="1" stop-color="#8FC4FF"/></linearGradient></defs><ellipse cx="80" cy="112" rx="58" ry="8" fill="#DCEBFF"/><rect x="42" y="18" width="62" height="86" rx="10" fill="#fff" stroke="#1F6FE5" stroke-width="3"/><rect x="58" y="10" width="30" height="16" rx="5" fill="#1F6FE5"/><rect x="52" y="34" width="38" height="8" rx="4" fill="url(#hsG1)"/><rect x="52" y="50" width="38" height="8" rx="4" fill="url(#hsG1)"/><rect x="52" y="66" width="38" height="8" rx="4" fill="url(#hsG1)"/><circle cx="50" cy="38" r="9" fill="#18A957"/><path d="m46.3 38.2 2.6 2.6 4.6-5" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="50" cy="54" r="9" fill="#18A957"/><path d="m46.3 54.2 2.6 2.6 4.6-5" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="50" cy="70" r="9" fill="#18A957"/><path d="m46.3 70.2 2.6 2.6 4.6-5" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M78 92 108 78 138 92 108 106z" fill="#1F6FE5"/><path d="M93 99v14c0 4 7 7 15 7s15-3 15-7V99" fill="none" stroke="#0B3F94" stroke-width="2.4"/><circle cx="135" cy="92" r="2.4" fill="#0B3F94"/><path d="M135 94v12" stroke="#0B3F94" stroke-width="2" stroke-linecap="round"/></svg></div>
             <div id="resBadge"></div>
+            <div class="hs-head" id="resHeadBlock"><h1 id="resHeadTitle"></h1><p id="resHeadSub"></p></div>
           </div>
-          <h1 tabindex="-1">Kết quả của bạn</h1>
+          <h1 id="resSumH1" tabindex="-1">Kết quả của bạn</h1>
           <div class="ring" id="resRing"><svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="gP" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5C25E"/><stop offset="1" stop-color="#D68F1E"/></linearGradient><linearGradient id="gY" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12B5C9"/><stop offset="1" stop-color="#17794A"/></linearGradient><linearGradient id="gN" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B3261E"/></linearGradient><linearGradient id="gT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12B5C9"/><stop offset="1" stop-color="#0A63C4"/></linearGradient><linearGradient id="gScRed" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B3261E"/></linearGradient><linearGradient id="gScYellow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5C25E"/><stop offset="1" stop-color="#D68F1E"/></linearGradient><linearGradient id="gScBlue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5BA8E8"/><stop offset="1" stop-color="#1D6FC2"/></linearGradient><linearGradient id="gScGreen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5FD08A"/><stop offset="1" stop-color="#17794A"/></linearGradient></defs><circle class="trk" cx="60" cy="60" r="52" fill="none" stroke-width="10"/><circle class="prg" id="resArc" cx="60" cy="60" r="52" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73"/></svg><div class="c"><b id="resPct">0%</b><span>Tỉ lệ đúng</span></div></div>
           <p class="thr" id="resThr"></p>
           <p class="cheer" id="resCheer"></p>
@@ -2989,11 +3018,11 @@ body[data-scr="exam"] .lnd-h span::after{display:none}
       <div class="ck-btns" id="ckBtns"><button type="button" class="ck-b go" id="ckYes">Đồng ý</button><button type="button" class="ck-b" id="ckNo">Chỉ cookie cần thiết</button></div>
       <p class="ck-note" id="ckNote">Không đồng ý: bạn vẫn làm bài bình thường, chỉ là mỗi lần mở trang phải nhập lại. Có thể đổi lựa chọn ở “Cài đặt cookie” cuối trang.</p>
       <div class="ck-blocked hide" id="ckBlocked">
-        <p class="ck-warn">⚠ Trình duyệt của bạn đang <b>chặn cookie</b>, nên dù bạn chọn gì ở đây, hệ thống cũng không ghi nhớ được — lần sau mở trang sẽ lại thấy thông báo này.</p>
+        <p class="ck-warn"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Trình duyệt của bạn đang <b>chặn cookie</b>, nên dù bạn chọn gì ở đây, hệ thống cũng không ghi nhớ được — lần sau mở trang sẽ lại thấy thông báo này.</p>
         <p class="ck-p">Cách bật cookie (tuỳ trình duyệt):</p>
         <ul class="ck-yes">
-          <li><b>Safari (iPhone/iPad):</b> Cài đặt → Safari → tắt "Ngăn chặn theo dõi trên nhiều trang web" hoặc tắt chế độ duyệt web riêng tư.</li>
-          <li><b>Chrome/Cốc Cốc:</b> bấm biểu tượng ổ khoá cạnh địa chỉ trang → Cookie → Cho phép.</li>
+          <li><b>Safari (iPhone/iPad):</b> Cài đặt <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> Safari <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> tắt "Ngăn chặn theo dõi trên nhiều trang web" hoặc tắt chế độ duyệt web riêng tư.</li>
+          <li><b>Chrome/Cốc Cốc:</b> bấm biểu tượng ổ khoá cạnh địa chỉ trang <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> Cookie <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> Cho phép.</li>
           <li><b>Mở trong Zalo/Facebook:</b> bấm "Mở bằng trình duyệt" (Chrome/Safari) thay vì làm bài ngay trong ứng dụng.</li>
         </ul>
         <div class="ck-btns"><button type="button" class="ck-b go" id="ckBlockedOk">Đã hiểu, tiếp tục làm bài</button></div>
@@ -3229,8 +3258,8 @@ function checkDone(j, code, email){
   if (!j.ok && j.face && j.face.ok){
     // Đã chụp khuôn mặt: báo rõ từng bước — khuôn mặt đạt, thông tin đăng nhập chưa khớp
     $('checkMsg').innerHTML = '<div class="msg err fsteps">' +
-      '<div class="fs ok"><b>✓</b><span><strong>Khuôn mặt: đã xác thực</strong>Ảnh có đúng một người, chụp trực tiếp qua máy ảnh.</span></div>' +
-      '<div class="fs bad"><b>✕</b><span><strong>Thông tin đăng nhập: chưa khớp</strong>' + esc(j.error || 'Không tìm thấy thông tin khớp với mã nhân viên và email đã nhập.') + '</span></div>' +
+      '<div class="fs ok"><b><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg></b><span><strong>Khuôn mặt: đã xác thực</strong>Ảnh có đúng một người, chụp trực tiếp qua máy ảnh.</span></div>' +
+      '<div class="fs bad"><b><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg></b><span><strong>Thông tin đăng nhập: chưa khớp</strong>' + esc(j.error || 'Không tìm thấy thông tin khớp với mã nhân viên và email đã nhập.') + '</span></div>' +
       '<p>Kiểm tra lại mã nhân viên và email rồi bấm Tiếp tục. Mỗi lần thử sau vẫn cần chụp lại khuôn mặt cho tới khi nhập đúng.</p></div>';
     return;
   }
@@ -3274,7 +3303,7 @@ function testRolePopOpen(){
   var t = ST.testRole, pop = $('testRolePop');
   if (!t) return;
   if (!pop){ pop = document.createElement('div'); pop.id = 'testRolePop'; pop.className = 'trp'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-modal', 'true'); pop.setAttribute('aria-labelledby', 'trpT'); document.body.appendChild(pop); }
-  pop.innerHTML = '<div class="trpc"><div class="trpt" id="trpT">🧪 Tài khoản thử nghiệm</div><p class="trpq">Bạn muốn thử hệ thống ở vai trò nào?</p>' +
+  pop.innerHTML = '<div class="trpc"><div class="trpt" id="trpT"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 2h6"/><path d="M10 2v6.5L4.5 19a2 2 0 0 0 1.8 3h11.4a2 2 0 0 0 1.8-3L14 8.5V2"/></svg> Tài khoản thử nghiệm</div><p class="trpq">Bạn muốn thử hệ thống ở vai trò nào?</p>' +
     '<label class="trpo' + (t.role === 'cand' ? ' on' : '') + '"><input type="radio" name="trole" value="cand"' + (t.role === 'cand' ? ' checked' : '') + '><span><b>Thí sinh</b><i>Đầy đủ mọi chức năng như thí sinh thật: quét khuôn mặt, che màn hình khi rời tab…</i></span></label>' +
     '<label class="trpo' + (t.role === 'admin' ? ' on' : '') + '"><input type="radio" name="trole" value="admin"' + (t.role === 'admin' ? ' checked' : '') + '><span><b>Quản trị viên</b><i>Chọn chức năng muốn thử, bỏ tích chức năng muốn bỏ qua.</i></span></label>' +
     '<div class="trpk' + (t.role === 'admin' ? '' : ' hide') + '" id="trChecks"><label><input type="checkbox" id="trFace"' + (t.face ? ' checked' : '') + '> Quét khuôn mặt + thử thách quay mặt</label>' +
@@ -3297,7 +3326,7 @@ function testRoleRender(){
   if (ST.testRoleFor !== c.inCode){ ST.testRole = null; ST.testRoleFor = c.inCode; }
   var t = ST.testRole = ST.testRole || { role: 'cand', face: true, shield: true, done: false };
   if (!chip){ chip = document.createElement('div'); chip.id = 'testRoleChip'; chip.className = 'trchip'; $('btnStart').parentNode.insertBefore(chip, $('btnStart')); }
-  chip.innerHTML = '<span>🧪 Đang thử với vai trò: <b>' + esc(testRoleSummary(t)) + '</b></span><button type="button" id="trChange">Đổi</button>';
+  chip.innerHTML = '<span><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 2h6"/><path d="M10 2v6.5L4.5 19a2 2 0 0 0 1.8 3h11.4a2 2 0 0 0 1.8-3L14 8.5V2"/></svg> Đang thử với vai trò: <b>' + esc(testRoleSummary(t)) + '</b></span><button type="button" id="trChange">Đổi</button>';
   $('trChange').onclick = testRolePopOpen;
   ST.noShield = t.role === 'admin' && !t.shield;
   if (!t.done) testRolePopOpen();
@@ -3608,8 +3637,8 @@ function askLocation(){
 var LOCG = { wait:null };
 function locHelp(){
   var ua = navigator.userAgent || '';
-  if (/iPhone|iPad|iPod/i.test(ua)) return '<ol><li>Mở <b>Cài đặt</b> → <b>Quyền riêng tư & Bảo mật</b> → <b>Dịch vụ định vị</b>: bật lên.</li><li>Trong danh sách đó chọn <b>Safari</b> (hoặc Chrome) → <b>Khi dùng ứng dụng</b>.</li><li>Quay lại trang này, bấm <b>Thử lại</b>.</li></ol>';
-  if (/Android/i.test(ua)) return '<ol><li>Kéo thanh thông báo xuống, bật <b>Vị trí</b> (GPS).</li><li>Bấm biểu tượng ổ khoá cạnh địa chỉ trang → <b>Quyền</b> → <b>Vị trí</b> → <b>Cho phép</b>.</li><li>Bấm <b>Thử lại</b>.</li></ol>';
+  if (/iPhone|iPad|iPod/i.test(ua)) return '<ol><li>Mở <b>Cài đặt</b> <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> <b>Quyền riêng tư & Bảo mật</b> <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> <b>Dịch vụ định vị</b>: bật lên.</li><li>Trong danh sách đó chọn <b>Safari</b> (hoặc Chrome) <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> <b>Khi dùng ứng dụng</b>.</li><li>Quay lại trang này, bấm <b>Thử lại</b>.</li></ol>';
+  if (/Android/i.test(ua)) return '<ol><li>Kéo thanh thông báo xuống, bật <b>Vị trí</b> (GPS).</li><li>Bấm biểu tượng ổ khoá cạnh địa chỉ trang <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> <b>Quyền</b> <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> <b>Vị trí</b> <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> <b>Cho phép</b>.</li><li>Bấm <b>Thử lại</b>.</li></ol>';
   return '<ol><li>Bấm biểu tượng ổ khoá cạnh địa chỉ trang.</li><li>Ở mục <b>Vị trí</b>, chọn <b>Cho phép</b>.</li><li>Bấm <b>Thử lại</b>.</li></ol>';
 }
 function locDlgRender(){
@@ -3648,10 +3677,10 @@ function renderLoc(){
   var el = $('locLine'); if (!el) return;
   var e = DEV.locErr, h;
   if (DEV.loc){ el.innerHTML = ''; return; }
-  else if (e === 'pending'){ el.className = 'locline'; h = '<span class="i" aria-hidden="true">📍</span><div>Đang lấy vị trí… Nếu trình duyệt hỏi, hãy bấm <b>Cho phép</b>.</div>'; }
-  else if (e === 'denied'){ el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Bạn đã chặn quyền vị trí. Không bắt buộc — bạn vẫn làm bài bình thường được. Muốn bật lại: bấm biểu tượng ổ khoá cạnh địa chỉ trang → Vị trí → Cho phép, rồi bấm thử lại.<button type="button" id="locRetry">Thử lại</button></div>'; }
-  else if (e === 'unsupported'){ el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Trình duyệt này không hỗ trợ lấy vị trí. Không bắt buộc — bạn vẫn làm bài bình thường được.</div>'; }
-  else { el.className = 'locline bad'; h = '<span class="i" aria-hidden="true">⚠️</span><div>Chưa lấy được vị trí. Không bắt buộc — bạn vẫn làm bài bình thường được. Muốn thử lại, bật GPS/Dịch vụ định vị rồi bấm nút.<button type="button" id="locRetry">Thử lại</button></div>'; }
+  else if (e === 'pending'){ el.className = 'locline'; h = '<span class="i" aria-hidden="true"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></span><div>Đang lấy vị trí… Nếu trình duyệt hỏi, hãy bấm <b>Cho phép</b>.</div>'; }
+  else if (e === 'denied'){ el.className = 'locline bad'; h = '<span class="i" aria-hidden="true"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span><div>Bạn đã chặn quyền vị trí. Không bắt buộc — bạn vẫn làm bài bình thường được. Muốn bật lại: bấm biểu tượng ổ khoá cạnh địa chỉ trang <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> Vị trí <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> Cho phép, rồi bấm thử lại.<button type="button" id="locRetry">Thử lại</button></div>'; }
+  else if (e === 'unsupported'){ el.className = 'locline bad'; h = '<span class="i" aria-hidden="true"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span><div>Trình duyệt này không hỗ trợ lấy vị trí. Không bắt buộc — bạn vẫn làm bài bình thường được.</div>'; }
+  else { el.className = 'locline bad'; h = '<span class="i" aria-hidden="true"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span><div>Chưa lấy được vị trí. Không bắt buộc — bạn vẫn làm bài bình thường được. Muốn thử lại, bật GPS/Dịch vụ định vị rồi bấm nút.<button type="button" id="locRetry">Thử lại</button></div>'; }
   el.innerHTML = h;
 }
 document.addEventListener('click', function(ev){ if (ev.target && ev.target.id === 'locRetry'){ requireLocation(); locTry(); } });
@@ -3871,7 +3900,7 @@ function lvOk(p, y, w, off){ // ngưỡng ở trình duyệt chặt hơn máy ch
   if (p === 'left') return y >= .15;
   return y <= -.15;
 }
-function lvPills(){ $('aiPills').innerHTML = LV.seq.map(function(p, k){ return '<li class="' + (k < LV.i ? 'done' : k === LV.i ? 'cur' : '') + '">' + (k < LV.i ? '✓ ' : '') + LV_NAME[p] + '</li>'; }).join(''); }
+function lvPills(){ $('aiPills').innerHTML = LV.seq.map(function(p, k){ return '<li class="' + (k < LV.i ? 'done' : k === LV.i ? 'cur' : '') + '">' + (k < LV.i ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> ' : '') + LV_NAME[p] + '</li>'; }).join(''); }
 /* Câu nhắc hiển thị DƯỚI khung camera (không đè lên khuôn mặt): lấy từ câu nhắc thử thách / câu nhắc chờ */
 function fvSaySync(){
   var el = $('fvSay'), sc = $('scrPhoto'); if (!el || !sc) return;
@@ -3885,7 +3914,7 @@ try { var fvMo = new MutationObserver(fvSaySync);
   ['aiHint', 'aiSayT'].forEach(function(id){ fvMo.observe($(id), { childList:true, characterData:true, subtree:true }); });
   fvMo.observe($('scrPhoto'), { attributes:true, attributeFilter:['class', 'data-ai'] });
   fvMo.observe(document.querySelector('#scrPhoto .photo-box'), { attributes:true, attributeFilter:['class'] }); } catch (e) {}
-/* Thẻ tiến trình kiểu "Phát hiện khuôn mặt → 3 thử thách" (giao diện điện thoại) */
+/* Thẻ tiến trình kiểu "Phát hiện khuôn mặt <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> 3 thử thách" (giao diện điện thoại) */
 var FV_NAME = { front:'Nhìn thẳng vào máy ảnh', left:'Quay mặt sang trái', right:'Quay mặt sang phải' };
 function fvPaint(hold){
   var on = LV.on && LV.seq && LV.seq.length === 3, i = on ? Math.min(LV.i, 3) : 0, cur = on ? 1 + i : 0, h = Math.max(0, Math.min(1, hold || 0));
@@ -4114,7 +4143,7 @@ async function aiVerifyEnd(res){ // kết quả máy chủ (kt-start): đối ch
     aiStep(4, 'ok', 1); aiStep(5, 'ok', 1);
     if (j.identity === 'mismatch'){ // khác người so với các lần trước: vẫn cho làm bài, nhưng báo rõ và đã báo quản trị viên
       aiStep(3, 'bad'); aiScr('bad'); aiChip('bad', 'KHÁC NGƯỜI LẦN TRƯỚC'); ST.identityWarn = true; sndWarn(); guide('Khuôn mặt chưa khớp với các lần làm bài trước. Sự việc đã được báo quản trị viên.');
-      msg('photoMsg', '⚠ Khuôn mặt chưa khớp với ảnh đã lưu của tài khoản này. Sự việc đã được ghi nhận và báo quản trị viên. Bạn vẫn có thể làm bài.', 'warn');
+      msg('photoMsg', '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Khuôn mặt chưa khớp với ảnh đã lưu của tài khoản này. Sự việc đã được ghi nhận và báo quản trị viên. Bạn vẫn có thể làm bài.', 'warn');
       await aiDelay(2400); return;
     }
     aiStep(3, 'ok', 1); aiScr('ok'); aiChip('ok', 'XÁC THỰC THÀNH CÔNG'); sndOk(); guide('Xác thực thành công.', 'verify-ok', 8000); await aiDelay(650); return;
@@ -4141,7 +4170,7 @@ async function photoInit(){
     PH.stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:480}, height:{ideal:360} }, audio:false });
     v.srcObject = PH.stream;
     var tk = PH.stream.getVideoTracks()[0], fm = tk && tk.getSettings ? (tk.getSettings().facingMode || '') : '';
-    box.classList.toggle('mirror', fm !== 'environment'); // webcam máy tính thường không báo facingMode → coi là camera trước
+    box.classList.toggle('mirror', fm !== 'environment'); // webcam máy tính thường không báo facingMode <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> coi là camera trước
     try { await v.play(); } catch(e2){}
     ready();
   } catch(e){
@@ -4197,11 +4226,11 @@ async function photoProcess(c){ // c: canvas chứa ảnh nhìn thẳng
   // Nhận diện đạt (hoặc máy không kiểm tra được cục bộ): tự động vào bài luôn, không bắt bấm "Dùng ảnh này" nữa.
   // Vẫn chờ một nhịp ngắn và giữ nút "Chụp lại" để kịp hủy nếu ảnh chưa ưng ý.
   if (r.status === 'ok' || r.status === 'unavailable'){
-    msg('photoMsg', r.status === 'ok' ? '✓ Đã nhận diện được khuôn mặt. Đang vào bài…' : 'Không tải được bộ kiểm tra khuôn mặt trên máy này. Ảnh sẽ được kiểm tra khi bắt đầu làm bài. Đang vào bài…', 'ok');
+    msg('photoMsg', r.status === 'ok' ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Đã nhận diện được khuôn mặt. Đang vào bài…' : 'Không tải được bộ kiểm tra khuôn mặt trên máy này. Ảnh sẽ được kiểm tra khi bắt đầu làm bài. Đang vào bài…', 'ok');
     clearTimeout(AUTO_T);
     AUTO_T = setTimeout(async function(){ if (g !== PHG || document.body.dataset.scr !== 'photo') return; await vgWait(12000); if (g !== PHG || document.body.dataset.scr !== 'photo') return; if (PH.mode === 'login') doFaceLogin(); else startExam(''); }, 900);
   }
-  else { msg('photoMsg', '⚠ ' + FACE_MSG[r.status], 'err'); }  // không cho bắt đầu, chỉ cho chụp lại
+  else { msg('photoMsg', '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> ' + FACE_MSG[r.status], 'err'); }  // không cho bắt đầu, chỉ cho chụp lại
 }
 $('btnCapture').addEventListener('click', async function(){
   var v = $('pvVideo'), c = $('pvCanvas');
@@ -4246,7 +4275,7 @@ async function doFaceLogin(){
   if (g !== PHG) return; // đã thoát màn quét trong lúc chờ máy chủ
   var j = res && res.j;
   if (j && j.ok){
-    aiStep(3, 'ok', 1); aiStep(4, 'run'); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN'); sndOk(); guide('Xin chào ' + (j.name || '') + '. Đăng nhập thành công.', 'hello', 8000); msg('photoMsg', '✓ Xin chào ' + (j.name || j.code) + '. Đang mở thông tin của bạn…', 'ok');
+    aiStep(3, 'ok', 1); aiStep(4, 'run'); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN'); sndOk(); guide('Xin chào ' + (j.name || '') + '. Đăng nhập thành công.', 'hello', 8000); msg('photoMsg', '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Xin chào ' + (j.name || j.code) + '. Đang mở thông tin của bạn…', 'ok');
     await aiDelay(900); if (g !== PHG) return; aiStep(4, 'ok', 1); await aiDelay(450); await vgWait(12000); if (g !== PHG) return; VG.last['scr-check'] = Date.now();
     fpSet(j.facePass ? { token: j.facePass, code: String(j.code || ''), photo: PH.dataUrl, at: Date.now() } : null); // vé: bỏ bước quét mặt lần hai khi bắt đầu làm bài
     flSet(j.faceLogin ? { token: j.faceLogin, code: String(j.code || ''), at: Date.now() } : null); // vé: vào bằng khuôn mặt thì không bị hỏi xác thực lại vì "nhập sai nhiều lần"
@@ -4263,7 +4292,7 @@ async function doFaceLogin(){
 }
 
 async function startExam(passToken){ // passToken: vé đăng nhập bằng khuôn mặt ('' = ảnh vừa chụp ở màn quét)
-  var btn = $('btnPhotoOk'), label = '✓ Dùng ảnh này, bắt đầu làm bài';
+  var btn = $('btnPhotoOk'), label = '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Dùng ảnh này, bắt đầu làm bài';
   if (START_BUSY) return; START_BUSY = true;
   btn.disabled = true; btn.textContent = 'AI đang xác minh và chuẩn bị đề…'; if (!passToken) msg('photoMsg',''); aiVerifyStart();
   var res, body = { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, face: PH.face, live: PH.live, device: DEV, examId:EXAM_ID, phone: ST.cand.phone || ST.phoneNew || '', province: (ST.rgNew && ST.rgNew.province) || '', region: (ST.rgNew && ST.rgNew.region) || '', birthDate: ST.birthNew || '' };
@@ -4279,7 +4308,7 @@ async function startExam(passToken){ // passToken: vé đăng nhập bằng khu�
   if (!res.j.ok && res.j.needPhone){ photoStop(); show('confirm'); msg('phoneMsg', res.j.error); return; }
   if (!res.j.ok && res.j.needRegion){ photoStop(); ST.cand.needRegion = true; renderConfirm(); msg('regionMsg', res.j.error); return; }
   if (!res.j.ok && res.j.needBirth){ photoStop(); ST.cand.needBirth = true; renderConfirm(); msg('birthMsg', res.j.error); return; }
-  if (!res.j.ok){ msg('photoMsg', (res.j.faceRejected ? '⚠ ' : '') + (res.j.error || 'Không thể bắt đầu bài kiểm tra.')); if (res.j.faceRejected || passToken){ btn.classList.add('hide'); $('btnPhotoRetry').classList.remove('hide'); } return; }
+  if (!res.j.ok){ msg('photoMsg', (res.j.faceRejected ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> ' : '') + (res.j.error || 'Không thể bắt đầu bài kiểm tra.')); if (res.j.faceRejected || passToken){ btn.classList.add('hide'); $('btnPhotoRetry').classList.remove('hide'); } return; }
   if (!ST.cand.phone && ST.phoneNew) ST.cand.phone = ST.phoneNew;
   if (ST.rgNew){ ST.cand.province = ST.rgNew.province; ST.cand.region = ST.rgNew.region; ST.cand.needRegion = false; }
   if (!ST.cand.birthDate && ST.birthNew) ST.cand.birthDate = ST.birthNew;
@@ -4693,7 +4722,7 @@ function renderAdvice(a){
     (a.strengths && a.strengths.length && !$('pnImp') ? '<span class="sub">Điều bạn làm tốt</span><ul class="str">' + a.strengths.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') +
     (a.topics && a.topics.length && !$('pnImp') ? '<span class="sub">Chủ đề nên ôn lại<small style="display:block;text-transform:none;letter-spacing:0;font-weight:500;opacity:.75;margin-top:2px">Đọc lại tài liệu, rồi thử tự giải thích bằng lời của mình.</small></span><ul class="topics">' + a.topics.map(function(x){ var i = x.indexOf(':'); return '<li>' + (i > 0 && i < 70 ? '<b>' + esc(x.slice(0, i)) + '</b>:' + esc(x.slice(i + 1)) : esc(x)) + '</li>'; }).join('') + '</ul>' : '') +
     '<span class="sub">Gợi ý cho lần tới</span><ul>' + a.actions.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' +
-    (a.goal ? '<div class="goal"><span aria-hidden="true">🎯</span><div><b>Mục tiêu nhỏ cho lần tới:</b> ' + esc(String(a.goal).replace(/^Lần tới:\s*/i, '')) + '</div></div>' : '');
+    (a.goal ? '<div class="goal"><span aria-hidden="true"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span><div><b>Mục tiêu nhỏ cho lần tới:</b> ' + esc(String(a.goal).replace(/^Lần tới:\s*/i, '')) + '</div></div>' : '');
   box.classList.remove('hide');
 }
 function triesTime(ms){ var d = new Date(ms + 7 * 3600 * 1000), p = function(n){ return (n < 10 ? '0' : '') + n; }; return p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()) + ' ' + p(d.getUTCDate()) + '/' + p(d.getUTCMonth() + 1); }
@@ -4705,7 +4734,7 @@ function renderTries(A){
   var head = '<div class="th"><b>Các lần làm bài</b><span>' + (A.max ? (A.left > 0 ? 'Còn ' + A.left + '/' + A.max + ' lượt' : 'Đã dùng hết ' + A.max + ' lượt') : 'Không giới hạn lượt') + '</span></div>';
   var cells = A.list.map(function(t){
     return '<div class="t' + (t.official ? ' off' : '') + (t.current ? ' cur' : '') + '"' + (t.current ? ' aria-current="true"' : '') + '>' +
-      '<span class="n">Lần ' + t.n + (t.current ? ' · đang xem' : '') + (t.official ? '<span class="tag">★ Chính thức</span>' : '') + '</span>' +
+      '<span class="n">Lần ' + t.n + (t.current ? ' · đang xem' : '') + (t.official ? '<span class="tag"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M12 2.5l2.9 6 6.6.7-4.9 4.6 1.3 6.5L12 17l-5.9 3.3 1.3-6.5-4.9-4.6 6.6-.7z"/></svg> Chính thức</span>' : '') + '</span>' +
       '<span class="sc">' + t.score + '/' + t.total + '</span>' +
       '<span class="mt">' + (t.pct != null ? t.pct + '%' : '') + (t.submittedAt ? ' · ' + triesTime(t.submittedAt) : '') + '</span></div>';
   }).join('');
@@ -4765,7 +4794,7 @@ function surveyPrompt(){
     setTimeout(function(){
       if (bg.querySelector('button.done')) return;
       go.classList.add('again'); go.textContent = 'Mở lại phiếu khảo sát';
-      var d = document.createElement('button'); d.type = 'button'; d.className = 'done'; d.textContent = '✓ Tôi đã gửi khảo sát';
+      var d = document.createElement('button'); d.type = 'button'; d.className = 'done'; d.textContent = '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Tôi đã gửi khảo sát';
       d.addEventListener('click', function(){ mark(); bg.remove(); document.removeEventListener('keydown', onKey, true); });
       go.parentNode.insertBefore(d, go);
       bg.querySelector('.note').textContent = 'Đã gửi khảo sát xong thì bấm nút xanh lá để xem kết quả bài kiểm tra.';
@@ -4780,7 +4809,7 @@ function rsPick(t){
   var m = { imp:'Imp', tries:'Tries', adv:'Adv', rcpt:'Rcpt' };
   Object.keys(m).forEach(function(k){ var on = k === t; $('pn' + m[k]).classList.toggle('on', on); $('tb' + m[k]).classList.toggle('on', on); $('tb' + m[k]).setAttribute('aria-selected', String(on)); });
 }
-function rsTabs(){ // tab mặc định: còn lượt làm tiếp → "Các lần làm"; còn lại → "Các vấn đề cần cải thiện" (luôn có)
+function rsTabs(){ // tab mặc định: còn lượt làm tiếp <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> "Các lần làm"; còn lại <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> "Các vấn đề cần cải thiện" (luôn có)
   var hasT = !$('resTries').classList.contains('hide'), hasA = !$('resAdvice').classList.contains('hide');
   $('tbTries').classList.toggle('hide', !hasT); $('tbAdv').classList.toggle('hide', !hasA);
   $('rsTabs').classList.remove('hide');
@@ -4811,6 +4840,7 @@ function renderMob(r, ps, prac, c){
     : ['Đã hoàn thành bài kiểm tra!', 'Bạn có thể xem chi tiết bài làm, nhận xét và học liệu gợi ý để cải thiện kết quả.'];
   $('resDone').className = 'rs-done ' + k;
   $('resDone').innerHTML = (k === 'n' ? RS_ICO.medalN : RS_ICO.medal) + '<div><b>' + t[0] + '</b><p>' + t[1] + '</p></div>';
+  $('resHeadTitle').textContent = t[0]; $('resHeadSub').textContent = t[1];
   $('lpCup').src = ps === false && !prac ? '/kiemtra/fail-photo.webp?v=2' : '/kiemtra/trophy-photo.webp';
   if (!prac) compArt(r.compliancePoints); // tải sẵn cho thẻ chia sẻ
   var open = !!$('btnRetry'); // còn lượt làm tiếp: mở sẵn phần chi tiết để thấy nút "Làm tiếp"
@@ -5610,7 +5640,7 @@ var LP_TXT = {
   guide: { t:'Hướng dẫn làm bài', b:'<ol><li>Nhập mã đề thi do bộ phận quản lý cung cấp, hoặc mở trực tiếp đường dẫn của đề.</li><li>Nhập mã nhân viên và email công ty để xác thực.</li><li>Kiểm tra lại thông tin, đọc thể lệ, chụp ảnh khuôn mặt và cho phép truy cập vị trí.</li><li>Mỗi câu có thời gian riêng, hết giờ hệ thống tự chuyển sang câu kế tiếp. Nếu lỡ thoát, mở lại đường dẫn để làm tiếp.</li><li>Kết quả hiển thị ngay sau khi nộp bài.</li></ol>' },
   support: { t:'Hỗ trợ', b:'<p>Mọi thắc mắc vui lòng liên hệ quản trị viên phụ trách.</p><p>Nếu không vào được bài, hãy mở đường dẫn bằng Chrome hoặc Safari (không mở trong Zalo hoặc Facebook) và cho phép trình duyệt sử dụng máy ảnh.</p>' }
 };
-// Menu ☰ trên điện thoại: bấm mở/đóng, chọn một mục hoặc bấm ra ngoài / phím Esc thì đóng
+// Menu <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M3 6h18M3 12h18M3 18h18"/></svg> trên điện thoại: bấm mở/đóng, chọn một mục hoặc bấm ra ngoài / phím Esc thì đóng
 (function(){
   var bar = document.querySelector('.lp-bar'), bt = $('lpBurger'); if (!bar || !bt) return;
   function set(on){ bar.classList.toggle('open', on); bt.setAttribute('aria-expanded', on ? 'true' : 'false'); bt.setAttribute('aria-label', on ? 'Đóng menu' : 'Mở menu'); if (on){ var f = $('lpNav').querySelector('a,button'); if (f) f.focus(); } }

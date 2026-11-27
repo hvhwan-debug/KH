@@ -471,7 +471,7 @@ table.t td input[type=checkbox],table.t th input[type=checkbox]{width:17px;heigh
   </div>
 
   <div id="vDetail" class="hide">
-    <div class="pg-head"><div><a href="#" id="back" style="font-size:13px;font-weight:700;color:var(--brand);text-decoration:none">← Tất cả chương trình</a>
+    <div class="pg-head"><div><a href="#" id="back" style="font-size:13px;font-weight:700;color:var(--brand);text-decoration:none"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M15 18l-6-6 6-6"/></svg> Tất cả chương trình</a>
       <h1 class="pg" id="dTitle" style="margin-top:6px"></h1><div id="dChips"></div></div>
       <div class="hdr-act"><button class="btn" type="button" id="bEdit">Sửa</button><button class="btn" type="button" id="bToggle"></button><button class="btn" type="button" id="bPrev">Xem trước email</button><button class="btn dng" type="button" id="bDel">Xoá</button></div></div>
     <div class="card"><div class="card-b"><div class="info" id="dInfo"></div><div class="kpis4" id="dKpi" style="margin-top:14px;grid-template-columns:repeat(4,minmax(0,1fr))"></div></div></div>
@@ -485,12 +485,12 @@ table.t td input[type=checkbox],table.t th input[type=checkbox]{width:17px;heigh
           <label class="ck"><input type="checkbox" id="fHideReg" checked> Ẩn người đã đăng ký</label>
         </div>
         <div class="tw"><table class="t" id="invT"></table></div>
-        <div class="sendbar"><b id="selN">Chưa chọn ai</b><div class="prog hide" id="prog"><i id="progI"></i></div><span class="sp"></span><span class="small" id="sendS" style="color:var(--muted);font-size:12.5px"></span><button class="btn pri" type="button" id="bSend" disabled>✉ Gửi email mời</button></div>
+        <div class="sendbar"><b id="selN">Chưa chọn ai</b><div class="prog hide" id="prog"><i id="progI"></i></div><span class="sp"></span><span class="small" id="sendS" style="color:var(--muted);font-size:12.5px"></span><button class="btn pri" type="button" id="bSend" disabled><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg> Gửi email mời</button></div>
         <div id="sendMsg"></div>
       </div>
       <div id="pAns" class="hide"></div>
       <div id="pReg" class="hide">
-        <div class="fbar2"><input type="search" id="rq" placeholder="Tìm trong danh sách đăng ký…" autocomplete="off"><span class="sp" style="flex:1"></span><button class="btn sm" type="button" id="bCsv">⬇ Tải CSV</button></div>
+        <div class="fbar2"><input type="search" id="rq" placeholder="Tìm trong danh sách đăng ký…" autocomplete="off"><span class="sp" style="flex:1"></span><button class="btn sm" type="button" id="bCsv"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg> Tải CSV</button></div>
         <div class="tw"><table class="t" id="regT"></table></div>
       </div>
     </div></div>
@@ -566,7 +566,7 @@ async function loadList(){
   $('mailWarn').classList.toggle('hide', S.mail);
   $('plist').innerHTML = S.list.length ? S.list.map(function(p){ var s = stLabel(p);
     return '<button type="button" class="pc" data-id="' + esc(p.id) + '"><div style="display:flex;gap:8px;align-items:flex-start;justify-content:space-between"><h3>' + esc(p.title) + '</h3><span class="chip ' + s[1] + '">' + s[0] + '</span></div>' +
-      '<div class="meta">' + (p.when ? '<span>🗓 ' + esc(p.when) + '</span>' : '') + (p.where ? '<span>📍 ' + esc(p.where) + '</span>' : '') + (p.deadline ? '<span>⏳ Hạn đăng ký ' + esc(vn(p.deadline)) + '</span>' : '') + '</div>' +
+      '<div class="meta">' + (p.when ? '<span><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> ' + esc(p.when) + '</span>' : '') + (p.where ? '<span><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + esc(p.where) + '</span>' : '') + (p.deadline ? '<span>⏳ Hạn đăng ký ' + esc(vn(p.deadline)) + '</span>' : '') + '</div>' +
       '<div class="nums"><div><b>' + p.invited + '</b><span>Đã mời</span></div><div class="g"><b>' + p.regs + (p.capacity ? '<small style="font-size:12px;color:var(--muted)">/' + p.capacity + '</small>' : '') + '</b><span>Đã đăng ký</span></div><div><b>' + (p.invited ? Math.round(p.regs / p.invited * 100) + '%' : '–') + '</b><span>Tỉ lệ đăng ký</span></div>' + (p.ask !== false ? '<div><b>' + (p.answered || 0) + '</b><span>Đã chia sẻ</span></div>' : '') + '</div></button>'; }).join('')
     : '<div class="card" style="grid-column:1/-1"><div class="state"><div><b>Chưa có chương trình nào</b>Bấm “+ Tạo chương trình” để bắt đầu.</div></div></div>';
   state('vList');
@@ -659,7 +659,7 @@ function renderAns(){
       keys.map(function(k){ return '<div class="br"><span>' + esc(k) + '</span><span class="tk"><i style="width:' + Math.round(cnt[k] / mx * 100) + '%"></i></span><b>' + cnt[k] + '</b></div>'; }).join('') + '</div></div></div>' +
     '<div class="card"><div class="card-b"><b style="color:var(--navy)">Tình huống được gửi (' + stories.length + ')</b><div class="small" style="color:var(--muted);font-size:12.5px;margin:2px 0 8px">Nguồn ví dụ thực tế cho người chia sẻ</div><div class="ansl" style="max-height:320px;overflow:auto">' +
       (stories.length ? stories.map(function(x){ return card(x, 'story'); }).join('') : '<div class="small" style="color:var(--muted)">Chưa có tình huống nào.</div>') + '</div></div></div></div>' +
-    '<div class="fbar2"><b style="color:var(--navy)">Tất cả chia sẻ</b><span class="sp" style="flex:1"></span><button class="btn sm" type="button" id="bAnsCsv">⬇ Tải CSV chia sẻ</button></div>' +
+    '<div class="fbar2"><b style="color:var(--navy)">Tất cả chia sẻ</b><span class="sp" style="flex:1"></span><button class="btn sm" type="button" id="bAnsCsv"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg> Tải CSV chia sẻ</button></div>' +
     '<div class="ansl">' + l.map(function(x){ return card(x); }).join('') + '</div>';
 }
 /* ---------- gửi email theo đợt ---------- */

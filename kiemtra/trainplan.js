@@ -1,5 +1,5 @@
-/* Menu "Kế hoạch đào tạo" của trang quản trị: chọn tháng → xem khoảng cách năng lực theo vị trí (luật minh bạch)
-   → AI (hoặc luật) lập bảng kế hoạch đào tạo tháng → sửa tay → lưu / xuất CSV.
+/* Menu "Kế hoạch đào tạo" của trang quản trị: chọn tháng <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> xem khoảng cách năng lực theo vị trí (luật minh bạch)
+   <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> AI (hoặc luật) lập bảng kế hoạch đào tạo tháng <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> sửa tay <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> lưu / xuất CSV.
    Dùng các hàm có sẵn của admin.html: $, esc, api, msg. Dữ liệu nhân sự chỉ ở máy chủ; trang này chỉ nhận số liệu tổng hợp theo vị trí. */
 (function () {
   'use strict';
@@ -120,7 +120,7 @@
   }
   function renderChips() {
     var el = document.getElementById('tpChips'); if (!el) return;
-    el.innerHTML = TP.months.length ? '<span class="small" style="align-self:center">Đã lưu:</span>' + TP.months.map(function (m) { return '<button type="button" class="tp-chip' + (m.month === TP.month ? ' on' : '') + '" data-tp-month="' + ea(m.month) + '">' + esc(mLabel(m.month)) + ' · ' + m.count + ' CT' + (m.status === 'final' ? ' ✓' : '') + '</button>'; }).join('') : '';
+    el.innerHTML = TP.months.length ? '<span class="small" style="align-self:center">Đã lưu:</span>' + TP.months.map(function (m) { return '<button type="button" class="tp-chip' + (m.month === TP.month ? ' on' : '') + '" data-tp-month="' + ea(m.month) + '">' + esc(mLabel(m.month)) + ' · ' + m.count + ' CT' + (m.status === 'final' ? ' <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M20 6 9 17l-5-5\"/></svg>' : '') + '</button>'; }).join('') : '';
   }
   function num(n) { return Number(n || 0).toLocaleString('vi-VN'); }
   function lines(arr) { return (arr || []).join('\n'); }
@@ -161,7 +161,7 @@
     var el = document.getElementById('tpFlow'); if (!el) return; var F = TP.flow, saved = TP.months.some(function (m) { return m.month === TP.month; });
     var head = '<div class="tp-fl"><div class="tp-sec" style="margin-top:0">Luồng đào tạo</div><div class="small" style="max-width:70em">Từ bảng kế hoạch đã lưu, hệ thống tự tạo cho từng chương trình: <b>chương trình đăng ký</b> (người nhận bấm 1 nút trong email), <b>bài kiểm tra sau đào tạo</b> (đề riêng, chỉ đúng người của chương trình; câu hỏi AI chỉ soạn từ tài liệu có thật và để ở dạng nháp) và <b>khảo sát sau buổi học</b> (nháp). '
       + '<b>Tạo luồng không gửi email nào.</b> Mỗi lần gửi thư đều có bước xem trước đúng số người và xác nhận, và chỉ gửi khi kế hoạch ở trạng thái “Đã duyệt” và chưa sửa sau khi duyệt.</div>'
-      + '<div class="tp-bar" style="margin:10px 0"><button type="button" class="btn sm" data-tp-act="flow"' + (saved && !TP.dirty ? '' : ' disabled title="Hãy lưu kế hoạch trước"') + '>🚀 ' + (F && F.created ? 'Cập nhật luồng đào tạo từ kế hoạch' : 'Tạo luồng đào tạo từ kế hoạch này') + '</button>'
+      + '<div class="tp-bar" style="margin:10px 0"><button type="button" class="btn sm" data-tp-act="flow"' + (saved && !TP.dirty ? '' : ' disabled title="Hãy lưu kế hoạch trước"') + '><svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M4.5 16.5c-1.5 1.5-2 5-2 5s3.5-.5 5-2c1-1 1-2.5 0-3.5-1-1-2.5-1-3 .5z\"/><path d=\"M12 15l-3-3c2-5 7-10 11-9 1 4-4 9-9 11z\"/><path d=\"M9 12l3 3\"/></svg> ' + (F && F.created ? 'Cập nhật luồng đào tạo từ kế hoạch' : 'Tạo luồng đào tạo từ kế hoạch này') + '</button>'
       + (F && F.created ? '<button type="button" class="btn ghost sm" data-tp-act="qall">Soạn câu hỏi nháp cho tất cả chương trình</button><button type="button" class="btn ghost sm" data-tp-act="effect">Xem đánh giá hiệu quả</button>' : '') + (saved ? '' : '<span class="small">Chưa có kế hoạch đã lưu cho tháng này.</span>') + '</div>';
     if (!F || !F.created) { el.innerHTML = head + '</div>'; return; }
     var gate = F.gate ? '<div class="msg warn" style="margin:0 0 8px">Chưa thể gửi thư: ' + esc(F.gate.error) + '</div>' : '<div class="msg ok" style="margin:0 0 8px">Kế hoạch đã duyệt: có thể gửi thư (mỗi lần đều xem trước và xác nhận).</div>';
@@ -227,7 +227,7 @@
   function steps(cur, err) { TP.steps = cur == null ? null : { cur: cur, err: !!err }; renderSteps(); }
   function renderSteps() {
     var el = document.getElementById('tpSteps'); if (!el) return; var s = TP.steps; if (!s) { el.innerHTML = ''; return; }
-    el.innerHTML = '<ol class="tp-steps">' + STEP_NAMES.map(function (n, i) { var st = i < s.cur ? 'done' : i === s.cur ? (s.err ? 'err' : 'act') : ''; return '<li class="' + st + '"><span>' + (st === 'done' ? '✓' : i + 1) + '</span>' + n + '</li>'; }).join('') + '</ol>';
+    el.innerHTML = '<ol class="tp-steps">' + STEP_NAMES.map(function (n, i) { var st = i < s.cur ? 'done' : i === s.cur ? (s.err ? 'err' : 'act') : ''; return '<li class="' + st + '"><span>' + (st === 'done' ? '<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M20 6 9 17l-5-5\"/></svg>' : i + 1) + '</span>' + n + '</li>'; }).join('') + '</ol>';
   }
   function ul(a) { return a && a.length ? '<ul>' + a.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '<div class="small">—</div>'; }
   function renderExplain() {
@@ -329,7 +329,7 @@
     var head = '<div class="tp-title">KHUNG CHƯƠNG TRÌNH ĐÀO TẠO CHI TIẾT – THÁNG ' + esc(mLabel(TP.month)) + '</div><div class="tp-sub">Kế hoạch đào tạo chi tiết theo đối tượng và chương trình</div>';
     if (!TP.rows.length) { el.innerHTML = '<div class="tp-wrap">' + head + '<div class="tp-empty tp-empty-art">' + EMPTY + '<b>Chưa có kế hoạch cho tháng này.</b><span>Bấm “AI lập kế hoạch” hoặc “Thêm dòng”.</span></div></div>'; renderState(); return; }
     var ths = COLS.map(function (c) { return '<th style="min-width:' + c[2] + 'px">' + c[1] + '</th>'; }).join('') + '<th></th>';
-    var body = TP.rows.map(function (r, i) { return '<tr>' + COLS.map(function (c) { return planCell(c[0], r, i); }).join('') + '<td class="act"><button type="button" class="btn ghost sm danger" data-tp-del="' + i + '" title="Xoá dòng">✕</button></td></tr>'; }).join('');
+    var body = TP.rows.map(function (r, i) { return '<tr>' + COLS.map(function (c) { return planCell(c[0], r, i); }).join('') + '<td class="act"><button type="button" class="btn ghost sm danger" data-tp-del="' + i + '" title="Xoá dòng"><svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M18 6 6 18\"/><path d=\"M6 6l12 12\"/></svg></button></td></tr>'; }).join('');
     el.innerHTML = '<div class="tp-wrap">' + head + '<div style="overflow-x:auto"><table class="tp-plan"><thead><tr>' + ths + '</tr></thead><tbody>' + body + '</tbody></table></div></div>';
     renderState();
   }
@@ -480,7 +480,7 @@
       await loadFlow(); say('Đã soạn ' + n + ' câu hỏi nháp cho các chương trình có tài liệu nguồn.' + (notes.length ? ' Lỗi: ' + notes.join(' · ') : ' Chương trình chưa có tài liệu nguồn được bỏ qua (xem ghi chú ở từng dòng khi bấm soạn riêng).'), notes.length ? 'warn' : 'ok');
     } finally { lock(false); }
   }
-  // Gửi thư có chốt chặn: xem trước đúng số người → hộp xác nhận nêu rõ số người → gửi theo đợt kèm đúng số đã xem
+  // Gửi thư có chốt chặn: xem trước đúng số người <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> hộp xác nhận nêu rõ số người <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> gửi theo đợt kèm đúng số đã xem
   async function sendFlow(op, extra, i, label) {
     var title = TP.flow.items[i].title, base = Object.assign({ op: op, month: TP.month, index: i }, extra);
     var d = await api('POST', '/api/kt-admin', Object.assign({ mode: 'dry' }, base));

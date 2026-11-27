@@ -1,10 +1,10 @@
 /* Đọc file "Danh sách nhân sự" (sheet GT1, GT2, ASM GT1, ASM GT2) và quy ra danh sách thí sinh cho hệ thống.
    Chạy được cả ở trình duyệt (window.KTHr) lẫn Node (để kiểm thử bằng chính file thật).
    Quy tắc chức danh:
-     - Đại diện bán hàng (mọi cấp L1…L5): sheet GT1 → "SR 1", sheet GT2 → "SR 2"
-     - Trưởng Kinh doanh Khu vực / ASM / Senior ASM: ngành 1 → "ASM 1", ngành 2 → "ASM 2"
-     - Nhân viên Tư vấn Sản phẩm → "PC"
-     - Chức danh khác (Task Force, Giám đốc, Trợ lý…) → nhóm "Khác", giữ nguyên chức danh gốc
+     - Đại diện bán hàng (mọi cấp L1…L5): sheet GT1 <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> "SR 1", sheet GT2 <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> "SR 2"
+     - Trưởng Kinh doanh Khu vực / ASM / Senior ASM: ngành 1 <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> "ASM 1", ngành 2 <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> "ASM 2"
+     - Nhân viên Tư vấn Sản phẩm <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> "PC"
+     - Chức danh khác (Task Force, Giám đốc, Trợ lý…) <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> nhóm "Khác", giữ nguyên chức danh gốc
    Bỏ qua: người đã có ngày thôi việc, dòng không có mã NV hợp lệ (vd. dòng ghi chú cuối bảng), sheet MT và Setup. */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -27,7 +27,7 @@
     }
     return String(v).replace(/\s+/g, ' ').trim();
   }
-  // ExcelJS workbook → [{ name, rows: [[...text]] }]
+  // ExcelJS workbook <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> [{ name, rows: [[...text]] }]
   function sheetsFromExcelJS(wb) {
     var out = [];
     wb.eachSheet(function (ws) {
@@ -114,10 +114,10 @@
     return 'Khác';
   }
 
-  /* sheets: [{ name, rows }] → { records, problems, ignored, counts } */
+  /* sheets: [{ name, rows }] <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> { records, problems, ignored, counts } */
   function parse(sheets) {
     var recs = {}, order = [], problems = [], ignored = [], noCode = [];
-    var nameToCode = {}; // tên (không dấu) → mã NV, để dò mã cho sheet ASM GT1 không có cột mã
+    var nameToCode = {}; // tên (không dấu) <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M9 18l6-6-6-6\"/></svg> mã NV, để dò mã cho sheet ASM GT1 không có cột mã
     function put(r, prio) {
       var k = r.code.toUpperCase(), old = recs[k];
       if (!old) { recs[k] = r; r._prio = prio; order.push(k); return; }

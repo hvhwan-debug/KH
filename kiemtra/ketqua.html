@@ -613,7 +613,7 @@ body.pv-on .wrap,body.cert-on.pv-on .wrap{max-width:1440px!important;width:min(1
 </head>
 <body>
 <script src="/kiemtra/topnav.js" data-hide=".au-bar,#vtBar,header.top" data-guide='[data-vt="guide"]' data-support='[data-vt="support"]'></script>
-<header class="au-bar"><a class="au-brand" href="/kiemtra/"><span class="au-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span class="au-name">Hệ thống kiểm tra đánh giá trực tuyến</span></a><a class="au-back" href="/kiemtra/">Trang làm bài →</a></header>
+<header class="au-bar"><a class="au-brand" href="/kiemtra/"><span class="au-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span class="au-name">Hệ thống kiểm tra đánh giá trực tuyến</span></a><a class="au-back" href="/kiemtra/">Trang làm bài <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg></a></header>
 <header class="vt-bar" id="vtBar">
   <a class="vt-brand" href="/kiemtra/"><span class="vt-mark"><img src="/kiemtra/logo-mark.png" alt=""></span><span><b>Nền tảng kiểm tra trực tuyến</b><small>Xác thực kết quả bài kiểm tra</small></span></a>
   <button type="button" class="vt-burger" id="vtBurger" aria-label="Mở menu" aria-expanded="false" aria-controls="vtNav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -952,7 +952,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape'){ if (w
 $('paperGo').addEventListener('click', function(){ if (window.inAppBlock && window.inAppBlock()) return; startPaper(); }); // trang xác thực xem được trong Zalo; chỉ khi cần camera (quét mặt xem lại đề) mới yêu cầu mở bằng trình duyệt
 $('paperAdmin').addEventListener('click', adminView);
 // Quản trị viên đang đăng nhập: hiện nút xem thẳng, không cần nhập mã NV + email
-// Thanh điều hướng: menu ☰ trên điện thoại + hộp Hướng dẫn / Hỗ trợ
+// Thanh điều hướng: menu <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M3 6h18M3 12h18M3 18h18"/></svg> trên điện thoại + hộp Hướng dẫn / Hỗ trợ
 (function(){
   var TXT = {
     guide: { t:'Hướng dẫn', b:'<p>Trang này xác thực kết quả bài kiểm tra bằng mã xác thực hoặc mã QR in trên thẻ kết quả.</p><p>Thông tin hiển thị được lấy trực tiếp từ dữ liệu bài làm trên hệ thống. Người làm bài có thể bấm <b>Xem lại đề đã làm</b> (sau khi bài kiểm tra kết thúc) và quét khuôn mặt để xem lại câu hỏi.</p>' },
@@ -1025,7 +1025,7 @@ $('paperAdmin').addEventListener('click', adminView);
     cal: '<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="9" width="36" height="33" rx="5"/><path d="M6 19h36M15 4v9M33 4v9"/><path d="M14 27h4M22 27h4M30 27h4M14 34h4M22 34h4" stroke-width="3.8"/></svg>'
   };
   $('vTitle').textContent = r.title;
-  var kind = prac ? 's-p' : ps === null ? 's-d' : ps ? 's-y' : 's-n', mark = (prac || ps === false) ? '!' : '✓';
+  var kind = prac ? 's-p' : ps === null ? 's-d' : ps ? 's-y' : 's-n', mark = (prac || ps === false) ? '!' : '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg>';
   var pillTxt = prac ? 'THI THỬ' + (ps === null ? '' : ps ? ' · ĐẠT' : ' · CHƯA ĐẠT') : ps === null ? 'ĐÃ HOÀN THÀNH' : ps ? 'ĐẠT' : 'CHƯA ĐẠT';
   $('vBadge').innerHTML = '<span class="ct-status ' + kind + '"><b>' + mark + '</b>' + esc(pillTxt) + ((ps !== null && r.passScore) ? '<i>Ngưỡng đạt: ' + esc(r.passScore) + '%</i>' : '') + '</span>';
   // Màu vòng theo mốc điểm (giống thẻ ảnh và email): >= 90% xanh lá, 70-90% xanh dương, 60-70% vàng, dưới 60% đỏ

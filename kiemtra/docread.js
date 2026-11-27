@@ -358,7 +358,7 @@ DocRead.importFiles=async function(files,opt){
       opt.msg('Đang đọc “'+files[0].name+'”…','busy');
       var d=await DocRead.read(files[0],ropt('')),n=DocRead.splitText(d.text,part).length;
       opt.fill(d.title,d.text,d.text.length>max?'Nội dung dài '+d.text.length.toLocaleString('vi-VN')+' ký tự nên sẽ tự tách thành '+n+' tài liệu khi lưu.':'');
-      opt.msg('Đã đọc “'+files[0].name+'” ('+d.text.length.toLocaleString('vi-VN')+' ký tự'+(d.pages?', '+d.pages+' trang':'')+'). Kiểm tra nội dung rồi bấm Lưu tài liệu.'+(d.text.length>max?' Nội dung dài nên sẽ tự tách thành '+n+' tài liệu.':'')+(d.warn?'\n⚠ '+d.warn:''),d.warn?'':'ok');
+      opt.msg('Đã đọc “'+files[0].name+'” ('+d.text.length.toLocaleString('vi-VN')+' ký tự'+(d.pages?', '+d.pages+' trang':'')+'). Kiểm tra nội dung rồi bấm Lưu tài liệu.'+(d.text.length>max?' Nội dung dài nên sẽ tự tách thành '+n+' tài liệu.':'')+(d.warn?'\n<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/></svg> '+d.warn:''),d.warn?'':'ok');
       return [{name:files[0].name,ok:true}];
     }catch(e){opt.msg(e.userMessage||'Không đọc được file “'+files[0].name+'”.','');return [{name:files[0].name,ok:false,error:e.userMessage}]}
   }
@@ -371,10 +371,10 @@ DocRead.importFiles=async function(files,opt){
         var res=await opt.save(ps.length>1?r.title+' (phần '+(k+1)+'/'+ps.length+')':r.title,ps[k]);
         if(!res||!res.ok){err=(res&&res.error)||'Không lưu được.';break}saved++;
       }
-      if(err)lines.push('✗ '+f.name+': '+err+(saved?' (đã lưu '+saved+'/'+ps.length+' phần)':''));
-      else{okN++;lines.push('✓ '+f.name+(ps.length>1?' ('+ps.length+' phần)':'')+(r.warn?' ⚠ '+r.warn:''))}
+      if(err)lines.push('<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M18 6 6 18\"/><path d=\"M6 6l12 12\"/></svg> '+f.name+': '+err+(saved?' (đã lưu '+saved+'/'+ps.length+' phần)':''));
+      else{okN++;lines.push('<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M20 6 9 17l-5-5\"/></svg> '+f.name+(ps.length>1?' ('+ps.length+' phần)':'')+(r.warn?' <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/></svg> '+r.warn:''))}
       report.push({name:f.name,ok:!err,error:err});
-    }catch(e){lines.push('✗ '+f.name+': '+(e.userMessage||'không đọc được.'));report.push({name:f.name,ok:false,error:e.userMessage});if(e&&e.code==='abort'){for(var j=i+1;j<files.length;j++)lines.push('– '+files[j].name+': bỏ qua do đã dừng.');break}}
+    }catch(e){lines.push('<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M18 6 6 18\"/><path d=\"M6 6l12 12\"/></svg> '+f.name+': '+(e.userMessage||'không đọc được.'));report.push({name:f.name,ok:false,error:e.userMessage});if(e&&e.code==='abort'){for(var j=i+1;j<files.length;j++)lines.push('– '+files[j].name+': bỏ qua do đã dừng.');break}}
   }
   opt.msg('Đã lưu '+okN+'/'+files.length+' file.\n'+lines.join('\n'),okN===files.length?'ok':'');
   return report;
