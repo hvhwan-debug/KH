@@ -110,10 +110,10 @@ function analyse(data, month, ctx) {
         priority: status === "cần đào tạo" ? Math.round((R ? R.gap : 0) * Math.max(5, min - (avg || 0)) * sw * (hits.length ? 1.5 : 1)) : 0, strategyHits: hits };
     }).sort((a, b) => b.priority - a.priority);
     return { key: k, label: A.label, short: A.short, nganh: NGANH[k], people: A.people, tested: A.tested, index: r1(mean(A.idx)), salesAvg: grp.salesAvg == null ? null : grp.salesAvg, below60: grp.below60 || 0,
-      needs: CTX.NEEDS[k] || [], reqs, gaps: reqs.filter((x) => x.status === "cần đào tạo").length, reliable: A.tested >= 10, focus: fp, salesWeight: Math.round(sw * 100) / 100,
+      needs: CTX.NEEDS[k] || [], reqs, missing: reqs.filter((x) => x.status === "thiếu dữ liệu").length, categories: (((data.system && data.system.catMap) || {})[A.label] || []).map((c) => ({ name: c.name, n: c.n, area: c.area, areaName: AREA_NAME[c.area] || "Kiến thức chung (không dùng)", manual: !!(ctx.areaMap && ctx.areaMap[CTX.fold(c.name)]) })), gaps: reqs.filter((x) => x.status === "cần đào tạo").length, reliable: A.tested >= 10, focus: fp, salesWeight: Math.round(sw * 100) / 100,
       note: !reqs.some((x) => x.status === "cần đào tạo") && grp.salesAvg != null && grp.salesAvg < 85 ? "Năng lực đạt yêu cầu nhưng bán TB 3 tháng chỉ " + grp.salesAvg + "%: đào tạo kiến thức chưa phải đòn bẩy chính; nên rà yếu tố ngoài đào tạo (hàng, giá, điểm bán) và coaching tại điểm bán." : "" };
   }).sort((a, b) => b.gaps - a.gaps || b.people - a.people);
-  return { month, generatedAt: Date.now(), meta: { population: (data.meta && data.meta.population) || data.people.length, tested: (data.meta && data.meta.tested) || 0 }, biz: { goals: biz.goals || [], strategy: biz.strategy || [], focus: biz.focus || [] }, sales: ctx.sales || null, audiences };
+  return { month, generatedAt: Date.now(), meta: { population: (data.meta && data.meta.population) || data.people.length, tested: (data.meta && data.meta.tested) || 0, catMissing: (data.meta && data.meta.catMissing) || 0 }, missingTotal: audiences.reduce((n, a) => n + a.missing, 0), biz: { goals: biz.goals || [], strategy: biz.strategy || [], focus: biz.focus || [] }, sales: ctx.sales || null, audiences };
 }
 
 // ---------- lịch: các ngày làm việc (T2–T6) rải đều trong tháng ----------
@@ -238,9 +238,9 @@ async function generate(opt) {
   opt = opt || {}; const month = s(opt.month, 7); if (!MONTH.test(month)) return { ok: false, error: "Tháng không hợp lệ." };
   const biz = await getBiz(month);
   if (!biz.goals.length && !biz.strategy.length && !biz.focus.length) return { ok: false, code: "need_biz", error: "Hãy nhập mục tiêu kinh doanh hoặc chiến lược của tháng trước khi lập kế hoạch đào tạo, để kế hoạch bám sát mục tiêu." };
-  const an = analyse(await require("./hrcompetency").build({ refresh: opt.refresh === true }), month, { biz, sales: await salesContext(month) });
+  const HC = require("./hrcompetency"), an = analyse(await HC.build({ refresh: opt.refresh === true }), month, { biz, sales: await salesContext(month), areaMap: await HC.getAreaMap() });
   const notes = an.audiences.filter((a) => a.note).map((a) => a.short + ": " + a.note);
-  if (!an.audiences.some((a) => a.gaps > 0) && !an.biz.focus.length) return { ok: true, source: "rules", rows: [], analysis: an, notes, warning: "Chưa phát hiện khoảng cách năng lực cần đào tạo (hoặc chưa đủ dữ liệu kiểm tra)." };
+  if (!an.audiences.some((a) => a.gaps > 0) && !an.biz.focus.length) return { ok: true, source: "rules", rows: [], analysis: an, notes, warning: "Chưa phát hiện khoảng cách năng lực cần đào tạo" + (an.missingTotal ? ", nhưng " + an.missingTotal + " mảng yêu cầu CHƯA CÓ dữ liệu kiểm tra nên chưa thể kết luận là đạt (xem mục “Vì sao thiếu dữ liệu” ở phần phân tích)." : ".") };
   let rows = null, source = "rules", warning = "";
   if (opt.mode !== "rules") { try { rows = await aiPlan(an); source = "ai"; } catch (e) { warning = "AI tạm thời không khả dụng nên kế hoạch được lập theo luật từ bản phân tích."; } }
   if (!rows) rows = rulePlan(an);

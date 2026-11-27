@@ -7,6 +7,21 @@
   var COLS = [['stt', 'STT', 46], ['doiTuong', 'Đối tượng', 90], ['nganh', 'Ngành', 120], ['tenChuongTrinh', 'Tên chương trình', 200], ['noiDung', 'Nội dung chính', 320], ['mucTieu', 'Mục tiêu', 230],
     ['phuongPhap', 'Phương pháp', 150], ['thoiLuong', 'Thời lượng', 86], ['phuTrach', 'Phụ trách', 96], ['thoiGian', 'Thời gian tổ chức', 138], ['guiTruoc', 'Hạn gửi nội dung cho người duyệt', 130], ['tanSuat', 'Tần suất', 150], ['ghiChu', 'Ghi chú', 230], ['mucTieuKd', 'Gắn mục tiêu kinh doanh', 230], ['chiSoDo', 'Chỉ số đo hiệu quả', 230], ['coSo', 'Cơ sở số liệu', 230]];
   var SRC = { ai: 'AI lập', rules: 'Lập theo luật', manual: 'Nhập tay' };
+  var AREA_LABEL = { mk: 'Thị trường & đối thủ', po: 'Chính sách, quy trình & tiêu chuẩn', sk: 'Kỹ năng bán hàng & tư vấn', n1: 'Sản phẩm ngành 1 · Máy lọc nước', n2: 'Sản phẩm ngành 2 · Điện gia dụng', sp: 'Kiến thức sản phẩm (chung)', gn: 'Kiến thức chung (không dùng)' };
+  function svg(d, extra) { return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' + (extra || '') + '>' + d + '</svg>'; }
+  var ICON = { chart: svg('<path d="M4 20V11M10 20V4M16 20v-6M2 20h20"/>'), spark: svg('<path d="M12 3l1.9 5.3L19 10l-5.1 1.7L12 17l-1.9-5.3L5 10l5.1-1.7z" fill="currentColor"/><path d="M19 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z" fill="currentColor" stroke-width="1"/>'),
+    list: svg('<path d="M9 6h11M9 12h11M9 18h11M3.5 6l1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/>'), save: svg('<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3M8 21v-7h8v7"/>'), plus: svg('<path d="M12 5v14M5 12h14"/>'),
+    down: svg('<path d="M12 4v11M8 11l4 4 4-4M4 20h16"/>'), trash: svg('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>') };
+  function ib(k, label) { return '<span class="ic">' + ICON[k] + '</span>' + label; }
+  var HERO = '<svg viewBox="0 0 320 180" width="100%" height="100%" aria-hidden="true"><defs><linearGradient id="tpg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4C9BFF"/><stop offset="1" stop-color="#0B4FD0"/></linearGradient></defs>'
+    + '<path d="M40 150c-10-40 14-62 30-70-6 30 6 52 30 70z" fill="#7FD6D0" opacity=".75"/><path d="M270 150c14-34-2-58-20-70 2 26-8 50-28 70z" fill="#7FD6D0" opacity=".75"/>'
+    + '<rect x="30" y="126" width="120" height="14" rx="3" fill="#2F7BEA"/><rect x="36" y="114" width="108" height="14" rx="3" fill="#7DB5FF"/>'
+    + '<rect x="96" y="22" width="130" height="118" rx="12" fill="#fff" stroke="#BCD5FA" stroke-width="2"/><path d="M96 34a12 12 0 0 1 12-12h106a12 12 0 0 1 12 12v18H96z" fill="url(#tpg1)"/>'
+    + '<g fill="#fff" stroke="#2F7BEA" stroke-width="2"><rect x="114" y="12" width="8" height="18" rx="4"/><rect x="138" y="12" width="8" height="18" rx="4"/><rect x="162" y="12" width="8" height="18" rx="4"/><rect x="186" y="12" width="8" height="18" rx="4"/></g>'
+    + '<g stroke="#2F7BEA" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M110 70l4 4 7-8M110 92l4 4 7-8M110 114l4 4 7-8"/></g><g stroke="#CFE0F8" stroke-width="5" stroke-linecap="round"><path d="M128 70h24M128 92h24M128 114h24"/></g>'
+    + '<g transform="translate(206 100)"><circle r="34" fill="#fff" stroke="#BCD5FA" stroke-width="2"/><circle r="25" fill="#2F7BEA"/><circle r="16" fill="#fff"/><circle r="8" fill="#2F7BEA"/><path d="M0 0L36 -36" stroke="#0B3FA8" stroke-width="4" stroke-linecap="round"/><path d="M30 -42l10 2-2 10z" fill="#0B3FA8"/></g></svg>';
+  var EMPTY = '<svg viewBox="0 0 160 120" width="150" height="112" aria-hidden="true"><path d="M20 108c-8-26 8-42 20-48-4 20 4 36 20 48z" fill="#9FDDD8" opacity=".8"/><path d="M142 108c8-24-4-40-16-48 0 18-6 34-20 48z" fill="#9FDDD8" opacity=".8"/>'
+    + '<rect x="46" y="14" width="68" height="88" rx="10" fill="#fff" stroke="#9CC4F7" stroke-width="3"/><rect x="66" y="8" width="28" height="14" rx="6" fill="#2F7BEA"/><g stroke="#2F7BEA" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M57 42l4 4 7-8M57 62l4 4 7-8M57 82l4 4 7-8"/></g><g stroke="#C9DBF6" stroke-width="5" stroke-linecap="round"><path d="M76 42h28M76 62h28M76 82h28"/></g></svg>';
   function ea(s) { return esc(s).replace(/"/g, '&quot;'); }
   function two(n) { return n < 10 ? '0' + n : '' + n; }
   function curMonth() { var d = new Date(); return d.getFullYear() + '-' + two(d.getMonth() + 1); }
@@ -46,23 +61,34 @@
       + '#tpRoot table.tp-plan textarea,#tpRoot table.tp-plan input{width:100%;box-sizing:border-box;border:1px solid transparent;background:transparent;font:inherit;font-size:13px;padding:5px 6px;border-radius:6px;resize:vertical}'
       + '#tpRoot table.tp-plan textarea:hover,#tpRoot table.tp-plan input:hover{border-color:#cfd8e6}#tpRoot table.tp-plan textarea:focus,#tpRoot table.tp-plan input:focus{border-color:#1B78E8;background:#f5faff;outline:none}'
       + '#tpRoot table.tp-plan td.stt{text-align:center;font-weight:700;vertical-align:middle}#tpRoot table.tp-plan td.act{text-align:center;vertical-align:middle;width:36px}'
-      + '#tpRoot .tp-off input{color:#B42318;font-weight:700}#tpRoot .tp-bad input[type=time]{color:#B42318;font-weight:700;background:#FEE4E2}#tpRoot td.gui{text-align:center;vertical-align:middle;color:#475569;font-size:12.5px}#tpRoot .tp-fl{border:1px solid #BFD6F5;background:#F8FBFF;border-radius:14px;padding:12px 14px;margin-top:14px}#tpRoot table.tp-fb{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;background:#fff}#tpRoot table.tp-fb th,#tpRoot table.tp-fb td{border:1px solid #d5dce8;padding:7px 8px;vertical-align:top;text-align:left}#tpRoot table.tp-fb th{background:#EAF2FD;color:#0B1F4B}#tpRoot .tp-fb .b{display:block;margin:4px 0 0}#tpRoot .tp-ap{border:1px solid var(--line,#dbe3ee);border-radius:14px;padding:12px 14px;margin-top:12px;background:#fff}#tpRoot .tp-ap .tp-apg{display:grid;grid-template-columns:150px 1fr 110px;gap:10px;align-items:start}@media(max-width:800px){#tpRoot .tp-ap .tp-apg{grid-template-columns:1fr}}#tpRoot .tp-ap label{font-size:13px;font-weight:700;color:#29466e;display:block}#tpRoot .tp-ap input,#tpRoot .tp-ap select,#tpRoot .tp-ap textarea{width:100%;box-sizing:border-box;margin-top:4px;padding:7px 9px;border:1px solid var(--line,#dbe3ee);border-radius:10px;font:inherit;font-size:13px;font-weight:400}#tpRoot .tp-empty{padding:26px;text-align:center;color:#5b6b85}';
+      + '#tpRoot .tp-off input{color:#B42318;font-weight:700}#tpRoot .tp-bad input[type=time]{color:#B42318;font-weight:700;background:#FEE4E2}#tpRoot td.gui{text-align:center;vertical-align:middle;color:#475569;font-size:12.5px}#tpRoot .tp-fl{border:1px solid #BFD6F5;background:#F8FBFF;border-radius:14px;padding:12px 14px;margin-top:14px}#tpRoot table.tp-fb{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;background:#fff}#tpRoot table.tp-fb th,#tpRoot table.tp-fb td{border:1px solid #d5dce8;padding:7px 8px;vertical-align:top;text-align:left}#tpRoot table.tp-fb th{background:#EAF2FD;color:#0B1F4B}#tpRoot .tp-fb .b{display:block;margin:4px 0 0}#tpRoot .tp-ap{border:1px solid var(--line,#dbe3ee);border-radius:14px;padding:12px 14px;margin-top:12px;background:#fff}#tpRoot .tp-ap .tp-apg{display:grid;grid-template-columns:150px 1fr 110px;gap:10px;align-items:start}@media(max-width:800px){#tpRoot .tp-ap .tp-apg{grid-template-columns:1fr}}#tpRoot .tp-ap label{font-size:13px;font-weight:700;color:#29466e;display:block}#tpRoot .tp-ap input,#tpRoot .tp-ap select,#tpRoot .tp-ap textarea{width:100%;box-sizing:border-box;margin-top:4px;padding:7px 9px;border:1px solid var(--line,#dbe3ee);border-radius:10px;font:inherit;font-size:13px;font-weight:400}#tpRoot .tp-empty{padding:26px;text-align:center;color:#5b6b85}'
+      + '#tpRoot .tp-hero{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:6px}#tpRoot .tp-hero-t{flex:1;min-width:0}#tpRoot .tp-hero h1{font-size:30px;line-height:1.2;color:#0B1F4B;margin:0 0 8px;font-weight:800}#tpRoot .tp-hero p{margin:0;max-width:60em;font-size:14px;line-height:1.6;color:#33425E}'
+      + '#tpRoot .tp-hero-art{flex:0 0 280px;height:150px}@media(max-width:800px){#tpRoot .tp-hero-art{display:none}#tpRoot .tp-hero h1{font-size:24px}}'
+      + '#tpRoot .tp-ctl{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin:14px 0 10px}#tpRoot .tp-lab{display:block;font-size:14px;font-weight:700;color:#29466e}#tpRoot .tp-lab input{display:block;margin-top:6px;min-width:250px;padding:11px 14px;border:1px solid #CBD7EA;border-radius:14px;font:inherit;font-weight:700;font-size:15px;color:#0B1F4B;background:#fff}'
+      + '#tpRoot .tp-bar .btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 20px;font-weight:700;font-size:14.5px;line-height:1.2;border:1px solid #BFD0EA;background:#fff;color:#0B4FD0;box-shadow:none;cursor:pointer}'
+      + '#tpRoot .tp-bar .btn .ic{display:inline-flex}#tpRoot .tp-bar .btn:hover{background:#EEF4FF}#tpRoot .tp-bar .btn:disabled{opacity:.55;cursor:default}'
+      + '#tpRoot .tp-bar .btn:not(.ghost){background:linear-gradient(180deg,#1B5FD6,#0A3A9C);border-color:#0A3A9C;color:#fff;box-shadow:0 8px 18px -10px rgba(10,58,156,.8)}#tpRoot .tp-bar .btn:not(.ghost):hover{filter:brightness(1.07)}'
+      + '#tpRoot .tp-bar .btn.danger{background:#FFF5F5;border-color:#F3B4B4;color:#C62828}#tpRoot .tp-bar .btn.danger:hover{background:#FFE9E9}'
+      + '#tpRoot .tp-title{background:#0B2A66}#tpRoot table.tp-plan th{background:#0B2A66}'
+      + '#tpRoot .tp-empty-art{display:flex;flex-direction:column;align-items:center;gap:4px;padding:30px 20px 34px}#tpRoot .tp-empty-art b{font-size:19px;color:#0B1F4B;margin-top:6px}#tpRoot .tp-empty-art span{font-size:14.5px}'
+      + '#tpRoot .tp-st.warn{background:#FEF0C7;color:#93370D}#tpRoot tr.tp-unm td{background:#FFF8E6}#tpRoot .tp-diag{margin-top:10px;border:1px dashed #F0C36D;background:#FFFBF0;border-radius:10px;padding:8px 12px}#tpRoot .tp-diag summary{cursor:pointer;font-weight:700;color:#93370D;font-size:13.5px}'
+      + '#tpRoot .tp-diag select{max-width:260px;padding:5px 8px;border:1px solid #CBD7EA;border-radius:8px;font:inherit;font-size:13px}';
     document.head.appendChild(st);
   }
 
   function shell() {
     var r = root(); if (!r || r.dataset.ready) return; r.dataset.ready = '1';
-    r.innerHTML = '<div class="tp-top"><div><h1>Kế hoạch đào tạo</h1><p class="small" style="margin:6px 0 0;max-width:62em">Đối chiếu năng lực thực tế của nhân sự (mọi bài kiểm tra, số bán, câu hỏi KAI…) với yêu cầu của từng vị trí để tìm khoảng cách cần giải quyết, rồi AI lập bảng kế hoạch đào tạo của tháng. '
-      + 'AI chỉ nhận số liệu tổng hợp theo vị trí, không có tên hay mã nhân viên. Bạn xem, sửa lại rồi mới lưu.</p></div>'
-      + '<div class="tp-bar"><label class="small">Tháng <input type="month" id="tpMonth"></label>'
-      + '<button type="button" class="btn ghost sm" data-tp-act="analyze">Phân tích năng lực</button>'
-      + '<button type="button" class="btn sm" data-tp-act="ai">✨ AI lập kế hoạch</button>'
-      + '<button type="button" class="btn ghost sm" data-tp-act="rules" title="Lập theo luật từ bản phân tích, không dùng AI">Lập theo luật</button></div></div>'
+    r.innerHTML = '<div class="tp-hero"><div class="tp-hero-t"><h1>Kế hoạch đào tạo</h1><p>Đối chiếu năng lực thực tế của nhân sự (mọi bài kiểm tra, số bán, câu hỏi KAI…) với yêu cầu của từng vị trí để tìm khoảng cách cần giải quyết, rồi AI lập bảng kế hoạch đào tạo của tháng. '
+      + 'AI chỉ nhận số liệu tổng hợp theo vị trí, không có tên hay mã nhân viên. Bạn xem, sửa lại rồi mới lưu.</p></div><div class="tp-hero-art">' + HERO + '</div></div>'
+      + '<div class="tp-ctl"><label class="tp-lab">Tháng<input type="month" id="tpMonth"></label><div class="tp-bar">'
+      + '<button type="button" class="btn ghost sm" data-tp-act="analyze">' + ib('chart', 'Phân tích năng lực') + '</button>'
+      + '<button type="button" class="btn sm" data-tp-act="ai">' + ib('spark', 'AI lập kế hoạch') + '</button>'
+      + '<button type="button" class="btn ghost sm" data-tp-act="rules" title="Lập theo luật từ bản phân tích, không dùng AI">' + ib('list', 'Lập theo luật') + '</button></div></div>'
       + '<div class="tp-chips" id="tpChips"></div><div id="tpMsg"></div><div id="tpBiz"></div><div id="tpAnalysis"></div>'
       + '<div class="tp-sec">Bảng kế hoạch đào tạo</div><div id="tpPlan"></div>'
-      + '<div id="tpApprove"></div><div id="tpFlow"></div><div class="tp-bar" style="margin-top:10px"><button type="button" class="btn sm" data-tp-act="save">Lưu kế hoạch</button>'
-      + '<button type="button" class="btn ghost sm" data-tp-act="add">+ Thêm dòng</button><button type="button" class="btn ghost sm" data-tp-act="csv">Xuất CSV</button>'
-      + '<button type="button" class="btn ghost sm danger" data-tp-act="del">Xoá kế hoạch tháng này</button><span class="small" id="tpState"></span></div>';
+      + '<div id="tpApprove"></div><div id="tpFlow"></div><div class="tp-bar" style="margin-top:12px"><button type="button" class="btn sm" data-tp-act="save">' + ib('save', 'Lưu kế hoạch') + '</button>'
+      + '<button type="button" class="btn ghost sm" data-tp-act="add">' + ib('plus', 'Thêm dòng') + '</button><button type="button" class="btn ghost sm" data-tp-act="csv">' + ib('down', 'Xuất CSV') + '</button>'
+      + '<button type="button" class="btn ghost sm danger" data-tp-act="del">' + ib('trash', 'Xoá kế hoạch tháng này') + '</button><span class="small" id="tpState"></span></div>';
     r.addEventListener('click', onClick); r.addEventListener('input', onInput); r.addEventListener('change', onInput);
     document.getElementById('tpMonth').addEventListener('change', function () { loadMonth(this.value); });
   }
@@ -118,25 +144,40 @@
   function gapTable(a) {
     return '<table class="tp-gap"><thead><tr><th>Mảng năng lực</th><th>Yêu cầu tối thiểu</th><th>Hiện trạng TB</th><th>Dưới ngưỡng</th><th>Trạng thái</th><th>Chủ đề yếu</th><th>Học liệu</th><th>Chiến lược</th></tr></thead><tbody>'
       + a.reqs.map(function (g) {
-        var cls = g.status === 'đạt' ? 'ok' : g.status === 'cần đào tạo' ? 'bad' : 'na';
+        var cls = g.status === 'đạt' ? 'ok' : g.status === 'cần đào tạo' ? 'bad' : 'warn';
         return '<tr><td>' + esc(g.areaName) + '</td><td>≥ ' + g.min + '%</td><td>' + (g.avg == null ? '—' : g.avg + '%') + '</td><td>' + (g.assessed ? g.gapPeople + '/' + g.assessed : '—') + '</td><td><span class="tp-st ' + cls + '">' + esc(g.status) + '</span></td>'
           + '<td>' + (g.topics.length ? g.topics.map(function (t) { return esc(t.name) + ' ' + t.pct + '%'; }).join('; ') : '—') + '</td><td>' + (g.materials == null ? '—' : g.materials) + '</td><td>' + (g.strategyHits && g.strategyHits.length ? '<span class="tp-st ok">Trọng tâm</span>' : '—') + '</td></tr>';
       }).join('') + '</tbody></table>';
+  }
+  function areaOpts(sel) { return Object.keys(AREA_LABEL).map(function (k) { return '<option value="' + k + '"' + (k === sel ? ' selected' : '') + '>' + esc((TP.areaNames && TP.areaNames[k] && k !== 'gn') ? TP.areaNames[k] : AREA_LABEL[k]) + '</option>'; }).join(''); }
+  function diag(a) {
+    if (!a.missing) return ''; var cats = a.categories || [];
+    return '<details class="tp-diag" open><summary>Vì sao thiếu dữ liệu? ' + a.missing + ' mảng yêu cầu chưa có dữ liệu — xem danh mục câu hỏi của vị trí này</summary>'
+      + '<div class="small" style="margin:6px 0">Một mảng chỉ được tính khi có ít nhất 3 người làm từ 4 câu thuộc mảng đó. Dưới đây là các danh mục câu hỏi vị trí này đã làm. Danh mục đang ở “Kiến thức chung (không dùng)” thì <b>chưa được tính vào mảng nào</b>: hãy chọn lại mảng đúng, hệ thống tính lại ngay.</div>'
+      + (cats.length ? '<table class="tp-gap"><thead><tr><th>Danh mục câu hỏi</th><th>Số câu đã làm</th><th>Đang tính vào mảng</th></tr></thead><tbody>' + cats.map(function (c) {
+        return '<tr' + (c.area === 'gn' ? ' class="tp-unm"' : '') + '><td>' + esc(c.name) + (c.manual ? ' <span class="tp-st ok">gắn thủ công</span>' : '') + '</td><td>' + c.n + '</td><td><select class="tp-catsel" data-cat="' + ea(c.name) + '">' + areaOpts(c.area) + '</select></td></tr>'; }).join('') + '</tbody></table>'
+        : '<div class="small">Vị trí này chưa có bài làm nào có phân danh mục câu hỏi.</div>') + '</details>';
   }
   function renderAnalysis() {
     var el = document.getElementById('tpAnalysis'); if (!el) return; var A = TP.analysis;
     if (!A) { el.innerHTML = ''; return; }
     if (!A.audiences.length || !A.meta.tested) { el.innerHTML = '<div class="tp-empty">Chưa có dữ liệu bài kiểm tra để phân tích năng lực.</div>'; return; }
     el.innerHTML = '<div class="tp-sec">Khoảng cách năng lực theo vị trí (' + A.meta.tested + '/' + A.meta.population + ' nhân sự đã có bài kiểm tra)</div>'
+      + '<div class="small" style="margin-bottom:8px">Quy tắc: một mảng được xếp “cần đào tạo” khi điểm trung bình thấp hơn yêu cầu hoặc từ 40% số người dưới ngưỡng; cần ít nhất 3 người có từ 4 câu trong mảng đó. <b>“Đạt” chỉ áp dụng cho mảng có dữ liệu</b>, mảng chưa có dữ liệu được ghi “thiếu dữ liệu”.</div>'
+      + (A.meta.catMissing ? '<div class="msg warn" style="margin:0 0 8px">Còn ' + A.meta.catMissing + ' bài chưa quét xong danh mục câu hỏi nên số liệu có thể chưa đủ. Hãy bấm “Phân tích năng lực” lại sau ít phút.</div>' : '')
+      + (A.missingTotal ? '<div class="msg warn" style="margin:0 0 8px">Có ' + A.missingTotal + ' mảng yêu cầu chưa có dữ liệu kiểm tra: chưa thể kết luận các mảng đó là đạt.</div>' : '')
       + A.audiences.filter(function (a) { return a.tested > 0; }).map(function (a) {
-        return '<div class="tp-aud"><h3>' + esc(a.label) + ' · ' + (a.gaps ? '<span class="tp-st bad">' + a.gaps + ' mảng cần đào tạo</span>' : '<span class="tp-st ok">Đạt yêu cầu</span>') + '</h3>'
-          + '<div class="tp-meta">' + a.tested + '/' + a.people + ' người có bài' + (a.index != null ? ' · chỉ số năng lực TB ' + a.index + '%' : '') + (a.salesAvg != null ? ' · bán TB 3 tháng ' + a.salesAvg + '%' : '') + (a.reliable ? '' : ' · <b>dưới 10 người có bài: chỉ là tín hiệu</b>') + (a.salesWeight > 1 ? ' · hệ số ưu tiên theo kết quả bán ×' + a.salesWeight : '') + '</div>' + (a.note ? '<div class="msg warn" style="margin:0 0 8px">' + esc(a.note) + '</div>' : '') + gapTable(a) + '</div>';
+        var badge = a.gaps ? '<span class="tp-st bad">' + a.gaps + ' mảng cần đào tạo</span>' : a.missing ? '<span class="tp-st warn">Chưa đủ dữ liệu (' + a.missing + ' mảng)</span>' : '<span class="tp-st ok">Đạt yêu cầu</span>';
+        return '<div class="tp-aud"><h3>' + esc(a.label) + ' · ' + badge + '</h3>'
+          + '<div class="tp-meta">' + a.tested + '/' + a.people + ' người có bài' + (a.index != null ? ' · chỉ số năng lực TB ' + a.index + '%' : '') + (a.salesAvg != null ? ' · bán TB 3 tháng ' + a.salesAvg + '%' : '') + (a.reliable ? '' : ' · <b>dưới 10 người có bài: chỉ là tín hiệu</b>') + (a.salesWeight > 1 ? ' · hệ số ưu tiên theo kết quả bán ×' + a.salesWeight : '') + (a.gaps && a.missing ? ' · còn ' + a.missing + ' mảng thiếu dữ liệu' : '') + '</div>'
+          + (a.note ? '<div class="msg warn" style="margin:0 0 8px">' + esc(a.note) + '</div>' : '') + gapTable(a) + diag(a) + '</div>';
       }).join('');
   }
+
   function renderPlan() {
     var el = document.getElementById('tpPlan'); if (!el) return;
     var head = '<div class="tp-title">KHUNG CHƯƠNG TRÌNH ĐÀO TẠO CHI TIẾT – THÁNG ' + esc(mLabel(TP.month)) + '</div><div class="tp-sub">Kế hoạch đào tạo chi tiết theo đối tượng và chương trình</div>';
-    if (!TP.rows.length) { el.innerHTML = '<div class="tp-wrap">' + head + '<div class="tp-empty">Chưa có kế hoạch cho tháng này. Bấm “AI lập kế hoạch” hoặc “+ Thêm dòng”.</div></div>'; renderState(); return; }
+    if (!TP.rows.length) { el.innerHTML = '<div class="tp-wrap">' + head + '<div class="tp-empty tp-empty-art">' + EMPTY + '<b>Chưa có kế hoạch cho tháng này.</b><span>Bấm “AI lập kế hoạch” hoặc “Thêm dòng”.</span></div></div>'; renderState(); return; }
     var ths = COLS.map(function (c) { return '<th style="min-width:' + c[2] + 'px">' + c[1] + '</th>'; }).join('') + '<th></th>';
     var body = TP.rows.map(function (r, i) {
       var off = r.thoiGian && r.thoiGian.slice(0, 7) !== TP.month;
@@ -155,6 +196,7 @@
   function renderAll() { var m = document.getElementById('tpMonth'); if (m) m.value = TP.month; renderChips(); renderBiz(); renderAnalysis(); renderPlan(); renderApprove(); renderFlow(); renderState(); }
 
   function onInput(e) {
+    if (e.target && e.target.classList && e.target.classList.contains('tp-catsel')) { if (e.type === 'change') setCat(e.target.getAttribute('data-cat'), e.target.value); return; }
     if (e.target && (e.target.id === 'tpGoals' || e.target.id === 'tpStrat' || e.target.id === 'tpFocus')) { TP.bizDirty = true; return; }
     if (e.target && /^tp(ApSt|ApWho|ApNote|SendBefore)$/.test(e.target.id || '')) {
       var id = e.target.id, v = e.target.value; if (id === 'tpApSt') TP.approval.status = v; else if (id === 'tpApWho') TP.approval.approver = v; else if (id === 'tpApNote') TP.approval.note = v; else { TP.sendBefore = Math.min(15, Math.max(0, parseInt(v, 10) || 0)); if (e.type === 'change') renderPlan(); }
@@ -198,10 +240,16 @@
       TP.biz = r.j.biz; TP.bizDirty = false; if (!quiet) { renderBiz(); say('Đã lưu mục tiêu kinh doanh & chiến lược tháng ' + mLabel(TP.month) + '.', 'ok'); } return true;
     } finally { lock(false); }
   }
+  async function setCat(name, area) {
+    if (TP.busy) return; lock(true); say('Đang gắn danh mục “' + name + '” và tính lại…', 'ok');
+    try { var r = await api('POST', '/api/kt-admin', { op: 'trainAreaMapSave', map: (function (o) { o[name] = area; return o; })({}) }); if (!r.j.ok) { say(r.j.error || 'Không lưu được.'); return; } }
+    finally { lock(false); }
+    await analyze(true);
+  }
   async function analyze(refresh) {
     if (TP.bizDirty && !(await saveBiz(true))) return;
     lock(true); say('Đang phân tích năng lực…', 'ok');
-    try { var r = await api('GET', '/api/kt-admin?op=trainPlanAnalysis&month=' + encodeURIComponent(TP.month) + (refresh ? '&refresh=1' : '')); if (!r.j.ok) say(r.j.error || 'Không phân tích được.'); else { TP.analysis = r.j.analysis; say(''); renderAnalysis(); } }
+    try { var r = await api('GET', '/api/kt-admin?op=trainPlanAnalysis&month=' + encodeURIComponent(TP.month) + (refresh ? '&refresh=1' : '')); if (!r.j.ok) say(r.j.error || 'Không phân tích được.'); else { TP.analysis = r.j.analysis; TP.areaNames = r.j.areas || TP.areaNames; say(''); renderAnalysis(); } }
     finally { lock(false); }
   }
   async function generate(mode) {
