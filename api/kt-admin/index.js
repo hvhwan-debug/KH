@@ -434,6 +434,10 @@ const handler = async function (context, req) {
           .map((r) => { const c = candBy[quiz.normCode(r.code)]; return Object.assign({}, r, { passed: quiz.passState(r.pct, st), title: c ? quiz.titleOf(c) : "", segment: c ? quiz.normSegment(c.segment) : (r.segment || ""), verify: r.status === "submitted" ? quiz.verifyToken(r.id) : "", probation: require("../_lib/probation").probationOf(r.code, r.submittedAt || Date.now(), c && c.joinDate) }); }); // passed: luôn theo cài đặt hiện tại (null = bài không có ngưỡng); title: chức danh hiện tại của nhân viên
         return reply(context, 200, { ok: true, results: list, periods, currentPeriod: st.examPeriod });
       }
+      if (op === "person360") { // nhận định đa chiều cho một nhân sự (theo luật, có so sánh đồng nghiệp / đội / xu hướng / bán hàng)
+        const r = await require("../_lib/person360").analyze(String(req.query.code || "").slice(0, 60), { refresh: req.query.refresh === "1" });
+        return reply(context, r.ok ? 200 : 404, r);
+      }
       if (op === "personHistory") {
         // Lịch sử thay đổi của MỘT nhân sự: bản ghi riêng theo người (mới) + dòng audit cũ trên hồ sơ (trước khi có tính năng này)
         const code = String(req.query.code || "").trim().slice(0, 60);
@@ -1009,6 +1013,10 @@ const handler = async function (context, req) {
     }
 
     // Gắn / cập nhật HỒ SƠ NHÂN SỰ cho người đã có trong danh sách (chỉ sửa trường profile, không đụng email, tên, chức danh...)
+    if (op === "person360Ai") { // AI viết phân tích đa chiều từ gói bằng chứng ẩn danh của một nhân sự
+      const r = await require("../_lib/person360").ai(String(b.code || "").slice(0, 60));
+      return reply(context, r.ok ? 200 : 502, r);
+    }
     if (op === "hrCompetencyAi") { // AI: toàn hệ thống / đối tượng / quản lí / tỉnh / ngành / từng người; máy chủ tự dựng dữ liệu ẩn danh
       const r = await require("../_lib/hrcompetency").ai({ kind: String(b.kind || ""), key: String(b.key || "").slice(0, 60) });
       return reply(context, r.ok ? 200 : 502, r);

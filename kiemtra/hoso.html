@@ -180,6 +180,32 @@ table.t .code{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-n
 .ch-ul .e{color:#9AA7BD;font-style:italic}
 .ch-ev{font-size:13px;margin-top:6px;color:#2F4468}
 .ch-old{opacity:.85}
+/* Nhận định đa chiều */
+.p3-hd{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,#F2F7FF,#FFFFFF);border:1px solid #D6E4FA}
+.p3-hd .ic3{flex:none;width:38px;height:38px;border-radius:12px;background:#0A63C4;color:#fff;display:grid;place-items:center;font-weight:800}
+.p3-hd b.t{display:block;font-size:16.5px;color:var(--navy);line-height:1.35}
+.p3-hd p{margin:4px 0 0;color:#2F4468;font-size:13.5px;line-height:1.55}
+.p3-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-top:14px}
+.p3-h{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px}
+.p3-hy{border:1px solid var(--line2);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.p3-hy b{color:var(--navy);font-size:13.5px}.p3-hy .n{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#E8F0FB;color:#0B3F94;font-size:11.5px;font-weight:800;margin-right:6px}
+.p3-hy ul{margin:6px 0 0;padding-left:18px;font-size:12.5px;color:#2F4468}.p3-hy li.x{color:#9A2A22}.p3-hy .v{font-size:12.5px;color:#5B6B86;margin-top:5px}
+.p3-ct{border-left:3px solid #E0A030;background:#FFF9EE;border-radius:0 10px 10px 0;padding:8px 12px;font-size:13px;color:#5A3E00;margin-bottom:8px}
+.p3-q{font-size:13px;color:#2F4468;padding:7px 0;border-top:1px dashed var(--line2)}.p3-q:first-of-type{border-top:0}
+.p3-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:16px}
+.p3-l{border:1px solid var(--line2);border-radius:14px;padding:12px 14px;background:#fff;border-top:3px solid #CBD5E4}
+.p3-l.good{border-top-color:#22A35E}.p3-l.ok{border-top-color:#7FA7DD}.p3-l.watch{border-top-color:#E0A030}.p3-l.risk{border-top-color:#E2574C}.p3-l.na{opacity:.75}
+.p3-l .hh{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px}.p3-l .hh b{font-size:13.5px;color:var(--navy)}
+.p3-lv{font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.p3-lv.good{background:#DDF3E8;color:#16794A}.p3-lv.ok{background:#E8F0FB;color:#0B3F94}.p3-lv.watch{background:#FFF1D6;color:#9A5B00}.p3-lv.risk{background:#FDE8E7;color:#C0332B}.p3-lv.na{background:#EEF2F7;color:#5B6B86}
+.p3-l p{margin:0;font-size:13px;line-height:1.55;color:#22324F}
+.p3-bar{margin-top:8px;font-size:11.5px;color:var(--muted)}.p3-bar .tr{position:relative;height:8px;border-radius:4px;background:#EEF2F8;margin:4px 0}
+.p3-bar .me{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:#0A63C4}.p3-bar .pe{position:absolute;top:-3px;bottom:-3px;border-left:2px solid #E0A030}
+.p3-l details{margin-top:6px;font-size:12px;color:#5B6B86}.p3-l summary{cursor:pointer;font-weight:600}.p3-l details ul{margin:4px 0 0;padding-left:16px}
+.p3-ai{margin-top:16px;padding:14px 16px;border:1.5px solid #CFE0F7;border-radius:14px;background:linear-gradient(180deg,#F6FAFF,#fff)}
+.p3-ai .k{font-weight:800;font-size:15px;color:var(--navy);margin:2px 0 10px}
+.p3-ai .gn{padding:8px 0;border-top:1px dashed var(--line2);font-size:13px}.p3-ai .gn b{color:var(--navy)}.p3-ai .gn i{display:block;color:#5B6B86;font-style:normal;margin-top:2px}
+.p3-warn{background:#FFF4E0;color:#9A5B00;border-radius:10px;padding:8px 10px;font-size:12.5px;margin-bottom:10px}
 .dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px 22px}
 .dl div{min-width:0}.dl dt{font-size:11.5px;color:var(--muted);font-weight:600}.dl dd{margin:1px 0 0;font-weight:600;color:var(--ink);overflow-wrap:anywhere}
 .dl .na{color:#9AA7BC;font-weight:400}
@@ -1206,10 +1232,62 @@ function renderTab(){
   $('dtab').innerHTML = f();
   document.querySelectorAll('#vDetail [data-dtab]').forEach(function(b){ b.setAttribute('aria-selected', String(+b.getAttribute('data-dtab') === D.tab)); });
 }
+/* --- Nhận định đa chiều (máy chủ: _lib/person360.js): 7 góc nhìn, so với đồng nghiệp / đội / xu hướng / bán hàng --- */
+var P3L = { good:'Điểm sáng', ok:'Ổn', watch:'Cần chú ý', risk:'Rủi ro', na:'Thiếu dữ liệu' };
+async function p360Load(refresh){
+  if (!D || D.p3 === 'loading') return; var code = D.c.code; D.p3 = 'loading';
+  var r; try { r = await api('GET', '/api/kt-admin?op=person360&code=' + encodeURIComponent(code) + (refresh ? '&refresh=1' : '')); } catch (e) { r = null; }
+  if (!D || D.c.code !== code) return;
+  D.p3 = r && r.j && r.j.ok ? r.j : { error:(r && r.j && r.j.error) || 'Không kết nối được máy chủ.' };
+  if (D.tab === 1) renderTab();
+}
+async function p360Ai(){
+  if (!D || D.p3ai === 'loading') return; var code = D.c.code; D.p3ai = 'loading'; if (D.tab === 1) renderTab();
+  var r; try { r = await api('POST', '/api/kt-admin', { op:'person360Ai', code:code }); } catch (e) { r = null; }
+  if (!D || D.c.code !== code) return;
+  D.p3ai = r && r.j && r.j.ok ? r.j : { error:(r && r.j && r.j.error) || 'Không kết nối được máy chủ.' };
+  if (D.tab === 1) renderTab();
+}
+function p3Spark(ys){ if (!ys || ys.length < 2) return ''; var w = 120, h = 28, mn = Math.min.apply(null, ys), mx = Math.max.apply(null, ys), rg = Math.max(1, mx - mn);
+  var pts = ys.map(function(y, i){ return (i * w / (ys.length - 1)).toFixed(1) + ',' + (h - 3 - (y - mn) / rg * (h - 6)).toFixed(1); }).join(' ');
+  return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true" style="display:block;margin-top:6px"><polyline points="' + pts + '" fill="none" stroke="#0A63C4" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>'; }
+function p3Bar(b){ if (!b || b.me == null || b.peer == null) return ''; var mx = Math.max(100, b.me, b.peer); return '<div class="p3-bar"><div class="tr"><i class="me" style="width:' + Math.min(100, b.me / mx * 100) + '%"></i><i class="pe" style="left:' + Math.min(100, b.peer / mx * 100) + '%"></i></div>Người này <b>' + vn(b.me) + '%</b> · vạch vàng: ' + esc(b.label) + ' ' + vn(b.peer) + '%</div>'; }
+function p3AiHtml(){
+  var x = D.p3ai; if (!x) return '';
+  if (x === 'loading') return '<div class="p3-ai"><div class="q">AI đang đối chiếu 7 góc nhìn và viết phân tích (khoảng 10 đến 30 giây)…</div></div>';
+  if (x.error) return '<div class="p3-ai" style="border-color:#F5C2C0;background:#FFF6F5"><b style="color:#B42318">' + esc(x.error) + '</b></div>';
+  var a = x.ai || {}, L = function(arr){ return (arr || []).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join(''); };
+  return '<div class="p3-ai">' + (x.warn ? '<div class="p3-warn">' + esc(x.warn) + '</div>' : '') + '<div class="q">✦ Phân tích của AI từ gói bằng chứng ẩn danh ở trên. Là gợi ý để quản lí kiểm chứng, không dùng để quyết định nhân sự.</div><div class="k">' + esc(a.ket_luan) + '</div>' +
+    '<div class="p3-cols" style="margin-top:4px"><div><div class="p3-h">Chẩn đoán & giả thuyết cạnh tranh</div>' + (a.chan_doan || []).map(function(h, i){ return '<div class="p3-hy"><b><span class="n">' + (i + 1) + '</span>' + esc(h.gia_thuyet) + '</b> <span class="p3-lv ' + (h.do_tin_cay === 'cao' ? 'good' : h.do_tin_cay === 'vừa' ? 'ok' : 'watch') + '">tin cậy ' + esc(h.do_tin_cay) + '</span><ul>' + L(h.ung_ho) + (h.phan_bac || []).map(function(t){ return '<li class="x">Phản bác: ' + esc(t) + '</li>'; }).join('') + '</ul>' + (h.cach_kiem_chung ? '<div class="v">Kiểm chứng: ' + esc(h.cach_kiem_chung) + '</div>' : '') + '</div>'; }).join('') + '</div>' +
+    '<div>' + ((a.mau_thuan || []).length ? '<div class="p3-h">Mâu thuẫn cần đào sâu</div>' + a.mau_thuan.map(function(t){ return '<div class="p3-ct">' + esc(t) + '</div>'; }).join('') : '') +
+      ((a.cau_hoi_1_1 || []).length ? '<div class="p3-h" style="margin-top:10px">Câu hỏi cho buổi 1-1</div>' + a.cau_hoi_1_1.map(function(t){ return '<div class="p3-q">“' + esc(t) + '”</div>'; }).join('') : '') + '</div></div>' +
+    ((a.goc_nhin || []).length ? '<div class="p3-h" style="margin-top:12px">Từng góc nhìn</div>' + a.goc_nhin.map(function(g){ return '<div class="gn"><b>' + esc(g.goc) + ':</b> ' + esc(g.nhan_dinh) + (g.ham_y ? '<i>→ ' + esc(g.ham_y) + '</i>' : '') + '</div>'; }).join('') : '') +
+    ((a.ke_hoach_30_ngay || []).length ? '<div class="p3-h" style="margin-top:12px">Kế hoạch 30 ngày</div><div class="tw"><table class="t"><thead><tr><th>Việc</th><th>Ai</th><th>Thời hạn</th><th>Đo bằng</th></tr></thead><tbody>' + a.ke_hoach_30_ngay.map(function(k){ return '<tr><td>' + esc(k.viec) + '</td><td class="nw"><b>' + esc(k.ai) + '</b></td><td class="nw">' + esc(k.thoi_han) + '</td><td>' + esc(k.chi_so) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '') +
+    (a.neu_khong_lam ? '<div class="q" style="margin-top:10px"><b>Nếu không xử lý:</b> ' + esc(a.neu_khong_lam) + '</div>' : '') + '</div>';
+}
+function p360Card(){
+  var head = '<div class="card-h"><h2>Nhận định đa chiều</h2><span class="sub">7 góc nhìn · so với đồng nghiệp, đội, các kỳ trước, kết quả bán</span>' + TIP('Mỗi nhận định có mốc so sánh (đồng nghiệp cùng vị trí, cùng đội, toàn hệ thống, kỳ trước) và chỉ ra vấn đề nằm ở cá nhân, cả đội, nội dung đào tạo, kỹ năng bán hay thị trường. Các giả thuyết được xếp theo mức bằng chứng ủng hộ, kèm bằng chứng phản bác và cách kiểm chứng.') + '<span class="sp" style="flex:1"></span>' +
+    (D.p3 && D.p3.ok && !D.p3.left ? '<button class="btn sm" type="button" data-p3re="1" title="Tính lại với dữ liệu mới nhất">↻</button><button class="btn sm pri" type="button" data-p3ai="1"' + (D.p3ai === 'loading' ? ' disabled' : '') + '>✦ AI phân tích sâu</button>' : '') + '</div>';
+  if (!D.p3 || D.p3 === 'loading'){ if (!D.p3) setTimeout(function(){ p360Load(false); }, 0); return '<div class="card c12">' + head + '<div class="card-b"><div class="sk" style="height:64px;margin-bottom:12px"></div><div class="sk" style="height:140px"></div><div class="q" style="margin-top:8px">Đang đối chiếu dữ liệu kiểm tra, bán hàng và đồng nghiệp…</div></div></div>'; }
+  if (D.p3.error) return '<div class="card c12">' + head + '<div class="card-b"><div class="empty">' + esc(D.p3.error) + ' <button class="btn sm" type="button" data-p3re="1">Thử lại</button></div></div></div>';
+  var r = D.p3, h = r.headline || {};
+  if (r.left) return '<div class="card c12">' + head + '<div class="card-b"><div class="empty">' + esc(h.text) + '</div></div></div>';
+  var hy = (r.hypotheses || []).map(function(x, i){ return '<div class="p3-hy"><b><span class="n">' + (i + 1) + '</span>' + esc(x.title) + '</b><ul>' + (x['for'] || []).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + (x.against || []).map(function(t){ return '<li class="x">Phản bác: ' + esc(t) + '</li>'; }).join('') + '</ul>' + (x.verify ? '<div class="v">Kiểm chứng: ' + esc(x.verify) + '</div>' : '') + '</div>'; }).join('') || '<div class="empty">Chưa có giả thuyết nổi bật.</div>';
+  var right = ((r.contradictions || []).length ? '<div class="p3-h">Mâu thuẫn cần đào sâu</div>' + r.contradictions.map(function(t){ return '<div class="p3-ct">' + esc(t) + '</div>'; }).join('') : '') +
+    '<div class="p3-h" style="margin-top:' + ((r.contradictions || []).length ? 10 : 0) + 'px">Câu hỏi gợi ý cho buổi 1-1</div>' + (r.questions || []).map(function(t){ return '<div class="p3-q">“' + esc(t) + '”</div>'; }).join('');
+  var lens = (r.lenses || []).map(function(l){ return '<div class="p3-l ' + l.level + '"><div class="hh"><b>' + esc(l.name) + '</b><span class="p3-lv ' + l.level + '">' + P3L[l.level] + '</span></div><p>' + esc(l.insight) + '</p>' + p3Bar(l.bar) + (l.spark ? p3Spark(l.spark) : '') +
+    ((l.evidence || []).length ? '<details><summary>Bằng chứng (' + l.evidence.length + ')</summary><ul>' + l.evidence.map(function(e){ return '<li>' + esc(e) + '</li>'; }).join('') + '</ul></details>' : '') + '</div>'; }).join('');
+  var plan = (r.plan || []).length ? '<div class="p3-h" style="margin-top:16px">Kế hoạch 30 ngày (theo thứ tự ưu tiên của chẩn đoán)</div><div class="tw"><table class="t"><thead><tr><th>Việc cần làm</th><th>Ai</th><th>Thời hạn</th><th>Đo bằng</th></tr></thead><tbody>' + r.plan.map(function(x){ return '<tr><td>' + esc(x.t) + '</td><td class="nw"><b>' + esc(x.who) + '</b></td><td class="nw">' + esc(x.when) + '</td><td>' + esc(x.kpi) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '';
+  return '<div class="card c12">' + head + '<div class="card-b">' +
+    '<div class="p3-hd"><div class="ic3">!</div><div><b class="t">' + esc(h.title) + '</b><p>' + esc(h.text) + '</p><div style="margin-top:6px"><span class="p3-lv ' + (h.confidence === 'cao' ? 'good' : h.confidence === 'vừa' ? 'ok' : 'watch') + '">Độ tin cậy: ' + esc(h.confidence) + '</span></div></div></div>' +
+    '<div class="p3-cols"><div><div class="p3-h">Giả thuyết, xếp theo mức bằng chứng</div>' + hy + '</div><div>' + right + '</div></div>' +
+    '<div class="p3-grid">' + lens + '</div>' + plan + p3AiHtml() +
+    '<div class="q" style="margin-top:10px">' + esc(r.method || '') + ' Dữ liệu năng lực tổng hợp lúc ' + esc(vnDT(r.cachedAt)) + '. Là gợi ý để quản lí kiểm chứng, không dùng để quyết định nhân sự.</div></div></div>';
+}
 /* --- Tab 1: Tổng quan năng lực --- */
 function tab1(){
   var P = D.P, a = D.agg, H = histOfficial().slice().sort(function(x, y){ return (x.submittedAt || 0) - (y.submittedAt || 0); });
-  if (!H.length) return '<div class="card"><div class="empty" style="padding:40px 14px">' + (P.status === 'doing' ? 'Nhân viên đang làm bài, chưa có kết quả nào.' : 'Nhân viên chưa có kết quả kiểm tra chính thức nào.') + '</div></div><div class="grid" style="margin-top:14px">' + planCard() + '</div>';
+  if (!H.length) return '<div class="card"><div class="empty" style="padding:40px 14px">' + (P.status === 'doing' ? 'Nhân viên đang làm bài, chưa có kết quả nào.' : 'Nhân viên chưa có kết quả kiểm tra chính thức nào.') + '</div></div><div class="grid" style="margin-top:14px">' + p360Card() + planCard() + '</div>';
   var pts = H.slice(-10).map(function(x){ return { l:vnDate(x.submittedAt), v:x.pct, v2:x.teamAvg }; });
   var byP = {}; H.forEach(function(x){ var p = x.period || ''; var o = byP[p] || (byP[p] = { s:0, n:0, t:0 }); o.s += x.pct || 0; o.n++; o.t = Math.max(o.t, x.submittedAt || 0); });
   var prog = Object.keys(byP).sort(function(x, y){ return byP[x].t - byP[y].t; }).map(function(p){ return { label:xTitle(p), sub:byP[p].n + ' lượt', v:byP[p].s / byP[p].n }; });
@@ -1217,11 +1295,11 @@ function tab1(){
   var strong = cats.slice().sort(function(x, y){ return y.pct - x.pct; }).slice(0, 3), weak = cats.slice().sort(function(x, y){ return x.pct - y.pct; }).slice(0, 3);
   var cl = function(arr){ return arr.length ? hbars(arr.map(function(c){ return { label:c.category, sub:c.n + ' câu', v:c.pct }; }), { noLegend:true }) : '<div class="empty">Chưa có dữ liệu theo chuyên đề.</div>'; };
   var A = a.assigned, done = a.done;
-  return '<div class="grid">' +
+  return '<div class="grid">' + p360Card() +
     '<div class="card c8"><div class="card-h"><h2>Tiến bộ điểm số theo thời gian</h2>' + TIP('Điểm % từng lượt làm bài chính thức (xanh) và trung bình của đội cùng kỳ (vàng). Đường đỏ nét đứt là mốc chuẩn của hệ thống.') + '</div><div class="card-b">' + lineChart(pts, { l1:'Điểm của nhân viên', l2:'Trung bình đội cùng kỳ', aria:'Tiến bộ điểm số theo thời gian' }) + '</div></div>' +
     '<div class="card c4"><div class="card-h"><h2>Tỉ lệ hoàn thành kiểm tra</h2></div><div class="card-b">' + (A ? '<div style="font-size:34px;font-weight:800;color:#0B2A5B;letter-spacing:-.02em">' + vn(a.compl, 0) + '<small style="font-size:16px;color:#5B6B86">%</small></div><div class="q" style="margin:2px 0 10px">' + done + ' / ' + A + ' bài kiểm tra được giao</div><div class="prog"><i style="width:' + Math.min(100, a.compl) + '%"></i></div>' : '<div class="empty">Chưa được giao bài kiểm tra nào.</div>') + '</div></div>' +
     '<div class="card c6"><div class="card-h"><h2>Điểm trung bình từng chương trình</h2></div><div class="card-b">' + hbars(prog) + '</div></div>' +
-    '<div class="card c6"><div class="card-h"><h2>Nhận định tổng quan</h2>' + TIP('Nhận định được tổng hợp tự động từ dữ liệu kiểm tra thực tế của nhân viên theo các ngưỡng đang cấu hình trong hệ thống.') + '</div><div class="card-b"><div class="ins">' + insight() + '</div></div></div>' +
+
     '<div class="card c6"><div class="card-h"><h2>Chuyên đề mạnh nhất</h2><span class="sub">từ ' + (P.papersRead || 0) + ' bài gần nhất</span></div><div class="card-b">' + cl(strong) + '</div></div>' +
     '<div class="card c6"><div class="card-h"><h2>Chuyên đề cần cải thiện</h2></div><div class="card-b">' + cl(weak) + '</div></div>' + planCard() + '</div>';
 }
@@ -1505,6 +1583,8 @@ function bind(){
     if (el.hasAttribute('data-selclear')){ V.sel = {}; renderList(); fillXlMenu(); return; }
     if (el.hasAttribute('data-xl')){ $('xlPop').classList.add('hide'); if (!el.disabled) exportXlsx(el.getAttribute('data-xl')); return; }
     if (el.hasAttribute('data-dtab')){ D.tab = +el.getAttribute('data-dtab'); renderTab(); return; }
+    if (el.hasAttribute('data-p3ai')){ p360Ai(); return; }
+    if (el.hasAttribute('data-p3re')){ D.p3 = null; D.p3ai = null; p360Load(true); if (D.tab === 1) renderTab(); return; }
     if (el.hasAttribute('data-chf')){ D.chF = el.getAttribute('data-chf'); renderTab(); return; }
     if (el.hasAttribute('data-chreload')){ D.hist = null; renderTab(); return; }
     if (el.hasAttribute('data-paper')){ openPaper(el.getAttribute('data-paper')); return; }
