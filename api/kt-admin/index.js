@@ -309,6 +309,9 @@ const handler = async function (context, req) {
         const plan = await TP.get(rq.month); if (plan && plan.history) plan.history = plan.history.map((h) => ({ at: h.at, by: h.by, status: h.status, approvalStatus: h.approvalStatus, count: h.count }));
         return reply(context, 200, { ok: true, plan, months: await TP.list(), framework: await TP.getFramework(), suggested: TP.SUGGESTED, formats: TP.FORMATS, statuses: TP.STATUSES, biz: await TP.getBiz(rq.month), sales: await TP.salesContext(String(rq.month || "").slice(0, 7)) });
       }
+      if (op === "trainFrameworkPropose") { // đề xuất khung năng lực SMART từ dữ liệu hệ thống; KHÔNG ghi vào khung
+        const rq = req.query || {}, r = await require("../_lib/trainframe").propose({ month: String(rq.month || ""), months: rq.months, horizon: rq.horizon }); return reply(context, r.ok ? 200 : 400, r);
+      }
       if (op === "trainPlanHistory") { const rq = req.query || {}; return reply(context, 200, { ok: true, history: await require("../_lib/trainplan").history(rq.month) }); }
       if (op === "trainPlanRestore") { const rq = req.query || {}, r = await require("../_lib/trainplan").restore(rq.month, rq.at); return reply(context, r.ok ? 200 : 404, r); }
       if (op === "trainFlowEffect") { const rq = req.query || {}; return reply(context, 200, await require("../_lib/trainstat").effectiveness(String(rq.month || ""))); }

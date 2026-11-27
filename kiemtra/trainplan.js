@@ -3,7 +3,7 @@
    Dùng các hàm có sẵn của admin.html: $, esc, api, msg. Dữ liệu nhân sự chỉ ở máy chủ; trang này chỉ nhận số liệu tổng hợp theo vị trí. */
 (function () {
   'use strict';
-  var TP = { audiences: null, scope: 0, framework: { min: {} }, suggested: {}, fwDraft: null, fwOpen: false, formats: [], statuses: [], explanation: null, history: [], effect: null, steps: null, month: '', rows: [], source: 'manual', status: 'draft', dirty: false, biz: { goals: [], strategy: [] }, sales: null, bizDirty: false, approval: { status: 'draft', approver: '', note: '', decidedAt: null }, sendBefore: 3, flow: null, analysis: null, months: [], busy: false, inited: false };
+  var TP = { proposal: null, audiences: null, scope: 0, framework: { min: {} }, suggested: {}, fwDraft: null, fwOpen: false, formats: [], statuses: [], explanation: null, history: [], effect: null, steps: null, month: '', rows: [], source: 'manual', status: 'draft', dirty: false, biz: { goals: [], strategy: [] }, sales: null, bizDirty: false, approval: { status: 'draft', approver: '', note: '', decidedAt: null }, sendBefore: 3, flow: null, analysis: null, months: [], busy: false, inited: false };
   var COLS = [['stt', 'STT', 46], ['tuan', 'Tuần triển khai', 76], ['thoiGian', 'Ngày / giờ dự kiến', 150], ['tenChuongTrinh', 'Chương trình đào tạo', 200], ['mucTieu', 'Mục tiêu đào tạo', 230], ['noiDung', 'Nội dung trọng tâm', 320], ['doiTuong', 'Đối tượng', 90],
     ['soHocVien', 'Số học viên dự kiến', 96], ['hinhThuc', 'Hình thức đào tạo', 170], ['thoiLuong', 'Thời lượng', 86], ['phuTrach', 'Giảng viên / phụ trách', 116], ['uuTien', 'Mức độ ưu tiên', 140], ['coSo', 'Căn cứ đề xuất', 260], ['chiSoDo', 'Chỉ số đánh giá hiệu quả', 260], ['trangThai', 'Trạng thái triển khai', 130],
     ['nganh', 'Ngành', 110], ['phuongPhap', 'Phương pháp', 150], ['guiTruoc', 'Hạn gửi nội dung cho người duyệt', 130], ['tanSuat', 'Tần suất', 140], ['ghiChu', 'Ghi chú', 220], ['mucTieuKd', 'Gắn mục tiêu kinh doanh', 230]];
@@ -84,6 +84,7 @@
       + '#tpRoot .tp-hard{margin-top:8px;font-size:13px}#tpRoot .tp-hard ul{margin:4px 0 0 18px;padding:0}#tpRoot input[type=number]{font:inherit}'
       + '#tpRoot ol.tp-steps{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;padding:0}#tpRoot ol.tp-steps li{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 8px;border:1px solid #CBD7EA;border-radius:99px;background:#fff;font-size:13px;color:#5b6b85}#tpRoot ol.tp-steps li span{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#E4ECF8;font-weight:800;font-size:12px}'
       + '#tpRoot ol.tp-steps li.done{color:#067647;border-color:#A6E5C5;background:#F0FBF5}#tpRoot ol.tp-steps li.done span{background:#12B76A;color:#fff}#tpRoot ol.tp-steps li.act{color:#0B4FD0;border-color:#8DB6F7;background:#EEF4FF;font-weight:700}#tpRoot ol.tp-steps li.act span{background:#1B5FD6;color:#fff}#tpRoot ol.tp-steps li.err{color:#B42318;border-color:#F3B4B4;background:#FFF5F5}#tpRoot ol.tp-steps li.err span{background:#D92D20;color:#fff}'
+      + '#tpRoot .tp-prop{border:1px dashed #8DB6F7;background:#F5F9FF;border-radius:12px;padding:10px 12px;margin-top:10px}#tpRoot .tp-smart{line-height:1.6;max-width:62em;padding:6px 0}#tpRoot .tp-prop details summary{cursor:pointer;color:#0B4FD0;font-size:13px}'
       + '#tpRoot .tp-diag select{max-width:260px;padding:5px 8px;border:1px solid #CBD7EA;border-radius:8px;font:inherit;font-size:13px}';
     document.head.appendChild(st);
   }
@@ -170,10 +171,44 @@
   function renderFramework() {
     var el = document.getElementById('tpFw'); if (!el) return; var has = Object.keys(TP.framework.min || {}).length > 0;
     el.innerHTML = '<details class="tp-fw" id="tpFwBox"' + (!has || TP.fwOpen ? ' open' : '') + '><summary>Khung năng lực yêu cầu theo vị trí ' + (has ? '<span class="tp-st ok">Đã khai báo</span>' : '<span class="tp-st warn">Chưa khai báo</span>') + '</summary>'
-      + (has ? '' : '<div class="msg warn" style="margin:8px 0">Chưa có khung năng lực yêu cầu. Hệ thống KHÔNG tự đặt điểm yêu cầu nên chưa thể xác định khoảng cách năng lực. Hãy nhập mức yêu cầu (% đúng tối thiểu) cho từng vị trí và mảng; ô để trống = chưa có yêu cầu (chỉ xem năng lực thực tế).</div>')
-      + '<div class="small" style="margin:6px 0">Nhập % đúng tối thiểu mà vị trí cần đạt ở từng mảng. Nút “Điền gợi ý” chỉ điền sẵn vào ô trống để bạn chỉnh — <b>gợi ý không phải chuẩn của công ty và chỉ có hiệu lực khi bạn bấm Lưu</b>.</div>'
+      + (has ? '' : '<div class="msg warn" style="margin:8px 0">Chưa có khung năng lực yêu cầu. Hệ thống KHÔNG tự đặt điểm yêu cầu nên chưa thể xác định khoảng cách năng lực. Bấm “Đề xuất khung năng lực (SMART)” để hệ thống phân tích nhân viên, số bán, chỉ đạo kinh doanh và thị trường rồi đề xuất mức yêu cầu kèm căn cứ; hoặc tự nhập (ô để trống = chưa có yêu cầu, chỉ xem năng lực thực tế).</div>')
+      + '<div class="small" style="margin:6px 0">Nhập % đúng tối thiểu mà vị trí cần đạt ở từng mảng. <b>Đề xuất chỉ điền sẵn vào ô nhập; chỉ có hiệu lực khi bạn xem, chỉnh và bấm Lưu.</b></div>'
       + '<div style="overflow-x:auto"><table class="tp-gap tp-fwt"><thead><tr><th>Vị trí</th>' + FW_AREAS.map(function (a) { return '<th>' + esc(AREA_LABEL[a]) + '</th>'; }).join('') + '</tr></thead><tbody>' + AUD_LIST.map(function (au) { return '<tr><td><b>' + au[1] + '</b></td>' + FW_AREAS.map(function (a) { return '<td><input type="number" min="1" max="100" data-fw="' + au[0] + '|' + a + '" value="' + ea(fwVal(au[0], a)) + '"></td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>'
-      + '<div class="tp-bar" style="margin-top:8px"><button type="button" class="btn ghost sm" data-tp-act="fwsuggest">Điền gợi ý vào ô trống</button><button type="button" class="btn sm" data-tp-act="fwsave">Lưu khung năng lực</button></div></details>';
+      + '<div class="tp-bar" style="margin-top:8px"><label class="small" style="display:inline-flex;align-items:center;gap:6px">Lộ trình <select id="tpHorizon">' + [2, 3, 4, 6].map(function (n) { return '<option value="' + n + '"' + (n === (TP.horizon || 3) ? ' selected' : '') + '>' + n + ' tháng</option>'; }).join('') + '</select></label>'
+      + '<button type="button" class="btn ghost sm" data-tp-act="fwpropose">' + ib('spark', 'Đề xuất khung năng lực (SMART)') + '</button><button type="button" class="btn sm" data-tp-act="fwsave">Lưu khung năng lực</button></div><div id="tpFwProp"></div></details>';
+    renderProposal();
+  }
+  var CONF = { cao: 'ok', vừa: 'warn', thấp: 'na' };
+  function renderProposal() {
+    var el = document.getElementById('tpFwProp'); if (!el) return; var P = TP.proposal; if (!P) { el.innerHTML = ''; return; }
+    var rows = P.proposals.map(function (x) {
+      var c = x.current, s = x.smart;
+      return '<tr><td><b>' + esc(x.short) + '</b></td><td>' + esc(x.areaName) + '</td><td>TB ' + c.avg + '%<div class="small">P25–P75: ' + c.p25 + '–' + c.p75 + '% · ' + x.n + ' người</div></td><td>' + (x.min == null ? '—' : '<b>≥ ' + x.min + '%</b>') + '</td><td><span class="tp-st ' + CONF[x.confidence] + '">' + esc(x.confidence) + '</span></td>'
+        + '<td><details><summary>Căn cứ S-M-A-R-T</summary><div class="small tp-smart"><b>Cụ thể:</b> ' + esc(s.S) + '<br><b>Đo được:</b> ' + esc(s.M) + '<br><b>Khả thi:</b> ' + esc(s.A) + '<br><b>Liên quan:</b> ' + esc(s.R) + '<br><b>Thời hạn:</b> ' + esc(s.T) + '</div></details></td></tr>';
+    }).join('');
+    el.innerHTML = '<div class="tp-prop"><div class="tp-sec" style="margin-top:0">Đề xuất khung năng lực theo SMART <span class="tp-st warn" style="font-size:11px">Chưa áp dụng</span></div>'
+      + '<div class="small">Mức đạt của đề thi: ' + (P.passScore == null ? 'chưa bật' : P.passScore + '%') + ' · ' + P.people + ' nhân sự · tối đa ' + P.withSales + ' người có cả điểm mảng và số bán' + (P.scope ? ' · dữ liệu ' + P.scope + ' tháng gần nhất' : '') + '</div>'
+      + (P.proposals.length ? '<div style="overflow-x:auto"><table class="tp-gap"><thead><tr><th>Vị trí</th><th>Mảng</th><th>Hiện trạng</th><th>Đề xuất</th><th>Độ tin cậy</th><th>Căn cứ</th></tr></thead><tbody>' + rows + '</tbody></table></div>' : '<div class="msg warn">Chưa đủ dữ liệu để đề xuất mức nào.</div>')
+      + (P.skipped && P.skipped.length ? '<div class="small" style="margin-top:6px"><b>Chưa đề xuất:</b> ' + P.skipped.map(function (x) { return esc(x.short + ' · ' + x.areaName + ' (' + x.n + ' người)'); }).join('; ') + ' — chưa đủ 5 người có dữ liệu.</div>' : '')
+      + '<div class="small" style="margin-top:6px">' + esc(P.note) + '</div>'
+      + '<div class="tp-bar" style="margin-top:8px"><button type="button" class="btn sm" data-tp-act="fwapply">Áp dụng đề xuất vào ô nhập (chưa lưu)</button></div></div>';
+  }
+  async function proposeFw() {
+    TP.horizon = Number((document.getElementById('tpHorizon') || {}).value) || 3; lock(true); say('Đang phân tích nhân viên, số bán, chỉ đạo kinh doanh và bằng chứng thị trường…', 'ok');
+    try {
+      var r = await api('GET', '/api/kt-admin?op=trainFrameworkPropose&month=' + encodeURIComponent(TP.month) + '&horizon=' + TP.horizon + (TP.scope ? '&months=' + TP.scope : ''));
+      if (!r.j.ok) { say(r.j.error || 'Không đề xuất được.'); return; }
+      TP.proposal = r.j; TP.fwOpen = true; renderFramework();
+      var n = r.j.proposals.filter(function (x) { return x.min != null; }).length, hi = r.j.proposals.filter(function (x) { return x.basis === 'sales'; }).length;
+      say('Đã tạo ' + n + ' đề xuất (' + hi + ' dựa trên số bán, ' + (n - hi) + ' dựa trên mức đạt của đề thi). Hãy đọc căn cứ từng dòng, rồi bấm “Áp dụng đề xuất vào ô nhập” và “Lưu khung năng lực”.', 'ok');
+    } finally { lock(false); }
+  }
+  function applyProposal() {
+    var P = TP.proposal; if (!P) return; var cur = readFw(), d = {}, over = 0, put = 0;
+    AUD_LIST.forEach(function (au) { FW_AREAS.forEach(function (a) { if (cur[au[0]] && cur[au[0]][a] != null) (d[au[0]] = d[au[0]] || {})[a] = cur[au[0]][a]; }); });
+    P.proposals.forEach(function (x) { if (x.min == null) return; var old = d[x.key] && d[x.key][x.area]; if (old != null && Number(old) !== x.min) over++; (d[x.key] = d[x.key] || {})[x.area] = x.min; put++; });
+    if (over && !confirm('Có ' + over + ' ô đang có giá trị khác sẽ bị thay bằng đề xuất (chưa lưu cho tới khi bạn bấm “Lưu khung năng lực”). Tiếp tục?')) return;
+    TP.fwDraft = d; TP.fwOpen = true; renderFramework(); say('Đã điền ' + put + ' ô từ đề xuất SMART. CHƯA lưu: hãy xem lại, chỉnh theo thực tế rồi bấm “Lưu khung năng lực”.', 'warn');
   }
   function readFw() { var m = {}; Array.prototype.forEach.call(document.querySelectorAll('#tpFw input[data-fw]'), function (x) { var k = x.getAttribute('data-fw').split('|'); if (x.value !== '') (m[k[0]] = m[k[0]] || {})[k[1]] = Number(x.value); }); return m; }
   function steps(cur, err) { TP.steps = cur == null ? null : { cur: cur, err: !!err }; renderSteps(); }
@@ -220,10 +255,6 @@
     try { var r = await api('POST', '/api/kt-admin', { op: 'trainFrameworkSave', min: m }); if (!r.j.ok) { say(r.j.error || 'Không lưu được khung năng lực.'); return; } TP.framework = r.j.framework; TP.fwDraft = null; renderFramework(); say('Đã lưu khung năng lực yêu cầu theo vị trí.', 'ok'); }
     finally { lock(false); }
     if (TP.analysis) await analyze(true);
-  }
-  function fwSuggest() {
-    var cur = readFw(), sg = TP.suggested || {}, d = {}; AUD_LIST.forEach(function (au) { FW_AREAS.forEach(function (a) { var v = cur[au[0]] && cur[au[0]][a] != null ? cur[au[0]][a] : (sg[au[0]] && sg[au[0]][a] != null ? sg[au[0]][a] : ''); if (v !== '') (d[au[0]] = d[au[0]] || {})[a] = v; }); });
-    TP.fwDraft = d; TP.fwOpen = true; renderFramework(); say('Đã điền gợi ý vào các ô trống. Đây CHƯA phải chuẩn của công ty: hãy chỉnh theo thực tế rồi bấm “Lưu khung năng lực”.', 'warn');
   }
   function renderState() {
     var el = document.getElementById('tpState'); if (!el) return;
@@ -315,7 +346,7 @@
     var a = b.getAttribute('data-tp-act');
     if (a === 'analyze') analyze(true); else if (a === 'ai') generate('ai'); else if (a === 'rules') generate('rules');
     else if (a === 'flowbtn') flowAct(b.getAttribute('data-tp-flow'), +b.getAttribute('data-i')); else if (a === 'flow') createFlow(); else if (a === 'qall') genAll(); else if (a === 'effect') loadEffect(); else if (a === 'biz') saveBiz(false);
-    else if (a === 'fwsave') fwSave(); else if (a === 'fwsuggest') fwSuggest(); else if (a === 'restore') restoreVer(b.getAttribute('data-at'));
+    else if (a === 'fwsave') fwSave(); else if (a === 'fwpropose') proposeFw(); else if (a === 'fwapply') applyProposal(); else if (a === 'restore') restoreVer(b.getAttribute('data-at'));
     else if (a === 'save') save('final'); else if (a === 'draft') save('draft'); else if (a === 'add') { TP.rows.push(emptyRow()); TP.dirty = true; renderPlan(); } else if (a === 'csv') exportCsv(); else if (a === 'del') removePlan();
   }
   function confirmLose() { return !TP.dirty || confirm('Có thay đổi chưa lưu trong bảng kế hoạch. Bỏ các thay đổi này?'); }
@@ -323,7 +354,7 @@
   async function loadMonth(m) {
     if (!/^\d{4}-\d{2}$/.test(m || '')) return;
     if (m !== TP.month && !confirmLose()) { var mi = document.getElementById('tpMonth'); if (mi) mi.value = TP.month; return; }
-    TP.month = m; TP.analysis = null; TP.explanation = null; TP.effect = null; TP.steps = null; say('');
+    TP.month = m; TP.proposal = null; TP.analysis = null; TP.explanation = null; TP.effect = null; TP.steps = null; say('');
     var r = await api('GET', '/api/kt-admin?op=trainPlanGet&month=' + encodeURIComponent(m));
     if (!r.j.ok) { say(r.j.error || 'Không tải được kế hoạch.'); return; }
     TP.months = r.j.months || []; TP.biz = r.j.biz || { goals: [], strategy: [] }; TP.sales = r.j.sales || null; TP.bizDirty = false; var p = r.j.plan;
