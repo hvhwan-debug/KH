@@ -34,10 +34,14 @@ const q=(cat,good,n,text)=>Array.from({length:n},(_,i)=>({category:cat,ok:i<good
   click('[data-tp-act="ai"]'); await idle(); await wait(100);
   ok(/không tự đặt điểm yêu cầu/.test(D.getElementById("tpMsg").textContent)&&D.getElementById("tpFwBox").open&&D.querySelectorAll("table.tp-plan tbody tr").length===0&&D.querySelector("ol.tp-steps li.err"),"lập kế hoạch khi chưa có khung: báo cần khai báo khung, tiến trình đánh dấu lỗi ở bước AI, không tạo bảng");
 
-  // 2) điền gợi ý (chưa lưu) → phải lưu mới có hiệu lực
-  click('[data-tp-act="fwsuggest"]');
-  const inp=(k)=>D.querySelector('#tpFw input[data-fw="'+k+'"]');
-  ok(inp("GT1|sk").value==="70"&&inp("PC|sp").value==="75"&&/CHƯA phải chuẩn của công ty/.test(D.getElementById("tpMsg").textContent),"điền gợi ý vào ô trống: SR 1 kỹ năng 70, PC kiến thức sản phẩm 75; nói rõ CHƯA phải chuẩn của công ty");
+  // 2) đề xuất khung năng lực SMART từ dữ liệu → áp dụng vào ô nhập → phải lưu mới có hiệu lực
+  click('[data-tp-act="fwpropose"]'); await idle(); await wait(80);
+  const prop=D.querySelector("#tpFwProp .tp-prop");
+  ok(prop&&/Chưa áp dụng/.test(prop.textContent)&&/Mức đạt của đề thi: 80%/.test(prop.textContent)&&/Kỹ năng bán hàng/.test(prop.textContent)&&/≥ 80%/.test(prop.textContent)&&/Căn cứ S-M-A-R-T/.test(prop.textContent)&&/Đã tạo \d+ đề xuất/.test(D.getElementById("tpMsg").textContent),"đề xuất SMART: bảng đề xuất 'Chưa áp dụng', mức đạt đề thi 80%, mức ≥ 80% kèm 'Căn cứ S-M-A-R-T'");
+  const sm=D.querySelector("#tpFwProp .tp-smart").textContent; ok(/Cụ thể:/.test(sm)&&/Đo được:/.test(sm)&&/Khả thi:/.test(sm)&&/Liên quan:/.test(sm)&&/Thời hạn:/.test(sm),"mỗi đề xuất nêu đủ 5 thuộc tính SMART: cụ thể, đo được, khả thi, liên quan, thời hạn");
+  const inp=(k)=>D.querySelector('#tpFw input[data-fw="'+k+'"]'); ok(inp("GT1|sk").value==="","trước khi bấm áp dụng: ô nhập vẫn trống (đề xuất không tự điền)");
+  click('[data-tp-act="fwapply"]');
+  ok(inp("GT1|sk").value==="80"&&inp("GT2|sk").value==="80"&&inp("GT1|mk").value===""&&/CHƯA lưu/.test(D.getElementById("tpMsg").textContent)&&/Chưa khai báo/.test(D.getElementById("tpFw").textContent),"áp dụng: điền ô có đề xuất (80), ô không có dữ liệu để trống; báo CHƯA lưu, khung vẫn 'Chưa khai báo'");
   inp("GT1|sk").value="72"; ev(inp("GT1|sk"),"input"); click('[data-tp-act="ai"]'); await wait(80);
   ok(/chưa lưu/.test(D.getElementById("tpMsg").textContent),"có thay đổi khung chưa lưu: chặn lập kế hoạch, nhắc lưu khung trước");
   click('[data-tp-act="fwsave"]'); await idle(); await wait(100);
