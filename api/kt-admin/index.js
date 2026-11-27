@@ -306,16 +306,22 @@ const handler = async function (context, req) {
       }
       if (op === "trainPlanGet") { // kế hoạch đào tạo tháng đã lưu + danh sách các tháng đã có
         const TP = require("../_lib/trainplan"), rq = req.query || {};
-        return reply(context, 200, { ok: true, plan: await TP.get(rq.month), months: await TP.list(), biz: await TP.getBiz(rq.month), sales: await TP.salesContext(String(rq.month || "").slice(0, 7)) });
+        const plan = await TP.get(rq.month); if (plan && plan.history) plan.history = plan.history.map((h) => ({ at: h.at, by: h.by, status: h.status, approvalStatus: h.approvalStatus, count: h.count }));
+        return reply(context, 200, { ok: true, plan, months: await TP.list(), framework: await TP.getFramework(), suggested: TP.SUGGESTED, formats: TP.FORMATS, statuses: TP.STATUSES, biz: await TP.getBiz(rq.month), sales: await TP.salesContext(String(rq.month || "").slice(0, 7)) });
       }
+      if (op === "trainPlanHistory") { const rq = req.query || {}; return reply(context, 200, { ok: true, history: await require("../_lib/trainplan").history(rq.month) }); }
+      if (op === "trainPlanRestore") { const rq = req.query || {}, r = await require("../_lib/trainplan").restore(rq.month, rq.at); return reply(context, r.ok ? 200 : 404, r); }
+      if (op === "trainFlowEffect") { const rq = req.query || {}; return reply(context, 200, await require("../_lib/trainstat").effectiveness(String(rq.month || ""))); }
       if (op === "trainFlowStatus") { // bảng theo dõi luồng đào tạo của tháng (chương trình, người nhận, đã mời / đăng ký, câu hỏi, khảo sát)
         const rq = req.query || {}; return reply(context, 200, Object.assign({ ok: true }, await require("../_lib/trainflow").status(String(rq.month || ""))));
       }
       if (op === "trainPlanAnalysis") { // khoảng cách năng lực theo vị trí (luật minh bạch, không dùng AI)
         const TP = require("../_lib/trainplan"), rq = req.query || {}, m = typeof rq.month === "string" ? rq.month.slice(0, 7) : "";
         if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(m)) return reply(context, 400, { ok: false, error: "Tháng không hợp lệ." });
-        const HC = require("../_lib/hrcompetency"), amap = await HC.getAreaMap();
-        return reply(context, 200, { ok: true, analysis: TP.analyse(await HC.build({ refresh: rq.refresh === "1" }), m, { biz: await TP.getBiz(m), sales: await TP.salesContext(m), areaMap: amap }), req: TP.REQ, areas: HC.AREA_NAME });
+        const HC = require("../_lib/hrcompetency"), amap = await HC.getAreaMap(), fw = await TP.getFramework(), months = [3, 6, 12].indexOf(Number(rq.months)) >= 0 ? Number(rq.months) : 0;
+        const aud = typeof rq.aud === "string" && rq.aud ? rq.aud.split(",").filter((k) => TP.SHORT[k]) : null;
+        let hard = {}; try { hard = (await require("../_lib/trainstat").hardQuestions({ budgetMs: 6000 })).byAudience; } catch (e) { hard = {}; }
+        return reply(context, 200, { ok: true, analysis: TP.analyse(await HC.build({ refresh: rq.refresh === "1", months }), m, { biz: await TP.getBiz(m), sales: await TP.salesContext(m), areaMap: amap, framework: fw, audiences: aud, hard, months }), framework: fw, suggested: TP.SUGGESTED, areas: HC.AREA_NAME });
       }
       if (op === "hrDims") { // nhận định theo từng người / quản lí / tỉnh / ngành (luật minh bạch), chỉ quản trị viên
         const rq = req.query || {}, per = typeof rq.period === "string" ? rq.period.slice(0, 40) : undefined;
@@ -1054,13 +1060,16 @@ const handler = async function (context, req) {
       return reply(context, r.ok ? 200 : 502, r);
     }
     if (op === "trainPlanGenerate") { // AI (hoặc luật) lập kế hoạch đào tạo tháng từ khoảng cách năng lực; chưa lưu, quản trị viên xem và sửa rồi mới lưu
-      const r = await require("../_lib/trainplan").generate({ month: String(b.month || ""), mode: b.mode === "rules" ? "rules" : "ai", refresh: b.refresh === true });
+      const r = await require("../_lib/trainplan").generate({ month: String(b.month || ""), mode: b.mode === "rules" ? "rules" : "ai", refresh: b.refresh === true, months: b.months, audiences: Array.isArray(b.audiences) ? b.audiences.map((x) => String(x).slice(0, 8)) : null });
       return reply(context, r.ok ? 200 : 400, r);
     }
     if (op === "trainAreaMapSave") { // gắn danh mục câu hỏi vào mảng năng lực (khi tên danh mục không khớp nên bị xếp vào "Kiến thức chung")
       const HC = require("../_lib/hrcompetency"), e = b.map && typeof b.map === "object" ? b.map : {}, bad = Object.keys(e).filter((k) => e[k] !== "" && !HC.AREA_NAME[e[k]]);
       if (bad.length) return reply(context, 400, { ok: false, error: "Mảng năng lực không hợp lệ." });
       await HC.setAreaMap(e, u.email); return reply(context, 200, { ok: true });
+    }
+    if (op === "trainFrameworkSave") { // khung năng lực yêu cầu theo vị trí do quản trị viên khai báo (hệ thống không tự đặt điểm yêu cầu)
+      const d = await require("../_lib/trainplan").saveFramework(b.min, u.email); return reply(context, 200, { ok: true, framework: { min: d.min, updatedAt: d.updatedAt, by: d.by } });
     }
     if (op === "trainPlanBizSave") { // mục tiêu kinh doanh và chiến lược của tháng: đầu vào bắt buộc để lập kế hoạch đào tạo
       try { return reply(context, 200, { ok: true, biz: await require("../_lib/trainplan").saveBiz(String(b.month || ""), b, u.email) }); } catch (e) { return reply(context, 400, { ok: false, error: e.message }); }

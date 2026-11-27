@@ -17,6 +17,7 @@ const q = (cat, good, n) => Array.from({ length: n }, (_, i) => ({ category: cat
     await quiz.upsertIndex({ id: "a" + i, code: "G" + i, status: "submitted", pct: 80, score: 8, total: 10, submittedAt: now, period: "k", flags: { blur: 0 } });
   }
   await quiz.saveCandidates(cands);
+  await call("POST", {}, { op: "trainFrameworkSave", min: require("../api/_lib/trainplan").SUGGESTED });
   const month = "2026-12", gt1 = (r) => r.j.analysis.audiences.find((a) => a.key === "GT1"), n1 = (r) => gt1(r).reqs.find((g) => g.area === "n1");
   let r = await call("GET", { op: "trainPlanAnalysis", month });
   ok(r.s === 200 && n1(r).status === "thiếu dữ liệu" && n1(r).assessed === 0, "SR 1: mảng sản phẩm ngành 1 'thiếu dữ liệu' vì danh mục câu hỏi không khớp");

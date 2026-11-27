@@ -36,6 +36,7 @@ async function setAreaMap(entries, by) { // entries: { "Tên danh mục": "n1" |
   Object.keys(entries || {}).forEach((name) => { const k = fold(name), v = entries[name]; if (!k) return; if (v === "" || v == null) delete cur[k]; else if (AREA_NAME[v]) cur[k] = v; });
   await store.put(AREA_MAP_KEY, { map: cur, updatedAt: Date.now(), by: String(by || "").toLowerCase() }); OVR = cur;
   await store.del(CACHE_KEY).catch(() => {}); // hồ sơ năng lực đang lưu tạm 20 phút: bỏ để tính lại theo cách gắn mới
+  for (const m of [3, 6, 12]) await store.del(cacheKeyOf({ months: m })).catch(() => {});
   return cur;
 }
 const SEG_AREA = { may_loc: ["n2"], gia_dung: ["n1"] }; // mảng chuyên sâu của ngành KHÁC (không tính vào chỉ số năng lực của người chỉ bán một ngành)
@@ -56,7 +57,7 @@ async function loadCatCache(index, budgetMs) {
 async function compute(opt) {
   opt = opt || {}; OVR = await getAreaMap(); const now = opt.now || Date.now(), yr = new Date(now).getFullYear();
   const cands = (await quiz.getCandidates()).filter((c) => !quiz.isLeft(c)), byCode = new Map(cands.map((c) => [quiz.normCode(c.code), c]));
-  const index = (await quiz.getIndex()).filter((r) => r && r.status === "submitted" && r.pct != null && isFinite(Number(r.pct)) && byCode.has(quiz.normCode(r.code)));
+  const index = (await quiz.getIndex()).filter((r) => r && r.status === "submitted" && r.pct != null && isFinite(Number(r.pct)) && byCode.has(quiz.normCode(r.code)) && (!opt.months || (r.submittedAt || 0) >= now - Number(opt.months) * 30 * 864e5));
   const { cache, missing } = await loadCatCache(index, opt.budgetMs || 20000);
   // số bán mọi tháng
   const sales = new Map(); let salesMonths = [];
@@ -194,13 +195,17 @@ function personRules(p, hl, now) {
   return { notes, actions, recs };
 }
 
+// Phạm vi dữ liệu: opt.months (3 / 6 / 12) chỉ tính các bài làm trong N tháng gần nhất; mỗi phạm vi lưu tạm riêng 20 phút
+const cacheKeyOf = (opt) => (opt && Number(opt.months) > 0 ? CACHE_KEY.replace(".json", "-" + Math.round(Number(opt.months)) + "m.json") : CACHE_KEY);
 async function build(opt) {
-  opt = opt || {};
-  if (!opt.refresh) { const c = await store.get(CACHE_KEY).catch(() => null); if (c && c.data && Date.now() - (c.at || 0) < CACHE_MS) return Object.assign({ cached: true, cachedAt: c.at }, c.data); }
+  opt = opt || {}; const key = cacheKeyOf(opt);
+  if (!opt.refresh) { const c = await store.get(key).catch(() => null); if (c && c.data && Date.now() - (c.at || 0) < CACHE_MS) return Object.assign({ cached: true, cachedAt: c.at }, c.data); }
   const data = await compute(opt);
-  await store.put(CACHE_KEY, { at: Date.now(), data }).catch(() => {});
+  await store.put(key, { at: Date.now(), data }).catch(() => {});
   return Object.assign({ cached: false, cachedAt: Date.now() }, data);
 }
+// Đọc bản đã tính gần nhất (không tính lại, không tốn thời gian): dùng để chụp số liệu nền khi lưu kế hoạch
+async function peek() { const c = await store.get(CACHE_KEY).catch(() => null); return c && c.data ? c.data : null; }
 
 // ---------- AI ----------
 const llm = require("./llm");
@@ -260,4 +265,4 @@ async function ai(opt) {
   return { ok: true, kind, items };
 }
 
-module.exports = { build, compute, ai, areaOf, getAreaMap, setAreaMap, AREA_NAME, AREAS, level, personRules, groupStat, RULES };
+module.exports = { build, peek, compute, ai, areaOf, getAreaMap, setAreaMap, AREA_NAME, AREAS, level, personRules, groupStat, RULES };

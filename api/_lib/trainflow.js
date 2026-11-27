@@ -76,6 +76,7 @@ async function load(month) { return (await store.get(fkey(month)).catch(() => nu
 async function createFlow(month, by) {
   month = s(month, 7); if (!MONTH.test(month)) return err("Tháng không hợp lệ.");
   const plan = await TP.get(month); if (!plan) return err("Hãy lưu kế hoạch đào tạo của tháng này trước khi tạo luồng.", "no_plan");
+  if (plan.status !== "final") return err("Kế hoạch đang ở dạng NHÁP. Hãy lưu kế hoạch chính thức (nút “Lưu kế hoạch”) trước khi tạo luồng.", "draft_plan");
   const cands = await quiz.getCandidates(), old = (await load(month)) || { items: [] }, items = [], problems = [];
   for (let i = 0; i < plan.rows.length; i++) {
     const row = plan.rows[i], prev = old.items[i] || {}, rc = recipientsFor(row, cands);
@@ -98,7 +99,7 @@ async function createFlow(month, by) {
 
 // ---------- câu hỏi kiểm tra: chỉ dựa trên tài liệu có thật; vào đề ở dạng NHÁP ----------
 function termsOf(row) {
-  const t = []; const m = /Sản phẩm trọng tâm tháng: (.+?) · /.exec(row.tenChuongTrinh || "");
+  const t = []; const m = /(?:Sản phẩm trọng tâm tháng|Triển khai sản phẩm mới): (.+?) · /.exec(row.tenChuongTrinh || "");
   if (m) m[1].split(",").forEach((x) => t.push(x.trim()));
   (row.noiDung || []).forEach((x) => { const w = /^Củng cố chủ đề yếu: (.+?) \(TB/.exec(x); if (w) t.push(w[1].trim()); });
   return t.filter((x) => x.length >= 2).slice(0, 8);

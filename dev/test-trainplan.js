@@ -22,6 +22,7 @@ const q = (cat, good, n) => Array.from({ length: n }, (_, i) => ({ category: cat
     await quiz.upsertIndex({ id: "a" + i, code: "NV" + i, status: "submitted", pct: gt1 ? 70 : gt2 ? 68 : 95, score: 7, total: 10, submittedAt: now, period: "k2", flags: { blur: 0 } });
   }
   await quiz.saveCandidates(cands);
+  await call("POST", {}, { op: "trainFrameworkSave", min: TP.SUGGESTED }); // quản trị viên khai báo khung năng lực (hệ thống không tự đặt)
 
   // 1) phân tích khoảng cách
   const month = "2026-12";
@@ -51,10 +52,10 @@ const q = (cat, good, n) => Array.from({ length: n }, (_, i) => ({ category: cat
   const fakePerson = (label, i) => ({ code: "F" + i, audience: label, tests: 1, index: 70, areas: [{ id: "sk", pct: 40, n: 5, offScope: false, topics: [] }] });
   const fk = { meta: { population: 8, tested: 8 }, system: { coverage: [] }, people: [1, 2, 3, 4].map((i) => fakePerson(CTX.AUD.GT1, i)).concat([5, 6, 7, 8].map((i) => fakePerson(CTX.AUD.SR, i))),
     audiences: [{ name: CTX.AUD.GT1, salesAvg: 60, below60: 0 }, { name: CTX.AUD.SR, salesAvg: 100, below60: 0 }] };
-  const fa = TP.analyse(fk, month, { biz: { goals: [], strategy: [] } }), pSk = (k) => fa.audiences.find((a) => a.key === k).reqs.find((g) => g.area === "sk").priority;
-  ok(pSk("GT1") > pSk("SR") && fa.audiences.find((a) => a.key === "GT1").salesWeight === 1.4, "cùng khoảng cách năng lực: vị trí bán chỉ đạt 60% được ưu tiên cao hơn (hệ số 1,4)");
+  const FWK = { min: { GT1: { sk: 70 }, SR: { sk: 70 } } }, fa = TP.analyse(fk, month, { biz: { goals: [], strategy: [] }, framework: FWK }), pSk = (k) => fa.audiences.find((a) => a.key === k).reqs.find((g) => g.area === "sk").priority;
+  ok(pSk("GT1") > pSk("SR") && fa.audiences.find((a) => a.key === "GT1").bizImpact === 1 && fa.audiences.find((a) => a.key === "SR").bizImpact === 0, "cùng khoảng cách năng lực: vị trí bán chỉ đạt 60% được ưu tiên cao hơn (ảnh hưởng kinh doanh 1 so với 0)");
   fk.people.forEach((p) => { p.areas[0].pct = 90; }); fk.audiences[0].salesAvg = 70;
-  const fb = TP.analyse(fk, month, {}), g1 = fb.audiences.find((a) => a.key === "GT1");
+  const fb = TP.analyse(fk, month, { framework: FWK }), g1 = fb.audiences.find((a) => a.key === "GT1");
   ok(g1.gaps === 0 && /ngoài đào tạo/.test(g1.note) && !fb.audiences.find((a) => a.key === "SR").note, "năng lực đạt nhưng bán 70%: không bắt đào tạo thêm, ghi chú nguyên nhân ngoài đào tạo");
 
   // 2) lập theo luật
@@ -113,7 +114,7 @@ const q = (cat, good, n) => Array.from({ length: n }, (_, i) => ({ category: cat
   ok(r.j.source === "ai" && ai1.gio === "08:00" && ai2.gio === "17:15", "AI xếp giờ sai (12:00; 2 giờ lúc 09:00): máy chủ sửa về 08:00 và 17:15");
   ok(r.j.rows.length === 4 && r.j.rows.some((x) => x.doiTuong === "PC" && /M25, BNN/.test(x.tenChuongTrinh)) && r.j.rows.some((x) => x.doiTuong === "SR 2" && /BNN, Bếp đôi/.test(x.tenChuongTrinh)) && !r.j.rows.some((x) => x.doiTuong === "SR 1" && /Sản phẩm trọng tâm tháng/.test(x.tenChuongTrinh)), "AI bỏ sót sản phẩm trọng tâm của PC và SR 2: tự bổ sung; SR 1 đã có (nhắc M25, kiềm) nên không thêm trùng");
   ok(r.j.rows.every((x) => /^2026-12-\d\d$/.test(x.thoiGian) && x.gio), "mọi dòng (kể cả dòng bổ sung) đều có ngày và giờ");
-  ok(/san_pham_trong_tam/.test(sent) && /GIỜ HỌC/.test(sent) && /SẢN PHẨM TRỌNG TÂM THEO VỊ TRÍ/.test(sent), "AI nhận sản phẩm trọng tâm theo vị trí và luật khung giờ");
+  ok(/san_pham_trong_tam/.test(sent) && /LỊCH:/.test(sent) && /08:00/.test(sent) && /SẢN PHẨM TRỌNG TÂM \/ SẢN PHẨM MỚI THEO VỊ TRÍ/.test(sent), "AI nhận sản phẩm trọng tâm theo vị trí và luật lịch / khung giờ");
   llm.chat = async () => { throw new Error("down"); };
 
   // 4) lưu / đọc / liệt kê / xoá
