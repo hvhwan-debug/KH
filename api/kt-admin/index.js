@@ -434,6 +434,7 @@ const handler = async function (context, req) {
           .map((r) => { const c = candBy[quiz.normCode(r.code)]; return Object.assign({}, r, { passed: quiz.passState(r.pct, st), title: c ? quiz.titleOf(c) : "", segment: c ? quiz.normSegment(c.segment) : (r.segment || ""), verify: r.status === "submitted" ? quiz.verifyToken(r.id) : "", probation: require("../_lib/probation").probationOf(r.code, r.submittedAt || Date.now(), c && c.joinDate) }); }); // passed: luôn theo cài đặt hiện tại (null = bài không có ngưỡng); title: chức danh hiện tại của nhân viên
         return reply(context, 200, { ok: true, results: list, periods, currentPeriod: st.examPeriod });
       }
+      if (op === "benchList") return reply(context, 200, Object.assign({ ok: true }, await require("../_lib/benchlib").list())); // thư viện benchmark ngành
       if (op === "person360") { // nhận định đa chiều cho một nhân sự (theo luật, có so sánh đồng nghiệp / đội / xu hướng / bán hàng)
         const r = await require("../_lib/person360").analyze(String(req.query.code || "").slice(0, 60), { refresh: req.query.refresh === "1" });
         return reply(context, r.ok ? 200 : 404, r);
@@ -1013,6 +1014,20 @@ const handler = async function (context, req) {
     }
 
     // Gắn / cập nhật HỒ SƠ NHÂN SỰ cho người đã có trong danh sách (chỉ sửa trường profile, không đụng email, tên, chức danh...)
+    if (op === "benchSearch" || op === "benchSet" || op === "benchDelete" || op === "benchAdd" || op === "benchDesign") { // thư viện benchmark ngành (_lib/benchlib.js)
+      const BL = require("../_lib/benchlib");
+      let r;
+      if (op === "benchSearch") r = await BL.research(String(b.topic || ""), String(b.focus || "").slice(0, 160), u.email);
+      else if (op === "benchSet") r = await BL.setStatus(String(b.id || ""), String(b.status || ""), u.email, b.note);
+      else if (op === "benchDelete") r = await BL.remove(String(b.id || ""));
+      else if (op === "benchAdd") r = await BL.addManual(b.item || {}, u.email);
+      else {
+        let internal = null;
+        if (b.ai === true) { try { const H = await require("../_lib/hrcompetency").build({}); const sy = H.system || {}; internal = { so_nguoi: H.meta && H.meta.population, da_kiem_tra: H.meta && H.meta.tested, chi_so_nang_luc_tb: sy.index, duoi_60: sy.below60, mang_nang_luc: (sy.areaMap || []).map((a) => ({ mang: a.name, tb: a.pct, so_nguoi_yeu: a.weakPeople })), kien_thuc_x_ban_hang: sy.quad, du_lieu_cu_hon_4_thang: sy.staleTests }; } catch (e) { internal = null; } }
+        r = await BL.design({ ai: b.ai === true, internal });
+      }
+      return reply(context, r.ok ? 200 : (r.needConfig ? 503 : 400), r);
+    }
     if (op === "person360Ai") { // AI viết phân tích đa chiều từ gói bằng chứng ẩn danh của một nhân sự
       const r = await require("../_lib/person360").ai(String(b.code || "").slice(0, 60));
       return reply(context, r.ok ? 200 : 502, r);

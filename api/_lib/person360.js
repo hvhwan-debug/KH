@@ -212,7 +212,9 @@ async function analyze(code, opt) {
   questions.push("Em muốn được hỗ trợ cụ thể điều gì nhất trong tháng tới (tài liệu, đi thị trường cùng, thời gian ôn)?");
   if (!plan.length) plan.push({ t: "Đặt mục tiêu nâng mảng thấp nhất thêm 10 điểm ở kỳ tới.", who: "Nhân viên", when: "Kỳ tới", kpi: "Mảng thấp nhất +10 điểm" });
 
-  const res = { ok: true, code: p.code, generatedAt: Date.now(), cachedAt: H.cachedAt, headline, hypotheses: hyp.slice(0, 4), contradictions: contra, lenses, questions: questions.slice(0, 4), plan: plan.slice(0, 5), facts,
+  // Bằng chứng ngành (thư viện benchmark đã duyệt) liên quan tới các giả thuyết hàng đầu
+  let industry = []; try { industry = (await require("./benchlib").forHypotheses(hyp.slice(0, 3).map((h) => h.id), 3)).map((x) => ({ id: x.id, topic: x.topicName, metric: x.metric, value: x.value, scope: x.scope, year: x.year, source: x.source, reliability: x.reliability, fit: x.fit, fitWhy: x.fitWhy, implication: x.implication })); } catch (e) { industry = []; }
+  const res = { ok: true, code: p.code, generatedAt: Date.now(), industry, cachedAt: H.cachedAt, headline, hypotheses: hyp.slice(0, 4), contradictions: contra, lenses, questions: questions.slice(0, 4), plan: plan.slice(0, 5), facts,
     method: "Đối chiếu 7 góc nhìn; mốc so sánh là đồng nghiệp cùng vị trí (" + (G.role.length) + " người), cùng đội (" + G.team.length + "), toàn hệ thống (" + G.all.length + ")." };
   Object.defineProperty(res, "_names", { value: [p.name, p.manager, p.code], enumerable: false }); // chỉ để ẩn danh khi gửi AI
   return res;
@@ -227,7 +229,7 @@ const SYSTEM = [
   "Bạn nhận GÓI BẰNG CHỨNG đã tính sẵn từ 7 góc nhìn. Nhiệm vụ: TAM GIÁC HOÁ các góc nhìn để tìm ĐIỂM NGHẼN THẬT, không liệt kê lại số.",
   "Quy tắc bắt buộc: (1) Mỗi nhận định phải có mốc so sánh (đồng nghiệp, đội, kỳ trước) và trả lời 'vậy thì sao / quản lí nên làm gì khác'. (2) Phân biệt rõ vấn đề nằm ở cá nhân, cấp đội, nội dung đào tạo, kỹ năng bán hay thị trường. (3) Với chẩn đoán chính, nêu ít nhất một giả thuyết cạnh tranh và bằng chứng nào sẽ phân định. (4) Chỉ ra các điểm MÂU THUẪN giữa góc nhìn (vd kiến thức tốt nhưng bán kém) vì đó là chỗ đáng giá nhất. (5) Kế hoạch có người làm, thời hạn và chỉ số đo được.",
   "CẤM các câu chung chung như 'cần cố gắng hơn', 'tiếp tục phát huy', 'nâng cao kiến thức', 'cần chú ý', 'tham gia đào tạo' nếu không nói rõ mảng nào, bằng cách nào, đo bằng gì.",
-  "CHỈ dùng số có trong gói bằng chứng, không bịa số. Không kết luận nhân quả chắc chắn; dùng 'nhiều khả năng', 'cần kiểm chứng'. Không đề xuất kỷ luật, hạ bậc, cho nghỉ. Rời màn hình / làm nhanh chỉ là tín hiệu, không phải bằng chứng gian lận.",
+  "Có thể dùng boi_canh_nganh (bằng chứng bên ngoài đã được duyệt, kèm độ tin cậy và độ phù hợp bối cảnh) để củng cố đề xuất; bằng chứng độ phù hợp thấp chỉ là định hướng và phải nói rõ điều đó. CHỈ dùng số có trong gói bằng chứng, không bịa số. Không kết luận nhân quả chắc chắn; dùng 'nhiều khả năng', 'cần kiểm chứng'. Không đề xuất kỷ luật, hạ bậc, cho nghỉ. Rời màn hình / làm nhanh chỉ là tín hiệu, không phải bằng chứng gian lận.",
   "Chỉ trả về MỘT JSON: {\"ket_luan\":string (1 câu, điểm nghẽn chính và nên làm gì),\"chan_doan\":[{\"gia_thuyet\":string,\"ung_ho\":[string],\"phan_bac\":[string],\"cach_kiem_chung\":string,\"do_tin_cay\":\"cao|vừa|thấp\"}] (2-3 mục, xếp theo khả năng),\"mau_thuan\":[string] (0-3),\"goc_nhin\":[{\"goc\":string,\"nhan_dinh\":string,\"ham_y\":string}] (3-6 mục, chỉ góc có dữ liệu),\"cau_hoi_1_1\":[string] (3-5 câu hỏi mở),\"ke_hoach_30_ngay\":[{\"viec\":string,\"ai\":string,\"thoi_han\":string,\"chi_so\":string}] (2-4),\"neu_khong_lam\":string}."
 ].join(" ") + " " + require("./hrcontext").CONTEXT;
 
@@ -239,7 +241,7 @@ function pack(r) { // gói bằng chứng ẩn danh: không tên, email, SĐT, t
 function packRaw(r) {
   const f = r.facts || {};
   return { nhan_su: "NV1", goc_nhin: r.lenses.filter((l) => l.level !== "na").map((l) => ({ goc: l.name, muc: LV[l.level], nhan_dinh_luat: l.insight, bang_chung: l.evidence })),
-    gia_thuyet_luat: r.hypotheses.map((h) => ({ gia_thuyet: h.title, ung_ho: h.for, phan_bac: h.against })), mau_thuan_luat: r.contradictions || [],
+    gia_thuyet_luat: r.hypotheses.map((h) => ({ gia_thuyet: h.title, ung_ho: h.for, phan_bac: h.against })), mau_thuan_luat: r.contradictions || [], boi_canh_nganh: (r.industry || []).map((x) => ({ chi_so: x.metric, gia_tri: x.value, pham_vi: x.scope, nam: x.year, nguon: x.source && x.source.publisher, do_tin_cay: x.reliability, do_phu_hop: x.fit, ham_y_dao_tao: x.implication })),
     so_lieu: { vi_the: f.position, mang: (f.areas || []).map((a) => ({ mang: a.name, ty_le: a.pct, so_cau: a.n, dong_nghiep: a.peer, chenh: a.gap, loai: a.kind, chu_de_yeu: a.topics })), xu_huong: f.trend && { so_ky: f.trend.periods, diem_tung_ky: f.trend.series.map((x) => x.best), do_doc: f.trend.slope, dao_dong: f.trend.volatility, tang_khi_lam_lai: f.trend.retakeGain },
       hanh_vi: f.behavior, ban_hang: f.sales, doi: f.team && { so_nguoi: f.team.n, tb_doi: f.team.teamMean, tb_he_thong: f.team.overallMean }, hoc_tap: f.engagement } };
 }

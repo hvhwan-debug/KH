@@ -60,7 +60,7 @@ const A = {
       questions: ["Xem ngân hàng đề", "read"], questionsBackup: ["Xem bản sao lưu ngân hàng đề", "read"], deleteAllPreview: ["Mở bước xoá toàn bộ ngân hàng đề", "read"],
       viewers: ["Xem danh sách quản lí", "read"], candidates: ["Xem danh sách thí sinh", "read"], settings: ["Xem cài đặt", "read"],
       results: ["Xem bảng kết quả", "read"], result: ["Xem chi tiết bài làm (ảnh, thiết bị, vị trí)", "read"], dashboard: ["Xem dashboard đánh giá", "read"],
-      audit: ["Xem nhật ký thao tác", "read"], personHistory: ["Xem lịch sử thay đổi của nhân sự", "read"], person360: ["Xem nhận định đa chiều của nhân sự", "read"], banks: ["Xem ngân hàng câu hỏi", "read"], exams: ["Xem danh sách đề thi", "read"],
+      audit: ["Xem nhật ký thao tác", "read"], personHistory: ["Xem lịch sử thay đổi của nhân sự", "read"], person360: ["Xem nhận định đa chiều của nhân sự", "read"], benchList: ["Xem thư viện benchmark ngành", "read"], banks: ["Xem ngân hàng câu hỏi", "read"], exams: ["Xem danh sách đề thi", "read"],
       previewBlueprint: ["Kiểm tra cấu trúc đề", "read"], itemAnalysis: ["Xem phân tích chất lượng câu hỏi", "read"], cohortInsight: ["Xem chẩn đoán hành vi cả nhóm", "read"], aiCheck: ["Kiểm tra kết nối AI", "read"]
     },
     POST: {
@@ -68,7 +68,7 @@ const A = {
       deleteAllQuestions: ["XOÁ TOÀN BỘ ngân hàng đề của kỳ", "change"], copyQuestions: ["Sao chép đề sang kỳ khác", "change"], moveQuestions: ["Chuyển câu hỏi sang kỳ khác", "change"], restoreQuestions: ["Khôi phục ngân hàng đề", "change"],
       saveViewer: ["Cấp / sửa quyền quản lí", "change"], setViewerPassword: ["Đặt mật khẩu cho quản lí", "change"], deleteViewer: ["Thu hồi quyền quản lí", "change"],
       addCandidates: ["Thêm / cập nhật thí sinh", "change"], approveChange: ["Duyệt yêu cầu điều chỉnh thông tin", "change"], notifyEmail: ["Gửi thông báo qua email", "change"], rejectChange: ["Từ chối yêu cầu điều chỉnh thông tin", "change"], deleteCandidate: ["Xoá thí sinh", "change"], renameCandidate: ["Đổi mã nhân viên", "change"], resetAttempt: ["Cho làm lại (xoá kết quả kỳ)", "change"], hideAttempt: ["Ẩn / hiện lại một bài làm", "change"], deleteAttempt: ["Xoá một bài làm đã nộp", "change"],
-      saveSettings: ["Đổi cài đặt", "change"], person360Ai: ["Dùng AI phân tích đa chiều một nhân sự", "export"], assignPeriod: ["Gắn kỳ cho bài chưa có kỳ", "change"],
+      saveSettings: ["Đổi cài đặt", "change"], person360Ai: ["Dùng AI phân tích đa chiều một nhân sự", "export"], benchSearch: ["AI tìm benchmark ngành trên web", "export"], benchSet: ["Duyệt / loại một benchmark ngành", "change"], benchDelete: ["Xoá một benchmark ngành", "change"], benchAdd: ["Thêm benchmark ngành thủ công", "change"], benchDesign: ["Tổng hợp gợi ý thiết kế đào tạo từ benchmark", "export"], assignPeriod: ["Gắn kỳ cho bài chưa có kỳ", "change"],
       saveBank: ["Lưu ngân hàng câu hỏi", "change"], deleteBank: ["Xoá ngân hàng câu hỏi", "change"], moveToBank: ["Chuyển câu hỏi sang ngân hàng khác", "change"],
       setQuestionActive: ["Ẩn / hiện câu hỏi", "change"], regrade: ["Chấm lại đề thi", "change"], regradeQuestion: ["Chấm lại bài có câu hỏi", "change"], saveExam: ["Lưu đề thi", "change"], deleteExam: ["Xoá đề thi", "change"], setDefaultExam: ["Đặt đề thi mặc định", "change"]
     }
@@ -162,6 +162,10 @@ function details(area, op, q, b, res, pre) {
     case "resetAttempt": d.code = b.code; d.period = typeof b.period === "string" ? (b.period || "chưa gắn kỳ") : "mọi kỳ"; d.removed = r.removed; if (cand) d.name = cand.name; break;
     case "approveChange": case "rejectChange": d.id = b.id; break;
     case "person360Ai": d.code = s(b.code, 60); break;
+    case "benchSearch": d.topic = s(b.topic, 40); if (b.focus) d.focus = s(b.focus, 120); d.added = r.added ? r.added.length : undefined; break;
+    case "benchSet": d.id = s(b.id, 20); d.status = s(b.status, 12); break;
+    case "benchDelete": d.id = s(b.id, 20); break;
+    case "benchAdd": d.metric = s(b.item && b.item.metric, 120); break;
     case "notifyEmail": d.count = Array.isArray(b.items) ? b.items.length : 0; d.sent = r.sent; d.subject = s(b.subject, 100); break;
     case "assignPeriod": d.period = b.period; d.assigned = r.assigned; break;
     case "saveSettings": {
