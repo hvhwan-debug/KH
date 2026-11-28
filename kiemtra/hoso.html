@@ -530,6 +530,7 @@ table.t.pl-act td{vertical-align:top;font-size:13px}
 @media(max-width:600px){.qd-grid{grid-template-columns:1fr}}
 </style>
 <script src="/kiemtra/p360view.js?v=1"></script>
+<script src="/kiemtra/pcincome-view.js?v=1"></script>
 <script>try{if(localStorage.getItem("kt_side_collapsed")==="1")document.documentElement.classList.add("sidec")}catch(e){}</script>
 <link rel="stylesheet" href="/kiemtra/sidebar.css?v=2">
 </head>
@@ -1243,15 +1244,16 @@ function renderDetail(){
       kpi('Điểm gần nhất', 'Điểm % của lần làm bài nộp gần nhất.', a.lastP == null ? '–' : vn(a.lastP) + '<small>%</small>', a.lastAt ? vnDate(a.lastAt) : '', a.lastP != null && a.lastP < S.th.low ? 'bad' : '') +
       kpi('Tiến bộ so với kỳ trước', 'Chênh lệch điểm % giữa bài kiểm tra gần nhất và bài ngay trước đó.', d == null ? '–' : (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + vn(Math.abs(d), 0) + '<small> điểm %</small>', d == null ? 'Cần ít nhất 2 bài' : '', d == null ? '' : d > 0 ? 'ok' : d < 0 ? 'bad' : '') +
     '</div>' +
-    '<div class="tabs" role="tablist" aria-label="Phân tích hồ sơ">' + [[1, 'Tổng quan năng lực'], [2, 'Lịch sử kiểm tra'], [8, 'Điểm tuân thủ hàng tháng'], [3, 'Phân tích kiến thức'], [4, 'Lộ trình học tập'], [5, 'Thông tin nhân sự'], [6, 'Kết quả kinh doanh'], [7, 'Lịch sử thay đổi']].map(function(t){ return '<button type="button" role="tab" data-dtab="' + t[0] + '" aria-selected="' + (D.tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
+    '<div class="tabs" role="tablist" aria-label="Phân tích hồ sơ">' + [[1, 'Tổng quan năng lực'], [2, 'Lịch sử kiểm tra'], [8, 'Điểm tuân thủ hàng tháng'], [3, 'Phân tích kiến thức'], [4, 'Lộ trình học tập'], [5, 'Thông tin nhân sự'], [6, 'Kết quả kinh doanh']].concat(D.P && D.P.isPC ? [[9, 'Ước tính thu nhập']] : [], [[7, 'Lịch sử thay đổi']]).map(function(t){ return '<button type="button" role="tab" data-dtab="' + t[0] + '" aria-selected="' + (D.tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
     '<div id="dtab"></div>';
   $('vDetail').innerHTML = h;
   renderTab();
   applyFaces($('vDetail'));
 }
 function renderTab(){
-  var f = [null, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8][D.tab] || tab1;
+  var f = [null, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9][D.tab] || tab1;
   $('dtab').innerHTML = f();
+  if (D.tab === 9 && window.pcIncomeMount) window.pcIncomeMount($('pciBox'), D.c.code);   // ước tính thu nhập PC (kiemtra/pcincome-view.js)
   document.querySelectorAll('#vDetail [data-dtab]').forEach(function(b){ b.setAttribute('aria-selected', String(+b.getAttribute('data-dtab') === D.tab)); });
 }
 function bmChips(x){ return '<span class="bm-c ' + x.reliability + '" title="' + esc('Điểm tin cậy ' + x.relScore + ': ' + (x.relWhy || []).join('; ')) + '">Tin cậy: ' + x.reliability + '</span><span class="bm-c ' + x.fit + '" title="' + esc(x.fitWhy || '') + '">Phù hợp: ' + x.fit + '</span>'; }
@@ -1433,6 +1435,7 @@ function tab2(){
   return '<div class="card"><div class="card-h"><h2>Lịch sử các lượt kiểm tra</h2><span class="sub">' + all.length + ' lượt</span><span class="sp"></span></div><div class="tw" style="margin-top:8px"><table class="t"><thead><tr><th>Bài kiểm tra</th><th>Ngày thực hiện</th><th class="r">Số câu đúng</th><th class="r">Tổng số câu</th><th class="r">Tỉ lệ đúng</th><th class="r">Điểm tuân thủ</th><th class="r">Thời gian</th><th class="r" title="Lần làm thứ mấy trong cùng một bài kiểm tra">Lần làm</th><th>Kết quả</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div></div>' +
     '<div class="q" style="margin-top:10px">“Ẩn” loại lượt làm bài khỏi báo cáo, xếp hạng và lịch sử của nhân viên nhưng vẫn khôi phục được. “Xoá” là xoá hẳn bài làm và ảnh xác nhận của lượt đó.</div>';
 }
+function tab9(){ return '<div id="pciBox"></div>'; }   // chỉ hiện với chức danh PC (D.P.isPC do máy chủ xác định, chỉ quản trị viên)
 /* --- Tab 8: Điểm tuân thủ học tập hàng tháng + tình trạng xác nhận điểm (đợt "Xác nhận điểm qua email") --- */
 var CMP_ST = { confirmed:['ok', 'Đã xác nhận'], disputed:['w', 'Có thắc mắc'], sent:['none', 'Đã gửi, chờ xác nhận'], pending:['none', 'Chưa gửi'] };
 function cmpSt(x){ return (x.dispute && x.dispute.resolved && x.state !== 'confirmed') ? ['w', 'Chờ xác nhận lại (đã xử lý thắc mắc)'] : CMP_ST[x.state]; }

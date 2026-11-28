@@ -331,6 +331,11 @@ const handler = async function (context, req) {
         return reply(context, 200, Object.assign({ ok: true }, await require("../_lib/hrdims").build({ period: per })));
       }
       if (op === "hrDiscovery") { const D = require("../_lib/hrdiscovery"); return reply(context, 200, { ok: true, report: D.build(await D.load()) }); } // rà soát dữ liệu nhân sự: chỉ số tổng hợp, quản trị viên xem
+      if (op === "pcIncome") { // ước tính thu nhập PC theo chính sách (chỉ quản trị viên, chỉ chức danh PC)
+        const rq = req.query || {};
+        const r = await require("../_lib/pcincome").build(String(rq.code || "").slice(0, 40), { month: String(rq.month || "").slice(0, 7) });
+        return reply(context, r.ok ? 200 : 404, r);
+      }
       if (op === "notifications") { // chuông thông báo: việc nhân viên gửi lên (thắc mắc điểm, yêu cầu điều chỉnh thông tin, xác nhận điểm mới)
         const FL = { name: "họ tên", email: "email", manager: "quản lí", title: "chức danh", segment: "nhóm ngành", phone: "số điện thoại", province: "tỉnh/thành", region: "miền" };
         let items = []; try { items = await require("../_lib/scoreconfirm").notifications(); } catch (e) { items = []; }
@@ -1086,6 +1091,12 @@ const handler = async function (context, req) {
     }
     if (op === "trainPlanBizSave") { // mục tiêu kinh doanh và chiến lược của tháng: đầu vào bắt buộc để lập kế hoạch đào tạo
       try { return reply(context, 200, { ok: true, biz: await require("../_lib/trainplan").saveBiz(String(b.month || ""), b, u.email) }); } catch (e) { return reply(context, 400, { ok: false, error: e.message }); }
+    }
+    if (op === "pcIncomeCalc" || op === "pcIncomeSave") { // tính thử (không lưu) / lưu dữ liệu nhập tay theo tháng cho ước tính thu nhập PC
+      const PI = require("../_lib/pcincome"), code = String(b.code || "").slice(0, 40), month = String(b.month || "").slice(0, 7);
+      if (op === "pcIncomeSave") { const sv = await PI.saveInputs(code, month, b.inputs); if (!sv.ok) return reply(context, 400, sv); }
+      const r = await PI.build(code, { month, override: op === "pcIncomeCalc" ? { [month]: b.inputs || {} } : null });
+      return reply(context, r.ok ? 200 : 404, r);
     }
     if (op === "scoreConfirmList" || op === "scoreConfirmCreate" || op === "scoreConfirmFromResults" || op === "scoreConfirmResolve" || op === "scoreConfirmHandle" || op === "scoreConfirmPreview" || op === "scoreConfirmSend" || op === "scoreConfirmStatus" || op === "scoreConfirmDelete") { // xác nhận điểm qua email: tạo đợt / xem trước / gửi theo đợt (có xác nhận số người) / theo dõi
       const SC = require("../_lib/scoreconfirm"), id = String(b.id || "").slice(0, 40);

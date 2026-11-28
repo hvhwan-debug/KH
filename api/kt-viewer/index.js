@@ -197,7 +197,9 @@ const handler = async function (context, req) {
         if (act) { const t = Object.assign({}, act); quiz.syncAttempt(t, Date.now()); if (t.cursor < t.questionIds.length) status = "doing"; }
         let complianceHistory = []; // lịch sử điểm tuân thủ theo tháng + tình trạng xác nhận (đợt "Xác nhận điểm qua email")
         try { complianceHistory = await require("../_lib/scoreconfirm").historyOf(c.code); } catch (e) { complianceHistory = []; }
-        return reply(context, 200, { ok: true, employee: empView(c), currentPeriod: settings.examPeriod, status, passEnabled: !!settings.passEnabled, complianceHistory,
+        let isPC = false; // chính sách thu nhập PC: chỉ quản trị viên được xem, chỉ chức danh PC
+        try { if (viewer.isAdmin) isPC = await require("../_lib/pcincome").detect(c); } catch (e) { isPC = false; }
+        return reply(context, 200, { ok: true, employee: empView(c), currentPeriod: settings.examPeriod, status, passEnabled: !!settings.passEnabled, complianceHistory, isPC,
           complianceLowMin: settings.complianceLowMin, history, categories, repeatWrong, lastWrong: lastWrong.slice(0, 15), papersRead: atts.filter(Boolean).length,
           // Hồ sơ nhân sự CHỈ dành cho quản trị viên (ADMIN_EMAILS). Quản lí thường không nhận khối này.
           hr: viewer.isAdmin && c.profile ? c.profile : undefined, hrEmpty: viewer.isAdmin && !c.profile });
