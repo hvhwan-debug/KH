@@ -1997,6 +1997,10 @@ body[data-tab="results"] .main,body[data-tab="analysis"] .main,body[data-tab="qu
         <label>Mật khẩu</label>
         <input type="password" id="loginPass">
       </div>
+      <div id="fLoginOtp" class="hide">
+        <label>Mã xác minh (đã gửi qua email)</label>
+        <input id="loginOtp" inputmode="numeric" autocomplete="one-time-code" placeholder="6 số">
+      </div>
       <button class="btn" id="loginBtn" style="width:100%;margin-top:14px;justify-content:center" onclick="doLogin()">Đăng nhập</button>
       <div id="loginMsg"></div>
       <button type="button" class="linkbtn" id="forgotBtn" style="margin-top:10px" onclick="setLoginMode(loginMode==='forgot'?'login':'forgot')">Quên mật khẩu?</button>
@@ -3312,7 +3316,7 @@ function setLoginMode(m){
   $('fLoginPass').classList.toggle('hide', f);
   $('loginBtn').textContent = f ? 'Gửi liên kết đặt lại mật khẩu' : 'Đăng nhập';
   $('loginBtn').onclick = f ? doForgot : doLogin;
-  $('forgotBtn').textContent = f ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M15 18l-6-6 6-6"/></svg> Quay lại đăng nhập' : 'Quên mật khẩu?';
+  $('forgotBtn').innerHTML = f ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M15 18l-6-6 6-6"/></svg> Quay lại đăng nhập' : 'Quên mật khẩu?';
   msg('loginMsg','');
 }
 async function doForgot(){
@@ -3359,7 +3363,22 @@ async function doLogin(){
   const email = $('loginEmail').value.trim();
   const password = $('loginPass').value;
   msg('loginMsg','');
-  const { j } = await api('POST','/api/auth/request', { email, password });
+  const body = { email, password };
+  const otpVisible = !$('fLoginOtp').classList.contains('hide');
+  if (otpVisible){
+    const otp = $('loginOtp').value.trim();
+    if (!otp){ msg('loginMsg','Nhập mã xác minh 6 số trong email.'); return; }
+    body.otp = otp;
+  }
+  const btn = $('loginBtn'); btn.disabled = true;
+  let j;
+  try { ({ j } = await api('POST','/api/auth/request', body)); }
+  finally { btn.disabled = false; }
+  if (j.ok && j.needsOtp){
+    $('fLoginOtp').classList.remove('hide'); $('loginOtp').focus();
+    msg('loginMsg','Mã xác minh đã gửi tới ' + j.email + '. Nhập mã rồi bấm Đăng nhập lần nữa. Đừng bấm nhiều lần, mỗi lần bấm sẽ gửi mã mới.','ok');
+    return;
+  }
   if (!j.ok){ msg('loginMsg', j.error || 'Đăng nhập thất bại.'); return; }
   location.reload();
 }

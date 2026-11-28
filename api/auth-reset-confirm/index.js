@@ -21,6 +21,8 @@ module.exports = async function (context, req) {
 
     if (ud.disabled) return reply(context, 403, { ok: false, error: "Tài khoản đã bị khoá. Hãy liên hệ quản trị viên." });
     ud.pwd = pwd.hash(password);
+    // Người dùng đã nhận được liên kết qua email => đã chứng minh sở hữu email, coi như đã xác minh.
+    if (ud.verified === false) { ud.verified = true; ud.otp = null; ud.otpExp = null; ud.otpFails = []; ud.otpSendTimes = []; }
     ud.sessAfter = Date.now();
     ud.failTimes = [];
     ud.resetTimes = [];
