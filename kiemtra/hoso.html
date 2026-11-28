@@ -1431,26 +1431,27 @@ function tab2(){
 }
 /* --- Tab 8: Điểm tuân thủ học tập hàng tháng + tình trạng xác nhận điểm (đợt "Xác nhận điểm qua email") --- */
 var CMP_ST = { confirmed:['ok', 'Đã xác nhận'], disputed:['w', 'Có thắc mắc'], sent:['none', 'Đã gửi, chờ xác nhận'], pending:['none', 'Chưa gửi'] };
+function cmpSt(x){ return (x.state === 'disputed' && x.dispute && x.dispute.resolved) ? ['none', 'Thắc mắc đã xử lý'] : CMP_ST[x.state]; }
 function cmpNum(v){ var n = parseFloat(String(v == null ? '' : v).replace(',', '.')); return isFinite(n) ? n : null; }
 function cmpList(){ return (D && D.P && D.P.complianceHistory) || []; }
 function cmpLatestText(){
   var L = cmpList(); if (!L.length) return '';
   var x = L[L.length - 1];
-  return (x.final === '' || x.final == null ? '–' : x.final) + ' điểm (' + x.period.toLowerCase() + ') · ' + CMP_ST[x.state][1].toLowerCase();
+  return (x.final === '' || x.final == null ? '–' : x.final) + ' điểm (' + x.period.toLowerCase() + ') · ' + cmpSt(x)[1].toLowerCase();
 }
 function tab8(){
   var L = cmpList();
   if (!L.length) return '<div class="card"><div class="empty" style="padding:40px 14px">Chưa có bảng điểm tuân thủ nào của nhân viên này.<br><span style="font-size:12.5px">Điểm xuất hiện ở đây sau khi quản trị viên tạo đợt “Xác nhận điểm qua email” có tên nhân viên.</span></div></div>';
-  var conf = L.filter(function(x){ return x.state === 'confirmed'; }).length, disp = L.filter(function(x){ return x.state === 'disputed'; }).length;
+  var conf = L.filter(function(x){ return x.state === 'confirmed'; }).length, disp = L.filter(function(x){ return x.state === 'disputed' && !(x.dispute && x.dispute.resolved); }).length;
   var nums = L.map(function(x){ return cmpNum(x.final); }), mx = Math.max.apply(null, nums.filter(function(v){ return v != null; }).concat([1]));
   var bars = L.map(function(x, i){
-    var v = nums[i], h = v == null ? 4 : Math.max(4, Math.round(v / mx * 70)), st = CMP_ST[x.state];
+    var v = nums[i], h = v == null ? 4 : Math.max(4, Math.round(v / mx * 70)), st = cmpSt(x);
     var col = x.state === 'confirmed' ? 'var(--ok)' : x.state === 'disputed' ? 'var(--warn)' : '#9CB4D8';
     var short = x.period.replace('Tháng ', 'T');
     return '<div title="' + esc(x.period + ': ' + (x.final === '' ? '–' : x.final) + ' điểm · ' + st[1]) + '" style="display:flex;flex-direction:column;align-items:center;gap:4px;min-width:46px"><b style="font-size:13px;color:var(--navy)">' + esc(x.final === '' || x.final == null ? '–' : x.final) + '</b><div style="width:26px;height:' + h + 'px;border-radius:6px 6px 2px 2px;background:' + col + '"></div><span style="font-size:11.5px;color:var(--muted);white-space:nowrap">' + esc(short) + '</span></div>';
   }).join('');
   var rows = L.slice().reverse().map(function(x){
-    var st = CMP_ST[x.state], detail = x.cols.slice(0, -1).map(function(c, i){ return esc(c) + ': <b>' + esc(x.vals[i] === '' ? '–' : x.vals[i]) + '</b>'; }).join(' · ');
+    var st = cmpSt(x), detail = x.cols.slice(0, -1).map(function(c, i){ return esc(c) + ': <b>' + esc(x.vals[i] === '' ? '–' : x.vals[i]) + '</b>'; }).join(' · ');
     var when = x.state === 'confirmed' ? esc(vnDT(x.confirmedAt)) : x.state === 'disputed' && x.dispute ? esc(vnDT(x.dispute.at)) : x.sentAt ? 'Gửi ' + esc(vnDT(x.sentAt)) : '–';
     return '<tr><td><b>' + esc(x.period) + '</b><div class="q" style="margin-top:2px">' + esc(x.title) + '</div></td>' +
       '<td class="r"><b style="font-size:15px">' + esc(x.final === '' || x.final == null ? '–' : x.final) + '</b><div class="q" style="margin-top:2px">' + esc(x.finalLabel) + '</div></td>' +

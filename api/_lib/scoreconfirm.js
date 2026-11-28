@@ -133,7 +133,7 @@ function statsOf(d, rc) {
   return {
     total: rc.length, withEmail: withEmail.length, noEmail: noEmail.length, notFound: rc.filter((x) => !x.found).length,
     alreadySent: withEmail.filter(sentOk).length, pending: withEmail.filter((x) => !sentOk(x)).length,
-    confirmed: rc.filter((x) => stateOf(d, x.code) === "confirmed").length, disputed: rc.filter((x) => stateOf(d, x.code) === "disputed").length,
+    confirmed: rc.filter((x) => stateOf(d, x.code) === "confirmed").length, disputed: rc.filter((x) => stateOf(d, x.code) === "disputed" && !((d.disputes[x.code] || {}).resolved)).length,
     missing: noEmail.slice(0, 30).map((x) => ({ code: x.code, name: x.name, why: x.found ? "chưa có email" : "không có trong danh sách nhân sự" }))
   };
 }
@@ -234,7 +234,7 @@ async function status(id) {
     rows: rc.map((x) => ({
       code: x.code, name: x.name, manager: x.row.manager, email: x.email, vals: x.row.vals, state: stateOf(d, x.code),
       sentAt: (d.sent[x.code] || {}).at || 0, sentN: (d.sent[x.code] || {}).n || 0,
-      confirmedAt: (d.confirmed[x.code] || {}).at || 0, dispute: d.disputes[x.code] ? { at: d.disputes[x.code].at, text: d.disputes[x.code].text } : null
+      confirmedAt: (d.confirmed[x.code] || {}).at || 0, dispute: d.disputes[x.code] ? { at: d.disputes[x.code].at, text: d.disputes[x.code].text, resolved: !!d.disputes[x.code].resolved } : null
     }))
   };
 }
@@ -258,11 +258,42 @@ async function historyOf(code) {
     out.push({
       id: d.id, title: d.title, period: per.label, key: per.key, createdAt: d.createdAt, deadline: d.deadline || 0,
       cols: d.cols, vals: r.vals, finalLabel: d.cols[last], final: r.vals[last],
-      state: st === "pending" && sent ? "sent" : st, sentAt: sent ? sent.at : 0, confirmedAt: c ? c.at : 0, dispute: x ? { at: x.at, text: x.text } : null
+      state: st === "pending" && sent ? "sent" : st, sentAt: sent ? sent.at : 0, confirmedAt: c ? c.at : 0, dispute: x ? { at: x.at, text: x.text, resolved: !!x.resolved } : null
     });
   });
   out.sort((a, b) => a.key - b.key || a.createdAt - b.createdAt);
   return out;
+}
+
+// ---------- thông báo cho quản trị viên: việc nhân viên gửi lên ----------
+// - Thắc mắc điểm CHƯA xử lý (cần xử lý, hiện cho tới khi bấm "Đã xử lý" hoặc nhân viên xác nhận lại).
+// - Số nhân viên mới xác nhận điểm trong 7 ngày (chỉ để biết, không cần xử lý). Chỉ xét 12 đợt gần nhất.
+async function notifications() {
+  const out = [], week = Date.now() - 7 * 864e5;
+  const docs = await Promise.all((await list()).slice(0, 12).map((x) => get(x.id).catch(() => null)));
+  docs.forEach((d) => {
+    if (!d) return;
+    const by = {}; d.rows.forEach((r) => { by[r.code] = r; });
+    Object.keys(d.disputes || {}).forEach((k) => {
+      const x = d.disputes[k]; if (!x || x.resolved || stateOf(d, k) !== "disputed") return;
+      const r = by[k] || {};
+      out.push({ kind: "dispute", act: true, id: "dsp:" + d.id + ":" + k, at: x.at, title: (r.name || k) + " (" + k + ") có thắc mắc về điểm", detail: x.text, sub: d.title, batchId: d.id, code: k });
+    });
+    let n = 0, last = 0;
+    Object.keys(d.confirmed || {}).forEach((k) => { const c = d.confirmed[k]; if (c && stateOf(d, k) === "confirmed" && c.at >= week) { n++; if (c.at > last) last = c.at; } });
+    if (n) out.push({ kind: "confirm", act: false, id: "cfm:" + d.id, at: last, title: n + " nhân viên đã xác nhận điểm", sub: d.title, batchId: d.id, n });
+  });
+  return out;
+}
+async function resolveDispute(id, code, by) {
+  const d = await get(id); if (!d) return err("Không tìm thấy đợt này.", "not_found");
+  const k = up(code); let ok = false;
+  await store.update(docKey(id), (cur) => {
+    const c = cur && !cur.deleted ? cur : d, x = c.disputes && c.disputes[k];
+    if (x && !x.resolved) { x.resolved = { at: Date.now(), by: clip(by, 120) }; ok = true; }
+    return c;
+  });
+  return ok ? { ok: true } : err("Không có thắc mắc nào đang chờ xử lý của người này.", "none");
 }
 
 // ---------- trang công khai của nhân viên ----------
@@ -289,4 +320,4 @@ async function act(t, op, b, meta) {
   return Object.assign(await view(t), res || {});
 }
 
-module.exports = { ORG_DEFAULT, fromResults, historyOf, periodOf, list, get, create, remove, token, readToken, linkUrl, stateOf, recipients, statsOf, mailFor, preview, send, status, view, act, BATCH };
+module.exports = { ORG_DEFAULT, notifications, resolveDispute, fromResults, historyOf, periodOf, list, get, create, remove, token, readToken, linkUrl, stateOf, recipients, statsOf, mailFor, preview, send, status, view, act, BATCH };

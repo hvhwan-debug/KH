@@ -261,9 +261,17 @@
       (rows.length ? rows.map(function (x) {
         var when = x.state === 'confirmed' ? vn(x.confirmedAt) : x.state === 'disputed' && x.dispute ? vn(x.dispute.at) : x.sentAt ? 'gửi ' + vn(x.sentAt) + (x.sentN > 1 ? ' (' + x.sentN + ' lần)' : '') : (x.email ? '' : 'chưa có email');
         return '<tr><td>' + esc(x.code) + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.manager) + '</td><td><b>' + esc(x.vals[last]) + '</b></td><td>' + badge(x.k) + '</td><td class="small">' + esc(when) + '</td></tr>' +
-          (x.dispute ? '<tr><td></td><td colspan="5" class="small" style="color:#B45309">Thắc mắc: ' + esc(x.dispute.text) + '</td></tr>' : '');
+          (x.dispute ? '<tr><td></td><td colspan="5" class="small" style="color:#B45309"><b>' + (x.dispute.resolved ? 'Thắc mắc (đã xử lý):' : 'Thắc mắc:') + '</b> ' + esc(x.dispute.text) +
+            (x.k === 'disputed' && !x.dispute.resolved ? ' <button type="button" class="btn ghost sm" data-resolve="' + esc(x.code).replace(/"/g, '&quot;') + '">Đã xử lý</button>' : '') + '</td></tr>' : '');
       }).join('') : '<tr><td colspan="6" class="small">Không có dòng nào khớp.</td></tr>') + '</tbody></table></div></div>';
     $('scRefresh').onclick = function () { openStatus(SC.cur); };
+    Array.prototype.forEach.call(document.querySelectorAll('#scDetail [data-resolve]'), function (b) {
+      b.onclick = async function () {
+        b.disabled = true; var r = await call('scoreConfirmResolve', { id: SC.cur, code: b.getAttribute('data-resolve') });
+        if (!r.j.ok) { say(r.j.error || 'Không đánh dấu được.', 'err'); b.disabled = false; return; }
+        if (window.ntfRefresh) window.ntfRefresh(); openStatus(SC.cur);
+      };
+    });
     $('scF').value = f; $('scF').onchange = function () { SC.filter = this.value; renderStatus(); };
     var qi = $('scQ'); qi.oninput = function () { SC.q = this.value; var pos = this.selectionStart; renderStatus(); var n = $('scQ'); n.focus(); n.setSelectionRange(pos, pos); };
   }
@@ -278,6 +286,7 @@
     }); }
     loadList();
   }
+  window.scOpenStatus = function (id, filter) { init(); if (filter) SC.filter = filter; return openStatus(id); };   // dùng cho chuông thông báo
   window.addEventListener('load', function () {
     var st = window.switchTab;
     if (typeof st === 'function') window.switchTab = function (t) { var r = st.apply(this, arguments); if (t === 'notify') init(); return r; };

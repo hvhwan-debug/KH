@@ -331,6 +331,16 @@ const handler = async function (context, req) {
         return reply(context, 200, Object.assign({ ok: true }, await require("../_lib/hrdims").build({ period: per })));
       }
       if (op === "hrDiscovery") { const D = require("../_lib/hrdiscovery"); return reply(context, 200, { ok: true, report: D.build(await D.load()) }); } // rà soát dữ liệu nhân sự: chỉ số tổng hợp, quản trị viên xem
+      if (op === "notifications") { // chuông thông báo: việc nhân viên gửi lên (thắc mắc điểm, yêu cầu điều chỉnh thông tin, xác nhận điểm mới)
+        const FL = { name: "họ tên", email: "email", manager: "quản lí", title: "chức danh", segment: "nhóm ngành", phone: "số điện thoại", province: "tỉnh/thành", region: "miền" };
+        let items = []; try { items = await require("../_lib/scoreconfirm").notifications(); } catch (e) { items = []; }
+        let reqs = []; try { reqs = (await require("../_lib/changereq").getAll()).filter((r) => r.status === "pending"); } catch (e) { reqs = []; }
+        reqs.forEach((r) => items.push({ kind: "request", act: true, id: "req:" + r.id, at: r.at || 0, code: r.code,
+          title: (r.name || r.code) + " (" + r.code + ") yêu cầu điều chỉnh thông tin",
+          detail: Object.keys(r.changes || {}).map((k) => FL[k] || k).join(", ") + (r.note ? (Object.keys(r.changes || {}).length ? " · " : "") + String(r.note).slice(0, 160) : "") }));
+        items.sort((a, b) => (b.act - a.act) || (b.at - a.at));
+        return reply(context, 200, { ok: true, items: items.slice(0, 60), actionable: items.filter((i) => i.act).length });
+      }
       if (op === "changeRequests") return reply(context, 200, { ok: true, requests: (await require("../_lib/changereq").getAll()).filter((r) => r.status === "pending") });
       if (op === "notifyData") {
         // Dữ liệu cho màn Gửi thông báo: thí sinh thuộc đối tượng của đề, đã làm / chưa làm, số điện thoại, liên kết kết quả
@@ -1077,12 +1087,13 @@ const handler = async function (context, req) {
     if (op === "trainPlanBizSave") { // mục tiêu kinh doanh và chiến lược của tháng: đầu vào bắt buộc để lập kế hoạch đào tạo
       try { return reply(context, 200, { ok: true, biz: await require("../_lib/trainplan").saveBiz(String(b.month || ""), b, u.email) }); } catch (e) { return reply(context, 400, { ok: false, error: e.message }); }
     }
-    if (op === "scoreConfirmList" || op === "scoreConfirmCreate" || op === "scoreConfirmFromResults" || op === "scoreConfirmPreview" || op === "scoreConfirmSend" || op === "scoreConfirmStatus" || op === "scoreConfirmDelete") { // xác nhận điểm qua email: tạo đợt / xem trước / gửi theo đợt (có xác nhận số người) / theo dõi
+    if (op === "scoreConfirmList" || op === "scoreConfirmCreate" || op === "scoreConfirmFromResults" || op === "scoreConfirmResolve" || op === "scoreConfirmPreview" || op === "scoreConfirmSend" || op === "scoreConfirmStatus" || op === "scoreConfirmDelete") { // xác nhận điểm qua email: tạo đợt / xem trước / gửi theo đợt (có xác nhận số người) / theo dõi
       const SC = require("../_lib/scoreconfirm"), id = String(b.id || "").slice(0, 40);
       let r;
       if (op === "scoreConfirmList") r = { ok: true, list: await SC.list() };
       else if (op === "scoreConfirmCreate") r = await SC.create(b, String(u.email).toLowerCase());
       else if (op === "scoreConfirmFromResults") r = await SC.fromResults(Object.assign({}, b, { dry: b.dry === true }), String(u.email).toLowerCase());
+      else if (op === "scoreConfirmResolve") r = await SC.resolveDispute(id, b.code, String(u.email).toLowerCase());
       else if (op === "scoreConfirmPreview") r = await SC.preview(id, b.code);
       else if (op === "scoreConfirmSend") r = await SC.send(id, { expect: b.expect, resend: b.resend === true, since: b.since });
       else if (op === "scoreConfirmStatus") r = await SC.status(id);
