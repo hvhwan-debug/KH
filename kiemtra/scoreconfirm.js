@@ -90,7 +90,17 @@
       '<div><label for="scDue">Hạn xác nhận (không bắt buộc)</label><input type="datetime-local" id="scDue"></div>' +
       '<div><label for="scContact">Người liên hệ khi có thắc mắc</label><input type="text" id="scContact" maxlength="150" placeholder="Ví dụ: Đào tạo kinh doanh"></div>' +
       '<div><label for="scPhone">Số điện thoại / email liên hệ</label><input type="text" id="scPhone" maxlength="120" placeholder="Ví dụ: 0846 993 993 (được nhớ cho lần sau)"></div></div>' +
-      '<label for="scPaste">Bảng điểm: dán từ Excel (gồm cả dòng tiêu đề) hoặc chọn file</label>' +
+      '<div style="margin:6px 0 16px;padding:14px 16px;border:1.5px solid #BBD3F6;border-radius:14px;background:#F4F8FF">' +
+      '<b>Cách nhanh (khuyên dùng): lấy điểm trực tiếp từ hệ thống</b>' +
+      '<p class="small" style="margin:4px 0 10px">Không cần xuất hay ghép bảng. Chọn đề thi, hệ thống tự lấy điểm cao nhất của từng người (bỏ thi thử, bài ẩn, người đã nghỉ việc). Chọn 2 đề thì tự thêm cột <b>Điểm trung bình</b> và tính <b>Điểm tuân thủ</b> theo điểm trung bình.</p>' +
+      '<div class="grid2"><div><label for="scXa">Đề thứ nhất</label><select id="scXa" style="margin:0"><option value="">Đang tải danh sách đề…</option></select></div>' +
+      '<div><label for="scXaL">Tên cột của đề thứ nhất</label><input type="text" id="scXaL" maxlength="60" placeholder="Ví dụ: Kiểm tra định kỳ" style="margin:0"></div>' +
+      '<div><label for="scXb">Đề thứ hai (không bắt buộc)</label><select id="scXb" style="margin:0"><option value="">— không chọn —</option></select></div>' +
+      '<div><label for="scXbL">Tên cột của đề thứ hai</label><input type="text" id="scXbL" maxlength="60" placeholder="Ví dụ: Điểm kiểm tra (M25)" style="margin:0"></div></div>' +
+      '<label style="display:flex;gap:8px;align-items:center;margin:10px 0 0;font-weight:500"><input type="checkbox" id="scXavg" checked style="width:auto;margin:0"> Chọn 2 đề: thêm cột Điểm trung bình và tính Điểm tuân thủ theo điểm trung bình</label>' +
+      '<label style="display:flex;gap:8px;align-items:center;margin:6px 0 0;font-weight:500"><input type="checkbox" id="scXonly" style="width:auto;margin:0"> Chỉ lấy người đã làm ít nhất một đề (bỏ người được giao nhưng chưa làm)</label>' +
+      '<div style="margin-top:12px"><button type="button" class="btn sm" id="scXgo">Tạo đợt từ hệ thống</button></div></div>' +
+      '<label for="scPaste">Hoặc dán bảng điểm từ Excel (gồm cả dòng tiêu đề) / chọn file</label>' +
       '<textarea id="scPaste" rows="5" style="width:100%;font-family:inherit" placeholder="STT\tMã nhân viên\tHọ tên\tQuản lí\tKiểm tra định kỳ\t…\tĐiểm tuân thủ"></textarea>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn ghost sm" id="scRead">Đọc bảng đã dán</button>' +
       '<button type="button" class="btn ghost sm" id="scFileBtn">Chọn file .xlsx…</button><input type="file" id="scFile" accept=".xlsx" style="display:none">' +
@@ -101,6 +111,7 @@
     $('scFileBtn').onclick = function () { $('scFile').click(); };
     $('scFile').onchange = readXlsx;
     $('scCreate').onclick = create;
+    $('scXgo').onclick = createFromSystem; loadExamOptions();
     $('scContact').value = 'Đào tạo kinh doanh';
     try { $('scContact').value = localStorage.getItem('sc.contact') || $('scContact').value; $('scPhone').value = localStorage.getItem('sc.phone') || ''; } catch (e) { /* trình duyệt chặn lưu: bỏ qua */ }
     var tm; $('scPaste').addEventListener('input', function () { clearTimeout(tm); tm = setTimeout(function () { if ($('scPaste').value.trim()) useParsed(parsePaste($('scPaste').value), ''); }, 500); }); // dán xong tự đọc, không cần bấm thêm
@@ -120,6 +131,51 @@
     say('Đã tạo đợt với ' + r.j.rows + ' nhân viên. Chưa gửi email nào. Bấm “Xem trước & gửi” để xem email trước khi gửi.', 'ok');
     $('scPaste').value = ''; $('scTitle').value = ''; $('scPrev').innerHTML = ''; SC.parsed = null;
     await loadList(); openPreview(r.j.id);
+  }
+  function examName(e) { return String(e.examTitle || e.title || e.id); }
+  function guessLabel(e) {
+    var t = examName(e), m = /\b(M\d{2})\b/i.exec(t);
+    if (/định\s*k[ìỳií]/i.test(t)) return 'Kiểm tra định kỳ';
+    if (m) return 'Điểm kiểm tra (' + m[1].toUpperCase() + ')';
+    return t.replace(/\s*\|.*$/, '').slice(0, 60);
+  }
+  async function loadExamOptions() {
+    var r = await api('GET', '/api/kt-admin?op=exams'), ex = (r.j && r.j.ok && r.j.exams) || [];
+    SC.exams = ex;
+    var opt = function (first) { return '<option value="">' + first + '</option>' + ex.map(function (e) { return '<option value="' + esc(e.id) + '">' + esc(examName(e)) + ' · ' + (e.resultCount || 0) + ' bài đã nộp</option>'; }).join(''); };
+    $('scXa').innerHTML = opt('— chọn đề —'); $('scXb').innerHTML = opt('— không chọn —');
+    // gợi ý sẵn: đề kiểm tra định kỳ + đề M25 (nếu có)
+    // Nhóm đối tượng của đề (PC / SR / ASM...): đề M25 gợi ý phải CÙNG nhóm với đề kiểm tra định kỳ (tránh lấy nhầm đề M25 của SR cho PC)
+    var kw = function (e) { var m = /(?:^|[^A-Za-z])(PC|SR|ASM)s?(?![A-Za-z])/i.exec(examName(e)); return m ? m[1].toUpperCase() : ''; };
+    var a = ex.find(function (e) { return /định\s*k[ìỳií]/i.test(examName(e)) && e.resultCount; });
+    var m25 = ex.filter(function (e) { return /\bM\d{2}\b/i.test(examName(e)) && e.resultCount && (!a || e.id !== a.id); });
+    var b = (a && kw(a) && m25.find(function (e) { return kw(e) === kw(a); })) || m25[0];
+    if (a) { $('scXa').value = a.id; $('scXaL').value = guessLabel(a); }
+    if (b) { $('scXb').value = b.id; $('scXbL').value = guessLabel(b); }
+    $('scXa').onchange = function () { var e = ex.find(function (x) { return x.id === this.value; }, this); $('scXaL').value = e ? guessLabel(e) : ''; };
+    $('scXb').onchange = function () { var e = ex.find(function (x) { return x.id === this.value; }, this); $('scXbL').value = e ? guessLabel(e) : ''; };
+  }
+  function monthOf(e) { var m = /(\d{1,2})\s*[\/.\-]\s*(\d{4})/.exec(examName(e) + ' ' + e.id); if (m && +m[1] >= 1 && +m[1] <= 12) return pad(+m[1]) + '/' + m[2]; var d = new Date(); return pad(d.getMonth() + 1) + '/' + d.getFullYear(); }
+  async function createFromSystem() {
+    var a = $('scXa').value, b = $('scXb').value; if (!a) { say('Hãy chọn đề thứ nhất.', 'err'); return; }
+    if (a === b) { say('Đề thứ hai đang trùng đề thứ nhất.', 'err'); return; }
+    var exams = [{ id: a, label: $('scXaL').value.trim() }]; if (b) exams.push({ id: b, label: $('scXbL').value.trim() });
+    var ea = (SC.exams || []).find(function (x) { return x.id === a; }) || { id: a };
+    var title = $('scTitle').value.trim() || ('ĐIỂM TUÂN THỦ HỌC TẬP THÁNG ' + monthOf(ea)); $('scTitle').value = title;
+    var due = $('scDue').value ? new Date($('scDue').value).getTime() : 0, ph = $('scPhone').value.trim();
+    var body = { title: title, exams: exams, avg: $('scXavg').checked, onlyTaken: $('scXonly').checked, deadline: due, contact: $('scContact').value.trim(), phone: /@/.test(ph) ? '' : ph, email: /@/.test(ph) ? ph : '' };
+    try { localStorage.setItem('sc.contact', body.contact); localStorage.setItem('sc.phone', ph); } catch (e) { /* bỏ qua */ }
+    var btn = $('scXgo'); btn.disabled = true; say('Đang lấy điểm từ hệ thống…', 'ok');
+    var d = await call('scoreConfirmFromResults', Object.assign({ dry: true }, body));
+    if (!d.j.ok) { btn.disabled = false; say(d.j.error || 'Không lấy được điểm.', 'err'); return; }
+    var j = d.j, sample = j.sample.map(function (r) { return '• ' + r.name + ' (' + r.code + '): ' + r.vals.join(' | '); }).join('\n');
+    var ok = confirm('Tạo đợt gồm ' + j.count + ' nhân viên.\n\nCác cột điểm (' + j.cols.length + '): ' + j.cols.join(' · ') + '\n\n' +
+      j.exams.map(function (x, i) { return x.label + ': ' + x.took + ' người đã làm' + (j.notTaken[i].n ? ', ' + j.notTaken[i].n + ' người chưa làm (tính 0)' : ''); }).join('\n') + '\n\n5 người đầu:\n' + sample + '\n\nĐúng chưa? Bấm Huỷ nếu thiếu cột hoặc sai số người. Chưa gửi email nào.');
+    if (!ok) { btn.disabled = false; say('', ''); return; }
+    var r = await call('scoreConfirmFromResults', body); btn.disabled = false;
+    if (!r.j.ok) { say(r.j.error || 'Không tạo được đợt.', 'err'); return; }
+    say('Đã tạo đợt với ' + r.j.rows + ' nhân viên, lấy điểm trực tiếp từ hệ thống. Chưa gửi email nào. Bấm “Xem trước & gửi” để xem email trước khi gửi.', 'ok');
+    $('scTitle').value = ''; await loadList(); openPreview(r.j.id);
   }
   async function loadList() {
     var r = await call('scoreConfirmList');

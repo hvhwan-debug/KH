@@ -52,6 +52,51 @@ async function create(b, by) {
   await store.update(LIST, (cur) => { const c = cur && Array.isArray(cur.list) ? cur : { list: [] }; c.list.unshift({ id, title, rows: rows.length, createdAt: doc.createdAt, by: doc.by }); c.list = c.list.slice(0, 200); return c; });
   return { ok: true, id, rows: rows.length, duplicates: dup };
 }
+// Tạo đợt TRỰC TIẾP từ kết quả trong hệ thống (không cần dán/ghép bảng bằng tay).
+// b: { title, exams:[{id,label}] (1-4 đề), avg (có cột Điểm trung bình khi >= 2 đề, mặc định bật), onlyTaken (bỏ người chưa làm đề nào),
+//      deadline, contact, phone, email, dry }
+// - Mỗi đề = một cột điểm (% đúng, làm tròn) lấy từ lần làm CAO NHẤT trong bài chính thức (bỏ thi thử / bài đã ẩn / tài khoản thử nghiệm). Chưa làm = 0.
+// - Người tham gia = người thuộc đối tượng của ÍT NHẤT một đề (chưa nghỉ việc) + người đã có bài ở các đề đó.
+// - Một đề: Điểm tuân thủ = điểm đã ghi lúc nộp bài (giống bản xuất rút gọn). Nhiều đề: Điểm trung bình = trung bình các đề (chưa làm tính 0),
+//   Điểm tuân thủ = quy đổi từ điểm trung bình theo đúng mốc của hệ thống (>= 9: 20, >= 7: 15, >= 6: 10, còn lại 0).
+const vnNum = (n, d) => Number(n).toLocaleString("vi-VN", { minimumFractionDigits: d, maximumFractionDigits: d });
+async function fromResults(b, by) {
+  const picks = (Array.isArray(b.exams) ? b.exams : []).map((e) => ({ id: String(e && e.id != null ? e.id : "").slice(0, 80), label: clip(e && e.label, 60) }))
+    .filter((e) => e.id).filter((e, i, a) => a.findIndex((x) => x.id === e.id) === i).slice(0, 4);
+  if (!picks.length) return err("Chọn ít nhất một đề thi.", "no_exam");
+  const title = clip(b.title, 150); if (!title) return err("Vui lòng nhập tiêu đề bảng điểm.", "no_title");
+  const [cands, idxAll, exams] = await Promise.all([quiz.getCandidates(), quiz.getIndex(), quiz.getExams()]);
+  const sets = await Promise.all(picks.map((p) => quiz.getExamSettings(p.id)));
+  const titleOf = (id) => { const e = exams.find((x) => x.id === id); return String((e && (e.examTitle || e.title)) || id); };
+  picks.forEach((p) => { if (!p.label) p.label = clip(titleOf(p.id), 60); });
+  const best = picks.map(() => ({}));
+  idxAll.filter((a) => a.status === "submitted" && !a.practice).forEach((a) => {
+    const i = picks.findIndex((p) => p.id === (a.period || "")); if (i < 0) return;
+    const k = quiz.normCode(a.code); if (quiz.betterResult(a, best[i][k])) best[i][k] = a;
+  });
+  const byCode = {}; cands.forEach((c) => { byCode[quiz.normCode(c.code)] = c; });
+  const who = {};
+  cands.forEach((c) => { if (!quiz.isLeft(c) && sets.some((st) => quiz.inAudience(st, c))) who[quiz.normCode(c.code)] = c; });
+  best.forEach((m) => Object.keys(m).forEach((k) => { const c = byCode[k]; if (c && !quiz.isLeft(c)) who[k] = c; }));
+  const multi = picks.length >= 2, withAvg = multi && b.avg !== false;
+  const pctOf = (a) => a ? Math.round(a.pct != null ? a.pct : (a.total ? a.score / a.total * 100 : 0)) : 0;
+  const rows = [], missing = picks.map(() => 0);
+  Object.keys(who).forEach((k) => {
+    const c = who[k], att = picks.map((p, i) => best[i][k] || null), pcts = att.map(pctOf);
+    att.forEach((a, i) => { if (!a) missing[i]++; });
+    if (b.onlyTaken && !att.some(Boolean)) return;
+    const mean = pcts.reduce((x, y) => x + y, 0) / pcts.length;
+    let cp;
+    if (!multi) cp = att[0] ? (att[0].compliancePoints != null ? att[0].compliancePoints : quiz.compliancePoints(pcts[0] / 10, sets[0])) : 0;
+    else cp = quiz.compliancePoints(mean / 10, sets[0]);
+    rows.push({ code: c.code, name: c.name || "", manager: c.manager || "", vals: pcts.map(String).concat(withAvg ? [vnNum(mean, 1)] : [], [String(cp)]) });
+  });
+  rows.sort((x, y) => String(x.manager || "~").localeCompare(String(y.manager || "~"), "vi") || String(x.name).localeCompare(String(y.name), "vi"));
+  const cols = picks.map((p) => p.label).concat(withAvg ? ["Điểm trung bình"] : [], ["Điểm tuân thủ"]);
+  if (!rows.length) return err("Không có nhân viên nào thuộc các đề đã chọn" + (b.onlyTaken ? " đã làm bài" : "") + ".", "no_rows");
+  if (b.dry) return { ok: true, dry: true, count: rows.length, cols, sample: rows.slice(0, 5), notTaken: picks.map((p, i) => ({ label: p.label, n: b.onlyTaken ? 0 : missing[i] })), exams: picks.map((p, i) => ({ label: p.label, took: Object.keys(best[i]).length })) };
+  return create({ title, cols, rows, deadline: b.deadline, contact: b.contact, phone: b.phone, email: b.email, note: b.note }, by);
+}
 async function remove(id) {
   const d = await get(id); if (!d) return false;
   await store.put(docKey(id), { deleted: true, id: d.id, at: Date.now() });
@@ -248,4 +293,4 @@ async function act(t, op, b, meta) {
   return Object.assign(await view(t), res || {});
 }
 
-module.exports = { ORG_DEFAULT, historyOf, periodOf, list, get, create, remove, token, readToken, linkUrl, stateOf, recipients, statsOf, mailFor, preview, send, status, view, act, BATCH };
+module.exports = { ORG_DEFAULT, fromResults, historyOf, periodOf, list, get, create, remove, token, readToken, linkUrl, stateOf, recipients, statsOf, mailFor, preview, send, status, view, act, BATCH };

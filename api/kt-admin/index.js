@@ -1077,11 +1077,12 @@ const handler = async function (context, req) {
     if (op === "trainPlanBizSave") { // mục tiêu kinh doanh và chiến lược của tháng: đầu vào bắt buộc để lập kế hoạch đào tạo
       try { return reply(context, 200, { ok: true, biz: await require("../_lib/trainplan").saveBiz(String(b.month || ""), b, u.email) }); } catch (e) { return reply(context, 400, { ok: false, error: e.message }); }
     }
-    if (op === "scoreConfirmList" || op === "scoreConfirmCreate" || op === "scoreConfirmPreview" || op === "scoreConfirmSend" || op === "scoreConfirmStatus" || op === "scoreConfirmDelete") { // xác nhận điểm qua email: tạo đợt / xem trước / gửi theo đợt (có xác nhận số người) / theo dõi
+    if (op === "scoreConfirmList" || op === "scoreConfirmCreate" || op === "scoreConfirmFromResults" || op === "scoreConfirmPreview" || op === "scoreConfirmSend" || op === "scoreConfirmStatus" || op === "scoreConfirmDelete") { // xác nhận điểm qua email: tạo đợt / xem trước / gửi theo đợt (có xác nhận số người) / theo dõi
       const SC = require("../_lib/scoreconfirm"), id = String(b.id || "").slice(0, 40);
       let r;
       if (op === "scoreConfirmList") r = { ok: true, list: await SC.list() };
       else if (op === "scoreConfirmCreate") r = await SC.create(b, String(u.email).toLowerCase());
+      else if (op === "scoreConfirmFromResults") r = await SC.fromResults(Object.assign({}, b, { dry: b.dry === true }), String(u.email).toLowerCase());
       else if (op === "scoreConfirmPreview") r = await SC.preview(id, b.code);
       else if (op === "scoreConfirmSend") r = await SC.send(id, { expect: b.expect, resend: b.resend === true });
       else if (op === "scoreConfirmStatus") r = await SC.status(id);
