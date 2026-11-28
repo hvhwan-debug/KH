@@ -529,6 +529,7 @@ table.t.pl-act td{vertical-align:top;font-size:13px}
 @media(max-width:900px){.plan .pl-cols{grid-template-columns:1fr}}
 @media(max-width:600px){.qd-grid{grid-template-columns:1fr}}
 </style>
+<script src="/kiemtra/p360view.js?v=1"></script>
 <script>try{if(localStorage.getItem("kt_side_collapsed")==="1")document.documentElement.classList.add("sidec")}catch(e){}</script>
 <link rel="stylesheet" href="/kiemtra/sidebar.css?v=2">
 </head>
@@ -1382,6 +1383,9 @@ function p360Card(){
   if (D.p3.error) return '<div class="card c12">' + head + '<div class="card-b"><div class="empty">' + esc(D.p3.error) + ' <button class="btn sm" type="button" data-p3re="1">Thử lại</button></div></div></div>';
   var r = D.p3, h = r.headline || {};
   if (r.left) return '<div class="card c12">' + head + '<div class="card-b"><div class="empty">' + esc(h.text) + '</div></div></div>';
+  var inner = null;   // giao diện trực quan (kiemtra/p360view.js); lỗi thì dùng giao diện cũ bên dưới
+  try { if (window.p360Body) inner = window.p360Body(r); } catch (err) { inner = null; if (window.console) console.error('p360Body', err); }
+  if (inner != null) return '<div class="card c12">' + head + '<div class="card-b">' + inner + '</div></div>';
   var hy = (r.hypotheses || []).map(function(x, i){ return '<div class="p3-hy"><b><span class="n">' + (i + 1) + '</span>' + esc(x.title) + '</b><ul>' + (x['for'] || []).map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + (x.against || []).map(function(t){ return '<li class="x">Phản bác: ' + esc(t) + '</li>'; }).join('') + '</ul>' + (x.verify ? '<div class="v">Kiểm chứng: ' + esc(x.verify) + '</div>' : '') + '</div>'; }).join('') || '<div class="empty">Chưa có giả thuyết nổi bật.</div>';
   var right = ((r.contradictions || []).length ? '<div class="p3-h">Mâu thuẫn cần đào sâu</div>' + r.contradictions.map(function(t){ return '<div class="p3-ct">' + esc(t) + '</div>'; }).join('') : '') +
     '<div class="p3-h" style="margin-top:' + ((r.contradictions || []).length ? 10 : 0) + 'px">Câu hỏi gợi ý cho buổi 1-1</div>' + (r.questions || []).map(function(t){ return '<div class="p3-q">“' + esc(t) + '”</div>'; }).join('');
@@ -1431,7 +1435,7 @@ function tab2(){
 }
 /* --- Tab 8: Điểm tuân thủ học tập hàng tháng + tình trạng xác nhận điểm (đợt "Xác nhận điểm qua email") --- */
 var CMP_ST = { confirmed:['ok', 'Đã xác nhận'], disputed:['w', 'Có thắc mắc'], sent:['none', 'Đã gửi, chờ xác nhận'], pending:['none', 'Chưa gửi'] };
-function cmpSt(x){ return (x.state === 'disputed' && x.dispute && x.dispute.resolved) ? ['none', 'Thắc mắc đã xử lý'] : CMP_ST[x.state]; }
+function cmpSt(x){ return (x.dispute && x.dispute.resolved && x.state !== 'confirmed') ? ['w', 'Chờ xác nhận lại (đã xử lý thắc mắc)'] : CMP_ST[x.state]; }
 function cmpNum(v){ var n = parseFloat(String(v == null ? '' : v).replace(',', '.')); return isFinite(n) ? n : null; }
 function cmpList(){ return (D && D.P && D.P.complianceHistory) || []; }
 function cmpLatestText(){
@@ -1456,7 +1460,7 @@ function tab8(){
     return '<tr><td><b>' + esc(x.period) + '</b><div class="q" style="margin-top:2px">' + esc(x.title) + '</div></td>' +
       '<td class="r"><b style="font-size:15px">' + esc(x.final === '' || x.final == null ? '–' : x.final) + '</b><div class="q" style="margin-top:2px">' + esc(x.finalLabel) + '</div></td>' +
       '<td style="font-size:12.5px;line-height:1.6">' + (detail || '–') + '</td>' +
-      '<td><span class="chip ' + st[0] + '">' + st[1] + '</span>' + (x.dispute ? '<div class="q" style="margin-top:4px;color:var(--warn)">Thắc mắc: ' + esc(x.dispute.text) + '</div>' : '') + '</td>' +
+      '<td><span class="chip ' + st[0] + '">' + st[1] + '</span>' + (x.dispute ? '<div class="q" style="margin-top:4px;color:var(--warn)">Thắc mắc: ' + esc(x.dispute.text) + (x.dispute.resolved ? ' · đã xử lý: ' + (x.dispute.outcome === 'adjust' ? 'điều chỉnh điểm' : x.dispute.outcome === 'keep' ? 'giữ nguyên kết quả' : 'đã đóng') : '') + '</div>' : '') + '</td>' +
       '<td class="nw">' + when + '</td></tr>';
   }).join('');
   return '<div class="card"><div class="card-h"><h2>Điểm tuân thủ học tập theo tháng</h2><span class="sub">' + L.length + ' kỳ · đã xác nhận ' + conf + '/' + L.length + (disp ? ' · có thắc mắc ' + disp : '') + '</span><span class="sp"></span></div>' +
