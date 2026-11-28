@@ -125,7 +125,7 @@ function render(j){
       '<button type="button" class="link" id="bAsk">Tôi phát hiện sai sót sau khi xác nhận</button>');
     mountAsk();
   } else {
-    var lead = 'Vui lòng kiểm tra số liệu bên dưới. Nếu đã đúng, bấm nút xác nhận.' + (j.deadline ? ' Hạn xác nhận: <b>' + esc(vn(j.deadline)) + '</b>.' : '');
+    var lead = 'Vui lòng kiểm tra số liệu bên dưới. Nếu đã đúng, bấm nút xác nhận.' + (j.deadline ? ' Hạn xác nhận: <b>' + esc(vn(j.deadline)) + '</b>. Sau thời hạn này, nếu không phản hồi, sẽ được hiểu là bạn <b>đồng ý với kết quả này</b>.' : '');
     var note = j.dispute ? '<div class="note"><b>Bạn đã gửi thắc mắc lúc ' + esc(vn(j.dispute.at)) + ':</b><br>' + esc(j.dispute.text) + '<br>' + esc(j.org || 'Đào tạo kinh doanh') + ' đang kiểm tra. Bạn vẫn có thể xác nhận nếu thấy số liệu đã đúng.</div>' : '';
     show('info', 'Xác nhận điểm' , lead, sheet(j) + note + '<div>' + confirmBtn + '</div><button type="button" class="link" id="bAsk">Tôi có thắc mắc về số liệu</button>');
     mountAsk();
