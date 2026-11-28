@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Xác nhận điểm</title>
+<link rel="icon" href="/kiemtra/logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--brand:#1559C4;--navy:#0A1F44;--ink:#101B33;--body:#3B465C;--muted:#6B7690;--line:#E3E8F1;--ok:#16A34A;--okbg:#E7F7EE;--warn:#B45309;--warnbg:#FFF4DE;--bad:#B6372E;--badbg:#FDECEA;--tile:#F1F6FD}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font-family:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:var(--body);background:radial-gradient(80% 60% at 10% 0%,#DCEBFF 0%,transparent 60%),radial-gradient(70% 60% at 100% 100%,#E3F4FF 0%,transparent 60%),#EEF3FA;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
+.card{width:min(560px,100%);background:#fff;border-radius:24px;box-shadow:0 30px 70px -30px rgba(10,40,100,.35);border:1px solid #E6EDF7;overflow:hidden}
+.top{display:flex;align-items:center;gap:10px;padding:16px 22px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700;color:var(--navy)}
+.top img{width:28px;height:28px;border-radius:8px}
+.main{padding:30px 28px 26px;text-align:center}
+.ic{width:84px;height:84px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center}
+.ic.ok{background:var(--okbg);color:var(--ok);animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+.ic.warn{background:var(--warnbg);color:var(--warn)}.ic.bad{background:var(--badbg);color:var(--bad)}.ic.wait,.ic.info{background:#EAF2FF;color:var(--brand)}
+.ic svg{width:46px;height:46px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.ic.ok path{stroke-dasharray:30;stroke-dashoffset:30;animation:draw .5s .25s forwards}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.spin{width:40px;height:40px;border-radius:50%;border:4px solid #CFE0FA;border-top-color:var(--brand);animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+h1{margin:0 0 8px;font-size:clamp(22px,5vw,27px);font-weight:900;color:var(--navy);letter-spacing:-.4px;line-height:1.25}
+.lead{margin:0 auto;max-width:440px;font-size:15px;line-height:1.6}
+.sheet{margin:22px 0 0;text-align:left;background:var(--tile);border:1px solid #E1EAF7;border-radius:16px;overflow:hidden}
+.sheet .h{padding:14px 18px 12px}
+.sheet .t{font-size:16.5px;font-weight:800;color:var(--ink);line-height:1.35}
+.sheet .who{margin-top:4px;font-size:13.5px;line-height:1.6;color:var(--muted)}.sheet .who b{color:var(--ink)}
+.sheet table{width:100%;border-collapse:collapse}
+.sheet td{padding:11px 18px;border-top:1px solid var(--line);font-size:14.5px}
+.sheet td.v{text-align:right;font-weight:800;color:var(--navy);font-size:16px;white-space:nowrap}
+.sheet tr.fin td{border-top:2px solid #C9D9F2;font-weight:800;color:var(--navy);font-size:15.5px;padding-top:14px;padding-bottom:14px}
+.sheet tr.fin td.v span{display:inline-block;min-width:54px;text-align:center;background:var(--brand);color:#fff;border-radius:12px;padding:8px 14px;font-size:22px;line-height:1}
+.dl{margin:14px 0 0;font-size:13.5px;color:var(--muted)}.dl b{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 30px;margin-top:22px;border:0;border-radius:14px;background:var(--ok);color:#fff;font:inherit;font-size:16.5px;font-weight:800;cursor:pointer;box-shadow:0 10px 24px -10px rgba(22,163,74,.7);max-width:100%}
+.btn:disabled{opacity:.6;cursor:default}
+.btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.link{margin-top:16px;background:none;border:0;color:var(--brand);font:inherit;font-size:14px;font-weight:600;text-decoration:underline;cursor:pointer}
+.ask{margin:18px 0 0;text-align:left;border:1.5px solid #CFE0FA;border-radius:18px;background:linear-gradient(180deg,#F4F8FF,#fff 60%);padding:16px 16px 14px}
+.ask b{display:block;font-size:15px;color:var(--navy)}.ask .sub{margin:3px 0 10px;font-size:13px;color:var(--muted)}
+.ask textarea{width:100%;min-height:92px;border:1.5px solid #D3E1F5;border-radius:12px;padding:10px 12px;font:inherit;font-size:14.5px;line-height:1.5;resize:vertical;background:#fff;color:var(--ink)}
+.ask textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(21,89,196,.15)}
+.ask .go{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.ask .go button{height:44px;padding:0 20px;border:0;border-radius:12px;background:var(--brand);color:#fff;font:inherit;font-size:14.5px;font-weight:800;cursor:pointer}
+.ask .go button.gh{background:#EEF2F8;color:var(--body)}
+.ask .go button:disabled{opacity:.55;cursor:default}
+.ask .m{font-size:13px;color:var(--muted)}.ask .m.bad{color:var(--bad)}
+.note{margin:16px 0 0;text-align:left;background:var(--warnbg);border-radius:14px;padding:12px 14px;font-size:13.5px;line-height:1.55;color:#7A4A06}
+.note b{color:#5E3604}
+.foot{padding:14px 22px;border-top:1px solid var(--line);font-size:12px;color:#94A0B8;text-align:center}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<div class="card" role="main">
+  <div class="top"><img src="/kiemtra/logo-mark.png" alt=""><span>Hệ thống kiểm tra đánh giá trực tuyến · Xác nhận điểm</span></div>
+  <div class="main" id="box">
+    <div class="ic wait"><div class="spin" aria-hidden="true"></div></div>
+    <h1>Đang tải điểm của bạn…</h1>
+    <p class="lead">Vui lòng chờ trong giây lát.</p>
+  </div>
+  <div class="foot" id="foot">Có thắc mắc về điểm, vui lòng liên hệ người gửi thư.</div>
+</div>
+<noscript><p style="text-align:center">Trình duyệt đang tắt JavaScript nên chưa xem được điểm. Hãy bật JavaScript rồi mở lại liên kết trong email.</p></noscript>
+<script>
+(function(){
+'use strict';
+var T = ''; try { T = new URLSearchParams(location.search).get('t') || ''; } catch (e) {}
+var box = document.getElementById('box'), D = null;
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
+function pad(n){ return n < 10 ? '0' + n : '' + n; }
+function vn(ms){ if (!ms) return ''; var d = new Date(ms + 7 * 3600e3); return pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ' ngày ' + pad(d.getUTCDate()) + '/' + pad(d.getUTCMonth() + 1) + '/' + d.getUTCFullYear(); }
+var IC = {
+  ok:'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  warn:'<svg viewBox="0 0 24 24"><path d="M12 7v6M12 17h.01"/><circle cx="12" cy="12" r="9.5"/></svg>',
+  bad:'<svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7 7 17"/></svg>',
+  info:'<svg viewBox="0 0 24 24"><path d="M9 12.5l2.2 2.2L15.5 10"/><rect x="4" y="4" width="16" height="16" rx="4"/></svg>'
+};
+function api(method, body){
+  return fetch('/api/score-confirm' + (method === 'GET' ? '?t=' + encodeURIComponent(T) : ''), { method: method, credentials:'same-origin', headers:{ 'Content-Type':'application/json', 'X-Requested-With':'livotec' }, body: body ? JSON.stringify(Object.assign({ t: T }, body)) : undefined })
+    .then(function(r){ return r.json().catch(function(){ return { ok:false, error:'Máy chủ không phản hồi, vui lòng thử lại.' }; }); }, function(){ return { ok:false, error:'Không kết nối được máy chủ. Kiểm tra mạng rồi mở lại liên kết trong email.' }; });
+}
+function sheet(j){
+  var last = j.cols.length - 1, rows = j.cols.map(function(c, i){
+    var v = j.vals[i] === '' || j.vals[i] == null ? '—' : esc(j.vals[i]);
+    return i === last ? '<tr class="fin"><td>' + esc(c) + '</td><td class="v"><span>' + v + '</span></td></tr>' : '<tr><td>' + esc(c) + '</td><td class="v">' + v + '</td></tr>';
+  }).join('');
+  return '<div class="sheet"><div class="h"><div class="t">' + esc(j.title) + '</div><div class="who">Mã nhân viên: <b>' + esc(j.code) + '</b>' + (j.manager ? ' · Quản lí: <b>' + esc(j.manager) + '</b>' : '') + '</div></div><table>' + rows + '</table></div>';
+}
+function show(kind, title, lead, extra){
+  box.innerHTML = '<div class="ic ' + kind + '">' + (IC[kind] || IC.info) + '</div><h1>' + title + '</h1>' + (lead ? '<p class="lead">' + lead + '</p>' : '') + (extra || '');
+}
+function who(){ return D && D.name ? ' <b>' + esc(D.name) + '</b>' : ''; }
+function contact(j){
+  var c = [j.contact, j.phone ? 'ĐT ' + j.phone : '', j.email].filter(Boolean).join(' · ');
+  document.getElementById('foot').textContent = c ? 'Có thắc mắc về điểm, vui lòng liên hệ: ' + c : 'Có thắc mắc về điểm, vui lòng liên hệ người gửi thư.';
+}
+function mountAsk(){
+  var a = document.createElement('div'); a.className = 'ask hide'; a.id = 'ask';
+  a.innerHTML = '<b>Bạn thấy số liệu chưa đúng?</b><p class="sub">Ghi rõ điểm nào, vì sao bạn cho là chưa đúng. ' + esc((D && D.org) || 'Đào tạo kinh doanh') + ' sẽ kiểm tra và phản hồi.</p>' +
+    '<textarea id="aTxt" maxlength="600" placeholder="Ví dụ: Điểm kiểm tra (M25) của tôi là 95, không phải 90…"></textarea>' +
+    '<div class="go"><button type="button" id="aSend">Gửi thắc mắc</button><button type="button" class="gh" id="aClose">Đóng</button><span class="m" id="aMsg"></span></div>';
+  box.appendChild(a);
+  document.getElementById('aClose').onclick = function(){ a.classList.add('hide'); };
+  document.getElementById('aSend').onclick = function(){
+    var btn = this, m = document.getElementById('aMsg'), text = document.getElementById('aTxt').value.trim();
+    if (text.length < 5){ m.className = 'm bad'; m.textContent = 'Hãy ghi rõ nội dung thắc mắc.'; return; }
+    btn.disabled = true; m.className = 'm'; m.textContent = 'Đang gửi…';
+    api('POST', { op:'dispute', text:text }).then(function(r){ btn.disabled = false; if (!r.ok){ m.className = 'm bad'; m.textContent = r.error || 'Chưa gửi được, vui lòng thử lại.'; return; } render(r); });
+  };
+}
+function render(j){
+  if (!j.ok){ show('bad', 'Chưa mở được điểm', esc(j.error || 'Đã có lỗi xảy ra.')); return; }
+  D = j; contact(j);
+  var confirmBtn = '<button type="button" class="btn" id="bOk"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Xác nhận điểm của tôi</button>';
+  if (j.state === 'confirmed'){
+    show('ok', 'Đã xác nhận điểm', 'Hệ thống đã ghi nhận' + who() + ' xác nhận điểm' + (j.confirmedAt ? ' lúc ' + vn(j.confirmedAt) : '') + '. Không cần làm gì thêm.', sheet(j) +
+      '<button type="button" class="link" id="bAsk">Tôi phát hiện sai sót sau khi xác nhận</button>');
+    mountAsk();
+  } else {
+    var lead = 'Vui lòng kiểm tra số liệu bên dưới. Nếu đã đúng, bấm nút xác nhận.' + (j.deadline ? ' Hạn xác nhận: <b>' + esc(vn(j.deadline)) + '</b>.' : '');
+    var note = j.dispute ? '<div class="note"><b>Bạn đã gửi thắc mắc lúc ' + esc(vn(j.dispute.at)) + ':</b><br>' + esc(j.dispute.text) + '<br>' + esc(j.org || 'Đào tạo kinh doanh') + ' đang kiểm tra. Bạn vẫn có thể xác nhận nếu thấy số liệu đã đúng.</div>' : '';
+    show('info', 'Xác nhận điểm' , lead, sheet(j) + note + '<div>' + confirmBtn + '</div><button type="button" class="link" id="bAsk">Tôi có thắc mắc về số liệu</button>');
+    mountAsk();
+  }
+  var ask = document.getElementById('bAsk'); if (ask) ask.onclick = function(){ var a = document.getElementById('ask'); a.classList.remove('hide'); document.getElementById('aTxt').focus(); a.scrollIntoView({ behavior:'smooth', block:'center' }); };
+  var ok = document.getElementById('bOk'); if (ok) ok.onclick = function(){ ok.disabled = true; api('POST', { op:'confirm' }).then(function(r){ if (!r.ok){ ok.disabled = false; alert(r.error || 'Chưa xác nhận được, vui lòng thử lại.'); return; } render(r); }); };
+}
+if (!T){ show('bad', 'Liên kết chưa đầy đủ', 'Hãy mở lại liên kết từ email, hoặc sao chép đầy đủ đường dẫn vào trình duyệt.'); return; }
+// Chỉ ĐỌC khi mở trang; xác nhận là một lần bấm nút có chủ đích (không tự xác nhận khi mở link).
+api('GET').then(render);
+})();
+</script>
+</body>
+</html>

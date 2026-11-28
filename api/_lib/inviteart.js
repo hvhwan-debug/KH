@@ -26,7 +26,7 @@ function wrap(c, text, maxW) {
 
 let BG = null; const HC = new Map();
 async function hero(p) {
-  const key = (p.title || "") + "|" + (p.tagline || "");
+  const key = (p.title || "") + "|" + (p.tagline || "") + "|" + (p.label || "") + "|" + (Array.isArray(p.script) ? p.script.join("/") : "");
   if (HC.has(key)) return HC.get(key);
   const out = await drawHero(p);
   if (HC.size > 40) HC.clear(); HC.set(key, out);
@@ -46,7 +46,7 @@ async function drawHero(p) {
   g.addColorStop(0, "rgba(236,244,255,0.97)"); g.addColorStop(0.55, "rgba(236,244,255,0.88)"); g.addColorStop(1, "rgba(236,244,255,0)");
   c.fillStyle = g; c.fillRect(0, 0, W, H);
   // nhãn
-  const X = 64; c.font = F(700, 21); const lab = "THƯ MỜI THAM GIA", lw = c.measureText(lab).width + 36;
+  const X = 64; c.font = F(700, 21); const lab = String(p.label || "THƯ MỜI THAM GIA").slice(0, 28), lw = c.measureText(lab).width + 36;
   rr(c, X, 46, lw, 44, 12); c.fillStyle = "rgba(21,89,196,0.12)"; c.fill(); c.fillStyle = BLUE; c.textBaseline = "middle"; c.fillText(lab, X + 18, 69);
   // tên chương trình: tự thu nhỏ để vừa tối đa 3 dòng
   const maxW = 600; let size = 54, lines;
@@ -60,7 +60,8 @@ async function drawHero(p) {
   wrap(c, tag, 640).slice(0, 2).forEach((l, i) => c.fillText(l, X, y + 14 + i * 34));
   // chữ viết tay
   c.save(); c.translate(880, 78); c.rotate(-0.16); c.fillStyle = BLUE; c.font = '600 40px "Dancing Script"';
-  c.fillText("Học để", 0, 0); c.fillText("phát triển", 0, 44); c.fillText("cùng nhau", 22, 88);
+  const sc = Array.isArray(p.script) && p.script.length ? p.script.slice(0, 3) : ["Học để", "phát triển", "cùng nhau"];
+  sc.forEach((t, i) => c.fillText(String(t).slice(0, 14), i === 2 ? 22 : 0, i * 44));
   c.beginPath(); c.moveTo(40, 118); c.quadraticCurveTo(130, 100, 215, 98); c.lineWidth = 3.5; c.strokeStyle = BLUE; c.lineCap = "round"; c.stroke();
   c.restore();
   return cv.encode("jpeg", 88);
