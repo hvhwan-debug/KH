@@ -54,7 +54,7 @@
   }
   async function readXlsx(ev) {
     var f = ev.target.files && ev.target.files[0]; ev.target.value = ''; if (!f) return;
-    say('Đang đọc file…', 'ok');
+    SC.parsed = null; SC.src = ''; $('scPrev').innerHTML = ''; say('Đang đọc file…', 'ok');
     try {
       var X = await loadExcelJS(), wb = new X.Workbook(); await wb.xlsx.load(await f.arrayBuffer());
       var best = null, errs = [];
@@ -67,10 +67,10 @@
         if (!best || p.cols.length > best.cols.length || (p.cols.length === best.cols.length && p.rows.length > best.rows.length)) best = p;
       });
       useParsed(best || { error: errs[0] || 'File không có dữ liệu.' }, f.name + (wb.worksheets.length > 1 && best ? ' · sheet “' + best.sheet + '”' : ''));
-    } catch (e) { say('Không đọc được file. Hãy lưu lại dưới dạng .xlsx rồi thử lại.', 'err'); }
+    } catch (e) { SC.parsed = null; SC.src = ''; $('scPrev').innerHTML = ''; say('Không đọc được file. Hãy lưu lại dưới dạng .xlsx rồi thử lại. (Đã bỏ dữ liệu cũ, chưa có gì để tạo đợt.)', 'err'); }
   }
   function useParsed(p, src) {
-    SC.parsed = p.error ? null : p;
+    SC.parsed = p.error ? null : p; SC.src = p.error ? '' : (src || '');
     if (p.error) { $('scPrev').innerHTML = ''; say(p.error, 'err'); return; }
     if (!$('scTitle').value.trim() && p.title) $('scTitle').value = p.title;
     say('', '');
@@ -109,6 +109,8 @@
     var p = SC.parsed || (function () { var q = parsePaste($('scPaste').value); if (!q.error) useParsed(q, ''); return q.error ? null : q; })();
     if (!p) { say('Hãy dán bảng điểm hoặc chọn file trước.', 'err'); return; }
     var title = $('scTitle').value.trim(); if (!title) { say('Vui lòng nhập tiêu đề bảng điểm.', 'err'); return; }
+    var okMsg = 'Tạo đợt xác nhận với ' + p.rows.length + ' nhân viên ' + (SC.src ? 'đọc từ “' + SC.src + '”' : '(dán vào ô bảng điểm)') + '.\n\nCác cột điểm (' + p.cols.length + '): ' + p.cols.join(' · ') + '\n\nĐúng bảng chưa? Bấm Huỷ nếu thiếu cột hoặc sai số người.';
+    if (!confirm(okMsg)) return;
     var due = $('scDue').value ? new Date($('scDue').value).getTime() : 0, ph = $('scPhone').value.trim();
     try { localStorage.setItem('sc.contact', $('scContact').value.trim()); localStorage.setItem('sc.phone', ph); } catch (e) { /* bỏ qua */ }
     var btn = $('scCreate'); btn.disabled = true;
