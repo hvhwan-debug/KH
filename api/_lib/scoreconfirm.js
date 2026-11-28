@@ -114,10 +114,10 @@ function linkUrl(id, code) { return (cfg().appUrl || "") + "/kiemtra/xacnhan-die
 
 // ---------- người nhận ----------
 function stateOf(d, code) {
-  const k = up(code), c = d.confirmed && d.confirmed[k], x = d.disputes && d.disputes[k];
-  if (c && (!x || c.at >= x.at)) return "confirmed";
-  if (x) return "disputed";
-  return "pending";
+  const k = up(code), c = d.confirmed && d.confirmed[k], x = d.disputes && d.disputes[k], rs = x && x.resolved;
+  if (c && (!x || c.at >= x.at || (rs && rs.outcome === "keep"))) return "confirmed";   // xử lý "giữ nguyên": xác nhận trước đó vẫn còn giá trị
+  if (x && !rs) return "disputed";                                                      // thắc mắc chưa xử lý
+  return "pending";                                                                     // đã xử lý (điều chỉnh điểm): chờ nhân viên xác nhận lại
 }
 async function recipients(d) {
   const cands = await quiz.getCandidates(), by = {};
@@ -234,7 +234,7 @@ async function status(id) {
     rows: rc.map((x) => ({
       code: x.code, name: x.name, manager: x.row.manager, email: x.email, vals: x.row.vals, state: stateOf(d, x.code),
       sentAt: (d.sent[x.code] || {}).at || 0, sentN: (d.sent[x.code] || {}).n || 0,
-      confirmedAt: (d.confirmed[x.code] || {}).at || 0, dispute: d.disputes[x.code] ? { at: d.disputes[x.code].at, text: d.disputes[x.code].text, resolved: !!d.disputes[x.code].resolved } : null
+      confirmedAt: (d.confirmed[x.code] || {}).at || 0, dispute: d.disputes[x.code] ? { at: d.disputes[x.code].at, text: d.disputes[x.code].text, resolved: !!d.disputes[x.code].resolved, outcome: (d.disputes[x.code].resolved || {}).outcome || "", reply: (d.disputes[x.code].resolved || {}).reply || "", emailed: !!((d.disputes[x.code].resolved || {}).emailed && d.disputes[x.code].resolved.emailed.ok) } : null
     }))
   };
 }
@@ -258,7 +258,7 @@ async function historyOf(code) {
     out.push({
       id: d.id, title: d.title, period: per.label, key: per.key, createdAt: d.createdAt, deadline: d.deadline || 0,
       cols: d.cols, vals: r.vals, finalLabel: d.cols[last], final: r.vals[last],
-      state: st === "pending" && sent ? "sent" : st, sentAt: sent ? sent.at : 0, confirmedAt: c ? c.at : 0, dispute: x ? { at: x.at, text: x.text, resolved: !!x.resolved } : null
+      state: st === "pending" && sent ? "sent" : st, sentAt: sent ? sent.at : 0, confirmedAt: c ? c.at : 0, dispute: x ? { at: x.at, text: x.text, resolved: !!x.resolved, outcome: (x.resolved || {}).outcome || "" } : null
     });
   });
   out.sort((a, b) => a.key - b.key || a.createdAt - b.createdAt);
@@ -296,13 +296,122 @@ async function resolveDispute(id, code, by) {
   return ok ? { ok: true } : err("Không có thắc mắc nào đang chờ xử lý của người này.", "none");
 }
 
+// ---------- xử lý thắc mắc + email thông báo kết quả cho nhân viên ----------
+function whoOf(nm) {   // cùng quy tắc xưng hô với email xác nhận điểm: Anh / Chị khi đủ chắc, còn lại "bạn"
+  const h0 = require("./honorific").honorific(nm, true, true), known = h0 === "Anh" || h0 === "Chị", given = String(nm || "").split(/\s+/).pop() || "";
+  return { known, H: known ? h0 : "bạn", Hc: known ? h0 : "Bạn", call: known && given ? h0 + " " + given : "bạn", to: nm ? (known ? h0 + " " + nm : nm) : "bạn" };
+}
+// res: { outcome: "keep" | "adjust", reply, before (mảng điểm cũ, khi adjust), after (mảng điểm hiện tại) }; needConfirm: còn phải bấm xác nhận
+async function resultMail(d, row, email, fullName, x, res, needConfirm) {
+  const nm = String(fullName || row.name || "").trim(), W = whoOf(nm), org = d.org || ORG_DEFAULT, url = linkUrl(d.id, row.code);
+  const C = { navy: "#0B2A6B", brand: "#1559C4", ink: "#1C2B4A", body: "#33425E", muted: "#6B7A96", line: "#E1E8F3", tile: "#F1F6FD" };
+  const FF = "'Be Vietnam Pro',Segoe UI,Arial,Helvetica,sans-serif";
+  const adjust = res.outcome === "adjust", last = d.cols.length - 1;
+  let hero = null; const atts = [];
+  try { hero = await require("./inviteart").hero({ title: d.title, label: "KẾT QUẢ XỬ LÝ", tagline: "Phản hồi thắc mắc về điểm của " + W.H, script: ["Cảm ơn bạn", "đã phản hồi"] }); } catch (e) { hero = null; }
+  if (hero) atts.push({ filename: "ket-qua-xu-ly.jpg", content: hero, contentType: "image/jpeg", cid: "sc-hero" });
+  const br = (t) => esc(t).replace(/\r?\n/g, "<br>");
+  const badge = adjust ? '<span style="display:inline-block;background:#E3F5EA;color:#17794A;font-size:13px;font-weight:800;letter-spacing:.04em;padding:6px 14px;border-radius:99px">ĐÃ ĐIỀU CHỈNH ĐIỂM</span>'
+    : '<span style="display:inline-block;background:#E4EEFC;color:' + C.brand + ';font-size:13px;font-weight:800;letter-spacing:.04em;padding:6px 14px;border-radius:99px">GIỮ NGUYÊN KẾT QUẢ</span>';
+  const val = (v) => esc(v === "" || v == null ? "—" : v);
+  const cell = (i) => {
+    const o = adjust && res.before ? res.before[i] : null, n = res.after[i], ch = adjust && res.before && o !== n;
+    return '<tr><td style="padding:11px 16px;border-top:1px solid ' + C.line + ';font-size:15px;color:' + C.body + '">' + esc(d.cols[i]) + '</td><td align="right" style="padding:11px 16px;border-top:1px solid ' + C.line + ';font-size:16px;font-weight:800;color:' + (ch ? "#17794A" : C.navy) + '">' +
+      (ch ? '<span style="text-decoration:line-through;color:#8A97AE;font-weight:500;font-size:14px;margin-right:10px">' + val(o) + '</span>' : "") + val(n) + "</td></tr>";
+  };
+  const fo = adjust && res.before ? res.before[last] : null, fn = res.after[last], fch = adjust && res.before && fo !== fn;
+  const card = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' + C.tile + ';border-radius:16px;border-collapse:separate;overflow:hidden">' +
+    '<tr><td colspan="2" style="padding:16px 16px 12px"><div style="font-size:15px;line-height:1.5;color:' + C.body + '">' + (adjust ? "Điểm sau khi điều chỉnh" : "Kết quả hiện tại") + ' của ' + esc(W.H) + ': <b style="color:' + C.navy + '">' + esc((nm || row.code).toLocaleUpperCase("vi-VN")) + '</b></div></td></tr>' +
+    d.cols.slice(0, last).map((c, i) => cell(i)).join("") +
+    '<tr><td style="padding:16px;border-top:2px solid #C9D9F2;font-size:16px;font-weight:800;color:' + C.navy + '">' + esc(d.cols[last]) + '</td><td align="right" style="padding:16px;border-top:2px solid #C9D9F2">' +
+    (fch ? '<span style="text-decoration:line-through;color:#8A97AE;font-size:16px;margin-right:12px">' + val(fo) + '</span>' : "") +
+    '<span style="display:inline-block;min-width:56px;text-align:center;background:' + (fch ? "#17794A" : C.brand) + ';color:#ffffff;font-size:24px;font-weight:800;line-height:1;padding:10px 16px;border-radius:12px">' + val(fn) + "</span></td></tr></table>";
+  const dueLine = needConfirm && d.deadline && d.deadline > Date.now() ? '<div style="margin-top:12px;font-size:15px;color:' + C.body + '">Vui lòng xác nhận <b style="color:' + C.navy + '">trước ' + esc(vnTime(d.deadline)) + "</b></div>" : "";
+  const cta = needConfirm
+    ? '<tr><td align="center" style="padding:26px 20px 6px"><table role="presentation" cellpadding="0" cellspacing="0" class="cta"><tr><td align="center" bgcolor="' + C.brand + '" style="border-radius:40px;background:' + C.brand + ';background:linear-gradient(180deg,#1E6AD8,#1152B8)">' +
+      '<a href="' + esc(url) + '" target="_blank" style="display:inline-block;padding:20px 54px;font-family:' + FF + ';font-size:18px;font-weight:800;letter-spacing:.02em;color:#ffffff;text-decoration:none;border-radius:40px">' + (adjust ? "XÁC NHẬN ĐIỂM MỚI" : "XÁC NHẬN ĐIỂM") + ' &nbsp;&rarr;</a></td></tr></table>' + dueLine + "</td></tr>"
+    : '<tr><td class="pad" style="padding:18px 36px 0"><div style="font-size:14px;line-height:1.6;color:' + C.body + '">Điểm của ' + esc(W.H) + ' đã được xác nhận trước đó và <b style="color:' + C.navy + '">không thay đổi</b>, ' + esc(W.H) + ' không cần làm thêm gì.</div></td></tr>';
+  const html = '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">' +
+    '<style>@media only screen and (max-width:560px){.pad{padding-left:20px!important;padding-right:20px!important}.cta a{padding:17px 26px!important;font-size:16px!important}}</style></head>' +
+    '<body style="margin:0;padding:0;background:#EEF3FA"><div style="display:none;max-height:0;overflow:hidden;opacity:0">' + esc(org) + " đã xử lý thắc mắc về điểm của " + esc(W.H) + ": " + (adjust ? "điểm đã được điều chỉnh" : "giữ nguyên kết quả") + '.&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EEF3FA"><tr><td align="center" style="padding:24px 10px">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;background:#ffffff;border-radius:18px;border-collapse:separate;overflow:hidden;font-family:' + FF + ';color:' + C.body + '">' +
+    '<tr><td style="padding:0;background:#EAF2FD">' + (hero ? '<img src="cid:sc-hero" width="640" alt="Kết quả xử lý thắc mắc: ' + esc(d.title) + '" style="display:block;width:100%;max-width:640px;height:auto;border:0">'
+      : '<div style="padding:34px 32px"><div style="display:inline-block;background:#DCE8FB;color:' + C.brand + ';font-weight:700;font-size:12px;padding:6px 12px;border-radius:8px">KẾT QUẢ XỬ LÝ</div><div style="margin-top:14px;font-size:28px;font-weight:800;color:' + C.navy + ';line-height:1.25">' + esc(d.title) + "</div></div>") + "</td></tr>" +
+    '<tr><td class="pad" style="padding:30px 36px 6px;font-size:16px;line-height:1.65;color:' + C.ink + '"><b><i>Chào ' + esc(W.call) + ',</i></b><br>' + esc(org) + " đã tiếp nhận và xử lý thắc mắc của " + esc(W.H) + ' về <b style="color:' + C.navy + '">' + esc(d.title) + "</b>.</td></tr>" +
+    '<tr><td class="pad" style="padding:14px 36px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-left:4px solid #C9D9F2"><tr><td style="padding:4px 0 4px 14px;font-size:14px;line-height:1.6;color:' + C.body + '">' +
+      '<div style="font-size:12px;letter-spacing:.06em;color:' + C.muted + ';text-transform:uppercase">Thắc mắc của ' + esc(W.H) + (x && x.at ? " · " + esc(vnTime(x.at)) : "") + '</div><div style="margin-top:4px;font-style:italic">' + br(x && x.text || "") + "</div></td></tr></table></td></tr>" +
+    '<tr><td class="pad" style="padding:20px 36px 0"><div>' + badge + '</div><div style="margin-top:12px;font-size:12px;letter-spacing:.06em;color:' + C.muted + ';text-transform:uppercase">Phản hồi của ' + esc(org) + '</div>' +
+      '<div style="margin-top:4px;font-size:15px;line-height:1.65;color:' + C.ink + '">' + br(res.reply) + "</div></td></tr>" +
+    '<tr><td class="pad" style="padding:20px 36px 0">' + card + "</td></tr>" + cta +
+    '<tr><td class="pad" style="padding:22px 36px 0"><div style="font-size:14px;line-height:1.65;color:' + C.body + '">Nếu ' + esc(W.H) + ' vẫn còn thắc mắc, vui lòng nhấn nút <b>“Tôi có thắc mắc”</b> trên trang xác nhận, ' + esc(org) + " sẽ tiếp tục hỗ trợ " + esc(W.H) + ".</div></td></tr>" +
+    '<tr><td class="pad" style="padding:22px 36px 8px;font-size:15px;line-height:1.6;color:' + C.ink + '">Trân trọng,<br><b style="color:' + C.navy + '">' + esc(org) + "</b></td></tr>" +
+    '<tr><td class="pad" style="padding:14px 36px 26px"><div style="border-top:1px solid ' + C.line + ';padding-top:14px;font-size:12px;line-height:1.7;color:#7C8AA5">' +
+      "Thư này được gửi riêng đến " + esc(W.to) + " (Mã nhân viên: " + esc(row.code) + "). Vui lòng không chuyển tiếp email này cho người khác.<br>" +
+      "Trong trường hợp không thể nhấn nút, " + esc(W.H) + ' vui lòng truy cập đường dẫn dưới đây:<br><a href="' + esc(url) + '" target="_blank" style="color:' + C.brand + ';font-weight:700;text-decoration:underline">Liên kết xác nhận điểm</a></div></td></tr>' +
+    "</table></td></tr></table></body></html>";
+  const text = "Chào " + W.call + ",\n" + org + " đã tiếp nhận và xử lý thắc mắc của " + W.H + " về " + d.title + ".\n\nThắc mắc của " + W.H + ": " + (x && x.text || "") + "\n\nKẾT QUẢ: " + (adjust ? "ĐÃ ĐIỀU CHỈNH ĐIỂM" : "GIỮ NGUYÊN KẾT QUẢ") + "\nPhản hồi của " + org + ": " + res.reply + "\n\n" +
+    (adjust ? "Điểm sau khi điều chỉnh" : "Kết quả hiện tại") + " của " + W.H + ": " + (nm || row.code).toLocaleUpperCase("vi-VN") + "\n" +
+    d.cols.map((c, i) => c + ": " + (adjust && res.before && res.before[i] !== res.after[i] ? (res.before[i] || "—") + " -> " : "") + (res.after[i] || "—")).join("\n") +
+    (needConfirm ? "\n\n" + (adjust ? "XÁC NHẬN ĐIỂM MỚI" : "XÁC NHẬN ĐIỂM") + ":\n" + url + (d.deadline && d.deadline > Date.now() ? "\nVui lòng xác nhận trước " + vnTime(d.deadline) + "." : "") : "\n\nĐiểm của " + W.H + " đã được xác nhận trước đó và không thay đổi.") +
+    "\n\nNếu " + W.H + " vẫn còn thắc mắc, vui lòng nhấn nút “Tôi có thắc mắc” trên trang xác nhận.\n\nTrân trọng,\n" + org;
+  const subject = "Kết quả xử lý thắc mắc về điểm dành cho " + W.call + ": " + d.title;
+  let previewHtml = html; atts.forEach((a) => { previewHtml = previewHtml.split("cid:" + a.cid).join("data:" + a.contentType + ";base64," + a.content.toString("base64")); });
+  return { subject, html, text, attachments: atts.length ? atts : undefined, previewHtml, to: email || "" };
+}
+// opt: { outcome: "keep"|"adjust", reply, vals (khi adjust), notify (mặc định gửi email), dry (chỉ xem trước, không lưu) }
+async function handleDispute(id, code, opt, by) {
+  opt = opt || {};
+  const d = await get(id); if (!d) return err("Không tìm thấy đợt này.", "not_found");
+  const k = up(code), ri = d.rows.findIndex((r) => r.code === k), x = d.disputes && d.disputes[k];
+  if (ri < 0 || !x) return err("Không có thắc mắc nào của người này.", "none");
+  if (x.resolved) return err("Thắc mắc này đã được xử lý rồi.", "done");
+  const outcome = opt.outcome === "adjust" ? "adjust" : opt.outcome === "keep" ? "keep" : "";
+  if (!outcome) return err("Hãy chọn kết quả xử lý: giữ nguyên hoặc điều chỉnh điểm.", "no_outcome");
+  const reply = clip(opt.reply, 800); if (reply.length < 5) return err("Hãy ghi nội dung phản hồi gửi nhân viên (ít nhất 5 ký tự).", "no_reply");
+  const row = d.rows[ri], before = row.vals.slice();
+  let after = before;
+  if (outcome === "adjust") {
+    if (!Array.isArray(opt.vals) || opt.vals.length !== d.cols.length) return err("Thiếu số điểm cần điều chỉnh.", "bad_vals");
+    after = d.cols.map((_, i) => clip(opt.vals[i], 30));
+    if (after.every((v, i) => v === before[i])) return err("Chưa có điểm nào thay đổi. Nếu giữ nguyên điểm, hãy chọn “Giữ nguyên”.", "same");
+  }
+  const rc = (await recipients(d)).find((r) => r.code === k) || { email: "", name: row.name };
+  const needConfirm = outcome === "adjust" || !(d.confirmed && d.confirmed[k]);   // giữ nguyên mà trước đó đã xác nhận thì không cần xác nhận lại
+  const mailRes = { outcome, reply, before: outcome === "adjust" ? before : null, after };
+  const m = await resultMail(Object.assign({}, d, { rows: d.rows }), Object.assign({}, row, { vals: after }), rc.email, rc.name || row.name, x, mailRes, needConfirm);
+  const willEmail = opt.notify !== false && !!rc.email && mailConfigured();
+  if (opt.dry) return { ok: true, dry: true, subject: m.subject, html: m.previewHtml, to: rc.email || "", willEmail, noEmailReason: !rc.email ? "Nhân viên chưa có email" : !mailConfigured() ? "Máy chủ chưa cấu hình gửi email" : "", needConfirm };
+  await store.update(docKey(id), (cur) => {
+    const c = cur && !cur.deleted ? cur : d, cx = c.disputes && c.disputes[k]; if (!cx || cx.resolved) return c;
+    if (outcome === "adjust") {
+      const r = c.rows[ri]; r.vals = after.slice();
+      r.adj = (r.adj || []).concat({ at: Date.now(), by: clip(by, 120), from: before, to: after.slice(), why: reply }).slice(-10);
+      if (c.confirmed && c.confirmed[k]) { c.confirmedPrev = c.confirmedPrev || {}; c.confirmedPrev[k] = c.confirmed[k]; delete c.confirmed[k]; }   // điểm đổi: xác nhận cũ không còn giá trị, phải xác nhận lại (giữ lại để đối chiếu)
+    }
+    cx.resolved = { at: Date.now(), by: clip(by, 120), outcome, reply };
+    return c;
+  });
+  let emailed = false, reason = "";
+  if (opt.notify === false) reason = "Bạn chọn không gửi email.";
+  else if (!rc.email) reason = "Nhân viên chưa có email nên chưa gửi được.";
+  else if (!mailConfigured()) reason = "Máy chủ chưa cấu hình gửi email (SMTP).";
+  else {
+    try { emailed = !!(await mail.send({ fromName: mail.KT_NAME, to: rc.email, subject: m.subject, html: m.html, text: m.text, attachments: m.attachments })); if (!emailed) reason = "Máy chủ chưa gửi được email."; }
+    catch (e) { reason = "Gửi email thất bại."; }
+  }
+  await store.update(docKey(id), (cur) => { const c = cur && !cur.deleted ? cur : d, cx = c.disputes && c.disputes[k]; if (cx && cx.resolved) cx.resolved.emailed = { at: Date.now(), ok: emailed }; return c; });
+  return { ok: true, outcome, emailed, reason, needConfirm };
+}
+
 // ---------- trang công khai của nhân viên ----------
 async function view(t) {
   const d = await get(t.id); if (!d) return err("Đợt xác nhận này không còn tồn tại. Vui lòng liên hệ người gửi thư.", "not_found");
   const row = d.rows.find((r) => r.code === t.code); if (!row) return err("Không tìm thấy điểm của bạn trong đợt này.", "no_row");
   const k = row.code, c = d.confirmed[k] || null, x = d.disputes[k] || null;
   return { ok: true, title: d.title, org: d.org, cols: d.cols, vals: row.vals, code: row.code, name: row.name, manager: row.manager, deadline: d.deadline || 0,
-    contact: d.contact, phone: d.phone, email: d.email, state: stateOf(d, k), confirmedAt: c ? c.at : 0, dispute: x ? { at: x.at, text: x.text } : null };
+    contact: d.contact, phone: d.phone, email: d.email, state: stateOf(d, k), confirmedAt: c ? c.at : 0, dispute: x ? { at: x.at, text: x.text, resolved: !!x.resolved } : null,
+    resolution: x && x.resolved ? { at: x.resolved.at, outcome: x.resolved.outcome || "", reply: x.resolved.reply || "" } : null };
 }
 async function act(t, op, b, meta) {
   const d = await get(t.id); if (!d) return err("Đợt xác nhận này không còn tồn tại.", "not_found");
@@ -320,4 +429,4 @@ async function act(t, op, b, meta) {
   return Object.assign(await view(t), res || {});
 }
 
-module.exports = { ORG_DEFAULT, notifications, resolveDispute, fromResults, historyOf, periodOf, list, get, create, remove, token, readToken, linkUrl, stateOf, recipients, statsOf, mailFor, preview, send, status, view, act, BATCH };
+module.exports = { ORG_DEFAULT, handleDispute, resultMail, notifications, resolveDispute, fromResults, historyOf, periodOf, list, get, create, remove, token, readToken, linkUrl, stateOf, recipients, statsOf, mailFor, preview, send, status, view, act, BATCH };

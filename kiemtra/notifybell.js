@@ -63,7 +63,7 @@
     if (!N.items.length) { p.innerHTML = head + '<div class="ntf-e">Chưa có thông báo nào.<br>Khi nhân viên gửi thắc mắc, yêu cầu hoặc xác nhận điểm, bạn sẽ thấy ở đây.</div>'; return; }
     p.innerHTML = head + N.items.map(function (it) {
       var k = KIND[it.kind] || KIND.confirm, un = unread(it, s);
-      var acts = it.kind === 'dispute' ? '<button type="button" class="pri" data-ntf="view" data-id="' + attr(it.id) + '">Xem bảng theo dõi</button><button type="button" data-ntf="resolve" data-id="' + attr(it.id) + '">Đã xử lý</button>'
+      var acts = it.kind === 'dispute' ? '<button type="button" class="pri" data-ntf="handle" data-id="' + attr(it.id) + '">Xử lý…</button><button type="button" data-ntf="view" data-id="' + attr(it.id) + '">Xem bảng theo dõi</button>'
         : it.kind === 'request' ? '<button type="button" class="pri" data-ntf="view" data-id="' + attr(it.id) + '">Xem yêu cầu</button>'
         : '<button type="button" data-ntf="view" data-id="' + attr(it.id) + '">Xem</button>';
       return '<div class="ntf-it' + (un ? ' un' : '') + '"><span class="ntf-dot" style="background:' + k[0] + '"></span><div class="ntf-b"><div class="ntf-t">' + esc(it.title) + '</div>' +
@@ -84,12 +84,7 @@
       else { switchTab('notify'); setTimeout(function () { if (window.scOpenStatus) window.scOpenStatus(it.batchId, it.kind === 'dispute' ? 'disputed' : 'all'); }, 250); }
       return;
     }
-    if (act === 'resolve') {
-      b.disabled = true;
-      var r = await api('POST', '/api/kt-admin', { op: 'scoreConfirmResolve', id: it.batchId, code: it.code });
-      if (!r.j || !r.j.ok) { alert((r.j && r.j.error) || 'Không đánh dấu được, thử lại.'); b.disabled = false; }
-      await refresh(true);
-    }
+    if (act === 'handle') { close(); switchTab('notify'); setTimeout(function () { if (window.scHandle) window.scHandle(it.batchId, it.code); }, 250); }
   }
   function markSeen() { var m = Date.now(); N.items.forEach(function (i) { if (i.at > m) m = i.at; }); seenSet(m); N.panelSeen = m; badge(); }
   function open() { N.open = true; N.panelSeen = seenGet(); render(); var p = document.getElementById('ntfPn'); p.hidden = false; document.getElementById('ntfBell').setAttribute('aria-expanded', 'true'); markSeen(); p.focus(); }

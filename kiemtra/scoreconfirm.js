@@ -4,7 +4,7 @@
 (function () {
   'use strict';
   var SC = { ready: false, list: [], cur: null, st: null, parsed: null, filter: 'all', q: '' };
-  var STATE = { pending: ['Chưa gửi', '#6B7690', '#EEF2F8'], sent: ['Đã gửi', '#1559C4', '#E8F2FF'], confirmed: ['Đã xác nhận', '#17794A', '#E3F5EA'], disputed: ['Có thắc mắc', '#B45309', '#FFF4DE'] };
+  var STATE = { pending: ['Chưa gửi', '#6B7690', '#EEF2F8'], sent: ['Đã gửi', '#1559C4', '#E8F2FF'], confirmed: ['Đã xác nhận', '#17794A', '#E3F5EA'], disputed: ['Có thắc mắc', '#B45309', '#FFF4DE'], reconfirm: ['Chờ xác nhận lại', '#B45309', '#FFF4DE'] };
 
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
   function vn(ms) { if (!ms) return ''; var d = new Date(ms); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ' ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(); }
@@ -111,7 +111,7 @@
       '<button type="button" class="btn ghost sm" id="scFileBtn">Chọn file .xlsx…</button><input type="file" id="scFile" accept=".xlsx" style="display:none">' +
       '<button type="button" class="btn sm" id="scCreate">Tạo đợt xác nhận</button></div>' +
       '<div id="scPrev"></div></div>' +
-      '<h2 style="margin:22px 0 6px;font-size:16px">Các đợt đã tạo</h2><div id="scList"><p class="small">Đang tải…</p></div><div id="scDetail"></div>';
+      '<h2 style="margin:22px 0 6px;font-size:16px">Các đợt đã tạo</h2><div id="scList"><p class="small">Đang tải…</p></div><div id="scDetail"></div><div id="scHandleBox"></div>';
     $('scRead').onclick = function () { useParsed(parsePaste($('scPaste').value), ''); };
     $('scFileBtn').onclick = function () { $('scFile').click(); };
     $('scFile').onchange = readXlsx;
@@ -249,8 +249,8 @@
   }
   function renderStatus() {
     var d = SC.st, s = d.stats, f = SC.filter, q = norm(SC.q);
-    var rows = d.rows.map(function (x) { return Object.assign({}, x, { k: x.state === 'pending' && x.sentAt ? 'sent' : x.state }); })
-      .filter(function (x) { return (f === 'all' || x.k === f) && (!q || norm(x.code + ' ' + x.name + ' ' + x.manager).indexOf(q) >= 0); });
+    var rows = d.rows.map(function (x) { return Object.assign({}, x, { k: x.state === 'pending' ? (x.dispute && x.dispute.resolved ? 'reconfirm' : x.sentAt ? 'sent' : 'pending') : x.state }); })
+      .filter(function (x) { return (f === 'all' || x.k === f || (f === 'sent' && x.k === 'reconfirm')) && (!q || norm(x.code + ' ' + x.name + ' ' + x.manager).indexOf(q) >= 0); });
     var last = d.cols.length - 1;
     $('scDetail').innerHTML = '<div class="card" style="margin-top:16px;border-color:#BBD3F6"><h2 style="margin:0 0 6px;font-size:16px">Theo dõi: ' + esc(d.title) + '</h2>' +
       bar(s.alreadySent, s.withEmail, 'Tiến trình gửi email') + bar(s.confirmed, s.total, 'Tiến trình xác nhận điểm', '#17794A') +
@@ -262,20 +262,57 @@
         var when = x.state === 'confirmed' ? vn(x.confirmedAt) : x.state === 'disputed' && x.dispute ? vn(x.dispute.at) : x.sentAt ? 'gửi ' + vn(x.sentAt) + (x.sentN > 1 ? ' (' + x.sentN + ' lần)' : '') : (x.email ? '' : 'chưa có email');
         return '<tr><td>' + esc(x.code) + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.manager) + '</td><td><b>' + esc(x.vals[last]) + '</b></td><td>' + badge(x.k) + '</td><td class="small">' + esc(when) + '</td></tr>' +
           (x.dispute ? '<tr><td></td><td colspan="5" class="small" style="color:#B45309"><b>' + (x.dispute.resolved ? 'Thắc mắc (đã xử lý):' : 'Thắc mắc:') + '</b> ' + esc(x.dispute.text) +
-            (x.k === 'disputed' && !x.dispute.resolved ? ' <button type="button" class="btn ghost sm" data-resolve="' + esc(x.code).replace(/"/g, '&quot;') + '">Đã xử lý</button>' : '') + '</td></tr>' : '');
+            (x.dispute.resolved ? '<br><b>→ ' + (x.dispute.outcome === 'adjust' ? 'Đã điều chỉnh điểm' : x.dispute.outcome === 'keep' ? 'Giữ nguyên kết quả' : 'Đã đóng') + (x.dispute.reply ? ':</b> ' + esc(x.dispute.reply) : '</b>') + (x.dispute.outcome ? (x.dispute.emailed ? ' <i>(đã gửi email thông báo)</i>' : ' <i>(chưa gửi email)</i>') : '')
+              : ' <button type="button" class="btn sm" data-handle="' + esc(x.code).replace(/"/g, '&quot;') + '">Xử lý…</button>') + '</td></tr>' : '');
       }).join('') : '<tr><td colspan="6" class="small">Không có dòng nào khớp.</td></tr>') + '</tbody></table></div></div>';
     $('scRefresh').onclick = function () { openStatus(SC.cur); };
-    Array.prototype.forEach.call(document.querySelectorAll('#scDetail [data-resolve]'), function (b) {
-      b.onclick = async function () {
-        b.disabled = true; var r = await call('scoreConfirmResolve', { id: SC.cur, code: b.getAttribute('data-resolve') });
-        if (!r.j.ok) { say(r.j.error || 'Không đánh dấu được.', 'err'); b.disabled = false; return; }
-        if (window.ntfRefresh) window.ntfRefresh(); openStatus(SC.cur);
-      };
-    });
+    Array.prototype.forEach.call(document.querySelectorAll('#scDetail [data-handle]'), function (b) { b.onclick = function () { openHandle(b.getAttribute('data-handle')); }; });
     $('scF').value = f; $('scF').onchange = function () { SC.filter = this.value; renderStatus(); };
     var qi = $('scQ'); qi.oninput = function () { SC.q = this.value; var pos = this.selectionStart; renderStatus(); var n = $('scQ'); n.focus(); n.setSelectionRange(pos, pos); };
   }
 
+  // ---------- xử lý thắc mắc: giữ nguyên / điều chỉnh điểm + email thông báo kết quả ----------
+  function openHandle(code) {
+    var d = SC.st; if (!d) return;
+    var x = d.rows.filter(function (r) { return r.code === code; })[0]; if (!x || !x.dispute) return;
+    var box = $('scHandleBox');
+    box.innerHTML = '<div class="card" style="margin-top:16px;border-color:#F0C36A"><h2 style="margin:0 0 8px;font-size:16px">Xử lý thắc mắc: ' + esc(x.name || x.code) + ' (' + esc(x.code) + ')</h2>' +
+      '<div class="msg warn" style="margin:0 0 12px"><b>Thắc mắc (' + vn(x.dispute.at) + '):</b> ' + esc(x.dispute.text) + '</div>' +
+      '<div style="font-weight:700;margin:0 0 6px">Kết quả xử lý</div>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-weight:500;margin:0 0 4px"><input type="radio" name="scHo" value="keep" checked style="width:auto;margin:0"> Giữ nguyên điểm (đã đối chiếu, điểm đúng)</label>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-weight:500;margin:0 0 10px"><input type="radio" name="scHo" value="adjust" style="width:auto;margin:0"> Điều chỉnh điểm (điểm đang sai, sửa lại)</label>' +
+      '<div id="scHoVals" class="hide" style="margin:0 0 12px"><div class="small" style="margin:0 0 6px">Nhập điểm đúng. Nhân viên sẽ phải <b>xác nhận lại</b> với điểm mới.</div><div class="grid2">' +
+        d.cols.map(function (c, i) { return '<div><label>' + esc(c) + '</label><input type="text" data-hv="' + i + '" maxlength="30" value="' + esc(x.vals[i] || '').replace(/"/g, '&quot;') + '" style="margin:0"></div>'; }).join('') + '</div></div>' +
+      '<label for="scHoReply">Nội dung phản hồi gửi nhân viên (bắt buộc)</label><textarea id="scHoReply" rows="4" maxlength="800" style="width:100%;font-family:inherit" placeholder="Ví dụ: Đã đối chiếu lại bài làm, điểm M25 đúng là 95. Hệ thống đã điều chỉnh…"></textarea>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-weight:500;margin:10px 0 0"><input type="checkbox" id="scHoMail" checked style="width:auto;margin:0"> Gửi email thông báo kết quả cho nhân viên' + (x.email ? ' (' + esc(x.email) + ')' : ' <span style="color:#B3261E">(chưa có email, sẽ không gửi được)</span>') + '</label>' +
+      '<div id="scHoMsg"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn ghost" id="scHoPrev">Xem trước email</button><button type="button" class="btn" id="scHoGo">Xử lý &amp; gửi</button><button type="button" class="btn ghost" id="scHoClose">Đóng</button></div>' +
+      '<div id="scHoPv"></div></div>';
+    var read = function () {
+      var o = box.querySelector('input[name="scHo"]:checked').value, b = { id: d.id, code: code, outcome: o, reply: $('scHoReply').value.trim(), notify: $('scHoMail').checked };
+      if (o === 'adjust') b.vals = Array.prototype.map.call(box.querySelectorAll('[data-hv]'), function (i) { return i.value.trim(); });
+      return b;
+    };
+    var hm = function (t, c) { msg('scHoMsg', t, c); };
+    Array.prototype.forEach.call(box.querySelectorAll('input[name="scHo"]'), function (r) { r.onchange = function () { $('scHoVals').classList.toggle('hide', box.querySelector('input[name="scHo"]:checked').value !== 'adjust'); }; });
+    $('scHoClose').onclick = function () { box.innerHTML = ''; };
+    $('scHoPrev').onclick = async function () {
+      var b = read(); hm('', ''); var r = await call('scoreConfirmHandle', Object.assign({ dry: true }, b));
+      if (!r.j.ok) { hm(r.j.error || 'Không xem trước được.', 'err'); return; }
+      $('scHoPv').innerHTML = '<div class="small" style="margin:12px 0 6px"><b>Tiêu đề thư:</b> ' + esc(r.j.subject) + '<br><b>Gửi tới:</b> ' + esc(r.j.to || '(chưa có email)') + (r.j.willEmail ? '' : ' <span style="color:#B3261E">· ' + esc(r.j.noEmailReason || 'sẽ không gửi email') + '</span>') + '</div><iframe id="scHoFrame" sandbox="" title="Xem trước email kết quả" style="width:100%;height:760px;border:1px solid var(--line);border-radius:12px;background:#EEF3FA"></iframe>';
+      $('scHoFrame').srcdoc = r.j.html;
+    };
+    $('scHoGo').onclick = async function () {
+      var b = read(); if (!b.reply || b.reply.length < 5) { hm('Hãy ghi nội dung phản hồi gửi nhân viên.', 'err'); return; }
+      if (!confirm('Xử lý thắc mắc của ' + (x.name || x.code) + ': ' + (b.outcome === 'adjust' ? 'ĐIỀU CHỈNH ĐIỂM' : 'GIỮ NGUYÊN ĐIỂM') + '.\n\n' + (b.notify ? 'Hệ thống sẽ gửi email kết quả cho nhân viên.' : 'Sẽ KHÔNG gửi email.') + (b.outcome === 'adjust' ? '\nĐiểm mới được lưu và nhân viên phải xác nhận lại.' : '') + '\n\nThao tác không hoàn tác được. Tiếp tục?')) return;
+      var btn = $('scHoGo'); btn.disabled = true; hm('Đang xử lý…', 'ok');
+      var r = await call('scoreConfirmHandle', b); btn.disabled = false;
+      if (!r.j.ok) { hm(r.j.error || 'Không xử lý được.', 'err'); return; }
+      box.innerHTML = ''; say('Đã xử lý thắc mắc của ' + (x.name || x.code) + ': ' + (r.j.outcome === 'adjust' ? 'đã điều chỉnh điểm, chờ nhân viên xác nhận lại' : 'giữ nguyên kết quả') + '. ' + (r.j.emailed ? 'Đã gửi email thông báo kết quả.' : 'Chưa gửi email: ' + (r.j.reason || '') ), r.j.emailed ? 'ok' : 'warn');
+      if (window.ntfRefresh) window.ntfRefresh();
+      openStatus(d.id);
+    };
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   function init() {
     if (!$('scMount')) return;
     if (!SC.ready) { SC.ready = true; mount(); $('scMount').addEventListener('click', function (e) {
@@ -287,6 +324,7 @@
     loadList();
   }
   window.scOpenStatus = function (id, filter) { init(); if (filter) SC.filter = filter; return openStatus(id); };   // dùng cho chuông thông báo
+  window.scHandle = async function (id, code) { init(); if (!SC.st || SC.st.id !== id) { SC.filter = 'disputed'; await openStatus(id); } openHandle(code); };
   window.addEventListener('load', function () {
     var st = window.switchTab;
     if (typeof st === 'function') window.switchTab = function (t) { var r = st.apply(this, arguments); if (t === 'notify') init(); return r; };
