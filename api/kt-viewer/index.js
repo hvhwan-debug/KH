@@ -195,7 +195,9 @@ const handler = async function (context, req) {
         let status = "none";
         const act = await quiz.getActive(c.code);
         if (act) { const t = Object.assign({}, act); quiz.syncAttempt(t, Date.now()); if (t.cursor < t.questionIds.length) status = "doing"; }
-        return reply(context, 200, { ok: true, employee: empView(c), currentPeriod: settings.examPeriod, status, passEnabled: !!settings.passEnabled,
+        let complianceHistory = []; // lịch sử điểm tuân thủ theo tháng + tình trạng xác nhận (đợt "Xác nhận điểm qua email")
+        try { complianceHistory = await require("../_lib/scoreconfirm").historyOf(c.code); } catch (e) { complianceHistory = []; }
+        return reply(context, 200, { ok: true, employee: empView(c), currentPeriod: settings.examPeriod, status, passEnabled: !!settings.passEnabled, complianceHistory,
           complianceLowMin: settings.complianceLowMin, history, categories, repeatWrong, lastWrong: lastWrong.slice(0, 15), papersRead: atts.filter(Boolean).length,
           // Hồ sơ nhân sự CHỈ dành cho quản trị viên (ADMIN_EMAILS). Quản lí thường không nhận khối này.
           hr: viewer.isAdmin && c.profile ? c.profile : undefined, hrEmpty: viewer.isAdmin && !c.profile });

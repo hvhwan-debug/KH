@@ -198,6 +198,32 @@ async function status(id) {
   };
 }
 
+// ---------- lịch sử điểm của MỘT nhân viên (hiện trong hồ sơ học tập) ----------
+// Mỗi đợt xác nhận = một kỳ điểm (thường là một tháng). Trả về theo thứ tự cũ -> mới. Tháng lấy từ tiêu đề ("... THÁNG 11/2026"), không có thì theo ngày tạo đợt.
+function periodOf(title, createdAt) {
+  const m = /TH[ÁA]NG\s*(\d{1,2})\s*\/\s*(\d{4})/i.exec(String(title || "").normalize("NFC"));
+  if (m && +m[1] >= 1 && +m[1] <= 12) return { label: "Tháng " + (+m[1]) + "/" + m[2], key: +m[2] * 100 + +m[1] };
+  const v = new Date((createdAt || Date.now()) + 7 * 3600e3), mo = v.getUTCMonth() + 1, y = v.getUTCFullYear();
+  return { label: "Tháng " + mo + "/" + y, key: y * 100 + mo };
+}
+async function historyOf(code) {
+  const k = up(code), out = [];
+  if (!k) return out;
+  const docs = await Promise.all((await list()).slice(0, 36).map((x) => get(x.id).catch(() => null)));
+  docs.forEach((d) => {
+    if (!d) return;
+    const r = d.rows.find((x) => x.code === k); if (!r) return;
+    const last = d.cols.length - 1, st = stateOf(d, k), sent = (d.sent && d.sent[k]) || null, c = (d.confirmed && d.confirmed[k]) || null, x = (d.disputes && d.disputes[k]) || null, per = periodOf(d.title, d.createdAt);
+    out.push({
+      id: d.id, title: d.title, period: per.label, key: per.key, createdAt: d.createdAt, deadline: d.deadline || 0,
+      cols: d.cols, vals: r.vals, finalLabel: d.cols[last], final: r.vals[last],
+      state: st === "pending" && sent ? "sent" : st, sentAt: sent ? sent.at : 0, confirmedAt: c ? c.at : 0, dispute: x ? { at: x.at, text: x.text } : null
+    });
+  });
+  out.sort((a, b) => a.key - b.key || a.createdAt - b.createdAt);
+  return out;
+}
+
 // ---------- trang công khai của nhân viên ----------
 async function view(t) {
   const d = await get(t.id); if (!d) return err("Đợt xác nhận này không còn tồn tại. Vui lòng liên hệ người gửi thư.", "not_found");
@@ -222,4 +248,4 @@ async function act(t, op, b, meta) {
   return Object.assign(await view(t), res || {});
 }
 
-module.exports = { ORG_DEFAULT, list, get, create, remove, token, readToken, linkUrl, stateOf, recipients, statsOf, mailFor, preview, send, status, view, act, BATCH };
+module.exports = { ORG_DEFAULT, historyOf, periodOf, list, get, create, remove, token, readToken, linkUrl, stateOf, recipients, statsOf, mailFor, preview, send, status, view, act, BATCH };
