@@ -145,20 +145,20 @@ function nameParts(name) {
   return { call: h ? h + " " + given : (name || "bạn") };
 }
 // Dựng email cho MỘT nhân viên. Khung, màu và nút theo đúng "Thư mời đăng ký chương trình" (programs.inviteMail).
-async function mailFor(d, row, email) {
-  const url = linkUrl(d.id, row.code), np = nameParts(row.name), org = d.org || ORG_DEFAULT;
+async function mailFor(d, row, email, fullName) {
+  const nm = String(fullName || row.name || "").trim(), url = linkUrl(d.id, row.code), np = nameParts(nm), org = d.org || ORG_DEFAULT;
   const C = { navy: "#0B2A6B", brand: "#1559C4", ink: "#1C2B4A", body: "#33425E", muted: "#6B7A96", line: "#E1E8F3", tile: "#F1F6FD" };
   const FF = "'Be Vietnam Pro',Segoe UI,Arial,Helvetica,sans-serif";
   let hero = null; const atts = [];
   try { hero = await require("./inviteart").hero({ title: d.title, label: "XÁC NHẬN ĐIỂM", tagline: "Kiểm tra điểm và xác nhận chỉ với một lần bấm", script: ["Cùng nhau", "tiến bộ", "mỗi ngày"] }); } catch (e) { hero = null; }
   if (hero) atts.push({ filename: "xac-nhan-diem.jpg", content: hero, contentType: "image/jpeg", cid: "sc-hero" });
-  const fm = (function () { const h = require("./honorific").honorific(row.name) || "Anh/Chị", nm = String(row.name || "").trim(); return { h, to: nm ? h + " " + nm : h }; })();
+  const fm = (function () { const h = require("./honorific").honorific(nm) || "Anh/Chị"; return { h, to: nm ? h + " " + nm : h }; })();
   const last = d.cols.length - 1, finalLabel = d.cols[last], finalVal = row.vals[last];
   const body = d.cols.slice(0, last).map((c, i) => [c, row.vals[i]]);
   const cell = (k, v, strong) => '<tr><td style="padding:11px 16px;border-top:1px solid ' + C.line + ';font-size:15px;color:' + C.body + '">' + esc(k) + '</td><td align="right" style="padding:11px 16px;border-top:1px solid ' + C.line + ';font-size:16px;font-weight:800;color:' + C.navy + (strong ? ';font-size:18px' : '') + '">' + esc(v === "" ? "—" : v) + '</td></tr>';
   const info = [["Mã nhân viên", row.code], row.manager ? ["Quản lí", row.manager] : null].filter(Boolean);
   const scoreCard = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' + C.tile + ';border-radius:16px;border-collapse:separate;overflow:hidden">' +
-    '<tr><td colspan="2" style="padding:16px 16px 12px"><div style="font-size:13px;letter-spacing:.06em;color:' + C.muted + ';text-transform:uppercase">Kết quả của ' + esc(np.call) + '</div>' +
+    '<tr><td colspan="2" style="padding:16px 16px 12px"><div style="font-size:16px;line-height:1.5;color:' + C.body + '">Kết quả của ' + esc(fm.h) + ': <b style="color:' + C.navy + '">' + esc((nm || row.code).toLocaleUpperCase("vi-VN")) + '</b></div>' +
     '<div style="margin-top:4px;font-size:15px;line-height:1.5;color:' + C.ink + '">' + info.map((x) => esc(x[0]) + ': <b style="color:' + C.navy + '">' + esc(x[1]) + '</b>').join(' &nbsp;·&nbsp; ') + '</div></td></tr>' +
     body.map((x) => cell(x[0], x[1])).join("") +
     '<tr><td style="padding:16px;border-top:2px solid #C9D9F2;font-size:16px;font-weight:800;color:' + C.navy + '">' + esc(finalLabel) + '</td><td align="right" style="padding:16px;border-top:2px solid #C9D9F2"><span style="display:inline-block;min-width:56px;text-align:center;background:' + C.brand + ';color:#ffffff;font-size:24px;font-weight:800;line-height:1;padding:10px 16px;border-radius:12px">' + esc(finalVal === "" ? "—" : finalVal) + '</span></td></tr></table>';
@@ -185,7 +185,7 @@ async function mailFor(d, row, email) {
     '<a href="' + esc(url) + '" target="_blank" style="color:' + C.brand + ';font-weight:700;text-decoration:underline">Liên kết xác nhận điểm</a></div></td></tr>' +
     '</table></td></tr></table></body></html>';
   const text = "Chào " + np.call + ",\n" + org + " gửi " + np.call + " kết quả " + d.title + ". " + fm.h + " vui lòng kiểm tra các số liệu dưới đây và xác nhận nếu thông tin đã đúng.\n" + (d.note ? d.note + "\n" : "") + "\n" +
-    "Mã nhân viên: " + row.code + (row.manager ? "\nQuản lí: " + row.manager : "") + "\n" + body.map((x) => x[0] + ": " + (x[1] || "—")).join("\n") + "\n" + finalLabel + ": " + (finalVal || "—") +
+    "Kết quả của " + fm.h + ": " + (nm || row.code).toLocaleUpperCase("vi-VN") + "\nMã nhân viên: " + row.code + (row.manager ? "\nQuản lí: " + row.manager : "") + "\n" + body.map((x) => x[0] + ": " + (x[1] || "—")).join("\n") + "\n" + finalLabel + ": " + (finalVal || "—") +
     (d.deadline ? "\n\nVui lòng xác nhận trước " + vnTime(d.deadline) + ".\nSau thời gian này, nếu " + fm.h + " không phản hồi, sẽ được hiểu là " + fm.h + " đồng ý với kết quả này." : "") + "\n\nXÁC NHẬN ĐIỂM (chỉ 1 lần bấm):\n" + url +
     "\n\nSố liệu chưa đúng? Mở liên kết trên, chọn “Tôi có thắc mắc” và ghi rõ nội dung." +
     "\n\nTrân trọng,\n" + org +
@@ -200,7 +200,7 @@ async function preview(id, code) {
   const d = await get(id); if (!d) return err("Không tìm thấy đợt này.", "not_found");
   const rc = await recipients(d), stats = statsOf(d, rc);
   const pick = (code && rc.find((x) => x.code === up(code))) || rc.find((x) => x.email) || rc[0];
-  const m = await mailFor(d, pick.row, pick.email);
+  const m = await mailFor(d, pick.row, pick.email, pick.name);
   return { ok: true, stats, cols: d.cols, createdAt: d.createdAt, subject: m.subject, html: m.previewHtml, to: pick.email || "(chưa có email)", sample: { code: pick.code, name: pick.name }, people: rc.slice(0, 400).map((x) => ({ code: x.code, name: x.name })) };
 }
 async function send(id, opt) {
@@ -213,7 +213,7 @@ async function send(id, opt) {
   const batch = todo.slice(0, BATCH), sent = [], failed = [];
   for (const x of batch) {
     try {
-      const m = await mailFor(d, x.row, x.email);
+      const m = await mailFor(d, x.row, x.email, x.name);
       const ok = await mail.send({ fromName: mail.KT_NAME, to: x.email, subject: m.subject, html: m.html, text: m.text, attachments: m.attachments });
       if (ok) sent.push(x); else failed.push({ code: x.code, reason: "Máy chủ chưa gửi được email" });
     } catch (e) { failed.push({ code: x.code, reason: "Gửi thất bại" }); }
