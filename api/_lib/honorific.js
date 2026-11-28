@@ -1,6 +1,7 @@
 // Cách xưng hô theo tên: "Anh" / "Chị"; không chắc thì giữ "Anh/Chị" (xưng sai còn tệ hơn xưng chung).
 // Hệ thống KHÔNG lưu giới tính nhân viên, nên chỉ suy ra từ tên đệm và tên gọi quen thuộc trong tiếng Việt.
-function honorific(fullName, loose) {   // loose = true: chỉ trả "Anh" / "Chị" (ngưỡng thấp hơn); không đủ căn cứ thì trả "" để nơi gọi gọi thẳng tên, không dùng "Anh/Chị"
+function honorific(fullName, loose, sure) {   // sure = true: CHỈ trả "Anh"/"Chị" khi thật chắc (ngưỡng cao hơn; tên đệm Thị/Văn quyết định), không chắc thì trả "" (nơi gọi dùng "bạn")
+    // loose = true: chỉ trả "Anh" / "Chị" (ngưỡng thấp hơn); không đủ căn cứ thì trả "" để nơi gọi gọi thẳng tên, không dùng "Anh/Chị"
   var set = function (s, w, o) { s.split(/\s+/).forEach(function (k) { if (k) o[k] = w; }); return o; };
   var MID_M = set("hữu đức quốc đình công trọng thế duy bá mạnh", 2, set("văn", 3, {}));          // tên đệm đặc trưng nam
   var MID_F = set("thu kim thùy thuỳ diễm bích mỹ", 3, set("thị", 3, {}));                         // tên đệm đặc trưng nữ
@@ -8,17 +9,18 @@ function honorific(fullName, loose) {   // loose = true: chỉ trả "Anh" / "Ch
   var GIV_F = set("hương lan linh hoa mai ngọc phương thảo trang thủy thuỷ hằng hạnh hiền nhung oanh quyên vân yến dung loan liên lệ ly my nga nguyệt nhi như phượng thu thúy thuý thư trâm trinh tuyết uyên yên chi châu diệp diễm duyên điệp hân huệ huyền kiều mỹ ngân nhàn quỳnh sen thơm tiên trà vy ánh bích cúc đào hường khuê lụa mận mơ nương phụng quế thắm thơ tố trúc", 2, {});
   var raw = String(fullName == null ? "" : fullName).normalize("NFC").toLowerCase().replace(/[^a-zà-ỹđ\s]/g, " ").replace(/\s+/g, " ").trim();
   var t = raw ? raw.split(" ") : [];
-  if (t.length < 2) return loose ? "" : "Anh/Chị";
+  if (t.length < 2) return loose || sure ? "" : "Anh/Chị";
   var last = t.length - 1, m = 0, f = 0;
+  if (sure) { var mids = t.slice(1, last), thi = mids.indexOf("thị") >= 0, van = mids.indexOf("văn") >= 0; if (thi && !van) return "Chị"; if (van && !thi) return "Anh"; }   // "Thị" = nữ, "Văn" = nam
   for (var i = 1; i <= last; i++) {                              // bỏ họ (từ đầu tiên)
     var k = t[i];
     if (i === last) { m += GIV_M[k] || 0; f += GIV_F[k] || 0; }   // tên gọi: tính đủ
     else { m += Math.max(MID_M[k] || 0, (GIV_M[k] || 0) * 0.25); f += Math.max(MID_F[k] || 0, (GIV_F[k] || 0) * 0.25); } // tên đệm
   }
-  var th = loose ? 1 : 1.5;
+  var th = sure ? 2 : (loose ? 1 : 1.5);
   if (m - f >= th) return "Anh";
   if (f - m >= th) return "Chị";
-  return loose ? "" : "Anh/Chị";
+  return loose || sure ? "" : "Anh/Chị";
 }
 
 module.exports = { honorific };

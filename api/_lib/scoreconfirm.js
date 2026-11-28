@@ -140,19 +140,18 @@ function statsOf(d, rc) {
 
 // ---------- email ----------
 const vnTime = (ms) => { const d = new Date(ms + 7 * 3600e3), p = (n) => String(n).padStart(2, "0"); return p(d.getUTCHours()) + ":" + p(d.getUTCMinutes()) + " ngày " + p(d.getUTCDate()) + "/" + p(d.getUTCMonth() + 1) + "/" + d.getUTCFullYear(); };
-function nameParts(name) {
-  const h = require("./honorific").honorific(name, true), parts = String(name || "").trim().split(/\s+/), given = parts[parts.length - 1] || "";
-  return { call: h ? h + " " + given : (name || "bạn") };
-}
 // Dựng email cho MỘT nhân viên. Khung, màu và nút theo đúng "Thư mời đăng ký chương trình" (programs.inviteMail).
 async function mailFor(d, row, email, fullName) {
-  const nm = String(fullName || row.name || "").trim(), url = linkUrl(d.id, row.code), np = nameParts(nm), org = d.org || ORG_DEFAULT;
+  const nm = String(fullName || row.name || "").trim(), url = linkUrl(d.id, row.code), org = d.org || ORG_DEFAULT;
+  // Xưng hô: chỉ gọi "Anh"/"Chị" khi tên đủ căn cứ (hệ thống không lưu giới tính); không chắc thì gọi "bạn", không dùng "Anh/Chị".
+  const h0 = require("./honorific").honorific(nm, true, true), known = h0 === "Anh" || h0 === "Chị", given = nm.split(/\s+/).pop() || "";
+  const np = { call: known && given ? h0 + " " + given : "bạn" };
   const C = { navy: "#0B2A6B", brand: "#1559C4", ink: "#1C2B4A", body: "#33425E", muted: "#6B7A96", line: "#E1E8F3", tile: "#F1F6FD" };
   const FF = "'Be Vietnam Pro',Segoe UI,Arial,Helvetica,sans-serif";
   let hero = null; const atts = [];
   try { hero = await require("./inviteart").hero({ title: d.title, label: "XÁC NHẬN ĐIỂM", tagline: "Kiểm tra điểm và xác nhận chỉ với một lần bấm", script: ["Cùng nhau", "tiến bộ", "mỗi ngày"] }); } catch (e) { hero = null; }
   if (hero) atts.push({ filename: "xac-nhan-diem.jpg", content: hero, contentType: "image/jpeg", cid: "sc-hero" });
-  const fm = (function () { const h = require("./honorific").honorific(nm) || "Anh/Chị"; return { h, to: nm ? h + " " + nm : h }; })();
+  const fm = { h: known ? h0 : "bạn", hc: known ? h0 : "Bạn", to: nm ? (known ? h0 + " " + nm : nm) : "bạn" };   // hc = đứng đầu câu
   const last = d.cols.length - 1, finalLabel = d.cols[last], finalVal = row.vals[last];
   const body = d.cols.slice(0, last).map((c, i) => [c, row.vals[i]]);
   const cell = (k, v, strong) => '<tr><td style="padding:11px 16px;border-top:1px solid ' + C.line + ';font-size:15px;color:' + C.body + '">' + esc(k) + '</td><td align="right" style="padding:11px 16px;border-top:1px solid ' + C.line + ';font-size:16px;font-weight:800;color:' + C.navy + (strong ? ';font-size:18px' : '') + '">' + esc(v === "" ? "—" : v) + '</td></tr>';
@@ -163,7 +162,7 @@ async function mailFor(d, row, email, fullName) {
     body.map((x) => cell(x[0], x[1])).join("") +
     '<tr><td style="padding:16px;border-top:2px solid #C9D9F2;font-size:16px;font-weight:800;color:' + C.navy + '">' + esc(finalLabel) + '</td><td align="right" style="padding:16px;border-top:2px solid #C9D9F2"><span style="display:inline-block;min-width:56px;text-align:center;background:' + C.brand + ';color:#ffffff;font-size:24px;font-weight:800;line-height:1;padding:10px 16px;border-radius:12px">' + esc(finalVal === "" ? "—" : finalVal) + '</span></td></tr></table>';
   const deadlineHtml = d.deadline ? '<div style="margin-top:14px;font-size:15px;color:' + C.body + '">Vui lòng xác nhận <b style="color:' + C.navy + '">trước ' + esc(vnTime(d.deadline)) + '</b><div style="margin-top:6px;font-size:14px;line-height:1.55;color:' + C.body + '">Sau thời gian này, nếu ' + esc(fm.h) + ' không phản hồi, sẽ được hiểu là ' + esc(fm.h) + ' <b style="color:' + C.navy + '">đồng ý với kết quả này</b>.</div></div>' : "";
-  const intro = esc(org) + " gửi " + esc(np.call) + " kết quả <b style=\"color:" + C.navy + "\">" + esc(d.title) + "</b>. " + esc(fm.h) + " vui lòng kiểm tra các số liệu dưới đây và bấm nút xác nhận nếu thông tin đã đúng." + (d.note ? "<br>" + esc(d.note) : "");
+  const intro = esc(org) + " gửi " + esc(np.call) + " kết quả <b style=\"color:" + C.navy + "\">" + esc(d.title) + "</b>. " + esc(fm.hc) + " vui lòng kiểm tra các số liệu dưới đây và bấm nút xác nhận nếu thông tin đã đúng." + (d.note ? "<br>" + esc(d.note) : "");
   const html = '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">' +
     '<style>@media only screen and (max-width:560px){.pad{padding-left:20px!important;padding-right:20px!important}.cta a{padding:17px 26px!important;font-size:16px!important}}</style></head>' +
     '<body style="margin:0;padding:0;background:#EEF3FA">' +
@@ -184,7 +183,7 @@ async function mailFor(d, row, email, fullName) {
     'Trong trường hợp không thể nhấn nút xác nhận, ' + esc(fm.h) + ' vui lòng truy cập đường dẫn dưới đây:<br>' +
     '<a href="' + esc(url) + '" target="_blank" style="color:' + C.brand + ';font-weight:700;text-decoration:underline">Liên kết xác nhận điểm</a></div></td></tr>' +
     '</table></td></tr></table></body></html>';
-  const text = "Chào " + np.call + ",\n" + org + " gửi " + np.call + " kết quả " + d.title + ". " + fm.h + " vui lòng kiểm tra các số liệu dưới đây và xác nhận nếu thông tin đã đúng.\n" + (d.note ? d.note + "\n" : "") + "\n" +
+  const text = "Chào " + np.call + ",\n" + org + " gửi " + np.call + " kết quả " + d.title + ". " + fm.hc + " vui lòng kiểm tra các số liệu dưới đây và xác nhận nếu thông tin đã đúng.\n" + (d.note ? d.note + "\n" : "") + "\n" +
     "Kết quả của " + fm.h + ": " + (nm || row.code).toLocaleUpperCase("vi-VN") + "\nMã nhân viên: " + row.code + (row.manager ? "\nQuản lí: " + row.manager : "") + "\n" + body.map((x) => x[0] + ": " + (x[1] || "—")).join("\n") + "\n" + finalLabel + ": " + (finalVal || "—") +
     (d.deadline ? "\n\nVui lòng xác nhận trước " + vnTime(d.deadline) + ".\nSau thời gian này, nếu " + fm.h + " không phản hồi, sẽ được hiểu là " + fm.h + " đồng ý với kết quả này." : "") + "\n\nXÁC NHẬN ĐIỂM (chỉ 1 lần bấm):\n" + url +
     "\n\nSố liệu chưa đúng? Mở liên kết trên, chọn “Tôi có thắc mắc” và ghi rõ nội dung." +
