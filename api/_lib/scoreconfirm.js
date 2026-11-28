@@ -163,9 +163,6 @@ async function mailFor(d, row, email) {
     body.map((x) => cell(x[0], x[1])).join("") +
     '<tr><td style="padding:16px;border-top:2px solid #C9D9F2;font-size:16px;font-weight:800;color:' + C.navy + '">' + esc(finalLabel) + '</td><td align="right" style="padding:16px;border-top:2px solid #C9D9F2"><span style="display:inline-block;min-width:56px;text-align:center;background:' + C.brand + ';color:#ffffff;font-size:24px;font-weight:800;line-height:1;padding:10px 16px;border-radius:12px">' + esc(finalVal === "" ? "—" : finalVal) + '</span></td></tr></table>';
   const deadlineHtml = d.deadline ? '<div style="margin-top:14px;font-size:15px;color:' + C.body + '">Vui lòng xác nhận <b style="color:' + C.navy + '">trước ' + esc(vnTime(d.deadline)) + '</b><div style="margin-top:6px;font-size:14px;line-height:1.55;color:' + C.body + '">Sau thời gian này, nếu ' + esc(fm.h) + ' không phản hồi, sẽ được hiểu là ' + esc(fm.h) + ' <b style="color:' + C.navy + '">đồng ý với kết quả này</b>.</div></div>' : "";
-  const contactName = d.contact || org;
-  const contactHtml = (d.phone || d.email || d.contact) ? '<tr><td class="pad" style="padding:22px 36px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ' + C.line + '"><tr><td style="padding-top:16px;font-size:14px;line-height:1.7;color:' + C.body + '">Mọi thắc mắc vui lòng liên hệ: <b style="color:' + C.navy + '">' + esc(contactName) + '</b><br>' +
-    [d.phone ? 'Điện thoại: <b style="color:' + C.navy + '">' + esc(d.phone) + '</b>' : "", d.email ? 'Email: <a href="mailto:' + esc(d.email) + '" style="color:' + C.brand + ';font-weight:700;text-decoration:none">' + esc(d.email) + '</a>' : ""].filter(Boolean).join(" &nbsp;|&nbsp; ") + '</td></tr></table></td></tr>' : "";
   const intro = esc(org) + " gửi " + esc(np.call) + " kết quả <b style=\"color:" + C.navy + "\">" + esc(d.title) + "</b>. " + esc(fm.h) + " vui lòng kiểm tra các số liệu dưới đây và bấm nút xác nhận nếu thông tin đã đúng." + (d.note ? "<br>" + esc(d.note) : "");
   const html = '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">' +
     '<style>@media only screen and (max-width:560px){.pad{padding-left:20px!important;padding-right:20px!important}.cta a{padding:17px 26px!important;font-size:16px!important}}</style></head>' +
@@ -181,7 +178,6 @@ async function mailFor(d, row, email) {
     '<a href="' + esc(url) + '" target="_blank" style="display:inline-block;padding:20px 54px;font-family:' + FF + ';font-size:18px;font-weight:800;letter-spacing:.02em;color:#ffffff;text-decoration:none;border-radius:40px">XÁC NHẬN ĐIỂM CỦA TÔI &nbsp;&rarr;</a></td></tr></table>' + deadlineHtml + '</td></tr>' +
     '<tr><td class="pad" style="padding:24px 36px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' + C.tile + ';border-radius:16px"><tr><td style="padding:18px 20px;font-size:14px;line-height:1.65;color:' + C.ink + '">' +
     '<b style="color:' + C.navy + '">Số liệu chưa đúng?</b><br>Bấm nút ở trên, chọn <b>“Tôi có thắc mắc”</b> và ghi rõ nội dung. ' + esc(org) + ' sẽ kiểm tra lại và phản hồi ' + esc(fm.h) + '.</td></tr></table></td></tr>' +
-    contactHtml +
     '<tr><td class="pad" style="padding:22px 36px 8px;font-size:15px;line-height:1.6;color:' + C.ink + '">Trân trọng,<br><b style="color:' + C.navy + '">' + esc(org) + '</b></td></tr>' +
     '<tr><td class="pad" style="padding:14px 36px 26px"><div style="border-top:1px solid ' + C.line + ';padding-top:14px;font-size:12px;line-height:1.7;color:#7C8AA5">' +
     'Thư này được gửi riêng đến ' + esc(fm.to) + ' (Mã nhân viên: ' + esc(row.code) + '). Vui lòng không chuyển tiếp email này cho người khác.<br>' +
@@ -192,7 +188,7 @@ async function mailFor(d, row, email) {
     "Mã nhân viên: " + row.code + (row.manager ? "\nQuản lí: " + row.manager : "") + "\n" + body.map((x) => x[0] + ": " + (x[1] || "—")).join("\n") + "\n" + finalLabel + ": " + (finalVal || "—") +
     (d.deadline ? "\n\nVui lòng xác nhận trước " + vnTime(d.deadline) + ".\nSau thời gian này, nếu " + fm.h + " không phản hồi, sẽ được hiểu là " + fm.h + " đồng ý với kết quả này." : "") + "\n\nXÁC NHẬN ĐIỂM (chỉ 1 lần bấm):\n" + url +
     "\n\nSố liệu chưa đúng? Mở liên kết trên, chọn “Tôi có thắc mắc” và ghi rõ nội dung." +
-    ((d.phone || d.email) ? "\n\nLiên hệ: " + contactName + [d.phone ? " · ĐT " + d.phone : "", d.email ? " · " + d.email : ""].join("") : "") + "\n\nTrân trọng,\n" + org +
+    "\n\nTrân trọng,\n" + org +
     "\n\n---\nThư này được gửi riêng đến " + fm.to + " (Mã nhân viên: " + row.code + "). Vui lòng không chuyển tiếp email này cho người khác.";
   const subject = "Xác nhận điểm dành cho " + np.call + ": " + d.title;
   let previewHtml = html; atts.forEach((a) => { previewHtml = previewHtml.split("cid:" + a.cid).join("data:" + a.contentType + ";base64," + a.content.toString("base64")); });
