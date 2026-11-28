@@ -819,7 +819,7 @@ $('authForm').addEventListener('submit', async function(e){
     var rr; try { rr = await api('POST','/api/kt-reset-request',{ email:email }); } catch(err){ rr = null; }
     btn.disabled = false; btn.textContent = label;
     if (!rr){ msg('authMsg','Không kết nối được máy chủ, vui lòng thử lại.'); return; }
-    msg('authMsg', rr.j.message || 'Đã gửi yêu cầu.', 'info');
+    msg('authMsg', rr.j.message || 'Đã gửi yêu cầu.', rr.j.ok ? 'info' : 'err');
     return;
   }
   var body = { email:email, password:$('aPass').value };

@@ -3326,7 +3326,7 @@ async function doForgot(){
   let r; try { r = await api('POST','/api/kt-reset-request', { email }); } catch(e){ r = null; }
   btn.disabled = false; btn.textContent = label;
   if (!r){ msg('loginMsg','Không kết nối được máy chủ, thử lại.'); return; }
-  msg('loginMsg', r.j.message || 'Đã gửi yêu cầu.', 'ok');
+  msg('loginMsg', r.j.message || 'Đã gửi yêu cầu.', r.j.ok ? 'ok' : 'err');
 }
 async function doResetConfirm(){
   const p1 = $('rPass').value, p2 = $('rPass2').value;
