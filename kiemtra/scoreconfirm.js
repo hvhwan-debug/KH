@@ -15,6 +15,7 @@
   // ---------- đọc bảng điểm ----------
   // Nhận mảng 2 chiều (dán từ Excel hoặc đọc từ .xlsx). Tự tìm dòng tiêu đề (có cột "Mã nhân viên"); dòng phía trên chỉ có 1 ô là tiêu đề bảng.
   function norm(s) { return String(s == null ? '' : s).normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim(); }
+  function colLetter(k) { var t = ''; k++; while (k > 0) { var m = (k - 1) % 26; t = String.fromCharCode(65 + m) + t; k = Math.floor((k - 1) / 26); } return t; }
   function parseGrid(grid) {
     var h = -1, i;
     for (i = 0; i < grid.length && h < 0; i++) if (grid[i].some(function (c) { return /^(mã nhân viên|mã nv|mã số nhân viên)$/.test(norm(c)); })) h = i;
@@ -23,18 +24,28 @@
     for (i = h - 1; i >= 0; i--) { var ne = grid[i].filter(function (c) { return String(c).trim(); }); if (ne.length === 1) { title = String(ne[0]).trim(); break; } }
     var find = function (re) { for (var k = 0; k < head.length; k++) if (re.test(head[k])) return k; return -1; };
     var ic = find(/^(mã nhân viên|mã nv|mã số nhân viên)$/), iname = find(/^(họ và tên|họ tên|tên nhân viên|tên)$/), imgr = find(/^quản l[ií]$/), istt = find(/^(stt|tt|#)$/);
-    var cols = [];
-    head.forEach(function (c, k) { if (k !== ic && k !== iname && k !== imgr && k !== istt && String(grid[h][k]).trim()) cols.push(k); });
-    if (!cols.length) return { error: 'Không thấy cột điểm nào sau cột Mã nhân viên / Họ tên / Quản lí.' };
+    var txt = function (v) { return String(v == null ? '' : v).trim(); };
+    // Tiêu đề 2 dòng (ô gộp): dòng ngay dưới không có mã nhân viên và chỉ toàn chữ (không có số) -> ghép tên cột "nhóm – chi tiết"
+    var start = h + 1, labels = {}, sub = grid[h + 1], width = Math.max.apply(null, [head.length].concat(grid.slice(h, h + 2).map(function (r) { return r.length; })));
+    var isSub = !!sub && !txt(sub[ic]) && sub.some(function (c, k) { return k !== ic && txt(c); }) && !sub.some(function (c) { return /^[\d.,\s%-]+$/.test(txt(c)) && txt(c); });
+    if (isSub) start = h + 2;
+    for (var k0 = 0; k0 < width; k0++) { var t0 = txt(grid[h][k0]), u0 = isSub ? txt(sub[k0]) : ''; labels[k0] = u0 ? (t0 && norm(t0) !== norm(u0) ? t0 + ' – ' + u0 : u0) : t0; }
+    var special = function (k) { return k === ic || k === iname || k === imgr || k === istt; };
+    var cols = [], skipped = [];
+    for (var k = 0; k < width; k++) if (!special(k) && labels[k]) cols.push(k);
     var rows = [], seen = {}, dup = [];
-    for (i = h + 1; i < grid.length; i++) {
-      var r = grid[i], code = String(r[ic] == null ? '' : r[ic]).trim(); if (!code) continue;
+    for (i = start; i < grid.length; i++) {
+      var r = grid[i], code = txt(r[ic]); if (!code) continue;
       if (seen[code.toUpperCase()]) { dup.push(code); continue; } seen[code.toUpperCase()] = 1;
-      rows.push({ code: code, name: iname >= 0 ? String(r[iname] == null ? '' : r[iname]).trim() : '', manager: imgr >= 0 ? String(r[imgr] == null ? '' : r[imgr]).trim() : '', vals: cols.map(function (k) { return String(r[k] == null ? '' : r[k]).trim(); }) });
+      rows.push({ code: code, name: iname >= 0 ? txt(r[iname]) : '', manager: imgr >= 0 ? txt(r[imgr]) : '', vals: cols.map(function (c) { return txt(r[c]); }) });
     }
+    // Cột có dữ liệu nhưng không có tên ở dòng tiêu đề: không đưa vào email, nhưng phải báo để quản trị viên biết
+    for (var k2 = 0; k2 < width; k2++) if (!special(k2) && !labels[k2] && grid.slice(start).some(function (r) { return txt(r[ic]) && txt(r[k2]); })) skipped.push(colLetter(k2));
+    if (!cols.length) return { error: 'Không thấy cột điểm nào sau cột Mã nhân viên / Họ tên / Quản lí.' };
     if (!rows.length) return { error: 'Không có dòng dữ liệu nào bên dưới dòng tiêu đề.' };
-    return { title: title, cols: cols.map(function (k) { return String(grid[h][k]).trim(); }), rows: rows, dup: dup, hasName: iname >= 0, hasMgr: imgr >= 0 };
+    return { title: title, cols: cols.map(function (c) { return labels[c]; }), rows: rows, dup: dup, skipped: skipped, twoRow: isSub, hasName: iname >= 0, hasMgr: imgr >= 0 };
   }
+
   function parsePaste(text) {
     var lines = String(text || '').replace(/\r/g, '').split('\n').filter(function (l) { return l.trim(); });
     if (!lines.length) return { error: 'Chưa có dữ liệu. Hãy dán bảng điểm (copy từ Excel) vào ô.' };
@@ -46,9 +57,16 @@
     say('Đang đọc file…', 'ok');
     try {
       var X = await loadExcelJS(), wb = new X.Workbook(); await wb.xlsx.load(await f.arrayBuffer());
-      var ws = wb.worksheets[0], grid = [];
-      ws.eachRow({ includeEmpty: false }, function (row) { var a = []; row.eachCell({ includeEmpty: true }, function (c, i) { a[i - 1] = c.text != null ? c.text : (c.value == null ? '' : String(c.value)); }); for (var k = 0; k < a.length; k++) if (a[k] == null) a[k] = ''; grid.push(a); });
-      useParsed(parseGrid(grid), f.name);
+      var best = null, errs = [];
+      wb.worksheets.forEach(function (ws) {
+        var grid = [];
+        ws.eachRow({ includeEmpty: false }, function (row) { var a = []; row.eachCell({ includeEmpty: true }, function (c, i) { a[i - 1] = c.text != null ? c.text : (c.value == null ? '' : String(c.value)); }); for (var k = 0; k < a.length; k++) if (a[k] == null) a[k] = ''; grid.push(a); });
+        var p = parseGrid(grid);
+        if (p.error) { errs.push(p.error); return; }
+        p.sheet = ws.name;
+        if (!best || p.cols.length > best.cols.length || (p.cols.length === best.cols.length && p.rows.length > best.rows.length)) best = p;
+      });
+      useParsed(best || { error: errs[0] || 'File không có dữ liệu.' }, f.name + (wb.worksheets.length > 1 && best ? ' · sheet “' + best.sheet + '”' : ''));
     } catch (e) { say('Không đọc được file. Hãy lưu lại dưới dạng .xlsx rồi thử lại.', 'err'); }
   }
   function useParsed(p, src) {
@@ -56,10 +74,11 @@
     if (p.error) { $('scPrev').innerHTML = ''; say(p.error, 'err'); return; }
     if (!$('scTitle').value.trim() && p.title) $('scTitle').value = p.title;
     say('', '');
+    var warn = p.skipped && p.skipped.length ? '<div class="msg warn" style="margin-top:8px"><b>Chú ý:</b> cột ' + p.skipped.join(', ') + ' có dữ liệu nhưng <b>không có tên cột</b> ở dòng tiêu đề nên <b>chưa đưa vào email</b>. Hãy đặt tên cho cột đó trong file rồi nạp lại.</div>' : '';
     var head = '<tr>' + ['Mã nhân viên', 'Họ tên', 'Quản lí'].concat(p.cols).map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') + '</tr>';
     var body = p.rows.slice(0, 5).map(function (r) { return '<tr><td>' + esc(r.code) + '</td><td>' + esc(r.name) + '</td><td>' + esc(r.manager) + '</td>' + r.vals.map(function (v) { return '<td>' + esc(v) + '</td>'; }).join('') + '</tr>'; }).join('');
     $('scPrev').innerHTML = '<div class="msg ok" style="margin-top:10px">Đã đọc <b>' + p.rows.length + '</b> nhân viên' + (src ? ' từ “' + esc(src) + '”' : '') + '. Cột điểm: ' + p.cols.map(function (c) { return '<b>' + esc(c) + '</b>'; }).join(', ') + '. Cột cuối (<b>' + esc(p.cols[p.cols.length - 1]) + '</b>) được hiện nổi bật trong email.' + (p.dup.length ? ' Bỏ qua ' + p.dup.length + ' dòng trùng mã.' : '') + (p.hasName ? '' : ' Bảng không có cột Họ tên: email sẽ lấy tên từ danh sách nhân sự.') + '</div>' +
-      '<div style="overflow-x:auto;margin-top:8px"><table class="dt"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' + (p.rows.length > 5 ? '<p class="small">Hiện 5 dòng đầu.</p>' : '');
+      warn + (p.twoRow ? '<p class="small">Tiêu đề 2 dòng đã được ghép tên cột.</p>' : '') + '<div style="overflow-x:auto;margin-top:8px"><table class="dt"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' + (p.rows.length > 5 ? '<p class="small">Hiện 5 dòng đầu.</p>' : '');
   }
 
   // ---------- giao diện ----------
