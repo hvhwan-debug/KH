@@ -82,7 +82,9 @@
     $('scFileBtn').onclick = function () { $('scFile').click(); };
     $('scFile').onchange = readXlsx;
     $('scCreate').onclick = create;
-    try { $('scContact').value = localStorage.getItem('sc.contact') || ''; $('scPhone').value = localStorage.getItem('sc.phone') || ''; } catch (e) { /* trình duyệt chặn lưu: bỏ qua */ }
+    $('scContact').value = 'Đào tạo kinh doanh';
+    try { $('scContact').value = localStorage.getItem('sc.contact') || $('scContact').value; $('scPhone').value = localStorage.getItem('sc.phone') || ''; } catch (e) { /* trình duyệt chặn lưu: bỏ qua */ }
+    var tm; $('scPaste').addEventListener('input', function () { clearTimeout(tm); tm = setTimeout(function () { if ($('scPaste').value.trim()) useParsed(parsePaste($('scPaste').value), ''); }, 500); }); // dán xong tự đọc, không cần bấm thêm
   }
   async function create() {
     var p = SC.parsed || (function () { var q = parsePaste($('scPaste').value); if (!q.error) useParsed(q, ''); return q.error ? null : q; })();
