@@ -160,7 +160,7 @@ async function preview(id, code) {
   const rc = await recipients(d), stats = statsOf(d, rc);
   const pick = (code && rc.find((x) => x.code === up(code))) || rc.find((x) => x.email) || rc[0];
   const m = await mailFor(d, pick.row, pick.email);
-  return { ok: true, stats, subject: m.subject, html: m.previewHtml, to: pick.email || "(chưa có email)", sample: { code: pick.code, name: pick.name }, people: rc.slice(0, 400).map((x) => ({ code: x.code, name: x.name })) };
+  return { ok: true, stats, cols: d.cols, createdAt: d.createdAt, subject: m.subject, html: m.previewHtml, to: pick.email || "(chưa có email)", sample: { code: pick.code, name: pick.name }, people: rc.slice(0, 400).map((x) => ({ code: x.code, name: x.name })) };
 }
 async function send(id, opt) {
   opt = opt || {};
