@@ -1084,7 +1084,7 @@ const handler = async function (context, req) {
       else if (op === "scoreConfirmCreate") r = await SC.create(b, String(u.email).toLowerCase());
       else if (op === "scoreConfirmFromResults") r = await SC.fromResults(Object.assign({}, b, { dry: b.dry === true }), String(u.email).toLowerCase());
       else if (op === "scoreConfirmPreview") r = await SC.preview(id, b.code);
-      else if (op === "scoreConfirmSend") r = await SC.send(id, { expect: b.expect, resend: b.resend === true });
+      else if (op === "scoreConfirmSend") r = await SC.send(id, { expect: b.expect, resend: b.resend === true, since: b.since });
       else if (op === "scoreConfirmStatus") r = await SC.status(id);
       else r = (await SC.remove(id)) ? { ok: true } : { ok: false, error: "Không tìm thấy đợt này." };
       return reply(context, r.ok ? 200 : 400, r);

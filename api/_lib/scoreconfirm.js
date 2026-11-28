@@ -207,7 +207,8 @@ async function send(id, opt) {
   const d = await get(id); if (!d) return err("Không tìm thấy đợt này.", "not_found");
   if (!mailConfigured()) return err("Máy chủ chưa cấu hình gửi email (SMTP).", "no_smtp");
   const rc = await recipients(d);
-  const todo = rc.filter((x) => x.email && (opt.resend ? stateOf(d, x.code) !== "confirmed" : !(d.sent && d.sent[x.code])));
+  const since = Number(opt.since) > 0 ? Number(opt.since) : Date.now();   // mốc bắt đầu một lượt gửi nhiều đợt (gửi lại: bỏ người đã nhận lại sau mốc này)
+  const todo = rc.filter((x) => x.email && (opt.resend ? stateOf(d, x.code) !== "confirmed" && !(d.sent && d.sent[x.code] && d.sent[x.code].at >= since) : !(d.sent && d.sent[x.code])));
   if (Number(opt.expect) !== todo.length) return err("Số người nhận đã thay đổi (" + todo.length + " thay vì " + Number(opt.expect) + "). Hãy xem trước lại rồi xác nhận.", "stale_preview");
   const batch = todo.slice(0, BATCH), sent = [], failed = [];
   for (const x of batch) {
@@ -223,7 +224,7 @@ async function send(id, opt) {
     return c;
   });
   const left = Math.max(0, todo.length - sent.length);
-  return { ok: true, sent: sent.length, failed, remaining: left, stats: statsOf(await get(id), rc) };
+  return { ok: true, sent: sent.length, failed, remaining: left, since, batch: BATCH, stats: statsOf(await get(id), rc) };
 }
 async function status(id) {
   const d = await get(id); if (!d) return err("Không tìm thấy đợt này.", "not_found");

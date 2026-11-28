@@ -10,6 +10,11 @@
   function vn(ms) { if (!ms) return ''; var d = new Date(ms); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ' ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(); }
   function call(op, body) { return api('POST', '/api/kt-admin', Object.assign({ op: op }, body || {})); }
   function badge(k) { var s = STATE[k] || STATE.pending; return '<span style="display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700;color:' + s[1] + ';background:' + s[2] + '">' + s[0] + '</span>'; }
+  function bar(done, total, label, color) {
+    var pct = total ? Math.min(100, Math.round(done / total * 100)) : 0;
+    return '<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;margin-bottom:4px"><span>' + label + '</span><b>' + done + '/' + total + ' · ' + pct + '%</b></div>' +
+      '<div style="height:10px;border-radius:99px;background:#DCE6F5;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + (color || '#1559C4') + ';border-radius:99px;transition:width .35s"></div></div></div>';
+  }
   function say(t, cls) { var el = $('scMsg'); if (el) msg('scMsg', t, cls); }
 
   // ---------- đọc bảng điểm ----------
@@ -199,6 +204,7 @@
       '<div class="msg warn" style="margin:0 0 10px">Thiếu cột điểm? Đợt đã tạo <b>không tự cập nhật</b>. Bấm <b>Xoá</b> ở đợt này, nạp lại file đầy đủ rồi tạo lại (mỗi cột điểm phải có tên ở dòng tiêu đề). Chưa gửi email nào thì xoá không ảnh hưởng ai.</div>' +
       '<iframe id="scFrame" sandbox="" title="Xem trước email" style="width:100%;height:820px;border:1px solid var(--line);border-radius:12px;background:#EEF3FA"></iframe>' +
       '<div class="msg ok" style="margin-top:12px"><b>' + s.total + '</b> nhân viên trong bảng · <b>' + s.withEmail + '</b> có email · <b>' + s.noEmail + '</b> chưa có email' + (s.notFound ? ' (' + s.notFound + ' mã không có trong danh sách nhân sự)' : '') + ' · đã gửi <b>' + s.alreadySent + '</b> · đã xác nhận <b>' + s.confirmed + '</b>' + (s.disputed ? ' · có thắc mắc <b>' + s.disputed + '</b>' : '') + miss + '</div>' +
+      '<div id="scProg" style="margin-top:12px">' + (s.alreadySent ? bar(s.alreadySent, s.withEmail, 'Tiến trình gửi') + bar(s.confirmed, s.total, 'Đã xác nhận điểm', '#17794A') : '') + '</div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="btn" id="scSend"' + (s.pending ? '' : ' disabled') + '>Gửi cho ' + s.pending + ' người chưa gửi</button>' +
       '<button type="button" class="btn ghost" id="scResend"' + (s.alreadySent ? '' : ' disabled') + '>Gửi lại cho người chưa xác nhận…</button></div>' +
       '<p class="small" style="margin-top:6px">Mỗi lượt gửi tối đa 25 thư. Còn người chưa gửi thì bấm nút lần nữa. Email đã gửi không thu hồi được.</p></div>';
@@ -209,11 +215,30 @@
     $('scDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   async function doSend(id, n, resend) {
-    if (!confirm((resend ? 'Gửi LẠI email xác nhận điểm cho ' : 'Gửi email xác nhận điểm cho ') + n + ' người?\n\nMỗi người nhận một email riêng chỉ chứa điểm của họ. Email đã gửi không thu hồi được.')) return;
-    say('Đang gửi, vui lòng không đóng trang…', 'ok');
-    var r = await call('scoreConfirmSend', { id: id, expect: n, resend: resend });
-    if (!r.j.ok) { say(r.j.error || 'Không gửi được.', 'err'); return; }
-    say('Đã gửi ' + r.j.sent + ' thư.' + (r.j.failed.length ? ' Lỗi ' + r.j.failed.length + ' thư.' : '') + (r.j.remaining ? ' Còn ' + r.j.remaining + ' người chưa gửi (do giới hạn mỗi lượt), bấm nút gửi lần nữa để gửi tiếp.' : ' Đã gửi hết.'), r.j.failed.length ? 'warn' : 'ok');
+    if (SC.sending) return;
+    if (!confirm((resend ? 'Gửi LẠI email xác nhận điểm cho ' : 'Gửi email xác nhận điểm cho ') + n + ' người?\n\nHệ thống tự gửi lần lượt từng đợt (tối đa 25 thư mỗi đợt) cho đến hết, bạn không cần bấm lại; có thể bấm Dừng bất cứ lúc nào. Mỗi người nhận một email riêng chỉ chứa điểm của họ. Email đã gửi không thu hồi được.')) return;
+    SC.sending = true; SC.stop = false; say('', '');
+    window.onbeforeunload = function () { return 'Đang gửi email, đóng trang bây giờ sẽ dừng giữa chừng.'; };
+    ['scSend', 'scResend'].forEach(function (k) { var x = $(k); if (x) x.disabled = true; });
+    var total = n, sent = 0, failed = 0, remaining = n, since = 0, batchNo = 0, err = '';
+    var paint = function (note) {
+      $('scProg').innerHTML = bar(sent, total, note) + (failed ? '<div class="small" style="color:#B3261E">Lỗi ' + failed + ' thư</div>' : '') + '<button type="button" class="btn ghost sm" id="scStop">Dừng sau đợt này</button>';
+      $('scStop').onclick = function () { SC.stop = true; this.disabled = true; this.textContent = 'Đang dừng…'; };
+    };
+    while (remaining > 0) {
+      batchNo++; paint('Đang gửi đợt ' + batchNo + ' (tối đa 25 thư)… còn ' + remaining + ' người');
+      var r;
+      try { r = await call('scoreConfirmSend', { id: id, expect: remaining, resend: resend, since: since }); } catch (e) { err = 'Mất kết nối máy chủ.'; break; }
+      if (!r.j.ok) { err = r.j.error || 'Không gửi được.'; break; }
+      sent += r.j.sent; failed += r.j.failed.length; remaining = r.j.remaining; since = r.j.since || since;
+      paint('Đã gửi xong đợt ' + batchNo + '. Còn ' + remaining + ' người');
+      if (!r.j.sent || SC.stop) break;
+    }
+    SC.sending = false; window.onbeforeunload = null;
+    var tail = failed ? ' Lỗi ' + failed + ' thư (xem Theo dõi để biết ai chưa nhận được).' : '';
+    if (err) say('Đã gửi ' + sent + '/' + total + ' thư rồi dừng vì lỗi: ' + err + tail + ' Bấm nút gửi để tiếp tục phần còn lại.', 'err');
+    else if (remaining > 0) say('Đã dừng: gửi ' + sent + '/' + total + ' thư, còn ' + remaining + ' người chưa gửi.' + tail + ' Bấm nút gửi để gửi tiếp.', 'warn');
+    else say('Đã gửi xong ' + sent + '/' + total + ' thư.' + tail, failed ? 'warn' : 'ok');
     openPreview(id);
   }
   async function openStatus(id) {
@@ -228,8 +253,9 @@
       .filter(function (x) { return (f === 'all' || x.k === f) && (!q || norm(x.code + ' ' + x.name + ' ' + x.manager).indexOf(q) >= 0); });
     var last = d.cols.length - 1;
     $('scDetail').innerHTML = '<div class="card" style="margin-top:16px;border-color:#BBD3F6"><h2 style="margin:0 0 6px;font-size:16px">Theo dõi: ' + esc(d.title) + '</h2>' +
+      bar(s.alreadySent, s.withEmail, 'Tiến trình gửi email') + bar(s.confirmed, s.total, 'Tiến trình xác nhận điểm', '#17794A') +
       '<div class="msg ok">Đã xác nhận <b>' + s.confirmed + '/' + s.total + '</b> · đã gửi <b>' + s.alreadySent + '</b> · chưa gửi <b>' + s.pending + '</b> · có thắc mắc <b>' + s.disputed + '</b> · chưa có email <b>' + s.noEmail + '</b>' + (d.deadline ? ' · hạn xác nhận ' + vn(d.deadline) : '') + '</div>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><select id="scF" style="max-width:200px;margin:0"><option value="all">Tất cả</option><option value="pending">Chưa gửi</option><option value="sent">Đã gửi, chưa xác nhận</option><option value="confirmed">Đã xác nhận</option><option value="disputed">Có thắc mắc</option></select>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><button type="button" class="btn ghost sm" id="scRefresh">Làm mới</button><select id="scF" style="max-width:200px;margin:0"><option value="all">Tất cả</option><option value="pending">Chưa gửi</option><option value="sent">Đã gửi, chưa xác nhận</option><option value="confirmed">Đã xác nhận</option><option value="disputed">Có thắc mắc</option></select>' +
       '<input type="text" id="scQ" placeholder="Tìm theo mã, tên, quản lí…" style="max-width:260px;margin:0" value="' + esc(SC.q) + '"></div>' +
       '<div style="overflow-x:auto"><table class="dt"><thead><tr><th>Mã</th><th>Họ tên</th><th>Quản lí</th><th>' + esc(d.cols[last]) + '</th><th>Trạng thái</th><th>Thời điểm</th></tr></thead><tbody>' +
       (rows.length ? rows.map(function (x) {
@@ -237,6 +263,7 @@
         return '<tr><td>' + esc(x.code) + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.manager) + '</td><td><b>' + esc(x.vals[last]) + '</b></td><td>' + badge(x.k) + '</td><td class="small">' + esc(when) + '</td></tr>' +
           (x.dispute ? '<tr><td></td><td colspan="5" class="small" style="color:#B45309">Thắc mắc: ' + esc(x.dispute.text) + '</td></tr>' : '');
       }).join('') : '<tr><td colspan="6" class="small">Không có dòng nào khớp.</td></tr>') + '</tbody></table></div></div>';
+    $('scRefresh').onclick = function () { openStatus(SC.cur); };
     $('scF').value = f; $('scF').onchange = function () { SC.filter = this.value; renderStatus(); };
     var qi = $('scQ'); qi.oninput = function () { SC.q = this.value; var pos = this.selectionStart; renderStatus(); var n = $('scQ'); n.focus(); n.setSelectionRange(pos, pos); };
   }
