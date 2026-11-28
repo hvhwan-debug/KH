@@ -568,7 +568,7 @@ function render(){
   $('hSub').innerHTML = esc(short(A.actual)) + ' / ' + esc(short(A.target)) + ' chỉ tiêu' + (el != null ? ' · thời gian đã qua ' + pct(el, 0) : '');
   $('hBar').querySelector('i').style.width = Math.min(100, (A.ht || 0) * 100) + '%';
   var tk = $('hBar').querySelector('.tick'); tk.style.display = el != null ? '' : 'none'; if (el != null) tk.style.left = (el * 100) + '%';
-  $('hLeg').innerHTML = el != null ? '<span>0%</span><span>' + (A.ht != null && A.ht >= el ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Vượt tiến độ thời gian' : 'Vạch vàng = tiến độ thời gian') + '</span><span>100%</span>' : '';
+  $('hLeg').innerHTML = el != null ? '<span>0%</span><span>' + (A.ht != null && A.ht >= el ? '✓ Vượt tiến độ thời gian' : 'Vạch vàng = tiến độ thời gian') + '</span><span>100%</span>' : '';
   var k = [
     ['Thực đạt', short(A.actual), P ? delta(A.actual, P.actual) + ' so với ' + mLabel(S.prev.month).toLowerCase() : money(A.actual) + ' đ'],
     ['Chỉ tiêu', short(A.target), A.withT + '/' + A.n + ' nhân viên có chỉ tiêu'],

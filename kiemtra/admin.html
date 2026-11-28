@@ -3475,7 +3475,7 @@ function hlView(v){
 }
 function hlRender(){
   const st = HL.stats;
-  $('hlKpis').innerHTML = [['Tổng học liệu', st.total], ['Đang hiển thị', st.published], ['Bản nháp', st.draft], ['Lượt xem', st.views], ['Đánh giá <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M7 11v9H4v-9z"/><path d="M7 11l4-7a2 2 0 0 1 2 2v4h5a2 2 0 0 1 2 2.3l-1.3 6A2 2 0 0 1 17 20H7"/></svg> / <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M17 13V4h3v9z"/><path d="M17 13l-4 7a2 2 0 0 1-2-2v-4H6a2 2 0 0 1-2-2.3l1.3-6A2 2 0 0 1 7 4h10"/></svg>', (st.up || 0) + ' / ' + (st.down || 0)], ['Tệp tải lên', st.uploads]].map(k => '<div class="kpi"><div class="v">' + (k[1] || 0) + '</div><div class="l">' + k[0] + '</div></div>').join('');
+  $('hlKpis').innerHTML = [['Tổng học liệu', st.total], ['Đang hiển thị', st.published], ['Bản nháp', st.draft], ['Lượt xem', st.views], ['Đánh giá 👍 / 👎', (st.up || 0) + ' / ' + (st.down || 0)], ['Tệp tải lên', st.uploads]].map(k => '<div class="kpi"><div class="v">' + (k[1] || 0) + '</div><div class="l">' + k[0] + '</div></div>').join('');
   const cur = $('hlFCat').value;
   $('hlFCat').innerHTML = '<option value="">Mọi danh mục</option>' + HL.cats.map(c => '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>').join(''); $('hlFCat').value = cur;
   hlRows(); hlAiBarRender();
@@ -3555,7 +3555,7 @@ function hlEditOpen(it){
   else if (it && it.source){ hlSetMode('link'); $('hlLink').value = it.source.link || it.source.url || ''; }
   else hlSetMode('upload');
   if (it && it.thumb){ HL.thumb = it.thumb.kind === 'upload' ? { kind:'upload', blob: it.thumb.blob, mime: it.thumb.mime, id: it.id, v: it.updatedAt, gen: it.thumb.gen } : { kind:'url', url: it.thumb.url }; if (it.thumb.kind === 'url') $('hlThumbUrl').value = it.thumb.url; }
-  hlThumbPaint(); hlFileInfo(); $('hlAiNote').textContent = ''; $('hlAiBtn').textContent = '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg> Tạo ảnh bằng AI';
+  hlThumbPaint(); hlFileInfo(); $('hlAiNote').textContent = ''; $('hlAiBtn').textContent = '✨ Tạo ảnh bằng AI';
   HL.exSel = it && Array.isArray(it.exams) ? it.exams.slice() : []; $('hlExQ').value = ''; hlExRender();
   $('hlList').classList.add('hide'); $('hlCats').classList.add('hide'); $('hlSub').classList.add('hide'); $('hlKpis').classList.add('hide'); $('hlEdit').classList.remove('hide');
   $('hlTitle').focus();
@@ -3595,9 +3595,9 @@ $('hlThumbFile').addEventListener('change', async function(){
 $('hlThumbUrl').addEventListener('input', function(){ const u = this.value.trim(); if (/^https:\/\//i.test(u)){ HL.thumb = { kind:'url', url:u }; } else if (HL.thumb && HL.thumb.kind === 'url') HL.thumb = null; hlThumbPaint(); });
 $('hlAiBtn').addEventListener('click', async () => {
   const title = $('hlTitle').value.trim(); if (!title){ hlMsg('Nhập tiêu đề trước để AI biết vẽ gì.'); $('hlTitle').focus(); return; }
-  const btn = $('hlAiBtn'); btn.disabled = true; HL.busy = true; $('hlSave').disabled = true; btn.textContent = '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg> AI đang vẽ… (10–30 giây)'; $('hlAiNote').textContent = '';
+  const btn = $('hlAiBtn'); btn.disabled = true; HL.busy = true; $('hlSave').disabled = true; btn.textContent = '✨ AI đang vẽ… (10–30 giây)'; $('hlAiNote').textContent = '';
   const r = await api('POST', '/api/hoclieu-admin', { op:'aiThumb', draft:{ title, desc:$('hlDesc').value.trim(), cat:$('hlCat').value, type:HL.type } });
-  btn.disabled = false; HL.busy = false; $('hlSave').disabled = false; btn.textContent = '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg> Vẽ lại bằng AI';
+  btn.disabled = false; HL.busy = false; $('hlSave').disabled = false; btn.textContent = '✨ Vẽ lại bằng AI';
   if (!r.j.ok){ hlMsg(r.j.error || 'Không tạo được ảnh.'); return; }
   HL.thumb = { kind:'upload', blob:r.j.blob, mime:r.j.mime, preview:r.j.preview, gen:r.j.source }; $('hlThumbUrl').value = ''; $('hlThumbFile').value = ''; hlThumbPaint();
   $('hlAiNote').textContent = (r.j.source === 'ai' ? 'Ảnh do AI vẽ. ' : '') + (r.j.note || '') + ' Bấm “Lưu học liệu” để dùng ảnh này.';
@@ -3618,7 +3618,7 @@ $('hlSave').addEventListener('click', async () => {
   if (!r.j.ok){ hlMsg(r.j.error || 'Không lưu được.'); return; }
   await hlOpen(); hlView('list');
   if (!th && !(r.j.item.source && r.j.item.source.kind === 'youtube')){ // chưa có ảnh bìa: AI tự vẽ và chèn
-    hlMsg('Đã lưu học liệu. <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg> AI đang vẽ ảnh minh hoạ…', 'ok');
+    hlMsg('Đã lưu học liệu. ✨ AI đang vẽ ảnh minh hoạ…', 'ok');
     const a = await api('POST', '/api/hoclieu-admin', { op:'aiThumb', id: r.j.item.id });
     await hlOpen(); hlMsg(a.j.ok ? 'Đã lưu học liệu và chèn ảnh minh hoạ' + (a.j.source === 'ai' ? ' do AI vẽ.' : ' tự vẽ theo chủ đề.') : 'Đã lưu học liệu (chưa tạo được ảnh minh hoạ).', 'ok');
   } else hlMsg('Đã lưu học liệu.', 'ok');
@@ -3919,7 +3919,7 @@ function exRemain(ms){
 // Khung giờ của đề: { text, sub, cls } — cls: '' bình thường, soon (< 24 giờ), urgent (< 3 giờ), closed
 function exWindow(e){
   const f = (ms) => new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' }), now = Date.now();
-  if (e.openAt && now < e.openAt) return { text:'Mở lúc ' + f(e.openAt) + (e.closeAt ? ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> ' + f(e.closeAt) : ''), sub:'còn ' + exRemain(e.openAt - now) + ' nữa mở', cls:'soon' };
+  if (e.openAt && now < e.openAt) return { text:'Mở lúc ' + f(e.openAt) + (e.closeAt ? ' → ' + f(e.closeAt) : ''), sub:'còn ' + exRemain(e.openAt - now) + ' nữa mở', cls:'soon' };
   if (e.closeAt && now > e.closeAt) return { text:'Đã đóng lúc ' + f(e.closeAt), sub:'', cls:'closed' };
   if (e.closeAt){ const left = e.closeAt - now; return { text:'Đến ' + f(e.closeAt), sub:'còn ' + exRemain(left), cls: left < 3 * 3600e3 ? 'urgent' : left < 24 * 3600e3 ? 'soon' : '' }; }
   return { text:'Không giới hạn thời gian', sub:'', cls:'' };
@@ -4037,7 +4037,7 @@ function examBadges(e){
   window.addEventListener('scroll', close, true); window.addEventListener('resize', close);
 })();
 function copyText(t, btn){
-  const done = () => { if (btn){ const o = btn.textContent; btn.textContent = 'Đã chép <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg>'; setTimeout(() => btn.textContent = o, 1500); } };
+  const done = () => { if (btn){ const o = btn.textContent; btn.textContent = 'Đã chép ✓'; setTimeout(() => btn.textContent = o, 1500); } };
   if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, () => prompt('Sao chép link:', t)); else prompt('Sao chép link:', t);
 }
 function cancelExamForm(){ if (EX_NEW){ EX_NEW = false; switchTab('exams'); } else switchTab('results'); }
@@ -4082,7 +4082,7 @@ const EXL_EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 function exListRow(e, cur){
   const now = Date.now(), id = esc(e.id), jid = esc(JSON.stringify(e.id).slice(1, -1));
   const st = e.openAt && now < e.openAt ? ['soon', 'Chưa mở'] : e.closeAt && now > e.closeAt ? ['closed', 'Đã đóng'] : ['open', 'Đang mở'];
-  const when = e.openAt && e.closeAt ? exShortDate(e.openAt) + ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> ' + exShortDate(e.closeAt) : e.openAt ? 'Từ ' + exShortDate(e.openAt) : e.closeAt ? 'Đến ' + exShortDate(e.closeAt) : 'Không giới hạn';
+  const when = e.openAt && e.closeAt ? exShortDate(e.openAt) + ' → ' + exShortDate(e.closeAt) : e.openAt ? 'Từ ' + exShortDate(e.openAt) : e.closeAt ? 'Đến ' + exShortDate(e.closeAt) : 'Không giới hạn';
   const nC = (e.codes || []).length, who = nC ? (e.codesExclude ? 'Mọi người trừ ' + nC + ' NV' : 'Gán ' + nC + ' NV') : ((e.segments || []).length ? e.segments.map(x => ({ gia_dung:'Gia dụng', may_loc:'Máy lọc', both:'Cả hai ngành' }[x] || x)).join(', ') : 'Mọi nhân viên');
   const pp = exPerPerson(e), bank = qCountOf(e);
   const bad = +e.questionCount > MAXQ || bpTotalOf(e.blueprint) > MAXQ || (bpTotalOf(e.blueprint) && e.questionCount && bpTotalOf(e.blueprint) !== +e.questionCount);
@@ -4289,7 +4289,7 @@ function asgFind(){
   ASG_HITS = asgPeople().filter(c => !c.left && spNorm([c.code, c.name, c.manager, c.title, c.province].join(' ')).indexOf(q) >= 0);
   const top = ASG_HITS.slice(0, 30);
   box.innerHTML = top.map(c => { const on = ASG.set.has(asgKey(c.code));
-    return '<button type="button" class="asg-r' + (on ? ' on' : '') + '" data-add="' + esc(c.code) + '"><span><b>' + esc(c.name || c.code) + '</b><small>' + asgSub(c) + '</small></span><i>' + (on ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Đã có' : '+ Thêm') + '</i></button>'; }).join('') +
+    return '<button type="button" class="asg-r' + (on ? ' on' : '') + '" data-add="' + esc(c.code) + '"><span><b>' + esc(c.name || c.code) + '</b><small>' + asgSub(c) + '</small></span><i>' + (on ? '✓ Đã có' : '+ Thêm') + '</i></button>'; }).join('') +
     (ASG_HITS.length > 30 ? '<div class="asg-hitmore">Còn ' + (ASG_HITS.length - 30) + ' người khớp nữa. Gõ cụ thể hơn, hoặc <button type="button" data-addall="1">thêm cả ' + ASG_HITS.length + ' người khớp</button></div>' : '') ||
     '<div class="asg-empty">Không tìm thấy ai khớp “' + esc($('asgQ').value.trim()) + '”.</div>';
 }
@@ -4371,12 +4371,12 @@ async function fetchPlan(){
 function renderPlan(j){
   const box = $('planPreview');
   if (!j || !j.ok){ box.innerHTML = '<div class="msg err">'+esc((j && j.error) || 'Không xem trước được.')+'</div>'; return; }
-  const srcL = (s) => s === 'blueprint' ? 'theo Cấu trúc đề' : s.indexOf('period') === 0 ? 'ngân hàng của kỳ này' : s.indexOf('unassigned') === 0 ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> câu chưa gắn kỳ (kỳ này chưa có câu riêng)' : s.indexOf('previous') === 0 ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> mượn ngân hàng kỳ trước (' + esc(s.split(':')[1]||'') + ')' : '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> không có câu';
+  const srcL = (s) => s === 'blueprint' ? 'theo Cấu trúc đề' : s.indexOf('period') === 0 ? 'ngân hàng của kỳ này' : s.indexOf('unassigned') === 0 ? '⚠ câu chưa gắn kỳ (kỳ này chưa có câu riêng)' : s.indexOf('previous') === 0 ? '⚠ mượn ngân hàng kỳ trước (' + esc(s.split(':')[1]||'') + ')' : '⚠ không có câu';
   box.innerHTML = (j.invalid ? '<div class="msg err">'+esc(j.invalid)+'</div>' : '') +
     '<div style="margin-top:10px;display:grid;gap:8px">' + j.plans.map(p =>
       '<div style="border:1px solid var(--line);border-radius:12px;padding:10px 12px">' +
         '<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><b>'+esc(p.label)+'</b>' +
-        '<span style="font-weight:800;color:var(--'+(p.error||p.short?'bad':'ok')+')">'+(p.error ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg> không tạo được đề' : (p.short ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> chỉ có '+p.got+'/'+p.target+' câu' : '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> '+p.got+' câu'))+'</span></div>' +
+        '<span style="font-weight:800;color:var(--'+(p.error||p.short?'bad':'ok')+')">'+(p.error ? '✕ không tạo được đề' : (p.short ? '⚠ chỉ có '+p.got+'/'+p.target+' câu' : '✓ '+p.got+' câu'))+'</span></div>' +
         '<div class="small" style="margin-top:4px">Nguồn: '+srcL(p.source)+' · '+p.pool+' câu khả dụng</div>' +
         (p.parts.length ? '<div class="small">'+p.parts.map(x => esc(x.label)+': '+x.got+'/'+x.want).join(' · ')+'</div>' : '') +
         (p.error ? '<div class="small" style="color:var(--bad)">'+esc(p.error)+'</div>' : '') +
@@ -4560,7 +4560,7 @@ function updateBpTotal(){
   const t = bpTotalOf({ rules: BP_RULES }), want = parseInt($('exCount').value, 10) || 0, el = $('bpTotal');
   if (!BP_RULES.length){ el.innerHTML = ''; return; }
   const ok = want > 0 && t === want;
-  el.innerHTML = '<span style="font-weight:700;color:var(--'+(ok?'ok':'bad')+')">'+(ok?'<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> ':'<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> ')+'Tổng các quy tắc: '+t+' câu'+(want ? ' / cần đúng '+want+' câu' : '')+'</span>'+
+  el.innerHTML = '<span style="font-weight:700;color:var(--'+(ok?'ok':'bad')+')">'+(ok?'✓ ':'⚠ ')+'Tổng các quy tắc: '+t+' câu'+(want ? ' / cần đúng '+want+' câu' : '')+'</span>'+
     (ok ? '' : '<br>Tổng các quy tắc phải bằng đúng ô "Tổng số câu hỏi mỗi đề". Đề sẽ không lưu được cho tới khi khớp.');
 }
 function addBpRule(){ BP_RULES.push({ bankId: (BANKS[0] && BANKS.length > 1 ? BANKS[1].id : 'default'), category:'', difficulty:'', tag:'', count:5 }); renderBpRules(); }
@@ -4572,7 +4572,7 @@ async function previewBp(){
   if (!j.ok){ $('bpPreview').innerHTML = '<div class="msg err">'+esc(j.error || 'Không kiểm tra được.')+'</div>'; return; }
   const rows = j.report.map((x, i) => {
     const r = x.rule, name = (r.bankId === '*' ? 'Mọi ngân hàng' : bankName(r.bankId)) + (r.category ? ' · ' + r.category : '') + (r.difficulty ? ' · ' + DIFF_LABEL[r.difficulty] : '') + (r.tag ? ' · #' + r.tag : '');
-    return '<div class="row" style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)"><span>Quy tắc '+(i+1)+': '+esc(name)+'</span><span style="color:var(--'+(x.short?'bad':'ok')+');font-weight:700">'+(x.short ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> thiếu '+x.short+' câu (có '+x.taken+'/'+r.count+')' : '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> đủ ('+x.available+' câu khả dụng)')+'</span></div>';
+    return '<div class="row" style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)"><span>Quy tắc '+(i+1)+': '+esc(name)+'</span><span style="color:var(--'+(x.short?'bad':'ok')+');font-weight:700">'+(x.short ? '⚠ thiếu '+x.short+' câu (có '+x.taken+'/'+r.count+')' : '✓ đủ ('+x.available+' câu khả dụng)')+'</span></div>';
   }).join('');
   $('bpPreview').innerHTML = '<div style="margin-top:10px">'+rows+'</div><div class="msg '+(j.total >= j.wanted ? 'ok' : 'warn')+'">Đề sẽ có '+j.total+'/'+j.wanted+' câu. '+(j.total >= j.wanted ? 'Đủ câu để ra đề.' : 'Hãy thêm câu hỏi vào ngân hàng hoặc giảm số câu.')+'</div>';
 }
@@ -4668,7 +4668,7 @@ iss[st].forEach(x => list.push({ st, t: x.t, m: x.m }));
 list.sort((a, b) => (a.t === 'err' ? 0 : 1) - (b.t === 'err' ? 0 : 1));
 const box = $('exCheck');
 box.classList.toggle('hide', !list.length);
-box.innerHTML = list.map(x => '<button type="button" class="' + (x.t === 'err' ? '' : 'warn') + '" onclick="exGoStep(' + x.st + ')"><span>' + (x.t === 'err' ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>' : '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>') + '</span><span>' + esc(x.m) + '</span><b>Bước ' + x.st + '</b></button>').join('');
+box.innerHTML = list.map(x => '<button type="button" class="' + (x.t === 'err' ? '' : 'warn') + '" onclick="exGoStep(' + x.st + ')"><span>' + (x.t === 'err' ? '✕' : '⚠') + '</span><span>' + esc(x.m) + '</span><b>Bước ' + x.st + '</b></button>').join('');
 $('exSum').innerHTML = exSummaryChips(errs).map(c => '<span class="exchip' + (c[1] ? ' ' + c[1] : '') + '">' + esc(c[0]) + '</span>').join('');
 } catch (e) { /* lỗi giao diện phụ không được làm hỏng form lưu đề */ }
 }
@@ -4754,7 +4754,7 @@ function exCloseQuick(days){
 // Chỉ khung giờ (không kèm đối tượng), dùng cho dòng riêng trong thẻ đề
 function examWindowOnly(e){
   const f = (ms) => new Date(ms).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
-  if (e.openAt && e.closeAt) return f(e.openAt) + ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> ' + f(e.closeAt);
+  if (e.openAt && e.closeAt) return f(e.openAt) + ' → ' + f(e.closeAt);
   if (e.openAt) return 'Từ ' + f(e.openAt);
   if (e.closeAt) return 'Đến ' + f(e.closeAt);
   return 'Không giới hạn thời gian';
@@ -4817,7 +4817,7 @@ function kaixImport(files){
     fill: function(title, text, note){ $('kdText').value = text; if (!$('kdTitle').value.trim()) $('kdTitle').value = title; kaixCount(); },
     save: function(title, text){ return kaixApi({ op:'docSave', title:title, text:text, enabled:$('kdOn').checked }); },
     onCancel: function(fn){ KX.stop = fn; },
-    msg: function(t, kind){ var busy = kind === 'busy'; msg('kdMsg', t, kind === 'ok' ? 'ok' : (busy || t.indexOf('<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>') >= 0 ? 'warn' : 'err')); $('kdStop').classList.toggle('hide', !busy); }
+    msg: function(t, kind){ var busy = kind === 'busy'; msg('kdMsg', t, kind === 'ok' ? 'ok' : (busy || t.indexOf('⚠') >= 0 ? 'warn' : 'err')); $('kdStop').classList.toggle('hide', !busy); }
   }).then(function(rep){ $('kdStop').classList.add('hide'); KX.stop = null; if (rep.length > 1) kaixLoadDocs(); });
 }
 function kaixReadFile(){ var f = [].slice.call(this.files || []); this.value = ''; kaixImport(f); }
@@ -5023,10 +5023,10 @@ async function runAiCheck(){
   b.disabled = false; b.textContent = 'Kiểm tra ngay';
   if (!j.ok){ msg('aiCheckOut', j.error || 'Không kiểm tra được.'); return; }
   const c = j.configured || {}, sec = (j.ms / 1000).toFixed(1), lim = Math.round(j.timeoutMs / 1000);
-  const keys = (c.azure ? 'Azure OpenAI <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg>' : 'Azure OpenAI <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>') + ' · ' + (c.groq ? 'Groq <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg>' : 'Groq <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>');
+  const keys = (c.azure ? 'Azure OpenAI ✓' : 'Azure OpenAI ✗') + ' · ' + (c.groq ? 'Groq ✓' : 'Groq ✗');
   const T = {
     ok: ['ok', 'AI hoạt động bình thường (phản hồi trong ' + sec + ' giây, hạn chờ ' + lim + ' giây). Lời khuyên sẽ do AI viết.'],
-    not_configured: ['err', 'Máy chủ chưa có khóa AI nên lời khuyên đang dùng bản dự phòng theo luật. Cần đặt AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_KEY, AZURE_OPENAI_DEPLOYMENT hoặc GROQ_API_KEY trong Azure Static Web Apps <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> Configuration.'],
+    not_configured: ['err', 'Máy chủ chưa có khóa AI nên lời khuyên đang dùng bản dự phòng theo luật. Cần đặt AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_KEY, AZURE_OPENAI_DEPLOYMENT hoặc GROQ_API_KEY trong Azure Static Web Apps → Configuration.'],
     off: ['warn', 'AI đang bị tắt bằng ADVICE_AI=off nên lời khuyên dùng bản dự phòng theo luật. Xoá biến này để bật lại.'],
     timeout: ['warn', 'AI phản hồi quá chậm (hơn ' + sec + ' giây, hạn chờ chỉ ' + lim + ' giây) nên lời khuyên rơi về bản dự phòng. Có thể tăng ADVICE_TIMEOUT_MS hoặc dùng mô hình nhanh hơn.'],
     invalid: ['warn', 'AI có trả lời nhưng sai định dạng yêu cầu (JSON gồm tiêu đề, nhận xét, các việc nên làm) nên bị bỏ và dùng bản dự phòng. Thử mô hình khác hoặc báo để chỉnh lại câu lệnh.'],
@@ -5143,7 +5143,7 @@ function renderItems(){
     const tNotes = (ITEM_TIME[it.id] && ITEM_TIME[it.id].notes) || [];
     const r = it.discrimination == null ? '–' : (Math.round(it.discrimination * 100) / 100).toFixed(2);
     const opts = it.options ? '<details style="margin-top:4px"><summary class="small" style="cursor:pointer">Phương án</summary><ul style="margin:4px 0 0;padding-left:18px">'+it.options.map(o =>
-      '<li style="'+(o.isKey?'color:var(--ok);font-weight:700':'')+'">'+esc(o.text)+(o.isKey?' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg>':'')+' <span class="small">· '+o.count+' lượt chọn ('+Math.round(o.rate*100)+'%)</span></li>').join('')+'</ul></details>' : '';
+      '<li style="'+(o.isKey?'color:var(--ok);font-weight:700':'')+'">'+esc(o.text)+(o.isKey?' ✓':'')+' <span class="small">· '+o.count+' lượt chọn ('+Math.round(o.rate*100)+'%)</span></li>').join('')+'</ul></details>' : '';
     return '<tr><td style="min-width:220px">'+esc(it.text.slice(0,110))+(it.text.length>110?'…':'')+'<div class="small">'+esc(TYPE_LABEL[it.type]||'')+(it.category?' · '+esc(it.category):'')+(it.bankId&&it.bankId!=='default'?' · '+esc(bankName(it.bankId)):'')+'</div>'+opts+'</td>'+
       '<td>'+it.n+'</td><td>'+Math.round(it.pCorrect*100)+'%</td><td>'+Math.round(it.blankRate*100)+'%</td><td>'+r+'</td>'+
       '<td style="min-width:190px">'+itemTimeCell(it)+'</td>'+
@@ -5222,7 +5222,7 @@ function onQTypeChange(){
   $('qOptsWrap').classList.toggle('hide', t === 'fill');
   $('qFillWrap').classList.toggle('hide', t !== 'fill');
   $('qAddOptBtn').classList.toggle('hide', t === 'tf');
-  $('qOptsLabel').textContent = t === 'multi' ? 'Các phương án trả lời (tick ô “<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Đúng” của TẤT CẢ đáp án đúng)' : 'Các phương án trả lời (bấm ô “<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Đúng” ở đầu dòng để chọn đáp án đúng)';
+  $('qOptsLabel').textContent = t === 'multi' ? 'Các phương án trả lời (tick ô “✓ Đúng” của TẤT CẢ đáp án đúng)' : 'Các phương án trả lời (bấm ô “✓ Đúng” ở đầu dòng để chọn đáp án đúng)';
   if (t === 'fill') return;
   $('qOptsEdit').innerHTML = '';
   if (t === 'tf'){
@@ -5285,7 +5285,7 @@ function qStatusCell(q){
 }
 function qStatBarRender(L){
   const n = f => L.filter(q => qStatPass(q, f)).length, cur = $('qStatF').value;
-  const defs = [['*','Tất cả'],['on','Đang dùng'],['off','Đã ẩn'],['err','<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Cần sửa'],['noexp','Thiếu giải thích'],['nocat','Chưa phân loại']];
+  const defs = [['*','Tất cả'],['on','Đang dùng'],['off','Đã ẩn'],['err','⚠ Cần sửa'],['noexp','Thiếu giải thích'],['nocat','Chưa phân loại']];
   $('qStatBar').innerHTML = defs.map(([k,l]) => '<button type="button" class="' + (k === cur ? 'on ' : '') + (k === 'err' && n('err') ? 'bad' : '') + '" onclick="$(\'qStatF\').value=\'' + k + '\';QLIM=50;renderQList()">' + l + ' <b>' + (k === '*' ? L.length : n(k)) + '</b></button>').join('');
 }
 // ----- Form sửa: quay lại danh sách / câu trước / câu sau (hỏi lại nếu đang có thay đổi chưa lưu) -----
@@ -5337,8 +5337,8 @@ function qBlankHint(){
   if (nb === 1){ box.innerHTML = ok('Nhận diện 1 chỗ trống' + (lines.length ? ' · ' + lines.length + ' cách viết đúng được chấp nhận.' : '.')); return; }
   var isPos = lines.length === nb && !lines.some(function(x){ return /[\/|;]/.test(x); });
   var oneLine = lines.length === 1 && /[\/|;]/.test(lines[0]);
-  if (isPos) box.innerHTML = ok('Nhận diện ' + nb + ' chỗ trống · ' + nb + ' dòng đáp án <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> chấm theo thứ tự: ' + lines.map(function(x, i){ return 'chỗ ' + (i + 1) + ' = “' + esc(x) + '”'; }).join(', ') + '.');
-  else if (oneLine){ var parts = lines[0].split(/\s*[\/|;]\s*/).filter(Boolean); box.innerHTML = parts.length === nb ? ok('Nhận diện ' + nb + ' chỗ trống · 1 dòng gồm ' + parts.length + ' phần ngăn bằng “/” <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> chấm theo thứ tự.') : warn('Đề có ' + nb + ' chỗ trống nhưng dòng đáp án có ' + parts.length + ' phần. Hãy nhập đủ ' + nb + ' phần.'); }
+  if (isPos) box.innerHTML = ok('Nhận diện ' + nb + ' chỗ trống · ' + nb + ' dòng đáp án → chấm theo thứ tự: ' + lines.map(function(x, i){ return 'chỗ ' + (i + 1) + ' = “' + esc(x) + '”'; }).join(', ') + '.');
+  else if (oneLine){ var parts = lines[0].split(/\s*[\/|;]\s*/).filter(Boolean); box.innerHTML = parts.length === nb ? ok('Nhận diện ' + nb + ' chỗ trống · 1 dòng gồm ' + parts.length + ' phần ngăn bằng “/” → chấm theo thứ tự.') : warn('Đề có ' + nb + ' chỗ trống nhưng dòng đáp án có ' + parts.length + ' phần. Hãy nhập đủ ' + nb + ' phần.'); }
   else box.innerHTML = warn('Đề có ' + nb + ' chỗ trống nhưng đang có ' + lines.length + ' dòng đáp án. Hãy nhập ' + nb + ' dòng (mỗi chỗ một dòng, theo thứ tự) hoặc 1 dòng ngăn bằng “/”.');
 }
 document.addEventListener('input', function(e){ var id = e.target && e.target.id; if (id === 'qText' || id === 'qAccepted') qBlankHint(); });
@@ -5348,7 +5348,7 @@ function clearQForm(){
   $('qEditId').value=''; $('qText').value=''; $('qCategory').value='';
   $('qDifficulty').value=''; $('qTags').value=''; $('qExplain').value=''; $('qImage').value=''; qImgPreview(); if ($('qBank').options.length) $('qBank').value = $('qBank').dataset.last || 'default';
   $('qType').value='single'; $('qAccepted').value=''; setTimeout(qBlankHint, 0); $('qOptsWrap').classList.remove('hide'); $('qFillWrap').classList.add('hide'); $('qAddOptBtn').classList.remove('hide');
-  $('qOptsLabel').textContent='Các phương án trả lời (bấm ô “<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Đúng” ở đầu dòng để chọn đáp án đúng)';
+  $('qOptsLabel').textContent='Các phương án trả lời (bấm ô “✓ Đúng” ở đầu dòng để chọn đáp án đúng)';
   $('qOptsEdit').innerHTML=''; $('qFormTitle').textContent='Thêm câu hỏi mới vào ' + qPerLabel(QP || '').toLowerCase();
   if ($('qPeriod').options.length) $('qPeriod').value = QP || '';
   for (let i=0;i<4;i++) addOptRow(i===0);
@@ -5390,7 +5390,7 @@ function renderQList(){
   $('qList').innerHTML = V.map((q, i) =>
     '<tr><td class="qno">' + (i + 1) + '</td><td class="qtxt" onclick="qPreview(\'' + q.id + '\')" title="Bấm để xem câu hỏi và đáp án">' + (HIT[q.id] && HIT[q.id].inText ? qMark(q.text, raw, 110) : esc(q.text.slice(0,110)) + (q.text.length > 110 ? '…' : '')) + (HIT[q.id] ? HIT[q.id].extra : '') + '</td><td class="small">' + esc(q.category || '') + '</td><td>' + qStatusCell(q) + '</td>' +
     '<td style="white-space:nowrap;text-align:right"><button class="btn ghost sm" onclick="editQuestion(\'' + q.id + '\')">Sửa</button> <button class="btn ghost sm" onclick="toggleQuestion(\'' + q.id + '\')">' + (q.active !== false ? 'Ẩn' : 'Hiện') + '</button> <button class="btn dghost sm" onclick="deleteQuestion(\'' + q.id + '\')">Xoá</button></td></tr>'
-  ).join('') || '<tr><td colspan="5" class="small">' + (L.length ? 'Không có câu nào khớp bộ lọc.' : 'Đề này chưa có câu hỏi. Bấm “<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg> Nhập từ file Excel” hoặc chép từ đề khác ở trên.') + '</td></tr>';
+  ).join('') || '<tr><td colspan="5" class="small">' + (L.length ? 'Không có câu nào khớp bộ lọc.' : 'Đề này chưa có câu hỏi. Bấm “📥 Nhập từ file Excel” hoặc chép từ đề khác ở trên.') + '</td></tr>';
   $('qMore').classList.toggle('hide', F.length <= QLIM);
   $('qMore').textContent = 'Xem thêm (còn ' + Math.max(0, F.length - QLIM) + ' câu)';
   if (CUR_EXAM) $('ehQ').textContent = qCountOf({ id: CUR_EXAM }); renderExGrid();
@@ -5420,12 +5420,12 @@ function qReadiness(list, isCur){
     return SP_SEGS.filter(([k]) => P[k] && P[k].length).map(([k,l]) => {
       const rows = P[k], need = rows.reduce((n,r) => n + r.count, 0), short = rows.filter(r => have(k, r.category) < r.count);
       return '<div class="row"><span><b>' + l + (spRgOf(k) ? '' : ' (cả 2 miền)') + '</b> (' + need + ' câu): ' + rows.map(r => esc(r.category) + ' ' + r.count).join(' · ') + '</span><span class="' + (short.length ? 'bad' : 'ok') + '">' +
-        (short.length ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> thiếu: ' + short.map(r => esc(r.category) + ' ' + have(k, r.category) + '/' + r.count).join(', ') : '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> đủ') + '</span></div>';
+        (short.length ? '⚠ thiếu: ' + short.map(r => esc(r.category) + ' ' + have(k, r.category) + '/' + r.count).join(', ') : '✓ đủ') + '</span></div>';
     }).join('').replace(/^/, '<div class="hd">Đủ câu theo phân bổ ' + (own ? 'riêng của đề này' : 'chung') + ' chưa?</div>');
   }
   const act = list.filter(q => q.active !== false), Q = +QMETA.questionCount || act.length, G = +QMETA.bothGiaDungCount || 0;
   const gd = act.filter(q => q.category === 'Gia dụng').length, ml = act.filter(q => q.category === 'Máy lọc nước').length, other = act.length - gd;
-  const row = (name, have, need) => '<div class="row"><span>' + name + '</span><span class="' + (have >= need ? 'ok' : 'bad') + '">' + (have >= need ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> đủ (' + have + ' câu)' : '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> thiếu ' + (need - have) + ' câu, đề chỉ có ' + have + '/' + need) + '</span></div>';
+  const row = (name, have, need) => '<div class="row"><span>' + name + '</span><span class="' + (have >= need ? 'ok' : 'bad') + '">' + (have >= need ? '✓ đủ (' + have + ' câu)' : '⚠ thiếu ' + (need - have) + ' câu, đề chỉ có ' + have + '/' + need) + '</span></div>';
   return '<div class="hd">Đủ câu để ra đề ' + Q + ' câu chưa?</div>' +
     row('Nhân viên bán Gia dụng (cần ' + Q + ' câu "Gia dụng")', gd, Q) +
     row('Nhân viên bán Máy lọc nước (cần ' + Q + ' câu "Máy lọc nước")', ml, Q) +
@@ -5483,8 +5483,8 @@ function renderQuestions(){
   })();
   // Danh sách
   $('qListTitle').textContent = 'Câu hỏi của đề';
-  $('qBulkPer').textContent = '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> vào ' + qPerLabel(QP).toLowerCase();
-  $('xlTarget').textContent = '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> vào ' + qPerLabel(QP); if (XL) xlRender();
+  $('qBulkPer').textContent = '→ vào ' + qPerLabel(QP).toLowerCase();
+  $('xlTarget').textContent = '→ vào ' + qPerLabel(QP); if (XL) xlRender();
   $('qCount').textContent = L.length;
   QLIST = L; renderQList(); catListFill(QP);
   $('qPeriod').innerHTML = pers.map(p => '<option value="' + esc(p) + '">' + qPerLabel(p) + (p === cur ? ' (hiện tại)' : '') + '</option>').join('') + (un.length ? '<option value="">Chưa gắn kỳ</option>' : '');
@@ -5559,7 +5559,7 @@ async function deleteAllQuestions(){
     if (!pv.ok){ alert(pv.error || 'Không kiểm tra được ngân hàng đề.'); return; }
     if (!pv.count){ alert('Ngân hàng đề đang trống, không có gì để xoá.'); return; }
     let m = 'XOÁ TẤT CẢ ' + pv.count + ' câu hỏi của ' + qPerLabel(QP || '').toLowerCase() + '?\n(Câu hỏi các kỳ khác giữ nguyên.)\n\n';
-    if (pv.inProgress && QP === (QMETA.currentPeriod || '')) m += '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Đang có ' + pv.inProgress + ' thí sinh làm bài dở: bài của họ sẽ kết thúc ngay và bị tính điểm 0.\n\n';
+    if (pv.inProgress && QP === (QMETA.currentPeriod || '')) m += '⚠ Đang có ' + pv.inProgress + ' thí sinh làm bài dở: bài của họ sẽ kết thúc ngay và bị tính điểm 0.\n\n';
     m += 'Hệ thống tự sao lưu trước khi xoá nên bạn có thể khôi phục lại.\n\nGõ đúng cụm  XOA TAT CA  để xác nhận:';
     const typed = prompt(m);
     if (typed === null) return;
@@ -5628,7 +5628,7 @@ function qPrevRender(){
   } else {
     ans = '<div class="small" style="margin:14px 0 2px;font-weight:700">Các phương án</div>' + opts.map((o, i) => {
       const ok = okSet.indexOf(i) >= 0;
-      return '<div class="qp-opt' + (ok ? ' ok' : '') + '"><span class="lt">' + (ok ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg>' : String.fromCharCode(65 + i)) + '</span><span style="flex:1;min-width:0;overflow-wrap:anywhere">' + esc(o) + '</span>' + (ok ? '<span class="qp-tag">Đáp án đúng</span>' : '') + '</div>';
+      return '<div class="qp-opt' + (ok ? ' ok' : '') + '"><span class="lt">' + (ok ? '✓' : String.fromCharCode(65 + i)) + '</span><span style="flex:1;min-width:0;overflow-wrap:anywhere">' + esc(o) + '</span>' + (ok ? '<span class="qp-tag">Đáp án đúng</span>' : '') + '</div>';
     }).join('');
   }
   $('qPrevBody').innerHTML = '<div class="small" style="color:var(--muted);margin-bottom:8px">Câu ' + (QPREV_I + 1) + ' / ' + QPREV_IDS.length + '</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">' + meta + '</div>' +
@@ -5662,7 +5662,7 @@ function editQuestion(id){
   const t = qUIType();
   $('qOptsWrap').classList.toggle('hide', t === 'fill'); $('qFillWrap').classList.toggle('hide', t !== 'fill');
   $('qAddOptBtn').classList.toggle('hide', t === 'tf');
-  $('qOptsLabel').textContent = t === 'multi' ? 'Các phương án trả lời (tick ô “<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Đúng” của TẤT CẢ đáp án đúng)' : 'Các phương án trả lời (bấm ô “<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Đúng” ở đầu dòng để chọn đáp án đúng)';
+  $('qOptsLabel').textContent = t === 'multi' ? 'Các phương án trả lời (tick ô “✓ Đúng” của TẤT CẢ đáp án đúng)' : 'Các phương án trả lời (bấm ô “✓ Đúng” ở đầu dòng để chọn đáp án đúng)';
   if (t === 'fill') $('qAccepted').value = (q.accepted || []).join('\n');
   else (q.options || []).forEach((o,i) => addOptRow(t === 'multi' ? (q.correctIndexes || []).indexOf(i) >= 0 : i === q.correctIndex, o));
   qMoreSync(!!(q.category || q.difficulty || (q.tags || []).length)); qNavSync(id); qSnap(); qBlankHint();
@@ -5700,7 +5700,7 @@ const AIQ_MAX = 150000; // khớp giới hạn máy chủ (examai.DOC_MAX)
 function aiqTotal(){ return AIQ.docs.reduce((n, d) => n + d.text.length, 0); }
 function aiqRender(){
   const tot = aiqTotal();
-  $('aiQDocs').innerHTML = AIQ.docs.map((d, i) => '<span class="aiq-chip" title="' + esc(d.name) + '"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg> <b>' + esc(d.name) + '</b> <em>' + d.text.length.toLocaleString('vi-VN') + ' ký tự' + (d.warn ? ' · <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>' : '') + '</em><button type="button" aria-label="Bỏ tài liệu ' + esc(d.name) + '" onclick="AIQ.docs.splice(' + i + ',1);aiqRender()">×</button></span>').join('') +
+  $('aiQDocs').innerHTML = AIQ.docs.map((d, i) => '<span class="aiq-chip" title="' + esc(d.name) + '"><svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg> <b>' + esc(d.name) + '</b> <em>' + d.text.length.toLocaleString('vi-VN') + ' ký tự' + (d.warn ? ' · ⚠' : '') + '</em><button type="button" aria-label="Bỏ tài liệu ' + esc(d.name) + '" onclick="AIQ.docs.splice(' + i + ',1);aiqRender()">×</button></span>').join('') +
     (AIQ.reading ? '<span class="aiq-chip busy">Đang đọc ' + AIQ.reading + ' file…</span>' : '') +
     (tot > AIQ_MAX ? '<div class="small" style="color:var(--warn);margin-top:4px">Tổng ' + tot.toLocaleString('vi-VN') + ' ký tự, AI chỉ dùng ' + AIQ_MAX.toLocaleString('vi-VN') + ' ký tự đầu. Nên gắn đúng phần cần hỏi.</div>' : '');
   $('aiQTopic').placeholder = AIQ.docs.length ? 'Trọng tâm cần hỏi (có thể để trống)' : 'Vd: An toàn điện khi lắp đặt bếp từ';
@@ -5750,7 +5750,7 @@ async function genQuestionsAI(){
   msg('aiQMsg', 'Đã soạn '+j.questions.length+' câu' + (j.fromDoc ? ' từ tài liệu' + (j.docParts > 1 ? ' (tài liệu dài, chia ' + j.docParts + ' phần)' : '') + '. Mỗi câu ghi căn cứ trong tài liệu để bạn đối chiếu' : '') + ' — xem lại bên dưới, sửa trực tiếp trong ô JSON nếu cần, rồi bấm "Nhập vào ngân hàng đề".', 'ok');
   $('qBulkText').value = JSON.stringify(j.questions, null, 2);
   $('aiQPreview').innerHTML = '<ol style="margin:12px 0 0;padding-left:20px;line-height:1.7">' + j.questions.map(q =>
-    '<li><b>'+esc(q.text)+'</b><br>'+q.options.map((o,i) => '<span style="'+(i===q.correctIndex?'color:var(--ok);font-weight:700':'')+'">'+(i===q.correctIndex?'<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> ':'· ')+esc(o)+'</span>').join('<br>')+(q.explanation||q.explain ? '<div class="small" style="color:var(--muted);margin-top:2px">Căn cứ: '+esc(q.explanation||q.explain)+'</div>' : '')+'</li>'
+    '<li><b>'+esc(q.text)+'</b><br>'+q.options.map((o,i) => '<span style="'+(i===q.correctIndex?'color:var(--ok);font-weight:700':'')+'">'+(i===q.correctIndex?'✓ ':'· ')+esc(o)+'</span>').join('<br>')+(q.explanation||q.explain ? '<div class="small" style="color:var(--muted);margin-top:2px">Căn cứ: '+esc(q.explanation||q.explain)+'</div>' : '')+'</li>'
   ).join('') + '</ol>';
   $('qBulkText').scrollIntoView({behavior:'smooth',block:'center'});
 }
@@ -6058,7 +6058,7 @@ async function hrDiscRun(){
   const box = $('hrDiscBody'); box.innerHTML = '<div class="small" style="margin-top:10px">Đang rà soát…</div>';
   const { j } = await api('GET', '/api/kt-admin?op=hrDiscovery');
   if (!j.ok){ box.innerHTML = '<div class="msg err">' + esc(j.error || 'Không rà soát được.') + '</div>'; return; }
-  const r = j.report, P = r.population, ST = { ok: ['#E3F5EA', '#17794A', '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Đủ mẫu'], low: ['#FFF4DE', '#B45309', '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Ít mẫu, chỉ mô tả'], no: ['#FDE8E8', '#B42318', '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg> Chưa đủ dữ liệu'] };
+  const r = j.report, P = r.population, ST = { ok: ['#E3F5EA', '#17794A', '✓ Đủ mẫu'], low: ['#FFF4DE', '#B45309', '⚠ Ít mẫu, chỉ mô tả'], no: ['#FDE8E8', '#B42318', '✕ Chưa đủ dữ liệu'] };
   const bar = (v) => '<span style="display:inline-block;width:90px;height:8px;border-radius:6px;background:#E3EAF5;vertical-align:middle;margin-right:6px"><span style="display:block;height:8px;border-radius:6px;width:' + Math.min(100, v) + '%;background:' + (v >= 80 ? '#18A957' : v >= 40 ? '#F5A524' : '#E5383B') + '"></span></span>' + v + '%';
   const tbl = (head, rows) => '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr>' + head.map(h => '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--line,#E1E8F3);white-space:nowrap">' + h + '</th>').join('') + '</tr></thead><tbody>' + rows.map(c => '<tr>' + c.map(x => '<td style="padding:6px 8px;border-bottom:1px solid #EEF2F8;vertical-align:top">' + x + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
   const h = (t) => '<h3 style="margin:18px 0 6px;font-size:15px">' + t + '</h3>';
@@ -6093,7 +6093,7 @@ function hrMissingCsv(){
 var HR_AN = null;
 const hrTbl = (head, rows) => '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr>' + head.map(h => '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--line,#E1E8F3);white-space:nowrap">' + h + '</th>').join('') + '</tr></thead><tbody>' + rows.map(c => '<tr>' + c.map(x => '<td style="padding:6px 8px;border-bottom:1px solid #EEF2F8;vertical-align:top">' + x + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
 const hrH = (t) => '<h3 style="margin:18px 0 6px;font-size:15px">' + t + '</h3>';
-const hrBadge = (st) => { const m = { ok: ['#E3F5EA', '#17794A', '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Đủ để kết luận'], low: ['#FFF4DE', '#B45309', '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Ít mẫu, chỉ mô tả'], no: ['#FDE8E8', '#B42318', '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg> Chưa đủ'] }[st]; return '<span style="padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;background:' + m[0] + ';color:' + m[1] + '">' + m[2] + '</span>'; };
+const hrBadge = (st) => { const m = { ok: ['#E3F5EA', '#17794A', '✓ Đủ để kết luận'], low: ['#FFF4DE', '#B45309', '⚠ Ít mẫu, chỉ mô tả'], no: ['#FDE8E8', '#B42318', '✕ Chưa đủ'] }[st]; return '<span style="padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;background:' + m[0] + ';color:' + m[1] + '">' + m[2] + '</span>'; };
 function hrCellColor(gap){ return gap == null ? '#fff' : gap <= -10 ? '#FBD5D1' : gap <= -5 ? '#FDE7C7' : gap >= 5 ? '#D5F1E0' : '#F1F5FB'; }
 async function hrAnRun(){
   const box = $('hrAnBody'); box.innerHTML = '<div class="small" style="margin-top:10px">Đang phân tích (có thể mất vài giây)…</div>'; $('hrAiBody').innerHTML = ''; $('hrAiBtn').disabled = true;
@@ -6206,7 +6206,7 @@ function candDeepRun(){
   const id = String(PENDING_EDIT || '').trim().toLowerCase(); PENDING_EDIT = '';
   if (!id) return;
   const c = CANDIDATES.find(x => String(x.code).toLowerCase() === id);
-  if (c) editCandidateOpen(c.code); else msg('candMsg', 'Không tìm thấy thí sinh mã ' + id.toUpperCase() + ' trong danh sách thí sinh (có thể là tài khoản thử nghiệm, xem mục “<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 2h6"/><path d="M10 2v6.5L4.5 19a2 2 0 0 0 1.8 3h11.4a2 2 0 0 0 1.8-3L14 8.5V2"/></svg> Tài khoản thử nghiệm”).', 'err');
+  if (c) editCandidateOpen(c.code); else msg('candMsg', 'Không tìm thấy thí sinh mã ' + id.toUpperCase() + ' trong danh sách thí sinh (có thể là tài khoản thử nghiệm, xem mục “🧪 Tài khoản thử nghiệm”).', 'err');
 }
 let CANDIDATES = [];
 /* Hồ sơ học tập của một thí sinh: dùng lại hộp thoại hồ sơ của trang quản lí (quanli.html?profile=MÃ) */
@@ -6299,9 +6299,9 @@ function hrsRender(){
   const list = (arr, f) => arr.length ? '<ul class="hrs-ul">' + arr.map(f).join('') + '</ul>' : '';
   const anH = '<p class="small hrs-hint">Chỉ để bạn biết, không có gì để chọn.</p>' +
     (A.badEmail.length ? '<p><b>' + A.badEmail.length + ' người có email không dùng được</b> (giả @example.com hoặc sai dạng): các email này sẽ không bao giờ được ghi đè lên email đang có.</p>' + list(A.badEmail, x => '<li>' + esc(x.name) + ' <span class="small">' + esc(x.code) + ' · ' + esc(x.email || '(trống)') + '</span></li>') : '') +
-    (A.dupEmail.length ? '<p><b>Email dùng chung:</b></p>' + list(A.dupEmail, x => '<li>' + esc(x.email) + ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M15 18l-6-6 6-6"/></svg> ' + esc(x.people.join(', ')) + '</li>') : '') +
+    (A.dupEmail.length ? '<p><b>Email dùng chung:</b></p>' + list(A.dupEmail, x => '<li>' + esc(x.email) + ' ← ' + esc(x.people.join(', ')) + '</li>') : '') +
     (A.noJoin.length ? '<p><b>' + A.noJoin.length + ' người thiếu ngày vào công ty:</b> ' + esc(A.noJoin.map(x => x.code).join(', ')) + '</p>' : '') +
-    (A.dupName.length ? '<p><b>Tên giống nhau:</b></p>' + list(A.dupName, x => '<li>' + esc(x.name) + ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M15 18l-6-6 6-6"/></svg> ' + esc(x.people.join(', ')) + '</li>') : '') +
+    (A.dupName.length ? '<p><b>Tên giống nhau:</b></p>' + list(A.dupName, x => '<li>' + esc(x.name) + ' ← ' + esc(x.people.join(', ')) + '</li>') : '') +
     (A.personalEmail ? '<p class="small">' + A.personalEmail + ' người dùng email cá nhân (gmail, icloud…) ở cột "Email công việc".</p>' : '') +
     (o.alreadyLeftNotInSystem.length ? '<p class="small">' + o.alreadyLeftNotInSystem.length + ' người trong file đã có ngày làm việc cuối đã qua và chưa có trong hệ thống: bỏ qua, không thêm.</p>' : '');
   const anN = A.badEmail.length + A.dupEmail.length + A.noJoin.length + A.dupName.length;
@@ -6368,7 +6368,7 @@ function hrsExport(){
   const o = HRS.out, dm = KTHrSync.dmy, rows = [['Nhóm', 'Mã nhân viên', 'Họ tên', 'Quản lí', 'Chi tiết']];
   o.leaving.forEach(l => rows.push(['Nghỉ việc theo HR', l.code, l.name, l.manager, (l.state === 'past' ? 'đã nghỉ từ ' : 'sẽ nghỉ ngày ') + dm(l.lastDay)]));
   o.missing.forEach(m => rows.push(['Không còn trong HR', m.code, m.name, m.manager, m.title]));
-  o.changed.forEach(c => c.diffs.forEach(d => rows.push(['Lệch thông tin', c.code, c.name, '', d.label + ': ' + d.from + ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> ' + d.to])));
+  o.changed.forEach(c => c.diffs.forEach(d => rows.push(['Lệch thông tin', c.code, c.name, '', d.label + ': ' + d.from + ' → ' + d.to])));
   o.added.forEach(a => rows.push(['Mới trong HR', a.code, a.name, a.manager, a.emailOk ? a.email : 'không thêm được: ' + a.blocked]));
   o.anomalies.badEmail.forEach(x => rows.push(['Email không dùng được', x.code, x.name, '', x.email || '(trống)']));
   o.anomalies.noJoin.forEach(x => rows.push(['Thiếu ngày vào công ty', x.code, x.name, '', '']));
@@ -6416,7 +6416,7 @@ async function candRenameDo(merge){
   const from = $('candEditCode').value, to = $('candRenameTo').value.trim();
   if (!to){ msg('candRenameMsg','Nhập mã mới.'); return; }
   if (to === from){ msg('candRenameMsg','Mã mới trùng mã hiện tại.'); return; }
-  if (merge !== true && !confirm('Đổi mã ' + from + ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> ' + to + '?\n\nHồ sơ, các bài đã nộp, kết quả và bài đang làm dở của thí sinh này sẽ chuyển theo sang mã mới. Thí sinh phải dùng mã mới để vào bài.')) return;
+  if (merge !== true && !confirm('Đổi mã ' + from + ' → ' + to + '?\n\nHồ sơ, các bài đã nộp, kết quả và bài đang làm dở của thí sinh này sẽ chuyển theo sang mã mới. Thí sinh phải dùng mã mới để vào bài.')) return;
   const { j } = await api('POST','/api/kt-admin', { op:'renameCandidate', from, to, merge: merge === true });
   if (j.needMerge){
     if (confirm(j.error + '\n\nChỉ bấm OK nếu đó đúng là bài của chính thí sinh này và muốn gộp vào.')) return candRenameDo(true);
@@ -6425,7 +6425,7 @@ async function candRenameDo(merge){
   if (!j.ok){ msg('candRenameMsg', j.error || 'Không đổi được mã.', 'err'); return; }
   $('candEditCode').value = j.to; $('candEditCodeShow').value = j.to;
   candRenameToggle(false);
-  msg('candEditMsg', 'Đã đổi mã ' + j.from + ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> ' + j.to + (j.moved ? ' (đã chuyển ' + j.moved + ' bài kiểm tra sang mã mới)' : '') + '.', 'ok');
+  msg('candEditMsg', 'Đã đổi mã ' + j.from + ' → ' + j.to + (j.moved ? ' (đã chuyển ' + j.moved + ' bài kiểm tra sang mã mới)' : '') + '.', 'ok');
   CANDIDATES = j.candidates || CANDIDATES;
   renderCandidates();
 }
@@ -6441,7 +6441,7 @@ async function saveCandidateEdit(){
     const r = (await api('POST','/api/kt-admin', { op:'setTestMode', code, test:true })).j;
     if (!r.ok){ msg('candEditMsg', 'Đã lưu thông tin nhưng chưa chuyển sang thử nghiệm: ' + (r.error || 'có lỗi, thử lại.'), 'err'); loadCandidates(); return; }
     $('candEditCard').classList.add('hide'); loadCandidates(); loadTestAccounts();
-    msg('candMsg', 'Đã chuyển ' + code + ' sang tài khoản thử nghiệm (xem mục “<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 2h6"/><path d="M10 2v6.5L4.5 19a2 2 0 0 0 1.8 3h11.4a2 2 0 0 0 1.8-3L14 8.5V2"/></svg> Tài khoản thử nghiệm” bên dưới). Bài làm sẽ được lưu nhưng không tính vào kết quả chính thức.', 'ok');
+    msg('candMsg', 'Đã chuyển ' + code + ' sang tài khoản thử nghiệm (xem mục “🧪 Tài khoản thử nghiệm” bên dưới). Bài làm sẽ được lưu nhưng không tính vào kết quả chính thức.', 'ok');
     return;
   }
   msg('candEditMsg','Đã lưu.','ok');
@@ -6459,7 +6459,7 @@ async function addCandidateForm(){
   if ($('candNewTest').checked){ // tạo luôn dạng tài khoản thử nghiệm
     const r = (await api('POST','/api/kt-admin', { op:'setTestMode', code, test:true })).j;
     if (!r.ok){ msg('candMsg', 'Đã thêm thí sinh nhưng chưa chuyển sang thử nghiệm: ' + (r.error || 'có lỗi, thử lại.'), 'err'); loadCandidates(); return; }
-    msg('candMsg', 'Đã tạo tài khoản thử nghiệm ' + code + ' (xem mục “<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 2h6"/><path d="M10 2v6.5L4.5 19a2 2 0 0 0 1.8 3h11.4a2 2 0 0 0 1.8-3L14 8.5V2"/></svg> Tài khoản thử nghiệm” bên dưới).', 'ok'); $('candNewTest').checked = false; loadTestAccounts();
+    msg('candMsg', 'Đã tạo tài khoản thử nghiệm ' + code + ' (xem mục “🧪 Tài khoản thử nghiệm” bên dưới).', 'ok'); $('candNewTest').checked = false; loadTestAccounts();
   } else msg('candMsg', 'Đã thêm '+j.added+' thí sinh mới, cập nhật '+j.updated+' thí sinh.', 'ok');
   ['candNewCode','candNewName','candNewEmail','candNewPhone'].forEach(id => $(id).value='');
   $('candNewCode').focus();
@@ -6512,8 +6512,8 @@ function hrRender(){
   const note = { 'SR 1':'Đại diện bán hàng GT ngành 1', 'SR 2':'Đại diện bán hàng GT ngành 2', 'ASM 1':'Trưởng KD khu vực ngành 1', 'ASM 2':'Trưởng KD khu vực ngành 2', 'PC':'Nhân viên Tư vấn Sản phẩm', 'Khác':'Task Force, Giám đốc, Trợ lý… (giữ nguyên chức danh gốc)' };
   const rows = KTHr.GROUPS.filter(g => cnt[g]).map(g =>
     '<tr class="' + (HR.on[g] ? '' : 'off') + '"><td><input type="checkbox" ' + (HR.on[g] ? 'checked' : '') + ' onchange="hrTick(\'' + g + '\',this.checked)" aria-label="Thêm nhóm ' + esc(g) + '"></td><td><b>' + esc(g) + '</b></td><td>' + esc(note[g]) + '</td><td class="n">' + cnt[g] + '</td><td class="n">' + ex[g] + '</td></tr>').join('');
-  const probs = R.problems.map(p => esc(p.sheet) + ' dòng ' + p.row + ': ' + esc((p.code ? p.code + ' ' : '') + (p.name || '')) + ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> ' + esc(p.reason)).concat(
-    pk.noMail.map(r => esc(r.code + ' ' + r.name) + ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> thiếu email' + (HR.usePersonal ? '' : ' công ty')));
+  const probs = R.problems.map(p => esc(p.sheet) + ' dòng ' + p.row + ': ' + esc((p.code ? p.code + ' ' : '') + (p.name || '')) + ' → ' + esc(p.reason)).concat(
+    pk.noMail.map(r => esc(r.code + ' ' + r.name) + ' → thiếu email' + (HR.usePersonal ? '' : ' công ty')));
   $('hrPreview').innerHTML =
     '<table class="hr-tb"><thead><tr><th></th><th>Chức danh</th><th>Gồm</th><th style="text-align:right">Trong file</th><th style="text-align:right">Đã có trong hệ thống</th></tr></thead><tbody>' + rows + '</tbody></table>' +
     '<div class="hr-opts"><label><input type="checkbox" ' + (HR.usePersonal ? 'checked' : '') + ' onchange="HR.usePersonal=this.checked;hrRender()"> Dùng email cá nhân khi người đó chưa có email công ty</label>' +
@@ -6603,7 +6603,7 @@ async function saveSettings(){
   if (period && !/^[a-z0-9][a-z0-9-]{0,39}$/i.test(period)){ msg('setPeriodMsg','Mã đề không hợp lệ.'); return; }
   if (period && period !== CUR_PERIOD){
     const e = examById(period), own = QUESTIONS.filter(q => q.active !== false && q.period === period).length;
-    if (!confirm('Đặt “' + ((e && e.title) || period) + '” làm đề mặc định (chỉ dùng trong trang quản trị; thí sinh vẫn phải vào bằng link hoặc mã đề)?' + (own ? '' : '\n\n<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Đề này chưa có câu hỏi riêng.'))) return;
+    if (!confirm('Đặt “' + ((e && e.title) || period) + '” làm đề mặc định (chỉ dùng trong trang quản trị; thí sinh vẫn phải vào bằng link hoặc mã đề)?' + (own ? '' : '\n\n⚠ Đề này chưa có câu hỏi riêng.'))) return;
   }
 
   const { j } = await api('POST','/api/kt-admin', {
@@ -6901,11 +6901,11 @@ function spRefresh(el){
       if (rg){
         const have = catsOf[rg][c] || 0;
         h.className = 'have ' + (have >= n ? 'ok' : 'bad'); if (have < n) short = true;
-        h.textContent = have >= n ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> ngân hàng có ' + have + ' câu' : '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> ngân hàng chỉ có ' + have + ' câu, thiếu ' + (n - have);
+        h.textContent = have >= n ? '✓ ngân hàng có ' + have + ' câu' : '⚠ ngân hàng chỉ có ' + have + ' câu, thiếu ' + (n - have);
       } else {
         const b = catsOf.bac[c] || 0, m = catsOf.nam[c] || 0, ok = b >= n && m >= n;
         h.className = 'have ' + (ok ? 'ok' : 'bad'); if (!ok) short = true;
-        h.textContent = (ok ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> ' : '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> ') + 'Miền Bắc có ' + b + ' · Miền Nam có ' + m + ' câu' + (ok ? '' : (b >= n || m >= n) ? ' (hai miền khác câu: nên tách đề theo miền)' : ', thiếu');
+        h.textContent = (ok ? '✓ ' : '⚠ ') + 'Miền Bắc có ' + b + ' · Miền Nam có ' + m + ' câu' + (ok ? '' : (b >= n || m >= n) ? ' (hai miền khác câu: nên tách đề theo miền)' : ', thiếu');
       }
     });
     totOf[k] = tot; shortOf[k] = short;
@@ -7356,7 +7356,7 @@ function vwReadPerms(){ const o = {}; document.querySelectorAll('#vwPerms input[
 function vwPreset(name){ vwRenderPerms((VW_PRESETS[name]) || {}); }
 function vwPermText(v){
   const lab = Object.keys(VW_LABELS).length ? VW_LABELS : VW_FALLBACK, on = Object.keys(lab).filter(k => (v.perms||{})[k]);
-  return (on.length ? on.map(k => esc(lab[k])).join(', ') : 'Không có quyền nào') + ' · <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> không xem ảnh' + (v.legacyPerms ? ' (quyền mặc định của tài khoản cũ — bấm Sửa để chỉnh)' : '');
+  return (on.length ? on.map(k => esc(lab[k])).join(', ') : 'Không có quyền nào') + ' · 🔒 không xem ảnh' + (v.legacyPerms ? ' (quyền mặc định của tài khoản cũ — bấm Sửa để chỉnh)' : '');
 }
 async function loadViewers(){
   const { j } = await api('GET','/api/kt-admin?op=viewers');
@@ -7640,11 +7640,11 @@ function pgCopy(){
   L.forEach(x => { const m = x.manager || '(chưa có quản lí)'; if (!g.has(m)) g.set(m, []); g.get(m).push(x.name || x.code); });
   const vn = new Date(Date.now() + 7 * 3600 * 1000), p2 = n => (n < 10 ? '0' : '') + n;
   const ds = p2(vn.getUTCDate()) + '/' + p2(vn.getUTCMonth() + 1) + '/' + vn.getUTCFullYear();
-  const t = ['<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><rect x="6" y="4" width="12" height="18" rx="2"/><path d="M9 4V2h6v2"/><path d="M9 11h6M9 15h4"/></svg> DANH SÁCH CHƯA LÀM BÀI – ' + ds, 'Tổng: ' + L.length + ' người', ''].concat(
+  const t = ['📋 DANH SÁCH CHƯA LÀM BÀI – ' + ds, 'Tổng: ' + L.length + ' người', ''].concat(
     [...g.entries()].sort((a, b) => (b[1].length - a[1].length) || a[0].localeCompare(b[0], 'vi')).map(([m, ns]) =>
-      '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg> ' + m + ' (' + ns.length + ')\n' + ns.sort((a, b) => String(a).localeCompare(String(b), 'vi')).map((n, i) => (i + 1) + '. ' + n).join('\n') + '\n')
+      '👤 ' + m + ' (' + ns.length + ')\n' + ns.sort((a, b) => String(a).localeCompare(String(b), 'vi')).map((n, i) => (i + 1) + '. ' + n).join('\n') + '\n')
   ).join('\n').trim();
-  const done = () => { const b = $('pgCopy'), o = b.textContent; b.textContent = 'Đã chép ' + L.length + ' người <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg>'; setTimeout(() => { b.textContent = o; }, 1500); };
+  const done = () => { const b = $('pgCopy'), o = b.textContent; b.textContent = 'Đã chép ' + L.length + ' người ✓'; setTimeout(() => { b.textContent = o; }, 1500); };
   if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, () => prompt('Sao chép danh sách:', t)); else prompt('Sao chép danh sách:', t);
 }
 /* ---------- Xuất Excel bảng theo dõi làm bài (mọi thí sinh, kể cả chưa làm) ----------
@@ -7707,7 +7707,7 @@ async function exportProgressXlsx(sharedWb, sharedE, silent){
   const ls = wb.addWorksheet(LS, { views:[{ state:'frozen', xSplit:3, ySplit:3, showGridLines:false }], pageSetup: Object.assign(page(true), { printTitlesRow:'3:3' }), headerFooter: footer });
   const cols = [['STT',6],['Mã NV',13],['Họ và tên',26],['Chức danh',11],['Quản lí',22],['Tỉnh/TP',14],['Miền',10],['Điện thoại',13],['Trạng thái',12],['Số câu đúng',9],['Tổng số câu',9],['Tỉ lệ đúng',10],['Điểm tuân thủ',10],['Số lần làm',8],['Thời điểm nộp',16],['Ghi chú',48]];
   ls.columns = cols.map(c => ({ width:c[1] }));
-  titleBlock(ls, 'P', 'DANH SÁCH THÍ SINH – ' + exTitle.toLocaleUpperCase('vi-VN'), 'Mã đề: ' + period + ' · Phạm vi: ' + filt + ' · Xuất lúc ' + nowTxt + ' · Điểm tính theo lần cao nhất của mỗi người. Sắp xếp: Chưa làm <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> Đang làm <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> Hoàn thành, trong mỗi nhóm theo quản lí và họ tên.');
+  titleBlock(ls, 'P', 'DANH SÁCH THÍ SINH – ' + exTitle.toLocaleUpperCase('vi-VN'), 'Mã đề: ' + period + ' · Phạm vi: ' + filt + ' · Xuất lúc ' + nowTxt + ' · Điểm tính theo lần cao nhất của mỗi người. Sắp xếp: Chưa làm → Đang làm → Hoàn thành, trong mỗi nhóm theo quản lí và họ tên.');
   headRow(ls.addRow(cols.map(c => c[0])));
   const R0 = 4;
   D.forEach((v, i) => {
@@ -7905,13 +7905,13 @@ async function exportBehaviorXlsx(sharedWb, sharedE, silent){
     if (wait.length >= 5){ tags.push('Để đồng hồ tự chuyển câu'); notes.push(wait.length + ' câu không bấm "Câu tiếp theo", để đồng hồ tự nộp' + (B.length ? '' : ' (dữ liệu cũ: không biết đã chọn từ giây thứ mấy)')); }
     if (rush.length >= 5){
       const where = r2n >= 2 * r1n ? ' ở cuối bài' : r1n >= 2 * r2n ? ' ở đầu bài' : '', ra = acc(rush);
-      tags.push((ra < 0.7 ? 'Bấm vội, sai nhiều' : 'Bấm nhanh') + where); notes.push(rush.length + ' câu chọn trong dưới ' + Math.round(FAST) + ' giây' + where + ', đúng ' + Math.round(ra * 100) + '%' + (ra < 0.7 ? ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> vội và sai nhiều' : ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> các câu này nắm chắc'));
+      tags.push((ra < 0.7 ? 'Bấm vội, sai nhiều' : 'Bấm nhanh') + where); notes.push(rush.length + ' câu chọn trong dưới ' + Math.round(FAST) + ' giây' + where + ', đúng ' + Math.round(ra * 100) + '%' + (ra < 0.7 ? ' → vội và sai nhiều' : ' → các câu này nắm chắc'));
     }
     if (to + bl >= 3){ tags.push('Bỏ lỡ câu'); notes.push((to + bl) + ' câu hết giờ / bỏ trống'); }
     if (h1.length >= 3 && h2.length >= 3 && mean(h2) >= 1.4 * mean(h1)){ tags.push('Tụt nhịp cuối bài'); notes.push('Nửa sau chọn chậm hơn nửa đầu ' + Math.round((mean(h2) / mean(h1) - 1) * 100) + '%'); }
-    if (changes != null && n && changes >= 0.3 * n){ tags.push('Hay đổi đáp án'); notes.push(changes + ' lần đổi đáp án <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> thiếu chắc chắn'); }
-    if (blur >= 3){ tags.push('Cần xem lại: rời trang'); notes.push((pct >= 85 ? 'Điểm cao nhưng r' : 'R') + 'ời trang ' + blur + ' lần' + (blurQs.length ? ' (ở câu ' + blurQs.slice(0, 8).join(', ') + ')' : '') + (pct >= 85 ? ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> nên xem lại bài' : '')); }
-    if (pct < 75){ const sa = acc(slow); tags.push('Hổng kiến thức'); notes.push('Đúng ' + pct + '% (dưới 75%)' + (sa != null && slow.length >= 3 && sa < 0.7 ? '; dành nhiều thời gian vẫn sai nhiều <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> thiếu kiến thức, không phải do vội' : '')); }
+    if (changes != null && n && changes >= 0.3 * n){ tags.push('Hay đổi đáp án'); notes.push(changes + ' lần đổi đáp án → thiếu chắc chắn'); }
+    if (blur >= 3){ tags.push('Cần xem lại: rời trang'); notes.push((pct >= 85 ? 'Điểm cao nhưng r' : 'R') + 'ời trang ' + blur + ' lần' + (blurQs.length ? ' (ở câu ' + blurQs.slice(0, 8).join(', ') + ')' : '') + (pct >= 85 ? ' → nên xem lại bài' : '')); }
+    if (pct < 75){ const sa = acc(slow); tags.push('Hổng kiến thức'); notes.push('Đúng ' + pct + '% (dưới 75%)' + (sa != null && slow.length >= 3 && sa < 0.7 ? '; dành nhiều thời gian vẫn sai nhiều → thiếu kiến thức, không phải do vội' : '')); }
     if (!tags.length){
       if (mF != null && mF < 0.25 && pct >= 85){ tags.push('Nhanh & chắc'); notes.push('Trung vị ' + Math.round(mdn) + ' giây/câu, đúng ' + pct + '%'); }
       else if (cv != null && cv < 0.45) tags.push('Nhịp đều, đạt chuẩn');
@@ -7967,7 +7967,7 @@ async function exportBehaviorXlsx(sharedWb, sharedE, silent){
   const s2 = wb.addWorksheet('Bản đồ thời gian', { views:[{ state:'frozen', xSplit:4, ySplit:3, showGridLines:false }], pageSetup:page });
   s2.columns = [{ width:5 }, { width:22 }, { width:18 }, { width:8 }].concat(Array.from({ length:maxN }, () => ({ width:5.5 }))).concat([{ width:8 }, { width:8 }]);
   const lastCol2 = s2.getColumn(4 + maxN + 2).letter;
-  titleBlock(s2, lastCol2, 'BẢN ĐỒ THỜI GIAN LÀM TỪNG CÂU (GIÂY)', sub + ' Mỗi ô = số giây đến lúc CHỌN đáp án. Màu: xanh = nhanh <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> đỏ = lâu (theo giới hạn ' + Lmain + ' giây). Chữ ĐỎ ĐẬM = sai · ĐH (nền tím) = không bấm tiếp, đồng hồ tự nộp đáp án đang chọn · HG = hết giờ · BT = bỏ trống · chữ nghiêng xám ở câu 1 = gồm thời gian chuẩn bị. Câu đánh số theo thứ tự hiện ra với từng người (đề trộn câu).');
+  titleBlock(s2, lastCol2, 'BẢN ĐỒ THỜI GIAN LÀM TỪNG CÂU (GIÂY)', sub + ' Mỗi ô = số giây đến lúc CHỌN đáp án. Màu: xanh = nhanh → đỏ = lâu (theo giới hạn ' + Lmain + ' giây). Chữ ĐỎ ĐẬM = sai · ĐH (nền tím) = không bấm tiếp, đồng hồ tự nộp đáp án đang chọn · HG = hết giờ · BT = bỏ trống · chữ nghiêng xám ở câu 1 = gồm thời gian chuẩn bị. Câu đánh số theo thứ tự hiện ra với từng người (đề trộn câu).');
   headRow(s2.addRow(['STT', 'Họ và tên', 'Quản lí', 'Đúng'].concat(Array.from({ length:maxN }, (_, k) => 'C' + (k + 1))).concat(['TB giây chọn', 'HG + BT'])));
   P.forEach((p, i) => {
     const byPos = {}; p.a.questions.forEach(q => { byPos[q.pos] = q; });
@@ -8138,7 +8138,7 @@ async function loadDashboard(sel){
   $('dashNdList').innerHTML = j.notDoneCount ? '<button class="btn ghost sm" type="button" id="ndCopy">Sao chép danh sách</button>' + Object.keys(g).sort().map(k => '<b>' + esc(k) + ' (' + g[k].length + ')</b>' + g[k].map(c => esc(c.name) + ' <span class="small">(' + esc(c.code) + ')</span>').join(', ')).join('') : '<p class="small">Tất cả thí sinh đã làm bài.</p>';
   if (j.notDoneCount) $('ndCopy').onclick = async function(){
     const t = 'Danh sách chưa làm bài kiểm tra ' + perLabel(j.period) + ':\n' + Object.keys(g).sort().map(k => '\n' + k + ':\n' + g[k].map(c => '- ' + c.name + ' (' + c.code + ')').join('\n')).join('\n');
-    try { await navigator.clipboard.writeText(t); this.textContent = 'Đã sao chép <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg>'; logEv('copyList', { period: j.period, count: j.notDoneCount }); } catch(e){ prompt('Sao chép danh sách:', t); }
+    try { await navigator.clipboard.writeText(t); this.textContent = 'Đã sao chép ✓'; logEv('copyList', { period: j.period, count: j.notDoneCount }); } catch(e){ prompt('Sao chép danh sách:', t); }
   };
 }
 async function assignPeriod(){
@@ -8262,7 +8262,7 @@ function resSortBy(k){ resPg.page = 1; if (RES_SORT.k === k) RES_SORT.d = -RES_S
 function resSortSel(v){ resPg.page = 1; const x = String(v).split(':'); RES_SORT = { k: x[0], d: x[1] === 'asc' ? 1 : -1 }; renderResults(); }
 function rtRow(ev, id){ if (ev.target.closest('button,a')) return; viewResult(id); }
 function rtCopy(btn){
-  const t = btn.dataset.copy, done = () => { const o = btn.textContent; btn.textContent = 'Đã chép <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg>'; setTimeout(() => { btn.textContent = o; }, 1300); };
+  const t = btn.dataset.copy, done = () => { const o = btn.textContent; btn.textContent = 'Đã chép ✓'; setTimeout(() => { btn.textContent = o; }, 1300); };
   if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, () => prompt('Sao chép mã:', t)); else prompt('Sao chép mã:', t);
 }
 const resPg = { page:1, size:20 }; // phân trang bảng kết quả (theo người, các lần làm xổ ra cùng dòng chính)
@@ -8417,9 +8417,9 @@ function rdCompare(L){
   const a = L[0], z = L[L.length - 1], dp = (z.pct || 0) - (a.pct || 0), ds = (z.score || 0) - (a.score || 0);
   const sign = v => (v > 0 ? '+' : '') + v, cls = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
   const chg = '<div class="cmp-chg">' +
-    '<div><span>Điểm (lần ' + a.n + ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> ' + z.n + ')</span><b class="' + cls(ds) + '">' + sign(ds) + ' câu · ' + sign(dp) + '%</b></div>' +
-    '<div><span>Thời gian làm</span><b>' + esc(tm(a.durationSec)) + ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> ' + esc(tm(z.durationSec)) + '</b></div>' +
-    '<div><span>Rời trang</span><b class="' + cls(-((z.blur || 0) - (a.blur || 0))) + '">' + (a.blur || 0) + ' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> ' + (z.blur || 0) + ' lần</b></div>' +
+    '<div><span>Điểm (lần ' + a.n + ' → ' + z.n + ')</span><b class="' + cls(ds) + '">' + sign(ds) + ' câu · ' + sign(dp) + '%</b></div>' +
+    '<div><span>Thời gian làm</span><b>' + esc(tm(a.durationSec)) + ' → ' + esc(tm(z.durationSec)) + '</b></div>' +
+    '<div><span>Rời trang</span><b class="' + cls(-((z.blur || 0) - (a.blur || 0))) + '">' + (a.blur || 0) + ' → ' + (z.blur || 0) + ' lần</b></div>' +
   '</div>';
   // Theo mảng kiến thức
   const cats = Array.from(new Set([].concat.apply([], L.map(t => Object.keys(t.cats || {}))))).sort((x, y) => x.localeCompare(y, 'vi'));
@@ -8527,7 +8527,7 @@ async function viewResult(id){
       body = '<div class="rd-opts">' + d.options.map((o,oi) => {
         const c = isC(oi), p = isS(oi);
         const cls = c && p ? 'good' : c ? 'key' : p ? 'wrong' : '';
-        const ic = c && p ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg>' : c ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg>' : p ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>' : (multi ? '▫' : '○');
+        const ic = c && p ? '✓' : c ? '✓' : p ? '✗' : (multi ? '▫' : '○');
         const tag = c && p ? 'Thí sinh chọn đúng' : c ? 'Đáp án đúng' : p ? 'Thí sinh chọn' : '';
         return '<div class="rd-opt '+cls+'"><span class="ic">'+ic+'</span><span class="tx">'+esc(o)+'</span>'+(tag?'<span class="tg">'+tag+'</span>':'')+'</div>';
       }).join('') + '</div>' + (multi && d.answered && !d.ok ? '<p class="small" style="margin:8px 2px 0">Câu nhiều đáp án chỉ tính đúng khi chọn đúng và đủ.</p>' : '');

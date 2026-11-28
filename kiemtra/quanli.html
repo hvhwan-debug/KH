@@ -805,7 +805,7 @@ function setMode(m){
   $('fPass').classList.toggle('hide', f); $('fOtp').classList.add('hide');
   $('authBtn').textContent = f ? 'Gửi liên kết đặt lại mật khẩu' : 'Đăng nhập';
   $('authTitle').textContent = f ? 'Quên mật khẩu' : 'Đăng nhập quản lí';
-  $('forgotBtn').textContent = f ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M15 18l-6-6 6-6"/></svg> Quay lại đăng nhập' : 'Quên mật khẩu?';
+  $('forgotBtn').textContent = f ? '← Quay lại đăng nhập' : 'Quên mật khẩu?';
   msg('authMsg','');
 }
 $('forgotBtn').addEventListener('click', function(){ setMode(mode === 'forgot' ? 'login' : 'forgot'); });
@@ -1228,7 +1228,7 @@ $('aiQBtn').addEventListener('click', async function(){
   AI_GEN_QUESTIONS = r.j.questions;
   msg('aiQMsg', 'Đã soạn '+AI_GEN_QUESTIONS.length+' câu — xem lại bên dưới rồi bấm "Thêm vào ngân hàng đề".', 'ok');
   $('aiQPreview').innerHTML = '<ol style="margin:12px 0 0;padding-left:20px;line-height:1.7">' + AI_GEN_QUESTIONS.map(function(q){
-    return '<li><b>'+esc(q.text)+'</b><br>'+q.options.map(function(o,i){ return '<span style="'+(i===q.correctIndex?'color:var(--ok);font-weight:700':'')+'">'+(i===q.correctIndex?'<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> ':'· ')+esc(o)+'</span>'; }).join('<br>')+'</li>';
+    return '<li><b>'+esc(q.text)+'</b><br>'+q.options.map(function(o,i){ return '<span style="'+(i===q.correctIndex?'color:var(--ok);font-weight:700':'')+'">'+(i===q.correctIndex?'✓ ':'· ')+esc(o)+'</span>'; }).join('<br>')+'</li>';
   }).join('') + '</ol>';
   $('aiQJson').value = JSON.stringify(AI_GEN_QUESTIONS, null, 2);
   $('aiQJson').classList.remove('hide'); $('aiQCommit').classList.remove('hide');
@@ -1372,9 +1372,9 @@ async function openEdit(e){
     var d = esc(fmt(x.at)) + ' · ' + esc(x.byName||x.by||'');
     if (x.kind === 'confirm') return '<li>'+d+' · <b>đã xác nhận thông tin</b></li>';
     var ch = x.changes || {}, parts = [];
-    if (ch.name) parts.push('họ tên: '+esc(ch.name.from)+' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> '+esc(ch.name.to));
-    if (ch.email) parts.push('email: '+esc(ch.email.from)+' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> '+esc(ch.email.to));
-    if (ch.segment) parts.push('nhóm ngành: '+esc(SEG[ch.segment.from]||ch.segment.from)+' <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> '+esc(SEG[ch.segment.to]||ch.segment.to));
+    if (ch.name) parts.push('họ tên: '+esc(ch.name.from)+' → '+esc(ch.name.to));
+    if (ch.email) parts.push('email: '+esc(ch.email.from)+' → '+esc(ch.email.to));
+    if (ch.segment) parts.push('nhóm ngành: '+esc(SEG[ch.segment.from]||ch.segment.from)+' → '+esc(SEG[ch.segment.to]||ch.segment.to));
     if (ch.admin) parts.push('quản trị viên cập nhật');
     return '<li>'+d+' · sửa ' + parts.join('; ') + '</li>';
   }).join('') || '<li>Chưa có chỉnh sửa nào.</li>';
@@ -1585,7 +1585,7 @@ function renderProfile(){
   $('fBody').innerHTML = html;
   $('aiProfBtn').onclick = runProfileAI;
   loadIns('/api/kt-viewer?op=insight&code=' + encodeURIComponent(PROF.emp.code), 'insBox', 'Chẩn đoán hành vi học tập - ' + (PROF.emp.name || PROF.emp.code), false);
-  $('aiProfCopy').onclick = async function(){ try { await navigator.clipboard.writeText('Phân tích kết quả kiểm tra - ' + (PROF.emp.name||PROF.emp.code) + '\n\n' + AIC[aiKey()]); this.textContent = 'Đã sao chép <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg>'; } catch(e){} };
+  $('aiProfCopy').onclick = async function(){ try { await navigator.clipboard.writeText('Phân tích kết quả kiểm tra - ' + (PROF.emp.name||PROF.emp.code) + '\n\n' + AIC[aiKey()]); this.textContent = 'Đã sao chép ✓'; } catch(e){} };
 }
 function aiKey(){ var H = PROF.history; return PROF.emp.code + ':' + (H.length ? H[H.length-1].id : ''); }
 function fmtAI(t){
@@ -1604,7 +1604,7 @@ function fmtAI(t){
 async function runProfileAI(){
   var P = PROF, e = P.emp, btn = $('aiProfBtn'); if (!P) return;
   var low = (P.complianceLowMin || 6) * 10;
-  var data = 'Nhân viên: ' + (e.name||e.code) + ' (mã ' + e.code + '), nhóm ngành: ' + (SEG[e.segment]||'') + '\nChuẩn tối thiểu: ' + low + '% câu đúng (dưới mức này là 0 điểm tuân thủ)\n\nLịch sử theo kỳ (cũ <svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M9 18l6-6-6-6"/></svg> mới):\n' +
+  var data = 'Nhân viên: ' + (e.name||e.code) + ' (mã ' + e.code + '), nhóm ngành: ' + (SEG[e.segment]||'') + '\nChuẩn tối thiểu: ' + low + '% câu đúng (dưới mức này là 0 điểm tuân thủ)\n\nLịch sử theo kỳ (cũ → mới):\n' +
     P.history.map(function(x){ return '- Đề ' + perL(x.period) + ': ' + x.score + '/' + x.total + ' câu đúng (' + x.pct + '%), trung bình đội ' + pc(x.teamAvg) + ', hạng ' + (x.rank ? x.rank + '/' + x.teamSize : '?') + ', điểm tuân thủ ' + (x.compliancePoints != null ? x.compliancePoints : '?') + ', thời gian ' + (x.durationSec != null ? clock(x.durationSec) : '?') + (x.flags && (x.flags.blur || x.flags.shot) ? ', cảnh báo: rời trang ' + (x.flags.blur||0) + ' lần, chụp màn hình ' + (x.flags.shot||0) + ' lần' : ''); }).join('\n') +
     '\n\nKết quả theo mảng kiến thức (tổng các bài / kỳ gần nhất):\n' + P.categories.map(function(c){ return '- ' + c.category + ': ' + c.pct + '% trên ' + c.n + ' câu' + (c.lastPct != null ? ' / gần nhất ' + c.lastPct + '%' : ''); }).join('\n') +
     (P.repeatWrong.length ? '\n\nCâu sai lặp lại:\n' + P.repeatWrong.map(function(w){ return '- (' + w.times + ' lần, ' + w.category + ') ' + w.text + ' | Đáp án đúng: ' + w.answer; }).join('\n') : '') +
@@ -1654,8 +1654,8 @@ $('ovProf').addEventListener('click', function(ev){
 /* ---------- Ảnh xác nhận chụp lúc làm bài ---------- */
 var PHOTO = {};
 // Đối chiếu với ảnh các lần kiểm tra trước của cùng nhân viên (AI nhận diện khuôn mặt trên máy chủ)
-var FID_S = { match:['ok','<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Khớp các lần trước','AI so với ảnh các lần kiểm tra trước: cùng một người.'], mismatch:['bad','<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Khác người các lần trước','AI so với ảnh các lần kiểm tra trước: không giống, nên kiểm tra lại.'], first:['','Ảnh gốc (lần đầu)','Chưa có ảnh lần trước để so; ảnh này dùng làm ảnh gốc cho các lần sau.'], noface:['warn','Chưa đối chiếu được','Ảnh không đủ rõ để AI đối chiếu khuôn mặt.'] };
-var FACE_S = { ok:['ok','<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> AI xác nhận khuôn mặt'], unclear:['warn','Khuôn mặt chưa rõ nét'], client_ok:['warn','Khuôn mặt chưa được AI xác minh'], unverified:['bad','Chưa xác minh khuôn mặt'] };
+var FID_S = { match:['ok','✓ Khớp các lần trước','AI so với ảnh các lần kiểm tra trước: cùng một người.'], mismatch:['bad','⚠ Khác người các lần trước','AI so với ảnh các lần kiểm tra trước: không giống, nên kiểm tra lại.'], first:['','Ảnh gốc (lần đầu)','Chưa có ảnh lần trước để so; ảnh này dùng làm ảnh gốc cho các lần sau.'], noface:['warn','Chưa đối chiếu được','Ảnh không đủ rõ để AI đối chiếu khuôn mặt.'] };
+var FACE_S = { ok:['ok','✓ AI xác nhận khuôn mặt'], unclear:['warn','Khuôn mặt chưa rõ nét'], client_ok:['warn','Khuôn mặt chưa được AI xác minh'], unverified:['bad','Chưa xác minh khuôn mặt'] };
 var FACE_L = { ok:'AI xác nhận có đúng 1 khuôn mặt', unclear:'AI thấy 1 khuôn mặt nhưng chưa rõ nét', client_ok:'Nhận diện được khuôn mặt trên máy thí sinh (AI máy chủ chưa xác minh)', unverified:'Chưa xác minh được khuôn mặt' };
 // sel: { id: mã bài làm } hoặc { period: 'YYYY-MM' }. Ảnh là minh chứng của ĐÚNG MỘT bài/kỳ, không lấy ảnh kỳ khác bù vào.
 function photoSel(e, sel){ return sel || (e.result && e.result.id ? { id: e.result.id } : { period: CURP }); }
@@ -1954,7 +1954,7 @@ async function exQuestions(id){
   $('aiQExam').value = id;
   var L = r.j.questions || [];
   box.innerHTML = '<b>Câu hỏi của đề ' + esc(id) + ' (' + L.length + ')</b> <span class="small">· thêm câu bằng "<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg> Soạn đề bằng AI" (chọn đúng đề)</span>' + (L.map(function(q, i){
-    return '<div class="exrow"><div class="grow">' + (i+1) + '. ' + esc(q.text) + '<div class="small">' + (q.options||[]).map(function(o, k){ return (k === q.correctIndex ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> ' : '') + esc(o); }).join(' · ') + '</div></div><button class="btn dghost sm" data-ex="dq" data-id="' + esc(id) + '" data-q="' + esc(q.id) + '">Xoá</button></div>';
+    return '<div class="exrow"><div class="grow">' + (i+1) + '. ' + esc(q.text) + '<div class="small">' + (q.options||[]).map(function(o, k){ return (k === q.correctIndex ? '✔ ' : '') + esc(o); }).join(' · ') + '</div></div><button class="btn dghost sm" data-ex="dq" data-id="' + esc(id) + '" data-q="' + esc(q.id) + '">Xoá</button></div>';
   }).join('') || '<p class="small">Đề chưa có câu hỏi nào.</p>');
 }
 var TAB = 'home';
@@ -2010,7 +2010,7 @@ $('exSave').addEventListener('click', async function(){
   $('exSave').disabled = false;
   if (!r.j.ok){ msg('exMsg', r.j.error || 'Không lưu được đề.'); return; }
   MYEX.exams = r.j.exams || MYEX.exams; exRender();
-  msg('exMsg', (r.j.created ? 'Đã tạo đề ' : 'Đã cập nhật đề ') + r.j.exam.id + ' cho ' + picked.length + ' nhân viên. Thêm câu hỏi bằng "<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg> Soạn đề bằng AI".', 'ok');
+  msg('exMsg', (r.j.created ? 'Đã tạo đề ' : 'Đã cập nhật đề ') + r.j.exam.id + ' cho ' + picked.length + ' nhân viên. Thêm câu hỏi bằng "✦ Soạn đề bằng AI".', 'ok');
   $('exId').disabled = true;
 });
 $('exList').addEventListener('click', async function(ev){

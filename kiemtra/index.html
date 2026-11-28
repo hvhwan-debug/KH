@@ -3900,7 +3900,7 @@ function lvOk(p, y, w, off){ // ngưỡng ở trình duyệt chặt hơn máy ch
   if (p === 'left') return y >= .15;
   return y <= -.15;
 }
-function lvPills(){ $('aiPills').innerHTML = LV.seq.map(function(p, k){ return '<li class="' + (k < LV.i ? 'done' : k === LV.i ? 'cur' : '') + '">' + (k < LV.i ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> ' : '') + LV_NAME[p] + '</li>'; }).join(''); }
+function lvPills(){ $('aiPills').innerHTML = LV.seq.map(function(p, k){ return '<li class="' + (k < LV.i ? 'done' : k === LV.i ? 'cur' : '') + '">' + (k < LV.i ? '✓ ' : '') + LV_NAME[p] + '</li>'; }).join(''); }
 /* Câu nhắc hiển thị DƯỚI khung camera (không đè lên khuôn mặt): lấy từ câu nhắc thử thách / câu nhắc chờ */
 function fvSaySync(){
   var el = $('fvSay'), sc = $('scrPhoto'); if (!el || !sc) return;
@@ -4143,7 +4143,7 @@ async function aiVerifyEnd(res){ // kết quả máy chủ (kt-start): đối ch
     aiStep(4, 'ok', 1); aiStep(5, 'ok', 1);
     if (j.identity === 'mismatch'){ // khác người so với các lần trước: vẫn cho làm bài, nhưng báo rõ và đã báo quản trị viên
       aiStep(3, 'bad'); aiScr('bad'); aiChip('bad', 'KHÁC NGƯỜI LẦN TRƯỚC'); ST.identityWarn = true; sndWarn(); guide('Khuôn mặt chưa khớp với các lần làm bài trước. Sự việc đã được báo quản trị viên.');
-      msg('photoMsg', '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Khuôn mặt chưa khớp với ảnh đã lưu của tài khoản này. Sự việc đã được ghi nhận và báo quản trị viên. Bạn vẫn có thể làm bài.', 'warn');
+      msg('photoMsg', '⚠ Khuôn mặt chưa khớp với ảnh đã lưu của tài khoản này. Sự việc đã được ghi nhận và báo quản trị viên. Bạn vẫn có thể làm bài.', 'warn');
       await aiDelay(2400); return;
     }
     aiStep(3, 'ok', 1); aiScr('ok'); aiChip('ok', 'XÁC THỰC THÀNH CÔNG'); sndOk(); guide('Xác thực thành công.', 'verify-ok', 8000); await aiDelay(650); return;
@@ -4226,11 +4226,11 @@ async function photoProcess(c){ // c: canvas chứa ảnh nhìn thẳng
   // Nhận diện đạt (hoặc máy không kiểm tra được cục bộ): tự động vào bài luôn, không bắt bấm "Dùng ảnh này" nữa.
   // Vẫn chờ một nhịp ngắn và giữ nút "Chụp lại" để kịp hủy nếu ảnh chưa ưng ý.
   if (r.status === 'ok' || r.status === 'unavailable'){
-    msg('photoMsg', r.status === 'ok' ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Đã nhận diện được khuôn mặt. Đang vào bài…' : 'Không tải được bộ kiểm tra khuôn mặt trên máy này. Ảnh sẽ được kiểm tra khi bắt đầu làm bài. Đang vào bài…', 'ok');
+    msg('photoMsg', r.status === 'ok' ? '✓ Đã nhận diện được khuôn mặt. Đang vào bài…' : 'Không tải được bộ kiểm tra khuôn mặt trên máy này. Ảnh sẽ được kiểm tra khi bắt đầu làm bài. Đang vào bài…', 'ok');
     clearTimeout(AUTO_T);
     AUTO_T = setTimeout(async function(){ if (g !== PHG || document.body.dataset.scr !== 'photo') return; await vgWait(12000); if (g !== PHG || document.body.dataset.scr !== 'photo') return; if (PH.mode === 'login') doFaceLogin(); else startExam(''); }, 900);
   }
-  else { msg('photoMsg', '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> ' + FACE_MSG[r.status], 'err'); }  // không cho bắt đầu, chỉ cho chụp lại
+  else { msg('photoMsg', '⚠ ' + FACE_MSG[r.status], 'err'); }  // không cho bắt đầu, chỉ cho chụp lại
 }
 $('btnCapture').addEventListener('click', async function(){
   var v = $('pvVideo'), c = $('pvCanvas');
@@ -4275,7 +4275,7 @@ async function doFaceLogin(){
   if (g !== PHG) return; // đã thoát màn quét trong lúc chờ máy chủ
   var j = res && res.j;
   if (j && j.ok){
-    aiStep(3, 'ok', 1); aiStep(4, 'run'); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN'); sndOk(); guide('Xin chào ' + (j.name || '') + '. Đăng nhập thành công.', 'hello', 8000); msg('photoMsg', '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Xin chào ' + (j.name || j.code) + '. Đang mở thông tin của bạn…', 'ok');
+    aiStep(3, 'ok', 1); aiStep(4, 'run'); aiScr('ok'); aiChip('ok', 'ĐÃ NHẬN DIỆN'); sndOk(); guide('Xin chào ' + (j.name || '') + '. Đăng nhập thành công.', 'hello', 8000); msg('photoMsg', '✓ Xin chào ' + (j.name || j.code) + '. Đang mở thông tin của bạn…', 'ok');
     await aiDelay(900); if (g !== PHG) return; aiStep(4, 'ok', 1); await aiDelay(450); await vgWait(12000); if (g !== PHG) return; VG.last['scr-check'] = Date.now();
     fpSet(j.facePass ? { token: j.facePass, code: String(j.code || ''), photo: PH.dataUrl, at: Date.now() } : null); // vé: bỏ bước quét mặt lần hai khi bắt đầu làm bài
     flSet(j.faceLogin ? { token: j.faceLogin, code: String(j.code || ''), at: Date.now() } : null); // vé: vào bằng khuôn mặt thì không bị hỏi xác thực lại vì "nhập sai nhiều lần"
@@ -4292,7 +4292,7 @@ async function doFaceLogin(){
 }
 
 async function startExam(passToken){ // passToken: vé đăng nhập bằng khuôn mặt ('' = ảnh vừa chụp ở màn quét)
-  var btn = $('btnPhotoOk'), label = '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Dùng ảnh này, bắt đầu làm bài';
+  var btn = $('btnPhotoOk'), label = '✓ Dùng ảnh này, bắt đầu làm bài';
   if (START_BUSY) return; START_BUSY = true;
   btn.disabled = true; btn.textContent = 'AI đang xác minh và chuẩn bị đề…'; if (!passToken) msg('photoMsg',''); aiVerifyStart();
   var res, body = { code:ST.cand.inCode, email:ST.cand.inEmail, photo: PH.dataUrl, face: PH.face, live: PH.live, device: DEV, examId:EXAM_ID, phone: ST.cand.phone || ST.phoneNew || '', province: (ST.rgNew && ST.rgNew.province) || '', region: (ST.rgNew && ST.rgNew.region) || '', birthDate: ST.birthNew || '' };
@@ -4308,7 +4308,7 @@ async function startExam(passToken){ // passToken: vé đăng nhập bằng khu�
   if (!res.j.ok && res.j.needPhone){ photoStop(); show('confirm'); msg('phoneMsg', res.j.error); return; }
   if (!res.j.ok && res.j.needRegion){ photoStop(); ST.cand.needRegion = true; renderConfirm(); msg('regionMsg', res.j.error); return; }
   if (!res.j.ok && res.j.needBirth){ photoStop(); ST.cand.needBirth = true; renderConfirm(); msg('birthMsg', res.j.error); return; }
-  if (!res.j.ok){ msg('photoMsg', (res.j.faceRejected ? '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> ' : '') + (res.j.error || 'Không thể bắt đầu bài kiểm tra.')); if (res.j.faceRejected || passToken){ btn.classList.add('hide'); $('btnPhotoRetry').classList.remove('hide'); } return; }
+  if (!res.j.ok){ msg('photoMsg', (res.j.faceRejected ? '⚠ ' : '') + (res.j.error || 'Không thể bắt đầu bài kiểm tra.')); if (res.j.faceRejected || passToken){ btn.classList.add('hide'); $('btnPhotoRetry').classList.remove('hide'); } return; }
   if (!ST.cand.phone && ST.phoneNew) ST.cand.phone = ST.phoneNew;
   if (ST.rgNew){ ST.cand.province = ST.rgNew.province; ST.cand.region = ST.rgNew.region; ST.cand.needRegion = false; }
   if (!ST.cand.birthDate && ST.birthNew) ST.cand.birthDate = ST.birthNew;
@@ -4794,7 +4794,7 @@ function surveyPrompt(){
     setTimeout(function(){
       if (bg.querySelector('button.done')) return;
       go.classList.add('again'); go.textContent = 'Mở lại phiếu khảo sát';
-      var d = document.createElement('button'); d.type = 'button'; d.className = 'done'; d.textContent = '<svg class="icon-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-0.15em"><path d="M20 6 9 17l-5-5"/></svg> Tôi đã gửi khảo sát';
+      var d = document.createElement('button'); d.type = 'button'; d.className = 'done'; d.textContent = '✓ Tôi đã gửi khảo sát';
       d.addEventListener('click', function(){ mark(); bg.remove(); document.removeEventListener('keydown', onKey, true); });
       go.parentNode.insertBefore(d, go);
       bg.querySelector('.note').textContent = 'Đã gửi khảo sát xong thì bấm nút xanh lá để xem kết quả bài kiểm tra.';

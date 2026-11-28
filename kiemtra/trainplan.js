@@ -120,7 +120,7 @@
   }
   function renderChips() {
     var el = document.getElementById('tpChips'); if (!el) return;
-    el.innerHTML = TP.months.length ? '<span class="small" style="align-self:center">Đã lưu:</span>' + TP.months.map(function (m) { return '<button type="button" class="tp-chip' + (m.month === TP.month ? ' on' : '') + '" data-tp-month="' + ea(m.month) + '">' + esc(mLabel(m.month)) + ' · ' + m.count + ' CT' + (m.status === 'final' ? ' <svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M20 6 9 17l-5-5\"/></svg>' : '') + '</button>'; }).join('') : '';
+    el.innerHTML = TP.months.length ? '<span class="small" style="align-self:center">Đã lưu:</span>' + TP.months.map(function (m) { return '<button type="button" class="tp-chip' + (m.month === TP.month ? ' on' : '') + '" data-tp-month="' + ea(m.month) + '">' + esc(mLabel(m.month)) + ' · ' + m.count + ' CT' + (m.status === 'final' ? ' ✓' : '') + '</button>'; }).join('') : '';
   }
   function num(n) { return Number(n || 0).toLocaleString('vi-VN'); }
   function lines(arr) { return (arr || []).join('\n'); }
@@ -227,7 +227,7 @@
   function steps(cur, err) { TP.steps = cur == null ? null : { cur: cur, err: !!err }; renderSteps(); }
   function renderSteps() {
     var el = document.getElementById('tpSteps'); if (!el) return; var s = TP.steps; if (!s) { el.innerHTML = ''; return; }
-    el.innerHTML = '<ol class="tp-steps">' + STEP_NAMES.map(function (n, i) { var st = i < s.cur ? 'done' : i === s.cur ? (s.err ? 'err' : 'act') : ''; return '<li class="' + st + '"><span>' + (st === 'done' ? '<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" width=\"1em\" height=\"1em\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-0.15em\"><path d=\"M20 6 9 17l-5-5\"/></svg>' : i + 1) + '</span>' + n + '</li>'; }).join('') + '</ol>';
+    el.innerHTML = '<ol class="tp-steps">' + STEP_NAMES.map(function (n, i) { var st = i < s.cur ? 'done' : i === s.cur ? (s.err ? 'err' : 'act') : ''; return '<li class="' + st + '"><span>' + (st === 'done' ? '✓' : i + 1) + '</span>' + n + '</li>'; }).join('') + '</ol>';
   }
   function ul(a) { return a && a.length ? '<ul>' + a.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '<div class="small">—</div>'; }
   function renderExplain() {
